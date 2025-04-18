@@ -38,9 +38,10 @@ export const DEFI_SEPARATOR_HEIGHT = 12;
 export const HEADER_TOP_AREA_HEIGHT = 170;
 export const HEADER_CHART_HEIGHT = 189;
 export const SWITCH_HEADER_HEIGHT = 42;
-export const SWITCH_HEADER_GAP = 12;
+export const SWITCH_HEADER_GAP = 16;
 export const ADDRESS_ENTRY_HEUGHT = 78;
 export const ADDRESS_ENTRY_GAP = 12;
+export const TOGGLE_SPLIT_HEIGHT = 24;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {

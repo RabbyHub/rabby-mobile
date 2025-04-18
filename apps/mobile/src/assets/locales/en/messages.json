@@ -1804,6 +1804,12 @@
     "safeMessageQueue": {
       "loading": "Loading messages",
       "noData": "No messages"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "Portfolio",
+        "address": "Address"
+      }
     }
   },
   "component": {

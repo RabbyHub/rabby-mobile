@@ -43,9 +43,7 @@ export const formChartData = (
 
     list.push({
       value: realtimeNetWorth || 0,
-      netWorth: realtimeNetWorth
-        ? `$${formatUsdValue(realtimeNetWorth)}`
-        : '$0',
+      netWorth: realtimeNetWorth ? `${formatUsdValue(realtimeNetWorth)}` : '$0',
       change: `${formatUsdValue(Math.abs(realtimeChange))}`,
       isLoss: realtimeChange < 0,
       changePercent:

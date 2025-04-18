@@ -141,13 +141,13 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
               action: 'Click_Setting',
             });
           }}>
-          <RcIconSetting />
+          <RcIconSetting color={colors2024['neutral-title-1']} />
           {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
       <View style={styles.curveBox}>
         <Card
-          style={styles.curveCard}
+          style={[styles.curveCard]}
           onPress={() => {
             trigger('impactLight', {
               enableVibrateFallback: true,
@@ -770,7 +770,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   balanceTextBox: {
     marginRight: 12,
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    fontWeight: '700',
     fontSize: 20,
     lineHeight: 24,
     textAlign: 'left',
@@ -1117,6 +1117,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 20,
     paddingVertical: 28,
     paddingHorizontal: 20,
+    height: 128,
     borderColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-line'],
@@ -1148,7 +1149,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   netWorth: {
     fontSize: 36,
     lineHeight: 42,
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },

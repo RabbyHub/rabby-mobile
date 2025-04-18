@@ -15,6 +15,8 @@ import { RootNames } from '@/constant/layout';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { View } from 'react-native';
 import { AbstractPortfolioToken } from './types';
+import { toast } from '@/components2024/Toast';
+import { useTranslation } from 'react-i18next';
 
 const hitSlop = {
   top: 10,
@@ -111,11 +113,19 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
 export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
   const { currentAccount } = useCurrentAccount();
   const showAddressDetail = useAddressDetailModal();
+  const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
+  const { t } = useTranslation();
 
   const onPress = () => {
     if (currentAccount) {
-      showAddressDetail({ account: currentAccount });
+      showAddressDetail({
+        account: currentAccount,
+        onDelete: () => {
+          toast.success(t('global.Deleted'));
+          navigation?.canGoBack() && navigation.goBack();
+        },
+      });
     }
   };
 

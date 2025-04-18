@@ -30,24 +30,15 @@ export const enum TabType {
 
 interface IProps {
   currentTab: TabType;
-  chainServerId?: string;
-  chainLength?: number;
   addressLength?: number;
-  onChainClick?: (clear: boolean) => void;
   onChangeTab: (tab: TabType) => void;
 }
 export const SwitchHeader = ({
   currentTab,
   onChangeTab,
-  chainLength,
-  onChainClick,
   addressLength,
-  chainServerId,
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const chainInfo = useFindChain({
-    serverId: chainServerId || null,
-  });
   const { t } = useTranslation();
 
   const maxHeight = Dimensions.get('window').height - 104;
@@ -116,7 +107,7 @@ export const SwitchHeader = ({
               styles.tab,
               currentTab === TabType.portfolio && styles.activeTab,
             ]}>
-            Portfolio
+            {t('page.multiAddressAssets.tabs.portfolio')}
           </Text>
         </Pressable>
         <Pressable
@@ -130,11 +121,12 @@ export const SwitchHeader = ({
               styles.tab,
               currentTab === TabType.address && styles.activeTab,
             ]}>
-            Address{addressLength ? `(${addressLength})` : ''}
+            {t('page.multiAddressAssets.tabs.address')}
+            {addressLength ? `(${addressLength})` : ''}
           </Text>
         </Pressable>
       </View>
-      <View style={styles.right}>
+      {/* <View style={styles.right}>
         {currentTab === TabType.portfolio ? (
           !!chainLength &&
           (chainInfo?.id ? (
@@ -171,7 +163,7 @@ export const SwitchHeader = ({
             />
           </Pressable>
         )}
-      </View>
+      </View> */}
     </View>
   );
 };
@@ -180,6 +172,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tabs: {
     flexDirection: 'row',
     alignContent: 'center',
+    width: '100%',
     gap: 4,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
@@ -193,10 +186,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    width: '100%',
   },
   tabContainer: {
     alignItems: 'center',
     flexDirection: 'row',
+    flex: 1,
     paddingHorizontal: 13,
     paddingVertical: 6,
   },

@@ -11,9 +11,11 @@ export const useAddressDetailModal = () => {
     ({
       account,
       onCancel,
+      onDelete,
     }: {
       account: KeyringAccountWithAlias;
       onCancel?: () => void;
+      onDelete?: () => void;
     }) => {
       const id = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.ADDRESS_DETAIL,
@@ -22,6 +24,7 @@ export const useAddressDetailModal = () => {
           removeGlobalBottomSheetModal2024(id);
           onCancel?.();
         },
+        onDelete,
       });
     },
     [],

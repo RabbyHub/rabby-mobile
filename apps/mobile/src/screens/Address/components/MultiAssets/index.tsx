@@ -31,6 +31,7 @@ import {
   RootNames,
   SWITCH_HEADER_GAP,
   SWITCH_HEADER_HEIGHT,
+  TOGGLE_SPLIT_HEIGHT,
   TOKEN_EMPTY_ROW_HIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -87,6 +88,10 @@ import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useBalanceUpdate } from './hooks/balance';
+import {
+  AssestAllHeader,
+  AsssetKey,
+} from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
@@ -441,6 +446,35 @@ export const MultiAssets = () => {
     },
     [chainsInfo.chainAssets, colors2024, isLight, selectChainItem, t],
   );
+  const currentSection = useMemo(() => {
+    if (firstRowType.includes('token')) {
+      return 'token';
+    }
+    if (firstRowType.includes('defi')) {
+      return 'defi';
+    }
+    return 'token';
+  }, [firstRowType]);
+
+  const handleSwitchTab = (key: AsssetKey) => {
+    setFoldHideList(true);
+    setTimeout(() => {
+      listRef.current?.forceUpdate(() => {
+        const data = (listRef.current?.props.dataProvider.getAllData() ||
+          []) as ActionItem[];
+        let index = 1;
+        if (key === 'defi') {
+          const defiHeaderIndex = data.findIndex(
+            item => item.type === 'defi_header',
+          );
+          if (defiHeaderIndex !== -1) {
+            index = data.findIndex(item => item.type === 'defi_header') - 1;
+          }
+        }
+        listRef.current?.scrollToIndex(index, true);
+      });
+    }, 0);
+  };
   const scrollToTop = () => {
     setFoldHideList(true);
     setTimeout(() => {
@@ -472,10 +506,7 @@ export const MultiAssets = () => {
         return (
           <SwitchHeader
             currentTab={extendedState.currentTab}
-            chainServerId={selectChainItem?.chain}
             addressLength={list.length}
-            onChainClick={handleOnChainClick}
-            chainLength={chainsInfo.chainLength}
             onChangeTab={tab => {
               trigger('impactLight', {
                 enableVibrateFallback: true,
@@ -537,9 +568,15 @@ export const MultiAssets = () => {
         );
       case 'asset_header':
         return (
-          <Text style={[styles.sectionHeader, styles.sectionTextHeader]}>
-            {t('page.search.sectionHeader.token')}
-          </Text>
+          <AssestAllHeader
+            style={[styles.sectionHeader, styles.sectionTextHeader]}
+            currentSection={currentSection}
+            chainLength={chainsInfo.chainLength}
+            onChainClick={handleOnChainClick}
+            chainServerId={selectChainItem?.chain}
+            disableNft
+            onPress={handleSwitchTab}
+          />
         );
       case 'toggle_token_fold':
         return (
@@ -578,40 +615,6 @@ export const MultiAssets = () => {
         return <ItemLoader style={{ height: ASSETS_ITEM_HEIGHT_NEW }} />;
       case 'loading-defi-skeleton':
         return <DefiItemLoader style={styles.defiLoading} />;
-      default:
-        return null;
-    }
-  };
-
-  const renderStickHeader = (type: string) => {
-    switch (type) {
-      /** header */
-      case 'fold_token':
-        return (
-          <TokenRowSectionHeader
-            str={getTotalFoldToken(tokens.filter(i => i._isFold))}
-            fold={foldHideList}
-            style={styles.sectionHeader}
-            buttonStyle={StyleSheet.flatten([
-              styles.buttonHeader,
-              !isLight && styles.bg2,
-            ])}
-            onPressFold={() => setFoldHideList(pre => !pre)}
-          />
-        );
-      case 'fold_defi':
-        return (
-          <TokenRowSectionHeader
-            str={getAllDefiCount(portfolios.filter(i => i._isFold))}
-            fold={foldDefi}
-            style={styles.sectionHeader}
-            buttonStyle={StyleSheet.flatten([
-              styles.buttonHeader,
-              !isLight && styles.bg2,
-            ])}
-            onPressFold={() => setFoldDefi(pre => !pre)}
-          />
-        );
       default:
         return null;
     }
@@ -666,7 +669,7 @@ export const MultiAssets = () => {
             break;
           case ViewTypes.HEADER:
             dim.width = SCREEN_WIDTH - 32;
-            dim.height = ASSETS_SECTION_HEADER + ASSETS_SEPARATOR_HEIGHT;
+            dim.height = ASSETS_SECTION_HEADER + TOGGLE_SPLIT_HEIGHT;
             break;
           case ViewTypes.EMPTY_TOKEN:
             dim.width = SCREEN_WIDTH - 32;
@@ -725,10 +728,7 @@ export const MultiAssets = () => {
         <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
           <SwitchHeader
             currentTab={extendedState.currentTab}
-            chainServerId={selectChainItem?.chain}
             addressLength={list.length}
-            onChainClick={handleOnChainClick}
-            chainLength={chainsInfo.chainLength}
             onChangeTab={tab => {
               trigger('impactLight', {
                 enableVibrateFallback: true,
@@ -741,7 +741,6 @@ export const MultiAssets = () => {
               scrollToTop();
             }}
           />
-          {renderStickHeader(firstRowType)}
         </Animated.View>
       )}
       <RecyclerListView
@@ -846,7 +845,7 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-    paddingBottom: 2,
+    paddingBottom: 12,
   },
   emptyHolder: {
     marginTop: 65,
@@ -894,7 +893,7 @@ const getStyles = createGetStyles2024(ctx => ({
     marginBottom: 8,
   },
   footer: {
-    height: 200,
+    minHeight: 400,
   },
   defiGroups: {
     flexDirection: 'row',

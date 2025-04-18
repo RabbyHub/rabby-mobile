@@ -111,6 +111,10 @@ export const ChartHeader = ({
     return data?.[currentIndex.value]?.clockTimeString || t('global.24h');
   }, [data, currentIndex]);
 
+  const formatNetWorth = useDerivedValue(() => {
+    return data?.[currentIndex?.value]?.netWorth || netWorth;
+  }, [data, currentIndex, netWorth]);
+
   const lossStyleProps = useAnimatedStyle(() => {
     if (data?.[currentIndex?.value]) {
       return {
@@ -139,8 +143,9 @@ export const ChartHeader = ({
     );
   }
   return (
-    <View>
-      <Text style={styles.netWorth}>{netWorth}</Text>
+    <View style={styles.charHeader}>
+      {/* <Text style={styles.netWorth}>{netWorth}</Text> */}
+      <AnimateableText style={styles.netWorth} text={formatNetWorth} />
       <View style={styles.changeSection}>
         <AnimateableText style={lossStyleProps} text={percentChange} />
         <AnimateableText style={styles.changeTime} text={dateTime} />
@@ -155,10 +160,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
   },
+  charHeader: {
+    alignContent: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    width: ScreenWidth - 32,
+  },
   netWorth: {
     fontSize: 36,
     lineHeight: 42,
-    fontWeight: '800',
+    textAlign: 'center',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -167,6 +179,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 2,
     marginTop: 4,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   changeValue: {
     fontSize: 16,

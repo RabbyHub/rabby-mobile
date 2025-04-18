@@ -113,7 +113,7 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
     changePercent,
     isLoss,
   } = props;
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { pinAddresses } = usePinAddresses({
     disableAutoFetch: true,
@@ -178,7 +178,9 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
           backgroundColor={
             isPressing
               ? colors2024['brand-light-1']
-              : colors2024['neutral-bg-2']
+              : isLight
+              ? colors2024['neutral-bg-2']
+              : colors2024['neutral-bg-1']
           }
         />
       )}
