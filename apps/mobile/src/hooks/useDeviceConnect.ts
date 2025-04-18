@@ -7,7 +7,7 @@ export const useDeviceConnect = () => {
   /**
    * @returns {boolean} true if connected, false if not connected and popup is shown
    */
-  const connect = React.useCallback((type: string) => {
+  const connect = React.useCallback((data: any) => {
     return true;
   }, []);
 

@@ -19,10 +19,7 @@ import { stats } from '@/utils/stats';
 import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
-
-export const underline2Camelcase = (str: string) => {
-  return str.replace(/_(.)/g, (m, p1) => p1.toUpperCase());
-};
+import { underline2Camelcase } from '../utils/common';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
