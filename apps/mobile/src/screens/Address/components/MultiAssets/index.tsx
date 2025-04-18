@@ -674,7 +674,6 @@ export const MultiAssets = () => {
             style={styles.renderItemWrapper}
             chainLogoSize={18}
             menuActions={getTokenMenuActions(data)}
-            hideFoldTag
           />
         );
       case 'unfold_defi':

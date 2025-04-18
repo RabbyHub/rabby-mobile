@@ -205,7 +205,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   container: {
     flexDirection: 'row',
-    height: SWITCH_HEADER_HEIGHT,
+    height: SWITCH_HEADER_HEIGHT - 16,
+    marginTop: 16,
     justifyContent: 'space-between',
     alignContent: 'center',
     backgroundColor: isLight

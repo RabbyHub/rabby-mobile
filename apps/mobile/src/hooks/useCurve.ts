@@ -64,6 +64,8 @@ export const formChartData = (
 
   return {
     list,
+    netWorthWithDot:
+      endNetWorth === 0 ? '$0' : `${formatUsdValue(endNetWorth)}`,
     netWorth:
       endNetWorth === 0
         ? '$0'

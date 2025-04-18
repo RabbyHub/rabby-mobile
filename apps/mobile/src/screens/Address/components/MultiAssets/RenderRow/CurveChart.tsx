@@ -38,7 +38,7 @@ function Chart({
     <View style={styles.container}>
       <LineChart.Provider data={data.list}>
         <ChartHeader
-          netWorth={data.netWorth}
+          netWorth={data.netWorthWithDot}
           change={data.change}
           changePercent={data.changePercent}
           isLoss={data.isLoss}

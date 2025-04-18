@@ -3,11 +3,19 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressListScreenContainer } from './components/AddressListScreenContainer';
 import { MultiAssets } from './components/MultiAssets';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export function AddressAssetsOverview(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
+  const { safeTop } = useSafeSizes();
   return (
-    <AddressListScreenContainer style={styles.screen}>
+    <AddressListScreenContainer
+      style={[
+        styles.screen,
+        {
+          paddingTop: Math.max(safeTop, 80),
+        },
+      ]}>
       <MultiAssets />
       {/* <FlatList
         ListEmptyComponent={AddressEmptyContainer}
