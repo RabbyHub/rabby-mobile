@@ -226,29 +226,29 @@ const BridgeToken = ({
               {<Text style={styles.value}>{useValue}</Text>}
             </View>
             <View style={styles.balanceContainer}>
-              {inSufficient && token ? (
-                <View style={styles.inSufficient}>
-                  <Text style={styles.inSufficientText}>
-                    {t('page.swap.insufficient-balance')}
-                    {': '}
-                    {formatTokenAmount(tokenAmountBn(token).toString(10))}
-                  </Text>
-                </View>
-              ) : (
+              {
                 <View style={styles.balanceWrapper}>
                   <RcIconWalletCC
                     width={16}
                     height={16}
-                    color={colors2024['neutral-foot']}
+                    color={
+                      inSufficient
+                        ? colors2024['red-default']
+                        : colors2024['neutral-foot']
+                    }
                   />
-                  <Text style={styles.balanceText}>
+                  <Text
+                    style={[
+                      styles.balanceText,
+                      inSufficient && styles.insufficientInput,
+                    ]}>
                     {token
                       ? formatTokenAmount(tokenAmountBn(token).toString(10)) ||
                         '0'
                       : 0}
                   </Text>
                 </View>
-              )}
+              }
             </View>
           </View>
         }

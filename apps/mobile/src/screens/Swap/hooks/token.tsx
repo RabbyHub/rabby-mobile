@@ -24,6 +24,7 @@ import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
 import { isSwapWrapToken } from '../utils';
+import { RequestRateLimiter } from './rateLimit';
 
 export const enableInsufficientQuote = true;
 
@@ -419,6 +420,10 @@ export const useTokenPair = (userAddress: string) => {
 
   const [quoteLoading, setQuoteLoading] = useState(false);
 
+  const rateLimitRef = useRef(new RequestRateLimiter(1000 * 30, 5));
+
+  const [rateLimit, setRateLimit] = useState(false);
+
   const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
     async (currentFetchId: number) => {
       if (
@@ -432,6 +437,9 @@ export const useTokenPair = (userAddress: string) => {
         inSufficientCanGetQuote &&
         !isDraggingSlider
       ) {
+        const limit = rateLimitRef.current?.checkRateLimit();
+        setRateLimit(!!limit);
+
         setQuotesList(e =>
           e.map(q => ({ ...q, loading: true, isBest: false })),
         );
@@ -450,6 +458,10 @@ export const useTokenPair = (userAddress: string) => {
             }
           },
           inSufficient,
+        }).finally(() => {
+          if (currentFetchId === fetchIdRef.current) {
+            setActiveProvider(undefined);
+          }
         });
       }
     },
@@ -469,7 +481,7 @@ export const useTokenPair = (userAddress: string) => {
   );
 
   const { run: runGetAllQuotes } = useDebounceFn(_runGetAllQuotes, {
-    wait: 1000,
+    wait: rateLimit ? 5000 : 1000,
   });
 
   useEffect(() => {

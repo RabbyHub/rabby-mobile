@@ -89,15 +89,14 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
       const amount = tokenAmountBn(token);
       return [
         formatTokenAmount(amount.toString(10)),
-        valueLoading
-          ? formatUsdValue(0)
-          : formatUsdValue(
-              new BigNumber(value || 0).times(token.price).toString(10),
-            ),
+
+        formatUsdValue(
+          new BigNumber(value || 0).times(token?.price).toString(10),
+        ),
       ];
     }
     return [0, formatUsdValue(0)];
-  }, [token, valueLoading, value]);
+  }, [token, value]);
 
   const onTokenSelect = useCallback(
     (newToken: TokenItem) => {
@@ -267,15 +266,16 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
 
       <View style={styles.bottom}>
         <View style={styles.balanceContainer}>
-          {!inSufficient && (
-            <RcIconWalletCC
-              width={16}
-              height={16}
-              color={colors2024['neutral-foot']}
-            />
-          )}
+          <RcIconWalletCC
+            width={16}
+            height={16}
+            color={
+              inSufficient
+                ? colors2024['red-default']
+                : colors2024['neutral-foot']
+            }
+          />
           <Text style={[styles.balance, inSufficient && styles.inSufficient]}>
-            {inSufficient ? t('page.swap.insufficient') : ''}
             {balance}
           </Text>
         </View>
