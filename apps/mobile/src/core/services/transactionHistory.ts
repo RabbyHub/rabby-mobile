@@ -726,7 +726,7 @@ export class TransactionHistoryService {
     }
   };
   /**
-   * @description clear expired txs, keep this.txHistoryLimit 500 compoleted transactions
+   * @description clear expired txs, keep this.txHistoryLimit 500 completed transactions
    */
   clearAllExpiredTxs() {
     const groups = this.getTransactionGroups();
