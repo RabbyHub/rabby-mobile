@@ -15,6 +15,7 @@ import {
   ScrollView,
   Dimensions,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
@@ -77,6 +78,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { LoadingLinear } from '../TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { Skeleton } from '@rneui/base';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
+import { BlurShadowView } from '@/components2024/BluerShadow';
 
 const HeaderHeight = 24;
 
@@ -146,76 +148,78 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
         </TouchableWithoutFeedback>
       </View>
       <View style={styles.curveBox}>
-        <Card
-          style={[styles.curveCard]}
-          onPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-            navigation.dispatch(
-              StackActions.push(RootNames.StackAddress, {
-                screen: RootNames.AddressAssetsOverview,
-                params: {},
-              }),
-            );
-            matomoRequestEvent({
-              category: 'Click_Header',
-              action: 'Click_Address',
-            });
-          }}>
-          <LinearGradient
-            colors={
-              isLight
-                ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
-                : ['rgba(0, 0, 0, 1)', 'rgba(0, 0, 0, 0)']
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.curveContainer}>
-            {loadingNewCurve ? (
-              <Skeleton
-                width={181}
-                height={44}
-                style={styles.skeleton}
-                LinearGradientComponent={LoadingLinear}
-              />
-            ) : (
-              <Text style={styles.netWorth}>{data.netWorth}</Text>
-            )}
-            {loadingNewCurve ? (
-              <Skeleton
-                width={100}
-                height={22}
-                style={styles.skeleton}
-                LinearGradientComponent={LoadingLinear}
-              />
-            ) : (
-              <View style={styles.changeSection}>
-                <Text
-                  style={[
-                    styles.changePercent,
-                    {
-                      color: data.isLoss
-                        ? colors2024['red-default']
-                        : colors2024['green-default'],
-                    },
-                  ]}>
-                  {percentChange}
-                </Text>
-              </View>
-            )}
-          </View>
-          <ArrowCircleCC
-            style={styles.arrow}
-            width={42}
-            height={42}
-            color={colors2024['neutral-body']}
-            backgroundColor={colors2024['neutral-bg-2']}
-          />
-        </Card>
+        <BlurShadowView isLight={isLight}>
+          <Card
+            style={[styles.curveCard, styles.shadowView]}
+            onPress={() => {
+              trigger('impactLight', {
+                enableVibrateFallback: true,
+                ignoreAndroidSystemSettings: false,
+              });
+              navigation.dispatch(
+                StackActions.push(RootNames.StackAddress, {
+                  screen: RootNames.AddressAssetsOverview,
+                  params: {},
+                }),
+              );
+              matomoRequestEvent({
+                category: 'Click_Header',
+                action: 'Click_Address',
+              });
+            }}>
+            <LinearGradient
+              colors={
+                isLight
+                  ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
+                  : ['rgba(0, 0, 0, 1)', 'rgba(0, 0, 0, 0)']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.curveContainer}>
+              {loadingNewCurve ? (
+                <Skeleton
+                  width={181}
+                  height={44}
+                  style={styles.skeleton}
+                  LinearGradientComponent={LoadingLinear}
+                />
+              ) : (
+                <Text style={styles.netWorth}>{data.netWorth}</Text>
+              )}
+              {loadingNewCurve ? (
+                <Skeleton
+                  width={100}
+                  height={22}
+                  style={styles.skeleton}
+                  LinearGradientComponent={LoadingLinear}
+                />
+              ) : (
+                <View style={styles.changeSection}>
+                  <Text
+                    style={[
+                      styles.changePercent,
+                      {
+                        color: data.isLoss
+                          ? colors2024['red-default']
+                          : colors2024['green-default'],
+                      },
+                    ]}>
+                    {percentChange}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <ArrowCircleCC
+              style={styles.arrow}
+              width={42}
+              height={42}
+              color={colors2024['neutral-body']}
+              backgroundColor={colors2024['neutral-bg-2']}
+            />
+          </Card>
+        </BlurShadowView>
       </View>
     </View>
   );
@@ -1124,6 +1128,20 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: 'transparent',
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  shadowView: {
+    ...Platform.select({
+      ios: {
+        shadowColor: colors2024['neutral-black'],
+        shadowOffset: {
+          width: 0,
+          height: 4,
+        },
+        shadowOpacity: 0.03,
+        shadowRadius: 10,
+        elevation: 8,
+      },
+    }),
   },
   skeleton: {
     borderRadius: 8,
