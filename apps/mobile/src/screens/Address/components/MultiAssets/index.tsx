@@ -817,7 +817,7 @@ export const MultiAssets = () => {
     );
   }, [listData]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     getCacheTop10Assets({ disableNFT: true }).then(() => {
       checkIsExpireAndUpdate(false, { disableNFT: true });
     });
