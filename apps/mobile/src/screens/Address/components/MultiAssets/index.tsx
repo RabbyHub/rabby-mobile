@@ -629,6 +629,9 @@ export const MultiAssets = () => {
                 ...pre,
                 currentTab: tab,
               }));
+              if (tab === TabType.address) {
+                handleOnChainClick(true);
+              }
             }}
           />
         );
@@ -853,6 +856,9 @@ export const MultiAssets = () => {
                 currentTab: tab,
               }));
               scrollToTop();
+              if (tab === TabType.address) {
+                handleOnChainClick(true);
+              }
             }}
           />
         </Animated.View>
