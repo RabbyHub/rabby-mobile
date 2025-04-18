@@ -865,7 +865,6 @@ export const MultiAssets = () => {
   return (
     <View style={styles.container}>
       {firstRowType === 'overview' ||
-      firstRowType === 'switch_tabs' ||
       firstRowType === '' ||
       !list.length ? null : (
         <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
