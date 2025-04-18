@@ -1,32 +1,62 @@
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+import {
+  makeThemeIcon2024FromCC,
+  makeThemeIconFromCC,
+} from '@/hooks/makeThemeIcon';
 
 import { default as RcClearPendingCC } from './clean-pending-cc.svg';
-export const RcClearPending = makeThemeIconFromCC(
+export const RcClearPending = makeThemeIcon2024FromCC(
   RcClearPendingCC,
-  'neutral-body',
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
 );
-
-import { default as RcCustomRpcCC } from './custom-rpc-cc.svg';
-export const RcCustomRpc = makeThemeIconFromCC(RcCustomRpcCC, 'neutral-body');
 
 import { default as RcFeedbackCC } from './feedback-cc.svg';
-export const RcFeedback = makeThemeIconFromCC(RcFeedbackCC, 'neutral-body');
+export const RcFeedback = makeThemeIcon2024FromCC(RcFeedbackCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
 
 import { default as RcFollowUsCC } from './follow-us-cc.svg';
-export const RcFollowUs = makeThemeIconFromCC(RcFollowUsCC, 'neutral-body');
+export const RcFollowUs = makeThemeIcon2024FromCC(RcFollowUsCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
 
 import { default as RcInfoCC } from './info-cc.svg';
-export const RcInfo = makeThemeIconFromCC(RcInfoCC, 'neutral-body');
+export const RcInfo = makeThemeIcon2024FromCC(RcInfoCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
 
 import { default as RcPrivacyPolicyCC } from './privacy-policy-cc.svg';
-export const RcPrivacyPolicy = makeThemeIconFromCC(
+export const RcPrivacyPolicy = makeThemeIcon2024FromCC(
   RcPrivacyPolicyCC,
-  'neutral-body',
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
 );
+
+import { default as RcFaceIdCC } from './face-id-cc.svg';
+export const RcFaceId = makeThemeIcon2024FromCC(RcFaceIdCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
+
+import { default as RcFingerprintCC } from './finger-print-cc.svg';
+export const RcFingerprint = makeThemeIcon2024FromCC(RcFingerprintCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
 
 // terms-of-use-cc.svg
 import { default as RcTermsOfUseCC } from './terms-of-use-cc.svg';
-export const RcTermsOfUse = makeThemeIconFromCC(RcTermsOfUseCC, 'neutral-body');
+export const RcTermsOfUse = makeThemeIcon2024FromCC(RcTermsOfUseCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
 
 import { default as RcLockCC } from './lock-cc.svg';
 export const RcLock = makeThemeIconFromCC(RcLockCC, 'neutral-body');
@@ -47,13 +77,19 @@ export const RcSupportChains = makeThemeIconFromCC(
 );
 
 import { default as RcThemeModeCC } from './theme-mode-cc.svg';
-export const RcThemeMode = makeThemeIconFromCC(RcThemeModeCC, 'neutral-body');
+export const RcThemeMode = makeThemeIcon2024FromCC(RcThemeModeCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
 
 import { default as RcWhitelistCC } from './whitelist-cc.svg';
 export const RcWhitelist = makeThemeIconFromCC(RcWhitelistCC, 'neutral-body');
 
 import { default as RcRPCCC } from './rpc-cc.svg';
-export const RcRPC = makeThemeIconFromCC(RcRPCCC, 'neutral-body');
+export const RcRPC = makeThemeIcon2024FromCC(RcRPCCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));
 
 import { default as RcEarthCC } from './earth-cc.svg';
 export const RcEarth = makeThemeIconFromCC(RcEarthCC, 'neutral-body');
@@ -74,9 +110,12 @@ import { default as RcLockWalletCC } from './lock-wallet-cc.svg';
 export const RcLockWallet = makeThemeIconFromCC(RcLockWalletCC, 'neutral-body');
 
 import { default as RcAutoLockTimeCC } from './auto-lock-time-cc.svg';
-export const RcAutoLockTime = makeThemeIconFromCC(
+export const RcAutoLockTime = makeThemeIcon2024FromCC(
   RcAutoLockTimeCC,
-  'neutral-body',
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
 );
 
 import { default as RcManagePasswordCC } from './manage-password-cc.svg';
@@ -95,9 +134,12 @@ export const RcScreenRecord = makeThemeIconFromCC(
 );
 
 import { default as RcAddCustomNetworkCC } from './add-custom-network-cc.svg';
-export const RcAddCustomNetwork = makeThemeIconFromCC(
+export const RcAddCustomNetwork = makeThemeIcon2024FromCC(
   RcAddCustomNetworkCC,
-  'neutral-body',
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
 );
 
 import { default as RcGoogleDriveCC } from './google-drive-cc.svg';
@@ -117,4 +159,7 @@ export const RcCode = makeThemeIconFromCC(RcCodeCC, 'neutral-body');
 
 // i18n-cc.svg
 import { default as RcI18nCC } from './i18n-cc.svg';
-export const RcI18n = makeThemeIconFromCC(RcI18nCC, 'neutral-body');
+export const RcI18n = makeThemeIcon2024FromCC(RcI18nCC, ctx => ({
+  onLight: ctx.colors2024['brand-default'],
+  onDark: ctx.colors2024['brand-default'],
+}));

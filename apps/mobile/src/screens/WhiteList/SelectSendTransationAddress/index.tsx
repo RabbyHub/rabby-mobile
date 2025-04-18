@@ -26,6 +26,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhitelist } from '@/hooks/whitelist';
 import { StackActions } from '@react-navigation/native';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 function SendHistoryScreen() {
   const { accounts } = useMyAccounts({
@@ -160,9 +161,14 @@ function SendHistoryScreen() {
             removeGlobalBottomSheetModal2024(id);
             addWhitelist(account.address, {
               onAdded: () => {
+                const isImported = accounts.some(i =>
+                  isSameAddress(i.address, account.address),
+                );
                 matomoRequestEvent({
                   category: 'Send Usage',
-                  action: 'Send_AddWhitelist',
+                  action: isImported
+                    ? 'Send_AddWhitelist_imported'
+                    : 'Send_AddWhitelist_notImported',
                 });
                 toast.success(t('page.whitelist.addSuccessful'));
                 navigation.popToTop();

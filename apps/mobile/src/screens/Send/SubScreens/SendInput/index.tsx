@@ -29,7 +29,8 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { matomoRequestEvent } from '@/utils/analytics';
-
+import { useAccounts } from '@/hooks/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
   ADDRESS_EXIST = 'ADDRESS_EXIST',
@@ -66,6 +67,9 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
   const { navigateToSendScreen } = useSendRoutes();
 
   const { findAccount } = useWhiteListAddress(true);
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
 
   const { t } = useTranslation();
 
@@ -106,9 +110,14 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
             },
             onConfirm() {
               removeGlobalBottomSheetModal2024(id);
+              const isImported = accounts.some(i =>
+                isSameAddress(i.address, account.address),
+              );
               matomoRequestEvent({
                 category: 'Send Usage',
-                action: 'Send_AddWhitelist',
+                action: isImported
+                  ? 'Send_AddWhitelist_imported'
+                  : 'Send_AddWhitelist_notImported',
               });
               addWhitelist(account.address, {
                 onAdded: () => {

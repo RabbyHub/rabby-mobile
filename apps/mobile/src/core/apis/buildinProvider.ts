@@ -2,13 +2,15 @@
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { EventEmitter } from 'events';
-import { underline2Camelcase } from '../controllers/rpcFlow';
+// import { underline2Camelcase } from '../controllers/rpcFlow';
 import { notificationService, preferenceService } from '../services';
 import providerController from '@/core/controllers/provider';
 import { findChain } from '@/utils/chain';
-import { sendRequest } from './provider';
-import { setGlobalProvider } from './globalProvider';
+// import { sendRequest } from './provider';
+import { getGlobalTmpStore, setGlobalProvider } from './globalProvider';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
+import { CHAINS } from '@debank/common';
+import { underline2Camelcase } from '../utils/common';
 
 interface StateProvider {
   accounts: string[] | null;
@@ -120,6 +122,7 @@ export class EthereumProvider extends EventEmitter {
         if (txParams.gas) {
           delete txParams.gas;
         }
+        const sendRequest = getGlobalTmpStore('sendRequest');
         return sendRequest(
           {
             $ctx: this.$ctx,

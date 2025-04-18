@@ -76,7 +76,7 @@ const DeFiListPopup = ({
                 </Text>
                 <Text style={styles.defiItemAmoutText}>{`${formatTokenAmount(
                   item?.amount,
-                )} ${ellipsisOverflowedText(symbol, 6)}`}</Text>
+                )} ${ellipsisOverflowedText(symbol, 10)}`}</Text>
               </View>
             </View>
             <View style={styles.defiItemContent}>
@@ -175,7 +175,7 @@ export const RelatedDeFi: React.FC<Props> = ({
                 </Text>
                 <Text style={styles.defiItemAmoutText}>{`${formatTokenAmount(
                   item?.amount,
-                )} ${ellipsisOverflowedText(symbol, 6)}`}</Text>
+                )} ${ellipsisOverflowedText(symbol, 10)}`}</Text>
               </View>
             </View>
             <View style={styles.defiItemContent}>

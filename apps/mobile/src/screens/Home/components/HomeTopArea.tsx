@@ -217,6 +217,20 @@ export const HomeTopArea = ({
     badgeStyle?: StyleProp<TextStyle>;
   }[] = [
     {
+      key: 'Swap',
+      title: t('page.home.services.swap'),
+      Icon: RcIconSwap,
+      onPress: async () => {
+        if (!currentAccount) {
+          return;
+        }
+        await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.Swap,
+        });
+      },
+    },
+    {
       key: 'Send',
       title: t('page.home.services.send'),
       Icon: RcIconSend,
@@ -242,20 +256,6 @@ export const HomeTopArea = ({
             screen: RootNames.Receive,
           }),
         );
-      },
-    },
-    {
-      key: 'Swap',
-      title: t('page.home.services.swap'),
-      Icon: RcIconSwap,
-      onPress: async () => {
-        if (!currentAccount) {
-          return;
-        }
-        await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.Swap,
-        });
       },
     },
     ...(isGnosisKeyring

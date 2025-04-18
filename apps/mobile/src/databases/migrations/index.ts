@@ -3,6 +3,7 @@ import { UpdateBuyTableAddPayCurrency1740378323012 } from './20250224';
 import { UpdateHistoryTableRestart1742289471888 } from './20250321';
 import { UpdateTokenItemAddCreditScore1741862198677 } from './20250313';
 import { UpdateTokenItemAddCexIds1743518329613 } from './20250401';
+import { UpdateHistoryTableAddSourceType1744873800025 } from './20250418';
 
 export function getMigrations() {
   return [
@@ -11,5 +12,6 @@ export function getMigrations() {
     UpdateHistoryTableRestart1742289471888,
     UpdateTokenItemAddCreditScore1741862198677,
     UpdateTokenItemAddCexIds1743518329613,
+    UpdateHistoryTableAddSourceType1744873800025,
   ];
 }

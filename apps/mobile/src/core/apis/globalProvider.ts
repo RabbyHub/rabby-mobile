@@ -1,5 +1,6 @@
 const store = {
   provider: null,
+  sendRequest: null,
 };
 
 export function setGlobalProvider(provider: any) {
@@ -8,4 +9,12 @@ export function setGlobalProvider(provider: any) {
 
 export function getGlobalProvider(): any {
   return store.provider;
+}
+
+export function setGlobalTmpStore(nextStore: any) {
+  Object.assign(store, nextStore);
+}
+
+export function getGlobalTmpStore(key: keyof typeof store): any {
+  return store[key];
 }

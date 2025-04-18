@@ -1,8 +1,7 @@
 import React from 'react';
-
-import { AppSwitch, SwitchToggleType } from '@/components';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { SwitchToggleType } from '@/components';
 import { useBiometrics } from '@/hooks/biometrics';
-import { useThemeColors } from '@/hooks/theme';
 import { useWalletPasswordInfo } from '@/screens/ManagePassword/useManagePassword';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { useTranslation } from 'react-i18next';
@@ -52,7 +51,7 @@ function useToggleBiometricsEnabled() {
 
 export const SwitchBiometricsAuthentication = React.forwardRef<
   SwitchToggleType,
-  React.ComponentProps<typeof AppSwitch>
+  React.ComponentProps<typeof AppSwitch2024>
 >((props, ref) => {
   const {
     isBiometricsEnabled,
@@ -67,18 +66,15 @@ export const SwitchBiometricsAuthentication = React.forwardRef<
   }));
 
   const { hasSetupCustomPassword } = useWalletPasswordInfo();
-  const colors = useThemeColors();
 
   return (
-    <AppSwitch
+    <AppSwitch2024
       {...props}
       circleSize={20}
       disabled={!hasSetupCustomPassword || !couldSetupBiometrics}
       value={!!isBiometricsEnabled}
       changeValueImmediately={false}
       onValueChange={requestToggleBiometricsEnabled}
-      backgroundActive={colors['green-default']}
-      circleBorderActiveColor={colors['green-default']}
     />
   );
 });

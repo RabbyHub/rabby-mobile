@@ -52,7 +52,6 @@ export const FundYourWallet = () => {
         title: t('page.nextComponent.multiAddressHome.buyWithFiat'),
         desc: t('page.nextComponent.multiAddressHome.buyWithFiatDesc'),
         icon: RcIconBuy,
-        // iconStyle: styles.buyIcon,
         onPress: () => {
           navigation.dispatch(
             StackActions.push(RootNames.StackTransaction, {
@@ -137,7 +136,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-1'],
