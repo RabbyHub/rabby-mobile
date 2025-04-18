@@ -72,9 +72,7 @@ export const TransactionItem = ({
     if (
       data.maxGasTx.action?.actionData.wrapToken ||
       data.maxGasTx.action?.actionData.unWrapToken ||
-      data.maxGasTx.action?.actionData.swap ||
-      data.maxGasTx.action?.actionData.crossToken ||
-      data.maxGasTx.action?.actionData.crossSwapToken
+      data.maxGasTx.action?.actionData.swap
     ) {
       return HistoryItemCateType.Swap;
     }
