@@ -33,7 +33,7 @@ import BigNumber from 'bignumber.js';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export const useAssets = (filterText?: string) => {
-  const [isLoading, setLoading] = useSafeState(false);
+  const [isLoading, setLoading] = useSafeState(true);
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -291,10 +291,11 @@ export const useAssets = (filterText?: string) => {
       disableToken?: boolean;
       disableDefi?: boolean;
       disableNFT?: boolean;
+      realTimeAddresses?: string[];
     },
   ) => {
     const top10Account = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
-    const addresses = [
+    const addresses = options?.realTimeAddresses || [
       ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
     ];
     removeUnNeedAssets(addresses);
@@ -323,10 +324,11 @@ export const useAssets = (filterText?: string) => {
     disableToken?: boolean;
     disableDefi?: boolean;
     disableNFT?: boolean;
+    realTimeAddresses?: string[];
   }) => {
     const { disableToken, disableDefi, disableNFT } = options || {};
     const top10Account = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
-    const addresses = [
+    const addresses = options?.realTimeAddresses || [
       ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
     ];
     removeUnNeedAssets(addresses);

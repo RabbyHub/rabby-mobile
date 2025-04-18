@@ -846,24 +846,23 @@ export const MultiAssets = () => {
   }, [listData]);
 
   useEffect(() => {
-    getCacheTop10Assets({ disableNFT: true }).then(() => {
-      checkIsExpireAndUpdate(false, { disableNFT: true });
-    });
+    const id = setTimeout(() => {
+      getCacheTop10Assets({
+        disableNFT: true,
+        realTimeAddresses: top10Addresses,
+      }).then(() => {
+        checkIsExpireAndUpdate(false, {
+          disableNFT: true,
+          realTimeAddresses: top10Addresses,
+        });
+      });
+    }, 50);
+    return () => {
+      clearTimeout(id);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [top10Addresses.length]);
 
-  // if (isLoading && !listData.getSize()) {
-  //   return (
-  //     <View style={styles.bgContainer}>
-  //       <PositionLoader />
-  //     </View>
-  //   );
-  // }
-  // if (!listData.getSize()) {
-  //   return null;
-  // }
-
-  console.log('🔍 CUSTOM_LOGGER:=>: listData', listData.getSize());
   return (
     <View style={styles.container}>
       {firstRowType === 'overview' ||
