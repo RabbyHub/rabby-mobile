@@ -168,6 +168,7 @@ export const judgeIsSmallUsdTx = (
     }
     const isCore =
       token?.is_core ||
+      token?.is_verified ||
       pinedQueue.find(
         p => p.chainId === item.chain && p.tokenId === i.token_id,
       );
