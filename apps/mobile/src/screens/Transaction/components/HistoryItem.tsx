@@ -228,7 +228,7 @@ export const HistoryItem = React.memo(
         })
         .sort((a, b) => {
           if (a.token?.is_core === b.token?.is_core) {
-            return a.amount * a.price - b.amount * b.price;
+            return b.amount * b.price - a.amount * a.price;
           }
           return a.token?.is_core ? -1 : 1;
         });
@@ -248,7 +248,7 @@ export const HistoryItem = React.memo(
         })
         .sort((a, b) => {
           if (a.token?.is_core === b.token?.is_core) {
-            return a.amount * a.price - b.amount * b.price;
+            return b.amount * b.price - a.amount * a.price;
           }
           return a.token?.is_core ? 1 : -1;
         });

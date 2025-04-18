@@ -23,7 +23,7 @@ import {
   useDateCurveData,
 } from './useCurve';
 import { ThemeColors2024 } from '@/constant/theme';
-import { TokenFromAddressItem } from '../..';
+import { RelatedDeFiType, TokenFromAddressItem } from '../..';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { useTranslation } from 'react-i18next';
@@ -40,10 +40,17 @@ interface Props {
   finalAccount?: KeyringAccountWithAlias;
   amountList: TokenFromAddressItem[];
   isSingleAddress?: boolean;
+  relateDefiList?: RelatedDeFiType[];
 }
 export function TokenPriceChart(props: Props) {
-  const { token, originToken, isSingleAddress, amountList, finalAccount } =
-    props;
+  const {
+    token,
+    originToken,
+    isSingleAddress,
+    amountList,
+    finalAccount,
+    relateDefiList,
+  } = props;
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -55,19 +62,25 @@ export function TokenPriceChart(props: Props) {
     // amountList.map((item, index) => {
     //   sum = sum + item.amount;
     // });
+
+    let deFiAmount = 0;
+    relateDefiList?.forEach(item => {
+      deFiAmount += item.amount;
+    });
+
     if ('totalAmount' in originToken && !isSingleAddress) {
-      return originToken.totalAmount as unknown as number;
+      return (originToken.totalAmount as unknown as number) + deFiAmount;
     } else {
       const currentAddress = finalAccount?.address;
       if ('fromAddress' in originToken && currentAddress) {
         const tokenAmount = originToken.fromAddress.find(
           item => item.address === currentAddress,
         );
-        return tokenAmount?.amount ?? originToken.amount;
+        return (tokenAmount?.amount ?? originToken.amount) + deFiAmount;
       }
-      return originToken.amount;
+      return originToken.amount + deFiAmount;
     }
-  }, [originToken, isSingleAddress, finalAccount]);
+  }, [originToken, isSingleAddress, finalAccount, relateDefiList]);
 
   const amount = useMemo(
     () => (priceType === 'holding' ? amountSum : 1),
