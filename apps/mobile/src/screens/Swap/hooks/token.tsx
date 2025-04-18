@@ -420,7 +420,7 @@ export const useTokenPair = (userAddress: string) => {
 
   const [quoteLoading, setQuoteLoading] = useState(false);
 
-  const rateLimitRef = useRef(new RequestRateLimiter(1000 * 30, 5));
+  const rateLimitRef = useRef(new RequestRateLimiter(1000 * 30, 10));
 
   const [rateLimit, setRateLimit] = useState(false);
 
