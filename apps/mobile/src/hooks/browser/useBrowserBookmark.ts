@@ -56,7 +56,7 @@ export function useBrowserBookmark() {
       return {
         ...dapp,
         ...item,
-        icon: item.icon || dapp.icon || dapp.info?.logo_url || undefined,
+        icon: item.icon || dapp?.icon || dapp?.info?.logo_url || undefined,
         origin,
         isFavorite: true,
       };

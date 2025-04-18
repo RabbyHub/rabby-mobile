@@ -90,6 +90,7 @@ export function BrowserScreen() {
                       });
                     }
                   }}
+                  isActive={isActiveTab}
                   onUpdateTab={({ url, viewShot }) => {
                     updateTab(tab.id, {
                       url,

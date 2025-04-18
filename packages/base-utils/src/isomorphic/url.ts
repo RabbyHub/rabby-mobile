@@ -1,4 +1,4 @@
-import { ensurePrefix, unPrefix } from "./string";
+import { ensurePrefix, unPrefix } from './string';
 
 type IParseDomainInfo = {
   subDomain: string;
@@ -43,7 +43,7 @@ export function safeGetOrigin<T extends string>(url: T): T {
 export function parseQueryString(
   input: string = typeof window !== 'undefined'
     ? window.location.search.slice(1)
-    : ''
+    : '',
 ) {
   const result: Record<string, string> = {};
   const queryStr = (input || '').replace(/^[?#&]/, '');
@@ -51,7 +51,7 @@ export function parseQueryString(
   queryStr
     .trim()
     .split('&')
-    .forEach((part) => {
+    .forEach(part => {
       const [key, value] = part.split('=') || [];
       if (!key) return;
 
@@ -73,7 +73,7 @@ function parseUrl(_url: string) {
   try {
     pathname = new URL(url).pathname;
     // eslint-disable-next-line no-empty
-  } catch (e) { }
+  } catch (e) {}
   const canoicalPath = pathname.replace(/\/$/, '');
 
   return { url, canoicalPath, query, queryString, hashFragment };
@@ -81,7 +81,7 @@ function parseUrl(_url: string) {
 
 export function integrateQueryToUrl(
   url: string,
-  extQuery: Record<string, string | number | boolean>
+  extQuery: Record<string, string | number | boolean>,
 ) {
   const { url: urlWithoutQuery, query: query1, hashFragment } = parseUrl(url);
   const query = { ...query1, ...extQuery };
@@ -104,7 +104,7 @@ export const query2obj = (str: string) => {
 
 export const obj2query = (obj: Record<string, string>) => {
   return Object.keys(obj)
-    .map((key) => {
+    .map(key => {
       return `${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}`;
     })
     .join('&');
@@ -163,13 +163,7 @@ export function extractDappInfoFromURL(dappURL: string): IDappInfoFromURL {
   };
 }
 
-export function makeDappAboutURLs(
-  input:
-    | {
-      type: 'http';
-      httpsURL: string;
-    }
-) {
+export function makeDappAboutURLs(input: { type: 'http'; httpsURL: string }) {
   const result = {
     dappID: '',
     dappOrigin: '',
@@ -187,11 +181,7 @@ export function canoicalizeDappUrl(url: string): ICanonalizedUrlInfo {
   const urlInfo: Partial<URL> | null = safeParseURL(url);
 
   const hostname = urlInfo?.hostname || '';
-  const isDapp =
-    (!!urlInfo?.protocol &&
-      [
-        'https:',
-      ].includes(urlInfo?.protocol));
+  const isDapp = !!urlInfo?.protocol && ['https:'].includes(urlInfo?.protocol);
 
   let origins = {
     dappOrigin: '',
@@ -200,7 +190,8 @@ export function canoicalizeDappUrl(url: string): ICanonalizedUrlInfo {
 
   origins.dappOrigin =
     urlInfo?.origin ||
-    `${urlInfo?.protocol}//${hostname}${urlInfo?.port ? `:${urlInfo?.port}` : ''
+    `${urlInfo?.protocol}//${hostname}${
+      urlInfo?.port ? `:${urlInfo?.port}` : ''
     }`;
   origins.httpOrigin = origins.dappOrigin;
 
@@ -220,7 +211,7 @@ export function canoicalizeDappUrl(url: string): ICanonalizedUrlInfo {
 export function parseDomainMeta(
   urlOrigin: string,
   inputOrigins: (string | { origin: string })[] | Set<string>,
-  retCache: Record<I2ndDomainMeta['secondaryDomain'], I2ndDomainMeta>
+  retCache: Record<I2ndDomainMeta['secondaryDomain'], I2ndDomainMeta>,
 ) {
   const allOrigins = Array.from(inputOrigins);
 
@@ -235,7 +226,7 @@ export function parseDomainMeta(
       subDomains: [],
     };
 
-    allOrigins.forEach((dO) => {
+    allOrigins.forEach(dO => {
       const dappOrigin = typeof dO === 'string' ? dO : dO.origin;
       const originInfo = canoicalizeDappUrl(dappOrigin);
       if (originInfo.secondaryDomain !== record.secondaryDomain) return;

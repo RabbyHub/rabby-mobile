@@ -4,6 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import {
+  Keyboard,
   ScrollView,
   StyleProp,
   Text,
@@ -42,7 +43,14 @@ export const BrowserBookmarkSection = ({
   }, [width]);
 
   return (
-    <ScrollView style={[styles.container, style]}>
+    <ScrollView
+      style={[styles.container, style]}
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ flex: 1 }}
+      onStartShouldSetResponder={() => {
+        Keyboard.dismiss();
+        return false;
+      }}>
       {list?.length ? (
         <>
           <View style={styles.header}>
@@ -57,13 +65,13 @@ export const BrowserBookmarkSection = ({
                 }}>
                 {isFold ? (
                   <View style={styles.headerExtra}>
-                    <Text style={styles.headerExtraText}>All</Text>
-                    <RcIconRight />
+                    <Text style={styles.headerExtraText}>Show All</Text>
+                    <RcIconRight style={styles.arrowDown} />
                   </View>
                 ) : (
                   <View style={styles.headerExtra}>
                     <Text style={styles.headerExtraText}>Fold</Text>
-                    <RcIconRight />
+                    <RcIconRight style={styles.arrowUp} />
                   </View>
                 )}
               </TouchableOpacity>
@@ -89,14 +97,16 @@ export const BrowserBookmarkSection = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    paddingHorizontal: 24,
     marginTop: 12,
+    paddingHorizontal: 0,
+    height: '100%',
   },
   header: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
+    paddingHorizontal: 24,
   },
   titleWarper: {
     display: 'flex',
@@ -130,9 +140,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     flexWrap: 'wrap',
     rowGap: 16,
+    paddingHorizontal: 24,
   },
   item: {
     // width: '25%',
     width: 56,
+  },
+  arrowDown: {
+    transform: [
+      {
+        rotate: '90deg',
+      },
+    ],
+  },
+  arrowUp: {
+    transform: [
+      {
+        rotate: '-90deg',
+      },
+    ],
   },
 }));

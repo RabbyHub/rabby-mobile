@@ -8,7 +8,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import WebView from 'react-native-webview';
+import WebView, { WebViewProps } from 'react-native-webview';
 
 import { RootNames, ScreenLayouts2 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -39,6 +39,9 @@ import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
 import { BrowserProgressBar } from './BrowserProgressBar';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useDapps } from '@/hooks/useDapps';
+import { urlUtils } from '@rabby-wallet/base-utils';
+import { parsePossibleURL } from '@/constant/dappView';
+import { CHAINS_ENUM } from '@debank/common';
 
 type BrowserTabProps = {
   origin: string;
@@ -51,6 +54,7 @@ type BrowserTabProps = {
   webviewProps?: React.ComponentProps<typeof WebView>;
   webviewContainerMaxHeight?: number;
   style?: StyleProp<ViewStyle>;
+  isActive?: boolean;
   onSelfClose?: (reason: 'phishing') => void;
   tabsCount?: number;
   onUpdateTab?: (params: {
@@ -82,6 +86,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       onUpdateTab,
       onOpenTab,
       onUpdateHistory,
+      isActive,
     },
     ref,
   ) => {
@@ -89,7 +94,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       getStyle: getStyles,
     });
 
-    const [isShowSearch, setIsShowSearch] = useState(!url);
+    const isEmptyTab = !url;
+    const [isShowSearch, setIsShowSearch] = useState(isActive && isEmptyTab);
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
 
@@ -106,7 +112,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     } = useWebViewControl({ initialTabId: tabId });
 
     const navigation = useRabbyAppNavigation();
-    const { dapps, disconnectDapp } = useDapps();
+    const { dapps, disconnectDapp, setDapp } = useDapps();
     const { bookmarkStore, addBookmark, removeBookmark } = useBrowserBookmark();
 
     const urlInfo = useMemo(() => {
@@ -120,6 +126,24 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const handleDisconnect = useMemoizedFn(() => {
       disconnectDapp(urlInfo.origin);
     });
+
+    const handleContentModeChange = useMemoizedFn(
+      (mode: WebViewProps['contentMode']) => {
+        if (dappInfo) {
+          setDapp({
+            ...dappInfo,
+            contentMode: mode,
+          });
+        } else {
+          setDapp({
+            origin: urlInfo.httpOrigin,
+            name: webviewState.title,
+            contentMode: mode,
+            chainId: CHAINS_ENUM.ETH,
+          });
+        }
+      },
+    );
 
     const isBookmark = useMemo(() => {
       return !!bookmarkStore.entities[webviewState.url];
@@ -166,15 +190,34 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleGoTo = useMemoizedFn((urlToGo: string) => {
-      if (!url) {
+      if (!urlToGo) {
+        return;
+      }
+      if (isEmptyTab) {
         onOpenTab?.(urlToGo);
       } else {
-        webviewRef.current?.injectJavaScript(
-          `(function(){window.location.href = '${urlToGo
-            .replace(/'/g, '%27')
-            .replace(/[\r\n]/g, '')}' })()`,
+        webviewRef?.current?.injectJavaScript(
+          `(function(){window.location.href = '${urlUtils.sanitizeUrlInput(
+            urlToGo,
+          )}' })()`,
         );
-        setIsShowSearch(false);
+      }
+      setIsLoading(true);
+      setProgress(0.1);
+      setIsShowSearch(false);
+    });
+
+    const handleSearch = useMemoizedFn(search => {
+      if (!search?.trim()) {
+        return;
+      }
+      const parsedUrl = parsePossibleURL(search);
+      if (parsedUrl) {
+        handleGoTo(parsedUrl);
+      } else {
+        handleGoTo(
+          `https://www.google.com/search?q=${encodeURIComponent(search)}`,
+        );
       }
     });
 
@@ -220,11 +263,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           onFocusChange={v => {
             setIsShowSearch(v);
           }}
-          onSearch={search => {
-            handleGoTo(
-              `https://google.com/search?q=${encodeURIComponent(search)}`,
-            );
-          }}
+          onSearch={handleSearch}
         />
 
         <View
@@ -303,6 +342,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     webviewActions.onNavigationStateChange
                   }
                   webviewDebuggingEnabled={__DEV__}
+                  contentMode={dappInfo?.contentMode}
                   onLoadStart={e => {
                     webviewProps?.onLoadStart?.(e);
                     onLoadStart(e);
@@ -328,7 +368,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     }
                   }}
                   onLoadProgress={({ nativeEvent }) => {
-                    console.log('xxx??', nativeEvent.progress);
                     setProgress(nativeEvent.progress);
                     if (nativeEvent.progress === 1) {
                       setIsLoading(false);
@@ -383,7 +422,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         </View>
         <View style={styles.dappWebViewNavControl}>
           <BrowserFooter
-            canReload={!!url}
+            url={webviewState.url}
+            canReload={!isEmptyTab}
             onReload={handleReload}
             canGoBack={webviewState.canGoBack}
             onGoBack={handleGoBack}
@@ -395,6 +435,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             isConnected={dappInfo?.isConnected}
             onBookmark={handleBookmark}
             onDisconnect={handleDisconnect}
+            contentMode={dappInfo?.contentMode}
+            onContentModeChange={handleContentModeChange}
             canViewMore={!!url}
           />
         </View>

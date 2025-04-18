@@ -18,7 +18,7 @@ export function BrowserNavigator() {
   return (
     <BrowserStack.Navigator
       screenOptions={mergeScreenOptions({
-        gestureEnabled: false,
+        // gestureEnabled: false,
         headerTitleAlign: 'center',
         headerStyle: {
           backgroundColor: 'transparent',

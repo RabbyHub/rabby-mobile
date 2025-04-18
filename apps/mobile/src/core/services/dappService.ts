@@ -5,6 +5,7 @@ import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { Account } from './preference';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
+import { WebViewProps } from 'react-native-webview';
 
 export interface DappInfo {
   origin: string;
@@ -21,6 +22,8 @@ export interface DappInfo {
   lastPathTimeAt?: number; //
   currentAccount?: Account | null;
   favoriteAt?: number | null;
+
+  contentMode?: WebViewProps['contentMode'];
 }
 
 export type DappStore = {

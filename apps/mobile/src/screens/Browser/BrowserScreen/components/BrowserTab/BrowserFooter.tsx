@@ -12,6 +12,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { DropdownMenuView } from './DropdownMenuView';
+import { WebViewProps } from 'react-native-webview';
 
 export function BrowserFooter({
   isConnected,
@@ -21,15 +22,15 @@ export function BrowserFooter({
   canViewMore,
   tabsCount,
   isBookmark,
-
   url,
-
+  contentMode,
   onGoBack,
   onGoForward,
   onReload,
   onViewTabs,
   onBookmark,
   onDisconnect,
+  onContentModeChange,
 }: {
   isBookmark?: boolean;
   isConnected?: boolean;
@@ -39,6 +40,7 @@ export function BrowserFooter({
   url?: string;
   tabsCount?: number;
   canViewMore?: boolean;
+  contentMode?: WebViewProps['contentMode'];
 
   onGoBack?(): void;
   onGoForward?(): void;
@@ -46,6 +48,7 @@ export function BrowserFooter({
   onViewTabs?(): void;
   onBookmark?(): void;
   onDisconnect?(): void;
+  onContentModeChange?(v: WebViewProps['contentMode']): void;
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
@@ -55,6 +58,20 @@ export function BrowserFooter({
     const urlInfo = urlUtils.canoicalizeDappUrl(url || '');
 
     const menuActions = [
+      {
+        title:
+          contentMode === 'desktop'
+            ? 'Request Mobile Site'
+            : 'Request DeskTop Site',
+        iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_1.png'),
+        androidIconName: 'ic_rabby_menu_more_1',
+        key: 'contentMode',
+        onSelect: () => {
+          onContentModeChange?.(
+            contentMode === 'desktop' ? 'recommended' : 'desktop',
+          );
+        },
+      },
       {
         title: 'Favorite',
         iosIconSource: isBookmark
@@ -99,7 +116,16 @@ export function BrowserFooter({
       iosMenuTitle: urlInfo.hostname,
       menuActions: menuActions.reverse(),
     } as React.ComponentProps<typeof DropdownMenuView>['menuConfig'];
-  }, [url, isBookmark, isConnected, colors2024, onBookmark, onDisconnect]);
+  }, [
+    url,
+    contentMode,
+    isBookmark,
+    isConnected,
+    colors2024,
+    onContentModeChange,
+    onBookmark,
+    onDisconnect,
+  ]);
 
   return (
     <View style={[styles.navControls]}>

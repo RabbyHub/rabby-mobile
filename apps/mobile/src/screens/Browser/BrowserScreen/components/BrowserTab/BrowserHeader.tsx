@@ -78,6 +78,8 @@ export function BrowserHeader({
           }}
           ref={inputRef}
           onSubmitEditing={e => {
+            inputRef.current.blur();
+            setSearchText('');
             onSearch?.(e.nativeEvent.text);
           }}
           enterKeyHint={'go'}

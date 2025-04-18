@@ -28,6 +28,9 @@ export interface BrowserBookmarkItem {
 export type BrowserStore = {
   browserHistory: EntityState<BrowserHistoryItem, string>;
   browserBookmarks: EntityState<BrowserBookmarkItem, string>;
+  config: {
+    isMigrated?: boolean;
+  };
 };
 
 export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
@@ -46,11 +49,23 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
           ids: [],
           entities: {},
         },
+        config: {
+          isMigrated: false,
+        },
       },
       {
         storageAdapter: options?.storageAdapter,
       },
     );
+
+    if (!this.store.config?.isMigrated) {
+      this.store.config = {
+        ...this.store.config,
+        isMigrated: true,
+      };
+      const dapps = options?.storageAdapter?.getItem(APP_STORE_NAMES.dapps);
+      console.log(dapps);
+    }
 
     const bookmarkAdapter = createEntityAdapter<BrowserBookmarkItem>({
       selectId: item => item.url,

@@ -1,5 +1,7 @@
 import { Linking } from 'react-native';
-import { urlUtils } from '@rabby-wallet/base-utils';
+import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
+import { safeParseURL } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { isPossibleDomain } from '@/utils/url';
 
 /**
  *
@@ -14,6 +16,24 @@ export function isOrHasWithAllowedProtocol(input?: string) {
   const { protocol } = urlUtils.safeParseURL(input) || {};
   return !!protocol && protocolAllowList.includes(protocol);
 }
+
+export const parsePossibleURL = (_str: string) => {
+  const str = _str.trim();
+  if (!str) {
+    return null;
+  }
+  const parsedResult = safeParseURL(str);
+  if (
+    parsedResult?.protocol &&
+    !isOrHasWithAllowedProtocol(parsedResult?.protocol)
+  ) {
+    return null;
+  }
+
+  if (isPossibleDomain(str)) {
+    return stringUtils.ensurePrefix(str, 'https://');
+  }
+};
 
 /**
  *
