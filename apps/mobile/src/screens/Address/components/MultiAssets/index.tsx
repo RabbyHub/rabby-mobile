@@ -92,6 +92,12 @@ import {
   AssestAllHeader,
   AsssetKey,
 } from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
+import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
+import { icons } from '@/screens/Home/AssetContainer';
+import { preferenceService } from '@/core/services';
+import { toast } from '@/components2024/Toast';
+import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
+import { DisplayedProject } from '@/screens/Home/utils/project';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
@@ -486,6 +492,113 @@ export const MultiAssets = () => {
       });
     }, 200);
   };
+  const { tokenRefresh } = useTriggerTagAssets();
+
+  const getTokenMenuActions = useCallback(
+    (data: AbstractPortfolioToken): MenuAction[] => {
+      return [
+        {
+          title: data._isFold
+            ? t('page.tokenDetail.action.unfold')
+            : t('page.tokenDetail.action.fold'),
+          icon: data._isFold
+            ? isLight
+              ? icons.unfoldLight
+              : icons.unfoldDark
+            : isLight
+            ? icons.foldLight
+            : icons.foldDark,
+          androidIconName: data._isFold
+            ? 'ic_rabby_menu_unfold'
+            : 'ic_rabby_menu_fold',
+          key: 'fold',
+          action() {
+            if (data._isFold) {
+              preferenceService.manualUnFoldToken({
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+            } else {
+              preferenceService.manualFoldToken({
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+            }
+            tokenRefresh();
+          },
+        },
+        {
+          title: data._isPined
+            ? t('page.tokenDetail.action.unpin')
+            : t('page.tokenDetail.action.pin'),
+          icon: data._isPined
+            ? isLight
+              ? icons.unpinLight
+              : icons.unpinDark
+            : isLight
+            ? icons.pinLight
+            : icons.pinDark,
+          androidIconName: data._isPined
+            ? 'ic_rabby_menu_un_pin'
+            : 'ic_rabby_menu_pin',
+          key: 'pin',
+          action() {
+            if (data._isPined) {
+              preferenceService.removePinedToken({
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+              toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
+            } else {
+              preferenceService.pinToken({
+                tokenId: data._tokenId,
+                chainId: data.chain,
+              });
+              toast.success(t('page.tokenDetail.actionsTips.pin_success'));
+            }
+            tokenRefresh();
+          },
+        },
+      ];
+    },
+    [isLight, tokenRefresh, t],
+  );
+  const getDefiOrNftMenuAction = useCallback(
+    (type: 'defi', data: DisplayedProject): MenuAction[] => {
+      const isFold = data._isFold;
+      return [
+        {
+          title: isFold
+            ? t('page.tokenDetail.action.unfold')
+            : t('page.tokenDetail.action.fold'),
+          icon: isFold
+            ? isLight
+              ? icons.unfoldLight
+              : icons.unfoldDark
+            : isLight
+            ? icons.foldLight
+            : icons.foldDark,
+          androidIconName: isFold
+            ? 'ic_rabby_menu_unfold'
+            : 'ic_rabby_menu_fold',
+          key: 'fold',
+          action() {
+            if (isFold) {
+              preferenceService.manualUnFoldDefi(data.id);
+              toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
+            } else {
+              preferenceService.manualFoldDefi(data.id);
+              toast.success(t('page.tokenDetail.actionsTips.fold_success'));
+            }
+            tokenRefresh();
+          },
+        },
+      ];
+    },
+    [isLight, t, tokenRefresh],
+  );
 
   const renderItem = (_type, _data) => {
     const { type, data } = _data;
@@ -529,6 +642,7 @@ export const MultiAssets = () => {
             logoSize={46}
             style={styles.renderItemWrapper}
             chainLogoSize={18}
+            menuActions={getTokenMenuActions(data)}
             hideFoldTag
           />
         );
@@ -542,7 +656,7 @@ export const MultiAssets = () => {
                 styles.renderDefiItemWrapper,
                 !isLight && styles.bg2,
               ])}
-              // menuActions={getDefiOrNftMenuAction('defi', data[0])}
+              menuActions={getDefiOrNftMenuAction('defi', data[0])}
               logoSize={40}
               onPress={() =>
                 handleOpenDefiDetail(data[0], [...(data[0]._portfolios || [])])
@@ -555,7 +669,7 @@ export const MultiAssets = () => {
                   styles.renderDefiItemWrapper,
                   !isLight && styles.bg2,
                 ])}
-                // menuActions={getDefiOrNftMenuAction('defi', data[1])}
+                menuActions={getDefiOrNftMenuAction('defi', data[1])}
                 logoSize={40}
                 onPress={() =>
                   handleOpenDefiDetail(data[1], [
@@ -899,7 +1013,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,
-    marginBottom: 8,
+    // marginBottom: 8,
   },
   footer: {
     minHeight: 400,

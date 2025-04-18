@@ -84,7 +84,7 @@ import { chunk } from 'lodash';
 import { getItemId } from './utils/listRenderId';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 
-const icons = {
+export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
   unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
   foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
