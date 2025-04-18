@@ -1113,12 +1113,18 @@ export const MiniApproval = ({
   const { sheetModalRef } = useSheetModal();
 
   useEffect(() => {
-    if (visible || txs?.length) {
+    if (visible) {
       sheetModalRef.current?.present();
     } else {
       sheetModalRef.current?.dismiss();
     }
   }, [sheetModalRef, visible, txs?.length]);
+
+  useEffect(() => {
+    if (txs?.length) {
+      sheetModalRef.current?.present();
+    }
+  }, [sheetModalRef, txs]);
 
   const indexRef = useRef(-1);
 

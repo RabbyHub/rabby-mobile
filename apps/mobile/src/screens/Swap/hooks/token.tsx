@@ -458,10 +458,6 @@ export const useTokenPair = (userAddress: string) => {
             }
           },
           inSufficient,
-        }).finally(() => {
-          if (currentFetchId === fetchIdRef.current) {
-            setActiveProvider(undefined);
-          }
         });
       }
     },
@@ -587,6 +583,7 @@ export const useTokenPair = (userAddress: string) => {
         }) || []),
       ];
 
+      setActiveProvider(undefined);
       if (sortedList?.[0]) {
         const bestQuote = sortedList[0];
         const { preExecResult } = bestQuote;
