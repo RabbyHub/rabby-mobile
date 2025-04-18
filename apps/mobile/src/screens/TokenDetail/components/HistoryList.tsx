@@ -77,28 +77,15 @@ export const HistoryList = ({
     const addresses = isForMultipleAdderss
       ? accounts.map(a => a.address.toLowerCase())
       : [finalAccount?.address.toLowerCase()!];
-    const [localHistoryList, _historyList, swapList, buyList] =
-      await Promise.all([
-        LocalHistoryItemEntity.getTokenHistoryItemSortedByTime(
-          addresses,
-          token._tokenId,
-          token.chain,
-          4,
-        ),
-        HistoryItemEntity.getTokenHistoryItemSortedByTime(
-          addresses,
-          token._tokenId,
-          token.chain,
-          4,
-        ),
-        SwapItemEntity.getAllHistoryItem(addresses, 10000),
-        BuyItemEntity.getAllHistoryItem(addresses, 10000),
-      ]);
-
-    const historyList: HistoryItemEntity[] = unionBy(
-      localHistoryList.concat(_historyList),
-      item => item._db_id,
-    );
+    const [historyList, buyList] = await Promise.all([
+      HistoryItemEntity.getTokenHistoryItemSortedByTime(
+        addresses,
+        token._tokenId,
+        token.chain,
+        4,
+      ),
+      BuyItemEntity.getAllHistoryItem(addresses, 10000),
+    ]);
 
     const list = historyList.map(item => {
       const localBuyItem = buyList.find(
@@ -109,7 +96,6 @@ export const HistoryList = ({
         ...ensureHistoryListItemFromDb(item),
         isLocalBuy: !!localBuyItem,
         buyDetails: localBuyItem,
-        isLocalSwap: swapList.some(e => e.tx_id === item.txHash),
         isSmallUsdTx: false,
         tokenDict,
         projectDict,
