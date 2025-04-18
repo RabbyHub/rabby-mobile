@@ -56,7 +56,7 @@ const BridgeSwitchBtn: FC<BridgeSwitchBtnProps> = ({
         <RcIconSwitchBtn color={colors2024['neutral-bg-3']} />
       )}
 
-      <Loading isLoading={loading} />
+      {loading && <Loading isLoading={loading} />}
     </TouchableOpacity>
   );
 };
