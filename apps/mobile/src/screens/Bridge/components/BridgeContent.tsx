@@ -235,6 +235,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     clickMaxBtnCount,
     isMaxRef,
     payTokenIsNativeToken,
+    inSufficientCanGetQuote,
   } = useBridge(isForMultipleAdderss);
   const [showMoreOpen, setShowMoreOpen] = useState(false);
   const refresh = useSetRefreshId();
@@ -485,7 +486,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const amountAvailable = useMemo(() => Number(amount) > 0, [amount]);
 
   const noQuote =
-    !inSufficient &&
+    inSufficientCanGetQuote &&
     !!fromToken &&
     !!toToken &&
     Number(amount) > 0 &&
@@ -619,12 +620,13 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             <BridgeSwitchBtn
               style={styles.switchButtonContainer}
               onPress={switchToken}
+              loading={quoteLoading}
             />
           </View>
         </View>
 
         <View>
-          {selectedBridgeQuote && (
+          {selectedBridgeQuote && inSufficientCanGetQuote && (
             <BridgeShowMore
               openFeePopup={openFeePopup}
               open={showMoreOpen}

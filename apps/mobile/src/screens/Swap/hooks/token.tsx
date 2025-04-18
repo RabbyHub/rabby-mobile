@@ -24,6 +24,9 @@ import { useLowCreditState } from '../components/LowCreditModal';
 import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
 import { isSwapWrapToken } from '../utils';
+import { RequestRateLimiter } from './rateLimit';
+
+export const enableInsufficientQuote = true;
 
 const sliderHapticTriggerNumbers = [0, 50, 100];
 
@@ -382,6 +385,10 @@ export const useTokenPair = (userAddress: string) => {
     [payToken, payAmount],
   );
 
+  const inSufficientCanGetQuote = enableInsufficientQuote
+    ? true
+    : !inSufficient;
+
   useEffect(() => {
     if (autoSlippage) {
       setSlippage(getSwapAutoSlippageValue(isStableCoin));
@@ -413,6 +420,10 @@ export const useTokenPair = (userAddress: string) => {
 
   const [quoteLoading, setQuoteLoading] = useState(false);
 
+  const rateLimitRef = useRef(new RequestRateLimiter(1000 * 30, 10));
+
+  const [rateLimit, setRateLimit] = useState(false);
+
   const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
     async (currentFetchId: number) => {
       if (
@@ -423,9 +434,12 @@ export const useTokenPair = (userAddress: string) => {
         chain &&
         Number(payAmount) > 0 &&
         feeRate &&
-        !inSufficient &&
+        inSufficientCanGetQuote &&
         !isDraggingSlider
       ) {
+        const limit = rateLimitRef.current?.checkRateLimit();
+        setRateLimit(!!limit);
+
         setQuotesList(e =>
           e.map(q => ({ ...q, loading: true, isBest: false })),
         );
@@ -443,6 +457,7 @@ export const useTokenPair = (userAddress: string) => {
               setFinishedQuotes(e => e + 1);
             }
           },
+          inSufficient,
         });
       }
     },
@@ -462,7 +477,7 @@ export const useTokenPair = (userAddress: string) => {
   );
 
   const { run: runGetAllQuotes } = useDebounceFn(_runGetAllQuotes, {
-    wait: 1000,
+    wait: rateLimit ? 5000 : 1000,
   });
 
   useEffect(() => {
@@ -474,11 +489,10 @@ export const useTokenPair = (userAddress: string) => {
       chain &&
       Number(payAmount) > 0 &&
       feeRate &&
-      !inSufficient
+      inSufficientCanGetQuote
     ) {
       setFinishedQuotes(0);
       setQuoteLoading(true);
-      setActiveProvider(undefined);
       fetchIdRef.current += 1;
       runGetAllQuotes(fetchIdRef.current);
     } else {
@@ -487,13 +501,13 @@ export const useTokenPair = (userAddress: string) => {
       setQuoteLoading(false);
     }
   }, [
+    inSufficientCanGetQuote,
     refreshId,
     userAddress,
     payToken?.id,
     receiveToken?.id,
     chain,
     feeRate,
-    inSufficient,
     receiveToken,
     payAmount,
     runGetAllQuotes,
@@ -509,15 +523,15 @@ export const useTokenPair = (userAddress: string) => {
       chain &&
       Number(payAmount) > 0 &&
       feeRate &&
-      !inSufficient
+      inSufficientCanGetQuote
     ) {
       return true;
     }
     return false;
   }, [
+    inSufficientCanGetQuote,
     chain,
     feeRate,
-    inSufficient,
     payAmount,
     payToken?.id,
     receiveToken,
@@ -526,14 +540,14 @@ export const useTokenPair = (userAddress: string) => {
 
   useEffect(() => {
     setQuotesList([]);
-  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
+  }, [payToken?.id, receiveToken?.id, chain, payAmount]);
 
   useEffect(() => {
     if (
       !quoteLoading &&
       receiveToken &&
       canUpdateActiveProvider &&
-      quoteList.every((q, idx) => !q.loading)
+      quoteList.every(q => !q.loading)
     ) {
       const sortIncludeGasFee = true;
       const sortedList = [
@@ -569,6 +583,7 @@ export const useTokenPair = (userAddress: string) => {
         }) || []),
       ];
 
+      setActiveProvider(undefined);
       if (sortedList?.[0]) {
         const bestQuote = sortedList[0];
         const { preExecResult } = bestQuote;
@@ -642,7 +657,25 @@ export const useTokenPair = (userAddress: string) => {
     if (expiredTimer.current) {
       clearTimeout(expiredTimer.current);
     }
-  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
+  }, [payToken?.id, receiveToken?.id, chain, payAmount, setActiveProvider]);
+
+  useEffect(() => {
+    setActiveProvider(undefined);
+  }, [payToken?.id, receiveToken?.id, chain, setActiveProvider]);
+
+  useEffect(() => {
+    if (!enableInsufficientQuote || !payAmount || Number(payAmount) === 0) {
+      setActiveProvider(undefined);
+    }
+  }, [payAmount, setActiveProvider]);
+
+  useEffect(() => {
+    if (!inSufficientCanGetQuote) {
+      clearTimeout(expiredTimer.current);
+      setQuotesList([]);
+      setActiveProvider(undefined);
+    }
+  }, [inSufficientCanGetQuote, setActiveProvider]);
 
   const search = {};
   const [searchObj] = useState<{
@@ -780,6 +813,7 @@ export const useTokenPair = (userAddress: string) => {
     isWrapToken,
     wrapTokenSymbol,
     inSufficient,
+    inSufficientCanGetQuote,
     slippageChanged,
     setSlippageChanged,
     slippageState,
