@@ -268,11 +268,12 @@ export const TransactionItem = ({
           ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
         );
       case HistoryItemCateType.Revoke:
-        return (
-          t('page.transactions.itemTitle.Revoke') +
-          ' ' +
-          ellipsisOverflowedText(getTokenSymbol(tokenApproveData[0].token), 6)
-        );
+        return t('page.transactions.itemTitle.Revoke', {
+          token: ellipsisOverflowedText(
+            getTokenSymbol(tokenApproveData[0].token),
+            6,
+          ),
+        });
       case HistoryItemCateType.Cancel:
         return t('page.transactions.itemTitle.Cancel');
       case HistoryItemCateType.UnKnown:
