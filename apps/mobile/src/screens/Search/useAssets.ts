@@ -29,9 +29,11 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import _ from 'lodash';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
+import BigNumber from 'bignumber.js';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export const useAssets = (filterText?: string) => {
-  const [isLoading, setLoading] = useSafeState(false);
+  const [isLoading, setLoading] = useSafeState(true);
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -146,10 +148,12 @@ export const useAssets = (filterText?: string) => {
     if (!addresses.length) {
       return;
     }
+    setLoading(true);
     const cachedTokens = await TokenItemEntity.batchMultAddressTokens(
       addresses,
     );
     if (!cachedTokens.length) {
+      setLoading(false);
       return;
     }
     const assestGroup = _.groupBy(cachedTokens, 'owner_addr');
@@ -199,6 +203,7 @@ export const useAssets = (filterText?: string) => {
       });
       return curr;
     });
+    setLoading(false);
   };
 
   const batchLoadCacheDefi = async (addresses: string[], setting: any) => {
@@ -268,6 +273,17 @@ export const useAssets = (filterText?: string) => {
       return curr;
     });
   };
+  const removeUnNeedAssets = (addresses: string[]) => {
+    setAssetsMap(pre => {
+      const curr = { ...pre };
+      Object.keys(pre).forEach(address => {
+        if (!addresses.find(i => isSameAddress(i, address))) {
+          delete curr[address];
+        }
+      });
+      return curr;
+    });
+  };
 
   const checkIsExpireAndUpdate = async (
     force?: boolean,
@@ -275,12 +291,14 @@ export const useAssets = (filterText?: string) => {
       disableToken?: boolean;
       disableDefi?: boolean;
       disableNFT?: boolean;
+      realTimeAddresses?: string[];
     },
   ) => {
     const top10Account = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
-    const addresses = [
+    const addresses = options?.realTimeAddresses || [
       ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
     ];
+    removeUnNeedAssets(addresses);
     const { disableToken, disableDefi, disableNFT } = options || {};
     setLoading(true);
     try {
@@ -306,12 +324,14 @@ export const useAssets = (filterText?: string) => {
     disableToken?: boolean;
     disableDefi?: boolean;
     disableNFT?: boolean;
+    realTimeAddresses?: string[];
   }) => {
     const { disableToken, disableDefi, disableNFT } = options || {};
     const top10Account = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
-    const addresses = [
+    const addresses = options?.realTimeAddresses || [
       ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
     ];
+    removeUnNeedAssets(addresses);
     const tokenSetting = await preferenceService.getUserTokenSettings();
     !disableToken && (await batchLoadCacheTokens(addresses, tokenSetting));
     Promise.all([
@@ -332,6 +352,87 @@ export const useAssets = (filterText?: string) => {
     () => filterNfts(nftList, filterText),
     [filterText, nftList],
   );
+
+  const chainsInfo = useMemo(() => {
+    const chainAssets: Record<
+      string,
+      {
+        total: BigNumber;
+        percentage: BigNumber;
+      }
+    > = {};
+
+    tokens?.forEach(token => {
+      const chainId = token.chain;
+      if (!chainAssets[chainId]) {
+        chainAssets[chainId] = {
+          total: new BigNumber(0),
+          percentage: new BigNumber(0),
+        };
+      }
+      if (token._isExcludeBalance) {
+        return;
+      }
+      chainAssets[chainId].total = chainAssets[chainId].total.plus(
+        token._usdValue || 0,
+      );
+    });
+
+    portfolios?.forEach(portfolio => {
+      const chainId = portfolio.chain;
+      if (!chainId) {
+        return;
+      }
+      if (!chainAssets[chainId]) {
+        chainAssets[chainId] = {
+          total: new BigNumber(0),
+          percentage: new BigNumber(0),
+        };
+      }
+      if (portfolio._isExcludeBalance) {
+        return;
+      }
+      chainAssets[chainId].total = chainAssets[chainId].total.plus(
+        portfolio.netWorth || 0,
+      );
+    });
+
+    nftList?.forEach(nft => {
+      const chainId = nft.chain;
+      if (!chainAssets[chainId]) {
+        chainAssets[chainId] = {
+          total: new BigNumber(0),
+          percentage: new BigNumber(0),
+        };
+      }
+    });
+
+    const totalValue = Object.values(chainAssets).reduce(
+      (sum, { total }) => sum.plus(total),
+      new BigNumber(0),
+    );
+
+    if (totalValue.gt(0)) {
+      Object.keys(chainAssets).forEach(chainId => {
+        chainAssets[chainId].percentage =
+          chainAssets[chainId].total.div(totalValue);
+      });
+    }
+    const chainAssetsArray = Object.entries(chainAssets).map(
+      ([chain, data]) => ({
+        chain,
+        total: data.total.toNumber(),
+        percentage: data.percentage.multipliedBy(100).toNumber(),
+      }),
+    );
+
+    chainAssetsArray.sort((a, b) => b.total - a.total);
+
+    return {
+      chainAssets: chainAssetsArray,
+      chainLength: Object.keys(chainAssets).length,
+    };
+  }, [tokens, portfolios, nftList]);
   return {
     tokens: fTokens,
     portfolios: fPortfolios,
@@ -342,5 +443,6 @@ export const useAssets = (filterText?: string) => {
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     refreshing: !!isLoading && !isFirstFetch,
+    chainsInfo,
   };
 };

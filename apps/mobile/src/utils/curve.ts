@@ -1,5 +1,6 @@
 import { range } from 'lodash';
 
+// use zero fill uncompleted data
 export const patchCurveData = (
   data: {
     timestamp: number;

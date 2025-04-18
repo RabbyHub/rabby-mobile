@@ -6,7 +6,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   viewBase: {
     borderWidth: 1,
-    borderRadius: 20,
+    borderRadius: 16,
     borderColor: colors2024['neutral-line'],
   },
   shadowView: {

@@ -799,7 +799,9 @@
       "enterPassphraseTitle": "Entrez la phrase secrète pour signer",
       "delete-checklist-2": "Je confirme que j'ai sauvegardé la clé privée ou la phrase secrète et que je suis prêt à la supprimer maintenant.",
       "watch-address": "Adresse de surveillance",
-      "enterThePassphrase": "Entrez la passphrase"
+      "enterThePassphrase": "Entrez la passphrase",
+      "quickAddressTitle_one": "{{count}} Adresse",
+      "quickAddressTitle_other": "{{count}} Adresses"
     },
     "home": {
       "services": {
@@ -1812,6 +1814,12 @@
     "safeMessageQueue": {
       "loading": "Chargement des messages",
       "noData": "Aucun message"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "Portefeuille",
+        "address": "Adresse"
+      }
     }
   },
   "native": {
@@ -2026,7 +2034,8 @@
     },
     "Unknown": "Inconnu",
     "unlimited": "illimité",
-    "Addresses": "Adresses"
+    "Addresses": "Adresses",
+    "24h": "24h"
   },
   "background": {
     "transactionWatcher": {

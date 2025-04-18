@@ -81,7 +81,8 @@
     },
     "Unknown": "未知",
     "unlimited": "unlimited",
-    "Addresses": "Addresses"
+    "Addresses": "Addresses",
+    "24h": "24小时"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -750,7 +751,9 @@
       "enterPassphraseTitle": "输入密码短语以进行签名",
       "delete-checklist-2": "我确认已备份私钥或助记词，并准备立即删除。",
       "delete-checklist-1": "我知道如果我删除这个地址，相应的私钥和助记词将被删除，Rabby 将无法恢复它们。",
-      "passphraseError": "密码无效"
+      "passphraseError": "密码无效",
+      "quickAddressTitle_one": "{{count}} 地址",
+      "quickAddressTitle_other": "{{count}} 个地址"
     },
     "bridge": {
       "Select": "选择",
@@ -1868,6 +1871,12 @@
     "safeMessageQueue": {
       "noData": "没有消息",
       "loading": "加载消息"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "投资组合",
+        "address": "地址"
+      }
     }
   },
   "component": {

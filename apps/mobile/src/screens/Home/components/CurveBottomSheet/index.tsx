@@ -258,7 +258,7 @@ export const CurveBottomSheetModal = forwardRef<
   );
 });
 
-const Mask = ({ xOffset }: { xOffset: SharedValue<number> }) => {
+export const Mask = ({ xOffset }: { xOffset: SharedValue<number> }) => {
   const colors = useThemeColors();
   const styles = useAnimatedStyle(() => ({
     position: 'absolute',

@@ -1,6 +1,6 @@
-import { openapi } from '@/core/request';
+import { getNetCurve } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
-import { formatUsdValue } from '@/utils/number';
+import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -11,7 +11,7 @@ export enum CurveDayType {
   WEEK = 7,
 }
 
-const formChartData = (
+export const formChartData = (
   data: CurveList,
   realtimeNetWorth = 0,
   realtimeTimestamp?: number,
@@ -33,6 +33,7 @@ const formChartData = (
             : `${(Math.abs(change * 100) / startData.usd_value).toFixed(2)}%`,
         timestamp: x.timestamp,
         dateString: dayjs.unix(x.timestamp).format('MM DD, HH:mm'),
+        clockTimeString: dayjs.unix(x.timestamp).format('HH:mm'),
       };
     }) || [];
 
@@ -42,9 +43,7 @@ const formChartData = (
 
     list.push({
       value: realtimeNetWorth || 0,
-      netWorth: realtimeNetWorth
-        ? `$${formatUsdValue(realtimeNetWorth)}`
-        : '$0',
+      netWorth: realtimeNetWorth ? `${formatUsdValue(realtimeNetWorth)}` : '$0',
       change: `${formatUsdValue(Math.abs(realtimeChange))}`,
       isLoss: realtimeChange < 0,
       changePercent:
@@ -55,6 +54,7 @@ const formChartData = (
             )}%`,
       timestamp: Math.floor(realtimeTimestamp / 1000),
       dateString: dayjs.unix(realtimeTimestamp / 1000).format('MM DD, HH:mm'),
+      clockTimeString: dayjs.unix(realtimeTimestamp / 1000).format('HH:mm'),
     });
   }
 
@@ -64,7 +64,15 @@ const formChartData = (
 
   return {
     list,
-    netWorth: endNetWorth === 0 ? '$0' : `${formatUsdValue(endNetWorth)}`,
+    netWorthWithDot:
+      endNetWorth === 0 ? '$0' : `${formatUsdValue(endNetWorth)}`,
+    netWorth:
+      endNetWorth === 0
+        ? '$0'
+        : '$' +
+          splitNumberByStep(
+            endNetWorth > 10 ? Math.floor(endNetWorth) : endNetWorth.toFixed(2),
+          ),
     change: `${formatUsdValue(Math.abs(assetsChange))}`,
     changePercent:
       startData.usd_value !== 0
@@ -94,7 +102,7 @@ export const useCurve = (
 
   const fetch = useCallback(
     async (addr: string, force = false) => {
-      const curve = await openapi.getNetCurve(addr, days);
+      const curve = await getNetCurve(addr, days, force);
       const start =
         days === CurveDayType.DAY
           ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()

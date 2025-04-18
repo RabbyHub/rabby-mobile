@@ -5,7 +5,12 @@ import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React, { useCallback } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  StyleProp,
+  StyleSheet,
+  TouchableOpacity,
+  ViewStyle,
+} from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 import { AddressItemContextMenu } from './AddressItemContextMenu';
 import { AddressItemInner2024 } from './AddressItemInner2024';
@@ -15,9 +20,7 @@ const { isSameAddress } = addressUtils;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
-    borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: colors2024['neutral-bg-3'],
   },
   rootPressing: {
     borderColor: colors2024['brand-light-2'],
@@ -26,11 +29,22 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 interface AddressItemProps {
   account: KeyringAccountWithAlias;
+  changePercent?: string;
+  isLoss?: boolean;
   lastSelectedAccount?: KeyringAccountWithAlias;
+  style?: StyleProp<ViewStyle>;
+  disableMenu?: boolean;
   onSelect?: () => void;
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
-  const { account, lastSelectedAccount, onSelect } = props;
+  const {
+    account,
+    lastSelectedAccount,
+    onSelect,
+    changePercent,
+    isLoss,
+    disableMenu,
+  } = props;
   const { switchAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
@@ -55,30 +69,38 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     );
   }, [lastSelectedAccount, account]);
 
+  const children = (
+    <AddressItemShadowView style={isPressing && styles.rootPressing}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressIn={() => setIsPressing(true)}
+        onPressOut={() => setIsPressing(false)}
+        style={StyleSheet.flatten([styles.root, props.style])}
+        delayLongPress={200} // long press delay
+        onPress={onDetail}
+        onLongPress={() => {
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
+        }}>
+        <AddressItemInner2024
+          isPressing={isCurrentAccount || isPressing}
+          account={account}
+          changePercent={changePercent}
+          isLoss={isLoss}
+        />
+      </TouchableOpacity>
+    </AddressItemShadowView>
+  );
+  if (disableMenu) {
+    return children;
+  }
   return (
     <AddressItemContextMenu
       account={account}
       actions={['copy', 'pin', 'edit', 'delete']}>
-      <AddressItemShadowView style={isPressing && styles.rootPressing}>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPressIn={() => setIsPressing(true)}
-          onPressOut={() => setIsPressing(false)}
-          style={StyleSheet.flatten([styles.root])}
-          delayLongPress={200} // long press delay
-          onPress={onDetail}
-          onLongPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-          }}>
-          <AddressItemInner2024
-            isPressing={isCurrentAccount || isPressing}
-            account={account}
-          />
-        </TouchableOpacity>
-      </AddressItemShadowView>
+      {children}
     </AddressItemContextMenu>
   );
 };

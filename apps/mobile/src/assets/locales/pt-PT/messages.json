@@ -219,7 +219,8 @@
     },
     "Unknown": "Desconhecido",
     "unlimited": "ilimitado",
-    "Addresses": "Endereços"
+    "Addresses": "Endereços",
+    "24h": "24h"
   },
   "page": {
     "getStart": {
@@ -879,7 +880,9 @@
       "enterThePassphrase": "Introduza a frase de acesso",
       "delete-checklist-2": "Confirmo que fiz o backup da chave privada ou frase-semente e estou pronto para excluí-la agora.",
       "delete-checklist-1": "Compreendo que, se eu eliminar este endereço, a chave privada correspondente e a frase-semente serão eliminadas e a Rabby NÃO será capaz de as recuperar.",
-      "private-key": "Chave Privada"
+      "private-key": "Chave Privada",
+      "quickAddressTitle_one": "{{count}} Endereço",
+      "quickAddressTitle_other": "{{count}} Endereços"
     },
     "bridge": {
       "bridge-from": "Ponte de",
@@ -1997,6 +2000,12 @@
     "safeMessageQueue": {
       "noData": "Sem mensagens",
       "loading": "A carregar mensagens"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "Portefólio",
+        "address": "Endereço"
+      }
     }
   },
   "constant": {

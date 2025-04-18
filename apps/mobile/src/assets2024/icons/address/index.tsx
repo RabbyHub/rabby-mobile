@@ -5,14 +5,17 @@ export const ArrowCircleCC = (
   props: {
     backgroundColor: string;
     color: string;
+    width?: number;
+    height?: number;
   } & SvgProps,
 ) => {
-  const { color, backgroundColor, ...rest } = props;
+  const { color, backgroundColor, width = 26, height = 26, ...rest } = props;
   return (
     <Svg
       xmlns="http://www.w3.org/2000/svg"
-      width={26}
-      height={26}
+      width={width}
+      height={height}
+      viewBox="0 0 26 26"
       fill="none"
       {...rest}>
       <Rect width={26} height={26} fill={backgroundColor} rx={13} />

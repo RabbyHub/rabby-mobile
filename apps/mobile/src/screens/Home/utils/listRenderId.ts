@@ -80,4 +80,8 @@ export const getItemId = (item: ActionItem) => {
     }
     return getSingleNftTags(item.type, item.data).join('/');
   }
+  if (item.type === 'address_entry') {
+    return `${item.type}/${item.data.address}/${item.data.type}/${item.data.brandName}/${item.data.aliasName}/${item.data.balance}/${item.data.isLoss}/${item.data.changPercent}`;
+  }
+  return `${item.type}/${JSON.stringify(item.data)}`;
 };

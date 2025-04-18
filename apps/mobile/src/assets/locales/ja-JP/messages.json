@@ -1049,7 +1049,9 @@
       "enterPassphraseTitle": "パスフレーズを入力して署名",
       "delete-checklist-2": "私はプライベートキーまたはシードフレーズをバックアップしたことを確認し、今すぐ削除する準備ができています。",
       "delete-checklist-1": "このアドレスを削除すると、対応するプライベートキーとシードフレーズが削除され、Rabbyがそれらを復元できないことを理解しています。",
-      "seed-phrase": "シードフレーズ"
+      "seed-phrase": "シードフレーズ",
+      "quickAddressTitle_other": "{{count}} アドレス",
+      "quickAddressTitle_one": "{{count}} アドレス"
     },
     "signText": {
       "title": "テキストに署名",
@@ -1855,6 +1857,12 @@
     "safeMessageQueue": {
       "loading": "メッセージを読み込み中",
       "noData": "メッセージはありません"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "ポートフォリオ",
+        "address": "アドレス"
+      }
     }
   },
   "global": {
@@ -1896,7 +1904,8 @@
     },
     "Unknown": "不明",
     "unlimited": "無制限",
-    "Addresses": "アドレス"
+    "Addresses": "アドレス",
+    "24h": "24時間"
   },
   "bluetooth": {
     "powered_off_alert": {

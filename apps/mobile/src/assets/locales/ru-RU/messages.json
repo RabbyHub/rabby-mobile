@@ -81,7 +81,8 @@
     },
     "Unknown": "Неизвестный",
     "unlimited": "неограниченный",
-    "Addresses": "Адреса"
+    "Addresses": "Адреса",
+    "24h": "24ч"
   },
   "page": {
     "getStart": {
@@ -824,7 +825,9 @@
       "delete-checklist-1": "Я понимаю, что если я удалю этот адрес, соответствующий приватный ключ и сид-фраза будут удалены, и Rabby НЕ сможет их восстановить.",
       "private-key": "Приватный ключ",
       "delete-checklist-2": "Я подтверждаю, что сделал резервную копию личного ключа или seed phrase и готов его сейчас удалить.",
-      "enterPassphraseTitle": "Введите парольную фразу для подписания"
+      "enterPassphraseTitle": "Введите парольную фразу для подписания",
+      "quickAddressTitle_one": "{{count}} Адрес",
+      "quickAddressTitle_other": "{{count}} Адреса"
     },
     "home": {
       "services": {
@@ -1859,6 +1862,12 @@
     "safeMessageQueue": {
       "loading": "Загрузка сообщений",
       "noData": "Нет сообщений"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "Портфель",
+        "address": "Адрес"
+      }
     }
   },
   "component": {

@@ -90,7 +90,8 @@
     },
     "Unknown": "未知",
     "unlimited": "unlimited",
-    "Addresses": "地址"
+    "Addresses": "地址",
+    "24h": "24小時"
   },
   "background": {
     "transactionWatcher": {
@@ -781,7 +782,9 @@
       "seed-phrase": "助記詞",
       "passphraseError": "密碼無效",
       "delete-checklist-2": "我確認已備份私鑰或助記詞，並準備立即刪除。",
-      "delete-checklist-1": "我知道如果我刪除這個地址，相應的私鑰和助記詞將被刪除，Rabby 將無法恢復它們。"
+      "delete-checklist-1": "我知道如果我刪除這個地址，相應的私鑰和助記詞將被刪除，Rabby 將無法恢復它們。",
+      "quickAddressTitle_one": "{{count}} 地址",
+      "quickAddressTitle_other": "{{count}} 個地址"
     },
     "home": {
       "services": {
@@ -1916,6 +1919,12 @@
     "safeMessageQueue": {
       "noData": "沒有消息",
       "loading": "正在加載訊息"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "address": "地址",
+        "portfolio": "投資組合"
+      }
     }
   },
   "component": {

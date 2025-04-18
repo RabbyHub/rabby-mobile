@@ -21,6 +21,7 @@ import { Handlable } from '@/components/customized/BottomSheetHandle';
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
   onCancel: () => void;
+  onDelete?: () => void;
 }
 
 export const AddressDetailInner: React.FC<
@@ -28,7 +29,7 @@ export const AddressDetailInner: React.FC<
     __IN_SHEET_MODAL__?: boolean;
   }
 > = props => {
-  const { account, onCancel, __IN_SHEET_MODAL__ = false } = props;
+  const { account, onCancel, onDelete, __IN_SHEET_MODAL__ = false } = props;
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const inWhiteList = useMemo(
@@ -112,7 +113,13 @@ export const AddressDetailInner: React.FC<
         <Card
           style={styles.card}
           onPress={() => {
-            removeAccount({ account, onFinished: onCancel });
+            removeAccount({
+              account,
+              onFinished: () => {
+                onDelete?.();
+                onCancel();
+              },
+            });
           }}>
           <Item
             label={t('page.addressDetail.delete-address')}

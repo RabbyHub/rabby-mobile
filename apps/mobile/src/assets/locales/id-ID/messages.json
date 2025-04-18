@@ -875,7 +875,9 @@
       "watch-address": "Pantau Alamat",
       "enterThePassphrase": "Masukkan Passphrase",
       "passphraseError": "Passphrase tidak valid",
-      "delete-checklist-1": "Saya mengerti bahwa jika saya menghapus alamat ini, kunci pribadi dan frasa benih yang sesuai akan dihapus, dan Rabby TIDAK akan dapat memulihkannya."
+      "delete-checklist-1": "Saya mengerti bahwa jika saya menghapus alamat ini, kunci pribadi dan frasa benih yang sesuai akan dihapus, dan Rabby TIDAK akan dapat memulihkannya.",
+      "quickAddressTitle_other": "{{count}} Alamat",
+      "quickAddressTitle_one": "{{count}} Alamat"
     },
     "home": {
       "services": {
@@ -1802,6 +1804,12 @@
     "safeMessageQueue": {
       "loading": "Memuat pesan",
       "noData": "Tidak ada pesan"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "address": "Alamat",
+        "portfolio": "Portofolio"
+      }
     }
   },
   "component": {
@@ -1996,7 +2004,8 @@
     "Price": "Harga",
     "Unknown": "Tidak Dikenal",
     "Paste": "Tempel",
-    "appDescription": "Dompet yang mengubah permainan untuk Ethereum dan semua rantai EVM"
+    "appDescription": "Dompet yang mengubah permainan untuk Ethereum dan semua rantai EVM",
+    "24h": "24j"
   },
   "background": {
     "error": {
