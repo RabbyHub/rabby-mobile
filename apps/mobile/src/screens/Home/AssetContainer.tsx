@@ -193,8 +193,13 @@ export const AssetContainer: React.FC<Props> = ({
   }, [_rawNftList, _rawPortfolios, _rawTokens, selectChainItem?.chain]);
   const sortTokens = useSortToken(tokens);
 
-  const { singleDeFiRefresh, singleNFTRefresh, singleTokenRefresh } =
-    useTriggerTagAssets();
+  const {
+    singleDeFiRefresh,
+    singleNFTRefresh,
+    singleTokenRefresh,
+    tokenRefresh,
+    deFiRefresh,
+  } = useTriggerTagAssets();
 
   const layoutProvider = useMemo(() => {
     return new LayoutProvider(
@@ -607,6 +612,7 @@ export const AssetContainer: React.FC<Props> = ({
               toast.success(t('page.tokenDetail.actionsTips.fold_success'));
             }
             singleTokenRefresh();
+            tokenRefresh();
           },
         },
         {
@@ -639,11 +645,12 @@ export const AssetContainer: React.FC<Props> = ({
               toast.success(t('page.tokenDetail.actionsTips.pin_success'));
             }
             singleTokenRefresh();
+            tokenRefresh();
           },
         },
       ];
     },
-    [isLight, singleTokenRefresh, t],
+    [isLight, singleTokenRefresh, t, tokenRefresh],
   );
   const getDefiOrNftMenuAction = useCallback(
     (
@@ -714,6 +721,7 @@ export const AssetContainer: React.FC<Props> = ({
             }
             if (type === 'defi') {
               singleDeFiRefresh();
+              deFiRefresh();
             } else if (type === 'nft') {
               singleNFTRefresh();
             }
@@ -721,7 +729,7 @@ export const AssetContainer: React.FC<Props> = ({
         },
       ];
     },
-    [isLight, singleDeFiRefresh, singleNFTRefresh, t],
+    [deFiRefresh, isLight, singleDeFiRefresh, singleNFTRefresh, t],
   );
 
   const handleOnReceive = async () => {
