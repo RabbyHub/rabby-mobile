@@ -20,6 +20,7 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import {
   ADDRESS_ENTRY_GAP,
   ADDRESS_ENTRY_HEUGHT,
+  AppRootName,
   ASSETS_EMPTY_ROW_HIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_LIST_HEADER,
@@ -69,7 +70,11 @@ import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { TabType, SwitchHeader } from './RenderRow/SwtichHeader';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { OtherAddressNav } from '../OtherAddressNav';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import { CurrentAddressProps } from '../AddressListScreenContainer';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import {
@@ -98,6 +103,9 @@ import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
 import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { DisplayedProject } from '@/screens/Home/utils/project';
+import { Card } from '@/components2024/Card';
+import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
+import { useSetPasswordFirst } from '@/hooks/useLock';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
@@ -276,9 +284,10 @@ export const MultiAssets = () => {
       {
         show: showPortfolios,
         data: [
-          {
-            type: 'asset_header',
-          },
+          // TODO: TMP for test
+          // {
+          //   type: 'asset_header',
+          // },
           ...unFoldList,
         ],
       },
@@ -481,6 +490,25 @@ export const MultiAssets = () => {
       });
     }, 0);
   };
+
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+  const gotoAddAddress = React.useCallback(() => {
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+      shouldRedirectToSetPasswordBefore2024,
+      navigateTo: (screen: AppRootName, params?: object) => {
+        navigation.dispatch(
+          StackActions.push(RootNames.StackAddress, {
+            screen,
+            params,
+          }),
+        );
+      },
+    });
+  }, [shouldRedirectToSetPasswordBefore2024, navigation]);
   const scrollToTop = () => {
     setFoldHideList(true);
     setTimeout(() => {
@@ -908,6 +936,18 @@ export const MultiAssets = () => {
                     SWITCH_HEADER_GAP,
                 },
               ]}>
+              <Card style={styles.footerCard} onPress={gotoAddAddress}>
+                <View style={styles.footerMain}>
+                  <PlusSVG
+                    width={20}
+                    height={20}
+                    color={colors2024['neutral-secondary']}
+                  />
+                  <Text style={styles.footerCardText}>
+                    {t('page.addressDetail.addressListScreen.addAddress')}
+                  </Text>
+                </View>
+              </Card>
               {hasSafeAddress && (
                 <OtherAddressNav
                   onPress={onGotoSafeAddress}
@@ -1045,5 +1085,25 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   footerGap: {
     height: 70,
+  },
+  footerCard: {
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    marginBottom: 22,
+    padding: 16,
+    borderRadius: 20,
+  },
+  footerMain: {
+    height: 46,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  footerCardText: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
   },
 }));
