@@ -3,20 +3,10 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { SvgProps } from 'react-native-svg';
 import { isValidElementType } from 'react-is';
-import { styled } from 'styled-components/native';
-
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
-
-import { RcIconRightCC } from '@/assets/icons/common';
-import { ThemeColors } from '@/constant/theme';
+import { default as RcIconRight } from '@/assets/icons/settings/icon-arrow-right.svg';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-
-const RcIconRight = makeThemeIconFromCC(
-  RcIconRightCC,
-  colors => colors['neutral-foot'],
-);
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export function Block({
   label,
@@ -27,24 +17,26 @@ export function Block({
   className?: string;
   style?: React.ComponentProps<typeof View>['style'];
 }>) {
-  const colors = useThemeColors();
+  const { colors2024 } = useTheme2024();
 
   return (
     <View style={style}>
       <Text
         style={{
           fontWeight: 'normal',
-          fontSize: 12,
-          color: colors['neutral-title-1'],
+          fontSize: 16,
+          color: colors2024['neutral-secondary'],
+          fontFamily: 'SF Pro Rounded',
+          paddingLeft: 12,
         }}>
         {label}
       </Text>
       <View
         style={{
-          borderRadius: 6,
+          borderRadius: 24,
           marginTop: 8,
           flexDirection: 'column',
-          backgroundColor: colors['neutral-card-1'],
+          backgroundColor: colors2024['neutral-bg-1'],
         }}>
         {children}
       </View>
@@ -56,10 +48,6 @@ type GenerateNodeCtx = {
   colors: Record<string, string>;
   rightIconNode: React.ReactNode;
 };
-
-const BlockContainer = styled(TouchableView)<{ disableStyle?: boolean }>`
-  opacity: ${props => (props.disableStyle ? 0.6 : 1)};
-`;
 
 function BlockItem({
   label,
@@ -81,15 +69,18 @@ function BlockItem({
   visible?: boolean;
   disabled?: boolean;
 }>) {
-  const { colors, styles } = useThemeStyles(getBlockItemStyles);
+  const { colors2024: colors, styles } = useTheme2024({
+    getStyle: getBlockItemStyles,
+  });
 
   children = children || (
     <Text
       numberOfLines={1}
       style={{
-        color: colors['neutral-title-1'],
-        fontWeight: 'normal',
-        fontSize: 14,
+        color: colors['neutral-body'],
+        fontWeight: '700',
+        fontSize: 16,
+        fontFamily: 'SF Pro Rounded',
       }}>
       {label}
     </Text>
@@ -106,10 +97,7 @@ function BlockItem({
   );
 
   const rightIconNode = (
-    <RcIconRight
-      color={colors['neutral-foot']}
-      style={{ width: 20, height: 20 }}
-    />
+    <RcIconRight style={{ width: 16, height: 16, marginLeft: 4 }} />
   );
 
   if (typeof rightNode === 'function') {
@@ -159,7 +147,7 @@ function BlockItem({
   );
 }
 
-const getBlockItemStyles = createGetStyles(colors => {
+const getBlockItemStyles = createGetStyles2024(colors => {
   return {
     container: {
       flexDirection: 'row',
@@ -193,7 +181,7 @@ const getBlockItemStyles = createGetStyles(colors => {
       // ...makeDebugBorder(),
     },
     defaultRightText: {
-      color: colors['neutral-title1'],
+      color: colors['neutral-title-1'],
       fontWeight: 'normal',
       fontSize: 14,
     },
