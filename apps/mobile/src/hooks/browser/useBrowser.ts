@@ -12,6 +12,11 @@ import {
 } from '../accountsSwitcher';
 import { useRabbyAppNavigation } from '../navigation';
 import { useMemo } from 'react';
+import {
+  TabActions,
+  useNavigationState,
+  useRoute,
+} from '@react-navigation/native';
 
 export type Tab = {
   url: string;
@@ -43,12 +48,26 @@ export function useBrowser() {
 
   const [tabs, setTabs] = useAtom(tabsAtom);
   const [activeTabId, setActiveTabId] = useAtom(activeTabIdAtom);
+  const route = useRoute();
+  console.log('route', route);
+
+  const navigateToBrowserScreen = useMemoizedFn(() => {
+    if (route.name === RootNames.BrowserScreen) {
+      return;
+    }
+    navigation.dispatch(
+      TabActions.jumpTo(RootNames.StackBrowser, {
+        screen: RootNames.BrowserScreen,
+      }),
+    );
+    // navigation.navigate(RootNames.StackBrowser, {
+    //   screen: RootNames.BrowserScreen,
+    // });
+  });
 
   const switchToTab = useMemoizedFn((tabId: string) => {
     setActiveTabId(tabId);
-    navigation.navigate(RootNames.StackBrowser, {
-      screen: 'BrowserScreen',
-    });
+    navigateToBrowserScreen();
     setTimeout(() => {
       switchSceneCurrentAccount(forScene, finalSceneCurrentAccount);
     });
@@ -109,21 +128,19 @@ export function useBrowser() {
 
     preferenceService.toggleAllowNotifyAccountsChanged(true);
 
+    navigateToBrowserScreen();
+
     // activate(dappInfo);
     //
-    const routeName = getLatestNavigationName();
-    const needRedirect =
-      routeName && routeName !== RootNames.DappWebViewStubOnHome;
-    if (needRedirect) {
-      navigation.navigate(RootNames.StackBrowser, {
-        screen: 'BrowserScreen',
-      });
-
-      // try trigger notify again
-      // setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
-    } else {
-      // activate(dapps[item.origin]);
-    }
+    // const routeName = getLatestNavigationName();
+    // const needRedirect = routeName && routeName !== RootNames.BrowserScreen;
+    // if (needRedirect) {
+    //   navigateToBrowserScreen();
+    //   // try trigger notify again
+    //   // setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
+    // } else {
+    //   // activate(dapps[item.origin]);
+    // }
 
     return true;
   });

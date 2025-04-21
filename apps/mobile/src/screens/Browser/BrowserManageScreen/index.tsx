@@ -157,7 +157,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   navbarItem: {
     height: 24,
-    borderRadius: 120,
+    borderRadius: 12,
   },
   navbarItemActive: {
     backgroundColor: colors2024['neutral-bg-1'],

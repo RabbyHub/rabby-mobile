@@ -57,7 +57,14 @@ export const DappIcon = ({
 
   if (source?.uri) {
     return (
-      <Image source={source} style={style} PlaceholderContent={Placeholder} />
+      <View style={style}>
+        <Image
+          source={source}
+          style={styles.image}
+          PlaceholderContent={Placeholder}
+          placeholderStyle={styles.placeholderStyle}
+        />
+      </View>
     );
   }
 
@@ -74,5 +81,12 @@ const getStyles = createGetStyles((colors, ctx) => ({
     fontSize: 15,
     fontWeight: '500',
     color: ctx?.isLight ? colors['neutral-card-1'] : colors['neutral-title2'],
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderStyle: {
+    backgroundColor: 'transparent',
   },
 }));
