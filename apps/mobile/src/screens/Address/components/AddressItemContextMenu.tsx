@@ -13,6 +13,18 @@ import { useDeleteAccountModal } from '../useDeleteAccountModal';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 
+const MenuIcons = {
+  copyDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png'),
+  copy: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
+  unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
+  unpin: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
+  pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png'),
+  pin: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+  editDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png'),
+  edit: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
+  deleteDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete_dark.png'),
+  delete: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
+};
 interface Props {
   account: KeyringAccountWithAlias;
   children: React.ReactElement;
@@ -51,9 +63,7 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
       [
         {
           title: t('page.whitelist.copyAddress'),
-          icon: isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
+          icon: isDarkTheme ? MenuIcons.copyDark : MenuIcons.copy,
           androidIconName: 'ic_rabby_menu_copy',
           key: 'copy',
           action() {
@@ -67,11 +77,11 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
             : t('page.addressDetail.addressListScreen.pin'),
           icon: pinned
             ? isDarkTheme
-              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
-              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+              ? MenuIcons.unpinDark
+              : MenuIcons.unpin
             : isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+            ? MenuIcons.pinDark
+            : MenuIcons.pin,
           androidIconName: pinned
             ? 'ic_rabby_menu_un_pin'
             : 'ic_rabby_menu_pin',
@@ -82,9 +92,7 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
         },
         {
           title: t('page.addressDetail.addressListScreen.edit'),
-          icon: isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
+          icon: isDarkTheme ? MenuIcons.editDark : MenuIcons.edit,
           androidIconName: 'ic_rabby_menu_edit',
           key: 'edit',
           action() {
@@ -104,9 +112,7 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
         // },
         {
           title: t('page.addressDetail.addressListScreen.delete'),
-          icon: isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
+          icon: isDarkTheme ? MenuIcons.deleteDark : MenuIcons.delete,
           key: 'delete',
           androidIconName: 'ic_rabby_menu_delete',
           destructive: true,

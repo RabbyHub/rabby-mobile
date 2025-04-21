@@ -1,13 +1,12 @@
-import React, { useRef } from 'react';
-import { Text, View } from 'react-native';
+import React from 'react';
+import { Text, TextStyle } from 'react-native';
 
 import { useAutoLockTime, useLastUnlockTime } from '@/hooks/appTimeout';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import useInterval from 'react-use/lib/useInterval';
 import { NEED_DEVSETTINGBLOCKS } from '@/constant/env';
 import { getTimeSpan, getTimeSpanByMs } from '@/utils/time';
 import { usePasswordStatus } from '@/hooks/useLock';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import {
   useAutoLockTimeMinites,
   useToggleShowAutoLockCountdown,
@@ -16,7 +15,7 @@ import { TIME_SETTINGS } from '@/constant/autoLock';
 
 export function useAutoLockCountDown() {
   const { autoLockTime } = useAutoLockTime();
-  const colors = useThemeColors();
+  const { colors2024 } = useTheme2024();
   const [spinner, setSpinner] = React.useState(false);
   useInterval(() => {
     if (NEED_DEVSETTINGBLOCKS) {
@@ -45,13 +44,13 @@ export function useAutoLockCountDown() {
   }, [autoLockTime, spinner]);
 
   const textColor = countDownText
-    ? colors['green-default']
+    ? colors2024['green-default']
     : countDownSecs > 5
-    ? colors['orange-default']
-    : colors['red-default'];
+    ? colors2024['orange-default']
+    : colors2024['red-default'];
 
   return {
-    colors,
+    colors: colors2024,
     textColor,
     autoLockTime,
     countDownText,
@@ -102,23 +101,13 @@ function useCurrentAutoLockLabel() {
     ].join(' ');
   }, [autoLockMinutes]);
 }
-export function AutoLockSettingLabel() {
+export function AutoLockSettingLabel({ style }: { style?: TextStyle }) {
   const settingLabel = useCurrentAutoLockLabel();
-  const colors = useThemeColors();
   const { isUseCustomPwd } = usePasswordStatus();
 
   if (!isUseCustomPwd) return null;
 
-  return (
-    <Text
-      style={{
-        color: colors['neutral-title1'],
-        fontWeight: 'normal',
-        fontSize: 14,
-      }}>
-      {settingLabel}
-    </Text>
-  );
+  return <Text style={style}>{settingLabel}</Text>;
 }
 
 export function LastUnlockTimeLabel() {

@@ -575,6 +575,7 @@ export const TokenDetailScreen = () => {
             originToken={token}
             finalAccount={finalAccount}
             amountList={tokenFromAddress}
+            relateDefiList={relateDefiList}
             isSingleAddress={isSingleAddress}
           />
           {/* <View style={styles.divider} /> */}

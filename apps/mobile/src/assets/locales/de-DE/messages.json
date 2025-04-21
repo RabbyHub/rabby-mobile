@@ -81,7 +81,8 @@
     },
     "Unknown": "Unbekannt",
     "unlimited": "unbegrenzt",
-    "Addresses": "Adressen"
+    "Addresses": "Adressen",
+    "24h": "24h"
   },
   "component": {
     "accountSwitcher": {
@@ -939,7 +940,9 @@
       "watch-address": "Adresse beobachten",
       "delete-checklist-1": "Ich verstehe, dass beim Löschen dieser Adresse der entsprechende private Schlüssel und die Seed-Phrase gelöscht werden und Rabby sie NICHT wiederherstellen kann.",
       "delete-checklist-2": "Ich bestätige, dass ich den privaten Schlüssel oder die Seed-Phrase gesichert habe und jetzt bereit bin, sie zu löschen.",
-      "passphraseError": "Passphrase ungültig"
+      "passphraseError": "Passphrase ungültig",
+      "quickAddressTitle_one": "{{count}} Adresse",
+      "quickAddressTitle_other": "{{count}} Adressen"
     },
     "swap": {
       "no-transaction-records": "Keine Transaktionsaufzeichnungen",
@@ -1050,10 +1053,10 @@
         "noAssets": "Keine Assets?",
         "buyWithFiat": "Mit Fiat kaufen",
         "importAddress": "Eine Adresse importieren",
-        "receiveCryptoDesc": "Token von einer anderen Adresse übertragen.",
+        "receiveCryptoDesc": "Token von einer anderen Adresse übertragen",
         "fundYourWallet": "Finanzieren Sie Ihr Wallet",
-        "buyWithFiatDesc": "Kaufen Sie Krypto mit einer Debitkarte oder einem Bankkonto.",
-        "importAddressDesc": "Füge eine bestehende Adresse mit Geldern hinzu."
+        "buyWithFiatDesc": "Einfache Krypto-Käufe",
+        "importAddressDesc": "Füge eine bestehende Adresse mit Geldern hinzu"
       },
       "addAddress": {
         "importAddress": "Adresse importieren",
@@ -1623,7 +1626,7 @@
       "emptyToken": {
         "buyHeader": "Mit Fiat kaufen",
         "receiveHeader": "Krypto empfangen",
-        "receiveBody": "Übertragen Sie Token von einer anderen Adresse.",
+        "receiveBody": "Übertragen Sie Token von einer anderen Adresse",
         "title": "Finanzieren Sie Ihr Wallet",
         "buyBody": "Einfacher Krypto-Kauf"
       },
@@ -1997,6 +2000,12 @@
     "safeMessageQueue": {
       "loading": "Lade Nachrichten",
       "noData": "Keine Nachrichten"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "Portfolio",
+        "address": "Adresse"
+      }
     }
   },
   "constant": {

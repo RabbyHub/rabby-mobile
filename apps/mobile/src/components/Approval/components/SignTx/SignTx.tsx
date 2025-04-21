@@ -26,7 +26,7 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import BigNumber from 'bignumber.js';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
 import { isHexString } from 'ethereumjs-util';
 import {
@@ -76,7 +76,7 @@ import {
 import { TxTypeComponent } from './TxTypeComponent';
 import { normalizeTxParams, toType } from './util';
 import { getStyles } from './style';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
 import Safe, { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
@@ -1555,8 +1555,8 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
 
   return (
     <>
-      <BottomSheetView style={styles.wrapper}>
-        <ScrollView style={styles.approvalTx}>
+      <View style={styles.wrapper}>
+        <BottomSheetScrollView style={styles.approvalTx}>
           {txDetail && (
             <View
               style={StyleSheet.flatten({
@@ -1677,7 +1677,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             onClose={handleRuleDrawerClose}
           />
           <View style={styles.placeholder} />
-        </ScrollView>
+        </BottomSheetScrollView>
         {txDetail && (
           <FooterBar
             isSwap={isSwap}
@@ -1801,7 +1801,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             }
           />
         )}
-      </BottomSheetView>
+      </View>
       <CustomRPCErrorModal
         visible={isShowCustomRPCErrorModal}
         onCancel={() => {

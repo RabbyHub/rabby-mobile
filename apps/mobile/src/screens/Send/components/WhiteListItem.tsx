@@ -51,6 +51,7 @@ interface IProps {
   inWhiteList?: boolean;
   isForWhitelist?: boolean;
   disableMenu?: boolean;
+  isImported?: boolean;
 }
 export const WhiteListItem = ({
   account,
@@ -58,6 +59,7 @@ export const WhiteListItem = ({
   isForWhitelist,
   inWhiteList,
   disableMenu,
+  isImported,
 }: IProps) => {
   const [cexInfo, setCexInfo] = useState<Cex | undefined>();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -176,7 +178,9 @@ export const WhiteListItem = ({
                   removeGlobalBottomSheetModal2024(id);
                   matomoRequestEvent({
                     category: 'Send Usage',
-                    action: 'Send_AddWhitelist',
+                    action: isImported
+                      ? 'Send_AddWhitelist_imported'
+                      : 'Send_AddWhitelist_notImported',
                   });
                   addWhitelist(account.address, {
                     onAdded: () => {

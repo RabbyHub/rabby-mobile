@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ViewStyle } from 'react-native';
+import { View, Text, Pressable, ViewStyle, StyleProp } from 'react-native';
 import React, { memo } from 'react';
 import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -16,7 +16,8 @@ type Props = {
   chainServerId?: string;
   chainLength?: number;
   onChainClick?: (clear: boolean) => void;
-  style?: ViewStyle;
+  disableNft?: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
 export const AssestAllHeader = memo(
@@ -27,6 +28,7 @@ export const AssestAllHeader = memo(
     chainLength,
     onChainClick,
     chainServerId,
+    disableNft,
   }: Props) => {
     const { t } = useTranslation();
     const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -63,15 +65,17 @@ export const AssestAllHeader = memo(
             </Text>
           </Pressable>
 
-          <Pressable onPress={() => handlePress('nft')}>
-            <Text
-              style={[
-                styles.symbol,
-                currentSection === 'nft' && styles.active,
-              ]}>
-              {t('page.singleHome.sectionHeader.Nft')}
-            </Text>
-          </Pressable>
+          {!disableNft && (
+            <Pressable onPress={() => handlePress('nft')}>
+              <Text
+                style={[
+                  styles.symbol,
+                  currentSection === 'nft' && styles.active,
+                ]}>
+                {t('page.singleHome.sectionHeader.Nft')}
+              </Text>
+            </Pressable>
+          )}
         </View>
         {!!chainLength &&
           (chainInfo?.id ? (

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { atom, useAtom } from 'jotai';
 import { apiBalance } from '@/core/apis';
 import { keyringService, preferenceService } from '@/core/services';
@@ -158,11 +158,26 @@ export default function useAccountsBalance(opts?: {
     fetchTotalBalance(isForceFetchFromApi ? 'from_api' : 'from_cache');
   });
 
+  const getTotalBalance = useCallback(
+    (addres: string[]) => {
+      let total = 0;
+      addres.forEach(address => {
+        const account = balanceAccounts.find(item =>
+          isSameAddress(item.address, address.toLowerCase()),
+        );
+        total += Number(account?.balance) || 0;
+      });
+      return total;
+    },
+    [balanceAccounts],
+  );
+
   return {
     balanceAccounts,
     balanceCacheAccounts,
     accountsLength, // maybe has some same address with other type
     triggerUpdate,
     balanceLoading,
+    getTotalBalance,
   };
 }

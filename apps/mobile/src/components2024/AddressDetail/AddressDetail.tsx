@@ -7,9 +7,14 @@ import { AddressDetailInner } from './AddressDetailInner';
 export interface Props {
   account: KeyringAccountWithAlias;
   onCancel: () => void;
+  onDelete?: () => void;
 }
 
-export const AddressDetail: React.FC<Props> = ({ account, onCancel }) => {
+export const AddressDetail: React.FC<Props> = ({
+  account,
+  onCancel,
+  onDelete,
+}) => {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -32,6 +37,7 @@ export const AddressDetail: React.FC<Props> = ({ account, onCancel }) => {
       <AddressDetailInner
         account={currentAccount}
         onCancel={onCancel}
+        onDelete={onDelete}
         __IN_SHEET_MODAL__
       />
     </BottomSheetScrollView>

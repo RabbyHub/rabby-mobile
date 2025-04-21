@@ -534,7 +534,8 @@
           "pending": "Menunggu",
           "pendingBroadcasted": "Pending: disiarkan",
           "pendingBroadcast": "Menunggu: akan disiarkan",
-          "canceled": "Dibatalkan"
+          "canceled": "Dibatalkan",
+          "failed": "Gagal"
         },
         "explain": {
           "unknown": "Transaksi Tidak Dikenal",
@@ -874,7 +875,9 @@
       "watch-address": "Pantau Alamat",
       "enterThePassphrase": "Masukkan Passphrase",
       "passphraseError": "Passphrase tidak valid",
-      "delete-checklist-1": "Saya mengerti bahwa jika saya menghapus alamat ini, kunci pribadi dan frasa benih yang sesuai akan dihapus, dan Rabby TIDAK akan dapat memulihkannya."
+      "delete-checklist-1": "Saya mengerti bahwa jika saya menghapus alamat ini, kunci pribadi dan frasa benih yang sesuai akan dihapus, dan Rabby TIDAK akan dapat memulihkannya.",
+      "quickAddressTitle_other": "{{count}} Alamat",
+      "quickAddressTitle_one": "{{count}} Alamat"
     },
     "home": {
       "services": {
@@ -979,14 +982,14 @@
         "totalBalance": "Total Balance",
         "noAssets": "Tidak ada Aset?",
         "pin": "Pin",
-        "receiveCryptoDesc": "Transfer token dari alamat lain.",
+        "receiveCryptoDesc": "Transfer token dari alamat lain",
         "receiveCrypto": "Terima Crypto",
         "buyWithFiat": "Beli dengan Fiat",
         "importAddress": "Impor Alamat",
         "fundYourWallet": "Isi Ulang Dompet Anda",
         "services": "Layanan",
-        "importAddressDesc": "Tambahkan alamat yang sudah ada dengan dana.",
-        "buyWithFiatDesc": "Beli kripto menggunakan kartu debit atau rekening bank."
+        "importAddressDesc": "Tambahkan alamat yang sudah ada dengan dana",
+        "buyWithFiatDesc": "Pembelian kripto sederhana"
       },
       "importAddress": {
         "tips": {
@@ -1678,7 +1681,7 @@
       "emptyToken": {
         "buyHeader": "Beli dengan Fiat",
         "buyBody": "Pembelian crypto yang sederhana",
-        "receiveBody": "Transfer token dari alamat lain.",
+        "receiveBody": "Transfer token dari alamat lain",
         "title": "Danai Dompet Anda",
         "receiveHeader": "Terima Crypto"
       },
@@ -1801,6 +1804,12 @@
     "safeMessageQueue": {
       "loading": "Memuat pesan",
       "noData": "Tidak ada pesan"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "address": "Alamat",
+        "portfolio": "Portofolio"
+      }
     }
   },
   "component": {
@@ -1995,7 +2004,8 @@
     "Price": "Harga",
     "Unknown": "Tidak Dikenal",
     "Paste": "Tempel",
-    "appDescription": "Dompet yang mengubah permainan untuk Ethereum dan semua rantai EVM"
+    "appDescription": "Dompet yang mengubah permainan untuk Ethereum dan semua rantai EVM",
+    "24h": "24j"
   },
   "background": {
     "error": {

@@ -875,7 +875,9 @@
       "enterThePassphrase": "Anahtar Kelimeyi Girin",
       "delete-checklist-1": "Bu adresi silersem, ilgili özel anahtar ve tohum ifadesinin silineceğini anlıyorum ve Rabby bunları geri yükleyemeyecek.",
       "delete-checklist-2": "Anahtar kelimeyi veya tohum ifadesini yedeklediğimi ve şimdi silmeye hazır olduğumu onaylıyorum.",
-      "add-address": "Adres ekle"
+      "add-address": "Adres ekle",
+      "quickAddressTitle_other": "{{count}} Adresler",
+      "quickAddressTitle_one": "{{count}} Adres"
     },
     "home": {
       "services": {
@@ -983,10 +985,10 @@
         "receiveCrypto": "Kripto Al ",
         "pin": "Pin",
         "noAssets": "Varlık yok mu?",
-        "importAddressDesc": "Mevcut fonlara sahip bir adres ekleyin.",
+        "importAddressDesc": "Mevcut fonlara sahip bir adres ekleyin",
         "totalBalance": "Toplam Bakiyeniz",
-        "buyWithFiatDesc": "Bir banka kartı veya banka hesabı kullanarak kripto satın alın.",
-        "receiveCryptoDesc": "Başka bir adrese token transfer et.",
+        "buyWithFiatDesc": "Basit kripto alımı",
+        "receiveCryptoDesc": "Başka bir adrese token transfer et",
         "buyWithFiat": "Fiat ile Satın Al"
       },
       "importAddress": {
@@ -1680,7 +1682,7 @@
         "buyBody": "Basit kripto alımı",
         "buyHeader": "Fiat ile Satın Al",
         "receiveHeader": "Kripto Al ",
-        "receiveBody": "Başka bir adresten token transfer et.",
+        "receiveBody": "Başka bir adresten token transfer et",
         "title": "Cüzdanınızı Fonlayın"
       },
       "nft": {
@@ -1802,6 +1804,12 @@
     "safeMessageQueue": {
       "loading": "Yükleniyor mesajlar",
       "noData": "Mesaj yok"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "address": "Adres",
+        "portfolio": "Portföy"
+      }
     }
   },
   "component": {
@@ -1996,7 +2004,8 @@
     "Unknown": "Bilinmiyor",
     "Paste": "Yapıştır",
     "Balance": "Bakiye",
-    "unlimited": "sınırsız"
+    "unlimited": "sınırsız",
+    "24h": "24s"
   },
   "background": {
     "error": {

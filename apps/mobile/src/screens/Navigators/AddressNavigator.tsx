@@ -50,6 +50,7 @@ import { useTranslation } from 'react-i18next';
 import { filterMyAccounts } from '@/utils/account';
 import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPasswordScreen';
 import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
+import { AddressAssetsOverview } from '@/screens/Address/AddressAssetsOverviewScreen';
 
 const AddressStack =
   createCustomNativeStackNavigator<AddressNavigatorParamList>();
@@ -114,6 +115,16 @@ export function AddressNavigator() {
             headerTintColor: colors2024['neutral-title-1'],
             headerTitleStyle: styles.headerTitleText,
             // eslint-disable-next-line react/no-unstable-nested-components
+            headerRight: () => <AddressListScreenButton type="address" />,
+          },
+        ])}
+      />
+      <AddressStack.Screen
+        name={RootNames.AddressAssetsOverview}
+        component={AddressAssetsOverview}
+        options={mergeScreenOptions2024([
+          {
+            // title: 'Address',
             headerRight: () => <AddressListScreenButton type="address" />,
           },
         ])}

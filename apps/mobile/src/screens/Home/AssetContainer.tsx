@@ -28,11 +28,12 @@ import {
   ASSETS_SECTION_HEADER,
   ASSETS_SEPARATOR_HEIGHT,
   DEFI_ITEM_HEIGHT,
+  DEFI_SEPARATOR_HEIGHT,
   HEADER_TOP_AREA_HEIGHT,
   RootNames,
   TOKEN_EMPTY_ROW_HIGHT,
 } from '@/constant/layout';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 
 import {
@@ -83,7 +84,7 @@ import { chunk } from 'lodash';
 import { getItemId } from './utils/listRenderId';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 
-const icons = {
+export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
   unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
   foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
@@ -192,8 +193,13 @@ export const AssetContainer: React.FC<Props> = ({
   }, [_rawNftList, _rawPortfolios, _rawTokens, selectChainItem?.chain]);
   const sortTokens = useSortToken(tokens);
 
-  const { singleDeFiRefresh, singleNFTRefresh, singleTokenRefresh } =
-    useTriggerTagAssets();
+  const {
+    singleDeFiRefresh,
+    singleNFTRefresh,
+    singleTokenRefresh,
+    tokenRefresh,
+    deFiRefresh,
+  } = useTriggerTagAssets();
 
   const layoutProvider = useMemo(() => {
     return new LayoutProvider(
@@ -251,10 +257,10 @@ export const AssetContainer: React.FC<Props> = ({
             break;
           case ViewTypes.DEFI:
             dim.width = SCREEN_WIDTH;
-            dim.height = DEFI_ITEM_HEIGHT + ASSETS_SEPARATOR_HEIGHT;
+            dim.height = DEFI_ITEM_HEIGHT + DEFI_SEPARATOR_HEIGHT;
             break;
           default:
-            dim.width = SCREEN_WIDTH - 32;
+            dim.width = SCREEN_WIDTH;
             dim.height = ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT;
         }
       },
@@ -606,6 +612,7 @@ export const AssetContainer: React.FC<Props> = ({
               toast.success(t('page.tokenDetail.actionsTips.fold_success'));
             }
             singleTokenRefresh();
+            tokenRefresh();
           },
         },
         {
@@ -638,11 +645,12 @@ export const AssetContainer: React.FC<Props> = ({
               toast.success(t('page.tokenDetail.actionsTips.pin_success'));
             }
             singleTokenRefresh();
+            tokenRefresh();
           },
         },
       ];
     },
-    [isLight, singleTokenRefresh, t],
+    [isLight, singleTokenRefresh, t, tokenRefresh],
   );
   const getDefiOrNftMenuAction = useCallback(
     (
@@ -713,6 +721,7 @@ export const AssetContainer: React.FC<Props> = ({
             }
             if (type === 'defi') {
               singleDeFiRefresh();
+              deFiRefresh();
             } else if (type === 'nft') {
               singleNFTRefresh();
             }
@@ -720,7 +729,7 @@ export const AssetContainer: React.FC<Props> = ({
         },
       ];
     },
-    [isLight, singleDeFiRefresh, singleNFTRefresh, t],
+    [deFiRefresh, isLight, singleDeFiRefresh, singleNFTRefresh, t],
   );
 
   const handleOnReceive = async () => {
@@ -806,17 +815,19 @@ export const AssetContainer: React.FC<Props> = ({
       case 'unfold_token':
       case 'fold_token':
         return (
-          <TokenRow
-            data={data}
-            style={StyleSheet.flatten([
-              styles.renderItemWrapper,
-              !isLight && styles.bg2,
-            ])}
-            onTokenPress={handleOpenTokenDetail}
-            menuActions={getTokenMenuActions(data)}
-            logoSize={46}
-            chainLogoSize={18}
-          />
+          <View style={styles.rowWrap}>
+            <TokenRow
+              data={data}
+              style={StyleSheet.flatten([
+                styles.renderItemWrapper,
+                !isLight && styles.bg2,
+              ])}
+              onTokenPress={handleOpenTokenDetail}
+              menuActions={getTokenMenuActions(data)}
+              logoSize={46}
+              chainLogoSize={18}
+            />
+          </View>
         );
       case 'unfold_defi':
       case 'fold_defi':
@@ -855,17 +866,19 @@ export const AssetContainer: React.FC<Props> = ({
       case 'unfold_nft':
       case 'fold_nft':
         return (
-          <NftRow
-            style={StyleSheet.flatten([
-              styles.renderItemWrapper,
-              !isLight && styles.bg2,
-            ])}
-            menuActions={getDefiOrNftMenuAction('nft', data)}
-            logoSize={46}
-            chainLogoSize={18}
-            item={data}
-            onPress={() => handlePressNft(data)}
-          />
+          <View style={styles.rowWrap}>
+            <NftRow
+              style={StyleSheet.flatten([
+                styles.renderItemWrapper,
+                !isLight && styles.bg2,
+              ])}
+              menuActions={getDefiOrNftMenuAction('nft', data)}
+              logoSize={46}
+              chainLogoSize={18}
+              item={data}
+              onPress={() => handlePressNft(data)}
+            />
+          </View>
         );
       /** header */
       case 'asset_header':
@@ -946,7 +959,11 @@ export const AssetContainer: React.FC<Props> = ({
       case 'empty-nft':
         return <EmptyAssets desc={data} type={type} />;
       case 'loading-skeleton':
-        return <ItemLoader />;
+        return (
+          <View style={styles.rowWrap}>
+            <ItemLoader style={styles.removeLeft} />
+          </View>
+        );
       case 'loading-defi-skeleton':
         return <DefiItemLoader />;
       default:
@@ -1115,13 +1132,18 @@ const getStyles = createGetStyles2024(ctx => ({
   bgContainer: {
     // backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
+  rowWrap: {
+    paddingHorizontal: 16,
+  },
+  removeLeft: {
+    marginLeft: 0,
+  },
   renderItemWrapper: {
     backgroundColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 16,
     height: ASSETS_ITEM_HEIGHT_NEW,
     paddingLeft: 12,
     width: '100%',
-    marginLeft: 16,
   },
   defiGroups: {
     flexDirection: 'row',

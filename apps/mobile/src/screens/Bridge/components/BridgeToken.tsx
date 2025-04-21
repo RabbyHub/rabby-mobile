@@ -45,6 +45,7 @@ const BridgeToken = ({
   clickMaxBtnCount,
   isMaxRef,
   handleMax,
+  skeletonLoading,
 }: {
   clickMaxBtnCount?: number;
   handleMax?: () => void;
@@ -61,6 +62,7 @@ const BridgeToken = ({
   fromTokenId?: string;
   noQuote?: boolean;
   inSufficient?: boolean;
+  skeletonLoading?: boolean;
 } & (
   | {
       type?: 'from';
@@ -153,7 +155,7 @@ const BridgeToken = ({
 
       <View style={styles.body}>
         <View style={styles.inputContainer}>
-          {valueLoading ? (
+          {valueLoading && skeletonLoading ? (
             <CustomSkeleton
               animation="wave"
               LinearGradientComponent={Linear}
@@ -165,11 +167,12 @@ const BridgeToken = ({
               style={StyleSheet.flatten([
                 styles.input,
                 (showNoQuote || !value) && styles.showNoQuoteText,
+                valueLoading && styles.loadingOpacity,
               ])}>
               {showNoQuote ? t('page.bridge.no-quote') : value?.toString() || 0}
             </Text>
           ) : (
-            <View style={styles.inputBox}>
+            <View style={[styles.inputBox]}>
               <TextInput
                 numberOfLines={1}
                 multiline={false}
@@ -217,38 +220,38 @@ const BridgeToken = ({
             )}
           </View>
         </View>
-        {!valueLoading && (
-          <View style={styles.footer}>
+        {
+          <View style={[styles.footer, valueLoading && styles.loadingOpacity]}>
             <View style={styles.balanceContainer}>
               {<Text style={styles.value}>{useValue}</Text>}
             </View>
             <View style={styles.balanceContainer}>
-              {inSufficient && token ? (
-                <View style={styles.inSufficient}>
-                  <Text style={styles.inSufficientText}>
-                    {t('page.swap.insufficient-balance')}
-                    {': '}
-                    {formatTokenAmount(tokenAmountBn(token).toString(10))}
-                  </Text>
-                </View>
-              ) : (
+              {
                 <View style={styles.balanceWrapper}>
                   <RcIconWalletCC
                     width={16}
                     height={16}
-                    color={colors2024['neutral-foot']}
+                    color={
+                      inSufficient
+                        ? colors2024['red-default']
+                        : colors2024['neutral-foot']
+                    }
                   />
-                  <Text style={styles.balanceText}>
+                  <Text
+                    style={[
+                      styles.balanceText,
+                      inSufficient && styles.insufficientInput,
+                    ]}>
                     {token
                       ? formatTokenAmount(tokenAmountBn(token).toString(10)) ||
                         '0'
                       : 0}
                   </Text>
                 </View>
-              )}
+              }
             </View>
           </View>
-        )}
+        }
       </View>
     </View>
   );
@@ -395,6 +398,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   balanceText: {
     fontSize: 13,
     color: '#6A7587',
+  },
+  loadingOpacity: {
+    opacity: 0.5,
   },
 }));
 

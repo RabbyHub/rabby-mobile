@@ -973,7 +973,9 @@
       "delete-checklist-2": "ฉันยืนยันว่าฉันได้สำรองข้อมูล private key หรือ seed phrase แล้วและพร้อมที่จะลบมันตอนนี้",
       "watch-address": "Watch Address",
       "delete-checklist-1": "ฉันเข้าใจว่าหากฉันลบที่อยู่นี้ คีย์ส่วนตัวและวลีเมล็ดที่เกี่ยวข้องจะถูกลบ และ Rabby จะไม่สามารถกู้คืนได้",
-      "private-key": "คีย์ส่วนตัว"
+      "private-key": "คีย์ส่วนตัว",
+      "quickAddressTitle_one": "{{count}} ที่อยู่",
+      "quickAddressTitle_other": "{{count}} ที่อยู่"
     },
     "swap": {
       "title": "Swap",
@@ -1054,7 +1056,7 @@
         "fundYourWallet": "เติมเงินใน Wallet ของคุณ",
         "receiveCryptoDesc": "โอนโทเค็นจากที่อยู่อื่น",
         "importAddress": "นำเข้าที่อยู่",
-        "buyWithFiatDesc": "ซื้อ crypto โดยใช้บัตรเดบิตหรือบัญชีธนาคาร"
+        "buyWithFiatDesc": "การซื้อสกุลเงินดิจิทัลที่ง่าย"
       },
       "importAddress": {
         "importTitle": "นำเข้า Address",
@@ -1941,6 +1943,12 @@
     "safeMessageQueue": {
       "noData": "ไม่มีข้อความ",
       "loading": "กำลังโหลดข้อความ"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "ผลงาน",
+        "address": "ที่อยู่"
+      }
     }
   },
   "native": {
@@ -1997,7 +2005,8 @@
     },
     "Unknown": "ไม่ทราบ",
     "unlimited": "ไม่จำกัด",
-    "Addresses": "ที่อยู่"
+    "Addresses": "ที่อยู่",
+    "24h": "24ชั่วโมง"
   },
   "background": {
     "transactionWatcher": {

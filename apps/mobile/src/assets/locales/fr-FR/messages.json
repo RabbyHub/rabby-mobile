@@ -799,7 +799,9 @@
       "enterPassphraseTitle": "Entrez la phrase secrète pour signer",
       "delete-checklist-2": "Je confirme que j'ai sauvegardé la clé privée ou la phrase secrète et que je suis prêt à la supprimer maintenant.",
       "watch-address": "Adresse de surveillance",
-      "enterThePassphrase": "Entrez la passphrase"
+      "enterThePassphrase": "Entrez la passphrase",
+      "quickAddressTitle_one": "{{count}} Adresse",
+      "quickAddressTitle_other": "{{count}} Adresses"
     },
     "home": {
       "services": {
@@ -914,12 +916,12 @@
         "totalBalance": "Solde total",
         "importAddress": "Importer une adresse",
         "receiveCrypto": "Recevoir des Crypto",
-        "importAddressDesc": "Ajoutez une adresse existante avec des fonds.",
+        "importAddressDesc": "Ajoutez une adresse existante avec des fonds",
         "noAssets": "Pas d'actifs ?",
         "buyWithFiat": "Acheter avec Fiat",
         "fundYourWallet": "Alimentez votre portefeuille",
-        "receiveCryptoDesc": "Transférer des tokens depuis une autre adresse.",
-        "buyWithFiatDesc": "Achetez des cryptos avec une carte de débit ou un compte bancaire."
+        "receiveCryptoDesc": "Transférer des tokens depuis une autre adresse",
+        "buyWithFiatDesc": "Achat de crypto simple"
       },
       "addAddress": {
         "createAddress": "Créer une adresse",
@@ -1414,7 +1416,7 @@
       "emptyToken": {
         "buyHeader": "Acheter avec Fiat",
         "receiveHeader": "Recevoir des cryptos",
-        "receiveBody": "Transférer des tokens depuis une autre adresse.",
+        "receiveBody": "Transférer des tokens depuis une autre adresse",
         "title": "Alimentez votre portefeuille",
         "buyBody": "Achat simple de crypto"
       },
@@ -1812,6 +1814,12 @@
     "safeMessageQueue": {
       "loading": "Chargement des messages",
       "noData": "Aucun message"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "Portefeuille",
+        "address": "Adresse"
+      }
     }
   },
   "native": {
@@ -2026,7 +2034,8 @@
     },
     "Unknown": "Inconnu",
     "unlimited": "illimité",
-    "Addresses": "Adresses"
+    "Addresses": "Adresses",
+    "24h": "24h"
   },
   "background": {
     "transactionWatcher": {

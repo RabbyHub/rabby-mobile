@@ -171,6 +171,7 @@ const Swap = ({
     swapUseSlider,
     clearExpiredTimer,
     finishedQuotes,
+    inSufficientCanGetQuote,
   } = useTokenPair(currentAccount!.address);
 
   const {
@@ -241,15 +242,6 @@ const Swap = ({
   useEffect(() => {
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     const isBuy = navState?.type === 'Buy';
-    console.log(
-      'navState?.isFromSwap',
-      isBuy,
-      navState,
-      navState?.isFromSwap,
-      receiveToken?.chain,
-      payToken?.chain,
-      chainItem?.serverId,
-    );
 
     if (navState?.isFromSwap) {
       if (navState?.tokenId && chainItem?.enum === chain) {
@@ -556,7 +548,7 @@ const Swap = ({
   const noQuoteOrigin = useMemo(
     () =>
       Number(payAmount) > 0 &&
-      !inSufficient &&
+      inSufficientCanGetQuote &&
       amountAvailable &&
       !quoteLoading &&
       !!payToken &&
@@ -564,7 +556,7 @@ const Swap = ({
       !activeProvider,
     [
       payAmount,
-      inSufficient,
+      inSufficientCanGetQuote,
       amountAvailable,
       quoteLoading,
       payToken,
@@ -586,7 +578,7 @@ const Swap = ({
       if (
         !isWrapToken &&
         Number(payAmount) > 0 &&
-        !inSufficient &&
+        inSufficientCanGetQuote &&
         amountAvailable &&
         !quoteLoading &&
         !!payToken &&
@@ -602,7 +594,7 @@ const Swap = ({
       showMoreVisible,
       isWrapToken,
       payAmount,
-      inSufficient,
+      inSufficientCanGetQuote,
       amountAvailable,
       payToken,
       receiveToken,
@@ -749,6 +741,7 @@ const Swap = ({
             <BridgeSwitchBtn
               onPress={exchangeToken}
               style={styles.arrowWrapper}
+              loading={quoteLoading}
             />
           </View>
 
@@ -758,7 +751,7 @@ const Swap = ({
 
           {showMoreVisible &&
             Number(payAmount) > 0 &&
-            !inSufficient &&
+            inSufficientCanGetQuote &&
             !!amountAvailable &&
             !!payToken &&
             !!receiveToken && (

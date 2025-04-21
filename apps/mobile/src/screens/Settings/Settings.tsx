@@ -19,6 +19,8 @@ import {
   RcGoogleDrive,
   RcCode,
   RcI18n,
+  RcFaceId,
+  RcFingerprint,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -35,7 +37,6 @@ import {
   SHOULD_SUPPORT_DARK_MODE,
   useAppTheme,
   useTheme2024,
-  useThemeColors,
 } from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { type SettingConfBlock, Block } from './Block';
@@ -53,13 +54,10 @@ import {
   APP_VERSIONS,
   INTERNAL_REQUEST_SESSION,
 } from '@/constant';
-import { clearPendingTxs } from '@/core/apis/transactions';
 import { openExternalUrl } from '@/core/utils/linking';
-import { useCurrentAccount } from '@/hooks/account';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useUpgradeInfo } from '@/hooks/version';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import {
   ManagePasswordSheetModal,
@@ -74,10 +72,8 @@ import {
   AutoLockSettingLabel,
 } from './components/LockAbout';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
-import { getBiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { SwitchShowFloatingAutoLockCountdown } from './components/SwitchFloatingView';
-import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
@@ -129,7 +125,7 @@ const isIOS = Platform.OS === 'ios';
 
 const { switchBiometricsRef, selectAutolockTimeRef } = sheetModalRefsNeedLock;
 function SettingsBlocks() {
-  const colors = useThemeColors();
+  const { colors, styles } = useTheme2024({ getStyle: getStyles });
 
   const [isShowClearPendingPopup, setIsShowClearPendingPopup] = useState(false);
 
@@ -193,7 +189,7 @@ function SettingsBlocks() {
         items: [
           {
             label: biometricsComputed.defaultTypeLabel,
-            icon: getBiometricsIcon(isFaceID),
+            icon: isFaceID ? RcFaceId : RcFingerprint,
             rightNode: (
               <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
             ),
@@ -209,7 +205,7 @@ function SettingsBlocks() {
             onPress: () => {
               startSelectAutolockTime();
             },
-            rightTextNode: <AutoLockSettingLabel />,
+            rightTextNode: <AutoLockSettingLabel style={styles.rightText} />,
           },
           {
             label: t('page.setting.currentLanguage'),
@@ -218,9 +214,7 @@ function SettingsBlocks() {
               setCurrentLanguageModalVisible(true);
             },
             rightTextNode: (
-              <Text style={{ color: colors['neutral-body'] }}>
-                {currentLangLabel}
-              </Text>
+              <Text style={styles.rightText}>{currentLangLabel}</Text>
             ),
           },
           {
@@ -259,17 +253,7 @@ function SettingsBlocks() {
               setThemeSelectorModalVisible(true);
             },
             rightTextNode: ctx => {
-              return (
-                <Text
-                  style={{
-                    fontWeight: '400',
-                    fontSize: 14,
-                    color: colors['neutral-title-1'],
-                    marginRight: 6,
-                  }}>
-                  {appThemeText}
-                </Text>
-              );
+              return <Text style={styles.rightText}>{appThemeText}</Text>;
             },
           },
           {
@@ -290,21 +274,14 @@ function SettingsBlocks() {
             rightNode: ({ rightIconNode }) => {
               return (
                 <View style={{ flexDirection: 'row' }}>
-                  <Text
-                    style={{
-                      color: colors['neutral-title-1'],
-                      fontSize: 14,
-                      fontWeight: '400',
-                      paddingRight: 8,
-                    }}>
+                  <Text style={styles.rightText}>
                     {localVersion || APP_VERSIONS.fromJs}
                   </Text>
                   {remoteVersion.couldUpgrade && (
                     <Text
                       style={{
+                        ...styles.rightText,
                         color: colors['red-default'],
-                        fontSize: 14,
-                        fontWeight: '400',
                         paddingRight: 4,
                       }}>
                       (New version)
@@ -365,9 +342,7 @@ function SettingsBlocks() {
                     <View style={{ flexDirection: 'row' }}>
                       <AppCacheSizeText
                         style={{
-                          color: colors['neutral-title-1'],
-                          fontSize: 14,
-                          fontWeight: '400',
+                          ...styles.rightText,
                           paddingRight: 8,
                         }}
                       />
@@ -460,7 +435,7 @@ function SettingsBlocks() {
 }
 
 function DevSettingsBlocks() {
-  const { colors, colors2024, styles } = useTheme2024({ getStyle: getStyles });
+  const { colors } = useTheme2024({ getStyle: getStyles });
   const navigation = useRabbyAppNavigation();
 
   const {
@@ -645,7 +620,7 @@ function DevSettingsBlocks() {
             },
             {
               label: 'Test Authentication Modal',
-              icon: getBiometricsIcon(isFaceID),
+              icon: isFaceID ? RcFaceId : RcFingerprint,
               onPress: () => {
                 AuthenticationModal2024.show({
                   title: 'Test Authentication Modal',
@@ -858,6 +833,14 @@ const getStyles = createGetStyles2024(ctx => {
       alignItems: 'center',
       justifyContent: 'center',
       // ...makeDebugBorder(),
+    },
+    rightText: {
+      color: ctx.colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 16,
+      fontStyle: 'normal',
+      fontWeight: '500',
+      lineHeight: 20,
     },
   };
 });

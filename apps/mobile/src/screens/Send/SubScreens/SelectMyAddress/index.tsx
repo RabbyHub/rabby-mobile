@@ -59,6 +59,7 @@ const SelectMyAddressScreen = ({
               account={item}
               inWhiteList={isAddrOnWhitelist(item.address)}
               isForWhitelist={isForWhitelist}
+              isImported={true}
             />
           </View>
         )}

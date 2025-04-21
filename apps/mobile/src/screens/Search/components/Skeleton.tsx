@@ -1,22 +1,24 @@
 import { memo } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleProp, ViewStyle } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 
-export const ItemLoader = memo(() => {
-  const { styles } = useTheme2024({ getStyle });
-  return (
-    <View style={[styles.positionLoader]}>
-      <Skeleton width={40} height={40} circle />
-      <View style={styles.loaderList}>
-        <Skeleton height={20} circle />
-        <Skeleton width={144} height={18} circle />
+export const ItemLoader = memo(
+  ({ style }: { style?: StyleProp<ViewStyle> }) => {
+    const { styles } = useTheme2024({ getStyle });
+    return (
+      <View style={[styles.positionLoader, style]}>
+        <Skeleton width={40} height={40} circle />
+        <View style={styles.loaderList}>
+          <Skeleton height={20} circle />
+          <Skeleton width={144} height={18} circle />
+        </View>
       </View>
-    </View>
-  );
-});
+    );
+  },
+);
 
 export const PositionLoader = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -58,7 +60,9 @@ const getStyle = createGetStyles2024(ctx => ({
     paddingHorizontal: 12,
     paddingVertical: 15,
     gap: 12,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
     borderTopColor: ctx.colors2024['neutral-line'],
   },
   loaderList: {

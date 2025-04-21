@@ -113,9 +113,10 @@ function ImportMethods(): JSX.Element {
                   }),
                 );
 
-                preferenceService.setReportActionTs(
-                  REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
-                );
+                !state?.isNotNewUserProc &&
+                  preferenceService.setReportActionTs(
+                    REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_SEED_PHRASE,
+                  );
               }}>
               <SeedPhraseIcon style={styles.icon} />
               <Text style={styles.importType}>
@@ -146,9 +147,10 @@ function ImportMethods(): JSX.Element {
                   }),
                 );
 
-                preferenceService.setReportActionTs(
-                  REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
-                );
+                !state?.isNotNewUserProc &&
+                  preferenceService.setReportActionTs(
+                    REPORT_TIMEOUT_ACTION_KEY.CLICK_IMPORT_PRIVATE_KEY,
+                  );
               }}>
               <PrivateKeyIcon style={styles.icon} />
               <Text style={styles.importType}>
@@ -191,6 +193,10 @@ function ImportMethods(): JSX.Element {
                       StackActions.push(RootNames.Scanner, {
                         syncExtension: true,
                       }),
+                    );
+
+                    preferenceService.setReportActionTs(
+                      REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
                     );
                   }}>
                   <IconSyncRabby style={styles.icon} />

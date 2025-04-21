@@ -21,6 +21,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { StyleProp } from 'react-native';
+import { Skeleton } from '@rneui/themed';
 
 interface Props {
   account: KeyringAccountWithAlias;
@@ -35,7 +36,7 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
 
-  const { data: allowance } = useRequest(async () => {
+  const { data: allowance, loading } = useRequest(async () => {
     const res = await getERC20Allowance(
       token.chain,
       token.id,
@@ -71,12 +72,16 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
         <Text style={styles.label}>
           {t('page.transactions.detail.totalApprovedAmount')}
         </Text>
-        <Text style={styles.value}>
-          {(allowance || 0) >= 1e9
-            ? t('global.unlimited')
-            : formatAmount(allowance || 0)}{' '}
-          {getTokenSymbol(token)}
-        </Text>
+        {loading ? (
+          <Skeleton width={80} height={16} />
+        ) : (
+          <Text style={styles.value}>
+            {(allowance || 0) >= 1e9
+              ? t('global.unlimited')
+              : formatAmount(allowance || 0)}{' '}
+            {getTokenSymbol(token)}
+          </Text>
+        )}
       </View>
       <View style={styles.buttonContainer}>
         <Tip
@@ -96,7 +101,7 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
             !allowance ? t('page.transactions.detail.NoApproveNeed') : undefined
           }>
           <Button
-            // loading={btnLoading}
+            loading={loading}
             disabled={!allowance}
             buttonStyle={[styles.ghostButton]}
             titleStyle={[

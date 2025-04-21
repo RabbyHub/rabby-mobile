@@ -875,7 +875,9 @@
       "watch-address": "Watch Address",
       "enterThePassphrase": "Enter the Passphrase",
       "enterPassphraseTitle": "Enter Passphrase to Sign",
-      "passphraseError": "Passphrase invalid"
+      "passphraseError": "Passphrase invalid",
+      "quickAddressTitle_one": "{{count}} Address",
+      "quickAddressTitle_other": "{{count}} Addresses"
     },
     "home": {
       "services": {
@@ -983,11 +985,11 @@
         "noAssets": "No Assets?",
         "fundYourWallet": "Fund Your Wallet",
         "importAddress": "Import an Address",
-        "importAddressDesc": "Add an existing address with funds.",
+        "importAddressDesc": "Add an existing address with funds",
         "receiveCrypto": "Receive Crypto",
-        "receiveCryptoDesc": "Transfer tokens from another address.",
+        "receiveCryptoDesc": "Transfer tokens from another address",
         "buyWithFiat": "Buy with Fiat",
-        "buyWithFiatDesc": "Purchase crypto using a debit card or bank account."
+        "buyWithFiatDesc": "Simple crypto purchase"
       },
       "importAddress": {
         "importTitle": "Import Address",
@@ -1679,7 +1681,7 @@
       "emptyToken": {
         "title": "Fund Your Wallet",
         "receiveHeader": "Receive Crypto",
-        "receiveBody": "Transfer tokens from another address.",
+        "receiveBody": "Transfer tokens from another address",
         "buyHeader": "Buy with Fiat",
         "buyBody": "Simple crypto purchase"
       },
@@ -1802,6 +1804,12 @@
     "safeMessageQueue": {
       "loading": "Loading messages",
       "noData": "No messages"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "Portfolio",
+        "address": "Address"
+      }
     }
   },
   "component": {
@@ -1996,7 +2004,8 @@
       "option_Dark": "Dark"
     },
     "unlimited": "unlimited",
-    "Addresses": "Addresses"
+    "Addresses": "Addresses",
+    "24h": "24h"
   },
   "background": {
     "error": {

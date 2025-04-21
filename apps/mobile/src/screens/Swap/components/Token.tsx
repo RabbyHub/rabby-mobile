@@ -1,7 +1,7 @@
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { QuoteProvider } from '../hooks';
 import { useTranslation } from 'react-i18next';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { tokenAmountBn } from '../utils';
 import {
   formatSpeicalAmount,
@@ -15,7 +15,6 @@ import TokenSelect, { TokenSelectInst } from './TokenSelect';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Skeleton } from '@rneui/themed';
 import {
   Pressable,
   StyleSheet,
@@ -52,6 +51,7 @@ interface SwapTokenItemProps {
   valueLoading?: boolean;
   currentQuote?: QuoteProvider;
   finishedQuotes?: number;
+  skeletonLoading?: boolean;
 }
 export const SwapTokenItem = (props: SwapTokenItemProps) => {
   const {
@@ -68,6 +68,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     inSufficient,
     valueLoading,
     currentQuote,
+    skeletonLoading,
   } = props;
   const { t } = useTranslation();
 
@@ -88,15 +89,14 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
       const amount = tokenAmountBn(token);
       return [
         formatTokenAmount(amount.toString(10)),
-        valueLoading
-          ? formatUsdValue(0)
-          : formatUsdValue(
-              new BigNumber(value || 0).times(token.price).toString(10),
-            ),
+
+        formatUsdValue(
+          new BigNumber(value || 0).times(token?.price).toString(10),
+        ),
       ];
     }
     return [0, formatUsdValue(0)];
-  }, [token, valueLoading, value]);
+  }, [token, value]);
 
   const onTokenSelect = useCallback(
     (newToken: TokenItem) => {
@@ -228,7 +228,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
           <Divider color={colors2024['neutral-line']} />
         </View>
 
-        {valueLoading ? (
+        {valueLoading && skeletonLoading ? (
           <CustomSkeleton
             animation="wave"
             LinearGradientComponent={Linear}
@@ -253,7 +253,12 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             ]}
           />
         ) : (
-          <Text numberOfLines={1} style={StyleSheet.flatten([styles.input])}>
+          <Text
+            numberOfLines={1}
+            style={StyleSheet.flatten([
+              styles.input,
+              valueLoading && styles.loadingOpacity,
+            ])}>
             {value ? formatTokenAmount(value) : '0'}
           </Text>
         )}
@@ -261,27 +266,34 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
 
       <View style={styles.bottom}>
         <View style={styles.balanceContainer}>
-          {!inSufficient && (
-            <RcIconWalletCC
-              width={16}
-              height={16}
-              color={colors2024['neutral-foot']}
-            />
-          )}
+          <RcIconWalletCC
+            width={16}
+            height={16}
+            color={
+              inSufficient
+                ? colors2024['red-default']
+                : colors2024['neutral-foot']
+            }
+          />
           <Text style={[styles.balance, inSufficient && styles.inSufficient]}>
-            {inSufficient ? t('page.swap.insufficient') : ''}
             {balance}
           </Text>
         </View>
         <View style={styles.usdValueContainer}>
-          {valueLoading ? (
+          {valueLoading && skeletonLoading ? (
             <CustomSkeleton
               animation="wave"
               LinearGradientComponent={Linear}
               style={styles.skeleton2}
             />
           ) : (
-            <Text style={styles.usdValue}>{usdValue}</Text>
+            <Text
+              style={StyleSheet.flatten([
+                styles.usdValue,
+                valueLoading && styles.loadingOpacity,
+              ])}>
+              {usdValue}
+            </Text>
           )}
         </View>
       </View>
@@ -419,5 +431,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 14,
     height: 14,
     backgroundColor: 'transparent',
+  },
+  loadingOpacity: {
+    opacity: 0.5,
   },
 }));

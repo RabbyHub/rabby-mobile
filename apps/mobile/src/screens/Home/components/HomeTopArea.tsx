@@ -16,7 +16,6 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useCachedValue from '@/hooks/common/useCachedValue';
-import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
 import { useTheme2024 } from '@/hooks/theme';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { useCurve } from '@/hooks/useCurve';
@@ -160,7 +159,7 @@ export const HomeTopArea = ({
   });
   const {
     result: curveData,
-    isLoading,
+    isLoading: isLoadingCurve,
     refresh: refreshCurveData,
   } = useCurve(currentAccount?.address, 0, balance);
 
@@ -218,6 +217,20 @@ export const HomeTopArea = ({
     badgeStyle?: StyleProp<TextStyle>;
   }[] = [
     {
+      key: 'Swap',
+      title: t('page.home.services.swap'),
+      Icon: RcIconSwap,
+      onPress: async () => {
+        if (!currentAccount) {
+          return;
+        }
+        await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.Swap,
+        });
+      },
+    },
+    {
       key: 'Send',
       title: t('page.home.services.send'),
       Icon: RcIconSend,
@@ -243,20 +256,6 @@ export const HomeTopArea = ({
             screen: RootNames.Receive,
           }),
         );
-      },
-    },
-    {
-      key: 'Swap',
-      title: t('page.home.services.swap'),
-      Icon: RcIconSwap,
-      onPress: async () => {
-        if (!currentAccount) {
-          return;
-        }
-        await switchSceneCurrentAccount('MakeTransactionAbout', currentAccount);
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.Swap,
-        });
       },
     },
     ...(isGnosisKeyring
@@ -413,7 +412,7 @@ export const HomeTopArea = ({
                 )}
               </Text>
 
-              {balanceLoading ? (
+              {isLoadingCurve ? (
                 <Skeleton
                   circle
                   style={{ marginLeft: 1 }}
@@ -445,7 +444,7 @@ export const HomeTopArea = ({
                           : colors2024['green-default']
                       }
                     />
-                    {!isLoading && missingList?.length ? (
+                    {!isLoadingCurve && missingList?.length ? (
                       <Tip
                         content={t('page.dashboard.home.missingDataTooltip', {
                           text:

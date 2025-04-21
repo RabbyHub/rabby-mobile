@@ -81,7 +81,8 @@
     },
     "Unknown": "未知",
     "unlimited": "unlimited",
-    "Addresses": "Addresses"
+    "Addresses": "Addresses",
+    "24h": "24小时"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -750,7 +751,9 @@
       "enterPassphraseTitle": "输入密码短语以进行签名",
       "delete-checklist-2": "我确认已备份私钥或助记词，并准备立即删除。",
       "delete-checklist-1": "我知道如果我删除这个地址，相应的私钥和助记词将被删除，Rabby 将无法恢复它们。",
-      "passphraseError": "密码无效"
+      "passphraseError": "密码无效",
+      "quickAddressTitle_one": "{{count}} 地址",
+      "quickAddressTitle_other": "{{count}} 个地址"
     },
     "bridge": {
       "Select": "选择",
@@ -970,12 +973,12 @@
         "pin": "Pin",
         "fundYourWallet": "为您的钱包充值",
         "buyWithFiat": "法币购买",
-        "importAddressDesc": "添加一个已有且有资金的地址。",
+        "importAddressDesc": "添加一个已有且有资金的地址",
         "importAddress": "导入地址",
         "receiveCrypto": "接收加密货币",
         "noAssets": "没有资产？",
-        "buyWithFiatDesc": "使用借记卡或银行账户购买加密货币。",
-        "receiveCryptoDesc": "从其他地址转移代币。"
+        "buyWithFiatDesc": "简单的加密货币购买",
+        "receiveCryptoDesc": "从其他地址转移代币"
       },
       "createNewAddress": {
         "verificationFailed": "验证失败",
@@ -1468,7 +1471,7 @@
       },
       "emptyToken": {
         "title": "为您的钱包注资",
-        "receiveBody": "将代币从另一个地址转移。",
+        "receiveBody": "将代币从另一个地址转移",
         "buyHeader": "使用法币购买",
         "buyBody": "简单的加密货币购买",
         "receiveHeader": "接收 Crypto"
@@ -1868,6 +1871,12 @@
     "safeMessageQueue": {
       "noData": "没有消息",
       "loading": "加载消息"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "投资组合",
+        "address": "地址"
+      }
     }
   },
   "component": {

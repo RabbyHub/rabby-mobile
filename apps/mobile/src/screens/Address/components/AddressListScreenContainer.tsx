@@ -15,7 +15,10 @@ export type CurrentAddressProps = NativeStackScreenProps<
   'StackAddress'
 >;
 
-export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
+export const AddressListScreenContainer: React.FC<any> = ({
+  children,
+  style,
+}) => {
   const { accounts } = useAccounts();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -28,7 +31,7 @@ export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
   }, [accounts, navigation]);
 
   return (
-    <NormalScreenContainer2024 overwriteStyle={styles.root}>
+    <NormalScreenContainer2024 overwriteStyle={[styles.root, style]}>
       {children}
       {/* <LinearGradient
         pointerEvents="none"

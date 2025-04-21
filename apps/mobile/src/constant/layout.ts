@@ -33,7 +33,15 @@ export const ASSETS_SECTION_HEADER = 36;
 export const TOKEN_EMPTY_ROW_HIGHT = 404;
 export const ASSETS_EMPTY_ROW_HIGHT = 186;
 export const ASSETS_SEPARATOR_HEIGHT = 8;
+export const ASSETS_LIST_HEADER = 22;
+export const DEFI_SEPARATOR_HEIGHT = 12;
 export const HEADER_TOP_AREA_HEIGHT = 170;
+export const HEADER_CHART_HEIGHT = 189;
+export const SWITCH_HEADER_HEIGHT = 58;
+export const SWITCH_HEADER_GAP = 16;
+export const ADDRESS_ENTRY_HEUGHT = 78;
+export const ADDRESS_ENTRY_GAP = 12;
+export const TOGGLE_SPLIT_HEIGHT = 24;
 
 // for DappWebViewControl2
 export const ScreenLayouts2 = {
@@ -141,6 +149,7 @@ export const RootNames = {
 
   StackAddress: 'StackAddress',
   AddressList: 'AddressList',
+  AddressAssetsOverview: 'AddressAssetsOverview',
   ApprovalAddressList: 'ApprovalAddressList',
   ImportNewAddress: 'ImportNewAddress',
   ImportHardwareAddress: 'ImportHardwareAddress',

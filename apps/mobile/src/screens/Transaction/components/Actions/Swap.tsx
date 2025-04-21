@@ -49,8 +49,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     const maxGasTx = data.maxGasTx;
     const actionData = (maxGasTx.action!.actionData.swap ||
       maxGasTx.action!.actionData.wrapToken ||
-      maxGasTx.action!.actionData.crossToken ||
-      maxGasTx.action!.actionData.crossSwapToken ||
       maxGasTx.action!.actionData.unWrapToken)!;
     const requireData = maxGasTx.action?.requiredData as SwapRequireData;
 

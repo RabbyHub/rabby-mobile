@@ -140,21 +140,8 @@ export const combinePinTokens = (
   pinTokens: TokenItem[],
   tokens: CombineTokensItem[],
 ) => {
-  const existPinTokens = tokens
-    .filter(i => i._isPined)
-    .sort((a, b) => {
-      if (a._isPined && b._isPined) {
-        return a._pinIndex! - b._pinIndex!;
-      }
-      if (a._isPined) {
-        return -1;
-      }
-      if (b._isPined) {
-        return 1;
-      }
-      return 0;
-    });
-  const noPinTokens = tokens.filter(i => !i._isPined).sort();
+  const existPinTokens = tokens.filter(i => i._isPined);
+  const noPinTokens = tokens.filter(i => !i._isPined);
   const unloadPinTokens = pinTokens
     .filter(
       i =>

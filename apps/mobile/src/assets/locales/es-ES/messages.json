@@ -949,7 +949,9 @@
       "passphraseError": "Frase de paso no válida",
       "delete-checklist-1": "Entiendo que si elimino esta dirección, se eliminarán la clave privada y la frase semilla correspondientes, y Rabby NO podrá recuperarlas.",
       "delete-checklist-2": "Confirmo que he respaldado la clave privada o la frase semilla y estoy listo para eliminarla ahora.",
-      "private-key": "Clave Privada"
+      "private-key": "Clave Privada",
+      "quickAddressTitle_one": "{{count}} Dirección",
+      "quickAddressTitle_other": "{{count}} Direcciones"
     },
     "swap": {
       "chain": "Cadena",
@@ -1065,13 +1067,13 @@
         "totalBalance": "Saldo total",
         "pin": "PIN",
         "noAssets": "¿Sin activos?",
-        "receiveCryptoDesc": "Transfiere tokens desde otra dirección.",
+        "receiveCryptoDesc": "Transfiere tokens desde otra dirección",
         "importAddress": "Importar una dirección",
         "receiveCrypto": "Recibir Crypto",
         "buyWithFiat": "Comprar con Fiat",
         "fundYourWallet": "Financiar tu wallet",
-        "buyWithFiatDesc": "Compra criptomonedas usando una tarjeta de débito o cuenta bancaria.",
-        "importAddressDesc": "Añadir una dirección existente con fondos."
+        "buyWithFiatDesc": "Compra de criptomonedas sencilla",
+        "importAddressDesc": "Añadir una dirección existente con fondos"
       }
     },
     "bridge": {
@@ -1626,7 +1628,7 @@
       "emptyToken": {
         "receiveHeader": "Recibir Crypto",
         "title": "Fondea tu Wallet",
-        "receiveBody": "Transferir tokens desde otra dirección.",
+        "receiveBody": "Transferir tokens desde otra dirección",
         "buyHeader": "Comprar con Fiat",
         "buyBody": "Compra sencilla de cripto"
       },
@@ -1956,6 +1958,12 @@
     "safeMessageQueue": {
       "noData": "Sin mensajes",
       "loading": "Cargando mensajes"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "portfolio": "Portafolio",
+        "address": "Dirección"
+      }
     }
   },
   "global": {
@@ -1997,7 +2005,8 @@
     },
     "Unknown": "Desconocido",
     "unlimited": "ilimitado",
-    "Addresses": "Direcciones"
+    "Addresses": "Direcciones",
+    "24h": "24h"
   },
   "bluetooth": {
     "powered_off_alert": {

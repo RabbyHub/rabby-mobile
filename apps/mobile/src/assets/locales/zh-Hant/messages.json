@@ -90,7 +90,8 @@
     },
     "Unknown": "未知",
     "unlimited": "unlimited",
-    "Addresses": "地址"
+    "Addresses": "地址",
+    "24h": "24小時"
   },
   "background": {
     "transactionWatcher": {
@@ -781,7 +782,9 @@
       "seed-phrase": "助記詞",
       "passphraseError": "密碼無效",
       "delete-checklist-2": "我確認已備份私鑰或助記詞，並準備立即刪除。",
-      "delete-checklist-1": "我知道如果我刪除這個地址，相應的私鑰和助記詞將被刪除，Rabby 將無法恢復它們。"
+      "delete-checklist-1": "我知道如果我刪除這個地址，相應的私鑰和助記詞將被刪除，Rabby 將無法恢復它們。",
+      "quickAddressTitle_one": "{{count}} 地址",
+      "quickAddressTitle_other": "{{count}} 個地址"
     },
     "home": {
       "services": {
@@ -1065,9 +1068,9 @@
         "noAssets": "沒有資產？",
         "fundYourWallet": "向錢包充值",
         "buyWithFiat": "法幣購買",
-        "importAddressDesc": "添加已有資金的地址。",
-        "receiveCryptoDesc": "從其他地址轉移代幣。\n",
-        "buyWithFiatDesc": "使用借記卡或銀行帳戶購買加密貨幣。"
+        "importAddressDesc": "添加已有資金的地址",
+        "receiveCryptoDesc": "從其他地址轉移代幣",
+        "buyWithFiatDesc": "簡單的加密貨幣購買"
       },
       "createNewAddress": {
         "BackupSeedPhrase": "手動備份助記詞",
@@ -1435,7 +1438,7 @@
         "receiveHeader": "接收 Crypto",
         "buyHeader": "使用法幣購買",
         "title": "為您的錢包充值",
-        "receiveBody": "從另一個地址轉移 tokens。",
+        "receiveBody": "從另一個地址轉移 tokens",
         "buyBody": "簡單的加密貨幣購買"
       },
       "nft": {
@@ -1916,6 +1919,12 @@
     "safeMessageQueue": {
       "noData": "沒有消息",
       "loading": "正在加載訊息"
+    },
+    "multiAddressAssets": {
+      "tabs": {
+        "address": "地址",
+        "portfolio": "投資組合"
+      }
     }
   },
   "component": {

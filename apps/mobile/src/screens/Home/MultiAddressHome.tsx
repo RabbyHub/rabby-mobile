@@ -15,6 +15,7 @@ import {
   ScrollView,
   Dimensions,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
@@ -26,13 +27,7 @@ import {
 } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
-import {
-  useGetBinaryMode,
-  useTheme2024,
-  useAppThemeConfig,
-} from '@/hooks/theme';
-import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
-import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
+import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
 import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -50,9 +45,8 @@ import RcIconSearch from '@/assets2024/icons/home/IconSearch.svg';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
-import { splitNumberByStep } from '@/utils/number';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import { transactionHistoryService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -62,18 +56,10 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { navigate } from '@/utils/navigation';
 import { useApprovalAlertCounts } from './hooks/approvals';
 import { BadgeText } from './components/HomeTopArea';
-import {
-  KeyringAccountWithAlias,
-  useCurrentAccount,
-  useMyAccounts,
-} from '@/hooks/account';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import useHomePinAddress from './hooks/useHomePinAddress';
+import { useMyAccounts } from '@/hooks/account';
 import { ThemeColors2024 } from '@/constant/theme';
 import { useAppState } from '@react-native-community/hooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
-import { ellipsisAddress } from '@/utils/address';
 import { useSyncAssetsDB } from '@/databases/hooks/assets';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
@@ -87,43 +73,37 @@ import { OfflineChainNotify } from './components/OfflineChainNotify';
 import { colord } from 'colord';
 import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
+import { Card } from '@/components2024/Card';
+import { ArrowCircleCC } from '@/assets2024/icons/address';
+import LinearGradient from 'react-native-linear-gradient';
+import { LoadingLinear } from '../TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { Skeleton } from '@rneui/base';
+import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
+import { BlurShadowView } from '@/components2024/BluerShadow';
 
 const HeaderHeight = 24;
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
-  const { loading } = prop;
+  const { loading, data, loadingNewCurve } = prop;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
-  const { balanceAccounts, accountsLength } = useAccountsBalance({
-    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
-  const needSmallNum = useMemo(() => {
-    const num = balanceAccounts.reduce(
-      (sum, item) => sum + (Number(item.balance) || 0),
-      0,
-    );
-    return num >= 1000000000;
-  }, [balanceAccounts]);
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
-  const totalBalanceUsd = useMemo(() => {
-    const num = balanceAccounts.reduce(
-      (sum, item) => sum + (Number(item.balance) || 0),
-      0,
-    );
-    return '$' + splitNumberByStep(num > 10 ? Math.floor(num) : num.toFixed(2));
-  }, [balanceAccounts]);
 
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
+
+  const percentChange = useMemo(() => {
+    return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
+      data.isLoss ? '-' : '+'
+    }${data.change})`;
+  }, [data]);
 
   useEffect(() => {
     if (loading) {
@@ -167,43 +147,83 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
               action: 'Click_Setting',
             });
           }}>
-          <RcIconSetting />
+          <RcIconSetting color={colors2024['neutral-title-1']} />
           {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
-      <View style={styles.balanceBox}>
-        <Text
-          style={[
-            styles.usdText,
-            // eslint-disable-next-line react-native/no-inline-styles
-            {
-              fontSize: needSmallNum ? 28 : 36,
-            },
-          ]}>
-          {totalBalanceUsd}
-        </Text>
-        <TouchableOpacity
-          style={styles.accountBg}
-          onPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-            navigation.dispatch(
-              StackActions.push(RootNames.StackAddress, {
-                screen: RootNames.AddressList,
-                params: {},
-              }),
-            );
-            matomoRequestEvent({
-              category: 'Click_Header',
-              action: 'Click_Address',
-            });
-          }}>
-          <RcIconSmallWallet />
-          <Text style={styles.accountText}>{accountsLength}</Text>
-          <RcIconSmallArrow />
-        </TouchableOpacity>
+      <View style={styles.curveBox}>
+        <BlurShadowView isLight={isLight}>
+          <Card
+            style={[styles.curveCard, styles.shadowView]}
+            onPress={() => {
+              trigger('impactLight', {
+                enableVibrateFallback: true,
+                ignoreAndroidSystemSettings: false,
+              });
+              navigation.dispatch(
+                StackActions.push(RootNames.StackAddress, {
+                  screen: RootNames.AddressAssetsOverview,
+                  params: {},
+                }),
+              );
+              matomoRequestEvent({
+                category: 'Click_Header',
+                action: 'Click_Address',
+              });
+            }}>
+            <LinearGradient
+              colors={
+                isLight
+                  ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
+                  : ['rgba(0, 0, 0, 1)', 'rgba(0, 0, 0, 0)']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.curveContainer}>
+              {loadingNewCurve ? (
+                <Skeleton
+                  width={181}
+                  height={44}
+                  style={styles.skeleton}
+                  LinearGradientComponent={LoadingLinear}
+                />
+              ) : (
+                <Text style={styles.netWorth}>{data.netWorth}</Text>
+              )}
+              {loadingNewCurve ? (
+                <Skeleton
+                  width={100}
+                  height={22}
+                  style={styles.skeleton}
+                  LinearGradientComponent={LoadingLinear}
+                />
+              ) : (
+                <View style={styles.changeSection}>
+                  <Text
+                    style={[
+                      styles.changePercent,
+                      {
+                        color: data.isLoss
+                          ? colors2024['red-default']
+                          : colors2024['green-default'],
+                      },
+                    ]}>
+                    {percentChange}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <ArrowCircleCC
+              style={styles.arrow}
+              width={42}
+              height={42}
+              color={colors2024['neutral-body']}
+              backgroundColor={colors2024['neutral-bg-2']}
+            />
+          </Card>
+        </BlurShadowView>
       </View>
     </View>
   );
@@ -225,8 +245,9 @@ function MultiAddressHome(): JSX.Element {
     success: number;
     fail: number;
   }>();
+  const { top10Addresses } = useAccountInfo();
+
   const timeRef = useRef<null | NodeJS.Timer>(null);
-  const { switchAccount } = useCurrentAccount();
   const appState = useAppState();
 
   const { width } = Dimensions.get('window');
@@ -344,11 +365,22 @@ function MultiAddressHome(): JSX.Element {
     balanceCacheAccounts,
     triggerUpdate,
     balanceLoading,
-    accountsLength,
+    getTotalBalance,
   } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
     accountsNoUnique: true, // balanceAccounts has filter same address accounts
   });
+
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
+
+  const {
+    combineData,
+    refresh: refreshCurve,
+    loading,
+    isLoadingNew: loadingNewCurve,
+  } = useMultiCurve(top10Addresses, true, top10Balance);
   useFetchCexInfo();
 
   const { accounts } = useMyAccounts({
@@ -361,9 +393,6 @@ function MultiAddressHome(): JSX.Element {
 
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(unionAccounts);
-
-  const { pinAccountsFirstFour, isShowPin, unPinAddress } =
-    useHomePinAddress(balanceAccounts);
 
   const displayFundWallet = useMemo(
     () =>
@@ -402,6 +431,12 @@ function MultiAddressHome(): JSX.Element {
 
     return result;
   });
+
+  useEffect(() => {
+    setTimeout(() => {
+      deleteLongTimeCurveCache();
+    }, 0);
+  }, []);
 
   // useMount(() => {  no use ?
   //   eventBus.addListener(EVENTS.TX_COMPLETED, fetchHistory);
@@ -447,6 +482,7 @@ function MultiAddressHome(): JSX.Element {
         triggerUpdateAlert();
         syncTop10Assets();
         syncTop10History();
+        refreshCurve();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
@@ -463,26 +499,14 @@ function MultiAddressHome(): JSX.Element {
     forceUpdate();
     syncTop10Assets(true);
     syncTop10History(true);
-  }, [triggerUpdate, forceUpdate, syncTop10Assets, syncTop10History]);
-
-  const totalBalance = useMemo(() => {
-    const num = balanceAccounts.reduce(
-      (sum, item) => sum + (Number(item.balance) || 0),
-      0,
-    );
-    return num;
-  }, [balanceAccounts]);
-
-  const calcPinPercent = useCallback(
-    (balance: number) => {
-      let percent = 0;
-      if (balance && totalBalance) {
-        percent = Math.floor((balance / totalBalance) * 100);
-      }
-      return `${percent}%`;
-    },
-    [totalBalance],
-  );
+    refreshCurve(true);
+  }, [
+    triggerUpdate,
+    forceUpdate,
+    syncTop10Assets,
+    syncTop10History,
+    refreshCurve,
+  ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
@@ -581,26 +605,7 @@ function MultiAddressHome(): JSX.Element {
     ],
   );
 
-  const handleClickPinAccount = useCallback(
-    (pinItem: KeyringAccountWithAlias) => {
-      trigger('impactLight', {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
-
-      switchAccount(pinItem);
-      navigation.dispatch(
-        StackActions.push(RootNames.SingleAddressStack, {
-          screen: RootNames.SingleAddressHome,
-          params: {},
-        }),
-      );
-    },
-    [switchAccount, navigation],
-  );
-
   const { bottom } = useSafeAreaInsets();
-  const isDarkTheme = useGetBinaryMode() === 'dark';
 
   useEffect(() => {
     matomoRequestEvent({
@@ -613,7 +618,11 @@ function MultiAddressHome(): JSX.Element {
     <NormalScreenContainer2024
       type="linear"
       noHeader
-      bgImageSource={require('@/assets2024/icons/home/ImgBgHome.png')}
+      bgImageSource={
+        combineData.isLoss
+          ? require('@/assets2024/icons/home/homeRed.png')
+          : require('@/assets2024/icons/home/homeGreen.png')
+      }
       linearProp={{
         colors: isLight
           ? [colors2024['neutral-bg-1'], colors2024['neutral-bg-2']]
@@ -626,7 +635,11 @@ function MultiAddressHome(): JSX.Element {
         paddingTop: 64,
       }}>
       <View style={styles.paddingContainer}>
-        <MultiAddressHomeHeader loading={balanceLoading} />
+        <MultiAddressHomeHeader
+          data={combineData}
+          loading={loading}
+          loadingNewCurve={loadingNewCurve}
+        />
         {pendingTxCount > 0 && (
           <View style={[styles.pendingContainer]} pointerEvents="box-none">
             <TouchableOpacity
@@ -661,90 +674,6 @@ function MultiAddressHome(): JSX.Element {
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>
-          {isShowPin && (
-            <View style={[styles.pinGrid]}>
-              {pinAccountsFirstFour.map((item, index) => {
-                return item ? (
-                  <ContextMenuView
-                    menuConfig={{
-                      menuTitle: item.alias || ellipsisAddress(item.address),
-                      menuActions: [
-                        ...(IS_ANDROID
-                          ? [
-                              {
-                                title:
-                                  item.alias || ellipsisAddress(item.address),
-                                key: 'hostname',
-                                icon: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
-                                disabled: true,
-                                action() {},
-                              },
-                            ]
-                          : []),
-                        {
-                          title: t('page.whitelist.copyAddress'),
-                          icon: isDarkTheme
-                            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
-                            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
-                          androidIconName: 'ic_rabby_menu_copy',
-                          key: 'copy',
-                          action() {
-                            Clipboard.setString(item.address);
-                            toastCopyAddressSuccess(item.address);
-                          },
-                        },
-                        {
-                          title: 'UnPin',
-                          icon: isDarkTheme
-                            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
-                            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
-                          androidIconName: 'ic_rabby_menu_un_pin',
-                          key: 'pin',
-                          action() {
-                            unPinAddress(item.address, item.brandName);
-                          },
-                        },
-                      ],
-                    }}
-                    key={`${item.address}-${item.brandName}`}
-                    preViewBorderRadius={10}
-                    triggerProps={{ action: 'longPress' }}>
-                    <TouchableOpacity
-                      key={index}
-                      delayLongPress={200} // long press delay
-                      onLongPress={() => {
-                        trigger('impactLight', {
-                          enableVibrateFallback: true,
-                          ignoreAndroidSystemSettings: false,
-                        });
-                      }}
-                      onPress={() => {
-                        handleClickPinAccount(item);
-                        matomoRequestEvent({
-                          category: 'Click_Pin',
-                          action: `Click_${index}`,
-                        });
-                      }}>
-                      <BlurView
-                        blurType={appThemeMode ?? 'light'}
-                        blurAmount={2}
-                        style={StyleSheet.flatten([styles.pinGridItem])}>
-                        <WalletIcon
-                          type={item.brandName}
-                          width={22}
-                          height={22}
-                          borderRadius={5}
-                        />
-                        <Text style={styles.pinGridText}>
-                          {calcPinPercent(item.balance || 0)}
-                        </Text>
-                      </BlurView>
-                    </TouchableOpacity>
-                  </ContextMenuView>
-                ) : null;
-              })}
-            </View>
-          )}
           <OfflineChainNotify />
           {displayFundWallet && (
             <>
@@ -849,7 +778,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   balanceTextBox: {
     marginRight: 12,
     color: colors2024['neutral-title-1'],
-    fontWeight: '900',
+    fontWeight: '700',
     fontSize: 20,
     lineHeight: 24,
     textAlign: 'left',
@@ -1187,6 +1116,78 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   hidden: {
     display: 'none',
+  },
+  curveBox: {
+    paddingHorizontal: 15,
+    paddingTop: 30,
+  },
+  curveCard: {
+    borderRadius: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    height: 128,
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-line'],
+    backgroundColor: 'transparent',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  shadowView: {
+    ...Platform.select({
+      ios: {
+        shadowColor: colors2024['neutral-black'],
+        shadowOffset: {
+          width: 0,
+          height: 4,
+        },
+        shadowOpacity: 0.03,
+        shadowRadius: 10,
+        elevation: 8,
+      },
+    }),
+  },
+  skeleton: {
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  curveContainer: {
+    gap: 10,
+  },
+  arrow: {
+    width: 42,
+    height: 42,
+    borderRadius: 30,
+  },
+  changePercent: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['green-default'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  netWorth: {
+    fontSize: 36,
+    lineHeight: 42,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  changeSection: {
+    flexDirection: 'row',
+    gap: 2,
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  changeTime: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
   },
 }));
 

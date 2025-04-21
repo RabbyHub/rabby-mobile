@@ -123,6 +123,7 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
+  [RootNames.AddressAssetsOverview]?: {};
   [RootNames.ReceiveAddressList]?: {};
   // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {
