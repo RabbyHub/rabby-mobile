@@ -142,7 +142,7 @@ PODS:
     - nanopb/encode (= 2.30909.1)
   - nanopb/decode (2.30909.1)
   - nanopb/encode (2.30909.1)
-  - OpenSSL-Universal (3.3.3001)
+  - OpenSSL-Universal (3.3.2000)
   - PromisesObjC (2.4.0)
   - RCT-Folly (2022.05.16.00):
     - boost
@@ -1669,7 +1669,7 @@ SPEC CHECKSUMS:
   MMKVCore: edbad9714bb70344544148f086a4a69061ff31b6
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
-  OpenSSL-Universal: 6082b0bf950e5636fe0d78def171184e2b3899c2
+  OpenSSL-Universal: b60a3702c9fea8b3145549d421fdb018e53ab7b4
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
   RCTRequired: 415e56f7c33799a6483e41e4dce607f3daf1e69b
