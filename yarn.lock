@@ -30419,9 +30419,9 @@ __metadata:
   linkType: hard
 
 "react-native-aes-crypto@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "react-native-aes-crypto@npm:3.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-aes-crypto%2F-%2Freact-native-aes-crypto-3.0.1.tgz"
-  checksum: 7e852a471fe80ddcdba3df9d79dee50b22f82a5a00fb7fda230cd01f6e963dde5fb63929067ca1e604c34a922f24a711bb6874d672f55da0584e59dde6dc3096
+  version: 3.2.1
+  resolution: "react-native-aes-crypto@npm:3.2.1"
+  checksum: 00d6cbbfa49c536a833f44c4fb32e32245d86cf431a20c1148c1ab350c0c7789e745b383d44cd1132fa596f2ecdd412aec361391c391ca4e53bb0e712f4684fa
   languageName: node
   linkType: hard
 
