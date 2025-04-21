@@ -16,7 +16,6 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { findChain, isTestnetChainId } from '@/utils/chain';
 import { Account } from '@/core/services/preference';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
-import { underline2Camelcase } from '@/core/controllers/rpcFlow';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
@@ -58,6 +57,7 @@ import { GnosisDrawer } from './TxComponents/GnosisDrawer';
 import { GnosisAdminFooterBarPopup } from './TxComponents/GnosisAdminFooterBarPopup';
 import { useSetState } from 'ahooks';
 import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
+import { underline2Camelcase } from '@/core/utils/common';
 
 interface SignTypedDataProps {
   method: string;
