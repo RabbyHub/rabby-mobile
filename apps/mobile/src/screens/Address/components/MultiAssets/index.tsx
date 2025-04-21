@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Dimensions,
+  ImageBackground,
   Keyboard,
   StyleSheet,
   Text,
@@ -125,7 +126,11 @@ const ViewTypes = {
   ASSET_HEADER: 11,
 };
 
-export const MultiAssets = () => {
+export const MultiAssets = ({
+  onUpdateIsDecrease,
+}: {
+  onUpdateIsDecrease: (isDecrease: boolean) => void;
+}) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const {
@@ -223,6 +228,10 @@ export const MultiAssets = () => {
   useEffect(() => {
     setExtendedState(prev => ({ ...prev, isLight, combineData }));
   }, [isLight, combineData]);
+
+  useEffect(() => {
+    onUpdateIsDecrease(combineData.isLoss);
+  }, [combineData.isLoss, onUpdateIsDecrease]);
 
   const [listData, setListData] = useState(() =>
     dataProvider.cloneWithRows([{ type: 'overview' }, { type: 'switch_tabs' }]),
@@ -804,7 +813,7 @@ export const MultiAssets = () => {
       (type, dim) => {
         switch (type) {
           case ViewTypes.OVERVIEW:
-            dim.width = SCREEN_WIDTH;
+            dim.width = SCREEN_WIDTH - 32;
             dim.height = HEADER_CHART_HEIGHT;
             break;
           case ViewTypes.ASSET_HEADER:
@@ -843,6 +852,21 @@ export const MultiAssets = () => {
       },
     );
   }, [listData]);
+  const topBg = useMemo(() => {
+    if (combineData.isLoss) {
+      if (isLight) {
+        return require('@/assets2024/singleHome/home-loss-bg-2.png');
+      } else {
+        return require('@/assets2024/singleHome/home-loss-dark-bg-2.png');
+      }
+    } else {
+      if (isLight) {
+        return require('@/assets2024/singleHome/home-profit-bg-2.png');
+      } else {
+        return require('@/assets2024/singleHome/home-profit-dark-bg-2.png');
+      }
+    }
+  }, [combineData.isLoss, isLight]);
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -868,6 +892,18 @@ export const MultiAssets = () => {
       firstRowType === '' ||
       !list.length ? null : (
         <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
+          <ImageBackground
+            source={topBg}
+            resizeMode="cover"
+            // eslint-disable-next-line react-native/no-inline-styles
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: SCREEN_WIDTH,
+              height: 150,
+            }}
+          />
           <SwitchHeader
             currentTab={extendedState.currentTab}
             addressLength={list.length}
@@ -989,7 +1025,7 @@ export const MultiAssets = () => {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
-    marginTop: -10,
+    // marginTop: -10,
   },
   list: {
     flex: 1,
@@ -1003,6 +1039,8 @@ const getStyles = createGetStyles2024(ctx => ({
     top: 0,
     left: 0,
     right: 0,
+    height: SWITCH_HEADER_HEIGHT,
+    overflow: 'hidden',
     // height: ASSETS_SECTION_HEADER,
     zIndex: 1,
   },
@@ -1011,7 +1049,7 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    // paddingBottom: 12,
   },
   emptyHolder: {
     marginTop: 65,

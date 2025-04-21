@@ -31,7 +31,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: 0,
-    backgroundColor: colors2024['neutral-bg-0'],
+    // backgroundColor: colors2024['neutral-bg-0'],
     gap: 4,
     width: '100%',
   },
