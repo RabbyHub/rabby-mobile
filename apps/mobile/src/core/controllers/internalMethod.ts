@@ -91,9 +91,15 @@ const getDappsInfo = async (req: ProviderRequest) => {
   return keyBy(res, 'id');
 };
 
+const getOriginIsScam = async (req: ProviderRequest) => {
+  const args: { origin: string; source: string } = req.data.params?.[0];
+  return openapi.getOriginIsScam(args.origin, args.origin);
+};
+
 export default {
   tabCheckin,
   getProviderState,
   rabby_getProviderState: getProviderState,
   rabby_getDappsInfo: getDappsInfo,
+  rabby_getOriginIsScam: getOriginIsScam,
 };
