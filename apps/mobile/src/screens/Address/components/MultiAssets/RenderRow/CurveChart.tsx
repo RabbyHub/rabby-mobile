@@ -93,7 +93,6 @@ export const ChartHeader = ({
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
-  const { t } = useTranslation();
   const percentChange = useDerivedValue(() => {
     const isActiveIndexData =
       data?.[currentIndex?.value]?.changePercent !== undefined;
@@ -158,12 +157,14 @@ export const ChartHeader = ({
 
   if (loading) {
     return (
-      <Skeleton
-        width={181}
-        height={42}
-        style={styles.skeleton}
-        LinearGradientComponent={LoadingLinear}
-      />
+      <View style={styles.center}>
+        <Skeleton
+          width={181}
+          height={42}
+          style={styles.skeleton}
+          LinearGradientComponent={LoadingLinear}
+        />
+      </View>
     );
   }
   return (
@@ -186,7 +187,14 @@ export const ChartHeader = ({
   );
 };
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginLeft: -16,
+  },
   skeleton: {
+    marginTop: 20,
     borderRadius: 8,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
@@ -239,7 +247,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: HEADER_CHART_HEIGHT,
   },
   loading: {
-    width: ScreenWidth - 40,
+    width: ScreenWidth - 32,
     paddingTop: 20,
     paddingHorizontal: 0,
   },

@@ -4,7 +4,7 @@ import { Skeleton } from '@rneui/themed';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import { LoadingLinear } from './LoadingLinear';
 
-export const CurveLoader = ({ style }: { style: StyleProp<ViewStyle> }) => {
+export const CurveLoader = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { styles } = useTheme2024({ getStyle });
   return (
     <View style={[styles.wrapper, style]}>
