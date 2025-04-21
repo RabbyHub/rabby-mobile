@@ -45,7 +45,12 @@ export const getAllDefiCount = (portfolios: DisplayedProject[]) => {
       ? 0
       : portfolio._portfolios
           ?.reduce(
-            (acc, item) => acc.plus(item._sumTokenRealUsdValue || 0),
+            (acc, item) =>
+              acc.plus(
+                item._sumTokenRealUsdValue < 0
+                  ? 0
+                  : item._sumTokenRealUsdValue || 0,
+              ),
             new BigNumber(0),
           )
           .toNumber();
@@ -57,7 +62,10 @@ export const getDisplayedPortfolioUsdValue = (
   portfolios: DisplayedProject['_portfolios'],
 ) => {
   return portfolios?.reduce(
-    (acc, item) => acc.plus(item._sumTokenRealUsdValue || 0),
+    (acc, item) =>
+      acc.plus(
+        item._sumTokenRealUsdValue < 0 ? 0 : item._sumTokenRealUsdValue || 0,
+      ),
     new BigNumber(0),
   );
 };
