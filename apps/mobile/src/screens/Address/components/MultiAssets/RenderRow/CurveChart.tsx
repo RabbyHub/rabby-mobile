@@ -2,8 +2,8 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { CurvePoint } from '@/screens/Home/hooks/useCurve';
-import { memo } from 'react';
-import { Dimensions, Text, View } from 'react-native';
+import { memo, useMemo } from 'react';
+import { Dimensions, ImageBackground, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formChartData } from '@/hooks/useCurve';
 import { HEADER_CHART_HEIGHT } from '@/constant/layout';
@@ -16,7 +16,6 @@ import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
-import { useTranslation } from 'react-i18next';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -33,43 +32,72 @@ function Chart({
   isNoAssets: boolean;
   pathColor: string;
 }) {
-  const { styles, colors } = useTheme2024({ getStyle });
+  const { styles, colors, isLight } = useTheme2024({ getStyle });
+  const topBg = useMemo(() => {
+    if (data.isLoss) {
+      if (isLight) {
+        return require('@/assets2024/singleHome/home-loss-bg-2.png');
+      } else {
+        return require('@/assets2024/singleHome/home-loss-dark-bg-2.png');
+      }
+    } else {
+      if (isLight) {
+        return require('@/assets2024/singleHome/home-profit-bg-2.png');
+      } else {
+        return require('@/assets2024/singleHome/home-profit-dark-bg-2.png');
+      }
+    }
+  }, [data.isLoss, isLight]);
   return (
     <View style={styles.container}>
-      <LineChart.Provider data={data.list}>
-        <ChartHeader
-          netWorth={data.netWorthWithDot}
-          change={data.change}
-          changePercent={data.changePercent}
-          isLoss={data.isLoss}
-          data={data.list}
-          loading={loading}
-        />
-        {isOffline || isNoAssets ? null : !loading ? (
-          <>
-            <LineChart
-              height={114}
-              width={ScreenWidth - 40}
-              shape={d3Shape.curveMonotoneX}
-              style={{ position: 'relative' }}>
-              <LineChart.Path
-                showInactivePath={false}
-                color={pathColor}
-                width={2}>
-                <LineChart.Gradient color={pathColor} />
-              </LineChart.Path>
-              <LineChart.CursorLine color={colors['neutral-line']} />
-              <LineChart.CursorCrosshair
-                color={pathColor}
-                outerSize={12}
-                size={8}
-              />
-            </LineChart>
-          </>
-        ) : (
-          <CurveLoader style={styles.loading} />
-        )}
-      </LineChart.Provider>
+      <ImageBackground
+        source={topBg}
+        resizeMode="cover"
+        // eslint-disable-next-line react-native/no-inline-styles
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: 150,
+        }}
+      />
+      <View style={styles.chartContainer}>
+        <LineChart.Provider data={data.list}>
+          <ChartHeader
+            netWorth={data.netWorthWithDot}
+            change={data.change}
+            changePercent={data.changePercent}
+            isLoss={data.isLoss}
+            data={data.list}
+            loading={loading}
+          />
+          {isOffline || isNoAssets ? null : !loading ? (
+            <>
+              <LineChart
+                height={114}
+                width={ScreenWidth - 40}
+                shape={d3Shape.curveMonotoneX}
+                style={{ position: 'relative' }}>
+                <LineChart.Path
+                  showInactivePath={false}
+                  color={pathColor}
+                  width={2}>
+                  <LineChart.Gradient color={pathColor} />
+                </LineChart.Path>
+                <LineChart.CursorLine color={colors['neutral-line']} />
+                <LineChart.CursorCrosshair
+                  color={pathColor}
+                  outerSize={12}
+                  size={8}
+                />
+              </LineChart>
+            </>
+          ) : (
+            <CurveLoader style={styles.loading} />
+          )}
+        </LineChart.Provider>
+      </View>
     </View>
   );
 }
@@ -93,7 +121,6 @@ export const ChartHeader = ({
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
-  const { t } = useTranslation();
   const percentChange = useDerivedValue(() => {
     const isActiveIndexData =
       data?.[currentIndex?.value]?.changePercent !== undefined;
@@ -158,12 +185,14 @@ export const ChartHeader = ({
 
   if (loading) {
     return (
-      <Skeleton
-        width={181}
-        height={42}
-        style={styles.skeleton}
-        LinearGradientComponent={LoadingLinear}
-      />
+      <View style={styles.center}>
+        <Skeleton
+          width={181}
+          height={42}
+          style={styles.skeleton}
+          LinearGradientComponent={LoadingLinear}
+        />
+      </View>
     );
   }
   return (
@@ -186,7 +215,14 @@ export const ChartHeader = ({
   );
 };
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginLeft: -16,
+  },
   skeleton: {
+    marginTop: 20,
     borderRadius: 8,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
@@ -237,9 +273,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   container: {
     height: HEADER_CHART_HEIGHT,
+    width: ScreenWidth,
+    marginLeft: -16,
+  },
+  chartContainer: {
+    paddingLeft: 16,
   },
   loading: {
-    width: ScreenWidth - 40,
+    width: ScreenWidth - 32,
     paddingTop: 20,
     paddingHorizontal: 0,
   },

@@ -210,10 +210,11 @@ export const useMultiCurve = (
         return data?.data || [];
       })
       .filter(data => data.length > 0);
+    const isAllGet = list.length === addresses.length;
     return formChartData(
       combineMulitCurve(list),
-      totalBalance || 0,
-      new Date().getTime(),
+      isAllGet ? totalBalance || 0 : 0,
+      isAllGet ? new Date().getTime() : 0,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses.length, multiTimeStamp, totalBalance]);
@@ -234,8 +235,7 @@ export const useMultiCurve = (
   ]);
 
   const isLoadingNew = useMemo(() => {
-    // return true;
-    return addresses.some(address => {
+    return addresses?.every(address => {
       return !multiTimeStamp[address.toLocaleLowerCase()]?.data?.length;
     });
   }, [addresses, multiTimeStamp]);

@@ -1,13 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { ImageBackground, Animated } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressListScreenContainer } from './components/AddressListScreenContainer';
 import { MultiAssets } from './components/MultiAssets';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useHeaderHeight } from '@react-navigation/elements';
 
 export function AddressAssetsOverview(): JSX.Element {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
   const { safeTop } = useSafeSizes();
+  const headerHeight = useHeaderHeight();
+  const fadeAnim = React.useRef(new Animated.Value(1)).current;
+  const [isDecrease, setIsDecrease] = useState(false);
+  const topBg = React.useMemo(() => {
+    if (isDecrease) {
+      if (isLight) {
+        return require('@/assets2024/singleHome/home-loss-bg-1.png');
+      } else {
+        return require('@/assets2024/singleHome/home-loss-dark-bg-1.png');
+      }
+    } else {
+      if (isLight) {
+        return require('@/assets2024/singleHome/home-profit-bg-1.png');
+      } else {
+        return require('@/assets2024/singleHome/home-profit-dark-bg-1.png');
+      }
+    }
+  }, [isDecrease, isLight]);
   return (
     <AddressListScreenContainer
       style={[
@@ -16,7 +36,25 @@ export function AddressAssetsOverview(): JSX.Element {
           paddingTop: Math.max(safeTop, 80),
         },
       ]}>
-      <MultiAssets />
+      <Animated.View
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '100%',
+          height: Math.max(headerHeight, 180),
+          opacity: fadeAnim,
+        }}>
+        <ImageBackground
+          source={topBg}
+          resizeMode="cover"
+          style={{
+            width: '100%',
+            height: Math.max(headerHeight, 180),
+          }}
+        />
+      </Animated.View>
+      <MultiAssets onUpdateIsDecrease={setIsDecrease} />
       {/* <FlatList
         ListEmptyComponent={AddressEmptyContainer}
       /> */}
@@ -26,7 +64,7 @@ export function AddressAssetsOverview(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   screen: {
-    backgroundColor: colors2024['neutral-bg-0'],
+    // backgroundColor: colors2024['neutral-bg-0'],
   },
   chart: {
     // paddingVertical: 20,
