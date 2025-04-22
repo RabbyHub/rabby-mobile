@@ -43,13 +43,13 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
-  isInSendHistory?: boolean;
+  onPressBottomBtn?: () => void;
 }
 
 export const Send: React.FC<Props> = ({
   data,
   isSingleAddress,
-  isInSendHistory,
+  onPressBottomBtn,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -239,28 +239,21 @@ export const Send: React.FC<Props> = ({
           <View style={{ flex: 1 }}>
             <Button
               onPress={() => {
-                if (isInSendHistory) {
-                  closeHistoryPopup?.();
-                  const idx = accounts.findIndex(a =>
-                    isSameAddress(a.address, actionData.to),
-                  );
-                  if (idx > -1) {
-                    naviPush(RootNames.StackTransaction, {
-                      screen: RootNames.MultiSend,
-                      params: {
-                        toAddress: accounts[idx].address,
-                        addressBrandName: accounts[idx].brandName,
-                      },
-                    });
-                  }
+                if (onPressBottomBtn) {
+                  onPressBottomBtn();
                   return;
                 }
                 navigateToSendPolyScreen(!!isSingleAddress, {
                   chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
                   tokenId: actionData.token?.id,
+                  toAddress: actionData.to,
                 });
               }}
-              title={t('page.transactions.detail.SendAgain')}
+              title={
+                onPressBottomBtn
+                  ? t('page.transactions.detail.AddToWhitelist')
+                  : t('page.transactions.detail.SendAgain')
+              }
             />
           </View>
         </View>

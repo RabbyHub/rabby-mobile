@@ -32,6 +32,10 @@ import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAl
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CaretDownIconCC } from '@/components/AccountSwitcher/icons/CaretDownIconCC';
+import { SendHistory } from '@/screens/Send/SubScreens/SelectPolyScreen/SendHistory';
+import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import { toast } from '@/components2024/Toast';
+import { useWhitelist } from '@/hooks/whitelist';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -63,8 +67,14 @@ const WhitelistInputScreen = () => {
   const { navigateToSendScreen } = useSendRoutes();
 
   const { findAccount } = useWhiteListAddress(true);
+  const { addWhitelist } = useWhitelist();
 
   const { t } = useTranslation();
+  const [historyVisible, setHistoryVisible] = useState(false);
+
+  const closeHistory = useCallback(() => {
+    setHistoryVisible(false);
+  }, []);
 
   const handleDone = async () => {
     if (!input) {
@@ -126,7 +136,10 @@ const WhitelistInputScreen = () => {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
-  }, []);
+
+    setHistoryVisible(true);
+    Keyboard.dismiss();
+  }, [setHistoryVisible]);
 
   const editAliasName = useAliasNameEditModal();
   // TODO:
@@ -145,125 +158,135 @@ const WhitelistInputScreen = () => {
   }, [navParams?.autoScan]);
 
   return (
-    <FooterButtonScreenContainer
-      as="View"
-      buttonProps={{
-        title: t('global.Confirm'),
-        onPress: handleDone,
-        loading: loading,
-        disabled: !input || !!error,
-      }}
-      style={styles.screen}
-      footerBottomOffset={56}
-      footerContainerStyle={{
-        paddingHorizontal: 20,
-      }}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
-          <View style={styles.topContent}>
-            <View style={styles.header}>
-              <Text style={styles.headerText}>Address</Text>
-              <TouchableOpacity onPress={openSendHistory}>
-                <RcIconSwapHistory
-                  style={styles.icon}
-                  color={colors2024['neutral-body']}
-                />
-              </TouchableOpacity>
-            </View>
-            <View>
-              <NextInput.TextArea
-                style={styles.textContainer}
-                inputStyle={styles.textArea}
-                tipText={''}
-                hasError={!!error}
-                fieldErrorTextStyle={styles.error}
-                containerStyle={Object.assign(
-                  {
-                    borderRadius: 16,
-                  },
-                  error
-                    ? {}
-                    : {
-                        borderColor: 'transparent',
-                      },
-                )}
-                inputProps={{
-                  placeholder: t('page.sendPoly.enterAddress'),
-                  placeholderTextColor: colors2024['neutral-secondary'],
-                  value: input,
-                  blurOnSubmit: true,
-                  autoFocus: true,
-                  returnKeyType: 'done',
-                  onChangeText: handleSubmit,
-                }}
-                // eslint-disable-next-line react/no-unstable-nested-components
-                customIcon={ctx => (
-                  <View style={[ctx.wrapperStyle, styles.customContainer]}>
-                    <PasteButton
-                      style={styles.pasteButton}
-                      onPaste={text => {
-                        handleSubmit(text);
-                      }}
-                    />
-                    <TouchableOpacity
-                      onPress={() => {
-                        navigate(RootNames.Scanner);
-                      }}>
-                      <RcIconScannerCC
-                        style={ctx.iconStyle}
-                        color={colors2024['neutral-title-1']}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
-              {error && (
-                <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
-              )}
-            </View>
-          </View>
-          <View style={styles.nameContent}>
-            <View style={styles.header}>
-              <Text style={styles.headerText}>Name</Text>
-            </View>
-            <View style={styles.editContainer}>
-              <Text style={styles.aliasName}>name</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  // editAliasName.show(account);
-                }}
-                hitSlop={10}
-                style={styles.button}>
-                <EditSVG
-                  color={colors2024['neutral-body']}
-                  width={20}
-                  height={20}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.exChangeContent}>
-            <View style={styles.header}>
-              <Text style={styles.headerText}>Exchange address?</Text>
-              <AppSwitch2024 onValueChange={setIsCex} value={isCex} />
-            </View>
-
-            <TouchableView style={styles.selectCex} onPress={() => {}}>
-              <View style={styles.addressRow}>
-                <Text style={styles.toSelect}>Select exchange</Text>
-                <CaretDownIconCC
-                  style={[styles.caretIcon, isOpen && styles.reverseCaret]}
-                  width={26}
-                  height={26}
-                  bgColor={colors2024['neutral-line']}
-                  lineColor={colors2024['neutral-title-1']}
-                />
+    <>
+      <FooterButtonScreenContainer
+        as="View"
+        buttonProps={{
+          title: t('global.Confirm'),
+          onPress: handleDone,
+          loading: loading,
+          disabled: !input || !!error,
+        }}
+        style={styles.screen}
+        footerBottomOffset={56}
+        footerContainerStyle={{
+          paddingHorizontal: 20,
+        }}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.container}>
+            <View style={styles.topContent}>
+              <View style={styles.header}>
+                <Text style={styles.headerText}>Address</Text>
+                <TouchableOpacity onPress={openSendHistory}>
+                  <RcIconSwapHistory
+                    style={styles.icon}
+                    color={colors2024['neutral-body']}
+                  />
+                </TouchableOpacity>
               </View>
-            </TouchableView>
+              <View>
+                <NextInput.TextArea
+                  style={styles.textContainer}
+                  inputStyle={styles.textArea}
+                  tipText={''}
+                  hasError={!!error}
+                  fieldErrorTextStyle={styles.error}
+                  containerStyle={Object.assign(
+                    {
+                      borderRadius: 16,
+                    },
+                    error
+                      ? {}
+                      : {
+                          borderColor: 'transparent',
+                        },
+                  )}
+                  inputProps={{
+                    placeholder: t('page.sendPoly.enterAddress'),
+                    placeholderTextColor: colors2024['neutral-secondary'],
+                    value: input,
+                    blurOnSubmit: true,
+                    autoFocus: true,
+                    returnKeyType: 'done',
+                    onChangeText: handleSubmit,
+                  }}
+                  // eslint-disable-next-line react/no-unstable-nested-components
+                  customIcon={ctx => (
+                    <View style={[ctx.wrapperStyle, styles.customContainer]}>
+                      <PasteButton
+                        style={styles.pasteButton}
+                        onPaste={text => {
+                          handleSubmit(text);
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={() => {
+                          navigate(RootNames.Scanner);
+                        }}>
+                        <RcIconScannerCC
+                          style={ctx.iconStyle}
+                          color={colors2024['neutral-title-1']}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                />
+                {error && (
+                  <Text style={styles.errorMessage}>
+                    {ERROR_MESSAGE[error]}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View style={styles.nameContent}>
+              <View style={styles.header}>
+                <Text style={styles.headerText}>Name</Text>
+              </View>
+              <View style={styles.editContainer}>
+                <Text style={styles.aliasName}>name</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    // editAliasName.show(account);
+                  }}
+                  hitSlop={10}
+                  style={styles.button}>
+                  <EditSVG
+                    color={colors2024['neutral-body']}
+                    width={20}
+                    height={20}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.exChangeContent}>
+              <View style={styles.header}>
+                <Text style={styles.headerText}>Exchange address?</Text>
+                <AppSwitch2024 onValueChange={setIsCex} value={isCex} />
+              </View>
+
+              <TouchableView style={styles.selectCex} onPress={() => {}}>
+                <View style={styles.addressRow}>
+                  <Text style={styles.toSelect}>Select exchange</Text>
+                  <CaretDownIconCC
+                    style={[styles.caretIcon, isOpen && styles.reverseCaret]}
+                    width={26}
+                    height={26}
+                    bgColor={colors2024['neutral-line']}
+                    lineColor={colors2024['neutral-title-1']}
+                  />
+                </View>
+              </TouchableView>
+            </View>
           </View>
-        </View>
-      </TouchableWithoutFeedback>
-    </FooterButtonScreenContainer>
+        </TouchableWithoutFeedback>
+      </FooterButtonScreenContainer>
+      <SendHistory
+        visible={historyVisible}
+        onClose={closeHistory}
+        title={t('page.sendPoly.SelectFromHistory')}
+        onPressBottomBtn={() => {}} // todo click AddToWhitelist cb
+      />
+    </>
   );
 };
 

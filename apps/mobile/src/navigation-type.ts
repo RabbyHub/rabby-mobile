@@ -254,6 +254,7 @@ export type TransactionNavigatorParamList = {
     canCancel?: boolean;
     isForMultipleAdderss?: boolean;
     title?: string;
+    onPressBottomBtn?: () => void;
     isInSendHistory?: boolean;
     // sendsToken: (TokenItem | undefined)[];
     // approveToken?: TokenItem;

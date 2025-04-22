@@ -37,6 +37,7 @@ export const TransactionItem = ({
   onRefresh,
   isForMultipleAdderss,
   isInSendHistory,
+  onPressBottomBtn,
   closeHistoryPopup,
 }: {
   historySuccessList?: string[];
@@ -45,6 +46,7 @@ export const TransactionItem = ({
   canCancel?: boolean;
   onRefresh?: () => void;
   isInSendHistory?: boolean;
+  onPressBottomBtn?: () => void;
   closeHistoryPopup?: () => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -349,7 +351,7 @@ export const TransactionItem = ({
         data,
         canCancel,
         title: formatTitle,
-        isInSendHistory,
+        onPressBottomBtn: onPressBottomBtn,
       },
     });
   }, [
@@ -358,6 +360,7 @@ export const TransactionItem = ({
     data,
     formatTitle,
     isInSendHistory,
+    onPressBottomBtn,
     closeHistoryPopup,
   ]);
 

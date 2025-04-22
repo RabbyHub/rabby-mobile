@@ -32,6 +32,7 @@ import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { useTranslation } from 'react-i18next';
+import { toast } from '@/components/Toast';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -84,8 +85,15 @@ function markFirstItems(
 interface IProps {
   visible: boolean;
   onClose: () => void;
+  title?: string;
+  onPressBottomBtn?: () => void;
 }
-export const SendHistory = ({ visible, onClose }: IProps) => {
+export const SendHistory = ({
+  visible,
+  onClose,
+  title,
+  onPressBottomBtn,
+}: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const { t } = useTranslation();
@@ -187,6 +195,7 @@ export const SendHistory = ({ visible, onClose }: IProps) => {
             canCancel={canCancel}
             isInSendHistory={true}
             closeHistoryPopup={onClose}
+            onPressBottomBtn={onPressBottomBtn}
             // onRefresh={onRefresh}
           />
         </>
@@ -207,7 +216,7 @@ export const SendHistory = ({ visible, onClose }: IProps) => {
       })}>
       {/* <BottomSheetScrollView> */}
       <AppBottomSheetModalTitle
-        title={t('page.sendPoly.SendHistory')}
+        title={title || t('page.sendPoly.SendHistory')}
         style={{
           paddingTop: ModalLayouts.titleTopOffset,
           fontWeight: '800',

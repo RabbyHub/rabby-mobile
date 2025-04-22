@@ -96,8 +96,8 @@ function HistoryLocalDetailScreen(): JSX.Element {
     data: _data,
     canCancel,
     isForMultipleAdderss,
-    isInSendHistory,
     title,
+    onPressBottomBtn,
   } = route.params || {};
   const [data, setData] = React.useState<TransactionGroup>(_data);
   const isPending = useMemo(() => data.isPending, [data]);
@@ -412,7 +412,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
         <Send
           data={data}
           isSingleAddress={!isForMultipleAdderss}
-          isInSendHistory={isInSendHistory}
+          onPressBottomBtn={onPressBottomBtn}
         />
       ) : (
         <UnknownAction data={data} isSingleAddress={!isForMultipleAdderss} />

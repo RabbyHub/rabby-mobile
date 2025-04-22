@@ -69,6 +69,7 @@
         "Succeeded": "Succeeded",
         "Failed": "Failed",
         "SendAgain": "Send Again",
+        "AddToWhitelist ": "Add to Whitelist",
         "SwapAgain": "Swap Again",
         "BuyAgain": "Buy Again",
         "Unlimited": "Unlimited",
@@ -654,6 +655,7 @@
       "emptyWhitelistTip": "No whitelisted addresses yet, ",
       "emptyWhitelistBtn": "Add now",
       "SendHistory": "Send History",
+      "SelectFromHistory": "Select From History",
 
       "modals": {
         "header": "Add Address to Whitelist",
