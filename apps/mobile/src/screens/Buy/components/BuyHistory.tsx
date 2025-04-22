@@ -228,6 +228,7 @@ export const BuyHistory = ({
     <AppBottomSheetModal
       ref={bottomRef}
       snapPoints={snapPoints}
+      e
       onDismiss={onClose}
       {...makeBottomSheetProps({
         colors: colors2024,

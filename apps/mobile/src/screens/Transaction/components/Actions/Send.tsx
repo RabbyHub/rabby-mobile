@@ -38,13 +38,19 @@ import { HistoryItemCateType } from '../type';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  isInSendHistory?: boolean;
 }
 
-export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const Send: React.FC<Props> = ({
+  data,
+  isSingleAddress,
+  isInSendHistory,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -85,7 +91,7 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
   }, [list]);
 
   const { switchAccount } = useCurrentAccount();
-  const { navigateToSendPolyScreen } = useSendRoutes();
+  const { navigateToSendPolyScreen, navigateToSendScreen } = useSendRoutes();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -233,6 +239,22 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
           <View style={{ flex: 1 }}>
             <Button
               onPress={() => {
+                if (isInSendHistory) {
+                  closeHistoryPopup?.();
+                  const idx = accounts.findIndex(a =>
+                    isSameAddress(a.address, actionData.to),
+                  );
+                  if (idx > -1) {
+                    naviPush(RootNames.StackTransaction, {
+                      screen: RootNames.MultiSend,
+                      params: {
+                        toAddress: accounts[idx].address,
+                        addressBrandName: accounts[idx].brandName,
+                      },
+                    });
+                  }
+                  return;
+                }
                 navigateToSendPolyScreen(!!isSingleAddress, {
                   chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
                   tokenId: actionData.token?.id,

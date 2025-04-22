@@ -1,5 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,7 @@ import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useRecentSend } from '../../hooks/useRecentSend';
 import { RecentSendItem } from './RecentSendItem';
+import { SendHeaderRight } from './HeaderRight';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
@@ -47,11 +48,18 @@ const SendPolyScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { list, findAccountWithoutBalance } = useWhiteListAddress();
-  const { navigation } = useSafeSetNavigationOptions();
+  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
   const { sendHistory } = useRecentSend(accounts.map(addr => addr.address));
+
+  const Header = useCallback(() => <SendHeaderRight />, []);
+  useEffect(() => {
+    setNavigationOptions({
+      headerRight: Header,
+    });
+  }, [Header, setNavigationOptions]);
 
   const handleGotoInputAddress = (autoScan: boolean) => {
     navigation.dispatch(

@@ -28,6 +28,7 @@ import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryIt
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { ellipsisAddress } from '@/utils/address';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
+import { naviPush } from '@/utils/navigation';
 
 export const TransactionItem = ({
   historySuccessList,
@@ -35,12 +36,16 @@ export const TransactionItem = ({
   canCancel,
   onRefresh,
   isForMultipleAdderss,
+  isInSendHistory,
+  closeHistoryPopup,
 }: {
   historySuccessList?: string[];
   isForMultipleAdderss?: boolean;
   data: TransactionGroup;
   canCancel?: boolean;
   onRefresh?: () => void;
+  isInSendHistory?: boolean;
+  closeHistoryPopup?: () => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -332,18 +337,29 @@ export const TransactionItem = ({
     );
   }, [formatType, data, t, styles.describeText]);
 
-  const navigation = useRabbyAppNavigation();
+  // const navigation = useRabbyAppNavigation();
   const hanldeNavigateDetail = useCallback(() => {
-    navigation.push(RootNames.StackTransaction, {
+    if (isInSendHistory) {
+      closeHistoryPopup?.();
+    }
+    naviPush(RootNames.StackTransaction, {
       screen: RootNames.HistoryLocalDetail,
       params: {
         isForMultipleAdderss,
         data,
         canCancel,
         title: formatTitle,
+        isInSendHistory,
       },
     });
-  }, [isForMultipleAdderss, navigation, canCancel, data, formatTitle]);
+  }, [
+    isForMultipleAdderss,
+    canCancel,
+    data,
+    formatTitle,
+    isInSendHistory,
+    closeHistoryPopup,
+  ]);
 
   useEffect(() => {
     if (!data.isPending) {
@@ -413,7 +429,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']

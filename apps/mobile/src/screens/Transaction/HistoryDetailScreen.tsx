@@ -189,9 +189,7 @@ export const AddressItemInDetail = ({
                 />
               )}
             </View>
-            <Text style={styles.itemAddressText}>
-              {ellipsisAddress(address)}
-            </Text>
+            <Text style={styles.itemAddressText}>{address}</Text>
           </View>
         </TouchableOpacity>
       ) : (
@@ -731,6 +729,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   itemAddressText: {
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
+    textAlign: 'right',
+    width: 165,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '400',
