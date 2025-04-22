@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
@@ -25,6 +25,13 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
+import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
+import { trigger } from 'react-native-haptic-feedback';
+import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
+import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import TouchableView from '@/components/Touchable/TouchableView';
+import { CaretDownIconCC } from '@/components/AccountSwitcher/icons/CaretDownIconCC';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -42,8 +49,9 @@ const ERROR_MESSAGE = {
 
 const WhitelistInputScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const [input, setInput] = React.useState('');
-  const [error, setError] = React.useState<INPUT_ERROR>();
+  const [input, setInput] = useState('');
+  const [error, setError] = useState<INPUT_ERROR>();
+  const [isCex, setIsCex] = useState(false);
   const scanner = useScanner();
   const [loading, setLoading] = useState(false);
   const navParams = useNavigationState(
@@ -109,12 +117,22 @@ const WhitelistInputScreen = () => {
     }
   };
 
-  const handleSubmit = React.useCallback((text: string) => {
+  const handleSubmit = useCallback((text: string) => {
     setError(undefined);
     setInput(text);
   }, []);
+  const openSendHistory = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+  }, []);
 
-  React.useEffect(() => {
+  const editAliasName = useAliasNameEditModal();
+  // TODO:
+  const isOpen = false;
+
+  useEffect(() => {
     if (scanner.text) {
       setInput(scanner.text);
       scanner.clear();
@@ -143,6 +161,15 @@ const WhitelistInputScreen = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <View style={styles.topContent}>
+            <View style={styles.header}>
+              <Text style={styles.headerText}>Address</Text>
+              <TouchableOpacity onPress={openSendHistory}>
+                <RcIconSwapHistory
+                  style={styles.icon}
+                  color={colors2024['neutral-body']}
+                />
+              </TouchableOpacity>
+            </View>
             <View>
               <NextInput.TextArea
                 style={styles.textContainer}
@@ -171,29 +198,68 @@ const WhitelistInputScreen = () => {
                 }}
                 // eslint-disable-next-line react/no-unstable-nested-components
                 customIcon={ctx => (
-                  <TouchableOpacity
-                    style={ctx.wrapperStyle}
-                    onPress={() => {
-                      navigate(RootNames.Scanner);
-                    }}>
-                    <RcIconScannerCC
-                      style={ctx.iconStyle}
-                      color={colors2024['neutral-title-1']}
+                  <View style={[ctx.wrapperStyle, styles.customContainer]}>
+                    <PasteButton
+                      style={styles.pasteButton}
+                      onPaste={text => {
+                        handleSubmit(text);
+                      }}
                     />
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        navigate(RootNames.Scanner);
+                      }}>
+                      <RcIconScannerCC
+                        style={ctx.iconStyle}
+                        color={colors2024['neutral-title-1']}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 )}
               />
               {error && (
                 <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
               )}
             </View>
+          </View>
+          <View style={styles.nameContent}>
+            <View style={styles.header}>
+              <Text style={styles.headerText}>Name</Text>
+            </View>
+            <View style={styles.editContainer}>
+              <Text style={styles.aliasName}>name</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  // editAliasName.show(account);
+                }}
+                hitSlop={10}
+                style={styles.button}>
+                <EditSVG
+                  color={colors2024['neutral-body']}
+                  width={20}
+                  height={20}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={styles.exChangeContent}>
+            <View style={styles.header}>
+              <Text style={styles.headerText}>Exchange address?</Text>
+              <AppSwitch2024 onValueChange={setIsCex} value={isCex} />
+            </View>
 
-            <PasteButton
-              style={styles.pasteButton}
-              onPaste={text => {
-                handleSubmit(text);
-              }}
-            />
+            <TouchableView style={styles.selectCex} onPress={() => {}}>
+              <View style={styles.addressRow}>
+                <Text style={styles.toSelect}>Select exchange</Text>
+                <CaretDownIconCC
+                  style={[styles.caretIcon, isOpen && styles.reverseCaret]}
+                  width={26}
+                  height={26}
+                  bgColor={colors2024['neutral-line']}
+                  lineColor={colors2024['neutral-title-1']}
+                />
+              </View>
+            </TouchableView>
           </View>
         </View>
       </TouchableWithoutFeedback>
@@ -210,15 +276,20 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     position: 'relative',
     height: '100%',
     width: '100%',
     paddingHorizontal: 20,
   },
   topContent: {
-    alignItems: 'center',
-    flexShrink: 0,
+    paddingTop: 16,
+    // alignItems: 'center',
+    // flexShrink: 0,
+  },
+  nameContent: {
+    width: '100%',
+    marginTop: 30,
   },
   errorMessage: {
     color: ctx.colors2024['red-default'],
@@ -229,6 +300,7 @@ const getStyles = createGetStyles2024(ctx => ({
 
   textContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
+    height: 140,
   },
   textArea: {
     marginTop: 14,
@@ -242,6 +314,81 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'left',
   },
   pasteButton: {
-    marginTop: 58,
+    borderWidth: 0,
+    padding: 0,
+    paddingHorizontal: 0,
+    width: 'auto',
+    gap: 4,
+  },
+  customContainer: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    marginBottom: 12,
+  },
+  headerText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: ctx.colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  icon: {
+    width: 20,
+    height: 20,
+  },
+  aliasName: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: ctx.colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  button: {
+    padding: 5,
+    backgroundColor: ctx.colors2024['neutral-line'],
+    borderRadius: 30,
+  },
+  editContainer: {
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 15,
+    paddingBottom: 17,
+    paddingHorizontal: 20,
+  },
+  exChangeContent: {
+    width: '100%',
+    marginTop: 32,
+  },
+  selectCex: {
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  caretIcon: {
+    marginLeft: 'auto',
+  },
+  reverseCaret: {
+    transform: [{ rotate: '180deg' }],
+  },
+  addressRow: {
+    flexDirection: 'row',
+    width: '100%',
+    alignItems: 'center',
+  },
+  toSelect: {
+    fontSize: 17,
+    lineHeight: 22,
+    color: ctx.colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));
