@@ -1,15 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { RcIconScannerCC } from '@/assets/icons/address';
+import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-import { isValidHexAddress } from '@metamask/utils';
+import { isValidHexAddress, Hex } from '@metamask/utils';
 import {
   Keyboard,
   TouchableOpacity,
   View,
   TouchableWithoutFeedback,
+  Image,
 } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
@@ -17,13 +18,20 @@ import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
-import { useFocusEffect, useNavigationState } from '@react-navigation/native';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
+import {
+  useFocusEffect,
+  useNavigation,
+  useNavigationState,
+} from '@react-navigation/native';
 import {
   createGlobalBottomSheetModal2024,
+  globalBottomSheetModalAddListener2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  EVENT_NAMES,
+  MODAL_NAMES,
+} from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { trigger } from 'react-native-haptic-feedback';
@@ -33,11 +41,14 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CaretDownIconCC } from '@/components/AccountSwitcher/icons/CaretDownIconCC';
 import { SendHistory } from '@/screens/Send/SubScreens/SelectPolyScreen/SendHistory';
-import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
+import { whitelistAtom } from '@/hooks/whitelist';
+import { contactService, whitelistService } from '@/core/services';
+import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
+import { setCexId } from '@/utils/addressCexId';
+import { useAtom } from 'jotai';
 import { toast } from '@/components2024/Toast';
-import { useWhitelist } from '@/hooks/whitelist';
-import { contactService } from '@/core/services';
-import { isValidAddress } from '@ethereumjs/util';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -58,7 +69,7 @@ const WhitelistInputScreen = () => {
   const [input, setInput] = useState('');
   const [isCex, setIsCex] = useState(false);
   const [aliasName, setAliasName] = useState('');
-  const [cexId, setCexId] = useState('');
+  const [cex, setCex] = useState<ProjectItem | undefined>();
   const [error, setError] = useState<INPUT_ERROR>();
   const scanner = useScanner();
   const [loading, setLoading] = useState(false);
@@ -67,13 +78,21 @@ const WhitelistInputScreen = () => {
   ) as {
     autoScan?: boolean;
   };
+  const nav = useNavigation();
 
-  const { navigateToSendScreen } = useSendRoutes();
+  const { list } = useCexSupportList();
 
-  const { findAccount, findAccountWithoutBalance } = useWhiteListAddress(true);
+  const { findAccountWithoutBalance } = useWhiteListAddress(true);
 
   const { t } = useTranslation();
   const [historyVisible, setHistoryVisible] = useState(false);
+
+  const [, setWL] = useAtom(whitelistAtom);
+
+  const getWhitelist = React.useCallback(async () => {
+    const data = await whitelistService.getWhitelist();
+    setWL(data);
+  }, [setWL]);
 
   const closeHistory = useCallback(() => {
     setHistoryVisible(false);
@@ -93,37 +112,14 @@ const WhitelistInputScreen = () => {
     try {
       setLoading(true);
       Keyboard.dismiss();
-      const { inWhitelist, account, isMyImported } = await findAccount(
-        address,
-        undefined,
-        true,
-      );
 
-      if (inWhitelist || isMyImported) {
-        navigateToSendScreen({
-          toAddress: account.address,
-          addressBrandName: account.brandName,
-        });
-      } else {
-        const id = createGlobalBottomSheetModal2024({
-          name: MODAL_NAMES.CONFIRM_ADDRESS,
-          account,
-          bottomSheetModalProps: {
-            enableDynamicSizing: true,
-          },
-          onCancel: () => {
-            removeGlobalBottomSheetModal2024(id);
-          },
-          onConfirm(acc, addressDesc) {
-            removeGlobalBottomSheetModal2024(id);
-            navigateToSendScreen({
-              addressBrandName: acc.brandName,
-              addrDesc: addressDesc,
-              toAddress: acc.address,
-            });
-          },
-        });
+      if (isCex && cex?.id) {
+        setCexId(input, cex.id);
       }
+      await whitelistService.addWhitelist(address);
+      await getWhitelist();
+      toast.success(t('page.whitelist.addSuccessful'));
+      nav.canGoBack() && nav.goBack();
     } catch (err: any) {
     } finally {
       setLoading(false);
@@ -144,9 +140,52 @@ const WhitelistInputScreen = () => {
     Keyboard.dismiss();
   }, [setHistoryVisible]);
 
+  const onSwitch = useCallback(
+    (bool: boolean) => {
+      if (isValidHexAddress(input as Hex)) {
+        setIsCex(!!bool);
+      }
+    },
+    [input],
+  );
+
+  const onSelectCex = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+    let tmpCex = cex;
+    globalBottomSheetModalAddListener2024(
+      EVENT_NAMES.DISMISS,
+      () => {
+        if (!tmpCex) {
+          setIsCex(false);
+          return;
+        }
+      },
+      true,
+    );
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.SELECT_CEX,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        handleStyle: {
+          backgroundColor: colors2024['neutral-bg-2'],
+        },
+      },
+      onSelect: item => {
+        tmpCex = item;
+        setCex(item);
+        removeGlobalBottomSheetModal2024(id);
+      },
+      onCancel: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+    });
+  }, [cex, colors2024]);
+
   const editAliasName = useAliasNameEditModal();
-  // TODO:
-  const isOpen = false;
 
   useEffect(() => {
     if (scanner.text) {
@@ -159,9 +198,21 @@ const WhitelistInputScreen = () => {
       navigate(RootNames.Scanner);
     }
   }, [navParams?.autoScan]);
+  useEffect(() => {
+    setIsCex(false);
+    setCex(undefined);
+    if (isValidHexAddress(input as Hex)) {
+      getAddrDescWithCexLocalCacheSync(input).then(res => {
+        if (res?.cex?.id && res?.cex?.is_deposit) {
+          setIsCex(true);
+          setCex(list.find(item => item.id === res?.cex?.id));
+        }
+      });
+    }
+  }, [input, list]);
 
   useFocusEffect(() => {
-    if (isValidAddress(input)) {
+    if (isValidHexAddress(input as Hex)) {
       setAliasName(contactService.getAliasByAddress(input)?.alias || '');
     }
   });
@@ -170,9 +221,9 @@ const WhitelistInputScreen = () => {
     <>
       <FooterButtonScreenContainer
         as="View"
-        buttonProps={{
+        authButtonProps={{
           title: t('global.Confirm'),
-          onPress: handleDone,
+          onFinished: handleDone,
           loading: loading,
           disabled: !input || !!error,
         }}
@@ -185,7 +236,9 @@ const WhitelistInputScreen = () => {
           <View style={styles.container}>
             <View style={styles.topContent}>
               <View style={styles.header}>
-                <Text style={styles.headerText}>Address</Text>
+                <Text style={styles.headerText}>
+                  {t('page.whitelist.header.address')}
+                </Text>
                 <TouchableOpacity onPress={openSendHistory}>
                   <RcIconSwapHistory
                     style={styles.icon}
@@ -232,7 +285,7 @@ const WhitelistInputScreen = () => {
                         onPress={() => {
                           navigate(RootNames.Scanner);
                         }}>
-                        <RcIconScannerCC
+                        <ScannerCC
                           style={ctx.iconStyle}
                           color={colors2024['neutral-title-1']}
                         />
@@ -249,46 +302,63 @@ const WhitelistInputScreen = () => {
             </View>
             <View style={styles.nameContent}>
               <View style={styles.header}>
-                <Text style={styles.headerText}>Name</Text>
+                <Text style={styles.headerText}>
+                  {t('page.whitelist.header.name')}
+                </Text>
               </View>
-              <View style={styles.editContainer}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (!isValidHexAddress(input as Hex)) {
+                    return;
+                  }
+                  editAliasName.show(findAccountWithoutBalance(input).account);
+                }}
+                style={styles.editContainer}>
                 {aliasName ? (
                   <Text style={styles.aliasName}>{aliasName}</Text>
                 ) : (
                   <Text style={styles.aliasNamePlaceholder}>
-                    Name Your Address
+                    {t('page.whitelist.placeholder.name')}
                   </Text>
                 )}
-                <TouchableOpacity
-                  onPress={() => {
-                    if (!isValidAddress(input)) {
-                      return;
-                    }
-                    editAliasName.show(
-                      findAccountWithoutBalance(input).account,
-                    );
-                  }}
-                  hitSlop={10}
-                  style={styles.button}>
+                <View style={styles.button}>
                   <EditSVG
                     color={colors2024['neutral-body']}
                     width={20}
                     height={20}
                   />
-                </TouchableOpacity>
-              </View>
+                </View>
+              </TouchableOpacity>
             </View>
             <View style={styles.exChangeContent}>
               <View style={styles.header}>
-                <Text style={styles.headerText}>Exchange address?</Text>
-                <AppSwitch2024 onValueChange={setIsCex} value={isCex} />
+                <Text style={styles.headerText}>
+                  {t('page.whitelist.header.exchange')}
+                </Text>
+                <AppSwitch2024 onValueChange={onSwitch} value={isCex} />
               </View>
               {isCex && (
-                <TouchableView style={styles.selectCex} onPress={() => {}}>
+                <TouchableView style={styles.selectCex} onPress={onSelectCex}>
                   <View style={styles.addressRow}>
-                    <Text style={styles.toSelect}>Select exchange</Text>
+                    {cex ? (
+                      <View style={styles.cexContainer}>
+                        <View>
+                          <Image
+                            source={{
+                              uri: cex.logo_url,
+                            }}
+                            style={styles.logo}
+                          />
+                        </View>
+                        <Text style={styles.name}>{cex.name}</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.toSelect}>
+                        {t('page.whitelist.placeholder.exchange')}
+                      </Text>
+                    )}
                     <CaretDownIconCC
-                      style={[styles.caretIcon, isOpen && styles.reverseCaret]}
+                      style={[styles.caretIcon]}
                       width={26}
                       height={26}
                       bgColor={colors2024['neutral-line']}
@@ -305,7 +375,14 @@ const WhitelistInputScreen = () => {
         visible={historyVisible}
         onClose={closeHistory}
         title={t('page.sendPoly.SelectFromHistory')}
-        onPressBottomBtn={() => {}} // todo click AddToWhitelist cb
+        onPressBottomBtn={data => {
+          if (data?.to && isValidHexAddress(data?.to as Hex)) {
+            if (nav.canGoBack()) {
+              nav.goBack();
+            }
+            setInput(data.to);
+          }
+        }}
       />
     </>
   );
@@ -439,6 +516,19 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 17,
     lineHeight: 22,
     color: ctx.colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  cexContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  logo: { borderRadius: 6, width: 24, height: 24 },
+  name: {
+    fontSize: 16,
+    lineHeight: 20,
+    color: ctx.colors2024['neutral-title-1'],
+    fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
   },
 }));
