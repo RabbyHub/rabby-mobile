@@ -17,6 +17,7 @@ import { useNavigationState } from '@react-navigation/native';
 import { Dimensions, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { BrowserTab } from './components/BrowserTab';
+import { preferenceService } from '@/core/services';
 
 export function BrowserScreen() {
   const {
@@ -48,8 +49,9 @@ export function BrowserScreen() {
 
   useLayoutEffect(() => {
     console.debug('BrowserScreen mounted');
-
+    preferenceService.toggleAllowNotifyAccountsChanged(true);
     return () => {
+      preferenceService.toggleAllowNotifyAccountsChanged(false);
       console.debug('BrowserScreen unmounted');
     };
   }, []);

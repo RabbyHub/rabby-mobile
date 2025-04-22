@@ -41,6 +41,7 @@ import { useDapps } from '@/hooks/useDapps';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { parsePossibleURL } from '@/constant/dappView';
 import { CHAINS_ENUM } from '@debank/common';
+import { BrowserSearchAutoComplete } from './BrowserSearchAutoComplete';
 
 type BrowserTabProps = {
   origin: string;
@@ -95,6 +96,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const isEmptyTab = !url;
     const [isShowSearch, setIsShowSearch] = useState(isActive && isEmptyTab);
+    const [searchText, setSearchText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
 
@@ -209,7 +211,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       setIsShowSearch(false);
     });
 
-    const handleSearch = useMemoizedFn(search => {
+    const handleSearch = useMemoizedFn((search: string) => {
       if (!search?.trim()) {
         return;
       }
@@ -217,10 +219,14 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       if (parsedUrl) {
         handleGoTo(parsedUrl);
       } else {
-        handleGoTo(
-          `https://www.google.com/search?q=${encodeURIComponent(search)}`,
-        );
+        handleSearchGoogle(search);
       }
+    });
+
+    const handleSearchGoogle = useMemoizedFn((search: string) => {
+      handleGoTo(
+        `https://www.google.com/search?q=${encodeURIComponent(search)}`,
+      );
     });
 
     const handleViewShot = useMemoizedFn(async (url: string) => {
@@ -280,16 +286,26 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         <BrowserHeader
           url={webviewState.url}
           isFocused={isShowSearch}
+          searchText={searchText}
+          onSearchTextChange={setSearchText}
           onFocusChange={v => {
             setIsShowSearch(v);
           }}
           onSearch={handleSearch}
         />
 
+        {isShowSearch ? (
+          <BrowserSearchAutoComplete
+            text={searchText}
+            onSelect={handleSearchGoogle}
+          />
+        ) : null}
+
         <View
           // renderToHardwareTextureAndroid
           style={[
             styles.dappWebViewContainer,
+            isShowSearch && styles.hidden,
             !webviewContainerMaxHeight
               ? {}
               : {
@@ -323,7 +339,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   key={contentMode}
                   cacheEnabled
                   startInLoadingState={false}
-                  renderLoading={() => <View style={{ display: 'none' }} />}
+                  renderLoading={() => <View style={styles.hidden} />}
                   allowsFullscreenVideo={false}
                   allowsInlineMediaPlayback={false}
                   originWhitelist={['*']}
@@ -331,11 +347,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   style={[
                     styles.dappWebView,
                     webviewProps?.style,
-                    isShowSearch
-                      ? {
-                          display: 'none',
-                        }
-                      : null,
+                    isShowSearch ? styles.hidden : null,
                   ]}
                   ref={webviewRef}
                   source={{
@@ -454,26 +466,28 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             )}
           </ViewShot>
         </View>
-        <View style={styles.dappWebViewNavControl}>
-          <BrowserFooter
-            url={webviewState.url}
-            canReload={!isEmptyTab}
-            onReload={handleReload}
-            canGoBack={webviewState.canGoBack}
-            onGoBack={handleGoBack}
-            canGoForward={webviewState.canGoForward}
-            onGoForward={handleGoForward}
-            tabsCount={tabsCount}
-            onViewTabs={handleViewTabs}
-            isBookmark={!!isBookmark}
-            isConnected={dappInfo?.isConnected}
-            onBookmark={handleBookmark}
-            onDisconnect={handleDisconnect}
-            contentMode={contentMode}
-            onContentModeChange={handleContentModeChange}
-            canViewMore={!!url}
-          />
-        </View>
+        {isShowSearch ? null : (
+          <View style={styles.dappWebViewNavControl}>
+            <BrowserFooter
+              url={webviewState.url}
+              canReload={!isEmptyTab}
+              onReload={handleReload}
+              canGoBack={webviewState.canGoBack}
+              onGoBack={handleGoBack}
+              canGoForward={webviewState.canGoForward}
+              onGoForward={handleGoForward}
+              tabsCount={tabsCount}
+              onViewTabs={handleViewTabs}
+              isBookmark={!!isBookmark}
+              isConnected={dappInfo?.isConnected}
+              onBookmark={handleBookmark}
+              onDisconnect={handleDisconnect}
+              contentMode={contentMode}
+              onContentModeChange={handleContentModeChange}
+              canViewMore={!!url}
+            />
+          </View>
+        )}
       </AutoLockView>
     );
   },
@@ -571,6 +585,9 @@ const getStyles = createGetStyles2024(ctx =>
       left: 0,
       right: 0,
       zIndex: 10,
+    },
+    hidden: {
+      display: 'none',
     },
   }),
 );

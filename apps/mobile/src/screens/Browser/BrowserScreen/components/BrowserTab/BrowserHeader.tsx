@@ -24,17 +24,20 @@ export function BrowserHeader({
   isFocused,
   onFocusChange,
   onSearch,
+  searchText,
+  onSearchTextChange,
 }: {
   url?: string;
   isFocused?: boolean;
   onFocusChange?(isFocused: boolean): void;
   onSearch?(search: string): void;
+  searchText?: string;
+  onSearchTextChange?(v: string): void;
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
 
-  const [searchText, setSearchText] = useState('');
   const navigation = useRabbyAppNavigation();
   const forScene = '@ActiveDappWebViewModal';
   const { finalSceneCurrentAccount, sceneCurrentAccount } = useSceneAccountInfo(
@@ -62,16 +65,14 @@ export function BrowserHeader({
           value={searchText}
           searchIcon={<RcIconGoogle />}
           autoFocus
+          selectTextOnFocus
           alwaysShowCancel
-          onChangeText={setSearchText}
+          onChangeText={onSearchTextChange}
           onFocus={() => {
             onFocusChange?.(true);
           }}
           onBlur={() => {
             onFocusChange?.(false);
-            setTimeout(() => {
-              setSearchText('');
-            }, 50);
           }}
           onCancel={() => {
             inputRef.current.blur();
@@ -79,7 +80,6 @@ export function BrowserHeader({
           ref={inputRef}
           onSubmitEditing={e => {
             inputRef.current.blur();
-            setSearchText('');
             onSearch?.(e.nativeEvent.text);
           }}
           enterKeyHint={'go'}
@@ -104,7 +104,11 @@ export function BrowserHeader({
         ) : null}
       </TouchableOpacity>
       <View style={styles.addressBar}>
-        <TouchableWithoutFeedback onPress={() => onFocusChange?.(true)}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            onSearchTextChange?.(url || '');
+            onFocusChange?.(true);
+          }}>
           {url ? (
             <Text style={styles.addressBarText}>{urlInfo.fullDomain}</Text>
           ) : (

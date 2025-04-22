@@ -62,24 +62,6 @@ const injectCss = () => {
     $style.setAttribute('data-inject-rabby', 'true');
 
     $style.innerHTML = `
-/* header */
-.Fh5muf {
-  display: none !important;
-}
-  #rso {
-    padding-top: 8px;
-  }
-
-/* tab bar*/
-.gDIH3 {
-  display: none !important;
-}
-
-/* search suggest */
-#taw {
-  display: none !important;
-}
-
 /* bottom ads */
 #bottomads {
   display: none !important;

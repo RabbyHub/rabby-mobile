@@ -126,8 +126,6 @@ export function useBrowser() {
 
     setActiveTabId(newTab.id);
 
-    preferenceService.toggleAllowNotifyAccountsChanged(true);
-
     navigateToBrowserScreen();
 
     // activate(dappInfo);
