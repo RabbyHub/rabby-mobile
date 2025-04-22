@@ -50,11 +50,11 @@ jobs:
       #   with:
       #     node-version: 18
 
-      # - name: Setup Ruby & Fastlane
-      #   uses: ruby/setup-ruby@v1
-      #   with:
-      #     ruby-version: '2.7'
-      #     bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+      - name: Setup Ruby & Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.6'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
       - uses: maxim-lobanov/setup-xcode@v1
         id: setup-xcode
