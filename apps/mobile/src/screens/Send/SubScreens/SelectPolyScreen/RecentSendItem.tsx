@@ -71,14 +71,13 @@ export const RecentSendItem = ({
   return (
     <AddressItemShadowView>
       <TouchableOpacity
-        activeOpacity={1}
+        // activeOpacity={1}
         style={StyleSheet.flatten([styles.root])}
         onPress={() => {
           trigger('impactLight', {
             enableVibrateFallback: true,
             ignoreAndroidSystemSettings: false,
           });
-          //TODO: shuang: do not check whitelist
           navigateToSendScreen({
             toAddress: account.address,
             addressBrandName: account.brandName,

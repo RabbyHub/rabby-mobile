@@ -434,6 +434,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   cardPressing: {
     backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 16,
   },
   arrowPressing: {
     backgroundColor: colors2024['brand-light-1'],
