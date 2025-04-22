@@ -17,7 +17,7 @@ import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
-import { useNavigationState } from '@react-navigation/native';
+import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import {
   createGlobalBottomSheetModal2024,
@@ -36,6 +36,8 @@ import { SendHistory } from '@/screens/Send/SubScreens/SelectPolyScreen/SendHist
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { toast } from '@/components2024/Toast';
 import { useWhitelist } from '@/hooks/whitelist';
+import { contactService } from '@/core/services';
+import { isValidAddress } from '@ethereumjs/util';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -54,8 +56,10 @@ const ERROR_MESSAGE = {
 const WhitelistInputScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, setInput] = useState('');
-  const [error, setError] = useState<INPUT_ERROR>();
   const [isCex, setIsCex] = useState(false);
+  const [aliasName, setAliasName] = useState('');
+  const [cexId, setCexId] = useState('');
+  const [error, setError] = useState<INPUT_ERROR>();
   const scanner = useScanner();
   const [loading, setLoading] = useState(false);
   const navParams = useNavigationState(
@@ -66,8 +70,7 @@ const WhitelistInputScreen = () => {
 
   const { navigateToSendScreen } = useSendRoutes();
 
-  const { findAccount } = useWhiteListAddress(true);
-  const { addWhitelist } = useWhitelist();
+  const { findAccount, findAccountWithoutBalance } = useWhiteListAddress(true);
 
   const { t } = useTranslation();
   const [historyVisible, setHistoryVisible] = useState(false);
@@ -157,6 +160,12 @@ const WhitelistInputScreen = () => {
     }
   }, [navParams?.autoScan]);
 
+  useFocusEffect(() => {
+    if (isValidAddress(input)) {
+      setAliasName(contactService.getAliasByAddress(input)?.alias || '');
+    }
+  });
+
   return (
     <>
       <FooterButtonScreenContainer
@@ -243,10 +252,21 @@ const WhitelistInputScreen = () => {
                 <Text style={styles.headerText}>Name</Text>
               </View>
               <View style={styles.editContainer}>
-                <Text style={styles.aliasName}>name</Text>
+                {aliasName ? (
+                  <Text style={styles.aliasName}>{aliasName}</Text>
+                ) : (
+                  <Text style={styles.aliasNamePlaceholder}>
+                    Name Your Address
+                  </Text>
+                )}
                 <TouchableOpacity
                   onPress={() => {
-                    // editAliasName.show(account);
+                    if (!isValidAddress(input)) {
+                      return;
+                    }
+                    editAliasName.show(
+                      findAccountWithoutBalance(input).account,
+                    );
                   }}
                   hitSlop={10}
                   style={styles.button}>
@@ -263,19 +283,20 @@ const WhitelistInputScreen = () => {
                 <Text style={styles.headerText}>Exchange address?</Text>
                 <AppSwitch2024 onValueChange={setIsCex} value={isCex} />
               </View>
-
-              <TouchableView style={styles.selectCex} onPress={() => {}}>
-                <View style={styles.addressRow}>
-                  <Text style={styles.toSelect}>Select exchange</Text>
-                  <CaretDownIconCC
-                    style={[styles.caretIcon, isOpen && styles.reverseCaret]}
-                    width={26}
-                    height={26}
-                    bgColor={colors2024['neutral-line']}
-                    lineColor={colors2024['neutral-title-1']}
-                  />
-                </View>
-              </TouchableView>
+              {isCex && (
+                <TouchableView style={styles.selectCex} onPress={() => {}}>
+                  <View style={styles.addressRow}>
+                    <Text style={styles.toSelect}>Select exchange</Text>
+                    <CaretDownIconCC
+                      style={[styles.caretIcon, isOpen && styles.reverseCaret]}
+                      width={26}
+                      height={26}
+                      bgColor={colors2024['neutral-line']}
+                      lineColor={colors2024['neutral-title-1']}
+                    />
+                  </View>
+                </TouchableView>
+              )}
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -364,6 +385,12 @@ const getStyles = createGetStyles2024(ctx => ({
   icon: {
     width: 20,
     height: 20,
+  },
+  aliasNamePlaceholder: {
+    fontSize: 17,
+    lineHeight: 22,
+    color: ctx.colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
   },
   aliasName: {
     fontSize: 16,
