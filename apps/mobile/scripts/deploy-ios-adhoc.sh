@@ -56,6 +56,7 @@ build_adhoc() {
   yarn;
   yarn syncrnversion;
   cd $project_dir/ios;
+  rimraf Pods;
   bundle install && bundle exec pod install --deployment;
   cd $project_dir;
   bundle exec fastlane ios adhoc;
