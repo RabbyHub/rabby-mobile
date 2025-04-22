@@ -80,7 +80,7 @@ RPCMethodsMiddleParameters) =>
       const activeDappState = getActiveDappState();
       if (!isRpcAllowed(activeDappState)) {
         // // leave here for debug
-        // console.debug('[checkTabActive] activeDappState', activeDappState);
+        console.debug('[checkTabActive] activeDappState', activeDappState);
         return false;
       }
 

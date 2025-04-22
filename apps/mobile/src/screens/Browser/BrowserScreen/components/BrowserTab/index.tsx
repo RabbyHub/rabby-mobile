@@ -32,7 +32,6 @@ import { TabActions } from '@react-navigation/native';
 import ViewShot from 'react-native-view-shot';
 import { BrowserFooter } from './BrowserFooter';
 import { BrowserHeader } from './BrowserHeader';
-import { DappFavoriteSection } from '@/screens/Browser/DappFavoriteSection';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useMemoizedFn, useSetState } from 'ahooks';
 import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
@@ -110,6 +109,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
       webviewActions,
     } = useWebViewControl({ initialTabId: tabId });
+    const [contentMode, setContentMode] =
+      useState<WebViewProps['contentMode']>('mobile');
 
     const navigation = useRabbyAppNavigation();
     const { dapps, disconnectDapp, setDapp } = useDapps();
@@ -129,19 +130,20 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleContentModeChange = useMemoizedFn(
       (mode: WebViewProps['contentMode']) => {
-        if (dappInfo) {
-          setDapp({
-            ...dappInfo,
-            contentMode: mode,
-          });
-        } else {
-          setDapp({
-            origin: urlInfo.httpOrigin,
-            name: webviewState.title,
-            contentMode: mode,
-            chainId: CHAINS_ENUM.ETH,
-          });
-        }
+        setContentMode(mode);
+        // if (dappInfo) {
+        //   setDapp({
+        //     ...dappInfo,
+        //     contentMode: mode,
+        //   });
+        // } else {
+        //   setDapp({
+        //     origin: urlInfo.httpOrigin,
+        //     name: webviewState.title,
+        //     contentMode: mode,
+        //     chainId: CHAINS_ENUM.ETH,
+        //   });
+        // }
       },
     );
 
@@ -267,6 +269,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
     }, [handleViewShot, isActive, isEmptyTab]);
 
+    // const contentMode = useMemo(() => {
+    //   return dappInfo?.contentMode === 'desktop' ? 'desktop' : 'mobile';
+    // }, [dappInfo?.contentMode]);
+
+    console.log({ contentMode });
+
     return (
       <AutoLockView style={[style, styles.dappWebViewControl]}>
         <BrowserHeader
@@ -312,7 +320,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   />
                 ) : null}
                 <WebView
-                  // cacheEnabled={false}
+                  key={contentMode}
                   cacheEnabled
                   startInLoadingState={false}
                   renderLoading={() => <View style={{ display: 'none' }} />}
@@ -342,6 +350,11 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     // 'User-Agent': ''
                   }}
                   testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
+                  userAgent={
+                    Platform.OS === 'android' && contentMode === 'desktop'
+                      ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
+                      : undefined
+                  }
                   applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
                   javaScriptEnabled
                   // androidLayerType='software'
@@ -350,11 +363,15 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   {...(IS_ANDROID && {
                     injectedJavaScript: PATCH_ANCHOR_TARGET,
                   })}
-                  onNavigationStateChange={
-                    webviewActions.onNavigationStateChange
-                  }
+                  onNavigationStateChange={event => {
+                    // onUpdateTab?.({
+                    //   url: event.url,
+                    //   name: event.title,
+                    // });
+                    return webviewActions.onNavigationStateChange(event);
+                  }}
                   webviewDebuggingEnabled={__DEV__}
-                  contentMode={dappInfo?.contentMode}
+                  contentMode={contentMode}
                   onLoadStart={e => {
                     webviewProps?.onLoadStart?.(e);
                     onLoadStart(e);
@@ -406,12 +423,14 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     }
                   }}
                   onShouldStartLoadWithRequest={nativeEvent => {
+                    console.log('onSould', nativeEvent);
                     return checkShouldStartLoadingWithRequestForDappWebView(
                       nativeEvent,
                     );
                   }}
                   // onError={errorLog}
                   onMessage={event => {
+                    console.log('xxx', event);
                     // // leave here for debug
                     // if (__DEV__) {
                     //   console.log('WebView:: onMessage event', event);
@@ -450,7 +469,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             isConnected={dappInfo?.isConnected}
             onBookmark={handleBookmark}
             onDisconnect={handleDisconnect}
-            contentMode={dappInfo?.contentMode}
+            contentMode={contentMode}
             onContentModeChange={handleContentModeChange}
             canViewMore={!!url}
           />

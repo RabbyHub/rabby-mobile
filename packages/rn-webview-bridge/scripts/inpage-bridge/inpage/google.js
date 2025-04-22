@@ -55,7 +55,7 @@ function getURLFromQuery(selector) {
 
 const injectCss = () => {
   try {
-    if (document.querySelector('style[data-inject-rabby]')) {
+    if (document.querySelector('style[data-inject-rabby]') || !document.head) {
       return;
     }
     const $style = document.createElement('style');
@@ -157,6 +157,14 @@ const injectCss = () => {
   }
 };
 
+const sleep = time => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, time);
+  });
+};
+
 const injectListBy = async list => {
   try {
     const dappsInfo = await window.ethereum
@@ -165,6 +173,7 @@ const injectListBy = async list => {
         params: [{ domains: list.map(item => item.hostname) }],
       })
       .catch(e => {
+        console.error(e);
         return {};
       });
     list.forEach(item => {
@@ -285,6 +294,14 @@ const observeSite = () => {
 };
 
 export const hackGoogle = () => {
+  const origin = window.location.origin;
+  const path = window.location.pathname;
+  if (
+    ['https://www.google.com', 'https://google.com'].includes(origin) &
+    (path === '/search')
+  ) {
+    injectCss();
+  }
   injectCss();
   domReadyCall(() => {
     const origin = window.location.origin;
@@ -294,7 +311,9 @@ export const hackGoogle = () => {
       (path === '/search')
     ) {
       injectCss();
-      injectScript();
+      setTimeout(() => {
+        injectScript();
+      }, 500);
       observeSite();
     }
   });

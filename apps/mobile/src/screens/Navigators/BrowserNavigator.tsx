@@ -28,7 +28,6 @@ export function BrowserNavigator() {
           fontWeight: 'normal',
         },
         headerTintColor: colors['neutral-title-1'],
-        animation: 'fade',
       })}
       initialRouteName={RootNames.BrowserScreen}>
       <BrowserStack.Screen

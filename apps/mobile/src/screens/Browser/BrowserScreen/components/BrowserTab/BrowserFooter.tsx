@@ -69,7 +69,7 @@ export function BrowserFooter({
         key: 'contentMode',
         onSelect: () => {
           onContentModeChange?.(
-            contentMode === 'desktop' ? 'recommended' : 'desktop',
+            contentMode === 'desktop' ? 'mobile' : 'desktop',
           );
         },
       },
