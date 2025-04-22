@@ -11,13 +11,8 @@ import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
-import { AppRootName, RootNames } from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { RcIconAddWhiteList } from '@/assets2024/icons/whitelist';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useRecentSend } from '../../hooks/useRecentSend';
@@ -81,20 +76,12 @@ const SendPolyScreen = () => {
     );
   };
   const handleGotoAddWhitelist = () => {
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-      navigateTo: (screen: AppRootName, params?: object) => {
-        navigation.dispatch(
-          StackActions.push(RootNames.StackTransaction, {
-            screen,
-            params,
-          }),
-        );
-      },
-    });
+    navigation.dispatch(
+      StackActions.push(RootNames.StackTransaction, {
+        screen: RootNames.WhitelistInput,
+        params: {},
+      }),
+    );
   };
 
   return (

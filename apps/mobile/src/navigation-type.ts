@@ -266,6 +266,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.SendInput]?: {
     autoScan?: boolean;
   };
+  [RootNames.WhitelistInput]?: {};
   [RootNames.SelectImportAddress]?: {};
   [RootNames.SelectTypeAddress]?: {
     type: 'watch' | 'safe';

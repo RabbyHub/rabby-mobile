@@ -32,6 +32,7 @@ import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
 import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
 import SendHistoryScreen from '../WhiteList/SelectSendTransationAddress';
 import { GnosisQueueScreen } from '../GnosisQueue';
+import WhitelistInputScreen from '../WhiteList/InputScreen';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -87,6 +88,19 @@ export default function TransactionNavigator() {
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.WhitelistInput}
+        component={WhitelistInputScreen}
+        options={mergeScreenOptions({
+          title: 'Add New Whitelist Address',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
