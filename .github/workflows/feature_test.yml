@@ -70,7 +70,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: heisenberg-2077/setup-ruby@master
         with:
-          ruby-version: 'ruby-3.3.6'
+          ruby-version: '2.7.2'
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
       - name: '[Linux] Setup Java'
