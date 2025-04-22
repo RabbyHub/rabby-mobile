@@ -1,22 +1,44 @@
-import React from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, FlatList } from 'react-native';
 
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { openapi } from '@/core/request';
+import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
+import { CexItem } from './CexItem';
 
 export interface IPorps {
   onSelect?: () => void;
 }
 const SelectCex = ({}: IPorps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const [list, setList] = useState<ProjectItem[]>([]);
 
+  useEffect(() => {
+    // TODO: store in global
+    openapi.getCexSupportList().then(res => {
+      setList(res);
+    });
+  }, []);
   return (
     <View style={[styles.screen]}>
       <Text style={styles.modalTitle}>Select Exchange Source</Text>
+      <FlatList
+        data={list}
+        keyExtractor={item => item.id}
+        ItemSeparatorComponent={Divider}
+        renderItem={({ item }) => {
+          return (
+            <CexItem name={item.name} id={item.id} logo_url={item.logo_url} />
+          );
+        }}
+      />
     </View>
   );
 };
+
+const Divider = () => <View style={{ height: 8 }} />;
 
 export default SelectCex;
 
@@ -33,6 +55,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   screen: {
     paddingHorizontal: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-2'],
   },
 }));
