@@ -39,12 +39,12 @@ export const useSendRoutes = () => {
       setParams(p || {});
       setIsSingleAddress(isForSingleAddress);
       if (p?.toAddress) {
-        const { inWhitelist, account } = await findAccount(
+        const { inWhitelist, account, isMyImported } = await findAccount(
           p.toAddress,
           undefined,
           true,
         );
-        if (inWhitelist) {
+        if (inWhitelist || isMyImported) {
           navigation.push(RootNames.StackTransaction, {
             screen: isForSingleAddress ? RootNames.Send : RootNames.MultiSend,
             params: { ...params, ...p },

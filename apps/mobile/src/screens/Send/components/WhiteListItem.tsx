@@ -27,7 +27,6 @@ import { RootNames } from '@/constant/layout';
 import { useWhitelist } from '@/hooks/whitelist';
 import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
-import { toast } from '@/components2024/Toast';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
@@ -38,34 +37,27 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import {
-  getAddrDescWithCexLocalCacheSync,
-  getCexWithLocalCache,
-} from '@/databases/hooks/cex';
-import { matomoRequestEvent } from '@/utils/analytics';
+import { getCexWithLocalCache } from '@/databases/hooks/cex';
 
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
   addrDesc?: AddrDescResponse['desc'];
   inWhiteList?: boolean;
-  isForWhitelist?: boolean;
   disableMenu?: boolean;
-  isImported?: boolean;
+  isMyImported?: boolean;
 }
 export const WhiteListItem = ({
   account,
   style,
-  isForWhitelist,
   inWhiteList,
   disableMenu,
-  isImported,
+  isMyImported,
 }: IProps) => {
   const [cexInfo, setCexInfo] = useState<Cex | undefined>();
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [isPressing, setIsPressing] = React.useState(false);
-  const { navigation } = useSafeSetNavigationOptions();
-  const { removeWhitelist, addWhitelist } = useWhitelist({
+  const { removeWhitelist } = useWhitelist({
     disableAutoFetch: true,
   });
   const isDarkTheme = useGetBinaryMode() === 'dark';
@@ -155,46 +147,7 @@ export const WhiteListItem = ({
         style={StyleSheet.flatten([styles.root])}
         delayLongPress={200} // long press delay
         onPress={() => {
-          if (isForWhitelist) {
-            if (inWhiteList) {
-              toast.show(t('page.whitelist.alreadyAdded'));
-            } else {
-              const id = createGlobalBottomSheetModal2024({
-                name: MODAL_NAMES.CONFIRM_ADDRESS,
-                account,
-                title: t('page.confirmAddress.addToWhitelist'),
-                disbaleWhiteSwitch: true,
-                bottomSheetModalProps: {
-                  enableDynamicSizing: true,
-                },
-                onCancel: () => {
-                  removeGlobalBottomSheetModal2024(id);
-                },
-                onConfirm() {
-                  removeGlobalBottomSheetModal2024(id);
-                  matomoRequestEvent({
-                    category: 'Send Usage',
-                    action: isImported
-                      ? 'Send_AddWhitelist_imported'
-                      : 'Send_AddWhitelist_notImported',
-                  });
-                  addWhitelist(account.address, {
-                    onAdded: () => {
-                      toast.success(t('page.whitelist.addSuccessful'));
-                      navigation.popToTop();
-                      navigation.dispatch(
-                        StackActions.push(RootNames.StackTransaction, {
-                          screen: RootNames.SendTo,
-                        }),
-                      );
-                    },
-                  });
-                },
-              });
-            }
-            return;
-          }
-          if (inWhiteList) {
+          if (inWhiteList || isMyImported) {
             navigateToSendScreen({
               toAddress: account.address,
               addressBrandName: account.brandName,

@@ -138,12 +138,12 @@ function SendHistoryScreen() {
   const handlePressItem = async (item: HistoryDisplayItem) => {
     const toAddress = item.sends[0]?.to_addr;
     if (toAddress) {
-      const { inWhitelist, account } = await findAccount(
+      const { inWhitelist, account, isMyImported } = await findAccount(
         toAddress,
         undefined,
         true,
       );
-      if (inWhitelist) {
+      if (inWhitelist || isMyImported) {
         toast.show(t('page.whitelist.alreadyAdded'));
       } else {
         const id = createGlobalBottomSheetModal2024({

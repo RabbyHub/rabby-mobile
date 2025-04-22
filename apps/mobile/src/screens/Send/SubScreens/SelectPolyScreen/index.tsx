@@ -23,6 +23,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useRecentSend } from '../../hooks/useRecentSend';
 import { RecentSendItem } from './RecentSendItem';
 import { SendHeaderRight } from './HeaderRight';
+import { filterMyAccounts } from '@/utils/account';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
@@ -120,6 +121,7 @@ const SendPolyScreen = () => {
           );
           return (
             <RecentSendItem
+              key={item.time_at}
               account={account}
               timeStamp={item.time_at}
               inWhiteList={inWhitelist}
@@ -137,7 +139,7 @@ const SendPolyScreen = () => {
             <WhiteListItem
               account={item}
               inWhiteList
-              isImported={accounts.some(i =>
+              isMyImported={filterMyAccounts(accounts).some(i =>
                 isSameAddress(i.address, item.address),
               )}
             />

@@ -18,19 +18,14 @@ import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
-import { StackActions, useNavigationState } from '@react-navigation/native';
-import { toast } from '@/components2024/Toast';
+import { useNavigationState } from '@react-navigation/native';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useWhitelist } from '@/hooks/whitelist';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { useAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
   ADDRESS_EXIST = 'ADDRESS_EXIST',
@@ -45,31 +40,21 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
-const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
+const SendInputScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, setInput] = React.useState('');
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
   const [loading, setLoading] = useState(false);
-  const { navigation } = useSafeSetNavigationOptions();
   const navParams = useNavigationState(
-    s =>
-      s.routes.find(
-        r =>
-          r.name ===
-          (isForWhitelist ? RootNames.WhitelistInput : RootNames.SendInput),
-      )?.params,
+    s => s.routes.find(r => r.name === RootNames.SendInput)?.params,
   ) as {
     autoScan?: boolean;
   };
-  const { addWhitelist } = useWhitelist();
 
   const { navigateToSendScreen } = useSendRoutes();
 
   const { findAccount } = useWhiteListAddress(true);
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
 
   const { t } = useTranslation();
 
@@ -87,55 +72,13 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
     try {
       setLoading(true);
       Keyboard.dismiss();
-      const { inWhitelist, account } = await findAccount(
+      const { inWhitelist, account, isMyImported } = await findAccount(
         address,
         undefined,
         true,
       );
 
-      if (isForWhitelist) {
-        if (inWhitelist) {
-          toast.show(t('page.whitelist.alreadyAdded'));
-        } else {
-          const id = createGlobalBottomSheetModal2024({
-            name: MODAL_NAMES.CONFIRM_ADDRESS,
-            account,
-            title: t('page.confirmAddress.addToWhitelist'),
-            disbaleWhiteSwitch: true,
-            bottomSheetModalProps: {
-              enableDynamicSizing: true,
-            },
-            onCancel: () => {
-              removeGlobalBottomSheetModal2024(id);
-            },
-            onConfirm() {
-              removeGlobalBottomSheetModal2024(id);
-              const isImported = accounts.some(i =>
-                isSameAddress(i.address, account.address),
-              );
-              matomoRequestEvent({
-                category: 'Send Usage',
-                action: isImported
-                  ? 'Send_AddWhitelist_imported'
-                  : 'Send_AddWhitelist_notImported',
-              });
-              addWhitelist(account.address, {
-                onAdded: () => {
-                  toast.success(t('page.whitelist.addSuccessful'));
-                  navigation.popToTop();
-                  navigation.dispatch(
-                    StackActions.push(RootNames.StackTransaction, {
-                      screen: RootNames.SendTo,
-                    }),
-                  );
-                },
-              });
-            },
-          });
-        }
-        return;
-      }
-      if (inWhitelist) {
+      if (inWhitelist || isMyImported) {
         navigateToSendScreen({
           toAddress: account.address,
           addressBrandName: account.brandName,
@@ -256,10 +199,6 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       </TouchableWithoutFeedback>
     </FooterButtonScreenContainer>
   );
-};
-
-SendInputScreen.ForWhitelist = () => {
-  return <SendInputScreen isForWhitelist />;
 };
 
 export default SendInputScreen;

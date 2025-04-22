@@ -2,7 +2,7 @@ import { contactService } from '@/core/services';
 import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
-import { findAccountByPriority } from '@/utils/account';
+import { filterMyAccounts, findAccountByPriority } from '@/utils/account';
 import { ellipsisAddress } from '@/utils/address';
 import { getTokenSettings } from '@/utils/getTokenSettings';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -87,6 +87,7 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
     const targetAccounts = accounts.filter(item =>
       isSameAddress(item.address, address),
     );
+    const myAccounts = filterMyAccounts(accounts);
     let balance = 0;
     if (!targetAccounts.length && !disableBalance) {
       const userTokenSettings = await getTokenSettings();
@@ -108,6 +109,9 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
     };
     return {
       inWhitelist: whitelist.some(item => isSameAddress(item, address)),
+      isMyImported: myAccounts.some(item =>
+        isSameAddress(item.address, address),
+      ),
       account: targetAccounts.length
         ? brandName
           ? targetAccounts.find(i => i.brandName === brandName) ||

@@ -93,19 +93,6 @@ export default function TransactionNavigator() {
         })}
       />
       <TransactionStack.Screen
-        name={RootNames.WhitelistInput}
-        component={SendInputScreen.ForWhitelist}
-        options={mergeScreenOptions({
-          title: 'Add New Address to Whitelist',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
         name={RootNames.SelectImportAddress}
         component={SelectMyAddressScreen}
         options={mergeScreenOptions({
@@ -119,28 +106,8 @@ export default function TransactionNavigator() {
         })}
       />
       <TransactionStack.Screen
-        name={RootNames.ImportAddress2Whitelist}
-        component={SelectMyAddressScreen.ForWhitelist}
-        options={mergeScreenOptions({
-          title: 'Select Imported Address',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
-      <TransactionStack.Screen
         name={RootNames.SelectTypeAddress}
         component={SelectWatchScreenScreen}
-        options={mergeScreenOptions({
-          title: '',
-        })}
-      />
-      <TransactionStack.Screen
-        name={RootNames.TypeAddress2Whitelist}
-        component={SelectWatchScreenScreen.ForWhitelist}
         options={mergeScreenOptions({
           title: '',
         })}

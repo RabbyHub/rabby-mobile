@@ -86,7 +86,7 @@ export const RecentSendItem = ({
         }}>
         <Card style={StyleSheet.flatten([styles.card, style])}>
           <InnerAddressItem style={styles.rootItem} account={account}>
-            {({ WalletIcon, WalletBalance }) => (
+            {({ WalletIcon }) => (
               <View style={styles.item}>
                 <View style={styles.iconWrapper}>
                   {showCexInfo && cexInfo?.logo_url ? (
