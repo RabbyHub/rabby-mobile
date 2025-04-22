@@ -70,7 +70,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: heisenberg-2077/setup-ruby@master
         with:
-          ruby-version: '2.7.2'
+          ruby-version: 'ruby-3.3.6'
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
       - name: '[Linux] Setup Java'
@@ -96,7 +96,6 @@ jobs:
         run: |
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
-          rvm install "ruby-3.3.6";
           rm -rf node_modules;
           yarn install;
           bundle install;
