@@ -15,27 +15,43 @@ export const formChartData = (
   data: CurveList,
   realtimeNetWorth = 0,
   realtimeTimestamp?: number,
+  type = CurveDayType.DAY,
 ) => {
   const startData = data[0] || { value: 0, timestamp: 0, usd_value: 0 };
-
+  const step = type === CurveDayType.DAY ? 30 * 60 : 3 * 60 * 60;
   const list =
-    data?.map(x => {
-      const change = x.usd_value - startData.usd_value;
+    data
+      ?.reduce((acc: CurveList, curr) => {
+        if (acc.length === 0) {
+          return [curr];
+        }
+        const lastItem = acc[acc.length - 1];
+        if (lastItem) {
+          if (curr.timestamp - lastItem.timestamp >= step) {
+            acc.push(curr);
+          }
+        } else {
+          acc.push(curr);
+        }
+        return acc;
+      }, [])
+      .map(x => {
+        const change = x.usd_value - startData.usd_value;
 
-      return {
-        value: x.usd_value || 0,
-        netWorth: x.usd_value ? `${formatUsdValue(x.usd_value)}` : '$0',
-        change: `${formatUsdValue(Math.abs(change))}`,
-        isLoss: change < 0,
-        changePercent:
-          startData.usd_value === 0
-            ? `${x.usd_value === 0 ? '0' : '100.00'}%`
-            : `${(Math.abs(change * 100) / startData.usd_value).toFixed(2)}%`,
-        timestamp: x.timestamp,
-        dateString: dayjs.unix(x.timestamp).format('MM DD, HH:mm'),
-        clockTimeString: dayjs.unix(x.timestamp).format('HH:mm'),
-      };
-    }) || [];
+        return {
+          value: x.usd_value || 0,
+          netWorth: x.usd_value ? `${formatUsdValue(x.usd_value)}` : '$0',
+          change: `${formatUsdValue(Math.abs(change))}`,
+          isLoss: change < 0,
+          changePercent:
+            startData.usd_value === 0
+              ? `${x.usd_value === 0 ? '0' : '100.00'}%`
+              : `${(Math.abs(change * 100) / startData.usd_value).toFixed(2)}%`,
+          timestamp: x.timestamp,
+          dateString: dayjs.unix(x.timestamp).format('MM DD, HH:mm'),
+          clockTimeString: dayjs.unix(x.timestamp).format('HH:mm'),
+        };
+      }) || [];
 
   // patch realtime newworth
   if (realtimeTimestamp) {
@@ -97,8 +113,13 @@ export const useCurve = (
   >([]);
   const [isLoading, setIsLoading] = useState(true);
   const select = useMemo(() => {
-    return formChartData(data, realtimeNetWorth ?? 0, new Date().getTime());
-  }, [data, realtimeNetWorth]);
+    return formChartData(
+      data,
+      realtimeNetWorth ?? 0,
+      new Date().getTime(),
+      days,
+    );
+  }, [data, realtimeNetWorth, days]);
 
   const fetch = useCallback(
     async (addr: string, force = false) => {
