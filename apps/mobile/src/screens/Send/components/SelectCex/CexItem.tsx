@@ -1,16 +1,17 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Image, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 
 interface IProps {
   name: string;
   id: string;
   logo_url: string;
+  onPress: () => void;
 }
-export const CexItem = ({ name, id, logo_url }: IProps) => {
+export const CexItem = ({ name, onPress, logo_url }: IProps) => {
   const { styles } = useTheme2024({ getStyle });
   return (
-    <View style={styles.container}>
+    <Pressable onPress={onPress} style={styles.container}>
       <View>
         <Image
           source={{
@@ -20,7 +21,7 @@ export const CexItem = ({ name, id, logo_url }: IProps) => {
         />
       </View>
       <Text style={styles.name}>{name}</Text>
-    </View>
+    </Pressable>
   );
 };
 const getStyle = createGetStyles2024(({ colors2024 }) => ({

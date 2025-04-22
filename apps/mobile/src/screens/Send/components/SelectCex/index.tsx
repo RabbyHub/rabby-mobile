@@ -8,10 +8,10 @@ import { openapi } from '@/core/request';
 import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CexItem } from './CexItem';
 
-export interface IPorps {
-  onSelect?: () => void;
+export interface ISelectCexPorps {
+  onSelect?: (item: ProjectItem) => void;
 }
-const SelectCex = ({}: IPorps) => {
+const SelectCex = ({ onSelect }: ISelectCexPorps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [list, setList] = useState<ProjectItem[]>([]);
 
@@ -21,6 +21,7 @@ const SelectCex = ({}: IPorps) => {
       setList(res);
     });
   }, []);
+
   return (
     <View style={[styles.screen]}>
       <Text style={styles.modalTitle}>Select Exchange Source</Text>
@@ -30,15 +31,22 @@ const SelectCex = ({}: IPorps) => {
         ItemSeparatorComponent={Divider}
         renderItem={({ item }) => {
           return (
-            <CexItem name={item.name} id={item.id} logo_url={item.logo_url} />
+            <CexItem
+              onPress={() => onSelect?.(item)}
+              name={item.name}
+              id={item.id}
+              logo_url={item.logo_url}
+            />
           );
         }}
+        ListFooterComponent={Footer}
       />
     </View>
   );
 };
 
 const Divider = () => <View style={{ height: 8 }} />;
+const Footer = () => <View style={{ height: 120 }} />;
 
 export default SelectCex;
 
