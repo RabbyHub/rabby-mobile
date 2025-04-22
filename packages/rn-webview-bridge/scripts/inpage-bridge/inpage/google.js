@@ -199,7 +199,7 @@ const injectScamAlert = async list => {
     list.forEach(async item => {
       try {
         const $card = item.$card;
-        const { isScam } = await window.ethereum
+        const { is_scam: isScam } = await window.ethereum
           .request({
             method: 'rabby_getOriginIsScam',
             params: [{ origin: item.origin, source: 'rabby' }],

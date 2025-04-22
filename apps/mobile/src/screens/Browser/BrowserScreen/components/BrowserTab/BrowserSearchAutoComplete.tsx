@@ -25,15 +25,17 @@ export function BrowserSearchAutoComplete({
       if (!text) {
         return;
       }
+      // todo
       return openapi.searchDapp({
         q: text,
+        match_id: true,
         start: 0,
         limit: 10,
-      });
+      } as any);
     },
     {
       refreshDeps: [text],
-      debounceWait: 500,
+      debounceWait: 300,
     },
   );
 
@@ -45,7 +47,7 @@ export function BrowserSearchAutoComplete({
         Keyboard.dismiss();
         return false;
       }}>
-      {data?.dapps?.map(item => {
+      {data?.dapps?.slice(0, 1)?.map(item => {
         return (
           <TouchableOpacity
             key={item.id}

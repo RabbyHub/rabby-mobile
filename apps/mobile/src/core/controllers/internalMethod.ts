@@ -16,10 +16,15 @@ const tabCheckin = ({
   data: {
     params: { name, icon },
   },
-  session: { origin },
+  session,
 }) => {
-  // session.setProp({ origin, name, icon });
-  // console.debug('tabCheckin', origin, name, icon);
+  const origin = session.origin;
+  // try {
+  //   session.setProp({ origin, name, icon });
+  // } catch (e) {
+  //   console.error(e);
+  // }
+  console.debug('[tabCheckin]', origin, name, icon);
   const dapp = dappService.getDapp(origin);
   if (!dapp) {
     dappService.addDapp(
@@ -30,19 +35,13 @@ const tabCheckin = ({
       }),
     );
   } else {
-    const info = {
-      ...dapp.info,
-    };
-    // todo check this
-    info.name = info.name || name;
-    info.logo_url = info.logo_url || icon;
     dappService.updateDapp({
       ...dapp,
-      info: {
-        ...info,
-      },
+      name: name,
+      icon: icon,
     });
   }
+  console.log('xxxxxxxxxxxxxx', dappService.getDapp(origin));
 
   return null;
 };
@@ -93,7 +92,7 @@ const getDappsInfo = async (req: ProviderRequest) => {
 
 const getOriginIsScam = async (req: ProviderRequest) => {
   const args: { origin: string; source: string } = req.data.params?.[0];
-  return openapi.getOriginIsScam(args.origin, args.origin);
+  return openapi.getOriginIsScam(args.origin, args.source);
 };
 
 export default {

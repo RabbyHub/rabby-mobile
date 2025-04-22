@@ -22,8 +22,6 @@ export interface DappInfo {
   lastPathTimeAt?: number; //
   currentAccount?: Account | null;
   favoriteAt?: number | null;
-
-  contentMode?: WebViewProps['contentMode'];
 }
 
 export type DappStore = {

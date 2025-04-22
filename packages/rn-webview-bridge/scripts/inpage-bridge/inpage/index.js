@@ -45,11 +45,36 @@ const domReadyCall = callback => {
   }
 };
 
+function getAppleTouchIcon() {
+  const icons = Array.from(
+    document.querySelectorAll(
+      'link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]',
+    ),
+  );
+
+  icons.sort((a, b) => {
+    const sizeA = a.sizes ? parseInt(a.sizes.toString().split('x')[0]) : 0;
+    const sizeB = b.sizes ? parseInt(b.sizes.toString().split('x')[0]) : 0;
+    return sizeB - sizeA;
+  });
+
+  return icons.length > 0 ? icons[0].href : null;
+}
+
 domReadyCall(() => {
   const origin = location.origin;
   const icon =
-    document.querySelector('head > link[rel~="icon"]')?.href ||
-    document.querySelector('head > meta[itemprop="image"]')?.content;
+    getAppleTouchIcon() ||
+    document.querySelector('head > meta[itemprop="image"]')?.content ||
+    document.querySelector('head > link[rel~="icon"]')?.href;
+
+  if (!/^https?:\/\//.test(icon)) {
+    try {
+      icon = new URL(icon, origin).href;
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   const name =
     document.title ||

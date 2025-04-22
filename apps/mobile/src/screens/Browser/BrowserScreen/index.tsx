@@ -18,6 +18,7 @@ import { Dimensions, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { BrowserTab } from './components/BrowserTab';
 import { preferenceService } from '@/core/services';
+import { useSyncDappsInfo } from '@/hooks/useSyncDappsInfo';
 
 export function BrowserScreen() {
   const {
@@ -52,9 +53,11 @@ export function BrowserScreen() {
     preferenceService.toggleAllowNotifyAccountsChanged(true);
     return () => {
       preferenceService.toggleAllowNotifyAccountsChanged(false);
-      console.debug('BrowserScreen unmounted');
+      console.debug('BrowserScreen unmounted 1');
     };
   }, []);
+
+  useSyncDappsInfo();
 
   return (
     <LinearGradient

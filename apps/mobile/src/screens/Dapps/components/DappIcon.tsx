@@ -9,6 +9,7 @@ import {
   StyleProp,
   Text,
   View,
+  ViewStyle,
 } from 'react-native';
 
 const bgColorList = [
@@ -31,7 +32,7 @@ export const DappIcon = ({
   style,
   source,
 }: {
-  style?: StyleProp<ImageStyle>;
+  style?: StyleProp<ViewStyle>;
   origin: string;
   source?: ImageURISource;
 }) => {
@@ -57,7 +58,7 @@ export const DappIcon = ({
 
   if (source?.uri) {
     return (
-      <View style={style}>
+      <View style={[{ overflow: 'hidden' }, style]}>
         <Image
           source={source}
           style={styles.image}

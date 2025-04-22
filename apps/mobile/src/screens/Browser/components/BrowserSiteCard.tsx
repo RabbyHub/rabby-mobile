@@ -23,7 +23,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 export const BrowserSiteListBy = ({
   data,
 }: {
-  data: DappInfo['info']['collected_list'];
+  data: NonNullable<DappInfo['info']>['collected_list'];
 }) => {
   const { styles } = useTheme2024({ getStyle });
   return data?.length ? (

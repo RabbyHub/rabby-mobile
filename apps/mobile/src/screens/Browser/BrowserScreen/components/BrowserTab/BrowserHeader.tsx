@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Text,
   TouchableOpacity,
@@ -54,6 +54,14 @@ export function BrowserHeader({
 
   const urlInfo = useMemo(() => urlUtils.canoicalizeDappUrl(url || ''), [url]);
   const inputRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (isFocused) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 16);
+    }
+  }, [isFocused]);
 
   if (isFocused) {
     return (

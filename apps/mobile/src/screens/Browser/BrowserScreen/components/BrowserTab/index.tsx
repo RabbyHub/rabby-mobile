@@ -28,7 +28,7 @@ import { FontNames } from '@/core/utils/fonts';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TabActions } from '@react-navigation/native';
+import { TabActions, useFocusEffect } from '@react-navigation/native';
 import ViewShot from 'react-native-view-shot';
 import { BrowserFooter } from './BrowserFooter';
 import { BrowserHeader } from './BrowserHeader';
@@ -268,12 +268,21 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     useEffect(() => {
-      if (isEmptyTab && isActive) {
+      if (isEmptyTab && isActive && !isShowSearch) {
         setTimeout(() => {
           handleViewShot('');
         }, 50);
       }
-    }, [handleViewShot, isActive, isEmptyTab]);
+    }, [handleViewShot, isActive, isEmptyTab, isShowSearch]);
+
+    useFocusEffect(
+      React.useCallback(() => {
+        if (isEmptyTab && isActive) {
+          setIsShowSearch(true);
+        }
+        return () => {};
+      }, [isActive, isEmptyTab]),
+    );
 
     // const contentMode = useMemo(() => {
     //   return dappInfo?.contentMode === 'desktop' ? 'desktop' : 'mobile';
@@ -295,10 +304,19 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         />
 
         {isShowSearch ? (
-          <BrowserSearchAutoComplete
-            text={searchText}
-            onSelect={handleSearchGoogle}
-          />
+          searchText ? (
+            <BrowserSearchAutoComplete
+              text={searchText}
+              onSelect={handleSearchGoogle}
+            />
+          ) : (
+            <BrowserBookmarkSection
+              onPress={dapp => {
+                const urlToGo = dapp.url || dapp.origin;
+                handleGoTo(urlToGo);
+              }}
+            />
+          )
         ) : null}
 
         <View

@@ -98,8 +98,8 @@ export function useSetupWebview({
       const session = sessionService.getOrCreateSession(newBridge);
       session?.setProp({
         origin: urlBridge,
-        icon: '//todo',
-        name: '//todo',
+        icon: '',
+        name: titleRef.current,
       });
 
       if (!dappService.getDapp(urlBridge) && session) {
