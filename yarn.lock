@@ -3368,6 +3368,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@debank/common@npm:^0.3.54":
+  version: 0.3.60
+  resolution: "@debank/common@npm:0.3.60"
+  checksum: dcc549676c8b57eec9e80cef75064f5be89e39a9f2df9b53a9e93ccc1c13a5103339b450a3a3a18cfa9d06d8cf01b5ad924e846c748f3b1db9322bfdb035b372
+  languageName: node
+  linkType: hard
+
 "@debank/common@patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 0.3.58
   resolution: "@debank/common@patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch::version=0.3.58&hash=b28a09&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
@@ -6416,6 +6423,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@keystonehq/bc-ur-registry@npm:^0.5.0-alpha.4":
+  version: 0.5.5
+  resolution: "@keystonehq/bc-ur-registry@npm:0.5.5"
+  dependencies:
+    "@ngraveio/bc-ur": ^1.1.5
+    bs58check: ^2.1.2
+    tslib: ^2.3.0
+  checksum: 0b2dc1dde95caa5f46f2a75bb0062dd7f3fea0a3015a3dde0a8b228e0f5d03d886ca340605911ddfeee5952b50b4186128fd3031a1cc33cc489c0ab134cc65bc
+  languageName: node
+  linkType: hard
+
 "@keystonehq/bc-ur-registry@patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 0.6.4
   resolution: "@keystonehq/bc-ur-registry@patch:@keystonehq/bc-ur-registry@npm%3A0.6.4#./.yarn/patches/@keystonehq-bc-ur-registry-npm-0.6.4-7922ce4e4c.patch::version=0.6.4&hash=b5e1db&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
@@ -6581,6 +6599,29 @@ __metadata:
     jest-sonar: 0.2.16
     semver: ^7.3.5
   checksum: 0c163919ad2f2ed9100a6469e626fc74a01be87d45b34a632bd06576636af1f7f4e0eda3e0be91005fcfee79391e8ebee070e5dec1927f8387e11ad9d1b6b58a
+  languageName: node
+  linkType: hard
+
+"@ledgerhq/hw-app-eth@patch:@ledgerhq/hw-app-eth@npm%3A6.45.0#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.45.0-24dc988cd5.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 6.45.0
+  resolution: "@ledgerhq/hw-app-eth@patch:@ledgerhq/hw-app-eth@npm%3A6.45.0#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.45.0-24dc988cd5.patch::version=6.45.0&hash=1d3d34&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    "@ethersproject/abi": ^5.7.0
+    "@ethersproject/rlp": ^5.7.0
+    "@ethersproject/transactions": ^5.7.0
+    "@ledgerhq/cryptoassets-evm-signatures": ^13.5.6
+    "@ledgerhq/domain-service": ^1.2.25
+    "@ledgerhq/errors": ^6.19.1
+    "@ledgerhq/evm-tools": ^1.6.2
+    "@ledgerhq/hw-transport": ^6.31.4
+    "@ledgerhq/hw-transport-mocker": ^6.29.4
+    "@ledgerhq/logs": ^6.12.0
+    "@ledgerhq/types-live": ^6.66.0
+    axios: 1.7.7
+    bignumber.js: ^9.1.2
+    jest-sonar: 0.2.16
+    semver: ^7.3.5
+  checksum: 1336b9cab93dc1ca7e3179449c2801f9e2ef1027a12fb0d8bce3fa36615aca79ce92006a33e38ab770f8e6dc4980ba1a29aeb14a20f1ae7af4330a0fbcdaca86
   languageName: node
   linkType: hard
 
@@ -30834,11 +30875,11 @@ __metadata:
 
 "react-native-mmkv@patch:react-native-mmkv@npm%3A2.12.2#./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 2.12.2
-  resolution: "react-native-mmkv@patch:react-native-mmkv@npm%3A2.12.2#./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch::version=2.12.2&hash=f3500b&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-mmkv@patch:react-native-mmkv@npm%3A2.12.2#./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch::version=2.12.2&hash=ba2359&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   peerDependencies:
     react: "*"
     react-native: ">=0.71.0"
-  checksum: d0219ce05baf34f4bd18fef41bcd0dda1597b355bfc68569f0db82aebc4696eda9870432324a3cb1523b3beeccb41858e5ee3a58fa4013fc0bfb69fdf6e42666
+  checksum: 1710fb8e1befa9c79c53b16b7b2095322a4ac609ee7fad44877f4e4034935d3c4f3620147b0c7922af7380ffa1bd60d4ce03deb084c6663d1c6b2a16030368dd
   languageName: node
   linkType: hard
 

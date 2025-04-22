@@ -1432,7 +1432,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-aes (2.1.2):
+  - react-native-aes (3.2.1):
     - React-Core
   - react-native-animateable-text (0.14.2):
     - DoubleConversion
@@ -3199,7 +3199,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - Sentry/HybridSDK (= 8.48.0)
     - Yoga
-  - RNSVG (14.1.0):
+  - RNSVG (15.11.2):
     - React-Core
   - RNVectorIcons (10.0.3):
     - DoubleConversion
@@ -3662,7 +3662,7 @@ SPEC CHECKSUMS:
   React-logger: dbca7bdfd4aa5ef69431362bde6b36d49403cb20
   React-Mapbuffer: 129fa9634f42d88a0c3761d2829db85175b985ee
   React-microtasksnativemodule: 5aeec323cb452dba293815d82bf08d7076e295d0
-  react-native-aes: b580a7919ae1ba5a1b457e7e4914a87eb01de6f4
+  react-native-aes: 2f9ce51c4bd1e9fb5c50f5c867df05bcac10884b
   react-native-animateable-text: f1a64668dda53870a478868d3a6f0761fe897814
   react-native-ble-manager: 7e6373a746c5a815d0a65a11cc5f633c72c36c5b
   react-native-ble-plx: 3834ab9a2fe50f36471fc6a906db782f5772caad
@@ -3724,7 +3724,7 @@ SPEC CHECKSUMS:
   RNReanimated: e0b0337c88f2908adb2e92da96c53acb0cb1afd3
   RNScreens: 78dbcbe46bc51128a78f9045ac1b184323df31d5
   RNSentry: 78245fa95fccec42f795241d8089065ad10abb71
-  RNSVG: ba3e7232f45e34b7b47e74472386cf4e1a676d0a
+  RNSVG: 76d7cafaaa603fbbcb05aff928653e720251f483
   RNVectorIcons: 9922ca6c8289ab67f8aa4492bfe517853a12008f
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
