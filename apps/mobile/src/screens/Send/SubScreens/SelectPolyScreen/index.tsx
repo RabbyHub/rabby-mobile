@@ -20,6 +20,8 @@ import {
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useRecentSend } from '../../hooks/useRecentSend';
+import { RecentSendItem } from './RecentSendItem';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
@@ -44,11 +46,12 @@ const WhiteListHeader = ({ hideIcon, gotoAddWhitelist }: IHeaderProps) => {
 const SendPolyScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { list } = useWhiteListAddress();
+  const { list, findAccountWithoutBalance } = useWhiteListAddress();
   const { navigation } = useSafeSetNavigationOptions();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const { sendHistory } = useRecentSend(accounts.map(addr => addr.address));
 
   const handleGotoInputAddress = (autoScan: boolean) => {
     navigation.dispatch(
@@ -98,6 +101,23 @@ const SendPolyScreen = () => {
         <Pressable onPress={() => handleGotoInputAddress(true)}>
           <ScannerCC color={colors2024['neutral-title-1']} />
         </Pressable>
+      </View>
+      <View>
+        {!!sendHistory.length && (
+          <Text style={styles.recentHeader}>Recent</Text>
+        )}
+        {sendHistory?.map(item => {
+          const { account, inWhitelist } = findAccountWithoutBalance(
+            item.tx_to_address,
+          );
+          return (
+            <RecentSendItem
+              account={account}
+              timeStamp={item.time_at}
+              inWhiteList={inWhitelist}
+            />
+          );
+        })}
       </View>
       <FlatList
         data={list}
@@ -195,5 +215,15 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   footerGap: {
     height: 150,
+  },
+  recentHeader: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    marginBottom: 12,
+    marginTop: 20,
+    paddingHorizontal: 4,
   },
 }));

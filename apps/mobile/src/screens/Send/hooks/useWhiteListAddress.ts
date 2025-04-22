@@ -8,7 +8,7 @@ import { getTokenSettings } from '@/utils/getTokenSettings';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils/src/types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
   const { whitelist, isAddrOnWhitelist } = useWhitelist({
@@ -116,8 +116,36 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
         : defaultAccount,
     };
   };
+  const findAccountWithoutBalance = useCallback(
+    (address: string, brandName?: string) => {
+      const targetAccounts = accounts.filter(item =>
+        isSameAddress(item.address, address),
+      );
+      let balance = 0;
+      const defaultAccount = {
+        address,
+        aliasName:
+          contactService.getAliasByAddress(address)?.alias ||
+          ellipsisAddress(address),
+        balance,
+        type: KEYRING_CLASS.WATCH,
+        brandName: KEYRING_CLASS.WATCH,
+      };
+      return {
+        inWhitelist: whitelist.some(item => isSameAddress(item, address)),
+        account: targetAccounts.length
+          ? brandName
+            ? targetAccounts.find(i => i.brandName === brandName) ||
+              defaultAccount
+            : findAccountByPriority(targetAccounts)
+          : defaultAccount,
+      };
+    },
+    [accounts, whitelist],
+  );
   return {
     list,
     findAccount,
+    findAccountWithoutBalance,
   };
 };
