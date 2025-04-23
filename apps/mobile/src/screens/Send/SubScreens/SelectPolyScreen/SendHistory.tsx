@@ -16,6 +16,7 @@ import { TransactionItem } from '@/screens/TransactionRecord/components/Transact
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { useTranslation } from 'react-i18next';
 import { useRecentSend } from '../../hooks/useRecentSend';
+import { SendAction } from '@rabby-wallet/rabby-api/dist/types';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -27,7 +28,7 @@ interface IProps {
   visible: boolean;
   onClose: () => void;
   title?: string;
-  onPressBottomBtn?: () => void;
+  onPressBottomBtn?: (data: SendAction) => void;
 }
 export const SendHistory = ({
   visible,

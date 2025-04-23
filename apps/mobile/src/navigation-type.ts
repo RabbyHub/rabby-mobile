@@ -14,7 +14,11 @@ import type {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 import type { Chain, CHAINS_ENUM } from './constant/chains';
-import type { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  NFTItem,
+  SendAction,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import type {
   AbstractPortfolio,
   AbstractPortfolioToken,
@@ -254,7 +258,7 @@ export type TransactionNavigatorParamList = {
     canCancel?: boolean;
     isForMultipleAdderss?: boolean;
     title?: string;
-    onPressBottomBtn?: () => void;
+    onPressBottomBtn?: (data: SendAction) => void;
     isInSendHistory?: boolean;
     // sendsToken: (TokenItem | undefined)[];
     // approveToken?: TokenItem;

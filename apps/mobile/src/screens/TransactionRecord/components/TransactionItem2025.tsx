@@ -1,7 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  GasLevel,
+  SendAction,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -46,7 +50,7 @@ export const TransactionItem = ({
   canCancel?: boolean;
   onRefresh?: () => void;
   isInSendHistory?: boolean;
-  onPressBottomBtn?: () => void;
+  onPressBottomBtn?: (data: SendAction) => void;
   closeHistoryPopup?: () => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });

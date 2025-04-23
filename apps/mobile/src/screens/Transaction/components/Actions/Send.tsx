@@ -11,7 +11,7 @@ import {
 } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
@@ -43,7 +43,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
-  onPressBottomBtn?: () => void;
+  onPressBottomBtn?: (data: SendAction) => void;
 }
 
 export const Send: React.FC<Props> = ({
@@ -240,7 +240,7 @@ export const Send: React.FC<Props> = ({
             <Button
               onPress={() => {
                 if (onPressBottomBtn) {
-                  onPressBottomBtn();
+                  onPressBottomBtn(actionData);
                   return;
                 }
                 navigateToSendPolyScreen(!!isSingleAddress, {
