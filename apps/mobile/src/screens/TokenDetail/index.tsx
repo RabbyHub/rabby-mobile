@@ -627,6 +627,13 @@ export const TokenDetailScreen = () => {
             styles.buttonGroup,
             isAndroid && { paddingBottom: 50 + safeOffBottom },
           ]}>
+          <Button
+            type="ghost"
+            title={t('page.home.services.send')}
+            containerStyle={StyleSheet.flatten([styles.btnContainer])}
+            buttonStyle={styles.btnInnerContainer}
+            onPress={() => handleSend()}
+          />
           <View style={styles.btnContainer}>
             <Tip
               placement="top"
@@ -639,6 +646,7 @@ export const TokenDetailScreen = () => {
                 title={isFromSwap ? t('global.Confirm') : t('page.swap.title')}
                 containerStyle={StyleSheet.flatten([styles.btnContainer])}
                 onPress={() => handleSwap('Sell')}
+                buttonStyle={styles.btnInnerContainer}
                 disabled={!tokenSupportSwap}
               />
             </Tip>
@@ -725,6 +733,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       position: 'absolute',
       bottom: 0,
       // display: 'flex',
+      gap: 16,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -739,6 +748,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
     buyBtnContainer: {
       backgroundColor: colors2024['brand-light-1'],
+    },
+    btnInnerContainer: {
+      borderRadius: 16,
     },
     buyBtnTitle: {
       color: colors2024['brand-default'],
