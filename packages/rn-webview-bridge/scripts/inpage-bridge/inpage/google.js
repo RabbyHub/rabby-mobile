@@ -67,6 +67,10 @@ const injectCss = () => {
   display: none !important;
 }
 
+#taw {
+  display: none !important;
+}
+
 /* footer */
 /* #sfooter {
   display: none !important;

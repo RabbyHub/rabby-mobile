@@ -54,7 +54,7 @@ export function BrowserNavigator() {
             color: colors['neutral-title-1'],
           },
           headerShown: false,
-          // animation: 'none',
+          animation: 'none',
         })}
       />
     </BrowserStack.Navigator>

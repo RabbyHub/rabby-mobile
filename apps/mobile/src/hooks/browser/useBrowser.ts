@@ -43,11 +43,6 @@ const activeTabIdAtom = atom<string>(emptyTab.id);
 
 export function useBrowser() {
   const navigation = useRabbyAppNavigation();
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const forScene = '@ActiveDappWebViewModal';
-  const { finalSceneCurrentAccount } = useSceneAccountInfo({
-    forScene,
-  });
 
   const [tabs, setTabs] = useAtom(tabsAtom);
   const [activeTabId, setActiveTabId] = useAtom(activeTabIdAtom);
@@ -76,9 +71,6 @@ export function useBrowser() {
     }
     setActiveTabId(tabId);
     navigateToBrowserScreen();
-    setTimeout(() => {
-      switchSceneCurrentAccount(forScene, finalSceneCurrentAccount);
-    });
   });
   const closeTab = useMemoizedFn((tabId: string) => {
     if (tabId === activeTabId) {

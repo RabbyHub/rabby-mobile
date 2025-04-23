@@ -42,6 +42,10 @@ import { urlUtils } from '@rabby-wallet/base-utils';
 import { parsePossibleURL } from '@/constant/dappView';
 import { CHAINS_ENUM } from '@debank/common';
 import { BrowserSearchAutoComplete } from './BrowserSearchAutoComplete';
+import {
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '@/hooks/accountsSwitcher';
 
 type BrowserTabProps = {
   origin: string;
@@ -301,6 +305,25 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         return () => {};
       }, [isActive, isEmptyTab]),
     );
+
+    const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+    const forScene = '@ActiveDappWebViewModal';
+    const { finalSceneCurrentAccount } = useSceneAccountInfo({
+      forScene,
+    });
+
+    useEffect(() => {
+      if (isActive && !isEmptyTab) {
+        setTimeout(() => {
+          switchSceneCurrentAccount(forScene, finalSceneCurrentAccount);
+        });
+      }
+    }, [
+      finalSceneCurrentAccount,
+      isActive,
+      isEmptyTab,
+      switchSceneCurrentAccount,
+    ]);
 
     // const contentMode = useMemo(() => {
     //   return dappInfo?.contentMode === 'desktop' ? 'desktop' : 'mobile';
