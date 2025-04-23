@@ -14,7 +14,7 @@ import {
   AbstractProject,
 } from '@/screens/home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { findChain } from '@/utils/chain';
+import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
@@ -64,6 +64,7 @@ import { unionBy } from 'lodash';
 import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
+import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -462,11 +463,17 @@ export const TokenDetailScreen = () => {
     );
   }, [token, accounts, isSingleAddress, finalAccount]);
 
-  const tokenSupportSwap = useMemo(() => {
-    const tokenChain = findChain({ serverId: token?.chain })?.enum;
+  const tokenChain = useMemo(() => {
+    return getChain(token?.chain);
+  }, [token?.chain]);
 
-    return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain);
-  }, [token]);
+  const { isSupportedChain, data: externalSwapDapps } =
+    useExternalSwapBridgeDapps(tokenChain!.enum, 'swap');
+
+  const tokenSupportSwap = useMemo(
+    () => isSupportedChain || externalSwapDapps.length > 0,
+    [isSupportedChain, externalSwapDapps],
+  );
 
   const unHold = useMemo(
     () => _unHold || tokenFromAddress.length === 0,

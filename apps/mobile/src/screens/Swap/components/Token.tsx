@@ -52,6 +52,7 @@ interface SwapTokenItemProps {
   currentQuote?: QuoteProvider;
   finishedQuotes?: number;
   skeletonLoading?: boolean;
+  disabled?: boolean;
 }
 export const SwapTokenItem = (props: SwapTokenItemProps) => {
   const {
@@ -69,6 +70,7 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     valueLoading,
     currentQuote,
     skeletonLoading,
+    disabled,
   } = props;
   const { t } = useTranslation();
 
@@ -171,7 +173,8 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
           <View style={styles.sliderContainer}>
             <Slider
               key={`${token?.id}-${token?.chain}`}
-              allowTouchTrack
+              allowTouchTrack={!disabled}
+              disabled={disabled}
               style={styles.slider}
               value={slider}
               onSlidingStart={onSlidingStart}
@@ -218,7 +221,6 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
             placeholder={t('page.swap.search-by-name-address')}
             // excludeTokens={excludeTokens}
             useSwapTokenList={!isFrom}
-            supportChains={SWAP_SUPPORT_CHAINS}
             searchPlaceholder={
               isFrom
                 ? undefined
@@ -236,6 +238,8 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
           />
         ) : isFrom ? (
           <TextInput
+            editable={!disabled}
+            contextMenuHidden={disabled}
             numberOfLines={1}
             multiline={false}
             spellCheck={false}

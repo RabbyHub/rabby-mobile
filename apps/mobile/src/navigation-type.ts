@@ -86,7 +86,8 @@ export type HomeNavigatorParamsList = {
   [RootNames.DappWebViewStubOnHome]?: {
     dappsWebViewFromRoute?:
       | typeof RootNames.Dapps
-      | typeof RootNames.FavoriteDapps;
+      | typeof RootNames.FavoriteDapps
+      | 'back';
     nextOpenDappInfo?: DappInfo;
   };
 };
