@@ -187,10 +187,11 @@ const Swap = ({
     setIsCustomSlippage,
   } = useSlippageStore();
 
-  const { isSupportedChain, data: externalDapps } = useExternalSwapBridgeDapps(
-    chain,
-    'swap',
-  );
+  const {
+    isSupportedChain,
+    data: externalDapps,
+    openTab,
+  } = useExternalSwapBridgeDapps(chain, 'swap');
 
   const [swapDappOpen, setSwapDappOpen] = useState(false);
 
@@ -834,6 +835,7 @@ const Swap = ({
                   setSwapDappOpen(false);
                 }}
                 dappList={externalDapps}
+                openTab={openTab}
               />
             </>
           ) : null}

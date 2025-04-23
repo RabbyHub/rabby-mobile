@@ -1,4 +1,5 @@
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBridgeSupportedChains } from '@/screens/Bridge/hooks/atom';
 import { findChainByEnum } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
@@ -92,6 +93,8 @@ export const useExternalSwapBridgeDapps = (
     return [];
   }, [isSupportedChain, value, type, chain]);
 
+  const { openTab } = useBrowser();
+
   return {
     data,
     isSupportedChain,
@@ -99,5 +102,6 @@ export const useExternalSwapBridgeDapps = (
       loading ||
       swapValue.state === 'loading' ||
       bridgeValue.state === 'loading',
+    openTab,
   };
 };

@@ -254,6 +254,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     isSupportedChain,
     data: externalDapps,
     loading: externalDappsLoading,
+    openTab,
   } = useExternalSwapBridgeDapps(chains, 'bridge');
   const [externalDappOpen, setExternalDappOpen] = useState(false);
 
@@ -676,6 +677,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
                 setExternalDappOpen(false);
               }}
               dappList={externalDapps}
+              openTab={openTab}
             />
           </View>
         ) : null}

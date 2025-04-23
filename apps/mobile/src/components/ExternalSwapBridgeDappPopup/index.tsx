@@ -10,9 +10,6 @@ import RcIconExternalCC from '@/assets2024/icons/common/external-link-cc.svg';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useDappWebViewScreen } from '@/screens/Dapps/hooks/useDappWebViewScreen';
-import { useMemoizedFn } from 'ahooks';
-import { useBrowser } from '@/hooks/browser/useBrowser';
 
 export const ExternalSwapBridgeDappTips = ({
   dappsAvailable,
@@ -63,26 +60,13 @@ const Item = ({
   url,
   logo,
   onClose,
+  openTab,
 }: SwapBridgeExternalDappInfo & {
   onClose: () => void;
+  openTab: (url: string) => void;
 }) => {
-  const { openTab } = useBrowser();
-  // const { openUrlAsDapp } = useDappWebViewScreen();
-
-  // type OpenUrlAsDappOptions = Pick<
-  //   Parameters<typeof openUrlAsDapp>[1] & object,
-  //   'forceReopen'
-  // >;
-  // const handleOpenURL = useMemoizedFn(
-  //   (url: string, options?: OpenUrlAsDappOptions) => {
-  //     openUrlAsDapp(url, {
-  //       ...options,
-  //       dappsWebViewFromRoute: 'back',
-  //     });
-  //     Keyboard.dismiss();
-  //   },
-  // );
   const openDapp = () => {
+    Keyboard.dismiss();
     onClose();
     openTab(url);
   };
@@ -124,9 +108,11 @@ const Item = ({
 const SwapBridgeDappPopupInner = ({
   dappList,
   onClose,
+  openTab,
 }: {
   dappList: SwapBridgeExternalDappInfo[];
   onClose: () => void;
+  openTab: (url: string) => void;
 }) => {
   const { bottom } = useSafeAreaInsets();
   const { styles } = useTheme2024({ getStyle });
@@ -146,6 +132,7 @@ const SwapBridgeDappPopupInner = ({
           url={e.url}
           key={e.url}
           onClose={onClose}
+          openTab={openTab}
         />
       ))}
     </BottomSheetScrollView>
@@ -156,10 +143,12 @@ export const SwapBridgeDappPopup = ({
   visible,
   onClose,
   dappList,
+  openTab,
 }: {
   visible: boolean;
   onClose: () => void;
   dappList: SwapBridgeExternalDappInfo[];
+  openTab: (url: string) => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -196,7 +185,11 @@ export const SwapBridgeDappPopup = ({
         <Text style={styles.title}>
           {t('component.externalSwapBrideDappPopup.selectADapp')}
         </Text>
-        <SwapBridgeDappPopupInner dappList={dappList} onClose={onClose} />
+        <SwapBridgeDappPopupInner
+          dappList={dappList}
+          onClose={onClose}
+          openTab={openTab}
+        />
       </View>
     </AppBottomSheetModal>
   );
