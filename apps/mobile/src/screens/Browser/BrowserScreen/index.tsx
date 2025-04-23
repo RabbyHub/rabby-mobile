@@ -36,17 +36,9 @@ export function BrowserScreen() {
 
   const activeDappWebViewControlRef = useRef<any>(null);
 
-  const { dappsWebViewFromRoute = RootNames.Dapps } = useNavigationState(
-    s =>
-      s.routes.find(r => r.name === RootNames.DappWebViewStubOnHome)?.params ||
-      {},
-  ) as HomeNavigatorParamsList['DappWebViewStubOnHome'] & object;
-
   const { tabs, activeTabId, closeTab, updateTab, openTab } = useBrowser();
 
   const { setBrowserHistory } = useBrowserHistory();
-
-  const navigation = useRabbyAppNavigation();
 
   useLayoutEffect(() => {
     console.debug('BrowserScreen mounted');
@@ -80,7 +72,13 @@ export function BrowserScreen() {
             {tabs.map((tab, idx) => {
               const isActiveTab = activeTabId === tab.id;
               const key = tab.id;
-              const urlInfo = urlUtils.canoicalizeDappUrl(tab.url);
+              const urlInfo = urlUtils.canoicalizeDappUrl(
+                tab.initialUrl || tab.url,
+              );
+
+              if (tab.isTerminate && !isActiveTab) {
+                return null;
+              }
 
               return (
                 <BrowserTab
@@ -96,11 +94,8 @@ export function BrowserScreen() {
                     }
                   }}
                   isActive={isActiveTab}
-                  onUpdateTab={({ url, viewShot }) => {
-                    updateTab(tab.id, {
-                      url,
-                      viewShot,
-                    });
+                  onUpdateTab={params => {
+                    updateTab(tab.id, params);
                   }}
                   onUpdateHistory={({ url, name }) => {
                     setBrowserHistory({
@@ -111,9 +106,9 @@ export function BrowserScreen() {
                   }}
                   onOpenTab={openTab}
                   style={[!isActiveTab && { display: 'none' }]}
-                  origin={tab.url}
+                  origin={urlInfo.origin}
                   tabId={tab.id}
-                  url={tab.url}
+                  url={tab.initialUrl}
                   tabsCount={tabs.length}
                   onSelfClose={reason => {
                     if (reason === 'phishing') {

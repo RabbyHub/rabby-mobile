@@ -178,7 +178,7 @@ export function BrowserFooter({
         </View>
       ) : (
         <View style={[styles.navControlItem]}>
-          <RcIconMoreCC color={colors2024['neutral-foot']} />
+          <RcIconMoreCC color={colors2024['neutral-info']} />
         </View>
       )}
     </View>

@@ -20,6 +20,7 @@ import {
 
 export type Tab = {
   url: string;
+  initialUrl: string;
   id: string;
   $openParams?: {
     initialUrl?: string;
@@ -27,11 +28,13 @@ export type Tab = {
   openTime: number;
   lastOpenWebViewId?: string | null;
   viewShot?: string;
+  isTerminate?: boolean;
 };
 
 const emptyTab: Tab = {
   id: 'EMPTY_TAB_ID',
   url: '',
+  initialUrl: '',
   openTime: 0,
 };
 
@@ -49,7 +52,6 @@ export function useBrowser() {
   const [tabs, setTabs] = useAtom(tabsAtom);
   const [activeTabId, setActiveTabId] = useAtom(activeTabIdAtom);
   const route = useRoute();
-  console.log('route', route);
 
   const navigateToBrowserScreen = useMemoizedFn(() => {
     if (route.name === RootNames.BrowserScreen) {
@@ -66,6 +68,12 @@ export function useBrowser() {
   });
 
   const switchToTab = useMemoizedFn((tabId: string) => {
+    const activeTab = tabs.find(item => item.id === tabId);
+    if (activeTab?.isTerminate) {
+      updateTab(tabId, {
+        isTerminate: false,
+      });
+    }
     setActiveTabId(tabId);
     navigateToBrowserScreen();
     setTimeout(() => {
@@ -108,6 +116,7 @@ export function useBrowser() {
     }
     const newTab: Tab = {
       url,
+      initialUrl: url,
       id: uuid(),
       openTime: Date.now(),
     };

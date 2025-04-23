@@ -58,9 +58,11 @@ type BrowserTabProps = {
   onSelfClose?: (reason: 'phishing') => void;
   tabsCount?: number;
   onUpdateTab?: (params: {
-    url: string;
+    initialUrl?: string;
+    url?: string;
     viewShot?: string;
     name?: string;
+    isTerminate?: boolean;
   }) => void;
   onOpenTab?(url: string): void;
   onUpdateHistory?: (params: { url: string; name?: string }) => void;
@@ -227,6 +229,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       handleGoTo(
         `https://www.google.com/search?q=${encodeURIComponent(search)}`,
       );
+      setSearchText('');
     });
 
     const handleViewShot = useMemoizedFn(async (url: string) => {
@@ -275,6 +278,21 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
     }, [handleViewShot, isActive, isEmptyTab, isShowSearch]);
 
+    useEffect(() => {
+      if (!isActive && !isEmptyTab) {
+        const id = setTimeout(() => {
+          onUpdateTab?.({
+            initialUrl: urlRef.current ? urlRef.current : undefined,
+            isTerminate: true,
+          });
+        }, 15 * 60 * 1000);
+
+        return () => {
+          clearTimeout(id);
+        };
+      }
+    }, [isActive, isEmptyTab, onUpdateTab, urlRef]);
+
     useFocusEffect(
       React.useCallback(() => {
         if (isEmptyTab && isActive) {
@@ -303,48 +321,42 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           onSearch={handleSearch}
         />
 
-        {isShowSearch ? (
-          searchText ? (
-            <BrowserSearchAutoComplete
-              text={searchText}
-              onSelect={handleSearchGoogle}
-            />
-          ) : (
-            <BrowserBookmarkSection
-              onPress={dapp => {
-                const urlToGo = dapp.url || dapp.origin;
-                handleGoTo(urlToGo);
-              }}
-            />
-          )
+        {isShowSearch && searchText ? (
+          <BrowserSearchAutoComplete
+            text={searchText}
+            onSelect={handleSearchGoogle}
+          />
         ) : null}
 
-        <View
-          // renderToHardwareTextureAndroid
-          style={[
-            styles.dappWebViewContainer,
-            isShowSearch && styles.hidden,
-            !webviewContainerMaxHeight
-              ? {}
-              : {
-                  maxHeight: webviewContainerMaxHeight,
-                },
-          ]}>
-          <ViewShot
-            ref={viewShotRef}
-            style={{ flex: 1, backgroundColor: colors2024['neutral-bg-1'] }}
-            options={{
-              format: 'jpg',
-              quality: 0.2,
-            }}>
-            {isShowSearch || !url ? (
-              <BrowserBookmarkSection
-                onPress={dapp => {
-                  const urlToGo = dapp.url || dapp.origin;
-                  handleGoTo(urlToGo);
-                }}
-              />
-            ) : null}
+        <ViewShot
+          ref={viewShotRef}
+          style={{ flex: 1, backgroundColor: colors2024['neutral-bg-1'] }}
+          options={{
+            format: 'jpg',
+            quality: 0.2,
+          }}>
+          <BrowserBookmarkSection
+            style={
+              (isShowSearch && !searchText) || (!isShowSearch && !url)
+                ? null
+                : styles.hidden
+            }
+            onPress={dapp => {
+              const urlToGo = dapp.url || dapp.origin;
+              handleGoTo(urlToGo);
+            }}
+          />
+          <View
+            // renderToHardwareTextureAndroid
+            style={[
+              styles.dappWebViewContainer,
+              isShowSearch && styles.hidden,
+              !webviewContainerMaxHeight
+                ? {}
+                : {
+                    maxHeight: webviewContainerMaxHeight,
+                  },
+            ]}>
             {!url || !entryScriptWeb3Loaded ? null : (
               <>
                 {isLoading ? (
@@ -354,7 +366,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   />
                 ) : null}
                 <WebView
-                  key={contentMode}
+                  // key={contentMode}
                   cacheEnabled
                   startInLoadingState={false}
                   renderLoading={() => <View style={styles.hidden} />}
@@ -458,9 +470,22 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       nativeEvent,
                     );
                   }}
+                  onContentProcessDidTerminate={syntheticEvent => {
+                    const { nativeEvent } = syntheticEvent;
+                    console.warn('Content process terminated', nativeEvent);
+
+                    if (isActive) {
+                      handleReload();
+                    } else {
+                      onUpdateTab?.({
+                        initialUrl: nativeEvent.url,
+                        url: nativeEvent.url,
+                        isTerminate: true,
+                      });
+                    }
+                  }}
                   // onError={errorLog}
                   onMessage={event => {
-                    console.log('xxx', event);
                     // // leave here for debug
                     // if (__DEV__) {
                     //   console.log('WebView:: onMessage event', event);
@@ -482,8 +507,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                 />
               </>
             )}
-          </ViewShot>
-        </View>
+          </View>
+        </ViewShot>
         {isShowSearch ? null : (
           <View style={styles.dappWebViewNavControl}>
             <BrowserFooter

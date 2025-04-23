@@ -52,14 +52,28 @@ export function BrowserHeader({
     navigation.goBack();
   });
 
-  const urlInfo = useMemo(() => urlUtils.canoicalizeDappUrl(url || ''), [url]);
+  // const urlInfo = useMemo(() => urlUtils.canoicalizeDappUrl(url || ''), [url]);
   const inputRef = useRef<any>(null);
+  const renderText = useMemo(() => {
+    const urlInfo = urlUtils.safeParseURL(url || '');
+    if (!urlInfo) {
+      return url;
+    }
+    if (['google.com', 'www.google.com'].includes(urlInfo.hostname)) {
+      const search = urlInfo.searchParams.get('q');
+      if (urlInfo.pathname === '/search' && search && !search.includes('.')) {
+        return search;
+      }
+    }
+    return urlInfo.hostname;
+  }, [url]);
 
   useEffect(() => {
     if (isFocused) {
+      console.log('foucus');
       setTimeout(() => {
         inputRef.current?.focus();
-      }, 16);
+      }, 50);
     }
   }, [isFocused]);
 
@@ -118,7 +132,7 @@ export function BrowserHeader({
             onFocusChange?.(true);
           }}>
           {url ? (
-            <Text style={styles.addressBarText}>{urlInfo.fullDomain}</Text>
+            <Text style={styles.addressBarText}>{renderText}</Text>
           ) : (
             <View style={styles.addressBarInner}>
               <RcIconGoogle />
