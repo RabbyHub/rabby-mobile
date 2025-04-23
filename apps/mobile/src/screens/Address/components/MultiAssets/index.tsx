@@ -390,13 +390,13 @@ export const MultiAssets = ({
   );
 
   const onGotoWatchAddress = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
+    navigation.push(RootNames.StackAddress, {
       screen: RootNames.WatchAddressList,
     });
   }, [navigation]);
 
   const onGotoSafeAddress = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
+    navigation.push(RootNames.StackAddress, {
       screen: RootNames.SafeAddressList,
     });
   }, [navigation]);
