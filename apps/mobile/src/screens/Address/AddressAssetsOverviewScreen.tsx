@@ -55,9 +55,6 @@ export function AddressAssetsOverview(): JSX.Element {
         />
       </Animated.View>
       <MultiAssets onUpdateIsDecrease={setIsDecrease} />
-      {/* <FlatList
-        ListEmptyComponent={AddressEmptyContainer}
-      /> */}
     </AddressListScreenContainer>
   );
 }

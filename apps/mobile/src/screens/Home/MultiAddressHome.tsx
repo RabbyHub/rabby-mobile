@@ -631,33 +631,6 @@ function MultiAddressHome(): JSX.Element {
         paddingTop: 64,
       }}>
       <View style={styles.paddingContainer}>
-        <MultiAddressHomeHeader
-          data={combineData}
-          loading={loading}
-          loadingNewCurve={loadingNewCurve}
-        />
-        {pendingTxCount > 0 && (
-          <View style={[styles.pendingContainer]} pointerEvents="box-none">
-            <TouchableOpacity
-              onPress={() => handleClickMenu(MultiHomeFeatTitle.History)}>
-              <BlurView
-                style={styles.pendingBlur}
-                blurType={appThemeMode ?? 'light'}
-                blurAmount={2}>
-                <Animated.View
-                  style={{
-                    transform: [{ rotate: spin }],
-                  }}>
-                  <RcPending width={21} height={21} />
-                </Animated.View>
-                <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
-                  'page.bridge.Pending',
-                )}`}</Text>
-                <RcIconOrangeArrow width={21} height={21} />
-              </BlurView>
-            </TouchableOpacity>
-          </View>
-        )}
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={styles.scroll}
@@ -670,6 +643,33 @@ function MultiAddressHome(): JSX.Element {
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={onRefresh} />
           }>
+          <MultiAddressHomeHeader
+            data={combineData}
+            loading={loading}
+            loadingNewCurve={loadingNewCurve}
+          />
+          {pendingTxCount > 0 && (
+            <View style={[styles.pendingContainer]} pointerEvents="box-none">
+              <TouchableOpacity
+                onPress={() => handleClickMenu(MultiHomeFeatTitle.History)}>
+                <BlurView
+                  style={styles.pendingBlur}
+                  blurType={appThemeMode ?? 'light'}
+                  blurAmount={2}>
+                  <Animated.View
+                    style={{
+                      transform: [{ rotate: spin }],
+                    }}>
+                    <RcPending width={21} height={21} />
+                  </Animated.View>
+                  <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
+                    'page.bridge.Pending',
+                  )}`}</Text>
+                  <RcIconOrangeArrow width={21} height={21} />
+                </BlurView>
+              </TouchableOpacity>
+            </View>
+          )}
           <OfflineChainNotify />
           {displayFundWallet && (
             <>

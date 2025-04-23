@@ -107,7 +107,10 @@ import { DisplayedProject } from '@/screens/Home/utils/project';
 import { Card } from '@/components2024/Card';
 import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
 import { useSetPasswordFirst } from '@/hooks/useLock';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 
+const END_POSITION = 20;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
 
@@ -132,7 +135,7 @@ export const MultiAssets = ({
   onUpdateIsDecrease: (isDecrease: boolean) => void;
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
-
+  const isTriggered = useRef(false);
   const {
     top10Addresses,
     list: _rawList,
@@ -886,139 +889,170 @@ export const MultiAssets = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [top10Addresses.length]);
 
-  return (
-    <View style={styles.container}>
-      {firstRowType === 'overview' ||
-      firstRowType === '' ||
-      !list.length ? null : (
-        <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
-          <ImageBackground
-            source={topBg}
-            resizeMode="cover"
-            // eslint-disable-next-line react-native/no-inline-styles
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: SCREEN_WIDTH,
-              height: 150,
-            }}
-          />
-          <SwitchHeader
-            currentTab={extendedState.currentTab}
-            addressLength={list.length}
-            onChangeTab={tab => {
-              trigger('impactLight', {
-                enableVibrateFallback: true,
-                ignoreAndroidSystemSettings: false,
-              });
-              setExtendedState(pre => ({
-                ...pre,
-                currentTab: tab,
-              }));
-              scrollToTop();
-              if (tab === TabType.address) {
-                handleOnChainClick(true);
-              }
-            }}
-          />
-        </Animated.View>
-      )}
-      <RecyclerListView
-        style={styles.list}
-        dataProvider={listData}
-        extendedState={extendedState}
-        layoutProvider={layoutProvider}
-        ref={listRef}
-        rowRenderer={renderItem}
-        onVisibleIndicesChanged={indexes => {
-          if (listData.getDataForIndex(indexes[0])?.type) {
-            setFirstRowType(listData.getDataForIndex(indexes[0]).type);
+  const switchTab = (type: TabType) => {
+    setExtendedState(pre => ({
+      ...pre,
+      currentTab: type,
+    }));
+  };
+
+  const panGesture = Gesture.Pan()
+    .onUpdate(e => {
+      // 检查右滑手势
+      if (!isTriggered.current) {
+        if (e.translationX <= -END_POSITION) {
+          if (extendedState.currentTab === TabType.portfolio) {
+            isTriggered.current = true;
+            runOnJS(switchTab)(TabType.address);
           }
-        }}
-        onScroll={event => {
-          const scrollOffset = event.nativeEvent.contentOffset.y;
-          if (scrollOffset > 80) {
-            setNavigationOptions({
-              headerTitle: () => (
-                <HeaderTitle
-                  netWorth={combineData.netWorth}
-                  changePercent={combineData.changePercent}
-                  isLoss={combineData.isLoss}
-                />
-              ),
-              headerTitleAlign: 'left',
-            });
-          } else {
-            setNavigationOptions({
-              headerTitle: '',
-              headerTitleAlign: 'left',
-            });
-          }
-          Keyboard.dismiss();
-        }}
-        renderFooter={() =>
-          extendedState.currentTab === TabType.address ? (
-            <View
-              style={[
-                {
-                  minHeight:
-                    Dimensions.get('screen').height -
-                    list.length * (ADDRESS_ENTRY_HEUGHT + ADDRESS_ENTRY_GAP) -
-                    -SWITCH_HEADER_HEIGHT -
-                    SWITCH_HEADER_GAP,
-                },
-              ]}>
-              <Card style={styles.footerCard} onPress={gotoAddAddress}>
-                <View style={styles.footerMain}>
-                  <PlusSVG
-                    width={20}
-                    height={20}
-                    color={colors2024['neutral-secondary']}
-                  />
-                  <Text style={styles.footerCardText}>
-                    {t('page.addressDetail.addressListScreen.addAddress')}
-                  </Text>
-                </View>
-              </Card>
-              {hasSafeAddress && (
-                <OtherAddressNav
-                  onPress={onGotoSafeAddress}
-                  text={t(
-                    'page.addressDetail.addressListScreen.importSafeAddress',
-                  )}
-                />
-              )}
-              {hasWatchAddress && (
-                <OtherAddressNav
-                  onPress={onGotoWatchAddress}
-                  text={t(
-                    'page.addressDetail.addressListScreen.importWatchAddress',
-                  )}
-                />
-              )}
-              <View style={styles.footerGap} />
-            </View>
-          ) : (
-            <View style={styles.footerGap} />
-          )
         }
-        scrollViewProps={{
-          refreshControl: (
-            <RefreshControl
-              style={styles.bgContainer}
-              onRefresh={() => {
-                triggerUpdate(true);
-                fetchAccounts();
-                checkIsExpireAndUpdate(true, { disableNFT: true });
-                refreshCurve(true);
+        if (e.translationX > -END_POSITION) {
+          if (extendedState.currentTab === TabType.address) {
+            isTriggered.current = true;
+            runOnJS(switchTab)(TabType.portfolio);
+          }
+        }
+      }
+    })
+    .onEnd(e => {
+      isTriggered.current = false;
+    });
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <View style={styles.container}>
+        {firstRowType === 'overview' ||
+        firstRowType === '' ||
+        !list.length ? null : (
+          <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
+            <ImageBackground
+              source={topBg}
+              resizeMode="cover"
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: SCREEN_WIDTH,
+                height: 150,
               }}
-              refreshing={refreshing}
             />
-          ),
-        }}
-      />
-    </View>
+            <SwitchHeader
+              currentTab={extendedState.currentTab}
+              addressLength={list.length}
+              onChangeTab={tab => {
+                trigger('impactLight', {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
+                setExtendedState(pre => ({
+                  ...pre,
+                  currentTab: tab,
+                }));
+                scrollToTop();
+                if (tab === TabType.address) {
+                  handleOnChainClick(true);
+                }
+              }}
+            />
+          </Animated.View>
+        )}
+        <RecyclerListView
+          style={styles.list}
+          dataProvider={listData}
+          extendedState={extendedState}
+          layoutProvider={layoutProvider}
+          ref={listRef}
+          rowRenderer={renderItem}
+          onVisibleIndicesChanged={indexes => {
+            if (listData.getDataForIndex(indexes[0])?.type) {
+              setFirstRowType(listData.getDataForIndex(indexes[0]).type);
+            }
+          }}
+          onScroll={event => {
+            const scrollOffset = event.nativeEvent.contentOffset.y;
+            if (scrollOffset > 80) {
+              setNavigationOptions({
+                headerTitle: () => (
+                  <HeaderTitle
+                    netWorth={combineData.netWorth}
+                    changePercent={combineData.changePercent}
+                    isLoss={combineData.isLoss}
+                  />
+                ),
+                headerTitleAlign: 'left',
+              });
+            } else {
+              setNavigationOptions({
+                headerTitle: '',
+                headerTitleAlign: 'left',
+              });
+            }
+            Keyboard.dismiss();
+          }}
+          renderFooter={() =>
+            extendedState.currentTab === TabType.address ? (
+              <View
+                style={[
+                  {
+                    minHeight:
+                      Dimensions.get('screen').height -
+                      list.length * (ADDRESS_ENTRY_HEUGHT + ADDRESS_ENTRY_GAP) -
+                      -SWITCH_HEADER_HEIGHT -
+                      SWITCH_HEADER_GAP,
+                  },
+                ]}>
+                <Card style={styles.footerCard} onPress={gotoAddAddress}>
+                  <View style={styles.footerMain}>
+                    <PlusSVG
+                      width={20}
+                      height={20}
+                      color={colors2024['neutral-secondary']}
+                    />
+                    <Text style={styles.footerCardText}>
+                      {t('page.addressDetail.addressListScreen.addAddress')}
+                    </Text>
+                  </View>
+                </Card>
+                {hasSafeAddress && (
+                  <OtherAddressNav
+                    onPress={onGotoSafeAddress}
+                    text={t(
+                      'page.addressDetail.addressListScreen.importSafeAddress',
+                    )}
+                  />
+                )}
+                {hasWatchAddress && (
+                  <OtherAddressNav
+                    onPress={onGotoWatchAddress}
+                    text={t(
+                      'page.addressDetail.addressListScreen.importWatchAddress',
+                    )}
+                  />
+                )}
+                <View style={styles.footerGap} />
+              </View>
+            ) : (
+              <View style={styles.footerGap} />
+            )
+          }
+          scrollViewProps={{
+            refreshControl: (
+              <RefreshControl
+                style={styles.bgContainer}
+                onRefresh={() => {
+                  triggerUpdate(true);
+                  fetchAccounts();
+                  checkIsExpireAndUpdate(true, { disableNFT: true });
+                  refreshCurve(true);
+                }}
+                refreshing={refreshing}
+              />
+            ),
+          }}
+        />
+      </View>
+    </GestureDetector>
   );
 };
 

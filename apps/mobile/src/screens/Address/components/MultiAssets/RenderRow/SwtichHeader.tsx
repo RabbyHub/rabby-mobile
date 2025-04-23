@@ -1,28 +1,15 @@
-import ChainFilterItem from '@/components/Token/ChainFilterItem';
-import {
-  AppRootName,
-  RootNames,
-  SWITCH_HEADER_HEIGHT,
-} from '@/constant/layout';
-import { ThemeColors2024 } from '@/constant/theme';
+import { SWITCH_HEADER_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { useFindChain } from '@/hooks/useFindChain';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, Pressable, Text, View } from 'react-native';
-import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useCallback, useRef } from 'react';
-import { useSetPasswordFirst } from '@/hooks/useLock';
-import { StackActions, useNavigation } from '@react-navigation/native';
-import { CurrentAddressProps } from '../../AddressListScreenContainer';
-import EditSVG from '@/assets2024/icons/common/edit-list.svg';
-import { trigger } from 'react-native-haptic-feedback';
-
+import { Pressable, Text, View } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 export const enum TabType {
   portfolio = 'portfolio',
   address = 'address',
@@ -40,58 +27,25 @@ export const SwitchHeader = ({
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const tabLineLeft = useSharedValue(0);
+  console.log('tabLineLeft', tabLineLeft);
 
-  const maxHeight = Dimensions.get('window').height - 104;
-  const contentHeight = (addressLength || 0) * (78 + 12) + 60 + 226;
-  const navigation = useNavigation<CurrentAddressProps['navigation']>();
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
-  const quickManagePopupRef =
-    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
+  useEffect(() => {
+    tabLineLeft.value = withTiming(currentTab === TabType.portfolio ? 0 : 0.5, {
+      duration: 200,
+      easing: Easing.linear,
+    });
 
-  const onAddAddress = useCallback(() => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-      onDone: () => {
-        quickManagePopupRef.current &&
-          removeGlobalBottomSheetModal2024(quickManagePopupRef.current);
-        quickManagePopupRef.current = undefined;
-        removeGlobalBottomSheetModal2024(id);
-      },
-      shouldRedirectToSetPasswordBefore2024,
-      navigateTo: (screen: AppRootName, params?: object) => {
-        navigation.dispatch(
-          StackActions.push(RootNames.StackAddress, {
-            screen,
-            params,
-          }),
-        );
-      },
-    });
-  }, [shouldRedirectToSetPasswordBefore2024, navigation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTab]);
 
-  const handleManageAddress = useCallback(() => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
-    quickManagePopupRef.current = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
-      bottomSheetModalProps: {
-        snapPoints: [Math.min(contentHeight, maxHeight)],
-      },
-      type: 'address',
-      onAddAddress,
-      onCancel: () => {
-        quickManagePopupRef.current &&
-          removeGlobalBottomSheetModal2024(quickManagePopupRef.current);
-        quickManagePopupRef.current = undefined;
-      },
-    });
-  }, [contentHeight, maxHeight, onAddAddress]);
+  const tabLineStyle = useAnimatedStyle(() => {
+    return {
+      left: `${tabLineLeft.value * 100}%`,
+    };
+  });
+
+  console.log('tabLineStyle', tabLineStyle);
 
   return (
     <View style={styles.container}>
@@ -125,45 +79,8 @@ export const SwitchHeader = ({
             {addressLength ? `(${addressLength})` : ''}
           </Text>
         </Pressable>
+        <Animated.View style={[styles.tabBottomLine, tabLineStyle]} />
       </View>
-      {/* <View style={styles.right}>
-        {currentTab === TabType.portfolio ? (
-          !!chainLength &&
-          (chainInfo?.id ? (
-            <View style={styles.chainContainer}>
-              <ChainFilterItem
-                style={styles.chainFilterItem}
-                chainItem={chainInfo}
-                onPress={() => onChainClick?.(false)}
-                onRemoveFilter={() => onChainClick?.(true)}
-              />
-            </View>
-          ) : (
-            <Pressable
-              style={styles.chainContainer}
-              onPress={() => onChainClick?.(false)}>
-              <Text style={styles.countChain}>
-                {t('page.singleHome.sectionHeader.totalChain', {
-                  count: chainLength || 0,
-                })}
-              </Text>
-              <ArrowRightSVG
-                style={styles.icon}
-                width={16}
-                color={colors2024['neutral-body']}
-              />
-            </Pressable>
-          ))
-        ) : (
-          <Pressable onPress={handleManageAddress}>
-            <EditSVG
-              color={colors2024['neutral-secondary']}
-              width={24}
-              height={24}
-            />
-          </Pressable>
-        )}
-      </View> */}
     </View>
   );
 };
@@ -174,16 +91,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignContent: 'center',
     width: '100%',
     gap: 4,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
     padding: 4,
     borderRadius: 12,
+    position: 'relative',
   },
   tab: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
@@ -197,11 +112,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 6,
   },
   activeTabContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 1)',
-    borderRadius: 8,
+    // borderRadius: 8,
   },
   activeTab: {
-    color: ThemeColors2024.dark['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
+  },
+  tabBottomLine: {
+    height: 5,
+    width: '50%',
+    backgroundColor: colors2024['brand-default'],
+    position: 'absolute',
+    bottom: 0,
+    borderRadius: 100,
   },
   container: {
     flexDirection: 'row',
