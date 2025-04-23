@@ -12,6 +12,7 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDappWebViewScreen } from '@/screens/Dapps/hooks/useDappWebViewScreen';
 import { useMemoizedFn } from 'ahooks';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 
 export const ExternalSwapBridgeDappTips = ({
   dappsAvailable,
@@ -65,24 +66,25 @@ const Item = ({
 }: SwapBridgeExternalDappInfo & {
   onClose: () => void;
 }) => {
-  const { openUrlAsDapp } = useDappWebViewScreen();
+  const { openTab } = useBrowser();
+  // const { openUrlAsDapp } = useDappWebViewScreen();
 
-  type OpenUrlAsDappOptions = Pick<
-    Parameters<typeof openUrlAsDapp>[1] & object,
-    'forceReopen'
-  >;
-  const handleOpenURL = useMemoizedFn(
-    (url: string, options?: OpenUrlAsDappOptions) => {
-      openUrlAsDapp(url, {
-        ...options,
-        dappsWebViewFromRoute: 'back',
-      });
-      Keyboard.dismiss();
-    },
-  );
+  // type OpenUrlAsDappOptions = Pick<
+  //   Parameters<typeof openUrlAsDapp>[1] & object,
+  //   'forceReopen'
+  // >;
+  // const handleOpenURL = useMemoizedFn(
+  //   (url: string, options?: OpenUrlAsDappOptions) => {
+  //     openUrlAsDapp(url, {
+  //       ...options,
+  //       dappsWebViewFromRoute: 'back',
+  //     });
+  //     Keyboard.dismiss();
+  //   },
+  // );
   const openDapp = () => {
     onClose();
-    handleOpenURL(url);
+    openTab(url);
   };
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
