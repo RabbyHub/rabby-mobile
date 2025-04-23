@@ -183,19 +183,14 @@ export function useSetupWebview({
       //   return false;
       // }
 
+      const dappOrigin = nativeEvent.url;
       backgroundBridgeRefs.current = [];
       const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
         ? dappOrigin
         : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
       initializeBackgroundBridge(formattedDappOrigin, true);
     },
-    [
-      backgroundBridgeRefs,
-      changeUrl,
-      dappOrigin,
-      initializeBackgroundBridge,
-      urlRef,
-    ],
+    [backgroundBridgeRefs, changeUrl, initializeBackgroundBridge, urlRef],
   );
 
   return {

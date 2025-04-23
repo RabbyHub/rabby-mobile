@@ -55,26 +55,32 @@ export const BrowserBookmarkSection = ({
         <>
           <View style={styles.header}>
             <View style={styles.titleWarper}>
-              <Text style={styles.title}>Favorites</Text>
+              <Text style={styles.title}>Favorites 1</Text>
             </View>
             {data?.length && data.length > 8 ? (
-              <TouchableOpacity
-                hitSlop={8}
-                onPress={() => {
-                  setIsFold(prev => !prev);
+              <View
+                onStartShouldSetResponder={event => true}
+                onTouchEnd={e => {
+                  e.stopPropagation();
                 }}>
-                {isFold ? (
-                  <View style={styles.headerExtra}>
-                    <Text style={styles.headerExtraText}>Show All</Text>
-                    <RcIconRight style={styles.arrowDown} />
-                  </View>
-                ) : (
-                  <View style={styles.headerExtra}>
-                    <Text style={styles.headerExtraText}>Fold</Text>
-                    <RcIconRight style={styles.arrowUp} />
-                  </View>
-                )}
-              </TouchableOpacity>
+                <TouchableOpacity
+                  hitSlop={8}
+                  onPress={() => {
+                    setIsFold(prev => !prev);
+                  }}>
+                  {isFold ? (
+                    <View style={styles.headerExtra}>
+                      <Text style={styles.headerExtraText}>Show All</Text>
+                      <RcIconRight style={styles.arrowDown} />
+                    </View>
+                  ) : (
+                    <View style={styles.headerExtra}>
+                      <Text style={styles.headerExtraText}>Fold</Text>
+                      <RcIconRight style={styles.arrowUp} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
             ) : null}
           </View>
 

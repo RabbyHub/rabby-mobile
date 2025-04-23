@@ -63,12 +63,12 @@ function getAppleTouchIcon() {
 
 domReadyCall(() => {
   const origin = location.origin;
-  const icon =
+  let icon =
     getAppleTouchIcon() ||
     document.querySelector('head > meta[itemprop="image"]')?.content ||
     document.querySelector('head > link[rel~="icon"]')?.href;
 
-  if (!/^https?:\/\//.test(icon)) {
+  if (icon && !/^https?:\/\//.test(icon)) {
     try {
       icon = new URL(icon, origin).href;
     } catch (e) {
@@ -81,9 +81,10 @@ domReadyCall(() => {
     document.querySelector('head > meta[name="title"]')?.content ||
     origin;
 
+  console.log(navigator.userAgent);
   rabbyProvider.request({
     method: 'tabCheckin',
-    params: { icon, name, origin },
+    params: { icon, name, origin, userAgent: navigator.userAgent },
   });
 });
 

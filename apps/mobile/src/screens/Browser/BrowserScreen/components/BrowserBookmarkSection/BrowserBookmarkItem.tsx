@@ -103,7 +103,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     flexShrink: 1,
     textAlign: 'center',
-    width: 80,
+    width: '100%',
+    // width: 80,
   },
   dappIconWarper: {
     position: 'relative',

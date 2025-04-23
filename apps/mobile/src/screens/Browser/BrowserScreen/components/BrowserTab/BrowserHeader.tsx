@@ -70,10 +70,9 @@ export function BrowserHeader({
 
   useEffect(() => {
     if (isFocused) {
-      console.log('foucus');
       setTimeout(() => {
         inputRef.current?.focus();
-      }, 50);
+      }, 100);
     }
   }, [isFocused]);
 

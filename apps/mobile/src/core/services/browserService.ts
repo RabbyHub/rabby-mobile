@@ -1,6 +1,6 @@
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
-import { sortBy } from 'lodash';
+import { entries, sortBy } from 'lodash';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import {
   createEntityAdapter,
@@ -37,6 +37,7 @@ export type BrowserStore = {
 export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
   bookmark: EntityTools<BrowserBookmarkItem, string>;
   history: EntityTools<BrowserHistoryItem, string>;
+  userAgent?: string;
 
   constructor(options?: StorageAdapaterOptions<BrowserStore>) {
     super(
@@ -133,9 +134,35 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
       },
     });
 
+    const res: EntityState<BrowserHistoryItem, string> = {
+      ids: [],
+      entities: {},
+    };
+
+    this.store.browserHistory.ids.forEach(key => {
+      const item = this.store.browserHistory.entities[key];
+      if (Date.now() - (item.createdAt || 0) < 30 * 24 * 60 * 60 * 1000) {
+        res.ids.push(key);
+        res.entities[key] = item;
+      }
+    });
+    this.store.browserHistory = res;
+
     this.history = createEntityTools(historyAdapter, this.store.browserHistory);
   }
 
+  getDefaultUserAgent = () => {
+    return this.userAgent;
+  };
+
+  setDefaultUserAgent = (ua: string) => {
+    this.userAgent = ua;
+  };
+
+  /**
+   * @deprecated
+   * @param param0
+   */
   setHistory({
     origin: _origin,
     createdAt,
@@ -153,6 +180,10 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
     };
   }
 
+  /**
+   * @deprecated
+   * @param param0
+   */
   getHistoryList() {
     return sortBy(
       Object.values(this.store.browserHistory),
@@ -160,10 +191,18 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
     );
   }
 
+  /**
+   * @deprecated
+   * @param param0
+   */
   getHistory(origin: string) {
     return this.store.browserHistory[origin.toLowerCase()];
   }
 
+  /**
+   * @deprecated
+   * @param param0
+   */
   hasHistory(origin: string) {
     return !!this.getHistory(origin);
   }

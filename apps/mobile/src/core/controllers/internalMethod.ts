@@ -1,12 +1,18 @@
+import { Platform } from 'react-native';
 import { keyBy, uniq } from 'lodash';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { keyringService } from '../services';
-import { dappService, sessionService } from '@/core/services/shared';
+import {
+  browserService,
+  dappService,
+  sessionService,
+} from '@/core/services/shared';
 import providerController from './provider';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { ProviderRequest } from './type';
 import { createDappBySession } from '../apis/dapp';
 import { openapi } from '../request';
+import { ANDROID_DESKTOP_MODE_UA } from '@/constant/browser';
 
 const networkIdMap: {
   [key: string]: string;
@@ -14,7 +20,7 @@ const networkIdMap: {
 
 const tabCheckin = ({
   data: {
-    params: { name, icon },
+    params: { name, icon, userAgent },
   },
   session,
 }) => {
@@ -24,7 +30,10 @@ const tabCheckin = ({
   // } catch (e) {
   //   console.error(e);
   // }
-  console.debug('[tabCheckin]', origin, name, icon);
+  console.debug('[tabCheckin]', origin, name, icon, userAgent);
+  if (Platform.OS === 'android' && userAgent !== ANDROID_DESKTOP_MODE_UA) {
+    browserService.setDefaultUserAgent(userAgent);
+  }
   const dapp = dappService.getDapp(origin);
   if (!dapp) {
     dappService.addDapp(

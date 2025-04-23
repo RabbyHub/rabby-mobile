@@ -46,6 +46,8 @@ import {
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
+import { ANDROID_DESKTOP_MODE_UA } from '@/constant/browser';
+import { browserService } from '@/core/services';
 
 type BrowserTabProps = {
   origin: string;
@@ -119,6 +121,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     } = useWebViewControl({ initialTabId: tabId });
     const [contentMode, setContentMode] =
       useState<WebViewProps['contentMode']>('mobile');
+    const [userAgent, setUserAgent] = useState<string>();
 
     const navigation = useRabbyAppNavigation();
     const { dapps, disconnectDapp, setDapp } = useDapps();
@@ -139,19 +142,13 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const handleContentModeChange = useMemoizedFn(
       (mode: WebViewProps['contentMode']) => {
         setContentMode(mode);
-        // if (dappInfo) {
-        //   setDapp({
-        //     ...dappInfo,
-        //     contentMode: mode,
-        //   });
-        // } else {
-        //   setDapp({
-        //     origin: urlInfo.httpOrigin,
-        //     name: webviewState.title,
-        //     contentMode: mode,
-        //     chainId: CHAINS_ENUM.ETH,
-        //   });
-        // }
+        if (Platform.OS === 'android') {
+          if (mode === 'desktop') {
+            setUserAgent(ANDROID_DESKTOP_MODE_UA);
+          } else {
+            setUserAgent(browserService.getDefaultUserAgent());
+          }
+        }
       },
     );
 
@@ -389,7 +386,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   />
                 ) : null}
                 <WebView
-                  // key={contentMode}
+                  key={contentMode}
                   cacheEnabled
                   startInLoadingState={false}
                   renderLoading={() => <View style={styles.hidden} />}
@@ -415,11 +412,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     // 'User-Agent': ''
                   }}
                   testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
-                  userAgent={
-                    Platform.OS === 'android' && contentMode === 'desktop'
-                      ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
-                      : undefined
-                  }
+                  userAgent={userAgent}
                   applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
                   javaScriptEnabled
                   // androidLayerType='software'
@@ -443,9 +436,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     setIsLoading(true);
                     setProgress(0);
                     const { nativeEvent } = e;
-                    if (nativeEvent.loading) {
-                      return;
-                    }
+
                     if (
                       nativeEvent.url !== urlRef.current &&
                       nativeEvent.loading &&
