@@ -1,30 +1,13 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { HistoryList } from '@/screens/Transaction/components/HistoryGroupList';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { ModalLayouts } from '@/constant/layout';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { AppBottomSheetModal, AppBottomSheetModalTitle } from '@/components';
-import { useMemoizedFn, useRequest } from 'ahooks';
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useMyAccounts } from '@/hooks/account';
-import { minBy, unionBy } from 'lodash';
-import { transactionHistoryService } from '@/core/services';
-import { findChain } from '@/utils/chain';
-import {
-  BottomSheetFlatList,
-  BottomSheetScrollView,
-} from '@gorhom/bottom-sheet';
-import dayjs from 'dayjs';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { formatTimestamp } from '@/utils/time';
 import { Text } from 'react-native';
@@ -32,54 +15,12 @@ import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { Empty } from '@/screens/Transaction/components/Empty';
 import { useTranslation } from 'react-i18next';
-import { toast } from '@/components/Toast';
+import { useRecentSend } from '../../hooks/useRecentSend';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
   time: number;
   data: HistoryDisplayItem | TransactionGroup;
-}
-
-function markFirstItems(
-  arr: (HistoryDisplayItem | TransactionGroup)[],
-): DisplayHistoryItem[] {
-  if (arr.length === 0) {
-    return [];
-  }
-  const newArr: DisplayHistoryItem[] = [];
-  for (let i = 0; i < arr.length; i++) {
-    const item = arr[i];
-    const newItem: DisplayHistoryItem = {
-      data: item,
-      time:
-        ('time_at' in item ? item.time_at * 1000 : undefined) ||
-        ('completedAt' in item && item.completedAt
-          ? item.completedAt
-          : new Date().getTime()),
-    };
-
-    const prev = arr[i - 1];
-
-    if (i === 0) {
-      newItem.isDateStart = true;
-    } else {
-      // judgs is date start
-      const curDate = dayjs(newItem.time);
-      const prevTime =
-        ('time_at' in prev ? prev.time_at * 1000 : undefined) ||
-        ('completedAt' in prev && prev.completedAt
-          ? prev.completedAt
-          : new Date().getTime());
-      const prevDate = dayjs(prevTime); // get time at
-      if (!curDate.isSame(prevDate, 'date')) {
-        newItem.isDateStart = true;
-      }
-    }
-
-    newArr.push(newItem);
-  }
-
-  return newArr;
 }
 
 interface IProps {
@@ -98,59 +39,7 @@ export const SendHistory = ({
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const { t } = useTranslation();
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const unionAccounts = useMemo(() => {
-    return unionBy(accounts, account => account.address.toLowerCase());
-  }, [accounts]);
-
-  const { data: historyList, runAsync } = useRequest(async () => {
-    return batchFetchLocalTx();
-  });
-
-  const batchFetchLocalTx = async () => {
-    const list: TransactionGroup[] = [];
-    const accountList = unionAccounts;
-    for (let i = 0; i < accountList.length; i++) {
-      const account = accountList[i];
-      if (!account) {
-        continue;
-      }
-      const addr = account.address.toLowerCase();
-      const localTxs = fetchLocalTx(addr);
-      list.push(...localTxs);
-    }
-    return list;
-  };
-
-  const fetchLocalTx = useMemoizedFn((address: string) => {
-    const { completeds: _completeds } =
-      transactionHistoryService.getList(address);
-
-    const completeds = _completeds.filter(item => {
-      const chain = findChain({ id: item.chainId });
-      return (
-        !chain?.isTestnet &&
-        !item.isSubmitFailed &&
-        item.$ctx?.ga?.source === 'sendToken'
-      );
-    });
-
-    return completeds;
-  });
-
-  const markedList = useMemo(() => {
-    return markFirstItems(
-      unionBy(historyList, item => {
-        if ('projectDict' in item) {
-          return `${item.address.toLowerCase()}-${item.id}`;
-        } else {
-          return `${item.address.toLowerCase()}-${item.maxGasTx.hash}`;
-        }
-      }) || [],
-    );
-  }, [historyList]);
+  const { markedList, runAsync } = useRecentSend();
 
   useEffect(() => {
     if (visible) {

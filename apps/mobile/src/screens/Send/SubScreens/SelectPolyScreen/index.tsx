@@ -48,7 +48,7 @@ const SendPolyScreen = () => {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
-  const { sendHistory } = useRecentSend(accounts.map(addr => addr.address));
+  const { recentHistory } = useRecentSend();
 
   const Header = useCallback(() => <SendHeaderRight />, []);
   useEffect(() => {
@@ -99,18 +99,18 @@ const SendPolyScreen = () => {
         </Pressable>
       </View>
       <View>
-        {!!sendHistory.length && (
+        {!!recentHistory.length && (
           <Text style={styles.recentHeader}>Recent</Text>
         )}
-        {sendHistory?.map(item => {
+        {recentHistory?.map(item => {
           const { account, inWhitelist } = findAccountWithoutBalance(
-            item.tx_to_address,
+            item.toAddress,
           );
           return (
             <RecentSendItem
-              key={item.time_at}
+              key={item.time}
               account={account}
-              timeStamp={item.time_at}
+              timeStamp={item.time}
               inWhiteList={inWhitelist}
             />
           );
