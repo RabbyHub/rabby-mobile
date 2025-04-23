@@ -297,17 +297,13 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     useFocusEffect(
       React.useCallback(() => {
         if (isEmptyTab && isActive) {
-          setIsShowSearch(true);
+          setTimeout(() => {
+            setIsShowSearch(true);
+          }, 100);
         }
         return () => {};
       }, [isActive, isEmptyTab]),
     );
-
-    useEffect(() => {
-      if (isEmptyTab && isActive) {
-        setIsShowSearch(true);
-      }
-    }, [isActive, isEmptyTab]);
 
     const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
     const forScene = '@ActiveDappWebViewModal';
