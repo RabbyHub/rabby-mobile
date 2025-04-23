@@ -303,6 +303,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }, [isActive, isEmptyTab]),
     );
 
+    useEffect(() => {
+      if (isEmptyTab && isActive) {
+        setIsShowSearch(true);
+      }
+    }, [isActive, isEmptyTab]);
+
     const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
     const forScene = '@ActiveDappWebViewModal';
     const { finalSceneCurrentAccount } = useSceneAccountInfo({

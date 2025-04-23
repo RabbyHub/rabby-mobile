@@ -55,7 +55,7 @@ export const BrowserBookmarkSection = ({
         <>
           <View style={styles.header}>
             <View style={styles.titleWarper}>
-              <Text style={styles.title}>Favorites 1</Text>
+              <Text style={styles.title}>Favorites</Text>
             </View>
             {data?.length && data.length > 8 ? (
               <View
