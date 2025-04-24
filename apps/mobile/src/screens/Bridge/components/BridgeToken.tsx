@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -139,6 +139,12 @@ const BridgeToken = ({
       />
     );
   }, [colors2024]);
+
+  useEffect(() => {
+    if (isFromToken && disabled) {
+      onInputChange?.('');
+    }
+  }, [isFromToken, disabled, onInputChange]);
 
   return (
     <View style={styles.container}>
