@@ -48,9 +48,15 @@ export default function ListByAssets() {
   const renderItem = React.useCallback<
     SectionListProps<AssetApprovalItem>['renderItem'] & object
   >(
-    ({ item }) => {
+    ({ item, index }) => {
+      const isFirstItem = index === 0;
+
       return (
-        <View style={styles.itemWrapper}>
+        <View
+          style={[
+            styles.itemWrapper,
+            isFirstItem ? { marginTop: 0 } : { marginTop: 8 },
+          ]}>
           <ApprovalAssetRow assetApproval={item} />
         </View>
       );
@@ -145,10 +151,7 @@ export default function ListByAssets() {
               IOS_SWIPABLE_LEFT_OFFSET,
           },
         ]}
-        contentContainerStyle={[
-          styles.listContainer,
-          !!sectionList.length && styles.round,
-        ]}
+        contentContainerStyle={styles.listContainer}
         renderItem={renderItem}
         // renderSectionHeader={renderSectionHeader}
         renderSectionFooter={() => <View style={styles.footContainer} />}
@@ -185,31 +188,19 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       flexDirection: 'column',
     },
 
-    list: {
-      paddingTop: 20,
-      paddingBottom: 0,
-      paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
-    },
-    round: {
-      borderRadius: 24,
-      overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-    },
-    listContainer: {
-      backgroundColor: colors2024['neutral-bg-1'],
-      // repair top offset due to special contentInset in iOS
-      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
-      // height: '100%',
-      paddingTop: 0,
-      // ...makeDebugBorder('yellow'),
-    },
+    list: {},
     listFooterContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       height: ApprovalsLayouts.listFooterComponentHeight,
       // ...makeDebugBorder('green'),
+    },
+    listContainer: {
+      paddingTop: 20,
+      paddingBottom: 0,
+      // repair top offset due to special contentInset in iOS
+      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
     },
     itemWrapper: {
       width: '100%',

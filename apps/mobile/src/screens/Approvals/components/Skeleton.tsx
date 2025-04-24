@@ -44,7 +44,7 @@ export const SkeletonListByContracts = memo(() => {
             key={i}
             style={[
               cardStyles.container,
-              { height: 122 },
+              { height: 74 },
               i > 0 && {
                 marginTop: 12,
               },
@@ -56,17 +56,11 @@ export const SkeletonListByContracts = memo(() => {
                 flexDirection: 'column',
                 justifyContent: 'space-evenly',
               }}>
-              <View
-                style={[
-                  skeletonStyles.skeletonFloor,
-                  {
-                    marginBottom: 14,
-                  },
-                ]}>
+              <View style={[skeletonStyles.skeletonFloor]}>
                 <Skeleton
-                  width={27}
+                  width={46}
                   animation="wave"
-                  height={27}
+                  height={46}
                   circle
                   LinearGradientComponent={LinearGradient}
                   style={[skeletonStyles.skeletonBg]}
@@ -80,32 +74,6 @@ export const SkeletonListByContracts = memo(() => {
                     skeletonStyles.skeletonBg,
                     { flexShrink: 1, marginLeft: 8 },
                   ]}
-                />
-              </View>
-              <View
-                style={[
-                  skeletonStyles.skeletonFloor,
-                  {
-                    marginBottom: 5,
-                  },
-                ]}>
-                <Skeleton
-                  animation="wave"
-                  width={'100%'}
-                  circle
-                  LinearGradientComponent={LinearGradient}
-                  height={22}
-                  style={[skeletonStyles.skeletonBg]}
-                />
-              </View>
-              <View style={[skeletonStyles.skeletonFloor]}>
-                <Skeleton
-                  height={22}
-                  animation="wave"
-                  width={'100%'}
-                  LinearGradientComponent={LinearGradient}
-                  circle
-                  style={skeletonStyles.skeletonBg}
                 />
               </View>
             </View>

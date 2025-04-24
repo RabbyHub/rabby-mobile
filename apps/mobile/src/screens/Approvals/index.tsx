@@ -105,31 +105,15 @@ const ApprovalScreenContainer = () => {
     setSearchKw,
   ]);
 
-  const getHeaderRight = React.useCallback(() => {
-    return (
-      <HeaderRight
-        isSearching={isSearching}
-        onTap={() => {
-          if (isSearching) {
-            setSearchKw('');
-          }
-          setIsSearching(pre => !pre);
-        }}
-      />
-    );
-  }, [isSearching, setSearchKw]);
-
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
-      headerRight: getHeaderRight,
     });
   }, [
     setNavigationOptions,
     getHeaderTitle,
     currentAccount?.aliasName,
     isSearching,
-    getHeaderRight,
   ]);
 
   if (!currentAccount?.address) {
@@ -213,7 +197,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 24,
   },
   tabContainer: {
-    // backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-bg-0'],
   },
   tabHeaderContainer: {
     shadowColor: 'transparent',
