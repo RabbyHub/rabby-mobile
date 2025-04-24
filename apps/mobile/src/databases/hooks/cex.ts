@@ -3,6 +3,8 @@ import { CexEntity } from '../entities/cex';
 import { runOnJS } from 'react-native-reanimated';
 import { syncCexInfo } from '../sync/assets';
 import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { getCexId, setCexId } from '@/utils/addressCexId';
+import { globalSupportCexList } from '@/hooks/useCexSupportList';
 
 type Parameters<T extends (...args: any) => any> = T extends (
   ...args: infer P
@@ -16,14 +18,29 @@ export const getCexWithLocalCache = async (
   force?: boolean,
 ): Promise<Cex | undefined> => {
   const isExpired = await CexEntity.isExpired(address);
+  let res;
   if (force || isExpired) {
     const addressDesc = await openapi.addrDesc(address);
     const cexInfo = addressDesc?.desc?.cex;
     runOnJS(syncCexInfo)(address, cexInfo);
-    return cexInfo;
+    res = cexInfo;
   } else {
-    return CexEntity.queryCexInfo(address);
+    res = await CexEntity.queryCexInfo(address);
   }
+  const localCexId = getCexId(address);
+  const localCexInfo = globalSupportCexList.find(
+    item => item.id === localCexId,
+  );
+  if (localCexId) {
+    res = {
+      ...(res || {}),
+      ...(localCexInfo || {}),
+      is_deposit: true,
+    } as Cex;
+  } else {
+    res?.id && res.is_deposit && setCexId(address, res?.id || '');
+  }
+  return res;
 };
 
 export const getAddrDescWithCexLocalCacheSync = async (
@@ -31,7 +48,21 @@ export const getAddrDescWithCexLocalCacheSync = async (
 ): Promise<AddrDescResponse['desc'] | undefined> => {
   try {
     const addressDesc = await openapi.addrDesc(address);
-    const cexInfo = addressDesc?.desc?.cex;
+    let cexInfo = addressDesc?.desc?.cex;
+    const localCexId = getCexId(address);
+    const localCexInfo = globalSupportCexList.find(
+      item => item.id === localCexId,
+    );
+    if (localCexId) {
+      cexInfo = {
+        ...(cexInfo || {}),
+        ...(localCexInfo || {}),
+        is_deposit: true,
+      } as Cex;
+    } else {
+      cexInfo?.id && cexInfo.is_deposit && setCexId(address, cexInfo?.id || '');
+    }
+    addressDesc.desc.cex = cexInfo;
     runOnJS(syncCexInfo)(address, cexInfo);
     return addressDesc?.desc;
   } catch (error) {

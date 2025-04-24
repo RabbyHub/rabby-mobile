@@ -87,6 +87,7 @@ import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { judgeIsSmallUsdTx } from '../Transaction/components/utils';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
 
 const HeaderHeight = 24;
 
@@ -381,6 +382,7 @@ function MultiAddressHome(): JSX.Element {
     loading,
     isLoadingNew: loadingNewCurve,
   } = useMultiCurve(top10Addresses, true, top10Balance);
+  useCexSupportList();
   useFetchCexInfo();
 
   const { accounts } = useMyAccounts({

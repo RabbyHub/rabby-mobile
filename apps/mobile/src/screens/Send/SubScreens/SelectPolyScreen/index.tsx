@@ -102,6 +102,7 @@ const SendPolyScreen = () => {
         {!!recentHistory.length && (
           <Text style={styles.recentHeader}>Recent</Text>
         )}
+        {/* less than 3 history */}
         {recentHistory?.map(item => {
           const { account, inWhitelist } = findAccountWithoutBalance(
             item.toAddress,

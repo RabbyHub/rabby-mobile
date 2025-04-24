@@ -1,26 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, FlatList } from 'react-native';
 
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { openapi } from '@/core/request';
 import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CexItem } from './CexItem';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
 
 export interface ISelectCexPorps {
   onSelect?: (item: ProjectItem) => void;
 }
 const SelectCex = ({ onSelect }: ISelectCexPorps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const [list, setList] = useState<ProjectItem[]>([]);
-
-  useEffect(() => {
-    // TODO: store in global
-    openapi.getCexSupportList().then(res => {
-      setList(res);
-    });
-  }, []);
+  const { list } = useCexSupportList();
 
   return (
     <View style={[styles.screen]}>
