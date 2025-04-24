@@ -153,14 +153,14 @@ export default function BottomSheetApprovalContract({
       {focusedContractApproval && (
         <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
           <BottomSheetHandlableView style={styles.staticArea}>
-            <Text style={styles.headerTitle}>
-              {t('page.approvals.RevokeApprovalModal.contractTitle')}
-            </Text>
-            <ApprovalCardContract contract={focusedContractApproval} />
+            <ApprovalCardContract
+              style={styles.headerTitle}
+              contract={focusedContractApproval}
+            />
 
             <View style={styles.listHeadOps}>
               <Text style={styles.listHeadText}>
-                Approved Assets and Amount
+                {t('page.approvals.approvedAssetsAndAmount')}
               </Text>
               <MiniButton
                 disabled={!focusedContractApproval?.list.length}
@@ -173,8 +173,8 @@ export default function BottomSheetApprovalContract({
                   )
                 }>
                 {nextShouldPickAllFocusingContracts
-                  ? 'Select All'
-                  : 'Unselect All'}
+                  ? t('page.approvals.selectAll')
+                  : t('page.approvals.unselectAll')}
               </MiniButton>
             </View>
           </BottomSheetHandlableView>
@@ -229,17 +229,12 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       paddingHorizontal: 16,
       flexShrink: 0,
     },
+
     headerTitle: {
-      marginTop: 8,
-      marginBottom: 30,
-      fontSize: 20,
-      fontWeight: '800',
-      color: colors2024['neutral-title-1'],
-      textAlign: 'center',
-      fontFamily: 'SF Pro Rounded',
+      marginTop: 20,
     },
     listHeadOps: {
-      marginTop: 30,
+      marginTop: 14,
       width: '100%',
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -250,6 +245,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '700',
+      lineHeight: 18,
     },
     miniBtn: {
       backgroundColor: 'transparent',
@@ -257,7 +253,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
     scrollableArea: {
       flexShrink: 1,
       height: '100%',
-      marginTop: 12,
+      marginTop: 2,
       paddingBottom: 16,
     },
     scrollableView: {
@@ -266,10 +262,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
-      borderRadius: 24,
-      borderWidth: 1,
       overflow: 'hidden',
-      borderColor: colors2024['neutral-line'],
     },
     listFooterContainer: {
       flexDirection: 'row',
