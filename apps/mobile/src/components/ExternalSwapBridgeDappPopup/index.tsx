@@ -68,7 +68,7 @@ const Item = ({
   const openDapp = () => {
     Keyboard.dismiss();
     onClose();
-    openTab(url);
+    openTab(url + '?utm_source=rabby');
   };
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
