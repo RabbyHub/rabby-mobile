@@ -16,6 +16,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { BrowserBookmarkEmpty } from './BrowserBookmarkEmpty';
 import { BrowserBookmarkItem } from './BrowserBookmarkItem';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import { useTranslation } from 'react-i18next';
 
 export const BrowserBookmarkSection = ({
   onPress,
@@ -34,6 +35,8 @@ export const BrowserBookmarkSection = ({
       list: isFold ? (data || []).slice(0, 8) : data || [],
     };
   }, [data, isFold]);
+
+  const { t } = useTranslation();
 
   const { width } = useWindowDimensions();
   const gapStyle = useMemo(() => {
@@ -55,7 +58,9 @@ export const BrowserBookmarkSection = ({
         <>
           <View style={styles.header}>
             <View style={styles.titleWarper}>
-              <Text style={styles.title}>Favorites</Text>
+              <Text style={styles.title}>
+                {t('page.browser.BrowserBookmarkSection.title')}
+              </Text>
             </View>
             {data?.length && data.length > 8 ? (
               <View
@@ -70,12 +75,16 @@ export const BrowserBookmarkSection = ({
                   }}>
                   {isFold ? (
                     <View style={styles.headerExtra}>
-                      <Text style={styles.headerExtraText}>Show All</Text>
+                      <Text style={styles.headerExtraText}>
+                        {t('page.browser.BrowserBookmarkSection.showAll')}
+                      </Text>
                       <RcIconRight style={styles.arrowDown} />
                     </View>
                   ) : (
                     <View style={styles.headerExtra}>
-                      <Text style={styles.headerExtraText}>Fold</Text>
+                      <Text style={styles.headerExtraText}>
+                        {t('page.browser.BrowserBookmarkSection.fold')}
+                      </Text>
                       <RcIconRight style={styles.arrowUp} />
                     </View>
                   )}

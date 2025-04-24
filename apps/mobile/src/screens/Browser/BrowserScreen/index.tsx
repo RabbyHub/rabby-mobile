@@ -1,5 +1,4 @@
 import { useLayoutEffect, useRef } from 'react';
-
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -12,7 +11,7 @@ import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { useSyncDappsInfo } from '@/hooks/useSyncDappsInfo';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
-import { Dimensions, View } from 'react-native';
+import { View } from 'react-native';
 import { BrowserTab } from './components/BrowserTab';
 
 export function BrowserScreen() {
@@ -23,7 +22,6 @@ export function BrowserScreen() {
   } = useTheme2024({
     getStyle: getScreenStyle,
   });
-  const { styles } = useTheme2024({ getStyle: getWebViewStubStyles });
 
   useLastUsedAccountInScreen();
 
@@ -137,60 +135,20 @@ export function BrowserScreen() {
   );
 }
 
-const getScreenStyle = createGetStyles2024(ctx => {
+const getScreenStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
       height: '100%',
-      backgroundColor: ctx.colors['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-1'],
     },
     containerDefaultPadding: {
       paddingTop: 56,
       paddingBottom: IS_ANDROID ? 0 : 0,
     },
     __TEST_TEXT__: {
-      color: ctx.colors2024['neutral-title-1'],
+      color: colors2024['neutral-title-1'],
       fontSize: 16,
       fontFamily: 'SF Pro',
-    },
-  };
-});
-
-const getWebViewStubStyles = createGetStyles2024(ctx => {
-  const bgMustBeTransparent = {
-    backgroundColor: 'transparent',
-  };
-  return {
-    bgMustBeTransparent,
-    sheetModalContainerStyle: { ...bgMustBeTransparent },
-    modalBg: {
-      paddingTop: 0,
-      borderTopLeftRadius: 0,
-      borderTopRightRadius: 0,
-      /**
-       * warning: never set backgroundColor other than transparent,
-       * or you will see it cover on top of the screens in some cases.
-       *
-       * only set background color when you need debug the layout
-       */
-      ...bgMustBeTransparent,
-    },
-    sheetModal: {
-      backgroundColor: ctx.colors['neutral-bg-1'],
-    },
-    bsView: {
-      position: 'relative',
-      paddingVertical: 0,
-      alignItems: 'center',
-      justifyContent: 'center',
-      // height: '100%',
-      /** @why keep '100%' for iOS layout, but could set as windowHeight for Android */
-      maxHeight: IS_ANDROID ? Dimensions.get('window').height : '100%',
-      minHeight: 20,
-      backgroundColor: ctx.colors['neutral-bg-1'],
-      // ...makeDebugBorder('black'),
-    },
-    bsViewOpened: {
-      height: '100%',
     },
   };
 });

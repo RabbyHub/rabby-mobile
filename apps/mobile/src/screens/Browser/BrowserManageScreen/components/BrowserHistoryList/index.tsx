@@ -9,6 +9,7 @@ import { BrowserHistoryEmpty } from './BrowserHistoryEmpty';
 import { BrowserHistorySiteList } from './BrowserHistorySiteList';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import { useTranslation } from 'react-i18next';
 
 export const BrowserHistoryList = ({
   style,
@@ -41,6 +42,7 @@ export const BrowserHistoryList = ({
   const handleDelete = useMemoizedFn((dappInfo: DappInfo) => {
     removeBrowserHistory(dappInfo.url || dappInfo.origin);
   });
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.container, style]}>
@@ -51,7 +53,9 @@ export const BrowserHistoryList = ({
         onDeletePress={handleDelete}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>History</Text>
+            <Text style={styles.title}>
+              {t('page.browserManage.BrowserHistoryList.title')}
+            </Text>
           </View>
         }
         ListEmptyComponent={BrowserHistoryEmpty}

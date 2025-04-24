@@ -4,7 +4,6 @@ import {
   Platform,
   StyleProp,
   StyleSheet,
-  Text,
   View,
   ViewStyle,
 } from 'react-native';
@@ -21,34 +20,33 @@ import {
 } from '@/components/WebView/hooks';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '@/components/WebView/utils';
 import { APP_UA_PARIALS } from '@/constant';
+import { ANDROID_DESKTOP_MODE_UA } from '@/constant/browser';
+import { parsePossibleURL } from '@/constant/dappView';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID } from '@/core/native/utils';
+import { browserService } from '@/core/services';
 import { FontNames } from '@/core/utils/fonts';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
-import { createGetStyles2024 } from '@/utils/styles';
-import { TabActions, useFocusEffect } from '@react-navigation/native';
-import ViewShot from 'react-native-view-shot';
-import { BrowserFooter } from './BrowserFooter';
-import { BrowserHeader } from './BrowserHeader';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-import { useMemoizedFn, useSetState } from 'ahooks';
-import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
-import { BrowserProgressBar } from './BrowserProgressBar';
-import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useDapps } from '@/hooks/useDapps';
-import { urlUtils } from '@rabby-wallet/base-utils';
-import { parsePossibleURL } from '@/constant/dappView';
-import { CHAINS_ENUM } from '@debank/common';
-import { BrowserSearchAutoComplete } from './BrowserSearchAutoComplete';
 import {
   useSceneAccountInfo,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
-import { ANDROID_DESKTOP_MODE_UA } from '@/constant/browser';
-import { browserService } from '@/core/services';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
+import { useDapps } from '@/hooks/useDapps';
 import { sleep } from '@/utils/async';
+import { createGetStyles2024 } from '@/utils/styles';
+import { urlUtils } from '@rabby-wallet/base-utils';
+import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useFocusEffect } from '@react-navigation/native';
+import { useMemoizedFn } from 'ahooks';
+import ViewShot from 'react-native-view-shot';
+import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
+import { BrowserFooter } from './BrowserFooter';
+import { BrowserHeader } from './BrowserHeader';
+import { BrowserProgressBar } from './BrowserProgressBar';
+import { BrowserSearchAutoComplete } from './BrowserSearchAutoComplete';
 
 type BrowserTabProps = {
   origin: string;
@@ -319,7 +317,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       if (isActive && !isEmptyTab) {
         setTimeout(() => {
           switchSceneCurrentAccount(forScene, finalSceneCurrentAccount);
-        });
+          console.log('emit');
+        }, 500);
       }
     }, [
       finalSceneCurrentAccount,
@@ -473,7 +472,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     if (nativeEvent.loading) {
                       return;
                     }
-                    console.log('loadend');
                     onUpdateTab?.({
                       url: nativeEvent.url,
                       name: nativeEvent.title,
@@ -487,7 +485,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     }
                   }}
                   onShouldStartLoadWithRequest={nativeEvent => {
-                    console.log('onSould', nativeEvent);
                     return checkShouldStartLoadingWithRequestForDappWebView(
                       nativeEvent,
                     );

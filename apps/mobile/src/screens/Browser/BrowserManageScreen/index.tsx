@@ -1,19 +1,18 @@
 import { RcNextLeftCC } from '@/assets/icons/common';
 import { PillsSwitch } from '@/components2024/PillsSwitch';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RootNames } from '@/constant/layout';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TabActions, useNavigation } from '@react-navigation/native';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { BrowserBookmarkList } from './components/BrowserBookmarkList';
 import { BrowserHistoryList } from './components/BrowserHistoryList';
 import { BrowserTabList } from './components/BrowserTabList';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 export function BrowserManageScreen(): JSX.Element {
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
 
@@ -22,23 +21,24 @@ export function BrowserManageScreen(): JSX.Element {
   // });
 
   const [activeTab, setActiveTab] = useState('tab');
+  const { t } = useTranslation();
 
   const options = useMemo(() => {
     return [
       {
-        label: 'Tab',
+        label: t('page.browserManage.option.tab'),
         key: 'tab',
       },
       {
-        label: 'History',
+        label: t('page.browserManage.option.history'),
         key: 'history',
       },
       {
-        label: 'Favorites',
+        label: t('page.browserManage.option.favorites'),
         key: 'favorites',
       },
     ];
-  }, []);
+  }, [t]);
 
   // todo fix any
   const tabRef = React.useRef<any>();

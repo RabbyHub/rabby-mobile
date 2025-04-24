@@ -9,6 +9,7 @@ import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
 import { BrowserBookmarkEmpty } from './BrowserBookmarkEmpty';
+import { useTranslation } from 'react-i18next';
 
 export const BrowserBookmarkList = ({
   style,
@@ -38,6 +39,8 @@ export const BrowserBookmarkList = ({
     }
   });
 
+  const { t } = useTranslation();
+
   return (
     <View style={[styles.container, style]}>
       <BrowserSiteCardList
@@ -46,7 +49,9 @@ export const BrowserBookmarkList = ({
         onFavoritePress={handleFavoritePress}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>Favorites</Text>
+            <Text style={styles.title}>
+              {t('page.browserManage.BrowserBookmarkList.title')}
+            </Text>
           </View>
         }
         ListEmptyComponent={BrowserBookmarkEmpty}

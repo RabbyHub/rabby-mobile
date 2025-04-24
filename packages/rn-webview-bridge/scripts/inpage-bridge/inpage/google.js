@@ -62,6 +62,24 @@ const injectCss = () => {
     $style.setAttribute('data-inject-rabby', 'true');
 
     $style.innerHTML = `
+/* header */
+.Fh5muf {
+  display: none !important;
+}
+  #rso {
+    padding-top: 8px;
+  }
+
+/* tab bar*/
+.gDIH3 {
+  display: none !important;
+}
+
+/* login modal */
+#lb {
+  display: none !important;
+}
+
 /* bottom ads */
 #bottomads {
   display: none !important;
@@ -279,23 +297,21 @@ const observeSite = () => {
   observer.observe(targetNode, config);
 };
 
+const checkIsGoogle = () => {
+  const googleRegex =
+    /^(https?:\/\/)?([a-z0-9-]+\.)*google\.(com(\.[a-z]{2,3})?|org|net|co\.[a-z]{2}|[a-z]{2})(\/|$)/i;
+  return (
+    googleRegex.test(window.location.origin) &&
+    window.location.pathname === '/search'
+  );
+};
 export const hackGoogle = () => {
-  const origin = window.location.origin;
-  const path = window.location.pathname;
-  if (
-    ['https://www.google.com', 'https://google.com'].includes(origin) &
-    (path === '/search')
-  ) {
+  if (checkIsGoogle()) {
     injectCss();
   }
   injectCss();
   domReadyCall(() => {
-    const origin = window.location.origin;
-    const path = window.location.pathname;
-    if (
-      ['https://www.google.com', 'https://google.com'].includes(origin) &
-      (path === '/search')
-    ) {
+    if (checkIsGoogle()) {
       injectCss();
       setTimeout(() => {
         injectScript();

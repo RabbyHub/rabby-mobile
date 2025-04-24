@@ -6,7 +6,7 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
 import { getActiveDappState, isRpcAllowed } from '../state';
 import { ethErrors } from 'eth-rpc-errors';
-import { SELF_CHECK_RPC_METHOD } from '@/constant/rpc';
+import { SAFE_RPC_METHODS, SELF_CHECK_RPC_METHOD } from '@/constant/rpc';
 
 let appVersion = '';
 
@@ -98,8 +98,12 @@ RPCMethodsMiddleParameters) =>
       },
     };
 
+    // todo check this
     const methodAllowed =
-      req.method === SELF_CHECK_RPC_METHOD || checkTabActive();
+      req.method === SELF_CHECK_RPC_METHOD ||
+      SAFE_RPC_METHODS.includes(req.method) ||
+      req.method === 'eth_accounts' ||
+      checkTabActive();
 
     const rpcMethods = {
       [SELF_CHECK_RPC_METHOD]: async () => {

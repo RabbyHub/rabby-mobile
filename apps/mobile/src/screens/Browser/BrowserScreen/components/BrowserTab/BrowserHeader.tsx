@@ -18,6 +18,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
+import { useTranslation } from 'react-i18next';
+import { getAddressBarTitle } from '@/utils/browser';
 
 export function BrowserHeader({
   url,
@@ -38,6 +40,8 @@ export function BrowserHeader({
     getStyle,
   });
 
+  const { t } = useTranslation();
+
   const navigation = useRabbyAppNavigation();
   const forScene = '@ActiveDappWebViewModal';
   const { finalSceneCurrentAccount, sceneCurrentAccount } = useSceneAccountInfo(
@@ -55,17 +59,7 @@ export function BrowserHeader({
   // const urlInfo = useMemo(() => urlUtils.canoicalizeDappUrl(url || ''), [url]);
   const inputRef = useRef<any>(null);
   const renderText = useMemo(() => {
-    const urlInfo = urlUtils.safeParseURL(url || '');
-    if (!urlInfo) {
-      return url;
-    }
-    if (['google.com', 'www.google.com'].includes(urlInfo.hostname)) {
-      const search = urlInfo.searchParams.get('q');
-      if (urlInfo.pathname === '/search' && search && !search.includes('.')) {
-        return search;
-      }
-    }
-    return urlInfo.hostname;
+    return getAddressBarTitle(url || '');
   }, [url]);
 
   useEffect(() => {
@@ -82,7 +76,11 @@ export function BrowserHeader({
         <NextSearchBar
           style={styles.searchBar}
           inputStyle={styles.searchBarInput}
-          placeholder={IS_IOS ? 'Search website' : 'Search Dapp'}
+          placeholder={
+            IS_IOS
+              ? t('page.browser.BrowserHeader.searchIos')
+              : t('page.browser.BrowserHeader.searchAndroid')
+          }
           value={searchText}
           searchIcon={<RcIconGoogle />}
           autoFocus
@@ -133,12 +131,11 @@ export function BrowserHeader({
           {url ? (
             <Text style={styles.addressBarText}>{renderText}</Text>
           ) : (
-            <View style={styles.addressBarInner}>
-              <RcIconGoogle />
-              <Text style={styles.addressBarPlaceholder}>
-                Search {IS_IOS ? 'Website' : 'Dapp'}
-              </Text>
-            </View>
+            <Text style={styles.addressBarPlaceholder}>
+              {IS_IOS
+                ? t('page.browser.BrowserHeader.searchIos')
+                : t('page.browser.BrowserHeader.searchAndroid')}
+            </Text>
           )}
         </TouchableWithoutFeedback>
       </View>
@@ -191,6 +188,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
+    textAlign: 'center',
   },
   addressBarPlaceholder: {
     color: colors2024['neutral-secondary'],
@@ -198,6 +196,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '400',
+    textAlign: 'center',
   },
   iconCloseCircle: {
     width: 32,

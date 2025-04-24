@@ -1,5 +1,5 @@
 import { RcIconCloseCC } from '@/assets/icons/common';
-import { Tab } from '@/hooks/browser/useBrowser';
+import { Tab } from '@/core/services/browserService';
 import { useTheme2024 } from '@/hooks/theme';
 
 import { createGetStyles2024 } from '@/utils/styles';

@@ -1,5 +1,5 @@
 import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
-import { Tab, useBrowser } from '@/hooks/browser/useBrowser';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { BrowserTabCard } from './BrowserTabCard';
+import { Tab } from '@/core/services/browserService';
 
 export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles } = useTheme2024({
