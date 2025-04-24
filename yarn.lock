@@ -30107,7 +30107,7 @@ __metadata:
     react-native-indicators: ^0.17.0
     react-native-ios-context-menu: 1.15.3
     react-native-keyboard-aware-scroll-view: ^0.9.5
-    react-native-keychain: 10.0.0
+    react-native-keychain: 8.0.0
     react-native-linear-gradient: ^2.8.3
     react-native-localize: 3.3.0
     react-native-mmkv: ^2.12.2
@@ -30902,10 +30902,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-keychain@npm:10.0.0":
-  version: 10.0.0
-  resolution: "react-native-keychain@npm:10.0.0"
-  checksum: 1055cc192df58cb110bd49df1264a401007a354ad28b93adefd740aeac0f746cdab86d7428887694a1b0949ef8d0dc85db8984e77db684d7b967180167b64d42
+"react-native-keychain@npm:8.0.0":
+  version: 8.0.0
+  resolution: "react-native-keychain@npm:8.0.0"
+  checksum: cbab1cef8565743072f919663068727df20fc0ef5edd53b0aa96fac74c11fcd0daa197968b06cabed4f1b3f8e5e5ae73b6db8543ed9adbecc13662c38958c9ce
+  languageName: node
+  linkType: hard
+
+"react-native-keychain@patch:react-native-keychain@npm%3A8.0.0#./.yarn/patches/react-native-keychain-npm-8.0.0-22c1f5c020.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 8.0.0
+  resolution: "react-native-keychain@patch:react-native-keychain@npm%3A8.0.0#./.yarn/patches/react-native-keychain-npm-8.0.0-22c1f5c020.patch::version=8.0.0&hash=5fe6b6&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  checksum: 5e52b8abdb1b41726af832623985492d370acb1c0eb68b413cae10d199c0bdb9cae3cfe49cadc1a25bc506a8f0c7d24dbd635ca53b4749e5bf70ba9bcc700105
   languageName: node
   linkType: hard
 
