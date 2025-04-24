@@ -48,6 +48,7 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { ANDROID_DESKTOP_MODE_UA } from '@/constant/browser';
 import { browserService } from '@/core/services';
+import { sleep } from '@/utils/async';
 
 type BrowserTabProps = {
   origin: string;
@@ -196,11 +197,14 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       // onSelfClose,
     });
 
-    const handleGoTo = useMemoizedFn((urlToGo: string) => {
+    const handleGoTo = useMemoizedFn(async (urlToGo: string) => {
       if (!urlToGo) {
         return;
       }
       if (isEmptyTab) {
+        setIsShowSearch(false);
+        await sleep(200);
+        await handleViewShot('');
         onOpenTab?.(urlToGo);
       } else {
         webviewRef?.current?.injectJavaScript(
@@ -271,13 +275,13 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       });
     });
 
-    useEffect(() => {
-      if (isEmptyTab && isActive && !isShowSearch) {
-        setTimeout(() => {
-          handleViewShot('');
-        }, 50);
-      }
-    }, [handleViewShot, isActive, isEmptyTab, isShowSearch]);
+    // useEffect(() => {
+    //   if (isEmptyTab && isActive) {
+    //     setTimeout(() => {
+    //       handleViewShot('');
+    //     }, 300);
+    //   }
+    // }, [handleViewShot, isActive, isEmptyTab, isShowSearch]);
 
     useEffect(() => {
       if (!isActive && !isEmptyTab) {
@@ -328,8 +332,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     //   return dappInfo?.contentMode === 'desktop' ? 'desktop' : 'mobile';
     // }, [dappInfo?.contentMode]);
 
-    console.log({ contentMode });
-
     return (
       <AutoLockView style={[style, styles.dappWebViewControl]}>
         <BrowserHeader
@@ -352,7 +354,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
         <ViewShot
           ref={viewShotRef}
-          style={{ flex: 1, backgroundColor: colors2024['neutral-bg-1'] }}
+          style={[
+            { flex: 1, backgroundColor: colors2024['neutral-bg-1'] },
+            isShowSearch && searchText ? styles.hidden : null,
+          ]}
           options={{
             format: 'jpg',
             quality: 0.2,
