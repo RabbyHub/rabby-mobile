@@ -122,8 +122,10 @@ const ViewTypes = {
 
 export const MultiAssets = ({
   onUpdateIsDecrease,
+  onReachTopStatusChange,
 }: {
   onUpdateIsDecrease: (isDecrease: boolean) => void;
+  onReachTopStatusChange?: (status: boolean) => void;
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const isTriggered = useRef(false);
@@ -886,7 +888,7 @@ export const MultiAssets = ({
   const panGesture = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .failOffsetY([-20, 20])
-    .hitSlop({ left: -80 })
+    .hitSlop({ left: -40 })
     .simultaneousWithExternalGesture(listRef as any)
     .onUpdate(e => {
       if (!isTriggered.current) {
@@ -907,6 +909,15 @@ export const MultiAssets = ({
     .onEnd(e => {
       isTriggered.current = false;
     });
+  const fadeAnim = React.useRef(new Animated.Value(1)).current;
+  const handleReachTopStatusChange = (status: boolean) => {
+    Animated.timing(fadeAnim, {
+      toValue: status ? 1 : 0,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+    onReachTopStatusChange?.(status);
+  };
 
   return (
     <GestureDetector gesture={panGesture}>
@@ -915,18 +926,20 @@ export const MultiAssets = ({
         firstRowType === '' ||
         !list.length ? null : (
           <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
-            <ImageBackground
-              source={topBg}
-              resizeMode="cover"
-              // eslint-disable-next-line react-native/no-inline-styles
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: SCREEN_WIDTH,
-                height: 150,
-              }}
-            />
+            <Animated.View style={{ opacity: fadeAnim }}>
+              <ImageBackground
+                source={topBg}
+                resizeMode="cover"
+                // eslint-disable-next-line react-native/no-inline-styles
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: SCREEN_WIDTH,
+                  height: 150,
+                }}
+              />
+            </Animated.View>
             <SwitchHeader
               currentTab={extendedState.currentTab}
               addressLength={list.length}
@@ -960,6 +973,16 @@ export const MultiAssets = ({
             }
           }}
           onScroll={event => {
+            if (
+              event.nativeEvent.contentSize &&
+              event.nativeEvent.layoutMeasurement
+            ) {
+              if (event.nativeEvent.contentOffset.y <= 0) {
+                handleReachTopStatusChange(true);
+              } else {
+                handleReachTopStatusChange(false);
+              }
+            }
             const scrollOffset = event.nativeEvent.contentOffset.y;
             if (scrollOffset > 80) {
               setNavigationOptions({
@@ -1056,6 +1079,7 @@ const getStyles = createGetStyles2024(ctx => ({
     right: 0,
     height: SWITCH_HEADER_HEIGHT,
     overflow: 'hidden',
+    backgroundColor: ctx.colors2024['neutral-bg-0'],
     // height: ASSETS_SECTION_HEADER,
     zIndex: 1,
   },

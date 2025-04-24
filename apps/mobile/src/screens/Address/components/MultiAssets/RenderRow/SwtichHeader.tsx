@@ -27,25 +27,25 @@ export const SwitchHeader = ({
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const tabLineLeft = useSharedValue(0);
-  console.log('tabLineLeft', tabLineLeft);
+  const tabLineLeft = useSharedValue(44);
 
   useEffect(() => {
-    tabLineLeft.value = withTiming(currentTab === TabType.portfolio ? 0 : 0.5, {
-      duration: 200,
-      easing: Easing.linear,
-    });
+    tabLineLeft.value = withTiming(
+      currentTab === TabType.portfolio ? 44 : 215,
+      {
+        duration: 200,
+        easing: Easing.linear,
+      },
+    );
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTab]);
 
   const tabLineStyle = useAnimatedStyle(() => {
     return {
-      left: `${tabLineLeft.value * 100}%`,
+      left: tabLineLeft.value,
     };
   });
-
-  console.log('tabLineStyle', tabLineStyle);
 
   return (
     <View style={styles.container}>
@@ -88,12 +88,13 @@ export const SwitchHeader = ({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   tabs: {
     flexDirection: 'row',
-    alignContent: 'center',
+    alignContent: 'flex-start',
     width: '100%',
     gap: 4,
-    padding: 4,
     borderRadius: 12,
     position: 'relative',
+    borderBottomWidth: 1,
+    borderBottomColor: colors2024['neutral-line'],
   },
   tab: {
     fontSize: 20,
@@ -105,11 +106,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: '100%',
   },
   tabContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexDirection: 'row',
     flex: 1,
     paddingHorizontal: 13,
     paddingVertical: 6,
+    paddingTop: 0,
   },
   activeTabContainer: {
     // borderRadius: 8,
@@ -119,10 +121,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tabBottomLine: {
     height: 5,
-    width: '50%',
+    width: 80,
     backgroundColor: colors2024['brand-default'],
     position: 'absolute',
-    bottom: 0,
+    bottom: 1,
     borderRadius: 100,
   },
   container: {
@@ -130,7 +132,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     height: SWITCH_HEADER_HEIGHT - 16,
     marginTop: 16,
     justifyContent: 'space-between',
-    alignContent: 'center',
+    alignContent: 'flex-start',
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],

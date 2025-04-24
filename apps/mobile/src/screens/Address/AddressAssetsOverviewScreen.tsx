@@ -28,6 +28,18 @@ export function AddressAssetsOverview(): JSX.Element {
       }
     }
   }, [isDecrease, isLight]);
+
+  const handleReachTopStatusChange = React.useCallback(
+    (status: boolean) => {
+      Animated.timing(fadeAnim, {
+        toValue: status ? 1 : 0,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
+    },
+    [fadeAnim],
+  );
+
   return (
     <AddressListScreenContainer
       style={[
@@ -54,14 +66,17 @@ export function AddressAssetsOverview(): JSX.Element {
           }}
         />
       </Animated.View>
-      <MultiAssets onUpdateIsDecrease={setIsDecrease} />
+      <MultiAssets
+        onUpdateIsDecrease={setIsDecrease}
+        onReachTopStatusChange={handleReachTopStatusChange}
+      />
     </AddressListScreenContainer>
   );
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   screen: {
-    // backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: colors2024['neutral-bg-0'],
   },
   chart: {
     // paddingVertical: 20,
