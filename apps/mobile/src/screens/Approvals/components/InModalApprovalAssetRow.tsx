@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 
 import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
-import { Tip } from '@/components';
+import { AssetAvatar, Tip } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 import {
@@ -18,6 +18,7 @@ import { ellipsisAddress } from '@/utils/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { querySelectedAssetSpender } from '../utils';
 import Permit2Badge from './Permit2Badge';
+import NFTAvatar from '@/components/NFTAvatar';
 
 function ApprovalAmountInfo({
   style,
@@ -113,6 +114,7 @@ export function InModalApprovalAssetRow({
     ctx: ToggleSelectApprovalSpenderCtx & { approval: AssetApprovalItem },
   ) => void;
 } & RNViewProps) {
+  const { t } = useTranslation();
   const { colors, styles } = useTheme2024({ getStyle: getStyle });
 
   const { assetFocusingRevokeMap } = useRevokeApprovals();
@@ -142,7 +144,8 @@ export function InModalApprovalAssetRow({
         isNFT,
         tokenLogoURL: spender.$assetContract?.logo_url || '',
         nftImageURL: spender.$assetContract?.logo_url,
-        protocolName: spender.protocol?.name || 'Unknown Contract',
+        protocolName:
+          spender.protocol?.name || t('page.approvals.unknownContract'),
         isRisky: risky,
         value,
         isUnlimited,
@@ -150,36 +153,41 @@ export function InModalApprovalAssetRow({
       },
       spenderValues,
     };
-  }, [spender]);
+  }, [spender, t]);
 
   return (
-    <TouchableView
+    <TouchableOpacity
       style={[styles.container, isSelected && styles.selectedContainer, style]}
       onPress={() => {
         onToggleSelection?.({ spender, approval });
       }}>
       <View style={styles.leftArea}>
-        {isSelected ? (
-          <RcIconHasCheckbox
-            style={styles.itemCheckbox}
-            color={colors['blue-default']}
-          />
-        ) : (
-          <RcIconNoCheck
-            style={styles.itemCheckbox}
-            color={colors['neutral-line']}
-          />
-        )}
+        <View style={styles.itemCheckbox}>
+          {isSelected ? (
+            <RcIconHasCheckbox color={colors['blue-default']} />
+          ) : (
+            <RcIconNoCheck color={colors['neutral-line']} />
+          )}
+        </View>
+
+        <AssetAvatar
+          style={styles.chainIcon}
+          // pass empty if it's token as no logo_url to enforce the default logo
+          logo={spender.protocol?.logo_url || ''}
+          logoStyle={{ backgroundColor: colors['neutral-foot'] }}
+          chain={spender.protocol?.chain}
+          chainIconPosition="br"
+          size={46}
+          chainSize={16}
+        />
+
         <View style={styles.basicInfo}>
           <View style={styles.basicInfoF1}>
-            <Text style={styles.address} ellipsizeMode="tail" numberOfLines={1}>
-              {ellipsisAddress(spender.id)}
-            </Text>
             <Text
               style={styles.protocolName}
               ellipsizeMode="tail"
               numberOfLines={1}>
-              ({spenderInfo.protocolName})
+              {spenderInfo.protocolName}
             </Text>
           </View>
           {spender.$assetContract?.type === 'contract' &&
@@ -208,7 +216,7 @@ export function InModalApprovalAssetRow({
           />
         )}
       </View>
-    </TouchableView>
+    </TouchableOpacity>
   );
 }
 
@@ -221,13 +229,13 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
       height: 72,
+      paddingVertical: 14,
+      paddingHorizontal: 12,
+      backgroundColor: colors2024['neutral-bg-1'],
+      borderRadius: 16,
     },
-    selectedContainer: {
-      ...selectableStyles.selectedContainer,
-    },
+    selectedContainer: {},
     leftArea: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -271,11 +279,10 @@ const getStyle = createGetStyles2024(ctx => {
       color: colors2024['neutral-title-1'],
     },
     protocolName: {
-      fontSize: 12,
-      fontWeight: '400',
+      fontSize: 16,
+      fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
-      color: colors2024['neutral-foot'],
-      marginLeft: 4,
+      color: colors2024['neutral-title-1'],
     },
     itemCheckbox: {
       marginRight: 12,
@@ -284,6 +291,9 @@ const getStyle = createGetStyles2024(ctx => {
     },
     permit2: {
       marginLeft: 0,
+    },
+    chainIcon: {
+      marginRight: 12,
     },
   };
 });

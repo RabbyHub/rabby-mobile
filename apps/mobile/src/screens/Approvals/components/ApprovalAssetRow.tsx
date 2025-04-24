@@ -191,6 +191,7 @@ export const getAssetsApprovalRowStyles = createGetStyles2024(ctx => {
       borderStyle: 'solid',
       borderWidth: 1,
       borderColor: 'transparent',
+      height: 74,
     },
     selectedContainer: {
       backgroundColor: colors2024['brand-light-1'],

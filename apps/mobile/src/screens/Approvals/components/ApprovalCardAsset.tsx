@@ -9,14 +9,18 @@ import { RcIconUnknown } from '../icons';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
+import { getSelectableContainerStyle } from './Layout';
+import { useTranslation } from 'react-i18next';
 
 function ApprovalCardAssetsProto({
   assetItem: asset,
+  style,
 }: {
   assetItem: AssetApprovalItem;
   inDetailModal?: boolean;
 } & RNViewProps) {
-  const { colors, styles } = useTheme2024({ getStyle: getAssetItemStyles });
+  const { t } = useTranslation();
+  const { colors2024, styles } = useTheme2024({ getStyle: getAssetItemStyles });
 
   const { assetName, nftTypeBadge, displayBalanceText } = React.useMemo(() => {
     const assetInfo = {
@@ -56,13 +60,13 @@ function ApprovalCardAssetsProto({
   }, [asset]);
 
   return (
-    <View style={[styles.container]}>
+    <View style={[styles.container, style]}>
       <View style={styles.floor}>
         <View style={[styles.lineLabel, styles.header]}>
           {asset?.logo_url ? (
             <AssetAvatar
               logo={asset?.logo_url}
-              logoStyle={{ backgroundColor: colors['neutral-foot'] }}
+              logoStyle={{ backgroundColor: colors2024['neutral-foot'] }}
               chain={asset?.chain}
               chainIconPosition="tr"
               style={{ marginRight: 7 }}
@@ -91,10 +95,14 @@ function ApprovalCardAssetsProto({
         </View>
       </View>
 
+      <View style={[styles.divider]} />
+
       <View style={styles.main}>
-        <View style={[styles.floor, { marginTop: 0 }]}>
+        <View style={[styles.floor]}>
           <View style={styles.lineLabel}>
-            <Text style={styles.lineLabelText}>All Approvals</Text>
+            <Text style={styles.lineLabelText}>
+              {t('page.approvals.allApprovals')}
+            </Text>
           </View>
           <View style={styles.lineValue}>
             <Text style={styles.lineValueText}>{asset.list.length}</Text>
@@ -104,7 +112,9 @@ function ApprovalCardAssetsProto({
         {displayBalanceText && (
           <View style={[styles.floor, { marginTop: 12 }]}>
             <View style={styles.lineLabel}>
-              <Text style={styles.lineLabelText}>My Balance</Text>
+              <Text style={styles.lineLabelText}>
+                {t('page.approvals.myBalance')}
+              </Text>
             </View>
             <View style={styles.lineValue}>
               <Text style={styles.lineValueText}>{displayBalanceText}</Text>
@@ -116,88 +126,92 @@ function ApprovalCardAssetsProto({
   );
 }
 
-export const getAssetItemStyles = createGetStyles2024(
-  ({ colors, colors2024 }) => {
-    return {
-      container: {
-        borderRadius: 8,
-        backgroundColor: colors['neutral-card1'],
-        flexDirection: 'column',
-        justifyContent: 'center',
-        width: '100%',
-      },
-      floor: {
-        width: '100%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      },
-      main: {
-        borderRadius: 30,
-        borderWidth: 1,
-        paddingVertical: 20,
-        paddingHorizontal: 24,
-        marginTop: 24,
-        borderColor: colors2024['neutral-line'],
-        backgroundColor: colors2024['neutral-bg-1'],
-      },
-      basicInfo: {
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-start',
-      },
-      lineLabel: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        // ...makeDebugBorder('red'),
-      },
-      header: {
-        width: '100%',
-      },
-      lineLabelText: {
-        fontFamily: 'SF Pro Rounded',
-        color: colors2024['neutral-foot'],
-        fontSize: 14,
-        fontWeight: '700',
-      },
-      lineValue: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-      },
-      lineValueText: {
-        fontSize: 14,
-        fontWeight: '700',
-        fontFamily: 'SF Pro Rounded',
-        color: colors2024['neutral-body'],
-      },
-      nftTypeBadge: {
-        borderRadius: 2,
-        borderStyle: 'solid',
-        borderColor: colors['neutral-line'],
-        borderWidth: 0.5,
-        marginTop: 6,
-        paddingVertical: 1,
-        paddingHorizontal: 4,
-        fontSize: 12,
-        fontFamily: 'SF Pro Rounded',
-        fontWeight: '400',
-        color: colors['neutral-foot'],
-      },
-      chainIcon: {
-        marginRight: 6,
-      },
-      assetNameText: {
-        color: colors2024['neutral-title-1'],
-        fontFamily: 'SF Pro Rounded',
-        fontSize: 20,
-        fontWeight: '700',
-        maxWidth: 180,
-      },
-    };
-  },
-);
+export const getAssetItemStyles = createGetStyles2024(ctx => {
+  const selectableStyles = getSelectableContainerStyle(ctx);
+  const { colors2024 } = ctx;
+
+  return {
+    container: {
+      borderRadius: 20,
+      backgroundColor: colors2024['neutral-bg-1'],
+      flexDirection: 'column',
+      justifyContent: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      width: '100%',
+      ...selectableStyles.container,
+    },
+    floor: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    main: {},
+    divider: {
+      height: 1,
+      marginBottom: 16,
+      marginTop: 16,
+      backgroundColor: colors2024['neutral-line'],
+    },
+    basicInfo: {
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      justifyContent: 'flex-start',
+    },
+    lineLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      // ...makeDebugBorder('red'),
+    },
+    header: {
+      width: '100%',
+    },
+    lineLabelText: {
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-foot'],
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+    },
+    lineValue: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
+    lineValueText: {
+      fontSize: 14,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      color: colors2024['neutral-body'],
+      lineHeight: 18,
+    },
+    nftTypeBadge: {
+      borderRadius: 2,
+      borderStyle: 'solid',
+      borderColor: colors2024['neutral-line'],
+      borderWidth: 0.5,
+      marginTop: 6,
+      paddingVertical: 1,
+      paddingHorizontal: 4,
+      fontSize: 12,
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '400',
+      color: colors2024['neutral-foot'],
+    },
+    chainIcon: {
+      marginRight: 6,
+    },
+    assetNameText: {
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 20,
+      fontWeight: '700',
+      maxWidth: 180,
+    },
+  };
+});
 
 const ApprovalCardAsset = React.memo(ApprovalCardAssetsProto);
 

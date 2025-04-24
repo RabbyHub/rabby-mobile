@@ -22,12 +22,14 @@ import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import AutoLockView from '@/components/AutoLockView';
+import { useTranslation } from 'react-i18next';
 
 export default function BottomSheetApprovalAsset({
   modalProps,
 }: {
   modalProps?: BottomSheetModalProps;
 }) {
+  const { t } = useTranslation();
   const {
     sheetModalRefs: { approvalAssetDetail: modalRef },
     assetFocusingRevokeMap,
@@ -75,7 +77,11 @@ export default function BottomSheetApprovalAsset({
   >(
     ({ item, section: _, index }) => {
       return (
-        <View key={`${item.$assetParent?.chain}-${item.id}-${index}`}>
+        <View
+          key={`${item.$assetParent?.chain}-${item.id}-${index}`}
+          style={{
+            marginTop: index === 0 ? 0 : 8,
+          }}>
           <InModalApprovalAssetRow
             approval={focusedAssetApproval!}
             spender={item}
@@ -126,16 +132,20 @@ export default function BottomSheetApprovalAsset({
           />
         );
       }}
-      snapPoints={['90%']}
+      snapPoints={['75%']}
       bottomInset={1}>
       {focusedAssetApproval && (
         <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
           <BottomSheetHandlableView style={styles.staticArea}>
-            <ApprovalCardAsset assetItem={focusedAssetApproval} inDetailModal />
+            <ApprovalCardAsset
+              assetItem={focusedAssetApproval}
+              inDetailModal
+              style={styles.headerTitle}
+            />
 
             <View style={styles.listHeadOps}>
               <Text style={styles.listHeadText}>
-                Approved Contracts and Amount
+                {t('page.approvals.approvedContractsAndAmount')}
               </Text>
               <MiniButton
                 disabled={!focusedAssetApproval?.list.length}
@@ -190,7 +200,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: 20,
     },
     bg: {
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-0'],
     },
     bodyContainer: {
       paddingVertical: 8,
@@ -202,8 +212,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingHorizontal: 16,
       flexShrink: 0,
     },
+    headerTitle: {
+      marginTop: 20,
+    },
     listHeadOps: {
-      marginTop: 30,
+      marginTop: 14,
       width: '100%',
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -214,6 +227,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '700',
+      lineHeight: 18,
     },
     miniBtn: {
       backgroundColor: 'transparent',
@@ -221,7 +235,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     scrollableArea: {
       flexShrink: 1,
       height: '100%',
-      marginTop: 12,
+      marginTop: 2,
       paddingBottom: 16,
     },
     scrollableView: {
@@ -230,10 +244,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
-      borderRadius: 24,
-      borderWidth: 1,
       overflow: 'hidden',
-      borderColor: colors2024['neutral-line'],
     },
     listFooterContainer: {
       flexDirection: 'row',
