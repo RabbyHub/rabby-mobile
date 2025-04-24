@@ -1,7 +1,6 @@
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -20,7 +19,7 @@ import { RefreshControl } from 'react-native-gesture-handler';
 
 import {
   ADDRESS_ENTRY_GAP,
-  ADDRESS_ENTRY_HEUGHT,
+  ADDRESS_ENTRY_HEIGHT,
   AppRootName,
   ASSETS_EMPTY_ROW_HIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
@@ -55,10 +54,7 @@ import {
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
-import {
-  ItemLoader,
-  PositionLoader,
-} from '@/screens/Search/components/Skeleton';
+import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import {
   RecyclerListView,
   DataProvider,
@@ -71,11 +67,7 @@ import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { TabType, SwitchHeader } from './RenderRow/SwtichHeader';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { OtherAddressNav } from '../OtherAddressNav';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-} from '@react-navigation/native';
+import { StackActions, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '../AddressListScreenContainer';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import {
@@ -88,7 +80,6 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
 import { formChartData } from '@/hooks/useCurve';
 import { trigger } from 'react-native-haptic-feedback';
-import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
@@ -110,7 +101,7 @@ import { useSetPasswordFirst } from '@/hooks/useLock';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 
-const END_POSITION = 20;
+const END_POSITION = 50;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
 
@@ -524,12 +515,7 @@ export const MultiAssets = ({
   const scrollToTop = () => {
     setFoldHideList(true);
     setTimeout(() => {
-      listRef.current?.forceUpdate(() => {
-        const data = (listRef.current?.props.dataProvider.getAllData() ||
-          []) as ActionItem[];
-        const index = data.findIndex(item => item.type === 'switch_tabs');
-        listRef.current?.scrollToIndex(index || 0, true);
-      });
+      listRef.current?.scrollToOffset(0, 0, true);
     }, 200);
   };
   const { tokenRefresh } = useTriggerTagAssets();
@@ -846,7 +832,7 @@ export const MultiAssets = ({
             break;
           case ViewTypes.ADDRESS_ENTRY:
             dim.width = SCREEN_WIDTH - 32;
-            dim.height = ADDRESS_ENTRY_HEUGHT + ADDRESS_ENTRY_GAP;
+            dim.height = ADDRESS_ENTRY_HEIGHT + ADDRESS_ENTRY_GAP;
             break;
           default:
             dim.width = SCREEN_WIDTH - 32;
@@ -894,9 +880,13 @@ export const MultiAssets = ({
       ...pre,
       currentTab: type,
     }));
+    scrollToTop();
   };
 
   const panGesture = Gesture.Pan()
+    .activeOffsetX([-10, 10])
+    .failOffsetY([-20, 20])
+    .simultaneousWithExternalGesture(listRef as any)
     .onUpdate(e => {
       // 检查右滑手势
       if (!isTriggered.current) {
@@ -992,16 +982,7 @@ export const MultiAssets = ({
           }}
           renderFooter={() =>
             extendedState.currentTab === TabType.address ? (
-              <View
-                style={[
-                  {
-                    minHeight:
-                      Dimensions.get('screen').height -
-                      list.length * (ADDRESS_ENTRY_HEUGHT + ADDRESS_ENTRY_GAP) -
-                      -SWITCH_HEADER_HEIGHT -
-                      SWITCH_HEADER_GAP,
-                  },
-                ]}>
+              <View>
                 <Card style={styles.footerCard} onPress={gotoAddAddress}>
                   <View style={styles.footerMain}>
                     <PlusSVG
