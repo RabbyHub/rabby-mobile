@@ -647,7 +647,7 @@
     "sendPoly": {
       "enterAddress": "Enter Address",
       "innerEnterAddress": "Enter Address / ENS",
-      "whitelistTitle": "My Whitelist Addresses",
+      "whitelistTitle": "Whitelist",
       "sendToImportedAddress": "Send to My Imported Addresses",
       "sendToWatchAddress": "Send to Watch-only Addresses",
       "sendToSafeAddress": "Send to Safe Addresses",
