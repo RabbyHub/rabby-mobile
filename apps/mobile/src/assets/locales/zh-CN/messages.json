@@ -818,9 +818,6 @@
           }
         }
       },
-      "RevokeApprovalModal": {
-        "contractTitle": "合同批准细节"
-      },
       "search": {
         "placeholder": "通过名称/地址搜索"
       },

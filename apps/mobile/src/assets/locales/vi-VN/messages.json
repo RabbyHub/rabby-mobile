@@ -758,9 +758,6 @@
             "modalTitle_other": "Tổng cộng cần <2>{{count}}</2> chữ ký"
           }
         }
-      },
-      "RevokeApprovalModal": {
-        "contractTitle": "Hợp đồng phê duyệt chi tiết"
       }
     },
     "gasTopUp": {
