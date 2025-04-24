@@ -1,6 +1,6 @@
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
-import { useAtom } from 'jotai';
+import { atom, useAtom } from 'jotai';
 
 import { formatNetworth } from '@/utils/math';
 import {
@@ -11,7 +11,7 @@ import {
 import { getDisplayedPortfolioUsdValue } from '../utils/converAssets';
 import { DisplayedProject } from '../utils/project';
 import { formatAmount } from '@/utils/number';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { preferenceService } from '@/core/services';
 import { usePinTokens } from '@/screens/Search/usePinTokens';
 import { tagTokenList } from '../utils/token';
@@ -238,10 +238,10 @@ export const combinedNFTs = (assetsMap: {
     }));
 };
 
+export const assetAtom = atom<{ [address: string]: IAssets }>({});
+
 export const useAssetsMap = () => {
-  const [assetsMap, setAssetsMap] = useState<{ [address: string]: IAssets }>(
-    {},
-  );
+  const [assetsMap, setAssetsMap] = useAtom(assetAtom);
   const { handleFetchTokens } = usePinTokens();
   const [tokenNounce, setTokenNounce] = useAtom(tokenNounceAtom);
   const [defiNounce, setDefiNounce] = useAtom(deFiNounceAtom);
@@ -267,7 +267,7 @@ export const useAssetsMap = () => {
         };
       });
     },
-    [],
+    [setAssetsMap],
   );
 
   const updatePortfolios = useCallback(
@@ -290,7 +290,7 @@ export const useAssetsMap = () => {
         };
       });
     },
-    [],
+    [setAssetsMap],
   );
   const updateNFTs = useCallback(
     ({ address, newNFTs }: { address: string; newNFTs: NFTItem[] }) => {
@@ -306,7 +306,7 @@ export const useAssetsMap = () => {
         };
       });
     },
-    [],
+    [setAssetsMap],
   );
 
   const refreshTagToken = useCallback(async () => {
@@ -324,7 +324,7 @@ export const useAssetsMap = () => {
 
       return updatedAssetsMap;
     });
-  }, [handleFetchTokens]);
+  }, [handleFetchTokens, setAssetsMap]);
   const refreshTagPortfolio = useCallback(async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
@@ -343,7 +343,7 @@ export const useAssetsMap = () => {
 
       return updatedAssetsMap;
     });
-  }, []);
+  }, [setAssetsMap]);
   const refreshTagNft = useCallback(async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
@@ -358,7 +358,7 @@ export const useAssetsMap = () => {
 
       return updatedAssetsMap;
     });
-  }, []);
+  }, [setAssetsMap]);
 
   useEffect(() => {
     if (tokenNounce > 0) {

@@ -25,7 +25,7 @@ export const SwitchHeader = ({
   onChangeTab,
   addressLength,
 }: IProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const tabLineLeft = useSharedValue(44);
 
