@@ -14,10 +14,7 @@ import { default as RcIconExternalLink2CC } from '@/assets/icons/common/external
 import { openNFTLinkFromChainItem } from '../utils';
 
 export const ContractFloorLayouts = {
-  floorHeader: { height: 33, paddingTop: 0 },
-  floor1: { height: 24, paddingTop: 4 },
-  floor2: { height: 24, paddingTop: 4 },
-  floor3: { height: 24, paddingTop: 4 },
+  floor1: { height: 18, paddingTop: 0 },
 };
 
 function CardProto({
@@ -151,7 +148,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
       flexDirection: 'column',
       justifyContent: 'center',
       paddingHorizontal: 16,
-      paddingVertical: 22,
+      paddingVertical: 16,
       width: '100%',
       ...selectableStyles.container,
     },

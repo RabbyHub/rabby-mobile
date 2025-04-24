@@ -789,7 +789,10 @@
         "approvalCount_other": "{{count}} approvals"
       },
       "contractAddress": "Contract Address",
-      "allApprovals": "All Approvals"
+      "allApprovals": "All Approvals",
+      "approvedAssetsAndAmount": "Approved Assets and Amount",
+      "unselectAll": "Unselect All",
+      "selectAll": "Select All"
     },
     "gasTopUp": {
       "No_Tokens": "No Tokens",
