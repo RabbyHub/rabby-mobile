@@ -63,10 +63,6 @@ export const DuplicateAddressModal: React.FC = () => {
 
   const handleSwitch = React.useCallback(async () => {
     if (currentAccount) {
-      trigger('impactLight', {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
       switchAccount(currentAccount);
       navigate(RootNames.SingleAddressStack, {
         screen: RootNames.SingleAddressHome,

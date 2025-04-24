@@ -38,18 +38,15 @@ import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { RcIconMore } from '@/assets/icons/home';
-import { trigger } from 'react-native-haptic-feedback';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
-import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
 import { CombineTokensItem } from '../Home/hooks/store';
 import { RelatedDeFi } from './components/RelatedDeFi';
 import { navigate, naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
-import { HomePinBadge } from './components/PinBadge';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
@@ -59,8 +56,6 @@ import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import LinearGradient from 'react-native-linear-gradient';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { unionBy } from 'lodash';
 import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
@@ -171,12 +166,6 @@ export const RightMore: React.FC<{
       },
     ] as MenuAction[];
   }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
-  const onPress = () => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
-  };
 
   return (
     <>
@@ -185,7 +174,7 @@ export const RightMore: React.FC<{
           menuActions: menuActions,
         }}
         triggerProps={{ action: 'press' }}>
-        <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
+        <CustomTouchableOpacity hitSlop={hitSlop}>
           <RcIconMore width={24} height={24} />
         </CustomTouchableOpacity>
       </DropDownMenuView>

@@ -49,10 +49,6 @@ export const SwitchHeader = ({
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
 
   const onAddAddress = useCallback(() => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
       onDone: () => {

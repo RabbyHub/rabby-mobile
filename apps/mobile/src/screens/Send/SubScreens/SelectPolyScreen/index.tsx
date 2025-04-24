@@ -8,7 +8,6 @@ import { WhiteListItem } from '../../components/WhiteListItem';
 import EmptyWhiteListHolder from '../../components/EmptyWhiteListHolder';
 import { OtherAddressNav } from '@/screens/Address/AddressListScreen';
 import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
-import { trigger } from 'react-native-haptic-feedback';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
@@ -42,13 +41,6 @@ const WhiteListHeader = ({ hideIcon, gotoAddWhitelist }: IHeaderProps) => {
   );
 };
 
-const triggerLight = () => {
-  trigger('impactLight', {
-    enableVibrateFallback: true,
-    ignoreAndroidSystemSettings: false,
-  });
-};
-
 const SendPolyScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -59,7 +51,6 @@ const SendPolyScreen = () => {
   });
 
   const handleGotoInputAddress = (autoScan: boolean) => {
-    triggerLight();
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: RootNames.SendInput,

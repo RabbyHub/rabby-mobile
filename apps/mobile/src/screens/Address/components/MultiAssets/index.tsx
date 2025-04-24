@@ -908,10 +908,6 @@ export const MultiAssets = ({
             currentTab={extendedState.currentTab}
             addressLength={list.length}
             onChangeTab={tab => {
-              trigger('impactLight', {
-                enableVibrateFallback: true,
-                ignoreAndroidSystemSettings: false,
-              });
               setExtendedState(pre => ({
                 ...pre,
                 currentTab: tab,

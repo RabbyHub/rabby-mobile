@@ -63,10 +63,6 @@ export function ImportHardwareAddressScreen(): JSX.Element {
   );
 
   const handleLedger = React.useCallback(() => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_LEDGER,
       bottomSheetModalProps: {
@@ -93,10 +89,6 @@ export function ImportHardwareAddressScreen(): JSX.Element {
   const goImport = useImportKeystone();
 
   const handleKeystone = React.useCallback(async () => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     matomoRequestEvent({
       category: 'Import Address',
       action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
@@ -124,10 +116,6 @@ export function ImportHardwareAddressScreen(): JSX.Element {
   }, [goImport]);
 
   const handleOneKey = React.useCallback(() => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_ONEKEY,
       bottomSheetModalProps: {

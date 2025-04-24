@@ -105,10 +105,6 @@ export const SelectGasAccountList = ({
         key={`${item.type}-${item.address}`}>
         <TouchableOpacity
           onPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
             onChange?.(item);
           }}>
           <AddressItem account={item} fetchAccount={false}>

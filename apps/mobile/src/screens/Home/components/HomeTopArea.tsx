@@ -47,7 +47,6 @@ import {
 } from 'react-native';
 import { useApprovalAlert } from '../hooks/approvals';
 import { CurveBottomSheetModal } from './CurveBottomSheet';
-import { trigger } from 'react-native-haptic-feedback';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
@@ -76,12 +75,6 @@ const Linear = () => {
 
 const isAndroid = Platform.OS === 'android';
 
-const triggerLight = () => {
-  trigger('impactLight', {
-    enableVibrateFallback: true,
-    ignoreAndroidSystemSettings: false,
-  });
-};
 export function BadgeText({
   count,
   style,
@@ -471,7 +464,6 @@ export const HomeTopArea = ({
                 item.disabled
                   ? toastDisabledAction
                   : () => {
-                      triggerLight();
                       item.onPress();
                     }
               }

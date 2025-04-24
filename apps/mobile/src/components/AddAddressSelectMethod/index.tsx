@@ -12,7 +12,6 @@ import { AppRootName, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
-import { trigger } from 'react-native-haptic-feedback';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
@@ -37,11 +36,6 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
       <View style={styles.section}>
         <ListItem
           onPress={async () => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-
             if (
               await shouldRedirectToSetPasswordBefore2024({
                 backScreen: RootNames.CreateSelectMethod,
@@ -60,11 +54,6 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
         />
         <ListItem
           onPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-
             navigateTo(RootNames.ImportMethods, {
               isNotNewUserProc: true,
             });
@@ -76,11 +65,6 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
         />
         <ListItem
           onPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-
             navigateTo(RootNames.ImportHardwareAddress);
             onDone();
           }}
@@ -91,11 +75,6 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
 
         <ListItem
           onPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-
             preferenceService.setReportActionTs(
               REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
             );

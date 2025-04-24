@@ -14,7 +14,6 @@ import {
   TouchableOpacityProps,
   TouchableOpacity,
 } from 'react-native';
-import { trigger } from 'react-native-haptic-feedback';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { renderText } from '@/utils/renderNode';
@@ -37,7 +36,6 @@ export type ButtonProps = Omit<
       ViewComponent?: typeof React.Component;
       disabled?: boolean;
       disabledTitleStyle?: StyleProp<TextStyle>;
-      disableTrigger?: boolean;
       noShadow?: boolean;
       icon?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
       iconRight?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
@@ -61,7 +59,6 @@ export const Button = ({
   icon,
   iconRight,
   ViewComponent = View,
-  disableTrigger,
   ...rest
 }: ButtonProps) => {
   // const isLight = useGetBinaryMode() === 'light';
@@ -88,17 +85,11 @@ export const Button = ({
 
   const handleOnPress = useCallback(
     (evt: any) => {
-      if (!disableTrigger) {
-        trigger('impactLight', {
-          enableVibrateFallback: true,
-          ignoreAndroidSystemSettings: false,
-        });
-      }
       if (!loading && !disabled) {
         onPress(evt);
       }
     },
-    [disableTrigger, disabled, loading, onPress],
+    [disabled, loading, onPress],
   );
 
   // Refactor to Pressable

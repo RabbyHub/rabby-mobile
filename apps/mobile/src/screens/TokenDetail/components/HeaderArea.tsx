@@ -6,23 +6,15 @@ import RcIconUnPin from '@/assets2024/icons/home/RcIconUnpin.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
-import {
-  RcIconCopyRegularCC,
-  RcIconExternalLinkCC,
-} from '@/assets/icons/common';
 import { AssetAvatar, Text } from '@/components';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { ellipsisAddress } from '@/utils/address';
 import { findChain } from '@/utils/chain';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
-import { openTxExternalUrl } from '@/utils/transaction';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useMemoizedFn } from 'ahooks';
 import { preferenceService } from '@/core/services';
-import { trigger } from 'react-native-haptic-feedback';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -75,10 +67,6 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   const handlePress = useCallback(() => {
     const currentPin = token._isPined;
     token._isPined = !token._isPined;
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     if (currentPin) {
       preferenceService.removePinedToken({
         tokenId: token._tokenId,

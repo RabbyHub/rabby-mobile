@@ -155,10 +155,6 @@ export const WhiteListItem = ({
         style={StyleSheet.flatten([styles.root])}
         delayLongPress={200} // long press delay
         onPress={() => {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
           if (isForWhitelist) {
             if (inWhiteList) {
               toast.show(t('page.whitelist.alreadyAdded'));
