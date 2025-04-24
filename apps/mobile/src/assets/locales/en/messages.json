@@ -767,7 +767,10 @@
       "allApprovals": "All Approvals",
       "approvedAssetsAndAmount": "Approved Assets and Amount",
       "unselectAll": "Unselect All",
-      "selectAll": "Select All"
+      "selectAll": "Select All",
+      "approvedContractsAndAmount": "Approved Contracts and Amount",
+      "myBalance": "My Balance",
+      "unknownContract": "Unknown Contract"
     },
     "gasTopUp": {
       "No_Tokens": "No Tokens",
