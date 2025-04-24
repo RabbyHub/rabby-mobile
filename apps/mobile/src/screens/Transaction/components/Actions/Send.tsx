@@ -38,7 +38,8 @@ import { HistoryItemCateType } from '../type';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useWhitelist } from '@/hooks/whitelist';
+import { Tip } from '@/components/Tip';
 
 interface Props {
   data: TransactionGroup;
@@ -92,6 +93,8 @@ export const Send: React.FC<Props> = ({
 
   const { switchAccount } = useCurrentAccount();
   const { navigateToSendPolyScreen, navigateToSendScreen } = useSendRoutes();
+
+  const { isAddrOnWhitelist } = useWhitelist();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -237,24 +240,33 @@ export const Send: React.FC<Props> = ({
       {data.isPending ? null : (
         <View style={styles.buttonContainer}>
           <View style={{ flex: 1 }}>
-            <Button
-              onPress={() => {
-                if (onPressBottomBtn) {
-                  onPressBottomBtn(actionData);
-                  return;
+            {isAddrOnWhitelist(actionData.to) && onPressBottomBtn ? (
+              <Tip content={t('page.whitelist.alreadyIn')}>
+                <Button
+                  disabled
+                  title={t('page.transactions.detail.AddToWhitelist')}
+                />
+              </Tip>
+            ) : (
+              <Button
+                onPress={() => {
+                  if (onPressBottomBtn) {
+                    onPressBottomBtn(actionData);
+                    return;
+                  }
+                  navigateToSendPolyScreen(!!isSingleAddress, {
+                    chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+                    tokenId: actionData.token?.id,
+                    toAddress: actionData.to,
+                  });
+                }}
+                title={
+                  onPressBottomBtn
+                    ? t('page.transactions.detail.AddToWhitelist')
+                    : t('page.transactions.detail.SendAgain')
                 }
-                navigateToSendPolyScreen(!!isSingleAddress, {
-                  chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-                  tokenId: actionData.token?.id,
-                  toAddress: actionData.to,
-                });
-              }}
-              title={
-                onPressBottomBtn
-                  ? t('page.transactions.detail.AddToWhitelist')
-                  : t('page.transactions.detail.SendAgain')
-              }
-            />
+              />
+            )}
           </View>
         </View>
       )}

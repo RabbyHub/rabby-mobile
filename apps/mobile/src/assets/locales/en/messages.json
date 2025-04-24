@@ -694,6 +694,7 @@
       "addSuccessful": "Address added to whitelist",
       "alreadyAdded": "Already added to your whitelist",
       "confirmPassword": "Enter the Password to Confirm",
+      "alreadyIn": "Already in Whitelist",
       "header": {
         "address": "Address",
         "name": "Name",
