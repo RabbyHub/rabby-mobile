@@ -886,6 +886,11 @@ export const MultiAssets = ({
   const panGesture = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .failOffsetY([-20, 20])
+    .onTouchesDown((e, state) => {
+      if (e.allTouches[0].absoluteX > 32) {
+        state.activate();
+      }
+    })
     .simultaneousWithExternalGesture(listRef as any)
     .onUpdate(e => {
       // 检查右滑手势
