@@ -626,9 +626,6 @@
           }
         }
       },
-      "RevokeApprovalModal": {
-        "contractTitle": "Détail d'approbation du contrat"
-      },
       "tableConfig": {
         "byContracts": {
           "columnTitle": {

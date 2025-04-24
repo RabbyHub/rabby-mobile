@@ -7,8 +7,8 @@ import { ellipsisAddress, getAddressScanLink } from '@/utils/address';
 import { openExternalUrl } from '@/core/utils/linking';
 import { getTokenSymbol } from '@/utils/token';
 import { AssetAvatar, Button } from '@/components';
-import { useTheme2024, useThemeStyles } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconExternalLinkCC } from '@/assets/icons/common';
 import RcIconWaring from '@/assets2024/icons/swap/waring.svg';
 

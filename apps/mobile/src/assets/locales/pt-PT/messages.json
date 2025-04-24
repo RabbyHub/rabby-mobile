@@ -1078,9 +1078,6 @@
           "btnText_zero": "Revogar"
         }
       },
-      "RevokeApprovalModal": {
-        "contractTitle": "Detalhes de aprovação do contrato"
-      },
       "tableConfig": {
         "byAssets": {
           "columnCell": {

@@ -768,9 +768,6 @@
             }
           }
         }
-      },
-      "RevokeApprovalModal": {
-        "contractTitle": "Detail Persetujuan Kontrak"
       }
     },
     "gasTopUp": {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
@@ -125,12 +125,15 @@ const getApprovalAmountStyles = createGetStyles2024(
         fontSize: 14,
         fontWeight: '400',
         color: colors2024['neutral-foot'],
+        fontFamily: 'SF Pro Rounded',
+        lineHeight: 18,
       },
       approvalValues: {
-        marginTop: 2,
         fontSize: 14,
         fontWeight: '700',
-        color: colors2024['neutral-body'],
+        color: colors2024['neutral-title-1'],
+        fontFamily: 'SF Pro Rounded',
+        lineHeight: 18,
       },
     };
   },
@@ -217,23 +220,19 @@ export function InModalApprovalContractRow({
   if (!spender) return null;
 
   return (
-    <TouchableView
+    <TouchableOpacity
       style={[styles.container, isSelected && styles.selectedContainer, style]}
       onPress={() => {
         onToggleSelection?.({ spender, approval, contractApproval });
       }}>
       <View style={styles.leftArea}>
-        {isSelected ? (
-          <RcIconHasCheckbox
-            style={styles.itemCheckbox}
-            color={colors['blue-default']}
-          />
-        ) : (
-          <RcIconNoCheck
-            style={styles.itemCheckbox}
-            color={colors['neutral-line']}
-          />
-        )}
+        <View style={styles.itemCheckbox}>
+          {isSelected ? (
+            <RcIconHasCheckbox color={colors['blue-default']} />
+          ) : (
+            <RcIconNoCheck color={colors['neutral-line']} />
+          )}
+        </View>
         {maybeTokenInfo.isToken ? (
           <AssetAvatar
             style={styles.chainIcon}
@@ -241,15 +240,15 @@ export function InModalApprovalContractRow({
             logo={maybeTokenInfo.tokenLogoUrl || ''}
             logoStyle={{ backgroundColor: colors['neutral-foot'] }}
             chain={contractApproval?.chain}
-            chainIconPosition="tr"
-            size={40}
+            chainIconPosition="br"
+            size={46}
             chainSize={16}
           />
         ) : (
           <NFTAvatar
             nftImageUrl={maybeNFTInfo.nftImageURL}
             style={styles.chainIcon}
-            size={40}
+            size={46}
           />
         )}
 
@@ -291,12 +290,11 @@ export function InModalApprovalContractRow({
               })}
         />
       </View>
-    </TouchableView>
+    </TouchableOpacity>
   );
 }
 
 const getApprovalContractRowStyles = createGetStyles2024(ctx => {
-  const selectableStyles = getSelectableContainerStyle(ctx);
   const { colors2024 } = ctx;
 
   return {
@@ -304,13 +302,12 @@ const getApprovalContractRowStyles = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: 16,
+      paddingVertical: 14,
+      paddingHorizontal: 12,
       backgroundColor: colors2024['neutral-bg-1'],
-      height: 72,
+      borderRadius: 16,
     },
-    selectedContainer: {
-      ...selectableStyles.selectedContainer,
-    },
+    selectedContainer: {},
     leftArea: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -344,6 +341,7 @@ const getApprovalContractRowStyles = createGetStyles2024(ctx => {
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
+      lineHeight: 20,
     },
     itemCheckbox: {
       marginRight: 12,

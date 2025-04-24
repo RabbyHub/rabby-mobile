@@ -622,9 +622,6 @@
         "assets": "アセット別",
         "contract": "コントラクトによる"
       },
-      "RevokeApprovalModal": {
-        "contractTitle": "契約承認の詳細"
-      },
       "component": {
         "ViewMore": {
           "text": "もっと見る"

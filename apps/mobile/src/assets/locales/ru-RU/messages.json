@@ -762,9 +762,6 @@
             }
           }
         }
-      },
-      "RevokeApprovalModal": {
-        "contractTitle": "Подробная информация о утверждении контракта"
       }
     },
     "gasTopUp": {

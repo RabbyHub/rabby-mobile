@@ -773,9 +773,6 @@
           }
         }
       },
-      "RevokeApprovalModal": {
-        "contractTitle": "Contract approval Detail"
-      },
       "revokeModal": {
         "gasNotEnough": "Insufficient Gas to submit",
         "gasTooHigh": "Gas fee is high",

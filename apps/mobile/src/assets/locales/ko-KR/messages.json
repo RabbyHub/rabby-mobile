@@ -842,9 +842,6 @@
       }
     },
     "approvals": {
-      "RevokeApprovalModal": {
-        "contractTitle": "계약 승인 세부 사항"
-      },
       "search": {
         "placeholder": "이름/주소로 검색"
       },

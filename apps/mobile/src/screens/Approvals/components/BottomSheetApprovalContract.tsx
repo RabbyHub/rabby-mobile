@@ -86,7 +86,14 @@ export default function BottomSheetApprovalContract({
       }
 
       return (
-        <View key={`${chain}-${id}-${index}`} style={[styles.rowItem]}>
+        <View
+          key={`${chain}-${id}-${index}`}
+          style={[
+            styles.rowItem,
+            {
+              marginTop: index === 0 ? 0 : 8,
+            },
+          ]}>
           {/* {__DEV__ && (
             <Text
               style={[styles.rowOrderText, { marginRight: 4, flexShrink: 0 }]}>
