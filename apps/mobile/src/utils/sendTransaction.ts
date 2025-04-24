@@ -34,6 +34,7 @@ import {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { getCexInfo } from '@/hooks/useCexSupportList';
 
 // fail code
 export enum FailedCode {
@@ -352,12 +353,14 @@ export const sendTransaction = async ({
     gasUsed: preExecResult.gas.gas_used,
     sender: tx.from,
   });
+  const cexInfo = getCexInfo(parsed.send?.to || '');
   const requiredData = await fetchActionRequiredData({
     type: 'transaction',
     actionData: parsed,
     contractCall: actionData.contract_call,
     chainId: chain.serverId,
     sender: address,
+    cex: cexInfo,
     walletProvider: {
       hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
       hasAddress: keyringService.hasAddress.bind(keyringService),

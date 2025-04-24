@@ -3,6 +3,7 @@ import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 
 import { openapi } from '@/core/request';
+import { getCexId } from '@/utils/addressCexId';
 
 export const globalSupportCexList: ProjectItem[] = [];
 export const supportCexListAtom = atom<ProjectItem[]>([]);
@@ -21,5 +22,20 @@ export const useCexSupportList = () => {
 
   return {
     list,
+  };
+};
+export const getCexInfo = (address: string) => {
+  if (!address) {
+    return undefined;
+  }
+  const cexId = getCexId(address);
+  const cexInfo = globalSupportCexList.find(item => item.id === cexId);
+  if (!cexInfo || !cexId) {
+    return undefined;
+  }
+  return {
+    id: cexId,
+    name: cexInfo?.name || '',
+    logo: cexInfo?.logo_url || '',
   };
 };
