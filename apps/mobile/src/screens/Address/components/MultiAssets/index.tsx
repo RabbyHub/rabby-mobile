@@ -886,9 +886,9 @@ export const MultiAssets = ({
   const panGesture = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .failOffsetY([-20, 20])
+    .hitSlop({ left: -80 })
     .simultaneousWithExternalGesture(listRef as any)
     .onUpdate(e => {
-      // 检查右滑手势
       if (!isTriggered.current) {
         if (e.translationX <= -END_POSITION) {
           if (extendedState.currentTab === TabType.portfolio) {
