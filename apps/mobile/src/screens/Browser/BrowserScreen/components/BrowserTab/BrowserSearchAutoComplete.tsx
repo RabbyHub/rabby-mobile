@@ -25,13 +25,12 @@ export function BrowserSearchAutoComplete({
       if (!text) {
         return;
       }
-      // todo
       return openapi.searchDapp({
         q: text,
         match_id: true,
         start: 0,
         limit: 10,
-      } as any);
+      });
     },
     {
       refreshDeps: [text],

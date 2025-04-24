@@ -51,7 +51,7 @@ export function BrowserFooter({
   onDisconnect?(): void;
   onContentModeChange?(v: WebViewProps['contentMode']): void;
 }) {
-  const { colors2024, styles } = useTheme2024({
+  const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
 
@@ -64,8 +64,13 @@ export function BrowserFooter({
           contentMode === 'desktop'
             ? 'Request Mobile Site'
             : 'Request DeskTop Site',
-        iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
-        androidIconName: 'ic_rabby_menu_more',
+        iosIconSource: isLight
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_1.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_1_dark.png'),
+
+        androidIconName: isLight
+          ? 'ic_rabby_menu_more_1'
+          : 'ic_rabby_menu_more_1_dark',
         key: 'contentMode',
         onSelect: () => {
           onContentModeChange?.(
@@ -120,6 +125,7 @@ export function BrowserFooter({
   }, [
     url,
     contentMode,
+    isLight,
     isBookmark,
     isConnected,
     colors2024,
