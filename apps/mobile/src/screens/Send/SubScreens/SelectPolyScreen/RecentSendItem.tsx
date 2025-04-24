@@ -21,6 +21,7 @@ import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { fromNow } from '@/utils/time';
+import { useTranslation } from 'react-i18next';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -40,6 +41,7 @@ export const RecentSendItem = ({
   const showCexInfo = useMemo(() => {
     return cexInfo?.id && cexInfo.is_deposit;
   }, [cexInfo?.id, cexInfo?.is_deposit]);
+  const { t } = useTranslation();
 
   useLayoutEffect(() => {
     if (cexInfo) {
@@ -123,7 +125,9 @@ export const RecentSendItem = ({
                       </Text>
                     )}
                   </View>
-                  <Text style={styles.itemBalanceText}>Send {timStr}</Text>
+                  <Text style={styles.itemBalanceText}>
+                    {t('page.sendPoly.sendTimeHeader')} {timStr}
+                  </Text>
                 </View>
               </View>
             )}

@@ -111,10 +111,10 @@ export const useRecentSend = () => {
     );
   }, [historyList]);
 
-  // TODO: limit to 24 hours
   const recentHistory = useMemo(() => {
     return markedList
       .sort((a, b) => b.time - a.time)
+      .filter(item => item.time > Date.now() - 24 * 60 * 60 * 1000) // in 24 hours
       .map(item => {
         if ('projectDict' in item.data) {
           return {

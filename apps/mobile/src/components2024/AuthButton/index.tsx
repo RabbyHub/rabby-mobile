@@ -1,15 +1,15 @@
-import { Pressable, Text, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useBiometrics } from '@/hooks/biometrics';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { RequestGenericPurpose } from '@/core/apis/keychain';
-import { BiometricsIcon } from '@/screens/Unlock/Unlock';
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { useTranslation } from 'react-i18next';
 import { Button, ButtonProps } from '../Button';
-import RcIconLock from '@/assets2024/icons/bridge/IconLock.svg';
+import RcIconLock from '@/assets2024/icons/common/lock-cc.svg';
+import RcIconKeychainFaceIdCC from '@/assets2024/icons/common/fack_id.svg';
+import RcIconKeychainFingerprintCC from '@/assets2024/icons/common/fingerprint.svg';
 
 export type IAuthButtonProps = Omit<ButtonProps, 'onPress'> & {
   onFinished?: () => void;
@@ -67,10 +67,21 @@ const AuthButton: React.FC<IAuthButtonProps> = ({ onFinished, ...props }) => {
     <Button
       icon={
         isBiometricsEnabled ? (
-          <BiometricsIcon isFaceID={isFaceID} size={26} />
+          isFaceID ? (
+            <RcIconKeychainFaceIdCC
+              color={colors2024['neutral-InvertHighlight']}
+              style={styles.lockIcon}
+            />
+          ) : (
+            <RcIconKeychainFingerprintCC
+              color={colors2024['neutral-InvertHighlight']}
+              style={styles.lockIcon}
+            />
+          )
         ) : (
+          // <BiometricsIcon isFaceID={isFaceID} size={22} />
           <RcIconLock
-            color={colors2024['neutral-foot']}
+            color={colors2024['neutral-InvertHighlight']}
             style={styles.lockIcon}
           />
         )
@@ -104,12 +115,8 @@ const getStyle = createGetStyles2024(ctx => ({
     gap: 24,
     // ...makeDebugBorder('yellow'),
   },
-  biometricsBtn: {
-    width: 26,
-    height: 26,
-  },
   lockIcon: {
-    width: 46,
-    height: 46,
+    width: 22,
+    height: 22,
   },
 }));

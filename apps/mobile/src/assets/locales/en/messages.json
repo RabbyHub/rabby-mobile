@@ -646,6 +646,7 @@
     },
     "sendPoly": {
       "enterAddress": "Enter Address",
+      "innerEnterAddress": "Enter Address / ENS",
       "whitelistTitle": "My Whitelist Addresses",
       "sendToImportedAddress": "Send to My Imported Addresses",
       "sendToWatchAddress": "Send to Watch-only Addresses",
@@ -656,7 +657,8 @@
       "emptyWhitelistBtn": "Add now",
       "SendHistory": "Send History",
       "SelectFromHistory": "Select From History",
-
+      "recent": "Recent",
+      "sendTimeHeader": "Send",
       "modals": {
         "header": "Add Address to Whitelist",
         "content": "Select how you want to add an address:",
@@ -691,7 +693,16 @@
       "cancel": "Cancel",
       "addSuccessful": "Address added to whitelist",
       "alreadyAdded": "Already added to your whitelist",
-      "confirmPassword": "Enter the Password to Confirm"
+      "confirmPassword": "Enter the Password to Confirm",
+      "header": {
+        "address": "Address",
+        "name": "Name",
+        "exchange": "Exchange address?"
+      },
+      "placeholder": {
+        "name": "Name Your Address",
+        "exchange": "select"
+      }
     },
     "sendTokenComponents": {
       "GasReserved": "Reserved <1>0</1> {{ tokenName }} for gas cost"
@@ -1998,6 +2009,9 @@
       "title": "Mobile wallet addresses are no longer supported",
       "desc": "The following addresses will be removed. You can still find them in the original wallet app. Import the seed phrase or private key to use them here.",
       "button": "Got it"
+    },
+    "selectCexModal": {
+      "title": "Select Exchange Source"
     }
   },
   "native": {

@@ -83,40 +83,8 @@ const SendPolyScreen = () => {
       }),
     );
   };
-
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
-      <View style={styles.input}>
-        <Pressable
-          style={styles.placeHolderWrapper}
-          onPress={() => handleGotoInputAddress(false)}>
-          <Text style={styles.placeHolder}>
-            {t('page.sendPoly.enterAddress')}
-          </Text>
-        </Pressable>
-        <Pressable onPress={() => handleGotoInputAddress(true)}>
-          <ScannerCC color={colors2024['neutral-title-1']} />
-        </Pressable>
-      </View>
-      <View>
-        {!!recentHistory.length && (
-          <Text style={styles.recentHeader}>Recent</Text>
-        )}
-        {/* less than 3 history */}
-        {recentHistory?.map(item => {
-          const { account, inWhitelist } = findAccountWithoutBalance(
-            item.toAddress,
-          );
-          return (
-            <RecentSendItem
-              key={item.time}
-              account={account}
-              timeStamp={item.time}
-              inWhiteList={inWhitelist}
-            />
-          );
-        })}
-      </View>
       <FlatList
         data={list}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
@@ -133,8 +101,44 @@ const SendPolyScreen = () => {
             />
           </View>
         )}
+        // eslint-disable-next-line react/no-unstable-nested-components
         ListHeaderComponent={() => (
-          <WhiteListHeader gotoAddWhitelist={handleGotoAddWhitelist} />
+          <View>
+            <View style={styles.input}>
+              <Pressable
+                style={styles.placeHolderWrapper}
+                onPress={() => handleGotoInputAddress(false)}>
+                <Text style={styles.placeHolder}>
+                  {t('page.sendPoly.enterAddress')}
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => handleGotoInputAddress(true)}>
+                <ScannerCC color={colors2024['neutral-title-1']} />
+              </Pressable>
+            </View>
+            <View>
+              {!!recentHistory.length && (
+                <Text style={styles.recentHeader}>
+                  {t('page.sendPoly.recent')}
+                </Text>
+              )}
+              {/* less than 3 history */}
+              {recentHistory?.map(item => {
+                const { account, inWhitelist } = findAccountWithoutBalance(
+                  item.toAddress,
+                );
+                return (
+                  <RecentSendItem
+                    key={item.time}
+                    account={account}
+                    timeStamp={item.time}
+                    inWhiteList={inWhitelist}
+                  />
+                );
+              })}
+            </View>
+            <WhiteListHeader gotoAddWhitelist={handleGotoAddWhitelist} />
+          </View>
         )}
         ListEmptyComponent={() => (
           <EmptyWhiteListHolder gotoAddWhitelist={handleGotoAddWhitelist} />
@@ -195,6 +199,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 12,
+    marginTop: 24,
     marginBottom: 4,
   },
   headerText: {

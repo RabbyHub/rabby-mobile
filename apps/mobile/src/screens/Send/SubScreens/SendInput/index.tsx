@@ -25,6 +25,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { openapi } from '@/core/request';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -51,6 +52,10 @@ const SendInputScreen = () => {
   ) as {
     autoScan?: boolean;
   };
+  const [ensResult, setEnsResult] = React.useState<null | {
+    addr: string;
+    name: string;
+  }>(null);
 
   const { navigateToSendScreen } = useSendRoutes();
 
@@ -126,6 +131,39 @@ const SendInputScreen = () => {
     }
   }, [navParams?.autoScan]);
 
+  const onSubmitEditing = React.useCallback(() => {
+    if (!error && ensResult && input !== ensResult.addr) {
+      setInput(ensResult.addr);
+    }
+  }, [error, ensResult, input]);
+
+  useEffect(() => {
+    if (!input) {
+      setError(undefined);
+      return;
+    }
+    if (isValidHexAddress(input as `0x${string}`)) {
+      setError(undefined);
+      return;
+    }
+    openapi
+      .getEnsAddressByName(input)
+      .then(result => {
+        if (result && result.addr) {
+          setEnsResult(result);
+          setError(undefined);
+        } else {
+          setEnsResult(null);
+          setError(INPUT_ERROR.INVALID_ADDRESS);
+        }
+      })
+      .catch(e => {
+        console.log(e);
+        setEnsResult(null);
+        setError(INPUT_ERROR.INVALID_ADDRESS);
+      });
+  }, [input]);
+
   return (
     <FooterButtonScreenContainer
       as="View"
@@ -161,13 +199,14 @@ const SendInputScreen = () => {
                       },
                 )}
                 inputProps={{
-                  placeholder: t('page.sendPoly.enterAddress'),
+                  placeholder: t('page.sendPoly.innerEnterAddress'),
                   placeholderTextColor: colors2024['neutral-secondary'],
                   value: input,
                   blurOnSubmit: true,
                   autoFocus: true,
                   returnKeyType: 'done',
                   onChangeText: handleSubmit,
+                  onSubmitEditing: onSubmitEditing,
                 }}
                 // eslint-disable-next-line react/no-unstable-nested-components
                 customIcon={ctx => (
@@ -183,6 +222,20 @@ const SendInputScreen = () => {
                   </TouchableOpacity>
                 )}
               />
+              {!error && ensResult && input === ensResult.addr && (
+                <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
+              )}
+
+              {!error && ensResult && input !== ensResult.addr && (
+                <TouchableOpacity
+                  style={styles.ensResultBox}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setInput(ensResult.addr);
+                  }}>
+                  <Text style={styles.ensResult}>{ensResult.addr}</Text>
+                </TouchableOpacity>
+              )}
               {error && (
                 <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
               )}
@@ -243,5 +296,32 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   pasteButton: {
     marginTop: 58,
+  },
+  ensResultBox: {
+    // padding: 4,
+    width: '100%',
+    borderRadius: 16,
+    display: 'flex',
+    marginTop: 12,
+    backgroundColor: ctx.colors2024['brand-light-1'],
+  },
+
+  ensResult: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontSize: 14,
+    borderRadius: 16,
+    // overflow: 'hidden',
+    color: ctx.colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+  },
+  ensText: {
+    fontSize: 13,
+    color: ctx.colors2024['neutral-body'],
+    marginVertical: 12,
+    marginHorizontal: 8,
   },
 }));

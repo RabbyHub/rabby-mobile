@@ -7,6 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CexItem } from './CexItem';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { useTranslation } from 'react-i18next';
 
 export interface ISelectCexPorps {
   onSelect?: (item: ProjectItem) => void;
@@ -14,10 +15,13 @@ export interface ISelectCexPorps {
 const SelectCex = ({ onSelect }: ISelectCexPorps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { list } = useCexSupportList();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.screen]}>
-      <Text style={styles.modalTitle}>Select Exchange Source</Text>
+      <Text style={styles.modalTitle}>
+        {t('component.selectCexModal.title')}
+      </Text>
       <FlatList
         data={list}
         keyExtractor={item => item.id}
