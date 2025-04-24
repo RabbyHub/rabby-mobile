@@ -26,9 +26,29 @@ export interface BrowserBookmarkItem {
   tabId?: string;
 }
 
+export type Tab = {
+  url: string;
+  initialUrl: string;
+  id: string;
+  openTime: number;
+  viewShot?: string;
+  isTerminate?: boolean;
+};
+
+export const emptyTab: Tab = {
+  id: 'EMPTY_TAB_ID',
+  url: '',
+  initialUrl: '',
+  openTime: 0,
+};
+
 export type BrowserStore = {
   browserHistory: EntityState<BrowserHistoryItem, string>;
   browserBookmarks: EntityState<BrowserBookmarkItem, string>;
+  browserTabs: {
+    activeTabId: string;
+    tabs: Tab[];
+  };
   config: {
     isMigrated?: boolean;
   };
@@ -43,6 +63,10 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
     super(
       APP_STORE_NAMES.browser,
       {
+        browserTabs: {
+          activeTabId: emptyTab.id,
+          tabs: [emptyTab],
+        },
         browserHistory: {
           ids: [],
           entities: {},
@@ -113,6 +137,34 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
       }
     }
 
+    const browserTabsStore = {
+      ...this.store.browserTabs,
+    };
+
+    let isValidActiveTabId = false;
+    let hasEmpty = false;
+    browserTabsStore.tabs = browserTabsStore.tabs.map(tab => {
+      const isActive = tab.id === browserTabsStore.activeTabId;
+      if (isActive) {
+        isValidActiveTabId = true;
+      }
+      if (tab.id === emptyTab.id) {
+        hasEmpty = true;
+      }
+      return {
+        ...tab,
+        initialUrl: tab.url || tab.initialUrl,
+        isTerminate: !isActive,
+      };
+    });
+    if (!isValidActiveTabId) {
+      browserTabsStore.activeTabId = emptyTab.id;
+    }
+    if (!hasEmpty) {
+      browserTabsStore.tabs = [emptyTab, ...browserTabsStore.tabs];
+    }
+    this.store.browserTabs = browserTabsStore;
+
     const bookmarkAdapter = createEntityAdapter<BrowserBookmarkItem>({
       selectId: item => item.url,
       sortComparer: (a, b) => (a?.createdAt > b?.createdAt ? -1 : 1),
@@ -157,6 +209,17 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
 
   setDefaultUserAgent = (ua: string) => {
     this.userAgent = ua;
+  };
+
+  updateBrowserTabs = (payload: Partial<BrowserStore['browserTabs']>) => {
+    this.store.browserTabs = {
+      ...this.store.browserTabs,
+      ...payload,
+    };
+  };
+
+  getBrowserTabs = () => {
+    return this.store.browserTabs;
   };
 
   /**

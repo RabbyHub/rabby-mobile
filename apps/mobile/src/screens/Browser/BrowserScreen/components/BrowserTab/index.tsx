@@ -361,6 +361,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           options={{
             format: 'jpg',
             quality: 0.2,
+            result: 'data-uri',
           }}>
           <BrowserBookmarkSection
             style={

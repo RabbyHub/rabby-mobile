@@ -1,52 +1,33 @@
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
 import { RootNames } from '@/constant/layout';
-import { preferenceService } from '@/core/services';
-import { getLatestNavigationName } from '@/utils/navigation';
+import { emptyTab, Tab } from '@/core/services/browserService';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { TabActions, useRoute } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { v4 as uuid } from 'uuid';
-import {
-  useSceneAccountInfo,
-  useSwitchSceneCurrentAccount,
-} from '../accountsSwitcher';
 import { useRabbyAppNavigation } from '../navigation';
-import { useMemo } from 'react';
-import {
-  TabActions,
-  useNavigationState,
-  useRoute,
-} from '@react-navigation/native';
+import { browserService } from '@/core/services';
 
-export type Tab = {
-  url: string;
-  initialUrl: string;
-  id: string;
-  $openParams?: {
-    initialUrl?: string;
-  };
-  openTime: number;
-  lastOpenWebViewId?: string | null;
-  viewShot?: string;
-  isTerminate?: boolean;
-};
-
-const emptyTab: Tab = {
-  id: 'EMPTY_TAB_ID',
-  url: '',
-  initialUrl: '',
-  openTime: 0,
-};
-
-const tabsAtom = atom<Tab[]>([emptyTab]);
-const activeTabIdAtom = atom<string>(emptyTab.id);
+export const tabsAtom = atom({
+  tabs: [emptyTab],
+  activeTabId: emptyTab.id,
+});
 
 export function useBrowser() {
   const navigation = useRabbyAppNavigation();
 
-  const [tabs, setTabs] = useAtom(tabsAtom);
-  const [activeTabId, setActiveTabId] = useAtom(activeTabIdAtom);
+  const [store, setStore] = useAtom(tabsAtom);
   const route = useRoute();
+
+  const getBrowserTabs = useMemoizedFn(() => {
+    setStore(browserService.getBrowserTabs());
+  });
+
+  const updateBrowserTabs = useMemoizedFn((payload: Partial<typeof store>) => {
+    browserService.updateBrowserTabs(payload);
+    getBrowserTabs();
+  });
 
   const navigateToBrowserScreen = useMemoizedFn(() => {
     if (route.name === RootNames.BrowserScreen) {
@@ -63,32 +44,38 @@ export function useBrowser() {
   });
 
   const switchToTab = useMemoizedFn((tabId: string) => {
-    const activeTab = tabs.find(item => item.id === tabId);
+    const activeTab = store.tabs.find(item => item.id === tabId);
     if (activeTab?.isTerminate) {
       updateTab(tabId, {
         isTerminate: false,
       });
     }
-    setActiveTabId(tabId);
+    updateBrowserTabs({
+      activeTabId: tabId,
+    });
     navigateToBrowserScreen();
   });
   const closeTab = useMemoizedFn((tabId: string) => {
-    if (tabId === activeTabId) {
-      const index = tabs.findIndex(item => item.id === tabId);
+    if (tabId === store.activeTabId) {
+      const index = store.tabs.findIndex(item => item.id === tabId);
       if (index === -1) {
         return;
       }
-      const newActiveTab = tabs[index + 1] || tabs[index - 1];
-      setActiveTabId(newActiveTab?.id || emptyTab.id);
+      const newActiveTab = store.tabs[index + 1] || store.tabs[index - 1];
+      updateBrowserTabs({
+        activeTabId: newActiveTab?.id || emptyTab.id,
+      });
     }
-    const newTabs = tabs.filter(item => item.id !== tabId);
-    setTabs(newTabs);
+    const newTabs = store.tabs.filter(item => item.id !== tabId);
+    updateBrowserTabs({
+      tabs: newTabs,
+    });
   });
 
   const updateTab = useMemoizedFn(
     (tabId: string, payload: Partial<Omit<Tab, 'id'>>) => {
-      setTabs(prev => {
-        return prev.map(item => {
+      updateBrowserTabs({
+        tabs: store.tabs.map(item => {
           if (item.id === tabId) {
             return {
               ...item,
@@ -96,7 +83,7 @@ export function useBrowser() {
             };
           }
           return item;
-        });
+        }),
       });
     },
   );
@@ -121,11 +108,10 @@ export function useBrowser() {
       return false;
     }
 
-    setTabs(prev => {
-      return [...prev, newTab];
+    updateBrowserTabs({
+      tabs: [...store.tabs, newTab],
+      activeTabId: newTab.id,
     });
-
-    setActiveTabId(newTab.id);
 
     navigateToBrowserScreen();
 
@@ -145,8 +131,9 @@ export function useBrowser() {
   });
 
   return {
-    activeTabId,
-    tabs,
+    getBrowserTabs,
+    activeTabId: store.activeTabId,
+    tabs: store.tabs,
     switchToTab,
     closeTab,
     updateTab,
