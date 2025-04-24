@@ -41,6 +41,7 @@ export enum FailedCode {
   GasTooHigh = 'GasTooHigh',
   SubmitTxFailed = 'SubmitTxFailed',
   DefaultFailed = 'DefaultFailed',
+  SimulationFailed = 'SimulationFailed',
   UserRejected = 'UserRejected',
 }
 
@@ -115,11 +116,13 @@ export const sendTransaction = async ({
   onUseGasAccount,
   ga,
   sig,
+  ignoreSimulationFailed,
 }: {
   tx: Tx;
   chainServerId: string;
   ignoreGasCheck?: boolean;
   ignoreGasNotEnoughCheck?: boolean;
+  ignoreSimulationFailed?: boolean;
   onProgress?: (status: ProgressStatus) => void;
   onUseGasAccount?: () => void;
   gasLevel?: GasLevel;
@@ -258,6 +261,7 @@ export const sendTransaction = async ({
   const isGasNotEnough = !isGasLess && checkErrors.some(e => e.code === 3001);
   const ETH_GAS_USD_LIMIT = 20;
   const OTHER_CHAIN_GAS_USD_LIMIT = 5;
+  const DEBUG_SIMULATION_FAILED = false;
 
   // generate tx with gas
   const transaction: Tx = {
@@ -272,7 +276,19 @@ export const sendTransaction = async ({
 
   let failedCode;
   let canUseGasAccount: boolean = false;
-  if (isGasNotEnough) {
+  // random simulation failed for test
+  if (
+    !ignoreSimulationFailed &&
+    DEBUG_SIMULATION_FAILED &&
+    Math.random() > 0.5
+  ) {
+    failedCode = FailedCode.SimulationFailed;
+  } else if (
+    !ignoreSimulationFailed &&
+    !preExecResult?.balance_change?.success
+  ) {
+    failedCode = FailedCode.SimulationFailed;
+  } else if (isGasNotEnough) {
     //  native gas not enough check gasAccount
     if (autoUseGasAccount && gasAccount?.sig && gasAccount?.accountId) {
       const gasAccountCanPay = await checkEnoughUseGasAccount({

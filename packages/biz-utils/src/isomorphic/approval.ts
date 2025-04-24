@@ -31,6 +31,7 @@ export function setApprovalEnvsOnce(envs: typeof approvalEnvs) {
 
 export type ApprovalSpenderItemToBeRevoked = {
   chainServerId: ApprovalItem['chain'];
+  approvalType: ApprovalItem['type'];
   spender: Spender['id'];
   permit2Id?: string;
 } & (
@@ -177,11 +178,11 @@ export type ComputedRiskEvaluation = {
 
 export function isContractType(
   contract: ContractApprovalItem,
-  type: 'nft'
+  type: 'nft',
 ): contract is ContractApprovalItem<'nft'>;
 export function isContractType(
   contract: ContractApprovalItem,
-  type: 'nft-contract'
+  type: 'nft-contract',
 ): contract is ContractApprovalItem<'nft-contract'>;
 export function isContractType(
   contract: ContractApprovalItem,
@@ -189,7 +190,7 @@ export function isContractType(
 ): contract is ContractApprovalItem<'token'>;
 export function isContractType<T extends ContractFor>(
   contract: ContractApprovalItem,
-  type: T
+  type: T,
 ): boolean {
   return contract.contractFor === type;
 }
@@ -225,12 +226,12 @@ export function makeComputedRiskAboutValues(
 
 export function getContractRiskEvaluation(
   risk_level: ApprovalRiskLevel | string,
-  riskValues: ComputedRiskAboutValues
+  riskValues: ComputedRiskAboutValues,
 ): ComputedRiskEvaluation {
   const serverRiskLevel = risk_level as ApprovalRiskLevel;
   const serverRiskScore = coerceInteger(
     RiskNumMap[serverRiskLevel],
-    0
+    0,
   ) as RiskLevelScore;
 
   // const exposureValue = coerceFloat(riskValues.risk_exposure_usd_value);
@@ -243,10 +244,10 @@ export function getContractRiskEvaluation(
   ) as RiskLevelScore;
 
   const approve_user_count = coerceInteger(
-    riskValues.approve_user_count
+    riskValues.approve_user_count,
   ) as RiskLevelScore;
   const revoke_user_count = coerceInteger(
-    riskValues.revoke_user_count
+    riskValues.revoke_user_count,
   ) as RiskLevelScore;
 
   const clientApprovalLevel: ApprovalRiskLevel =
@@ -260,7 +261,7 @@ export function getContractRiskEvaluation(
 
   const clientApprovalScore = coerceInteger(
     RiskNumMap[clientApprovalLevel],
-    0
+    0,
   ) as RiskLevelScore;
 
   const allClientScores = [clientSpendScore, clientApprovalScore];
@@ -269,7 +270,7 @@ export function getContractRiskEvaluation(
 
   const clientTotalRiskScore = allClientScores.reduce(
     (acc, cur) => (acc + cur) as RiskLevelScore,
-    0
+    0,
   );
 
   return {
@@ -302,7 +303,7 @@ export function getContractRiskEvaluation(
  */
 export function compareContractApprovalItemByRiskLevel(
   a: ContractApprovalItem,
-  b: ContractApprovalItem
+  b: ContractApprovalItem,
 ) {
   const aRisk =
     a.$contractRiskEvaluation ||
@@ -333,7 +334,7 @@ export function compareContractApprovalItemByRiskLevel(
 
 export function markContractTokenSpender(
   orig: TokenApproval,
-  spender: Spender
+  spender: Spender,
 ): TokenApprovalIndexedBySpender {
   const tokenApproval = { ...orig };
   // eslint-disable-next-line no-prototype-builtins
@@ -365,7 +366,7 @@ export function markParentForAssetItemSpender(
   spender: Spender,
   parent: AssetApprovalItem,
   assetContract: ContractApprovalItem,
-  assetToken: TokenApproval | NFTApproval | NFTApprovalContract
+  assetToken: TokenApproval | NFTApproval | NFTApprovalContract,
 ) {
   Object.defineProperty(spender, '$assetParent', {
     enumerable: false,
@@ -406,11 +407,17 @@ export function getSpenderBalancePartials(spender: AssetApprovalSpender) {
 
     if (spender.$assetParent?.nftContract) {
       partials.from = 'nft-contract';
-      partials.nftAmount = coerceInteger(spender.$assetParent?.nftContract.amount, 0);
+      partials.nftAmount = coerceInteger(
+        spender.$assetParent?.nftContract.amount,
+        0,
+      );
     } else if (spender.$assetParent?.nftToken) {
       if (spender.$assetParent?.nftToken?.is_erc1155) {
         partials.from = 'nft-contract';
-        partials.nftAmount = coerceInteger(spender.$assetParent?.nftToken.amount, 0);
+        partials.nftAmount = coerceInteger(
+          spender.$assetParent?.nftToken.amount,
+          0,
+        );
       } else if (spender.$assetParent?.nftToken?.is_erc721) {
         partials.nftAmount = 1;
       }
@@ -423,7 +430,8 @@ export function getSpenderBalancePartials(spender: AssetApprovalSpender) {
 
   return {
     ...partials,
-    balanceValue: partials.from === 'token' ? partials.tokenBalance : partials.nftAmount,
+    balanceValue:
+      partials.from === 'token' ? partials.tokenBalance : partials.nftAmount,
   };
 }
 type AmountPartialsType = ReturnType<typeof getSpenderBalancePartials>;
@@ -479,7 +487,9 @@ export function getSpenderApprovalAmount(spender: AssetApprovalSpender) {
       displayAmountText = displayAmountUnitText = 'Unlimited';
     } else {
       displayAmountText = stepNumberText;
-      displayAmountUnitText = `${stepNumberText} ${spender.$assetParent?.name || ''}`;
+      displayAmountUnitText = `${stepNumberText} ${
+        spender.$assetParent?.name || ''
+      }`;
     }
 
     const absBalance = spender.$assetParent?.balance;
@@ -518,7 +528,7 @@ export function getSpenderApprovalAmount(spender: AssetApprovalSpender) {
  */
 export function compareAssetSpenderByAmount(
   a: AssetApprovalSpender,
-  b: AssetApprovalSpender
+  b: AssetApprovalSpender,
 ) {
   const aApprovedAmount = getSpenderApprovalAmount(a);
   const bApprovedAmount = getSpenderApprovalAmount(b);

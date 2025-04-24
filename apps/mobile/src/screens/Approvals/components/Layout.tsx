@@ -205,6 +205,7 @@ export function ApprovalsBottomArea() {
         title={buttonTitle}
         loading={isSubmitLoading}
         onPress={onRevoke}
+        buttonStyle={styles.buttonContainer}
       />
       <Modal
         visible={showModal}
@@ -257,12 +258,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   buttonContainer: {
-    width: '100%',
-    height: 52,
-    borderRadius: 6,
-    ...(!isAndroid && {
-      marginBottom: 16,
-    }),
+    borderRadius: 16,
   },
 
   buttonText: {

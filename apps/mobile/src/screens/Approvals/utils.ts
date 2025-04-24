@@ -299,9 +299,9 @@ export function querySelectedAssetSpender(
     : null;
 }
 
-function getAbiType<T extends SpendersHost = ApprovalItem['list'][number]>(
-  spenderHost: T,
-) {
+export function getAbiType<
+  T extends SpendersHost = ApprovalItem['list'][number],
+>(spenderHost: T) {
   if ('is_erc721' in spenderHost && spenderHost.is_erc721) return 'ERC721';
   if ('is_erc1155' in spenderHost && spenderHost.is_erc1155) return 'ERC1155';
 

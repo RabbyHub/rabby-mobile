@@ -402,7 +402,7 @@ export const getCardStyles = createGetStyles2024(ctx => {
 
   return {
     container: {
-      borderRadius: 24,
+      borderRadius: 20,
       backgroundColor: colors2024['neutral-bg-1'],
       flexDirection: 'column',
       justifyContent: 'center',
@@ -466,17 +466,18 @@ export const getCardStyles = createGetStyles2024(ctx => {
     },
     riskyTip: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'flex-start',
+      alignItems: 'center',
+      justifyContent: 'center',
       borderRadius: 12,
       paddingVertical: 7,
       paddingHorizontal: 15,
       backgroundColor: colors2024['red-light-2'],
       position: 'relative',
+      flex: 1,
     },
     riskyTipArrow: {
       position: 'absolute',
-      left: '20%',
+      left: '30%',
       top: -6,
       ...makeTriangleStyle({
         dir: 'up',

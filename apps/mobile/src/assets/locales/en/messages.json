@@ -753,6 +753,18 @@
       },
       "RevokeApprovalModal": {
         "contractTitle": "Approval Details"
+      },
+      "revokeModal": {
+        "gasNotEnough": "Insufficient Gas to submit",
+        "gasTooHigh": "Gas fee is high",
+        "submitTxFailed": "Fail to Submit",
+        "defaultFailed": "Transaction failed",
+        "stillRevoke": "Still Revoke",
+        "paused": "Paused",
+        "simulationFailed": "Simulation Failed",
+        "approvalCount": "{{count}} approval",
+        "approvalCount_one": "{{count}} approval",
+        "approvalCount_other": "{{count}} approvals"
       }
     },
     "gasTopUp": {
