@@ -123,19 +123,21 @@ const SendPolyScreen = () => {
                 </Text>
               )}
               {/* less than 3 history */}
-              {recentHistory?.map(item => {
-                const { account, inWhitelist } = findAccountWithoutBalance(
-                  item.toAddress,
-                );
-                return (
-                  <RecentSendItem
-                    key={item.time}
-                    account={account}
-                    timeStamp={item.time}
-                    inWhiteList={inWhitelist}
-                  />
-                );
-              })}
+              <View style={styles.recentList}>
+                {recentHistory?.map(item => {
+                  const { account, inWhitelist } = findAccountWithoutBalance(
+                    item.toAddress,
+                  );
+                  return (
+                    <RecentSendItem
+                      key={item.time}
+                      account={account}
+                      timeStamp={item.time}
+                      inWhiteList={inWhitelist}
+                    />
+                  );
+                })}
+              </View>
             </View>
             <WhiteListHeader gotoAddWhitelist={handleGotoAddWhitelist} />
           </View>
@@ -228,5 +230,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginBottom: 12,
     marginTop: 20,
     paddingHorizontal: 4,
+  },
+  recentList: {
+    gap: 12,
   },
 }));

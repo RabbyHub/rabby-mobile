@@ -139,7 +139,10 @@ export const WhiteListItem = ({
 
   const children = (
     <AddressItemShadowView
-      style={!disableMenu && isPressing && styles.rootPressing}>
+      style={[
+        styles.shadowView,
+        !disableMenu && isPressing && styles.rootPressing,
+      ]}>
       <TouchableOpacity
         activeOpacity={1}
         onPressIn={() => setIsPressing(true)}
@@ -353,6 +356,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   shadowView: {
     borderRadius: 20,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   card: {
     flexDirection: 'row',

@@ -109,6 +109,7 @@ export const SendHistory = ({
         title={title || t('page.sendPoly.SendHistory')}
         style={{
           paddingTop: ModalLayouts.titleTopOffset,
+          fontFamily: 'SF Pro Rounded',
           fontWeight: '800',
           fontSize: 20,
           lineHeight: 24,

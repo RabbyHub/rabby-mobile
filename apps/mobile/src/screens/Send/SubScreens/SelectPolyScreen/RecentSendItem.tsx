@@ -71,7 +71,7 @@ export const RecentSendItem = ({
   const { navigateToSendScreen } = useSendRoutes();
 
   return (
-    <AddressItemShadowView>
+    <AddressItemShadowView style={styles.shadow}>
       <TouchableOpacity
         // activeOpacity={1}
         style={StyleSheet.flatten([styles.root])}
@@ -139,9 +139,13 @@ export const RecentSendItem = ({
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  shadow: {
+    borderRadius: 20,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
   root: {
-    // borderRadius: 20,
     overflow: 'hidden',
+    borderRadius: 20,
     height: 78,
     // backgroundColor: colors2024['neutral-bg-1'],
   },
@@ -149,7 +153,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderWidth: 0,
-    // borderColor: colors2024['neutral-line'],
     borderRadius: 20,
     flex: 1,
     flexGrow: 1,
@@ -195,6 +198,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 16,
     lineHeight: 20,
     color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
   },
   itemName: {
