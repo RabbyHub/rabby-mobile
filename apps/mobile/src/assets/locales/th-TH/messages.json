@@ -420,7 +420,7 @@
         }
       },
       "RevokeApprovalModal": {
-        "contractTitle": "รายละเอียดการอนุมัติ"
+        "contractTitle": "รายละเอียดการอนุมัติสัญญา"
       },
       "tableConfig": {
         "byAssets": {

@@ -622,7 +622,7 @@
         "contract": "コントラクトによる"
       },
       "RevokeApprovalModal": {
-        "contractTitle": "承認の詳細"
+        "contractTitle": "契約承認の詳細"
       },
       "component": {
         "ViewMore": {

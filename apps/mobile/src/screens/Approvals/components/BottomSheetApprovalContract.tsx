@@ -148,7 +148,7 @@ export default function BottomSheetApprovalContract({
           />
         );
       }}
-      snapPoints={['90%']}
+      snapPoints={['75%']}
       bottomInset={1}>
       {focusedContractApproval && (
         <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
@@ -217,7 +217,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       height: 20,
     },
     bg: {
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: colors2024['neutral-bg-0'],
     },
     bodyContainer: {
       paddingVertical: 8,

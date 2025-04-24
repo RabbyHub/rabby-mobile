@@ -626,7 +626,7 @@
         }
       },
       "RevokeApprovalModal": {
-        "contractTitle": "Détails d'Approval"
+        "contractTitle": "Détail d'approbation du contrat"
       },
       "tableConfig": {
         "byContracts": {
