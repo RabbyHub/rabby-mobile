@@ -193,7 +193,7 @@ function History({
           tokenDict,
           projectDict,
           isShowSuccess: historySuccessList.includes(
-            `${item.owner_addr}-${item.txHash}`,
+            `${item.owner_addr.toLowerCase()}-${item.txHash}`,
           ),
         } as HistoryDisplayItem;
       });

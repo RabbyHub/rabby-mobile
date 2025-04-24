@@ -196,6 +196,12 @@ export class TransactionHistoryService {
     }
   }
 
+  setFailedList(id: string) {
+    if (!this.store.failList.includes(id)) {
+      this.store.failList.push(id);
+    }
+  }
+
   getFailedCount() {
     return this.store.failList.length;
   }

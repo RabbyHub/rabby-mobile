@@ -460,9 +460,13 @@ function MultiAddressHome(): JSX.Element {
     list.map(i => {
       const isSmallTx = judgeIsSmallUsdTx(i, tokenDict, pinedQueue);
       if (!isSmallTx) {
-        transactionHistoryService.setSucceedList(
-          `${i.owner_addr.toLowerCase()}-${i.txHash}`,
-        );
+        const status = i.status ?? 1;
+        const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
+        if (status === 1) {
+          transactionHistoryService.setSucceedList(id);
+        } else {
+          transactionHistoryService.setFailedList(id);
+        }
       }
     });
 
