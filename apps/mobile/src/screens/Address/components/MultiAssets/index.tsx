@@ -886,11 +886,6 @@ export const MultiAssets = ({
   const panGesture = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .failOffsetY([-20, 20])
-    .onTouchesDown((e, state) => {
-      if (e.allTouches[0].absoluteX > 32) {
-        state.activate();
-      }
-    })
     .simultaneousWithExternalGesture(listRef as any)
     .onUpdate(e => {
       // 检查右滑手势
@@ -952,6 +947,18 @@ export const MultiAssets = ({
             />
           </Animated.View>
         )}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '100%',
+            width: 50,
+            backgroundColor: 'red',
+            zIndex: 100,
+          }}
+        />
         <RecyclerListView
           style={styles.list}
           dataProvider={listData}
