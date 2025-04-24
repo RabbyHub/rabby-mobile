@@ -947,18 +947,6 @@ export const MultiAssets = ({
             />
           </Animated.View>
         )}
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '100%',
-            width: 50,
-            backgroundColor: 'red',
-            zIndex: 100,
-          }}
-        />
         <RecyclerListView
           style={styles.list}
           dataProvider={listData}
