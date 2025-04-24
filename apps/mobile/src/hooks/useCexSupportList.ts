@@ -15,7 +15,7 @@ export const useCexSupportList = () => {
       return;
     }
     openapi.getCexSupportList().then(res => {
-      globalSupportCexList.push(...res);
+      globalSupportCexList.length === 0 && globalSupportCexList.push(...res);
       setList(res);
     });
   }, [list.length, setList]);

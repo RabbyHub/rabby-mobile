@@ -858,47 +858,6 @@ export class TransactionHistoryService {
       });
     });
   }
-  batchSendList({
-    addresses,
-    limit = 100,
-  }: {
-    addresses: string[];
-    limit?: number;
-  }) {
-    const groups: TransactionGroup[] = [];
-    this.store.transactions?.forEach(tx => {
-      if (
-        addresses.length &&
-        addresses.every(address => !isSameAddress(address, tx.address))
-      ) {
-        return;
-      }
-      if (
-        !findChain({
-          id: tx.chainId,
-        })
-      ) {
-        return;
-      }
-      // only send
-      // if (tx.action !== 'send') {
-      //   return;
-      // }
-      const group = groups.find(
-        g =>
-          g.address === tx.address &&
-          g.nonce === tx.nonce &&
-          g.chainId === tx.chainId,
-      );
-      if (group) {
-        group.txs.push(tx);
-      } else {
-        groups.push(new TransactionGroup({ txs: [tx] }));
-      }
-    });
-
-    return groups.slice(0, limit);
-  }
 }
 
 export class TransactionGroup {
