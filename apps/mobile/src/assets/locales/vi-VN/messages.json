@@ -761,7 +761,7 @@
         }
       },
       "RevokeApprovalModal": {
-        "contractTitle": "Chi tiết Phê duyệt"
+        "contractTitle": "Hợp đồng phê duyệt chi tiết"
       }
     },
     "gasTopUp": {

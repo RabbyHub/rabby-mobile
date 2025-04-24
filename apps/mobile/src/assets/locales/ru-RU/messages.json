@@ -764,7 +764,7 @@
         }
       },
       "RevokeApprovalModal": {
-        "contractTitle": "Подробности о подтверждении"
+        "contractTitle": "Подробная информация о утверждении контракта"
       }
     },
     "gasTopUp": {

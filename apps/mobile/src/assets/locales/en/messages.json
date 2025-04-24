@@ -774,7 +774,7 @@
         }
       },
       "RevokeApprovalModal": {
-        "contractTitle": "Approval Details"
+        "contractTitle": "Contract approval Detail"
       },
       "revokeModal": {
         "gasNotEnough": "Insufficient Gas to submit",
@@ -787,7 +787,9 @@
         "approvalCount": "{{count}} approval",
         "approvalCount_one": "{{count}} approval",
         "approvalCount_other": "{{count}} approvals"
-      }
+      },
+      "contractAddress": "Contract Address",
+      "allApprovals": "All Approvals"
     },
     "gasTopUp": {
       "No_Tokens": "No Tokens",

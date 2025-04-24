@@ -1079,7 +1079,7 @@
         }
       },
       "RevokeApprovalModal": {
-        "contractTitle": "Detalhes de Aprovação"
+        "contractTitle": "Detalhes de aprovação do contrato"
       },
       "tableConfig": {
         "byAssets": {

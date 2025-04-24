@@ -717,7 +717,7 @@
         "placeholder": "通過名稱/地址搜索"
       },
       "RevokeApprovalModal": {
-        "contractTitle": "批准詳情"
+        "contractTitle": "合同批准細節"
       },
       "tab-switch": {
         "assets": "按資產",

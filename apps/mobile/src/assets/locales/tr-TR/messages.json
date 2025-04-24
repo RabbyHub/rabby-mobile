@@ -770,7 +770,7 @@
         }
       },
       "RevokeApprovalModal": {
-        "contractTitle": "Onay Detayları"
+        "contractTitle": "Sözleşme Onay Detayı"
       }
     },
     "gasTopUp": {

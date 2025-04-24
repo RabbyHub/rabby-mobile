@@ -897,7 +897,7 @@
         }
       },
       "RevokeApprovalModal": {
-        "contractTitle": "Genehmigungsdetails"
+        "contractTitle": "Vertragsgenehmigungsdetail"
       },
       "tableConfig": {
         "byContracts": {
