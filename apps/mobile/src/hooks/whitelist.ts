@@ -6,6 +6,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { atom, useAtom } from 'jotai';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { removeCexId } from '@/utils/addressCexId';
 
 const { isSameAddress } = addressUtils;
 
@@ -61,6 +62,7 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
   const removeWhitelist = React.useCallback(
     async (address: string) => {
       await whitelistService.removeWhitelist(address);
+      removeCexId(address);
       await getWhitelist();
     },
     [getWhitelist],

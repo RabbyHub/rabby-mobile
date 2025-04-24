@@ -21,3 +21,7 @@ export const setCexId = (_address: string, cexId: string) => {
     storage.set(address, cexId);
   }
 };
+export const removeCexId = (_address: string) => {
+  const address = _address.toLowerCase();
+  storage.delete(address);
+};
