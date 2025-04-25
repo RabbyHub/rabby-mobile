@@ -1565,7 +1565,8 @@
       },
       "header": {
         "placeHolder": "Поиск",
-        "searchPlaceHolder": "Поиск Названия Токена / Адреса"
+        "searchPlaceHolder": "Поиск Названия Токена / Адреса",
+        "favoriteTitle": "Избранный токен"
       },
       "tokenItem": {
         "verifyDangerTips": "Это мошеннический токен",
@@ -1724,7 +1725,9 @@
         "fold": "Сложить",
         "unfold": "Развернуть",
         "excludeBalance": "Исключить из баланса",
-        "unpin": "Открепить"
+        "unpin": "Открепить",
+        "favorite": "Избранное",
+        "unfavorite": "Неизбранное"
       },
       "Info": "Инфо",
       "IssuerWebsite": "Веб-сайт издателя",
@@ -1868,6 +1871,30 @@
         "portfolio": "Портфель",
         "address": "Адрес"
       }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "fold": "Сложить",
+        "showAll": "Показать все",
+        "title": "Избранное"
+      },
+      "BrowserHeader": {
+        "searchAndroid": "Поиск Dapp",
+        "searchIos": "Поиск сайта"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "history": "История",
+        "favorites": "Избранное",
+        "tab": "Вкладка"
+      },
+      "BrowserBookmarkList": {
+        "title": "Избранное"
+      },
+      "BrowserHistoryList": {
+        "title": "История"
+      }
     }
   },
   "component": {
@@ -2006,6 +2033,18 @@
       "title": "Мобильные адреса кошельков больше не поддерживаются",
       "desc": "Следующие адреса будут удалены. Вы все еще можете найти их в оригинальном приложении кошелька. Импортируйте сид-фразу или приватный ключ для их использования здесь.",
       "button": "Понял"
+    },
+    "externalSwapBrideDappPopup": {
+      "chainNotSupported": "Не поддерживается в этой цепочке",
+      "selectADapp": "Выберите Dapp",
+      "help": "Пожалуйста, свяжитесь с официальной командой этой цепи для получения поддержки.",
+      "noDapps": "Нет Dapp, доступных в этой цепочке",
+      "viewDappOptions": "Посмотреть параметры Dapp",
+      "bridgeOnDapp": "Мост на Dapp",
+      "thirdPartyDappToProceed": "Пожалуйста, используйте сторонний Dapp для продолжения",
+      "noQuotesForChain": "Пока нет доступных котировок для этой цепочки",
+      "swapOnDapp": "Менять на Dapp",
+      "noDapp": "Нет доступных Dapps"
     }
   },
   "constant": {

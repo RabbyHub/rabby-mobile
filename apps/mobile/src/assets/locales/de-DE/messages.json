@@ -220,6 +220,18 @@
       "depositWithPayDesc": "30 % Gebühr, keine Abhebungen",
       "depositWithTokenDesc": "Keine zusätzlichen Gebühren, sofortige Auszahlungen",
       "depositWithPay": "Kaufen mit"
+    },
+    "externalSwapBrideDappPopup": {
+      "viewDappOptions": "Dapp-Optionen anzeigen",
+      "help": "Bitte kontaktieren Sie das offizielle Team dieser Chain für Unterstützung.",
+      "thirdPartyDappToProceed": "Bitte verwenden Sie eine Drittanbieter-Dapp, um fortzufahren.",
+      "chainNotSupported": "Dieser Chain nicht unterstützt",
+      "bridgeOnDapp": "Brücke auf Dapp",
+      "noDapp": "Keine Dapps verfügbar",
+      "swapOnDapp": "Swap auf Dapp",
+      "selectADapp": "Wählen Sie eine Dapp",
+      "noDapps": "Kein Dapp auf dieser Kette verfügbar",
+      "noQuotesForChain": "Für diese Kette liegen noch keine Angebote vor."
     }
   },
   "page": {
@@ -1755,7 +1767,8 @@
       },
       "header": {
         "placeHolder": "Suche",
-        "searchPlaceHolder": "Token Name / Address suchen"
+        "searchPlaceHolder": "Token Name / Address suchen",
+        "favoriteTitle": "Bevorzugter Token"
       },
       "searchWeb": {
         "searchTips": "Im Web suchen",
@@ -1795,7 +1808,9 @@
         "less": "Weniger",
         "unfold": "Entfalten",
         "Buy": "Kaufen",
-        "all": "Alle"
+        "all": "Alle",
+        "favorite": "Favorit",
+        "unfavorite": "Nicht als Favorit markieren"
       },
       "IssuedBy": "Ausgestellt von",
       "fdv": "FDV",
@@ -2005,6 +2020,30 @@
       "tabs": {
         "portfolio": "Portfolio",
         "address": "Adresse"
+      }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "title": "Favoriten",
+        "showAll": "Alle anzeigen",
+        "fold": "Falten"
+      },
+      "BrowserHeader": {
+        "searchIos": "Website durchsuchen",
+        "searchAndroid": "Suche Dapp"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "history": "Verlauf",
+        "favorites": "Lieblingsartikel",
+        "tab": "Tab"
+      },
+      "BrowserBookmarkList": {
+        "title": "Favoriten"
+      },
+      "BrowserHistoryList": {
+        "title": "Geschichte"
       }
     }
   },

@@ -1492,7 +1492,8 @@
     "search": {
       "header": {
         "placeHolder": "搜尋",
-        "searchPlaceHolder": "搜索代幣名稱 / 地址"
+        "searchPlaceHolder": "搜索代幣名稱 / 地址",
+        "favoriteTitle": "最愛的代幣"
       },
       "sectionHeader": {
         "Defi": "DeFi",
@@ -1660,7 +1661,9 @@
         "Sell": "出售",
         "pin": "Pin",
         "fold": "摺疊",
-        "all": "全部"
+        "all": "全部",
+        "unfavorite": "取消收藏",
+        "favorite": "最愛"
       },
       "excludeBalanceTips": "此資產已從您的總餘額中排除以確保準確性。您可以點擊查看詳情，並根據需要將其包含在內。",
       "SeeMore": "查看更多",
@@ -1925,6 +1928,30 @@
         "address": "地址",
         "portfolio": "投資組合"
       }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "fold": "摺叠",
+        "title": "最愛",
+        "showAll": "顯示全部"
+      },
+      "BrowserHeader": {
+        "searchIos": "搜尋網站",
+        "searchAndroid": "搜尋 Dapp"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "tab": "標籤",
+        "history": "歷史",
+        "favorites": "最愛"
+      },
+      "BrowserBookmarkList": {
+        "title": "最愛"
+      },
+      "BrowserHistoryList": {
+        "title": "歷史"
+      }
     }
   },
   "component": {
@@ -2063,6 +2090,18 @@
       "contextMenu": {
         "viewDetail": "查看詳細資訊"
       }
+    },
+    "externalSwapBrideDappPopup": {
+      "viewDappOptions": "查看 Dapp 選項",
+      "chainNotSupported": "不支援此鏈上",
+      "noDapps": "此鏈上沒有可用的 Dapp",
+      "thirdPartyDappToProceed": "請使用第三方 Dapp 進行操作",
+      "noQuotesForChain": "此链尚无可用报价",
+      "bridgeOnDapp": "在 Dapp 上的 Bridge",
+      "swapOnDapp": "在 Dapp 上交換",
+      "noDapp": "目前沒有可用的 Dapps",
+      "help": "請聯繫該區塊鏈的官方團隊以獲取支援",
+      "selectADapp": "選擇一個 Dapp"
     }
   },
   "common": {

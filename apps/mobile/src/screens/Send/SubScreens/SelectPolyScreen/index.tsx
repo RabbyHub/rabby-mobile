@@ -61,7 +61,6 @@ const SendPolyScreen = () => {
     );
   };
   const handleGotoImportedAddress = () => {
-    triggerLight();
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: RootNames.SelectImportAddress,
@@ -70,7 +69,6 @@ const SendPolyScreen = () => {
     );
   };
   const handleGotoAddWhitelist = () => {
-    triggerLight();
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD,
       onDone: () => {

@@ -1440,7 +1440,8 @@
       },
       "header": {
         "placeHolder": "Recherche",
-        "searchPlaceHolder": "Rechercher le nom/la l’adresse du token"
+        "searchPlaceHolder": "Rechercher le nom/la l’adresse du token",
+        "favoriteTitle": "Token Favori"
       },
       "tokenItem": {
         "Issuedby": "Émis par",
@@ -1565,7 +1566,9 @@
         "unfold": "Déplier",
         "includeBalance": "Inclure dans le Solde",
         "unpin": "Détacher",
-        "pin": "Code PIN"
+        "pin": "Code PIN",
+        "unfavorite": "Retirer des favoris",
+        "favorite": "Favori"
       },
       "actionsTips": {
         "fold_success": "Plié avec succès",
@@ -1820,6 +1823,30 @@
         "portfolio": "Portefeuille",
         "address": "Adresse"
       }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "showAll": "Tout afficher",
+        "title": "Favoris",
+        "fold": "Plier"
+      },
+      "BrowserHeader": {
+        "searchIos": "Rechercher le site Web",
+        "searchAndroid": "Rechercher Dapp"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "favorites": "Favoris",
+        "history": "Historique",
+        "tab": "Onglet"
+      },
+      "BrowserBookmarkList": {
+        "title": "Favoris"
+      },
+      "BrowserHistoryList": {
+        "title": "Histoire"
+      }
     }
   },
   "native": {
@@ -1993,6 +2020,18 @@
         "enableTip": "Activez {{ bioType }} pour déverrouiller Rabby",
         "enable": "Activer {{ bioType }}"
       }
+    },
+    "externalSwapBrideDappPopup": {
+      "thirdPartyDappToProceed": "Veuillez utiliser un Dapp tiers pour continuer.",
+      "noQuotesForChain": "Aucune cotation disponible pour cette chaîne pour l'instant.",
+      "help": "Veuillez contacter l'équipe officielle de cette chaîne pour obtenir de l'aide.",
+      "swapOnDapp": "Échanger sur Dapp",
+      "selectADapp": "Sélectionnez une Dapp",
+      "chainNotSupported": "Non pris en charge sur cette chaîne",
+      "bridgeOnDapp": "Pont sur Dapp",
+      "viewDappOptions": "Voir les options Dapp",
+      "noDapps": "Aucune Dapp disponible sur cette chaîne",
+      "noDapp": "Aucune Dapps disponible"
     }
   },
   "global": {

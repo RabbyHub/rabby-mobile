@@ -1402,7 +1402,8 @@
       },
       "header": {
         "placeHolder": "Tìm kiếm",
-        "searchPlaceHolder": "Tìm kiếm Tên Token / Địa chỉ"
+        "searchPlaceHolder": "Tìm kiếm Tên Token / Địa chỉ",
+        "favoriteTitle": "Mã Token Yêu Thích"
       },
       "tokenItem": {
         "verifyDangerTips": "Đây là một token lừa đảo",
@@ -1558,7 +1559,9 @@
         "unpin": "Bỏ ghim",
         "pin": "Mã PIN",
         "Sell": "Bán",
-        "send": "Gửi"
+        "send": "Gửi",
+        "unfavorite": "Bỏ yêu thích",
+        "favorite": "Yêu thích"
       },
       "excludeBalanceTips": "Tài sản này bị loại khỏi tổng số dư của bạn để đảm bảo độ chính xác. Bạn có thể nhấn vào để xem chi tiết và bao gồm nó nếu muốn.",
       "noBalance": "Không có số dư",
@@ -1868,6 +1871,30 @@
         "address": "Địa chỉ",
         "portfolio": "Danh mục"
       }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "title": "Yêu thích",
+        "showAll": "Hiển thị tất cả",
+        "fold": "Gập"
+      },
+      "BrowserHeader": {
+        "searchIos": "Tìm kiếm Website",
+        "searchAndroid": "Tìm kiếm Dapp"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "favorites": "Yêu thích",
+        "tab": "Tab",
+        "history": "Lịch sử"
+      },
+      "BrowserBookmarkList": {
+        "title": "Yêu thích"
+      },
+      "BrowserHistoryList": {
+        "title": "Lịch sử"
+      }
     }
   },
   "component": {
@@ -2006,6 +2033,18 @@
     "NFTNumberInput": {
       "erc1155Tips": "Số dư của bạn là {{amount}}",
       "erc721Tips": "Chỉ có thể gửi một NFT của ERC 721 mỗi lần."
+    },
+    "externalSwapBrideDappPopup": {
+      "selectADapp": "Chọn một Dapp",
+      "swapOnDapp": "Hoán đổi trên Dapp",
+      "bridgeOnDapp": "Cầu trên Dapp",
+      "noDapp": "Không có Dapps có sẵn",
+      "thirdPartyDappToProceed": "Vui lòng sử dụng một Dapp bên thứ ba để tiếp tục.",
+      "viewDappOptions": "Xem tùy chọn Dapp",
+      "chainNotSupported": "Không được hỗ trợ trên chuỗi này",
+      "noDapps": "Không có Dapp nào khả dụng trên chuỗi này",
+      "noQuotesForChain": "Chưa có báo giá cho chuỗi này.",
+      "help": "Vui lòng liên hệ với đội ngũ chính thức của chuỗi này để được hỗ trợ."
     }
   },
   "constant": {
