@@ -37,15 +37,14 @@ function markFirstItems(
     if (i === 0) {
       newItem.isDateStart = true;
     } else {
-      // judgs is date start
       const curDate = dayjs(newItem.time);
       const prevTime =
         ('time_at' in prev ? prev.time_at * 1000 : undefined) ||
         ('completedAt' in prev && prev.completedAt
           ? prev.completedAt
           : new Date().getTime());
-      const prevDate = dayjs(prevTime); // get time at
-      if (!curDate.isSame(prevDate, 'date')) {
+      const prevDate = dayjs(prevTime);
+      if (!curDate.isSame(prevDate, 'day')) {
         newItem.isDateStart = true;
       }
     }
@@ -92,6 +91,9 @@ export const useRecentSend = () => {
       return (
         !chain?.isTestnet &&
         !item.isSubmitFailed &&
+        !item.isFailed &&
+        !item.isWithdrawed &&
+        !item.maxGasTx.action?.actionData.cancelTx &&
         item.$ctx?.ga?.source === 'sendToken'
       );
     });
@@ -100,8 +102,11 @@ export const useRecentSend = () => {
   });
 
   const markedList = useMemo(() => {
+    const sortedList = historyList?.sort(
+      (a, b) => (b?.completedAt || 0) - (a?.completedAt || 0),
+    );
     return markFirstItems(
-      unionBy(historyList, item => {
+      unionBy(sortedList, item => {
         if ('projectDict' in item) {
           return `${item.address.toLowerCase()}-${item.id}`;
         } else {

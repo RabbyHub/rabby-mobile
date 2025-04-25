@@ -369,13 +369,13 @@ export const TransactionItem = ({
   ]);
 
   useEffect(() => {
-    if (!data.isPending) {
+    if (!data.isPending && !isInSendHistory) {
       const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
       const isShowStatus =
         transactionHistoryService.clearSuccessAndFailSingleId(rawId);
       isShowStatus && setShowSuccess(true);
     }
-  }, [data]);
+  }, [data, isInSendHistory]);
 
   const noNeedTokenChangeType = useMemo(
     () =>
@@ -436,6 +436,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
+    paddingRight: 16,
     paddingVertical: 14,
     borderRadius: 16,
     backgroundColor: isLight
@@ -478,8 +479,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
   titleText: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 22,
     fontWeight: '500',
   },
   describeText: {

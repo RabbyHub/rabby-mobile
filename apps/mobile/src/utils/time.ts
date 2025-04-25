@@ -153,39 +153,19 @@ export const calcGasEstimated = (seconds?: number) => {
 };
 
 export function formatTimestamp(timestamp: number, t: any) {
-  const date = new Date(timestamp);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
+  const date = dayjs(timestamp);
+  const today = dayjs();
+  const yesterday = today.subtract(1, 'day');
 
-  if (date.toDateString() === today.toDateString()) {
+  if (date.isSame(today, 'day')) {
     return t('page.transactions.Today');
   }
 
-  if (date.toDateString() === yesterday.toDateString()) {
+  if (date.isSame(yesterday, 'day')) {
     return t('page.transactions.Yesterday');
   }
 
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  const year = date.getFullYear();
-  const month = months[date.getMonth()];
-  const day = date.getDate();
-
-  return `${month} ${day}, ${year}`;
+  return date.format('MMM D, YYYY');
 }
 
 export function formatIntlTimestamp(timestamp: number): string {
