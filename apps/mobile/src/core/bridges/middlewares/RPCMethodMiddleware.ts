@@ -86,7 +86,9 @@ RPCMethodsMiddleParameters) =>
 
       const webviewId = bridge.webviewId;
 
-      return activeDappState.tabId === webviewId;
+      return (
+        !activeDappState.isScreenHide && activeDappState.tabId === webviewId
+      );
     };
 
     const providerSessionBase: ProviderRequest['session'] & object = {

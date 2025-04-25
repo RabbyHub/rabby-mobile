@@ -6,11 +6,13 @@ export type ActiveDappState = {
   dappOrigin: string | null;
   tabId: string | null | undefined;
   isPanning: boolean;
+  isScreenHide?: boolean;
 };
 const activeDappRef: ActiveDappState = {
   dappOrigin: null,
   tabId: null,
   isPanning: false,
+  isScreenHide: true,
 };
 type Listeners = {
   updated: (info: ActiveDappState['tabId']) => void;
@@ -28,6 +30,7 @@ export function globalSetActiveDappState(
     tabId?: string | null;
     dappOrigin?: string | null;
     isPanning?: boolean;
+    isScreenHide?: boolean;
   },
   options?: { delay?: number },
 ) {
@@ -39,6 +42,10 @@ export function globalSetActiveDappState(
   if (input.tabId !== undefined) {
     activeDappRef.tabId = input.tabId || null;
     activeDappStateEvents.emit('updated', activeDappRef.tabId);
+  }
+
+  if (input.isScreenHide !== undefined) {
+    activeDappRef.isScreenHide = input.isScreenHide;
   }
 
   const setter = () => {

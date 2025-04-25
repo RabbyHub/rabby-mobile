@@ -39,7 +39,7 @@ import { sleep } from '@/utils/async';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import ViewShot from 'react-native-view-shot';
 import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
@@ -316,17 +316,19 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       forScene,
     });
 
+    const isFocused = useIsFocused();
+
     useEffect(() => {
-      if (isActive && !isEmptyTab) {
+      if (isFocused && isActive && !isEmptyTab) {
         setTimeout(() => {
           switchSceneCurrentAccount(forScene, finalSceneCurrentAccount);
-          console.log('emit');
         }, 500);
       }
     }, [
       finalSceneCurrentAccount,
       isActive,
       isEmptyTab,
+      isFocused,
       switchSceneCurrentAccount,
     ]);
 

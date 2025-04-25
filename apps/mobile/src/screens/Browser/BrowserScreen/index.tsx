@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -13,6 +13,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { View } from 'react-native';
 import { BrowserTab } from './components/BrowserTab';
+import { useFocusEffect } from '@react-navigation/native';
 
 export function BrowserScreen() {
   const {
@@ -43,6 +44,19 @@ export function BrowserScreen() {
   }, []);
 
   useSyncDappsInfo();
+
+  useFocusEffect(
+    useCallback(() => {
+      globalSetActiveDappState({
+        isScreenHide: false,
+      });
+      return () => {
+        globalSetActiveDappState({
+          isScreenHide: true,
+        });
+      };
+    }, []),
+  );
 
   return (
     <View
