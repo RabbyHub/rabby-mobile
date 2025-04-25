@@ -65,12 +65,12 @@ export function BrowserFooter({
             ? 'Request Mobile Site'
             : 'Request DeskTop Site',
         iosIconSource: isLight
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_1.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_1_dark.png'),
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_content_mode.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_content_mode_dark.png'),
 
         androidIconName: isLight
-          ? 'ic_rabby_menu_more_1'
-          : 'ic_rabby_menu_more_1_dark',
+          ? 'ic_rabby_menu_content_mode'
+          : 'ic_rabby_menu_content_mode_dark',
         key: 'contentMode',
         onSelect: () => {
           onContentModeChange?.(
@@ -82,10 +82,14 @@ export function BrowserFooter({
         title: 'Favorite',
         iosIconSource: isBookmark
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_filled.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite.png'),
+          : isLight
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_dark.png'),
         androidIconName: isBookmark
           ? 'ic_rabby_menu_favorite_filled'
-          : 'ic_rabby_menu_favorite',
+          : isLight
+          ? 'ic_rabby_menu_favorite'
+          : 'ic_rabby_menu_favorite_dark',
         key: 'favorite',
         onSelect: () => {
           onBookmark?.();
