@@ -90,7 +90,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 100088
-        versionName "0.6.11"
+        versionName "0.6.12"
         missingDimensionStrategy "store", "play"
     }
     splits {
