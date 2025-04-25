@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Dimensions, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,8 +8,8 @@ import { AssetAvatar, Text } from '@/components';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
-import { preferenceService } from '@/core/services';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -21,23 +21,38 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   refreshTags,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { removePinedToken, pinToken, userTokenSettings } =
+    useUserTokenSettings();
 
+  const isPined = useMemo(
+    () =>
+      userTokenSettings?.pinedQueue?.some(
+        pinned =>
+          pinned.chainId === token.chain && pinned.tokenId === token._tokenId,
+      ),
+    [token._tokenId, token.chain, userTokenSettings?.pinedQueue],
+  );
   const handlePress = useCallback(() => {
-    const currentPin = token._isPined;
-    token._isPined = !token._isPined;
-    if (currentPin) {
-      preferenceService.removePinedToken({
-        tokenId: token._tokenId,
-        chainId: token.chain,
+    if (isPined) {
+      removePinedToken({
+        id: token._tokenId,
+        chain: token.chain,
       });
     } else {
-      preferenceService.pinToken({
-        tokenId: token._tokenId,
-        chainId: token.chain,
+      pinToken({
+        id: token._tokenId,
+        chain: token.chain,
       });
     }
     refreshTags();
-  }, [refreshTags, token]);
+  }, [
+    isPined,
+    pinToken,
+    refreshTags,
+    removePinedToken,
+    token._tokenId,
+    token.chain,
+  ]);
 
   return (
     <View style={styles.root}>
@@ -61,7 +76,7 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
               width={22}
               height={21}
               color={
-                token._isPined
+                isPined
                   ? colors2024['orange-default']
                   : colors2024['neutral-info']
               }
