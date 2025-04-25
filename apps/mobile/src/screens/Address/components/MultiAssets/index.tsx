@@ -474,8 +474,8 @@ export const MultiAssets = ({
             ? icons.pinLight
             : icons.pinDark,
           androidIconName: data._isPined
-            ? 'ic_rabby_menu_un_pin'
-            : 'ic_rabby_menu_pin',
+            ? 'ic_rabby_menu_token_unfavorite'
+            : 'ic_rabby_menu_token_favorite',
           key: 'pin',
           action() {
             if (data._isPined) {

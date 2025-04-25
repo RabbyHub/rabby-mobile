@@ -1,20 +1,15 @@
 import React, { useCallback } from 'react';
 import { Dimensions, TouchableOpacity, View } from 'react-native';
 
-import RcIconPin from '@/assets2024/icons/home/RcIconPin.svg';
-import RcIconUnPin from '@/assets2024/icons/home/RcIconUnpin.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { AssetAvatar, Text } from '@/components';
-import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { findChain } from '@/utils/chain';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { useMemoizedFn } from 'ahooks';
 import { preferenceService } from '@/core/services';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -26,43 +21,6 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   refreshTags,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-
-  const handleCopyAddress = useMemoizedFn<
-    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
-  >(evt => {
-    evt.stopPropagation();
-    if (!token?._tokenId) {
-      return;
-    }
-    Clipboard.setString(token._tokenId);
-    toastCopyAddressSuccess(token._tokenId);
-  });
-
-  const { isContractToken, nativeTokenChainName, tokenAddress, chainItem } =
-    React.useMemo(() => {
-      const item = findChain({ serverId: token.chain });
-      /* for AbstractPortfolioToken,
-          id of native token is `{chain.symbol}{chain.symbol}`,
-          id of non-native token is `{token_address}{chain.symbol}  */
-      // const isContractToken = /^0x.{40}/.test(token.id) && token.id.endsWith(token.chain);
-      const isContractToken =
-        /^0x.{40}/.test(token._tokenId) &&
-        token.id === `${token._tokenId}${token.chain}`;
-
-      return {
-        chainItem: item,
-        isContractToken,
-        nativeTokenChainName: !isContractToken && item ? item.name : '',
-        tokenAddress: !isContractToken
-          ? item?.nativeTokenAddress || ''
-          : token._tokenId,
-      };
-    }, [token]);
-
-  const needHideAddress = React.useMemo(
-    () => getTokenSymbol(token).length >= 5,
-    [token],
-  );
 
   const handlePress = useCallback(() => {
     const currentPin = token._isPined;
@@ -99,7 +57,15 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             {ellipsisOverflowedText(getTokenSymbol(token), 15)}
           </Text>
           <TouchableOpacity onPress={handlePress}>
-            {token._isPined ? <RcIconUnPin /> : <RcIconPin />}
+            <RcIconFavorite
+              width={22}
+              height={21}
+              color={
+                token._isPined
+                  ? colors2024['orange-default']
+                  : colors2024['neutral-info']
+              }
+            />
           </TouchableOpacity>
         </View>
         {/* <View style={styles.contract}>

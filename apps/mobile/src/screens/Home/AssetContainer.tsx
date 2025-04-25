@@ -89,10 +89,10 @@ export const icons = {
   unfoldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png'),
   foldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png'),
   foldLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-  pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png'),
-  pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
-  unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
-  unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png'),
+  pinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png'),
+  pinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
+  unpinDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
+  unpinLight: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png'),
 };
 
 const ViewTypes = {
@@ -627,8 +627,8 @@ export const AssetContainer: React.FC<Props> = ({
             ? icons.pinLight
             : icons.pinDark,
           androidIconName: data._isPined
-            ? 'ic_rabby_menu_un_pin'
-            : 'ic_rabby_menu_pin',
+            ? 'ic_rabby_menu_token_unfavorite'
+            : 'ic_rabby_menu_token_favorite',
           key: 'pin',
           action() {
             if (data._isPined) {

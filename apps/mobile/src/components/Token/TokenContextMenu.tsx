@@ -68,14 +68,14 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
             : t('page.addressDetail.addressListScreen.pin'),
           icon: isPined
             ? isDarkTheme
-              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
-              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
+              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png')
             : isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
           androidIconName: isPined
-            ? 'ic_rabby_menu_un_pin'
-            : 'ic_rabby_menu_pin',
+            ? 'ic_rabby_menu_token_unfavorite'
+            : 'ic_rabby_menu_token_favorite',
           key: 'pin',
           action() {
             handlePress();

@@ -30,18 +30,14 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
-import {
-  ASSETS_ITEM_HEIGHT_NEW,
-  ASSETS_SECTION_HEADER,
-} from '@/constant/layout';
+import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { HighlightText } from '@/components2024/HighlightText';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenidentityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatPrice, formatUsdValue } from '@/utils/number';
 import { RiskTokenTips } from '@/screens/TokenDetail';
-import BigNumber from 'bignumber.js';
-import RcIconPin from '@/assets2024/icons/address/pin-cc.svg';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { formatUsdValueKMB } from '../../utils/price';
 
 const formatPercentage = (x: number) => {
@@ -210,8 +206,8 @@ export const TokenRow = memo(
           ) : null}
         </View>
         {data._isPined && (
-          <View style={[styles.pinBadge]}>
-            <RcIconPin color={colors2024['brand-default']} />
+          <View style={[styles.favoriteBadge]}>
+            <RcIconFavorite color={colors2024['orange-default']} />
           </View>
         )}
       </TouchableOpacity>
@@ -766,13 +762,13 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-InvertHighlight'],
     backgroundColor: ctx.colors2024['brand-default'],
   },
-  pinBadge: {
+  favoriteBadge: {
     position: 'absolute',
     top: 0,
     right: 0,
     paddingHorizontal: 12,
     paddingVertical: 3,
-    backgroundColor: ctx.colors2024['brand-light-1'],
+    backgroundColor: ctx.colors2024['orange-light-1'],
     borderBottomLeftRadius: 12,
     borderTopRightRadius: 16,
   },
