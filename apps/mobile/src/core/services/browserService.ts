@@ -89,12 +89,14 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         ...this.store.config,
         isMigrated: true,
       };
-      const dapps = options?.storageAdapter?.getItem(
+      const dappsStore = options?.storageAdapter?.getItem(
         APP_STORE_NAMES.dapps,
-      ) as Record<string, DappInfo> | null;
-      const historyMap = options?.storageAdapter?.getItem(
+      );
+      const dapps = dappsStore?.dapps as Record<string, DappInfo> | null;
+      const historyStore = options?.storageAdapter?.getItem(
         APP_STORE_NAMES.browserHistory,
-      ) as Record<
+      );
+      const historyMap = historyStore?.browserHistory as Record<
         string,
         {
           origin: string;
