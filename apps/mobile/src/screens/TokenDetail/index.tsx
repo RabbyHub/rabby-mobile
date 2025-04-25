@@ -503,7 +503,7 @@ export const TokenDetailScreen = () => {
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
 
-      navigation.navigate(RootNames.StackTransaction, {
+      navigation.push(RootNames.StackTransaction, {
         screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
         params: {
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
