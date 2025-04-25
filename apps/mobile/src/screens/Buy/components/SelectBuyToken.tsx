@@ -292,14 +292,14 @@ const TokenSelectorInner = ({
           containerStyle={styles.searchInputContainer}
           searchIconWrapperStyle={styles.searchIconWrapperStyle}
           inputStyle={styles.inputStyle}
-          searchIcon={<SearchSVG color={colors2024['neutral-foot']} />}
+          searchIcon={<SearchSVG color={colors2024['neutral-secondary']} />}
           inputProps={{
             value: query,
             onChange: e => handleQueryChange(e.nativeEvent.text),
             onFocus: handleInputFocus,
             onBlur: handleInputBlur,
             placeholder: 'Search Token',
-            placeholderTextColor: colors2024['neutral-info'],
+            placeholderTextColor: colors2024['neutral-secondary'],
           }}
         />
       </View>
@@ -482,12 +482,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
   },
   searchInputContainer: {
-    borderRadius: 30,
-    backgroundColor: colors2024['neutral-bg-2'],
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 13,
     borderColor: 'transparent',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   searchIconWrapperStyle: {
     paddingLeft: 0,
