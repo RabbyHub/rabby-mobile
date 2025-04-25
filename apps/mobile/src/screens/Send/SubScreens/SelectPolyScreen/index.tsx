@@ -195,7 +195,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   listContainer: {
     flex: 1,
-    paddingTop: 36,
   },
   header: {
     flexDirection: 'row',

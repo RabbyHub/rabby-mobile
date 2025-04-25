@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { RcIconScannerCC } from '@/assets/icons/address';
+import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -215,7 +215,7 @@ const SendInputScreen = () => {
                     onPress={() => {
                       navigate(RootNames.Scanner);
                     }}>
-                    <RcIconScannerCC
+                    <ScannerCC
                       style={ctx.iconStyle}
                       color={colors2024['neutral-title-1']}
                     />
