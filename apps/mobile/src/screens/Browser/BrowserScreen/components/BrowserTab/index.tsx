@@ -140,6 +140,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleContentModeChange = useMemoizedFn(
       (mode: WebViewProps['contentMode']) => {
+        onUpdateTab?.({
+          initialUrl: webviewState.url,
+        });
         setContentMode(mode);
         if (Platform.OS === 'android') {
           if (mode === 'desktop') {
