@@ -304,8 +304,8 @@ const Swap = ({
   ]);
 
   const btnText = useMemo(() => {
-    if (!isSupportedChain && externalDapps.length > 0) {
-      return t('component.externalSwapBrideDappPopup.viewDappOptions');
+    if (!isSupportedChain) {
+      return t('component.externalSwapBrideDappPopup.swapOnDapp');
     }
     if (quoteLoading) {
       return t('page.swap.title');
@@ -316,13 +316,7 @@ const Swap = ({
     }
 
     return t('page.swap.title');
-  }, [
-    activeProvider?.shouldApproveToken,
-    externalDapps?.length,
-    isSupportedChain,
-    quoteLoading,
-    t,
-  ]);
+  }, [activeProvider?.shouldApproveToken, isSupportedChain, quoteLoading, t]);
 
   const { safeOffBottom } = useSafeSizes();
 
@@ -849,7 +843,7 @@ const Swap = ({
         <Tip
           content={
             !isSupportedChain && externalDapps.length < 1
-              ? t('component.externalSwapBrideDappPopup.chainNotSupported')
+              ? t('component.externalSwapBrideDappPopup.noDapps')
               : undefined
           }>
           <View>

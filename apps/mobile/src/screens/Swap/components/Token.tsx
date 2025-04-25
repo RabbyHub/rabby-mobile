@@ -140,8 +140,10 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
   );
 
   const onSlidingStart = useCallback(() => {
-    showBubble.value = true;
-  }, [showBubble]);
+    if (!disabled) {
+      showBubble.value = true;
+    }
+  }, [showBubble, disabled]);
 
   const onAfterChangeSlider = useCallback(
     (v: number) => {

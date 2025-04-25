@@ -18,20 +18,7 @@ export const ExternalSwapBridgeDappTips = ({
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
-  if (!dappsAvailable) {
-    return (
-      <View
-        style={[
-          styles.tipContainer,
-          { paddingLeft: 16, flexDirection: 'row', alignItems: 'center' },
-        ]}>
-        <RcIconCircleWarning width={18} height={18} />
-        <Text style={styles.tipTitle}>
-          {t('component.externalSwapBrideDappPopup.noQuotesForChain')}
-        </Text>
-      </View>
-    );
-  }
+
   return (
     <View style={styles.tipContainer}>
       <Text style={styles.tipTitle} numberOfLines={1}>

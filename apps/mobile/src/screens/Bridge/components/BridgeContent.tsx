@@ -536,8 +536,8 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   }, [runBuildTxs, canUseMiniTx, btnDisabled, selectedBridgeQuote, mutateTxs]);
 
   const btnText = useMemo(() => {
-    if (showExternalDappTips && externalDapps.length > 0) {
-      return t('component.externalSwapBrideDappPopup.viewDappOptions');
+    if (showExternalDappTips) {
+      return t('component.externalSwapBrideDappPopup.bridgeOnDapp');
     }
     if (btnDisabled) {
       return t('page.bridge.title');
@@ -549,7 +549,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     return t('page.bridge.title');
   }, [
     showExternalDappTips,
-    externalDapps.length,
     btnDisabled,
     selectedBridgeQuote?.shouldApproveToken,
     t,
@@ -744,7 +743,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
         <Tip
           content={
             !isSupportedChain && externalDapps.length < 1
-              ? t('component.externalSwapBrideDappPopup.chainNotSupported')
+              ? t('component.externalSwapBrideDappPopup.noDapps')
               : undefined
           }>
           <Button
