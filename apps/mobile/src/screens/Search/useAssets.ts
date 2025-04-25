@@ -16,12 +16,7 @@ import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { useMyAccounts } from '@/hooks/account';
 import { useMemo, useState } from 'react';
 import { useSortAddressList } from '../Address/useSortAddressList';
-import {
-  combinePinTokens,
-  filterNfts,
-  filterPortfolios,
-  filterTokens,
-} from './useSearch';
+import { combinePinTokens } from './useSearch';
 import { usePinTokens } from './usePinTokens';
 import { tagNfts } from '../Home/hooks/nft';
 import { syncNFTs, syncProtocols, syncTokens } from '@/databases/hooks/assets';
@@ -29,10 +24,9 @@ import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import _ from 'lodash';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
-import BigNumber from 'bignumber.js';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
-export const useAssets = (filterText?: string) => {
+export const useAssets = () => {
   const [isLoading, setLoading] = useSafeState(true);
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -332,6 +326,9 @@ export const useAssets = (filterText?: string) => {
       ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
     ];
     removeUnNeedAssets(addresses);
+    if (Object.keys(assetsMap).length) {
+      return;
+    }
     const tokenSetting = await preferenceService.getUserTokenSettings();
     !disableToken && (await batchLoadCacheTokens(addresses, tokenSetting));
     Promise.all([
@@ -341,108 +338,19 @@ export const useAssets = (filterText?: string) => {
   };
 
   const fTokens = useMemo(
-    () => filterTokens(combinePinTokens(pinTokens, tokens), filterText),
-    [filterText, pinTokens, tokens],
-  );
-  const fPortfolios = useMemo(
-    () => filterPortfolios(portfolios, filterText),
-    [filterText, portfolios],
-  );
-  const fNftList = useMemo(
-    () => filterNfts(nftList, filterText),
-    [filterText, nftList],
+    () => combinePinTokens(pinTokens, tokens),
+    [pinTokens, tokens],
   );
 
-  const chainsInfo = useMemo(() => {
-    const chainAssets: Record<
-      string,
-      {
-        total: BigNumber;
-        percentage: BigNumber;
-      }
-    > = {};
-
-    tokens?.forEach(token => {
-      const chainId = token.chain;
-      if (!chainAssets[chainId]) {
-        chainAssets[chainId] = {
-          total: new BigNumber(0),
-          percentage: new BigNumber(0),
-        };
-      }
-      if (token._isExcludeBalance) {
-        return;
-      }
-      chainAssets[chainId].total = chainAssets[chainId].total.plus(
-        token._usdValue || 0,
-      );
-    });
-
-    portfolios?.forEach(portfolio => {
-      const chainId = portfolio.chain;
-      if (!chainId) {
-        return;
-      }
-      if (!chainAssets[chainId]) {
-        chainAssets[chainId] = {
-          total: new BigNumber(0),
-          percentage: new BigNumber(0),
-        };
-      }
-      if (portfolio._isExcludeBalance) {
-        return;
-      }
-      chainAssets[chainId].total = chainAssets[chainId].total.plus(
-        portfolio.netWorth || 0,
-      );
-    });
-
-    nftList?.forEach(nft => {
-      const chainId = nft.chain;
-      if (!chainAssets[chainId]) {
-        chainAssets[chainId] = {
-          total: new BigNumber(0),
-          percentage: new BigNumber(0),
-        };
-      }
-    });
-
-    const totalValue = Object.values(chainAssets).reduce(
-      (sum, { total }) => sum.plus(total),
-      new BigNumber(0),
-    );
-
-    if (totalValue.gt(0)) {
-      Object.keys(chainAssets).forEach(chainId => {
-        chainAssets[chainId].percentage =
-          chainAssets[chainId].total.div(totalValue);
-      });
-    }
-    const chainAssetsArray = Object.entries(chainAssets).map(
-      ([chain, data]) => ({
-        chain,
-        total: data.total.toNumber(),
-        percentage: data.percentage.multipliedBy(100).toNumber(),
-      }),
-    );
-
-    chainAssetsArray.sort((a, b) => b.total - a.total);
-
-    return {
-      chainAssets: chainAssetsArray,
-      chainLength: Object.keys(chainAssets).length,
-    };
-  }, [tokens, portfolios, nftList]);
   return {
     tokens: fTokens,
-    portfolios: fPortfolios,
-    nftList: fNftList,
+    portfolios,
+    nftList,
     assetsMap,
     isLoading,
-    hasAssets: !!fTokens?.length || !!fPortfolios?.length || !!fNftList?.length,
+    hasAssets: !!fTokens?.length || !!portfolios?.length || !!nftList?.length,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     refreshing: !!isLoading && !isFirstFetch,
-    chainsInfo,
   };
 };

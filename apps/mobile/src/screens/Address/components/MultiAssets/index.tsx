@@ -11,7 +11,6 @@ import {
   Animated,
   Dimensions,
   ImageBackground,
-  Keyboard,
   StyleSheet,
   Text,
   View,
@@ -20,7 +19,7 @@ import { RefreshControl } from 'react-native-gesture-handler';
 
 import {
   ADDRESS_ENTRY_GAP,
-  ADDRESS_ENTRY_HEUGHT,
+  ADDRESS_ENTRY_HEIGHT,
   AppRootName,
   ASSETS_EMPTY_ROW_HIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
@@ -55,10 +54,7 @@ import {
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
-import {
-  ItemLoader,
-  PositionLoader,
-} from '@/screens/Search/components/Skeleton';
+import { ItemLoader } from '@/screens/Search/components/Skeleton';
 import {
   RecyclerListView,
   DataProvider,
@@ -71,33 +67,21 @@ import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { TabType, SwitchHeader } from './RenderRow/SwtichHeader';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { OtherAddressNav } from '../OtherAddressNav';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-} from '@react-navigation/native';
+import { StackActions, useNavigation } from '@react-navigation/native';
 import { CurrentAddressProps } from '../AddressListScreenContainer';
-import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useAccountInfo } from './hooks';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { HeaderTitle } from './HeaderTitle';
 import { formChartData } from '@/hooks/useCurve';
 import { trigger } from 'react-native-haptic-feedback';
-import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useBalanceUpdate } from './hooks/balance';
-import {
-  AssestAllHeader,
-  AsssetKey,
-} from '@/screens/Home/components/AssetRenderItems/SectionHeaders';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 import { icons } from '@/screens/Home/AssetContainer';
 import { preferenceService } from '@/core/services';
@@ -107,7 +91,10 @@ import { DisplayedProject } from '@/screens/Home/utils/project';
 import { Card } from '@/components2024/Card';
 import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
 import { useSetPasswordFirst } from '@/hooks/useLock';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS, useSharedValue } from 'react-native-reanimated';
 
+const END_POSITION = 60;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
 
@@ -128,11 +115,13 @@ const ViewTypes = {
 
 export const MultiAssets = ({
   onUpdateIsDecrease,
+  onReachTopStatusChange,
 }: {
   onUpdateIsDecrease: (isDecrease: boolean) => void;
+  onReachTopStatusChange?: (status: boolean) => void;
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
-
+  const isTriggered = useSharedValue(false);
   const {
     top10Addresses,
     list: _rawList,
@@ -164,12 +153,11 @@ export const MultiAssets = ({
   }, [balanceAccounts, _rawList]);
 
   const {
-    tokens: _rawTokens,
-    portfolios: _rawPortfolios,
+    tokens,
+    portfolios,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     refreshing,
-    chainsInfo,
     isLoading,
   } = useAssets();
 
@@ -180,26 +168,8 @@ export const MultiAssets = ({
     isLoadingNew: isLoadingCurve,
   } = useMultiCurve(top10Addresses, false, top10Balance);
 
-  const [selectChainItem, setSelectChainItem] = useState<
-    ChainListItem | undefined
-  >();
   const listRef = useRef<RecyclerListViewRef>(null);
   const [firstRowType, setFirstRowType] = useState('');
-
-  const { tokens, portfolios } = useMemo(() => {
-    return {
-      tokens: _rawTokens?.filter(item =>
-        selectChainItem?.chain && item?.chain
-          ? item.chain === selectChainItem.chain
-          : true,
-      ),
-      portfolios: _rawPortfolios.filter(item =>
-        selectChainItem?.chain && item?.chain
-          ? item.chain === selectChainItem.chain
-          : true,
-      ),
-    };
-  }, [_rawPortfolios, _rawTokens, selectChainItem?.chain]);
 
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
@@ -223,7 +193,6 @@ export const MultiAssets = ({
     combineData,
     isLight: isLight,
   });
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   useEffect(() => {
     setExtendedState(prev => ({ ...prev, isLight, combineData }));
@@ -292,36 +261,32 @@ export const MultiAssets = ({
       },
       {
         show: showPortfolios,
-        data: [
-          // TODO: TMP for test
-          // {
-          //   type: 'asset_header',
-          // },
-          ...unFoldList,
-        ],
+        data: [...unFoldList],
       },
       {
         show: !showPortfolios,
-        data: list.map(item => {
-          const hasChangeData = multiTimeStamp[
-            item.address.toLocaleLowerCase()
-          ]?.data?.some(i => i.usd_value !== 0);
-          const chartData = formChartData(
-            multiTimeStamp[item.address.toLocaleLowerCase()]?.data || [],
-            item.balance,
-            new Date().getTime(),
-          );
-          return {
-            type: 'address_entry',
-            data: {
-              ...item,
-              changPercent: hasChangeData
-                ? chartData?.changePercent
-                : undefined,
-              isLoss: hasChangeData ? chartData?.isLoss : undefined,
-            },
-          };
-        }),
+        data: showPortfolios
+          ? []
+          : list.map(item => {
+              const hasChangeData = multiTimeStamp[
+                item.address.toLocaleLowerCase()
+              ]?.data?.some(i => i.usd_value !== 0);
+              const chartData = formChartData(
+                multiTimeStamp[item.address.toLocaleLowerCase()]?.data || [],
+                item.balance,
+                new Date().getTime(),
+              );
+              return {
+                type: 'address_entry',
+                data: {
+                  ...item,
+                  changPercent: hasChangeData
+                    ? chartData?.changePercent
+                    : undefined,
+                  isLoss: hasChangeData ? chartData?.isLoss : undefined,
+                },
+              };
+            }),
       },
       {
         show: showPortfolios && !!foldTokenList.length,
@@ -436,70 +401,6 @@ export const MultiAssets = ({
     });
   }, [navigation]);
 
-  const handleOnChainClick = useCallback(
-    (clear: boolean) => {
-      if (clear) {
-        setSelectChainItem(undefined);
-        setExtendedState(prev => ({ ...prev, selectedChain: undefined }));
-        return;
-      }
-
-      const id = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
-        value: selectChainItem,
-        bottomSheetModalProps: {
-          // enableContentPanningGesture: true,
-          enablePanDownToClose: true,
-          handleStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
-          },
-        },
-        chainList: chainsInfo.chainAssets,
-        titleText: t('page.receiveAddressList.selectChainTitle'),
-        onChange: (v: ChainListItem) => {
-          setSelectChainItem(v);
-          setExtendedState(prev => ({ ...prev, selectedChain: v }));
-          removeGlobalBottomSheetModal2024(id);
-        },
-        onClose: () => {
-          removeGlobalBottomSheetModal2024(id);
-        },
-      });
-    },
-    [chainsInfo.chainAssets, colors2024, isLight, selectChainItem, t],
-  );
-  const currentSection = useMemo(() => {
-    if (firstRowType.includes('token')) {
-      return 'token';
-    }
-    if (firstRowType.includes('defi')) {
-      return 'defi';
-    }
-    return 'token';
-  }, [firstRowType]);
-
-  const handleSwitchTab = (key: AsssetKey) => {
-    setFoldHideList(true);
-    setTimeout(() => {
-      listRef.current?.forceUpdate(() => {
-        const data = (listRef.current?.props.dataProvider.getAllData() ||
-          []) as ActionItem[];
-        let index = 1;
-        if (key === 'defi') {
-          const defiHeaderIndex = data.findIndex(
-            item => item.type === 'defi_header',
-          );
-          if (defiHeaderIndex !== -1) {
-            index = data.findIndex(item => item.type === 'defi_header') - 1;
-          }
-        }
-        listRef.current?.scrollToIndex(index, true);
-      });
-    }, 0);
-  };
-
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
   const gotoAddAddress = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
@@ -521,12 +422,7 @@ export const MultiAssets = ({
   const scrollToTop = () => {
     setFoldHideList(true);
     setTimeout(() => {
-      listRef.current?.forceUpdate(() => {
-        const data = (listRef.current?.props.dataProvider.getAllData() ||
-          []) as ActionItem[];
-        const index = data.findIndex(item => item.type === 'switch_tabs');
-        listRef.current?.scrollToIndex(index || 0, true);
-      });
+      listRef.current?.scrollToOffset(0, 0, true);
     }, 200);
   };
   const { tokenRefresh } = useTriggerTagAssets();
@@ -666,9 +562,6 @@ export const MultiAssets = ({
                 ...pre,
                 currentTab: tab,
               }));
-              if (tab === TabType.address) {
-                handleOnChainClick(true);
-              }
             }}
           />
         );
@@ -718,18 +611,6 @@ export const MultiAssets = ({
               />
             )}
           </View>
-        );
-      case 'asset_header':
-        return (
-          <AssestAllHeader
-            style={[styles.sectionHeader, styles.sectionTextHeader]}
-            currentSection={currentSection}
-            chainLength={chainsInfo.chainLength}
-            onChainClick={handleOnChainClick}
-            chainServerId={selectChainItem?.chain}
-            disableNft
-            onPress={handleSwitchTab}
-          />
         );
       case 'toggle_token_fold':
         return (
@@ -843,7 +724,7 @@ export const MultiAssets = ({
             break;
           case ViewTypes.ADDRESS_ENTRY:
             dim.width = SCREEN_WIDTH - 32;
-            dim.height = ADDRESS_ENTRY_HEUGHT + ADDRESS_ENTRY_GAP;
+            dim.height = ADDRESS_ENTRY_HEIGHT + ADDRESS_ENTRY_GAP;
             break;
           default:
             dim.width = SCREEN_WIDTH - 32;
@@ -868,153 +749,179 @@ export const MultiAssets = ({
     }
   }, [combineData.isLoss, isLight]);
 
+  useLayoutEffect(() => {
+    getCacheTop10Assets({
+      disableNFT: true,
+      realTimeAddresses: top10Addresses,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [top10Addresses.length]);
+
   useEffect(() => {
     const id = setTimeout(() => {
-      getCacheTop10Assets({
+      checkIsExpireAndUpdate(false, {
         disableNFT: true,
         realTimeAddresses: top10Addresses,
-      }).then(() => {
-        checkIsExpireAndUpdate(false, {
-          disableNFT: true,
-          realTimeAddresses: top10Addresses,
-        });
       });
-    }, 50);
+    }, 500);
     return () => {
       clearTimeout(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [top10Addresses.length]);
 
-  return (
-    <View style={styles.container}>
-      {firstRowType === 'overview' ||
-      firstRowType === '' ||
-      !list.length ? null : (
-        <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
-          <ImageBackground
-            source={topBg}
-            resizeMode="cover"
-            // eslint-disable-next-line react-native/no-inline-styles
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: SCREEN_WIDTH,
-              height: 150,
-            }}
-          />
-          <SwitchHeader
-            currentTab={extendedState.currentTab}
-            addressLength={list.length}
-            onChangeTab={tab => {
-              setExtendedState(pre => ({
-                ...pre,
-                currentTab: tab,
-              }));
-              scrollToTop();
-              if (tab === TabType.address) {
-                handleOnChainClick(true);
-              }
-            }}
-          />
-        </Animated.View>
-      )}
-      <RecyclerListView
-        style={styles.list}
-        dataProvider={listData}
-        extendedState={extendedState}
-        layoutProvider={layoutProvider}
-        ref={listRef}
-        rowRenderer={renderItem}
-        onVisibleIndicesChanged={indexes => {
-          if (listData.getDataForIndex(indexes[0])?.type) {
-            setFirstRowType(listData.getDataForIndex(indexes[0]).type);
-          }
-        }}
-        onScroll={event => {
-          const scrollOffset = event.nativeEvent.contentOffset.y;
-          if (scrollOffset > 80) {
-            setNavigationOptions({
-              headerTitle: () => (
-                <HeaderTitle
-                  netWorth={combineData.netWorth}
-                  changePercent={combineData.changePercent}
-                  isLoss={combineData.isLoss}
-                />
-              ),
-              headerTitleAlign: 'left',
-            });
-          } else {
-            setNavigationOptions({
-              headerTitle: '',
-              headerTitleAlign: 'left',
-            });
-          }
-          Keyboard.dismiss();
-        }}
-        renderFooter={() =>
-          extendedState.currentTab === TabType.address ? (
-            <View
-              style={[
-                {
-                  minHeight:
-                    Dimensions.get('screen').height -
-                    list.length * (ADDRESS_ENTRY_HEUGHT + ADDRESS_ENTRY_GAP) -
-                    -SWITCH_HEADER_HEIGHT -
-                    SWITCH_HEADER_GAP,
-                },
-              ]}>
-              <Card style={styles.footerCard} onPress={gotoAddAddress}>
-                <View style={styles.footerMain}>
-                  <PlusSVG
-                    width={20}
-                    height={20}
-                    color={colors2024['neutral-secondary']}
-                  />
-                  <Text style={styles.footerCardText}>
-                    {t('page.addressDetail.addressListScreen.addAddress')}
-                  </Text>
-                </View>
-              </Card>
-              {hasSafeAddress && (
-                <OtherAddressNav
-                  onPress={onGotoSafeAddress}
-                  text={t(
-                    'page.addressDetail.addressListScreen.importSafeAddress',
-                  )}
-                />
-              )}
-              {hasWatchAddress && (
-                <OtherAddressNav
-                  onPress={onGotoWatchAddress}
-                  text={t(
-                    'page.addressDetail.addressListScreen.importWatchAddress',
-                  )}
-                />
-              )}
-              <View style={styles.footerGap} />
-            </View>
-          ) : (
-            <View style={styles.footerGap} />
-          )
+  const switchTab = (type: TabType) => {
+    if (isTriggered.value) return;
+    isTriggered.value = true;
+    setExtendedState(pre => ({
+      ...pre,
+      currentTab: type,
+    }));
+    scrollToTop();
+  };
+
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-10, 10])
+    .failOffsetY([-20, 20])
+    .hitSlop({ left: -40 })
+    .simultaneousWithExternalGesture(listRef as any)
+    .onUpdate(e => {
+      if (e.translationX <= -END_POSITION) {
+        if (extendedState.currentTab === TabType.portfolio) {
+          runOnJS(switchTab)(TabType.address);
         }
-        scrollViewProps={{
-          refreshControl: (
-            <RefreshControl
-              style={styles.bgContainer}
-              onRefresh={() => {
-                triggerUpdate(true);
-                fetchAccounts();
-                checkIsExpireAndUpdate(true, { disableNFT: true });
-                refreshCurve(true);
+      }
+      if (e.translationX > -END_POSITION) {
+        if (extendedState.currentTab === TabType.address) {
+          runOnJS(switchTab)(TabType.portfolio);
+        }
+      }
+    })
+    .onEnd(e => {
+      isTriggered.value = false;
+    });
+  const fadeAnim = React.useRef(new Animated.Value(1)).current;
+  const handleReachTopStatusChange = (status: boolean) => {
+    Animated.timing(fadeAnim, {
+      toValue: status ? 1 : 0,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+    onReachTopStatusChange?.(status);
+  };
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <View style={styles.container}>
+        {firstRowType === 'overview' ||
+        firstRowType === '' ||
+        !list.length ? null : (
+          <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
+            <Animated.View style={{ opacity: fadeAnim }}>
+              <ImageBackground
+                source={topBg}
+                resizeMode="cover"
+                // eslint-disable-next-line react-native/no-inline-styles
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: SCREEN_WIDTH,
+                  height: 150,
+                }}
+              />
+            </Animated.View>
+            <SwitchHeader
+              currentTab={extendedState.currentTab}
+              addressLength={list.length}
+              onChangeTab={tab => {
+                setExtendedState(pre => ({
+                  ...pre,
+                  currentTab: tab,
+                }));
+                scrollToTop();
               }}
-              refreshing={refreshing}
             />
-          ),
-        }}
-      />
-    </View>
+          </Animated.View>
+        )}
+        <RecyclerListView
+          style={styles.list}
+          dataProvider={listData}
+          extendedState={extendedState}
+          layoutProvider={layoutProvider}
+          ref={listRef}
+          rowRenderer={renderItem}
+          onVisibleIndicesChanged={indexes => {
+            if (listData.getDataForIndex(indexes[0])?.type) {
+              setFirstRowType(listData.getDataForIndex(indexes[0]).type);
+            }
+          }}
+          onScroll={event => {
+            if (
+              event.nativeEvent.contentSize &&
+              event.nativeEvent.layoutMeasurement
+            ) {
+              if (event.nativeEvent.contentOffset.y <= 0) {
+                handleReachTopStatusChange(true);
+              } else {
+                handleReachTopStatusChange(false);
+              }
+            }
+          }}
+          renderFooter={() =>
+            extendedState.currentTab === TabType.address ? (
+              <View>
+                <Card style={styles.footerCard} onPress={gotoAddAddress}>
+                  <View style={styles.footerMain}>
+                    <PlusSVG
+                      width={20}
+                      height={20}
+                      color={colors2024['neutral-secondary']}
+                    />
+                    <Text style={styles.footerCardText}>
+                      {t('page.addressDetail.addressListScreen.addAddress')}
+                    </Text>
+                  </View>
+                </Card>
+                {hasSafeAddress && (
+                  <OtherAddressNav
+                    onPress={onGotoSafeAddress}
+                    text={t(
+                      'page.addressDetail.addressListScreen.importSafeAddress',
+                    )}
+                  />
+                )}
+                {hasWatchAddress && (
+                  <OtherAddressNav
+                    onPress={onGotoWatchAddress}
+                    text={t(
+                      'page.addressDetail.addressListScreen.importWatchAddress',
+                    )}
+                  />
+                )}
+                <View style={styles.footerGap} />
+              </View>
+            ) : (
+              <View style={styles.footerGap} />
+            )
+          }
+          scrollViewProps={{
+            refreshControl: (
+              <RefreshControl
+                style={styles.bgContainer}
+                onRefresh={() => {
+                  triggerUpdate(true);
+                  fetchAccounts();
+                  checkIsExpireAndUpdate(true, { disableNFT: true });
+                  refreshCurve(true);
+                }}
+                refreshing={refreshing}
+              />
+            ),
+          }}
+        />
+      </View>
+    </GestureDetector>
   );
 };
 
@@ -1037,6 +944,7 @@ const getStyles = createGetStyles2024(ctx => ({
     right: 0,
     height: SWITCH_HEADER_HEIGHT,
     overflow: 'hidden',
+    backgroundColor: ctx.colors2024['neutral-bg-0'],
     // height: ASSETS_SECTION_HEADER,
     zIndex: 1,
   },

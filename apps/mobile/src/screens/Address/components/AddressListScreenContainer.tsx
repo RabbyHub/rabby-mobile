@@ -8,7 +8,6 @@ import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import LinearGradient from 'react-native-linear-gradient';
-import { colord } from 'colord';
 
 export type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -20,7 +19,7 @@ export const AddressListScreenContainer: React.FC<any> = ({
   style,
 }) => {
   const { accounts } = useAccounts();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
 
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 

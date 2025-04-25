@@ -5,7 +5,7 @@ import {
 } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CurveDayType, formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';

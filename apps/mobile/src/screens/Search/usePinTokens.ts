@@ -3,6 +3,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { preferenceService } from '@/core/services';
 import { openapi } from '@/core/request';
 import { atom, useAtom } from 'jotai';
+import { useCallback } from 'react';
 
 const chunkArray = (arr: IManageToken[], size: number): IManageToken[][] => {
   const chunks: IManageToken[][] = [];
@@ -33,9 +34,9 @@ export const pinTokensAtom = atom<TokenItem[]>([]);
 
 export const usePinTokens = () => {
   const [data, setData] = useAtom(pinTokensAtom);
-  const handleFetchTokens = () => {
+  const handleFetchTokens = useCallback(() => {
     return getPinTokens().then(setData);
-  };
+  }, [setData]);
 
   return {
     data,
