@@ -28,10 +28,18 @@ export const SwitchHeader = ({
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const tabLineLeft = useSharedValue(44);
+  const tabLineWidth = useSharedValue(80);
 
   useEffect(() => {
     tabLineLeft.value = withTiming(
-      currentTab === TabType.portfolio ? 44 : 215,
+      currentTab === TabType.portfolio ? 44 : 200,
+      {
+        duration: 200,
+        easing: Easing.linear,
+      },
+    );
+    tabLineWidth.value = withTiming(
+      currentTab === TabType.portfolio ? 80 : 120,
       {
         duration: 200,
         easing: Easing.linear,
@@ -44,6 +52,7 @@ export const SwitchHeader = ({
   const tabLineStyle = useAnimatedStyle(() => {
     return {
       left: tabLineLeft.value,
+      width: tabLineWidth.value,
     };
   });
 
@@ -93,8 +102,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
     borderRadius: 12,
     position: 'relative',
-    borderBottomWidth: 1,
-    borderBottomColor: colors2024['neutral-line'],
   },
   tab: {
     fontSize: 20,
@@ -121,7 +128,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tabBottomLine: {
     height: 5,
-    width: 80,
     backgroundColor: colors2024['brand-default'],
     position: 'absolute',
     bottom: 1,
