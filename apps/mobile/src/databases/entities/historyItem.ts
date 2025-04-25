@@ -225,6 +225,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     count?: number,
     filterNotScam?: boolean,
     cate_id?: string,
+    maxTimeAt?: number,
   ) {
     await prepareAppDataSource();
     const currentTime = new Date().getTime();
@@ -234,7 +235,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     const queryBuilder = repo
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
-      .andWhere('historyitem.time_at >= :ninetyDaysAgo', { ninetyDaysAgo })
+      .andWhere('historyitem.time_at >= :ninetyDaysAgo', {
+        ninetyDaysAgo: maxTimeAt ?? ninetyDaysAgo,
+      })
       .orderBy('historyitem.time_at', 'DESC')
       .take(count || 10000); // limit
 

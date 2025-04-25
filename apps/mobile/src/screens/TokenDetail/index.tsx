@@ -609,42 +609,50 @@ export const TokenDetailScreen = () => {
         />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
       </ScrollView>
-      <LinearGradient
+      {/* <LinearGradient
         colors={
           isLight
             ? ['rgba(246, 247, 247, 1)', 'rgba(246, 247, 247, 0.3)']
             : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.3)']
         }
         locations={[0.6393, 1]}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 0, y: 0 }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
         style={[
           styles.floatBottom,
           isAndroid && { height: 120 + safeOffBottom },
+        ]}> */}
+      <View
+        style={[
+          styles.buttonGroup,
+          isAndroid && { paddingBottom: 50 + safeOffBottom },
         ]}>
-        <View
-          style={[
-            styles.buttonGroup,
-            isAndroid && { paddingBottom: 50 + safeOffBottom },
-          ]}>
-          <View style={styles.btnContainer}>
-            <Tip
-              placement="top"
-              content={
-                !tokenSupportSwap
-                  ? t('page.tokenDetail.notSupportedOnChain')
-                  : undefined
-              }>
-              <Button
-                title={isFromSwap ? t('global.Confirm') : t('page.swap.title')}
-                containerStyle={StyleSheet.flatten([styles.btnContainer])}
-                onPress={() => handleSwap('Sell')}
-                disabled={!tokenSupportSwap}
-              />
-            </Tip>
-          </View>
+        <Button
+          type="ghost"
+          title={t('page.home.services.send')}
+          containerStyle={StyleSheet.flatten([styles.btnContainer])}
+          buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
+          onPress={() => handleSend()}
+        />
+        <View style={styles.btnContainer}>
+          <Tip
+            placement="top"
+            content={
+              !tokenSupportSwap
+                ? t('page.tokenDetail.notSupportedOnChain')
+                : undefined
+            }>
+            <Button
+              title={isFromSwap ? t('global.Confirm') : t('page.swap.title')}
+              containerStyle={StyleSheet.flatten([styles.btnContainer])}
+              onPress={() => handleSwap('Sell')}
+              buttonStyle={styles.btnInnerContainer}
+              disabled={!tokenSupportSwap}
+            />
+          </Tip>
         </View>
-      </LinearGradient>
+      </View>
+      {/* </LinearGradient> */}
     </NormalScreenContainer2024>
   );
 };
@@ -721,10 +729,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 20,
     },
     buttonGroup: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
       width: '100%',
       position: 'absolute',
       bottom: 0,
       // display: 'flex',
+      gap: 16,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -737,8 +749,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flex: 1,
     },
 
-    buyBtnContainer: {
+    ghostBtn: {
+      borderWidth: 1.5,
       backgroundColor: colors2024['brand-light-1'],
+    },
+    btnInnerContainer: {
+      borderRadius: 16,
     },
     buyBtnTitle: {
       color: colors2024['brand-default'],

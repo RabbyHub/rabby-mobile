@@ -94,6 +94,7 @@ interface TxHistoryStore {
   successList: string[];
   failList: string[];
   isNeedFetchTxHistory: Record<string, boolean>;
+  clearSuccessAndFailListTs: number;
 }
 
 // TODO
@@ -121,6 +122,7 @@ export class TransactionHistoryService {
           successList: [],
           failList: [],
           isNeedFetchTxHistory: {},
+          clearSuccessAndFailListTs: new Date().getTime(),
         },
       },
       {
@@ -141,6 +143,10 @@ export class TransactionHistoryService {
 
     if (typeof this.store.isNeedFetchTxHistory !== 'object') {
       this.store.isNeedFetchTxHistory = {};
+    }
+
+    if (typeof this.store.clearSuccessAndFailListTs !== 'number') {
+      this.store.clearSuccessAndFailListTs = new Date().getTime();
     }
 
     this.init();
@@ -184,8 +190,24 @@ export class TransactionHistoryService {
     return this.store.successList;
   }
 
+  setSucceedList(id: string) {
+    if (!this.store.successList.includes(id)) {
+      this.store.successList.push(id);
+    }
+  }
+
+  setFailedList(id: string) {
+    if (!this.store.failList.includes(id)) {
+      this.store.failList.push(id);
+    }
+  }
+
   getFailedCount() {
     return this.store.failList.length;
+  }
+
+  getClearSuccessAndFailListTs() {
+    return this.store.clearSuccessAndFailListTs;
   }
 
   setNeedFetchTxHistory(address: string) {
@@ -205,6 +227,7 @@ export class TransactionHistoryService {
   clearSuccessAndFailList() {
     this.store.successList = [];
     this.store.failList = [];
+    this.store.clearSuccessAndFailListTs = new Date().getTime();
   }
 
   clearSuccessAndFailSingleId(id: string) {
