@@ -6,7 +6,6 @@ import { runOnJS } from 'react-native-reanimated';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { syncRemotePortocols } from '@/databases/sync/assets';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useSafeState } from '@/hooks/useSafeState';
 import { batchQueryNFTsWithLocalCache } from '@/screens/Home/utils/nft';
 import {
@@ -92,16 +91,10 @@ export const syncProtocols = async (
     (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
   );
 
-  const { thresholdIndex, hasExpandSwitch } = getExpandListSwitch(
-    snapshotData,
-    snapshotNetWorth,
+  const chunkIds = chunk(
+    snapshotData.map(i => i.id),
+    5,
   );
-
-  const realtimeIds = hasExpandSwitch
-    ? snapshotData.slice(0, thresholdIndex).map(x => x.id)
-    : snapshotRes?.map(x => x.id) || [];
-
-  const chunkIds = chunk(realtimeIds, 5);
 
   const protocols: ComplexProtocol[] = [];
   await Promise.all(
