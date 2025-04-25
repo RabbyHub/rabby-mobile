@@ -81,7 +81,6 @@ domReadyCall(() => {
     document.querySelector('head > meta[name="title"]')?.content ||
     origin;
 
-  console.log(navigator.userAgent);
   rabbyProvider.request({
     method: 'tabCheckin',
     params: { icon, name, origin, userAgent: navigator.userAgent },

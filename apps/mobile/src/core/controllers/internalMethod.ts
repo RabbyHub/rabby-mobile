@@ -50,7 +50,6 @@ const tabCheckin = ({
       icon: icon,
     });
   }
-  console.log('xxxxxxxxxxxxxx', dappService.getDapp(origin));
 
   return null;
 };
