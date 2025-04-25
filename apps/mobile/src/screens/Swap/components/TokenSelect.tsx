@@ -411,25 +411,12 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const list = useMemo(() => {
       if (pinedQueue?.length) {
         return [
-          ...availableToken
-            .map(e => ({
-              ...e,
-              isPined: pinedQueue?.some(
-                x => x.chainId === e.chain && x.tokenId === e.id,
-              ),
-              pinIndex: pinedQueue?.findIndex(
-                x => x.chainId === e.chain && x.tokenId === e.id,
-              ),
-            }))
-            .sort((a, b) => {
-              if (a.pinIndex > -1 && b.pinIndex > -1) {
-                return a.pinIndex - b.pinIndex;
-              }
-
-              const a1 = a.isPined ? 1 : 0;
-              const b1 = b.isPined ? 1 : 0;
-              return b1 - a1;
-            }),
+          ...availableToken.map(e => ({
+            ...e,
+            isPined: pinedQueue?.some(
+              x => x.chainId === e.chain && x.tokenId === e.id,
+            ),
+          })),
         ] as TokenItem[];
       }
 

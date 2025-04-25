@@ -149,18 +149,7 @@ export function useSortTokenPure<T extends TokenItem | AbstractPortfolioToken>(
     });
 
     const sortedOthers = sortTokenByChainBalance(others, balanceCache);
-    return [...hasUsdValue, ...hasAmount, ...sortedOthers].sort((a, b) => {
-      if (a.isPined && b.isPined) {
-        return a.pinIndex! - b.pinIndex!;
-      }
-      if (a.isPined) {
-        return -1;
-      }
-      if (b.isPined) {
-        return 1;
-      }
-      return 0;
-    });
+    return [...hasUsdValue, ...hasAmount, ...sortedOthers];
   }, [list, currentAccount, balanceCache]);
 
   useEffect(() => {
