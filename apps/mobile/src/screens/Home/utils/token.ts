@@ -7,15 +7,12 @@ import { DisplayedProject, DisplayedToken, pQueue } from './project';
 import { isTestnet as checkIsTestnet } from '@/utils/chain';
 import { flatten } from 'lodash';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
-import { openapi, testOpenapi } from '@/core/request';
+import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '../types';
 import { ITokenSetting } from '@/core/services/preference';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { runOnJS } from 'react-native-reanimated';
-import dayjs from 'dayjs';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import BigNumber from 'bignumber.js';
 
 export const queryTokensCache = async (user_id: string, isTestnet = false) => {
   return requestOpenApiWithChainId(
@@ -182,7 +179,7 @@ export function tagTokenItem<
     if (!i.is_core) {
       return [true, false];
     }
-    if ((i._usdValue || 0) < 1 || isExcludeBalance) {
+    if (isExcludeBalance) {
       return [true, true];
     }
     return [false, false];
@@ -207,7 +204,33 @@ export const tagTokenList = (
   tokens: AbstractPortfolioToken[],
   tokenSetting: ITokenSetting,
 ) => {
-  return tokens.map(i => tagTokenItem(i, tokenSetting));
+  const tagedTokens = tokens.map(i => tagTokenItem(i, tokenSetting));
+  const coreTokens = tokens.filter(i => i.is_core);
+  const listLength = coreTokens.length || 0;
+  const totalValue = coreTokens.reduce(
+    (acc, curr) => acc + (curr._usdValue || 0),
+    0,
+  );
+  const threshold = Math.min((totalValue || 0) / 1000, 1000);
+  const thresholdIndex = coreTokens
+    ? coreTokens.findIndex(m => (m._usdValue || 0) < threshold)
+    : -1;
+
+  const hasExpandSwitch =
+    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
+  if (!hasExpandSwitch) {
+    return tagedTokens;
+  }
+  return tagedTokens.map(i => {
+    if (i._isPined || i._isMiniFold || i._isFold || !i.is_core) {
+      return i;
+    }
+    return {
+      ...i,
+      _isMiniFold: (i._usdValue || 0) < threshold,
+      _isFold: (i._usdValue || 0) < threshold,
+    };
+  });
 };
 
 export const ensureAbstractPortfolioToken = (
