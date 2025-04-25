@@ -9,7 +9,6 @@ import { AppRootName, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
-import { trigger } from 'react-native-haptic-feedback';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
@@ -30,10 +29,6 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
         <Text style={styles.desc}>{t('page.sendPoly.modals.content')}</Text>
         <ListItem
           onPress={async () => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
             navigateTo(RootNames.WhitelistInput);
             onDone();
           }}
@@ -43,11 +38,6 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
         />
         <ListItem
           onPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-
             navigateTo(RootNames.ImportAddress2Whitelist);
             onDone();
           }}
@@ -57,11 +47,6 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
         />
         <ListItem
           onPress={() => {
-            trigger('impactLight', {
-              enableVibrateFallback: true,
-              ignoreAndroidSystemSettings: false,
-            });
-
             navigateTo(RootNames.SendHistory);
             onDone();
           }}

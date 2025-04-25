@@ -8,12 +8,8 @@ import {
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayedPortfolio } from '../Home/utils/project';
 import { formatAmount } from '@/utils/math';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { AbstractPortfolioToken } from '../Home/types';
-import { trigger } from 'react-native-haptic-feedback';
 import { openapi } from '@/core/request';
-import { navigate } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
 
 export const useSearch = () => {
   const [searchState, setSearchState] = useState<string>('');
@@ -175,10 +171,6 @@ export const useSearchTokens = (filterText?: string) => {
     if (!text) {
       return;
     }
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     searchedRef.current = text;
     setResultTokens([]);
     setLoading(true);

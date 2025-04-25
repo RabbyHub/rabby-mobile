@@ -92,10 +92,6 @@ function ImportMethods(): JSX.Element {
               style={styles.importItem}
               hasArrow={state?.isNotNewUserProc}
               onPress={async () => {
-                trigger('impactLight', {
-                  enableVibrateFallback: true,
-                  ignoreAndroidSystemSettings: false,
-                });
                 if (
                   // only has address in this set password
                   state?.isNotNewUserProc &&
@@ -127,10 +123,6 @@ function ImportMethods(): JSX.Element {
               hasArrow={state?.isNotNewUserProc}
               style={styles.importItem}
               onPress={async () => {
-                trigger('impactLight', {
-                  enableVibrateFallback: true,
-                  ignoreAndroidSystemSettings: false,
-                });
                 if (
                   state?.isNotNewUserProc &&
                   (await shouldRedirectToSetPasswordBefore2024({
@@ -163,11 +155,6 @@ function ImportMethods(): JSX.Element {
                   hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
                   onPress={() => {
-                    trigger('impactLight', {
-                      enableVibrateFallback: true,
-                      ignoreAndroidSystemSettings: false,
-                    });
-
                     navigation.dispatch(
                       StackActions.push(RootNames.StackAddress, {
                         screen: RootNames.ImportHardwareAddress,
@@ -184,11 +171,6 @@ function ImportMethods(): JSX.Element {
                   hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
                   onPress={() => {
-                    trigger('impactLight', {
-                      enableVibrateFallback: true,
-                      ignoreAndroidSystemSettings: false,
-                    });
-
                     navigation.dispatch(
                       StackActions.push(RootNames.Scanner, {
                         syncExtension: true,
@@ -215,11 +197,6 @@ function ImportMethods(): JSX.Element {
                   hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
                   onPress={() => {
-                    trigger('impactLight', {
-                      enableVibrateFallback: true,
-                      ignoreAndroidSystemSettings: false,
-                    });
-
                     navigation.dispatch(
                       StackActions.push(RootNames.StackAddress, {
                         screen: RootNames.ImportSafeAddress2024,
@@ -244,11 +221,6 @@ function ImportMethods(): JSX.Element {
                   hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
                   onPress={() => {
-                    trigger('impactLight', {
-                      enableVibrateFallback: true,
-                      ignoreAndroidSystemSettings: false,
-                    });
-
                     navigation.dispatch(
                       StackActions.push(RootNames.StackAddress, {
                         screen: RootNames.ImportWatchAddress2024,
@@ -274,11 +246,6 @@ function ImportMethods(): JSX.Element {
                 hasArrow={state?.isNotNewUserProc}
                 style={styles.importItem}
                 onPress={() => {
-                  trigger('impactLight', {
-                    enableVibrateFallback: true,
-                    ignoreAndroidSystemSettings: false,
-                  });
-
                   navigation.dispatch(
                     StackActions.push(RootNames.StackAddress, {
                       screen: RootNames.ImportHardwareAddress,

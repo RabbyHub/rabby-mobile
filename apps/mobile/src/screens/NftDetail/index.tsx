@@ -116,12 +116,6 @@ const RightMore: React.FC<{
       },
     ] as MenuAction[];
   }, [nft, t, isDarkTheme, refreshTags]);
-  const onPress = () => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
-  };
 
   return (
     <DropDownMenuView
@@ -129,7 +123,7 @@ const RightMore: React.FC<{
         menuActions: menuActions,
       }}
       triggerProps={{ action: 'press' }}>
-      <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
+      <CustomTouchableOpacity hitSlop={hitSlop}>
         <RcIconMore width={24} height={24} />
       </CustomTouchableOpacity>
     </DropDownMenuView>

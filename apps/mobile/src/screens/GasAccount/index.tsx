@@ -52,18 +52,10 @@ export const GasAccountScreen = () => {
       isOpen: true,
       type,
     });
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
   });
 
   const handleWithdraw = useMemoizedFn(() => {
     setShowWithdraw(true);
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
   });
 
   const { isLogin } = useGasAccountLogin({ value: gasAccount, loading });

@@ -36,10 +36,6 @@ export const AssestAllHeader = memo(
       serverId: chainServerId || null,
     });
     const handlePress = (key: AsssetKey) => {
-      trigger('impactLight', {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
       onPress?.(key);
     };
 

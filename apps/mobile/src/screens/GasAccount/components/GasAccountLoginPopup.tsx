@@ -59,10 +59,6 @@ const GasAccountLoginContent: React.FC<{
     const isSwitch = gasAccountInfo?.account.id || sig;
     setLoading(true);
     try {
-      trigger('impactLight', {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
       await switchSceneCurrentAccount('GasAccount', account);
       if (isSwitch) {
         await logout();

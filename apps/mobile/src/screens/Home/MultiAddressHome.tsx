@@ -160,10 +160,6 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
           <Card
             style={[styles.curveCard, styles.shadowView]}
             onPress={() => {
-              trigger('impactLight', {
-                enableVibrateFallback: true,
-                ignoreAndroidSystemSettings: false,
-              });
               navigation.dispatch(
                 StackActions.push(RootNames.StackAddress, {
                   screen: RootNames.AddressAssetsOverview,
@@ -566,10 +562,6 @@ function MultiAddressHome(): JSX.Element {
 
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
-      trigger('impactLight', {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
       switch (key) {
         case MultiHomeFeatTitle.Send:
           navigateToSendPolyScreen(false);

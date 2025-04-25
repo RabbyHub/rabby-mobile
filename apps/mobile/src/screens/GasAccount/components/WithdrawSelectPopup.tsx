@@ -307,10 +307,6 @@ const RecipientAddressInnerPopup = ({
             style={[styles.innerRow, isSelected && styles.innerRowSelected]}
             onPress={() => {
               setSelectedAddress(item.recharge_addr);
-              trigger('impactLight', {
-                enableVibrateFallback: true,
-                ignoreAndroidSystemSettings: false,
-              });
             }}>
             <AddressItem account={account}>
               {({ WalletIcon, WalletName, WalletAddress, WalletBalance }) => (

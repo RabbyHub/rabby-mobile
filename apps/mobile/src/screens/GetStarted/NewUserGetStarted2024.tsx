@@ -81,10 +81,6 @@ function GetStartedScreen2024(): JSX.Element {
   }, [getStaretd.processedInit, startCreateAddressProc]);
 
   const handleGoToImport = useCallback(async () => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     if (!getStaretd.processedInit) {
       return;
     }
@@ -100,10 +96,6 @@ function GetStartedScreen2024(): JSX.Element {
   }, [getStaretd.processedInit]);
 
   const handleGoToSyncExtension = useCallback(async () => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     if (!getStaretd.processedInit) {
       return;
     }
