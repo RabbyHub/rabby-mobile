@@ -92,9 +92,9 @@ import { Card } from '@/components2024/Card';
 import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
+import { runOnJS, useSharedValue } from 'react-native-reanimated';
 
-const END_POSITION = 50;
+const END_POSITION = 60;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
 
@@ -121,7 +121,7 @@ export const MultiAssets = ({
   onReachTopStatusChange?: (status: boolean) => void;
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const isTriggered = useRef(false);
+  const isTriggered = useSharedValue(false);
   const {
     top10Addresses,
     list: _rawList,
@@ -771,6 +771,9 @@ export const MultiAssets = ({
   }, [top10Addresses.length]);
 
   const switchTab = (type: TabType) => {
+    console.log(isTriggered.value);
+    if (isTriggered.value) return;
+    isTriggered.value = true;
     setExtendedState(pre => ({
       ...pre,
       currentTab: type,
@@ -784,23 +787,19 @@ export const MultiAssets = ({
     .hitSlop({ left: -40 })
     .simultaneousWithExternalGesture(listRef as any)
     .onUpdate(e => {
-      if (!isTriggered.current) {
-        if (e.translationX <= -END_POSITION) {
-          if (extendedState.currentTab === TabType.portfolio) {
-            isTriggered.current = true;
-            runOnJS(switchTab)(TabType.address);
-          }
+      if (e.translationX <= -END_POSITION) {
+        if (extendedState.currentTab === TabType.portfolio) {
+          runOnJS(switchTab)(TabType.address);
         }
-        if (e.translationX > -END_POSITION) {
-          if (extendedState.currentTab === TabType.address) {
-            isTriggered.current = true;
-            runOnJS(switchTab)(TabType.portfolio);
-          }
+      }
+      if (e.translationX > -END_POSITION) {
+        if (extendedState.currentTab === TabType.address) {
+          runOnJS(switchTab)(TabType.portfolio);
         }
       }
     })
     .onEnd(e => {
-      isTriggered.current = false;
+      isTriggered.value = false;
     });
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const handleReachTopStatusChange = (status: boolean) => {
