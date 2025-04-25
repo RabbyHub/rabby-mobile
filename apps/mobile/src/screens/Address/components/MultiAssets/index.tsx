@@ -390,13 +390,13 @@ export const MultiAssets = ({
   );
 
   const onGotoWatchAddress = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
+    navigation.push(RootNames.StackAddress, {
       screen: RootNames.WatchAddressList,
     });
   }, [navigation]);
 
   const onGotoSafeAddress = React.useCallback(() => {
-    navigation.navigate(RootNames.StackAddress, {
+    navigation.push(RootNames.StackAddress, {
       screen: RootNames.SafeAddressList,
     });
   }, [navigation]);
@@ -464,8 +464,8 @@ export const MultiAssets = ({
         },
         {
           title: data._isPined
-            ? t('page.tokenDetail.action.unpin')
-            : t('page.tokenDetail.action.pin'),
+            ? t('page.tokenDetail.action.unfavorite')
+            : t('page.tokenDetail.action.favorite'),
           icon: data._isPined
             ? isLight
               ? icons.unpinLight
@@ -474,22 +474,20 @@ export const MultiAssets = ({
             ? icons.pinLight
             : icons.pinDark,
           androidIconName: data._isPined
-            ? 'ic_rabby_menu_un_pin'
-            : 'ic_rabby_menu_pin',
-          key: 'pin',
+            ? 'ic_rabby_menu_token_unfavorite'
+            : 'ic_rabby_menu_token_favorite',
+          key: 'favorite',
           action() {
             if (data._isPined) {
               preferenceService.removePinedToken({
                 tokenId: data._tokenId,
                 chainId: data.chain,
               });
-              toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
             } else {
               preferenceService.pinToken({
                 tokenId: data._tokenId,
                 chainId: data.chain,
               });
-              toast.success(t('page.tokenDetail.actionsTips.pin_success'));
             }
             tokenRefresh();
           },

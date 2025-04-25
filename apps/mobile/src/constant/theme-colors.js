@@ -123,6 +123,7 @@ const themeColorsNext2024 = {
     'neutral-bg-2': 'rgba(242, 244, 247, 1)',
     'neutral-bg-3': 'rgba(249, 249, 249, 1)',
     'neutral-bg-4': 'rgba(235, 238, 247, 1)',
+    'neutral-bg-5': 'rgba(224, 229, 236, 0.5)',
     'neutral-line': 'rgba(224, 229, 236, 1)',
     'neutral-title-1': 'rgba(25, 41, 69, 1)',
     /** @deprecated just for compability, use classcial's, not next's */
@@ -174,6 +175,7 @@ const themeColorsNext2024 = {
     'neutral-bg-2': 'rgba(35, 36, 40, 1)',
     'neutral-bg-3': 'rgba(28, 28, 29, 1)',
     'neutral-bg-4': 'rgba(56, 59, 65, 1)',
+    'neutral-bg-5': 'rgba(47, 49, 53, 0.5)',
     'neutral-line': 'rgba(47, 49, 53, 1)',
     'neutral-title-1': 'rgba(247, 250, 252, 1)',
     /** @deprecated just for compability, use classcial's, not next's */

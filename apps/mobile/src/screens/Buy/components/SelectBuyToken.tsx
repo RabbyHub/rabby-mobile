@@ -32,7 +32,7 @@ import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { preferenceService } from '@/core/services';
-import { TextBadge } from '@/screens/Address/components/PinBadge';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -148,25 +148,12 @@ const TokenSelectorInner = ({
 
   const sortedList = useMemo(() => {
     if (pinedQueue?.length) {
-      return list
-        ?.map(e => ({
-          ...e,
-          isPined: pinedQueue?.some(
-            x => x.chainId === e.chain && x.tokenId === e.id,
-          ),
-          pinIndex: pinedQueue?.findIndex(
-            x => x.chainId === e.chain && x.tokenId === e.id,
-          ),
-        }))
-        .sort((a, b) => {
-          if (a.pinIndex > -1 && b.pinIndex > -1) {
-            return a.pinIndex - b.pinIndex;
-          }
-
-          const a1 = a.isPined ? 1 : 0;
-          const b1 = b.isPined ? 1 : 0;
-          return b1 - a1;
-        });
+      return list?.map(e => ({
+        ...e,
+        isPined: pinedQueue?.some(
+          x => x.chainId === e.chain && x.tokenId === e.id,
+        ),
+      }));
     }
     return list;
   }, [pinedQueue, list]);
@@ -219,7 +206,6 @@ const TokenSelectorInner = ({
                 <Text style={styles.tokenName} numberOfLines={1}>
                   {ellipsisOverflowedText(getTokenSymbol(item), 15)}
                 </Text>
-                {item.isPined && <TextBadge />}
 
                 {isSelected && (
                   <CheckedIcon
@@ -249,12 +235,19 @@ const TokenSelectorInner = ({
               )}
             </Text>
           </View>
+          {item.isPined && (
+            <View style={[styles.favoriteBadge]}>
+              <RcIconFavorite color={colors2024['orange-default']} />
+            </View>
+          )}
         </TouchableOpacity>
       );
     },
     [
+      colors2024,
       onChange,
       onClose,
+      styles.favoriteBadge,
       styles.selectedToken,
       styles.tokenHeaderAmount,
       styles.tokenHeaderNetworth,
@@ -299,14 +292,14 @@ const TokenSelectorInner = ({
           containerStyle={styles.searchInputContainer}
           searchIconWrapperStyle={styles.searchIconWrapperStyle}
           inputStyle={styles.inputStyle}
-          searchIcon={<SearchSVG color={colors2024['neutral-foot']} />}
+          searchIcon={<SearchSVG color={colors2024['neutral-secondary']} />}
           inputProps={{
             value: query,
             onChange: e => handleQueryChange(e.nativeEvent.text),
             onFocus: handleInputFocus,
             onBlur: handleInputBlur,
             placeholder: 'Search Token',
-            placeholderTextColor: colors2024['neutral-info'],
+            placeholderTextColor: colors2024['neutral-secondary'],
           }}
         />
       </View>
@@ -460,7 +453,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
     marginBottom: 18,
     textAlign: 'center',
@@ -489,12 +482,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
   },
   searchInputContainer: {
-    borderRadius: 30,
-    backgroundColor: colors2024['neutral-bg-2'],
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 13,
     borderColor: 'transparent',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   searchIconWrapperStyle: {
     paddingLeft: 0,
@@ -577,5 +570,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 24,
     overflow: 'hidden',
     gap: 8,
+  },
+  favoriteBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    backgroundColor: colors2024['orange-light-1'],
+    borderBottomLeftRadius: 12,
+    borderTopRightRadius: 16,
   },
 }));

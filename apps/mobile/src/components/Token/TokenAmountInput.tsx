@@ -16,7 +16,8 @@ import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { useTranslation } from 'react-i18next';
-import { Skeleton } from '@rneui/themed';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import LinearGradient from 'react-native-linear-gradient';
 
 function useLoadTokenList({
   onTokenChange,
@@ -120,6 +121,17 @@ export const TokenAmountInput = React.forwardRef<
         valueText,
       };
     }, [value, token.price]);
+    const Linear = useCallback(() => {
+      return (
+        <LinearGradient
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{ height: '100%' }}
+          colors={[colors2024['neutral-line'], colors2024['neutral-bg-2']]}
+        />
+      );
+    }, [colors2024]);
 
     return (
       <>
@@ -133,22 +145,30 @@ export const TokenAmountInput = React.forwardRef<
               evt.stopPropagation();
               tokenInputRef.current?.focus();
             }}>
-            <NumericInput
-              style={[
-                inlinePrize && !!valueText && styles.inputHasInlinePrize,
-                styles.input,
-              ]}
-              value={value}
-              onChangeText={(value: string) => {
-                onChange?.(formatSpeicalAmount(value));
-              }}
-              ref={tokenInputRef}
-              placeholder="0"
-              placeholderTextColor={colors2024['neutral-info']}
-              inputMode="decimal"
-              keyboardType="numeric"
-              numberOfLines={1}
-            />
+            {!value && token.amount > 0 && isEstimatingGas ? (
+              <CustomSkeleton
+                animation="wave"
+                LinearGradientComponent={Linear}
+                style={styles.skeleton}
+              />
+            ) : (
+              <NumericInput
+                style={[
+                  inlinePrize && !!valueText && styles.inputHasInlinePrize,
+                  styles.input,
+                ]}
+                value={value}
+                onChangeText={(value: string) => {
+                  onChange?.(formatSpeicalAmount(value));
+                }}
+                ref={tokenInputRef}
+                placeholder="0"
+                placeholderTextColor={colors2024['neutral-info']}
+                inputMode="decimal"
+                keyboardType="numeric"
+                numberOfLines={1}
+              />
+            )}
             <View style={styles.inlinePrizeContainer}>
               <Text
                 style={styles.inlinePrizeText}
@@ -161,11 +181,7 @@ export const TokenAmountInput = React.forwardRef<
           {/* max button */}
           {!value &&
             token.amount > 0 &&
-            (isEstimatingGas ? (
-              <Skeleton
-                style={[styles.maxButtonWrapper, styles.maxButtonLoading]}
-              />
-            ) : (
+            (isEstimatingGas ? null : (
               <TouchableOpacity
                 disabled={isEstimatingGas}
                 style={styles.maxButtonWrapper}
@@ -282,5 +298,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
     },
     maxButtonLoading: { width: 30, height: '100%', marginLeft: 2 },
+    skeleton: {
+      marginTop: 16,
+      marginBottom: 10,
+      backgroundColor: colors2024['neutral-line'],
+      height: 36,
+      width: 120,
+      borderRadius: 100,
+    },
   };
 });
