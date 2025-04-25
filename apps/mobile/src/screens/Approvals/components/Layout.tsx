@@ -21,13 +21,19 @@ import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
 import { apiApprovals } from '@/core/apis';
 import { useRefState } from '@/hooks/common/useRefState';
 import { ApprovalsLayouts } from '../layout';
-import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
+import {
+  AssetApprovalSpender,
+  summarizeRevoke,
+} from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
 import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useApprovalAlertCounts } from '@/screens/Home/hooks/approvals';
+import { RootNames } from '@/constant/layout';
+import { navigate } from '@/utils/navigation';
+
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
 
@@ -91,16 +97,10 @@ export function ApprovalsBottomArea() {
 
   const [showModal, setShowModal] = useState(false);
 
-  const { forceUpdate } = useApprovalAlertCounts(10 * 60 * 1000);
-  const {
-    filterType,
-    loadApprovals,
-    safeSizeInfo: { safeSizes },
-  } = useApprovalsPage();
-  const { contractRevokeMap, assetRevokeMap, resetRevokeMaps } =
-    useRevokeApprovals();
+  const { filterType } = useApprovalsPage();
+  const { contractRevokeMap, assetRevokeMap } = useRevokeApprovals();
 
-  const timeoutId = React.useRef<ReturnType<typeof setTimeout>>();
+  const { displaySortedAssetsList } = useApprovalsPage();
 
   const { currentRevokeList, revokeSummary } = React.useMemo(() => {
     const list =
@@ -140,48 +140,17 @@ export function ApprovalsBottomArea() {
   } = useRefState(false);
   const { safeOffBottom } = useSafeSizes();
 
-  useEffect(() => {
-    return () => {
-      if (timeoutId.current) {
-        clearTimeout(timeoutId.current);
-      }
-    };
-  }, []);
-
   const handleRevoke = React.useCallback(() => {
     setShowModal(false);
-    if (isSubmitLoadingRef.current) {
-      return;
-    }
-    setIsSubmitLoading(true, true);
 
-    apiApprovals
-      .revoke({ list: currentRevokeList })
-      .then(() => {
-        if (timeoutId.current) {
-          clearTimeout(timeoutId.current);
-          timeoutId.current = undefined;
-        }
-        forceUpdate();
-        timeoutId.current = setTimeout(() => {
-          loadApprovals();
-        }, 1000);
-        resetRevokeMaps();
-      })
-      .catch(err => {
-        console.error(err);
-      })
-      .finally(() => {
-        setIsSubmitLoading(false, true);
-      });
-  }, [
-    isSubmitLoadingRef,
-    setIsSubmitLoading,
-    currentRevokeList,
-    forceUpdate,
-    resetRevokeMaps,
-    loadApprovals,
-  ]);
+    navigate(RootNames.StackTransaction, {
+      screen: RootNames.BatchRevoke,
+      params: {
+        revokeList: currentRevokeList,
+        dataSource: displaySortedAssetsList,
+      },
+    });
+  }, [currentRevokeList, displaySortedAssetsList]);
 
   const onRevoke = () => {
     const hasPackedPermit2Sign = Object.values(

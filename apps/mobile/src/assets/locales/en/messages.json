@@ -792,7 +792,11 @@
       "selectAll": "Select All",
       "approvedContractsAndAmount": "Approved Contracts and Amount",
       "myBalance": "My Balance",
-      "unknownContract": "Unknown Contract"
+      "unknownContract": "Unknown Contract",
+      "startRevoke": "Start Revoke ({{currentCount}}/{{totalCount}})",
+      "asset": "Asset",
+      "revokeFrom": "Revoke From",
+      "gasFee": "Gas Fee"
     },
     "gasTopUp": {
       "No_Tokens": "No Tokens",
