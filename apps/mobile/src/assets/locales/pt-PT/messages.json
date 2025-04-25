@@ -178,6 +178,18 @@
       "title": "Os endereços de carteiras móveis não são mais suportados",
       "desc": "Os seguintes endereços serão removidos. Ainda pode encontrá-los na aplicação original da carteira. Importe a frase-semente ou chave privada para usá-los aqui.",
       "button": "Entendi"
+    },
+    "externalSwapBrideDappPopup": {
+      "chainNotSupported": "Não suportado nesta cadeia",
+      "noDapp": "Sem Dapps disponíveis",
+      "viewDappOptions": "Ver Opções de Dapp",
+      "noQuotesForChain": "Ainda não há cotações disponíveis para esta cadeia",
+      "selectADapp": "Selecione um Dapp",
+      "help": "Por favor, entre em contacto com a equipa oficial desta cadeia para suporte.",
+      "swapOnDapp": "Troca no Dapp",
+      "bridgeOnDapp": "Ponte na Dapp",
+      "thirdPartyDappToProceed": "Por favor, use uma Dapp de terceiros para prosseguir.",
+      "noDapps": "Não há Dapp disponível nesta cadeia"
     }
   },
   "global": {
@@ -1657,7 +1669,8 @@
     "search": {
       "header": {
         "placeHolder": "Pesquisa",
-        "searchPlaceHolder": "Pesquisar Nome / Endereço do Token"
+        "searchPlaceHolder": "Pesquisar Nome / Endereço do Token",
+        "favoriteTitle": "Token Favorito"
       },
       "sectionHeader": {
         "Defi": "DeFi",
@@ -1693,7 +1706,9 @@
         "less": "Menos",
         "unfold": "Desdobrar",
         "all": "Todos",
-        "excludeBalance": "Excluir do Saldo"
+        "excludeBalance": "Excluir do Saldo",
+        "favorite": "Favorito",
+        "unfavorite": "Remover Favoritos"
       },
       "noBalance": "Sem saldo",
       "excludeBalanceTips": "Este ativo é excluído do seu saldo total para precisão. Pode tocá-lo para ver detalhes e incluí-lo, se preferir.",
@@ -2005,6 +2020,30 @@
       "tabs": {
         "portfolio": "Portefólio",
         "address": "Endereço"
+      }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "title": "Favoritos",
+        "fold": "Dobre",
+        "showAll": "Mostrar Todos"
+      },
+      "BrowserHeader": {
+        "searchAndroid": "Pesquisar Dapp",
+        "searchIos": "Pesquisar Website"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "favorites": "Favoritos",
+        "history": "Histórico",
+        "tab": "Aba"
+      },
+      "BrowserBookmarkList": {
+        "title": "Favoritos"
+      },
+      "BrowserHistoryList": {
+        "title": "Histórico"
       }
     }
   },

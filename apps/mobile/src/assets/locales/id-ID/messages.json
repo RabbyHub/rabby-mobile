@@ -1623,7 +1623,9 @@
         "unpin": "Lepaskan Pin",
         "excludeBalance": "Kecualikan dari Saldo",
         "pin": "Pin",
-        "Sell": "Jual"
+        "Sell": "Jual",
+        "favorite": "Favorit",
+        "unfavorite": "Hapus dari Favorit"
       },
       "actionsTips": {
         "pin_success": "Ditempelkan dengan sukses",
@@ -1698,7 +1700,8 @@
       },
       "header": {
         "searchPlaceHolder": "Cari Nama Token / Alamat",
-        "placeHolder": "Cari"
+        "placeHolder": "Cari",
+        "favoriteTitle": "Token Favorit"
       },
       "tokenItem": {
         "verifyDangerTips": "Ini adalah token scam",
@@ -1809,6 +1812,30 @@
       "tabs": {
         "address": "Alamat",
         "portfolio": "Portofolio"
+      }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "title": "Favorit",
+        "fold": "Lipat",
+        "showAll": "Tampilkan Semua"
+      },
+      "BrowserHeader": {
+        "searchIos": "Cari Situs Web",
+        "searchAndroid": "Cari Dapp"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "tab": "Tab",
+        "history": "Sejarah",
+        "favorites": "Favorit"
+      },
+      "BrowserBookmarkList": {
+        "title": "Favorit"
+      },
+      "BrowserHistoryList": {
+        "title": "Riwayat"
       }
     }
   },
@@ -1948,6 +1975,18 @@
       "title": "Alamat dompet mobile tidak lagi didukung",
       "button": "Mengerti",
       "desc": "Alamat berikut akan dihapus. Anda masih dapat menemukannya di aplikasi dompet asli. Impor frasa benih atau kunci pribadi untuk menggunakannya di sini."
+    },
+    "externalSwapBrideDappPopup": {
+      "viewDappOptions": "Lihat Opsi Dapp",
+      "noQuotesForChain": "Belum ada kutipan yang tersedia untuk rantai ini.",
+      "bridgeOnDapp": "Jembatan di Dapp",
+      "swapOnDapp": "Tukar di Dapp",
+      "thirdPartyDappToProceed": "Silakan gunakan Dapp pihak ketiga untuk melanjutkan",
+      "chainNotSupported": "Tidak didukung di rantai ini",
+      "selectADapp": "Pilih Dapp",
+      "noDapps": "Tidak ada Dapp yang tersedia di rantai ini",
+      "help": "Silakan hubungi tim resmi dari rantai ini untuk dukungan.",
+      "noDapp": "Tidak ada Dapps yang tersedia"
     }
   },
   "native": {

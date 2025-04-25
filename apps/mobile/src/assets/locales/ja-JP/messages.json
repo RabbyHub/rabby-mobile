@@ -1559,7 +1559,9 @@
         "excludeBalance": "残高から除外",
         "fold": "フォルド",
         "unpin": "ピン留め解除",
-        "Sell": "売る"
+        "Sell": "売る",
+        "favorite": "お気に入り",
+        "unfavorite": "お気に入り解除"
       },
       "excludeBalanceTips": "この資産は正確性のために総残高から除外されています。詳細を表示し、必要に応じて含めるにはタップしてください。",
       "actionsTips": {
@@ -1674,7 +1676,8 @@
     "search": {
       "header": {
         "placeHolder": "検索",
-        "searchPlaceHolder": "トークン名 / アドレスを検索"
+        "searchPlaceHolder": "トークン名 / アドレスを検索",
+        "favoriteTitle": "お気に入りのトークン"
       },
       "sectionHeader": {
         "Defi": "DeFi",
@@ -1862,6 +1865,30 @@
       "tabs": {
         "portfolio": "ポートフォリオ",
         "address": "アドレス"
+      }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "showAll": "すべて表示",
+        "title": "お気に入り",
+        "fold": "折りたたむ"
+      },
+      "BrowserHeader": {
+        "searchAndroid": "Dappを検索",
+        "searchIos": "ウェブサイトを検索"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "favorites": "お気に入り",
+        "tab": "タブ",
+        "history": "履歴"
+      },
+      "BrowserBookmarkList": {
+        "title": "お気に入り"
+      },
+      "BrowserHistoryList": {
+        "title": "履歴"
       }
     }
   },
@@ -2063,6 +2090,18 @@
       "instant": "インスタント",
       "doNotReserve": "ガスを予約しない",
       "normal": "ノーマル"
+    },
+    "externalSwapBrideDappPopup": {
+      "bridgeOnDapp": "Dapp上のブリッジ",
+      "help": "このチェーンの公式チームにサポートを依頼してください。",
+      "thirdPartyDappToProceed": "サードパーティのDappを使用して続行してください",
+      "viewDappOptions": "Dappオプションを表示",
+      "swapOnDapp": "Dappでスワップする",
+      "noDapps": "このチェーンには利用可能なDappがありません",
+      "selectADapp": "Dappを選択してください",
+      "chainNotSupported": "このチェーンではサポートされていません",
+      "noDapp": "利用可能なDappsはありません",
+      "noQuotesForChain": "このチェーンにはまだ利用可能な見積もりがありません"
     }
   },
   "common": {

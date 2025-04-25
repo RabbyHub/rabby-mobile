@@ -178,6 +178,18 @@
       "EditModal": {
         "title": "Editar nota de dirección"
       }
+    },
+    "externalSwapBrideDappPopup": {
+      "selectADapp": "Selecciona una Dapp",
+      "thirdPartyDappToProceed": "Por favor, utiliza una Dapp de terceros para continuar.",
+      "viewDappOptions": "Ver Opciones de Dapp",
+      "noDapps": "No hay Dapp disponible en esta cadena",
+      "noDapp": "No hay Dapps disponibles",
+      "noQuotesForChain": "Aún no hay cotizaciones disponibles para esta cadena",
+      "swapOnDapp": "Intercambiar en Dapp",
+      "help": "Por favor, contacta al equipo oficial de esta cadena para obtener soporte.",
+      "bridgeOnDapp": "Puente en Dapp",
+      "chainNotSupported": "No soportado en esta cadena"
     }
   },
   "page": {
@@ -1608,7 +1620,8 @@
       },
       "header": {
         "placeHolder": "Buscar",
-        "searchPlaceHolder": "Buscar Nombre del Token / Dirección"
+        "searchPlaceHolder": "Buscar Nombre del Token / Dirección",
+        "favoriteTitle": "Token Favorito"
       },
       "tokenItem": {
         "verifyDangerTips": "Este es un token de estafa",
@@ -1684,7 +1697,9 @@
         "includeBalance": "Incluir en Balance",
         "fold": "Plegar",
         "Buy": "Comprar",
-        "less": "Menos"
+        "less": "Menos",
+        "favorite": "Favorito",
+        "unfavorite": "No favorito"
       },
       "notSupportedOnChain": "No compatible con esta cadena",
       "excludeBalanceTips": "Este activo está excluido de tu saldo total para mayor precisión. Puedes tocarlo para ver los detalles e incluirlo si lo prefieres.",
@@ -1963,6 +1978,30 @@
       "tabs": {
         "portfolio": "Portafolio",
         "address": "Dirección"
+      }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "title": "Favoritos",
+        "fold": "Plegar",
+        "showAll": "Mostrar todo"
+      },
+      "BrowserHeader": {
+        "searchIos": "Buscar sitio web",
+        "searchAndroid": "Buscar Dapp"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "tab": "Pestaña",
+        "favorites": "Favoritos",
+        "history": "Historia"
+      },
+      "BrowserBookmarkList": {
+        "title": "Favoritos"
+      },
+      "BrowserHistoryList": {
+        "title": "Historial"
       }
     }
   },

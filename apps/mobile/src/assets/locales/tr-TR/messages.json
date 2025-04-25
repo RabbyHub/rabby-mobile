@@ -1623,7 +1623,9 @@
         "Buy": "Satın Al",
         "unfold": "Açılmak",
         "fold": "Katla",
-        "excludeBalance": "Bakiyeden Hariç Tut"
+        "excludeBalance": "Bakiyeden Hariç Tut",
+        "favorite": "Favori",
+        "unfavorite": "Favori Değil"
       },
       "actionsTips": {
         "unpin_success": "Başarıyla sabitlendi",
@@ -1698,7 +1700,8 @@
       },
       "header": {
         "placeHolder": "Araştırma",
-        "searchPlaceHolder": "Token Adı / Adresi Ara"
+        "searchPlaceHolder": "Token Adı / Adresi Ara",
+        "favoriteTitle": "Favori Token"
       },
       "tokenItem": {
         "verifyDangerTips": "Bu bir dolandırıcılık token'ıdır.",
@@ -1809,6 +1812,30 @@
       "tabs": {
         "address": "Adres",
         "portfolio": "Portföy"
+      }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "showAll": "Tümünü Göster",
+        "title": "Favoriler",
+        "fold": "Kıvrım"
+      },
+      "BrowserHeader": {
+        "searchIos": "Websitesini Ara",
+        "searchAndroid": "Dapp Ara"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "tab": "Sekme",
+        "favorites": "Favoriler",
+        "history": "Geçmiş"
+      },
+      "BrowserBookmarkList": {
+        "title": "Favoriler"
+      },
+      "BrowserHistoryList": {
+        "title": "Geçmiş"
       }
     }
   },
@@ -1948,6 +1975,18 @@
       "button": "Tamam",
       "title": "Mobil cüzdan adresleri artık desteklenmiyor.",
       "desc": "Aşağıdaki adresler kaldırılacak. Onları orijinal cüzdan uygulamasında bulmaya devam edebilirsiniz. Burada kullanmak için seed ifadesini veya özel anahtarı içe aktarın."
+    },
+    "externalSwapBrideDappPopup": {
+      "bridgeOnDapp": "Dapp'te Köprü",
+      "noDapp": "Mevcut Dapp yok",
+      "viewDappOptions": "Dapp Seçeneklerini Görüntüle",
+      "noDapps": "Bu zincirde mevcut Dapp yok.",
+      "selectADapp": "Bir Dapp Seçin",
+      "help": "Lütfen destek için bu zincirin resmi ekibiyle iletişime geçin.",
+      "swapOnDapp": "Dapp'ta Takas Yapın",
+      "noQuotesForChain": "Bu ağ için henüz hiç alıntı mevcut değil.",
+      "thirdPartyDappToProceed": "Lütfen işlemi devam ettirmek için bir üçüncü taraf Dapp kullanın.",
+      "chainNotSupported": "Bu zincirde desteklenmiyor"
     }
   },
   "native": {

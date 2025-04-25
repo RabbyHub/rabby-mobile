@@ -163,6 +163,18 @@
       "button": "เข้าใจแล้ว",
       "title": "ที่อยู่ใน Mobile wallet ไม่ได้รับการรองรับอีกต่อไป",
       "desc": "ที่อยู่ต่อไปนี้จะถูกลบ คุณยังสามารถค้นหาพวกมันในแอปกระเป๋าเงินเดิมได้ นำเข้า seed phrase หรือ private key เพื่อใช้งานที่นี่"
+    },
+    "externalSwapBrideDappPopup": {
+      "selectADapp": "เลือก Dapp",
+      "noQuotesForChain": "ยังไม่มีการเสนอราคาสำหรับเครือข่ายนี้",
+      "viewDappOptions": "ดูตัวเลือก Dapp",
+      "bridgeOnDapp": "สะพานบน Dapp",
+      "swapOnDapp": "สลับบน Dapp",
+      "noDapps": "ไม่มี Dapp ที่พร้อมใช้งานในเครือข่ายนี้",
+      "chainNotSupported": "ไม่รองรับในเครือข่ายนี้",
+      "thirdPartyDappToProceed": "กรุณาใช้ Dapp ของบุคคลที่สามเพื่อดำเนินการต่อ",
+      "noDapp": "ไม่พบ Dapps",
+      "help": "โปรดติดต่อทีมงานทางการของเครือข่ายนี้เพื่อขอความช่วยเหลือ"
     }
   },
   "page": {
@@ -1576,7 +1588,8 @@
       },
       "header": {
         "placeHolder": "ค้นหา",
-        "searchPlaceHolder": "ค้นหาชื่อ Token / ที่อยู่"
+        "searchPlaceHolder": "ค้นหาชื่อ Token / ที่อยู่",
+        "favoriteTitle": "โทเค็นที่ชื่นชอบ"
       },
       "tokenItem": {
         "verifyDangerTips": "นี่คือโทเค็นหลอกลวง",
@@ -1780,7 +1793,9 @@
         "pin": "รหัส PIN",
         "includeBalance": "รวมในยอดเงินคงเหลือ",
         "Buy": "ซื้อ",
-        "fold": "พับ"
+        "fold": "พับ",
+        "favorite": "รายการโปรด",
+        "unfavorite": "ยกเลิกการโปรดปราน"
       },
       "SeeMore": "ดูเพิ่มเติม",
       "Transaction": "ธุรกรรม",
@@ -1948,6 +1963,30 @@
       "tabs": {
         "portfolio": "ผลงาน",
         "address": "ที่อยู่"
+      }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "fold": "พับ",
+        "showAll": "แสดงทั้งหมด",
+        "title": "รายการโปรด"
+      },
+      "BrowserHeader": {
+        "searchAndroid": "ค้นหา Dapp",
+        "searchIos": "ค้นหาเว็บไซต์"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "tab": "แท็บ",
+        "favorites": "รายการโปรด",
+        "history": "ประวัติศาสตร์"
+      },
+      "BrowserBookmarkList": {
+        "title": "รายการโปรด"
+      },
+      "BrowserHistoryList": {
+        "title": "ประวัติ"
       }
     }
   },
