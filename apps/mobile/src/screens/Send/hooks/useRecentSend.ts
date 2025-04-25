@@ -90,9 +90,6 @@ export const useRecentSend = () => {
       const chain = findChain({ id: item.chainId });
       return (
         !chain?.isTestnet &&
-        !item.isSubmitFailed &&
-        !item.isFailed &&
-        !item.isWithdrawed &&
         !item.maxGasTx.action?.actionData.cancelTx &&
         item.$ctx?.ga?.source === 'sendToken'
       );
@@ -125,6 +122,7 @@ export const useRecentSend = () => {
           return {
             toAddress: item.data.sends[0].to_addr,
             time: item.time / 1000,
+            isFailed: item.data.tx?.status !== 1,
           };
         } else {
           return {
@@ -134,10 +132,14 @@ export const useRecentSend = () => {
                 ?.protocol?.name ||
               '',
             time: item.time / 1000,
+            isFailed:
+              item.data.isSubmitFailed ||
+              item.data.isFailed ||
+              item.data.isWithdrawed,
           };
         }
       })
-      .filter(item => item.toAddress.length && item.time)
+      .filter(item => item.toAddress.length && item.time && !item.isFailed)
       .slice(0, 3);
   }, [markedList]);
 
