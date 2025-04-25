@@ -13,7 +13,7 @@ import {
 } from './types';
 import { MODAL_VIEWS, SNAP_POINTS } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
 import { globalSheetModalEvents } from './event';
 import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
@@ -177,6 +177,9 @@ export const GlobalBottomSheetModal2024 = () => {
       {modals.map(modal => {
         const ModalView = MODAL_VIEWS[modal.params.name];
         const bottomSheetModalProps = modal.params.bottomSheetModalProps;
+        const RootView = bottomSheetModalProps?.useBottomSheetScrollView
+          ? BottomSheetScrollView
+          : BottomSheetView;
 
         const modalViewProps = {
           ...modal.params,
@@ -200,7 +203,7 @@ export const GlobalBottomSheetModal2024 = () => {
             ref={modal.ref}
             name={modal.id}
             children={
-              <BottomSheetView
+              <RootView
                 // eslint-disable-next-line react-native/no-inline-styles
                 // TODO: need check
                 style={
@@ -208,7 +211,7 @@ export const GlobalBottomSheetModal2024 = () => {
                 }
                 {...panResponder.panHandlers}>
                 <ModalView {...modalViewProps} />
-              </BottomSheetView>
+              </RootView>
             }
             stackBehavior="push"
             {...makeBottomSheetProps({

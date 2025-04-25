@@ -16,7 +16,6 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
 import { useQrCodeModal } from '../QrCodeModal/useQrCodeModal';
 import { useTranslation } from 'react-i18next';
-import { Handlable } from '@/components/customized/BottomSheetHandle';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
@@ -69,9 +68,7 @@ export const AddressDetailInner: React.FC<
 
   return (
     <View style={styles.root}>
-      <Handlable
-        __IN_SHEET_MODAL__={__IN_SHEET_MODAL__}
-        style={styles.qrCodeView}>
+      <View style={styles.qrCodeView}>
         <TouchableOpacity
           style={styles.qrCode}
           hitSlop={10}
@@ -84,14 +81,10 @@ export const AddressDetailInner: React.FC<
             color={colors2024['neutral-body']}
           />
         </TouchableOpacity>
-      </Handlable>
-      <Handlable __IN_SHEET_MODAL__={__IN_SHEET_MODAL__}>
-        <AddressInfoItem account={account} />
-      </Handlable>
+      </View>
+      <AddressInfoItem account={account} />
       <View style={styles.cardList}>
-        <Handlable.Fragment __IN_SHEET_MODAL__={__IN_SHEET_MODAL__}>
-          <AddressAssetsItem onCancel={onCancel} account={account} />
-        </Handlable.Fragment>
+        <AddressAssetsItem onCancel={onCancel} account={account} />
         <AddressBackupItem onCancel={onCancel} account={account} />
         <Card style={styles.card}>
           <Item

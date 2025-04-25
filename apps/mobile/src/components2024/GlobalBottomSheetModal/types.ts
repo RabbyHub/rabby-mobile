@@ -103,6 +103,10 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
   onCancel?: () => void;
   bottomSheetModalProps?: Partial<BottomSheetModalProps> & {
     linearGradientType?: LinearGradientContainerProps['type'];
+    /**
+     * use BottomSheetScrollView instead of BottomSheetView
+     */
+    useBottomSheetScrollView?: boolean;
   };
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,
