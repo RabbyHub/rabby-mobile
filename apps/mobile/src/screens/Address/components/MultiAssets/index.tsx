@@ -771,7 +771,6 @@ export const MultiAssets = ({
   }, [top10Addresses.length]);
 
   const switchTab = (type: TabType) => {
-    console.log(isTriggered.value);
     if (isTriggered.value) return;
     isTriggered.value = true;
     setExtendedState(pre => ({
