@@ -20,7 +20,11 @@ import {
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { trigger } from 'react-native-haptic-feedback';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
+import {
+  StackActions,
+  TabActions,
+  useFocusEffect,
+} from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
@@ -619,8 +623,8 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Dapps:
-          navigation.navigate(RootNames.StackDapps, {
-            screen: RootNames.Dapps,
+          navigation.navigate(RootNames.StackBrowser, {
+            screen: RootNames.BrowserScreen,
             params: {},
           });
           break;

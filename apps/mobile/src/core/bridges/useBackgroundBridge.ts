@@ -98,8 +98,8 @@ export function useSetupWebview({
       const session = sessionService.getOrCreateSession(newBridge);
       session?.setProp({
         origin: urlBridge,
-        icon: '//todo',
-        name: '//todo',
+        icon: '',
+        name: titleRef.current,
       });
 
       if (!dappService.getDapp(urlBridge) && session) {
@@ -183,19 +183,14 @@ export function useSetupWebview({
       //   return false;
       // }
 
+      const dappOrigin = nativeEvent.url;
       backgroundBridgeRefs.current = [];
       const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
         ? dappOrigin
         : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
       initializeBackgroundBridge(formattedDappOrigin, true);
     },
-    [
-      backgroundBridgeRefs,
-      changeUrl,
-      dappOrigin,
-      initializeBackgroundBridge,
-      urlRef,
-    ],
+    [backgroundBridgeRefs, changeUrl, initializeBackgroundBridge, urlRef],
   );
 
   return {

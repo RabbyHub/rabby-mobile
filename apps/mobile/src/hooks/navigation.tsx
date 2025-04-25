@@ -8,13 +8,18 @@ import {
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 import { useTheme2024 } from '@/hooks/theme';
-import { getReadyNavigationInstance, navigationRef } from '@/utils/navigation';
+import {
+  getLatestNavigationName,
+  getReadyNavigationInstance,
+  navigationRef,
+} from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
 import {
   NavigationContainerRef,
+  TabActions,
   useNavigation,
 } from '@react-navigation/native';
 
@@ -286,6 +291,13 @@ export function resetNavigationTo(
         index: 0,
         routes: [{ name: RootNames.Unlock, params: {} }],
       });
+      if (
+        getLatestNavigationName() === RootNames.BrowserScreen ||
+        getLatestNavigationName() === RootNames.BrowserManageScreen
+      ) {
+        navigation.dispatch(TabActions.jumpTo(RootNames.StackMain));
+      }
+
       break;
     }
     case 'GetStarted2024': {

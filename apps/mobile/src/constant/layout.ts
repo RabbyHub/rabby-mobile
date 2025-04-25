@@ -196,6 +196,12 @@ export const RootNames = {
   SyncExtensionPassword: 'SyncExtensionPassword',
   SyncExtensionImported: 'SyncExtensionImported',
   SyncExtensionAccountSuccess: 'SyncExtensionAccountSuccess',
+
+  StackMain: 'StackMain',
+
+  StackBrowser: 'StackBrowser',
+  BrowserScreen: 'BrowserScreen',
+  BrowserManageScreen: 'BrowserManageScreen',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

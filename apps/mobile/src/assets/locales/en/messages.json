@@ -1810,6 +1810,30 @@
         "portfolio": "Portfolio",
         "address": "Address"
       }
+    },
+    "browser": {
+      "BrowserBookmarkSection": {
+        "title": "Favorites",
+        "showAll": "Show All",
+        "fold": "Fold"
+      },
+      "BrowserHeader": {
+        "searchIos": "Search Website",
+        "searchAndroid": "Search Dapp"
+      }
+    },
+    "browserManage": {
+      "option": {
+        "tab": "Tab",
+        "history": "History",
+        "favorites": "Favorites"
+      },
+      "BrowserBookmarkList": {
+        "title": "Favorites"
+      },
+      "BrowserHistoryList": {
+        "title": "History"
+      }
     }
   },
   "component": {

@@ -7,6 +7,7 @@ import * as pump from 'pump';
 import { v4 as uuid } from 'uuid';
 import MobilePortStream from './MobilePortStream';
 import ReactNativePostMessageStream from './ReactNativePostMessageStream';
+import { hackGoogle } from './google';
 
 const PORT_INPAGE = 'rabby-inpage';
 const PORT_CONTENT_SCRIPT = 'rabby-contentscript';
@@ -44,11 +45,36 @@ const domReadyCall = callback => {
   }
 };
 
+function getAppleTouchIcon() {
+  const icons = Array.from(
+    document.querySelectorAll(
+      'link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]',
+    ),
+  );
+
+  icons.sort((a, b) => {
+    const sizeA = a.sizes ? parseInt(a.sizes.toString().split('x')[0]) : 0;
+    const sizeB = b.sizes ? parseInt(b.sizes.toString().split('x')[0]) : 0;
+    return sizeB - sizeA;
+  });
+
+  return icons.length > 0 ? icons[0].href : null;
+}
+
 domReadyCall(() => {
   const origin = location.origin;
-  const icon =
-    document.querySelector('head > link[rel~="icon"]')?.href ||
-    document.querySelector('head > meta[itemprop="image"]')?.content;
+  let icon =
+    getAppleTouchIcon() ||
+    document.querySelector('head > meta[itemprop="image"]')?.content ||
+    document.querySelector('head > link[rel~="icon"]')?.href;
+
+  if (icon && !/^https?:\/\//.test(icon)) {
+    try {
+      icon = new URL(icon, origin).href;
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   const name =
     document.title ||
@@ -57,7 +83,7 @@ domReadyCall(() => {
 
   rabbyProvider.request({
     method: 'tabCheckin',
-    params: { icon, name, origin },
+    params: { icon, name, origin, userAgent: navigator.userAgent },
   });
 });
 
@@ -174,3 +200,5 @@ function notifyProviderOfStreamFailure() {
     window.location.origin,
   );
 }
+
+hackGoogle();

@@ -95,7 +95,7 @@ export function AccountSwitcherModal({
 const getModalStyle = createGetStyles2024(ctx => {
   return {
     handleStyle: {
-      backgroundColor: 'transparent',
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
       paddingTop: 10,
       height: 36,
     },

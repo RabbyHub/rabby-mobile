@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { View, SectionList, RefreshControl } from 'react-native';
+import { View, SectionList, RefreshControl, Platform } from 'react-native';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar, Text } from '@/components';
 import { RcIconMore } from '@/assets/icons/home';
@@ -37,6 +37,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_ANDROID } from '@/core/native/utils';
 import { ellipsisAddress } from '@/utils/address';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { Button } from '@/components2024/Button';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -240,6 +242,8 @@ export const DeFiDetailScreen = () => {
     );
   });
 
+  const { openTab } = useBrowser();
+
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
@@ -399,6 +403,17 @@ export const DeFiDetailScreen = () => {
           />
         }
       />
+      {data?.site_url ? (
+        <View style={styles.footer}>
+          <Button
+            type="primary"
+            title={Platform.OS === 'ios' ? 'View in Website' : 'View in Dapp'}
+            onPress={() => {
+              openTab(data.site_url);
+            }}
+          />
+        </View>
+      ) : null}
     </NormalScreenContainer2024>
   );
 };
@@ -484,5 +499,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
+  },
+  footer: {
+    width: '100%',
+    paddingBottom: 56,
+    paddingHorizontal: 16,
   },
 }));
