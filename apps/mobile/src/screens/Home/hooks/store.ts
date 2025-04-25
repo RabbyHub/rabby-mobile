@@ -67,7 +67,8 @@ export interface IAssets {
 export const combinedTokens = (assetsMap: {
   [address: string]: IAssets;
 }): CombineTokensItem[] => {
-  const { unfoldTokens = [] } = preferenceService.getUserTokenSettings() || {};
+  const { unfoldTokens = [] } =
+    preferenceService.getUserTokenSettingsSync() || {};
   const tokenMap: Record<string, CombineTokensItem> = {};
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()),
