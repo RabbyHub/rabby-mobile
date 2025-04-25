@@ -15,6 +15,7 @@ import { TokenSelectType } from '@/components/Token/TokenSelectorSheetModal';
 import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { Account } from '@/core/services/preference';
+import { isAddress } from 'viem';
 
 export const useTokenAssetsMap = () => {
   const [tokensMap, setTokensMap] = useState<{
@@ -69,6 +70,9 @@ export const useSelectTokens = ({
       });
       return list
         .filter(e => e.chain === chain_server_id)
+        .filter(e =>
+          isAddress(keyword, { strict: false }) ? true : !!e.is_core,
+        )
         .map(
           e =>
             ({

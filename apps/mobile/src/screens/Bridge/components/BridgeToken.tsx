@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -46,6 +46,7 @@ const BridgeToken = ({
   isMaxRef,
   handleMax,
   skeletonLoading,
+  disabled,
 }: {
   clickMaxBtnCount?: number;
   handleMax?: () => void;
@@ -63,6 +64,7 @@ const BridgeToken = ({
   noQuote?: boolean;
   inSufficient?: boolean;
   skeletonLoading?: boolean;
+  disabled?: boolean;
 } & (
   | {
       type?: 'from';
@@ -138,6 +140,12 @@ const BridgeToken = ({
     );
   }, [colors2024]);
 
+  useEffect(() => {
+    if (isFromToken && disabled) {
+      onInputChange?.('');
+    }
+  }, [isFromToken, disabled, onInputChange]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -149,7 +157,7 @@ const BridgeToken = ({
           chainEnum={chain}
           onChange={onChangeChain}
           // excludeChains={excludeChains}
-          supportChains={supportedChains}
+          // supportChains={supportedChains}
         />
       </View>
 
@@ -174,6 +182,8 @@ const BridgeToken = ({
           ) : (
             <View style={[styles.inputBox]}>
               <TextInput
+                contextMenuHidden={disabled}
+                editable={!disabled}
                 numberOfLines={1}
                 multiline={false}
                 textAlign="left"
@@ -191,7 +201,10 @@ const BridgeToken = ({
           )}
           <View style={styles.tokenSelectBox}>
             {isFromToken && !value && (
-              <TouchableOpacity onPress={handleMax} style={styles.maxBtnBox}>
+              <TouchableOpacity
+                activeOpacity={disabled ? 1 : undefined}
+                onPress={disabled ? undefined : handleMax}
+                style={styles.maxBtnBox}>
                 <Text style={styles.maxBtnText}>MAX</Text>
               </TouchableOpacity>
             )}
@@ -215,7 +228,7 @@ const BridgeToken = ({
                 chainId={chainObj?.serverId!}
                 type={'bridgeFrom'}
                 placeholder={t('page.swap.search-by-name-address')}
-                supportChains={supportedChains}
+                // supportChains={supportedChains}
               />
             )}
           </View>

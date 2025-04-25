@@ -44,6 +44,14 @@ import { Button } from '@/components2024/Button';
 
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
+import { CHAINS_ENUM } from '@debank/common';
+import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
+import {
+  ExternalSwapBridgeDappTips,
+  SwapBridgeDappPopup,
+} from '@/components/ExternalSwapBridgeDappPopup';
+import { Tip } from '@/components';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -237,6 +245,30 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     payTokenIsNativeToken,
     inSufficientCanGetQuote,
   } = useBridge(isForMultipleAdderss);
+
+  const chains = useMemo(
+    () => [toChain, fromChain].filter(e => !!e) as CHAINS_ENUM[],
+    [toChain, fromChain],
+  );
+
+  const {
+    isSupportedChain,
+    data: externalDapps,
+    loading: externalDappsLoading,
+    openTab: _openTab,
+  } = useExternalSwapBridgeDapps(chains, 'bridge');
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const openTab = useMemoizedFn((url: string) => {
+    switchSceneCurrentAccount('@ActiveDappWebViewModal', currentAccount);
+    _openTab(url);
+  });
+  const [externalDappOpen, setExternalDappOpen] = useState(false);
+
+  const showExternalDappTips = useMemo(
+    () => !isSupportedChain && !!fromChain && !!toChain,
+    [isSupportedChain, fromChain, toChain],
+  );
+
   const [showMoreOpen, setShowMoreOpen] = useState(false);
   const refresh = useSetRefreshId();
 
@@ -510,6 +542,9 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   }, [runBuildTxs, canUseMiniTx, btnDisabled, selectedBridgeQuote, mutateTxs]);
 
   const btnText = useMemo(() => {
+    if (showExternalDappTips) {
+      return t('component.externalSwapBrideDappPopup.bridgeOnDapp');
+    }
     if (btnDisabled) {
       return t('page.bridge.title');
     }
@@ -518,11 +553,21 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
       return t('page.bridge.approve-and-bridge');
     }
     return t('page.bridge.title');
-  }, [t, selectedBridgeQuote?.shouldApproveToken, btnDisabled]);
+  }, [
+    showExternalDappTips,
+    btnDisabled,
+    selectedBridgeQuote?.shouldApproveToken,
+    t,
+  ]);
 
   const navigation = useNavigation();
 
   const handleConfirm = () => {
+    if (showExternalDappTips && externalDapps.length > 0) {
+      setExternalDappOpen(true);
+      return;
+    }
+
     if (fetchingBridgeQuote) {
       return;
     }
@@ -562,6 +607,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           <View style={styles.cardContainer}>
             <BridgeToken
               type="from"
+              disabled={!isSupportedChain}
               account={currentAccount}
               inSufficient={inSufficient}
               chain={fromChain}
@@ -625,6 +671,22 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           </View>
         </View>
 
+        {!isSupportedChain && fromChain && toChain ? (
+          <View style={{ marginHorizontal: 22 }}>
+            <ExternalSwapBridgeDappTips
+              dappsAvailable={externalDapps?.length > 0}
+            />
+            <SwapBridgeDappPopup
+              visible={externalDappOpen}
+              onClose={() => {
+                setExternalDappOpen(false);
+              }}
+              dappList={externalDapps}
+              openTab={openTab}
+            />
+          </View>
+        ) : null}
+
         <View>
           {selectedBridgeQuote && inSufficientCanGetQuote && (
             <BridgeShowMore
@@ -684,13 +746,24 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             paddingBottom: Math.max(bottom, 50),
           },
         ]}>
-        <Button
-          onPress={handleConfirm}
-          title={btnText}
-          titleStyle={styles.btnTitle}
-          loading={fetchingBridgeQuote}
-          disabled={btnDisabled}
-        />
+        <Tip
+          content={
+            !isSupportedChain && externalDapps.length < 1
+              ? t('component.externalSwapBrideDappPopup.noDapps')
+              : undefined
+          }>
+          <Button
+            onPress={handleConfirm}
+            title={btnText}
+            titleStyle={styles.btnTitle}
+            loading={fetchingBridgeQuote}
+            disabled={
+              !isSupportedChain && externalDapps.length > 0
+                ? false
+                : btnDisabled
+            }
+          />
+        </Tip>
       </View>
 
       <TwpStepApproveModal

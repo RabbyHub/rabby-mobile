@@ -61,6 +61,7 @@ import {
   PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { SwapTokenItem } from './components/Token';
@@ -80,6 +81,12 @@ import {
 import { TokenInfoPopup } from './components/TokenInfoPopup';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import {
+  ExternalSwapBridgeDappTips,
+  SwapBridgeDappPopup,
+} from '@/components/ExternalSwapBridgeDappPopup';
+import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
+import { Tip } from '@/components';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -181,6 +188,19 @@ const Swap = ({
     setIsCustomSlippage,
   } = useSlippageStore();
 
+  const {
+    isSupportedChain,
+    data: externalDapps,
+    openTab: _openTab,
+  } = useExternalSwapBridgeDapps(chain, 'swap');
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const openTab = useMemoizedFn((url: string) => {
+    switchSceneCurrentAccount('@ActiveDappWebViewModal', currentAccount);
+    _openTab(url);
+  });
+
+  const [swapDappOpen, setSwapDappOpen] = useState(false);
+
   const refresh = useSetAtom(refreshIdAtom);
   const [
     { visible: isShowRabbyFeePopup, dexName, dexFeeDesc },
@@ -249,7 +269,6 @@ const Swap = ({
           (payToken && payToken.chain !== chainItem.serverId) ||
           (receiveToken && receiveToken.chain !== chainItem.serverId)
         ) {
-          console.log('??????');
           switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
             payTokenId: navState?.tokenId,
             changeTo: isBuy,
@@ -291,6 +310,9 @@ const Swap = ({
   ]);
 
   const btnText = useMemo(() => {
+    if (!isSupportedChain) {
+      return t('component.externalSwapBrideDappPopup.swapOnDapp');
+    }
     if (quoteLoading) {
       return t('page.swap.title');
     }
@@ -300,7 +322,7 @@ const Swap = ({
     }
 
     return t('page.swap.title');
-  }, [activeProvider, quoteLoading, t]);
+  }, [activeProvider?.shouldApproveToken, isSupportedChain, quoteLoading, t]);
 
   const { safeOffBottom } = useSafeSizes();
 
@@ -646,7 +668,7 @@ const Swap = ({
           <ChainInfo2024
             chainEnum={chain}
             onChange={switchChain}
-            supportChains={SWAP_SUPPORT_CHAINS}
+            // supportChains={SWAP_SUPPORT_CHAINS}
             hideTestnetTab
           />
           <View style={styles.swapContainer}>
@@ -661,6 +683,7 @@ const Swap = ({
               position: 'relative',
             }}>
             <SwapTokenItem
+              disabled={!isSupportedChain}
               inSufficient={inSufficient}
               slider={slider}
               onChangeSlider={onChangeSlider}
@@ -801,6 +824,21 @@ const Swap = ({
                 />
               </View>
             )}
+          {!isSupportedChain ? (
+            <>
+              <ExternalSwapBridgeDappTips
+                dappsAvailable={externalDapps.length > 0}
+              />
+              <SwapBridgeDappPopup
+                visible={swapDappOpen}
+                onClose={() => {
+                  setSwapDappOpen(false);
+                }}
+                dappList={externalDapps}
+                openTab={openTab}
+              />
+            </>
+          ) : null}
         </View>
       </KeyboardAwareScrollView>
       <View
@@ -808,22 +846,44 @@ const Swap = ({
           styles.buttonContainer,
           isAndroid && { paddingBottom: safeOffBottom },
         ]}>
-        <Button
-          onPress={() => {
-            if (!activeProvider || slippageChanged) {
-              refresh(e => e + 1);
-              return;
-            }
-            if (activeProvider?.shouldTwoStepApprove) {
-              setTwoStepApproveModalVisible(true);
-              return;
-            }
-            // gotoSwap();
-            handleSwap();
-          }}
-          title={btnText}
-          disabled={swapBtnDisabled}
-        />
+        <Tip
+          content={
+            !isSupportedChain && externalDapps.length < 1
+              ? t('component.externalSwapBrideDappPopup.noDapps')
+              : undefined
+          }>
+          <View>
+            <Button
+              onPress={() => {
+                if (!isSupportedChain && !externalDapps.length) {
+                  return;
+                }
+                if (!isSupportedChain && externalDapps.length > 0) {
+                  setSwapDappOpen(true);
+                  return;
+                }
+                if (!activeProvider || slippageChanged) {
+                  refresh(e => e + 1);
+                  return;
+                }
+                if (activeProvider?.shouldTwoStepApprove) {
+                  setTwoStepApproveModalVisible(true);
+                  return;
+                }
+                // gotoSwap();
+                handleSwap();
+              }}
+              title={btnText}
+              disabled={
+                isSupportedChain
+                  ? swapBtnDisabled
+                  : externalDapps.length > 0
+                  ? false
+                  : true
+              }
+            />
+          </View>
+        </Tip>
       </View>
       <TwpStepApproveModal
         open={twoStepApproveModalVisible}
