@@ -67,6 +67,8 @@ export interface IAssets {
 export const combinedTokens = (assetsMap: {
   [address: string]: IAssets;
 }): CombineTokensItem[] => {
+  const { unfoldTokens = [] } =
+    preferenceService.getUserTokenSettingsSync() || {};
   const tokenMap: Record<string, CombineTokensItem> = {};
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()),
@@ -99,9 +101,6 @@ export const combinedTokens = (assetsMap: {
         existingToken.totalUsdValue = existingToken.totalUsdValue?.plus(
           token._usdValue || 0,
         );
-        existingToken._isFold = existingToken._isMiniFold
-          ? existingToken.totalUsdValue.isLessThan(1)
-          : existingToken._isFold;
         existingToken.fromAddress.push({
           address,
           amount: token.amount,
@@ -110,6 +109,19 @@ export const combinedTokens = (assetsMap: {
     });
   });
 
+  const coreTokens = Object.values(tokenMap).filter(i => i.is_core);
+  const listLength = coreTokens.length || 0;
+  const totalValue = coreTokens.reduce(
+    (acc, curr) => acc + (curr.totalUsdValue.toNumber() || 0),
+    0,
+  );
+  const threshold = Math.min((totalValue || 0) / 1000, 1000);
+  const thresholdIndex = coreTokens
+    ? coreTokens.findIndex(m => (m.totalUsdValue.toNumber() || 0) < threshold)
+    : -1;
+
+  const hasExpandSwitch =
+    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
   return Object.values(tokenMap)
     .sort((a, b) =>
       a.totalUsdValue.gt(b.totalUsdValue)
@@ -118,14 +130,37 @@ export const combinedTokens = (assetsMap: {
         ? 1
         : 0,
     )
-    .map(i => ({
-      ...i,
-      totalAmount: i.totalAmount.toNumber(),
-      totalUsdValue: i.totalUsdValue?.toNumber(),
-      _usdValue: i.totalUsdValue?.toNumber(),
-      _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
-      _amountStr: formatAmount(i.totalAmount.toNumber()),
-    }));
+    .map(i => {
+      if (
+        !hasExpandSwitch ||
+        i._isPined ||
+        !i.is_core ||
+        i._isManualFold ||
+        unfoldTokens.some(
+          x => x.chainId === i.chain && x.tokenId === i._tokenId,
+        )
+      ) {
+        return {
+          ...i,
+          totalAmount: i.totalAmount.toNumber(),
+          totalUsdValue: i.totalUsdValue?.toNumber(),
+          _usdValue: i.totalUsdValue?.toNumber(),
+          _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
+          _amountStr: formatAmount(i.totalAmount.toNumber()),
+        };
+      } else {
+        return {
+          ...i,
+          totalAmount: i.totalAmount.toNumber(),
+          totalUsdValue: i.totalUsdValue?.toNumber(),
+          _usdValue: i.totalUsdValue?.toNumber(),
+          _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
+          _amountStr: formatAmount(i.totalAmount.toNumber()),
+          _isFold: (i.totalUsdValue?.toNumber() || 0) < threshold,
+          _isMiniFold: (i.totalUsdValue?.toNumber() || 0) < threshold,
+        };
+      }
+    });
 };
 
 export const combinedProtocols = (assetsMap: {
@@ -168,6 +203,19 @@ export const combinedProtocols = (assetsMap: {
     });
   });
 
+  const portfolios = Object.values(defiMap);
+  const listLength = portfolios.length || 0;
+  const totalValue = portfolios.reduce((acc, curr) => {
+    return acc + (curr.totalUsdValue.toNumber() || 0);
+  }, 0);
+  const threshold = Math.min((totalValue || 0) / 1000, 1000);
+  const thresholdIndex = portfolios
+    ? portfolios.findIndex(m => (m.totalUsdValue.toNumber() || 0) < threshold)
+    : -1;
+
+  const hasExpandSwitch =
+    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
+
   return Object.values(defiMap)
     .sort((a, b) =>
       a.totalUsdValue.gt(b.totalUsdValue)
@@ -180,6 +228,10 @@ export const combinedProtocols = (assetsMap: {
       ...p,
       totalUsdValue: p.totalUsdValue.toNumber(),
       _netWorth: formatNetworth(p.totalUsdValue?.toNumber()),
+      _isFold: hasExpandSwitch ? p.totalUsdValue.toNumber() < threshold : false,
+      _isMiniFold: hasExpandSwitch
+        ? p.totalUsdValue.toNumber() < threshold
+        : false,
     }));
 };
 

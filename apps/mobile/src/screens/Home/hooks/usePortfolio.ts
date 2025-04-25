@@ -28,6 +28,18 @@ export const tagProfiles = (
   );
   const foldDefisSet = new Set(foldDefis);
   const unFoldDefisSet = new Set(unFoldDefis);
+  const listLength = profiles.length || 0;
+  const totalNetWorth = profiles.reduce(
+    (acc, curr) => acc + (Number(curr.netWorth) || 0),
+    0,
+  );
+  const threshold = Math.min((totalNetWorth || 0) / 1000, 1000);
+  const thresholdIndex = profiles
+    ? profiles.findIndex(m => (Number(m.netWorth) || 0) < threshold)
+    : -1;
+  const hasExpandSwitch =
+    listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
+
   return profiles
     .map(i => {
       const isExcludeBalance = (() => {
@@ -49,7 +61,7 @@ export const tagProfiles = (
         if (unFoldDefisSet.has(i.id)) {
           return false;
         }
-        if ((i.netWorth || 0) < 1) {
+        if (hasExpandSwitch && (i.netWorth || 0) < threshold) {
           return true;
         }
         return false;
