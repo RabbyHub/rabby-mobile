@@ -1,31 +1,30 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { stringUtils } from '@rabby-wallet/base-utils';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AssetApprovalSpenderWithStatus } from './useBatchRevokeTask';
-
-const { ensureSuffix } = stringUtils;
+import { formatGasCostUsd } from '@/utils/number';
+import { useTranslation } from 'react-i18next';
 
 export const ListItemStatus: React.FC<{
   data: AssetApprovalSpenderWithStatus;
   isPaused: boolean;
   onStillRevoke: () => void;
 }> = ({ data, isPaused, onStillRevoke }) => {
-  const { $assetParent: asset } = data;
+  const { t } = useTranslation();
 
-  if (!asset) {
+  if (!data) {
     return null;
   }
 
-  const fullName =
-    asset.type === 'nft' && asset.nftToken
-      ? ensureSuffix(asset.name || 'Unknown', ` #${asset.nftToken.inner_id}`)
-      : asset.name || 'Unknown';
-
   return (
     <View>
-      <ChainIconImage chainServerId={asset.chain} />
-      <Text>{fullName}</Text>
+      {data.$status?.status === 'success' && (
+        <View>
+          <Text>{formatGasCostUsd(data.$status?.gasCost.gasCostUsd)}</Text>
+        </View>
+      )}
+      {!data.$status?.status && (
+        <Text> {isPaused ? t('page.approvals.revokeModal.paused') : '-'} </Text>
+      )}
     </View>
   );
 };
