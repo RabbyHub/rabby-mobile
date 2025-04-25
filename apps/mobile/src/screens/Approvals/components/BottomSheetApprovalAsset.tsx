@@ -118,7 +118,8 @@ export default function BottomSheetApprovalAsset({
         return (
           <BottomSheetModalFooterButton
             title={[
-              'Confirm',
+              t('page.approvals.component.RevokeButton.btnText'),
+
               confirmingAssetsCount && ` (${confirmingAssetsCount})`,
             ]
               .filter(Boolean)

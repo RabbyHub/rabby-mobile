@@ -134,26 +134,25 @@ function AssetsApprovalRowProto({
                   style={styles.chainIcon}
                 />
               )}
-              <HighlightText
-                style={[
-                  styles.assetNameText,
-                  { flexShrink: 1, maxWidth: '85%' },
-                ]}
-                highlightStyle={styles.highlightText}
-                numberOfLines={1}
-                searchWords={[searchKw]}
-                textToHighlight={approvalInfo.floor1Text}
-              />
             </View>
-            {approvalInfo.hasFloor2 && (
-              <View style={styles.basicInfoF2}>
-                {/* <Text style={styles.floor2Text}>{approvalInfo.floor2Text}</Text> */}
-                {approvalInfo.nftType && (
-                  <ApprovalNFTBadge type={approvalInfo.nftType} />
-                )}
-              </View>
-            )}
           </View>
+        </View>
+        <View style={styles.title}>
+          <HighlightText
+            style={[styles.assetNameText, { flexShrink: 1 }]}
+            highlightStyle={styles.highlightText}
+            numberOfLines={1}
+            searchWords={[searchKw]}
+            textToHighlight={approvalInfo.floor1Text}
+          />
+          {approvalInfo.hasFloor2 && (
+            <View style={styles.basicInfoF2}>
+              {/* <Text style={styles.floor2Text}>{approvalInfo.floor2Text}</Text> */}
+              {approvalInfo.nftType && (
+                <ApprovalNFTBadge type={approvalInfo.nftType} />
+              )}
+            </View>
+          )}
         </View>
         <RightTouchableView
           onPress={evt => {
@@ -281,6 +280,11 @@ export const getAssetsApprovalRowStyles = createGetStyles2024(ctx => {
       marginRight: 12,
       width: 20,
       height: 20,
+    },
+    title: {
+      flex: 1,
+      height: 50,
+      justifyContent: 'center',
     },
   };
 });

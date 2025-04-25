@@ -141,7 +141,7 @@ export default function BottomSheetApprovalContract({
         return (
           <BottomSheetModalFooterButton
             title={[
-              'Confirm',
+              t('page.approvals.component.RevokeButton.btnText'),
               confirmingContractCount && ` (${confirmingContractCount})`,
             ]
               .filter(Boolean)
