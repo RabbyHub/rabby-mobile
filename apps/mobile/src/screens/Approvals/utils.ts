@@ -317,7 +317,7 @@ export const toRevokeItem = <T extends ApprovalItem>(
     const assetApprovalSpender =
       assetApprovalSpenderOrIsContractItem === true
         ? '$indexderSpender' in spenderHost
-          ? (spenderHost as TokenApprovalIndexedBySpender).$indexderSpender
+          ? spenderHost.$indexderSpender
           : null
         : assetApprovalSpenderOrIsContractItem ?? null;
 
@@ -325,6 +325,7 @@ export const toRevokeItem = <T extends ApprovalItem>(
 
     if ('inner_id' in spenderHost) {
       return {
+        approvalType: 'contract',
         chainServerId: spenderHost?.chain,
         contractId: spenderHost?.contract_id,
         permit2Id,
@@ -335,6 +336,7 @@ export const toRevokeItem = <T extends ApprovalItem>(
       } as const;
     } else if ('contract_name' in spenderHost) {
       return {
+        approvalType: 'contract',
         chainServerId: spenderHost?.chain,
         contractId: spenderHost?.contract_id,
         permit2Id,
@@ -346,6 +348,7 @@ export const toRevokeItem = <T extends ApprovalItem>(
       } as const;
     } else {
       return {
+        approvalType: 'contract',
         chainServerId: item.chain,
         permit2Id,
         tokenId: spenderHost?.id,
@@ -357,6 +360,7 @@ export const toRevokeItem = <T extends ApprovalItem>(
 
   if (item.type === 'token') {
     return {
+      approvalType: 'token',
       chainServerId: item.chain,
       tokenId: (spenderHost as Spender).id,
       id: item.id,
@@ -373,6 +377,7 @@ export const toRevokeItem = <T extends ApprovalItem>(
       ? 'ERC1155'
       : '';
     return {
+      approvalType: 'nft',
       chainServerId: item?.chain,
       contractId: nftInfo?.contract_id || '',
       spender: (spenderHost as Spender).id,
