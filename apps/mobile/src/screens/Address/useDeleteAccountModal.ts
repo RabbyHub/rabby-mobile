@@ -8,6 +8,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { trigger } from 'react-native-haptic-feedback';
 
 export const useDeleteAccountModal = () => {
   const { t } = useTranslation();
@@ -66,6 +67,10 @@ export const useDeleteAccountModal = () => {
           ? { authType: ['none'] }
           : { authType: ['biometrics', 'password'] }),
         onFinished: async () => {
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
           await removeAccount(account);
           await handleShouldGoStartPage();
           onFinished?.();
