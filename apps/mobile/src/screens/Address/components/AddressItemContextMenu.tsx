@@ -13,6 +13,7 @@ import { useDeleteAccountModal } from '../useDeleteAccountModal';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { trigger } from 'react-native-haptic-feedback';
+import { toast } from '@/components2024/Toast';
 
 const MenuIcons = {
   copyDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png'),
@@ -122,7 +123,12 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
           androidIconName: 'ic_rabby_menu_delete',
           destructive: true,
           action() {
-            removeAccount({ account });
+            removeAccount({
+              account,
+              onFinished: () => {
+                toast.success(t('global.Deleted'));
+              },
+            });
           },
         },
       ] as MenuAction[],
