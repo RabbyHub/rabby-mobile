@@ -8,7 +8,7 @@ import { getTokenSettings } from '@/utils/getTokenSettings';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils/src/types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
   const { whitelist, isAddrOnWhitelist } = useWhitelist({
@@ -79,43 +79,42 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
     })();
   }, [accounts, disableFetchBalance, isAddrOnWhitelist, whitelist]);
 
-  const findAccount = async (
-    address: string,
-    brandName?: string,
-    disableBalance?: boolean,
-  ) => {
-    const targetAccounts = accounts.filter(item =>
-      isSameAddress(item.address, address),
-    );
-    let balance = 0;
-    if (!targetAccounts.length && !disableBalance) {
-      const userTokenSettings = await getTokenSettings();
-      const { total_usd_value } = await batchBalanceWithLocalCache({
-        address: address,
-        isCore: false,
-        ...userTokenSettings,
-      });
-      balance = total_usd_value || 0;
-    }
-    const defaultAccount = {
-      address,
-      aliasName:
-        contactService.getAliasByAddress(address)?.alias ||
-        ellipsisAddress(address),
-      balance,
-      type: KEYRING_CLASS.WATCH,
-      brandName: KEYRING_CLASS.WATCH,
-    };
-    return {
-      inWhitelist: whitelist.some(item => isSameAddress(item, address)),
-      account: targetAccounts.length
-        ? brandName
-          ? targetAccounts.find(i => i.brandName === brandName) ||
-            defaultAccount
-          : findAccountByPriority(targetAccounts)
-        : defaultAccount,
-    };
-  };
+  const findAccount = useCallback(
+    async (address: string, brandName?: string, disableBalance?: boolean) => {
+      const targetAccounts = accounts.filter(item =>
+        isSameAddress(item.address, address),
+      );
+      let balance = 0;
+      if (!targetAccounts.length && !disableBalance) {
+        const userTokenSettings = await getTokenSettings();
+        const { total_usd_value } = await batchBalanceWithLocalCache({
+          address: address,
+          isCore: false,
+          ...userTokenSettings,
+        });
+        balance = total_usd_value || 0;
+      }
+      const defaultAccount = {
+        address,
+        aliasName:
+          contactService.getAliasByAddress(address)?.alias ||
+          ellipsisAddress(address),
+        balance,
+        type: KEYRING_CLASS.WATCH,
+        brandName: KEYRING_CLASS.WATCH,
+      };
+      return {
+        inWhitelist: whitelist.some(item => isSameAddress(item, address)),
+        account: targetAccounts.length
+          ? brandName
+            ? targetAccounts.find(i => i.brandName === brandName) ||
+              defaultAccount
+            : findAccountByPriority(targetAccounts)
+          : defaultAccount,
+      };
+    },
+    [accounts, whitelist],
+  );
   return {
     list,
     findAccount,
