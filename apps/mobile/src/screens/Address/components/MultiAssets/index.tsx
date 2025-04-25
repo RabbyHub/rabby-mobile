@@ -464,8 +464,8 @@ export const MultiAssets = ({
         },
         {
           title: data._isPined
-            ? t('page.tokenDetail.action.unpin')
-            : t('page.tokenDetail.action.pin'),
+            ? t('page.tokenDetail.action.unfavorite')
+            : t('page.tokenDetail.action.favorite'),
           icon: data._isPined
             ? isLight
               ? icons.unpinLight
@@ -476,20 +476,18 @@ export const MultiAssets = ({
           androidIconName: data._isPined
             ? 'ic_rabby_menu_token_unfavorite'
             : 'ic_rabby_menu_token_favorite',
-          key: 'pin',
+          key: 'favorite',
           action() {
             if (data._isPined) {
               preferenceService.removePinedToken({
                 tokenId: data._tokenId,
                 chainId: data.chain,
               });
-              toast.success(t('page.tokenDetail.actionsTips.unpin_success'));
             } else {
               preferenceService.pinToken({
                 tokenId: data._tokenId,
                 chainId: data.chain,
               });
-              toast.success(t('page.tokenDetail.actionsTips.pin_success'));
             }
             tokenRefresh();
           },
