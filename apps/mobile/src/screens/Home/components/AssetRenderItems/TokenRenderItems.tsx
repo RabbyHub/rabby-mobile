@@ -39,7 +39,6 @@ import { formatPrice, formatUsdValue } from '@/utils/number';
 import { RiskTokenTips } from '@/screens/TokenDetail';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { formatUsdValueKMB } from '../../utils/price';
-import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -261,6 +260,7 @@ export const ExternalTokenRow = memo(
     onTokenPress,
     touchable = true,
     decimalPrecision = false,
+    isPined = false,
   }: {
     data: TokenRowDataType;
     style?: ViewStyle;
@@ -268,21 +268,13 @@ export const ExternalTokenRow = memo(
     fold?: boolean;
     logoSize?: number;
     chainLogoSize?: number;
+    isPined?: boolean;
     onTokenPress?(token: TokenRowDataType): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
-    const { userTokenSettings } = useUserTokenSettings();
-
-    const isPined = useMemo(
-      () =>
-        userTokenSettings.pinedQueue.some(
-          pinned => pinned.chainId === data.chain && pinned.tokenId === data.id,
-        ),
-      [data.chain, data.id, userTokenSettings.pinedQueue],
-    );
 
     const mediaStyle = useMemo(
       () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),

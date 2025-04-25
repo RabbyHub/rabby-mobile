@@ -67,6 +67,7 @@ import {
 import { TokenItemContextMenu } from './TokenContextMenu';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -233,6 +234,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const [swapToTokenDetail, setSwapToTokenDetail] = useState(false);
     const route = useRoute<SwapRouteProps['route']>();
     const isFocused = useIsFocused();
+    const { userTokenSettings } = useUserTokenSettings();
 
     const isSingleAddress = useMemo(
       () => route.name === RootNames.Swap,
@@ -458,7 +460,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        const isPined = token?.$origin.isPined;
+        const isPined =
+          token?.$origin.isPined ||
+          userTokenSettings.pinedQueue.some(
+            pinned =>
+              pinned.chainId === token?.$origin?.chain &&
+              pinned.tokenId === token?.$origin?.id,
+          );
         const isManualFold = token?.$origin.isManualFold;
         const isSelected = selectToken && selectToken.tokenId === token.id;
         const token_key = [
@@ -536,6 +544,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   }}>
                   <ExternalTokenRow
                     decimalPrecision
+                    isPined={isPined}
                     data={token.$origin as unknown as any}
                     logoSize={40}
                     touchable={false}
@@ -677,6 +686,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         isLoading,
         disableItemCheck,
         chainSearchCtx.filterAccountItem,
+        userTokenSettings?.pinedQueue,
         selectToken,
         supportChains,
         isFromModalType,
