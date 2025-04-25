@@ -61,6 +61,7 @@ import {
   PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { SwapTokenItem } from './components/Token';
@@ -190,8 +191,13 @@ const Swap = ({
   const {
     isSupportedChain,
     data: externalDapps,
-    openTab,
+    openTab: _openTab,
   } = useExternalSwapBridgeDapps(chain, 'swap');
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const openTab = useMemoizedFn((url: string) => {
+    switchSceneCurrentAccount('@ActiveDappWebViewModal', currentAccount);
+    _openTab(url);
+  });
 
   const [swapDappOpen, setSwapDappOpen] = useState(false);
 

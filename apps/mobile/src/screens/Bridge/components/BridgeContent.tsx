@@ -51,6 +51,7 @@ import {
   SwapBridgeDappPopup,
 } from '@/components/ExternalSwapBridgeDappPopup';
 import { Tip } from '@/components';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -254,8 +255,13 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     isSupportedChain,
     data: externalDapps,
     loading: externalDappsLoading,
-    openTab,
+    openTab: _openTab,
   } = useExternalSwapBridgeDapps(chains, 'bridge');
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const openTab = useMemoizedFn((url: string) => {
+    switchSceneCurrentAccount('@ActiveDappWebViewModal', currentAccount);
+    _openTab(url);
+  });
   const [externalDappOpen, setExternalDappOpen] = useState(false);
 
   const showExternalDappTips = useMemo(
