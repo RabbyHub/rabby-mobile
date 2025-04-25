@@ -114,10 +114,10 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
 
       if (dapps) {
         Object.entries(dapps).forEach(([origin, dappInfo]) => {
-          if (dappInfo.isFavorite) {
+          if (dappInfo?.isFavorite) {
             browserBookmarks.ids.push(dappInfo.origin);
             browserBookmarks.entities[origin] = {
-              name: dappInfo.name,
+              name: dappInfo.name || dappInfo.info?.name || '',
               url: dappInfo.origin,
               createdAt: dappInfo.favoriteAt || 0,
             };
@@ -129,7 +129,7 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
           if (dapps[origin]) {
             browserHistory.ids.push(origin);
             browserHistory.entities[origin] = {
-              name: dappInfo.name,
+              name: dappInfo.name || dappInfo.info?.name || '',
               url: dappInfo.origin,
               createdAt: item.createdAt || 0,
             };
