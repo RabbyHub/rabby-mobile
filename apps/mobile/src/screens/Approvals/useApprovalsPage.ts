@@ -459,6 +459,21 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     return [];
   }, [approvalsData.contractMap]);
 
+  const sortedAssetsList = useMemo(() => {
+    const assetsList = [
+      ...flatten(
+        Object.values(approvalsData.tokenMap || {}).map(
+          (item: TokenApprovalItem) => item.list,
+        ),
+      ),
+      ...flatten(
+        Object.values(approvalsData.nftMap || {}).map(item => item.list),
+      ),
+    ] as AssetApprovalItem['list'][number][];
+
+    return assetsList;
+  }, [approvalsData.tokenMap, approvalsData.nftMap]);
+
   const {
     // sortedFlattenedAssetstList,
     sortedTokenApprovals,
@@ -587,6 +602,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     displaySortedContractList,
     displaySortedAssetApprovalList,
     safeSizeInfo,
+    displaySortedAssetsList: sortedAssetsList,
   };
 }
 

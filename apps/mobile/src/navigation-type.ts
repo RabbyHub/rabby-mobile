@@ -24,7 +24,10 @@ import type { DappInfo } from './core/services/dappService';
 import type { HistoryDisplayItem } from './screens/Transaction/MultiAddressHistory';
 import type { TransactionGroup } from './core/services/transactionHistory';
 import { Account } from './core/services/preference';
-import { AssetApprovalSpender } from './screens/Approvals/useApprovalsPage';
+import {
+  ApprovalSpenderItemToBeRevoked,
+  AssetApprovalSpender,
+} from './screens/Approvals/useApprovalsPage';
 // import type { HistoryItemCateType } from './screens/Transaction/components/HistoryItemIcon';
 
 /**
@@ -302,7 +305,8 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.MultiBuy]?: TransactionNavigatorParamList['Buy'] & object;
   [RootNames.BatchRevoke]?: {
-    list: AssetApprovalSpender[];
+    revokeList: ApprovalSpenderItemToBeRevoked[];
+    dataSource: AssetApprovalSpender[];
   };
 };
 
