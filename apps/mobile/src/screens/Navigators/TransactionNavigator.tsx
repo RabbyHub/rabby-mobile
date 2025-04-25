@@ -33,6 +33,7 @@ import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
 import SendHistoryScreen from '../WhiteList/SelectSendTransationAddress';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import WhitelistInputScreen from '../WhiteList/InputScreen';
+import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -326,6 +327,16 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'Approvals',
           ...headerPresets.withBgCard2_2024,
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.BatchRevoke}
+        component={BatchRevokeScreen}
+        options={mergeScreenOptions({
+          title: 'Batch Revoke',
+          ...headerPresets.withBgCard2_2024,
+          headerStyle: {},
         })}
       />
 
