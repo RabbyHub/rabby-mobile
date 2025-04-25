@@ -132,6 +132,7 @@ export const RootNames = {
   MultiSwap: 'MultiSwap',
   GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
+  BatchRevoke: 'BatchRevoke',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
   HistoryDetail: 'HistoryDetail',
