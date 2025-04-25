@@ -39,7 +39,9 @@ export const PinedTokenList = () => {
   return pinTokens.length > 0 ? (
     <View style={styles.container}>
       <View style={styles.titleHeader}>
-        <Text style={styles.titleText}>Pinned Token</Text>
+        <Text style={styles.titleText}>
+          {t('page.search.header.favoriteTitle')}
+        </Text>
       </View>
       <View style={styles.section}>
         {pinTokens.map((token, index) => (
@@ -47,12 +49,12 @@ export const PinedTokenList = () => {
             menuConfig={{
               menuActions: [
                 {
-                  title: 'UnPin',
+                  title: t('page.tokenDetail.action.unfavorite'),
                   icon: isLight
-                    ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
-                    : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png'),
-                  androidIconName: 'ic_rabby_menu_un_pin',
-                  key: 'pin',
+                    ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png')
+                    : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png'),
+                  androidIconName: 'ic_rabby_menu_token_unfavorite',
+                  key: 'favorite',
                   action() {
                     preferenceService.removePinedToken({
                       tokenId: token.id,
@@ -60,9 +62,6 @@ export const PinedTokenList = () => {
                     });
                     setTimeout(() => {
                       handleFetchTokens();
-                      toast.success(
-                        t('page.tokenDetail.actionsTips.unpin_success'),
-                      );
                     }, 0);
                   },
                 },

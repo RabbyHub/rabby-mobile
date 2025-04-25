@@ -64,19 +64,19 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       [
         {
           title: isPined
-            ? t('page.addressDetail.addressListScreen.unpin')
-            : t('page.addressDetail.addressListScreen.pin'),
+            ? t('page.tokenDetail.action.unfavorite')
+            : t('page.tokenDetail.action.favorite'),
           icon: isPined
             ? isDarkTheme
-              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_dark.png')
-              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_un_pin.png')
+              ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite_dark.png')
+              : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_unfavorite.png')
             : isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_pin.png'),
+            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite_dark.png')
+            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_token_favorite.png'),
           androidIconName: isPined
-            ? 'ic_rabby_menu_un_pin'
-            : 'ic_rabby_menu_pin',
-          key: 'pin',
+            ? 'ic_rabby_menu_token_unfavorite'
+            : 'ic_rabby_menu_token_favorite',
+          key: 'favorite',
           action() {
             handlePress();
           },
@@ -98,7 +98,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
   }, [isPined, t, isDarkTheme, handlePress, gotoTokenDetail]);
 
   const menuActions = React.useMemo(() => {
-    return ['pin', 'detail']
+    return ['favorite', 'detail']
       .map(key => {
         return menuActionDict[key];
       })

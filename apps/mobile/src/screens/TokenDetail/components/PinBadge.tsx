@@ -40,13 +40,15 @@ export const HomePinBadge: React.FC<Props> = ({ token, refreshTags }) => {
       style={[styles.pinBadgeAction, styles.unpinContainer]}>
       <RcIconUnPinCC color={colors2024['neutral-foot']} />
       <Text style={[styles.relateTitle, styles.unpinTitle]}>
-        {t('page.tokenDetail.action.unpin')}
+        {t('page.tokenDetail.action.unfavorite')}
       </Text>
     </TouchableOpacity>
   ) : (
     <TouchableOpacity onPress={handlePress} style={styles.pinBadgeAction}>
       <RcIconPinCC color={colors2024['brand-default']} />
-      <Text style={styles.relateTitle}>{t('page.tokenDetail.action.pin')}</Text>
+      <Text style={styles.relateTitle}>
+        {t('page.tokenDetail.action.favorite')}
+      </Text>
     </TouchableOpacity>
   );
 };

@@ -132,34 +132,6 @@ export const filterNfts = (nfts: CombineNFTItem[], filterText?: string) => {
   });
 };
 
-export const combinePinTokens = (
-  pinTokens: TokenItem[],
-  tokens: CombineTokensItem[],
-) => {
-  const existPinTokens = tokens.filter(i => i._isPined);
-  const noPinTokens = tokens.filter(i => !i._isPined);
-  const unloadPinTokens = pinTokens
-    .filter(
-      i =>
-        !existPinTokens.some(j => j._tokenId === i.id && j.chain === i.chain),
-    )
-    .map(i => ({
-      ...i,
-      _isPined: true,
-      _isFold: false,
-      _isExcludeBalance: false,
-      _usdValueStr: 0,
-      _amountStr: 1,
-      _unHold: true,
-      _tokenId: i.id,
-    }));
-  return [
-    ...existPinTokens,
-    ...unloadPinTokens,
-    ...noPinTokens,
-  ] as CombineTokensItem[];
-};
-
 export const useSearchTokens = (filterText?: string) => {
   const [resultTokens, setResultTokens] = useState<AbstractPortfolioToken[]>(
     [],

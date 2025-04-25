@@ -48,15 +48,12 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { useMemoizedFn } from 'ahooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import RcIconTipCC from '@/assets2024/icons/common/tips-cc.svg';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { naviPush } from '@/utils/navigation';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import {
   CompositeScreenProps,
   useIsFocused,
   useRoute,
 } from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
 import { Account } from '@/core/services/preference';
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
@@ -70,6 +67,7 @@ import {
 import { TokenItemContextMenu } from './TokenContextMenu';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -236,6 +234,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const [swapToTokenDetail, setSwapToTokenDetail] = useState(false);
     const route = useRoute<SwapRouteProps['route']>();
     const isFocused = useIsFocused();
+    const { userTokenSettings } = useUserTokenSettings();
 
     const isSingleAddress = useMemo(
       () => route.name === RootNames.Swap,
@@ -461,7 +460,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        const isPined = token?.$origin.isPined;
+        const isPined =
+          token?.$origin.isPined ||
+          userTokenSettings.pinedQueue.some(
+            pinned =>
+              pinned.chainId === token?.$origin?.chain &&
+              pinned.tokenId === token?.$origin?.id,
+          );
         const isManualFold = token?.$origin.isManualFold;
         const isSelected = selectToken && selectToken.tokenId === token.id;
         const token_key = [
@@ -539,6 +544,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   }}>
                   <ExternalTokenRow
                     decimalPrecision
+                    isPined={isPined}
                     data={token.$origin as unknown as any}
                     logoSize={40}
                     touchable={false}
@@ -588,7 +594,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                       <Text style={styles.tokenName} numberOfLines={1}>
                         {ellipsisOverflowedText(token?._symbol, 15)}
                       </Text>
-                      {isPined && <TextBadge />}
                       {isManualFold && <TextBadge type="folded" />}
                     </View>
                     {showOwnerAccount ? (
@@ -667,6 +672,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     </View>
                   </View>
                 )}
+                {isPined && (
+                  <View style={[styles.favoriteBadge]}>
+                    <RcIconFavorite color={colors2024['orange-default']} />
+                  </View>
+                )}
               </TouchableOpacity>
             </TokenItemContextMenu>
           </View>
@@ -676,6 +686,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         isLoading,
         disableItemCheck,
         chainSearchCtx.filterAccountItem,
+        userTokenSettings?.pinedQueue,
         selectToken,
         supportChains,
         isFromModalType,
@@ -695,6 +706,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.tips,
         styles.tokenHeaderAmount,
         styles.textSecondary,
+        styles.favoriteBadge,
         styles.tokenRowWrap,
         styles.tokenRowTokenWrap,
         styles.tokenRowTokenInner,
@@ -1092,8 +1104,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'space-between',
       alignItems: 'center',
       height: ITEM_HEIGHT,
-      paddingHorizontal: 8,
+      // paddingHorizontal: 8,
       paddingRight: 16,
+      paddingLeft: 12,
       // marginHorizontal: 12,
       // marginTop: 8,
       backgroundColor: isLight
@@ -1193,6 +1206,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     netSwitchTabsItem: {
       height: 32,
       borderRadius: 16,
+    },
+    favoriteBadge: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      paddingHorizontal: 12,
+      paddingVertical: 3,
+      backgroundColor: colors2024['orange-light-1'],
+      borderBottomLeftRadius: 12,
+      borderTopRightRadius: 16,
     },
   };
 });

@@ -11,13 +11,12 @@ import { toast } from '@/components2024/Toast';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { topUpGasAccount } from '@/core/apis/gasAccount';
 import { openapi } from '@/core/request';
-import { gasAccountService, preferenceService } from '@/core/services';
+import { preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useAlias } from '@/hooks/alias';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { findChainByServerID } from '@/utils/chain';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -29,7 +28,6 @@ import {
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Skeleton } from '@rneui/themed';
 import BigNumber from 'bignumber.js';
@@ -43,19 +41,19 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Dimensions,
   Keyboard,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import useAsync from 'react-use/lib/useAsync';
 import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
 import { SelectGasAccountList } from './SelectGasAccountList';
 import { maxBy } from 'lodash';
 import { filterMyAccounts } from '@/utils/account';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
 const amountList = [10, 100];
 
@@ -68,7 +66,7 @@ const BottomSheetWrapper = (
   >,
 ) => {
   const { visible, onClose, children, ...others } = props;
-  const { colors2024 } = useTheme2024({
+  const { colors2024, isLight } = useTheme2024({
     getStyle: getStyles,
   });
 
@@ -83,13 +81,19 @@ const BottomSheetWrapper = (
   }, [visible]);
   return (
     <AppBottomSheetModal
-      snapPoints={['90%']}
+      snapPoints={[Dimensions.get('window').height - 200]}
       onDismiss={onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
         linearGradientType: 'linear',
         colors: colors2024,
       })}
+      handleStyle={{
+        backgroundColor: isLight
+          ? colors2024['neutral-bg-0']
+          : colors2024['neutral-bg-1'],
+        paddingVertical: 18,
+      }}
       {...others}>
       {children}
     </AppBottomSheetModal>
@@ -108,7 +112,7 @@ const TokenSelector = ({
   onClose: () => void;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyles,
   });
 
@@ -156,18 +160,12 @@ const TokenSelector = ({
     const k = query?.trim()?.toLowerCase();
 
     const sortAndFilter = (l: (TokenItem & { pinned?: boolean })[]) =>
-      l
-        .filter(item =>
-          k
-            ? item.symbol?.toLowerCase().includes(k) ||
-              item.id?.toLowerCase().includes(k)
-            : true,
-        )
-        .sort((a, b) => {
-          const a1 = a.pinned ? 1 : 0;
-          const b1 = b?.pinned ? 1 : 0;
-          return b1 - a1;
-        });
+      l.filter(item =>
+        k
+          ? item.symbol?.toLowerCase().includes(k) ||
+            item.id?.toLowerCase().includes(k)
+          : true,
+      );
 
     if (!_list.length) {
       return [];
@@ -224,19 +222,28 @@ const TokenSelector = ({
               ])}>
               {getTokenSymbol(item)}
             </Text>
-            {!!item.pinned && (
-              <View style={styles.pinnedWrapper}>
-                <Text style={styles.pinText}>Pin</Text>
-              </View>
-            )}
           </View>
           <Text style={styles.text}>
             {formatUsdValue(item.amount * item.price || 0)}
           </Text>
+          {!!item.pinned && (
+            <View style={[styles.favoriteBadge]}>
+              <RcIconFavorite color={colors2024['orange-default']} />
+            </View>
+          )}
         </CustomTouchableOpacity>
       );
     },
-    [cost, onChange, onClose, styles],
+    [
+      colors2024,
+      cost,
+      onChange,
+      onClose,
+      styles.box,
+      styles.favoriteBadge,
+      styles.text,
+      styles.tokenListItem,
+    ],
   );
 
   const showInsufficientTip = useMemo(() => {
@@ -251,7 +258,7 @@ const TokenSelector = ({
     return loading ? (
       <>
         {Array.from({ length: 10 }).map((_, index) => (
-          <View key={index} style={styles.tokenListItem}>
+          <View key={index} style={[styles.tokenListItem, { marginBottom: 8 }]}>
             <View style={[styles.box, { gap: 16 }]}>
               <Skeleton circle width={40} height={40} />
               <Skeleton width={70} height={20} />
@@ -264,7 +271,13 @@ const TokenSelector = ({
   }, [loading, styles.box, styles.tokenListItem]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: isLight
+          ? colors2024['neutral-bg-0']
+          : colors2024['neutral-bg-1'],
+      }}>
       <View style={{ paddingHorizontal: 20 }}>
         <Text style={styles.title}>
           {t('page.gasTopUp.Select-from-supported-tokens')}
@@ -275,14 +288,14 @@ const TokenSelector = ({
           containerStyle={styles.searchInputContainer}
           searchIconWrapperStyle={styles.searchIconWrapperStyle}
           inputStyle={styles.inputStyle}
-          searchIcon={<SearchSVG color={colors2024['neutral-foot']} />}
+          searchIcon={<SearchSVG color={colors2024['neutral-secondary']} />}
           inputProps={{
             value: query,
             onChange: e => handleQueryChange(e.nativeEvent.text),
             onFocus: handleInputFocus,
             onBlur: handleInputBlur,
             placeholder: 'Search Token',
-            placeholderTextColor: colors2024['neutral-info'],
+            placeholderTextColor: colors2024['neutral-secondary'],
           }}
         />
 
@@ -314,6 +327,7 @@ const TokenSelector = ({
           ),
           [Row],
         )}
+        ItemSeparatorComponent={() => <View style={styles.divider} />}
         renderSectionHeader={useCallback(
           ({ section: { title } }) => {
             if (title === 'insufficient' && !showInsufficientTip) {
@@ -507,7 +521,9 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
   }, [rawValue, selectedAmount]);
 
   const openTokenList = () => {
-    if (!amountPass) return;
+    if (!amountPass) {
+      return;
+    }
     setTokenListVisible(true);
   };
 
@@ -522,7 +538,9 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
   const [accountListVisible, setAccountListVisible] = useState(false);
 
   const openAccountList = () => {
-    if (!amountPass) return;
+    if (!amountPass) {
+      return;
+    }
     setAccountListVisible(true);
   };
 
@@ -703,7 +721,7 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
   );
 };
 
-const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors, isLight, colors2024 }) => ({
   container: {
     width: '100%',
     flex: 1,
@@ -721,8 +739,9 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
+    marginTop: 12,
     marginBottom: 18,
     textAlign: 'center',
   },
@@ -807,10 +826,16 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     paddingVertical: 14,
     flex: 1,
     width: '100%',
-    flexDirection: 'row',
+    height: 74,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    paddingLeft: 12,
+    paddingRight: 16,
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: 6,
+    flexDirection: 'row',
+    borderRadius: 16,
   },
   tokenContent: { flexDirection: 'row', alignItems: 'center' },
   tokenSymbol: {
@@ -871,7 +896,8 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingTop: 10,
+    paddingBottom: 12,
   },
 
   label: {
@@ -906,7 +932,9 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '500',
     lineHeight: 18,
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
     paddingHorizontal: 8,
   },
 
@@ -915,7 +943,7 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
+    marginVertical: 20,
   },
 
   tokenInsufficientDivider: {
@@ -935,17 +963,19 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '500',
     lineHeight: 18,
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
     paddingHorizontal: 8,
   },
 
   searchInputContainer: {
-    borderRadius: 30,
-    backgroundColor: colors2024['neutral-bg-2'],
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 13,
     borderColor: 'transparent',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   searchIconWrapperStyle: {
     paddingLeft: 0,
@@ -997,5 +1027,18 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     lineHeight: 22,
+  },
+  favoriteBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    backgroundColor: colors2024['orange-light-1'],
+    borderBottomLeftRadius: 12,
+    borderTopRightRadius: 16,
+  },
+  divider: {
+    height: 8,
   },
 }));

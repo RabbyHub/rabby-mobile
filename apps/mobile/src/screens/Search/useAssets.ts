@@ -14,10 +14,8 @@ import { filterDisplayToken } from '../Home/hooks/token';
 import { portfolio2Display } from '../Home/utils/portfolio';
 import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { useMyAccounts } from '@/hooks/account';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useSortAddressList } from '../Address/useSortAddressList';
-import { combinePinTokens } from './useSearch';
-import { usePinTokens } from './usePinTokens';
 import { tagNfts } from '../Home/hooks/nft';
 import { syncNFTs, syncProtocols, syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
@@ -44,7 +42,6 @@ export const useAssets = () => {
     updateTokens,
   } = useAssetsMap();
 
-  const { data: pinTokens, handleFetchTokens } = usePinTokens();
   const loadToken = async (address: string, force?: boolean) => {
     if (!address) {
       return;
@@ -296,7 +293,6 @@ export const useAssets = () => {
     const { disableToken, disableDefi, disableNFT } = options || {};
     setLoading(true);
     try {
-      await handleFetchTokens();
       for (const address of addresses) {
         try {
           await Promise.all([
@@ -336,19 +332,13 @@ export const useAssets = () => {
       !disableNFT && batchLoadCacheNFT(addresses, tokenSetting),
     ]);
   };
-
-  const fTokens = useMemo(
-    () => combinePinTokens(pinTokens, tokens),
-    [pinTokens, tokens],
-  );
-
   return {
-    tokens: fTokens,
+    tokens,
     portfolios,
     nftList,
     assetsMap,
     isLoading,
-    hasAssets: !!fTokens?.length || !!portfolios?.length || !!nftList?.length,
+    hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     refreshing: !!isLoading && !isFirstFetch,

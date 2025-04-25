@@ -1648,6 +1648,8 @@
         "unfold": "Unfold",
         "less": "Less",
         "all": "All",
+        "favorite": "Favorite",
+        "unfavorite": "Unfavorite",
         "includeBalance": "Include in Balance",
         "excludeBalance": "Exclude from Balance"
       },
@@ -1698,7 +1700,8 @@
       },
       "header": {
         "placeHolder": "Search",
-        "searchPlaceHolder": "Search Token Name / Address"
+        "searchPlaceHolder": "Search Token Name / Address",
+        "favoriteTitle": "Favorite Token"
       },
       "tokenItem": {
         "Issuedby": "Issued by",
