@@ -1,9 +1,9 @@
 import { SWITCH_HEADER_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Dimensions, Pressable, Text, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -27,34 +27,52 @@ export const SwitchHeader = ({
 }: IProps) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const tabLineLeft = useSharedValue(44);
-  const tabLineWidth = useSharedValue(80);
-
+  const windowWidth = Dimensions.get('window').width;
+  const portfolioStyle = useMemo(() => {
+    return {
+      left: Math.floor(((windowWidth - 32) / 2 - 80) / 2),
+      width: 80,
+    };
+  }, [windowWidth]);
+  const addressStyle = useMemo(() => {
+    const singleBlock = (windowWidth - 32) / 2;
+    return {
+      left: Math.floor(singleBlock + (singleBlock - 110) / 2),
+      width: 110,
+    };
+  }, [windowWidth]);
+  const tabLineLeft = useSharedValue(portfolioStyle.left);
+  const tabLineWidth = useSharedValue(portfolioStyle.width);
   useEffect(() => {
     tabLineLeft.value = withTiming(
-      currentTab === TabType.portfolio ? 44 : 200,
+      Math.floor(
+        currentTab === TabType.portfolio
+          ? portfolioStyle.left
+          : addressStyle.left,
+      ),
       {
         duration: 200,
         easing: Easing.linear,
       },
     );
     tabLineWidth.value = withTiming(
-      currentTab === TabType.portfolio ? 80 : 120,
+      currentTab === TabType.portfolio
+        ? portfolioStyle.width
+        : addressStyle.width,
       {
         duration: 200,
         easing: Easing.linear,
       },
     );
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTab]);
+  }, [currentTab, portfolioStyle]);
 
   const tabLineStyle = useAnimatedStyle(() => {
     return {
       left: tabLineLeft.value,
       width: tabLineWidth.value,
     };
-  });
+  }, [currentTab]);
 
   return (
     <View style={styles.container}>
@@ -110,11 +128,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-    width: '100%',
   },
   tabContainer: {
     alignItems: 'flex-start',
     flexDirection: 'row',
+    justifyContent: 'center',
     flex: 1,
     paddingHorizontal: 13,
     paddingVertical: 6,
