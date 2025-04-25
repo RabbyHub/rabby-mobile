@@ -205,6 +205,7 @@ export const tagTokenList = (
   tokenSetting: ITokenSetting,
 ) => {
   const tagedTokens = tokens.map(i => tagTokenItem(i, tokenSetting));
+  const { unfoldTokens = [] } = tokenSetting;
   const coreTokens = tokens.filter(i => i.is_core);
   const listLength = coreTokens.length || 0;
   const totalValue = coreTokens.reduce(
@@ -222,7 +223,13 @@ export const tagTokenList = (
     return tagedTokens;
   }
   return tagedTokens.map(i => {
-    if (i._isPined || i._isMiniFold || i._isFold || !i.is_core) {
+    if (
+      i._isPined ||
+      i._isMiniFold ||
+      i._isFold ||
+      !i.is_core ||
+      unfoldTokens.some(x => x.chainId === i.chain && x.tokenId === i._tokenId)
+    ) {
       return i;
     }
     return {

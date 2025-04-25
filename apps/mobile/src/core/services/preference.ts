@@ -915,7 +915,7 @@ export class PreferenceService {
     }
   };
 
-  getUserTokenSettings = async () => {
+  getUserTokenSettings = () => {
     return {
       foldTokens: this.store.foldTokens || [],
       unfoldTokens: this.store.unfoldTokens || [],

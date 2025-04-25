@@ -67,6 +67,7 @@ export interface IAssets {
 export const combinedTokens = (assetsMap: {
   [address: string]: IAssets;
 }): CombineTokensItem[] => {
+  const { unfoldTokens = [] } = preferenceService.getUserTokenSettings() || {};
   const tokenMap: Record<string, CombineTokensItem> = {};
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()),
@@ -99,9 +100,6 @@ export const combinedTokens = (assetsMap: {
         existingToken.totalUsdValue = existingToken.totalUsdValue?.plus(
           token._usdValue || 0,
         );
-        existingToken._isFold = existingToken._isMiniFold
-          ? existingToken.totalUsdValue.isLessThan(1)
-          : existingToken._isFold;
         existingToken.fromAddress.push({
           address,
           amount: token.amount,
@@ -113,12 +111,12 @@ export const combinedTokens = (assetsMap: {
   const coreTokens = Object.values(tokenMap).filter(i => i.is_core);
   const listLength = coreTokens.length || 0;
   const totalValue = coreTokens.reduce(
-    (acc, curr) => acc + (curr._usdValue || 0),
+    (acc, curr) => acc + (curr.totalUsdValue.toNumber() || 0),
     0,
   );
   const threshold = Math.min((totalValue || 0) / 1000, 1000);
   const thresholdIndex = coreTokens
-    ? coreTokens.findIndex(m => (m._usdValue || 0) < threshold)
+    ? coreTokens.findIndex(m => (m.totalUsdValue.toNumber() || 0) < threshold)
     : -1;
 
   const hasExpandSwitch =
@@ -132,7 +130,15 @@ export const combinedTokens = (assetsMap: {
         : 0,
     )
     .map(i => {
-      if (!hasExpandSwitch || i._isPined || !i.is_core) {
+      if (
+        !hasExpandSwitch ||
+        i._isPined ||
+        !i.is_core ||
+        i._isManualFold ||
+        unfoldTokens.some(
+          x => x.chainId === i.chain && x.tokenId === i._tokenId,
+        )
+      ) {
         return {
           ...i,
           totalAmount: i.totalAmount.toNumber(),
@@ -149,8 +155,8 @@ export const combinedTokens = (assetsMap: {
           _usdValue: i.totalUsdValue?.toNumber(),
           _usdValueStr: formatNetworth(i.totalUsdValue?.toNumber()),
           _amountStr: formatAmount(i.totalAmount.toNumber()),
-          _isFold: (i._usdValue || 0) < threshold,
-          _isMiniFold: (i._usdValue || 0) < threshold,
+          _isFold: (i.totalUsdValue?.toNumber() || 0) < threshold,
+          _isMiniFold: (i.totalUsdValue?.toNumber() || 0) < threshold,
         };
       }
     });
