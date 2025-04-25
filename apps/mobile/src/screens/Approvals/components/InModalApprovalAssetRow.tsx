@@ -258,7 +258,6 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      marginTop: 6,
     },
     rightArea: {
       flexDirection: 'row',

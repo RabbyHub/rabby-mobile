@@ -139,7 +139,7 @@ export default function ListByContracts() {
         // makeDebugBorder('red')
       ]}>
       <Tabs.SectionList<ContractApprovalItem>
-        initialNumToRender={4}
+        initialNumToRender={8}
         maxToRenderPerBatch={20}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>

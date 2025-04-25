@@ -37,7 +37,7 @@ export const SkeletonListByContracts = memo(() => {
           ApprovalsLayouts.innerContainerHorizontalOffset -
           IOS_SWIPABLE_LEFT_OFFSET,
       }}>
-      {Array(5)
+      {Array(8)
         .fill(0)
         .map((e, i) => (
           <View
@@ -46,7 +46,7 @@ export const SkeletonListByContracts = memo(() => {
               cardStyles.container,
               { height: 74 },
               i > 0 && {
-                marginTop: 12,
+                marginTop: 8,
               },
             ]}>
             <View
@@ -87,13 +87,17 @@ export const SkeletonListByAssets = memo(() => {
   const { styles: cardStyles } = useTheme2024({ getStyle: getCardStyles });
   return (
     <View>
-      {Array(15)
+      {Array(8)
         .fill(0)
         .map((e, i) => (
           <View
             key={i}
             style={[
               cardStyles.container,
+              { height: 74 },
+              i > 0 && {
+                marginTop: 8,
+              },
               {
                 height: ApprovalsLayouts.assetsItemHeight,
                 borderWidth: 0,

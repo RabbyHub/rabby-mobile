@@ -192,10 +192,11 @@ export const getAssetItemStyles = createGetStyles2024(ctx => {
       borderStyle: 'solid',
       borderColor: colors2024['neutral-line'],
       borderWidth: 0.5,
-      marginTop: 6,
-      paddingVertical: 1,
+      paddingVertical: 4,
       paddingHorizontal: 4,
       fontSize: 12,
+      lineHeight: 12,
+      marginTop: 2,
       fontFamily: 'SF Pro Rounded',
       fontWeight: '400',
       color: colors2024['neutral-foot'],
@@ -206,9 +207,9 @@ export const getAssetItemStyles = createGetStyles2024(ctx => {
     assetNameText: {
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
-      fontSize: 20,
+      fontSize: 16,
       fontWeight: '700',
-      maxWidth: 180,
+      lineHeight: 20,
     },
   };
 });

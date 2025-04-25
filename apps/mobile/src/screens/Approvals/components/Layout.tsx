@@ -463,6 +463,7 @@ export function BottomSheetModalFooterButton({
           styles.footerButtonContainer,
           buttonProps?.containerStyle,
         ]}
+        buttonStyle={[styles.buttonStyle]}
       />
     </View>
   );
@@ -483,9 +484,11 @@ const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
       alignItems: 'center',
     },
     footerButtonContainer: {
-      minWidth: 248,
-      height: 52,
       width: '100%',
+      height: 56,
+    },
+    buttonStyle: {
+      borderRadius: 16,
     },
     footerText: {
       color: colors['neutral-title2'],
