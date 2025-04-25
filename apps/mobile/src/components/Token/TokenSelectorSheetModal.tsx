@@ -1092,8 +1092,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'space-between',
       alignItems: 'center',
       height: ITEM_HEIGHT,
-      paddingHorizontal: 8,
+      // paddingHorizontal: 8,
       paddingRight: 16,
+      paddingLeft: 12,
       // marginHorizontal: 12,
       // marginTop: 8,
       backgroundColor: isLight
