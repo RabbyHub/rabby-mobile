@@ -8,6 +8,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { trigger } from 'react-native-haptic-feedback';
 
 export const useDeleteAccountModal = () => {
   const { t } = useTranslation();
@@ -34,6 +35,10 @@ export const useDeleteAccountModal = () => {
       autoConfirm?: boolean;
       onFinished?: () => void;
     }) => {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
       const count =
         account.type === KEYRING_TYPE.HdKeyring
           ? (await apiMnemonic.getKeyringAccountsByAddress(account.address))
@@ -66,6 +71,10 @@ export const useDeleteAccountModal = () => {
           ? { authType: ['none'] }
           : { authType: ['biometrics', 'password'] }),
         onFinished: async () => {
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
+          });
           await removeAccount(account);
           await handleShouldGoStartPage();
           onFinished?.();

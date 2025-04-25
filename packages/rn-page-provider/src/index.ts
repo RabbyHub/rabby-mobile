@@ -116,9 +116,17 @@ export class EthereumProvider extends EventEmitter {
     this._bcm.connect().on("message", this._handleBackgroundMessage);
     domReadyCall(() => {
       const origin = location.origin;
-      const icon =
+      let icon =
         ($('head > link[rel~="icon"]') as HTMLLinkElement)?.href ||
         ($('head > meta[itemprop="image"]') as HTMLMetaElement)?.content;
+
+        if (!/^https?:\/\//.test(icon)) {
+          try {
+            icon = new URL(icon, origin).href
+          } catch(e) {
+            console.error(e)
+          }
+        }
 
       const name =
         document.title ||

@@ -20,7 +20,11 @@ import {
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { trigger } from 'react-native-haptic-feedback';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
+import {
+  StackActions,
+  TabActions,
+  useFocusEffect,
+} from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
@@ -42,7 +46,7 @@ import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { transactionHistoryService } from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -59,7 +63,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSyncAssetsDB } from '@/databases/hooks/assets';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
-import { unionBy } from 'lodash';
+import { debounce, unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
 import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
@@ -79,6 +83,10 @@ import { LoadingLinear } from '../TokenDetail/components/TokenPriceChart/Loading
 import { Skeleton } from '@rneui/base';
 import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
 import { BlurShadowView } from '@/components2024/BluerShadow';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { judgeIsSmallUsdTx } from '../Transaction/components/utils';
+import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 
 const HeaderHeight = 24;
 
@@ -152,10 +160,6 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
           <Card
             style={[styles.curveCard, styles.shadowView]}
             onPress={() => {
-              trigger('impactLight', {
-                enableVibrateFallback: true,
-                ignoreAndroidSystemSettings: false,
-              });
               navigation.dispatch(
                 StackActions.push(RootNames.StackAddress, {
                   screen: RootNames.AddressAssetsOverview,
@@ -389,6 +393,7 @@ function MultiAddressHome(): JSX.Element {
 
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(unionAccounts);
+  const { tokenDict } = useHistoryTokenDict();
 
   const displayFundWallet = useMemo(
     () =>
@@ -441,7 +446,30 @@ function MultiAddressHome(): JSX.Element {
   //   };
   // });
 
-  const getSuccessAndFailList = useCallback(() => {
+  const getSuccessAndFailList = useCallback(async () => {
+    const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
+    const list = await HistoryItemEntity.getAllHistoryItemSortedByTime(
+      top10Addresses,
+      200,
+      true,
+      undefined,
+      timestamp / 1000,
+    );
+
+    const pinedQueue = preferenceService.getPinToken();
+    list.map(i => {
+      const isSmallTx = judgeIsSmallUsdTx(i, tokenDict, pinedQueue);
+      if (!isSmallTx) {
+        const status = i.status ?? 1;
+        const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
+        if (status === 1) {
+          transactionHistoryService.setSucceedList(id);
+        } else {
+          transactionHistoryService.setFailedList(id);
+        }
+      }
+    });
+
     const count = transactionHistoryService.getFailedCount();
     const success = transactionHistoryService.getSucceedCount();
 
@@ -449,7 +477,8 @@ function MultiAddressHome(): JSX.Element {
       success: success,
       fail: count,
     });
-  }, [setHistoryCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -470,6 +499,24 @@ function MultiAddressHome(): JSX.Element {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [getSuccessAndFailList, pendingTxCount]),
   );
+
+  const thorttleGetSuccessAndFailList = useMemo(
+    () => debounce(getSuccessAndFailList, 1000),
+    [getSuccessAndFailList],
+  );
+
+  useAppOrmSyncEvents({
+    taskFor: ['all-history'],
+    onRemoteDataUpserted: ctx => {
+      switch (ctx.taskFor) {
+        case 'all-history':
+          thorttleGetSuccessAndFailList();
+          break;
+        default:
+          break;
+      }
+    },
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -515,10 +562,6 @@ function MultiAddressHome(): JSX.Element {
 
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
-      trigger('impactLight', {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
       switch (key) {
         case MultiHomeFeatTitle.Send:
           navigateToSendPolyScreen(false);
@@ -572,8 +615,8 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Dapps:
-          navigation.navigate(RootNames.StackDapps, {
-            screen: RootNames.Dapps,
+          navigation.navigate(RootNames.StackBrowser, {
+            screen: RootNames.BrowserScreen,
             params: {},
           });
           break;

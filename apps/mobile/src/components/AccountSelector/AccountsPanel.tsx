@@ -172,7 +172,6 @@ function AddressItemInSheetModal({
                       <TouchableOpacity
                         onPress={evt => {
                           evt.stopPropagation();
-                          triggerLight();
                           onPressAccount();
                         }}
                         style={styles.iconWrapper}>

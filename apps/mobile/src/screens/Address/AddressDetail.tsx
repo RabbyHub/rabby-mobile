@@ -56,6 +56,7 @@ import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useAddressSource } from '@/hooks/useAddressSource';
 import { SeedPhraseBar } from './components/SeedPhraseBar';
 import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
+import { trigger } from 'react-native-haptic-feedback';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -178,6 +179,10 @@ export const AddressInfo = (props: AddressInfoProps) => {
 
   const handleDelete = useCallback(async () => {
     try {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
       await removeAccount(account);
       handleCloseDeleteModalPress();
       // navigation.goBack();

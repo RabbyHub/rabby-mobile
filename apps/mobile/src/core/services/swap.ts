@@ -127,8 +127,6 @@ export class SwapService {
       }
     }
     this.store = storage || this.store;
-
-    this.handleUnsupportedChain();
   }
 
   handleUnsupportedChain = () => {

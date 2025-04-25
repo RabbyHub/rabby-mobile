@@ -14,6 +14,9 @@ export type BrowserHistoryStore = {
   };
 };
 
+/**
+ * @deprecated
+ */
 export class BrowserHistoryService extends StoreServiceBase<
   BrowserHistoryStore,
   'browserHistory'

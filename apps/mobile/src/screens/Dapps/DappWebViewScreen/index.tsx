@@ -77,6 +77,12 @@ export function DappWebViewStubScreen() {
         });
         break;
       }
+
+      case 'back': {
+        navigation.pop();
+        break;
+      }
+
       default: {
         navigation.replace(RootNames.StackDapps, {
           screen: dappsWebViewFromRoute,

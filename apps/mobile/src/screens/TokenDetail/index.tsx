@@ -14,7 +14,7 @@ import {
   AbstractProject,
 } from '@/screens/home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { findChain } from '@/utils/chain';
+import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
@@ -38,18 +38,15 @@ import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { RcIconMore } from '@/assets/icons/home';
-import { trigger } from 'react-native-haptic-feedback';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
-import { HeaderRightHistory } from '../Home/SingleHomeRightArea';
 import { CombineTokensItem } from '../Home/hooks/store';
 import { RelatedDeFi } from './components/RelatedDeFi';
 import { navigate, naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
-import { HomePinBadge } from './components/PinBadge';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
@@ -59,11 +56,10 @@ import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import LinearGradient from 'react-native-linear-gradient';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { unionBy } from 'lodash';
 import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
+import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -171,12 +167,6 @@ export const RightMore: React.FC<{
       },
     ] as MenuAction[];
   }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
-  const onPress = () => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
-  };
 
   return (
     <>
@@ -185,7 +175,7 @@ export const RightMore: React.FC<{
           menuActions: menuActions,
         }}
         triggerProps={{ action: 'press' }}>
-        <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
+        <CustomTouchableOpacity hitSlop={hitSlop}>
           <RcIconMore width={24} height={24} />
         </CustomTouchableOpacity>
       </DropDownMenuView>
@@ -462,11 +452,17 @@ export const TokenDetailScreen = () => {
     );
   }, [token, accounts, isSingleAddress, finalAccount]);
 
-  const tokenSupportSwap = useMemo(() => {
-    const tokenChain = findChain({ serverId: token?.chain })?.enum;
+  const tokenChain = useMemo(() => {
+    return getChain(token?.chain);
+  }, [token?.chain]);
 
-    return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain);
-  }, [token]);
+  const { isSupportedChain, data: externalSwapDapps } =
+    useExternalSwapBridgeDapps(tokenChain!.enum, 'swap');
+
+  const tokenSupportSwap = useMemo(
+    () => isSupportedChain || externalSwapDapps.length > 0,
+    [isSupportedChain, externalSwapDapps],
+  );
 
   const unHold = useMemo(
     () => _unHold || tokenFromAddress.length === 0,
@@ -609,42 +605,50 @@ export const TokenDetailScreen = () => {
         />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
       </ScrollView>
-      <LinearGradient
+      {/* <LinearGradient
         colors={
           isLight
             ? ['rgba(246, 247, 247, 1)', 'rgba(246, 247, 247, 0.3)']
             : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.3)']
         }
         locations={[0.6393, 1]}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 0, y: 0 }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
         style={[
           styles.floatBottom,
           isAndroid && { height: 120 + safeOffBottom },
+        ]}> */}
+      <View
+        style={[
+          styles.buttonGroup,
+          isAndroid && { paddingBottom: 50 + safeOffBottom },
         ]}>
-        <View
-          style={[
-            styles.buttonGroup,
-            isAndroid && { paddingBottom: 50 + safeOffBottom },
-          ]}>
-          <View style={styles.btnContainer}>
-            <Tip
-              placement="top"
-              content={
-                !tokenSupportSwap
-                  ? t('page.tokenDetail.notSupportedOnChain')
-                  : undefined
-              }>
-              <Button
-                title={isFromSwap ? t('global.Confirm') : t('page.swap.title')}
-                containerStyle={StyleSheet.flatten([styles.btnContainer])}
-                onPress={() => handleSwap('Sell')}
-                disabled={!tokenSupportSwap}
-              />
-            </Tip>
-          </View>
+        <Button
+          type="ghost"
+          title={t('page.home.services.send')}
+          containerStyle={StyleSheet.flatten([styles.btnContainer])}
+          buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
+          onPress={() => handleSend()}
+        />
+        <View style={styles.btnContainer}>
+          <Tip
+            placement="top"
+            content={
+              !tokenSupportSwap
+                ? t('page.tokenDetail.notSupportedOnChain')
+                : undefined
+            }>
+            <Button
+              title={isFromSwap ? t('global.Confirm') : t('page.swap.title')}
+              containerStyle={StyleSheet.flatten([styles.btnContainer])}
+              onPress={() => handleSwap('Sell')}
+              buttonStyle={styles.btnInnerContainer}
+              disabled={!tokenSupportSwap}
+            />
+          </Tip>
         </View>
-      </LinearGradient>
+      </View>
+      {/* </LinearGradient> */}
     </NormalScreenContainer2024>
   );
 };
@@ -721,10 +725,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       paddingHorizontal: 20,
     },
     buttonGroup: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
       width: '100%',
       position: 'absolute',
       bottom: 0,
       // display: 'flex',
+      gap: 16,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -737,8 +745,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flex: 1,
     },
 
-    buyBtnContainer: {
+    ghostBtn: {
+      borderWidth: 1.5,
       backgroundColor: colors2024['brand-light-1'],
+    },
+    btnInnerContainer: {
+      borderRadius: 16,
     },
     buyBtnTitle: {
       color: colors2024['brand-default'],

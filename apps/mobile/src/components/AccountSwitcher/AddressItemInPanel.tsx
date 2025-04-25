@@ -1,23 +1,15 @@
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import React, { useCallback } from 'react';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 import RcIconCorrectCC from './icons/correct-cc.svg';
 import { Account } from '@/core/services/preference';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 import { useTopTokensForAddress } from './hooks';
 import { AssetAvatar } from '../AssetAvatar';
 import { trigger } from 'react-native-haptic-feedback';
-import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
-import { IS_ANDROID } from '@/core/native/utils';
-import { getAliasName } from '@/core/apis/contact';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { toastCopyAddressSuccess } from '../AddressViewer/CopyAddress';
-import { ellipsisAddress } from '@/utils/address';
-import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { useTranslation } from 'react-i18next';
 import { AccountSwitcherContextMenu } from './ContextMenu';
 const MY_ADDRESS_LIMIT = 3;
@@ -59,10 +51,6 @@ export function AddressItemInPanel({
 
   const { account } = addressItemProps;
   const onPressAddress = useCallback(() => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     proponPressAddress?.(account);
   }, [account, proponPressAddress]);
 

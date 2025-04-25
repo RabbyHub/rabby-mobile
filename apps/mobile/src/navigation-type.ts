@@ -42,6 +42,7 @@ export type RootStackParamsList = {
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackDapps]: NavigatorScreenParams<DappsNavigatorParamsList>;
+  [RootNames.StackBrowser]: NavigatorScreenParams<BrowserNavigatorParamsList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]: {
     token: NFTItem;
@@ -86,7 +87,8 @@ export type HomeNavigatorParamsList = {
   [RootNames.DappWebViewStubOnHome]?: {
     dappsWebViewFromRoute?:
       | typeof RootNames.Dapps
-      | typeof RootNames.FavoriteDapps;
+      | typeof RootNames.FavoriteDapps
+      | 'back';
     nextOpenDappInfo?: DappInfo;
   };
 };
@@ -98,6 +100,11 @@ export type HomeNonTabNavigatorParamsList = {
 export type DappsNavigatorParamsList = {
   [RootNames.Dapps]?: {};
   [RootNames.FavoriteDapps]?: {};
+};
+
+export type BrowserNavigatorParamsList = {
+  [RootNames.BrowserScreen]?: {};
+  [RootNames.BrowserManageScreen]?: {};
 };
 
 type GetStartedNavigatorParamsList = {

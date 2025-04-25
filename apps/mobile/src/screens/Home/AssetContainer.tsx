@@ -733,10 +733,6 @@ export const AssetContainer: React.FC<Props> = ({
   );
 
   const handleOnReceive = async () => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     if (!currentAccount?.address) {
       return;
     }
@@ -749,10 +745,6 @@ export const AssetContainer: React.FC<Props> = ({
   };
 
   const handleOnBuy = async () => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     if (!currentAccount?.address) {
       return;
     }

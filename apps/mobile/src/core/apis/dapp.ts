@@ -149,3 +149,29 @@ export const syncBasicDappInfo = async (origin: string | string[]) => {
 
   return dappService.getDapps();
 };
+
+export const syncBasicDappsInfo = async () => {
+  const dapps = Object.values(dappService.getDapps());
+  const ids = dapps
+    .filter(
+      item => Date.now() - (item.infoUpdateAt || 0) > 3 * 24 * 60 * 60 * 1000,
+    )
+    .map(item => item.origin.replace(/^https?:\/\//, ''));
+  if (ids.length) {
+    const res = await openapi.getDappsInfo({
+      ids,
+    });
+
+    dappService.patchDapps(
+      res.reduce((accu, item) => {
+        if (item.id) {
+          const dappOrigin = stringUtils.ensurePrefix(item.id, 'https://');
+          if (dappOrigin) {
+            accu[dappOrigin] = { info: item, infoUpdateAt: Date.now() };
+          }
+        }
+        return accu;
+      }, {} as Record<DappInfo['origin'], Partial<DappInfo>>),
+    );
+  }
+};

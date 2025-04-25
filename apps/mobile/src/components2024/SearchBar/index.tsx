@@ -1,9 +1,10 @@
-import React, { useImperativeHandle, useRef, useState } from 'react';
+import React, { ReactNode, useImperativeHandle, useRef, useState } from 'react';
 import {
   StyleProp,
   Text,
   TextInput,
   TextInputProps,
+  TextStyle,
   View,
   ViewStyle,
 } from 'react-native';
@@ -23,8 +24,12 @@ import {
 
 export interface Props extends Omit<TextInputProps, 'style'> {
   style?: StyleProp<ViewStyle>;
+  inputContainerStyle?: StyleProp<ViewStyle>;
   onCancel?(): void;
   noCancel?: boolean;
+  searchIcon?: ReactNode;
+  alwaysShowCancel?: boolean;
+  inputStyle?: StyleProp<TextStyle>;
   ref?: React.ForwardedRef<{
     focus(): void;
     blur(): void;
@@ -36,7 +41,11 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
   (
     {
       style,
+      inputContainerStyle,
+      inputStyle,
       value,
+      searchIcon,
+      alwaysShowCancel,
       onChangeText,
       onChange,
       onBlur,
@@ -79,22 +88,28 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
 
     return (
       <View style={[styles.container, style]}>
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, inputContainerStyle]}>
           <TouchableWithoutFeedback
             hitSlop={8}
             onPress={() => {
               inputRef.current?.focus();
             }}>
-            <RcNextSearchCC
-              style={styles.searchIcon}
-              color={colors2024['neutral-foot']}
-              width={16}
-              height={16}
-            />
+            {searchIcon || (
+              <RcNextSearchCC
+                style={styles.searchIcon}
+                color={colors2024['neutral-foot']}
+                width={16}
+                height={16}
+              />
+            )}
           </TouchableWithoutFeedback>
           <TextInput
             ref={inputRef}
-            style={[styles.input, isEmpty ? styles.placeholder : null]}
+            style={[
+              styles.input,
+              inputStyle,
+              isEmpty ? styles.placeholder : null,
+            ]}
             placeholderTextColor={styles.placeholder.color}
             value={value}
             onChangeText={onChangeText}
@@ -124,7 +139,7 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
             </TouchableWithoutFeedback>
           ) : null}
         </View>
-        {isFocus && !noCancel ? (
+        {alwaysShowCancel || (isFocus && !noCancel) ? (
           <TouchableOpacity
             onPress={() => {
               onCancel?.();
@@ -153,10 +168,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 16,
     backgroundColor: colors2024['neutral-bg-2'],
     paddingHorizontal: 8,
+    paddingLeft: 12,
     gap: 7,
   },
 
-  searchIcon: { marginLeft: 12 },
+  searchIcon: {},
   closeIcon: {},
   input: {
     flex: 1,

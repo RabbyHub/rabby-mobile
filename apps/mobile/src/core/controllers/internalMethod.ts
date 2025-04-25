@@ -1,10 +1,18 @@
+import { Platform } from 'react-native';
+import { keyBy, uniq } from 'lodash';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { keyringService } from '../services';
-import { dappService, sessionService } from '@/core/services/shared';
+import {
+  browserService,
+  dappService,
+  sessionService,
+} from '@/core/services/shared';
 import providerController from './provider';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { ProviderRequest } from './type';
 import { createDappBySession } from '../apis/dapp';
+import { openapi } from '../request';
+import { ANDROID_DESKTOP_MODE_UA } from '@/constant/browser';
 
 const networkIdMap: {
   [key: string]: string;
@@ -12,12 +20,20 @@ const networkIdMap: {
 
 const tabCheckin = ({
   data: {
-    params: { name, icon },
+    params: { name, icon, userAgent },
   },
-  session: { origin },
+  session,
 }) => {
-  // session.setProp({ origin, name, icon });
-  // console.debug('tabCheckin', origin, name, icon);
+  const origin = session.origin;
+  // try {
+  //   session.setProp({ origin, name, icon });
+  // } catch (e) {
+  //   console.error(e);
+  // }
+  console.debug('[tabCheckin]', origin, name, icon, userAgent);
+  if (Platform.OS === 'android' && userAgent !== ANDROID_DESKTOP_MODE_UA) {
+    browserService.setDefaultUserAgent(userAgent);
+  }
   const dapp = dappService.getDapp(origin);
   if (!dapp) {
     dappService.addDapp(
@@ -28,17 +44,10 @@ const tabCheckin = ({
       }),
     );
   } else {
-    const info = {
-      ...dapp.info,
-    };
-    // todo check this
-    info.name = info.name || name;
-    info.logo_url = info.logo_url || icon;
     dappService.updateDapp({
       ...dapp,
-      info: {
-        ...info,
-      },
+      name: name,
+      icon: icon,
     });
   }
 
@@ -80,8 +89,24 @@ const getProviderState = async (req: ProviderRequest) => {
   };
 };
 
+const getDappsInfo = async (req: ProviderRequest) => {
+  const domains: string[] = req.data.params?.[0]?.domains || [];
+
+  const res = await openapi.getDappsInfo({
+    ids: domains,
+  });
+  return keyBy(res, 'id');
+};
+
+const getOriginIsScam = async (req: ProviderRequest) => {
+  const args: { origin: string; source: string } = req.data.params?.[0];
+  return openapi.getOriginIsScam(args.origin, args.source);
+};
+
 export default {
   tabCheckin,
   getProviderState,
   rabby_getProviderState: getProviderState,
+  rabby_getDappsInfo: getDappsInfo,
+  rabby_getOriginIsScam: getOriginIsScam,
 };

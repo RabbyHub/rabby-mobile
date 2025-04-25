@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useDeleteAccountModal } from '../useDeleteAccountModal';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { trigger } from 'react-native-haptic-feedback';
 
 const MenuIcons = {
   copyDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png'),
@@ -67,6 +68,10 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
           androidIconName: 'ic_rabby_menu_copy',
           key: 'copy',
           action() {
+            trigger('impactLight', {
+              enableVibrateFallback: true,
+              ignoreAndroidSystemSettings: false,
+            });
             Clipboard.setString(account.address);
             toastCopyAddressSuccess(account.address);
           },

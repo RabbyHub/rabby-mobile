@@ -526,9 +526,7 @@ ConnectProps) => {
         setDefaultChain(site.chainId);
       }
 
-      if (site.info.logo_url) {
-        setDappIcon(site.info.logo_url);
-      }
+      setDappIcon(site?.icon || site?.info?.logo_url || icon);
       return;
     }
     setIsLoading(false);

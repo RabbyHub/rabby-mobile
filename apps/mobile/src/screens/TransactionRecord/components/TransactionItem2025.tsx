@@ -385,12 +385,15 @@ export const TransactionItem = ({
             <Text style={styles.titleText} numberOfLines={1}>
               {formatTitle}
             </Text>
-            {isShowSuccess && <TxStatusItem status={1} showSuccess={true} />}
-            <TxStatusItem
-              isPending={data.isPending}
-              withText={false}
-              status={1}
-            />
+            {isShowSuccess ? (
+              <TxStatusItem status={1} showSuccess={true} />
+            ) : (
+              <TxStatusItem
+                isPending={data.isPending}
+                withText={false}
+                status={1}
+              />
+            )}
           </View>
           {formatDescribe}
         </View>

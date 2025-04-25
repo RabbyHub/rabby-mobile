@@ -78,7 +78,7 @@ interface TokenSelectProps {
         openTokenModal: () => void;
       }) => React.ReactNode)
     | React.ReactNode;
-  supportChains: CHAINS_ENUM[];
+  supportChains?: CHAINS_ENUM[];
   searchPlaceholder?: string;
 }
 const defaultExcludeTokens = [];

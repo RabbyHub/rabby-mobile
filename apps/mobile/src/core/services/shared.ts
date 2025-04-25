@@ -37,6 +37,7 @@ import { BrowserHistoryService } from './browserHistoryService';
 import { MockWalletConnectKeyring } from '../keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
 import { OfflineChainService } from './offlineChain';
+import { BrowserService } from './browserService';
 
 migrateAppStorage(appStorage);
 
@@ -180,6 +181,10 @@ export const offlineChainService = new OfflineChainService({
   storageAdapter: appStorage,
 });
 
+export const browserService = new BrowserService({
+  storageAdapter: appStorage,
+});
+
 migrateServices({
   contactBook: contactService,
   dapps: dappService,
@@ -196,4 +201,5 @@ migrateServices({
   HDKeyRingLastAddAddrTime: hdKeyringService,
   gasAccount: gasAccountService,
   offlineChain: offlineChainService,
+  browser: browserService,
 });

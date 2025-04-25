@@ -83,10 +83,6 @@ export function ApprovalAddressListScreen(): JSX.Element {
   );
 
   const handleSelect = (account: KeyringAccountWithAlias) => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     // set =>> currentAccountAtom
     switchAccount(account);
     navigation.push(RootNames.StackTransaction, {
