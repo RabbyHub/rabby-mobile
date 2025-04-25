@@ -10,6 +10,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { AddressItem } from '../AddressItem/AddressItem';
 import { useAliasNameEditModal } from '../AliasNameEditModal/useAliasNameEditModal';
 import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
+import { trigger } from 'react-native-haptic-feedback';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
@@ -21,6 +22,10 @@ export const AddressInfoItem: React.FC<AddressInfoProps> = props => {
   const editAliasName = useAliasNameEditModal();
 
   const onCopy = useCallback(() => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     Clipboard.setString(account.address);
     toastCopyAddressSuccess(account.address);
   }, [account?.address]);

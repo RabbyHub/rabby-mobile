@@ -13,6 +13,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useNavigation } from '@react-navigation/native';
+import { trigger } from 'react-native-haptic-feedback';
 
 export default function HomeHeaderArea() {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -31,6 +32,10 @@ export default function HomeHeaderArea() {
       if (!currentAccount?.address) {
         return;
       }
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
       Clipboard.setString(currentAccount.address);
       toastCopyAddressSuccess(currentAccount.address);
     },

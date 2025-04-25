@@ -35,6 +35,10 @@ export const useDeleteAccountModal = () => {
       autoConfirm?: boolean;
       onFinished?: () => void;
     }) => {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
       const count =
         account.type === KEYRING_TYPE.HdKeyring
           ? (await apiMnemonic.getKeyringAccountsByAddress(account.address))
