@@ -10,6 +10,7 @@ import { ListHeader } from './ListHeader';
 import { useBatchRevokeTask } from './useBatchRevokeTask';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 const ItemSeparatorComponent = () => {
   const { styles } = useTheme2024({
@@ -52,6 +53,37 @@ export const BatchRevokeScreen = () => {
     };
   }, [isPaused]);
 
+  const buttonText = React.useMemo(() => {
+    switch (task.status) {
+      case 'paused':
+        return t('page.approvals.continueRevoke');
+      case 'active':
+        return t('page.approvals.pauseRevoke');
+      case 'completed':
+        return t('page.approvals.revokeCompleted');
+      case 'idle':
+      default:
+        return t('page.approvals.startRevoke');
+    }
+  }, [t, task.status]);
+
+  const { navigation } = useSafeSetNavigationOptions();
+  const buttonAction = React.useCallback(() => {
+    switch (task.status) {
+      case 'paused':
+        return task.continue();
+      case 'active':
+        return task.pause();
+      case 'completed':
+        navigation.canGoBack() && navigation.goBack();
+        // back to the previous screen
+        return;
+      case 'idle':
+      default:
+        return task.start();
+    }
+  }, [navigation, task]);
+
   if (!params) {
     return null;
   }
@@ -60,11 +92,9 @@ export const BatchRevokeScreen = () => {
     <FooterButtonScreenContainer
       footerBottomOffset={35}
       buttonProps={{
-        title: t('page.approvals.startRevoke', {
-          currentCount: task.revokedApprovals,
-          totalCount: task.totalApprovals,
-        }),
+        title: `${buttonText} (${task.revokedApprovals}/${task.totalApprovals})`,
         buttonStyle: { borderRadius: 16 },
+        onPress: buttonAction,
       }}>
       <View style={styles.root}>
         <ListHeader />

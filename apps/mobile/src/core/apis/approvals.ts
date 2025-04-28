@@ -378,7 +378,7 @@ export async function revokeNFTApprove(
   if (!chainId) throw new Error(t('background.error.invalidChainId'));
   if (abi === 'ERC721') {
     if (isApprovedForAll) {
-      return await this.sendRequest(
+      return await sendRequest(
         {
           $ctx,
           method: 'eth_sendTransaction',
@@ -411,10 +411,11 @@ export async function revokeNFTApprove(
             },
           ],
         },
+        INTERNAL_REQUEST_SESSION,
         isBuild,
       );
     } else {
-      return await this.sendRequest(
+      return await sendRequest(
         {
           $ctx,
           method: 'eth_sendTransaction',
@@ -448,6 +449,7 @@ export async function revokeNFTApprove(
             },
           ],
         },
+        INTERNAL_REQUEST_SESSION,
         isBuild,
       );
     }

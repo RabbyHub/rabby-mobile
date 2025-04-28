@@ -56,7 +56,7 @@ const getStyle = createGetStyles2024(ctx =>
   }),
 );
 
-interface FooterButtonContainer2024Props {
+export interface FooterButtonContainer2024Props {
   noHeader?: boolean;
   children: React.ReactNode;
   buttonProps?: ButtonProps;

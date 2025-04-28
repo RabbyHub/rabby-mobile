@@ -783,7 +783,8 @@
         "simulationFailed": "Simulation Failed",
         "approvalCount": "{{count}} approval",
         "approvalCount_one": "{{count}} approval",
-        "approvalCount_other": "{{count}} approvals"
+        "approvalCount_other": "{{count}} approvals",
+        "iGotIt": "I Got it"
       },
       "contractAddress": "Contract Address",
       "allApprovals": "All Approvals",
@@ -793,10 +794,16 @@
       "approvedContractsAndAmount": "Approved Contracts and Amount",
       "myBalance": "My Balance",
       "unknownContract": "Unknown Contract",
-      "startRevoke": "Start Revoke ({{currentCount}}/{{totalCount}})",
+      "startRevoke": "Start Revoke",
       "asset": "Asset",
       "revokeFrom": "Revoke From",
-      "gasFee": "Gas Fee"
+      "gasFee": "Gas Fee",
+      "continueRevoke": "Continue",
+      "pauseRevoke": "Paused",
+      "revokeCompleted": "Done",
+      "errorReason": {
+        "title": "Fail to Revoke"
+      }
     },
     "gasTopUp": {
       "No_Tokens": "No Tokens",
