@@ -38,6 +38,7 @@ export const ListItem: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
+    marginHorizontal: 12,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',

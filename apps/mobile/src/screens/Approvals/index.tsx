@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Platform, Dimensions } from 'react-native';
+import { View, Platform, Dimensions, Text } from 'react-native';
 import {
   Tabs,
   MaterialTabBar,
@@ -25,18 +25,15 @@ import BottomSheetApprovalContract from './components/BottomSheetApprovalContrac
 import BottomSheetApprovalAsset from './components/BottomSheetApprovalAsset';
 import { IS_IOS } from '@/core/native/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { ellipsisAddress } from '@/utils/address';
-import { HeaderRight } from './components/Headers/HeaderRight';
-import { HeaderCenter } from './components/Headers/HeaderCenter';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 const isAndroid = Platform.OS === 'android';
 
 const ApprovalScreenContainer = () => {
   const { currentAccount } = useCurrentAccount();
-  const [isSearching, setIsSearching] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { filterType, searchKw, setSearchKw, setFilterType } =
-    useApprovalsPage();
+  const { filterType, setFilterType } = useApprovalsPage();
 
   const { t } = useTranslation();
 
@@ -83,38 +80,30 @@ const ApprovalScreenContainer = () => {
 
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <HeaderCenter
-        textTitle={
-          currentAccount?.address
-            ? currentAccount?.aliasName ||
-              ellipsisAddress(currentAccount.address)
-            : 'Approvals'
-        }
-        type={filterType}
-        inputValue={searchKw}
-        inputOnChange={setSearchKw}
-        isSearching={isSearching}
-      />
+      <View style={styles.title}>
+        <WalletIcon
+          type={currentAccount?.brandName as KEYRING_TYPE}
+          width={25}
+          height={25}
+          borderRadius={6}
+        />
+        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
+          {currentAccount?.aliasName || currentAccount?.brandName}
+        </Text>
+      </View>
     );
   }, [
-    currentAccount?.address,
     currentAccount?.aliasName,
-    filterType,
-    isSearching,
-    searchKw,
-    setSearchKw,
+    currentAccount?.brandName,
+    styles.title,
+    styles.titleText,
   ]);
 
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
     });
-  }, [
-    setNavigationOptions,
-    getHeaderTitle,
-    currentAccount?.aliasName,
-    isSearching,
-  ]);
+  }, [setNavigationOptions, getHeaderTitle, currentAccount?.aliasName]);
 
   if (!currentAccount?.address) {
     return null;
@@ -160,7 +149,7 @@ export default function ApprovalsScreen() {
 
   const { loadApprovals } = approvalsPageCtx;
 
-  useEffect(() => {
+  React.useEffect(() => {
     loadApprovals();
   }, [loadApprovals]);
 
@@ -190,6 +179,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
   },
   title: {
+    gap: 8,
+    flexDirection: 'row',
+  },
+  titleText: {
     color: colors2024['neutral-title-1'],
     fontWeight: '800',
     fontSize: 20,

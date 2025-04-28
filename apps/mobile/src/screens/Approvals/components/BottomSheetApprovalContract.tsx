@@ -8,6 +8,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import {
   ContractApprovalItem,
+  useApprovalsPage,
   useFocusedApprovalOnApprovals,
   useRevokeContractSpenders,
 } from '../useApprovalsPage';
@@ -24,6 +25,9 @@ import { parseContractApprovalListItem } from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
+import { findIndexRevokeList } from '@/screens/BatchRevoke/utils';
+import { RootNames } from '@/constant/layout';
+import { navigate } from '@/utils/navigation';
 
 export default function BottomSheetApprovalContract({
   modalProps,
@@ -48,6 +52,29 @@ export default function BottomSheetApprovalContract({
     () => Object.keys(contractFocusingRevokeMap).length,
     [contractFocusingRevokeMap],
   );
+
+  const { displaySortedAssetsList } = useApprovalsPage();
+
+  const handleRevoke = React.useCallback(() => {
+    modalRef?.current?.close();
+    const currentRevokeList = Object.values(contractFocusingRevokeMap);
+    const filteredDataSource = displaySortedAssetsList.filter(record => {
+      return (
+        findIndexRevokeList(currentRevokeList, {
+          item: record.$assetContract!,
+          spenderHost: record.$assetToken!,
+          assetApprovalSpender: record,
+        }) > -1
+      );
+    });
+    navigate(RootNames.StackTransaction, {
+      screen: RootNames.BatchRevoke,
+      params: {
+        revokeList: currentRevokeList,
+        dataSource: filteredDataSource,
+      },
+    });
+  }, [contractFocusingRevokeMap, displaySortedAssetsList, modalRef]);
 
   const { styles } = useTheme2024({ getStyle });
 
@@ -146,12 +173,7 @@ export default function BottomSheetApprovalContract({
             ]
               .filter(Boolean)
               .join('')}
-            onPress={() => {
-              toggleFocusedContractItem({
-                contractItemToBlur: focusedContractApproval,
-                isConfirmSelected: true,
-              });
-            }}
+            onPress={handleRevoke}
           />
         );
       }}
