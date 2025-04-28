@@ -11,6 +11,7 @@ import {
 import BigNumber from 'bignumber.js';
 import React from 'react';
 import { FailReason } from './useBatchRevokeTask';
+import { formatGasCostUsd } from '@/utils/number';
 
 export const BatchRevokeErrorReason: React.FC<{
   onStillRevoke: () => void;
@@ -63,6 +64,12 @@ export const BatchRevokeErrorReason: React.FC<{
         <Text style={styles.contentText}>
           {FailReason[failedCode ?? FailedCode.DefaultFailed]}
         </Text>
+        {canStillRevoke && gasCostUsd && (
+          <Text style={styles.contentText}>
+            (Est. Gas ≈$
+            {formatGasCostUsd(gasCostUsd)})
+          </Text>
+        )}
       </View>
     </FooterButtonScreenContainer>
   );

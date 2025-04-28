@@ -151,10 +151,7 @@ export class TransactionWatcherService {
 
     // notification.create(url, title, content, 2);
 
-    eventBus.emit(EVENTS.broadcastToUI, {
-      method: EVENTS.TX_COMPLETED,
-      params: { address, hash },
-    });
+    eventBus.emit(EVENTS.TX_COMPLETED, { address, hash });
   };
 
   // fetch pending txs status every 5s

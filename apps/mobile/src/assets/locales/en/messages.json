@@ -799,7 +799,7 @@
       "revokeFrom": "Revoke From",
       "gasFee": "Gas Fee",
       "continueRevoke": "Continue",
-      "pauseRevoke": "Paused",
+      "pauseRevoke": "Pause",
       "revokeCompleted": "Done",
       "errorReason": {
         "title": "Fail to Revoke"

@@ -82,5 +82,7 @@ export const ListItemStatus: React.FC<{
 const getStyle = createGetStyles2024(() => ({
   success: {
     gap: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 }));
