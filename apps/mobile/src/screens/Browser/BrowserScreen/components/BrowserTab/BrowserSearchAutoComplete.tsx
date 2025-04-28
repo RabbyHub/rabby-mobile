@@ -51,7 +51,7 @@ export function BrowserSearchAutoComplete({
           <TouchableOpacity
             key={item.id}
             onPress={() => {
-              onSelect?.(item.id);
+              onSelect?.(item.name);
             }}>
             <View style={styles.listItem}>
               <RcSearchCC
@@ -63,7 +63,7 @@ export function BrowserSearchAutoComplete({
                 style={styles.listItemText}
                 numberOfLines={1}
                 ellipsizeMode="tail">
-                {item.id}
+                {item.name}
               </Text>
               <RcIconArrowTopLeftCC
                 width={24}
