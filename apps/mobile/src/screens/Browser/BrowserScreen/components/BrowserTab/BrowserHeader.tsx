@@ -16,10 +16,12 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { getAddressBarTitle } from '@/utils/browser';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useDapps } from '@/hooks/useDapps';
 
 export function BrowserHeader({
   url,
@@ -41,6 +43,26 @@ export function BrowserHeader({
   });
 
   const { t } = useTranslation();
+  const { tabs, activeTabId, closeTab, updateTab, openTab } = useBrowser();
+
+  const { isDappConnected } = useDapps();
+
+  const activeDappOrigin = useMemo(() => {
+    const tab = tabs.find(tab => tab.id === activeTabId);
+    if (tab) {
+      const url = tab.url;
+      const origin = safeGetOrigin(url);
+      return origin;
+    }
+    return null;
+  }, [tabs, activeTabId]);
+
+  const activeDappConnected = useMemo(() => {
+    if (!activeDappOrigin) {
+      return false;
+    }
+    return isDappConnected(activeDappOrigin);
+  }, [activeDappOrigin, isDappConnected]);
 
   const navigation = useRabbyAppNavigation();
   const forScene = '@ActiveDappWebViewModal';
@@ -109,19 +131,21 @@ export function BrowserHeader({
 
   return (
     <View style={styles.header}>
-      <TouchableOpacity
-        onPress={() => {
-          toggleSceneVisible(forScene, !isOpen);
-        }}>
-        {finalSceneCurrentAccount ? (
-          <WalletIcon
-            type={finalSceneCurrentAccount?.type}
-            width={24}
-            height={24}
-            style={styles.walletIcon}
-          />
-        ) : null}
-      </TouchableOpacity>
+      {activeDappConnected && (
+        <TouchableOpacity
+          onPress={() => {
+            toggleSceneVisible(forScene, !isOpen);
+          }}>
+          {finalSceneCurrentAccount ? (
+            <WalletIcon
+              type={finalSceneCurrentAccount?.type}
+              width={24}
+              height={24}
+              style={styles.walletIcon}
+            />
+          ) : null}
+        </TouchableOpacity>
+      )}
       <View style={styles.addressBar}>
         <TouchableWithoutFeedback
           onPress={() => {

@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -16,11 +16,7 @@ import { BrowserTab } from './components/BrowserTab';
 import { useFocusEffect } from '@react-navigation/native';
 
 export function BrowserScreen() {
-  const {
-    styles: stylesScreen,
-    colors,
-    colors2024,
-  } = useTheme2024({
+  const { styles: stylesScreen } = useTheme2024({
     getStyle: getScreenStyle,
   });
 
