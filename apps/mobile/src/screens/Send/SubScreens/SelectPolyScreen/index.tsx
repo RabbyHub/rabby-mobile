@@ -19,6 +19,10 @@ import { useRecentSend } from '../../hooks/useRecentSend';
 import { RecentSendItem } from './RecentSendItem';
 import { SendHeaderRight } from './HeaderRight';
 import { filterMyAccounts } from '@/utils/account';
+import SendInputScreen from '../SendInput';
+import { useInputSwitch } from '../SendInput/useInputSwitch';
+import { SendHeaderLeft } from './HeaderLeft';
+import { navigate } from '@/utils/navigation';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
@@ -48,24 +52,30 @@ const SendPolyScreen = () => {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const {
+    isInputAddress,
+    toggle: toggleInput,
+    clean: cleanInput,
+  } = useInputSwitch();
   const { recentHistory } = useRecentSend();
 
   const Header = useCallback(() => <SendHeaderRight />, []);
+  const HeaderLeft = useCallback(
+    () => <SendHeaderLeft isInputAddress={isInputAddress} clean={cleanInput} />,
+    [cleanInput, isInputAddress],
+  );
   useEffect(() => {
     setNavigationOptions({
       headerRight: Header,
+      headerLeft: HeaderLeft,
     });
-  }, [Header, setNavigationOptions]);
+  }, [Header, HeaderLeft, setNavigationOptions]);
 
   const handleGotoInputAddress = (autoScan: boolean) => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.SendInput,
-        params: {
-          autoScan,
-        },
-      }),
-    );
+    toggleInput();
+    if (autoScan) {
+      navigate(RootNames.Scanner);
+    }
   };
   const handleGotoImportedAddress = () => {
     navigation.dispatch(
@@ -83,6 +93,9 @@ const SendPolyScreen = () => {
       }),
     );
   };
+  if (isInputAddress) {
+    return <SendInputScreen cleanInput={cleanInput} />;
+  }
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
       <FlatList
@@ -176,7 +189,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
     gap: 8,
     marginHorizontal: 4,
-    height: 56,
+    height: 58,
   },
   item: {
     marginBottom: 12,
@@ -187,9 +200,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   placeHolder: {
     color: colors2024['neutral-secondary'],
-    fontSize: 16,
-    lineHeight: 56,
-    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 58,
+    fontWeight: '400',
     flex: 1,
     fontFamily: 'SF Pro Rounded',
   },

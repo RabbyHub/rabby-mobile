@@ -41,7 +41,7 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
-const SendInputScreen = () => {
+const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, setInput] = React.useState('');
   const [error, setError] = React.useState<INPUT_ERROR>();
@@ -116,7 +116,6 @@ const SendInputScreen = () => {
   const handleSubmit = React.useCallback((text: string) => {
     setError(undefined);
     setInput(text);
-    Keyboard.dismiss();
   }, []);
 
   React.useEffect(() => {
@@ -178,7 +177,13 @@ const SendInputScreen = () => {
       footerContainerStyle={{
         paddingHorizontal: 20,
       }}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          Keyboard.dismiss();
+          if (!input && !ensResult) {
+            cleanInput?.();
+          }
+        }}>
         <View style={styles.container}>
           <View style={styles.topContent}>
             <View>
@@ -245,6 +250,7 @@ const SendInputScreen = () => {
               style={styles.pasteButton}
               onPaste={text => {
                 handleSubmit(text);
+                Keyboard.dismiss();
               }}
             />
           </View>
@@ -267,7 +273,7 @@ const getStyles = createGetStyles2024(ctx => ({
     position: 'relative',
     height: '100%',
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   topContent: {
     alignItems: 'center',
@@ -282,6 +288,7 @@ const getStyles = createGetStyles2024(ctx => ({
 
   textContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
+    paddingTop: 8,
   },
   textArea: {
     marginTop: 14,

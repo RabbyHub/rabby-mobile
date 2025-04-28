@@ -1,19 +1,14 @@
-import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
-import { AddressItem as InnerAddressItem } from '@/components2024/AddressItem/AddressItem';
+import React, { useCallback, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Card } from '@/components2024/Card';
 import {
-  StyleSheet,
   View,
-  Text,
   StyleProp,
   ViewStyle,
   TouchableOpacity,
-  Image,
+  Keyboard,
 } from 'react-native';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { SendHistory } from './SendHistory';
 
 interface IProps {
@@ -29,6 +24,7 @@ export const SendHeaderRight = ({ style }: IProps) => {
   }, []);
 
   const openHistory = useCallback(() => {
+    Keyboard.dismiss();
     setHistoryVisible(true);
   }, []);
 
