@@ -171,42 +171,26 @@ export const AddressItemInDetail = ({
 
   return (
     <View>
-      {getAlianName(address) ? (
-        <TouchableOpacity
-          disabled={!isInAccounts}
-          style={styles.itemAliaName}
-          onPress={handleGoAddressDetail}>
-          <View style={{ alignItems: 'flex-end', flexDirection: 'column' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.itemContentText}>
-                {getAlianName(address) || ellipsisAddress(address)}
-              </Text>
-              {isInAccounts && (
-                <RcIconRightCC
-                  width={12}
-                  height={12}
-                  color={colors2024['neutral-foot']}
-                />
-              )}
-            </View>
-            <Text style={styles.itemAddressText}>{address}</Text>
+      <TouchableOpacity
+        disabled={!isInAccounts}
+        style={styles.itemAliaName}
+        onPress={handleGoAddressDetail}>
+        <View style={{ alignItems: 'flex-end', flexDirection: 'column' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.itemContentText}>
+              {getAlianName(address) || ellipsisAddress(address)}
+            </Text>
+            {isInAccounts && (
+              <RcIconRightCC
+                width={12}
+                height={12}
+                color={colors2024['neutral-foot']}
+              />
+            )}
           </View>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          style={styles.itemAliaName}
-          disabled={!isInAccounts}
-          onPress={handleGoAddressDetail}>
-          <Text style={styles.itemContentText}>{ellipsisAddress(address)}</Text>
-          {isInAccounts && (
-            <RcIconRightCC
-              width={14}
-              height={14}
-              color={colors2024['neutral-foot']}
-            />
-          )}
-        </TouchableOpacity>
-      )}
+          <Text style={styles.itemAddressText}>{address}</Text>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 };
