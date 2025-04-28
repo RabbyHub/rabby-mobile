@@ -189,7 +189,7 @@ export const MultiAssets = ({
     isLight: boolean;
     combineData?: any;
   }>({
-    currentTab: TabType.portfolio,
+    currentTab: TabType.address,
     combineData,
     isLight: isLight,
   });
@@ -785,13 +785,13 @@ export const MultiAssets = ({
     .simultaneousWithExternalGesture(listRef as any)
     .onUpdate(e => {
       if (e.translationX <= -END_POSITION) {
-        if (extendedState.currentTab === TabType.portfolio) {
-          runOnJS(switchTab)(TabType.address);
+        if (extendedState.currentTab === TabType.address) {
+          runOnJS(switchTab)(TabType.portfolio);
         }
       }
       if (e.translationX > -END_POSITION) {
-        if (extendedState.currentTab === TabType.address) {
-          runOnJS(switchTab)(TabType.portfolio);
+        if (extendedState.currentTab === TabType.portfolio) {
+          runOnJS(switchTab)(TabType.address);
         }
       }
     })

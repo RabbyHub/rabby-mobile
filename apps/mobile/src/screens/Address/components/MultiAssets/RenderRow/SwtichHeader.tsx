@@ -28,21 +28,21 @@ export const SwitchHeader = ({
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const windowWidth = Dimensions.get('window').width;
-  const portfolioStyle = useMemo(() => {
-    return {
-      left: Math.floor(((windowWidth - 32) / 2 - 80) / 2),
-      width: 80,
-    };
-  }, [windowWidth]);
   const addressStyle = useMemo(() => {
-    const singleBlock = (windowWidth - 32) / 2;
     return {
-      left: Math.floor(singleBlock + (singleBlock - 110) / 2),
+      left: Math.floor(((windowWidth - 32) / 2 - 110) / 2),
       width: 110,
     };
   }, [windowWidth]);
-  const tabLineLeft = useSharedValue(portfolioStyle.left);
-  const tabLineWidth = useSharedValue(portfolioStyle.width);
+  const portfolioStyle = useMemo(() => {
+    const singleBlock = (windowWidth - 32) / 2;
+    return {
+      left: Math.floor(singleBlock + (singleBlock - 80) / 2),
+      width: 80,
+    };
+  }, [windowWidth]);
+  const tabLineLeft = useSharedValue(addressStyle.left);
+  const tabLineWidth = useSharedValue(addressStyle.width);
   useEffect(() => {
     tabLineLeft.value = withTiming(
       Math.floor(
@@ -80,20 +80,6 @@ export const SwitchHeader = ({
         <Pressable
           style={[
             styles.tabContainer,
-            currentTab === TabType.portfolio && styles.activeTabContainer,
-          ]}
-          onPress={() => onChangeTab(TabType.portfolio)}>
-          <Text
-            style={[
-              styles.tab,
-              currentTab === TabType.portfolio && styles.activeTab,
-            ]}>
-            {t('page.multiAddressAssets.tabs.portfolio')}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.tabContainer,
             currentTab === TabType.address && styles.activeTabContainer,
           ]}
           onPress={() => onChangeTab(TabType.address)}>
@@ -106,6 +92,21 @@ export const SwitchHeader = ({
             {addressLength ? `(${addressLength})` : ''}
           </Text>
         </Pressable>
+        <Pressable
+          style={[
+            styles.tabContainer,
+            currentTab === TabType.portfolio && styles.activeTabContainer,
+          ]}
+          onPress={() => onChangeTab(TabType.portfolio)}>
+          <Text
+            style={[
+              styles.tab,
+              currentTab === TabType.portfolio && styles.activeTab,
+            ]}>
+            {t('page.multiAddressAssets.tabs.portfolio')}
+          </Text>
+        </Pressable>
+
         <Animated.View style={[styles.tabBottomLine, tabLineStyle]} />
       </View>
     </View>
