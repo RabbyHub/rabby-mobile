@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { findIndexRevokeList } from '@/screens/BatchRevoke/utils';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
+import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 
 export default function BottomSheetApprovalContract({
   modalProps,
@@ -54,27 +55,20 @@ export default function BottomSheetApprovalContract({
   );
 
   const { displaySortedAssetsList } = useApprovalsPage();
+  const batchRevoke = useBatchRevoke();
 
   const handleRevoke = React.useCallback(() => {
     modalRef?.current?.close();
+
     const currentRevokeList = Object.values(contractFocusingRevokeMap);
-    const filteredDataSource = displaySortedAssetsList.filter(record => {
-      return (
-        findIndexRevokeList(currentRevokeList, {
-          item: record.$assetContract!,
-          spenderHost: record.$assetToken!,
-          assetApprovalSpender: record,
-        }) > -1
-      );
-    });
-    navigate(RootNames.StackTransaction, {
-      screen: RootNames.BatchRevoke,
-      params: {
-        revokeList: currentRevokeList,
-        dataSource: filteredDataSource,
-      },
-    });
-  }, [contractFocusingRevokeMap, displaySortedAssetsList, modalRef]);
+
+    batchRevoke(currentRevokeList, displaySortedAssetsList);
+  }, [
+    batchRevoke,
+    contractFocusingRevokeMap,
+    displaySortedAssetsList,
+    modalRef,
+  ]);
 
   const { styles } = useTheme2024({ getStyle });
 

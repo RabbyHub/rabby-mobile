@@ -803,7 +803,9 @@
       "revokeCompleted": "Done",
       "errorReason": {
         "title": "Fail to Revoke"
-      }
+      },
+      "stopTheRevokeProcess": "Stop the revoke process?",
+      "leavingThisPageWillStopTheRevokeProcess": "Leaving this page will stop the revoke process."
     },
     "gasTopUp": {
       "No_Tokens": "No Tokens",
