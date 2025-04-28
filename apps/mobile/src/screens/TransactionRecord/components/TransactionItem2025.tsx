@@ -400,7 +400,10 @@ export const TransactionItem = ({
           {formatDescribe}
         </View>
       </View>
-      <TxChange tokenChangeData={tokenChangeData} style={styles.txChange} />
+      <TxChange
+        tokenChangeData={isFailed ? [] : tokenChangeData}
+        style={styles.txChange}
+      />
     </TouchableOpacity>
   );
 };
