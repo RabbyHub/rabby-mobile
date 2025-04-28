@@ -112,11 +112,8 @@ export function ApprovalsBottomArea() {
 
   const { couldSubmit, buttonTitle } = useMemo(() => {
     const revokeCount = revokeSummary.statics.txCount;
-    const buttonTitle = [
-      `${t('page.approvals.component.RevokeButton.btnText', {
-        // count: revokeList.length,
-        // count: revokeCount,
-      })}`,
+    const _buttonTitle = [
+      `${t('page.approvals.component.RevokeButton.btnText')}`,
       revokeCount && ` (${currentRevokeList.length})`,
     ]
       .filter(Boolean)
@@ -124,7 +121,7 @@ export function ApprovalsBottomArea() {
 
     return {
       couldSubmit: !!revokeCount,
-      buttonTitle,
+      buttonTitle: _buttonTitle,
     };
   }, [revokeSummary.statics.txCount, t, currentRevokeList.length]);
 

@@ -128,6 +128,7 @@ export const BatchRevokeScreen = () => {
       <View style={styles.root}>
         <ListHeader />
         <FlatList
+          style={styles.list}
           ListHeaderComponent={ItemSeparatorComponent}
           data={task.list}
           keyExtractor={(item, index) => `${item.id}-${index}`}
@@ -151,11 +152,11 @@ export const BatchRevokeScreen = () => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
-    paddingHorizontal: 12,
     paddingVertical: 16,
     borderRadius: 12,
     backgroundColor: colors2024['neutral-bg-1'],
     marginHorizontal: 16,
+    marginBottom: 40,
   },
   spacer: {
     height: 16,

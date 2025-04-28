@@ -27,6 +27,7 @@ export const ListHeader = () => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
+    marginHorizontal: 12,
     backgroundColor: colors2024['neutral-bg-2'],
     paddingHorizontal: 12,
     paddingVertical: 6,
