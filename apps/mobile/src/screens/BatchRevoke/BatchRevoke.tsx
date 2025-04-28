@@ -7,7 +7,7 @@ import { TransactionNavigatorParamList } from '@/navigation-type';
 import { useNavigationState } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, View } from 'react-native';
+import { Alert, BackHandler, FlatList, Platform, View } from 'react-native';
 import { ListItem } from './ListItem';
 import { ListHeader } from './ListHeader';
 import { useBatchRevokeTask } from './useBatchRevokeTask';
@@ -119,6 +119,57 @@ export const BatchRevokeScreen = () => {
     }
   }, [colors2024, navigation, t, task]);
 
+  const removeListenerRef = React.useRef<() => void>();
+
+  React.useEffect(() => {
+    if (task.status === 'idle') {
+      return;
+    }
+    const beforeRemoveListener = navigation.addListener('beforeRemove', e => {
+      e.preventDefault();
+
+      Alert.alert(
+        t('page.approvals.stopTheRevokeProcess'),
+        t('page.approvals.leavingThisPageWillStopTheRevokeProcess'),
+        [
+          {
+            text: t('global.Cancel'),
+            style: 'cancel',
+            onPress: () => {},
+          },
+          {
+            text: t('page.signTx.yes'),
+            style: 'destructive',
+            onPress: () => {
+              if (removeListenerRef.current) {
+                removeListenerRef.current();
+              }
+              navigation.goBack();
+            },
+          },
+        ],
+      );
+    });
+
+    removeListenerRef.current = beforeRemoveListener;
+
+    return beforeRemoveListener;
+  }, [navigation, t, task.status]);
+
+  React.useEffect(() => {
+    if (Platform.OS === 'android') {
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          navigation.goBack();
+          return true;
+        },
+      );
+
+      return () => backHandler.remove();
+    }
+  }, [navigation]);
+
   if (!params) {
     return null;
   }
@@ -128,7 +179,6 @@ export const BatchRevokeScreen = () => {
       <View style={styles.root}>
         <ListHeader />
         <FlatList
-          style={styles.list}
           ListHeaderComponent={ItemSeparatorComponent}
           data={task.list}
           keyExtractor={(item, index) => `${item.id}-${index}`}

@@ -99,19 +99,15 @@ function CardProto({
             style={styles.contractCheckbox}
             size={24}
           />
-          {contract.logo_url ? (
-            <AssetAvatar
-              style={styles.chainIcon}
-              size={46}
-              chainSize={16}
-              logo={contract.logo_url}
-              chain={contract.chain}
-              chainIconPosition="br"
-              logoStyle={{ backgroundColor: colors2024['neutral-foot'] }}
-            />
-          ) : (
-            <RcIconUnknown width={46} height={46} style={styles.chainIcon} />
-          )}
+          <AssetAvatar
+            style={styles.chainIcon}
+            size={46}
+            chainSize={16}
+            logo={contract.logo_url}
+            chain={contract.chain}
+            chainIconPosition="br"
+            logoStyle={{ backgroundColor: colors2024['neutral-foot'] }}
+          />
 
           <View style={styles.addrContractWrapper}>
             <HighlightText

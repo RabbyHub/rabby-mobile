@@ -28,6 +28,8 @@ import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { findIndexRevokeList } from '@/screens/BatchRevoke/utils';
+import { apiApprovals } from '@/core/apis';
+import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
@@ -127,26 +129,12 @@ export function ApprovalsBottomArea() {
 
   const { safeOffBottom } = useSafeSizes();
 
+  const batchRevoke = useBatchRevoke();
+
   const handleRevoke = React.useCallback(() => {
     setShowModal(false);
-
-    const filteredDataSource = displaySortedAssetsList.filter(record => {
-      return (
-        findIndexRevokeList(currentRevokeList, {
-          item: record.$assetContract!,
-          spenderHost: record.$assetToken!,
-          assetApprovalSpender: record,
-        }) > -1
-      );
-    });
-    navigate(RootNames.StackTransaction, {
-      screen: RootNames.BatchRevoke,
-      params: {
-        revokeList: currentRevokeList,
-        dataSource: filteredDataSource,
-      },
-    });
-  }, [currentRevokeList, displaySortedAssetsList]);
+    batchRevoke(currentRevokeList, displaySortedAssetsList);
+  }, [batchRevoke, currentRevokeList, displaySortedAssetsList]);
 
   const onRevoke = () => {
     const hasPackedPermit2Sign = Object.values(
