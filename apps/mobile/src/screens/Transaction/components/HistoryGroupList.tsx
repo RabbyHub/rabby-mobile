@@ -215,10 +215,9 @@ export const HistoryList = forwardRef(
     return (
       <FlatList
         ref={flatListRef}
-        removeClippedSubviews
         data={markedList}
         renderItem={renderItem}
-        windowSize={5}
+        windowSize={21}
         ListEmptyComponent={loading ? null : firstFetchDone ? <Empty /> : null}
         style={styles.container}
         onEndReached={loadMore}
