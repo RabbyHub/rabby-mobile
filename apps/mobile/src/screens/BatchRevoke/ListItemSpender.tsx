@@ -1,7 +1,7 @@
 import React from 'react';
-import { Text, View } from 'react-native';
 import { AssetApprovalSpenderWithStatus } from './useBatchRevokeTask';
 import { AssetAvatar } from '@/components';
+import { Cell, CellText } from './Cell';
 
 export const ListItemSpender: React.FC<{
   data: AssetApprovalSpenderWithStatus;
@@ -15,15 +15,15 @@ export const ListItemSpender: React.FC<{
   const protocolName = data.protocol?.name || 'Unknown';
 
   return (
-    <View>
+    <Cell>
       <AssetAvatar
         chain={asset.chain}
-        logo={asset.logo_url}
+        logo={data.protocol?.logo_url}
         size={24}
         chainSize={8}
         chainIconPosition="br"
       />
-      <Text>{protocolName}</Text>
-    </View>
+      <CellText>{protocolName}</CellText>
+    </Cell>
   );
 };

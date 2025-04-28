@@ -1,8 +1,8 @@
 import React from 'react';
-import { Text, View } from 'react-native';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AssetApprovalSpenderWithStatus } from './useBatchRevokeTask';
+import { AssetAvatar } from '@/components';
+import { Cell, CellText } from './Cell';
 
 const { ensureSuffix } = stringUtils;
 
@@ -21,9 +21,9 @@ export const ListItemAsset: React.FC<{
       : asset.name || 'Unknown';
 
   return (
-    <View>
-      <ChainIconImage chainServerId={asset.chain} />
-      <Text>{fullName}</Text>
-    </View>
+    <Cell>
+      <AssetAvatar logo={asset.logo_url} />
+      <CellText>{fullName}</CellText>
+    </Cell>
   );
 };

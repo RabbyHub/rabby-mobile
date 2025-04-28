@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Platform,
   View,
@@ -18,21 +18,16 @@ import { RcIconPartChecked } from '../icons';
 import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
 
 import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
-import { apiApprovals } from '@/core/apis';
-import { useRefState } from '@/hooks/common/useRefState';
 import { ApprovalsLayouts } from '../layout';
-import {
-  AssetApprovalSpender,
-  summarizeRevoke,
-} from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
+import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
 import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
-import { useApprovalAlertCounts } from '@/screens/Home/hooks/approvals';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
+import { findIndexRevokeList } from '@/screens/BatchRevoke/utils';
 
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
@@ -133,21 +128,25 @@ export function ApprovalsBottomArea() {
     };
   }, [revokeSummary.statics.txCount, t, currentRevokeList.length]);
 
-  const {
-    state: isSubmitLoading,
-    setRefState: setIsSubmitLoading,
-    stateRef: isSubmitLoadingRef,
-  } = useRefState(false);
   const { safeOffBottom } = useSafeSizes();
 
   const handleRevoke = React.useCallback(() => {
     setShowModal(false);
 
+    const filteredDataSource = displaySortedAssetsList.filter(record => {
+      return (
+        findIndexRevokeList(currentRevokeList, {
+          item: record.$assetContract!,
+          spenderHost: record.$assetToken!,
+          assetApprovalSpender: record,
+        }) > -1
+      );
+    });
     navigate(RootNames.StackTransaction, {
       screen: RootNames.BatchRevoke,
       params: {
         revokeList: currentRevokeList,
-        dataSource: displaySortedAssetsList,
+        dataSource: filteredDataSource,
       },
     });
   }, [currentRevokeList, displaySortedAssetsList]);
@@ -172,7 +171,6 @@ export function ApprovalsBottomArea() {
       <Button
         disabled={!couldSubmit}
         title={buttonTitle}
-        loading={isSubmitLoading}
         onPress={onRevoke}
         buttonStyle={styles.buttonContainer}
       />

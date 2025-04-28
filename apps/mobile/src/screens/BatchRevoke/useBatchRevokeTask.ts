@@ -241,11 +241,11 @@ export const useBatchRevokeTask = () => {
   const init = React.useCallback(
     (
       dataSource: AssetApprovalSpender[],
-      revokeList: ApprovalSpenderItemToBeRevoked[],
+      _revokeList: ApprovalSpenderItemToBeRevoked[],
     ) => {
       queueRef.current.clear();
       setList(dataSource);
-      setRevokeList(revokeList);
+      setRevokeList(_revokeList);
       setStatus('idle');
     },
     [],
