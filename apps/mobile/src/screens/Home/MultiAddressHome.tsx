@@ -221,7 +221,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
               width={42}
               height={42}
               color={colors2024['neutral-body']}
-              backgroundColor={colors2024['neutral-bg-2']}
+              backgroundColor={colors2024['neutral-line']}
             />
           </Card>
         </BlurShadowView>

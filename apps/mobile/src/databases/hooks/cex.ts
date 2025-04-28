@@ -37,8 +37,6 @@ export const getCexWithLocalCache = async (
       ...(localCexInfo || {}),
       is_deposit: true,
     } as Cex;
-  } else {
-    res?.id && res.is_deposit && setCexId(address, res?.id || '');
   }
   return res;
 };
@@ -59,8 +57,6 @@ export const getAddrDescWithCexLocalCacheSync = async (
         ...(localCexInfo || {}),
         is_deposit: true,
       } as Cex;
-    } else {
-      cexInfo?.id && cexInfo.is_deposit && setCexId(address, cexInfo?.id || '');
     }
     addressDesc.desc.cex = cexInfo;
     runOnJS(syncCexInfo)(address, cexInfo);
