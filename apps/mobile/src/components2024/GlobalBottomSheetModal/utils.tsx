@@ -46,6 +46,7 @@ import { Dimensions } from 'react-native';
 import { CollectionNFTs } from '../CollectionNFTs';
 import { AddWhitelistSelectMethod } from '@/components/AddWhitelistSelectMethod';
 import ConfirmAddress from '@/screens/Send/components/ConfirmAddress';
+import { BatchRevokeErrorReason } from '@/screens/BatchRevoke/BatchRevokeErrorReason';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -94,6 +95,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.ADDRESS_DETAIL]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.NO_LONGER_SUPPORTS]: ['85%'],
+  [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: undefined,
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -141,4 +143,5 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.ADDRESS_DETAIL]: AddressDetail,
   [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ImportMoreAddress,
   [MODAL_NAMES.NO_LONGER_SUPPORTS]: NoLongerSupports,
+  [MODAL_NAMES.BATCH_REVOKE_ERROR_REASON]: BatchRevokeErrorReason,
 };
