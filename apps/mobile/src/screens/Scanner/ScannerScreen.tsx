@@ -16,6 +16,7 @@ import { RootNames } from '@/constant/layout';
 import { URDecoder } from '@ngraveio/bc-ur';
 import { strFromU8, gunzipSync } from 'fflate';
 import { useTranslation } from 'react-i18next';
+import { QRCodePicker } from './QRCodePicker';
 
 const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 
@@ -45,9 +46,8 @@ export const ScannerScreen = () => {
   const count = useRef(0);
 
   const handleCodeScanned = React.useCallback(
-    (data: Code[]) => {
+    (value?: string | null) => {
       if (navState?.syncExtension) {
-        const value = data[0]?.value;
         if (value && value.startsWith('ur:')) {
           try {
             decoder.receivePart(value);
@@ -74,7 +74,7 @@ export const ScannerScreen = () => {
           }
         }
       } else {
-        setText(data[0].value!);
+        value && setText(value);
         nav.goBack();
       }
     },
@@ -117,6 +117,7 @@ export const ScannerScreen = () => {
           </>
         ) : null}
       </View>
+      <QRCodePicker onCodeScanned={handleCodeScanned} />
     </View>
   );
 };
