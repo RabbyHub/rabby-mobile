@@ -26,7 +26,7 @@ export const BrowserBookmarkSection = ({
   onPress?: (dapp: DappInfo) => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const [isFold, setIsFold] = useState(true);
+  const [isFold, setIsFold] = useState(false);
 
   const { bookmarkList: data } = useBrowserBookmark();
 
