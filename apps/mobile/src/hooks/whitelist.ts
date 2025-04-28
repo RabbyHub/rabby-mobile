@@ -1,7 +1,11 @@
 import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { apisLock } from '@/core/apis';
-import { whitelistService } from '@/core/services';
+import {
+  contactService,
+  keyringService,
+  whitelistService,
+} from '@/core/services';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { atom, useAtom } from 'jotai';
 import React, { useEffect } from 'react';
@@ -63,6 +67,10 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
     async (address: string) => {
       await whitelistService.removeWhitelist(address);
       removeCexId(address);
+      const hasSameAddressLeft = await keyringService.hasAddress(address);
+      if (!hasSameAddressLeft) {
+        contactService.removeAlias(address);
+      }
       await getWhitelist();
     },
     [getWhitelist],

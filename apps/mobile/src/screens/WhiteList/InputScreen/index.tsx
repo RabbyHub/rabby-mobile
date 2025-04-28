@@ -114,8 +114,9 @@ const WhitelistInputScreen = () => {
       Keyboard.dismiss();
 
       if (isCex && cex?.id) {
-        setCexId(input, cex.id);
+        setCexId(address, cex.id);
       }
+      setInput('');
       await whitelistService.addWhitelist(address);
       await getWhitelist();
       toast.success(t('page.whitelist.addSuccessful'));
