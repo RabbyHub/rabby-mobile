@@ -1,4 +1,7 @@
-import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
+import {
+  FooterButtonContainer2024Props,
+  FooterButtonScreenContainer,
+} from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import { useNavigationState } from '@react-navigation/native';
@@ -29,7 +32,7 @@ export const BatchRevokeScreen = () => {
       return route.params as TransactionNavigatorParamList['BatchRevoke'];
     }
   });
-  const { styles } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle: getStyle,
   });
 
@@ -53,49 +56,75 @@ export const BatchRevokeScreen = () => {
     };
   }, [isPaused]);
 
-  const buttonText = React.useMemo(() => {
-    switch (task.status) {
-      case 'paused':
-        return t('page.approvals.continueRevoke');
-      case 'active':
-        return t('page.approvals.pauseRevoke');
-      case 'completed':
-        return t('page.approvals.revokeCompleted');
-      case 'idle':
-      default:
-        return t('page.approvals.startRevoke');
-    }
-  }, [t, task.status]);
-
   const { navigation } = useSafeSetNavigationOptions();
-  const buttonAction = React.useCallback(() => {
+
+  const buttonProps = React.useMemo(() => {
+    const processText = `  (${task.revokedApprovals}/${task.totalApprovals})`;
     switch (task.status) {
       case 'paused':
-        return task.continue();
+        return {
+          children: null,
+          buttonProps: {
+            title: t('page.approvals.continueRevoke') + processText,
+            onPress: () => task.continue(),
+            buttonStyle: {
+              borderRadius: 16,
+              backgroundColor: colors2024['green-light-4'],
+            },
+            titleStyle: {
+              color: colors2024['green-default'],
+            },
+          },
+        } as FooterButtonContainer2024Props;
       case 'active':
-        return task.pause();
+        return {
+          children: null,
+          buttonProps: {
+            title: t('page.approvals.pauseRevoke') + processText,
+            onPress: () => task.pause(),
+            buttonStyle: {
+              borderRadius: 16,
+              backgroundColor: colors2024['red-light-1'],
+            },
+            titleStyle: {
+              color: colors2024['red-default'],
+            },
+          },
+        } as FooterButtonContainer2024Props;
       case 'completed':
-        navigation.canGoBack() && navigation.goBack();
-        // back to the previous screen
-        return;
+        return {
+          children: null,
+          buttonProps: {
+            title: t('page.approvals.revokeCompleted') + processText,
+            onPress: () => {
+              navigation.canGoBack() && navigation.goBack();
+            },
+            buttonStyle: {
+              borderRadius: 16,
+            },
+          },
+        } as FooterButtonContainer2024Props;
       case 'idle':
       default:
-        return task.start();
+        return {
+          children: null,
+          buttonProps: {
+            title: t('page.approvals.startRevoke') + processText,
+            onPress: () => task.start(),
+            buttonStyle: {
+              borderRadius: 16,
+            },
+          },
+        } as FooterButtonContainer2024Props;
     }
-  }, [navigation, task]);
+  }, [colors2024, navigation, t, task]);
 
   if (!params) {
     return null;
   }
 
   return (
-    <FooterButtonScreenContainer
-      footerBottomOffset={35}
-      buttonProps={{
-        title: `${buttonText} (${task.revokedApprovals}/${task.totalApprovals})`,
-        buttonStyle: { borderRadius: 16 },
-        onPress: buttonAction,
-      }}>
+    <FooterButtonScreenContainer footerBottomOffset={56} {...buttonProps}>
       <View style={styles.root}>
         <ListHeader />
         <FlatList

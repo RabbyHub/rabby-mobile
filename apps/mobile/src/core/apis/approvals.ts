@@ -454,7 +454,7 @@ export async function revokeNFTApprove(
       );
     }
   } else if (abi === 'ERC1155') {
-    await sendRequest(
+    return await sendRequest(
       {
         $ctx,
         method: 'eth_sendTransaction',
