@@ -291,11 +291,11 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingTop: 8,
   },
   textArea: {
-    marginTop: 14,
+    marginTop: 10,
     paddingHorizontal: 20,
     backgroundColor: ctx.colors['neutral-card-1'],
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 17,
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
   },
   error: {
