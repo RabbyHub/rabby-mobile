@@ -34,7 +34,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
-import { trigger } from 'react-native-haptic-feedback';
 import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
@@ -129,13 +128,9 @@ const WhitelistInputScreen = () => {
   const handleSubmit = useCallback((text: string) => {
     setError(undefined);
     setInput(text);
+    Keyboard.dismiss();
   }, []);
   const openSendHistory = useCallback(() => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
-
     setHistoryVisible(true);
     Keyboard.dismiss();
   }, [setHistoryVisible]);
@@ -150,10 +145,6 @@ const WhitelistInputScreen = () => {
   );
 
   const onSelectCex = useCallback(() => {
-    trigger('impactLight', {
-      enableVibrateFallback: true,
-      ignoreAndroidSystemSettings: false,
-    });
     let tmpCex = cex;
     globalBottomSheetModalAddListener2024(
       EVENT_NAMES.DISMISS,
@@ -455,8 +446,8 @@ const getStyles = createGetStyles2024(ctx => ({
   headerText: {
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '500',
-    color: ctx.colors2024['neutral-secondary'],
+    fontWeight: '700',
+    color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   icon: {

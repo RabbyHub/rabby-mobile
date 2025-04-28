@@ -42,7 +42,7 @@ const ConfirmAddress = ({
   const { t } = useTranslation();
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const switchRef = useRef<Switch>(null);
-  const { loading, risks, addressDesc, balance } = useRisks(
+  const { loading, risks, addressDesc } = useRisks(
     account.address,
     !!account.balance,
   );
@@ -107,10 +107,7 @@ const ConfirmAddress = ({
       <AddressSource
         loading={loading}
         addressDesc={addressDesc}
-        account={{
-          ...account,
-          balance: account.balance || balance || 0,
-        }}
+        account={account}
         style={styles.addressCard}
       />
       {!loading && !disbaleWhiteSwitch && (

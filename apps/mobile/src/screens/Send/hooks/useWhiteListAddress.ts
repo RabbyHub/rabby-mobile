@@ -79,52 +79,52 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
     })();
   }, [accounts, disableFetchBalance, isAddrOnWhitelist, whitelist]);
 
-  const findAccount = async (
-    address: string,
-    brandName?: string,
-    disableBalance?: boolean,
-  ) => {
-    const targetAccounts = accounts.filter(item =>
-      isSameAddress(item.address, address),
-    );
-    const myAccounts = filterMyAccounts(accounts);
-    let balance = 0;
-    if (!targetAccounts.length && !disableBalance) {
-      const userTokenSettings = await getTokenSettings();
-      const { total_usd_value } = await batchBalanceWithLocalCache({
-        address: address,
-        isCore: false,
-        ...userTokenSettings,
-      });
-      balance = total_usd_value || 0;
-    }
-    const defaultAccount = {
-      address,
-      aliasName:
-        contactService.getAliasByAddress(address)?.alias ||
-        ellipsisAddress(address),
-      balance,
-      type: KEYRING_CLASS.WATCH,
-      brandName: KEYRING_CLASS.WATCH,
-    };
-    return {
-      inWhitelist: whitelist.some(item => isSameAddress(item, address)),
-      isMyImported: myAccounts.some(item =>
+  const findAccount = useCallback(
+    async (address: string, brandName?: string, disableBalance?: boolean) => {
+      const targetAccounts = accounts.filter(item =>
         isSameAddress(item.address, address),
-      ),
-      account: targetAccounts.length
-        ? brandName
-          ? targetAccounts.find(i => i.brandName === brandName) ||
-            defaultAccount
-          : findAccountByPriority(targetAccounts)
-        : defaultAccount,
-    };
-  };
+      );
+      const myAccounts = filterMyAccounts(accounts);
+      let balance = 0;
+      if (!targetAccounts.length && !disableBalance) {
+        const userTokenSettings = await getTokenSettings();
+        const { total_usd_value } = await batchBalanceWithLocalCache({
+          address: address,
+          isCore: false,
+          ...userTokenSettings,
+        });
+        balance = total_usd_value || 0;
+      }
+      const defaultAccount = {
+        address,
+        aliasName:
+          contactService.getAliasByAddress(address)?.alias ||
+          ellipsisAddress(address),
+        balance,
+        type: KEYRING_CLASS.WATCH,
+        brandName: KEYRING_CLASS.WATCH,
+      };
+      return {
+        inWhitelist: whitelist.some(item => isSameAddress(item, address)),
+        isMyImported: myAccounts.some(item =>
+          isSameAddress(item.address, address),
+        ),
+        account: targetAccounts.length
+          ? brandName
+            ? targetAccounts.find(i => i.brandName === brandName) ||
+              defaultAccount
+            : findAccountByPriority(targetAccounts)
+          : defaultAccount,
+      };
+    },
+    [accounts, whitelist],
+  );
   const findAccountWithoutBalance = useCallback(
     (address: string, brandName?: string) => {
       const targetAccounts = accounts.filter(item =>
         isSameAddress(item.address, address),
       );
+      const myAccounts = filterMyAccounts(accounts);
       let balance = 0;
       const defaultAccount = {
         address,
@@ -137,6 +137,9 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
       };
       return {
         inWhitelist: whitelist.some(item => isSameAddress(item, address)),
+        isMyImported: myAccounts.some(item =>
+          isSameAddress(item.address, address),
+        ),
         account: targetAccounts.length
           ? brandName
             ? targetAccounts.find(i => i.brandName === brandName) ||

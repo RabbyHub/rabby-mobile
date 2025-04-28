@@ -702,7 +702,7 @@
       },
       "placeholder": {
         "name": "Name Your Address",
-        "exchange": "select"
+        "exchange": "select exchange"
       }
     },
     "sendTokenComponents": {

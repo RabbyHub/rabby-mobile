@@ -59,7 +59,7 @@ const SendInputScreen = () => {
 
   const { navigateToSendScreen } = useSendRoutes();
 
-  const { findAccount } = useWhiteListAddress(true);
+  const { findAccountWithoutBalance } = useWhiteListAddress(true);
 
   const { t } = useTranslation();
 
@@ -77,10 +77,9 @@ const SendInputScreen = () => {
     try {
       setLoading(true);
       Keyboard.dismiss();
-      const { inWhitelist, account, isMyImported } = await findAccount(
+      const { inWhitelist, account, isMyImported } = findAccountWithoutBalance(
         address,
         undefined,
-        true,
       );
 
       if (inWhitelist || isMyImported) {
@@ -117,6 +116,7 @@ const SendInputScreen = () => {
   const handleSubmit = React.useCallback((text: string) => {
     setError(undefined);
     setInput(text);
+    Keyboard.dismiss();
   }, []);
 
   React.useEffect(() => {

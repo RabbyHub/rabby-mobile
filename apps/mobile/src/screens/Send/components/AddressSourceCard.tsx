@@ -26,7 +26,6 @@ import {
   BRAND_ALIAS_TYPE_TEXT,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils/dist/types';
-import { formatUsdValue } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
 
 interface IProps {
@@ -102,34 +101,32 @@ const AddressSource = ({ account, style, addressDesc, loading }: IProps) => {
                 <Text style={styles.itemNameText}>
                   {adderssAlias || ellipsisAddress(account.address, 6)}
                 </Text>
-                {((cexDesc?.is_deposit && cexDesc?.id) ||
-                  account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
-                  <View style={styles.itemName}>
-                    <Text
-                      style={[
-                        styles.itemType,
-                        {
-                          color: brandColors.brandColor,
-                          backgroundColor: brandColors.brandBg,
-                        },
-                      ]}>
-                      {cexDesc?.is_deposit && cexDesc?.name
-                        ? `${cexDesc.name} ${t(
-                            'page.confirmAddress.dexNameTail',
-                          )}`
-                        : `${
-                            BRAND_ALIAS_TYPE_TEXT[account.type] ||
-                            account.brandName
-                          } ${t('page.confirmAddress.brandNameTail')}`}
-                    </Text>
-                  </View>
-                )}
               </View>
-              <View style={styles.editAliasWrapper}>
-                <Text style={styles.balanceText}>
+              {((cexDesc?.is_deposit && cexDesc?.id) ||
+                account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
+                <View style={styles.itemName}>
+                  <Text
+                    style={[
+                      styles.itemType,
+                      {
+                        color: brandColors.brandColor,
+                        backgroundColor: brandColors.brandBg,
+                      },
+                    ]}>
+                    {cexDesc?.is_deposit && cexDesc?.name
+                      ? `${cexDesc.name} ${t(
+                          'page.confirmAddress.dexNameTail',
+                        )}`
+                      : `${
+                          BRAND_ALIAS_TYPE_TEXT[account.type] ||
+                          account.brandName
+                        } ${t('page.confirmAddress.brandNameTail')}`}
+                  </Text>
+                </View>
+              )}
+              {/* <Text style={styles.balanceText}>
                   {formatUsdValue(account.balance || 0)}
-                </Text>
-              </View>
+                </Text> */}
             </View>
           </View>
         )}
@@ -174,6 +171,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   itemInfo: {
     gap: 6,
     flexGrow: 1,
+    justifyContent: 'center',
     flex: 1,
   },
   editAliasWrapper: {
