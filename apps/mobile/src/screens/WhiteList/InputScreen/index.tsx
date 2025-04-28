@@ -48,6 +48,7 @@ import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { setCexId } from '@/utils/addressCexId';
 import { useAtom } from 'jotai';
 import { toast } from '@/components2024/Toast';
+import { useAlert } from './useAlert';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -204,6 +205,11 @@ const WhitelistInputScreen = () => {
       });
     }
   }, [input, list]);
+  const onReaptAdd = useCallback(() => {
+    setError(undefined);
+    setInput('');
+  }, []);
+  useAlert(input, onReaptAdd);
 
   useFocusEffect(() => {
     if (isValidHexAddress(input as Hex)) {

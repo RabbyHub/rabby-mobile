@@ -116,7 +116,15 @@ export const RecentSendItem = ({
                 </View>
                 <View style={styles.itemInfo}>
                   <View style={styles.itemName}>
-                    <Text style={styles.itemNameText} numberOfLines={1}>
+                    <Text
+                      style={[
+                        styles.itemNameText,
+                        {
+                          maxWidth: hideTail ? '100%' : '30%',
+                        },
+                      ]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
                       {formatName}
                     </Text>
                     {!hideTail && (
