@@ -217,9 +217,15 @@ export const HistoryList = forwardRef(
         ref={flatListRef}
         data={markedList}
         renderItem={renderItem}
-        windowSize={21}
+        windowSize={5}
+        initialNumToRender={Math.min(markedList.length, 50)}
         ListEmptyComponent={loading ? null : firstFetchDone ? <Empty /> : null}
         style={styles.container}
+        keyExtractor={(item, index) =>
+          `${
+            'id' in item.data ? item.data.id : item.data.maxGasTx.hash
+          }-${index}`
+        }
         onEndReached={loadMore}
         onEndReachedThreshold={0.8}
         ListFooterComponent={
