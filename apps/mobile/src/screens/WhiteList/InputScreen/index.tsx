@@ -135,15 +135,6 @@ const WhitelistInputScreen = () => {
     Keyboard.dismiss();
   }, [setHistoryVisible]);
 
-  const onSwitch = useCallback(
-    (bool: boolean) => {
-      if (isValidHexAddress(input as Hex)) {
-        setIsCex(!!bool);
-      }
-    },
-    [input],
-  );
-
   const onSelectCex = useCallback(() => {
     let tmpCex = cex;
     globalBottomSheetModalAddListener2024(
@@ -175,6 +166,18 @@ const WhitelistInputScreen = () => {
       },
     });
   }, [cex, colors2024]);
+
+  const onSwitch = useCallback(
+    (bool: boolean) => {
+      if (isValidHexAddress(input as Hex)) {
+        setIsCex(!!bool);
+        if (bool && !cex) {
+          onSelectCex();
+        }
+      }
+    },
+    [cex, input, onSelectCex],
+  );
 
   const editAliasName = useAliasNameEditModal();
 
