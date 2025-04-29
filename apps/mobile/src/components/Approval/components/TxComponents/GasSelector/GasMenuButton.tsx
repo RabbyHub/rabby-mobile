@@ -7,10 +7,11 @@ import ArrowSVG from '@/assets/icons/sign/arrow-cc.svg';
 import { StyleSheet, Text, TouchableOpacity, Platform } from 'react-native';
 import {
   useGetBinaryMode,
+  useTheme2024,
   useThemeColors,
   useThemeStyles,
 } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { AppColorsVariants } from '@/constant/theme';
 import { getGasLevelI18nKey } from '@/utils/trans';
 import { useTranslation } from 'react-i18next';
@@ -59,9 +60,10 @@ export const GasMenuButton: React.FC<Props> = ({
   showCustomGasPrice,
   disabled,
 }) => {
-  const { styles } = useThemeStyles(getStyle);
+  const { styles, colors } = useTheme2024({
+    getStyle,
+  });
   const { t } = useTranslation();
-  const colors = useThemeColors();
   const actions = React.useMemo(() => {
     const list = gasList.map(gas => {
       const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
@@ -171,7 +173,7 @@ export const GasMenuButton: React.FC<Props> = ({
   );
 };
 
-const getStyle = createGetStyles((colors: AppColorsVariants) => ({
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   menuButton: {
     alignItems: 'center',
     borderRadius: 100,
@@ -181,6 +183,7 @@ const getStyle = createGetStyles((colors: AppColorsVariants) => ({
     borderColor: colors['neutral-line'],
     borderStyle: 'solid',
     flexDirection: 'row',
+    minHeight: 26,
   },
   gwei: {
     color: colors['neutral-foot'],
@@ -189,10 +192,11 @@ const getStyle = createGetStyles((colors: AppColorsVariants) => ({
     lineHeight: 16,
   },
   levelText: {
-    color: colors['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 16,
     fontWeight: '500',
+    color: colors['neutral-body'],
   },
   dot: {
     width: 2,

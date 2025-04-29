@@ -13,12 +13,10 @@ import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import {
-  ActionGroup,
-  Props as ActionGroupProps,
-} from '../FooterBar/ActionGroup';
+import { Props as ActionGroupProps } from '../FooterBar/ActionGroup';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
 import { Dots } from '../Popup/Dots';
+import { MiniActionGroup } from './MiniActionGroup';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
 
 interface Props extends ActionGroupProps {
@@ -68,7 +66,6 @@ export const MiniCommonAction: React.FC<Props> = ({
   ...props
 }) => {
   const binaryTheme = useGetBinaryMode();
-  const isDarkTheme = binaryTheme === 'dark';
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
@@ -77,7 +74,7 @@ export const MiniCommonAction: React.FC<Props> = ({
     <>
       {task.status === 'idle' ? (
         <>
-          <ActionGroup account={account} gasLess={useGasLess} {...props} />
+          <MiniActionGroup account={account} gasLess={useGasLess} {...props} />
           {footer}
         </>
       ) : task.status === 'completed' ? (

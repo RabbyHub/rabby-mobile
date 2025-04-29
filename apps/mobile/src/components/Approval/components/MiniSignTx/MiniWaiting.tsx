@@ -1,14 +1,15 @@
-import { AppBottomSheetModal } from '@/components';
+import { AppBottomSheetModal, Text } from '@/components';
 import { useCurrentAccount } from '@/hooks/account';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { MiniLedgerHardwareWaiting } from './MiniLedgerHardwareWaiting';
 import { MiniPrivatekeyWaiting } from './MiniPrivatekeyWaiting';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
+import { MiniOneKeyHardwareWaiting } from './MiniOneKeyHardwareWaiting';
 
 export const MiniWaiting = ({
   visible,
@@ -23,15 +24,18 @@ export const MiniWaiting = ({
   onDone?: () => void;
   error?: BatchSignTxTaskType['error'];
 }) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getSheetStyles(colors), [colors]);
+  const { styles } = useTheme2024({
+    getStyle,
+  });
 
   const { sheetModalRef } = useSheetModal();
+  const dismissedByCodeRef = useRef(false);
 
   useEffect(() => {
     if (visible) {
       sheetModalRef.current?.present();
     } else {
+      dismissedByCodeRef.current = true;
       sheetModalRef.current?.dismiss();
     }
   }, [sheetModalRef, visible]);
@@ -44,17 +48,28 @@ export const MiniWaiting = ({
       enableDismissOnClose
       onDismiss={() => {
         if (visible) {
-          onCancel?.();
+          if (!dismissedByCodeRef.current) {
+            onCancel?.();
+          }
+          dismissedByCodeRef.current = false;
         }
       }}
-      handleStyle={styles.sheetBg}
+      handleStyle={styles.handleStyle}
       enableDynamicSizing
+      handleIndicatorStyle={styles.handleIndicatorStyle}
       backgroundStyle={styles.sheetBg}>
       <BottomSheetView style={styles.warper}>
         {error ? (
           <>
             {currentAccount?.type === KEYRING_TYPE.LedgerKeyring ? (
               <MiniLedgerHardwareWaiting
+                error={error}
+                onCancel={onCancel}
+                onDone={onDone}
+                onRetry={onRetry}
+              />
+            ) : currentAccount?.type === KEYRING_TYPE.OneKeyKeyring ? (
+              <MiniOneKeyHardwareWaiting
                 error={error}
                 onCancel={onCancel}
                 onDone={onDone}
@@ -75,11 +90,26 @@ export const MiniWaiting = ({
   );
 };
 
-const getSheetStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   sheetBg: {
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  handleStyle: {
+    paddingTop: 10,
+    backgroundColor: colors2024['neutral-bg-1'],
+    height: 36,
+  },
+  handleIndicatorStyle: {
+    backgroundColor: colors2024['neutral-line'],
+    height: 6,
+    width: 50,
+  },
+  sheet: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   warper: {
-    paddingBottom: 40,
+    paddingBottom: 52,
   },
 }));

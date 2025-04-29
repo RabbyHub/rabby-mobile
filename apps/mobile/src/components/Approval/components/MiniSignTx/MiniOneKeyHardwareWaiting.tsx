@@ -1,9 +1,8 @@
-import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
+import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 import { toast } from '@/components/Toast';
 import { useTheme2024 } from '@/hooks/theme';
 import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -15,7 +14,6 @@ interface Props {
   onDone?: () => void;
   error: NonNullable<MiniApprovalTaskType['error']>;
 }
-
 const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
     brandIcon: {
@@ -48,7 +46,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
     },
   }),
 );
-export const MiniLedgerHardwareWaiting = ({
+
+export const MiniOneKeyHardwareWaiting = ({
   onCancel,
   onDone,
   onRetry,
@@ -66,50 +65,38 @@ export const MiniLedgerHardwareWaiting = ({
 
   const currentDescription = React.useMemo(() => {
     const description = error.description;
-    if (description?.includes('0x650f')) {
-      return t('page.newAddress.ledger.error.lockedOrNoEthApp');
-    }
-    if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
-      return t('page.signFooterBar.ledger.unlockAlert');
-    } else if (
-      description?.includes('0x6e00') ||
-      description?.includes('0x6b00')
-    ) {
-      return t('page.signFooterBar.ledger.updateFirmwareAlert');
-    } else if (description?.includes('0x6985')) {
-      return t('page.signFooterBar.ledger.txRejectedByLedger');
-    }
-
     return description;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [error.description]);
 
-  const renderContent = useMemoizedFn(({ contentColor }) => (
-    <View style={styles.contentWrapper}>
-      <Text
-        style={StyleSheet.flatten([
-          styles.content,
-          {
-            color: colors[contentColor],
-          },
-        ])}>
-        {error.content}
-      </Text>
-    </View>
-  ));
+  const renderContent = React.useCallback(
+    ({ contentColor }) => (
+      <View style={styles.contentWrapper}>
+        <Text
+          style={StyleSheet.flatten([
+            styles.content,
+            {
+              color: colors[contentColor],
+            },
+          ])}>
+          {error.content}
+        </Text>
+      </View>
+    ),
+    [colors, error.content, styles.content, styles.contentWrapper],
+  );
 
   return (
     <View>
       <View style={styles.titleWrapper}>
-        <LedgerSVG width={20} height={20} style={styles.brandIcon} />
+        <OneKeySVG width={20} height={20} style={styles.brandIcon} />
         <Text style={styles.title}>
-          {t('page.signFooterBar.qrcode.signWith', { brand: 'Ledger' })}
+          {t('page.signFooterBar.qrcode.signWith', { brand: 'OneKey' })}
         </Text>
       </View>
 
       <ApprovalPopupContainer
         showAnimation
-        hdType="ledger"
+        hdType="onekey"
         status={error.status}
         onRetry={() => handleRetry()}
         onDone={onDone}

@@ -1,7 +1,10 @@
 import { Account } from '@/core/services/preference';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { KeyringAccount } from '@rabby-wallet/keyring-utils/src/types';
+import {
+  KeyringAccount,
+  KeyringTypeName,
+} from '@rabby-wallet/keyring-utils/src/types';
 import BigNumber from 'bignumber.js';
 
 export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
@@ -50,4 +53,15 @@ export const filterMyAccounts = <
   return accounts.filter(
     a => a.type !== KEYRING_CLASS.WATCH && a.type !== KEYRING_CLASS.GNOSIS,
   );
+};
+
+export const isAccountSupportMiniApproval = (type: string) => {
+  return (
+    [
+      KEYRING_CLASS.MNEMONIC,
+      KEYRING_CLASS.PRIVATE_KEY,
+      KEYRING_CLASS.HARDWARE.LEDGER,
+      KEYRING_CLASS.HARDWARE.ONEKEY,
+    ] as string[]
+  ).includes(type);
 };

@@ -32,7 +32,7 @@ import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { ReactNode, useMemo } from 'react';
 import { useLedgerStatus } from '@/hooks/ledger/useLedgerStatus';
 import React from 'react';
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import { isLedgerLockError } from '@/utils/ledger';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +43,8 @@ import clsx from 'clsx';
 import { Dots } from '../Popup/Dots';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
+import { MiniProcessActions } from './MiniProcessActions';
+import { createGetStyles2024 } from '@/utils/styles';
 
 interface Props extends ActionGroupProps {
   chain?: Chain;
@@ -91,10 +93,7 @@ export const MiniLedgerAction: React.FC<Props> = ({
   onSubmit,
   ...props
 }) => {
-  const binaryTheme = useGetBinaryMode();
-  const isDarkTheme = binaryTheme === 'dark';
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { txStatus, total, currentActiveIndex: current } = task;
   const { status, onClickConnect } = useLedgerStatus(account.address);
   const { t } = useTranslation();
@@ -113,7 +112,7 @@ export const MiniLedgerAction: React.FC<Props> = ({
     <>
       {task.status === 'idle' ? (
         <>
-          <ProcessActions
+          <MiniProcessActions
             account={account}
             gasLess={useGasLess}
             {...props}
@@ -131,7 +130,7 @@ export const MiniLedgerAction: React.FC<Props> = ({
             <RcIconCheckedCC
               width={16}
               height={16}
-              color={colors['green-default']}
+              color={colors2024['green-default']}
             />
 
             <Text style={[styles.statusText, styles.statusTextSuccess]}>
@@ -156,14 +155,14 @@ export const MiniLedgerAction: React.FC<Props> = ({
                   total: total,
                 })}
               </Text>
-              <Dots />
+              {/* <Dots /> */}
             </>
           ) : (
             <>
               <Text style={styles.statusText}>
                 {t('page.miniSignFooterBar.status.txSending')}
               </Text>
-              <Dots />
+              {/* <Dots /> */}
             </>
           )}
         </View>
@@ -172,29 +171,30 @@ export const MiniLedgerAction: React.FC<Props> = ({
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    statusContainer: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 16,
-      gap: 8,
-      backgroundColor: colors['neutral-card-2'],
-      borderRadius: 6,
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  statusContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // padding: 16,
+    gap: 8,
+    backgroundColor: colors2024['neutral-bg-4'],
+    borderRadius: 16,
+    height: 56,
 
-      marginTop: 10,
-    },
-    statusContainerSuccess: {
-      backgroundColor: colors['green-light'],
-    },
-    statusText: {
-      fontSize: 16,
-      lineHeight: 19,
-      fontWeight: '500',
-      color: colors['neutral-body'],
-    },
-    statusTextSuccess: {
-      color: colors['green-default'],
-    },
-  });
+    marginTop: 20,
+  },
+  statusContainerSuccess: {
+    backgroundColor: colors2024['green-light'],
+  },
+  statusText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+  },
+  statusTextSuccess: {
+    color: colors2024['green-default'],
+  },
+}));

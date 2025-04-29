@@ -25,6 +25,8 @@ import { GasLessNotEnough } from '../FooterBar/GasLessComponents/GasLessNotEnoug
 import { MiniCommonAction } from './MiniCommonAction';
 import { MiniLedgerAction } from './MiniLedgerAction';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
+import { MiniActionGroup } from './MiniActionGroup';
+import { MiniActionStatus } from './MiniActionStatus';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -68,7 +70,7 @@ const getStyles = (colors: AppColorsVariants) =>
     wrapper: {
       paddingHorizontal: 20,
       paddingTop: 10,
-      paddingBottom: 40,
+      paddingBottom: 52,
       borderTopLeftRadius: 16,
       borderTopRightRadius: 16,
       backgroundColor: colors['neutral-bg-1'],
@@ -438,7 +440,36 @@ export const MiniFooterBar: React.FC<Props> = ({
         )}
 
         <View style={styles.actions}>
-          {account.type === KEYRING_CLASS.HARDWARE.LEDGER ? (
+          {task.status === 'idle' ? (
+            <MiniActionGroup
+              isMiniSignTx
+              account={account}
+              gasLess={useGasLess && !payGasByGasAccount}
+              {...props}
+              disabledProcess={
+                payGasByGasAccount
+                  ? !gasAccountCanPay
+                  : useGasLess
+                  ? false
+                  : props.disabledProcess
+              }
+              enableTooltip={
+                payGasByGasAccount
+                  ? false
+                  : useGasLess
+                  ? false
+                  : props.enableTooltip
+              }
+              gasLessThemeColor={
+                isDarkTheme
+                  ? gasLessConfig?.dark_color
+                  : gasLessConfig?.theme_color
+              }
+            />
+          ) : (
+            <MiniActionStatus account={account} task={task} />
+          )}
+          {/* {account.type === KEYRING_CLASS.HARDWARE.LEDGER ? (
             <MiniLedgerAction
               isMiniSignTx
               task={task}
@@ -496,7 +527,7 @@ export const MiniFooterBar: React.FC<Props> = ({
               }
               footer={footer}
             />
-          )}
+          )} */}
         </View>
       </View>
     </View>

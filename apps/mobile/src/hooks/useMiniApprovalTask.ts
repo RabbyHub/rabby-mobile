@@ -2,7 +2,8 @@ import { isLedgerLockError } from '@/utils/ledger';
 import { FailedCode, sendTransaction } from '@/utils/sendTransaction';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
-import _ from 'lodash';
+import { atom, useAtom } from 'jotai';
+import _, { uniqueId } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,23 +17,22 @@ type ListItemType = {
   >;
   status: TxStatus;
   message?: string;
+  hash?: string;
 };
 
-/**
- * @deprecated
- */
-export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
-  // const wallet = useWallet();
+const taskListAtom = atom<ListItemType[]>([]);
+const taskStatusAtom = atom<'idle' | 'active' | 'paused' | 'completed'>('idle');
+const taskErrorAtom = atom<{
+  status: 'REJECTED' | 'FAILED';
+  content: string;
+  description: string;
+} | null>(null);
 
-  const [list, setList] = useState<ListItemType[]>([]);
-  const [status, setStatus] = React.useState<
-    'idle' | 'active' | 'paused' | 'completed'
-  >('idle');
-  const [error, setError] = useState<{
-    status: 'REJECTED' | 'FAILED';
-    content: string;
-    description: string;
-  } | null>(null);
+let globalCurrentTaskId = uniqueId();
+export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
+  const [list, setList] = useAtom(taskListAtom);
+  const [status, setStatus] = useAtom(taskStatusAtom);
+  const [error, setError] = useAtom(taskErrorAtom);
 
   const { t } = useTranslation();
 
@@ -54,9 +54,13 @@ export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
   const init = useMemoizedFn((list: ListItemType[]) => {
     setList(list);
     setStatus('idle');
+    setError(null);
+    globalCurrentTaskId = uniqueId();
   });
 
   const start = useMemoizedFn(async () => {
+    const currentId = globalCurrentTaskId;
+    const txHashList: string[] = [];
     try {
       setStatus('active');
       for (let index = 0; index < list.length; index++) {
@@ -73,6 +77,9 @@ export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
             ga,
             tx,
             onProgress: status => {
+              if (currentId !== globalCurrentTaskId) {
+                return;
+              }
               if (status === 'builded') {
                 _updateList({
                   index,
@@ -90,8 +97,21 @@ export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
               }
             },
           });
+          if (currentId !== globalCurrentTaskId) {
+            throw new Error('different taskId');
+          }
+          _updateList({
+            index,
+            payload: {
+              hash: result?.txHash,
+            },
+          });
+          txHashList.push(result?.txHash);
         } catch (e: any) {
           console.error(e);
+          if (currentId !== globalCurrentTaskId) {
+            return;
+          }
           const msg = e.message || e.name;
           _updateList({
             index,
@@ -117,7 +137,11 @@ export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
           throw e;
         }
       }
+      if (currentId !== globalCurrentTaskId) {
+        return;
+      }
       setStatus('completed');
+      return txHashList;
     } catch (e) {
       console.error(e);
       throw e;
@@ -126,7 +150,7 @@ export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
 
   const handleRetry = useMemoizedFn(async () => {
     setError(null);
-    await start();
+    return await start();
   });
 
   const stop = useMemoizedFn(() => {
@@ -142,6 +166,10 @@ export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
     return list[currentActiveIndex]?.status;
   }, [list, currentActiveIndex]);
 
+  const clear = useMemoizedFn(() => {
+    return init([]);
+  });
+
   return {
     list,
     init,
@@ -153,7 +181,25 @@ export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
     total: list.length,
     txStatus,
     stop,
+    clear,
   };
 };
 
-export type BatchSignTxTaskType = ReturnType<typeof useBatchSignTxTask>;
+export const useClearMiniApprovalTask = () => {
+  const [, setList] = useAtom(taskListAtom);
+  const [, setStatus] = useAtom(taskStatusAtom);
+  const [, setError] = useAtom(taskErrorAtom);
+
+  const clear = useMemoizedFn(() => {
+    setList([]);
+    setStatus('idle');
+    setError(null);
+    globalCurrentTaskId = uniqueId();
+  });
+
+  return {
+    clear,
+  };
+};
+
+export type MiniApprovalTaskType = ReturnType<typeof useMiniApprovalTask>;
