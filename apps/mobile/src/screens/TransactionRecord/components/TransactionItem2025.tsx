@@ -443,6 +443,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     marginBottom: 8,
+    alignItems: 'center',
+    gap: 12,
     // borderColor: colors2024['neutral-line'],
     // borderWidth: 1,
   },
