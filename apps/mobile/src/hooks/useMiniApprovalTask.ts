@@ -1,7 +1,7 @@
 import { isLedgerLockError } from '@/utils/ledger';
 import { FailedCode, sendTransaction } from '@/utils/sendTransaction';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import _, { uniqueId } from 'lodash';
 import React, { useMemo, useState } from 'react';
@@ -58,95 +58,100 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
     globalCurrentTaskId = uniqueId();
   });
 
-  const start = useMemoizedFn(async () => {
-    const currentId = globalCurrentTaskId;
-    const txHashList: string[] = [];
-    try {
-      setStatus('active');
-      for (let index = 0; index < list.length; index++) {
-        const item = list[index];
-        const tx = item.tx;
-        const options = item.options;
-        if (item.status === 'signed') {
-          continue;
-        }
-
-        try {
-          const result = await sendTransaction({
-            ...options,
-            ga,
-            tx,
-            onProgress: status => {
-              if (currentId !== globalCurrentTaskId) {
-                return;
-              }
-              if (status === 'builded') {
-                _updateList({
-                  index,
-                  payload: {
-                    status: 'sended',
-                  },
-                });
-              } else if (status === 'signed') {
-                _updateList({
-                  index,
-                  payload: {
-                    status: 'signed',
-                  },
-                });
-              }
-            },
-          });
-          if (currentId !== globalCurrentTaskId) {
-            throw new Error('different taskId');
+  const { runAsync: start } = useRequest(
+    async () => {
+      const currentId = globalCurrentTaskId;
+      const txHashList: string[] = [];
+      try {
+        setStatus('active');
+        for (let index = 0; index < list.length; index++) {
+          const item = list[index];
+          const tx = item.tx;
+          const options = item.options;
+          if (item.status === 'signed') {
+            continue;
           }
-          _updateList({
-            index,
-            payload: {
-              hash: result?.txHash,
-            },
-          });
-          txHashList.push(result?.txHash);
-        } catch (e: any) {
-          console.error(e);
-          if (currentId !== globalCurrentTaskId) {
-            return;
-          }
-          const msg = e.message || e.name;
-          _updateList({
-            index,
-            payload: {
-              status: 'failed',
-              message: msg,
-            },
-          });
 
-          const _status =
-            e.name === FailedCode.UserRejected ? 'REJECTED' : 'FAILED';
-          setError({
-            status: _status,
-            content:
-              _status === 'REJECTED'
-                ? t('page.signFooterBar.ledger.txRejected')
-                : t('page.signFooterBar.qrcode.txFailed'),
-            description: msg,
-          });
-          // if (!(isLedgerLockError(msg) || msg === 'DISCONNECTED')) {
-          //   setError(msg);
-          // }
-          throw e;
+          try {
+            const result = await sendTransaction({
+              ...options,
+              ga,
+              tx,
+              onProgress: status => {
+                if (currentId !== globalCurrentTaskId) {
+                  return;
+                }
+                if (status === 'builded') {
+                  _updateList({
+                    index,
+                    payload: {
+                      status: 'sended',
+                    },
+                  });
+                } else if (status === 'signed') {
+                  _updateList({
+                    index,
+                    payload: {
+                      status: 'signed',
+                    },
+                  });
+                }
+              },
+            });
+            if (currentId !== globalCurrentTaskId) {
+              throw new Error('different taskId');
+            }
+            _updateList({
+              index,
+              payload: {
+                hash: result?.txHash,
+              },
+            });
+            txHashList.push(result?.txHash);
+          } catch (e: any) {
+            console.error(e);
+            if (currentId !== globalCurrentTaskId) {
+              return;
+            }
+            const msg = e.message || e.name;
+            _updateList({
+              index,
+              payload: {
+                status: 'failed',
+                message: msg,
+              },
+            });
+
+            const _status =
+              e.name === FailedCode.UserRejected ? 'REJECTED' : 'FAILED';
+            setError({
+              status: _status,
+              content:
+                _status === 'REJECTED'
+                  ? t('page.signFooterBar.ledger.txRejected')
+                  : t('page.signFooterBar.qrcode.txFailed'),
+              description: msg,
+            });
+            // if (!(isLedgerLockError(msg) || msg === 'DISCONNECTED')) {
+            //   setError(msg);
+            // }
+            throw e;
+          }
         }
+        if (currentId !== globalCurrentTaskId) {
+          return;
+        }
+        setStatus('completed');
+        return txHashList;
+      } catch (e) {
+        console.error(e);
+        throw e;
       }
-      if (currentId !== globalCurrentTaskId) {
-        return;
-      }
-      setStatus('completed');
-      return txHashList;
-    } catch (e) {
-      console.error(e);
-      throw e;
-    }
-  });
+    },
+    {
+      manual: true,
+    },
+  );
 
   const handleRetry = useMemoizedFn(async () => {
     setError(null);
