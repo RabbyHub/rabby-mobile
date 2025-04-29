@@ -8,6 +8,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import {
   ApprovalAssetsItem,
+  useApprovalsPage,
   useFocusedApprovalOnApprovals,
   useRevokeAssetSpenders,
 } from '../useApprovalsPage';
@@ -23,6 +24,7 @@ import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
+import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 
 export default function BottomSheetApprovalAsset({
   modalProps,
@@ -47,6 +49,17 @@ export default function BottomSheetApprovalAsset({
     () => Object.keys(assetFocusingRevokeMap).length,
     [assetFocusingRevokeMap],
   );
+
+  const { displaySortedAssetsList } = useApprovalsPage();
+  const batchRevoke = useBatchRevoke();
+
+  const handleRevoke = React.useCallback(() => {
+    modalRef?.current?.close();
+
+    const currentRevokeList = Object.values(assetFocusingRevokeMap);
+
+    batchRevoke(currentRevokeList, displaySortedAssetsList);
+  }, [batchRevoke, assetFocusingRevokeMap, displaySortedAssetsList, modalRef]);
 
   const { styles } = useTheme2024({ getStyle });
 
@@ -124,12 +137,7 @@ export default function BottomSheetApprovalAsset({
             ]
               .filter(Boolean)
               .join('')}
-            onPress={() => {
-              toggleFocusedAssetItem({
-                assetItemToBlur: focusedAssetApproval,
-                isConfirmSelected: true,
-              });
-            }}
+            onPress={handleRevoke}
           />
         );
       }}

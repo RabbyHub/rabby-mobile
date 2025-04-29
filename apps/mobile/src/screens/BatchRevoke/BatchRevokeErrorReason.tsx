@@ -63,13 +63,10 @@ export const BatchRevokeErrorReason: React.FC<{
       <View style={styles.content}>
         <Text style={styles.contentText}>
           {FailReason[failedCode ?? FailedCode.DefaultFailed]}
+          {canStillRevoke &&
+            gasCostUsd &&
+            `(Est. Gas ≈$ ${formatGasCostUsd(gasCostUsd)})`}
         </Text>
-        {canStillRevoke && gasCostUsd && (
-          <Text style={styles.contentText}>
-            (Est. Gas ≈$
-            {formatGasCostUsd(gasCostUsd)})
-          </Text>
-        )}
       </View>
     </FooterButtonScreenContainer>
   );

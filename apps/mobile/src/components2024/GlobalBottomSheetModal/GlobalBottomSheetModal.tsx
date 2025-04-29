@@ -189,7 +189,7 @@ export const GlobalBottomSheetModal2024 = () => {
         return (
           <AppBottomSheetModal
             topInset={height.top}
-            bottomInset={androidOnlyBottomOffset}
+            // bottomInset={androidOnlyBottomOffset}
             enableContentPanningGesture={false}
             enableDismissOnClose
             keyboardBlurBehavior="restore"
