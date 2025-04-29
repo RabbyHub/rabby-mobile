@@ -6,6 +6,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { BarcodeFormat, detectBarcodes } from 'react-native-barcodes-detector';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { ThemeColors2024 } from '@/constant/theme';
 
 export const QRCodePicker: React.FC<{
   onCodeScanned: (val: string | null) => void;
@@ -51,7 +52,7 @@ export const QRCodePicker: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({}) => ({
   root: {
     alignItems: 'center',
     gap: 8,
@@ -61,7 +62,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   text: {
     fontSize: 14,
     lineHeight: 18,
-    color: colors2024['neutral-title-1'],
+    color: ThemeColors2024.dark['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
