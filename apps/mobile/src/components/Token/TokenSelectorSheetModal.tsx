@@ -775,6 +775,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
       ];
     }, [isBridgeTo, tokens, unshiftList]);
 
+    const inputNotActiveAndNoQuery = useMemo(() => {
+      return !(query || isInputActive);
+    }, [query, isInputActive]);
+
     const { willShowChainFilter, willShowAccountFilter, willShowFilterRow } =
       useMemo(() => {
         const _willShowAccountFilter =
@@ -846,55 +850,47 @@ export const TokenSelectorSheetModal = React.forwardRef<
               ) : null}
             </BottomSheetHandlableView>
 
-            <NextSearchBar
-              // noCancel={!isInputActive && !query}
-              // alwaysShowCancel={true}
-              onCancel={() => {
-                setQuery('');
-                setTimeout(() => {
-                  inputRef.current?.blur();
-                }, 50);
-              }}
-              // isActive={isInputActive}
-              inputContainerStyle={{
-                justifyContent:
-                  query || isInputActive ? 'flex-start' : 'center',
-              }}
-              inputStyle={{
-                flex: query || isInputActive ? 1 : 0,
-              }}
-              style={styles.searchInputContainer}
-              placeholder={
-                searchPlaceholder ||
-                t('component.TokenSelector.searchPlaceHolder2')
-              }
-              value={query}
-              onChangeText={v => {
-                handleQueryChange(v);
-              }}
-              placeholderTextColor={colors2024['neutral-secondary']}
-              returnKeyType="done"
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-              ref={inputRef}
-            />
-            {/* <SearchInput
-              isActive={isInputActive}
-              containerStyle={styles.searchInputContainer}
-              searchIconWrapperStyle={styles.searchIconWrapperStyle}
-              inputStyle={styles.inputStyle}
-              searchIcon={<SearchSVG color={colors2024['neutral-foot']} />}
-              inputProps={{
-                value: query,
-                onChange: e => handleQueryChange(e.nativeEvent.text),
-                onFocus: handleInputFocus,
-                onBlur: handleInputBlur,
-                placeholder:
+            <View style={styles.searchInputContainer}>
+              <NextSearchBar
+                onCancel={() => {
+                  setQuery('');
+                  setTimeout(() => {
+                    inputRef.current?.blur();
+                  }, 50);
+                }}
+                inputContainerStyle={{
+                  justifyContent: inputNotActiveAndNoQuery
+                    ? 'center'
+                    : 'flex-start',
+                }}
+                inputStyle={{
+                  flex: inputNotActiveAndNoQuery ? 0 : 1,
+                }}
+                style={styles.searchInputContainer}
+                placeholder={
                   searchPlaceholder ||
-                  t('component.TokenSelector.searchPlaceHolder2'),
-                placeholderTextColor: colors2024['neutral-secondary'],
-              }}
-            /> */}
+                  t('component.TokenSelector.searchPlaceHolder2')
+                }
+                value={query}
+                onChangeText={v => {
+                  handleQueryChange(v);
+                }}
+                placeholderTextColor={colors2024['neutral-secondary']}
+                returnKeyType="done"
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
+                ref={inputRef}
+              />
+              {/* for mask touch event in input to emit focus event */}
+              {inputNotActiveAndNoQuery && (
+                <TouchableOpacity
+                  style={[styles.absoluteContainer]}
+                  onPress={() => {
+                    inputRef.current?.focus();
+                  }}
+                />
+              )}
+            </View>
           </View>
 
           <View
@@ -1105,6 +1101,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
 
     searchInputContainer: {
+      position: 'relative',
       borderRadius: 12,
       // paddingHorizontal: 12,
       // borderColor: 'transparent',
@@ -1260,6 +1257,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['orange-light-1'],
       borderBottomLeftRadius: 12,
       borderTopRightRadius: 16,
+    },
+    absoluteContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 1,
     },
   };
 });
