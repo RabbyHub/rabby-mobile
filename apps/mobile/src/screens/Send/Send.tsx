@@ -126,7 +126,10 @@ function SendScreen({
     putScreenState,
     resetScreenState,
   } = useSendTokenScreenState();
-  const Header = useCallback(() => <SendHeaderRight />, []);
+  const Header = useCallback(
+    () => <SendHeaderRight isForMultipleAdderss={isForMultipleAdderss} />,
+    [isForMultipleAdderss],
+  );
   useEffect(() => {
     setNavigationOptions({
       headerRight: Header,

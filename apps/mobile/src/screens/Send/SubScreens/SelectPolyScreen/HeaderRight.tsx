@@ -12,9 +12,13 @@ import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { SendHistory } from './SendHistory';
 
 interface IProps {
+  isForMultipleAdderss?: boolean;
   style?: StyleProp<ViewStyle>;
 }
-export const SendHeaderRight = ({ style }: IProps) => {
+export const SendHeaderRight = ({
+  style,
+  isForMultipleAdderss = true,
+}: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const [historyVisible, setHistoryVisible] = useState(false);
@@ -36,7 +40,11 @@ export const SendHeaderRight = ({ style }: IProps) => {
         </TouchableOpacity>
       </View>
 
-      <SendHistory visible={historyVisible} onClose={closeHistory} />
+      <SendHistory
+        isForMultipleAdderss={isForMultipleAdderss}
+        visible={historyVisible}
+        onClose={closeHistory}
+      />
     </>
   );
 };

@@ -49,6 +49,7 @@ import { setCexId } from '@/utils/addressCexId';
 import { useAtom } from 'jotai';
 import { toast } from '@/components2024/Toast';
 import { useAlert } from './useAlert';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -79,6 +80,7 @@ const WhitelistInputScreen = () => {
     autoScan?: boolean;
   };
   const nav = useNavigation();
+  const { isSingleAddress } = useSendRoutes();
 
   const { list } = useCexSupportList();
 
@@ -375,6 +377,7 @@ const WhitelistInputScreen = () => {
       <SendHistory
         visible={historyVisible}
         onClose={closeHistory}
+        isForMultipleAdderss={!isSingleAddress}
         title={t('page.sendPoly.SelectFromHistory')}
         onPressBottomBtn={data => {
           if (data?.to && isValidHexAddress(data?.to as Hex)) {

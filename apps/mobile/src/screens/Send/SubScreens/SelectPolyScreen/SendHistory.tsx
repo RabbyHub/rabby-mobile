@@ -30,6 +30,7 @@ interface IProps {
   visible: boolean;
   onClose: () => void;
   title?: string;
+  isForMultipleAdderss?: boolean;
   onPressBottomBtn?: (data: SendAction) => void;
   isForMultipleAddress?: boolean;
 }
@@ -37,6 +38,7 @@ export const SendHistory = ({
   visible,
   onClose,
   title,
+  isForMultipleAdderss = true,
   onPressBottomBtn,
   isForMultipleAddress = true,
 }: IProps) => {

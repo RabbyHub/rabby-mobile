@@ -37,7 +37,7 @@ export const useSendRoutes = () => {
         action: 'Send_Enter',
       });
       setParams(p || {});
-      setIsSingleAddress(isForSingleAddress);
+      setIsSingleAddress(!!isForSingleAddress);
       if (p?.toAddress) {
         const { inWhitelist, account, isMyImported } =
           findAccountWithoutBalance(p.toAddress, undefined);
@@ -86,5 +86,6 @@ export const useSendRoutes = () => {
   return {
     navigateToSendPolyScreen,
     navigateToSendScreen,
+    isSingleAddress,
   };
 };

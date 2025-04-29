@@ -23,6 +23,7 @@ import SendInputScreen from '../SendInput';
 import { useInputSwitch } from '../SendInput/useInputSwitch';
 import { SendHeaderLeft } from './HeaderLeft';
 import { navigate } from '@/utils/navigation';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
@@ -58,8 +59,12 @@ const SendPolyScreen = () => {
     clean: cleanInput,
   } = useInputSwitch();
   const { recentHistory } = useRecentSend();
+  const { isSingleAddress } = useSendRoutes();
 
-  const Header = useCallback(() => <SendHeaderRight />, []);
+  const Header = useCallback(
+    () => <SendHeaderRight isForMultipleAdderss={!isSingleAddress} />,
+    [isSingleAddress],
+  );
   const HeaderLeft = useCallback(
     () => <SendHeaderLeft isInputAddress={isInputAddress} clean={cleanInput} />,
     [cleanInput, isInputAddress],
