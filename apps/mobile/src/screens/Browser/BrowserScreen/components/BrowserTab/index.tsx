@@ -4,6 +4,7 @@ import {
   Platform,
   StyleProp,
   StyleSheet,
+  Text,
   View,
   ViewStyle,
 } from 'react-native';
@@ -25,7 +26,7 @@ import { parsePossibleURL } from '@/constant/dappView';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID } from '@/core/native/utils';
-import { browserService } from '@/core/services';
+import { browserService, preferenceService } from '@/core/services';
 import { FontNames } from '@/core/utils/fonts';
 import {
   useSceneAccountInfo,
@@ -312,6 +313,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
     const forScene = '@ActiveDappWebViewModal';
+    const [preferenceCurrentAccount, setPreferenceCurrentAccount] =
+      useState<any>(null);
 
     const isFocused = useIsFocused();
 
@@ -319,6 +322,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       if (isFocused && isActive && !isEmptyTab && dappInfo) {
         setTimeout(() => {
           switchSceneCurrentAccount(forScene, dappInfo.currentAccount || null);
+          setTimeout(() => {
+            const acct = preferenceService.getCurrentAccount();
+            setPreferenceCurrentAccount(acct);
+          }, 500);
         }, 500);
       }
     }, [isActive, isEmptyTab, isFocused, switchSceneCurrentAccount, dappInfo]);
@@ -388,6 +395,22 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     style={styles.progressBar}
                   />
                 ) : null}
+                <View>
+                  {dappInfo && (
+                    <Text>
+                      {dappInfo?.origin}-{dappInfo?.currentAccount?.address}-
+                      {dappInfo?.currentAccount?.aliasName}-
+                      {dappInfo?.currentAccount?.type}
+                    </Text>
+                  )}
+                  {preferenceCurrentAccount && (
+                    <Text>
+                      Perference: {preferenceCurrentAccount.address}-
+                      {preferenceCurrentAccount.aliasName}-
+                      {preferenceCurrentAccount.type}
+                    </Text>
+                  )}
+                </View>
                 <WebView
                   key={contentMode}
                   cacheEnabled
