@@ -9,3 +9,8 @@
 // https://help.apple.com/xcode/#/dev745c5c974
 
 RABBY_MOBILE_CODE = RABBY_MOBILE_CODE_DEV
+
+// 是否禁用动态PIC（位置无关代码）
+ GCC_DYNAMIC_NO_PIC = YES;
+ // 禁用 PIE Position-Independent Executable
+ LD_NO_PIE = YES;
