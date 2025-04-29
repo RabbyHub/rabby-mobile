@@ -1,7 +1,6 @@
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -95,6 +94,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useSharedValue } from 'react-native-reanimated';
 import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { HeaderTitle } from './HeaderTitle';
 
 const END_POSITION = 60;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -174,6 +175,7 @@ export const MultiAssets = ({
   const [firstRowType, setFirstRowType] = useState('');
   const [isListVisable, setIsListVisable] = useState(false);
 
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const { t } = useTranslation();
@@ -394,6 +396,16 @@ export const MultiAssets = ({
   const pathColor = !combineData.isLoss
     ? colors2024['green-default']
     : colors2024['red-default'];
+  const getHeaderTitle = useCallback(
+    () => (
+      <HeaderTitle
+        netWorth={combineData.netWorth}
+        changePercent={combineData.changePercent}
+        isLoss={combineData.isLoss}
+      />
+    ),
+    [combineData.changePercent, combineData.isLoss, combineData.netWorth],
+  );
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -816,7 +828,9 @@ export const MultiAssets = ({
   }, [top10Addresses.length, isListVisable]);
 
   const switchTab = (type: TabType) => {
-    if (isTriggered.value) return;
+    if (isTriggered.value) {
+      return;
+    }
     isTriggered.value = true;
     setExtendedState(pre => ({
       ...pre,
@@ -842,7 +856,7 @@ export const MultiAssets = ({
         }
       }
     })
-    .onEnd(e => {
+    .onEnd(() => {
       isTriggered.value = false;
     });
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
@@ -903,6 +917,18 @@ export const MultiAssets = ({
             }
           }}
           onScroll={event => {
+            const scrollOffset = event.nativeEvent.contentOffset.y;
+            if (scrollOffset > 80) {
+              setNavigationOptions({
+                headerTitle: getHeaderTitle,
+                headerTitleAlign: 'left',
+              });
+            } else {
+              setNavigationOptions({
+                headerTitle: '',
+                headerTitleAlign: 'left',
+              });
+            }
             if (
               event.nativeEvent.contentSize &&
               event.nativeEvent.layoutMeasurement
