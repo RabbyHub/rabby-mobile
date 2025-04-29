@@ -140,7 +140,7 @@ const flowContext = flow
               { height: 800 },
             );
           connectOrigins.delete(origin);
-          apisDapp.connect({
+          await apisDapp.connect({
             origin,
             chainId: defaultChain || CHAINS_ENUM.ETH,
             session: {

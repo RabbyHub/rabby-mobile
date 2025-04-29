@@ -8,6 +8,10 @@ import { openapi } from '../request';
 import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { cached } from '@/utils/cache';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { getAllAccountsToDisplay } from './account';
+import { sortAccountList } from '@/screens/Address/useSortAddressList';
+import { sceneAccountInfoAtom } from '@/hooks/accountsSwitcher';
+import { getDefaultStore } from 'jotai';
 
 export const removeDapp = (origin: string) => {
   disconnect(origin);
@@ -22,7 +26,7 @@ export const disconnect = (origin: string) => {
   dappService.disconnect(origin);
 };
 
-export const connect = ({
+export const connect = async ({
   origin,
   session,
   info,
@@ -36,10 +40,29 @@ export const connect = ({
   currentAccount?: DappInfo['currentAccount'];
 }) => {
   const dapp = dappService.getDapp(origin);
+  const allAccounts = await getAllAccountsToDisplay();
+  const pinAddresses = preferenceService.getPinAddresses();
+  const accounts = sortAccountList(allAccounts, {
+    highlightedAddresses: pinAddresses,
+  });
+
   const account =
     currentAccount ||
     dapp?.currentAccount ||
+    accounts?.[0] ||
     preferenceService.getCurrentAccount();
+  const store = getDefaultStore();
+  const originValue = store.get(sceneAccountInfoAtom);
+  store.set(sceneAccountInfoAtom, {
+    ...originValue,
+    '@ActiveDappWebViewModal': {
+      ...originValue['@ActiveDappWebViewModal'],
+      signingAccount:
+        originValue['@ActiveDappWebViewModal']?.signingAccount || null,
+      currentAccount: account || null,
+    },
+  });
+  console.log('connect account', account);
   if (dapp) {
     dappService.patchDapps({
       [origin]: {
