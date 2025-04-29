@@ -154,7 +154,7 @@ const WhitelistInputScreen = () => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CEX,
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
+        // enableContentPanningGesture: true,
         enablePanDownToClose: true,
         handleStyle: {
           backgroundColor: colors2024['neutral-bg-2'],

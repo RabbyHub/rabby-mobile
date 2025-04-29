@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, FlatList } from 'react-native';
+import { View } from 'react-native';
 
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
@@ -8,6 +8,9 @@ import { ProjectItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CexItem } from './CexItem';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { useTranslation } from 'react-i18next';
+import AutoLockView from '@/components/AutoLockView';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 export interface ISelectCexPorps {
   onSelect?: (item: ProjectItem) => void;
@@ -18,14 +21,18 @@ const SelectCex = ({ onSelect }: ISelectCexPorps) => {
   const { t } = useTranslation();
 
   return (
-    <View style={[styles.screen]}>
-      <Text style={styles.modalTitle}>
-        {t('component.selectCexModal.title')}
-      </Text>
-      <FlatList
+    <AutoLockView as="BottomSheetView" style={[styles.screen]}>
+      <BottomSheetHandlableView>
+        <Text style={styles.modalTitle}>
+          {t('component.selectCexModal.title')}
+        </Text>
+      </BottomSheetHandlableView>
+      <BottomSheetFlatList
         data={list}
         keyExtractor={item => item.id}
         ItemSeparatorComponent={Divider}
+        style={styles.scrollView}
+        contentContainerStyle={{ flexGrow: 1 }}
         renderItem={({ item }) => {
           return (
             <CexItem
@@ -38,7 +45,7 @@ const SelectCex = ({ onSelect }: ISelectCexPorps) => {
         }}
         ListFooterComponent={Footer}
       />
-    </View>
+    </AutoLockView>
   );
 };
 
@@ -61,5 +68,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   screen: {
     paddingHorizontal: 20,
     backgroundColor: colors2024['neutral-bg-2'],
+    flex: 1,
+  },
+  scrollView: {
+    flexShrink: 1,
+    minHeight: 150,
+    height: 200,
   },
 }));

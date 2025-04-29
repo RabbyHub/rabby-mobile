@@ -3,7 +3,7 @@ import { CexEntity } from '../entities/cex';
 import { runOnJS } from 'react-native-reanimated';
 import { syncCexInfo } from '../sync/assets';
 import { AddrDescResponse, Cex } from '@rabby-wallet/rabby-api/dist/types';
-import { getCexId, setCexId } from '@/utils/addressCexId';
+import { getCexId } from '@/utils/addressCexId';
 import { globalSupportCexList } from '@/hooks/useCexSupportList';
 
 type Parameters<T extends (...args: any) => any> = T extends (
