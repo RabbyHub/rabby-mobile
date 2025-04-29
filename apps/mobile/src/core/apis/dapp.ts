@@ -36,12 +36,16 @@ export const connect = ({
   currentAccount?: DappInfo['currentAccount'];
 }) => {
   const dapp = dappService.getDapp(origin);
+  const account =
+    currentAccount ||
+    dapp?.currentAccount ||
+    preferenceService.getCurrentAccount();
   if (dapp) {
     dappService.patchDapps({
       [origin]: {
         chainId,
         isConnected: true,
-        ...(currentAccount !== undefined && { currentAccount }),
+        currentAccount: account,
       },
     });
     return;
@@ -49,10 +53,11 @@ export const connect = ({
   if (info) {
     dappService.addDapp({
       origin,
+      name: info?.name,
       info,
       isConnected: true,
       chainId,
-      ...(currentAccount !== undefined && { currentAccount }),
+      currentAccount: account,
     });
     return;
   }
@@ -64,7 +69,7 @@ export const connect = ({
         icon: '',
       },
     ),
-    ...(currentAccount !== undefined && { currentAccount }),
+    currentAccount: account,
     isConnected: true,
     chainId,
   });

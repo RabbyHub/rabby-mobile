@@ -312,25 +312,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
     const forScene = '@ActiveDappWebViewModal';
-    const { finalSceneCurrentAccount } = useSceneAccountInfo({
-      forScene,
-    });
 
     const isFocused = useIsFocused();
 
     useEffect(() => {
-      if (isFocused && isActive && !isEmptyTab) {
+      if (isFocused && isActive && !isEmptyTab && dappInfo) {
         setTimeout(() => {
-          switchSceneCurrentAccount(forScene, finalSceneCurrentAccount);
+          switchSceneCurrentAccount(forScene, dappInfo.currentAccount || null);
         }, 500);
       }
-    }, [
-      finalSceneCurrentAccount,
-      isActive,
-      isEmptyTab,
-      isFocused,
-      switchSceneCurrentAccount,
-    ]);
+    }, [isActive, isEmptyTab, isFocused, switchSceneCurrentAccount, dappInfo]);
 
     // const contentMode = useMemo(() => {
     //   return dappInfo?.contentMode === 'desktop' ? 'desktop' : 'mobile';

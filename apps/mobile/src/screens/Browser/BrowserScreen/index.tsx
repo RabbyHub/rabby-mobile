@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
-import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
@@ -7,26 +7,35 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { useSyncDappsInfo } from '@/hooks/useSyncDappsInfo';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { View } from 'react-native';
 import { BrowserTab } from './components/BrowserTab';
 import { useFocusEffect } from '@react-navigation/native';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 
 export function BrowserScreen() {
   const { styles: stylesScreen } = useTheme2024({
     getStyle: getScreenStyle,
   });
 
-  useLastUsedAccountInScreen();
-
   const { safeTop, androidOnlyBottomOffset } = useSafeSizes();
 
   const activeDappWebViewControlRef = useRef<any>(null);
 
   const { tabs, activeTabId, closeTab, updateTab, openTab } = useBrowser();
+
+  useLastUsedAccountInScreen();
+
+  const activeTabOrigin = useMemo(() => {
+    const tab = tabs.find(tab => tab.id === activeTabId);
+    if (tab) {
+      return safeGetOrigin(tab.url);
+    }
+    return undefined;
+  }, [tabs, activeTabId]);
 
   const { setBrowserHistory } = useBrowserHistory();
 
@@ -135,12 +144,9 @@ export function BrowserScreen() {
           })}
         </>
       )}
-      {/* {tabs.length > 0 && activeTab&& (
-            <AccountSwitcherModalInDappWebView
-              activeDappId={finalActiveDappId}
-            />
-          )} */}
-      <AccountSwitcherModal forScene="@ActiveDappWebViewModal" inScreen />
+      {tabs.length > 0 && (
+        <AccountSwitcherModalInDappWebView activeDappId={activeTabOrigin} />
+      )}
     </View>
   );
 }

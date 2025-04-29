@@ -43,7 +43,7 @@ export function BrowserHeader({
   });
 
   const { t } = useTranslation();
-  const { tabs, activeTabId, closeTab, updateTab, openTab } = useBrowser();
+  const { tabs, activeTabId } = useBrowser();
 
   const { isDappConnected } = useDapps();
 
