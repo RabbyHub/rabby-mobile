@@ -118,7 +118,8 @@ export type ActionHeaderItem = {
     | 'empty-defi'
     | 'switch_tabs'
     | 'loading-skeleton'
-    | 'loading-defi-skeleton';
+    | 'loading-defi-skeleton'
+    | 'scam_token';
   data?: null | string;
 };
 

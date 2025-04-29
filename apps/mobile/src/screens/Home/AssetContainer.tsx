@@ -70,7 +70,6 @@ import { EmptyTokenRow } from './components/AssetRenderItems/EmptyToken';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
-import { trigger } from 'react-native-haptic-feedback';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -83,6 +82,8 @@ import { DefiItemLoader, ItemLoader } from './components/Skeleton';
 import { chunk } from 'lodash';
 import { getItemId } from './utils/listRenderId';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
+import { isScamHidenToken } from './utils/collection';
+import { ScamTokenHeader } from './components/AssetRenderItems/ScamTokenHeader';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -144,6 +145,7 @@ export const AssetContainer: React.FC<Props> = ({
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
+  const [foldScam, setFoldScam] = useState(true);
   const [notBorn, setNotBorn] = useState(false);
 
   const dataProvider = useMemo(
@@ -340,13 +342,30 @@ export const AssetContainer: React.FC<Props> = ({
         data: item,
       }));
     const foldAndIncludeBalanceTokenList: ActionItem[] = sortTokens
-      .filter(i => i._isFold && !i._isExcludeBalance && i._realUsdValue > 0)
+      .filter(
+        i =>
+          !isScamHidenToken(i) &&
+          i._isFold &&
+          !i._isExcludeBalance &&
+          i._realUsdValue > 0,
+      )
       .map(item => ({
         type: 'fold_token',
         data: item,
       }));
     const foldAndExcludeBalanceTokenList: ActionItem[] = sortTokens
-      .filter(i => i._isFold && (i._isExcludeBalance || i._realUsdValue === 0))
+      .filter(
+        i =>
+          !isScamHidenToken(i) &&
+          i._isFold &&
+          (i._isExcludeBalance || i._realUsdValue === 0),
+      )
+      .map(item => ({
+        type: 'fold_token',
+        data: item,
+      }));
+    const scamTokens: ActionItem[] = sortTokens
+      .filter(isScamHidenToken)
       .map(item => ({
         type: 'fold_token',
         data: item,
@@ -395,6 +414,12 @@ export const AssetContainer: React.FC<Props> = ({
           { type: 'toggle_token_fold' },
           ...(foldHideList ? [] : foldTokenList),
         ],
+      },
+      {
+        show: !foldHideList && !!scamTokens.length,
+        data: foldScam
+          ? [{ type: 'scam_token', data: '' + scamTokens.length }]
+          : scamTokens,
       },
       {
         show: !!loadingToken && !sortTokens.length,
@@ -478,6 +503,7 @@ export const AssetContainer: React.FC<Props> = ({
     foldHideList,
     foldNft,
     foldNftList,
+    foldScam,
     loadingNft,
     loadingPortfolio,
     loadingToken,
@@ -563,6 +589,7 @@ export const AssetContainer: React.FC<Props> = ({
   };
   const handleSwitchTab = (key: AsssetKey) => {
     setFoldHideList(true);
+    setFoldScam(true);
     setTimeout(() => {
       listRef.current?.forceUpdate(() => {
         const data = (listRef.current?.props.dataProvider.getAllData() ||
@@ -853,6 +880,21 @@ export const AssetContainer: React.FC<Props> = ({
             )}
           </View>
         );
+      case 'scam_token':
+        return (
+          <View style={styles.rowWrap}>
+            <ScamTokenHeader
+              total={data}
+              style={StyleSheet.flatten([
+                styles.renderItemWrapper,
+                !isLight && styles.bg2,
+              ])}
+              onPress={() => {
+                setFoldScam(false);
+              }}
+            />
+          </View>
+        );
       case 'unfold_nft':
       case 'fold_nft':
         return (
@@ -892,7 +934,12 @@ export const AssetContainer: React.FC<Props> = ({
               styles.buttonHeader,
               !isLight && styles.bg2,
             ])}
-            onPressFold={() => setFoldHideList(pre => !pre)}
+            onPressFold={() => {
+              if (!foldHideList) {
+                setFoldScam(true);
+              }
+              setFoldHideList(pre => !pre);
+            }}
           />
         );
       case 'defi_header':
@@ -999,7 +1046,12 @@ export const AssetContainer: React.FC<Props> = ({
               styles.buttonHeader,
               !isLight && styles.bg2,
             ])}
-            onPressFold={() => setFoldHideList(pre => !pre)}
+            onPressFold={() => {
+              if (!foldHideList) {
+                setFoldScam(true);
+              }
+              setFoldHideList(pre => !pre);
+            }}
           />
         );
       case 'fold_defi':

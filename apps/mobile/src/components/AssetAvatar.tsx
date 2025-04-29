@@ -20,7 +20,7 @@ type AssetAvatarProps = {
 };
 
 // 没有用 svg 因为在 虚拟列表中，会有问题
-const DefaultToken = memo(
+export const DefaultToken = memo(
   ({
     size = 28,
     style,
