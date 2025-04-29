@@ -135,10 +135,6 @@ export function BrowserHeader({
       {activeDappConnected && (
         <TouchableOpacity
           onPress={() => {
-            Alert.alert(
-              'test',
-              `${finalSceneCurrentAccount?.address}-${finalSceneCurrentAccount?.aliasName}`,
-            );
             toggleSceneVisible(forScene, !isOpen);
           }}>
           {finalSceneCurrentAccount ? (
