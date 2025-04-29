@@ -10,6 +10,7 @@ import {
   preferenceServiceMigration,
 } from './preference.migration';
 import { contactBookServiceMigration } from './contactBook.migration';
+import { dappServiceMigration } from './dapps.migration';
 import { IStoreMigrations, processMigration } from './_fns.store';
 import {
   IServiceMigrationsByVersion,
@@ -40,6 +41,7 @@ export const serviceMigrations: {
 } = {
   preference: preferenceServiceMigration,
   contactBook: contactBookServiceMigration,
+  dapps: dappServiceMigration,
 };
 
 export function migrateServices(services: STORE_SERVICE_MAP) {
