@@ -34,6 +34,9 @@ import {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { isNonPublicProductionEnv, isSelfhostRegPkg } from '@/constant/env';
+import { getDefaultStore } from 'jotai';
+import { mockBatchRevokeAtom } from '@/hooks/appSettings';
 
 // fail code
 export enum FailedCode {
@@ -139,6 +142,9 @@ export const sendTransaction = async ({
   ga?: Record<string, any>;
   sig?: string;
 }) => {
+  const MOCK_BATCH_REVOKE = getDefaultStore().get(mockBatchRevokeAtom);
+  console.log('MOCK_BATCH_REVOKE', MOCK_BATCH_REVOKE);
+
   onProgress?.('building');
   const chain = findChain({
     serverId: chainServerId,
@@ -259,9 +265,15 @@ export const sendTransaction = async ({
       });
 
   const isGasNotEnough = !isGasLess && checkErrors.some(e => e.code === 3001);
-  const ETH_GAS_USD_LIMIT = 20;
-  const OTHER_CHAIN_GAS_USD_LIMIT = 5;
-  const DEBUG_SIMULATION_FAILED = false;
+  const ETH_GAS_USD_LIMIT = isSelfhostRegPkg
+    ? MOCK_BATCH_REVOKE.DEBUG_ETH_GAS_USD_LIMIT
+    : 20;
+  const OTHER_CHAIN_GAS_USD_LIMIT = isSelfhostRegPkg
+    ? MOCK_BATCH_REVOKE.DEBUG_OTHER_CHAIN_GAS_USD_LIMIT
+    : 5;
+  const DEBUG_SIMULATION_FAILED = isSelfhostRegPkg
+    ? MOCK_BATCH_REVOKE.DEBUG_SIMULATION_FAILED
+    : false;
 
   // generate tx with gas
   const transaction: Tx = {
@@ -416,6 +428,15 @@ export const sendTransaction = async ({
   };
 
   onProgress?.('builded');
+
+  if (isNonPublicProductionEnv) {
+    if (MOCK_BATCH_REVOKE.DEBUG_MOCK_SUBMIT) {
+      return {
+        txHash: 'mock_hash',
+        gasCost: estimateGasCost,
+      };
+    }
+  }
 
   const handleSendAfter = async () => {
     const statsData = await notificationService.getStatsData();

@@ -192,3 +192,29 @@ export function useToggleShowAutoLockCountdown() {
     toggleShowAutoLockCountdown,
   };
 }
+
+export const mockBatchRevokeAtom = atom({
+  DEBUG_MOCK_SUBMIT: false,
+  DEBUG_ETH_GAS_USD_LIMIT: 20,
+  DEBUG_OTHER_CHAIN_GAS_USD_LIMIT: 5,
+  DEBUG_SIMULATION_FAILED: false,
+});
+export function useMockBatchRevoke() {
+  const [mockBatchRevokeSetting, setMockBatchRevokeSetting] =
+    useAtom(mockBatchRevokeAtom);
+
+  const setMockBatchRevoke = useCallback(
+    (key: keyof typeof mockBatchRevokeSetting, value: boolean | number) => {
+      setMockBatchRevokeSetting(prev => ({
+        ...prev,
+        [key]: value,
+      }));
+    },
+    [setMockBatchRevokeSetting],
+  );
+
+  return {
+    mockBatchRevokeSetting,
+    setMockBatchRevoke,
+  };
+}

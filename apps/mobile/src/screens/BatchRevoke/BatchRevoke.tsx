@@ -122,7 +122,7 @@ export const BatchRevokeScreen = () => {
   const removeListenerRef = React.useRef<() => void>();
 
   React.useEffect(() => {
-    if (task.status === 'idle') {
+    if (task.status === 'idle' || task.status === 'completed') {
       return;
     }
     const beforeRemoveListener = navigation.addListener('beforeRemove', e => {

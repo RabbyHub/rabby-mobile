@@ -53,14 +53,14 @@ export const ListItemStatus: React.FC<{
     <View>
       {data.$status?.status === 'success' && (
         <View style={styles.success}>
-          <SuccessSVG />
+          <SuccessSVG style={styles.successIcon} />
           <CellText>
             {formatGasCostUsd(data.$status?.gasCost.gasCostUsd)}
           </CellText>
         </View>
       )}
       {data.$status?.status === 'fail' && (
-        <TouchableOpacity onPress={handlePressErrorReason}>
+        <TouchableOpacity hitSlop={10} onPress={handlePressErrorReason}>
           <FailedSVG />
         </TouchableOpacity>
       )}
@@ -84,5 +84,8 @@ const getStyle = createGetStyles2024(() => ({
     gap: 2,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  successIcon: {
+    marginBottom: 2,
   },
 }));
