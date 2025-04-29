@@ -124,7 +124,9 @@ export const ScannerScreen = () => {
           </>
         ) : null}
       </View>
-      {showScanLine ? null : <QRCodePicker onCodeScanned={handleCodeScanned} />}
+      {navState?.syncExtension ? null : (
+        <QRCodePicker onCodeScanned={handleCodeScanned} />
+      )}
     </View>
   );
 };
