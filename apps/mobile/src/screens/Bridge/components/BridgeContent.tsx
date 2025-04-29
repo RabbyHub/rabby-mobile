@@ -244,6 +244,8 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     isMaxRef,
     payTokenIsNativeToken,
     inSufficientCanGetQuote,
+    slider,
+    onChangeSlider,
   } = useBridge(isForMultipleAdderss);
 
   const chains = useMemo(
@@ -343,6 +345,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               to_token_amount: selectedBridgeQuote.to_token_amount,
               tx: tx,
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
+              slippage: new BigNumber(slippage).div(100).toNumber(),
             },
           },
           {
@@ -438,6 +441,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               to_token_amount: selectedBridgeQuote.to_token_amount,
               tx: tx,
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
+              slippage: new BigNumber(slippageState).div(100).toNumber(),
             },
           },
           {
@@ -607,6 +611,8 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           <View style={styles.cardContainer}>
             <BridgeToken
               type="from"
+              slider={slider}
+              onChangeSlider={onChangeSlider}
               disabled={!isSupportedChain}
               account={currentAccount}
               inSufficient={inSufficient}
