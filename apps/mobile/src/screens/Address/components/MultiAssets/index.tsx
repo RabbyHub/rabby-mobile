@@ -93,6 +93,8 @@ import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useSharedValue } from 'react-native-reanimated';
+import { isScamHidenToken } from '@/screens/Home/utils/collection';
+import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 
 const END_POSITION = 60;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -184,6 +186,7 @@ export const MultiAssets = ({
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
+  const [foldScam, setFoldScam] = useState(true);
   const [extendedState, setExtendedState] = useState<{
     currentTab: TabType;
     isLight: boolean;
@@ -215,13 +218,30 @@ export const MultiAssets = ({
         data: item,
       }));
     const foldAndIncludeBalanceTokenList: ActionItem[] = tokens
-      .filter(i => i._isFold && !i._isExcludeBalance && i._realUsdValue > 0)
+      .filter(
+        i =>
+          !isScamHidenToken(i) &&
+          i._isFold &&
+          !i._isExcludeBalance &&
+          i._realUsdValue > 0,
+      )
       .map(item => ({
         type: 'fold_token',
         data: item,
       }));
     const foldAndExcludeBalanceTokenList: ActionItem[] = tokens
-      .filter(i => i._isFold && (i._isExcludeBalance || i._realUsdValue === 0))
+      .filter(
+        i =>
+          !isScamHidenToken(i) &&
+          i._isFold &&
+          (i._isExcludeBalance || i._realUsdValue === 0),
+      )
+      .map(item => ({
+        type: 'fold_token',
+        data: item,
+      }));
+    const scamTokens: ActionItem[] = tokens
+      .filter(isScamHidenToken)
       .map(item => ({
         type: 'fold_token',
         data: item,
@@ -296,6 +316,12 @@ export const MultiAssets = ({
         ],
       },
       {
+        show: !foldHideList && !!scamTokens.length,
+        data: foldScam
+          ? [{ type: 'scam_token', data: '' + scamTokens.length }]
+          : scamTokens,
+      },
+      {
         show: showPortfolios && !!isLoading && !tokens.length,
         data: Array.from({ length: 5 }, () => ({
           type: 'loading-skeleton',
@@ -351,6 +377,7 @@ export const MultiAssets = ({
     extendedState.currentTab,
     foldDefi,
     foldHideList,
+    foldScam,
     isLoading,
     list,
     multiTimeStamp,
@@ -421,6 +448,7 @@ export const MultiAssets = ({
   }, [shouldRedirectToSetPasswordBefore2024, navigation]);
   const scrollToTop = () => {
     setFoldHideList(true);
+    setFoldScam(true);
     setTimeout(() => {
       listRef.current?.scrollToOffset(0, 0, true);
     }, 200);
@@ -610,13 +638,31 @@ export const MultiAssets = ({
             )}
           </View>
         );
+      case 'scam_token':
+        return (
+          <ScamTokenHeader
+            total={data}
+            style={StyleSheet.flatten([
+              styles.renderItemWrapper,
+              !isLight && styles.bg2,
+            ])}
+            onPress={() => {
+              setFoldScam(false);
+            }}
+          />
+        );
       case 'toggle_token_fold':
         return (
           <TokenRowSectionHeader
             style={styles.tokenSectionHeader}
             str={getTotalFoldToken(tokens.filter(i => i._isFold))}
             fold={foldHideList}
-            onPressFold={() => setFoldHideList(pre => !pre)}
+            onPressFold={() => {
+              if (!foldHideList) {
+                setFoldScam(true);
+              }
+              setFoldHideList(pre => !pre);
+            }}
           />
         );
       case 'defi_header':
@@ -996,7 +1042,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,
-    // marginBottom: 8,
+    marginBottom: ASSETS_SEPARATOR_HEIGHT,
   },
   footer: {
     minHeight: 400,
