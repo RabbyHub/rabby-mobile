@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 
 import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
-import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
+// import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
+import { RcNextSearchCC } from '@/assets/icons/common';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
@@ -30,9 +31,10 @@ import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { NextSearchBar } from '../SearchBar';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
-const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
+const RcIconSearch = makeThemeIconFromCC(RcNextSearchCC, 'neutral-secondary');
 
 const useChainSeletorList = ({
   supportChains,
@@ -215,33 +217,28 @@ export default function SelectChainWithSummary({
               </View>
             )}
             <Pressable onPress={handleToggleSearch} style={styles.iconSearch}>
-              <RcIconSearch color={colors2024['neutral-foot']} />
+              <RcNextSearchCC
+                color={colors2024['neutral-secondary']}
+                width={20}
+                height={20}
+              />
             </Pressable>
           </View>
         )}
         {canSearch && (
           <View style={styles.titleView}>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={{
-                  ...styles.inputText,
-                  ...styles.inputContainerStyle,
-                  backgroundColor: isDark
-                    ? colors2024['neutral-bg-2']
-                    : '#E8E9E9', // There is no more suitable color, use a temporary color number to replace it first
-                }}
-                placeholderTextColor={colors2024['neutral-info']}
-                placeholder="Search chain"
-                value={search}
-                onChangeText={text => {
-                  setSearch(text);
-                }}
-                ref={inputRef}
-              />
-            </View>
-            <Pressable onPress={handleToggleSearch}>
-              <Text style={styles.cancelText}>{t('global.cancel')}</Text>
-            </Pressable>
+            <NextSearchBar
+              alwaysShowCancel={true}
+              onCancel={handleToggleSearch}
+              style={styles.searchBar}
+              placeholder={t('page.search.header.SearchChain')}
+              value={search}
+              onChangeText={v => {
+                setSearch(v);
+              }}
+              returnKeyType="done"
+              ref={inputRef}
+            />
           </View>
         )}
         {isShowTestnet && !hideMainnetTab ? (
@@ -315,6 +312,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 16,
     paddingTop: 10,
   },
+  searchBar: {
+    flex: 1,
+  },
   titleText: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
@@ -334,7 +334,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   inputContainerStyle: {
     height: 46,
-    borderRadius: 30,
+    borderRadius: 12,
     paddingHorizontal: 20,
     borderBottomWidth: 0,
   },
@@ -397,6 +397,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
   iconSearch: {
     position: 'absolute',
-    right: 0,
+    right: 4,
   },
 }));

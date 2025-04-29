@@ -1,5 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useMemo, useEffect, useCallback, useState } from 'react';
+import React, {
+  useMemo,
+  useEffect,
+  useCallback,
+  useState,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -8,6 +14,7 @@ import {
   StyleSheet,
   Platform,
   SectionListRenderItem,
+  TextInput,
 } from 'react-native';
 import {
   BottomSheetBackdropProps,
@@ -68,6 +75,7 @@ import { TokenItemContextMenu } from './TokenContextMenu';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { NextSearchBar } from '@/components2024/SearchBar';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -227,6 +235,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const androidBottomOffset = isAndroid ? bottom : 0;
 
     const { isLight, styles, colors2024 } = useTheme2024({ getStyle });
+
+    const inputRef = useRef<TextInput | null>(null);
 
     const [query, setQuery] = useState('');
     const [isInputActive, setIsInputActive] = useState(false);
@@ -836,7 +846,39 @@ export const TokenSelectorSheetModal = React.forwardRef<
               ) : null}
             </BottomSheetHandlableView>
 
-            <SearchInput
+            <NextSearchBar
+              // noCancel={!isInputActive && !query}
+              // alwaysShowCancel={true}
+              onCancel={() => {
+                setQuery('');
+                setTimeout(() => {
+                  inputRef.current?.blur();
+                }, 50);
+              }}
+              // isActive={isInputActive}
+              inputContainerStyle={{
+                justifyContent:
+                  query || isInputActive ? 'flex-start' : 'center',
+              }}
+              inputStyle={{
+                flex: query || isInputActive ? 1 : 0,
+              }}
+              style={styles.searchInputContainer}
+              placeholder={
+                searchPlaceholder ||
+                t('component.TokenSelector.searchPlaceHolder2')
+              }
+              value={query}
+              onChangeText={v => {
+                handleQueryChange(v);
+              }}
+              placeholderTextColor={colors2024['neutral-secondary']}
+              returnKeyType="done"
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              ref={inputRef}
+            />
+            {/* <SearchInput
               isActive={isInputActive}
               containerStyle={styles.searchInputContainer}
               searchIconWrapperStyle={styles.searchIconWrapperStyle}
@@ -852,7 +894,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   t('component.TokenSelector.searchPlaceHolder2'),
                 placeholderTextColor: colors2024['neutral-secondary'],
               }}
-            />
+            /> */}
           </View>
 
           <View
@@ -1063,10 +1105,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
 
     searchInputContainer: {
-      borderRadius: 30,
-      backgroundColor: isLight ? '#E6E9EE' : colors2024['neutral-bg-2'],
-      paddingHorizontal: 12,
-      borderColor: 'transparent',
+      borderRadius: 12,
+      // paddingHorizontal: 12,
+      // borderColor: 'transparent',
       alignItems: 'center',
       marginBottom: 8,
     },
@@ -1151,6 +1192,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '400',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
+    },
+    searchBar: {
+      flex: 1,
     },
     tokenInfoColRight: {
       alignItems: 'flex-end',
