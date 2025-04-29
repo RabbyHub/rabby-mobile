@@ -9,7 +9,6 @@ import {
   notificationService,
   preferenceService,
 } from '@/core/services';
-import { useCurrentAccount } from '@/hooks/account';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
@@ -24,6 +23,7 @@ import {
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import clsx from 'clsx';
 import PQueue from 'p-queue';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -51,6 +51,7 @@ const getStyles = (colors: AppColorsVariants) =>
       height: '100%',
       flexDirection: 'column',
       backgroundColor: colors['neutral-bg-1'],
+      display: 'flex',
     },
     approvalConnect: {
       padding: 26,
@@ -612,53 +613,39 @@ ConnectProps) => {
   return (
     <Spin spinning={isLoading}>
       <View style={styles.connectWrapper}>
-        <View style={styles.approvalConnect}>
-          <View style={styles.titleWrapper}>
-            <Text style={styles.approvalTitle}>{t('page.connect.title')}</Text>
-            <ChainSelector
-              style={styles.chainSelector}
-              value={defaultChain}
-              onChange={handleChainChange}
-              connection
-            />
+        <BottomSheetScrollView style={{ flex: 1 }}>
+          <View style={styles.approvalConnect}>
+            <View style={styles.titleWrapper}>
+              <Text style={styles.approvalTitle}>
+                {t('page.connect.title')}
+              </Text>
+              <ChainSelector
+                style={styles.chainSelector}
+                value={defaultChain}
+                onChange={handleChainChange}
+                connection
+              />
+            </View>
+            <View style={styles.connectCard}>
+              <DappIcon
+                origin={origin}
+                source={dappIcon ? { uri: dappIcon } : undefined}
+                style={styles.dappIcon}
+              />
+              <Text style={styles.connectOrigin}>{origin}</Text>
+            </View>
           </View>
-          <View style={styles.connectCard}>
-            <DappIcon
-              origin={origin}
-              source={dappIcon ? { uri: dappIcon } : undefined}
-              style={styles.dappIcon}
-            />
-            <Text style={styles.connectOrigin}>{origin}</Text>
-          </View>
-        </View>
 
-        <View style={styles.ruleList}>
-          {RuleDesc.map((rule, index) => {
-            if (rule.id === '1006') {
-              return (
-                <RuleResult
-                  rule={{
-                    id: '1006',
-                    desc: t('page.connect.markRuleText'),
-                    result: userListResult || null,
-                  }}
-                  onSelect={handleSelectRule}
-                  collectList={collectList}
-                  popularLevel={originPopularLevel}
-                  userListResult={userListResult}
-                  ignored={processedRules.includes(rule.id)}
-                  hasSafe={hasSafe}
-                  hasForbidden={hasForbidden}
-                  onEditUserList={handleEditUserDataList}
-                  key={`${rule.id}_${index}`}
-                />
-              );
-            } else {
-              if (sortRules.find(item => item.id === rule.id) || rule.fixed) {
+          <View style={styles.ruleList}>
+            {RuleDesc.map((rule, index) => {
+              if (rule.id === '1006') {
                 return (
                   <RuleResult
-                    rule={sortRules.find(item => item.id === rule.id)!}
-                    key={`${rule.id}_${index}`}
+                    rule={{
+                      id: '1006',
+                      desc: t('page.connect.markRuleText'),
+                      result: userListResult || null,
+                    }}
                     onSelect={handleSelectRule}
                     collectList={collectList}
                     popularLevel={originPopularLevel}
@@ -667,14 +654,32 @@ ConnectProps) => {
                     hasSafe={hasSafe}
                     hasForbidden={hasForbidden}
                     onEditUserList={handleEditUserDataList}
+                    key={`${rule.id}_${index}`}
                   />
                 );
               } else {
-                return null;
+                if (sortRules.find(item => item.id === rule.id) || rule.fixed) {
+                  return (
+                    <RuleResult
+                      rule={sortRules.find(item => item.id === rule.id)!}
+                      key={`${rule.id}_${index}`}
+                      onSelect={handleSelectRule}
+                      collectList={collectList}
+                      popularLevel={originPopularLevel}
+                      userListResult={userListResult}
+                      ignored={processedRules.includes(rule.id)}
+                      hasSafe={hasSafe}
+                      hasForbidden={hasForbidden}
+                      onEditUserList={handleEditUserDataList}
+                    />
+                  );
+                } else {
+                  return null;
+                }
               }
-            }
-          })}
-        </View>
+            })}
+          </View>
+        </BottomSheetScrollView>
         <View>
           <SignTestnetPermission
             value={signPermission}

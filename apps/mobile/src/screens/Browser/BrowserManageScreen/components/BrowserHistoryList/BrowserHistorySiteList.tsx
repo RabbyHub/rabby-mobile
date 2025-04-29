@@ -9,6 +9,53 @@ import React from 'react';
 import { View } from 'react-native';
 import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
 
+export const BrowserHistorySiteItem = ({
+  item,
+  onDeletePress,
+  onFavoritePress,
+  onPress,
+}: {
+  item: DappInfo;
+  onDeletePress?: (item: DappInfo) => void;
+  onFavoritePress?: (item: DappInfo) => void;
+  onPress?: (item: DappInfo) => void;
+}) => {
+  const { styles } = useTheme2024({
+    getStyle,
+  });
+
+  return (
+    <View style={styles.listItem}>
+      <ContextMenuView
+        triggerProps={{ action: 'longPress' }}
+        preViewBorderRadius={20}
+        menuConfig={{
+          menuTitle: stringUtils.unPrefix(item.origin, 'https://'),
+          menuActions: [
+            {
+              title: 'Delete',
+              icon: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
+              androidIconName: 'ic_rabby_menu_delete',
+              key: 'delete',
+              action: () => {
+                onDeletePress?.(item);
+              },
+            },
+          ],
+        }}>
+        <TouchableOpacity
+          onPress={() => {
+            onPress?.(item);
+          }}
+          delayLongPress={100}
+          onLongPress={noop}>
+          <BrowserSiteCardInner data={item} onFavoritePress={onFavoritePress} />
+        </TouchableOpacity>
+      </ContextMenuView>
+    </View>
+  );
+};
+
 export const BrowserHistorySiteList = ({
   data,
   onPress,
@@ -42,41 +89,14 @@ export const BrowserHistorySiteList = ({
       style={styles.list}
       keyExtractor={item => item.url || item.origin}
       showsVerticalScrollIndicator={false}
-      renderItem={({ item }) => {
-        return (
-          <View style={styles.listItem}>
-            <ContextMenuView
-              triggerProps={{ action: 'longPress' }}
-              preViewBorderRadius={20}
-              menuConfig={{
-                menuTitle: stringUtils.unPrefix(item.origin, 'https://'),
-                menuActions: [
-                  {
-                    title: 'Delete',
-                    icon: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
-                    androidIconName: 'ic_rabby_menu_delete',
-                    key: 'delete',
-                    action: () => {
-                      onDeletePress?.(item);
-                    },
-                  },
-                ],
-              }}>
-              <TouchableOpacity
-                onPress={() => {
-                  onPress?.(item);
-                }}
-                delayLongPress={100}
-                onLongPress={noop}>
-                <BrowserSiteCardInner
-                  data={item}
-                  onFavoritePress={onFavoritePress}
-                />
-              </TouchableOpacity>
-            </ContextMenuView>
-          </View>
-        );
-      }}
+      renderItem={({ item }) => (
+        <BrowserHistorySiteItem
+          item={item}
+          onDeletePress={onDeletePress}
+          onFavoritePress={onFavoritePress}
+          onPress={onPress}
+        />
+      )}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={ListEmptyComponent}
     />
