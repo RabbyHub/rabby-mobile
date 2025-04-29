@@ -372,6 +372,7 @@ function makeScreenSpecConfig() {
       SetPassword2024: bg1Default2024Conf,
       SetBiometricsAuthentication: bg1DefaultConf,
       Scanner: blueLightConf,
+      BatchRevoke: transparentDefault2024Conf,
       // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
     };
 

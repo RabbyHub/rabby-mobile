@@ -4,7 +4,10 @@ import {
 } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { TransactionNavigatorParamList } from '@/navigation-type';
-import { useNavigationState } from '@react-navigation/native';
+import {
+  UNSTABLE_usePreventRemove,
+  useNavigationState,
+} from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -126,15 +129,9 @@ export const BatchRevokeScreen = () => {
     }
   }, [colors2024, navigation, t, task]);
 
-  const removeListenerRef = React.useRef<() => void>();
-
-  React.useEffect(() => {
-    if (task.status === 'idle' || task.status === 'completed') {
-      return;
-    }
-    const beforeRemoveListener = navigation.addListener('beforeRemove', e => {
-      e.preventDefault();
-
+  UNSTABLE_usePreventRemove(
+    task.status !== 'idle' && task.status !== 'completed',
+    e => {
       Alert.alert(
         t('page.approvals.stopTheRevokeProcess'),
         t('page.approvals.leavingThisPageWillStopTheRevokeProcess'),
@@ -148,20 +145,13 @@ export const BatchRevokeScreen = () => {
             text: t('page.signTx.yes'),
             style: 'destructive',
             onPress: () => {
-              if (removeListenerRef.current) {
-                removeListenerRef.current();
-              }
-              navigation.goBack();
+              navigation.dispatch(e.data.action);
             },
           },
         ],
       );
-    });
-
-    removeListenerRef.current = beforeRemoveListener;
-
-    return beforeRemoveListener;
-  }, [navigation, t, task.status]);
+    },
+  );
 
   React.useEffect(() => {
     if (Platform.OS === 'android') {

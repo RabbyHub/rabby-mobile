@@ -19,6 +19,7 @@ import {
   useRevokeApprovals,
 } from './useApprovalsPage';
 import { Tabs } from 'react-native-collapsible-tab-view';
+import { useFocusEffect } from '@react-navigation/native';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { SectionListProps } from 'react-native';
 import { SkeletonListByAssets } from './components/Skeleton';
@@ -94,6 +95,12 @@ export default function ListByAssets() {
     } finally {
     }
   }, [resetRevokeMaps, resetPage, loadApprovals]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   const ListEmptyComponent = React.useMemo(() => {
     return isLoading ? (

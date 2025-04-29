@@ -24,6 +24,7 @@ import { SectionListProps } from 'react-native';
 import ApprovalContractRow from './components/ApprovalContractRow';
 import { SkeletonListByContracts } from './components/Skeleton';
 import { ApprovalsLayouts, IOS_SWIPABLE_LEFT_OFFSET } from './layout';
+import { useFocusEffect } from '@react-navigation/native';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -97,6 +98,12 @@ export default function ListByContracts() {
     } finally {
     }
   }, [resetRevokeMaps, resetPage, loadApprovals]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   const ListEmptyComponent = React.useMemo(() => {
     return isLoading ? (
