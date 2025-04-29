@@ -1,8 +1,16 @@
 import { useThemeColors } from '@/hooks/theme';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Image, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import {
+  Dimensions,
+  Image,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 import {
   CameraRuntimeError,
+  Code,
   Camera as VisionCamera,
   useCameraDevice,
   useCodeScanner,
@@ -20,10 +28,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
+const CAMERA_WIDTH = Dimensions.get('window').width - 70;
+
 export interface CameraViewProps {
-  onCodeScanned?: (value?: string) => void;
+  onCodeScanned?: (code: Code[]) => void;
   containerStyle?: StyleProp<ViewStyle>;
-  size: number;
+  size?: number;
   showScanLine?: boolean;
 }
 
@@ -57,7 +67,7 @@ const getStyles = (colors: AppColorsVariants) =>
 export const CameraView = ({
   onCodeScanned,
   containerStyle,
-  size,
+  size = CAMERA_WIDTH,
   showScanLine,
 }: CameraViewProps) => {
   const colors = useThemeColors();
@@ -71,7 +81,7 @@ export const CameraView = ({
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
     onCodeScanned: codes => {
-      onCodeScanned?.(codes[0]?.value);
+      onCodeScanned?.(codes);
     },
   });
   const onError = useCallback((error: CameraRuntimeError) => {

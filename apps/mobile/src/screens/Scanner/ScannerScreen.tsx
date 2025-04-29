@@ -46,7 +46,12 @@ export const ScannerScreen = () => {
   const count = useRef(0);
 
   const handleCodeScanned = React.useCallback(
-    (value?: string | null) => {
+    (data: Code[] | string | null) => {
+      if (!data) {
+        return;
+      }
+      const value = typeof data === 'string' ? data : data[0]?.value;
+
       if (navState?.syncExtension) {
         if (value && value.startsWith('ur:')) {
           try {
