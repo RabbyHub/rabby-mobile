@@ -211,6 +211,10 @@ const WhitelistInputScreen = () => {
   const onReaptAdd = useCallback(() => {
     setError(undefined);
     setInput('');
+    setIsCex(false);
+    setLoading(false);
+    setAliasName('');
+    setCex(undefined);
   }, []);
   useAlert(input, onReaptAdd);
 
