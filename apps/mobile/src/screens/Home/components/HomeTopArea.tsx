@@ -398,7 +398,7 @@ export const HomeTopArea = ({
                     circle
                     skeletonStyle={styles.skeleton}
                     width={140}
-                    height={38}
+                    height={42}
                   />
                 ) : (
                   usd
