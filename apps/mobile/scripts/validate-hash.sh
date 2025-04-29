@@ -13,6 +13,8 @@ rm -rf "./ios/DerivedData"
 
 cd ./ios && bundle exec pod install --deployment && cd ..
 
+git checkout ./ios/RabbyMobile.xcodeproj/project.pbxproj
+
 bundle exec fastlane ios hashcheck
 
 # Assets.car 特殊处理，它里面有个 Timestamp，还没法指定，只能先解析成 json，再把 timestamp 移除，对比 json 的 hash
