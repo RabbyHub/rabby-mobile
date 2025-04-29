@@ -256,7 +256,7 @@ export const WhiteListItem = ({
         menuTitle: account.address,
         menuActions: menuActions,
       }}
-      preViewBorderRadius={20}
+      preViewBorderRadius={16}
       triggerProps={{ action: 'longPress' }}>
       {children}
     </ContextMenuView>

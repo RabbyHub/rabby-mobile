@@ -22,21 +22,30 @@ import { AddressItemShadowView } from '@/screens/Address/components/AddressItemS
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
 import { fromNow } from '@/utils/time';
 import { useTranslation } from 'react-i18next';
+import {
+  ContextMenuView,
+  MenuAction,
+} from '@/components2024/ContextMenuView/ContextMenuView';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
   timeStamp?: number;
   inWhiteList?: boolean;
+  disableMenu?: boolean;
 }
 export const RecentSendItem = ({
   account,
   style,
   timeStamp,
+  disableMenu,
   inWhiteList,
 }: IProps) => {
   const [cexInfo, setCexInfo] = useState<Cex | undefined>();
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const showCexInfo = useMemo(() => {
     return cexInfo?.id && cexInfo.is_deposit;
@@ -68,21 +77,56 @@ export const RecentSendItem = ({
     return timeStamp ? `${fromNow(timeStamp)} ago` : '';
   }, [timeStamp]);
 
+  const editAliasName = useAliasNameEditModal();
+
+  const menuActions = React.useMemo(() => {
+    return [
+      {
+        title: t('page.whitelist.copyAddress'),
+        icon: !isLight
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_copy.png'),
+        androidIconName: 'ic_rabby_menu_copy',
+        key: 'copy',
+        action() {
+          Clipboard.setString(account.address);
+          toastCopyAddressSuccess(account.address);
+        },
+      },
+      {
+        title: t('page.addressDetail.addressListScreen.edit'),
+        icon: !isLight
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
+        androidIconName: 'ic_rabby_menu_edit',
+        key: 'edit',
+        action() {
+          editAliasName.show(account);
+        },
+      },
+    ] as MenuAction[];
+  }, [account, editAliasName, isLight, t]);
   const { navigateToSendScreen } = useSendRoutes();
 
-  return (
+  const children = (
     <AddressItemShadowView style={styles.shadow}>
       <TouchableOpacity
         // activeOpacity={1}
         style={StyleSheet.flatten([styles.root])}
+        delayLongPress={200} // long press delay
         onPress={() => {
-          trigger('impactLight', {
-            enableVibrateFallback: true,
-            ignoreAndroidSystemSettings: false,
-          });
           navigateToSendScreen({
             toAddress: account.address,
             addressBrandName: account.brandName,
+          });
+        }}
+        onLongPress={() => {
+          if (disableMenu) {
+            return;
+          }
+          trigger('impactLight', {
+            enableVibrateFallback: true,
+            ignoreAndroidSystemSettings: false,
           });
         }}>
         <Card style={StyleSheet.flatten([styles.card, style])}>
@@ -143,6 +187,20 @@ export const RecentSendItem = ({
         </Card>
       </TouchableOpacity>
     </AddressItemShadowView>
+  );
+  if (disableMenu) {
+    return children;
+  }
+  return (
+    <ContextMenuView
+      menuConfig={{
+        menuTitle: account.address,
+        menuActions: menuActions,
+      }}
+      preViewBorderRadius={16}
+      triggerProps={{ action: 'longPress' }}>
+      {children}
+    </ContextMenuView>
   );
 };
 
