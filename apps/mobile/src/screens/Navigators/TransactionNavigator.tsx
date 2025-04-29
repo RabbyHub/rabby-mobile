@@ -393,10 +393,16 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'GasAccount',
           ...headerPresets.withBgCard2_2024,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
           headerStyle: {
             backgroundColor: 'transparent',
           },
-          headerTintColor: undefined,
         })}
       />
 

@@ -34,6 +34,8 @@ import Animated, {
 import { IS_ANDROID } from '@/core/native/utils';
 import { BubbleWithText } from '@/screens/Swap/components/Slider';
 
+const hiddenSlider = true;
+
 const BridgeToken = ({
   type = 'from',
   token,
@@ -206,7 +208,7 @@ const BridgeToken = ({
           // excludeChains={excludeChains}
           // supportChains={supportedChains}
         />
-        {isFromToken && (
+        {isFromToken && !hiddenSlider && (
           <View style={styles.sliderContainer}>
             <Slider
               key={`${token?.id}-${token?.chain}`}
