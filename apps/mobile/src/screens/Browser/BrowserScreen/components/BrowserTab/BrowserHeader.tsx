@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -134,6 +135,10 @@ export function BrowserHeader({
       {activeDappConnected && (
         <TouchableOpacity
           onPress={() => {
+            Alert.alert(
+              'test',
+              `${finalSceneCurrentAccount?.address}-${finalSceneCurrentAccount?.aliasName}`,
+            );
             toggleSceneVisible(forScene, !isOpen);
           }}>
           {finalSceneCurrentAccount ? (
