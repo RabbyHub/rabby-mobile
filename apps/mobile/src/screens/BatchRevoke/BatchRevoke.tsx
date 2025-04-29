@@ -7,7 +7,14 @@ import { TransactionNavigatorParamList } from '@/navigation-type';
 import { useNavigationState } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, BackHandler, FlatList, Platform, View } from 'react-native';
+import {
+  Alert,
+  AppState,
+  BackHandler,
+  FlatList,
+  Platform,
+  View,
+} from 'react-native';
 import { ListItem } from './ListItem';
 import { ListHeader } from './ListHeader';
 import { useBatchRevokeTask } from './useBatchRevokeTask';
@@ -169,6 +176,20 @@ export const BatchRevokeScreen = () => {
       return () => backHandler.remove();
     }
   }, [navigation]);
+
+  React.useEffect(() => {
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'background') {
+        if (task.status === 'active') {
+          task.pause();
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [task]);
 
   if (!params) {
     return null;

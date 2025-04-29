@@ -12,7 +12,7 @@ import {
   useFocusedApprovalOnApprovals,
   useRevokeContractSpenders,
 } from '../useApprovalsPage';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ApprovalCardContract from './ApprovalCardContract';
 import { MiniButton } from '@/components/Button';
@@ -25,9 +25,6 @@ import { parseContractApprovalListItem } from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
-import { findIndexRevokeList } from '@/screens/BatchRevoke/utils';
-import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 
 export default function BottomSheetApprovalContract({
