@@ -75,7 +75,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useAccountInfo } from './hooks';
-import { formChartData } from '@/hooks/useCurve';
+import { getChangeData } from '@/hooks/useCurve';
 import { trigger } from 'react-native-haptic-feedback';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
@@ -172,6 +172,7 @@ export const MultiAssets = ({
 
   const listRef = useRef<RecyclerListViewRef>(null);
   const [firstRowType, setFirstRowType] = useState('');
+  const [isListVisable, setIsListVisable] = useState(false);
 
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
@@ -291,7 +292,7 @@ export const MultiAssets = ({
               const hasChangeData = multiTimeStamp[
                 item.address.toLocaleLowerCase()
               ]?.data?.some(i => i.usd_value !== 0);
-              const chartData = formChartData(
+              const chartData = getChangeData(
                 multiTimeStamp[item.address.toLocaleLowerCase()]?.data || [],
                 item.balance,
                 new Date().getTime(),
@@ -793,26 +794,26 @@ export const MultiAssets = ({
     }
   }, [combineData.isLoss, isLight]);
 
-  useLayoutEffect(() => {
-    getCacheTop10Assets({
-      disableNFT: true,
-      realTimeAddresses: top10Addresses,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10Addresses.length]);
-
   useEffect(() => {
     const id = setTimeout(() => {
-      checkIsExpireAndUpdate(false, {
+      if (!isListVisable) {
+        return;
+      }
+      getCacheTop10Assets({
         disableNFT: true,
         realTimeAddresses: top10Addresses,
+      }).finally(() => {
+        checkIsExpireAndUpdate(false, {
+          disableNFT: true,
+          realTimeAddresses: top10Addresses,
+        });
       });
-    }, 500);
+    }, 200);
     return () => {
-      clearTimeout(id);
+      id && clearTimeout(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10Addresses.length]);
+  }, [top10Addresses.length, isListVisable]);
 
   const switchTab = (type: TabType) => {
     if (isTriggered.value) return;
@@ -896,6 +897,7 @@ export const MultiAssets = ({
           ref={listRef}
           rowRenderer={renderItem}
           onVisibleIndicesChanged={indexes => {
+            setIsListVisable(true);
             if (listData.getDataForIndex(indexes[0])?.type) {
               setFirstRowType(listData.getDataForIndex(indexes[0]).type);
             }
@@ -913,7 +915,7 @@ export const MultiAssets = ({
             }
           }}
           renderFooter={() =>
-            extendedState.currentTab === TabType.address ? (
+            isListVisable && extendedState.currentTab === TabType.address ? (
               <View>
                 <Card style={styles.footerCard} onPress={gotoAddAddress}>
                   <View style={styles.footerMain}>
