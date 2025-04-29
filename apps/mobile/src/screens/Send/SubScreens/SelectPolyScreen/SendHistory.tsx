@@ -32,7 +32,6 @@ interface IProps {
   title?: string;
   isForMultipleAdderss?: boolean;
   onPressBottomBtn?: (data: SendAction) => void;
-  isForMultipleAddress?: boolean;
 }
 export const SendHistory = ({
   visible,
@@ -40,7 +39,6 @@ export const SendHistory = ({
   title,
   isForMultipleAdderss = true,
   onPressBottomBtn,
-  isForMultipleAddress = true,
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const bottomRef = useRef<BottomSheetModalMethods>(null);
@@ -61,14 +59,14 @@ export const SendHistory = ({
   }, [visible, runAsync]);
 
   const dataList = useMemo(() => {
-    if (!isForMultipleAddress && currentAccount?.address) {
+    if (!isForMultipleAdderss && currentAccount?.address) {
       return markedList.filter(item =>
         isSameAddress(item.data.address, currentAccount?.address),
       );
     } else {
       return markedList;
     }
-  }, [markedList, currentAccount, isForMultipleAddress]);
+  }, [markedList, currentAccount, isForMultipleAdderss]);
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
@@ -81,7 +79,7 @@ export const SendHistory = ({
           ) : null}
           <HistoryItem
             data={item.data}
-            isForMultipleAdderss={isForMultipleAddress}
+            isForMultipleAdderss={isForMultipleAdderss}
             projectDict={item.data.projectDict}
             cateDict={item.data.cateDict}
             tokenDict={item.data.tokenDict || {}}
@@ -98,7 +96,7 @@ export const SendHistory = ({
             <Text style={[styles.date]}>{formatTimestamp(item.time, t)}</Text>
           ) : null}
           <TransactionItem
-            isForMultipleAdderss={isForMultipleAddress}
+            isForMultipleAdderss={isForMultipleAdderss}
             // historySuccessList={historySuccessList}
             data={item.data}
             canCancel={canCancel}
