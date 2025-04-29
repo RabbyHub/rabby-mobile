@@ -30,7 +30,7 @@ export function BrowserScreen() {
   useLastUsedAccountInScreen();
 
   const activeTabOrigin = useMemo(() => {
-    const tab = tabs.find(tab => tab.id === activeTabId);
+    const tab = tabs.find(t => t.id === activeTabId);
     if (tab) {
       return safeGetOrigin(tab.url);
     }
