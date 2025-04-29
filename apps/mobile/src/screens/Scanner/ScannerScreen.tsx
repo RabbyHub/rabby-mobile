@@ -91,6 +91,8 @@ export const ScannerScreen = () => {
     }
   }, [navState, setText]);
 
+  const showScanLine = navState?.syncExtension && currentCount > 0;
+
   return (
     <View style={styles.main}>
       <View style={styles.wrapper}>
@@ -98,7 +100,7 @@ export const ScannerScreen = () => {
           containerStyle={styles.containerStyle}
           onCodeScanned={handleCodeScanned}
           size={CAMERA_WIDTH}
-          showScanLine={navState?.syncExtension && currentCount > 0}
+          showScanLine={showScanLine}
         />
         {navState?.syncExtension ? (
           <>
@@ -117,7 +119,7 @@ export const ScannerScreen = () => {
           </>
         ) : null}
       </View>
-      <QRCodePicker onCodeScanned={handleCodeScanned} />
+      {showScanLine ? null : <QRCodePicker onCodeScanned={handleCodeScanned} />}
     </View>
   );
 };
