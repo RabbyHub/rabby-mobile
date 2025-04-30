@@ -7,6 +7,7 @@ export { default as RcIconRefreshCC } from './refresh-cc.svg';
 export { default as RcIconMoreCC } from './more-cc.svg';
 export { default as RcIconTabsCC } from './tabs-cc.svg';
 export { default as RcIconArrowTopLeftCC } from './arrow-top-left-cc.svg';
+export { default as RcIconHomeCC } from './home-cc.svg';
 
 export const RcIconAddPlusCircle = ({
   backgroundColor,

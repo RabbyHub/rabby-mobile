@@ -27,10 +27,7 @@ import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID } from '@/core/native/utils';
 import { browserService, preferenceService } from '@/core/services';
 import { FontNames } from '@/core/utils/fonts';
-import {
-  useSceneAccountInfo,
-  useSwitchSceneCurrentAccount,
-} from '@/hooks/accountsSwitcher';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
@@ -47,6 +44,8 @@ import { BrowserFooter } from './BrowserFooter';
 import { BrowserHeader } from './BrowserHeader';
 import { BrowserProgressBar } from './BrowserProgressBar';
 import { BrowserSearchAutoComplete } from './BrowserSearchAutoComplete';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { emptyTab } from '@/core/services/browserService';
 
 type BrowserTabProps = {
   origin: string;
@@ -106,6 +105,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [searchText, setSearchText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
+    const { switchToTab } = useBrowser();
 
     const {
       webviewRef,
@@ -276,6 +276,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       });
     });
 
+    const handleGoHome = useMemoizedFn(() => {
+      switchToTab(emptyTab.id);
+    });
+
     // useEffect(() => {
     //   if (isEmptyTab && isActive) {
     //     setTimeout(() => {
@@ -322,10 +326,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         }, 500);
       }
     }, [isActive, isEmptyTab, isFocused, switchSceneCurrentAccount, dappInfo]);
-
-    // const contentMode = useMemo(() => {
-    //   return dappInfo?.contentMode === 'desktop' ? 'desktop' : 'mobile';
-    // }, [dappInfo?.contentMode]);
 
     return (
       <AutoLockView style={[style, styles.dappWebViewControl]}>
@@ -528,6 +528,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           <View style={styles.dappWebViewNavControl}>
             <BrowserFooter
               url={webviewState.url}
+              onGoHome={handleGoHome}
               canReload={!isEmptyTab}
               onReload={handleReload}
               canGoBack={webviewState.canGoBack}
