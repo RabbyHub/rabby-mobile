@@ -202,7 +202,9 @@ export default function SelectChainWithSummary({
     <AutoLockView
       style={{
         ...styles.container,
-        backgroundColor: colors2024['neutral-bg-1'],
+        backgroundColor: isDark
+          ? colors2024['neutral-bg-1']
+          : colors2024['neutral-bg-0'],
       }}>
       <BottomSheetHandlableView>
         {!canSearch && (
