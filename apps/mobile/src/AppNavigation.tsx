@@ -322,8 +322,7 @@ const StackMain = () => {
           headerTintColor: colors['neutral-title-2'],
           headerTitleStyle: {
             color: colors['neutral-title-2'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
+            fontWeight: 'normal',
           },
         })}
       />

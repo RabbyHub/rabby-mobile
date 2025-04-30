@@ -1857,11 +1857,6 @@
       "BrowserHistoryList": {
         "title": "History"
       }
-    },
-    "scan": {
-      "selectFromAlbum": "Select from Album",
-      "noCameraDevice": "No Camera Device",
-      "noQRCodeFound": "No QR-Code found"
     }
   },
   "component": {
