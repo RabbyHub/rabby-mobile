@@ -7445,16 +7445,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-action@npm:0.1.12-beta.0":
-  version: 0.1.12-beta.0
-  resolution: "@rabby-wallet/rabby-action@npm:0.1.12-beta.0"
+"@rabby-wallet/rabby-action@npm:0.1.12":
+  version: 0.1.12
+  resolution: "@rabby-wallet/rabby-action@npm:0.1.12"
   peerDependencies:
     "@debank/common": "*"
     "@rabby-wallet/rabby-api": "*"
     "@rabby-wallet/rabby-security-engine": "*"
     bignumber.js: "*"
     p-queue: ^7.3.0
-  checksum: 07ccb11e12584c16c523364238ba84364868e99ad49ee319b90f6da94176ef47c8c6ad67746530bd8ad3361f0b324aa86e34dc0096fecb6518190e7f08612165
+  checksum: 3a5357a62be62eb574b6e9b0c56806ac6342575ccc65f67ef2e0fb8661f2a29bbc7b18530349e54f17907bad8a0de552ff8b0f172542707d0d8f8259859cd7a1
   languageName: node
   linkType: hard
 
@@ -29294,7 +29294,7 @@ __metadata:
     "@rabby-wallet/gnosis-sdk": 1.4.2
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-action": 0.1.12-beta.0
+    "@rabby-wallet/rabby-action": 0.1.12
     "@rabby-wallet/rabby-api": 0.9.21
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
