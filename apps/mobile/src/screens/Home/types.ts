@@ -118,9 +118,16 @@ export type ActionHeaderItem = {
     | 'empty-defi'
     | 'switch_tabs'
     | 'loading-skeleton'
-    | 'loading-defi-skeleton'
-    | 'scam_token';
+    | 'loading-defi-skeleton';
   data?: null | string;
+};
+
+export type IScamTokenHeader = {
+  type: 'scam_token';
+  data: {
+    total: number;
+    logoUrls: string[];
+  };
 };
 
 export type RenterAddressType = {
@@ -133,7 +140,8 @@ export type ActionItem =
   | CombineToken
   | CombineDefi
   | CombineNft
-  | RenterAddressType;
+  | RenterAddressType
+  | IScamTokenHeader;
 
 export type DisplayNftItem = NFTItem & {
   _isFold?: boolean;

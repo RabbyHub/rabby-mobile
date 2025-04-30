@@ -45,6 +45,7 @@ import {
   AbstractPortfolioToken,
   AbstractProject,
   ActionItem,
+  CombineToken,
 } from '@/screens/Home/types';
 import {
   getAllDefiCount,
@@ -321,7 +322,17 @@ export const MultiAssets = ({
       {
         show: !foldHideList && !!scamTokens.length,
         data: foldScam
-          ? [{ type: 'scam_token', data: '' + scamTokens.length }]
+          ? [
+              {
+                type: 'scam_token',
+                data: {
+                  total: scamTokens.length,
+                  logoUrls: (scamTokens as CombineToken[])
+                    .slice(0, 3)
+                    .map(i => i.data?.logo_url),
+                },
+              },
+            ]
           : scamTokens,
       },
       {
@@ -654,7 +665,8 @@ export const MultiAssets = ({
       case 'scam_token':
         return (
           <ScamTokenHeader
-            total={data}
+            total={data.total}
+            logoUrls={data.logoUrls}
             style={StyleSheet.flatten([
               styles.renderItemWrapper,
               !isLight && styles.bg2,

@@ -11,19 +11,21 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import BottomArrowCC from '@/assets2024/icons/home/bottomArrow.svg';
-import { DefaultToken } from '@/components/AssetAvatar';
+import { AssetAvatar } from '@/components/AssetAvatar';
 
 export const ScamTokenHeader = memo(
   ({
     total,
     style,
     onPress,
+    logoUrls,
   }: {
     total: number;
     style?: ViewStyle;
     onPress?(): void;
+    logoUrls: string[];
   }) => {
-    const { styles, colors2024, isLight } = useTheme2024({
+    const { styles, colors2024 } = useTheme2024({
       getStyle: getStyles,
     });
     const { t } = useTranslation();
@@ -40,9 +42,14 @@ export const ScamTokenHeader = memo(
         onPress={onPressToken}>
         <View style={styles.left}>
           <View style={styles.logo}>
-            <DefaultToken isLight={isLight} size={28} style={logoSize} />
-            <DefaultToken isLight={isLight} size={28} style={logoSize} />
-            <DefaultToken isLight={isLight} size={28} style={logoSize} />
+            {Array.from({ length: Math.min(3, total) }).map((_, index) => (
+              <AssetAvatar
+                key={index}
+                logo={logoUrls?.[index] || ''}
+                size={28}
+                style={logoSize}
+              />
+            ))}
           </View>
           <Text style={styles.title}>
             {t('page.multiAddressAssets.scamTokenHeader')}

@@ -363,7 +363,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
         ...(normalFoldTokens?.slice(0, fold ? 1 : undefined) || []),
         ...(fold || !isScamFold || !scamTokens.length
           ? []
-          : [{ ...SCAM_TOKEN_HEADER_DATA, amount: scamTokens.length }]),
+          : [
+              {
+                ...SCAM_TOKEN_HEADER_DATA,
+                amount: scamTokens.length,
+                logoUrls: scamTokens.slice(0, 3).map(item => item.logo_url),
+              },
+            ]),
         ...(fold || isScamFold ? [] : scamTokens),
       ];
 
@@ -516,6 +522,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               }}
               style={styles.scamHeader}
               total={token.amount}
+              logoUrls={token.$origin.logoUrls}
             />
           );
         }

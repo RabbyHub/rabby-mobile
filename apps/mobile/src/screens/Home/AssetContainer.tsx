@@ -20,6 +20,7 @@ import {
   AbstractPortfolioToken,
   AbstractProject,
   ActionItem,
+  CombineToken,
   DisplayNftItem,
 } from './types';
 import {
@@ -418,7 +419,17 @@ export const AssetContainer: React.FC<Props> = ({
       {
         show: !foldHideList && !!scamTokens.length,
         data: foldScam
-          ? [{ type: 'scam_token', data: '' + scamTokens.length }]
+          ? [
+              {
+                type: 'scam_token',
+                data: {
+                  total: scamTokens.length,
+                  logoUrls: (scamTokens as CombineToken[])
+                    .slice(0, 3)
+                    .map(i => i.data?.logo_url),
+                },
+              },
+            ]
           : scamTokens,
       },
       {
@@ -884,7 +895,8 @@ export const AssetContainer: React.FC<Props> = ({
         return (
           <View style={styles.rowWrap}>
             <ScamTokenHeader
-              total={data}
+              total={data.total}
+              logoUrls={data.logoUrls}
               style={StyleSheet.flatten([
                 styles.renderItemWrapper,
                 !isLight && styles.bg2,
