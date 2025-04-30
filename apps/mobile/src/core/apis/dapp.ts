@@ -12,6 +12,7 @@ import { getAllAccountsToDisplay } from './account';
 import { sortAccountList } from '@/screens/Address/useSortAddressList';
 import { sceneAccountInfoAtom } from '@/hooks/accountsSwitcher';
 import { getDefaultStore } from 'jotai';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 export const removeDapp = (origin: string) => {
   disconnect(origin);
@@ -46,9 +47,16 @@ export const connect = async ({
     highlightedAddresses: pinAddresses,
   });
 
+  const myAccounts = accounts.filter(
+    account =>
+      account.type !== KEYRING_CLASS.WATCH &&
+      account.type !== KEYRING_CLASS.GNOSIS,
+  );
+
   const account =
     currentAccount ||
     dapp?.currentAccount ||
+    myAccounts?.[0] ||
     accounts?.[0] ||
     preferenceService.getCurrentAccount();
   const store = getDefaultStore();
