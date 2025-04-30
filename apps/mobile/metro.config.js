@@ -18,6 +18,20 @@ const {
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
 
+// 保证 module 的顺序
+// https://github.com/getsentry/sentry-react-native/blob/432a4cbf65883f74c4ee6b20c1148e2c599041fe/packages/core/src/js/tools/vendor/metro/utils.ts#L60
+function stableStringHash(path) {
+  // 初始化参数（选用高熵值参数）
+  const BASE = 257n; // 大于 ASCII 范围的质数
+  const MOD = 2n ** 53n - 1n; // JS 最大安全整数
+  let hash = 0n;
+  for (let i = 0; i < path.length; i++) {
+    const charCode = BigInt(path.charCodeAt(i));
+    hash = (hash * BASE + charCode) % MOD;
+  }
+  return Number(hash);
+}
+
 /**
  * Metro configuration
  * https://reactnative.dev/docs/metro
