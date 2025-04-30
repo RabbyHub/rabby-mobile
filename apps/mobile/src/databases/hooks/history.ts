@@ -170,6 +170,7 @@ export const useSyncHistoryDB = (
               address,
               res.history_list,
               setHistoryLoading,
+              setTokenDict,
             );
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
@@ -196,6 +197,7 @@ export const useSyncHistoryDB = (
               address,
               res.history_list,
               setHistoryLoading,
+              setTokenDict,
             );
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
@@ -326,6 +328,7 @@ export const useSyncHistoryDB = (
                 address,
                 res.history_list,
                 setHistoryLoading,
+                setTokenDict,
               );
               setProjectDict(prev => ({ ...prev, ...res.project_dict }));
               setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
@@ -352,6 +355,7 @@ export const useSyncHistoryDB = (
               address,
               res.history_list,
               setHistoryLoading,
+              setTokenDict,
             );
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));

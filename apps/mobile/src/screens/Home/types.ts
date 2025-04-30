@@ -122,6 +122,14 @@ export type ActionHeaderItem = {
   data?: null | string;
 };
 
+export type IScamTokenHeader = {
+  type: 'scam_token';
+  data: {
+    total: number;
+    logoUrls: string[];
+  };
+};
+
 export type RenterAddressType = {
   type: 'address_entry';
   data: KeyringAccountWithAlias;
@@ -132,7 +140,8 @@ export type ActionItem =
   | CombineToken
   | CombineDefi
   | CombineNft
-  | RenterAddressType;
+  | RenterAddressType
+  | IScamTokenHeader;
 
 export type DisplayNftItem = NFTItem & {
   _isFold?: boolean;

@@ -301,7 +301,7 @@ export const HistoryItem = React.memo(
               </View>
             </View>
             <TxChange
-              tokenChangeData={tokenChangeData}
+              tokenChangeData={data.tx?.status === 1 ? tokenChangeData : []}
               style={styles.txChange}
             />
           </View>

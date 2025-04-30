@@ -75,6 +75,9 @@ import { TokenItemContextMenu } from './TokenContextMenu';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { isScamTokenForSelect } from '@/screens/Home/utils/collection';
+import { SCAM_TOKEN_HAEDER_ID, SCAM_TOKEN_HEADER_DATA } from './constant';
+import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { NextSearchBar } from '@/components2024/SearchBar';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -191,6 +194,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       useSheetModal();
 
     const [fold, setFold] = useState(true);
+    const [isScamFold, setIsScamFold] = useState(true);
 
     const { t } = useTranslation();
     const isBridgeTo = type === 'bridgeTo';
@@ -202,6 +206,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       if (!visible) {
         setIsInputActive(false);
         setFold(true);
+        setIsScamFold(true);
       }
     }, [visible, toggleShowSheetModal]);
 
@@ -359,14 +364,27 @@ export const TokenSelectorSheetModal = React.forwardRef<
     );
 
     const tokens = useMemo(() => {
+      const normalFoldTokens = foldTokensList.filter(
+        i => !isScamTokenForSelect(i),
+      );
+      const scamTokens = foldTokensList.filter(isScamTokenForSelect);
       const allList = [
         ...(displayList || []),
-        ...(foldTokensList?.slice(0, fold ? 1 : undefined) || []),
+        ...(normalFoldTokens?.slice(0, fold ? 1 : undefined) || []),
+        ...(fold || !isScamFold || !scamTokens.length
+          ? []
+          : [
+              {
+                ...SCAM_TOKEN_HEADER_DATA,
+                amount: scamTokens.length,
+                logoUrls: scamTokens.slice(0, 3).map(item => item.logo_url),
+              },
+            ]),
+        ...(fold || isScamFold ? [] : scamTokens),
       ];
 
       const formatList = (allList ?? []).map(x => {
         const _netWorth = isBridgeTo ? 0 : x.amount * x.price || 0;
-
         return {
           id: x.id,
           amount: x.amount,
@@ -386,7 +404,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
       return isFromModalType
         ? formatList
         : formatList.sort((m, n) => n._netWorth - m._netWorth);
-    }, [displayList, isBridgeTo, foldTokensList, fold, isFromModalType]);
+    }, [
+      foldTokensList,
+      displayList,
+      fold,
+      isScamFold,
+      isFromModalType,
+      isBridgeTo,
+    ]);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => {
@@ -423,8 +448,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
     }, [isLoading]);
 
     const onPressToken = useCallback(() => {
+      if (!fold) {
+        setIsScamFold(true);
+      }
       return setFold(pre => !pre);
-    }, [setFold]);
+    }, [fold]);
 
     const renderItemRenderComponent = useCallback<
       SectionListRenderItem<(typeof tokens)[number]>
@@ -495,6 +523,19 @@ export const TokenSelectorSheetModal = React.forwardRef<
           token.$origin.isExcludeBalance &&
           isFromModalType &&
           (token._netWorth || 0) > 0;
+
+        if (token.id === SCAM_TOKEN_HAEDER_ID) {
+          return (
+            <ScamTokenHeader
+              onPress={() => {
+                setIsScamFold(false);
+              }}
+              style={styles.scamHeader}
+              total={token.amount}
+              logoUrls={token.$origin.logoUrls}
+            />
+          );
+        }
 
         if (token.$origin.isFakerFoldRow) {
           return (
@@ -717,6 +758,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.tokenHeaderAmount,
         styles.textSecondary,
         styles.favoriteBadge,
+        styles.scamHeader,
         styles.tokenRowWrap,
         styles.tokenRowTokenWrap,
         styles.tokenRowTokenInner,
@@ -1154,6 +1196,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // // leave here for debug
       // borderWidth: 1,
       // borderColor: 'blue',
+    },
+    scamHeader: {
+      marginHorizontal: 12,
+      height: ITEM_HEIGHT,
+      marginTop: 8,
+      width: 'auto',
     },
     tips: {
       width: 14,

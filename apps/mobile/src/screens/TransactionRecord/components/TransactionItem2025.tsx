@@ -364,10 +364,12 @@ export const TransactionItem = ({
     [formatType],
   );
 
+  const isFailed = useMemo(() => {
+    return data.isFailed || data.isSubmitFailed || data.isWithdrawed;
+  }, [data]);
+
   return (
-    <TouchableOpacity
-      onPress={hanldeNavigateDetail}
-      style={[styles.card, data.isFailed ? styles.cardGray : null]}>
+    <TouchableOpacity onPress={hanldeNavigateDetail} style={[styles.card]}>
       <View
         style={[
           styles.leftContent,
@@ -391,14 +393,17 @@ export const TransactionItem = ({
               <TxStatusItem
                 isPending={data.isPending}
                 withText={false}
-                status={1}
+                status={isFailed ? 0 : 1}
               />
             )}
           </View>
           {formatDescribe}
         </View>
       </View>
-      <TxChange tokenChangeData={tokenChangeData} style={styles.txChange} />
+      <TxChange
+        tokenChangeData={isFailed ? [] : tokenChangeData}
+        style={styles.txChange}
+      />
     </TouchableOpacity>
   );
 };

@@ -9,11 +9,9 @@ import {
 } from 'react-native';
 
 import RcFoldCC from '@/assets2024/icons/common/fold.svg';
-RcIconDanger;
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
 import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
 import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
-import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
