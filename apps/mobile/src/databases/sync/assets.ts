@@ -24,12 +24,9 @@ import { batchSaveWithPQueueAndTransaction } from './_task';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
 import { deleteCurveCache } from '@/utils/24balanceCurveCache';
-<<<<<<< HEAD
 import { transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
-=======
 import { removeCexId } from '@/utils/addressCexId';
->>>>>>> 41da57f1 (feat: clean cex local data)
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   const data = [..._tokens];
