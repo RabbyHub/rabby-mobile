@@ -145,7 +145,10 @@ const ConfirmAddress = ({
           },
         ]}>
         {loading ? (
-          <Skeleton style={styles.loading} height={52} />
+          <View style={styles.tipItem}>
+            <Skeleton circle width={20} height={20} />
+            <Skeleton style={styles.loading} height={40} />
+          </View>
         ) : (
           risks.map(risk => (
             <View key={risk.type} style={styles.tipItem}>
@@ -236,7 +239,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   tipItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 8,
     backgroundColor: colors2024['neutral-bg-5'],
     paddingHorizontal: 12,

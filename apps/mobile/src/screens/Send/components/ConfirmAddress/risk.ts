@@ -10,8 +10,6 @@ import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { getTokenSettings } from '@/utils/getTokenSettings';
-import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 
 const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 
@@ -39,7 +37,6 @@ export const useRisks = (
   const [risks, setRisks] = useState<Array<{ type: RiskType; value: string }>>(
     [],
   );
-  const [balance, setBalance] = useState(0);
   const { t } = useTranslation();
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
@@ -69,25 +66,6 @@ export const useRisks = (
           setTimeout(() => reject(new Error('timeout')), 2000);
         });
 
-        const balancePromise = async (_address: string) => {
-          if (disableBalance) {
-            return;
-          }
-          try {
-            const tokenSetting = await getTokenSettings();
-            const res = await batchBalanceWithLocalCache({
-              address: _address,
-              isCore: false,
-              ...tokenSetting,
-            });
-            if (res.total_usd_value) {
-              setBalance(res.total_usd_value);
-            }
-          } catch (error) {
-            console.error('balance fetch error', error);
-          }
-        };
-
         const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
 
         const checkTransferPromise = new Promise<void>(resolve => {
@@ -116,57 +94,59 @@ export const useRisks = (
           waitQueueFinished(queue).then(() => resolve());
         });
 
-        const [addressRes] = (await Promise.race([
-          Promise.all([
-            addressDescPromise,
-            balancePromise(address),
-            checkTransferPromise,
-          ]),
-          timeoutPromise,
-        ])) as [AddrDescResponse['desc']];
-        if (cex) {
-          if (!addressRes?.cex) {
-            addressRes.cex = {
-              id: cex.id,
-              name: cex.name,
-              logo_url: cex.logo_url,
-              is_deposit: true,
-            };
-          } else {
-            addressRes.cex.is_deposit = true;
-            addressRes.cex.name = cex.name;
-            addressRes.cex.logo_url = cex.logo_url;
-            addressRes.cex.id = cex.id;
+        addressDescPromise.then(addressRes => {
+          if (!addressRes) {
+            return;
           }
-        }
-        if (addressRes) {
-          setAddressDesc(addressRes);
-        }
-        if (addressRes?.is_danger || addressRes?.is_scam) {
-          currRisks.push({
-            type: RiskType.SCAM_ADDRESS,
-            value: t('page.confirmAddress.risks.scamAddress'),
-          });
-        }
-        if (addressRes?.cex?.id && !addressRes.cex.is_deposit) {
-          currRisks.push({
-            type: RiskType.CEX_NO_DEPOSIT,
-            value: t('page.confirmAddress.risks.dexNoDeposite'),
-          });
-        }
-        const isContract = Object.keys(addressRes?.contract || {}).length > 0;
-        const isSafeAddress = Object.keys(addressRes?.contract || {}).some(
-          key => {
-            const contract = addressRes?.contract?.[key];
-            return !!contract?.multisig;
-          },
-        );
-        if (isContract && !isSafeAddress) {
-          currRisks.push({
-            type: RiskType.CONTRACT_ADDRESS,
-            value: t('page.confirmAddress.risks.contractAddress'),
-          });
-        }
+          if (cex) {
+            if (!addressRes?.cex) {
+              addressRes.cex = {
+                id: cex.id,
+                name: cex.name,
+                logo_url: cex.logo_url,
+                is_deposit: true,
+              };
+            } else {
+              addressRes.cex.is_deposit = true;
+              addressRes.cex.name = cex.name;
+              addressRes.cex.logo_url = cex.logo_url;
+              addressRes.cex.id = cex.id;
+            }
+          }
+          if (addressRes) {
+            setAddressDesc(addressRes);
+          }
+          if (addressRes?.is_danger || addressRes?.is_scam) {
+            currRisks.push({
+              type: RiskType.SCAM_ADDRESS,
+              value: t('page.confirmAddress.risks.scamAddress'),
+            });
+          }
+          if (addressRes?.cex?.id && !addressRes.cex.is_deposit) {
+            currRisks.push({
+              type: RiskType.CEX_NO_DEPOSIT,
+              value: t('page.confirmAddress.risks.dexNoDeposite'),
+            });
+          }
+          const isContract = Object.keys(addressRes?.contract || {}).length > 0;
+          const isSafeAddress = Object.keys(addressRes?.contract || {}).some(
+            key => {
+              const contract = addressRes?.contract?.[key];
+              return !!contract?.multisig;
+            },
+          );
+          if (isContract && !isSafeAddress) {
+            currRisks.push({
+              type: RiskType.CONTRACT_ADDRESS,
+              value: t('page.confirmAddress.risks.contractAddress'),
+            });
+          }
+        });
+
+        await Promise.race([
+          Promise.all([addressDescPromise, checkTransferPromise]),
+          timeoutPromise,
+        ]);
 
         if (!hasSended && !hasError) {
           setRisks([
@@ -190,7 +170,6 @@ export const useRisks = (
   return {
     risks,
     addressDesc,
-    balance,
     hasSend,
     loading,
   };
