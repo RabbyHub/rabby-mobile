@@ -11,6 +11,6 @@ export const updateExpiredTime = async (_address: string, offest?: number) => {
       PortocolItemEntity.willExpired(address, offest),
     ]);
   } catch (error) {
-    console.log('update expired)', error);
+    console.log('update expired', error);
   }
 };
