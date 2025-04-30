@@ -15,11 +15,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/dist/types';
 import { filterMyAccounts } from '@/utils/account';
 
-const SelectMyAddressScreen = ({
-  isForWhitelist,
-}: {
-  isForWhitelist: boolean;
-}) => {
+const SelectMyAddressScreen = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { accounts: allAccounts } = useAccounts();
@@ -28,9 +24,7 @@ const SelectMyAddressScreen = ({
   const handleGotoImportedAddress = (type: 'watch' | 'safe') => {
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
-        screen: isForWhitelist
-          ? RootNames.TypeAddress2Whitelist
-          : RootNames.SelectTypeAddress,
+        screen: RootNames.SelectTypeAddress,
         params: { type },
       }),
     );
@@ -49,8 +43,7 @@ const SelectMyAddressScreen = ({
             <WhiteListItem
               account={item}
               inWhiteList={isAddrOnWhitelist(item.address)}
-              isForWhitelist={isForWhitelist}
-              isImported={true}
+              isMyImported={true}
             />
           </View>
         )}
@@ -61,22 +54,14 @@ const SelectMyAddressScreen = ({
               .length && (
               <OtherAddressNav
                 onPress={() => handleGotoImportedAddress('watch')}
-                text={
-                  isForWhitelist
-                    ? t('page.selectAddress.selectWatchAddress')
-                    : t('page.sendPoly.sendToWatchAddress')
-                }
+                text={t('page.sendPoly.sendToWatchAddress')}
               />
             )}
             {!!allAccounts.filter(acc => acc.brandName === KEYRING_CLASS.GNOSIS)
               .length && (
               <OtherAddressNav
                 onPress={() => handleGotoImportedAddress('safe')}
-                text={
-                  isForWhitelist
-                    ? t('page.selectAddress.selectSafeAddress')
-                    : t('page.sendPoly.sendToSafeAddress')
-                }
+                text={t('page.sendPoly.sendToSafeAddress')}
               />
             )}
             <View style={styles.footerGap} />
@@ -85,10 +70,6 @@ const SelectMyAddressScreen = ({
       />
     </NormalScreenContainer2024>
   );
-};
-
-SelectMyAddressScreen.ForWhitelist = () => {
-  return <SelectMyAddressScreen isForWhitelist />;
 };
 
 export default SelectMyAddressScreen;

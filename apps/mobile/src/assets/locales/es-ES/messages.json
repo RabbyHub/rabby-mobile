@@ -190,6 +190,9 @@
       "help": "Por favor, contacta al equipo oficial de esta cadena para obtener soporte.",
       "bridgeOnDapp": "Puente en Dapp",
       "chainNotSupported": "No soportado en esta cadena"
+    },
+    "selectCexModal": {
+      "title": "Seleccionar fuente de intercambio"
     }
   },
   "page": {
@@ -251,7 +254,8 @@
         "BuyAgain": "Comprar de nuevo",
         "PurchaseFrom": "Comprado de",
         "WillReceive": "Recibirá: ≈ {{token}}",
-        "Collection": "Colección"
+        "Collection": "Colección",
+        "AddToWhitelist": "Añadir a la lista blanca"
       },
       "empty": {
         "desc": "No se encontraron transacciones en <1>supported chains</1>",
@@ -1621,7 +1625,8 @@
       "header": {
         "placeHolder": "Buscar",
         "searchPlaceHolder": "Buscar Nombre del Token / Dirección",
-        "favoriteTitle": "Token Favorito"
+        "favoriteTitle": "Token Favorito",
+        "SearchChain": "Buscar Cadena"
       },
       "tokenItem": {
         "verifyDangerTips": "Este es un token de estafa",
@@ -1927,7 +1932,12 @@
       "sendToImportedAddress": "Enviar a Mis Direcciones Importadas",
       "emptyWhitelistTip": "Aún no hay direcciones en la lista blanca,",
       "emptyWhitelistContent": "Agrega direcciones de confianza a la lista blanca para transferencias rápidas: no se necesita confirmación la próxima vez",
-      "whitelistTitle": "Mis direcciones de lista blanca"
+      "whitelistTitle": "Mis direcciones de lista blanca",
+      "innerEnterAddress": "Ingrese dirección / ENS",
+      "SendHistory": "Historial de Envíos",
+      "sendTimeHeader": "Enviar",
+      "SelectFromHistory": "Seleccionar del historial",
+      "recent": "Reciente"
     },
     "confirmAddress": {
       "risks": {
@@ -1941,7 +1951,8 @@
       "addToWhitelist": "Añadir a la lista blanca",
       "dexNameTail": "Dirección de Depósito",
       "sendTo": "Enviar a esta dirección",
-      "title": "Confirmar dirección"
+      "title": "Confirmar dirección",
+      "checkbox": "Entiendo los riesgos y quiero continuar"
     },
     "selectAddress": {
       "selectSafeAddress": "Seleccionar desde direcciones seguras",
@@ -1955,7 +1966,18 @@
       "confirm": "Confirmar",
       "addSuccessful": "Dirección añadida a la lista blanca",
       "removeWhitelist": "Eliminar de Whitelist",
-      "copyAddress": "Copiar Dirección"
+      "copyAddress": "Copiar Dirección",
+      "header": {
+        "address": "Dirección",
+        "name": "Nombre",
+        "exchange": "¿Dirección de intercambio?"
+      },
+      "placeholder": {
+        "name": "Nombra tu dirección",
+        "exchange": "seleccionar intercambio"
+      },
+      "alreadyInYour": "Ya está en tu lista blanca",
+      "alreadyIn": "Ya en la lista blanca"
     },
     "syncExtension": {
       "verifyWithPassword": "Verifique con su contraseña de la extensión Rabby",
@@ -1978,7 +2000,8 @@
       "tabs": {
         "portfolio": "Portafolio",
         "address": "Dirección"
-      }
+      },
+      "scamTokenHeader": "Tokens de estafa"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2003,6 +2026,11 @@
       "BrowserHistoryList": {
         "title": "Historial"
       }
+    },
+    "scan": {
+      "noCameraDevice": "Sin dispositivo de cámara",
+      "selectFromAlbum": "Seleccionar de Álbum",
+      "noQRCodeFound": "No se encontró ningún código QR"
     }
   },
   "global": {

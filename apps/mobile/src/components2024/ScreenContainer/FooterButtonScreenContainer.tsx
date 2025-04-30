@@ -19,6 +19,7 @@ import {
   ReactNativeViewAs,
   ReactNativeViewAsMap,
 } from '@/hooks/common/useReactNativeViews';
+import AuthButton, { IAuthButtonProps } from '../AuthButton';
 
 const getStyle = createGetStyles2024(ctx =>
   StyleSheet.create({
@@ -59,6 +60,7 @@ interface FooterButtonContainer2024Props {
   noHeader?: boolean;
   children: React.ReactNode;
   buttonProps?: ButtonProps;
+  authButtonProps?: IAuthButtonProps;
   buttonGroupProps?: React.ComponentProps<
     typeof import('../FooterButtonGroup').FooterButtonGroup
   >;
@@ -102,6 +104,7 @@ export const FooterButtonScreenContainer = <
   children,
   buttonProps,
   buttonGroupProps,
+  authButtonProps,
   style,
   footerContainerHeight = 56,
   footerBottomOffset = 0,
@@ -152,6 +155,7 @@ export const FooterButtonScreenContainer = <
         ]}>
         {buttonGroupProps && <FooterButtonGroup {...buttonGroupProps} />}
         {buttonProps && <Button type={'primary'} {...buttonProps} />}
+        {authButtonProps && <AuthButton {...authButtonProps} />}
       </View>
     </ViewComp>
   );

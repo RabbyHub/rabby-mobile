@@ -138,7 +138,8 @@
         "totalApprovedAmount": "現在の承認額",
         "Collection": "コレクション",
         "WillReceive": "受け取る予定: ≈ {{token}}",
-        "PurchaseFrom": "から購入"
+        "PurchaseFrom": "から購入",
+        "AddToWhitelist": "ホワイトリストに追加"
       },
       "empty": {
         "desc": "<1>サポートされているチェーン</1>で取引が見つかりませんでした。",
@@ -1677,7 +1678,8 @@
       "header": {
         "placeHolder": "検索",
         "searchPlaceHolder": "トークン名 / アドレスを検索",
-        "favoriteTitle": "お気に入りのトークン"
+        "favoriteTitle": "お気に入りのトークン",
+        "SearchChain": "チェーンを検索"
       },
       "sectionHeader": {
         "Defi": "DeFi",
@@ -1814,7 +1816,12 @@
       "emptyWhitelistContent": "信頼できるアドレスをホワイトリストに追加して高速転送を実現 - 次回からは確認が不要です",
       "emptyWhitelistTip": "まだホワイトリストに登録されたアドレスはありません。",
       "whitelistTitle": "私のホワイトリストアドレス",
-      "sendToImportedAddress": "インポートしたアドレスに送信"
+      "sendToImportedAddress": "インポートしたアドレスに送信",
+      "innerEnterAddress": "アドレス / ENSを入力してください",
+      "recent": "最近",
+      "sendTimeHeader": "送信",
+      "SelectFromHistory": "履歴から選択",
+      "SendHistory": "送信履歴"
     },
     "confirmAddress": {
       "risks": {
@@ -1828,7 +1835,8 @@
       "addToWhitelist": "ホワイトリストに追加",
       "tipForWhiteList": "ホワイトリストに追加すると、次回は確認なしで高速転送が可能です。",
       "title": "アドレスを確認する",
-      "sendTo": "このアドレスに送信"
+      "sendTo": "このアドレスに送信",
+      "checkbox": "リスクを理解しており、続行したいと思います。"
     },
     "selectAddress": {
       "selectSafeAddress": "Safeアドレスから選択",
@@ -1842,7 +1850,18 @@
       "removeWhitelist": "ホワイトリストから削除",
       "cancel": "キャンセル",
       "confirmPassword": "パスワードを入力して確認してください",
-      "copyAddress": "アドレスをコピー"
+      "copyAddress": "アドレスをコピー",
+      "header": {
+        "address": "アドレス",
+        "name": "名前",
+        "exchange": "取引所のアドレスは？"
+      },
+      "placeholder": {
+        "exchange": "エクスチェンジを選択してください",
+        "name": "アドレスに名前を付ける"
+      },
+      "alreadyIn": "ホワイトリストに既に登録済み",
+      "alreadyInYour": "既にホワイトリストに追加されています"
     },
     "syncExtension": {
       "noNewAddr": "新しいアドレスは見つかりませんでしたインポートするために",
@@ -1865,7 +1884,8 @@
       "tabs": {
         "portfolio": "ポートフォリオ",
         "address": "アドレス"
-      }
+      },
+      "scamTokenHeader": "詐欺トークン"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1890,6 +1910,11 @@
       "BrowserHistoryList": {
         "title": "履歴"
       }
+    },
+    "scan": {
+      "selectFromAlbum": "アルバムから選択してください",
+      "noCameraDevice": "カメラデバイスがありません",
+      "noQRCodeFound": "QRコードが見つかりませんでした。"
     }
   },
   "global": {
@@ -2102,6 +2127,9 @@
       "chainNotSupported": "このチェーンではサポートされていません",
       "noDapp": "利用可能なDappsはありません",
       "noQuotesForChain": "このチェーンにはまだ利用可能な見積もりがありません"
+    },
+    "selectCexModal": {
+      "title": "交換元を選択してください"
     }
   },
   "common": {

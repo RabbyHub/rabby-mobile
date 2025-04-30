@@ -82,7 +82,8 @@
         "ApproveTo": "Onayla",
         "Revoke": "İptal Et",
         "InteractionResults": "Etkileşim Sonuçları",
-        "Pending": "Beklemede"
+        "Pending": "Beklemede",
+        "AddToWhitelist": "Beyaz Listeye Ekle"
       },
       "empty": {
         "title": "Hiç işlem yok",
@@ -659,7 +660,12 @@
       "enterAddress": "Adres Girin",
       "emptyWhitelistHeader": "Beyaz Liste Adresi Ekle",
       "emptyWhitelistContent": "Güvenilir adresleri hızlı transferler için beyaz listeye ekleyin—bir dahaki sefere onay gerekmez.",
-      "sendToImportedAddress": "İçe Aktardığım Adreslere Gönder"
+      "sendToImportedAddress": "İçe Aktardığım Adreslere Gönder",
+      "SelectFromHistory": "Geçmişten Seçin",
+      "sendTimeHeader": "Gönder",
+      "innerEnterAddress": "Adres / ENS Girin",
+      "SendHistory": "Gönderim Geçmişi",
+      "recent": "Son zamanlarda"
     },
     "confirmAddress": {
       "risks": {
@@ -673,7 +679,8 @@
       "title": "Adres Onayla",
       "dexNameTail": "Yatırım Adresi",
       "addToWhitelist": "Beyaz listeye ekle",
-      "tipForWhiteList": "Beyaz listenize ekleyin, böylece hızlı transferler yapabilir, bir dahaki sefer onay gerekmez."
+      "tipForWhiteList": "Beyaz listenize ekleyin, böylece hızlı transferler yapabilir, bir dahaki sefer onay gerekmez.",
+      "checkbox": "Riskleri anlıyorum ve devam etmek istiyorum."
     },
     "selectAddress": {
       "selectWatchAddress": "Gözlem adreslerinden seçin",
@@ -687,7 +694,18 @@
       "confirm": "Onayla",
       "cancel": "İptal et",
       "confirmPassword": "Şifreyi Onaylamak için Girin",
-      "alreadyAdded": "Zaten beyaz listenize eklendi"
+      "alreadyAdded": "Zaten beyaz listenize eklendi",
+      "header": {
+        "name": "Adınız",
+        "address": "Adres",
+        "exchange": "Borsa adresi?"
+      },
+      "placeholder": {
+        "name": "Adresinizi Adlandırın",
+        "exchange": "borsa seçin"
+      },
+      "alreadyIn": "Zaten Beyaz Liste'de",
+      "alreadyInYour": "Zaten beyaz listenizde."
     },
     "sendTokenComponents": {
       "GasReserved": "Gas maliyeti için ayrılan <1>0</1> {{ tokenName }}"
@@ -1701,7 +1719,8 @@
       "header": {
         "placeHolder": "Araştırma",
         "searchPlaceHolder": "Token Adı / Adresi Ara",
-        "favoriteTitle": "Favori Token"
+        "favoriteTitle": "Favori Token",
+        "SearchChain": "Zincir Ara"
       },
       "tokenItem": {
         "verifyDangerTips": "Bu bir dolandırıcılık token'ıdır.",
@@ -1812,7 +1831,8 @@
       "tabs": {
         "address": "Adres",
         "portfolio": "Portföy"
-      }
+      },
+      "scamTokenHeader": "Dolandırıcılık tokenleri"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1837,6 +1857,11 @@
       "BrowserHistoryList": {
         "title": "Geçmiş"
       }
+    },
+    "scan": {
+      "selectFromAlbum": "Albümden Seçin",
+      "noQRCodeFound": "QR Kodu bulunamadı",
+      "noCameraDevice": "Kamera Cihazı Yok"
     }
   },
   "component": {
@@ -1987,6 +2012,9 @@
       "noQuotesForChain": "Bu ağ için henüz hiç alıntı mevcut değil.",
       "thirdPartyDappToProceed": "Lütfen işlemi devam ettirmek için bir üçüncü taraf Dapp kullanın.",
       "chainNotSupported": "Bu zincirde desteklenmiyor"
+    },
+    "selectCexModal": {
+      "title": "Borsa Kaynağını Seçin"
     }
   },
   "native": {

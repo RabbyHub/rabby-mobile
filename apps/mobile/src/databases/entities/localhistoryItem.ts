@@ -1,25 +1,13 @@
 import 'reflect-metadata';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToMany,
-  JoinTable,
-  ManyToOne,
-  Brackets,
-} from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
 import BigNumber from 'bignumber.js';
 import { findChain } from '@/utils/chain';
 import { TransactionHistoryItem } from '@/core/services/transactionHistory';
-import {
-  HistoryItemCateType,
-  TransactionSourceType,
-} from '@/screens/Transaction/components/type';
+import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 
 @Entity('cache_localhistoryitem')
 export class LocalHistoryItemEntity extends EntityAddressAssetBase {
@@ -267,6 +255,20 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
 
     const res = await queryBuilder.getMany();
     return res;
+  }
+
+  static async batchMultAddressSend(addresses: string[]) {
+    await prepareAppDataSource();
+    return await this.getRepository()
+      .createQueryBuilder('localhistoryitem')
+      .where('localhistoryitem.owner_addr IN (:...owner_addrs)', {
+        owner_addrs: addresses,
+      })
+      .andWhere('localhistoryitem.source_type = :source_type', {
+        source_type: 'sendToken',
+      })
+      .take(3)
+      .getMany();
   }
 
   static async deleteForAddress(owner_addr: string) {

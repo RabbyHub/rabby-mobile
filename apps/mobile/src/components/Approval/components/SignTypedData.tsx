@@ -58,6 +58,7 @@ import { GnosisAdminFooterBarPopup } from './TxComponents/GnosisAdminFooterBarPo
 import { useSetState } from 'ahooks';
 import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
 import { underline2Camelcase } from '@/core/utils/common';
+import { getCexInfo } from '@/hooks/useCexSupportList';
 
 interface SignTypedDataProps {
   method: string;
@@ -490,12 +491,13 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
           id: Number(data.chainId),
         })?.serverId;
       }
-
+      const cexInfo = getCexInfo(data.send?.to || '');
       const requireData = await fetchActionRequiredData({
         type: 'typed_data',
         actionData: data,
         sender: currentAccount.address,
         chainId: chainServerId || CHAINS.ETH.serverId,
+        cex: cexInfo,
         walletProvider: {
           hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
           hasAddress: keyringService.hasAddress.bind(keyringService),

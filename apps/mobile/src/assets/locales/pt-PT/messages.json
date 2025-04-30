@@ -190,6 +190,9 @@
       "bridgeOnDapp": "Ponte na Dapp",
       "thirdPartyDappToProceed": "Por favor, use uma Dapp de terceiros para prosseguir.",
       "noDapps": "Não há Dapp disponível nesta cadeia"
+    },
+    "selectCexModal": {
+      "title": "Selecionar Fonte de Câmbio"
     }
   },
   "global": {
@@ -293,7 +296,8 @@
         "PurchaseFrom": "Comprado de",
         "Collection": "Coleção",
         "totalApprovedAmount": "Montante Aprovado Atual",
-        "WillReceive": "Receberá: ≈ {{token}}"
+        "WillReceive": "Receberá: ≈ {{token}}",
+        "AddToWhitelist": "Adicionar à Lista Branca"
       },
       "empty": {
         "title": "Sem transações",
@@ -1670,7 +1674,8 @@
       "header": {
         "placeHolder": "Pesquisa",
         "searchPlaceHolder": "Pesquisar Nome / Endereço do Token",
-        "favoriteTitle": "Token Favorito"
+        "favoriteTitle": "Token Favorito",
+        "SearchChain": "Pesquisar Chain"
       },
       "sectionHeader": {
         "Defi": "DeFi",
@@ -1969,7 +1974,12 @@
       "whitelistTitle": "Os Meus Endereços da Whitelist",
       "emptyWhitelistHeader": "Adicionar Endereço à Lista de Permissões",
       "emptyWhitelistTip": "Ainda não há endereços na lista de permissões,",
-      "emptyWhitelistContent": "Adicione endereços confiáveis à lista branca para transferências rápidas—sem necessidade de confirmação na próxima vez"
+      "emptyWhitelistContent": "Adicione endereços confiáveis à lista branca para transferências rápidas—sem necessidade de confirmação na próxima vez",
+      "SendHistory": "Histórico de Envio",
+      "recent": "Recente",
+      "SelectFromHistory": "Selecionar do Histórico",
+      "sendTimeHeader": "Enviar",
+      "innerEnterAddress": "Introduzir Endereço / ENS"
     },
     "confirmAddress": {
       "risks": {
@@ -1983,7 +1993,8 @@
       "addToWhitelist": "Adicionar à lista de permissões",
       "tipForWhiteList": "Adicione à sua whitelist para transferências rápidas, sem necessidade de confirmação na próxima vez.",
       "title": "Confirmar Endereço",
-      "sendTo": "Enviar para este Endereço"
+      "sendTo": "Enviar para este Endereço",
+      "checkbox": "Eu entendo os riscos e quero continuar"
     },
     "selectAddress": {
       "selectSafeAddress": "Selecionar de endereços Safe",
@@ -1997,7 +2008,18 @@
       "removeWhitelist": "Remover da Whitelist",
       "alreadyAdded": "Já adicionado à sua lista de permissões",
       "confirmPassword": "Introduza a Palavra-passe para Confirmar",
-      "copyAddress": "Copiar Endereço"
+      "copyAddress": "Copiar Endereço",
+      "header": {
+        "exchange": "Endereço de troca?",
+        "address": "Endereço",
+        "name": "Nome"
+      },
+      "placeholder": {
+        "name": "Nomeie o Seu Endereço",
+        "exchange": "selecionar troca"
+      },
+      "alreadyInYour": "Já na sua whitelist",
+      "alreadyIn": "Já na Whitelist"
     },
     "syncExtension": {
       "syncingProgress": "A digitalização ({{ percent }})",
@@ -2020,7 +2042,8 @@
       "tabs": {
         "portfolio": "Portefólio",
         "address": "Endereço"
-      }
+      },
+      "scamTokenHeader": "Tokens de golpe"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2045,6 +2068,11 @@
       "BrowserHistoryList": {
         "title": "Histórico"
       }
+    },
+    "scan": {
+      "noQRCodeFound": "Nenhum QR-Code encontrado",
+      "selectFromAlbum": "Selecionar do Álbum",
+      "noCameraDevice": "Sem Dispositivo de Câmera"
     }
   },
   "constant": {

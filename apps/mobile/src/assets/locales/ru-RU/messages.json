@@ -143,7 +143,8 @@
         "Name": "Имя",
         "totalApprovedAmount": "Текущая утвержденная сумма",
         "WillReceive": "Получите: ≈ {{token}}",
-        "PurchaseFrom": "Приобретено от"
+        "PurchaseFrom": "Приобретено от",
+        "AddToWhitelist": "Добавить вWhitelist"
       },
       "empty": {
         "title": "Нет транзакций",
@@ -1566,7 +1567,8 @@
       "header": {
         "placeHolder": "Поиск",
         "searchPlaceHolder": "Поиск Названия Токена / Адреса",
-        "favoriteTitle": "Избранный токен"
+        "favoriteTitle": "Избранный токен",
+        "SearchChain": "Поиск цепи"
       },
       "tokenItem": {
         "verifyDangerTips": "Это мошеннический токен",
@@ -1819,7 +1821,12 @@
       "whitelistTitle": "Мои адреса в белом списке",
       "emptyWhitelistContent": "Добавьте доверенные адреса в белый список для быстрых переводов — в следующий раз подтверждение не потребуется",
       "emptyWhitelistTip": "Еще нет добавленных в белый список адресов,",
-      "sendToSafeAddress": "Отправить на безопасные адреса"
+      "sendToSafeAddress": "Отправить на безопасные адреса",
+      "innerEnterAddress": "Введите адрес / ENS",
+      "SendHistory": "История отправлений",
+      "SelectFromHistory": "Выбрать из истории",
+      "recent": "Недавний",
+      "sendTimeHeader": "Отправить"
     },
     "confirmAddress": {
       "risks": {
@@ -1833,7 +1840,8 @@
       "addToWhitelist": "Добавить в белый список",
       "tipForWhiteList": "Добавьте в белый список для быстрых переводов, подтверждение не потребуется в следующий раз",
       "title": "Подтвердите адрес",
-      "sendTo": "Отправить на этот адрес"
+      "sendTo": "Отправить на этот адрес",
+      "checkbox": "Я понимаю риски и хочу продолжить"
     },
     "selectAddress": {
       "selectSafeAddress": "Выберите из адресов Safe",
@@ -1847,7 +1855,18 @@
       "addSuccessful": "Адрес добавлен в белый список",
       "removeWhitelist": "Удалить из белого списка",
       "addToWhitelist": "Добавить в белый список",
-      "copyAddress": "Скопировать адрес"
+      "copyAddress": "Скопировать адрес",
+      "header": {
+        "address": "Адрес",
+        "name": "Имя",
+        "exchange": "Адрес обмена?"
+      },
+      "placeholder": {
+        "name": "Назовите свой адрес",
+        "exchange": "выбрать обмен"
+      },
+      "alreadyIn": "Уже в белом списке",
+      "alreadyInYour": "Уже в вашем белом списке"
     },
     "syncExtension": {
       "importedTips": "Если в приложении уже есть дублирующий адрес, он не будет импортирован. Примечания к адресам и белые списки также будут синхронизированы.",
@@ -1870,7 +1889,8 @@
       "tabs": {
         "portfolio": "Портфель",
         "address": "Адрес"
-      }
+      },
+      "scamTokenHeader": "Мошеннические токены"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1895,6 +1915,11 @@
       "BrowserHistoryList": {
         "title": "История"
       }
+    },
+    "scan": {
+      "noCameraDevice": "Нет устройства камеры",
+      "noQRCodeFound": "Не найден QR-код",
+      "selectFromAlbum": "Выбрать из Альбома"
     }
   },
   "component": {
@@ -2045,6 +2070,9 @@
       "noQuotesForChain": "Пока нет доступных котировок для этой цепочки",
       "swapOnDapp": "Менять на Dapp",
       "noDapp": "Нет доступных Dapps"
+    },
+    "selectCexModal": {
+      "title": "Выберите источник обмена"
     }
   },
   "constant": {

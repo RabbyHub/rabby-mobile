@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -26,6 +27,8 @@ import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { useCurrentAccount } from '@/hooks/account';
 import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { ellipsisAddress } from '@/utils/address';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -35,12 +38,31 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
-    paddingBottom: 24,
+    paddingBottom: 0,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  walletIcon: {
+    borderRadius: 4,
+    width: 18,
+    height: 18,
+    marginRight: 4,
+  },
+  address: {
+    margin: 4,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    lineHeight: 20,
+    fontSize: 16,
+    color: colors2024['neutral-foot'],
   },
   skeletonBlock: {
     width: '100%',
@@ -83,6 +105,7 @@ const HistoryList = ({
   const { txList, loading, loadMore, noMore } = useSwapHistory();
   const { t } = useTranslation();
   const { styles, isLight } = useTheme2024({ getStyle });
+  const { currentAccount } = useCurrentAccount();
 
   const renderItem = useCallback(
     ({ item }) => (
@@ -95,11 +118,29 @@ const HistoryList = ({
 
   const ListHeaderComponent = useCallback(() => {
     return (
-      <View>
+      <View
+        style={{
+          marginBottom: 12,
+        }}>
         <Text style={styles.headerTitle}>{t('page.swap.historyTitle')}</Text>
+        {Boolean(currentAccount) && (
+          <AddressItem account={currentAccount!}>
+            {({ WalletIcon, WalletAddress }) => {
+              return (
+                <View style={styles.addressRow}>
+                  <WalletIcon style={styles.walletIcon} />
+                  <Text style={styles.address}>
+                    {currentAccount?.aliasName ||
+                      ellipsisAddress(currentAccount?.address || '')}
+                  </Text>
+                </View>
+              );
+            }}
+          </AddressItem>
+        )}
       </View>
     );
-  }, [styles.headerTitle, t]);
+  }, [styles, t, currentAccount]);
 
   const ListEndLoader = useCallback(() => {
     if (noMore) {
@@ -161,24 +202,27 @@ const HistoryList = ({
   }, [txList]);
 
   return (
-    <BottomSheetFlatList
-      contentContainerStyle={[
-        {
-          paddingBottom: 20 + bottom,
-        },
-      ]}
-      style={styles.flatList}
-      stickyHeaderIndices={[0]}
-      ListHeaderComponent={ListHeaderComponent}
-      data={sortedList}
-      ItemSeparatorComponent={ItemSeparator}
-      renderItem={renderItem}
-      keyExtractor={item => item.tx_id + item.chain}
-      onEndReached={loadMore}
-      onEndReachedThreshold={0.6}
-      ListFooterComponent={ListEndLoader}
-      ListEmptyComponent={ListEmptyComponent}
-    />
+    <>
+      {ListHeaderComponent()}
+      <BottomSheetFlatList
+        contentContainerStyle={[
+          {
+            paddingBottom: 20 + bottom,
+          },
+        ]}
+        style={styles.flatList}
+        // stickyHeaderIndices={[0]}
+        // ListHeaderComponent={ListHeaderComponent}
+        data={sortedList}
+        ItemSeparatorComponent={ItemSeparator}
+        renderItem={renderItem}
+        keyExtractor={item => item.tx_id + item.chain}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.6}
+        ListFooterComponent={ListEndLoader}
+        ListEmptyComponent={ListEmptyComponent}
+      />
+    </>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { RcIconScannerCC } from '@/assets/icons/address';
+import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -18,19 +18,15 @@ import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
-import { StackActions, useNavigationState } from '@react-navigation/native';
-import { toast } from '@/components2024/Toast';
+import { useNavigationState } from '@react-navigation/native';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useWhitelist } from '@/hooks/whitelist';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { useAccounts } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { openapi } from '@/core/request';
+
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
   ADDRESS_EXIST = 'ADDRESS_EXIST',
@@ -45,31 +41,25 @@ const ERROR_MESSAGE = {
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
-const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
+const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const [input, setInput] = React.useState('');
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
   const [loading, setLoading] = useState(false);
-  const { navigation } = useSafeSetNavigationOptions();
   const navParams = useNavigationState(
-    s =>
-      s.routes.find(
-        r =>
-          r.name ===
-          (isForWhitelist ? RootNames.WhitelistInput : RootNames.SendInput),
-      )?.params,
+    s => s.routes.find(r => r.name === RootNames.SendInput)?.params,
   ) as {
     autoScan?: boolean;
   };
-  const { addWhitelist } = useWhitelist();
+  const [ensResult, setEnsResult] = React.useState<null | {
+    addr: string;
+    name: string;
+  }>(null);
 
   const { navigateToSendScreen } = useSendRoutes();
 
-  const { findAccount } = useWhiteListAddress(true);
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
+  const { findAccountWithoutBalance } = useWhiteListAddress(true);
 
   const { t } = useTranslation();
 
@@ -87,55 +77,12 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
     try {
       setLoading(true);
       Keyboard.dismiss();
-      const { inWhitelist, account } = await findAccount(
+      const { inWhitelist, account, isMyImported } = findAccountWithoutBalance(
         address,
         undefined,
-        true,
       );
 
-      if (isForWhitelist) {
-        if (inWhitelist) {
-          toast.show(t('page.whitelist.alreadyAdded'));
-        } else {
-          const id = createGlobalBottomSheetModal2024({
-            name: MODAL_NAMES.CONFIRM_ADDRESS,
-            account,
-            title: t('page.confirmAddress.addToWhitelist'),
-            disbaleWhiteSwitch: true,
-            bottomSheetModalProps: {
-              enableDynamicSizing: true,
-            },
-            onCancel: () => {
-              removeGlobalBottomSheetModal2024(id);
-            },
-            onConfirm() {
-              removeGlobalBottomSheetModal2024(id);
-              const isImported = accounts.some(i =>
-                isSameAddress(i.address, account.address),
-              );
-              matomoRequestEvent({
-                category: 'Send Usage',
-                action: isImported
-                  ? 'Send_AddWhitelist_imported'
-                  : 'Send_AddWhitelist_notImported',
-              });
-              addWhitelist(account.address, {
-                onAdded: () => {
-                  toast.success(t('page.whitelist.addSuccessful'));
-                  navigation.popToTop();
-                  navigation.dispatch(
-                    StackActions.push(RootNames.StackTransaction, {
-                      screen: RootNames.SendTo,
-                    }),
-                  );
-                },
-              });
-            },
-          });
-        }
-        return;
-      }
-      if (inWhitelist) {
+      if (inWhitelist || isMyImported) {
         navigateToSendScreen({
           toAddress: account.address,
           addressBrandName: account.brandName,
@@ -183,6 +130,39 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
     }
   }, [navParams?.autoScan]);
 
+  const onSubmitEditing = React.useCallback(() => {
+    if (!error && ensResult && input !== ensResult.addr) {
+      setInput(ensResult.addr);
+    }
+  }, [error, ensResult, input]);
+
+  useEffect(() => {
+    if (!input) {
+      setError(undefined);
+      return;
+    }
+    if (isValidHexAddress(input as `0x${string}`)) {
+      setError(undefined);
+      return;
+    }
+    openapi
+      .getEnsAddressByName(input)
+      .then(result => {
+        if (result && result.addr) {
+          setEnsResult(result);
+          setError(undefined);
+        } else {
+          setEnsResult(null);
+          setError(INPUT_ERROR.INVALID_ADDRESS);
+        }
+      })
+      .catch(e => {
+        console.log(e);
+        setEnsResult(null);
+        setError(INPUT_ERROR.INVALID_ADDRESS);
+      });
+  }, [input]);
+
   return (
     <FooterButtonScreenContainer
       as="View"
@@ -197,7 +177,13 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       footerContainerStyle={{
         paddingHorizontal: 20,
       }}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          Keyboard.dismiss();
+          if (!input && !ensResult) {
+            cleanInput?.();
+          }
+        }}>
         <View style={styles.container}>
           <View style={styles.topContent}>
             <View>
@@ -218,13 +204,14 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
                       },
                 )}
                 inputProps={{
-                  placeholder: t('page.sendPoly.enterAddress'),
+                  placeholder: t('page.sendPoly.innerEnterAddress'),
                   placeholderTextColor: colors2024['neutral-secondary'],
                   value: input,
                   blurOnSubmit: true,
                   autoFocus: true,
                   returnKeyType: 'done',
                   onChangeText: handleSubmit,
+                  onSubmitEditing: onSubmitEditing,
                 }}
                 // eslint-disable-next-line react/no-unstable-nested-components
                 customIcon={ctx => (
@@ -233,13 +220,27 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
                     onPress={() => {
                       navigate(RootNames.Scanner);
                     }}>
-                    <RcIconScannerCC
+                    <ScannerCC
                       style={ctx.iconStyle}
                       color={colors2024['neutral-title-1']}
                     />
                   </TouchableOpacity>
                 )}
               />
+              {!error && ensResult && input === ensResult.addr && (
+                <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
+              )}
+
+              {!error && ensResult && input !== ensResult.addr && (
+                <TouchableOpacity
+                  style={styles.ensResultBox}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setInput(ensResult.addr);
+                  }}>
+                  <Text style={styles.ensResult}>{ensResult.addr}</Text>
+                </TouchableOpacity>
+              )}
               {error && (
                 <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
               )}
@@ -249,6 +250,7 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
               style={styles.pasteButton}
               onPaste={text => {
                 handleSubmit(text);
+                Keyboard.dismiss();
               }}
             />
           </View>
@@ -256,10 +258,6 @@ const SendInputScreen = ({ isForWhitelist }: { isForWhitelist: boolean }) => {
       </TouchableWithoutFeedback>
     </FooterButtonScreenContainer>
   );
-};
-
-SendInputScreen.ForWhitelist = () => {
-  return <SendInputScreen isForWhitelist />;
 };
 
 export default SendInputScreen;
@@ -275,7 +273,7 @@ const getStyles = createGetStyles2024(ctx => ({
     position: 'relative',
     height: '100%',
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   topContent: {
     alignItems: 'center',
@@ -290,13 +288,14 @@ const getStyles = createGetStyles2024(ctx => ({
 
   textContainer: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
+    paddingTop: 8,
   },
   textArea: {
-    marginTop: 14,
+    marginTop: 10,
     paddingHorizontal: 20,
     backgroundColor: ctx.colors['neutral-card-1'],
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 17,
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
   },
   error: {
@@ -304,5 +303,32 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   pasteButton: {
     marginTop: 58,
+  },
+  ensResultBox: {
+    // padding: 4,
+    width: '100%',
+    borderRadius: 16,
+    display: 'flex',
+    marginTop: 12,
+    backgroundColor: ctx.colors2024['brand-light-1'],
+  },
+
+  ensResult: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontSize: 14,
+    borderRadius: 16,
+    // overflow: 'hidden',
+    color: ctx.colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+  },
+  ensText: {
+    fontSize: 13,
+    color: ctx.colors2024['neutral-body'],
+    marginVertical: 12,
+    marginHorizontal: 8,
   },
 }));

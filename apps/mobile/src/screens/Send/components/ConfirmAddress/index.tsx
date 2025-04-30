@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch } from 'react-native-switch';
 import { noop } from 'lodash';
@@ -10,20 +16,25 @@ import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import AddressPopover from '../AddressPopover';
 import AddressSource from '../AddressSourceCard';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { StyleSheet, View } from 'react-native';
-import RcTipCC from '@/assets2024/icons/common/tips.svg';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useRisks } from './risk';
 import { toast } from '@/components2024/Toast';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  AddrDescResponse,
+  ProjectItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { Skeleton } from '@rneui/themed';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { CheckBoxRect } from '@/components2024/CheckBox';
+import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disbaleWhiteSwitch?: boolean;
+  cex?: ProjectItem;
   account: KeyringAccountWithAlias;
   onConfirm?: (
     account: KeyringAccountWithAlias,
@@ -36,16 +47,19 @@ const ConfirmAddress = ({
   onCancel,
   onConfirm,
   title,
+  cex,
   disbaleWhiteSwitch,
 }: ConfirmAddressScreenProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const switchRef = useRef<Switch>(null);
-  const { loading, risks, addressDesc, balance } = useRisks(
+  const { loading, risks, addressDesc } = useRisks(
     account.address,
     !!account.balance,
+    cex,
   );
+  const [isChecked, setIsChecked] = useState(false);
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -58,7 +72,9 @@ const ConfirmAddress = ({
     [account.address, isAddrOnWhitelist],
   );
   useEffect(() => {
-    switchRef.current?.setState({ value: inWhiteList });
+    if (switchRef.current) {
+      switchRef.current.setState({ value: inWhiteList });
+    }
   }, [inWhiteList]);
 
   const setInWhitelist = useCallback(
@@ -107,10 +123,7 @@ const ConfirmAddress = ({
       <AddressSource
         loading={loading}
         addressDesc={addressDesc}
-        account={{
-          ...account,
-          balance: account.balance || balance || 0,
-        }}
+        account={account}
         style={styles.addressCard}
       />
       {!loading && !disbaleWhiteSwitch && (
@@ -133,38 +146,44 @@ const ConfirmAddress = ({
         ]}>
         {loading ? (
           <View style={styles.tipItem}>
-            <View style={styles.tipIcon}>
-              <RcTipCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-info']}
-              />
-            </View>
+            <Skeleton circle width={20} height={20} />
             <Skeleton style={styles.loading} height={40} />
           </View>
         ) : (
           risks.map(risk => (
             <View key={risk.type} style={styles.tipItem}>
-              <View style={styles.tipIcon}>
-                <RcTipCC
-                  width={14}
-                  height={14}
-                  color={colors2024['neutral-info']}
-                />
-              </View>
+              <RcIconWarningCircleCC
+                width={20}
+                height={20}
+                color={colors2024['orange-default']}
+              />
               <Text style={styles.tipText}>{risk.value}</Text>
             </View>
           ))
         )}
       </View>
+      {!loading && risks?.length ? (
+        <TouchableOpacity
+          style={styles.checkbox}
+          onPress={() => {
+            setIsChecked(prev => !prev);
+          }}>
+          <CheckBoxRect size={16} checked={isChecked} />
+          <Text style={styles.checkboxText}>
+            {t('page.confirmAddress.checkbox')}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
       {!loading && (
         <FooterButtonGroup
           style={StyleSheet.flatten([
             styles.footerButtonGroup,
             { marginBottom: safeSizes.footerButtonGroupMb },
           ])}
+          authButton
           onCancel={onCancel ?? noop}
           onConfirm={handleConfirm}
+          confirmDisabled={risks.length > 0 && !isChecked}
         />
       )}
     </View>
@@ -198,7 +217,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 15,
-    marginBottom: 12,
   },
   text: {
     fontSize: 14,
@@ -213,13 +231,20 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
   },
   riskList: {
-    marginTop: 41,
+    marginTop: 34,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    marginBottom: 32,
   },
   tipItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 8,
-    marginBottom: 32,
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    borderRadius: 12,
   },
   tipIcon: {
     width: 14,
@@ -229,10 +254,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tipText: {
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '400',
+    fontWeight: '500',
     flex: 1,
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-body'],
   },
   footerButtonGroup: {
     paddingTop: 0,
@@ -247,5 +272,20 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 8,
     flex: 1,
+  },
+  checkbox: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  checkboxText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-foot'],
   },
 }));

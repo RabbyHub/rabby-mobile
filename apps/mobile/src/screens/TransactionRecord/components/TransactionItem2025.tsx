@@ -1,7 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  GasLevel,
+  SendAction,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -28,6 +32,7 @@ import { HistoryItemTokenArea } from '@/screens/Transaction/components/HistoryIt
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { ellipsisAddress } from '@/utils/address';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
+import { naviPush } from '@/utils/navigation';
 
 export const TransactionItem = ({
   historySuccessList,
@@ -35,12 +40,18 @@ export const TransactionItem = ({
   canCancel,
   onRefresh,
   isForMultipleAdderss,
+  isInSendHistory,
+  onPressBottomBtn,
+  closeHistoryPopup,
 }: {
   historySuccessList?: string[];
   isForMultipleAdderss?: boolean;
   data: TransactionGroup;
   canCancel?: boolean;
   onRefresh?: () => void;
+  isInSendHistory?: boolean;
+  onPressBottomBtn?: (data: SendAction) => void;
+  closeHistoryPopup?: () => void;
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -332,27 +343,39 @@ export const TransactionItem = ({
     );
   }, [formatType, data, t, styles.describeText]);
 
-  const navigation = useRabbyAppNavigation();
+  // const navigation = useRabbyAppNavigation();
   const hanldeNavigateDetail = useCallback(() => {
-    navigation.push(RootNames.StackTransaction, {
+    if (isInSendHistory) {
+      closeHistoryPopup?.();
+    }
+    naviPush(RootNames.StackTransaction, {
       screen: RootNames.HistoryLocalDetail,
       params: {
         isForMultipleAdderss,
         data,
         canCancel,
         title: formatTitle,
+        onPressBottomBtn: onPressBottomBtn,
       },
     });
-  }, [isForMultipleAdderss, navigation, canCancel, data, formatTitle]);
+  }, [
+    isForMultipleAdderss,
+    canCancel,
+    data,
+    formatTitle,
+    isInSendHistory,
+    onPressBottomBtn,
+    closeHistoryPopup,
+  ]);
 
   useEffect(() => {
-    if (!data.isPending) {
+    if (!data.isPending && !isInSendHistory) {
       const rawId = `${data.address.toLowerCase()}-${data.maxGasTx.hash}`;
       const isShowStatus =
         transactionHistoryService.clearSuccessAndFailSingleId(rawId);
       isShowStatus && setShowSuccess(true);
     }
-  }, [data]);
+  }, [data, isInSendHistory]);
 
   const noNeedTokenChangeType = useMemo(
     () =>
@@ -413,12 +436,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 16,
+    paddingRight: 16,
+    paddingVertical: 14,
     borderRadius: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     marginBottom: 8,
+    alignItems: 'center',
+    gap: 12,
     // borderColor: colors2024['neutral-line'],
     // borderWidth: 1,
   },
@@ -455,8 +481,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight, colors }) => ({
   titleText: {
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 22,
     fontWeight: '500',
   },
   describeText: {

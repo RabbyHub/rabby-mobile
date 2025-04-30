@@ -21,6 +21,7 @@ export enum MMKV_FILE_NAMES {
   KEYRING = 'mmkv.keyring',
   CHAINS = 'mmkv.chains',
   DAYCURVE = 'mmkv.24hCurve',
+  CEXID = 'mmkv.cexid',
 }
 
 export async function walkThroughMMKVFiles(

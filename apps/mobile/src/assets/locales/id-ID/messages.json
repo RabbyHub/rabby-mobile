@@ -82,7 +82,8 @@
         "BuyAgain": "Beli Lagi",
         "From": "Dari",
         "RevokeToken": "Batalkan Token",
-        "GasFee": "Biaya Gas"
+        "GasFee": "Biaya Gas",
+        "AddToWhitelist": "Tambahkan ke Daftar Putih"
       },
       "empty": {
         "title": "Tidak ada transaksi",
@@ -659,7 +660,12 @@
       "emptyWhitelistContent": "Tambahkan alamat tepercaya ke daftar putih untuk transfer cepat—tidak perlu konfirmasi pada lain waktu",
       "emptyWhitelistTip": "Belum ada alamat yang terdaftar.",
       "emptyWhitelistHeader": "Tambahkan Alamat Daftar Putih",
-      "sendToImportedAddress": "Kirim ke Alamat yang Saya Impor"
+      "sendToImportedAddress": "Kirim ke Alamat yang Saya Impor",
+      "recent": "Terbaru",
+      "sendTimeHeader": "Kirim",
+      "innerEnterAddress": "Masukkan Alamat / ENS",
+      "SendHistory": "Kirim Riwayat",
+      "SelectFromHistory": "Pilih Dari Riwayat"
     },
     "confirmAddress": {
       "risks": {
@@ -673,7 +679,8 @@
       "title": "Konfirmasi Alamat",
       "tipForWhiteList": "Tambahkan ke daftar putih Anda untuk transfer cepat, tidak perlu konfirmasi lain kali.",
       "addToWhitelist": "Tambahkan ke daftar putih",
-      "dexNameTail": "Alamat Deposit"
+      "dexNameTail": "Alamat Deposit",
+      "checkbox": "Saya memahami risiko dan ingin melanjutkan"
     },
     "selectAddress": {
       "selectSafeAddress": "Pilih dari alamat Safe",
@@ -687,7 +694,18 @@
       "addSuccessful": "Alamat ditambahkan ke whitelist",
       "alreadyAdded": "Sudah ditambahkan ke dalam daftar putih Anda",
       "confirmPassword": "Masukkan Kata Sandi untuk Konfirmasi",
-      "confirm": "Konfirmasi"
+      "confirm": "Konfirmasi",
+      "header": {
+        "address": "Alamat",
+        "name": "Nama",
+        "exchange": "Alamat pertukaran?"
+      },
+      "placeholder": {
+        "name": "Beri Nama Alamat Anda",
+        "exchange": "pilih pertukaran"
+      },
+      "alreadyInYour": "Sudah ada dalam whitelist Anda",
+      "alreadyIn": "Sudah dalam Daftar Putih"
     },
     "sendTokenComponents": {
       "GasReserved": "Dipesan <1>0</1> {{ tokenName }} untuk biaya gas"
@@ -1701,7 +1719,8 @@
       "header": {
         "searchPlaceHolder": "Cari Nama Token / Alamat",
         "placeHolder": "Cari",
-        "favoriteTitle": "Token Favorit"
+        "favoriteTitle": "Token Favorit",
+        "SearchChain": "Cari Rantai"
       },
       "tokenItem": {
         "verifyDangerTips": "Ini adalah token scam",
@@ -1812,7 +1831,8 @@
       "tabs": {
         "address": "Alamat",
         "portfolio": "Portofolio"
-      }
+      },
+      "scamTokenHeader": "Token penipuan"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1837,6 +1857,11 @@
       "BrowserHistoryList": {
         "title": "Riwayat"
       }
+    },
+    "scan": {
+      "noQRCodeFound": "Tidak ada QR-Code yang ditemukan",
+      "selectFromAlbum": "Pilih dari Album",
+      "noCameraDevice": "Tidak Ada Perangkat Kamera"
     }
   },
   "component": {
@@ -1987,6 +2012,9 @@
       "noDapps": "Tidak ada Dapp yang tersedia di rantai ini",
       "help": "Silakan hubungi tim resmi dari rantai ini untuk dukungan.",
       "noDapp": "Tidak ada Dapps yang tersedia"
+    },
+    "selectCexModal": {
+      "title": "Pilih Sumber Pertukaran"
     }
   },
   "native": {
