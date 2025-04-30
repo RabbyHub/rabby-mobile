@@ -7,8 +7,9 @@ import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
+import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { navigate } from '@/utils/navigation';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
@@ -22,12 +23,8 @@ import { GasLessConfig } from '../FooterBar/GasLessComponents';
 import { GasAccountTips } from '../FooterBar/GasLessComponents/GasAccountTips';
 import { GasLessActivityToSign } from '../FooterBar/GasLessComponents/GasLessActivityToSign';
 import { GasLessNotEnough } from '../FooterBar/GasLessComponents/GasLessNotEnough';
-import { MiniCommonAction } from './MiniCommonAction';
-import { MiniLedgerAction } from './MiniLedgerAction';
-import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { MiniActionGroup } from './MiniActionGroup';
 import { MiniActionStatus } from './MiniActionStatus';
-import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -470,65 +467,6 @@ export const MiniFooterBar: React.FC<Props> = ({
           ) : (
             <MiniActionStatus account={account} task={task} />
           )}
-          {/* {account.type === KEYRING_CLASS.HARDWARE.LEDGER ? (
-            <MiniLedgerAction
-              isMiniSignTx
-              task={task}
-              account={account}
-              gasLess={useGasLess && !payGasByGasAccount}
-              {...props}
-              disabledProcess={
-                payGasByGasAccount
-                  ? !gasAccountCanPay
-                  : useGasLess
-                  ? false
-                  : props.disabledProcess
-              }
-              enableTooltip={
-                account.type === KEYRING_TYPE.WatchAddressKeyring
-                  ? true
-                  : payGasByGasAccount
-                  ? false
-                  : useGasLess
-                  ? false
-                  : props.enableTooltip
-              }
-              gasLessThemeColor={
-                isDarkTheme
-                  ? gasLessConfig?.dark_color
-                  : gasLessConfig?.theme_color
-              }
-              footer={footer}
-            />
-          ) : (
-            <MiniCommonAction
-              isMiniSignTx
-              task={task}
-              account={account}
-              gasLess={useGasLess && !payGasByGasAccount}
-              {...props}
-              disabledProcess={
-                payGasByGasAccount
-                  ? !gasAccountCanPay
-                  : useGasLess
-                  ? false
-                  : props.disabledProcess
-              }
-              enableTooltip={
-                payGasByGasAccount
-                  ? false
-                  : useGasLess
-                  ? false
-                  : props.enableTooltip
-              }
-              gasLessThemeColor={
-                isDarkTheme
-                  ? gasLessConfig?.dark_color
-                  : gasLessConfig?.theme_color
-              }
-              footer={footer}
-            />
-          )} */}
         </View>
       </View>
     </View>

@@ -3,6 +3,7 @@ import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import OneKeySvg from '@/assets/icons/wallet/onekey.svg';
 import { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
+import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { Loading } from '@/screens/Bridge/components/BridgeSwitchBtn';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -10,11 +11,10 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { Dots } from '../Popup/Dots';
-import { BatchSignTxTaskType } from './useBatchSignTxTask';
 
 interface Props {
   account: Account;
-  task: BatchSignTxTaskType;
+  task: MiniApprovalTaskType;
 }
 
 export const MiniActionStatus: React.FC<Props> = ({ task, account }) => {
