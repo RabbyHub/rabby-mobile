@@ -1812,7 +1812,8 @@
       "tabs": {
         "portfolio": "Portfolio",
         "address": "Address"
-      }
+      },
+      "scamTokenHeader": "Scam tokens"
     },
     "browser": {
       "BrowserBookmarkSection": {
