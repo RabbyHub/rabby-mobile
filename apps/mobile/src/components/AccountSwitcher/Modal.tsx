@@ -175,7 +175,7 @@ export function AccountSwitcherModalInDappWebView({
         <AutoLockView style={[styles.container]}>
           <View style={[styles.panelContainer]}>
             <AccountsPanelInModal
-              allowNullCurrentAccount
+              allowNullCurrentAccount={false}
               forScene={'@ActiveDappWebViewModal'}
               onSwitchSceneAccount={async ctx => {
                 if (!activeDappId) {
