@@ -7,6 +7,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
+import { MiniApprovalPopupContainer } from '../Popup/MiniApprovalPopupContainer';
 
 interface Props {
   onCancel?: () => void;
@@ -87,14 +88,14 @@ export const MiniOneKeyHardwareWaiting = ({
 
   return (
     <View>
-      <View style={styles.titleWrapper}>
+      {/* <View style={styles.titleWrapper}>
         <OneKeySVG width={20} height={20} style={styles.brandIcon} />
         <Text style={styles.title}>
           {t('page.signFooterBar.qrcode.signWith', { brand: 'OneKey' })}
         </Text>
-      </View>
+      </View> */}
 
-      <ApprovalPopupContainer
+      <MiniApprovalPopupContainer
         showAnimation
         hdType="onekey"
         status={error.status}
@@ -103,6 +104,7 @@ export const MiniOneKeyHardwareWaiting = ({
         onCancel={onCancel}
         description={currentDescription}
         content={renderContent}
+        BrandIcon={OneKeySVG}
         hasMoreDescription={
           error.status === 'REJECTED' || error.status === 'FAILED'
         }

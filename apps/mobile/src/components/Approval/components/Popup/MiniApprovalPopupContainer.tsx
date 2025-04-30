@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { FooterResend } from './FooterResend';
 import { FooterButton } from './FooterButton';
 import { FooterResendCancelGroup } from './FooterResendCancelGroup';
-import TxFailedSVG from '@/assets/icons/approval/tx-failed.svg';
+import TxFailedSVG from '@/assets/icons/approval/tx-failed-1.svg';
+import IconWarningSvg from '@/assets/icons/swap/warning-cc.svg';
 import TxSucceedSVG from '@/assets/icons/approval/tx-succeed.svg';
 import ConnectWiredSVG from '@/assets/icons/approval/connect-wired.svg';
 import ConnectBleSVG from '@/assets/icons/approval/connect-ble.svg';
@@ -25,11 +26,13 @@ import {
   ViewStyle,
 } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useApprovalPopup } from '@/hooks/useApprovalPopup';
 import useDebounce from 'react-use/lib/useDebounce';
+import { createGetStyles2024 } from '@/utils/styles';
+import { MiniFooterResendCancelGroup } from './MiniFooterResendCancelGroup';
 
-const getStyles = (colors: AppColorsVariants) =>
+const getStyle = createGetStyles2024(({ colors }) =>
   StyleSheet.create({
     wrapper: {
       alignItems: 'center',
@@ -56,7 +59,7 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
     },
     hdTitleWrapper: {
-      marginTop: 25,
+      // marginTop: 25,
     },
     infoIcon: {
       width: 20,
@@ -69,11 +72,18 @@ const getStyles = (colors: AppColorsVariants) =>
       fontWeight: '400',
     },
     footer: {},
-    description: { marginTop: 12, marginBottom: 10, height: 46 },
+    description: {
+      marginTop: 8,
+      marginBottom: 32,
+      height: 46,
+      paddingHorizontal: 16,
+    },
     noDescription: {
       height: 20,
+      marginBottom: 10,
     },
-  });
+  }),
+);
 
 export interface Props {
   hdType:
@@ -106,7 +116,7 @@ export interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-export const ApprovalPopupContainer: React.FC<Props> = ({
+export const MiniApprovalPopupContainer: React.FC<Props> = ({
   hdType,
   status,
   content,
@@ -124,8 +134,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   const [iconColor, setIconColor] = React.useState('');
   const [contentColor, setContentColor] = React.useState('');
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
 
   const SendSVG = React.useMemo(() => {
     switch (hdType) {
@@ -205,7 +214,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   const isHD = hdType === 'ledger';
   return (
     <View style={StyleSheet.flatten([styles.wrapper, style])}>
-      {SendSVG ? (
+      {/* {SendSVG ? (
         <View style={styles.mainContainer}>
           {BrandIcon && (
             <View style={styles.brandIcon}>
@@ -214,13 +223,14 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
           )}
           <SendSVG style={styles.mainImage} />
         </View>
-      ) : null}
+      ) : null} */}
       <View
         style={StyleSheet.flatten([
           styles.titleWrapper,
           styles.hdTitleWrapper,
         ])}>
         {InfoSVG ? <InfoSVG style={styles.infoIcon} /> : null}
+
         <View>{content({ contentColor })}</View>
         {(status === 'SENDING' || status === 'WAITING') && showAnimation ? (
           <Dots color={contentColor} />
@@ -246,11 +256,19 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         {status === 'SENDING' && <FooterResend onResend={onRetry} />}
         {status === 'WAITING' && <FooterResend onResend={onRetry} />}
         {status === 'FAILED' && (
-          <FooterResendCancelGroup onCancel={onCancel} onResend={onRetry} />
+          <MiniFooterResendCancelGroup
+            BrandIcon={BrandIcon}
+            onCancel={onCancel}
+            onResend={onRetry}
+          />
         )}
         {status === 'RESOLVED' && <FooterDoneButton onDone={onDone} hide />}
         {status === 'REJECTED' && (
-          <FooterResendCancelGroup onCancel={onCancel} onResend={onRetry} />
+          <MiniFooterResendCancelGroup
+            BrandIcon={BrandIcon}
+            onCancel={onCancel}
+            onResend={onRetry}
+          />
         )}
         {status === 'SUBMITTING' && (
           <FooterButton

@@ -8,6 +8,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
+import { MiniApprovalPopupContainer } from '../Popup/MiniApprovalPopupContainer';
 
 interface Props {
   onCancel?: () => void;
@@ -100,14 +101,14 @@ export const MiniLedgerHardwareWaiting = ({
 
   return (
     <View>
-      <View style={styles.titleWrapper}>
+      {/* <View style={styles.titleWrapper}>
         <LedgerSVG width={20} height={20} style={styles.brandIcon} />
         <Text style={styles.title}>
           {t('page.signFooterBar.qrcode.signWith', { brand: 'Ledger' })}
         </Text>
-      </View>
+      </View> */}
 
-      <ApprovalPopupContainer
+      <MiniApprovalPopupContainer
         showAnimation
         hdType="ledger"
         status={error.status}
@@ -115,6 +116,7 @@ export const MiniLedgerHardwareWaiting = ({
         onDone={onDone}
         onCancel={onCancel}
         description={currentDescription}
+        BrandIcon={LedgerSVG}
         content={renderContent}
         hasMoreDescription={
           error.status === 'REJECTED' || error.status === 'FAILED'

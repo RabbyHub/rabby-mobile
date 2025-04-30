@@ -7,6 +7,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
+import { MiniApprovalPopupContainer } from '../Popup/MiniApprovalPopupContainer';
 
 interface Props {
   onCancel?: () => void;
@@ -80,7 +81,7 @@ export const MiniPrivatekeyWaiting = ({
 
   return (
     <View>
-      <ApprovalPopupContainer
+      <MiniApprovalPopupContainer
         showAnimation
         hdType={'privatekey'}
         status={error?.status}
