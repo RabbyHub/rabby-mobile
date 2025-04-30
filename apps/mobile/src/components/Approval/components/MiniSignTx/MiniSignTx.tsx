@@ -80,6 +80,7 @@ import {
   useMiniApprovalTask,
 } from '@/hooks/useMiniApprovalTask';
 import { View } from 'react-native';
+import { sendTransaction } from '@/utils/sendTransaction';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -132,7 +133,7 @@ const MiniSignTx = ({
 }: {
   txs: Tx[];
   onReject?: (e?: any) => void;
-  onResolve?: (res: string[]) => void;
+  onResolve?: (res: Awaited<ReturnType<typeof sendTransaction>>[]) => void;
   onSubmit?: () => void;
   ga?: Record<string, any>;
   onVisibleChange?: (v: boolean) => void;
@@ -1124,7 +1125,7 @@ export const MiniApproval = ({
   txs?: Tx[];
   visible?: boolean;
   onReject?: (e?: any) => void;
-  onResolve?: (res: string[]) => void;
+  onResolve?: (res: Awaited<ReturnType<typeof sendTransaction>>[]) => void;
   onVisibleChange?: (v: boolean) => void;
   ga?: Record<string, any>;
   onSubmitting?: () => void;

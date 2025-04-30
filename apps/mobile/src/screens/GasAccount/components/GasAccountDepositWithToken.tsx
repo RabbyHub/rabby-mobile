@@ -508,7 +508,7 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
               txs: [tx],
             });
             console.log('[txhash]', res);
-            const hash = res?.[0];
+            const hash = res?.[0]?.txHash;
 
             await afterTopUpGasAccount({
               to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
