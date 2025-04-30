@@ -23,7 +23,6 @@ export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
           } catch (error) {
             console.error(error);
           }
-          console.log('dappSceneAccount', dappSceneAccount);
           const preference = ctx.services[APP_STORE_NAMES.preference];
 
           const currentAccount = preference.getCurrentAccount();
