@@ -95,7 +95,8 @@
         "WillReceive": "Recevoira : ≈ {{token}}",
         "Collection": "Collection",
         "totalApprovedAmount": "Montant Approuvé Actuel",
-        "BuyAgain": "Acheter à nouveau"
+        "BuyAgain": "Acheter à nouveau",
+        "AddToWhitelist": "Ajouter à la liste blanche"
       },
       "empty": {
         "title": "Aucune transaction",
@@ -1441,7 +1442,8 @@
       "header": {
         "placeHolder": "Recherche",
         "searchPlaceHolder": "Rechercher le nom/la l’adresse du token",
-        "favoriteTitle": "Token Favori"
+        "favoriteTitle": "Token Favori",
+        "SearchChain": "Recherche de la chaîne"
       },
       "tokenItem": {
         "Issuedby": "Émis par",
@@ -1771,7 +1773,12 @@
       "emptyWhitelistTip": "Aucune adresse autorisée pour le moment,",
       "sendToWatchAddress": "Envoyer à des adresses en mode lecture seule",
       "sendToSafeAddress": "Envoyer à des adresses sûres",
-      "emptyWhitelistContent": "Ajoutez des adresses de confiance à la liste blanche pour des transferts rapides—pas de confirmation nécessaire la prochaine fois."
+      "emptyWhitelistContent": "Ajoutez des adresses de confiance à la liste blanche pour des transferts rapides—pas de confirmation nécessaire la prochaine fois.",
+      "sendTimeHeader": "Envoyer",
+      "SendHistory": "Historique des envois",
+      "recent": "Récent",
+      "innerEnterAddress": "Entrez l'adresse / ENS",
+      "SelectFromHistory": "Sélectionner dans l'historique"
     },
     "confirmAddress": {
       "risks": {
@@ -1785,7 +1792,8 @@
       "tipForWhiteList": "Ajoutez à votre liste blanche pour des transferts rapides, aucune confirmation n'est nécessaire la prochaine fois.",
       "addToWhitelist": "Ajouter à la liste blanche",
       "title": "Confirmer l'adresse",
-      "sendTo": "Envoyer à cette adresse"
+      "sendTo": "Envoyer à cette adresse",
+      "checkbox": "Je comprends les risques et je souhaite continuer"
     },
     "selectAddress": {
       "selectSafeAddress": "Sélectionner parmi les adresses Safe",
@@ -1799,7 +1807,18 @@
       "removeWhitelist": "Supprimer de la liste blanche",
       "cancel": "Annuler",
       "alreadyAdded": "Déjà ajouté à votre liste blanche",
-      "copyAddress": "Copier l'adresse"
+      "copyAddress": "Copier l'adresse",
+      "header": {
+        "address": "Adresse",
+        "exchange": "Adresse d'échange ?",
+        "name": "Nom"
+      },
+      "placeholder": {
+        "name": "Nommez votre adresse",
+        "exchange": "sélectionner l'échange"
+      },
+      "alreadyIn": "Déjà dans la liste blanche",
+      "alreadyInYour": "Déjà dans votre liste blanche"
     },
     "syncExtension": {
       "syncingProgress": "Analyse ({{ percent }})",
@@ -1822,7 +1841,8 @@
       "tabs": {
         "portfolio": "Portefeuille",
         "address": "Adresse"
-      }
+      },
+      "scamTokenHeader": "Tokens d'escroquerie"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1847,6 +1867,11 @@
       "BrowserHistoryList": {
         "title": "Histoire"
       }
+    },
+    "scan": {
+      "noCameraDevice": "Aucun appareil photo",
+      "noQRCodeFound": "Aucun QR-Code trouvé",
+      "selectFromAlbum": "Sélectionner depuis l'Album"
     }
   },
   "native": {
@@ -2032,6 +2057,9 @@
       "viewDappOptions": "Voir les options Dapp",
       "noDapps": "Aucune Dapp disponible sur cette chaîne",
       "noDapp": "Aucune Dapps disponible"
+    },
+    "selectCexModal": {
+      "title": "Sélectionner la source d'échange"
     }
   },
   "global": {

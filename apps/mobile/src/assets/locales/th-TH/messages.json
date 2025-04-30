@@ -175,6 +175,9 @@
       "thirdPartyDappToProceed": "กรุณาใช้ Dapp ของบุคคลที่สามเพื่อดำเนินการต่อ",
       "noDapp": "ไม่พบ Dapps",
       "help": "โปรดติดต่อทีมงานทางการของเครือข่ายนี้เพื่อขอความช่วยเหลือ"
+    },
+    "selectCexModal": {
+      "title": "เลือกแหล่งแลกเปลี่ยน"
     }
   },
   "page": {
@@ -236,7 +239,8 @@
         "PurchaseFrom": "ซื้อจาก",
         "Collection": "คอลเลกชัน",
         "WillReceive": "จะได้รับ: ≈ {{token}}",
-        "totalApprovedAmount": "จำนวนเงินที่อนุมัติในปัจจุบัน"
+        "totalApprovedAmount": "จำนวนเงินที่อนุมัติในปัจจุบัน",
+        "AddToWhitelist": "เพิ่มลงในรายการขาว"
       },
       "empty": {
         "desc": "ไม่พบธุรกรรมบน<1>supported chains</1>",
@@ -1589,7 +1593,8 @@
       "header": {
         "placeHolder": "ค้นหา",
         "searchPlaceHolder": "ค้นหาชื่อ Token / ที่อยู่",
-        "favoriteTitle": "โทเค็นที่ชื่นชอบ"
+        "favoriteTitle": "โทเค็นที่ชื่นชอบ",
+        "SearchChain": "ค้นหา Chain"
       },
       "tokenItem": {
         "verifyDangerTips": "นี่คือโทเค็นหลอกลวง",
@@ -1912,7 +1917,12 @@
       "whitelistTitle": "ที่อยู่ Whitelist ของฉัน",
       "emptyWhitelistHeader": "เพิ่มที่อยู่ใน Whitelist",
       "emptyWhitelistTip": "ยังไม่มีที่อยู่ที่ผ่านการอนุมัติ",
-      "emptyWhitelistContent": "เพิ่มที่อยู่ที่เชื่อถือได้ไปยังบัญชีขาวเพื่อการโอนที่รวดเร็ว — ไม่จำเป็นต้องยืนยันในครั้งถัดไป"
+      "emptyWhitelistContent": "เพิ่มที่อยู่ที่เชื่อถือได้ไปยังบัญชีขาวเพื่อการโอนที่รวดเร็ว — ไม่จำเป็นต้องยืนยันในครั้งถัดไป",
+      "SelectFromHistory": "เลือกจากประวัติ",
+      "SendHistory": "ประวัติการส่ง",
+      "recent": "ล่าสุด",
+      "innerEnterAddress": "ป้อนที่อยู่ / ENS",
+      "sendTimeHeader": "ส่ง"
     },
     "confirmAddress": {
       "risks": {
@@ -1926,7 +1936,8 @@
       "addToWhitelist": "เพิ่มในบัญชีขาว",
       "tipForWhiteList": "เพิ่มในรายการที่อนุญาตของคุณเพื่อการโอนไว ไม่ต้องยืนยันในครั้งถัดไป",
       "title": "ยืนยันที่อยู่",
-      "sendTo": "ส่งไปยังที่อยู่นี้"
+      "sendTo": "ส่งไปยังที่อยู่นี้",
+      "checkbox": "ฉันเข้าใจความเสี่ยงและต้องการดำเนินการต่อ"
     },
     "selectAddress": {
       "selectWatchAddress": "เลือกจากที่อยู่อย่างเดียวสำหรับการดู",
@@ -1940,7 +1951,18 @@
       "addSuccessful": "เพิ่มที่อยู่ในรายการที่อนุญาต",
       "alreadyAdded": "เพิ่มลงในรายชื่อที่อนุญาตของคุณแล้ว",
       "addToWhitelist": "เพิ่มไปยัง Whitelist",
-      "copyAddress": "คัดลอกที่อยู่"
+      "copyAddress": "คัดลอกที่อยู่",
+      "header": {
+        "address": "ที่อยู่",
+        "exchange": "ที่อยู่ของการแลกเปลี่ยน?",
+        "name": "ชื่อ"
+      },
+      "placeholder": {
+        "name": "ตั้งชื่อที่อยู่ของคุณ",
+        "exchange": "เลือกการแลกเปลี่ยน"
+      },
+      "alreadyInYour": "อยู่ในรายชื่อที่อนุญาตแล้ว",
+      "alreadyIn": "อยู่ใน Whitelist แล้ว"
     },
     "syncExtension": {
       "syncingTips": "ถือกล้องให้นิ่งจนกว่าการสแกนจะเสร็จสิ้น",
@@ -1963,7 +1985,8 @@
       "tabs": {
         "portfolio": "ผลงาน",
         "address": "ที่อยู่"
-      }
+      },
+      "scamTokenHeader": "โทเค็นหลอกลวง"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1988,6 +2011,11 @@
       "BrowserHistoryList": {
         "title": "ประวัติ"
       }
+    },
+    "scan": {
+      "noQRCodeFound": "ไม่พบ QR-Code",
+      "noCameraDevice": "ไม่มีอุปกรณ์กล้อง",
+      "selectFromAlbum": "เลือกจากอัลบั้ม"
     }
   },
   "native": {
