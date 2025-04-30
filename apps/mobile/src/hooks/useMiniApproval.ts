@@ -3,12 +3,13 @@ import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useClearMiniApprovalTask } from './useMiniApprovalTask';
 import { uniqueId } from 'lodash';
+import { sendTransaction } from '@/utils/sendTransaction';
 
 export const miniApprovalAtom = atom<{
   txs?: Tx[];
   visible?: boolean;
   onReject?: (e?: any) => void;
-  onResolve?: (res: string[]) => void;
+  onResolve?: (res: Awaited<ReturnType<typeof sendTransaction>>[]) => void;
   onVisibleChange?: (v: boolean) => void;
   ga?: Record<string, any>;
 }>({
@@ -24,24 +25,26 @@ export const useMiniApproval = () => {
     ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
       // clear();
       // const currentApprovalId = uniqueId('mini-approval');
-      return new Promise<string[]>((resolve, reject) => {
-        setState(prev => {
-          return {
-            ...prev,
-            txs,
-            ga,
-            visible: true,
-            onReject: e => {
-              setState(prev => ({ ...prev, txs: [], visible: false }));
-              reject(e);
-            },
-            onResolve: res => {
-              setState(prev => ({ ...prev, txs: [], visible: false }));
-              resolve(res);
-            },
-          };
-        });
-      });
+      return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(
+        (resolve, reject) => {
+          setState(prev => {
+            return {
+              ...prev,
+              txs,
+              ga,
+              visible: true,
+              onReject: e => {
+                setState(prev => ({ ...prev, txs: [], visible: false }));
+                reject(e);
+              },
+              onResolve: res => {
+                setState(prev => ({ ...prev, txs: [], visible: false }));
+                resolve(res);
+              },
+            };
+          });
+        },
+      );
     },
   );
 

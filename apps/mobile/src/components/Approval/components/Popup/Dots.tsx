@@ -1,7 +1,15 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React, { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Easing,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextStyle,
+  View,
+} from 'react-native';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -19,7 +27,8 @@ const bounceHeight = 5;
 
 export const Dots: React.FC<{
   color?: string;
-}> = ({ color }) => {
+  style?: StyleProp<TextStyle>;
+}> = ({ color, style }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [animations, setAnimations] = useState<Animated.Value[]>([]);
@@ -93,6 +102,7 @@ export const Dots: React.FC<{
               {
                 color: colors[color],
               },
+              style,
             ]}>
             .
           </Text>

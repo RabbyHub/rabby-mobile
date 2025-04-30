@@ -61,7 +61,7 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
   const { runAsync: start } = useRequest(
     async () => {
       const currentId = globalCurrentTaskId;
-      const txHashList: string[] = [];
+      const resultList: Awaited<ReturnType<typeof sendTransaction>>[] = [];
       try {
         setStatus('active');
         for (let index = 0; index < list.length; index++) {
@@ -107,7 +107,7 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
                 hash: result?.txHash,
               },
             });
-            txHashList.push(result?.txHash);
+            resultList.push(result);
           } catch (e: any) {
             console.error(e);
             if (currentId !== globalCurrentTaskId) {
@@ -142,7 +142,7 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
           return;
         }
         setStatus('completed');
-        return txHashList;
+        return resultList;
       } catch (e) {
         console.error(e);
         throw e;
