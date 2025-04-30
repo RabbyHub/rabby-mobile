@@ -59,7 +59,7 @@ export default function TransactionNavigator() {
           title: 'Send to',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
@@ -73,7 +73,7 @@ export default function TransactionNavigator() {
           title: 'Select Address to add',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
@@ -86,7 +86,7 @@ export default function TransactionNavigator() {
           title: 'Send to',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
@@ -99,7 +99,7 @@ export default function TransactionNavigator() {
           title: 'Add New Address to Whitelist',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
@@ -112,7 +112,7 @@ export default function TransactionNavigator() {
           title: 'Select Imported Address',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
@@ -125,7 +125,7 @@ export default function TransactionNavigator() {
           title: 'Select Imported Address',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
@@ -152,7 +152,7 @@ export default function TransactionNavigator() {
           title: 'Send',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
@@ -165,7 +165,7 @@ export default function TransactionNavigator() {
           title: 'Send',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
@@ -186,7 +186,7 @@ export default function TransactionNavigator() {
           title: 'Receive',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             fontSize: 20,
           },
@@ -245,7 +245,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
@@ -262,7 +262,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
@@ -281,7 +281,7 @@ export default function TransactionNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,
-            fontWeight: '800',
+            fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
           },
@@ -345,7 +345,6 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'Approvals',
           ...headerPresets.withBgCard2_2024,
-          headerStyle: {},
         })}
       />
 
@@ -394,10 +393,16 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'GasAccount',
           ...headerPresets.withBgCard2_2024,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
           headerStyle: {
             backgroundColor: 'transparent',
           },
-          headerTintColor: undefined,
         })}
       />
 

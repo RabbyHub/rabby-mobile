@@ -129,7 +129,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     titleText: {
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '800',
+      fontWeight: '900',
       lineHeight: 24,
       fontSize: 20,
       color: ctx.colors2024['neutral-title-1'],

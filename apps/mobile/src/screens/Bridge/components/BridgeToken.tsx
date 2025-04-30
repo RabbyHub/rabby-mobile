@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -19,13 +20,21 @@ import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import TokenSelect from '@/screens/Swap/components/TokenSelect';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { Skeleton } from '@rneui/themed';
+import { Skeleton, Slider } from '@rneui/themed';
 import LinearGradient from 'react-native-linear-gradient';
 import RcIconWalletCC from '@/assets2024/icons/swap/wallet-cc.svg';
 import { Account } from '@/core/services/preference';
 import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import useAutoFocusInput from '@/hooks/useAutoFocusInput';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { IS_ANDROID } from '@/core/native/utils';
+import { BubbleWithText } from '@/screens/Swap/components/Slider';
+
+const hiddenSlider = true;
 
 const BridgeToken = ({
   type = 'from',
@@ -47,6 +56,8 @@ const BridgeToken = ({
   handleMax,
   skeletonLoading,
   disabled,
+  slider,
+  onChangeSlider,
 }: {
   clickMaxBtnCount?: number;
   handleMax?: () => void;
@@ -65,6 +76,8 @@ const BridgeToken = ({
   inSufficient?: boolean;
   skeletonLoading?: boolean;
   disabled?: boolean;
+  slider?: number;
+  onChangeSlider?: (value: number, syncAmount?: boolean) => void;
 } & (
   | {
       type?: 'from';
@@ -140,6 +153,42 @@ const BridgeToken = ({
     );
   }, [colors2024]);
 
+  const showBubble = useSharedValue(false);
+
+  const { width } = useWindowDimensions();
+
+  const sliderStyle = useAnimatedStyle(
+    () => ({
+      opacity: showBubble.value ? 1 : 0,
+      display: showBubble.value ? 'flex' : 'none',
+      position: 'absolute',
+      top: IS_ANDROID ? -72 : -60,
+      left: 0,
+      height: 70,
+      width,
+      transform: [
+        {
+          translateX: 0 - width / 2 + (IS_ANDROID ? 7 : 6),
+        },
+      ],
+    }),
+    [width],
+  );
+
+  const onSlidingStart = useCallback(() => {
+    if (!disabled) {
+      showBubble.value = true;
+    }
+  }, [showBubble, disabled]);
+
+  const onAfterChangeSlider = useCallback(
+    (v: number) => {
+      onChangeSlider?.(v, true);
+      showBubble.value = false;
+    },
+    [onChangeSlider, showBubble],
+  );
+
   useEffect(() => {
     if (isFromToken && disabled) {
       onInputChange?.('');
@@ -159,6 +208,40 @@ const BridgeToken = ({
           // excludeChains={excludeChains}
           // supportChains={supportedChains}
         />
+        {isFromToken && !hiddenSlider && (
+          <View style={styles.sliderContainer}>
+            <Slider
+              key={`${token?.id}-${token?.chain}`}
+              allowTouchTrack={!disabled}
+              disabled={disabled}
+              style={styles.slider}
+              value={slider}
+              onSlidingStart={onSlidingStart}
+              onValueChange={onChangeSlider}
+              onSlidingComplete={onAfterChangeSlider}
+              minimumValue={0}
+              maximumValue={100}
+              minimumTrackTintColor={colors2024['brand-default']}
+              maximumTrackTintColor={colors2024['neutral-line']}
+              step={1}
+              thumbStyle={styles.thumbStyle}
+              thumbProps={{
+                children: (
+                  <View>
+                    <View style={[styles.outerThumb, { position: 'relative' }]}>
+                      <View style={styles.innerThumb} />
+
+                      <Animated.View style={sliderStyle}>
+                        <BubbleWithText slide={slider || 0} />
+                      </Animated.View>
+                    </View>
+                  </View>
+                ),
+              }}
+            />
+            <Text style={styles.sliderValue}>{slider}%</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.body}>
@@ -318,6 +401,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderBottomWidth: 0.5,
     borderColor: colors2024['neutral-line'],
   },
+  headerRight: {},
   chainSelector: {
     height: 32,
     marginLeft: 8,
@@ -414,6 +498,49 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   loadingOpacity: {
     opacity: 0.5,
+  },
+  sliderContainer: {
+    flex: 1,
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    position: 'relative',
+    gap: 8,
+  },
+  slider: {
+    maxWidth: 126,
+    flex: 1,
+    height: 4,
+  },
+  sliderValue: {
+    width: 40,
+    textAlign: 'right',
+    color: colors2024['brand-default'],
+    fontSize: 13,
+    fontWeight: '500',
+    fontFamily: 'SF Pro',
+  },
+  thumbStyle: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 14,
+    height: 14,
+    backgroundColor: 'transparent',
+  },
+  outerThumb: {
+    width: 14,
+    height: 14,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  innerThumb: {
+    width: 10,
+    height: 10,
+    borderRadius: 10,
+    backgroundColor: colors2024['brand-default'],
   },
 }));
 

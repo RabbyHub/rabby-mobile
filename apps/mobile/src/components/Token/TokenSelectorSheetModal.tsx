@@ -571,7 +571,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        if (isSwapTo) {
+        if (
+          isSwapTo ||
+          (query && (type === 'bridgeFrom' || type === 'swapFrom'))
+        ) {
           return (
             <View style={{ marginTop: 8, marginHorizontal: 12 }}>
               <TokenItemContextMenu
@@ -734,6 +737,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         );
       },
       [
+        query,
         isLoading,
         disableItemCheck,
         chainSearchCtx.filterAccountItem,
