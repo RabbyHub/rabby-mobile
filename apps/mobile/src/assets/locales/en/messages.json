@@ -1701,6 +1701,7 @@
       "header": {
         "placeHolder": "Search",
         "searchPlaceHolder": "Search Token Name / Address",
+        "SearchChain": "Search Chain",
         "favoriteTitle": "Favorite Token"
       },
       "tokenItem": {
