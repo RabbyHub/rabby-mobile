@@ -479,32 +479,46 @@ const Swap = ({
       ) {
         // runBuildSwapTxs();
         // setIsShowSign(true);
-        if (txs?.length) {
-          try {
-            await sendPrepareMiniTransactions();
-            setTimeout(() => {
-              mutateTxs([]);
 
-              navigation.dispatch(
-                StackActions.replace(RootNames.StackRoot, {
-                  screen: RootNames.Home,
-                }),
-              );
-            }, 500);
-            preferenceService.setReportActionTs(
-              REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
-              {
-                chain: chainServerId,
-              },
-            );
-            console.log(['[miniApproval resolve]']);
-          } catch (e) {
-            console.log(['[miniApproval reject]', e]);
-            console.error(e);
-            mutateTxs([]);
-            refresh(e => e + 1);
+        try {
+          if (txs?.length) {
+            await sendPrepareMiniTransactions();
+          } else {
+            const res = await runBuildSwapTxs();
+            if (res) {
+              await sendMiniTransactions({
+                txs: res,
+                ga: {
+                  category: 'Swap',
+                  source: 'swap',
+                  swapUseSlider,
+                },
+              });
+            }
           }
+          setTimeout(() => {
+            mutateTxs([]);
+
+            navigation.dispatch(
+              StackActions.replace(RootNames.StackRoot, {
+                screen: RootNames.Home,
+              }),
+            );
+          }, 500);
+          preferenceService.setReportActionTs(
+            REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
+            {
+              chain: chainServerId,
+            },
+          );
+          console.log(['[miniApproval resolve]']);
+        } catch (e) {
+          console.log(['[miniApproval reject]', e]);
+          console.error(e);
+          mutateTxs([]);
+          refresh(e => e + 1);
         }
+
         clearExpiredTimer();
       } else {
         gotoSwap();
@@ -522,11 +536,7 @@ const Swap = ({
   );
 
   const canUseMiniTx =
-    [
-      KEYRING_TYPE.SimpleKeyring,
-      KEYRING_TYPE.HdKeyring,
-      KEYRING_CLASS.HARDWARE.LEDGER,
-    ].includes((currentAccount?.type || '') as any) &&
+    isAccountSupportMiniApproval((currentAccount?.type || '') as any) &&
     !receiveToken?.low_credit_score &&
     !receiveToken?.is_scam &&
     receiveToken?.is_verified !== false &&

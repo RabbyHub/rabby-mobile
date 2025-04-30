@@ -1173,10 +1173,12 @@ export const MiniApproval = ({
           handleReject?.();
         }
         dismissedByCodeRef.current = false;
+        onVisibleChange?.(false);
       }
+
       indexRef.current = index;
     },
-    [handleReject],
+    [handleReject, onVisibleChange],
   );
 
   const task = useMiniApprovalTask({

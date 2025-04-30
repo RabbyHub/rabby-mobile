@@ -27,6 +27,7 @@ import { MiniLedgerAction } from './MiniLedgerAction';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { MiniActionGroup } from './MiniActionGroup';
 import { MiniActionStatus } from './MiniActionStatus';
+import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -48,7 +49,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   Header?: React.ReactNode;
   gasLessConfig?: GasLessConfig;
   isGasNotEnough?: boolean;
-  task: BatchSignTxTaskType;
+  task: MiniApprovalTaskType;
   gasMethod?: 'native' | 'gasAccount';
   gasAccountCost?: GasAccountCheckResult;
   onChangeGasAccount?: () => void;
