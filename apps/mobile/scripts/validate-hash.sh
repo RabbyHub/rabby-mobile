@@ -11,6 +11,9 @@ cd "${SCRIPT_DIR}/.."
 
 # 不上传 sentry 报告了，没啥用
 export SENTRY_DISABLE_AUTO_UPLOAD=true
+# https://www.npmjs.com/package/react-native-dotenv#override-envname
+# 覆写 .env
+export APP_ENV=hashing
 
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
 BUILD_REPORT_FILE="build_info_${TIMESTAMP}.txt"
