@@ -116,7 +116,7 @@ export const useRecentSend = () => {
   const recentHistory = useMemo(() => {
     return markedList
       .sort((a, b) => b.time - a.time)
-      .filter(item => item.time > Date.now() - 24 * 60 * 60 * 1000) // in 24 hours
+      .filter(item => item.time > Date.now() - 60 * 60 * 1000) // in 1 hours
       .map(item => {
         if ('projectDict' in item.data) {
           return {

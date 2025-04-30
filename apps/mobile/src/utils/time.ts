@@ -10,7 +10,7 @@ export const formatSeconds = (secs: number) => {
   const min = Math.floor(secs / 60);
   const s = secs - min * 60;
 
-  return `${min} min${s > 0 ? ` ${s} sec` : ''}`;
+  return `${min}min${s > 0 ? ` ${s}sec` : ''}`;
 };
 
 export const timeago = (a: number, b: number) => {
@@ -65,10 +65,10 @@ export const formatTimeReadable = (timeElapse: number) => {
   let timeStr = '';
   const { d, h, m, s } = getTimeSpan(timeElapse);
 
-  if (d) timeStr = `${d} day` + (d > 1 ? 's' : '');
-  if (h && !timeStr) timeStr = `${h} hr` + (h > 1 ? 's' : '');
-  if (m && !timeStr) timeStr = `${m} min` + (m > 1 ? 's' : '');
-  if (!timeStr) timeStr = `${s} sec` + (s > 1 ? 's' : '');
+  if (d) timeStr = `${d}day` + (d > 1 ? 's' : '');
+  if (h && !timeStr) timeStr = `${h}hr` + (h > 1 ? 's' : '');
+  if (m && !timeStr) timeStr = `${m}min` + (m > 1 ? 's' : '');
+  if (!timeStr) timeStr = `${s}sec` + (s > 1 ? 's' : '');
   return timeStr;
 };
 
@@ -87,11 +87,11 @@ export function fromNow(time: number, currTime?: number) {
     flag++;
   }
   if ((h || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${h} hour`;
+    str += `${flag > 0 ? ' ' : ''}${h}hour`;
     flag++;
   }
   if ((m || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${m} min`;
+    str += `${flag > 0 ? ' ' : ''}${m}min`;
     flag++;
   }
   if (str) successTimeView = str;
@@ -109,15 +109,15 @@ export function fromNowWithSecs(time: number, currTime?: number) {
     flag++;
   }
   if ((h || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${h} hour`;
+    str += `${flag > 0 ? ' ' : ''}${h}hour`;
     flag++;
   }
   if ((m || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${m} min`;
+    str += `${flag > 0 ? ' ' : ''}${m}min`;
     flag++;
   }
   if (!d && !h && !m) {
-    str += `${s} sec`;
+    str += `${s}sec`;
   }
   if (str) successTimeView = str;
   return successTimeView;
@@ -143,11 +143,11 @@ export const calcGasEstimated = (seconds?: number) => {
   // > 1 minute: ~ time min
   // >= 30 minutes: > 30 min
   if (seconds < 60) {
-    return `~${Math.round(seconds)} sec`;
+    return `~${Math.round(seconds)}sec`;
   }
   const minutes = seconds / 60;
   if (minutes < 30) {
-    return `~${Math.round(minutes)} min`;
+    return `~${Math.round(minutes)}min`;
   }
   return '>30 min';
 };
