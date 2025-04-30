@@ -27,6 +27,7 @@ import {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils/dist/types';
 import { Skeleton } from '@rneui/themed';
+import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -71,73 +72,84 @@ const AddressSource = ({ account, style, addressDesc, loading }: IProps) => {
     );
   }
   return (
-    <Card style={StyleSheet.flatten([styles.card, style])}>
-      <InnerAddressItem style={styles.rootItem} account={account}>
-        {({ WalletIcon }) => (
-          <View style={styles.item}>
-            <View style={styles.iconWrapper}>
-              {cexDesc?.is_deposit && cexDesc?.logo_url ? (
-                <Image
-                  source={{ uri: cexDesc?.logo_url }}
-                  style={styles.walletIcon}
-                  width={46}
-                  height={46}
-                />
-              ) : (
-                <WalletIcon style={styles.walletIcon} width={46} height={46} />
-              )}
-              {inWhiteList && (
-                <RcIconLockCC
-                  style={styles.lockIcon}
-                  color={colors2024['brand-default']}
-                  surroundColor={colors2024['neutral-bg-1']}
-                  width={22}
-                  height={22}
-                />
-              )}
-            </View>
-            <View style={styles.itemInfo}>
-              <View style={styles.itemNameWrapper}>
-                <Text style={styles.itemNameText}>
-                  {adderssAlias || ellipsisAddress(account.address, 6)}
-                </Text>
+    <AddressItemShadowView style={[styles.shadowView]}>
+      <Card style={StyleSheet.flatten([styles.card, style])}>
+        <InnerAddressItem style={styles.rootItem} account={account}>
+          {({ WalletIcon }) => (
+            <View style={styles.item}>
+              <View style={styles.iconWrapper}>
+                {cexDesc?.is_deposit && cexDesc?.logo_url ? (
+                  <Image
+                    source={{ uri: cexDesc?.logo_url }}
+                    style={styles.walletIcon}
+                    width={46}
+                    height={46}
+                  />
+                ) : (
+                  <WalletIcon
+                    style={styles.walletIcon}
+                    width={46}
+                    height={46}
+                  />
+                )}
+                {inWhiteList && (
+                  <RcIconLockCC
+                    style={styles.lockIcon}
+                    color={colors2024['brand-default']}
+                    surroundColor={colors2024['neutral-bg-1']}
+                    width={22}
+                    height={22}
+                  />
+                )}
               </View>
-              {((cexDesc?.is_deposit && cexDesc?.id) ||
-                account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
-                <View style={styles.itemName}>
-                  <Text
-                    style={[
-                      styles.itemType,
-                      {
-                        color: brandColors.brandColor,
-                        backgroundColor: brandColors.brandBg,
-                      },
-                    ]}>
-                    {cexDesc?.is_deposit && cexDesc?.name
-                      ? `${cexDesc.name} ${t(
-                          'page.confirmAddress.dexNameTail',
-                        )}`
-                      : `${
-                          BRAND_ALIAS_TYPE_TEXT[account.type] ||
-                          account.brandName
-                        } ${t('page.confirmAddress.brandNameTail')}`}
+              <View style={styles.itemInfo}>
+                <View style={styles.itemNameWrapper}>
+                  <Text style={styles.itemNameText}>
+                    {adderssAlias || ellipsisAddress(account.address, 6)}
                   </Text>
                 </View>
-              )}
-              {/* <Text style={styles.balanceText}>
+                {((cexDesc?.is_deposit && cexDesc?.id) ||
+                  account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
+                  <View style={styles.itemName}>
+                    <Text
+                      style={[
+                        styles.itemType,
+                        {
+                          color: brandColors.brandColor,
+                          backgroundColor: brandColors.brandBg,
+                        },
+                      ]}>
+                      {cexDesc?.is_deposit && cexDesc?.name
+                        ? `${cexDesc.name} ${t(
+                            'page.confirmAddress.dexNameTail',
+                          )}`
+                        : `${
+                            BRAND_ALIAS_TYPE_TEXT[account.type] ||
+                            account.brandName
+                          } ${t('page.confirmAddress.brandNameTail')}`}
+                    </Text>
+                  </View>
+                )}
+                {/* <Text style={styles.balanceText}>
                   {formatUsdValue(account.balance || 0)}
                 </Text> */}
+              </View>
             </View>
-          </View>
-        )}
-      </InnerAddressItem>
-    </Card>
+          )}
+        </InnerAddressItem>
+      </Card>
+    </AddressItemShadowView>
   );
 };
 
 export default AddressSource;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  shadowView: {
+    // borderRadius: 20,
+    borderWidth: 0,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',

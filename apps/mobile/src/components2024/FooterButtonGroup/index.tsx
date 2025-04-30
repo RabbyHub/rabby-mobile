@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Button } from '@/components2024/Button';
+import AuthButton from '../AuthButton';
 
 export const FooterButtonGroup: React.FC<{
   onCancel?: () => void;
@@ -14,6 +15,7 @@ export const FooterButtonGroup: React.FC<{
   disable?: boolean;
   confirmDisabled?: boolean;
   loading?: boolean;
+  authButton?: boolean;
   style?: StyleProp<ViewStyle>;
 }> = ({
   onCancel,
@@ -24,6 +26,7 @@ export const FooterButtonGroup: React.FC<{
   style,
   disable,
   loading,
+  authButton,
   confirmDisabled,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -44,14 +47,25 @@ export const FooterButtonGroup: React.FC<{
       />
       <View style={styles.btnGap} />
 
-      <Button
-        containerStyle={styles.btnContainer}
-        title={confirmText}
-        onPress={onConfirm}
-        disabled={disable || confirmDisabled}
-        loading={loading}
-        type={confirmType || 'primary'}
-      />
+      {authButton ? (
+        <AuthButton
+          containerStyle={styles.btnContainer}
+          title={confirmText}
+          onFinished={onConfirm}
+          disabled={disable || confirmDisabled}
+          loading={loading}
+          type={confirmType || 'primary'}
+        />
+      ) : (
+        <Button
+          containerStyle={styles.btnContainer}
+          title={confirmText}
+          onPress={onConfirm}
+          disabled={disable || confirmDisabled}
+          loading={loading}
+          type={confirmType || 'primary'}
+        />
+      )}
     </View>
   );
 };

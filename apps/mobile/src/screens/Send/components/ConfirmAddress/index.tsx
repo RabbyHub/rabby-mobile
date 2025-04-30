@@ -22,7 +22,10 @@ import { useRisks } from './risk';
 import { toast } from '@/components2024/Toast';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  AddrDescResponse,
+  ProjectItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { Skeleton } from '@rneui/themed';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -31,6 +34,7 @@ import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disbaleWhiteSwitch?: boolean;
+  cex?: ProjectItem;
   account: KeyringAccountWithAlias;
   onConfirm?: (
     account: KeyringAccountWithAlias,
@@ -43,6 +47,7 @@ const ConfirmAddress = ({
   onCancel,
   onConfirm,
   title,
+  cex,
   disbaleWhiteSwitch,
 }: ConfirmAddressScreenProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -52,6 +57,7 @@ const ConfirmAddress = ({
   const { loading, risks, addressDesc } = useRisks(
     account.address,
     !!account.balance,
+    cex,
   );
   const [isChecked, setIsChecked] = useState(false);
   const { accounts } = useAccounts({
@@ -66,7 +72,9 @@ const ConfirmAddress = ({
     [account.address, isAddrOnWhitelist],
   );
   useEffect(() => {
-    switchRef.current?.setState({ value: inWhiteList });
+    if (switchRef.current) {
+      switchRef.current.setState({ value: inWhiteList });
+    }
   }, [inWhiteList]);
 
   const setInWhitelist = useCallback(
@@ -176,9 +184,10 @@ const ConfirmAddress = ({
             styles.footerButtonGroup,
             { marginBottom: safeSizes.footerButtonGroupMb },
           ])}
+          authButton
           onCancel={onCancel ?? noop}
           onConfirm={handleConfirm}
-          confirmDisabled={!isChecked}
+          confirmDisabled={risks.length > 0 && !isChecked}
         />
       )}
     </View>

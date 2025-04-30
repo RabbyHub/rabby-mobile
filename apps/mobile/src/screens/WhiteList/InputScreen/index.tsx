@@ -50,6 +50,7 @@ import { useAtom } from 'jotai';
 import { toast } from '@/components2024/Toast';
 import { useAlert } from './useAlert';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -115,14 +116,42 @@ const WhitelistInputScreen = () => {
       setLoading(true);
       Keyboard.dismiss();
 
-      if (isCex && cex?.id) {
-        setCexId(address, cex.id);
+      const { inWhitelist, account, isImported } =
+        await findAccountWithoutBalance(address, undefined);
+      if (inWhitelist) {
+        toast.show(t('page.whitelist.alreadyAdded'));
+      } else {
+        const id = createGlobalBottomSheetModal2024({
+          name: MODAL_NAMES.CONFIRM_ADDRESS,
+          account,
+          title: t('page.confirmAddress.addToWhitelist'),
+          cex: isCex ? cex : undefined,
+          disbaleWhiteSwitch: true,
+          bottomSheetModalProps: {
+            enableDynamicSizing: true,
+          },
+          onCancel: () => {
+            removeGlobalBottomSheetModal2024(id);
+          },
+          async onConfirm() {
+            removeGlobalBottomSheetModal2024(id);
+            matomoRequestEvent({
+              category: 'Send Usage',
+              action: isImported
+                ? 'Send_AddWhitelist_imported'
+                : 'Send_AddWhitelist_notImported',
+            });
+            if (isCex && cex?.id) {
+              setCexId(address, cex.id);
+            }
+            setInput('');
+            await whitelistService.addWhitelist(address);
+            await getWhitelist();
+            toast.success(t('page.whitelist.addSuccessful'));
+            nav.canGoBack() && nav.goBack();
+          },
+        });
       }
-      setInput('');
-      await whitelistService.addWhitelist(address);
-      await getWhitelist();
-      toast.success(t('page.whitelist.addSuccessful'));
-      nav.canGoBack() && nav.goBack();
     } catch (err: any) {
     } finally {
       setLoading(false);
@@ -228,9 +257,9 @@ const WhitelistInputScreen = () => {
     <>
       <FooterButtonScreenContainer
         as="View"
-        authButtonProps={{
+        buttonProps={{
           title: t('global.Confirm'),
-          onFinished: handleDone,
+          onPress: handleDone,
           loading: loading,
           disabled: !input || !!error,
         }}

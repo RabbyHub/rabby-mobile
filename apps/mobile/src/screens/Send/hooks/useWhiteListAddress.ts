@@ -140,6 +140,7 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
         isMyImported: myAccounts.some(item =>
           isSameAddress(item.address, address),
         ),
+        isImported: accounts.some(item => isSameAddress(item.address, address)),
         account: targetAccounts.length
           ? brandName
             ? targetAccounts.find(i => i.brandName === brandName) ||
