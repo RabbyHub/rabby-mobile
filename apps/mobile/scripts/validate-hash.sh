@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# 保存原始目录并设置退出时自动恢复
+ORIGINAL_DIR=$(pwd)
+# 设置退出时必定执行切回原目录（无论成功/失败）
+trap 'cd "$ORIGINAL_DIR"' EXIT
+
+# 获取脚本所在绝对路径
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+cd "${SCRIPT_DIR}/.."
+
 # 不上传 sentry 报告了，没啥用
 export SENTRY_DISABLE_AUTO_UPLOAD=true
 
