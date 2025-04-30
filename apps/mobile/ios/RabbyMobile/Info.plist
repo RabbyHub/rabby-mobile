@@ -112,7 +112,5 @@
 	<false />
 	<key>rabbit_code</key>
 	<string>$(RABBY_MOBILE_CODE)</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need access to your photo library to allow you to select images for use in the app.</string>
 </dict>
 </plist>
