@@ -16,7 +16,6 @@ import { RootNames } from '@/constant/layout';
 import { URDecoder } from '@ngraveio/bc-ur';
 import { strFromU8, gunzipSync } from 'fflate';
 import { useTranslation } from 'react-i18next';
-import { QRCodePicker } from './QRCodePicker';
 
 const CAMERA_WIDTH = Dimensions.get('window').width - 70;
 
@@ -46,13 +45,9 @@ export const ScannerScreen = () => {
   const count = useRef(0);
 
   const handleCodeScanned = React.useCallback(
-    (data: Code[] | string | null) => {
-      if (!data) {
-        return;
-      }
-      const value = typeof data === 'string' ? data : data[0]?.value;
-
+    (data: Code[]) => {
       if (navState?.syncExtension) {
+        const value = data[0]?.value;
         if (value && value.startsWith('ur:')) {
           try {
             decoder.receivePart(value);
@@ -79,7 +74,7 @@ export const ScannerScreen = () => {
           }
         }
       } else {
-        value && setText(value);
+        setText(data[0].value!);
         nav.goBack();
       }
     },
@@ -96,8 +91,6 @@ export const ScannerScreen = () => {
     }
   }, [navState, setText]);
 
-  const showScanLine = navState?.syncExtension && currentCount > 0;
-
   return (
     <View style={styles.main}>
       <View style={styles.wrapper}>
@@ -105,7 +98,7 @@ export const ScannerScreen = () => {
           containerStyle={styles.containerStyle}
           onCodeScanned={handleCodeScanned}
           size={CAMERA_WIDTH}
-          showScanLine={showScanLine}
+          showScanLine={navState?.syncExtension && currentCount > 0}
         />
         {navState?.syncExtension ? (
           <>
@@ -124,9 +117,6 @@ export const ScannerScreen = () => {
           </>
         ) : null}
       </View>
-      {navState?.syncExtension ? null : (
-        <QRCodePicker onCodeScanned={handleCodeScanned} />
-      )}
     </View>
   );
 };
