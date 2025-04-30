@@ -117,6 +117,8 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
             onChange={onChange}
             onBlur={handleBlur}
             onFocus={handleFocus}
+            autoCorrect={false}
+            spellCheck={false}
             {...rest}
           />
           {!isEmpty ? (

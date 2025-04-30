@@ -1,14 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  Dimensions,
-  ScrollView,
-  StyleProp,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { Dimensions, StyleProp, Text, View, ViewStyle } from 'react-native';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';

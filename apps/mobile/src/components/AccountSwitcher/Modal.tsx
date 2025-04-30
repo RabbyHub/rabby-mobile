@@ -74,7 +74,6 @@ export function AccountSwitcherModal({
         colors: colors2024,
       })}
       onDismiss={onCancel}
-      handleStyle={styles.handleStyle}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
       <BottomSheetScrollView ref={scrollViewRef}>
@@ -165,16 +164,18 @@ export function AccountSwitcherModalInDappWebView({
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      // snapPoints={snapPoints}
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}
       onDismiss={onCancel}
-      handleStyle={styles.handleStyle}
       enableDynamicSizing
       maxDynamicContentSize={maxHeight}>
       <BottomSheetScrollView ref={scrollViewRef}>
         <AutoLockView style={[styles.container]}>
           <View style={[styles.panelContainer]}>
             <AccountsPanelInModal
-              allowNullCurrentAccount
+              allowNullCurrentAccount={false}
               forScene={'@ActiveDappWebViewModal'}
               onSwitchSceneAccount={async ctx => {
                 if (!activeDappId) {
