@@ -29404,6 +29404,7 @@ __metadata:
     react-native-aes-crypto: ^3.0.1
     react-native-animateable-text: 0.11.1
     react-native-asset: ^2.1.1
+    react-native-barcodes-detector: ^0.1.1
     react-native-ble-manager: 8
     react-native-ble-plx: 3.1.2
     react-native-bundle-splitter: ^3.0.1
@@ -29420,6 +29421,7 @@ __metadata:
     react-native-get-random-values: ^1.10.0
     react-native-haptic-feedback: 2.3.3
     react-native-iap: 12.16.2
+    react-native-image-picker: ^8.2.0
     react-native-inappbrowser-reborn: ^3.7.0
     react-native-indicators: ^0.17.0
     react-native-ios-context-menu: 1.15.3
@@ -29868,6 +29870,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-barcodes-detector@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "react-native-barcodes-detector@npm:0.1.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: f3e3ddabafb87da194ba2aaf44d1fa102b4e3dece7336634feae258a1bfa266a3e67eb7f0a134c218bb7e74a16d29c0099f84328bcb8dc42e4372ff3a00ac075
+  languageName: node
+  linkType: hard
+
 "react-native-ble-manager@npm:8, react-native-ble-manager@npm:^8.1.0":
   version: 8.8.0
   resolution: "react-native-ble-manager@npm:8.8.0"
@@ -30101,6 +30113,16 @@ __metadata:
     expo:
       optional: true
   checksum: 8d107815f3e352da9bed3aabed8fee519864b25393bfc63c5c6a6ff9ab0d7e0fd187484218279a57f579ebae977072c9674cec322cfba2e46935e14a7cae84d9
+  languageName: node
+  linkType: hard
+
+"react-native-image-picker@npm:^8.2.0":
+  version: 8.2.0
+  resolution: "react-native-image-picker@npm:8.2.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: d261d4f0571b771c5d2d8a1d5c129743a4993318a454e5bf7850db0fa452d4d5da2215a2f2af3879cd38211b864b3ba77d1d09255ff1f43112b3dcf985d6c233
   languageName: node
   linkType: hard
 

@@ -62,7 +62,6 @@ export const ScanDeviceScreen: React.FC<{ onScanFinish: () => void }> = ({
   const handleCodeScanned = async (codes: Code[]) => {
     try {
       const data = codes[0].value!;
-
       decoder.current.receivePart(data);
       setProgress(Math.floor(decoder.current.estimatedPercentComplete() * 100));
       if (decoder.current.isComplete()) {
