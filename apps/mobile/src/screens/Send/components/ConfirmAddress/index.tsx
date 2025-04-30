@@ -17,7 +17,6 @@ import AddressPopover from '../AddressPopover';
 import AddressSource from '../AddressSourceCard';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useRisks } from './risk';
 import { toast } from '@/components2024/Toast';
@@ -139,30 +138,21 @@ const ConfirmAddress = ({
         ]}>
         {loading ? (
           <View style={styles.tipItem}>
-            <View style={styles.tipIcon}>
-              {/* <RcTipCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-info']}
-              /> */}
-              <RcIconWarningCircleCC
-                width={20}
-                height={20}
-                color={colors2024['orange-default']}
-              />
-            </View>
+            <RcIconWarningCircleCC
+              width={20}
+              height={20}
+              color={colors2024['orange-default']}
+            />
             <Skeleton style={styles.loading} height={40} />
           </View>
         ) : (
           risks.map(risk => (
             <View key={risk.type} style={styles.tipItem}>
-              <View style={styles.tipIcon}>
-                <RcIconWarningCircleCC
-                  width={20}
-                  height={20}
-                  color={colors2024['orange-default']}
-                />
-              </View>
+              <RcIconWarningCircleCC
+                width={20}
+                height={20}
+                color={colors2024['orange-default']}
+              />
               <Text style={styles.tipText}>{risk.value}</Text>
             </View>
           ))
@@ -246,7 +236,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: colors2024['neutral-bg-5'],
     paddingHorizontal: 12,
     paddingVertical: 16,
     borderRadius: 12,
