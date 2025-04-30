@@ -19,7 +19,6 @@ import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTranslation } from 'react-i18next';
 import { BrowserHistorySiteItem } from '../../../BrowserManageScreen/components/BrowserHistoryList/BrowserHistorySiteList';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { DappHistorySectionEmpty } from '@/screens/Dapps/components/DappHistorySection/DappHistorySectionEmpty';
 import { useMemoizedFn } from 'ahooks';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 
@@ -87,6 +86,10 @@ export const BrowserBookmarkSection = ({
         Keyboard.dismiss();
         return false;
       }}>
+      {list.length <= 0 && browserHistoryList?.length <= 0 ? (
+        <BrowserBookmarkEmpty />
+      ) : null}
+
       {list?.length ? (
         <>
           <View style={styles.header}>
@@ -125,7 +128,6 @@ export const BrowserBookmarkSection = ({
               </View>
             ) : null}
           </View>
-
           <View style={[styles.list, gapStyle]}>
             {list.map(item => {
               return (
@@ -136,9 +138,8 @@ export const BrowserBookmarkSection = ({
             })}
           </View>
         </>
-      ) : (
-        <BrowserBookmarkEmpty />
-      )}
+      ) : null}
+
       {browserHistoryList?.length ? (
         <View style={styles.historyListWrapper}>
           <View style={styles.header}>
@@ -159,9 +160,7 @@ export const BrowserBookmarkSection = ({
             ))}
           </View>
         </View>
-      ) : (
-        <DappHistorySectionEmpty />
-      )}
+      ) : null}
     </ScrollView>
   );
 };
