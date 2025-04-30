@@ -161,7 +161,6 @@ const WhitelistInputScreen = () => {
   const handleSubmit = useCallback((text: string) => {
     setError(undefined);
     setInput(text);
-    Keyboard.dismiss();
   }, []);
   const openSendHistory = useCallback(() => {
     setHistoryVisible(true);
@@ -228,7 +227,9 @@ const WhitelistInputScreen = () => {
   useEffect(() => {
     setIsCex(false);
     setCex(undefined);
+    setAliasName('');
     if (isValidHexAddress(input as Hex)) {
+      setAliasName(contactService.getAliasByAddress(input)?.alias || '');
       getAddrDescWithCexLocalCacheSync(input).then(res => {
         if (res?.cex?.id && res?.cex?.is_deposit) {
           setIsCex(true);

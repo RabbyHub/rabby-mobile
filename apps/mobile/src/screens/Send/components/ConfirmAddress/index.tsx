@@ -145,14 +145,7 @@ const ConfirmAddress = ({
           },
         ]}>
         {loading ? (
-          <View style={styles.tipItem}>
-            <RcIconWarningCircleCC
-              width={20}
-              height={20}
-              color={colors2024['orange-default']}
-            />
-            <Skeleton style={styles.loading} height={40} />
-          </View>
+          <Skeleton style={styles.loading} height={52} />
         ) : (
           risks.map(risk => (
             <View key={risk.type} style={styles.tipItem}>
