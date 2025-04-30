@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch } from 'react-native-switch';
 import { noop } from 'lodash';
@@ -10,7 +16,7 @@ import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import AddressPopover from '../AddressPopover';
 import AddressSource from '../AddressSourceCard';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useRisks } from './risk';
@@ -21,6 +27,8 @@ import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Skeleton } from '@rneui/themed';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { CheckBoxRect } from '@/components2024/CheckBox';
+import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disbaleWhiteSwitch?: boolean;
@@ -46,6 +54,7 @@ const ConfirmAddress = ({
     account.address,
     !!account.balance,
   );
+  const [isChecked, setIsChecked] = useState(false);
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -131,10 +140,15 @@ const ConfirmAddress = ({
         {loading ? (
           <View style={styles.tipItem}>
             <View style={styles.tipIcon}>
-              <RcTipCC
+              {/* <RcTipCC
                 width={14}
                 height={14}
                 color={colors2024['neutral-info']}
+              /> */}
+              <RcIconWarningCircleCC
+                width={20}
+                height={20}
+                color={colors2024['orange-default']}
               />
             </View>
             <Skeleton style={styles.loading} height={40} />
@@ -143,10 +157,10 @@ const ConfirmAddress = ({
           risks.map(risk => (
             <View key={risk.type} style={styles.tipItem}>
               <View style={styles.tipIcon}>
-                <RcTipCC
-                  width={14}
-                  height={14}
-                  color={colors2024['neutral-info']}
+                <RcIconWarningCircleCC
+                  width={20}
+                  height={20}
+                  color={colors2024['orange-default']}
                 />
               </View>
               <Text style={styles.tipText}>{risk.value}</Text>
@@ -154,6 +168,18 @@ const ConfirmAddress = ({
           ))
         )}
       </View>
+      {!loading && risks?.length ? (
+        <TouchableOpacity
+          style={styles.checkbox}
+          onPress={() => {
+            setIsChecked(prev => !prev);
+          }}>
+          <CheckBoxRect size={16} checked={isChecked} />
+          <Text style={styles.checkboxText}>
+            {t('page.confirmAddress.checkbox')}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
       {!loading && (
         <FooterButtonGroup
           style={StyleSheet.flatten([
@@ -162,6 +188,7 @@ const ConfirmAddress = ({
           ])}
           onCancel={onCancel ?? noop}
           onConfirm={handleConfirm}
+          confirmDisabled={!isChecked}
         />
       )}
     </View>
@@ -195,7 +222,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 15,
-    marginBottom: 12,
   },
   text: {
     fontSize: 14,
@@ -210,13 +236,20 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
   },
   riskList: {
-    marginTop: 41,
+    marginTop: 34,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    marginBottom: 32,
   },
   tipItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    marginBottom: 32,
+    backgroundColor: colors2024['neutral-bg-0'],
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    borderRadius: 12,
   },
   tipIcon: {
     width: 14,
@@ -226,10 +259,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tipText: {
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '400',
+    fontWeight: '500',
     flex: 1,
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-body'],
   },
   footerButtonGroup: {
     paddingTop: 0,
@@ -244,5 +277,20 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 8,
     flex: 1,
+  },
+  checkbox: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  checkboxText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-foot'],
   },
 }));

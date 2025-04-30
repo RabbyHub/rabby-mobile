@@ -679,7 +679,8 @@
         "dexNoDeposite": "The recipient address is a non-deposit address from a CEX. Please ensure your deposit address is correct.",
         "contractAddress": "The recipient address is a contract address, potentially causing funds loss",
         "scamAddress": "The recipient address is a scam address flagged by Rabby"
-      }
+      },
+      "checkbox": "I understand the risks and want to continue"
     },
     "selectAddress": {
       "selectWatchAddress": "Select from Watch-only addresses",
