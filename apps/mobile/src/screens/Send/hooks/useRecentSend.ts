@@ -1,6 +1,6 @@
 import { transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useMyAccounts } from '@/hooks/account';
+import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { findChain } from '@/utils/chain';
 import { SendRequireData } from '@rabby-wallet/rabby-action';
@@ -55,7 +55,9 @@ function markFirstItems(
   return newArr;
 }
 
-export const useRecentSend = () => {
+export const useRecentSend = ({
+  useAllHistory,
+}: { useAllHistory?: boolean } = {}) => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -67,9 +69,11 @@ export const useRecentSend = () => {
     return batchFetchLocalTx();
   });
 
+  const { currentAccount } = useCurrentAccount();
+
   const batchFetchLocalTx = async () => {
     const list: TransactionGroup[] = [];
-    const accountList = unionAccounts;
+    const accountList = useAllHistory ? unionAccounts : [currentAccount];
     for (let i = 0; i < accountList.length; i++) {
       const account = accountList[i];
       if (!account) {

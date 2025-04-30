@@ -46,7 +46,9 @@ export const SendHistory = ({
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const { t } = useTranslation();
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
-  const { markedList, runAsync } = useRecentSend();
+  const { markedList, runAsync } = useRecentSend({
+    useAllHistory: isForMultipleAdderss,
+  });
   const { currentAccount } = useCurrentAccount({
     disableAutoFetch: true,
   });
@@ -59,16 +61,6 @@ export const SendHistory = ({
       bottomRef.current?.dismiss();
     }
   }, [visible, runAsync]);
-
-  const dataList = useMemo(() => {
-    if (!isForMultipleAdderss && currentAccount?.address) {
-      return markedList.filter(item =>
-        isSameAddress(item.data.address, currentAccount?.address),
-      );
-    } else {
-      return markedList;
-    }
-  }, [markedList, currentAccount, isForMultipleAdderss]);
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
@@ -151,7 +143,7 @@ export const SendHistory = ({
         </AddressItem>
       )}
       <BottomSheetFlatList
-        data={dataList}
+        data={markedList}
         renderItem={renderItem}
         windowSize={5}
         ListEmptyComponent={<Empty />}

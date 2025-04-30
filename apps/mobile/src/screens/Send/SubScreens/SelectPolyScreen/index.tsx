@@ -58,7 +58,7 @@ const SendPolyScreen = () => {
     toggle: toggleInput,
     clean: cleanInput,
   } = useInputSwitch();
-  const { recentHistory } = useRecentSend();
+  const { recentHistory } = useRecentSend({ useAllHistory: true });
   const { isSingleAddress } = useSendRoutes();
 
   const Header = useCallback(
