@@ -30096,6 +30096,7 @@ __metadata:
     react-native-crypto-js: ^1.0.0
     react-native-device-info: 14.0.4
     react-native-dotenv: ^3.4.9
+    react-native-edge-to-edge: ^1.6.0
     react-native-exception-handler: ^2.10.10
     react-native-fast-image: ^8.6.3
     react-native-fs: ^2.20.0
@@ -30722,6 +30723,16 @@ __metadata:
   peerDependencies:
     "@babel/runtime": ^7.20.6
   checksum: 9727c6a08e1b3e53b31d620ac1e9daedd899b61c0fd5413fb4593a209c0bf73e245506fc02bdb0d3caa4abf4f4145fa8499afff8e48e22bcf317cd90dbe18b87
+  languageName: node
+  linkType: hard
+
+"react-native-edge-to-edge@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "react-native-edge-to-edge@npm:1.6.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 624893661f8708b6924faafb0586edc1f42b3741930866efd2dd263c9592e5abc8a4615d7a3ee41e8aa4da9486bda56c84385bc35a168269f22ec0a8432aa5de
   languageName: node
   linkType: hard
 

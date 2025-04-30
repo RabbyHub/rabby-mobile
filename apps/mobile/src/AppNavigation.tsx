@@ -5,12 +5,16 @@ import {
   NavigationContainer,
 } from '@react-navigation/native';
 import React, { useCallback, useMemo, useRef } from 'react';
-import { BackHandler, ColorSchemeName } from 'react-native';
+import { Appearance, BackHandler, ColorSchemeName } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 
 import { navigationRef, replace } from '@/utils/navigation';
-import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from './constant/layout';
+import {
+  DEFAULT_NAVBAR_FONT_SIZE,
+  getScreenStatusBarConf,
+  RootNames,
+} from './constant/layout';
 import {
   useSetCurrentRouteName,
   useSetNavigationReady,
@@ -85,6 +89,7 @@ import { BrowserNavigator } from './screens/Navigators/BrowserNavigator';
 import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
 import { EVENT_ROUTE_CHANGE, eventBus } from './utils/events';
 // import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
+import { useOpenedActiveDappState } from './screens/Dapps/hooks/useDappView';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -346,7 +351,6 @@ export default function AppNavigation({
   const { setNavigationReady } = useSetNavigationReady();
 
   const { setCurrentRouteName } = useSetCurrentRouteName();
-  const { tuneOnRouteChange } = useTuneStatusBarOnRouteChange();
 
   const onRouteChange = useCallback(
     (currentRouteName?: string) => {
@@ -363,11 +367,11 @@ export default function AppNavigation({
        *
        * we do extra tune for StatusBar
        */
-      setTimeout(() => {
-        tuneOnRouteChange(currentRouteName);
-      }, 250);
+      // setTimeout(() => {
+      //   tuneOnRouteChange(currentRouteName);
+      // }, 250);
     },
-    [setCurrentRouteName, tuneOnRouteChange],
+    [setCurrentRouteName],
   );
 
   const onReady = useCallback<
@@ -388,6 +392,11 @@ export default function AppNavigation({
     matomoLogScreenView({ name: readyRootName });
   }, [setNavigationReady, isAppUnlocked, onRouteChange]);
 
+  const { hasActiveDapp: isShowingDappCard } = useOpenedActiveDappState();
+  const [statusBarStyle, setStatusBarStyle] = React.useState<'dark' | 'light'>(
+    'dark',
+  );
+
   const onStateChange = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onStateChange'] & object
   >(
@@ -402,6 +411,19 @@ export default function AppNavigation({
           currentRouteName,
           previousRouteName,
         });
+        // setStatusBarStyle
+        const appColorScheme = Appearance.getColorScheme();
+        const isDarkTheme = appColorScheme === 'dark';
+        if (currentRouteName) {
+          const { screenSpec } = getScreenStatusBarConf({
+            screenName: currentRouteName,
+            isDarkTheme,
+            isShowingDappCard,
+          });
+          setStatusBarStyle(
+            screenSpec.barStyle === 'dark-content' ? 'dark' : 'light',
+          );
+        }
 
         analytics.logScreenView({
           screen_name: routeNameRef.current,
@@ -411,7 +433,7 @@ export default function AppNavigation({
       }
       routeNameRef.current = currentRouteName;
     },
-    [onRouteChange],
+    [isShowingDappCard, onRouteChange],
   );
 
   useDetermineExitAppOnPressBack();
