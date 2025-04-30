@@ -29,6 +29,9 @@ export function useBrowserHistory() {
   });
 
   const setBrowserHistory = useMemoizedFn((item: BrowserHistoryItem) => {
+    if (!item || !/^https?:\/\//.test(item.url)) {
+      return;
+    }
     try {
       const entry = browserService.history.selectors.selectById(item.url);
       if (entry) {

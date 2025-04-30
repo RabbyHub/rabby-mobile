@@ -208,6 +208,7 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         const item = this.store.browserHistory.entities[key];
         if (
           item &&
+          /^https?:\/\//.test(item.url) &&
           Date.now() - (item.createdAt || 0) < 30 * 24 * 60 * 60 * 1000
         ) {
           res.ids.push(key);
