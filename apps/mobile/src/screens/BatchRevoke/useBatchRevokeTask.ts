@@ -11,8 +11,11 @@ import { FailedCode, sendTransaction } from '@/utils/sendTransaction';
 import { t } from 'i18next';
 import { useGasAccountSign } from '../GasAccount/hooks/atom';
 import { findIndexRevokeList } from './utils';
+import { useCurrentAccount } from '@/hooks/account';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
 
-async function buildTx(item: ApprovalSpenderItemToBeRevoked) {
+export async function buildTx(item: ApprovalSpenderItemToBeRevoked) {
   // generate tx
   let tx: Tx;
   if (item.permit2Id) {
@@ -132,6 +135,9 @@ const cloneAssetApprovalSpender = (item: AssetApprovalSpender) => {
 };
 
 export const useBatchRevokeTask = () => {
+  const { currentAccount } = useCurrentAccount();
+  const { sendMiniTransactions } = useMiniApproval();
+
   const gasAccount = useGasAccountSign();
   const queueRef = React.useRef(
     new PQueue({ concurrency: 1, autoStart: true }),
@@ -171,44 +177,61 @@ export const useBatchRevokeTask = () => {
           setList(prev => updateAssetApprovalSpender(prev, cloneItem));
           try {
             const tx = await buildTx(revokeItem);
-            const result = await sendTransaction({
-              tx,
-              ignoreGasCheck,
-              chainServerId: revokeItem.chainServerId,
-              gasAccount: {
-                sig: gasAccount.sig,
-                accountId: gasAccount.accountId,
-              },
-              autoUseGasAccount: true,
-              onProgress: status => {
-                if (status === 'builded') {
-                  setTxStatus('sended');
-                } else if (status === 'signed') {
-                  setTxStatus('signed');
-                }
-              },
-              onUseGasAccount: () => {
-                // update status
-                cloneItem.$status = {
-                  status: 'pending',
-                  isGasAccount: true,
-                };
-                setList(prev => updateAssetApprovalSpender(prev, cloneItem));
-              },
-              ga: {
-                category: 'Security',
-                source: 'tokenApproval',
-              },
-            });
-            // update status
-            cloneItem.$status = {
-              status: 'success',
-              txHash: result.txHash,
-              gasCost: result.gasCost,
-            };
+
+            if (
+              currentAccount?.type === KEYRING_TYPE.SimpleKeyring ||
+              currentAccount?.type === KEYRING_TYPE.HdKeyring
+            ) {
+              const result = await sendTransaction({
+                tx,
+                ignoreGasCheck,
+                chainServerId: revokeItem.chainServerId,
+                gasAccount: {
+                  sig: gasAccount.sig,
+                  accountId: gasAccount.accountId,
+                },
+                autoUseGasAccount: true,
+                onProgress: status => {
+                  if (status === 'builded') {
+                    setTxStatus('sended');
+                  } else if (status === 'signed') {
+                    setTxStatus('signed');
+                  }
+                },
+                onUseGasAccount: () => {
+                  // update status
+                  cloneItem.$status = {
+                    status: 'pending',
+                    isGasAccount: true,
+                  };
+                  setList(prev => updateAssetApprovalSpender(prev, cloneItem));
+                },
+                ga: {
+                  category: 'Security',
+                  source: 'tokenApproval',
+                },
+              });
+              // update status
+              cloneItem.$status = {
+                status: 'success',
+                txHash: result.txHash,
+                gasCost: result.gasCost,
+              };
+            } else {
+              const [result] = await sendMiniTransactions({
+                txs: [tx],
+              });
+
+              // update status
+              cloneItem.$status = {
+                status: 'success',
+                txHash: result.txHash,
+                gasCost: result.gasCost,
+              };
+            }
           } catch (e: any) {
             let failedCode = FailedCode.DefaultFailed;
-            if (FailedCode[e.name]) {
+            if (FailedCode[e?.name]) {
               failedCode = e.name;
             }
 
@@ -216,8 +239,8 @@ export const useBatchRevokeTask = () => {
             cloneItem.$status = {
               status: 'fail',
               failedCode: failedCode,
-              failedReason: e.message,
-              gasCost: e.gasCost,
+              failedReason: e?.message,
+              gasCost: e?.gasCost,
             };
           } finally {
             setList(prev => updateAssetApprovalSpender(prev, cloneItem));
@@ -227,7 +250,13 @@ export const useBatchRevokeTask = () => {
         { priority },
       );
     },
-    [gasAccount.accountId, gasAccount.sig, revokeList],
+    [
+      currentAccount?.type,
+      gasAccount.accountId,
+      gasAccount.sig,
+      revokeList,
+      sendMiniTransactions,
+    ],
   );
 
   const start = React.useCallback(() => {
