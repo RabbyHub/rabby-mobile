@@ -6,7 +6,7 @@ import { useMemoizedFn, useMount } from 'ahooks';
 import { useAtom } from 'jotai';
 import React, { useRef } from 'react';
 import { MiniApproval } from './MiniSignTx';
-import { toast } from '@/components2024/Toast';
+import { toast, toastWithDotAnimation } from '@/components2024/Toast';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 export const GlobalMiniApproval = () => {
@@ -16,7 +16,9 @@ export const GlobalMiniApproval = () => {
   });
   const { clear } = useClearMiniApprovalTask();
   // const [currentRoute, setCurrentRoute] = useState(getLatestNavigationName());
-  const submittingToastRef = useRef<ReturnType<typeof toast.show> | null>(null);
+  const submittingToastRef = useRef<ReturnType<
+    typeof toastWithDotAnimation
+  > | null>(null);
   const handleSubmitting = useMemoizedFn(() => {
     if (
       [KEYRING_CLASS.MNEMONIC, KEYRING_CLASS.PRIVATE_KEY].includes(
@@ -24,9 +26,12 @@ export const GlobalMiniApproval = () => {
       )
     ) {
       submittingToastRef?.current?.();
-      submittingToastRef.current = toast.show('Submitting Transaction...', {
-        duration: 0,
-      });
+      submittingToastRef.current = toastWithDotAnimation(
+        'Submitting Transaction',
+        {
+          duration: 0,
+        },
+      );
     }
   });
 
