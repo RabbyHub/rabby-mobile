@@ -1,12 +1,13 @@
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import { View } from 'react-native';
-import { getStyles } from './styles';
+import { getStyle } from './styles';
 
 export const GasSelectorSkeleton = () => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { colors, styles } = useTheme2024({
+    getStyle,
+  });
   return (
     <View style={styles.gasSelector}>
       <View>

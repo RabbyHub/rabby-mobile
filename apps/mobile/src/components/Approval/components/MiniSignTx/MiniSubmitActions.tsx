@@ -1,4 +1,3 @@
-import { Button } from '@/components/Button';
 import { globalBottomSheetModalAddListener } from '@/components/GlobalBottomSheetModal';
 import { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { Tip } from '@/components/Tip';
@@ -9,15 +8,16 @@ import mixPlugin from 'colord/plugins/mix';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { ActionsContainer, Props } from './ActionsContainer';
-import { GasLessAnimatedWrapper } from './GasLessComponents';
-import { useSubmitAction } from './useSubmitAction';
+import { ActionsContainer, Props } from '../FooterBar/ActionsContainer';
+import { GasLessAnimatedWrapper } from '../FooterBar/GasLessComponents';
+import { useSubmitAction } from '../FooterBar/useSubmitAction';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { Button } from '@/components2024/Button';
 
 extend([mixPlugin]);
 
-export const SubmitActions: React.FC<Props> = ({
+export const MiniSubmitActions: React.FC<Props> = ({
   disabledProcess,
   onSubmit,
   onCancel,
@@ -60,45 +60,33 @@ export const SubmitActions: React.FC<Props> = ({
     onPress(onSubmit, () => setPressedConfirm(false));
   }, [onSubmit, setPressedConfirm, onPress]);
 
+  console.log({ disabledProcess, pressedConfirm });
+
   return (
     <ActionsContainer onCancel={onCancel} isMiniSignTx={isMiniSignTx}>
       {isSign ? (
-        <View
-          style={{
-            flex: 1,
-          }}>
+        <View style={styles.warper}>
           <Button
             disabled={disabledProcess || pressedConfirm}
             type="primary"
-            buttonStyle={StyleSheet.flatten([
-              styles.button,
-              styles.buttonConfirm,
-            ])}
-            titleStyle={styles.buttonText}
-            disabledStyle={styles.buttonDisabled}
             onPress={handlePress}
-            title={
-              <View style={styles.submitButtonWrapper}>
-                {SubmitIcon && (
-                  <SubmitIcon
-                    width={18}
-                    height={18}
-                    style={{
-                      // @ts-expect-error
-                      color: colors['neutral-title-2'],
-                    }}
-                  />
-                )}
-                <Text style={styles.buttonText}>{submitText}</Text>
-              </View>
+            icon={
+              SubmitIcon ? (
+                <SubmitIcon
+                  width={18}
+                  height={18}
+                  style={{
+                    // @ts-expect-error
+                    color: colors['neutral-title-2'],
+                  }}
+                />
+              ) : null
             }
+            title={submitText}
           />
         </View>
       ) : (
-        <View
-          style={{
-            flex: 1,
-          }}>
+        <View style={styles.warper}>
           {/* @ts-ignore */}
           <Tip content={enableTooltip ? tooltipContent : undefined}>
             <View style={styles.buttonWrapper}>
@@ -122,8 +110,6 @@ export const SubmitActions: React.FC<Props> = ({
                         }
                       : {},
                   ]}
-                  titleStyle={styles.buttonText}
-                  disabledStyle={styles.buttonDisabled}
                   onPress={handleClickSign}
                   title={t('page.signFooterBar.signAndSubmitButton')}
                 />
@@ -137,16 +123,18 @@ export const SubmitActions: React.FC<Props> = ({
 };
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
+  warper: {
+    flex: 1,
+  },
   button: {
     height: 56,
-    borderColor: colors2024['brand-default'],
-    borderWidth: 1,
-    borderRadius: 100,
+    // borderColor: colors2024['brand-default'],
+    // borderWidth: 1,
   },
   buttonConfirm: {
     width: '100%',
-    borderColor: colors2024['brand-default'],
-    backgroundColor: colors2024['brand-default'],
+    // borderColor: colors2024['brand-default'],
+    // backgroundColor: colors2024['brand-default'],
   },
   buttonText: {
     color: colors2024['neutral-InvertHighlight'],

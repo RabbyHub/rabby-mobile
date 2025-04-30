@@ -470,7 +470,8 @@
       "blockDappFromSendingRequests": "Block Dapp from sending requests for 1 min",
       "cancelConnection": "Cancel connection",
       "cancelCurrentConnection": "Cancel current connection",
-      "startSigning": "Start Signing"
+      "startSigning": "Start Signing",
+      "ledgerConfirm": "Confirm"
     },
     "signTypedData": {
       "safeCantSignText": "This is a Safe address, and it cannot be used to sign text.",

@@ -1,6 +1,6 @@
-import { Button } from '@/components';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { Button } from '@/components2024/Button';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -10,50 +10,46 @@ export interface Props {
   onCancel: () => void;
 }
 
-const getStyles = (colors: AppColorsVariants) =>
+const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
     wrapper: {
       flexDirection: 'row',
       gap: 8,
+      width: '100%',
+      paddingHorizontal: 16,
     },
-    buttonStyle: {
-      backgroundColor: 'white',
-      borderColor: colors['blue-default'],
-      borderWidth: 1,
-      height: 48,
-      width: 173,
-      borderRadius: 8,
+    item: {
+      width: '50%',
+      flex: 1,
     },
-    buttonTitleStyle: {
-      color: colors['blue-default'],
-      fontSize: 15,
-    },
-  });
+  }),
+);
 
 export const FooterResendCancelGroup: React.FC<Props> = ({
   onResend,
   onCancel,
 }) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({
+    getStyle,
+  });
 
   return (
     <View style={styles.wrapper}>
-      <Button
-        titleStyle={styles.buttonTitleStyle}
-        buttonStyle={styles.buttonStyle}
-        type="clear"
-        onPress={onResend}
-        title={t('page.signFooterBar.resend')}
-      />
-      <Button
-        titleStyle={styles.buttonTitleStyle}
-        buttonStyle={styles.buttonStyle}
-        type="clear"
-        onPress={onCancel}
-        title={t('global.cancelButton')}
-      />
+      <View style={styles.item}>
+        <Button
+          type="ghost"
+          onPress={onCancel}
+          title={t('global.cancelButton')}
+        />
+      </View>
+      <View style={styles.item}>
+        <Button
+          type="primary"
+          onPress={onResend}
+          title={t('page.signFooterBar.resend')}
+        />
+      </View>
     </View>
   );
 };

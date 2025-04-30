@@ -49,6 +49,8 @@ import { RootNames } from '@/constant/layout';
 import { useNavigationState } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import { isAccountSupportMiniApproval } from '@/utils/account';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -551,6 +553,8 @@ export function useSendTokenForm(
     });
   }, [loadGasListAndResolve, putScreenState]);
 
+  const { sendMiniTransactions } = useMiniApproval();
+
   const handleSubmit = useCallback(
     async ({
       to,
@@ -625,9 +629,8 @@ export function useSendTokenForm(
           currentToken,
         );
         // await persistPageStateCache();
-
-        await apiProvider
-          .sendRequest(
+        if (isAccountSupportMiniApproval(currentAccount?.type || '')) {
+          const res = await apiProvider.sendRequest(
             {
               method: 'eth_sendTransaction',
               params: [params],
@@ -642,14 +645,58 @@ export function useSendTokenForm(
               },
             },
             INTERNAL_REQUEST_SESSION,
-          )
-          .then(() => {
-            sendTokenEventsRef.current.emit(SendTokenEvents.ON_SIGNED_SUCCESS);
-          })
-          .catch(err => {
-            console.error(err);
-            // toast.info(err.message);
-          });
+            true,
+          );
+          const tx = res.params?.[0];
+          if (tx) {
+            await sendMiniTransactions({
+              txs: [tx],
+              ga: {
+                category: 'Send',
+                source: 'sendToken',
+                toAddress,
+                // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                trigger: 'sendToken',
+              },
+            })
+              .then(() => {
+                sendTokenEventsRef.current.emit(
+                  SendTokenEvents.ON_SIGNED_SUCCESS,
+                );
+              })
+              .catch(err => {
+                console.error(err);
+                // toast.info(err.message);
+              });
+          }
+        } else {
+          await apiProvider
+            .sendRequest(
+              {
+                method: 'eth_sendTransaction',
+                params: [params],
+                $ctx: {
+                  ga: {
+                    category: 'Send',
+                    source: 'sendToken',
+                    toAddress,
+                    // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                    trigger: 'sendToken',
+                  },
+                },
+              },
+              INTERNAL_REQUEST_SESSION,
+            )
+            .then(() => {
+              sendTokenEventsRef.current.emit(
+                SendTokenEvents.ON_SIGNED_SUCCESS,
+              );
+            })
+            .catch(err => {
+              console.error(err);
+              // toast.info(err.message);
+            });
+        }
       } catch (e: any) {
         Alert.alert(e.message);
         console.error(e);
@@ -667,6 +714,7 @@ export function useSendTokenForm(
       screenState.estimatedGas,
       screenState.selectedGasLevel?.price,
       screenState.showGasReserved,
+      sendMiniTransactions,
       toAddress,
     ],
   );

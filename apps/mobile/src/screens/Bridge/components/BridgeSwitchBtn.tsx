@@ -52,8 +52,8 @@ const BridgeSwitchBtn: FC<BridgeSwitchBtnProps> = ({
     </TouchableOpacity>
   );
 };
-
-function Loading() {
+// todo move to components fold
+export function Loading() {
   const rotateValue = useRef(new Animated.Value(0)).current;
   const opacityValue = useRef(new Animated.Value(0)).current;
 

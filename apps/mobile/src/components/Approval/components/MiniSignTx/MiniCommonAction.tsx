@@ -4,26 +4,20 @@
 import { Chain } from '@debank/common';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import clsx from 'clsx';
 // import { KEYRING_CLASS } from 'consts';
 import React, { ReactNode, useMemo } from 'react';
 // import { ReactComponent as LedgerSVG } from 'ui/assets/walletlogo/ledger.svg';
-import {
-  ActionGroup,
-  Props as ActionGroupProps,
-} from '../FooterBar/ActionGroup';
-import { GasLessConfig } from '../FooterBar/GasLessComponents';
-import { ProcessActions } from '../FooterBar/ProcessActions';
-import { Dots } from '../Popup/Dots';
-import { BatchSignTxTaskType } from './useBatchSignTxTask';
-import { useTranslation } from 'react-i18next';
+import { RcIconCheckedCC } from '@/assets/icons/common';
+import { AppColorsVariants } from '@/constant/theme';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
-import { RcIconCheckedCC } from '@/assets/icons/common';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { AppColorsVariants } from '@/constant/theme';
+import { Props as ActionGroupProps } from '../FooterBar/ActionGroup';
+import { GasLessConfig } from '../FooterBar/GasLessComponents';
+import { Dots } from '../Popup/Dots';
+import { MiniActionGroup } from './MiniActionGroup';
+import { BatchSignTxTaskType } from './useBatchSignTxTask';
 
 interface Props extends ActionGroupProps {
   chain?: Chain;
@@ -72,7 +66,6 @@ export const MiniCommonAction: React.FC<Props> = ({
   ...props
 }) => {
   const binaryTheme = useGetBinaryMode();
-  const isDarkTheme = binaryTheme === 'dark';
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
@@ -81,7 +74,7 @@ export const MiniCommonAction: React.FC<Props> = ({
     <>
       {task.status === 'idle' ? (
         <>
-          <ActionGroup account={account} gasLess={useGasLess} {...props} />
+          <MiniActionGroup account={account} gasLess={useGasLess} {...props} />
           {footer}
         </>
       ) : task.status === 'completed' ? (

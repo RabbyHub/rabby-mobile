@@ -18,6 +18,9 @@ type ListItemType = {
   message?: string;
 };
 
+/**
+ * @deprecated
+ */
 export const useBatchSignTxTask = ({ ga }: { ga?: Record<string, any> }) => {
   // const wallet = useWallet();
 

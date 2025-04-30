@@ -25,11 +25,12 @@ import {
   ViewStyle,
 } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useApprovalPopup } from '@/hooks/useApprovalPopup';
 import useDebounce from 'react-use/lib/useDebounce';
+import { createGetStyles2024 } from '@/utils/styles';
 
-const getStyles = (colors: AppColorsVariants) =>
+const getStyle = createGetStyles2024(({ colors }) =>
   StyleSheet.create({
     wrapper: {
       alignItems: 'center',
@@ -56,7 +57,7 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
     },
     hdTitleWrapper: {
-      marginTop: 25,
+      // marginTop: 25,
     },
     infoIcon: {
       width: 20,
@@ -69,11 +70,18 @@ const getStyles = (colors: AppColorsVariants) =>
       fontWeight: '400',
     },
     footer: {},
-    description: { marginTop: 12, marginBottom: 10, height: 46 },
+    description: {
+      marginTop: 8,
+      marginBottom: 32,
+      height: 46,
+      paddingHorizontal: 16,
+    },
     noDescription: {
       height: 20,
+      marginBottom: 10,
     },
-  });
+  }),
+);
 
 export interface Props {
   hdType:
@@ -124,8 +132,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   const [iconColor, setIconColor] = React.useState('');
   const [contentColor, setContentColor] = React.useState('');
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors } = useTheme2024({ getStyle });
 
   const SendSVG = React.useMemo(() => {
     switch (hdType) {

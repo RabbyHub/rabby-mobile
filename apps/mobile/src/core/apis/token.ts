@@ -127,11 +127,13 @@ export const sendToken = async ({
   tokenId,
   rawAmount,
   $ctx,
+  isBuild,
 }: {
   to: string;
   chainServerId: string;
   tokenId: string;
   rawAmount: string;
+  isBuild?: boolean;
   $ctx?: any;
 }) => {
   const account = await preferenceService.getCurrentAccount();
@@ -186,5 +188,6 @@ export const sendToken = async ({
       $ctx,
     },
     INTERNAL_REQUEST_SESSION,
+    isBuild,
   );
 };
