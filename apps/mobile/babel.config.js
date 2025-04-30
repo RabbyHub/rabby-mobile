@@ -5,9 +5,10 @@ const { version } = pkg;
 
 const buildGitInfo = (function getBuildEnvVars() {
   const BUILD_GIT_HASH = child_process
-    .execSync('git log --format="%h" -n 1')
+    .execSync('git log --format="%H" -n 1')
     .toString()
-    .trim();
+    .trim()
+    .slice(0, 8);
 
   const BUILD_GIT_HASH_TIME =
     process.platform === 'win32'
