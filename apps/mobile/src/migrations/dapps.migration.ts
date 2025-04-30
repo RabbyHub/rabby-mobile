@@ -30,7 +30,6 @@ export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
           dapps
             .filter(dapp => dapp.isConnected && !dapp.currentAccount)
             .forEach(dapp => {
-              console.log('dapp', dapp);
               dappService.updateDapp({
                 ...dapp,
                 currentAccount: dappSceneAccount || currentAccount,

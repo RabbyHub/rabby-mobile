@@ -70,7 +70,7 @@ export const connect = async ({
       currentAccount: account || null,
     },
   });
-  console.log('connect account', account);
+
   if (dapp) {
     dappService.patchDapps({
       [origin]: {
