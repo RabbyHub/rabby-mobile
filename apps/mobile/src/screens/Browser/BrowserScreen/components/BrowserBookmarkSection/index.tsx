@@ -32,7 +32,11 @@ export const BrowserBookmarkSection = ({
   const { styles } = useTheme2024({ getStyle });
   const [isFold, setIsFold] = useState(true);
   const { openTab } = useBrowser();
-  const { browserHistoryList, removeBrowserHistory } = useBrowserHistory();
+  const { browserHistoryList: allBrowserHistoryList, removeBrowserHistory } =
+    useBrowserHistory();
+  const browserHistoryList = useMemo(() => {
+    return allBrowserHistoryList.slice(0, 30);
+  }, [allBrowserHistoryList]);
 
   const {
     bookmarkList: data,
