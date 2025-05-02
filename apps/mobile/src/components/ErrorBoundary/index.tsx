@@ -1,10 +1,15 @@
 import * as React from 'react';
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { View, StyleSheet, Button, Text } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 
 const appErrorHandler = (error: Error) => {
   console.warn('[AppErrorBoundary::appErrorHandler] error occured');
   console.error(error);
+  Sentry.captureException(error, scope => {
+    scope.setTransactionName('AppErrorBoundary');
+    return scope;
+  });
 };
 
 const ErrorFallback: React.ComponentType<FallbackProps> = ({

@@ -60,7 +60,7 @@ export function useBrowserHistory() {
     return store.ids
       .map(key => {
         const item = store.entities[key];
-        if (!item) {
+        if (!item || !/^https?:\/\//.test(item.url)) {
           return;
         }
         const origin = urlUtils.canoicalizeDappUrl(item.url).httpOrigin;

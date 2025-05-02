@@ -199,6 +199,29 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
     });
 
     try {
+      const res: EntityState<BrowserBookmarkItem, string> = {
+        ids: [],
+        entities: {},
+      };
+
+      this.store.browserBookmarks.ids.forEach(key => {
+        const item = this.store.browserBookmarks.entities[key];
+        if (item && /^https?:\/\//.test(item.url)) {
+          res.ids.push(key);
+          res.entities[key] = item;
+        }
+      });
+      this.store.browserBookmarks = res;
+    } catch (e) {
+      console.error(e);
+      Sentry.captureException(e);
+      this.store.browserBookmarks = {
+        ids: [],
+        entities: {},
+      };
+    }
+
+    try {
       const res: EntityState<BrowserHistoryItem, string> = {
         ids: [],
         entities: {},
@@ -219,6 +242,10 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
     } catch (e) {
       console.error(e);
       Sentry.captureException(e);
+      this.store.browserHistory = {
+        ids: [],
+        entities: {},
+      };
     }
 
     try {

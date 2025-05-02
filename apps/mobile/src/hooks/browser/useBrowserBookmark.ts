@@ -52,18 +52,23 @@ export function useBrowserBookmark() {
   });
 
   const bookmarkList: DappInfo[] = useMemo(() => {
-    return store.ids.map(key => {
-      const item = store.entities[key];
-      const origin = urlUtils.canoicalizeDappUrl(item.url).httpOrigin;
-      const dapp = dapps[origin];
-      return {
-        ...dapp,
-        ...item,
-        icon: dapp?.icon || dapp?.info?.logo_url || undefined,
-        origin,
-        isFavorite: true,
-      };
-    });
+    return store.ids
+      .map(key => {
+        const item = store.entities[key];
+        if (!item || !/^https?:\/\//.test(item.url)) {
+          return;
+        }
+        const origin = urlUtils.canoicalizeDappUrl(item.url).httpOrigin;
+        const dapp = dapps[origin];
+        return {
+          ...dapp,
+          ...item,
+          icon: dapp?.icon || dapp?.info?.logo_url || undefined,
+          origin,
+          isFavorite: true,
+        };
+      })
+      .filter(item => !!item);
   }, [dapps, store.entities, store.ids]);
 
   return {

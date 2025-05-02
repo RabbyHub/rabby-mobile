@@ -68,17 +68,17 @@ export const DappCardInWebViewNav = ({
             {formatDappOriginToShow(data.origin)}
           </Text>
           <View style={styles.dappInfo}>
-            {data.info.name ? (
+            {data.info?.name ? (
               <Text
                 style={[styles.dappInfoText, styles.dappName]}
                 numberOfLines={1}>
                 {data.info.name}
               </Text>
             ) : null}
-            {data.info.name && data.info.collected_list?.length ? (
+            {data.info?.name && data.info.collected_list?.length ? (
               <View style={styles.divider} />
             ) : null}
-            <DappCardListBy data={data.info.collected_list} />
+            <DappCardListBy data={data.info?.collected_list} />
           </View>
         </View>
         <TouchableWithoutFeedback
