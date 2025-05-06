@@ -51,6 +51,7 @@ import { toast } from '@/components2024/Toast';
 import { useAlert } from './useAlert';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { matomoRequestEvent } from '@/utils/analytics';
+import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -96,6 +97,7 @@ const WhitelistInputScreen = () => {
     const data = await whitelistService.getWhitelist();
     setWL(data);
   }, [setWL]);
+  const { inputCallbackRef } = useAutoFocusInput(false);
 
   const closeHistory = useCallback(() => {
     setHistoryVisible(false);
@@ -290,6 +292,7 @@ const WhitelistInputScreen = () => {
                   tipText={''}
                   hasError={!!error}
                   fieldErrorTextStyle={styles.error}
+                  ref={inputCallbackRef}
                   containerStyle={Object.assign(
                     {
                       borderRadius: 16,
@@ -305,7 +308,6 @@ const WhitelistInputScreen = () => {
                     placeholderTextColor: colors2024['neutral-secondary'],
                     value: input,
                     blurOnSubmit: true,
-                    autoFocus: true,
                     returnKeyType: 'done',
                     onChangeText: handleSubmit,
                   }}
