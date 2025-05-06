@@ -20,11 +20,7 @@ import {
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { trigger } from 'react-native-haptic-feedback';
-import {
-  StackActions,
-  TabActions,
-  useFocusEffect,
-} from '@react-navigation/native';
+import { StackActions, useFocusEffect } from '@react-navigation/native';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
@@ -77,7 +73,8 @@ import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { Card } from '@/components2024/Card';
-import { ArrowCircleCC } from '@/assets2024/icons/address';
+import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
+import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import LinearGradient from 'react-native-linear-gradient';
 import { LoadingLinear } from '../TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { Skeleton } from '@rneui/base';
@@ -87,6 +84,7 @@ import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { judgeIsSmallUsdTx } from '../Transaction/components/utils';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
 
 const HeaderHeight = 24;
 
@@ -97,6 +95,11 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
+
+  const { accountsLength } = useAccountsBalance({
+    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
 
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
@@ -215,13 +218,11 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
                 </View>
               )}
             </View>
-            <ArrowCircleCC
-              style={styles.arrow}
-              width={42}
-              height={42}
-              color={colors2024['neutral-body']}
-              backgroundColor={colors2024['neutral-bg-2']}
-            />
+            <View style={styles.accountBg}>
+              <RcIconSmallWallet />
+              <Text style={styles.accountText}>{accountsLength}</Text>
+              <RcIconSmallArrow />
+            </View>
           </Card>
         </BlurShadowView>
       </View>
@@ -381,6 +382,7 @@ function MultiAddressHome(): JSX.Element {
     loading,
     isLoadingNew: loadingNewCurve,
   } = useMultiCurve(top10Addresses, true, top10Balance);
+  useCexSupportList();
   useFetchCexInfo();
 
   const { accounts } = useMyAccounts({
@@ -853,7 +855,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     minWidth: 72,
     padding: 8,
     paddingLeft: 14,
-    borderRadius: 94,
+    borderRadius: 10,
     backgroundColor: isLight
       ? ThemeColors2024.dark['neutral-bg-1']
       : colors2024['brand-default'],

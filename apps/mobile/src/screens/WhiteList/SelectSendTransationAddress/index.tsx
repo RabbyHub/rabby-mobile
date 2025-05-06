@@ -126,7 +126,7 @@ function SendHistoryScreen() {
     return isLoading;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyLoading]);
-  const { findAccount } = useWhiteListAddress(true);
+  const { findAccountWithoutBalance } = useWhiteListAddress(true);
   const { addWhitelist } = useWhitelist();
 
   const fetchFromDbLoading = useMemo(
@@ -138,12 +138,11 @@ function SendHistoryScreen() {
   const handlePressItem = async (item: HistoryDisplayItem) => {
     const toAddress = item.sends[0]?.to_addr;
     if (toAddress) {
-      const { inWhitelist, account } = await findAccount(
+      const { inWhitelist, account, isMyImported } = findAccountWithoutBalance(
         toAddress,
         undefined,
-        true,
       );
-      if (inWhitelist) {
+      if (inWhitelist || isMyImported) {
         toast.show(t('page.whitelist.alreadyAdded'));
       } else {
         const id = createGlobalBottomSheetModal2024({

@@ -2,6 +2,7 @@ import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import { entries, sortBy } from 'lodash';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
+import * as Sentry from '@sentry/react-native';
 import {
   createEntityAdapter,
   createEntityTools,
@@ -84,125 +85,177 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
       },
     );
 
-    if (!this.store.config?.isMigrated) {
-      this.store.config = {
-        ...this.store.config,
-        isMigrated: true,
-      };
-      const dappsStore = options?.storageAdapter?.getItem(
-        APP_STORE_NAMES.dapps,
-      );
-      const dapps = dappsStore?.dapps as Record<string, DappInfo> | null;
-      const historyStore = options?.storageAdapter?.getItem(
-        APP_STORE_NAMES.browserHistory,
-      );
-      const historyMap = historyStore?.browserHistory as Record<
-        string,
-        {
-          origin: string;
-          createdAt: number;
+    try {
+      if (!this.store.config?.isMigrated) {
+        this.store.config = {
+          ...this.store.config,
+          isMigrated: true,
+        };
+        const dappsStore = options?.storageAdapter?.getItem(
+          APP_STORE_NAMES.dapps,
+        );
+        const dapps = dappsStore?.dapps as Record<string, DappInfo> | null;
+        const historyStore = options?.storageAdapter?.getItem(
+          APP_STORE_NAMES.browserHistory,
+        );
+        const historyMap = historyStore?.browserHistory as Record<
+          string,
+          {
+            origin: string;
+            createdAt: number;
+          }
+        > | null;
+        const browserBookmarks: BrowserStore['browserBookmarks'] = {
+          ids: [],
+          entities: {},
+        };
+        const browserHistory: BrowserStore['browserHistory'] = {
+          ids: [],
+          entities: {},
+        };
+
+        if (dapps) {
+          Object.entries(dapps).forEach(([origin, dappInfo]) => {
+            if (dappInfo?.isFavorite) {
+              browserBookmarks.ids.push(dappInfo.origin);
+              browserBookmarks.entities[origin] = {
+                name: dappInfo.name || dappInfo.info?.name || '',
+                url: dappInfo.origin,
+                createdAt: dappInfo.favoriteAt || 0,
+              };
+            }
+          });
+          this.store.browserBookmarks = browserBookmarks;
+          Object.entries(historyMap || {}).forEach(([origin, item]) => {
+            const dappInfo = dapps[origin];
+            if (dapps[origin]) {
+              browserHistory.ids.push(origin);
+              browserHistory.entities[origin] = {
+                name: dappInfo.name || dappInfo.info?.name || '',
+                url: dappInfo.origin,
+                createdAt: item.createdAt || 0,
+              };
+            }
+          });
+          this.store.browserHistory = browserHistory;
         }
-      > | null;
-      const browserBookmarks: BrowserStore['browserBookmarks'] = {
-        ids: [],
-        entities: {},
-      };
-      const browserHistory: BrowserStore['browserHistory'] = {
-        ids: [],
-        entities: {},
-      };
-
-      if (dapps) {
-        Object.entries(dapps).forEach(([origin, dappInfo]) => {
-          if (dappInfo?.isFavorite) {
-            browserBookmarks.ids.push(dappInfo.origin);
-            browserBookmarks.entities[origin] = {
-              name: dappInfo.name || dappInfo.info?.name || '',
-              url: dappInfo.origin,
-              createdAt: dappInfo.favoriteAt || 0,
-            };
-          }
-        });
-        this.store.browserBookmarks = browserBookmarks;
-        Object.entries(historyMap || {}).forEach(([origin, item]) => {
-          const dappInfo = dapps[origin];
-          if (dapps[origin]) {
-            browserHistory.ids.push(origin);
-            browserHistory.entities[origin] = {
-              name: dappInfo.name || dappInfo.info?.name || '',
-              url: dappInfo.origin,
-              createdAt: item.createdAt || 0,
-            };
-          }
-        });
-        this.store.browserHistory = browserHistory;
       }
+    } catch (e) {
+      Sentry.captureException(e);
+      console.error(e);
     }
 
-    const browserTabsStore = {
-      ...this.store.browserTabs,
-    };
-
-    let isValidActiveTabId = false;
-    let hasEmpty = false;
-    browserTabsStore.tabs = browserTabsStore.tabs.map(tab => {
-      const isActive = tab.id === browserTabsStore.activeTabId;
-      if (isActive) {
-        isValidActiveTabId = true;
-      }
-      if (tab.id === emptyTab.id) {
-        hasEmpty = true;
-      }
-      return {
-        ...tab,
-        initialUrl: tab.url || tab.initialUrl,
-        isTerminate: !isActive,
+    try {
+      const browserTabsStore = {
+        ...this.store.browserTabs,
       };
-    });
-    if (!isValidActiveTabId) {
-      browserTabsStore.activeTabId = emptyTab.id;
+
+      let isValidActiveTabId = false;
+      let hasEmpty = false;
+      browserTabsStore.tabs = browserTabsStore.tabs.map(tab => {
+        const isActive = tab.id === browserTabsStore.activeTabId;
+        if (isActive) {
+          isValidActiveTabId = true;
+        }
+        if (tab.id === emptyTab.id) {
+          hasEmpty = true;
+        }
+        return {
+          ...tab,
+          initialUrl: tab.url || tab.initialUrl,
+          isTerminate: !isActive,
+        };
+      });
+      if (!isValidActiveTabId) {
+        browserTabsStore.activeTabId = emptyTab.id;
+      }
+      if (!hasEmpty) {
+        browserTabsStore.tabs = [emptyTab, ...browserTabsStore.tabs];
+      }
+      this.store.browserTabs = browserTabsStore;
+    } catch (e) {
+      console.error(e);
+      Sentry.captureException(e);
+      this.store.browserTabs = {
+        tabs: [emptyTab],
+        activeTabId: emptyTab.id,
+      };
     }
-    if (!hasEmpty) {
-      browserTabsStore.tabs = [emptyTab, ...browserTabsStore.tabs];
-    }
-    this.store.browserTabs = browserTabsStore;
 
     const bookmarkAdapter = createEntityAdapter<BrowserBookmarkItem>({
-      selectId: item => item.url,
+      selectId: item => item?.url,
       sortComparer: (a, b) => (a?.createdAt > b?.createdAt ? -1 : 1),
       onStateChange: newState => {
         this.store.browserBookmarks = newState;
       },
     });
 
-    this.bookmark = createEntityTools(
-      bookmarkAdapter,
-      this.store.browserBookmarks,
-    );
-
     const historyAdapter = createEntityAdapter<BrowserHistoryItem>({
-      selectId: item => item.url,
+      selectId: item => item?.url,
       sortComparer: (a, b) => (a?.createdAt > b?.createdAt ? -1 : 1),
       onStateChange: newState => {
         this.store.browserHistory = newState;
       },
     });
 
-    const res: EntityState<BrowserHistoryItem, string> = {
-      ids: [],
-      entities: {},
-    };
+    try {
+      const res: EntityState<BrowserHistoryItem, string> = {
+        ids: [],
+        entities: {},
+      };
 
-    this.store.browserHistory.ids.forEach(key => {
-      const item = this.store.browserHistory.entities[key];
-      if (Date.now() - (item.createdAt || 0) < 30 * 24 * 60 * 60 * 1000) {
-        res.ids.push(key);
-        res.entities[key] = item;
-      }
-    });
-    this.store.browserHistory = res;
+      this.store.browserHistory.ids.forEach(key => {
+        const item = this.store.browserHistory.entities[key];
+        if (
+          item &&
+          /^https?:\/\//.test(item.url) &&
+          Date.now() - (item.createdAt || 0) < 30 * 24 * 60 * 60 * 1000
+        ) {
+          res.ids.push(key);
+          res.entities[key] = item;
+        }
+      });
+      this.store.browserHistory = res;
+    } catch (e) {
+      console.error(e);
+      Sentry.captureException(e);
+    }
 
-    this.history = createEntityTools(historyAdapter, this.store.browserHistory);
+    try {
+      this.bookmark = createEntityTools(
+        bookmarkAdapter,
+        this.store.browserBookmarks,
+      );
+    } catch (e) {
+      console.error(e);
+      Sentry.captureException(e);
+      this.store.browserBookmarks = {
+        ids: [],
+        entities: {},
+      };
+      this.bookmark = createEntityTools(
+        bookmarkAdapter,
+        this.store.browserBookmarks,
+      );
+    }
+
+    try {
+      this.history = createEntityTools(
+        historyAdapter,
+        this.store.browserHistory,
+      );
+    } catch (e) {
+      console.error(e);
+      Sentry.captureException(e);
+      this.store.browserHistory = {
+        ids: [],
+        entities: {},
+      };
+      this.history = createEntityTools(
+        historyAdapter,
+        this.store.browserHistory,
+      );
+    }
   }
 
   getDefaultUserAgent = () => {

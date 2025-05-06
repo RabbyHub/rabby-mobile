@@ -97,11 +97,11 @@ function HistoryLocalDetailScreen(): JSX.Element {
     canCancel,
     isForMultipleAdderss,
     title,
+    onPressBottomBtn,
   } = route.params || {};
   const [data, setData] = React.useState<TransactionGroup>(_data);
   const isPending = useMemo(() => data.isPending, [data]);
   const isFailed = useMemo(() => data.isFailed, [data]);
-  console.debug('HistoryLocalDetailScreen isPending', isPending);
   const { switchAccount } = useCurrentAccount();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { bottom } = useSafeAreaInsets();
@@ -409,7 +409,11 @@ function HistoryLocalDetailScreen(): JSX.Element {
       ) : needUseSwap ? (
         <Swap data={data} isSingleAddress={!isForMultipleAdderss} />
       ) : data.maxGasTx.action?.actionData?.send ? (
-        <Send data={data} isSingleAddress={!isForMultipleAdderss} />
+        <Send
+          data={data}
+          isSingleAddress={!isForMultipleAdderss}
+          onPressBottomBtn={onPressBottomBtn}
+        />
       ) : (
         <UnknownAction data={data} isSingleAddress={!isForMultipleAdderss} />
       )}

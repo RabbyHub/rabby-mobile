@@ -1,6 +1,7 @@
 import React, { ReactNode, useImperativeHandle, useRef, useState } from 'react';
 import {
   StyleProp,
+  StyleSheet,
   Text,
   TextInput,
   TextInputProps,
@@ -97,7 +98,7 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
             {searchIcon || (
               <RcNextSearchCC
                 style={styles.searchIcon}
-                color={colors2024['neutral-foot']}
+                color={colors2024['neutral-secondary']}
                 width={16}
                 height={16}
               />
@@ -105,17 +106,19 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
           </TouchableWithoutFeedback>
           <TextInput
             ref={inputRef}
-            style={[
+            style={StyleSheet.flatten([
               styles.input,
               inputStyle,
               isEmpty ? styles.placeholder : null,
-            ]}
+            ])}
             placeholderTextColor={styles.placeholder.color}
             value={value}
             onChangeText={onChangeText}
             onChange={onChange}
             onBlur={handleBlur}
             onFocus={handleFocus}
+            autoCorrect={false}
+            spellCheck={false}
             {...rest}
           />
           {!isEmpty ? (
@@ -165,9 +168,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-2'],
-    paddingHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 12,
     paddingLeft: 12,
     gap: 7,
   },
@@ -178,8 +181,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     fontFamily: 'SF Pro Rounded',
     height: 46,
-    fontSize: 17,
-    // lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     textAlignVertical: 'center',
@@ -188,10 +191,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   placeholder: {
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '400',
-    color: isLight
-      ? colors2024['neutral-secondary']
-      : colors2024['neutral-foot'],
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
   },
   cancelText: {
     fontFamily: 'SF Pro Rounded',

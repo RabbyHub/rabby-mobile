@@ -137,7 +137,8 @@
         "Collection": "Bộ sưu tập",
         "PurchaseFrom": "Đã mua từ",
         "totalApprovedAmount": "Số tiền được phê duyệt hiện tại",
-        "BuyAgain": "Mua lại"
+        "BuyAgain": "Mua lại",
+        "AddToWhitelist": "Thêm vào Danh sách Trắng"
       },
       "empty": {
         "title": "Không có giao dịch",
@@ -1403,7 +1404,8 @@
       "header": {
         "placeHolder": "Tìm kiếm",
         "searchPlaceHolder": "Tìm kiếm Tên Token / Địa chỉ",
-        "favoriteTitle": "Mã Token Yêu Thích"
+        "favoriteTitle": "Mã Token Yêu Thích",
+        "SearchChain": "Tìm kiếm Chuỗi"
       },
       "tokenItem": {
         "verifyDangerTips": "Đây là một token lừa đảo",
@@ -1819,7 +1821,12 @@
       "sendToSafeAddress": "Gửi đến Địa chỉ An toàn",
       "emptyWhitelistContent": "Thêm địa chỉ đáng tin cậy vào danh sách trắng để chuyển tiền nhanh chóng—không cần xác nhận lần tới",
       "emptyWhitelistTip": "Chưa có địa chỉ nào được đưa vào danh sách trắng,",
-      "sendToWatchAddress": "Gửi tới địa chỉ Chỉ xem"
+      "sendToWatchAddress": "Gửi tới địa chỉ Chỉ xem",
+      "sendTimeHeader": "Gửi",
+      "innerEnterAddress": "Nhập Địa Chỉ / ENS",
+      "recent": "Gần đây",
+      "SendHistory": "Lịch sử Gửi",
+      "SelectFromHistory": "Chọn từ Lịch sử"
     },
     "confirmAddress": {
       "risks": {
@@ -1833,7 +1840,8 @@
       "dexNameTail": "Địa chỉ gửi tiền",
       "tipForWhiteList": "Thêm vào danh sách trắng của bạn để chuyển nhanh, không cần xác nhận lần tới",
       "sendTo": "Gửi tới địa chỉ này",
-      "title": "Xác nhận địa chỉ"
+      "title": "Xác nhận địa chỉ",
+      "checkbox": "Tôi hiểu những rủi ro và muốn tiếp tục"
     },
     "selectAddress": {
       "selectWatchAddress": "Chọn từ địa chỉ chỉ xem",
@@ -1847,7 +1855,18 @@
       "alreadyAdded": "Đã được thêm vào danh sách trắng của bạn",
       "removeWhitelist": "Xóa khỏi danh sách trắng",
       "confirmPassword": "Nhập Mật khẩu để Xác nhận",
-      "copyAddress": "Sao chép địa chỉ"
+      "copyAddress": "Sao chép địa chỉ",
+      "header": {
+        "name": "Tên",
+        "address": "Địa chỉ",
+        "exchange": "Địa chỉ trao đổi?"
+      },
+      "placeholder": {
+        "exchange": "chọn sàn giao dịch",
+        "name": "Đặt tên cho địa chỉ của bạn"
+      },
+      "alreadyIn": "Đã ở trong danh sách trắng",
+      "alreadyInYour": "Đã có trong danh sách trắng của bạn"
     },
     "syncExtension": {
       "importedSuccessfully": "Đã nhập thành công!",
@@ -1870,7 +1889,8 @@
       "tabs": {
         "address": "Địa chỉ",
         "portfolio": "Danh mục"
-      }
+      },
+      "scamTokenHeader": "Token lừa đảo"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1895,6 +1915,11 @@
       "BrowserHistoryList": {
         "title": "Lịch sử"
       }
+    },
+    "scan": {
+      "noCameraDevice": "Không có thiết bị camera",
+      "selectFromAlbum": "Chọn từ Album",
+      "noQRCodeFound": "Không tìm thấy mã QR"
     }
   },
   "component": {
@@ -2045,6 +2070,9 @@
       "noDapps": "Không có Dapp nào khả dụng trên chuỗi này",
       "noQuotesForChain": "Chưa có báo giá cho chuỗi này.",
       "help": "Vui lòng liên hệ với đội ngũ chính thức của chuỗi này để được hỗ trợ."
+    },
+    "selectCexModal": {
+      "title": "Chọn Nguồn Giao Dịch"
     }
   },
   "constant": {

@@ -27,6 +27,9 @@ export function useBrowserBookmark() {
   });
 
   const addBookmark = useMemoizedFn((item: BrowserBookmarkItem) => {
+    if (!item || !/^https?:\/\//.test(item.url)) {
+      return;
+    }
     browserService.bookmark.addOne(item);
     getBookmarkList();
   });

@@ -7,6 +7,7 @@ import {
   RcIconMoreCC,
   RcIconRefreshCC,
   RcIconTabsCC,
+  RcIconHomeCC,
 } from '@/assets2024/icons/browser';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
@@ -32,6 +33,7 @@ export function BrowserFooter({
   onBookmark,
   onDisconnect,
   onContentModeChange,
+  onGoHome,
 }: {
   isBookmark?: boolean;
   isConnected?: boolean;
@@ -50,6 +52,7 @@ export function BrowserFooter({
   onBookmark?(): void;
   onDisconnect?(): void;
   onContentModeChange?(v: WebViewProps['contentMode']): void;
+  onGoHome?(): void;
 }) {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
@@ -140,6 +143,9 @@ export function BrowserFooter({
 
   return (
     <View style={[styles.navControls]}>
+      <TouchableOpacity style={[styles.navControlItem]} onPress={onGoHome}>
+        <RcIconHomeCC color={colors2024['neutral-body']} />
+      </TouchableOpacity>
       <TouchableOpacity
         style={[styles.navControlItem]}
         disabled={!canGoBack}

@@ -72,6 +72,11 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
 
+  const isFail = useMemo(
+    () => data.isFailed || data.isSubmitFailed || data.isWithdrawed,
+    [data.isFailed, data.isSubmitFailed, data.isWithdrawed],
+  );
+
   const { switchAccount } = useCurrentAccount();
 
   const handleOpenTxId = useMemoizedFn(() => {
@@ -120,7 +125,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             chain={actionData.payToken?.chain}
             chainSize={16}
           />
-          <View style={[styles.rowBox]}>
+          <View style={[styles.rowBox, isFail && styles.isFailBox]}>
             <Text style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
               {'-'} {formatTokenAmount(actionData.payToken.amount)}{' '}
               {getTokenSymbol(actionData.payToken as TokenItem)}
@@ -141,7 +146,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             chain={receiveToken?.chain}
             chainSize={16}
           />
-          <View style={[styles.rowBox]}>
+          <View style={[styles.rowBox, isFail && styles.isFailBox]}>
             <Text style={[styles.tokenAmountTextList]}>
               {'+'}{' '}
               {formatTokenAmount(

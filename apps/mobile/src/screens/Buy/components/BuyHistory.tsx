@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
@@ -19,6 +20,9 @@ import { naviPush } from '@/utils/navigation';
 import { BuyHistoryItem as TBuyHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { ellipsisAddress } from '@/utils/address';
+import { useCurrentAccount } from '@/hooks/account';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -47,9 +51,33 @@ const HistoryList = ({
     [onGoToDetail],
   );
 
+  const { currentAccount } = useCurrentAccount();
+
   const ListHeaderComponent = useCallback(() => {
-    return <Text style={styles.headerTitle}>{t('page.buy.history')}</Text>;
-  }, [styles.headerTitle, t]);
+    return (
+      <View
+        style={{
+          marginBottom: 12,
+        }}>
+        <Text style={styles.headerTitle}>{t('page.buy.history')}</Text>
+        {Boolean(currentAccount) && (
+          <AddressItem account={currentAccount!}>
+            {({ WalletIcon, WalletAddress }) => {
+              return (
+                <View style={styles.addressRow}>
+                  <WalletIcon style={styles.walletIcon} />
+                  <Text style={styles.address}>
+                    {currentAccount?.aliasName ||
+                      ellipsisAddress(currentAccount?.address || '')}
+                  </Text>
+                </View>
+              );
+            }}
+          </AddressItem>
+        )}
+      </View>
+    );
+  }, [styles, t, currentAccount]);
 
   const ListEndLoader = useCallback(() => {
     if (noMore) {
@@ -110,24 +138,27 @@ const HistoryList = ({
   }, [txList]);
 
   return (
-    <BottomSheetFlatList
-      contentContainerStyle={[
-        {
-          paddingBottom: 20 + bottom,
-        },
-      ]}
-      style={styles.flatList}
-      stickyHeaderIndices={[0]}
-      ListHeaderComponent={ListHeaderComponent}
-      ItemSeparatorComponent={ItemSeparator}
-      data={sortedList}
-      renderItem={renderItem}
-      keyExtractor={item => item.id}
-      onEndReached={loadMore}
-      onEndReachedThreshold={0.6}
-      ListFooterComponent={ListEndLoader}
-      ListEmptyComponent={ListEmptyComponent}
-    />
+    <>
+      {ListHeaderComponent()}
+      <BottomSheetFlatList
+        contentContainerStyle={[
+          {
+            paddingBottom: 20 + bottom,
+          },
+        ]}
+        style={styles.flatList}
+        // stickyHeaderIndices={[0]}
+        // ListHeaderComponent={ListHeaderComponent}
+        ItemSeparatorComponent={ItemSeparator}
+        data={sortedList}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.6}
+        ListFooterComponent={ListEndLoader}
+        ListEmptyComponent={ListEmptyComponent}
+      />
+    </>
   );
 };
 
@@ -245,6 +276,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-info'],
     fontFamily: 'SF Pro Rounded',
   },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  walletIcon: {
+    borderRadius: 4,
+    width: 18,
+    height: 18,
+    marginRight: 4,
+  },
+  address: {
+    margin: 4,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    lineHeight: 20,
+    fontSize: 16,
+    color: colors2024['neutral-foot'],
+  },
   skeletonBlock: {
     width: '100%',
     height: 74,
@@ -263,7 +313,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
-    paddingBottom: 24,
+    // paddingBottom: 24,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     backgroundColor: isLight

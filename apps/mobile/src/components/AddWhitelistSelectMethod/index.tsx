@@ -29,7 +29,7 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
         <Text style={styles.desc}>{t('page.sendPoly.modals.content')}</Text>
         <ListItem
           onPress={async () => {
-            navigateTo(RootNames.WhitelistInput);
+            // navigateTo(RootNames.WhitelistInput);
             onDone();
           }}
           style={styles.importItem}
@@ -38,7 +38,7 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
         />
         <ListItem
           onPress={() => {
-            navigateTo(RootNames.ImportAddress2Whitelist);
+            // navigateTo(RootNames.ImportAddress2Whitelist);
             onDone();
           }}
           style={styles.importItem}
@@ -47,7 +47,7 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
         />
         <ListItem
           onPress={() => {
-            navigateTo(RootNames.SendHistory);
+            // navigateTo(RootNames.SendHistory);
             onDone();
           }}
           style={styles.importItem}

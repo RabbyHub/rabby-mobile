@@ -106,6 +106,7 @@ import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog'
 import { GnosisAdminFooterBarPopup } from '../TxComponents/GnosisAdminFooterBarPopup';
 import { apisKeyring } from '@/core/apis/keyring';
 import { adjustV } from '@/utils/gnosis';
+import { getCexInfo } from '@/hooks/useCexSupportList';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -634,6 +635,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             gasUsed: res.gas.gas_used,
             sender: tx.from,
           });
+          const cexInfo = getCexInfo(parsed.send?.to || '');
           const requiredData = await fetchActionRequiredData({
             type: 'transaction',
             actionData: parsed,
@@ -651,6 +653,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
               findChain,
               ALIAS_ADDRESS,
             },
+            cex: cexInfo,
             tx: {
               ...tx,
               gas: '0x0',

@@ -63,17 +63,13 @@ const toastLoading = toastWithIcon(() => (
 ));
 const toastUnlocking = () => toastLoading('Unlocking', { duration: 3000 });
 
-function BiometricsIcon(props: { isFaceID?: boolean }) {
-  const { isFaceID = isIOS } = props;
+export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
+  const { isFaceID = isIOS, size = BiometricsIconSize } = props;
 
   return isFaceID ? (
-    <RcIconFaceId
-      strokeWidth={2}
-      width={BiometricsIconSize}
-      height={BiometricsIconSize}
-    />
+    <RcIconFaceId strokeWidth={2} width={size} height={size} />
   ) : (
-    <RcIconFingerprint width={BiometricsIconSize} height={BiometricsIconSize} />
+    <RcIconFingerprint width={size} height={size} />
   );
 }
 

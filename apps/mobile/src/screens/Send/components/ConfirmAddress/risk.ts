@@ -1,14 +1,15 @@
 import { openapi } from '@/core/request';
 import { useMyAccounts } from '@/hooks/account';
-import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  AddrDescResponse,
+  ProjectItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { getTokenSettings } from '@/utils/getTokenSettings';
-import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
 
 const queue = new PQueue({ intervalCap: 5, concurrency: 5, interval: 1000 });
 
@@ -28,11 +29,14 @@ export const enum RiskType {
   CONTRACT_ADDRESS = 3,
   CEX_NO_DEPOSIT = 4,
 }
-export const useRisks = (address: string, disableBalance?: boolean) => {
+export const useRisks = (
+  address: string,
+  disableBalance?: boolean,
+  cex?: ProjectItem,
+) => {
   const [risks, setRisks] = useState<Array<{ type: RiskType; value: string }>>(
     [],
   );
-  const [balance, setBalance] = useState(0);
   const { t } = useTranslation();
   const { accounts } = useMyAccounts();
   const sortedAccounts = useSortAddressList(accounts);
@@ -57,95 +61,92 @@ export const useRisks = (address: string, disableBalance?: boolean) => {
       const currRisks: Array<{ type: RiskType; value: string }> = [];
       let hasSended = false;
       let hasError = false;
+      try {
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('timeout')), 2000);
+        });
 
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('timeout')), 2000);
-      });
+        const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
 
-      const balancePromise = async (_address: string) => {
-        if (disableBalance) {
-          return;
-        }
-        try {
-          const tokenSetting = await getTokenSettings();
-          const res = await batchBalanceWithLocalCache({
-            address: _address,
-            isCore: false,
-            ...tokenSetting,
+        const checkTransferPromise = new Promise<void>(resolve => {
+          sortedAccounts.slice(0, 10).forEach(acc => {
+            if (isSameAddress(acc.address, address)) {
+              return;
+            }
+            queue.add(async () => {
+              try {
+                if (hasSended || hasError) {
+                  return;
+                }
+                const res = await openapi.hasTransferAllChain(
+                  acc.address,
+                  address,
+                );
+                if (res?.has_transfer) {
+                  hasSended = true;
+                }
+              } catch (error) {
+                console.error('has_transfer fetch error', error);
+                hasError = true;
+              }
+            });
           });
-          if (res.total_usd_value) {
-            setBalance(res.total_usd_value);
-          }
-        } catch (error) {
-          console.error('balance fetch error', error);
-        }
-      };
+          waitQueueFinished(queue).then(() => resolve());
+        });
 
-      const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
-
-      const checkTransferPromise = new Promise<void>(resolve => {
-        sortedAccounts.slice(0, 10).forEach(acc => {
-          if (isSameAddress(acc.address, address)) {
+        addressDescPromise.then(addressRes => {
+          if (!addressRes) {
             return;
           }
-          queue.add(async () => {
-            try {
-              if (hasSended || hasError) {
-                return;
-              }
-              const res = await openapi.hasTransferAllChain(
-                acc.address,
-                address,
-              );
-              if (res?.has_transfer) {
-                hasSended = true;
-              }
-            } catch (error) {
-              console.error('has_transfer fetch error', error);
-              hasError = true;
+          if (cex) {
+            if (!addressRes?.cex) {
+              addressRes.cex = {
+                id: cex.id,
+                name: cex.name,
+                logo_url: cex.logo_url,
+                is_deposit: true,
+              };
+            } else {
+              addressRes.cex.is_deposit = true;
+              addressRes.cex.name = cex.name;
+              addressRes.cex.logo_url = cex.logo_url;
+              addressRes.cex.id = cex.id;
             }
-          });
+          }
+          if (addressRes) {
+            setAddressDesc(addressRes);
+          }
+          if (addressRes?.is_danger || addressRes?.is_scam) {
+            currRisks.push({
+              type: RiskType.SCAM_ADDRESS,
+              value: t('page.confirmAddress.risks.scamAddress'),
+            });
+          }
+          if (addressRes?.cex?.id && !addressRes.cex.is_deposit) {
+            currRisks.push({
+              type: RiskType.CEX_NO_DEPOSIT,
+              value: t('page.confirmAddress.risks.dexNoDeposite'),
+            });
+          }
+          const isContract = Object.keys(addressRes?.contract || {}).length > 0;
+          const isSafeAddress = Object.keys(addressRes?.contract || {}).some(
+            key => {
+              const contract = addressRes?.contract?.[key];
+              return !!contract?.multisig;
+            },
+          );
+          if (isContract && !isSafeAddress) {
+            currRisks.push({
+              type: RiskType.CONTRACT_ADDRESS,
+              value: t('page.confirmAddress.risks.contractAddress'),
+            });
+          }
         });
-        waitQueueFinished(queue).then(() => resolve());
-      });
 
-      try {
-        const [addressRes] = (await Promise.race([
-          Promise.all([
-            addressDescPromise,
-            balancePromise(address),
-            checkTransferPromise,
-          ]),
+        await Promise.race([
+          Promise.all([addressDescPromise, checkTransferPromise]),
           timeoutPromise,
-        ])) as [AddrDescResponse['desc']];
-        if (addressRes) {
-          setAddressDesc(addressRes);
-        }
-        if (addressRes?.is_danger || addressRes?.is_scam) {
-          currRisks.push({
-            type: RiskType.SCAM_ADDRESS,
-            value: t('page.confirmAddress.risks.scamAddress'),
-          });
-        }
-        if (addressRes?.cex?.id && !addressRes.cex.is_deposit) {
-          currRisks.push({
-            type: RiskType.CEX_NO_DEPOSIT,
-            value: t('page.confirmAddress.risks.dexNoDeposite'),
-          });
-        }
-        const isContract = Object.keys(addressRes?.contract || {}).length > 0;
-        const isSafeAddress = Object.keys(addressRes?.contract || {}).some(
-          key => {
-            const contract = addressRes?.contract?.[key];
-            return !!contract?.multisig;
-          },
-        );
-        if (isContract && !isSafeAddress) {
-          currRisks.push({
-            type: RiskType.CONTRACT_ADDRESS,
-            value: t('page.confirmAddress.risks.contractAddress'),
-          });
-        }
+        ]);
 
         if (!hasSended && !hasError) {
           setRisks([
@@ -165,11 +166,10 @@ export const useRisks = (address: string, disableBalance?: boolean) => {
       }
       setLoading(false);
     })();
-  }, [address, disableBalance, sortedAccounts, t]);
+  }, [address, cex, disableBalance, sortedAccounts, t]);
   return {
     risks,
     addressDesc,
-    balance,
     hasSend,
     loading,
   };

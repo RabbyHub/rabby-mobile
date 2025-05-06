@@ -17,13 +17,15 @@ import AddressPopover from '../AddressPopover';
 import AddressSource from '../AddressSourceCard';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import RcTipCC from '@/assets2024/icons/common/tips.svg';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useRisks } from './risk';
 import { toast } from '@/components2024/Toast';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  AddrDescResponse,
+  ProjectItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { Skeleton } from '@rneui/themed';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -32,6 +34,7 @@ import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disbaleWhiteSwitch?: boolean;
+  cex?: ProjectItem;
   account: KeyringAccountWithAlias;
   onConfirm?: (
     account: KeyringAccountWithAlias,
@@ -44,15 +47,17 @@ const ConfirmAddress = ({
   onCancel,
   onConfirm,
   title,
+  cex,
   disbaleWhiteSwitch,
 }: ConfirmAddressScreenProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const switchRef = useRef<Switch>(null);
-  const { loading, risks, addressDesc, balance } = useRisks(
+  const { loading, risks, addressDesc } = useRisks(
     account.address,
     !!account.balance,
+    cex,
   );
   const [isChecked, setIsChecked] = useState(false);
   const { accounts } = useAccounts({
@@ -67,7 +72,9 @@ const ConfirmAddress = ({
     [account.address, isAddrOnWhitelist],
   );
   useEffect(() => {
-    switchRef.current?.setState({ value: inWhiteList });
+    if (switchRef.current) {
+      switchRef.current.setState({ value: inWhiteList });
+    }
   }, [inWhiteList]);
 
   const setInWhitelist = useCallback(
@@ -116,10 +123,7 @@ const ConfirmAddress = ({
       <AddressSource
         loading={loading}
         addressDesc={addressDesc}
-        account={{
-          ...account,
-          balance: account.balance || balance || 0,
-        }}
+        account={account}
         style={styles.addressCard}
       />
       {!loading && !disbaleWhiteSwitch && (
@@ -142,30 +146,17 @@ const ConfirmAddress = ({
         ]}>
         {loading ? (
           <View style={styles.tipItem}>
-            <View style={styles.tipIcon}>
-              {/* <RcTipCC
-                width={14}
-                height={14}
-                color={colors2024['neutral-info']}
-              /> */}
-              <RcIconWarningCircleCC
-                width={20}
-                height={20}
-                color={colors2024['orange-default']}
-              />
-            </View>
+            <Skeleton circle width={20} height={20} />
             <Skeleton style={styles.loading} height={40} />
           </View>
         ) : (
           risks.map(risk => (
             <View key={risk.type} style={styles.tipItem}>
-              <View style={styles.tipIcon}>
-                <RcIconWarningCircleCC
-                  width={20}
-                  height={20}
-                  color={colors2024['orange-default']}
-                />
-              </View>
+              <RcIconWarningCircleCC
+                width={20}
+                height={20}
+                color={colors2024['orange-default']}
+              />
               <Text style={styles.tipText}>{risk.value}</Text>
             </View>
           ))
@@ -189,9 +180,10 @@ const ConfirmAddress = ({
             styles.footerButtonGroup,
             { marginBottom: safeSizes.footerButtonGroupMb },
           ])}
+          authButton
           onCancel={onCancel ?? noop}
           onConfirm={handleConfirm}
-          confirmDisabled={!isChecked}
+          confirmDisabled={risks.length > 0 && !isChecked}
         />
       )}
     </View>
@@ -247,9 +239,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   tipItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 8,
-    backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: colors2024['neutral-bg-5'],
     paddingHorizontal: 12,
     paddingVertical: 16,
     borderRadius: 12,

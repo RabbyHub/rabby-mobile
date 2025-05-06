@@ -46,34 +46,37 @@ export function BrowserSearchAutoComplete({
         Keyboard.dismiss();
         return false;
       }}>
-      {data?.dapps?.slice(0, 1)?.map(item => {
-        return (
-          <TouchableOpacity
-            key={item.id}
-            onPress={() => {
-              onSelect?.(item.id);
-            }}>
-            <View style={styles.listItem}>
-              <RcSearchCC
-                width={16}
-                height={16}
-                color={colors2024['neutral-foot']}
-              />
-              <Text
-                style={styles.listItemText}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {item.id}
-              </Text>
-              <RcIconArrowTopLeftCC
-                width={24}
-                height={24}
-                color={colors2024['neutral-body']}
-              />
-            </View>
-          </TouchableOpacity>
-        );
-      })}
+      {data?.dapps
+        ?.filter(item => !!item.name)
+        .slice(0, 1)
+        ?.map(item => {
+          return (
+            <TouchableOpacity
+              key={item.id}
+              onPress={() => {
+                onSelect?.(item.name);
+              }}>
+              <View style={styles.listItem}>
+                <RcSearchCC
+                  width={16}
+                  height={16}
+                  color={colors2024['neutral-foot']}
+                />
+                <Text
+                  style={styles.listItemText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {item.name}
+                </Text>
+                <RcIconArrowTopLeftCC
+                  width={24}
+                  height={24}
+                  color={colors2024['neutral-body']}
+                />
+              </View>
+            </TouchableOpacity>
+          );
+        })}
     </ScrollView>
   );
 }

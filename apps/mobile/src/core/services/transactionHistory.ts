@@ -26,10 +26,11 @@ import { findChain } from '@/utils/chain';
 import { customTestnetService } from './customTestnetService';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { updateExpiredTime } from '@/databases/sync/assets';
+// import { updateExpiredTime } from '@/databases/sync/assets'
 import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 import { loadTxSaveFromLocalStore } from '@/screens/Transaction/components/utils';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
+import { updateExpiredTime } from '@/databases/sync/utils';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -282,6 +283,26 @@ export class TransactionHistoryService {
     });
 
     return groups;
+  }
+
+  getSwapFailTransactions(address: string) {
+    const groups = this.getTransactionGroups({
+      address,
+    });
+
+    const failedGroups = groups.filter(item => {
+      const swapAction =
+        item.maxGasTx.action?.actionData.swap ||
+        item.maxGasTx.action?.actionData.wrapToken ||
+        item.maxGasTx.action?.actionData.unWrapToken;
+
+      const isFailed =
+        item.isFailed || item.isSubmitFailed || item.isWithdrawed;
+
+      return isFailed && swapAction;
+    });
+
+    return failedGroups;
   }
 
   getNonceByChain(address: string, chainId: number) {

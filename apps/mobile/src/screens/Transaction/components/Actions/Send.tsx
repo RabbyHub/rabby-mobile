@@ -11,7 +11,7 @@ import {
 } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
@@ -38,13 +38,20 @@ import { HistoryItemCateType } from '../type';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { useWhitelist } from '@/hooks/whitelist';
+import { Tip } from '@/components/Tip';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  onPressBottomBtn?: (data: SendAction) => void;
 }
 
-export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const Send: React.FC<Props> = ({
+  data,
+  isSingleAddress,
+  onPressBottomBtn,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -85,7 +92,9 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
   }, [list]);
 
   const { switchAccount } = useCurrentAccount();
-  const { navigateToSendPolyScreen } = useSendRoutes();
+  const { navigateToSendPolyScreen, navigateToSendScreen } = useSendRoutes();
+
+  const { isAddrOnWhitelist } = useWhitelist();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -231,15 +240,33 @@ export const Send: React.FC<Props> = ({ data, isSingleAddress }) => {
       {data.isPending ? null : (
         <View style={styles.buttonContainer}>
           <View style={{ flex: 1 }}>
-            <Button
-              onPress={() => {
-                navigateToSendPolyScreen(!!isSingleAddress, {
-                  chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-                  tokenId: actionData.token?.id,
-                });
-              }}
-              title={t('page.transactions.detail.SendAgain')}
-            />
+            {isAddrOnWhitelist(actionData.to) && onPressBottomBtn ? (
+              <Tip content={t('page.whitelist.alreadyIn')}>
+                <Button
+                  disabled
+                  title={t('page.transactions.detail.AddToWhitelist')}
+                />
+              </Tip>
+            ) : (
+              <Button
+                onPress={() => {
+                  if (onPressBottomBtn) {
+                    onPressBottomBtn(actionData);
+                    return;
+                  }
+                  navigateToSendPolyScreen(!!isSingleAddress, {
+                    chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+                    tokenId: actionData.token?.id,
+                    toAddress: actionData.to,
+                  });
+                }}
+                title={
+                  onPressBottomBtn
+                    ? t('page.transactions.detail.AddToWhitelist')
+                    : t('page.transactions.detail.SendAgain')
+                }
+              />
+            )}
           </View>
         </View>
       )}

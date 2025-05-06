@@ -629,7 +629,10 @@ export function useSendTokenForm(
           currentToken,
         );
         // await persistPageStateCache();
-        if (isAccountSupportMiniApproval(currentAccount?.type || '')) {
+        if (
+          isAccountSupportMiniApproval(currentAccount?.type || '') &&
+          !chain.isTestnet
+        ) {
           const res = await apiProvider.sendRequest(
             {
               method: 'eth_sendTransaction',

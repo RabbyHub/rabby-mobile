@@ -8,6 +8,11 @@ import { openapi } from '../request';
 import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { cached } from '@/utils/cache';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { getAllAccountsToDisplay } from './account';
+import { sortAccountList } from '@/screens/Address/useSortAddressList';
+import { sceneAccountInfoAtom } from '@/hooks/accountsSwitcher';
+import { getDefaultStore } from 'jotai';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 export const removeDapp = (origin: string) => {
   disconnect(origin);
@@ -22,7 +27,7 @@ export const disconnect = (origin: string) => {
   dappService.disconnect(origin);
 };
 
-export const connect = ({
+export const connect = async ({
   origin,
   session,
   info,
@@ -36,12 +41,42 @@ export const connect = ({
   currentAccount?: DappInfo['currentAccount'];
 }) => {
   const dapp = dappService.getDapp(origin);
+  const allAccounts = await getAllAccountsToDisplay();
+  const pinAddresses = preferenceService.getPinAddresses();
+  const accounts = sortAccountList(allAccounts, {
+    highlightedAddresses: pinAddresses,
+  });
+
+  const myAccounts = accounts.filter(
+    account =>
+      account.type !== KEYRING_CLASS.WATCH &&
+      account.type !== KEYRING_CLASS.GNOSIS,
+  );
+
+  const account =
+    currentAccount ||
+    dapp?.currentAccount ||
+    myAccounts?.[0] ||
+    accounts?.[0] ||
+    preferenceService.getCurrentAccount();
+  const store = getDefaultStore();
+  const originValue = store.get(sceneAccountInfoAtom);
+  store.set(sceneAccountInfoAtom, {
+    ...originValue,
+    '@ActiveDappWebViewModal': {
+      ...originValue['@ActiveDappWebViewModal'],
+      signingAccount:
+        originValue['@ActiveDappWebViewModal']?.signingAccount || null,
+      currentAccount: account || null,
+    },
+  });
+
   if (dapp) {
     dappService.patchDapps({
       [origin]: {
         chainId,
         isConnected: true,
-        ...(currentAccount !== undefined && { currentAccount }),
+        currentAccount: account,
       },
     });
     return;
@@ -49,10 +84,11 @@ export const connect = ({
   if (info) {
     dappService.addDapp({
       origin,
+      name: info?.name,
       info,
       isConnected: true,
       chainId,
-      ...(currentAccount !== undefined && { currentAccount }),
+      currentAccount: account,
     });
     return;
   }
@@ -64,7 +100,7 @@ export const connect = ({
         icon: '',
       },
     ),
-    ...(currentAccount !== undefined && { currentAccount }),
+    currentAccount: account,
     isConnected: true,
     chainId,
   });

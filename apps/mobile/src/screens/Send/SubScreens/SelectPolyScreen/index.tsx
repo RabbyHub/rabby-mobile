@@ -1,5 +1,5 @@
 import { useTheme2024 } from '@/hooks/theme';
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -11,15 +11,19 @@ import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
-import { AppRootName, RootNames } from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { RcIconAddWhiteList } from '@/assets2024/icons/whitelist';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useRecentSend } from '../../hooks/useRecentSend';
+import { RecentSendItem } from './RecentSendItem';
+import { SendHeaderRight } from './HeaderRight';
+import { filterMyAccounts } from '@/utils/account';
+import SendInputScreen from '../SendInput';
+import { useInputSwitch } from '../SendInput/useInputSwitch';
+import { SendHeaderLeft } from './HeaderLeft';
+import { navigate } from '@/utils/navigation';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
@@ -44,21 +48,39 @@ const WhiteListHeader = ({ hideIcon, gotoAddWhitelist }: IHeaderProps) => {
 const SendPolyScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const { list } = useWhiteListAddress();
-  const { navigation } = useSafeSetNavigationOptions();
+  const { list, findAccountWithoutBalance } = useWhiteListAddress();
+  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
+  const {
+    isInputAddress,
+    toggle: toggleInput,
+    clean: cleanInput,
+  } = useInputSwitch();
+  const { recentHistory } = useRecentSend({ useAllHistory: true });
+  const { isSingleAddress } = useSendRoutes();
+
+  const Header = useCallback(
+    () => <SendHeaderRight isForMultipleAdderss={!isSingleAddress} />,
+    [isSingleAddress],
+  );
+  const HeaderLeft = useCallback(
+    () => <SendHeaderLeft isInputAddress={isInputAddress} clean={cleanInput} />,
+    [cleanInput, isInputAddress],
+  );
+  useEffect(() => {
+    setNavigationOptions({
+      headerRight: Header,
+      headerLeft: HeaderLeft,
+    });
+  }, [Header, HeaderLeft, setNavigationOptions]);
 
   const handleGotoInputAddress = (autoScan: boolean) => {
-    navigation.dispatch(
-      StackActions.push(RootNames.StackTransaction, {
-        screen: RootNames.SendInput,
-        params: {
-          autoScan,
-        },
-      }),
-    );
+    toggleInput();
+    if (autoScan) {
+      navigate(RootNames.Scanner);
+    }
   };
   const handleGotoImportedAddress = () => {
     navigation.dispatch(
@@ -69,36 +91,18 @@ const SendPolyScreen = () => {
     );
   };
   const handleGotoAddWhitelist = () => {
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-      navigateTo: (screen: AppRootName, params?: object) => {
-        navigation.dispatch(
-          StackActions.push(RootNames.StackTransaction, {
-            screen,
-            params,
-          }),
-        );
-      },
-    });
+    navigation.dispatch(
+      StackActions.push(RootNames.StackTransaction, {
+        screen: RootNames.WhitelistInput,
+        params: {},
+      }),
+    );
   };
-
+  if (isInputAddress) {
+    return <SendInputScreen cleanInput={cleanInput} />;
+  }
   return (
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
-      <View style={styles.input}>
-        <Pressable
-          style={styles.placeHolderWrapper}
-          onPress={() => handleGotoInputAddress(false)}>
-          <Text style={styles.placeHolder}>
-            {t('page.sendPoly.enterAddress')}
-          </Text>
-        </Pressable>
-        <Pressable onPress={() => handleGotoInputAddress(true)}>
-          <ScannerCC color={colors2024['neutral-title-1']} />
-        </Pressable>
-      </View>
       <FlatList
         data={list}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
@@ -109,14 +113,52 @@ const SendPolyScreen = () => {
             <WhiteListItem
               account={item}
               inWhiteList
-              isImported={accounts.some(i =>
+              isMyImported={filterMyAccounts(accounts).some(i =>
                 isSameAddress(i.address, item.address),
               )}
             />
           </View>
         )}
+        // eslint-disable-next-line react/no-unstable-nested-components
         ListHeaderComponent={() => (
-          <WhiteListHeader gotoAddWhitelist={handleGotoAddWhitelist} />
+          <View>
+            <View style={styles.input}>
+              <Pressable
+                style={styles.placeHolderWrapper}
+                onPress={() => handleGotoInputAddress(false)}>
+                <Text style={styles.placeHolder}>
+                  {t('page.sendPoly.enterAddress')}
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => handleGotoInputAddress(true)}>
+                <ScannerCC color={colors2024['neutral-title-1']} />
+              </Pressable>
+            </View>
+            <View>
+              {!!recentHistory.length && (
+                <Text style={styles.recentHeader}>
+                  {t('page.sendPoly.recent')}
+                </Text>
+              )}
+              {/* less than 3 history */}
+              <View style={styles.recentList}>
+                {recentHistory?.map(item => {
+                  const { account, inWhitelist } = findAccountWithoutBalance(
+                    item.toAddress,
+                  );
+                  return (
+                    <RecentSendItem
+                      key={item.time}
+                      account={account}
+                      timeStamp={item.time}
+                      inWhiteList={inWhitelist}
+                    />
+                  );
+                })}
+              </View>
+            </View>
+            <WhiteListHeader gotoAddWhitelist={handleGotoAddWhitelist} />
+          </View>
         )}
         ListEmptyComponent={() => (
           <EmptyWhiteListHolder gotoAddWhitelist={handleGotoAddWhitelist} />
@@ -152,7 +194,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
     gap: 8,
     marginHorizontal: 4,
-    height: 56,
+    height: 58,
   },
   item: {
     marginBottom: 12,
@@ -163,20 +205,20 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   placeHolder: {
     color: colors2024['neutral-secondary'],
-    fontSize: 16,
-    lineHeight: 56,
-    fontWeight: '500',
+    fontSize: 17,
+    lineHeight: 58,
+    fontWeight: '400',
     flex: 1,
     fontFamily: 'SF Pro Rounded',
   },
   listContainer: {
     flex: 1,
-    paddingTop: 36,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 12,
+    marginTop: 24,
     marginBottom: 4,
   },
   headerText: {
@@ -195,5 +237,18 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   footerGap: {
     height: 150,
+  },
+  recentHeader: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    marginBottom: 12,
+    marginTop: 20,
+    paddingHorizontal: 4,
+  },
+  recentList: {
+    gap: 12,
   },
 }));

@@ -27,6 +27,7 @@ import { apiProvider } from '@/core/apis';
 import { useMount } from 'ahooks';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 
 export const enableInsufficientQuote = true;
 
@@ -137,17 +138,6 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
   const slippageObj = useBridgeSlippage();
 
   const [recommendFromToken, setRecommendFromToken] = useState<TokenItem>();
-
-  const fillRecommendFromToken = useCallback(() => {
-    if (recommendFromToken) {
-      const targetChain = findChainByServerID(recommendFromToken?.chain);
-      if (targetChain) {
-        switchFromChain(targetChain.enum, false);
-        setFromToken(recommendFromToken);
-        setAmount('');
-      }
-    }
-  }, [recommendFromToken, switchFromChain, setFromToken]);
 
   const [selectedBridgeQuote, setOriSelectedBridgeQuote] = useState<
     SelectedBridgeQuote | undefined
@@ -273,77 +263,6 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     });
   });
 
-  const initIdRef = useRef(0); // just work on lastest fetch and clear old fetch
-  const initChainByCache = useCallback(async () => {
-    initIdRef.current += 1;
-    const currentFetchId = initIdRef.current;
-    const { firstChain } = await fetchOrderedChainList({
-      supportChains: supportedChains,
-    });
-    if (initIdRef.current !== currentFetchId) {
-      return;
-    }
-    const firstChainEnum = firstChain?.enum || CHAINS_ENUM.ETH;
-    setAmount('');
-    !navState?.chainEnum && switchFromChain(firstChainEnum);
-    const getRemoteRecommendChain = async () => {
-      if (initIdRef.current === currentFetchId) {
-        const data = await openapi.getRecommendBridgeToChain({
-          from_chain_id: findChainByEnum(firstChainEnum)!.serverId,
-        });
-        initIdRef.current === currentFetchId &&
-          switchToChain(findChainByServerID(data.to_chain_id)?.enum);
-      }
-    };
-    if (userAddress) {
-      const latestTx = await openapi.getBridgeHistoryList({
-        user_addr: userAddress,
-        start: 0,
-        limit: 1,
-      });
-      if (initIdRef.current !== currentFetchId) {
-        return;
-      }
-      const latestToToken = latestTx?.history_list?.[0]?.to_token;
-      if (latestToToken) {
-        const lastBridgeChain = findChainByServerID(latestToToken.chain);
-        if (lastBridgeChain && lastBridgeChain.enum !== firstChainEnum) {
-          switchToChain(lastBridgeChain.enum);
-          setToToken(latestToToken);
-        } else {
-          await getRemoteRecommendChain();
-        }
-      } else {
-        await getRemoteRecommendChain();
-      }
-    }
-  }, [
-    navState,
-    fetchOrderedChainList,
-    userAddress,
-    setAmount,
-    supportedChains,
-    setToToken,
-    switchFromChain,
-    switchToChain,
-  ]);
-
-  useEffect(() => {
-    initChainByCache();
-  }, [initChainByCache]);
-
-  const handleAmountChange = useCallback((e: string) => {
-    const v = formatSpeicalAmount(e);
-    if (!/^\d*(\.\d*)?$/.test(v)) {
-      return;
-    }
-    setUseGasPrice(false);
-    setAmount(v);
-    if (Number(v) > 0) {
-      setPending(true);
-    }
-  }, []);
-
   const switchToken = useCallback(() => {
     switchFromChain(toChain, false);
     switchToChain(fromChain, false);
@@ -377,30 +296,200 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     [setRefreshId],
   );
 
-  useEffect(() => {
-    setQuotesList([]);
-    setRecommendFromToken(undefined);
-    setSelectedBridgeQuote(undefined);
-  }, [fromToken?.id, toToken?.id, fromChain, toChain, setSelectedBridgeQuote]);
-
-  useEffect(() => {
-    if (!inSufficientCanGetQuote) {
-      setQuotesList([]);
-      setRecommendFromToken(undefined);
-      setSelectedBridgeQuote(undefined);
-    }
-  }, [inSufficientCanGetQuote, setSelectedBridgeQuote]);
-
-  useEffect(() => {
-    if (!enableInsufficientQuote || !amount || Number(amount) === 0) {
-      setQuotesList([]);
-      setRecommendFromToken(undefined);
-      setSelectedBridgeQuote(undefined);
-    }
-  }, [amount, setSelectedBridgeQuote]);
-
   // const aggregatorsList = useBridgeSupportedChains(s => s.bridge.aggregatorsList || []);
   const aggregatorsList = useAggregatorsList();
+
+  const [bestQuoteId, setBestQuoteId] = useState<
+    | {
+        bridgeId: string;
+        aggregatorId: string;
+      }
+    | undefined
+  >(undefined);
+
+  const openQuote = useSetQuoteVisible();
+
+  const openQuotesList = useCallback(() => {
+    openQuote(true);
+  }, [openQuote]);
+
+  const showLoss = useMemo(() => {
+    if (selectedBridgeQuote) {
+      return !!tokenPriceImpact(
+        fromToken,
+        toToken,
+        amount,
+        selectedBridgeQuote?.to_token_amount,
+      )?.showLoss;
+    }
+    return false;
+  }, [fromToken, toToken, amount, selectedBridgeQuote]);
+
+  const clearExpiredTimer = useCallback(() => {
+    if (expiredTimer.current) {
+      clearTimeout(expiredTimer.current);
+    }
+  }, []);
+
+  const chainInfo = useMemo(
+    () => findChainByEnum(fromChain) || CHAINS[fromChain || 'ETH'],
+    [fromChain],
+  );
+
+  const { value: gasList } = useAsync(() => {
+    return apiProvider.gasMarketV2({
+      chainId: chainInfo.serverId,
+    });
+  }, [chainInfo?.serverId]);
+
+  const [passGasPrice, setUseGasPrice] = useState(false);
+  const isMaxRef = useRef(false);
+  const [clickMaxBtnCount, setClickMaxBtnCount] = useState(0);
+
+  const normalGasPrice = useMemo(
+    () => gasList?.find(e => e.level === 'normal')?.price,
+    [gasList],
+  );
+
+  const nativeTokenDecimals = useMemo(
+    () => findChain({ enum: fromChain })?.nativeTokenDecimals || 1e18,
+    [fromChain],
+  );
+
+  const gasLimit = useMemo(
+    () => (fromChain === CHAINS_ENUM.ETH ? 1000000 : 2000000),
+    [fromChain],
+  );
+
+  const payTokenIsNativeToken = useMemo(() => {
+    if (fromToken) {
+      return isSameAddress(fromToken.id, chainInfo.nativeTokenAddress);
+    }
+    return false;
+  }, [chainInfo?.nativeTokenAddress, fromToken]);
+
+  const handleSlider100 = useCallback(() => {
+    if (fromToken) {
+      setUseGasPrice(false);
+      setAmount(tokenAmountBn(fromToken).toString(10));
+    }
+    if (payTokenIsNativeToken && fromToken) {
+      if (normalGasPrice) {
+        const val = tokenAmountBn(fromToken).minus(
+          new BigNumber(gasLimit)
+            .times(normalGasPrice)
+            .div(10 ** nativeTokenDecimals),
+        );
+        if (!val.lt(0)) {
+          setUseGasPrice(true);
+        }
+        setAmount(
+          val.lt(0) ? tokenAmountBn(fromToken).toString(10) : val.toString(10),
+        );
+      }
+    }
+  }, [
+    fromToken,
+    gasLimit,
+    nativeTokenDecimals,
+    normalGasPrice,
+    payTokenIsNativeToken,
+  ]);
+
+  const {
+    onChangeSlider,
+    slider,
+    setSlider,
+    isDraggingSlider,
+    setIsDraggingSlider,
+  } = useSwapBridgeSlider({
+    setAmount,
+    fromToken,
+    handleSlider100,
+  });
+
+  const handleAmountChange = useCallback(
+    (e: string) => {
+      const v = formatSpeicalAmount(e);
+      if (!/^\d*(\.\d*)?$/.test(v)) {
+        return;
+      }
+      if (fromToken) {
+        const slider = v
+          ? Number(
+              new BigNumber(v || 0)
+                .div(fromToken?.amount ? tokenAmountBn(fromToken) : 1)
+                .times(100)
+                .toFixed(0),
+            )
+          : 0;
+        setSlider(slider < 0 ? 0 : slider > 100 ? 100 : slider);
+        if (!fromToken?.amount) {
+          setSlider(0);
+        }
+      }
+      setUseGasPrice(false);
+      setAmount(v);
+      if (Number(v) > 0) {
+        setPending(true);
+      }
+    },
+    [fromToken, setSlider],
+  );
+
+  const handleMax = useCallback(() => {
+    setUseGasPrice(false);
+
+    if (payTokenIsNativeToken && fromToken) {
+      if (normalGasPrice) {
+        const val = tokenAmountBn(fromToken).minus(
+          new BigNumber(gasLimit)
+            .times(normalGasPrice)
+            .div(10 ** nativeTokenDecimals),
+        );
+        if (!val.lt(0)) {
+          setUseGasPrice(true);
+        }
+        setAmount(
+          val.lt(0) ? tokenAmountBn(fromToken).toString(10) : val.toString(10),
+        );
+        setSlider(100);
+      }
+    }
+
+    if (!payTokenIsNativeToken && fromToken) {
+      isMaxRef.current = true;
+      handleAmountChange?.(tokenAmountBn(fromToken)?.toString(10));
+      setClickMaxBtnCount(e => e + 1);
+    }
+  }, [
+    payTokenIsNativeToken,
+    fromToken,
+    normalGasPrice,
+    gasLimit,
+    nativeTokenDecimals,
+    setSlider,
+    handleAmountChange,
+  ]);
+
+  const fillRecommendFromToken = useCallback(() => {
+    if (recommendFromToken) {
+      const targetChain = findChainByServerID(recommendFromToken?.chain);
+      if (targetChain) {
+        switchFromChain(targetChain.enum, false);
+        setFromToken(recommendFromToken);
+        setAmount('');
+        setSlider(0);
+        setIsDraggingSlider(false);
+      }
+    }
+  }, [
+    recommendFromToken,
+    switchFromChain,
+    setFromToken,
+    setSlider,
+    setIsDraggingSlider,
+  ]);
 
   const fetchIdRef = useRef(0);
   const [{ loading: quoteLoading, error: quotesError }, getQuoteList] =
@@ -417,7 +506,8 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
         fromChain &&
         toChain &&
         Number(amount) > 0 &&
-        aggregatorsList.length > 0
+        aggregatorsList.length > 0 &&
+        !isDraggingSlider
       ) {
         let isEmpty = false;
         const result: SelectedBridgeQuote[] = [];
@@ -635,6 +725,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
       toChain,
       amount,
       slippageObj.slippage,
+      isDraggingSlider,
     ]);
 
   const [pending, setPending] = useState(false);
@@ -676,20 +767,6 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     [getQuoteList],
   );
 
-  const [bestQuoteId, setBestQuoteId] = useState<
-    | {
-        bridgeId: string;
-        aggregatorId: string;
-      }
-    | undefined
-  >(undefined);
-
-  const openQuote = useSetQuoteVisible();
-
-  const openQuotesList = useCallback(() => {
-    openQuote(true);
-  }, [openQuote]);
-
   useEffect(() => {
     if (!quoteLoading && toToken && quoteList.every(e => !e.loading)) {
       const sortedList = quoteList?.sort((b, a) => {
@@ -729,97 +806,95 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     console.error('quotesError', quotesError);
   }
 
-  const showLoss = useMemo(() => {
-    if (selectedBridgeQuote) {
-      return !!tokenPriceImpact(
-        fromToken,
-        toToken,
-        amount,
-        selectedBridgeQuote?.to_token_amount,
-      )?.showLoss;
-    }
-    return false;
-  }, [fromToken, toToken, amount, selectedBridgeQuote]);
-
-  const clearExpiredTimer = useCallback(() => {
-    if (expiredTimer.current) {
-      clearTimeout(expiredTimer.current);
-    }
-  }, []);
-
-  const chainInfo = useMemo(
-    () => findChainByEnum(fromChain) || CHAINS[fromChain || 'ETH'],
-    [fromChain],
-  );
-
-  const { value: gasList } = useAsync(() => {
-    return apiProvider.gasMarketV2({
-      chainId: chainInfo.serverId,
+  const initIdRef = useRef(0); // just work on lastest fetch and clear old fetch
+  const initChainByCache = useCallback(async () => {
+    initIdRef.current += 1;
+    const currentFetchId = initIdRef.current;
+    const { firstChain } = await fetchOrderedChainList({
+      supportChains: supportedChains,
     });
-  }, [chainInfo?.serverId]);
-
-  const [passGasPrice, setUseGasPrice] = useState(false);
-  const isMaxRef = useRef(false);
-  const [clickMaxBtnCount, setClickMaxBtnCount] = useState(0);
-
-  const normalGasPrice = useMemo(
-    () => gasList?.find(e => e.level === 'normal')?.price,
-    [gasList],
-  );
-
-  const nativeTokenDecimals = useMemo(
-    () => findChain({ enum: fromChain })?.nativeTokenDecimals || 1e18,
-    [fromChain],
-  );
-
-  const gasLimit = useMemo(
-    () => (fromChain === CHAINS_ENUM.ETH ? 1000000 : 2000000),
-    [fromChain],
-  );
-
-  const payTokenIsNativeToken = useMemo(() => {
-    if (fromToken) {
-      return isSameAddress(fromToken.id, chainInfo.nativeTokenAddress);
+    if (initIdRef.current !== currentFetchId) {
+      return;
     }
-    return false;
-  }, [chainInfo?.nativeTokenAddress, fromToken]);
-
-  const handleMax = useCallback(() => {
-    setUseGasPrice(false);
-
-    if (payTokenIsNativeToken && fromToken) {
-      if (normalGasPrice) {
-        const val = tokenAmountBn(fromToken).minus(
-          new BigNumber(gasLimit)
-            .times(normalGasPrice)
-            .div(10 ** nativeTokenDecimals),
-        );
-        if (!val.lt(0)) {
-          setUseGasPrice(true);
+    const firstChainEnum = firstChain?.enum || CHAINS_ENUM.ETH;
+    setAmount('');
+    setSlider(0);
+    setIsDraggingSlider(false);
+    !navState?.chainEnum && switchFromChain(firstChainEnum);
+    const getRemoteRecommendChain = async () => {
+      if (initIdRef.current === currentFetchId) {
+        const data = await openapi.getRecommendBridgeToChain({
+          from_chain_id: findChainByEnum(firstChainEnum)!.serverId,
+        });
+        initIdRef.current === currentFetchId &&
+          switchToChain(findChainByServerID(data.to_chain_id)?.enum);
+      }
+    };
+    if (userAddress) {
+      const latestTx = await openapi.getBridgeHistoryList({
+        user_addr: userAddress,
+        start: 0,
+        limit: 1,
+      });
+      if (initIdRef.current !== currentFetchId) {
+        return;
+      }
+      const latestToToken = latestTx?.history_list?.[0]?.to_token;
+      if (latestToToken) {
+        const lastBridgeChain = findChainByServerID(latestToToken.chain);
+        if (lastBridgeChain && lastBridgeChain.enum !== firstChainEnum) {
+          switchToChain(lastBridgeChain.enum);
+          setToToken(latestToToken);
+        } else {
+          await getRemoteRecommendChain();
         }
-        setAmount(
-          val.lt(0) ? tokenAmountBn(fromToken).toString(10) : val.toString(10),
-        );
+      } else {
+        await getRemoteRecommendChain();
       }
     }
-
-    if (!payTokenIsNativeToken && fromToken) {
-      isMaxRef.current = true;
-      handleAmountChange?.(tokenAmountBn(fromToken)?.toString(10));
-      setClickMaxBtnCount(e => e + 1);
-    }
   }, [
-    payTokenIsNativeToken,
-    fromToken,
-    normalGasPrice,
-    gasLimit,
-    nativeTokenDecimals,
-    handleAmountChange,
+    fetchOrderedChainList,
+    supportedChains,
+    setSlider,
+    setIsDraggingSlider,
+    navState?.chainEnum,
+    switchFromChain,
+    userAddress,
+    switchToChain,
+    setToToken,
   ]);
 
   useEffect(() => {
+    initChainByCache();
+  }, [initChainByCache]);
+
+  useEffect(() => {
+    setQuotesList([]);
+    setRecommendFromToken(undefined);
+    setSelectedBridgeQuote(undefined);
+  }, [fromToken?.id, toToken?.id, fromChain, toChain, setSelectedBridgeQuote]);
+
+  useEffect(() => {
+    if (!inSufficientCanGetQuote) {
+      setQuotesList([]);
+      setRecommendFromToken(undefined);
+      setSelectedBridgeQuote(undefined);
+    }
+  }, [inSufficientCanGetQuote, setSelectedBridgeQuote]);
+
+  useEffect(() => {
+    if (!enableInsufficientQuote || !amount || Number(amount) === 0) {
+      setQuotesList([]);
+      setRecommendFromToken(undefined);
+      setSelectedBridgeQuote(undefined);
+    }
+  }, [amount, setSelectedBridgeQuote]);
+
+  useEffect(() => {
     setAmount('');
-  }, [fromChain]);
+    setSlider(0);
+    setIsDraggingSlider(false);
+  }, [fromChain, setIsDraggingSlider, setSlider]);
 
   return {
     clearExpiredTimer,
@@ -860,5 +935,8 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
 
     setSelectedBridgeQuote,
     ...slippageObj,
+
+    onChangeSlider,
+    slider,
   };
 };

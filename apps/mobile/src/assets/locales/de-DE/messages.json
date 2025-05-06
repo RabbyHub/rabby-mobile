@@ -232,6 +232,9 @@
       "selectADapp": "Wählen Sie eine Dapp",
       "noDapps": "Kein Dapp auf dieser Kette verfügbar",
       "noQuotesForChain": "Für diese Kette liegen noch keine Angebote vor."
+    },
+    "selectCexModal": {
+      "title": "Quelle auswählen"
     }
   },
   "page": {
@@ -287,7 +290,8 @@
         "totalApprovedAmount": "Derzeit genehmigter Betrag",
         "Name": "Name",
         "WillReceive": "Erhalten wird: ≈ {{token}}",
-        "BuyAgain": "Erneut kaufen"
+        "BuyAgain": "Erneut kaufen",
+        "AddToWhitelist": "Zur Whitelist hinzufügen"
       },
       "empty": {
         "title": "Keine Transaktionen",
@@ -1768,7 +1772,8 @@
       "header": {
         "placeHolder": "Suche",
         "searchPlaceHolder": "Token Name / Address suchen",
-        "favoriteTitle": "Bevorzugter Token"
+        "favoriteTitle": "Bevorzugter Token",
+        "SearchChain": "Chain suchen"
       },
       "searchWeb": {
         "searchTips": "Im Web suchen",
@@ -1969,7 +1974,12 @@
       "emptyWhitelistHeader": "Whitelist-Adresse hinzufügen",
       "whitelistTitle": "Meine Whitelist-Adressen",
       "enterAddress": "Adresse eingeben",
-      "emptyWhitelistContent": "Fügen Sie vertrauenswürdige Adressen zur Whitelist für schnelle Überweisungen hinzu – beim nächsten Mal ist keine Bestätigung erforderlich"
+      "emptyWhitelistContent": "Fügen Sie vertrauenswürdige Adressen zur Whitelist für schnelle Überweisungen hinzu – beim nächsten Mal ist keine Bestätigung erforderlich",
+      "sendTimeHeader": "Senden",
+      "SendHistory": "Send Verlauf",
+      "SelectFromHistory": "Aus der Geschichte auswählen",
+      "recent": "Aktuell",
+      "innerEnterAddress": "Gib Adresse / ENS ein"
     },
     "confirmAddress": {
       "risks": {
@@ -1983,7 +1993,8 @@
       "dexNameTail": "Einzahlungsadresse",
       "tipForWhiteList": "Fügen Sie Ihrer Whitelist für schnelle Überweisungen hinzu, keine Bestätigung beim nächsten Mal erforderlich",
       "sendTo": "An diese Adresse senden",
-      "title": "Bestätige Adresse"
+      "title": "Bestätige Adresse",
+      "checkbox": "Ich verstehe die Risiken und möchte fortfahren."
     },
     "selectAddress": {
       "selectSafeAddress": "Aus Safe-Adressen auswählen",
@@ -1997,7 +2008,18 @@
       "alreadyAdded": "Bereits zur Whitelist hinzugefügt",
       "addSuccessful": "Adresse zur Whitelist hinzugefügt",
       "confirmPassword": "Geben Sie das Passwort ein, um zu bestätigen",
-      "copyAddress": "Adresse kopieren"
+      "copyAddress": "Adresse kopieren",
+      "header": {
+        "exchange": "Tauschadresse?",
+        "name": "Name",
+        "address": "Adresse"
+      },
+      "placeholder": {
+        "exchange": "Wählen Sie den Austausch",
+        "name": "Benennen Sie Ihre Adresse"
+      },
+      "alreadyIn": "Bereits in der Whitelist",
+      "alreadyInYour": "Bereits in Ihrer Whitelist"
     },
     "syncExtension": {
       "syncingProgress": "Scannen ({{ percent }})",
@@ -2020,7 +2042,8 @@
       "tabs": {
         "portfolio": "Portfolio",
         "address": "Adresse"
-      }
+      },
+      "scamTokenHeader": "Scam-Token"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2045,6 +2068,11 @@
       "BrowserHistoryList": {
         "title": "Geschichte"
       }
+    },
+    "scan": {
+      "noCameraDevice": "Kein Kamera-Gerät",
+      "selectFromAlbum": "Aus Album auswählen",
+      "noQRCodeFound": "Kein QR-Code gefunden"
     }
   },
   "constant": {

@@ -6,6 +6,7 @@ import type { AuthenticationModalProps } from '@/components/AuthenticationModal/
 import type { NFTDetailPopupProps } from '@/screens/NftDetail/PopupInner';
 import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
 import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddress';
+import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
 
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',
@@ -45,6 +46,7 @@ export enum MODAL_NAMES {
   'ONEKEY_TEMP_PIN_OR_PASSPHRASE' = 'ONEKEY_TEMP_PIN_OR_PASSPHRASE',
   'AUTHENTICATION' = 'AUTHENTICATION',
   'CONFIRM_ADDRESS' = 'CONFIRM_ADDRESS',
+  'SELECT_CEX' = 'SELECT_CEX',
   'NFT_DETAIL' = 'NFT_DETAIL',
   'DESCRIPTION' = 'DESCRIPTION',
   'RESTORE_FROM_CLOUD' = 'RESTORE_FROM_CLOUD',
@@ -87,6 +89,7 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.TIP_UPGRADE]: {};
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: {};
   [MODAL_NAMES.CONFIRM_ADDRESS]: ConfirmAddressScreenProps;
+  [MODAL_NAMES.SELECT_CEX]: ISelectCexPorps;
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModalProps;
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupProps;
   [MODAL_NAMES.DESCRIPTION]: React.ComponentProps<

@@ -10,7 +10,7 @@ export const formatSeconds = (secs: number) => {
   const min = Math.floor(secs / 60);
   const s = secs - min * 60;
 
-  return `${min} min${s > 0 ? ` ${s} sec` : ''}`;
+  return `${min}min${s > 0 ? ` ${s}sec` : ''}`;
 };
 
 export const timeago = (a: number, b: number) => {
@@ -65,10 +65,10 @@ export const formatTimeReadable = (timeElapse: number) => {
   let timeStr = '';
   const { d, h, m, s } = getTimeSpan(timeElapse);
 
-  if (d) timeStr = `${d} day` + (d > 1 ? 's' : '');
-  if (h && !timeStr) timeStr = `${h} hr` + (h > 1 ? 's' : '');
-  if (m && !timeStr) timeStr = `${m} min` + (m > 1 ? 's' : '');
-  if (!timeStr) timeStr = `${s} sec` + (s > 1 ? 's' : '');
+  if (d) timeStr = `${d}day` + (d > 1 ? 's' : '');
+  if (h && !timeStr) timeStr = `${h}hr` + (h > 1 ? 's' : '');
+  if (m && !timeStr) timeStr = `${m}min` + (m > 1 ? 's' : '');
+  if (!timeStr) timeStr = `${s}sec` + (s > 1 ? 's' : '');
   return timeStr;
 };
 
@@ -87,11 +87,11 @@ export function fromNow(time: number, currTime?: number) {
     flag++;
   }
   if ((h || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${h} hour`;
+    str += `${flag > 0 ? ' ' : ''}${h}hour`;
     flag++;
   }
   if ((m || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${m} min`;
+    str += `${flag > 0 ? ' ' : ''}${m}min`;
     flag++;
   }
   if (str) successTimeView = str;
@@ -109,15 +109,15 @@ export function fromNowWithSecs(time: number, currTime?: number) {
     flag++;
   }
   if ((h || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${h} hour`;
+    str += `${flag > 0 ? ' ' : ''}${h}hour`;
     flag++;
   }
   if ((m || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${m} min`;
+    str += `${flag > 0 ? ' ' : ''}${m}min`;
     flag++;
   }
   if (!d && !h && !m) {
-    str += `${s} sec`;
+    str += `${s}sec`;
   }
   if (str) successTimeView = str;
   return successTimeView;
@@ -143,49 +143,29 @@ export const calcGasEstimated = (seconds?: number) => {
   // > 1 minute: ~ time min
   // >= 30 minutes: > 30 min
   if (seconds < 60) {
-    return `~${Math.round(seconds)} sec`;
+    return `~${Math.round(seconds)}sec`;
   }
   const minutes = seconds / 60;
   if (minutes < 30) {
-    return `~${Math.round(minutes)} min`;
+    return `~${Math.round(minutes)}min`;
   }
   return '>30 min';
 };
 
 export function formatTimestamp(timestamp: number, t: any) {
-  const date = new Date(timestamp);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
+  const date = dayjs(timestamp);
+  const today = dayjs();
+  const yesterday = today.subtract(1, 'day');
 
-  if (date.toDateString() === today.toDateString()) {
+  if (date.isSame(today, 'day')) {
     return t('page.transactions.Today');
   }
 
-  if (date.toDateString() === yesterday.toDateString()) {
+  if (date.isSame(yesterday, 'day')) {
     return t('page.transactions.Yesterday');
   }
 
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  const year = date.getFullYear();
-  const month = months[date.getMonth()];
-  const day = date.getDate();
-
-  return `${month} ${day}, ${year}`;
+  return date.format('MMM D, YYYY');
 }
 
 export function formatIntlTimestamp(timestamp: number): string {

@@ -503,7 +503,7 @@ export const TokenDetailScreen = () => {
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
 
-      navigation.navigate(RootNames.StackTransaction, {
+      navigation.push(RootNames.StackTransaction, {
         screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
         params: {
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
@@ -746,7 +746,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
 
     ghostBtn: {
-      borderWidth: 1.5,
+      // borderWidth: 1.5,
       backgroundColor: colors2024['brand-light-1'],
     },
     btnInnerContainer: {

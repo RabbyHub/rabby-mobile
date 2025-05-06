@@ -24,7 +24,8 @@ export function makeBottomSheetProps({
     switch (createParams?.name) {
       case MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY: {
         return {
-          handleBgColor: colors['neutral-bg-0'],
+          // neutral-bg-0 only for light theme
+          handleBgColor: colors['neutral-bg-0'] || colors['neutral-bg-1'],
         };
       }
       default: {

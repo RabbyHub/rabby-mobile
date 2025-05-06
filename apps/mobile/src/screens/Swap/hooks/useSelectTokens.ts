@@ -60,16 +60,25 @@ export const useSelectTokens = ({
   const [userTokenSettings, setUserTokenSettings] = useState({});
   const currentAddress = currentAccount?.address;
 
+  const enableSearchTokensV2 = useMemo(
+    () =>
+      keyword &&
+      type &&
+      (['swapFrom', 'swapTo', 'bridgeFrom'] as TokenSelectType[]).some(
+        e => e === type,
+      ),
+    [keyword, type],
+  );
   const {
     value: swapToTokenSearchResult,
     loading: swapToTokenSearchResultLoading,
   } = useAsync(async () => {
-    if (type === 'swapTo' && keyword) {
+    if (enableSearchTokensV2 && keyword) {
       const list = await openapi.searchTokensV2({
         q: keyword,
       });
       return list
-        .filter(e => e.chain === chain_server_id)
+        .filter(e => (chain_server_id ? e.chain === chain_server_id : true))
         .filter(e =>
           isAddress(keyword, { strict: false }) ? true : !!e.is_core,
         )
@@ -87,7 +96,7 @@ export const useSelectTokens = ({
         );
     }
     return [];
-  }, [keyword, chain_server_id]);
+  }, [enableSearchTokensV2, keyword, chain_server_id]);
 
   useEffect(() => {
     if (visible && Object.keys(userTokenSettings).length === 0) {
@@ -274,7 +283,7 @@ export const useSelectTokens = ({
   }, [chain_server_id, currentAddress, keyword, tokensMap, visible]);
 
   const tokenWithOwner = useMemo(() => {
-    if (type === 'swapTo' && keyword) {
+    if (enableSearchTokensV2 && keyword) {
       return (
         swapToTokenSearchResult?.map(token =>
           tagTokenItem(
@@ -307,10 +316,10 @@ export const useSelectTokens = ({
   }, [
     accounts,
     currentAccount,
+    enableSearchTokensV2,
     keyword,
     swapToTokenSearchResult,
     tokens,
-    type,
     userTokenSettings,
   ]);
 

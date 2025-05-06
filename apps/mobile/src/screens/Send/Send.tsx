@@ -70,6 +70,8 @@ import { useAtom } from 'jotai';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { lowcaseSame } from '@/utils/common';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
+import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 function SendScreen({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
@@ -77,6 +79,7 @@ function SendScreen({
   const navigation = useNavigation();
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
     useState(false);
 
@@ -123,6 +126,15 @@ function SendScreen({
     putScreenState,
     resetScreenState,
   } = useSendTokenScreenState();
+  const Header = useCallback(
+    () => <SendHeaderRight isForMultipleAdderss={isForMultipleAdderss} />,
+    [isForMultipleAdderss],
+  );
+  useEffect(() => {
+    setNavigationOptions({
+      headerRight: Header,
+    });
+  }, [Header, setNavigationOptions]);
 
   const disableItemCheck = useCallback(
     (token: TokenItem) => {

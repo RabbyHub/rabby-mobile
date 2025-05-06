@@ -99,6 +99,28 @@ export const formChartData = (
   };
 };
 
+export const getChangeData = (
+  data: CurveList,
+  realtimeNetWorth = 0,
+  realtimeTimestamp?: number,
+) => {
+  const startData = data[0] || { value: 0, timestamp: 0, usd_value: 0 };
+  const endNetWorth = realtimeTimestamp
+    ? realtimeNetWorth || 0
+    : data?.length
+    ? data[data.length - 1]?.usd_value || 0
+    : 0;
+  const assetsChange = endNetWorth - startData.usd_value;
+
+  return {
+    changePercent:
+      startData.usd_value !== 0
+        ? `${Math.abs((assetsChange * 100) / startData.usd_value).toFixed(2)}%`
+        : `${endNetWorth === 0 ? '0' : '100.00'}%`,
+    isLoss: assetsChange < 0,
+  };
+};
+
 export const useCurve = (
   address: string | undefined,
   nonce: number,

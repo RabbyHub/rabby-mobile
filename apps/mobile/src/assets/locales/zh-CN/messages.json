@@ -146,7 +146,8 @@
         "WillReceive": "将收到：≈ {{token}}",
         "BuyAgain": "再次购买",
         "totalApprovedAmount": "当前批准金额",
-        "Collection": "收藏"
+        "Collection": "收藏",
+        "AddToWhitelist": "添加至白名单"
       },
       "empty": {
         "title": "暂无交易",
@@ -1630,7 +1631,8 @@
       "header": {
         "placeHolder": "搜索",
         "searchPlaceHolder": "搜索代币名称 / 地址",
-        "favoriteTitle": "喜欢的代币"
+        "favoriteTitle": "喜欢的代币",
+        "SearchChain": "搜索链"
       },
       "searchWeb": {
         "title": "所有结果",
@@ -1828,7 +1830,12 @@
       "sendToImportedAddress": "发送到我的导入地址",
       "sendToWatchAddress": "发送到仅观察地址",
       "whitelistTitle": "我的白名单地址列表",
-      "emptyWhitelistContent": "将受信任的地址添加到白名单以实现快速转账——下次无需确认"
+      "emptyWhitelistContent": "将受信任的地址添加到白名单以实现快速转账——下次无需确认",
+      "sendTimeHeader": "发送",
+      "innerEnterAddress": "输入地址 / ENS",
+      "recent": "最近",
+      "SelectFromHistory": "从历史中选择",
+      "SendHistory": "发送历史"
     },
     "confirmAddress": {
       "risks": {
@@ -1842,7 +1849,8 @@
       "addToWhitelist": "添加到白名单",
       "tipForWhiteList": "将其添加到您的白名单中，以便快速转账，下次无需确认",
       "sendTo": "发送到此地址",
-      "title": "确认地址"
+      "title": "确认地址",
+      "checkbox": "我理解风险并想继续"
     },
     "selectAddress": {
       "selectSafeAddress": "从 Safe 地址中选择",
@@ -1856,7 +1864,18 @@
       "addSuccessful": "地址已添加到白名单",
       "removeWhitelist": "从白名单中移除",
       "alreadyAdded": "已添加到您的白名单",
-      "copyAddress": "复制地址"
+      "copyAddress": "复制地址",
+      "header": {
+        "address": "地址",
+        "name": "名称",
+        "exchange": "交易地址？"
+      },
+      "placeholder": {
+        "name": "命名您的地址",
+        "exchange": "选择交易所"
+      },
+      "alreadyIn": "已在白名单中",
+      "alreadyInYour": "已在您的白名单中"
     },
     "syncExtension": {
       "noNewAddr": "未找到可导入的新地址",
@@ -1879,7 +1898,8 @@
       "tabs": {
         "portfolio": "投资组合",
         "address": "地址"
-      }
+      },
+      "scamTokenHeader": "诈骗代币"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1904,6 +1924,11 @@
       "BrowserHistoryList": {
         "title": "历史"
       }
+    },
+    "scan": {
+      "noQRCodeFound": "未找到 QR-Code",
+      "selectFromAlbum": "从相册中选择",
+      "noCameraDevice": "无摄像头设备"
     }
   },
   "component": {
@@ -2054,6 +2079,9 @@
       "noDapp": "没有可用的 Dapps",
       "noDapps": "该链上没有可用的 Dapp",
       "selectADapp": "选择一个 Dapp"
+    },
+    "selectCexModal": {
+      "title": "选择交易所来源"
     }
   },
   "bluetooth": {

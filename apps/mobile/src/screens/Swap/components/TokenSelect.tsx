@@ -204,7 +204,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const searchedLocalTokensWithOwner = useMemo(
       () =>
-        isSwapTo && queryConds.keyword
+        (isSwapTo || type === 'bridgeFrom' || type === 'swapFrom') &&
+        queryConds.keyword
           ? tokens
           : tokens.map(
               e =>
@@ -214,7 +215,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
                     'ownerAccount' in e ? e.ownerAccount : undefined,
                 } as TokenItemMaybeWithOwner),
             ),
-      [isSwapTo, queryConds.keyword, tokens],
+      [isSwapTo, queryConds.keyword, tokens, type],
     );
 
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
@@ -464,7 +465,11 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const { forScene, ofScreen } = useScreenSceneAccountContext();
     const allowClearAccountFilter = useMemo(() => {
-      if (!currentAccount?.type || isWatchOrSafeAccount(currentAccount?.type)) {
+      if (
+        queryConds.keyword ||
+        !currentAccount?.type ||
+        isWatchOrSafeAccount(currentAccount?.type)
+      ) {
         return false;
       }
 
@@ -473,7 +478,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         ((RootNames.MultiBridge === ofScreen && type === 'bridgeFrom') ||
           (RootNames.MultiSwap === ofScreen && type === 'swapFrom'))
       );
-    }, [forScene, ofScreen, currentAccount?.type, type]);
+    }, [queryConds.keyword, currentAccount?.type, forScene, ofScreen, type]);
 
     const handleTokenChange = useMemoizedFn(async (tokenItem?: TokenItem) => {
       if (!tokenItem || !tokenItem.id) {

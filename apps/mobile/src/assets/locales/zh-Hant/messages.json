@@ -205,7 +205,8 @@
         "BuyAgain": "再次購買",
         "WillReceive": "將接收：≈ {{token}}",
         "totalApprovedAmount": "當前已批准金額",
-        "PurchaseFrom": "購買自"
+        "PurchaseFrom": "購買自",
+        "AddToWhitelist": "加入白名單"
       },
       "empty": {
         "title": "沒有交易",
@@ -1493,7 +1494,8 @@
       "header": {
         "placeHolder": "搜尋",
         "searchPlaceHolder": "搜索代幣名稱 / 地址",
-        "favoriteTitle": "最愛的代幣"
+        "favoriteTitle": "最愛的代幣",
+        "SearchChain": "搜尋鏈"
       },
       "sectionHeader": {
         "Defi": "DeFi",
@@ -1876,7 +1878,12 @@
       "sendToImportedAddress": "發送到我的導入地址",
       "emptyWhitelistTip": "尚無白名單地址，",
       "sendToSafeAddress": "發送到安全地址",
-      "emptyWhitelistContent": "將受信任的地址添加到白名單中以進行快速轉賬——下次無需確認"
+      "emptyWhitelistContent": "將受信任的地址添加到白名單中以進行快速轉賬——下次無需確認",
+      "sendTimeHeader": "發送",
+      "innerEnterAddress": "輸入地址 / ENS",
+      "SendHistory": "發送歷史",
+      "SelectFromHistory": "從歷史中選擇",
+      "recent": "最近"
     },
     "confirmAddress": {
       "risks": {
@@ -1890,7 +1897,8 @@
       "addToWhitelist": "添加至白名單",
       "tipForWhiteList": "將其添加到白名單中，以便快速轉賬，下次無需確認。",
       "title": "確認地址",
-      "sendTo": "發送到此地址"
+      "sendTo": "發送到此地址",
+      "checkbox": "我了解風險並想繼續"
     },
     "selectAddress": {
       "selectWatchAddress": "從 Watch-only 地址中選擇",
@@ -1904,7 +1912,18 @@
       "addSuccessful": "地址已加入白名單",
       "cancel": "取消",
       "confirmPassword": "輸入密碼以確認",
-      "copyAddress": "複製地址"
+      "copyAddress": "複製地址",
+      "header": {
+        "address": "地址",
+        "exchange": "交易地址？",
+        "name": "名稱"
+      },
+      "placeholder": {
+        "exchange": "選擇交易所",
+        "name": "命名您的地址"
+      },
+      "alreadyIn": "已在白名單中",
+      "alreadyInYour": "已在您的白名單中"
     },
     "syncExtension": {
       "scanTips2": "掃描二維碼開始同步",
@@ -1927,7 +1946,8 @@
       "tabs": {
         "address": "地址",
         "portfolio": "投資組合"
-      }
+      },
+      "scamTokenHeader": "詐騙代幣"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1952,6 +1972,11 @@
       "BrowserHistoryList": {
         "title": "歷史"
       }
+    },
+    "scan": {
+      "noCameraDevice": "無攝影機設備",
+      "noQRCodeFound": "未找到 QR-Code",
+      "selectFromAlbum": "從相簿中選擇"
     }
   },
   "component": {
@@ -2102,6 +2127,9 @@
       "noDapp": "目前沒有可用的 Dapps",
       "help": "請聯繫該區塊鏈的官方團隊以獲取支援",
       "selectADapp": "選擇一個 Dapp"
+    },
+    "selectCexModal": {
+      "title": "選擇交易所來源"
     }
   },
   "common": {

@@ -24,6 +24,9 @@ import { batchSaveWithPQueueAndTransaction } from './_task';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
 import { deleteCurveCache } from '@/utils/24balanceCurveCache';
+import { transactionHistoryService } from '@/core/services';
+import { TransactionGroup } from '@/core/services/transactionHistory';
+import { removeCexId } from '@/utils/addressCexId';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   const data = [..._tokens];
@@ -63,20 +66,70 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
     });
 }
 
+const updateSwapFailHistoryItem = (
+  historyItem: HistoryItemEntity,
+  swapFailHistoryList: TransactionGroup[],
+  setTokenDict: any,
+) => {
+  if (historyItem.status === 0) {
+    const localSwapFailTransaction = swapFailHistoryList.find(
+      a => historyItem.txHash === a.maxGasTx.hash,
+    );
+
+    if (localSwapFailTransaction) {
+      const swapAction =
+        localSwapFailTransaction.maxGasTx.action?.actionData.swap ||
+        localSwapFailTransaction.maxGasTx.action?.actionData.wrapToken ||
+        localSwapFailTransaction.maxGasTx.action?.actionData.unWrapToken;
+
+      if (swapAction) {
+        const sends = [
+          {
+            token_id: swapAction.payToken.id,
+            amount: swapAction.payToken.amount,
+          },
+        ];
+        const receives = [
+          {
+            token_id: swapAction.receiveToken.id,
+            amount:
+              swapAction.receiveToken.amount ||
+              swapAction.receiveToken.min_amount,
+          },
+        ];
+        setTokenDict(prev => ({
+          ...prev,
+          [`${swapAction.payToken.chain}_token:${swapAction.payToken.id}`]: {
+            ...swapAction.payToken,
+          },
+          [`${swapAction.receiveToken.chain}_token:${swapAction.receiveToken.id}`]:
+            {
+              ...swapAction.receiveToken,
+            },
+        }));
+        historyItem.sends = JSON.stringify(sends);
+        historyItem.receives = JSON.stringify(receives);
+      }
+    }
+  }
+};
 export async function syncRemoteHistory(
   address: string,
   history_list: TxAllHistoryResult['history_list'],
-  setHistoryLoading,
+  setHistoryLoading: any,
+  setTokenDict: any,
 ) {
   try {
     console.debug('syncRemoteHistory history_list.length', history_list.length);
 
+    const swapFailHistoryList =
+      transactionHistoryService.getSwapFailTransactions(address);
     const historyItems = history_list
       .filter(i => Boolean(i.tx))
       .map(raw => {
         const item = new HistoryItemEntity();
         HistoryItemEntity.fillEntity(item, address, raw);
-
+        updateSwapFailHistoryItem(item, swapFailHistoryList, setTokenDict);
         return item;
       });
     await prepareAppDataSource();
@@ -297,22 +350,10 @@ export const deleteDBResourceForAddress = async (_address: string) => {
       BalanceEntity.deleteForAddress(address),
       CexEntity.deleteForAddress(address),
       deleteCurveCache(address),
+      removeCexId(address),
     ]);
   } catch (error) {
     console.log('deleteDBResourceForAddress', error);
-  }
-};
-
-export const updateExpiredTime = async (_address: string, offest?: number) => {
-  const address = _address.toLowerCase();
-  try {
-    await Promise.all([
-      TokenItemEntity.willExpired(address, offest),
-      NFTItemEntity.willExpired(address, offest),
-      PortocolItemEntity.willExpired(address, offest),
-    ]);
-  } catch (error) {
-    console.log('update expired)', error);
   }
 };
 

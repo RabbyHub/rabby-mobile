@@ -18,7 +18,7 @@ export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
 export const isSingleAddressAtom = atom<boolean>(false);
 export const useSendRoutes = () => {
   const navigation = useNavigation<HomeProps['navigation']>();
-  const { findAccount } = useWhiteListAddress(true);
+  const { findAccountWithoutBalance } = useWhiteListAddress(true);
   const [params, setParams] = useAtom(sendScreenParamsAtom);
   const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
   const navigateToSendScreen = useCallback(
@@ -37,14 +37,11 @@ export const useSendRoutes = () => {
         action: 'Send_Enter',
       });
       setParams(p || {});
-      setIsSingleAddress(isForSingleAddress);
+      setIsSingleAddress(!!isForSingleAddress);
       if (p?.toAddress) {
-        const { inWhitelist, account } = await findAccount(
-          p.toAddress,
-          undefined,
-          true,
-        );
-        if (inWhitelist) {
+        const { inWhitelist, account, isMyImported } =
+          findAccountWithoutBalance(p.toAddress, undefined);
+        if (inWhitelist || isMyImported) {
           navigation.push(RootNames.StackTransaction, {
             screen: isForSingleAddress ? RootNames.Send : RootNames.MultiSend,
             params: { ...params, ...p },
@@ -77,7 +74,7 @@ export const useSendRoutes = () => {
       });
     },
     [
-      findAccount,
+      findAccountWithoutBalance,
       navigateToSendScreen,
       navigation,
       params,
@@ -89,5 +86,6 @@ export const useSendRoutes = () => {
   return {
     navigateToSendPolyScreen,
     navigateToSendScreen,
+    isSingleAddress,
   };
 };

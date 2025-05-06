@@ -1,7 +1,6 @@
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -46,6 +45,7 @@ import {
   AbstractPortfolioToken,
   AbstractProject,
   ActionItem,
+  CombineToken,
 } from '@/screens/Home/types';
 import {
   getAllDefiCount,
@@ -75,7 +75,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useAccountInfo } from './hooks';
-import { formChartData } from '@/hooks/useCurve';
+import { getChangeData } from '@/hooks/useCurve';
 import { trigger } from 'react-native-haptic-feedback';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
@@ -93,6 +93,10 @@ import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
 import { useSetPasswordFirst } from '@/hooks/useLock';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useSharedValue } from 'react-native-reanimated';
+import { isScamHidenToken } from '@/screens/Home/utils/collection';
+import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { HeaderTitle } from './HeaderTitle';
 
 const END_POSITION = 60;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -170,7 +174,9 @@ export const MultiAssets = ({
 
   const listRef = useRef<RecyclerListViewRef>(null);
   const [firstRowType, setFirstRowType] = useState('');
+  const [isListVisable, setIsListVisable] = useState(false);
 
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const { t } = useTranslation();
@@ -184,12 +190,13 @@ export const MultiAssets = ({
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
+  const [foldScam, setFoldScam] = useState(true);
   const [extendedState, setExtendedState] = useState<{
     currentTab: TabType;
     isLight: boolean;
     combineData?: any;
   }>({
-    currentTab: TabType.portfolio,
+    currentTab: TabType.address,
     combineData,
     isLight: isLight,
   });
@@ -215,13 +222,30 @@ export const MultiAssets = ({
         data: item,
       }));
     const foldAndIncludeBalanceTokenList: ActionItem[] = tokens
-      .filter(i => i._isFold && !i._isExcludeBalance && i._realUsdValue > 0)
+      .filter(
+        i =>
+          !isScamHidenToken(i) &&
+          i._isFold &&
+          !i._isExcludeBalance &&
+          i._realUsdValue > 0,
+      )
       .map(item => ({
         type: 'fold_token',
         data: item,
       }));
     const foldAndExcludeBalanceTokenList: ActionItem[] = tokens
-      .filter(i => i._isFold && (i._isExcludeBalance || i._realUsdValue === 0))
+      .filter(
+        i =>
+          !isScamHidenToken(i) &&
+          i._isFold &&
+          (i._isExcludeBalance || i._realUsdValue === 0),
+      )
+      .map(item => ({
+        type: 'fold_token',
+        data: item,
+      }));
+    const scamTokens: ActionItem[] = tokens
+      .filter(isScamHidenToken)
       .map(item => ({
         type: 'fold_token',
         data: item,
@@ -271,7 +295,7 @@ export const MultiAssets = ({
               const hasChangeData = multiTimeStamp[
                 item.address.toLocaleLowerCase()
               ]?.data?.some(i => i.usd_value !== 0);
-              const chartData = formChartData(
+              const chartData = getChangeData(
                 multiTimeStamp[item.address.toLocaleLowerCase()]?.data || [],
                 item.balance,
                 new Date().getTime(),
@@ -294,6 +318,22 @@ export const MultiAssets = ({
           { type: 'toggle_token_fold' },
           ...(foldHideList ? [] : foldTokenList),
         ],
+      },
+      {
+        show: !foldHideList && !!scamTokens.length,
+        data: foldScam
+          ? [
+              {
+                type: 'scam_token',
+                data: {
+                  total: scamTokens.length,
+                  logoUrls: (scamTokens as CombineToken[])
+                    .slice(0, 3)
+                    .map(i => i.data?.logo_url),
+                },
+              },
+            ]
+          : scamTokens,
       },
       {
         show: showPortfolios && !!isLoading && !tokens.length,
@@ -351,6 +391,7 @@ export const MultiAssets = ({
     extendedState.currentTab,
     foldDefi,
     foldHideList,
+    foldScam,
     isLoading,
     list,
     multiTimeStamp,
@@ -366,6 +407,16 @@ export const MultiAssets = ({
   const pathColor = !combineData.isLoss
     ? colors2024['green-default']
     : colors2024['red-default'];
+  const getHeaderTitle = useCallback(
+    () => (
+      <HeaderTitle
+        netWorth={combineData.netWorth}
+        changePercent={combineData.changePercent}
+        isLoss={combineData.isLoss}
+      />
+    ),
+    [combineData.changePercent, combineData.isLoss, combineData.netWorth],
+  );
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -421,6 +472,7 @@ export const MultiAssets = ({
   }, [shouldRedirectToSetPasswordBefore2024, navigation]);
   const scrollToTop = () => {
     setFoldHideList(true);
+    setFoldScam(true);
     setTimeout(() => {
       listRef.current?.scrollToOffset(0, 0, true);
     }, 200);
@@ -610,13 +662,32 @@ export const MultiAssets = ({
             )}
           </View>
         );
+      case 'scam_token':
+        return (
+          <ScamTokenHeader
+            total={data.total}
+            logoUrls={data.logoUrls}
+            style={StyleSheet.flatten([
+              styles.renderItemWrapper,
+              !isLight && styles.bg2,
+            ])}
+            onPress={() => {
+              setFoldScam(false);
+            }}
+          />
+        );
       case 'toggle_token_fold':
         return (
           <TokenRowSectionHeader
             style={styles.tokenSectionHeader}
             str={getTotalFoldToken(tokens.filter(i => i._isFold))}
             fold={foldHideList}
-            onPressFold={() => setFoldHideList(pre => !pre)}
+            onPressFold={() => {
+              if (!foldHideList) {
+                setFoldScam(true);
+              }
+              setFoldHideList(pre => !pre);
+            }}
           />
         );
       case 'defi_header':
@@ -747,29 +818,31 @@ export const MultiAssets = ({
     }
   }, [combineData.isLoss, isLight]);
 
-  useLayoutEffect(() => {
-    getCacheTop10Assets({
-      disableNFT: true,
-      realTimeAddresses: top10Addresses,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10Addresses.length]);
-
   useEffect(() => {
     const id = setTimeout(() => {
-      checkIsExpireAndUpdate(false, {
+      if (!isListVisable) {
+        return;
+      }
+      getCacheTop10Assets({
         disableNFT: true,
         realTimeAddresses: top10Addresses,
+      }).finally(() => {
+        checkIsExpireAndUpdate(false, {
+          disableNFT: true,
+          realTimeAddresses: top10Addresses,
+        });
       });
-    }, 500);
+    }, 200);
     return () => {
-      clearTimeout(id);
+      id && clearTimeout(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10Addresses.length]);
+  }, [top10Addresses.length, isListVisable]);
 
   const switchTab = (type: TabType) => {
-    if (isTriggered.value) return;
+    if (isTriggered.value) {
+      return;
+    }
     isTriggered.value = true;
     setExtendedState(pre => ({
       ...pre,
@@ -785,17 +858,17 @@ export const MultiAssets = ({
     .simultaneousWithExternalGesture(listRef as any)
     .onUpdate(e => {
       if (e.translationX <= -END_POSITION) {
-        if (extendedState.currentTab === TabType.portfolio) {
-          runOnJS(switchTab)(TabType.address);
-        }
-      }
-      if (e.translationX > -END_POSITION) {
         if (extendedState.currentTab === TabType.address) {
           runOnJS(switchTab)(TabType.portfolio);
         }
       }
+      if (e.translationX > -END_POSITION) {
+        if (extendedState.currentTab === TabType.portfolio) {
+          runOnJS(switchTab)(TabType.address);
+        }
+      }
     })
-    .onEnd(e => {
+    .onEnd(() => {
       isTriggered.value = false;
     });
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
@@ -850,11 +923,24 @@ export const MultiAssets = ({
           ref={listRef}
           rowRenderer={renderItem}
           onVisibleIndicesChanged={indexes => {
+            setIsListVisable(true);
             if (listData.getDataForIndex(indexes[0])?.type) {
               setFirstRowType(listData.getDataForIndex(indexes[0]).type);
             }
           }}
           onScroll={event => {
+            const scrollOffset = event.nativeEvent.contentOffset.y;
+            if (scrollOffset > 80) {
+              setNavigationOptions({
+                headerTitle: getHeaderTitle,
+                headerTitleAlign: 'left',
+              });
+            } else {
+              setNavigationOptions({
+                headerTitle: '',
+                headerTitleAlign: 'left',
+              });
+            }
             if (
               event.nativeEvent.contentSize &&
               event.nativeEvent.layoutMeasurement
@@ -867,7 +953,7 @@ export const MultiAssets = ({
             }
           }}
           renderFooter={() =>
-            extendedState.currentTab === TabType.address ? (
+            isListVisable && extendedState.currentTab === TabType.address ? (
               <View>
                 <Card style={styles.footerCard} onPress={gotoAddAddress}>
                   <View style={styles.footerMain}>
@@ -996,7 +1082,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,
-    // marginBottom: 8,
+    marginBottom: ASSETS_SEPARATOR_HEIGHT,
   },
   footer: {
     minHeight: 400,

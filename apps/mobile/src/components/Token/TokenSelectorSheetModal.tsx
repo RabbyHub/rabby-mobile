@@ -1,5 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useMemo, useEffect, useCallback, useState } from 'react';
+import React, {
+  useMemo,
+  useEffect,
+  useCallback,
+  useState,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -8,6 +14,7 @@ import {
   StyleSheet,
   Platform,
   SectionListRenderItem,
+  TextInput,
 } from 'react-native';
 import {
   BottomSheetBackdropProps,
@@ -68,6 +75,10 @@ import { TokenItemContextMenu } from './TokenContextMenu';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { isScamTokenForSelect } from '@/screens/Home/utils/collection';
+import { SCAM_TOKEN_HAEDER_ID, SCAM_TOKEN_HEADER_DATA } from './constant';
+import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
+import { NextSearchBar } from '@/components2024/SearchBar';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -183,6 +194,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       useSheetModal();
 
     const [fold, setFold] = useState(true);
+    const [isScamFold, setIsScamFold] = useState(true);
 
     const { t } = useTranslation();
     const isBridgeTo = type === 'bridgeTo';
@@ -194,6 +206,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       if (!visible) {
         setIsInputActive(false);
         setFold(true);
+        setIsScamFold(true);
       }
     }, [visible, toggleShowSheetModal]);
 
@@ -227,6 +240,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const androidBottomOffset = isAndroid ? bottom : 0;
 
     const { isLight, styles, colors2024 } = useTheme2024({ getStyle });
+
+    const inputRef = useRef<TextInput | null>(null);
 
     const [query, setQuery] = useState('');
     const [isInputActive, setIsInputActive] = useState(false);
@@ -349,14 +364,27 @@ export const TokenSelectorSheetModal = React.forwardRef<
     );
 
     const tokens = useMemo(() => {
+      const normalFoldTokens = foldTokensList.filter(
+        i => !isScamTokenForSelect(i),
+      );
+      const scamTokens = foldTokensList.filter(isScamTokenForSelect);
       const allList = [
         ...(displayList || []),
-        ...(foldTokensList?.slice(0, fold ? 1 : undefined) || []),
+        ...(normalFoldTokens?.slice(0, fold ? 1 : undefined) || []),
+        ...(fold || !isScamFold || !scamTokens.length
+          ? []
+          : [
+              {
+                ...SCAM_TOKEN_HEADER_DATA,
+                amount: scamTokens.length,
+                logoUrls: scamTokens.slice(0, 3).map(item => item.logo_url),
+              },
+            ]),
+        ...(fold || isScamFold ? [] : scamTokens),
       ];
 
       const formatList = (allList ?? []).map(x => {
         const _netWorth = isBridgeTo ? 0 : x.amount * x.price || 0;
-
         return {
           id: x.id,
           amount: x.amount,
@@ -376,7 +404,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
       return isFromModalType
         ? formatList
         : formatList.sort((m, n) => n._netWorth - m._netWorth);
-    }, [displayList, isBridgeTo, foldTokensList, fold, isFromModalType]);
+    }, [
+      foldTokensList,
+      displayList,
+      fold,
+      isScamFold,
+      isFromModalType,
+      isBridgeTo,
+    ]);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => {
@@ -413,8 +448,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
     }, [isLoading]);
 
     const onPressToken = useCallback(() => {
+      if (!fold) {
+        setIsScamFold(true);
+      }
       return setFold(pre => !pre);
-    }, [setFold]);
+    }, [fold]);
 
     const renderItemRenderComponent = useCallback<
       SectionListRenderItem<(typeof tokens)[number]>
@@ -486,6 +524,19 @@ export const TokenSelectorSheetModal = React.forwardRef<
           isFromModalType &&
           (token._netWorth || 0) > 0;
 
+        if (token.id === SCAM_TOKEN_HAEDER_ID) {
+          return (
+            <ScamTokenHeader
+              onPress={() => {
+                setIsScamFold(false);
+              }}
+              style={styles.scamHeader}
+              total={token.amount}
+              logoUrls={token.$origin.logoUrls}
+            />
+          );
+        }
+
         if (token.$origin.isFakerFoldRow) {
           return (
             <View style={StyleSheet.flatten([styles.tokenRowWrap])}>
@@ -520,7 +571,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        if (isSwapTo) {
+        if (
+          isSwapTo ||
+          (query && (type === 'bridgeFrom' || type === 'swapFrom'))
+        ) {
           return (
             <View style={{ marginTop: 8, marginHorizontal: 12 }}>
               <TokenItemContextMenu
@@ -683,6 +737,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         );
       },
       [
+        query,
         isLoading,
         disableItemCheck,
         chainSearchCtx.filterAccountItem,
@@ -707,6 +762,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.tokenHeaderAmount,
         styles.textSecondary,
         styles.favoriteBadge,
+        styles.scamHeader,
         styles.tokenRowWrap,
         styles.tokenRowTokenWrap,
         styles.tokenRowTokenInner,
@@ -764,6 +820,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
         },
       ];
     }, [isBridgeTo, tokens, unshiftList]);
+
+    const inputNotActiveAndNoQuery = useMemo(() => {
+      return !(query || isInputActive);
+    }, [query, isInputActive]);
 
     const { willShowChainFilter, willShowAccountFilter, willShowFilterRow } =
       useMemo(() => {
@@ -836,23 +896,47 @@ export const TokenSelectorSheetModal = React.forwardRef<
               ) : null}
             </BottomSheetHandlableView>
 
-            <SearchInput
-              isActive={isInputActive}
-              containerStyle={styles.searchInputContainer}
-              searchIconWrapperStyle={styles.searchIconWrapperStyle}
-              inputStyle={styles.inputStyle}
-              searchIcon={<SearchSVG color={colors2024['neutral-foot']} />}
-              inputProps={{
-                value: query,
-                onChange: e => handleQueryChange(e.nativeEvent.text),
-                onFocus: handleInputFocus,
-                onBlur: handleInputBlur,
-                placeholder:
+            <View style={styles.searchInputContainer}>
+              <NextSearchBar
+                onCancel={() => {
+                  setQuery('');
+                  setTimeout(() => {
+                    inputRef.current?.blur();
+                  }, 50);
+                }}
+                inputContainerStyle={{
+                  justifyContent: inputNotActiveAndNoQuery
+                    ? 'center'
+                    : 'flex-start',
+                }}
+                inputStyle={{
+                  flex: inputNotActiveAndNoQuery ? 0 : 1,
+                }}
+                style={styles.searchInputContainer}
+                placeholder={
                   searchPlaceholder ||
-                  t('component.TokenSelector.searchPlaceHolder2'),
-                placeholderTextColor: colors2024['neutral-secondary'],
-              }}
-            />
+                  t('component.TokenSelector.searchPlaceHolder2')
+                }
+                value={query}
+                onChangeText={v => {
+                  handleQueryChange(v);
+                }}
+                placeholderTextColor={colors2024['neutral-secondary']}
+                returnKeyType="done"
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
+                ref={inputRef}
+              />
+              {/* for mask touch event in input to emit focus event */}
+              {inputNotActiveAndNoQuery && (
+                <TouchableOpacity
+                  style={[styles.absoluteContainer]}
+                  onPress={() => {
+                    inputRef.current?.focus();
+                  }}
+                />
+              )}
+            </View>
           </View>
 
           <View
@@ -1063,10 +1147,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     },
 
     searchInputContainer: {
-      borderRadius: 30,
-      backgroundColor: isLight ? '#E6E9EE' : colors2024['neutral-bg-2'],
-      paddingHorizontal: 12,
-      borderColor: 'transparent',
+      position: 'relative',
+      borderRadius: 12,
+      // paddingHorizontal: 12,
+      // borderColor: 'transparent',
       alignItems: 'center',
       marginBottom: 8,
     },
@@ -1117,6 +1201,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       // borderWidth: 1,
       // borderColor: 'blue',
     },
+    scamHeader: {
+      marginHorizontal: 12,
+      height: ITEM_HEIGHT,
+      marginTop: 8,
+      width: 'auto',
+    },
     tips: {
       width: 14,
       height: 14,
@@ -1151,6 +1241,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '400',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
+    },
+    searchBar: {
+      flex: 1,
     },
     tokenInfoColRight: {
       alignItems: 'flex-end',
@@ -1216,6 +1309,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['orange-light-1'],
       borderBottomLeftRadius: 12,
       borderTopRightRadius: 16,
+    },
+    absoluteContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 1,
     },
   };
 });

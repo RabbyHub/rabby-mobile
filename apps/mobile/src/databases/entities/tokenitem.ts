@@ -202,8 +202,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return (
       await this.getRepository().findBy({
         owner_addr: In(addresses),
-        is_core: true,
-        is_scam: false,
       })
     )
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
