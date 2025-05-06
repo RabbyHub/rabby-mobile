@@ -44,7 +44,9 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
         chain: token.chain,
       });
     }
-    refreshTags();
+    setTimeout(() => {
+      refreshTags();
+    }, 0);
   }, [
     isPined,
     pinToken,
