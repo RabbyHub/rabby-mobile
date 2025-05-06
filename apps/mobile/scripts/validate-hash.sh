@@ -9,6 +9,7 @@ trap 'cd "$ORIGINAL_DIR"' EXIT
 
 # 获取脚本所在绝对路径
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PROJECT_PATH=$(dirname -- "${SCRIPT_DIR}")
 cd "${SCRIPT_DIR}/.."
 
 # 不上传 sentry 报告了，没啥用
@@ -21,6 +22,8 @@ TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
 EXPORT_DIR="${EXPORT_DIR}/build_${TIMESTAMP}"
 BUILD_REPORT_FILE="${EXPORT_DIR}/build_hashes.txt"
 
+sed -i '' "s|RABBY_MOBILE_PATH_HOLDER|${PROJECT_PATH}|" ./ios/RabbyMobile/AppConfig.xcconfig
+
 APP_PATH="./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app"
 
 if [ -n "$EXPORT_DIR" ]; then
@@ -31,6 +34,7 @@ if [ -n "$EXPORT_DIR" ]; then
   echo "ℹ️  Export directory set to: $EXPORT_DIR"
 fi
 
+rm -rf ~/Library/Developer/Xcode/DerivedData/RabbyMobile-*
 rm -rf "./ios/Package"
 rm -rf "./ios/build"
 rm -rf "./ios/DerivedData"
