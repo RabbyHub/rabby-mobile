@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ViewProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { AppBottomSheetModal } from '@/components';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -143,7 +143,7 @@ export const GasAccountLogoutPopup = (props: {
   visible: boolean;
   onClose?: () => void;
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   useEffect(() => {
@@ -160,7 +160,7 @@ export const GasAccountLogoutPopup = (props: {
       onDismiss={props.onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
-        linearGradientType: 'linear',
+        linearGradientType: isLight ? 'bg2' : 'bg1',
         colors: colors2024,
       })}>
       <BottomSheetView style={styles.popup}>

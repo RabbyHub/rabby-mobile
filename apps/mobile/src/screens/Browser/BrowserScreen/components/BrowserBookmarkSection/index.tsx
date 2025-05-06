@@ -145,7 +145,11 @@ export const BrowserBookmarkSection = ({
       ) : null}
 
       {browserHistoryList?.length ? (
-        <View style={styles.historyListWrapper}>
+        <View
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{
+            marginTop: list.length ? 30 : 0,
+          }}>
           <View style={styles.header}>
             <View style={styles.titleWarper}>
               <Text style={styles.title}>
@@ -234,7 +238,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     ],
   },
   historyListWrapper: {
-    marginTop: 30,
+    // marginTop: 30,
   },
   historyList: {
     paddingHorizontal: 24,

@@ -6,7 +6,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { trigger } from 'react-native-haptic-feedback';
 import { GasAccountCard } from './components/GasAccountCard';
 import { GasAccountDepositPopup } from './components/GasAccountDepositPopup';
 import { GasAccountLoginPopup } from './components/GasAccountLoginPopup';

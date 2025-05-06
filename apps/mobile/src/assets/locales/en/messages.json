@@ -1851,6 +1851,9 @@
         "history": "History",
         "favorites": "Favorites"
       },
+      "BrowserTabList": {
+        "closeAllTabs": "Close all tabs"
+      },
       "BrowserBookmarkList": {
         "title": "Favorites"
       },
@@ -2051,6 +2054,7 @@
     "Balance": "Balance",
     "Done": "Done",
     "Nonce": "Nonce",
+    "Edit": "Edit",
     "cancel": "Cancel",
     "Paste": "Paste",
     "Price": "Price",

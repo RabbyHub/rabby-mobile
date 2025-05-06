@@ -122,7 +122,7 @@ export const GasAccountLoginPopup: React.FC<{
   onClose?(): void;
   onLogin?(): void;
 }> = ({ visible, onClose, onLogin }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export const GasAccountLoginPopup: React.FC<{
       onDismiss={onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
-        linearGradientType: 'linear',
+        linearGradientType: isLight ? 'bg2' : 'bg1',
         colors: colors2024,
       })}
       enableDynamicSizing
