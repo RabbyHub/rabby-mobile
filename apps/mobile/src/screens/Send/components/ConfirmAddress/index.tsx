@@ -1,12 +1,5 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Switch } from 'react-native-switch';
 import { noop } from 'lodash';
 
 import { Text } from '@/components';
@@ -19,7 +12,6 @@ import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useRisks } from './risk';
-import { toast } from '@/components2024/Toast';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import {
@@ -31,6 +23,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
+import { toast } from '@/components2024/Toast';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disbaleWhiteSwitch?: boolean;
@@ -53,7 +46,9 @@ const ConfirmAddress = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
-  const switchRef = useRef<Switch>(null);
+  const [inWhiteList, setInWhiteList] = useState(
+    isAddrOnWhitelist(account.address),
+  );
   const { loading, risks, addressDesc } = useRisks(
     account.address,
     !!account.balance,
@@ -66,16 +61,6 @@ const ConfirmAddress = ({
   const { safeSizes } = useSafeAndroidBottomSizes({
     footerButtonGroupMb: 35,
   });
-
-  const inWhiteList = useMemo(
-    () => isAddrOnWhitelist(account.address),
-    [account.address, isAddrOnWhitelist],
-  );
-  useEffect(() => {
-    if (switchRef.current) {
-      switchRef.current.setState({ value: inWhiteList });
-    }
-  }, [inWhiteList]);
 
   const setInWhitelist = useCallback(
     (bool: boolean) => {
@@ -90,6 +75,7 @@ const ConfirmAddress = ({
             : 'Send_AddWhitelist_notImported',
         });
         addWhitelist(account.address, {
+          hasValidated: true,
           onAdded: () => {
             toast.success(t('page.whitelist.addSuccessful'));
           },
@@ -102,6 +88,9 @@ const ConfirmAddress = ({
   );
 
   const handleConfirm = () => {
+    if (!disbaleWhiteSwitch) {
+      setInWhitelist(inWhiteList);
+    }
     onConfirm?.(account, addressDesc);
   };
   return (
@@ -129,11 +118,7 @@ const ConfirmAddress = ({
       {!loading && !disbaleWhiteSwitch && (
         <View style={styles.whitelist}>
           <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
-          <AppSwitch2024
-            ref={switchRef}
-            onValueChange={setInWhitelist}
-            value={inWhiteList}
-          />
+          <AppSwitch2024 onValueChange={setInWhiteList} value={inWhiteList} />
         </View>
       )}
       <View
