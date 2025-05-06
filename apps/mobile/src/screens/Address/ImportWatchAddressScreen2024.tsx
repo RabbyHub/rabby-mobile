@@ -23,6 +23,7 @@ import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { ellipsisAddress } from '@/utils/address';
+import { debounce } from 'lodash';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -37,6 +38,18 @@ const ERROR_MESSAGE = {
     "The address you're are trying to import is duplicated",
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
+
+const debouncedGetEnsAddress = debounce(
+  (
+    input: string,
+    callback: (result: any) => void,
+    errorCallback: (e: any) => void,
+  ) => {
+    openapi.getEnsAddressByName(input).then(callback).catch(errorCallback);
+  },
+  500,
+  { leading: false, trailing: true },
+);
 
 export const ImportWatchAddressScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -99,6 +112,7 @@ export const ImportWatchAddressScreen2024 = () => {
   const onSubmitEditing = React.useCallback(() => {
     if (!error && ensResult && input !== ensResult.addr) {
       setInput(ensResult.addr);
+      setEnsResult(null);
     }
   }, [error, ensResult, input]);
 
@@ -118,9 +132,9 @@ export const ImportWatchAddressScreen2024 = () => {
       setError(undefined);
       return;
     }
-    openapi
-      .getEnsAddressByName(input)
-      .then(result => {
+    debouncedGetEnsAddress(
+      input,
+      result => {
         if (result && result.addr) {
           setEnsResult(result);
           setError(undefined);
@@ -128,12 +142,12 @@ export const ImportWatchAddressScreen2024 = () => {
           setEnsResult(null);
           setError(INPUT_ERROR.INVALID_ADDRESS);
         }
-      })
-      .catch(e => {
-        console.log(e);
+      },
+      () => {
         setEnsResult(null);
         setError(INPUT_ERROR.INVALID_ADDRESS);
-      });
+      },
+    );
   }, [input]);
 
   return (
