@@ -31,7 +31,7 @@ export const SubmitActions: React.FC<Props> = ({
   isSwap,
 }) => {
   const { t } = useTranslation();
-  const [isSign, setIsSign] = React.useState(!gasLess);
+  const [isSign, setIsSign] = React.useState(false);
 
   const handleClickSign = React.useCallback(() => {
     setIsSign(true);
@@ -63,37 +63,32 @@ export const SubmitActions: React.FC<Props> = ({
   return (
     <ActionsContainer onCancel={onCancel} isMiniSignTx={isMiniSignTx}>
       {isSign ? (
-        <View
-          style={{
-            flex: 1,
-          }}>
-          <Button
-            disabled={disabledProcess || pressedConfirm}
-            type="primary"
-            buttonStyle={StyleSheet.flatten([
-              styles.button,
-              styles.buttonConfirm,
-            ])}
-            titleStyle={styles.buttonText}
-            disabledStyle={styles.buttonDisabled}
-            onPress={handlePress}
-            title={
-              <View style={styles.submitButtonWrapper}>
-                {SubmitIcon && (
-                  <SubmitIcon
-                    width={18}
-                    height={18}
-                    style={{
-                      // @ts-expect-error
-                      color: colors['neutral-title-2'],
-                    }}
-                  />
-                )}
-                <Text style={styles.buttonText}>{submitText}</Text>
-              </View>
-            }
-          />
-        </View>
+        <Button
+          disabled={disabledProcess || pressedConfirm}
+          type="primary"
+          buttonStyle={StyleSheet.flatten([
+            styles.button,
+            styles.buttonConfirm,
+          ])}
+          titleStyle={styles.buttonText}
+          disabledStyle={styles.buttonDisabled}
+          onPress={handlePress}
+          title={
+            <View style={styles.submitButtonWrapper}>
+              {SubmitIcon && (
+                <SubmitIcon
+                  width={18}
+                  height={18}
+                  style={{
+                    // @ts-expect-error
+                    color: colors['neutral-title-2'],
+                  }}
+                />
+              )}
+              <Text style={styles.buttonText}>{submitText}</Text>
+            </View>
+          }
+        />
       ) : (
         <View
           style={{
@@ -144,7 +139,7 @@ const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 100,
   },
   buttonConfirm: {
-    width: '100%',
+    width: 220,
     borderColor: colors2024['brand-default'],
     backgroundColor: colors2024['brand-default'],
   },

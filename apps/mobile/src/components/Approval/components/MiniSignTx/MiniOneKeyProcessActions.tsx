@@ -24,7 +24,7 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
     <MiniProcessActions
       {...props}
       onSubmit={handleSubmit}
-      submitText={t('page.signFooterBar.oneKeySign')}
+      submitText={t('page.signFooterBar.oneKeyConfirm')}
       disabledProcess={disabledProcess}
       buttonIcon={<OneKeySvg width={22} height={22} viewBox="0 0 28 28" />}
     />
