@@ -57,8 +57,7 @@ export default function ListByContracts() {
             isFirstItem ? { marginTop: 0 } : { marginTop: 8 },
             {
               paddingHorizontal:
-                ApprovalsLayouts.innerContainerHorizontalOffset -
-                IOS_SWIPABLE_LEFT_OFFSET,
+                ApprovalsLayouts.innerContainerHorizontalOffset,
             },
           ]}>
           <ApprovalContractRow contract={item} />

@@ -153,9 +153,7 @@ export default function ListByAssets() {
         style={[
           styles.list,
           {
-            paddingHorizontal:
-              ApprovalsLayouts.innerContainerHorizontalOffset -
-              IOS_SWIPABLE_LEFT_OFFSET,
+            paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
           },
         ]}
         contentContainerStyle={styles.listContainer}

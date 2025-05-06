@@ -23,8 +23,7 @@ import {
 } from '../useApprovalsPage';
 import ApprovalNFTBadge from './NFTBadge';
 import { useTranslation } from 'react-i18next';
-import { getSelectableContainerStyle, getTooltipContentStyles } from './Layout';
-import TouchableView from '@/components/Touchable/TouchableView';
+import { getTooltipContentStyles } from './Layout';
 import Permit2Badge from './Permit2Badge';
 import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
 import { getTokenSymbol } from '@/utils/token';
@@ -295,7 +294,7 @@ export function InModalApprovalContractRow({
 }
 
 const getApprovalContractRowStyles = createGetStyles2024(ctx => {
-  const { colors2024 } = ctx;
+  const { colors2024, isLight } = ctx;
 
   return {
     container: {
@@ -304,7 +303,9 @@ const getApprovalContractRowStyles = createGetStyles2024(ctx => {
       justifyContent: 'space-between',
       paddingVertical: 14,
       paddingHorizontal: 12,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       borderRadius: 16,
     },
     selectedContainer: {},

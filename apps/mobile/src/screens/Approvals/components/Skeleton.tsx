@@ -33,9 +33,7 @@ export const SkeletonListByContracts = memo(() => {
   return (
     <View
       style={{
-        paddingHorizontal:
-          ApprovalsLayouts.innerContainerHorizontalOffset -
-          IOS_SWIPABLE_LEFT_OFFSET,
+        paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
       }}>
       {Array(8)
         .fill(0)
@@ -86,7 +84,10 @@ export const SkeletonListByContracts = memo(() => {
 export const SkeletonListByAssets = memo(() => {
   const { styles: cardStyles } = useTheme2024({ getStyle: getCardStyles });
   return (
-    <View>
+    <View
+      style={{
+        paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
+      }}>
       {Array(8)
         .fill(0)
         .map((e, i) => (

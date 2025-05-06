@@ -176,12 +176,14 @@ function AssetsApprovalRowProto({
 }
 
 export const getAssetsApprovalRowStyles = createGetStyles2024(ctx => {
-  const { colors, colors2024 } = ctx;
+  const { colors, colors2024, isLight } = ctx;
 
   return {
     container: {
       borderRadius: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       flexDirection: 'column',
       justifyContent: 'center',
       paddingVertical: 14,

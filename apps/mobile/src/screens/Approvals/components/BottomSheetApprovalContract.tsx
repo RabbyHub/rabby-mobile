@@ -225,7 +225,7 @@ export default function BottomSheetApprovalContract({
   );
 }
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
   return {
     sheetModalContainer: {
       paddingVertical: 0,
@@ -237,7 +237,9 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       height: 20,
     },
     bg: {
-      backgroundColor: colors2024['neutral-bg-0'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
     },
     bodyContainer: {
       paddingVertical: 8,

@@ -102,18 +102,22 @@ const ApprovalScreenContainer = () => {
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
+      headerStyle: {
+        backgroundColor: colors2024['neutral-bg-1'],
+      },
     });
-  }, [setNavigationOptions, getHeaderTitle, currentAccount?.aliasName]);
+  }, [
+    setNavigationOptions,
+    getHeaderTitle,
+    currentAccount?.aliasName,
+    colors2024,
+  ]);
 
   if (!currentAccount?.address) {
     return null;
   }
   return (
     <Tabs.Container
-      {...(IS_IOS && {
-        // leave horizontal space to make swipable-to-back area larger
-        width: Dimensions.get('window').width - IOS_SWIPABLE_LEFT_OFFSET * 2,
-      })}
       initialTabName={filterType}
       onTabChange={({ tabName }) => {
         setFilterType(tabName as any);
@@ -169,7 +173,7 @@ export default function ApprovalsScreen() {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   root: {
     // backgroundColor: colors2024['neutral-bg-2'],
   },
@@ -190,7 +194,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 24,
   },
   tabContainer: {
-    backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   tabHeaderContainer: {
     shadowColor: 'transparent',

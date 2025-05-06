@@ -13,12 +13,9 @@ import {
   ToggleSelectApprovalSpenderCtx,
   useRevokeApprovals,
 } from '../useApprovalsPage';
-import { getSelectableContainerStyle, getTooltipContentStyles } from './Layout';
-import { ellipsisAddress } from '@/utils/address';
-import TouchableView from '@/components/Touchable/TouchableView';
+import { getTooltipContentStyles } from './Layout';
 import { querySelectedAssetSpender } from '../utils';
 import Permit2Badge from './Permit2Badge';
-import NFTAvatar from '@/components/NFTAvatar';
 
 function ApprovalAmountInfo({
   style,
@@ -221,8 +218,7 @@ export function InModalApprovalAssetRow({
 }
 
 const getStyle = createGetStyles2024(ctx => {
-  const selectableStyles = getSelectableContainerStyle(ctx);
-  const { colors, colors2024 } = ctx;
+  const { colors, colors2024, isLight } = ctx;
 
   return {
     container: {
@@ -232,7 +228,9 @@ const getStyle = createGetStyles2024(ctx => {
       height: 72,
       paddingVertical: 14,
       paddingHorizontal: 12,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       borderRadius: 16,
     },
     selectedContainer: {},

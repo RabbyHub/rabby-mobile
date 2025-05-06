@@ -128,12 +128,14 @@ function ApprovalCardAssetsProto({
 
 export const getAssetItemStyles = createGetStyles2024(ctx => {
   const selectableStyles = getSelectableContainerStyle(ctx);
-  const { colors2024 } = ctx;
+  const { colors2024, isLight } = ctx;
 
   return {
     container: {
       borderRadius: 20,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       flexDirection: 'column',
       justifyContent: 'center',
       paddingHorizontal: 16,
