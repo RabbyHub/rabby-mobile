@@ -3,23 +3,13 @@ import {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
 } from '../Approvals/useApprovalsPage';
-import { apiApprovals } from '@/core/apis';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { findIndexRevokeList } from './utils';
+import { useRevokeOne } from './useRevokeOne';
 
 export const useBatchRevoke = () => {
-  const handleRevokeOne = React.useCallback(
-    async (revokeList: ApprovalSpenderItemToBeRevoked[]) => {
-      return apiApprovals
-        .revoke({ list: revokeList })
-
-        .catch(err => {
-          console.log(err);
-        });
-    },
-    [],
-  );
+  const handleRevokeOne = useRevokeOne();
 
   const handleRevoke = React.useCallback(
     (
@@ -55,7 +45,7 @@ export const useBatchRevoke = () => {
         return;
       }
       if (revokeList.length === 1) {
-        return handleRevokeOne(revokeList);
+        return handleRevokeOne(revokeList[0]);
       }
       return handleRevoke(revokeList, dataSource);
     },

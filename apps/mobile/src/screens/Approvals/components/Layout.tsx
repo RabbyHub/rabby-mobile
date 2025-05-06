@@ -25,10 +25,6 @@ import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
-import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
-import { findIndexRevokeList } from '@/screens/BatchRevoke/utils';
-import { apiApprovals } from '@/core/apis';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 
 /** @deprecated import from '../layout' directly */
@@ -115,7 +111,7 @@ export function ApprovalsBottomArea() {
   const { couldSubmit, buttonTitle } = useMemo(() => {
     const revokeCount = revokeSummary.statics.txCount;
     const _buttonTitle = [
-      `${t('page.approvals.component.RevokeButton.btnText')}`,
+      t('page.approvals.component.RevokeButton.btnText'),
       revokeCount && ` (${currentRevokeList.length})`,
     ]
       .filter(Boolean)
