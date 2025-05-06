@@ -83,6 +83,9 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
     }
 
     let address = input;
+    if (ensResult && input !== ensResult.addr) {
+      address = ensResult.addr;
+    }
     if (!isValidHexAddress(address as any)) {
       setError(INPUT_ERROR.INVALID_ADDRESS);
       return;

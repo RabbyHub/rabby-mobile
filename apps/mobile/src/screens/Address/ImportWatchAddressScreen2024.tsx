@@ -75,7 +75,6 @@ export const ImportWatchAddressScreen2024 = () => {
       address = ensResult.addr;
     }
 
-    console.log('address', address);
     if (!isValidHexAddress(address as any)) {
       setError(INPUT_ERROR.INVALID_ADDRESS);
       return;
