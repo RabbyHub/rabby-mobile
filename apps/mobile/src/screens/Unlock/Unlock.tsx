@@ -236,15 +236,26 @@ export default function UnlockScreen() {
     }
   }, [unlockApp, t]);
 
+  const [lockBiometric, setLockBiometric] = useState(false);
   const manualUnlockWithBiometrics = useCallback(async () => {
+    if (lockBiometric) {
+      return;
+    }
+    setLockBiometric(true);
     if (!isFaceID) {
       const hideToast = toastUnlocking();
-      await unlockWithBiometrics().finally(() => checkUnlocked());
+      await unlockWithBiometrics().finally(() => {
+        checkUnlocked();
+        setLockBiometric(false);
+      });
       hideToast();
     } else {
-      await unlockWithBiometrics().finally(() => checkUnlocked());
+      await unlockWithBiometrics().finally(() => {
+        checkUnlocked();
+        setLockBiometric(false);
+      });
     }
-  }, [unlockWithBiometrics, checkUnlocked, isFaceID]);
+  }, [lockBiometric, isFaceID, unlockWithBiometrics, checkUnlocked]);
 
   useLayoutEffect(() => {
     incToReset(true);
