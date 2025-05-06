@@ -89,6 +89,8 @@ if [ -n "$EXPORT_DIR" ]; then
     exit 3
   fi
 
+  otool -tV "$BINARY_DEST" > "$EXPORT_DIR/RabbyMobile.s"
+
   echo "✅ Exported to:"
   echo "   - Binary: $BINARY_DEST"
   echo "   - Bundle: $BUNDLE_DEST"

@@ -10,9 +10,21 @@
 
 RABBY_MOBILE_CODE = RABBY_MOBILE_CODE_DEV
 
-// 尝试解决 literal pool symbol address: _objc_msgSend 地址不稳定的问题
+// 解决 literal pool symbol address: _objc_msgSend 地址不稳定的问题
 GCC_OPTIMIZATION_LEVEL = 0
 SWIFT_OPTIMIZATION_LEVEL = -Onone
+LD_NO_PIE = YES
+LLVM_LTO = NO
+
+// 针对 C/Objective-C 文件
+OTHER_CFLAGS = $(inherited) -O0 -fno-inline -fno-stack-protector -fno-optimize-sibling-calls -mllvm -enable-objc-arc-opts=false -mllvm -arm-promote-constant=false -fdebug-prefix-map=/Users/odylee/workspace/rabby-mobile/apps/mobile=.
+
+// 针对 C++/Objective-C++ 文件
+OTHER_CPLUSPLUSFLAGS = $(inherited) -fdebug-prefix-map=/Users/odylee/workspace/rabby-mobile/apps/mobile=.
+
+// 针对 Swift 间接影响 C++ 的情况（如桥接头文件）
+OTHER_SWIFT_FLAGS = $(inherited) -Xcc -fdebug-prefix-map=/Users/odylee/workspace/rabby-mobile/apps/mobile=.
+
 
 // 链接器 (Linker) 额外参数
 // order 文件生成：
@@ -21,17 +33,4 @@ SWIFT_OPTIMIZATION_LEVEL = -Onone
 // sed -E 's/.*[[:space:]](_OBJC_CLASS_\$[^ ]+|[^ ]*_objc_msgSend[^ ]*).*/\1/' |
 // sort -u > ./scripts/validate-hash.order
 
-OTHER_LDFLAGS = $(inherited) -Wl,-no_objc_category_merging -Wl,-order_file,RABBY_MOBILE_PATH_HOLDER/scripts/validate-hash.order
-
-// 针对 C/Objective-C 文件
-OTHER_CFLAGS = $(inherited) -O0 -fno-inline -mllvm -arm-promote-constant=false -fdebug-prefix-map=RABBY_MOBILE_PATH_HOLDER=.
-
-// 针对 C++/Objective-C++ 文件
-OTHER_CPLUSPLUSFLAGS = $(inherited) -fdebug-prefix-map=RABBY_MOBILE_PATH_HOLDER=.
-
-// 针对 Swift 间接影响 C++ 的情况（如桥接头文件）
-OTHER_SWIFT_FLAGS = $(inherited) -Xcc -fdebug-prefix-map=RABBY_MOBILE_PATH_HOLDER=.
-
-// 禁用 PIE Position-Independent Executable
-LD_NO_PIE = YES
-LLVM_LTO = NO
+OTHER_LDFLAGS = $(inherited) -Wl,-no_objc_category_merging -Wl,-order_file,/Users/odylee/workspace/rabby-mobile/apps/mobile/scripts/validate-hash.order -Wl,-rename_section,__TEXT,__objc_methname,__RODATA,__fixed_objc_methname -Wl,-rename_section,__TEXT,__cstring,__RODATA,__fixed_cstring -Wl,-sectalign,__DATA,__objc_selrefs,0x1000 -Wl,-no_pie -Wl,-segprot,__DATA,rw,rw -Wl,-pagezero_size,0x4000 -Wl,-map,${BUILD_DIR}/LinkMap.txt

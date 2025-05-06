@@ -1,3 +1,4 @@
+_objc_msgSend
 _OBJC_CLASS_$_ASWebAuthenticationSession
 _OBJC_CLASS_$_AVAssetExportSession
 _OBJC_CLASS_$_AVAssetWriter
@@ -129,6 +130,7 @@ _OBJC_CLASS_$_NSNull
 _OBJC_CLASS_$_NSNumber
 _OBJC_CLASS_$_NSNumberFormatter
 _OBJC_CLASS_$_NSObject
+_OBJC_METACLASS_$_NSObject
 _OBJC_CLASS_$_NSOperation
 _OBJC_CLASS_$_NSOperationQueue
 _OBJC_CLASS_$_NSOrderedSet
@@ -297,5 +299,4 @@ _OBJC_CLASS_$_WKWebViewConfiguration
 _OBJC_CLASS_$_WKWebpagePreferences
 _OBJC_CLASS_$_WKWebsiteDataStore
 _OBJC_CLASS_$__TtCs12_SwiftObject
-_objc_msgSend
 _objc_msgSendSuper2
