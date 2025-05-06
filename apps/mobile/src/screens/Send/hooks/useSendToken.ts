@@ -44,13 +44,15 @@ import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { useFindChain } from '@/hooks/useFindChain';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
-import { naviReplace } from '@/utils/navigation';
+import { navigate, naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useNavigationState } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { toast } from '@/components2024/Toast';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -411,6 +413,7 @@ export function useSendTokenForm(
     tips: '',
   });
   const [tmpToken, setTmpToken] = useState<TokenItem>();
+  const navigation = useRabbyAppNavigation();
 
   const { addressType } = useCheckAddressType(formValues.to, chainItem);
 
@@ -666,6 +669,9 @@ export function useSendTokenForm(
                 sendTokenEventsRef.current.emit(
                   SendTokenEvents.ON_SIGNED_SUCCESS,
                 );
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                }
               })
               .catch(err => {
                 console.error(err);
@@ -691,6 +697,10 @@ export function useSendTokenForm(
               INTERNAL_REQUEST_SESSION,
             )
             .then(() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              }
+              toast.success('Transaction submitted');
               sendTokenEventsRef.current.emit(
                 SendTokenEvents.ON_SIGNED_SUCCESS,
               );
@@ -713,6 +723,7 @@ export function useSendTokenForm(
       getParams,
       isNativeToken,
       isShowMessageDataForToken,
+      navigation,
       putScreenState,
       screenState.estimatedGas,
       screenState.selectedGasLevel?.price,

@@ -73,8 +73,8 @@ export const MiniSubmitActions: React.FC<Props> = ({
             icon={
               SubmitIcon ? (
                 <SubmitIcon
-                  width={18}
-                  height={18}
+                  width={24}
+                  height={24}
                   style={{
                     // @ts-expect-error
                     color: colors['neutral-title-2'],
@@ -126,6 +126,7 @@ const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   warper: {
     flex: 1,
   },
+
   button: {
     height: 56,
     // borderColor: colors2024['brand-default'],

@@ -318,7 +318,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           status: tx ? 'success' : 'fail',
           payAmount: amount,
         });
-        bridgeToken(
+        await bridgeToken(
           {
             to: tx.to,
             value: tx.value,
@@ -358,6 +358,8 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             },
           },
         );
+        handleAmountChange('');
+        // toast.success('Transaction submitted');
       } catch (error) {
         toast.info((error as any)?.message || String(error));
         stats.report('bridgeQuoteResult', {
@@ -520,19 +522,11 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
                 // trigger: rbiSource,
               },
             });
-            setTimeout(() => {
-              setIsShowSign(false);
-              mutateTxs([]);
-
-              navigation.dispatch(
-                StackActions.replace(RootNames.StackRoot, {
-                  screen: RootNames.Home,
-                }),
-              );
-            }, 500);
             setIsShowSign(false);
+            mutateTxs([]);
+            handleAmountChange('');
+            toast.success('Transaction submitted');
           } catch (e) {
-            console.log('[cancel]');
             console.error(e);
             mutateTxs([]);
             refresh(e => e + 1);

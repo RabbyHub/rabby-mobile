@@ -89,6 +89,7 @@ import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappP
 import { Tip } from '@/components';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { isAccountSupportMiniApproval } from '@/utils/account';
+import { toast } from '@/components2024/Toast';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -337,7 +338,7 @@ const Swap = ({
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
-        dexSwap(
+        await dexSwap(
           {
             swapPreferMEVGuarded: !!preferMEVGuarded,
             chain,
@@ -382,6 +383,7 @@ const Swap = ({
             },
           },
         );
+        handleAmountChange('');
       } catch (error) {
         console.error(error);
       }
@@ -496,24 +498,16 @@ const Swap = ({
               });
             }
           }
-          setTimeout(() => {
-            mutateTxs([]);
-
-            navigation.dispatch(
-              StackActions.replace(RootNames.StackRoot, {
-                screen: RootNames.Home,
-              }),
-            );
-          }, 500);
+          mutateTxs([]);
+          handleAmountChange('');
+          toast.success('Transaction submitted');
           preferenceService.setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
             {
               chain: chainServerId,
             },
           );
-          console.log(['[miniApproval resolve]']);
         } catch (e) {
-          console.log(['[miniApproval reject]', e]);
           console.error(e);
           mutateTxs([]);
           refresh(e => e + 1);

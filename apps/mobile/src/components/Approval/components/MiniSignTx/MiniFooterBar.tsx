@@ -69,9 +69,9 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 20,
       paddingTop: 10,
       paddingBottom: 52,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      backgroundColor: colors['neutral-bg-1'],
+      // borderTopLeftRadius: 16,
+      // borderTopRightRadius: 16,
+      // backgroundColor: colors['neutral-bg-1'],
       position: 'relative',
       // shadow
       // shadowColor: colors['neutral-line'],
