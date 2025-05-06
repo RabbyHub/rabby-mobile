@@ -2,11 +2,10 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Tab, TabView } from '@rneui/themed';
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
 
 interface ContentProps {
@@ -118,8 +117,10 @@ export const ViewRawDetail = ({
         value={index}
         onChange={setIndex}>
         {hasRaw && (
-          <TabView.Item style={styles.tabContainerView}>
-            <Text style={styles.tabContentText}>{stringify(raw)}</Text>
+          <TabView.Item>
+            <ScrollView style={styles.tabContainerView}>
+              <Text style={styles.tabContentText}>{stringify(raw)}</Text>
+            </ScrollView>
           </TabView.Item>
         )}
         {hasAbi && (
