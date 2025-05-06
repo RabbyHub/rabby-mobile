@@ -8,6 +8,7 @@ import { atom, useAtom } from 'jotai';
 import { v4 as uuid } from 'uuid';
 import { useRabbyAppNavigation } from '../navigation';
 import { browserService } from '@/core/services';
+import { omit } from 'lodash';
 
 export const tabsAtom = atom({
   tabs: [emptyTab],
@@ -74,12 +75,16 @@ export function useBrowser() {
 
   const updateTab = useMemoizedFn(
     (tabId: string, payload: Partial<Omit<Tab, 'id'>>) => {
+      const _payload =
+        !payload?.url || !/^https?:\/\//.test(payload.url)
+          ? omit(payload, 'url')
+          : payload;
       updateBrowserTabs({
         tabs: store.tabs.map(item => {
           if (item.id === tabId) {
             return {
               ...item,
-              ...payload,
+              ..._payload,
             };
           }
           return item;
@@ -89,7 +94,7 @@ export function useBrowser() {
   );
 
   const openTab = useMemoizedFn((url?: string) => {
-    if (!url) {
+    if (!url || !/^https?:\/\//.test(url)) {
       switchToTab(emptyTab.id);
       return;
     }
