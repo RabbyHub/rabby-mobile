@@ -948,9 +948,31 @@ export function useSendTokenForm(
       }
       putScreenState({ isLoading: false });
 
+      if (
+        new BigNumber(formValues.amount || 0).isGreaterThan(
+          new BigNumber(result?.raw_amount_hex_str || 0).div(
+            10 ** (result?.decimals || 18),
+          ),
+        )
+      ) {
+        // Insufficient balance
+        putScreenState({
+          balanceError: t('page.sendToken.balanceError.insufficientBalance'),
+        });
+      } else {
+        putScreenState({ balanceError: null });
+      }
+
       return result;
     },
-    [putScreenState, estimateGasOnChain, setRouteParams, putChainToken],
+    [
+      putScreenState,
+      formValues.amount,
+      estimateGasOnChain,
+      setRouteParams,
+      putChainToken,
+      t,
+    ],
   );
 
   const handleCurrentTokenChange = useCallback(
