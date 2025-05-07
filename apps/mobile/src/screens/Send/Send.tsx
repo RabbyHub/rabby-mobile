@@ -69,9 +69,31 @@ import FromAddressControl2024 from './components/FromAddressControl';
 import { useAtom } from 'jotai';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { lowcaseSame } from '@/utils/common';
-import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
+import {
+  getAddrDescWithCexLocalCacheSync,
+  getInitDescWithCexLocalCache,
+} from '@/databases/hooks/cex';
 import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { getRecommendToken } from '@/utils/addressSupport';
+
+const EMPTY_TOKEN_ITEM = {
+  decimals: 18,
+  logo_url: '',
+  symbol: '',
+  display_symbol: '',
+  optimized_symbol: '',
+  is_core: false,
+  is_verified: false,
+  is_wallet: false,
+  is_scam: false,
+  is_suspicious: false,
+  name: '',
+  time_at: 0,
+  amount: 0,
+  price: 0,
+};
+
 function SendScreen({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
@@ -110,7 +132,7 @@ function SendScreen({
     useSendTokenScreenChainToken();
   const [addrDesc, setAddrDesc] = useState<
     AddrDescResponse['desc'] | undefined
-  >(navParams?.addrDesc);
+  >(navParams?.addrDesc || getInitDescWithCexLocalCache(navParams?.toAddress));
   useEffect(() => {
     if (addrDesc || !navParams?.toAddress) {
       return;
@@ -212,6 +234,7 @@ function SendScreen({
 
   const initByCache = async () => {
     const account = (await preferenceService.getCurrentAccount())!;
+    let targetToken: TokenItem | null = null;
     if (
       navParams &&
       'safeInfo' in navParams &&
@@ -223,31 +246,12 @@ function SendScreen({
         safeInfo: safeInfo,
       });
 
-      const hideLoading = toastLoading('Loading Token...');
-      try {
-        if (!target) {
-          await Promise.race([
-            await loadCurrentToken(
-              currentToken.id,
-              currentToken.chain,
-              account.address,
-            ),
-            sleep(5000),
-          ]);
-        } else {
-          setChainEnum(target.enum);
-          await Promise.race([
-            await loadCurrentToken(
-              target.nativeTokenAddress,
-              target.serverId,
-              account.address,
-            ),
-            sleep(5000),
-          ]);
-        }
-      } finally {
-        hideLoading();
-      }
+      targetToken = {
+        id: target ? target?.nativeTokenAddress : currentToken.id,
+        chain: target ? target?.serverId : currentToken.chain,
+        ...EMPTY_TOKEN_ITEM,
+      };
+      target?.enum && setChainEnum(target.enum);
     } else if (
       navParams &&
       'chainEnum' in navParams &&
@@ -260,89 +264,92 @@ function SendScreen({
         isManualChangeToken ? routeParams.chainEnum : navParams?.chainEnum,
       );
 
-      const hideLoading = toastLoading('Loading Token...');
-      try {
-        if (!target) {
-          await Promise.race([
-            await loadCurrentToken(
-              currentToken.id,
-              currentToken.chain,
-              account.address,
-            ),
-            sleep(5000),
-          ]);
-        } else {
-          setChainEnum(target.enum);
-          await Promise.race([
-            await loadCurrentToken(
-              isManualChangeToken ? routeParams.tokenId : navParams?.tokenId,
-              target.serverId,
-              account.address,
-            ),
-            sleep(5000),
-          ]);
-        }
-      } finally {
-        hideLoading();
-      }
+      targetToken = {
+        chain: target ? target?.serverId : currentToken.chain,
+        id: target
+          ? isManualChangeToken
+            ? routeParams.tokenId
+            : navParams?.tokenId
+          : currentToken.id,
+        ...EMPTY_TOKEN_ITEM,
+      };
+      target && setChainEnum(target.enum);
     } else {
       const isManualChangeToken =
         routeParams?.tokenId && routeParams?.chainEnum;
       if (isManualChangeToken) {
         const target = findChainByEnum(routeParams.chainEnum);
-        target &&
-          loadCurrentToken(
-            routeParams.tokenId,
-            target?.serverId,
-            account.address,
-          );
-        return;
-      }
-      let tokenFromOrder: TokenItem | null = null;
-
-      const _lastTimeToken = await preferenceService.getLastTimeSendToken(
-        account.address,
-      );
-      const lastTimeToken =
-        chainItem && chainItem.serverId === _lastTimeToken?.chain
-          ? _lastTimeToken
-          : null;
-      if (lastTimeToken) {
-        if (
-          !lowcaseSame(lastTimeToken.chain, currentToken.chain) ||
-          !lowcaseSame(lastTimeToken.id, currentToken.id)
-        ) {
-          setCurrentToken(lastTimeToken);
+        if (target) {
+          targetToken = {
+            chain: target.serverId,
+            id: routeParams.tokenId,
+            ...EMPTY_TOKEN_ITEM,
+          };
         }
-      } else {
+      }
+
+      if (!targetToken) {
+        targetToken = await preferenceService.getLastTimeSendToken(
+          account.address,
+        );
+      }
+      if (!targetToken) {
         const { firstChain } = await fetchOrderedChainList({
           supportChains: undefined,
         });
-
-        tokenFromOrder = firstChain ? makeTokenFromChain(firstChain) : null;
-        if (firstChain) {
-          if (
-            !lowcaseSame(firstChain.serverId, currentToken.chain) ||
-            !lowcaseSame(firstChain.nativeTokenAddress, currentToken.id)
-          ) {
-            setCurrentToken(tokenFromOrder!);
-          }
+        targetToken = firstChain ? makeTokenFromChain(firstChain) : null;
+      }
+      if (!targetToken) {
+        targetToken = currentToken;
+      }
+    }
+    const hideLoading = toastLoading('Loading Token...');
+    try {
+      if (navParams?.toAddress) {
+        const res = await getRecommendToken({
+          from: account.address,
+          to: navParams?.toAddress || '',
+          tokenId: targetToken.id,
+          chain: targetToken.chain,
+        });
+        if (res.chain !== targetToken.chain || res.tokenId !== targetToken.id) {
+          targetToken = {
+            chain: res.chain,
+            id: res.tokenId,
+            ...EMPTY_TOKEN_ITEM,
+          };
         }
       }
-
-      let needLoadToken: TokenItem =
-        lastTimeToken || tokenFromOrder || currentToken;
-
-      if (chainItem && needLoadToken.chain !== chainItem.serverId) {
-        const target = findChainByServerID(needLoadToken.chain);
+      // 更新页面状态
+      if (chainItem && targetToken.chain !== chainItem.serverId) {
+        const target = findChainByServerID(targetToken.chain);
         if (target?.enum) {
           setChainEnum(target.enum);
         }
       }
-      if (!chainItem) {
-        setChainEnum(CHAINS_ENUM.ETH);
-      }
-      loadCurrentToken(needLoadToken.id, needLoadToken.chain, account.address);
+      // // 不知道为什么要，感觉可以不要
+      // if (!chainItem) {
+      //   setChainEnum(CHAINS_ENUM.ETH);
+      // }
+      // // 应该去了也可以
+      // if (targetToken) {
+      //   if (
+      //     !lowcaseSame(targetToken.chain, currentToken.chain) ||
+      //     !lowcaseSame(targetToken.id, currentToken.id)
+      //   ) {
+      //     // setCurrentToken(targetToken);
+      //   }
+      // }
+      await Promise.race([
+        await loadCurrentToken(
+          targetToken.id,
+          targetToken.chain,
+          account.address,
+        ),
+        sleep(5000),
+      ]);
+    } finally {
+      hideLoading();
     }
   };
 

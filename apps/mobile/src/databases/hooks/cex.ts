@@ -66,3 +66,37 @@ export const getAddrDescWithCexLocalCacheSync = async (
     return undefined;
   }
 };
+
+export const getInitDescWithCexLocalCache = (
+  address?: FirstParameter<typeof openapi.addrDesc>,
+): AddrDescResponse['desc'] | undefined => {
+  if (!address) {
+    return;
+  }
+  try {
+    const localCexId = getCexId(address);
+    const localCexInfo = globalSupportCexList.find(
+      item => item.id === localCexId,
+    );
+    if (!localCexId) {
+      return undefined;
+    }
+    return {
+      cex: {
+        id: localCexId,
+        name: localCexInfo?.name || '',
+        logo_url: localCexInfo?.logo_url || '',
+        is_deposit: true,
+      },
+      usd_value: 0,
+      born_at: 0,
+      is_danger: false,
+      is_spam: false,
+      is_scam: false,
+      name: '',
+    };
+  } catch (error) {
+    // may 429 error
+    return undefined;
+  }
+};
