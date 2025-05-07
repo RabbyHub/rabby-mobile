@@ -674,7 +674,6 @@ export class CustomTestnetService {
         tokenId: q,
         address,
       });
-      console.log('token', tokens);
       return tokens;
     }
     return result;
