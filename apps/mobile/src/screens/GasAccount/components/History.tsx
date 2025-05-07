@@ -7,6 +7,8 @@ import {
   Easing,
   ListRenderItem,
 } from 'react-native';
+import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import { useTranslation } from 'react-i18next';
 import { formatUsdValue } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
@@ -112,7 +114,7 @@ export const GasAccountHistory = () => {
   const { t } = useTranslation();
   const { loading, txList, loadingMore, loadMore, noMore } =
     useGasAccountHistory();
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, isLight } = useTheme2024({ getStyle: getStyles });
 
   const { bottom } = useSafeAreaInsets();
 
@@ -204,12 +206,16 @@ export const GasAccountHistory = () => {
   ) {
     return (
       <View style={[styles.container, { height: 254 }]}>
-        <EmptyHolder
-          text={t('page.gasAccount.history.noHistory')}
-          type="default"
-          imgStyle={styles.emptyImg}
-          textStyle={styles.emptyText}
-        />
+        <View style={styles.emptyContent}>
+          {isLight ? (
+            <RcIconEmpty style={styles.emptyImg} />
+          ) : (
+            <RcIconEmptyDark style={styles.emptyImg} />
+          )}
+          <Text style={styles.emptyText}>
+            {t('page.gasAccount.history.noHistory')}
+          </Text>
+        </View>
       </View>
     );
   }
@@ -309,8 +315,17 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
 
   emptyImg: {
+    marginTop: 40,
     width: 159,
     height: 116.928,
+  },
+
+  emptyContent: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 6,
   },
 
   emptyText: {

@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 
 import { View, Text } from 'react-native';
@@ -17,7 +18,7 @@ export function Block({
   className?: string;
   style?: React.ComponentProps<typeof View>['style'];
 }>) {
-  const { colors2024 } = useTheme2024();
+  const { colors2024, isLight } = useTheme2024();
 
   return (
     <View style={style}>
@@ -36,7 +37,9 @@ export function Block({
           borderRadius: 24,
           marginTop: 8,
           flexDirection: 'column',
-          backgroundColor: colors2024['neutral-bg-1'],
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-1']
+            : colors2024['neutral-bg-2'],
         }}>
         {children}
       </View>

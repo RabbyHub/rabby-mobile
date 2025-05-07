@@ -7,7 +7,8 @@ import {
   ViewStyle,
   TextInput,
 } from 'react-native';
-
+import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import RcIconNotFindCC from '@/assets2024/icons/address/noFind.svg';
 // import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
 import { RcNextSearchCC } from '@/assets/icons/common';
@@ -149,7 +150,7 @@ export default function SelectChainWithSummary({
 }: RNViewProps & SelectSortedChainProps) {
   const { t } = useTranslation();
   const [canSearch, setCanSearch] = useState(false);
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const isDark = useGetBinaryMode() === 'dark';
   const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
@@ -254,12 +255,12 @@ export default function SelectChainWithSummary({
         <View style={[styles.chainListWrapper, styles.emptyDataWrapper]}>
           {selectedTab === 'testnet' ? (
             <>
-              <RcIconNotFind />
+              {isLight ? <RcIconEmpty /> : <RcIconEmptyDark />}
               <Text style={styles.emptyText}>No Custom Network</Text>
             </>
           ) : (
             <>
-              <RcIconNotFind />
+              {isLight ? <RcIconEmpty /> : <RcIconEmptyDark />}
               <Text style={styles.emptyText}>No Chains</Text>
             </>
           )}
