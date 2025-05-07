@@ -72,6 +72,7 @@ import {
 import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { getRecommendToken } from '@/utils/addressSupport';
+import { lowcaseSame } from '@/utils/common';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -316,7 +317,10 @@ function SendScreen({
           tokenId: targetToken.id,
           chain: targetToken.chain,
         });
-        if (res.chain !== targetToken.chain || res.tokenId !== targetToken.id) {
+        if (
+          !lowcaseSame(res.chain, targetToken.chain) ||
+          !lowcaseSame(res.tokenId, targetToken.id)
+        ) {
           targetToken = {
             chain: res.chain,
             id: res.tokenId,
