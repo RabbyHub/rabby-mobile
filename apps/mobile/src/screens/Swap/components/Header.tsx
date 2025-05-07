@@ -1,14 +1,11 @@
+import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { useTheme2024 } from '@/hooks/theme';
+import PendingTx from '@/screens/Bridge/components/PendingTx';
+import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import {
-  usePollSwapPendingNumber,
-  useSwapTxHistoryVisible,
-} from '../hooks/history';
+import { useReadPendingCount, useSwapTxHistoryVisible } from '../hooks/history';
 import { SwapTxHistory } from './SwapTxHistory';
-import PendingTx from '@/screens/Bridge/components/PendingTx';
-import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
-import { createGetStyles2024 } from '@/utils/styles';
 
 export const SwapHeader = ({
   isForMultipleAdderss,
@@ -17,7 +14,7 @@ export const SwapHeader = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const loadingNumber = usePollSwapPendingNumber(5000);
+  const loadingNumber = useReadPendingCount();
 
   const { setVisible } = useSwapTxHistoryVisible();
 

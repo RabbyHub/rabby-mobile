@@ -55,7 +55,10 @@ export const filterMyAccounts = <
   );
 };
 
-export const isAccountSupportMiniApproval = (type: string) => {
+export const isAccountSupportMiniApproval = (type?: string) => {
+  if (!type) {
+    return false;
+  }
   return (
     [
       KEYRING_CLASS.MNEMONIC,

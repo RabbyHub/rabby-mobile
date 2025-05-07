@@ -11,6 +11,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
+  usePollBridgePendingNumber,
   useQuoteVisible,
   useSetQuoteVisible,
   useSetRefreshId,
@@ -192,6 +193,8 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
 
+  const { runAsync: runFetchBridgePendingCount } = usePollBridgePendingNumber();
+
   const { currentAccount } = useCurrentAccount();
 
   const quoteVisible = useQuoteVisible();
@@ -359,7 +362,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           },
         );
         handleAmountChange('');
-        // toast.success('Transaction submitted');
+        runFetchBridgePendingCount();
       } catch (error) {
         toast.info((error as any)?.message || String(error));
         stats.report('bridgeQuoteResult', {
@@ -481,16 +484,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     manual: true,
   });
 
-  const showLoss = useMemo(() => {
-    const impact = tokenPriceImpact(
-      fromToken,
-      toToken,
-      amount,
-      selectedBridgeQuote?.to_token_amount,
-    );
-    return !!impact?.showLoss;
-  }, [fromToken, amount, selectedBridgeQuote?.to_token_amount, toToken]);
-
   const runBuildSwapTxsRef = useRef<ReturnType<typeof runBuildTxs>>();
   const {
     prepareMiniTransactions,
@@ -498,18 +491,12 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     sendMiniTransactions,
   } = useMiniApproval();
 
-  const canUseMiniTx =
-    !toToken?.low_credit_score &&
-    !toToken?.is_scam &&
-    toToken?.is_verified !== false &&
-    !isSlippageHigh &&
-    !isSlippageLow &&
-    !showLoss &&
-    isAccountSupportMiniApproval((currentAccount?.type || '') as any);
+  const canUseMiniTx = isAccountSupportMiniApproval(currentAccount?.type);
 
   const handleBridge = useMemoizedFn(async () => {
     if (canUseMiniTx) {
       try {
+        clearExpiredTimer();
         setFetchingBridgeQuote(true);
         const res = await runBuildSwapTxsRef.current;
         if (res?.length) {
@@ -525,7 +512,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             setIsShowSign(false);
             mutateTxs([]);
             handleAmountChange('');
-            toast.success('Transaction submitted');
+            runFetchBridgePendingCount();
           } catch (e) {
             console.error(e);
             mutateTxs([]);
@@ -538,10 +525,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
       } finally {
         setFetchingBridgeQuote(false);
       }
-      setIsShowSign(true);
-      console.log('[xtxs]', txs);
-
-      clearExpiredTimer();
     } else {
       gotoBridge();
     }

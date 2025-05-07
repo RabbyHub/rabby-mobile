@@ -1,54 +1,46 @@
-import { useInfiniteScroll } from 'ahooks';
+import { useInfiniteScroll, useRequest } from 'ahooks';
 import React, { useEffect, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
-import { useCurrentAccount } from '@/hooks/account';
+import { currentAccountAtom, useCurrentAccount } from '@/hooks/account';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
+import { atom, useAtom, useAtomValue } from 'jotai';
 
+const pendingCountAtom = atom(0);
+export const useReadBridgePendingCount = () => {
+  return useAtomValue(pendingCountAtom);
+};
 export const usePollBridgePendingNumber = (timer = 10000) => {
-  const [refetchCount, setRefetchCount] = useState(0);
+  const [, setCount] = useAtom(pendingCountAtom);
 
   const { currentAccount: account } = useCurrentAccount({
     disableAutoFetch: true,
   });
 
-  const { value, loading, error } = useAsync(async () => {
-    if (!account?.address) {
-      return 0;
-    }
+  return useRequest(
+    async () => {
+      if (!account?.address) {
+        return 0;
+      }
 
-    const data = await openapi.getBridgeHistoryList({
-      user_addr: account!.address,
-      start: 0,
-      limit: 10,
-    });
-    return (
-      data?.history_list?.filter(item => item?.status === 'pending')?.length ||
-      0
-    );
-  }, [refetchCount]);
-
-  const timerRef = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    if ((!loading && value !== undefined) || error) {
-      timerRef.current = setTimeout(() => {
-        setRefetchCount(e => e + 1);
-      }, timer);
-    }
-
-    return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-    };
-  }, [loading, value, error, timer]);
-
-  useEffect(() => {
-    return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  return value;
+      const data = await openapi.getBridgeHistoryList({
+        user_addr: account!.address,
+        start: 0,
+        limit: 10,
+      });
+      return (
+        data?.history_list?.filter(item => item?.status === 'pending')
+          ?.length || 0
+      );
+    },
+    {
+      refreshDeps: [account],
+      pollingInterval: timer,
+      onSuccess(v) {
+        setCount(v);
+      },
+    },
+  );
 };
 
 export const useBridgeHistory = () => {

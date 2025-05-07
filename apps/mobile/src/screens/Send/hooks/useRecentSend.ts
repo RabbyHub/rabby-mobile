@@ -87,10 +87,10 @@ export const useRecentSend = ({
   };
 
   const fetchLocalTx = useMemoizedFn((address: string) => {
-    const { completeds: _completeds } =
+    const { completeds: _completeds, pendings: _pendings } =
       transactionHistoryService.getList(address);
 
-    const completeds = _completeds.filter(item => {
+    return [..._pendings, ..._completeds].filter(item => {
       const chain = findChain({ id: item.chainId });
       return (
         !chain?.isTestnet &&
@@ -98,8 +98,6 @@ export const useRecentSend = ({
         item.$ctx?.ga?.source === 'sendToken'
       );
     });
-
-    return completeds;
   });
 
   const markedList = useMemo(() => {

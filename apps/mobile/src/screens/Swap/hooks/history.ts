@@ -7,6 +7,7 @@ import { uniqBy } from 'lodash';
 import { useEffect, useRef, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { refreshIdAtom } from './atom';
+import { useRequest } from 'ahooks';
 
 const swapTxHistoryVisibleAtom = atom(false);
 
@@ -118,46 +119,37 @@ export const useSwapHistory = () => {
   };
 };
 
+export const swapPendingCountAtom = atom(0);
+export const useReadPendingCount = () => {
+  return useAtomValue(swapPendingCountAtom);
+};
 export const usePollSwapPendingNumber = (timer = 10000) => {
-  const [refetchCount, setRefetchCount] = useState(0);
+  const [, setCount] = useAtom(swapPendingCountAtom);
 
   const { currentAccount } = useCurrentAccount();
-  const { value, loading, error } = useAsync(async () => {
-    const account = currentAccount;
-    if (!account?.address) {
-      return 0;
-    }
+  return useRequest(
+    async () => {
+      const account = currentAccount;
+      if (!account?.address) {
+        return 0;
+      }
 
-    const data = await openapi.getSwapTradeList({
-      user_addr: account!.address,
-      start: '0',
-      limit: '10',
-    });
-    return (
-      data?.history_list?.filter(item => item?.status === 'Pending')?.length ||
-      0
-    );
-  }, [refetchCount]);
-
-  const timerRef = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    if ((!loading && value !== undefined) || error) {
-      timerRef.current = setTimeout(() => {
-        setRefetchCount(e => e + 1);
-      }, timer);
-    }
-
-    return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-    };
-  }, [loading, value, error, timer]);
-
-  useEffect(() => {
-    return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  return value;
+      const data = await openapi.getSwapTradeList({
+        user_addr: account!.address,
+        start: '0',
+        limit: '10',
+      });
+      return (
+        data?.history_list?.filter(item => item?.status === 'Pending')
+          ?.length || 0
+      );
+    },
+    {
+      onSuccess(v) {
+        setCount(v);
+      },
+      refreshDeps: [currentAccount],
+      pollingInterval: timer,
+    },
+  );
 };

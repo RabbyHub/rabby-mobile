@@ -72,6 +72,7 @@ import { lowcaseSame } from '@/utils/common';
 import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { usePollSendPendingCount } from './hooks/useSendPendingCount';
 function SendScreen({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
@@ -398,11 +399,11 @@ function SendScreen({
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
         resetScreenState();
-        navigation.dispatch(
-          StackActions.replace(RootNames.StackRoot, {
-            screen: RootNames.Home,
-          }),
-        );
+        // navigation.dispatch(
+        //   StackActions.replace(RootNames.StackRoot, {
+        //     screen: RootNames.Home,
+        //   }),
+        // );
       },
       { disposeRets },
     );

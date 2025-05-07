@@ -53,6 +53,7 @@ import { isAccountSupportMiniApproval } from '@/utils/account';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { toast } from '@/components2024/Toast';
+import { usePollSendPendingCount } from './useSendPendingCount';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -557,181 +558,9 @@ export function useSendTokenForm(
   }, [loadGasListAndResolve, putScreenState]);
 
   const { sendMiniTransactions } = useMiniApproval();
-
-  const handleSubmit = useCallback(
-    async ({
-      to,
-      amount,
-      messageDataForSendToEoa,
-      messageDataForContractCall,
-    }: FormSendToken) => {
-      sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
-      putScreenState({ isSubmitLoading: true });
-      const chain = findChain({
-        serverId: currentToken.chain,
-      })!;
-
-      const params = getParams({
-        to,
-        amount,
-        messageDataForSendToEoa,
-        messageDataForContractCall,
-      });
-      if (isNativeToken) {
-        // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
-        const couldSpecifyIntrinsicGas =
-          !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
-
-        try {
-          const code = await apiProvider.requestETHRpc(
-            {
-              method: 'eth_getCode',
-              params: [to, 'latest'],
-            },
-            chain.serverId,
-          );
-          const notContract = !!code && (code === '0x' || code === '0x0');
-          let gasLimit = 0;
-
-          if (screenState.estimatedGas) {
-            gasLimit = screenState.estimatedGas;
-          }
-
-          /**
-           * we dont' need always fetch estimatedGas, if no `params.gas` set below,
-           * `params.gas` would be filled on Tx Page.
-           */
-          if (gasLimit > 0) {
-            params.gas = intToHex(gasLimit);
-          } else if (notContract && couldSpecifyIntrinsicGas) {
-            params.gas = intToHex(DEFAULT_GAS_USED);
-          }
-          if (!notContract) {
-            // not pre-set gasLimit if to address is contract address
-            delete params.gas;
-          }
-        } catch (e) {
-          if (couldSpecifyIntrinsicGas) {
-            params.gas = intToHex(DEFAULT_GAS_USED);
-          }
-        }
-        if (
-          isShowMessageDataForToken &&
-          (messageDataForContractCall || messageDataForSendToEoa)
-        ) {
-          delete params.gas;
-        }
-        putScreenState({ isSubmitLoading: false });
-        if (screenState.showGasReserved) {
-          params.gasPrice = screenState.selectedGasLevel?.price;
-        }
-      }
-      try {
-        await preferenceService.setLastTimeSendToken(
-          currentAccount!.address,
-          currentToken,
-        );
-        // await persistPageStateCache();
-        if (
-          isAccountSupportMiniApproval(currentAccount?.type || '') &&
-          !chain.isTestnet
-        ) {
-          const res = await apiProvider.sendRequest(
-            {
-              method: 'eth_sendTransaction',
-              params: [params],
-              $ctx: {
-                ga: {
-                  category: 'Send',
-                  source: 'sendToken',
-                  toAddress,
-                  // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-                  trigger: 'sendToken',
-                },
-              },
-            },
-            INTERNAL_REQUEST_SESSION,
-            true,
-          );
-          const tx = res.params?.[0];
-          if (tx) {
-            await sendMiniTransactions({
-              txs: [tx],
-              ga: {
-                category: 'Send',
-                source: 'sendToken',
-                toAddress,
-                // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-                trigger: 'sendToken',
-              },
-            })
-              .then(() => {
-                sendTokenEventsRef.current.emit(
-                  SendTokenEvents.ON_SIGNED_SUCCESS,
-                );
-                if (navigation.canGoBack()) {
-                  navigation.goBack();
-                }
-              })
-              .catch(err => {
-                console.error(err);
-                // toast.info(err.message);
-              });
-          }
-        } else {
-          await apiProvider
-            .sendRequest(
-              {
-                method: 'eth_sendTransaction',
-                params: [params],
-                $ctx: {
-                  ga: {
-                    category: 'Send',
-                    source: 'sendToken',
-                    toAddress,
-                    // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-                    trigger: 'sendToken',
-                  },
-                },
-              },
-              INTERNAL_REQUEST_SESSION,
-            )
-            .then(() => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              }
-              toast.success('Transaction submitted');
-              sendTokenEventsRef.current.emit(
-                SendTokenEvents.ON_SIGNED_SUCCESS,
-              );
-            })
-            .catch(err => {
-              console.error(err);
-              // toast.info(err.message);
-            });
-        }
-      } catch (e: any) {
-        Alert.alert(e.message);
-        console.error(e);
-      } finally {
-        putScreenState({ isSubmitLoading: false });
-      }
-    },
-    [
-      currentAccount,
-      currentToken,
-      getParams,
-      isNativeToken,
-      isShowMessageDataForToken,
-      navigation,
-      putScreenState,
-      screenState.estimatedGas,
-      screenState.selectedGasLevel?.price,
-      screenState.showGasReserved,
-      sendMiniTransactions,
-      toAddress,
-    ],
-  );
+  const { runAsync: runFetchPendingCount } = usePollSendPendingCount({
+    isForMultipleAddress: isForMultipleAdderss,
+  });
 
   /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
   const formik = useFormik({
@@ -903,6 +732,179 @@ export function useSendTokenForm(
       }
     },
     [formik, setFormValues, handleFormValuesChange],
+  );
+
+  const handleSubmit = useCallback(
+    async ({
+      to,
+      amount,
+      messageDataForSendToEoa,
+      messageDataForContractCall,
+    }: FormSendToken) => {
+      sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
+      putScreenState({ isSubmitLoading: true });
+      const chain = findChain({
+        serverId: currentToken.chain,
+      })!;
+
+      const params = getParams({
+        to,
+        amount,
+        messageDataForSendToEoa,
+        messageDataForContractCall,
+      });
+      if (isNativeToken) {
+        // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
+        const couldSpecifyIntrinsicGas =
+          !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
+
+        try {
+          const code = await apiProvider.requestETHRpc(
+            {
+              method: 'eth_getCode',
+              params: [to, 'latest'],
+            },
+            chain.serverId,
+          );
+          const notContract = !!code && (code === '0x' || code === '0x0');
+          let gasLimit = 0;
+
+          if (screenState.estimatedGas) {
+            gasLimit = screenState.estimatedGas;
+          }
+
+          /**
+           * we dont' need always fetch estimatedGas, if no `params.gas` set below,
+           * `params.gas` would be filled on Tx Page.
+           */
+          if (gasLimit > 0) {
+            params.gas = intToHex(gasLimit);
+          } else if (notContract && couldSpecifyIntrinsicGas) {
+            params.gas = intToHex(DEFAULT_GAS_USED);
+          }
+          if (!notContract) {
+            // not pre-set gasLimit if to address is contract address
+            delete params.gas;
+          }
+        } catch (e) {
+          if (couldSpecifyIntrinsicGas) {
+            params.gas = intToHex(DEFAULT_GAS_USED);
+          }
+        }
+        if (
+          isShowMessageDataForToken &&
+          (messageDataForContractCall || messageDataForSendToEoa)
+        ) {
+          delete params.gas;
+        }
+        putScreenState({ isSubmitLoading: false });
+        if (screenState.showGasReserved) {
+          params.gasPrice = screenState.selectedGasLevel?.price;
+        }
+      }
+      try {
+        await preferenceService.setLastTimeSendToken(
+          currentAccount!.address,
+          currentToken,
+        );
+        // await persistPageStateCache();
+        if (
+          isAccountSupportMiniApproval(currentAccount?.type || '') &&
+          !chain.isTestnet
+        ) {
+          const res = await apiProvider.sendRequest(
+            {
+              method: 'eth_sendTransaction',
+              params: [params],
+              $ctx: {
+                ga: {
+                  category: 'Send',
+                  source: 'sendToken',
+                  toAddress,
+                  // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                  trigger: 'sendToken',
+                },
+              },
+            },
+            INTERNAL_REQUEST_SESSION,
+            true,
+          );
+          const tx = res.params?.[0];
+          if (tx) {
+            await sendMiniTransactions({
+              txs: [tx],
+              ga: {
+                category: 'Send',
+                source: 'sendToken',
+                toAddress,
+                // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                trigger: 'sendToken',
+              },
+            })
+              .then(() => {
+                runFetchPendingCount();
+                handleFieldChange('amount', '');
+                sendTokenEventsRef.current.emit(
+                  SendTokenEvents.ON_SIGNED_SUCCESS,
+                );
+              })
+              .catch(err => {
+                console.error(err);
+                // toast.info(err.message);
+              });
+          }
+        } else {
+          await apiProvider
+            .sendRequest(
+              {
+                method: 'eth_sendTransaction',
+                params: [params],
+                $ctx: {
+                  ga: {
+                    category: 'Send',
+                    source: 'sendToken',
+                    toAddress,
+                    // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                    trigger: 'sendToken',
+                  },
+                },
+              },
+              INTERNAL_REQUEST_SESSION,
+            )
+            .then(() => {
+              runFetchPendingCount();
+              handleFieldChange('amount', '');
+              sendTokenEventsRef.current.emit(
+                SendTokenEvents.ON_SIGNED_SUCCESS,
+              );
+            })
+            .catch(err => {
+              console.error(err);
+              // toast.info(err.message);
+            });
+        }
+      } catch (e: any) {
+        Alert.alert(e.message);
+        console.error(e);
+      } finally {
+        putScreenState({ isSubmitLoading: false });
+      }
+    },
+    [
+      currentAccount,
+      currentToken,
+      getParams,
+      handleFieldChange,
+      isNativeToken,
+      isShowMessageDataForToken,
+      putScreenState,
+      runFetchPendingCount,
+      screenState.estimatedGas,
+      screenState.selectedGasLevel?.price,
+      screenState.showGasReserved,
+      sendMiniTransactions,
+      toAddress,
+    ],
   );
 
   useEffect(() => {

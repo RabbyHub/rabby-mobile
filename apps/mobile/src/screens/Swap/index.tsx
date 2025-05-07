@@ -46,6 +46,7 @@ import { QuoteList } from './components/Quotes';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
 import {
   useDetectLoss,
+  usePollSwapPendingNumber,
   useSlippageStore,
   useSwapUnlimitedAllowance,
   useTokenPair,
@@ -89,7 +90,6 @@ import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappP
 import { Tip } from '@/components';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { toast } from '@/components2024/Toast';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -120,6 +120,7 @@ const Swap = ({
       headerRight,
     });
   }, [headerRight, setNavigationOptions]);
+  const { runAsync: runFetchSwapPendingCount } = usePollSwapPendingNumber(5000);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
@@ -384,6 +385,7 @@ const Swap = ({
           },
         );
         handleAmountChange('');
+        runFetchSwapPendingCount();
       } catch (error) {
         console.error(error);
       }
@@ -452,13 +454,6 @@ const Swap = ({
     manual: true,
   });
 
-  const showLoss = useDetectLoss({
-    payToken: payToken,
-    payAmount: payAmount,
-    receiveRawAmount: activeProvider?.actualReceiveAmount || 0,
-    receiveToken: receiveToken,
-  });
-
   const [_, setRecentSwapToToken] = useSwapRecentToTokens();
 
   const chainServerId = useMemo(() => {
@@ -470,18 +465,8 @@ const Swap = ({
       if (receiveToken) {
         setRecentSwapToToken(receiveToken);
       }
-      if (
-        isAccountSupportMiniApproval((currentAccount?.type || '') as any) &&
-        !receiveToken?.low_credit_score &&
-        !receiveToken?.is_scam &&
-        receiveToken?.is_verified !== false &&
-        !isSlippageHigh &&
-        !isSlippageLow &&
-        !showLoss
-      ) {
-        // runBuildSwapTxs();
-        // setIsShowSign(true);
-
+      if (isAccountSupportMiniApproval(currentAccount?.type)) {
+        clearExpiredTimer();
         try {
           if (txs?.length) {
             await sendPrepareMiniTransactions();
@@ -500,7 +485,7 @@ const Swap = ({
           }
           mutateTxs([]);
           handleAmountChange('');
-          toast.success('Transaction submitted');
+          runFetchSwapPendingCount();
           preferenceService.setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
             {
@@ -512,8 +497,6 @@ const Swap = ({
           mutateTxs([]);
           refresh(e => e + 1);
         }
-
-        clearExpiredTimer();
       } else {
         gotoSwap();
       }
@@ -529,14 +512,7 @@ const Swap = ({
     },
   );
 
-  const canUseMiniTx =
-    isAccountSupportMiniApproval((currentAccount?.type || '') as any) &&
-    !receiveToken?.low_credit_score &&
-    !receiveToken?.is_scam &&
-    receiveToken?.is_verified !== false &&
-    !isSlippageHigh &&
-    !isSlippageLow &&
-    !showLoss;
+  const canUseMiniTx = isAccountSupportMiniApproval(currentAccount?.type || '');
 
   const amountAvailable = useMemo(
     () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
