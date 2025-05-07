@@ -1,10 +1,4 @@
-import React, {
-  useMemo,
-  useCallback,
-  useRef,
-  useState,
-  useEffect,
-} from 'react';
+import React, { useMemo, useCallback, useRef, useEffect } from 'react';
 import { Alert, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Sentry from '@sentry/react-native';
@@ -17,7 +11,7 @@ import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { GasLevel, TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
-import { openapi, testOpenapi } from '@/core/request';
+import { openapi } from '@/core/request';
 import { TFunction } from 'i18next';
 import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
@@ -401,14 +395,6 @@ export function useSendTokenForm(
   const [formValues, setFormValues] = React.useState<FormSendToken>({
     ...DF_SEND_TOKEN_FORM,
   });
-  const [depositeModalInfo, setDepositeModalInfol] = useState<{
-    visable: boolean;
-    tips: string;
-  }>({
-    visable: false,
-    tips: '',
-  });
-  const [tmpToken, setTmpToken] = useState<TokenItem>();
 
   const { addressType } = useCheckAddressType(formValues.to, chainItem);
 
@@ -1030,35 +1016,43 @@ export function useSendTokenForm(
   const checkCexSupport = useCallback(
     async (token: TokenItem) => {
       const { reason } = disableItemCheck?.(token) || {};
-      if (toAddress && reason) {
-        setTmpToken(token);
-        setDepositeModalInfol({
-          visable: true,
-          tips: reason,
-        });
-        return;
-      }
-      if (!isForMultipleAdderss) {
-        handleCurrentTokenChange(token);
-      } else {
-        const { accountSwitchTo } = switchAccountOnSelectedToken({
-          token,
-          currentAccount,
-        });
-        if (!accountSwitchTo) {
+      const confirmCallback = () => {
+        if (!isForMultipleAdderss) {
           handleCurrentTokenChange(token);
         } else {
-          const currChainItem = findChainByServerID(token.chain);
-          naviReplace(RootNames.StackTransaction, {
-            screen: RootNames.MultiSend,
-            params: {
-              ...(multiNavParams || {}),
-              chainEnum: currChainItem?.enum,
-              tokenId: token.id,
-            },
+          const { accountSwitchTo } = switchAccountOnSelectedToken({
+            token,
+            currentAccount,
           });
+          if (!accountSwitchTo) {
+            handleCurrentTokenChange(token);
+          } else {
+            const currChainItem = findChainByServerID(token.chain);
+            naviReplace(RootNames.StackTransaction, {
+              screen: RootNames.MultiSend,
+              params: {
+                ...(multiNavParams || {}),
+                chainEnum: currChainItem?.enum,
+                tokenId: token.id,
+              },
+            });
+          }
         }
+      };
+      if (toAddress && reason) {
+        Alert.alert(reason, '', [
+          {
+            text: t('page.sendToken.noSupportBtns.cancel'),
+            style: 'cancel',
+          },
+          {
+            text: t('page.sendToken.noSupportBtns.confirm'),
+            onPress: confirmCallback,
+          },
+        ]);
+        return;
       }
+      confirmCallback();
     },
     [
       currentAccount,
@@ -1067,6 +1061,7 @@ export function useSendTokenForm(
       isForMultipleAdderss,
       multiNavParams,
       switchAccountOnSelectedToken,
+      t,
       toAddress,
     ],
   );
@@ -1343,8 +1338,6 @@ export function useSendTokenForm(
 
     currentToken,
     loadCurrentToken,
-    tmpToken,
-    setTmpToken,
     checkCexSupport,
     handleCurrentTokenChange,
 
@@ -1362,9 +1355,6 @@ export function useSendTokenForm(
     whitelist,
     whitelistEnabled,
     computed,
-
-    depositeModalInfo,
-    setDepositeModalInfol,
   };
 }
 export function useSendTokenFormikContext() {

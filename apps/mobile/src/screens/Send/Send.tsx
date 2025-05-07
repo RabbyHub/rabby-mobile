@@ -7,10 +7,8 @@ import React, {
 import {
   StyleSheet,
   View,
-  Text,
   TouchableWithoutFeedback,
   Keyboard,
-  Modal,
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useNavigation } from '@react-navigation/native';
@@ -61,14 +59,12 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { useTranslation } from 'react-i18next';
 import ToAddressControl2024 from './components/ToAddressControl2024';
-import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import FromAddressControl2024 from './components/FromAddressControl';
 import { useAtom } from 'jotai';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
-import { lowcaseSame } from '@/utils/common';
 import {
   getAddrDescWithCexLocalCacheSync,
   getInitDescWithCexLocalCache,
@@ -192,6 +188,18 @@ function SendScreen({
             reason: t('page.sendToken.noSupprotTokenForSafe'),
           };
         }
+        const contactChains = Object.entries(addrDesc?.contract || {}).map(
+          ([chain]) => chain?.toLocaleLowerCase(),
+        );
+        if (
+          contactChains.length > 0 &&
+          !contactChains.includes(token?.chain?.toLocaleLowerCase())
+        ) {
+          return {
+            disable: true,
+            reason: t('page.sendToken.noSupportTokenForChain'),
+          };
+        }
       }
       return {
         disable: false,
@@ -208,11 +216,7 @@ function SendScreen({
     handleFieldChange,
     handleClickMaxButton,
     handleGasLevelChanged,
-    depositeModalInfo,
-    setDepositeModalInfol,
 
-    tmpToken,
-    setTmpToken,
     checkCexSupport,
     loadCurrentToken,
     handleCurrentTokenChange,
@@ -511,48 +515,6 @@ function SendScreen({
             <BottomArea />
           </View>
         </TouchableWithoutFeedback>
-        <Modal
-          visible={depositeModalInfo.visable}
-          onRequestClose={() => {
-            setDepositeModalInfol({
-              visable: false,
-              tips: '',
-            });
-          }}
-          transparent
-          animationType="fade">
-          <View style={styles.overlay}>
-            <View
-              style={styles.modalContent}
-              onStartShouldSetResponder={() => true}>
-              <Text style={styles.alertModalText}>
-                {depositeModalInfo.tips}
-              </Text>
-              <FooterButtonGroup
-                style={styles.btns}
-                confirmText={t('page.sendToken.noSupportBtns.confirm')}
-                confirmType="ghost"
-                cancelText={t('page.sendToken.noSupportBtns.cancel')}
-                onCancel={() => {
-                  setDepositeModalInfol({
-                    visable: false,
-                    tips: '',
-                  });
-                }}
-                onConfirm={() => {
-                  if (tmpToken) {
-                    handleCurrentTokenChange(tmpToken);
-                    setTmpToken(tmpToken);
-                    setDepositeModalInfol({
-                      visable: false,
-                      tips: '',
-                    });
-                  }
-                }}
-              />
-            </View>
-          </View>
-        </Modal>
         <TokenInfoPopup />
         <BlockedAddressDialog
           visible={isShowBlockedTransactionDialog}
