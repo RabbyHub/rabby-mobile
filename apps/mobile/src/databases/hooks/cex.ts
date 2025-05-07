@@ -78,7 +78,7 @@ export const getInitDescWithCexLocalCache = (
     const localCexInfo = globalSupportCexList.find(
       item => item.id === localCexId,
     );
-    if (!localCexId) {
+    if (!localCexId || !localCexInfo) {
       return undefined;
     }
     return {
