@@ -146,7 +146,7 @@ const ApprovalScreenContainer = () => {
       containerStyle={[styles.tabContainer]}
       renderTabBar={renderTabBar}
       // disable horizontal swiping-scroll-to-switch
-      pagerProps={{ scrollEnabled: false }}
+      // pagerProps={{ scrollEnabled: false }}
       headerContainerStyle={styles.tabHeaderContainer}>
       <Tabs.Tab
         label={t('page.approvals.tab-switch.contract')}
