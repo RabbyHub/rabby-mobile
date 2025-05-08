@@ -126,6 +126,7 @@ export const MultiAssets = ({
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const isTriggered = useSharedValue(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const {
     top10Addresses,
     list: _rawList,
@@ -214,7 +215,7 @@ export const MultiAssets = ({
   );
   useBalanceUpdate(triggerUpdate);
 
-  const dataList = useMemo(() => {
+  const portfolioListData = useMemo(() => {
     const unFoldList: ActionItem[] = tokens
       .filter(i => !i._isFold)
       .map(item => ({
@@ -274,7 +275,6 @@ export const MultiAssets = ({
       type: 'unfold_defi',
       data: item,
     }));
-    const showPortfolios = extendedState.currentTab === TabType.portfolio;
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
@@ -284,36 +284,11 @@ export const MultiAssets = ({
         data: [{ type: 'overview' }, { type: 'switch_tabs' }],
       },
       {
-        show: showPortfolios,
+        show: true,
         data: [...unFoldList],
       },
       {
-        show: !showPortfolios,
-        data: showPortfolios
-          ? []
-          : list.map(item => {
-              const hasChangeData = multiTimeStamp[
-                item.address.toLocaleLowerCase()
-              ]?.data?.some(i => i.usd_value !== 0);
-              const chartData = getChangeData(
-                multiTimeStamp[item.address.toLocaleLowerCase()]?.data || [],
-                item.balance,
-                new Date().getTime(),
-              );
-              return {
-                type: 'address_entry',
-                data: {
-                  ...item,
-                  changPercent: hasChangeData
-                    ? chartData?.changePercent
-                    : undefined,
-                  isLoss: hasChangeData ? chartData?.isLoss : undefined,
-                },
-              };
-            }),
-      },
-      {
-        show: showPortfolios && !!foldTokenList.length,
+        show: !!foldTokenList.length,
         data: [
           { type: 'toggle_token_fold' },
           ...(foldHideList ? [] : foldTokenList),
@@ -336,13 +311,13 @@ export const MultiAssets = ({
           : scamTokens,
       },
       {
-        show: showPortfolios && !!isLoading && !tokens.length,
+        show: !!isLoading && !tokens.length,
         data: Array.from({ length: 5 }, () => ({
           type: 'loading-skeleton',
         })),
       },
       {
-        show: showPortfolios && !isLoading && !tokens.length,
+        show: !isLoading && !tokens.length,
         data: [
           {
             type: 'empty-assets',
@@ -353,11 +328,11 @@ export const MultiAssets = ({
         ],
       },
       {
-        show: showPortfolios,
+        show: true,
         data: [{ type: 'defi_header' }, ...unFoldDefiList],
       },
       {
-        show: showPortfolios && !!foldDefiList.length,
+        show: !!foldDefiList.length,
         data: [
           {
             type: 'toggle_defi_fold',
@@ -366,13 +341,13 @@ export const MultiAssets = ({
         ],
       },
       {
-        show: showPortfolios && !!isLoading && !portfolios.length,
+        show: !!isLoading && !portfolios.length,
         data: Array.from({ length: 2 }, () => ({
           type: 'loading-defi-skeleton',
         })),
       },
       {
-        show: showPortfolios && !isLoading && portfolios.length === 0,
+        show: !isLoading && portfolios.length === 0,
         data: [
           {
             type: 'empty-defi',
@@ -387,22 +362,60 @@ export const MultiAssets = ({
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [
-    extendedState.currentTab,
-    foldDefi,
-    foldHideList,
-    foldScam,
-    isLoading,
-    list,
-    multiTimeStamp,
-    portfolios,
-    t,
-    tokens,
-  ]);
+  }, [foldDefi, foldHideList, foldScam, isLoading, portfolios, t, tokens]);
 
+  const addressListData = useMemo(() => {
+    return [
+      { type: 'overview' },
+      { type: 'switch_tabs' },
+      ...list.map(item => {
+        const hasChangeData = multiTimeStamp[
+          item.address.toLocaleLowerCase()
+        ]?.data?.some(i => i.usd_value !== 0);
+        const chartData = getChangeData(
+          multiTimeStamp[item.address.toLocaleLowerCase()]?.data || [],
+          item.balance,
+          new Date().getTime(),
+        );
+        return {
+          type: 'address_entry',
+          data: {
+            ...item,
+            balance:
+              item.balance > 10
+                ? Math.floor(item.balance)
+                : Number(item.balance.toFixed(2)),
+            changPercent: hasChangeData ? chartData?.changePercent : undefined,
+            isLoss: hasChangeData ? chartData?.isLoss : undefined,
+          },
+        };
+      }),
+    ];
+  }, [list, multiTimeStamp]);
+
+  const preHashRef = useRef('');
+  const preSwitchTabRef = useRef(TabType.address);
   useEffect(() => {
-    setListData(dataProvider.cloneWithRows(dataList));
-  }, [dataList, dataProvider]);
+    if (isRefreshing && preSwitchTabRef.current === extendedState.currentTab) {
+      return;
+    }
+    preSwitchTabRef.current = extendedState.currentTab;
+    const isAddressTab = extendedState.currentTab === TabType.address;
+    const dataList = isAddressTab ? addressListData : portfolioListData;
+    const currentHash = isAddressTab
+      ? JSON.stringify(dataList.map(getItemId))
+      : '';
+    if (preHashRef.current !== currentHash || !currentHash) {
+      setListData(dataProvider.cloneWithRows(dataList));
+      preHashRef.current = currentHash;
+    }
+  }, [
+    addressListData,
+    dataProvider,
+    extendedState.currentTab,
+    isRefreshing,
+    portfolioListData,
+  ]);
 
   const pathColor = !combineData.isLoss
     ? colors2024['green-default']
@@ -993,13 +1006,23 @@ export const MultiAssets = ({
             refreshControl: (
               <RefreshControl
                 style={styles.bgContainer}
-                onRefresh={() => {
-                  triggerUpdate(true);
-                  fetchAccounts();
-                  checkIsExpireAndUpdate(true, { disableNFT: true });
-                  refreshCurve(true);
+                onRefresh={async () => {
+                  setIsRefreshing(true);
+                  try {
+                    await Promise.all([
+                      triggerUpdate(true),
+                      refreshCurve(true),
+                      extendedState.currentTab === TabType.address
+                        ? fetchAccounts()
+                        : checkIsExpireAndUpdate(true, { disableNFT: true }),
+                    ]);
+                    setIsRefreshing(false);
+                  } catch (error) {
+                    console.error('Refresh failed:', error);
+                    setIsRefreshing(false);
+                  }
                 }}
-                refreshing={refreshing}
+                refreshing={isRefreshing}
               />
             ),
           }}
