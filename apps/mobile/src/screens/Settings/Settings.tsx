@@ -770,6 +770,7 @@ export default function SettingsScreen(): JSX.Element {
   return (
     <RootScreenContainer
       fitStatuBar
+      hideBottomBar
       style={[
         styles.container,
         {
@@ -807,7 +808,9 @@ const getStyles = createGetStyles2024(ctx => {
       flex: 0,
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: ctx.classicalColors['neutral-bg-2'],
+      backgroundColor: ctx.isLight
+        ? ctx.classicalColors['neutral-bg-2']
+        : ctx.colors2024['neutral-bg-1'],
       // paddingBottom: LAYOUTS.fiexedFooterHeight,
     },
     scrollableContentStyle: {

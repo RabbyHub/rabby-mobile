@@ -725,7 +725,7 @@ const getStyles = createGetStyles2024(({ colors, isLight, colors2024 }) => ({
   container: {
     width: '100%',
     flex: 1,
-    paddingBottom: 44,
+    paddingBottom: 20,
   },
   handleStyle: {
     backgroundColor: 'transparent',

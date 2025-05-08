@@ -48,7 +48,7 @@ const getStyle = createGetStyles2024(() => ({
   accountRoot: {
     paddingTop: 0,
     backgroundColor: 'transparent',
-    paddingBottom: 56,
+    // paddingBottom: 24,
     height: '100%',
     maxHeight: '100%',
   },
