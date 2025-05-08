@@ -1,30 +1,24 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   Platform,
   View,
   Text,
   Dimensions,
   StatusBar,
-  Modal,
   TouchableOpacity,
 } from 'react-native';
 import { useTheme2024, useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { Button } from '@/components2024/Button';
-import { useTranslation, Trans } from 'react-i18next';
-
+import { useTranslation } from 'react-i18next';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-
 import { RcIconPartChecked } from '../icons';
 import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
-
 import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
 import { ApprovalsLayouts } from '../layout';
 import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
 import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
-
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 
 /** @deprecated import from '../layout' directly */
@@ -88,8 +82,6 @@ export function ApprovalsBottomArea() {
 
   const { styles } = useTheme2024({ getStyle });
 
-  const [showModal, setShowModal] = useState(false);
-
   const { filterType } = useApprovalsPage();
   const { contractRevokeMap, assetRevokeMap } = useRevokeApprovals();
 
@@ -128,19 +120,11 @@ export function ApprovalsBottomArea() {
   const batchRevoke = useBatchRevoke();
 
   const handleRevoke = React.useCallback(() => {
-    setShowModal(false);
     batchRevoke(currentRevokeList, displaySortedAssetsList);
   }, [batchRevoke, currentRevokeList, displaySortedAssetsList]);
 
   const onRevoke = () => {
-    const hasPackedPermit2Sign = Object.values(
-      revokeSummary.permit2Revokes,
-    ).some(x => x.tokenSpenders.length > 1);
-
-    if (!hasPackedPermit2Sign) {
-      return handleRevoke();
-    }
-    setShowModal(true);
+    return handleRevoke();
   };
 
   return (
@@ -155,41 +139,6 @@ export function ApprovalsBottomArea() {
         onPress={onRevoke}
         buttonStyle={styles.buttonContainer}
       />
-      <Modal
-        visible={showModal}
-        transparent={true}
-        onRequestClose={() => setShowModal(false)}>
-        <TouchableOpacity
-          style={styles.modalContainer}
-          onPress={() => setShowModal(false)}>
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.modalContent}
-            onPress={e => e.stopPropagation()}>
-            <Text style={styles.modalTitle}>
-              <Trans
-                i18nKey="page.approvals.component.RevokeButton.permit2Batch.modalTitle"
-                values={{ count: revokeSummary.statics.txCount }}>
-                A total of{' '}
-                <Text style={styles.highlightText}>
-                  {revokeSummary.statics.txCount}
-                </Text>{' '}
-                signature is required
-              </Trans>
-            </Text>
-            <Text style={styles.modalBody}>
-              {t(
-                'page.approvals.component.RevokeButton.permit2Batch.modalContent',
-              )}
-            </Text>
-            <FooterButtonGroup
-              style={styles.btns}
-              onCancel={() => setShowModal(false)}
-              onConfirm={handleRevoke}
-            />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
     </View>
   );
 }

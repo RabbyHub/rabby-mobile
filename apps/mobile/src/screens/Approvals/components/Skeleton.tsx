@@ -84,10 +84,7 @@ export const SkeletonListByContracts = memo(() => {
 export const SkeletonListByAssets = memo(() => {
   const { styles: cardStyles } = useTheme2024({ getStyle: getCardStyles });
   return (
-    <View
-      style={{
-        paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
-      }}>
+    <View>
       {Array(8)
         .fill(0)
         .map((e, i) => (

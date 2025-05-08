@@ -68,7 +68,7 @@ function ApprovalCardAssetsProto({
               logo={asset?.logo_url}
               logoStyle={{ backgroundColor: colors2024['neutral-foot'] }}
               chain={asset?.chain}
-              chainIconPosition="tr"
+              chainIconPosition="br"
               style={{ marginRight: 7 }}
               size={36}
               chainSize={16}

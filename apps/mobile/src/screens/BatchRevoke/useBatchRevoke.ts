@@ -9,11 +9,16 @@ import { navigate } from '@/utils/navigation';
 import { findIndexRevokeList } from './utils';
 import { useRevokeOne } from './useRevokeOne';
 import { useApprovalAlertCounts } from '../Home/hooks/approvals';
+import { useCurrentAccount } from '@/hooks/account';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { apiApprovals } from '@/core/apis';
 
 export const useBatchRevoke = () => {
   const handleRevokeOne = useRevokeOne();
   const { forceUpdate } = useApprovalAlertCounts(10 * 60 * 1000);
   const { loadApprovals } = useApprovalsPage();
+  const { currentAccount } = useCurrentAccount();
+
   const handleRevoke = React.useCallback(
     (
       revokeList: ApprovalSpenderItemToBeRevoked[],
@@ -47,6 +52,14 @@ export const useBatchRevoke = () => {
       if (revokeList.length === 0) {
         return;
       }
+      if (
+        currentAccount &&
+        (currentAccount.type === KEYRING_TYPE.KeystoneKeyring ||
+          currentAccount.type === KEYRING_TYPE.WatchAddressKeyring ||
+          currentAccount.type === KEYRING_TYPE.GnosisKeyring)
+      ) {
+        return apiApprovals.revoke({ list: revokeList });
+      }
       if (revokeList.length === 1) {
         forceUpdate();
         await handleRevokeOne(revokeList[0]);
@@ -55,7 +68,7 @@ export const useBatchRevoke = () => {
       }
       return handleRevoke(revokeList, dataSource);
     },
-    [handleRevoke, handleRevokeOne, forceUpdate, loadApprovals],
+    [currentAccount, handleRevoke, forceUpdate, handleRevokeOne, loadApprovals],
   );
 
   return batchRevoke;

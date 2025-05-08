@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Platform, Dimensions, Text } from 'react-native';
+import { View, Platform } from 'react-native';
 import {
   Tabs,
   MaterialTabBar,
@@ -12,7 +12,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ApprovalsBottomArea } from './components/Layout';
-import { ApprovalsLayouts, IOS_SWIPABLE_LEFT_OFFSET } from './layout';
+import { ApprovalsLayouts } from './layout';
 import ListByAssets from './ListByAssets';
 import ListByContracts from './ListByContracts';
 import {
@@ -23,17 +23,18 @@ import {
 } from './useApprovalsPage';
 import BottomSheetApprovalContract from './components/BottomSheetApprovalContract';
 import BottomSheetApprovalAsset from './components/BottomSheetApprovalAsset';
-import { IS_IOS } from '@/core/native/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { HeaderRight } from './components/Headers/HeaderRight';
+import { HeaderCenter } from './components/Headers/HeaderCenter';
+import { ellipsisAddress } from '@/utils/address';
 const isAndroid = Platform.OS === 'android';
 
 const ApprovalScreenContainer = () => {
   const { currentAccount } = useCurrentAccount();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { filterType, setFilterType } = useApprovalsPage();
+  const { filterType, setFilterType, searchKw, setSearchKw } =
+    useApprovalsPage();
 
   const { t } = useTranslation();
 
@@ -78,30 +79,44 @@ const ApprovalScreenContainer = () => {
     ],
   );
 
+  const [isSearching, setIsSearching] = React.useState(false);
+
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <View style={styles.title}>
-        <WalletIcon
-          type={currentAccount?.brandName as KEYRING_TYPE}
-          width={25}
-          height={25}
-          borderRadius={6}
-        />
-        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
-          {currentAccount?.aliasName || currentAccount?.brandName}
-        </Text>
-      </View>
+      <HeaderCenter
+        textTitle={
+          currentAccount?.address
+            ? currentAccount?.aliasName ||
+              ellipsisAddress(currentAccount.address)
+            : 'Approvals'
+        }
+        type={filterType}
+        inputValue={searchKw}
+        inputOnChange={setSearchKw}
+        isSearching={isSearching}
+        currentAccount={currentAccount}
+      />
     );
-  }, [
-    currentAccount?.aliasName,
-    currentAccount?.brandName,
-    styles.title,
-    styles.titleText,
-  ]);
+  }, [currentAccount, filterType, isSearching, searchKw, setSearchKw]);
+
+  const getHeaderRight = React.useCallback(() => {
+    return (
+      <HeaderRight
+        isSearching={isSearching}
+        onTap={() => {
+          if (isSearching) {
+            setSearchKw('');
+          }
+          setIsSearching(pre => !pre);
+        }}
+      />
+    );
+  }, [isSearching, setSearchKw]);
 
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
+      headerRight: getHeaderRight,
       headerStyle: {
         backgroundColor: colors2024['neutral-bg-1'],
       },
@@ -111,6 +126,7 @@ const ApprovalScreenContainer = () => {
     getHeaderTitle,
     currentAccount?.aliasName,
     colors2024,
+    getHeaderRight,
   ]);
 
   if (!currentAccount?.address) {
@@ -181,17 +197,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     alignItems: 'center',
     position: 'relative',
-  },
-  title: {
-    gap: 8,
-    flexDirection: 'row',
-  },
-  titleText: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
   },
   tabContainer: {
     backgroundColor: isLight
