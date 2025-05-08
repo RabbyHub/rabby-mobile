@@ -65,7 +65,7 @@ export const HistoryBottomBtn = ({
   const { accounts } = useMyAccounts();
 
   const fromAddrIsImported = useMemo(() => {
-    return accounts.some(account =>
+    return accounts.find(account =>
       addressUtils.isSameAddress(account.address, data.tx?.from_addr || ''),
     );
   }, [accounts, data]);
@@ -97,16 +97,13 @@ export const HistoryBottomBtn = ({
               const sendToken =
                 tokenDict[sends[0]?.token_id] ||
                 tokenDict[fetchHistoryTokenUUId(sends[0]?.token_id, chain)];
-              console.log('chainItem sendToken', chain, sendToken);
               const chainItem = findChain({
                 serverId: sendToken.chain,
               });
-              if (!isForMultipleAdderss) {
-                await switchSceneCurrentAccount(
-                  'MakeTransactionAbout',
-                  currentAccount,
-                );
-              }
+              await switchSceneCurrentAccount(
+                'MakeTransactionAbout',
+                isForMultipleAdderss ? fromAddrIsImported : currentAccount,
+              );
               navigateToSendPolyScreen(!isForMultipleAdderss, {
                 chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
                 tokenId: sends[0]?.token_id,
