@@ -80,6 +80,9 @@ platform :ios do
       derived_data_path: './ios/DerivedData',
       archive_path: './ios/Package/RabbyMobile.xcarchive',
       skip_codesigning: true,
+      # skip_archive: true,
+      xcargs: "-jobs 1", # 禁用并行编译
+      buildlog_path: './ios/Package'
     )
   end
 

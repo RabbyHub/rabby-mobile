@@ -14,7 +14,6 @@ cd "${SCRIPT_DIR}/.."
 
 export ZERO_AR_DATE=1
 export SOURCE_DATE_EPOCH=1600000000
-export SOURCE_ROOT=/Users/odylee/workspace/rabby-mobile/apps/mobile
 
 # 不上传 sentry 报告了，没啥用
 export SENTRY_DISABLE_AUTO_UPLOAD=true
@@ -41,7 +40,8 @@ rm -rf "./ios/Package"
 rm -rf "./ios/build"
 rm -rf "./ios/DerivedData"
 
-cd ./ios && bundle exec pod install --deployment && cd ..
+# macOS 的 APFS 文件系统在文件扫描时不保证顺序一致。尝试在 pod install 后，对 Pods/ 下文件执行一次排序构建
+cd ./ios && bundle exec pod install --deployment && find Pods -type f -print0 | sort -z | xargs -0 cat > /dev/null && cd ..
 
 git checkout ./ios/RabbyMobile.xcodeproj/project.pbxproj
 
@@ -93,6 +93,8 @@ if [ -n "$EXPORT_DIR" ]; then
 
   otool -tV "$BINARY_DEST" > "$EXPORT_DIR/RabbyMobile.s"
   mv "$PROJECT_PATH/ios/LinkMap.txt" "$EXPORT_DIR/LinkMap.txt"
+  cp "$PROJECT_PATH/ios/Package/RabbyMobile-RabbyMobileRegression.log" "$EXPORT_DIR/RabbyMobile-RabbyMobileRegression.log"
+  # cp -r "$PROJECT_PATH/ios/DerivedData/Build/Intermediates.noindex" "$EXPORT_DIR/"
 
   echo "✅ Exported to:"
   echo "   - Binary: $BINARY_DEST"
