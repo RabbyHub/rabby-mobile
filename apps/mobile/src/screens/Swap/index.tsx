@@ -21,6 +21,7 @@ import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import {
   CompositeScreenProps,
   StackActions,
+  useFocusEffect,
   useIsFocused,
   useNavigation,
   useNavigationState,
@@ -90,6 +91,7 @@ import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappP
 import { Tip } from '@/components';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { isAccountSupportMiniApproval } from '@/utils/account';
+import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -529,7 +531,8 @@ const Swap = ({
     !receiveToken ||
     !amountAvailable ||
     inSufficient ||
-    !activeProvider;
+    !activeProvider ||
+    isSubmitting;
 
   useEffect(() => {
     if (!swapBtnDisabled && activeProvider && canUseMiniTx) {
@@ -580,6 +583,18 @@ const Swap = ({
     setLowCreditVisible,
     navState,
   ]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const listener = () => {
+        handleAmountChange('');
+      };
+      eventBus.addListener(EVENT_MINI_APPROVAL_START_SIGN, listener);
+      return () => {
+        eventBus.removeListener(EVENT_MINI_APPROVAL_START_SIGN, listener);
+      };
+    }, [handleAmountChange]),
+  );
 
   const [showMoreOpen, setShowMoreOpen] = useState(false);
 

@@ -82,6 +82,11 @@ import {
 } from '@/hooks/useMiniApprovalTask';
 import { View } from 'react-native';
 import { sendTransaction } from '@/utils/sendTransaction';
+import {
+  EVENT_MINI_APPROVAL_START_SIGN,
+  eventBus,
+  EVENTS,
+} from '@/utils/events';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -554,6 +559,7 @@ const MiniSignTx = ({
     }
     onSubmitting?.();
     try {
+      eventBus.emit(EVENT_MINI_APPROVAL_START_SIGN, {});
       const res = await task.start();
       // todo check this
       onResolve?.(res || []);
