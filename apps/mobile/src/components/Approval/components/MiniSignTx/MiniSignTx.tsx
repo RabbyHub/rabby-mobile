@@ -28,6 +28,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   ExplainTxResponse,
   GasLevel,
+  ParseTxResponse,
   Tx,
   TxPushType,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -300,6 +301,7 @@ const MiniSignTx = ({
       gasLimit: string;
       recommendGasLimitRatio: number;
       gasCost: Awaited<ReturnType<typeof explainGas>>;
+      actionData: ParseTxResponse;
     }[]
   >([]);
 
@@ -516,6 +518,10 @@ const MiniSignTx = ({
             ignoreGasCheck: true,
             ignoreGasNotEnoughCheck: true,
             sig,
+            extra: {
+              preExecResult: item.preExecResult,
+              actionData: item.actionData,
+            },
           },
           status: 'idle',
         };

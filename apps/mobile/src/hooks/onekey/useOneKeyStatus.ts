@@ -12,7 +12,12 @@ export const oneKeyStatusAtom = atom<'CONNECTED' | 'DISCONNECTED' | undefined>(
   'CONNECTED',
 );
 
-export const useOneKeyStatus = (address: string) => {
+export const useOneKeyStatus = (
+  address: string,
+  extra?: {
+    onDismiss?(): void;
+  },
+) => {
   const [status, setStatus] = useAtom(oneKeyStatusAtom);
   const [deviceId, setDeviceId] = React.useState<string>();
   let toastHiddenRef = React.useRef<() => void>(() => {});
@@ -52,9 +57,12 @@ export const useOneKeyStatus = (address: string) => {
             toastHiddenRef.current?.();
           }
         },
+        bottomSheetModalProps: {
+          onDismiss: extra?.onDismiss,
+        },
       });
     },
-    [address, deviceId, setStatus],
+    [address, deviceId, extra?.onDismiss, setStatus],
   );
 
   React.useEffect(() => {

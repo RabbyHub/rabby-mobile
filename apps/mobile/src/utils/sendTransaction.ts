@@ -3,6 +3,7 @@ import { calcMaxPriorityFee, checkGasAndNonce } from '@/utils/transaction';
 import {
   ExplainTxResponse,
   GasLevel,
+  ParseTxResponse,
   Tx,
   TxPushType,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -130,8 +131,8 @@ export const sendTransaction = async ({
   onProgress?: (status: ProgressStatus) => void;
   onUseGasAccount?: () => void;
   extra?: {
-    nonce?: string;
     preExecResult?: ExplainTxResponse;
+    actionData?: ParseTxResponse;
   };
   gasLevel?: GasLevel;
   lowGasDeadline?: number;
@@ -155,7 +156,7 @@ export const sendTransaction = async ({
   const { address, ...currentAccount } =
     (await preferenceService.getCurrentAccount())!;
   const recommendNonce =
-    extra?.nonce ||
+    tx.nonce ||
     (await apiProvider.getRecommendNonce({
       from: tx.from,
       chainId: chain.id,
@@ -327,8 +328,11 @@ export const sendTransaction = async ({
     };
   }
 
-  const maxPriorityFee = calcMaxPriorityFee([], normalGas, chain.id, true);
-  const maxFeePerGas = intToHex(Math.round(normalGas.price));
+  const maxPriorityFee =
+    +(tx.maxFeePerGas || '') ||
+    calcMaxPriorityFee([], normalGas, chain.id, true);
+  const maxFeePerGas =
+    tx.maxFeePerGas || tx.gasPrice || intToHex(Math.round(normalGas.price));
 
   if (support1559) {
     transaction.maxFeePerGas = maxFeePerGas;
@@ -341,18 +345,20 @@ export const sendTransaction = async ({
   }
 
   // fetch action data
-  const actionData = await openapi.parseTx({
-    chainId: chain.serverId,
-    tx: {
-      ...tx,
-      gas: '0x0',
-      nonce: recommendNonce || '0x1',
-      value: tx.value || '0x0',
-      to: tx.to || '',
-    },
-    origin: INTERNAL_REQUEST_SESSION.origin || '',
-    addr: address,
-  });
+  const actionData =
+    extra?.actionData ||
+    (await openapi.parseTx({
+      chainId: chain.serverId,
+      tx: {
+        ...tx,
+        gas: '0x0',
+        nonce: recommendNonce || '0x1',
+        value: tx.value || '0x0',
+        to: tx.to || '',
+      },
+      origin: INTERNAL_REQUEST_SESSION.origin || '',
+      addr: address,
+    }));
   const parsed = parseAction({
     type: 'transaction',
     data: actionData.action,

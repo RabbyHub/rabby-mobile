@@ -7,9 +7,14 @@ import { MiniProcessActions } from './MiniProcessActions';
 
 export const MiniLedgerProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
-  const { status, onClickConnect } = useLedgerStatus(account.address);
+
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { status, onClickConnect } = useLedgerStatus(account.address, {
+    onDismiss: () => {
+      setIsSubmitting(false);
+    },
+  });
 
   const handleSubmit = React.useCallback(() => {
     if (status !== 'CONNECTED') {
