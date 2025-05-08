@@ -30088,7 +30088,7 @@ __metadata:
     react-native-animateable-text: 0.14.2
     react-native-asset: ^2.1.1
     react-native-ble-manager: 11.6.0
-    react-native-ble-plx: 3.5.0
+    react-native-ble-plx: 3.1.2
     react-native-bundle-splitter: ^3.0.1
     react-native-bundle-visualizer: 3.1.0
     react-native-cloud-storage: ^1.4.1
@@ -30608,16 +30608,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 6a35269d4e65c3b8a52469db9a628b4519f28fe4009f90c96ba017b84408d63751c708391901219ec0a4cac3c560defba4fa504ded0b8a4a4b5b2c8c307a1841
-  languageName: node
-  linkType: hard
-
-"react-native-ble-plx@npm:3.5.0":
-  version: 3.5.0
-  resolution: "react-native-ble-plx@npm:3.5.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: d84ce1eefdc584c8a4891266941f5951b31c8a800d0993659d7f87ba57cb8c23c4ba09dc3d4d8bfbc1d16f64dbd7405fad2b5fd2cf79fa7578d001a22aee47ae
   languageName: node
   linkType: hard
 
