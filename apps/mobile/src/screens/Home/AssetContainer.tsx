@@ -1103,7 +1103,7 @@ export const AssetContainer: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      {firstRowType !== 'asset_header' && (
+      {firstRowType !== 'asset_header' && firstRowType !== '' && (
         <Animated.View style={[styles.bgContainer, styles.stickyHeader]}>
           <AssestAllHeader
             style={styles.assetHeader}
