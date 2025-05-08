@@ -136,7 +136,10 @@ const Send = ({
                 </Text>
               </SubRow>
               <SubRow>
-                <Values.Protocol value={requireData.protocol} />
+                <Values.Protocol
+                  value={requireData.protocol}
+                  textStyle={commonStyle.detailPrimaryText}
+                />
               </SubRow>
             </SubCol>
           )}
