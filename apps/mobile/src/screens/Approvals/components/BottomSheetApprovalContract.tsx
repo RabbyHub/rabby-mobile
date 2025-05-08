@@ -55,9 +55,11 @@ export default function BottomSheetApprovalContract({
   const batchRevoke = useBatchRevoke();
 
   const handleRevoke = React.useCallback(() => {
-    modalRef?.current?.close();
-
     const currentRevokeList = Object.values(contractFocusingRevokeMap);
+
+    if (currentRevokeList.length > 1) {
+      modalRef?.current?.close();
+    }
 
     batchRevoke(currentRevokeList, displaySortedAssetsList);
   }, [

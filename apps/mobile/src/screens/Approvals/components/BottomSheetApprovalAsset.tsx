@@ -54,9 +54,11 @@ export default function BottomSheetApprovalAsset({
   const batchRevoke = useBatchRevoke();
 
   const handleRevoke = React.useCallback(() => {
-    modalRef?.current?.close();
-
     const currentRevokeList = Object.values(assetFocusingRevokeMap);
+
+    if (currentRevokeList.length > 1) {
+      modalRef?.current?.close();
+    }
 
     batchRevoke(currentRevokeList, displaySortedAssetsList);
   }, [batchRevoke, assetFocusingRevokeMap, displaySortedAssetsList, modalRef]);

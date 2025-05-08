@@ -156,7 +156,7 @@ export const useBatchRevokeTask = () => {
   const addRevokeTask = React.useCallback(
     async (
       item: AssetApprovalSpender,
-      priority: number = 0,
+      priority: number = -1,
       ignoreGasCheck = false,
     ) => {
       return queueRef.current.add(

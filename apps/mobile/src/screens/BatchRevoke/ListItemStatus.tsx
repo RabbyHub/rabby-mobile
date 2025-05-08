@@ -55,7 +55,7 @@ export const ListItemStatus: React.FC<{
         <View style={styles.success}>
           <SuccessSVG style={styles.successIcon} />
           <CellText>
-            {formatGasCostUsd(data.$status?.gasCost.gasCostUsd)}
+            ${formatGasCostUsd(data.$status?.gasCost.gasCostUsd)}
           </CellText>
         </View>
       )}
