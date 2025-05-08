@@ -117,23 +117,15 @@ function AssetsApprovalRowProto({
           />
           <View style={styles.basicInfo}>
             <View style={styles.basicInfoF1}>
-              {assetApproval?.logo_url ? (
-                <AssetAvatar
-                  style={styles.chainIcon}
-                  logo={assetApproval?.logo_url}
-                  logoStyle={{ backgroundColor: colors2024['neutral-foot'] }}
-                  chain={assetApproval?.chain}
-                  chainIconPosition="br"
-                  size={46}
-                  chainSize={16}
-                />
-              ) : (
-                <RcIconUnknown
-                  width={46}
-                  height={46}
-                  style={styles.chainIcon}
-                />
-              )}
+              <AssetAvatar
+                style={styles.chainIcon}
+                logo={assetApproval?.logo_url}
+                logoStyle={{ backgroundColor: colors2024['neutral-foot'] }}
+                chain={assetApproval?.chain}
+                chainIconPosition="br"
+                size={46}
+                chainSize={16}
+              />
             </View>
           </View>
         </View>

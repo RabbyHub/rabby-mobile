@@ -172,7 +172,7 @@ export function InModalApprovalAssetRow({
           // pass empty if it's token as no logo_url to enforce the default logo
           logo={spender.protocol?.logo_url || ''}
           logoStyle={{ backgroundColor: colors['neutral-foot'] }}
-          chain={spender.protocol?.chain}
+          chain={spender.protocol?.chain || approval.chain}
           chainIconPosition="br"
           size={46}
           chainSize={16}

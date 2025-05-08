@@ -228,7 +228,7 @@ export const useBatchRevokeTask = () => {
               };
             }
           } catch (e: any) {
-            let failedCode = FailedCode.DefaultFailed;
+            let failedCode = FailedCode.SubmitTxFailed;
             if (FailedCode[e?.name]) {
               failedCode = e.name;
             }

@@ -63,19 +63,16 @@ function ApprovalCardAssetsProto({
     <View style={[styles.container, style]}>
       <View style={styles.floor}>
         <View style={[styles.lineLabel, styles.header]}>
-          {asset?.logo_url ? (
-            <AssetAvatar
-              logo={asset?.logo_url}
-              logoStyle={{ backgroundColor: colors2024['neutral-foot'] }}
-              chain={asset?.chain}
-              chainIconPosition="br"
-              style={{ marginRight: 7 }}
-              size={36}
-              chainSize={16}
-            />
-          ) : (
-            <RcIconUnknown width={36} height={36} style={styles.chainIcon} />
-          )}
+          <AssetAvatar
+            logo={asset?.logo_url}
+            logoStyle={{ backgroundColor: colors2024['neutral-foot'] }}
+            chain={asset?.chain}
+            chainIconPosition="br"
+            style={{ marginRight: 7 }}
+            size={36}
+            chainSize={16}
+          />
+
           <View style={styles.basicInfo}>
             <Text
               style={styles.assetNameText}
