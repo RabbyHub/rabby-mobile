@@ -29,13 +29,11 @@ export const MiniWaiting = ({
   });
 
   const { sheetModalRef } = useSheetModal();
-  const dismissedByCodeRef = useRef(false);
 
   useEffect(() => {
     if (visible) {
       sheetModalRef.current?.present();
     } else {
-      dismissedByCodeRef.current = true;
       sheetModalRef.current?.dismiss();
     }
   }, [sheetModalRef, visible]);
@@ -48,10 +46,7 @@ export const MiniWaiting = ({
       enableDismissOnClose
       onDismiss={() => {
         if (visible) {
-          if (!dismissedByCodeRef.current) {
-            onCancel?.();
-          }
-          dismissedByCodeRef.current = false;
+          onCancel?.();
         }
       }}
       handleStyle={styles.handleStyle}

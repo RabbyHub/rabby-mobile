@@ -94,8 +94,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-4'],
     borderRadius: 16,
     height: 56,
-
-    marginTop: 20,
+    marginTop: 12,
   },
   statusContainerSuccess: {
     backgroundColor: colors2024['green-light'],
