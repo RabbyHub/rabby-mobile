@@ -47,7 +47,6 @@ function CardProto({
     <View
       style={[
         styles.container,
-        styles.shadowButton,
         contract?.risk_alert ? styles.containerWithRisky : {},
         style,
       ]}>
@@ -153,16 +152,6 @@ export const getCardStyles = createGetStyles2024(ctx => {
       paddingVertical: 16,
       width: '100%',
       ...selectableStyles.container,
-    },
-    shadowButton: {
-      shadowColor: colors2024['neutral-black'],
-      shadowOffset: {
-        width: 0,
-        height: 4,
-      },
-      shadowOpacity: 0.06,
-      shadowRadius: 60,
-      // elevation: 4,
     },
     title: {
       flexDirection: 'row',

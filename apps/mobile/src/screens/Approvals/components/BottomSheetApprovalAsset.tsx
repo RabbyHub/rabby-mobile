@@ -156,7 +156,7 @@ export default function BottomSheetApprovalAsset({
 
             <View style={styles.listHeadOps}>
               <Text style={styles.listHeadText}>
-                {t('page.approvals.approvedContractsAndAmount')}
+                {t('page.approvals.approvedAssets')}
               </Text>
               <MiniButton
                 disabled={!focusedAssetApproval?.list.length}
@@ -234,6 +234,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      marginBottom: 4,
     },
     listHeadText: {
       color: colors2024['neutral-foot'],
