@@ -12,6 +12,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 PROJECT_PATH=$(dirname -- "${SCRIPT_DIR}")
 cd "${SCRIPT_DIR}/.."
 
+export ZERO_AR_DATE=1
+export SOURCE_DATE_EPOCH=1600000000
+export SOURCE_ROOT=/Users/odylee/workspace/rabby-mobile/apps/mobile
+
 # 不上传 sentry 报告了，没啥用
 export SENTRY_DISABLE_AUTO_UPLOAD=true
 # https://www.npmjs.com/package/react-native-dotenv#override-envname
@@ -21,8 +25,6 @@ export APP_ENV=hashing
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
 EXPORT_DIR="${EXPORT_DIR}/build_${TIMESTAMP}"
 BUILD_REPORT_FILE="${EXPORT_DIR}/build_hashes.txt"
-
-sed -i '' "s|RABBY_MOBILE_PATH_HOLDER|${PROJECT_PATH}|" ./ios/RabbyMobile/AppConfig.xcconfig
 
 APP_PATH="./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app"
 
@@ -90,6 +92,7 @@ if [ -n "$EXPORT_DIR" ]; then
   fi
 
   otool -tV "$BINARY_DEST" > "$EXPORT_DIR/RabbyMobile.s"
+  mv "$PROJECT_PATH/ios/LinkMap.txt" "$EXPORT_DIR/LinkMap.txt"
 
   echo "✅ Exported to:"
   echo "   - Binary: $BINARY_DEST"
