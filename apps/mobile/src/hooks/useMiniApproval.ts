@@ -48,8 +48,6 @@ export const useMiniApproval = () => {
     },
   );
 
-  console.log(state);
-
   const prepareMiniTransactions = useMemoizedFn(
     ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
       setState(prev => {

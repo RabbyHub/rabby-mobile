@@ -507,7 +507,6 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
             const res = await sendMiniTransactions({
               txs: [tx],
             });
-            console.log('[txhash]', res);
             const hash = res?.[0]?.txHash;
 
             await afterTopUpGasAccount({

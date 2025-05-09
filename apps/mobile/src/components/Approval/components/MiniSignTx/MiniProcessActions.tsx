@@ -71,17 +71,6 @@ export const MiniProcessActions: React.FC<Props> = ({
       : {},
   ]);
 
-  console.log('[gasLess]', {
-    isGasNotEnough,
-    gasLessThemeColor,
-    buttonText,
-    buttonTextStyle,
-    buttonStyle,
-    gasLess,
-    // showOrigin,
-    disabledProcess,
-  });
-
   return (
     <ActionsContainer onCancel={onCancel} isMiniSignTx={isMiniSignTx}>
       <View style={{ flex: 1 }}>

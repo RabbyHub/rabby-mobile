@@ -329,7 +329,7 @@ export const sendTransaction = async ({
   }
 
   const maxPriorityFee =
-    +(tx.maxFeePerGas || '') ||
+    +(tx.maxPriorityFeePerGas || '') ||
     calcMaxPriorityFee([], normalGas, chain.id, true);
   const maxFeePerGas =
     tx.maxFeePerGas || tx.gasPrice || intToHex(Math.round(normalGas.price));

@@ -60,8 +60,6 @@ export const MiniSubmitActions: React.FC<Props> = ({
     onPress(onSubmit, () => setPressedConfirm(false));
   }, [onSubmit, setPressedConfirm, onPress]);
 
-  console.log({ disabledProcess, pressedConfirm });
-
   return (
     <ActionsContainer onCancel={onCancel} isMiniSignTx={isMiniSignTx}>
       {isSign ? (

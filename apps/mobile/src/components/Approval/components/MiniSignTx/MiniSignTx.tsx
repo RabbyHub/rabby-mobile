@@ -224,11 +224,6 @@ const MiniSignTx = ({
   const chain = useFindChain({
     id: chainId,
   });
-  console.log({
-    chainId,
-    chain,
-    txs,
-  });
   const [inited, setInited] = useState(false);
   const [isHardware, setIsHardware] = useState(false);
   const [manuallyChangeGasLimit, setManuallyChangeGasLimit] = useState(false);
