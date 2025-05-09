@@ -487,8 +487,11 @@ export class TransactionHistoryService {
   }
 
   removeList(address: string) {
-    const normalizedAddress = address.toLowerCase();
-    delete this.store.transactions[normalizedAddress];
+    this.setStore(draft => {
+      return draft.filter(item => {
+        return !isSameAddress(item.address, address);
+      });
+    });
   }
 
   completeTx({
@@ -824,7 +827,10 @@ export class TransactionHistoryService {
   clearPendingTransactions(address: string) {
     this.setStore(draft => {
       return draft.filter(item => {
-        return isSameAddress(address, item.address) && !item.isPending;
+        if (!isSameAddress(address, item.address)) {
+          return true;
+        }
+        return !item.isPending;
       });
     });
   }
