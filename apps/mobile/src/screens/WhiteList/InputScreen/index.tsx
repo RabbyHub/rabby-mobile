@@ -18,11 +18,7 @@ import { NextInput } from '@/components2024/Form/Input';
 import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
-import {
-  useFocusEffect,
-  useNavigation,
-  useNavigationState,
-} from '@react-navigation/native';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import {
   createGlobalBottomSheetModal2024,
   globalBottomSheetModalAddListener2024,
@@ -51,6 +47,9 @@ import { toast } from '@/components2024/Toast';
 import { useAlert } from './useAlert';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { matomoRequestEvent } from '@/utils/analytics';
+import useAutoFocusInput from '@/hooks/useAutoFocusInput';
+import { ellipsisAddress } from '@/utils/address';
+import { useAccounts } from '@/hooks/account';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -89,6 +88,7 @@ const WhitelistInputScreen = () => {
 
   const { t } = useTranslation();
   const [historyVisible, setHistoryVisible] = useState(false);
+  const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
 
   const [, setWL] = useAtom(whitelistAtom);
 
@@ -96,6 +96,7 @@ const WhitelistInputScreen = () => {
     const data = await whitelistService.getWhitelist();
     setWL(data);
   }, [setWL]);
+  const { inputCallbackRef } = useAutoFocusInput(false);
 
   const closeHistory = useCallback(() => {
     setHistoryVisible(false);
@@ -123,7 +124,10 @@ const WhitelistInputScreen = () => {
       } else {
         const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.CONFIRM_ADDRESS,
-          account,
+          account: {
+            ...account,
+            aliasName: aliasName || account.aliasName,
+          },
           title: t('page.confirmAddress.addToWhitelist'),
           cex: isCex ? cex : undefined,
           disbaleWhiteSwitch: true,
@@ -144,6 +148,11 @@ const WhitelistInputScreen = () => {
             if (isCex && cex?.id) {
               setCexId(address, cex.id);
             }
+            contactService.updateAlias({
+              address,
+              name: aliasName || ellipsisAddress(address),
+            });
+            fetchAccounts();
             setInput('');
             await whitelistService.addWhitelist(address);
             await getWhitelist();
@@ -248,12 +257,6 @@ const WhitelistInputScreen = () => {
   }, []);
   useAlert(input, onReaptAdd);
 
-  useFocusEffect(() => {
-    if (isValidHexAddress(input as Hex)) {
-      setAliasName(contactService.getAliasByAddress(input)?.alias || '');
-    }
-  });
-
   return (
     <>
       <FooterButtonScreenContainer
@@ -290,6 +293,7 @@ const WhitelistInputScreen = () => {
                   tipText={''}
                   hasError={!!error}
                   fieldErrorTextStyle={styles.error}
+                  ref={inputCallbackRef}
                   containerStyle={Object.assign(
                     {
                       borderRadius: 16,
@@ -305,7 +309,6 @@ const WhitelistInputScreen = () => {
                     placeholderTextColor: colors2024['neutral-secondary'],
                     value: input,
                     blurOnSubmit: true,
-                    autoFocus: true,
                     returnKeyType: 'done',
                     onChangeText: handleSubmit,
                   }}
@@ -348,7 +351,16 @@ const WhitelistInputScreen = () => {
                   if (!isValidHexAddress(input as Hex)) {
                     return;
                   }
-                  editAliasName.show(findAccountWithoutBalance(input).account);
+                  const targetAccount =
+                    findAccountWithoutBalance(input).account;
+                  editAliasName.show(
+                    {
+                      ...targetAccount,
+                      aliasName: aliasName || targetAccount.aliasName,
+                    },
+                    undefined,
+                    editAlias => setAliasName(editAlias),
+                  );
                 }}
                 style={styles.editContainer}>
                 {aliasName ? (

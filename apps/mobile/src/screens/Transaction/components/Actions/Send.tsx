@@ -40,6 +40,8 @@ import { formatIntlTimestamp } from '@/utils/time';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useWhitelist } from '@/hooks/whitelist';
 import { Tip } from '@/components/Tip';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 interface Props {
   data: TransactionGroup;
@@ -92,6 +94,8 @@ export const Send: React.FC<Props> = ({
   }, [list]);
 
   const { switchAccount } = useCurrentAccount();
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
   const { navigateToSendPolyScreen, navigateToSendScreen } = useSendRoutes();
 
   const { isAddrOnWhitelist } = useWhitelist();
@@ -249,10 +253,22 @@ export const Send: React.FC<Props> = ({
               </Tip>
             ) : (
               <Button
-                onPress={() => {
+                onPress={async () => {
                   if (onPressBottomBtn) {
                     onPressBottomBtn(actionData);
                     return;
+                  }
+                  const fromAccount = accounts.find(account =>
+                    addressUtils.isSameAddress(
+                      account.address,
+                      data.maxGasTx.address || '',
+                    ),
+                  );
+                  if (!isSingleAddress && fromAccount) {
+                    await switchSceneCurrentAccount(
+                      'MakeTransactionAbout',
+                      fromAccount,
+                    );
                   }
                   navigateToSendPolyScreen(!!isSingleAddress, {
                     chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
