@@ -1186,12 +1186,11 @@ export const MiniApproval = ({
           handleReject?.();
         }
         dismissedByCodeRef.current = false;
-        onVisibleChange?.(false);
       }
 
       indexRef.current = index;
     },
-    [handleReject, onVisibleChange],
+    [handleReject],
   );
 
   const task = useMiniApprovalTask({
@@ -1244,6 +1243,7 @@ export const MiniApproval = ({
                 onResolve={res => {
                   setIsSubmitting(false);
                   onResolve?.(res);
+                  dismissedByCodeRef.current = true;
                 }}
                 onSubmitting={onSubmitting}
                 onSubmitted={onSubmitted}
@@ -1264,6 +1264,7 @@ export const MiniApproval = ({
             // todo check this
             onResolve?.(res || []);
             onSubmitted?.(true);
+            dismissedByCodeRef.current = true;
           } catch (e) {
             console.error(e);
             onSubmitted?.(false);
