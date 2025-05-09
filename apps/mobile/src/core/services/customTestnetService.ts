@@ -450,6 +450,31 @@ export class CustomTestnetService {
     });
   };
 
+  getTokenOnAllChains = async ({
+    address,
+    tokenId,
+  }: {
+    address: string;
+    tokenId: string;
+  }) => {
+    const chainList = Object.values(this.store.customTestnet).map(item => {
+      return item.id;
+    });
+    const res = await Promise.all(
+      chainList.map(chainId => {
+        return this.getToken({
+          chainId,
+          address,
+          tokenId,
+        }).catch(e => {
+          console.error(e);
+          return null;
+        });
+      }),
+    );
+    const result = res.filter((item): item is CustomTestnetToken => !!item);
+    return result;
+  };
   getToken = async ({
     chainId,
     address,
@@ -635,7 +660,7 @@ export class CustomTestnetService {
         }),
       ),
     );
-    return sortBy(
+    const result = sortBy(
       res.filter((item): item is CustomTestnetToken => !!item),
       item => {
         return !item.id;
@@ -644,6 +669,14 @@ export class CustomTestnetService {
         return -item.amount;
       },
     );
+    if (result.length <= 0 && q && isAddress(q)) {
+      const tokens = await this.getTokenOnAllChains({
+        tokenId: q,
+        address,
+      });
+      return tokens;
+    }
+    return result;
   };
 
   // todo
