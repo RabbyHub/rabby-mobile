@@ -690,6 +690,7 @@ export const GasSelectorHeader = ({
                 borderStyle: 'solid',
                 borderColor: colors['neutral-line'],
                 marginRight: 12,
+                pointerEvents: isDisabledGasPopup ? 'none' : undefined,
               }}>
               <GasMethod
                 active={gasMethod === 'native'}
