@@ -1,10 +1,15 @@
 import React from 'react';
-import { View, Text, SectionListProps, ActivityIndicator } from 'react-native';
-
+import {
+  View,
+  Text,
+  SectionListProps,
+  ActivityIndicator,
+  SectionList,
+} from 'react-native';
 import { AppBottomSheetModal } from '@/components';
 import {
   BottomSheetModalProps,
-  BottomSheetSectionList,
+  BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 import {
   ApprovalAssetsItem,
@@ -17,7 +22,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { MiniButton } from '@/components/Button';
 import ApprovalCardAsset from './ApprovalCardAsset';
 import { InModalApprovalAssetRow } from './InModalApprovalAssetRow';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalFooterButton } from './Layout';
@@ -125,7 +129,7 @@ export default function BottomSheetApprovalAsset({
       style={styles.sheetModalContainer}
       handleStyle={[styles.handle, styles.bg]}
       enablePanDownToClose={true}
-      enableContentPanningGesture={false}
+      enableContentPanningGesture={true}
       backgroundStyle={styles.bg}
       keyboardBlurBehavior="restore"
       onDismiss={() => {
@@ -148,53 +152,58 @@ export default function BottomSheetApprovalAsset({
       snapPoints={['75%']}
       bottomInset={1}>
       {focusedAssetApproval && (
-        <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
-          <BottomSheetHandlableView style={styles.staticArea}>
-            <ApprovalCardAsset
-              assetItem={focusedAssetApproval}
-              inDetailModal
-              style={styles.headerTitle}
-            />
+        <AutoLockView as="View" style={[styles.bodyContainer]}>
+          <BottomSheetScrollView>
+            <View style={styles.staticArea}>
+              <ApprovalCardAsset
+                assetItem={focusedAssetApproval}
+                inDetailModal
+                style={styles.headerTitle}
+              />
 
-            <View style={styles.listHeadOps}>
-              <Text style={styles.listHeadText}>
-                {t('page.approvals.approvedAssets')}
-              </Text>
-              <MiniButton
-                disabled={!focusedAssetApproval?.list.length}
-                style={styles.miniBtn}
-                onPress={() =>
-                  onSelectAllAsset(
-                    focusedAssetApproval!,
-                    nextShouldPickAllFocusingAsset,
-                    'focusing',
-                  )
-                }>
-                {nextShouldPickAllFocusingAsset ? 'Select All' : 'Unselect All'}
-              </MiniButton>
+              <View style={styles.listHeadOps}>
+                <Text style={styles.listHeadText}>
+                  {t('page.approvals.approvedAssets')}
+                </Text>
+                <MiniButton
+                  disabled={!focusedAssetApproval?.list.length}
+                  style={styles.miniBtn}
+                  onPress={() =>
+                    onSelectAllAsset(
+                      focusedAssetApproval!,
+                      nextShouldPickAllFocusingAsset,
+                      'focusing',
+                    )
+                  }>
+                  {nextShouldPickAllFocusingAsset
+                    ? 'Select All'
+                    : 'Unselect All'}
+                </MiniButton>
+              </View>
             </View>
-          </BottomSheetHandlableView>
 
-          <BottomSheetSectionList
-            initialNumToRender={4}
-            maxToRenderPerBatch={20}
-            ListFooterComponent={
-              sectionList.length >= 20 ? (
-                <View style={styles.listFooterContainer}>
-                  {isFetchingNextPage ? <ActivityIndicator /> : null}
-                </View>
-              ) : null
-            }
-            style={[styles.scrollableView, styles.scrollableArea]}
-            contentContainerStyle={styles.listContainer}
-            renderItem={renderItem}
-            sections={sectionList}
-            keyExtractor={keyExtractor}
-            ListEmptyComponent={ListEmptyComponent}
-            stickySectionHeadersEnabled={false}
-            onEndReached={onEndReached}
-            onEndReachedThreshold={0.3}
-          />
+            <SectionList
+              scrollEnabled={false}
+              initialNumToRender={4}
+              maxToRenderPerBatch={20}
+              ListFooterComponent={
+                sectionList.length >= 20 ? (
+                  <View style={styles.listFooterContainer}>
+                    {isFetchingNextPage ? <ActivityIndicator /> : null}
+                  </View>
+                ) : null
+              }
+              style={[styles.scrollableView, styles.scrollableArea]}
+              contentContainerStyle={styles.listContainer}
+              renderItem={renderItem}
+              sections={sectionList}
+              keyExtractor={keyExtractor}
+              ListEmptyComponent={ListEmptyComponent}
+              stickySectionHeadersEnabled={false}
+              onEndReached={onEndReached}
+              onEndReachedThreshold={0.3}
+            />
+          </BottomSheetScrollView>
         </AutoLockView>
       )}
     </AppBottomSheetModal>

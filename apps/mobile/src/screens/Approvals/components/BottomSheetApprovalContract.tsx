@@ -1,10 +1,15 @@
 import React from 'react';
-import { View, Text, SectionListProps, ActivityIndicator } from 'react-native';
-
+import {
+  View,
+  Text,
+  SectionListProps,
+  ActivityIndicator,
+  SectionList,
+} from 'react-native';
 import { AppBottomSheetModal } from '@/components';
 import {
   BottomSheetModalProps,
-  BottomSheetSectionList,
+  BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 import {
   ContractApprovalItem,
@@ -17,7 +22,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import ApprovalCardContract from './ApprovalCardContract';
 import { MiniButton } from '@/components/Button';
 import { InModalApprovalContractRow } from './InModalApprovalContractRow';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
@@ -175,54 +179,57 @@ export default function BottomSheetApprovalContract({
       snapPoints={['75%']}
       bottomInset={1}>
       {focusedContractApproval && (
-        <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
-          <BottomSheetHandlableView style={styles.staticArea}>
-            <ApprovalCardContract
-              style={styles.headerTitle}
-              contract={focusedContractApproval}
-            />
+        <AutoLockView as="View" style={[styles.bodyContainer]}>
+          <BottomSheetScrollView>
+            <View style={styles.staticArea}>
+              <ApprovalCardContract
+                style={styles.headerTitle}
+                contract={focusedContractApproval}
+              />
 
-            <View style={styles.listHeadOps}>
-              <Text style={styles.listHeadText}>
-                {t('page.approvals.approvedContracts')}
-              </Text>
-              <MiniButton
-                disabled={!focusedContractApproval?.list.length}
-                style={styles.miniBtn}
-                onPress={() =>
-                  onSelectAllContractApprovals(
-                    focusedContractApproval!,
-                    nextShouldPickAllFocusingContracts,
-                    'focusing',
-                  )
-                }>
-                {nextShouldPickAllFocusingContracts
-                  ? t('page.approvals.selectAll')
-                  : t('page.approvals.unselectAll')}
-              </MiniButton>
+              <View style={styles.listHeadOps}>
+                <Text style={styles.listHeadText}>
+                  {t('page.approvals.approvedContracts')}
+                </Text>
+                <MiniButton
+                  disabled={!focusedContractApproval?.list.length}
+                  style={styles.miniBtn}
+                  onPress={() =>
+                    onSelectAllContractApprovals(
+                      focusedContractApproval!,
+                      nextShouldPickAllFocusingContracts,
+                      'focusing',
+                    )
+                  }>
+                  {nextShouldPickAllFocusingContracts
+                    ? t('page.approvals.selectAll')
+                    : t('page.approvals.unselectAll')}
+                </MiniButton>
+              </View>
             </View>
-          </BottomSheetHandlableView>
 
-          <BottomSheetSectionList
-            initialNumToRender={4}
-            maxToRenderPerBatch={20}
-            ListFooterComponent={
-              sectionList.length >= 15 ? (
-                <View style={styles.listFooterContainer}>
-                  {isFetchingNextPage ? <ActivityIndicator /> : null}
-                </View>
-              ) : null
-            }
-            style={[styles.scrollableView, styles.scrollableArea]}
-            contentContainerStyle={styles.listContainer}
-            renderItem={renderItem}
-            sections={sectionList}
-            keyExtractor={keyExtractor}
-            ListEmptyComponent={ListEmptyComponent}
-            stickySectionHeadersEnabled={false}
-            onEndReached={onEndReached}
-            onEndReachedThreshold={0.3}
-          />
+            <SectionList
+              scrollEnabled={false}
+              initialNumToRender={4}
+              maxToRenderPerBatch={20}
+              ListFooterComponent={
+                sectionList.length >= 15 ? (
+                  <View style={styles.listFooterContainer}>
+                    {isFetchingNextPage ? <ActivityIndicator /> : null}
+                  </View>
+                ) : null
+              }
+              style={[styles.scrollableView, styles.scrollableArea]}
+              contentContainerStyle={styles.listContainer}
+              renderItem={renderItem}
+              sections={sectionList}
+              keyExtractor={keyExtractor}
+              ListEmptyComponent={ListEmptyComponent}
+              stickySectionHeadersEnabled={false}
+              onEndReached={onEndReached}
+              onEndReachedThreshold={0.3}
+            />
+          </BottomSheetScrollView>
         </AutoLockView>
       )}
     </AppBottomSheetModal>
