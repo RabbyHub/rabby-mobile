@@ -90,8 +90,8 @@ export default function ListByContracts() {
     resetPage();
 
     try {
-      await loadApprovals();
       resetRevokeMaps('contract');
+      await loadApprovals();
     } catch (err) {
       console.error(err);
     } finally {

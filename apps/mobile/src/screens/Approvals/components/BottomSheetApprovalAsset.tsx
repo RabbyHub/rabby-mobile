@@ -60,7 +60,9 @@ export default function BottomSheetApprovalAsset({
       modalRef?.current?.close();
     }
 
-    batchRevoke(currentRevokeList, displaySortedAssetsList);
+    batchRevoke(currentRevokeList, displaySortedAssetsList).finally(() => {
+      modalRef?.current?.close();
+    });
   }, [batchRevoke, assetFocusingRevokeMap, displaySortedAssetsList, modalRef]);
 
   const { styles } = useTheme2024({ getStyle });

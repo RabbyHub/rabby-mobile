@@ -5,7 +5,7 @@ import {
   useApprovalsPage,
 } from '../Approvals/useApprovalsPage';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { findIndexRevokeList } from './utils';
 import { useRevokeOne } from './useRevokeOne';
 import { useApprovalAlertCounts } from '../Home/hooks/approvals';
@@ -33,7 +33,7 @@ export const useBatchRevoke = () => {
           }) > -1
         );
       });
-      navigate(RootNames.StackTransaction, {
+      naviPush(RootNames.StackTransaction, {
         screen: RootNames.BatchRevoke,
         params: {
           revokeList: revokeList,

@@ -88,8 +88,8 @@ export default function ListByAssets() {
     resetPage();
 
     try {
-      await loadApprovals();
       resetRevokeMaps('assets');
+      await loadApprovals();
     } catch (err) {
       console.error(err);
     } finally {

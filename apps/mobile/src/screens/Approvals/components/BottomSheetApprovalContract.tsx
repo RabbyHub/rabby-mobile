@@ -61,7 +61,9 @@ export default function BottomSheetApprovalContract({
       modalRef?.current?.close();
     }
 
-    batchRevoke(currentRevokeList, displaySortedAssetsList);
+    batchRevoke(currentRevokeList, displaySortedAssetsList).finally(() => {
+      modalRef?.current?.close();
+    });
   }, [
     batchRevoke,
     contractFocusingRevokeMap,
