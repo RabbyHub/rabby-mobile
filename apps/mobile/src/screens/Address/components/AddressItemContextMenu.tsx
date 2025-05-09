@@ -30,10 +30,11 @@ const MenuIcons = {
 interface Props {
   account: KeyringAccountWithAlias;
   children: React.ReactElement;
+  preViewBorderRadius?: number;
   actions: ('copy' | 'pin' | 'edit' | 'delete')[];
 }
 export const AddressItemContextMenu: React.FC<Props> = props => {
-  const { account, children, actions } = props;
+  const { account, children, actions, preViewBorderRadius = 20 } = props;
   const removeAccount = useDeleteAccountModal();
   const editAliasName = useAliasNameEditModal();
 
@@ -158,7 +159,7 @@ export const AddressItemContextMenu: React.FC<Props> = props => {
         menuTitle: account.address,
         menuActions: menuActions,
       }}
-      preViewBorderRadius={20}
+      preViewBorderRadius={preViewBorderRadius}
       triggerProps={{ action: 'longPress' }}>
       {children}
     </ContextMenuView>

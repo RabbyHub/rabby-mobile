@@ -632,14 +632,16 @@ export const MultiAssets = ({
       case 'unfold_token':
       case 'fold_token':
         return (
-          <TokenRow
-            data={data}
-            onTokenPress={handleOpenTokenDetail}
-            logoSize={46}
-            style={styles.renderItemWrapper}
-            chainLogoSize={18}
-            menuActions={getTokenMenuActions(data)}
-          />
+          <View style={styles.rowWrap}>
+            <TokenRow
+              data={data}
+              onTokenPress={handleOpenTokenDetail}
+              logoSize={46}
+              style={styles.renderItemWrapper}
+              chainLogoSize={18}
+              menuActions={getTokenMenuActions(data)}
+            />
+          </View>
         );
       case 'unfold_defi':
       case 'fold_defi':
@@ -1103,9 +1105,12 @@ const getStyles = createGetStyles2024(ctx => ({
   defiLoading: {
     paddingHorizontal: 0,
   },
-  renderItemWrapper: {
+  rowWrap: {
     height: ASSETS_ITEM_HEIGHT_NEW,
     marginBottom: ASSETS_SEPARATOR_HEIGHT,
+  },
+  renderItemWrapper: {
+    height: ASSETS_ITEM_HEIGHT_NEW,
   },
   footer: {
     minHeight: 400,
