@@ -156,6 +156,7 @@ export const BrowserBookmarkSection = ({
           <View style={styles.historyList}>
             {browserHistoryList.map(item => (
               <BrowserHistorySiteItem
+                key={item.url}
                 item={item}
                 onDeletePress={handleDelete}
                 onFavoritePress={handleFavoritePress}
