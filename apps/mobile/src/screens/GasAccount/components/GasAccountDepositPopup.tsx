@@ -63,7 +63,7 @@ export const GasAccountDepositPopup: React.FC<{
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       {...makeBottomSheetProps({
-        linearGradientType: isLight ? 'bg2' : 'bg1',
+        linearGradientType: 'bg1',
         colors: colors2024,
       })}>
       <BottomSheetScrollView style={styles.popup}>

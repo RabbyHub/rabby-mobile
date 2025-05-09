@@ -160,7 +160,7 @@ export const GasAccountLogoutPopup = (props: {
       onDismiss={props.onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
-        linearGradientType: isLight ? 'bg2' : 'bg1',
+        linearGradientType: 'bg1',
         colors: colors2024,
       })}>
       <BottomSheetView style={styles.popup}>
