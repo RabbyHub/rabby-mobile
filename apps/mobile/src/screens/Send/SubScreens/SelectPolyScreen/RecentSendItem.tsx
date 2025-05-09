@@ -178,7 +178,7 @@ export const RecentSendItem = ({
                     )}
                   </View>
                   <Text style={styles.itemBalanceText}>
-                    {t('page.sendPoly.sendTimeHeader')} {timStr}
+                    {t('page.sendPoly.sentTimeHeader')} {timStr}
                   </Text>
                 </View>
               </View>

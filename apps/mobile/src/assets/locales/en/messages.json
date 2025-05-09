@@ -667,7 +667,8 @@
         "addAddress": "New Address",
         "importedAddress": "Imported Address",
         "recentAddress": "Recent Sent Addresses"
-      }
+      },
+      "sentTimeHeader": "Sent"
     },
     "confirmAddress": {
       "addToWhitelist": "Add to whitelist",
