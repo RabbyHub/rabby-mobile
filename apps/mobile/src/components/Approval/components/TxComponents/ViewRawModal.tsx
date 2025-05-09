@@ -58,7 +58,7 @@ const getStyles = (colors: AppColorsVariants) =>
       borderRadius: 8,
     },
     tabContainerView: {
-      padding: 12,
+      paddingHorizontal: 12,
     },
     tab: {
       backgroundColor: colors['neutral-line'],
