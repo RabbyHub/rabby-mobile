@@ -53,6 +53,9 @@ if [ -f "$APP_PATH/Assets.car" ]; then
   sed -i '' 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' "$APP_PATH/Assets.car.json" && rm -f "$APP_PATH/Assets.car"
 fi
 
+# 去掉路径相关信息
+strip -S "$APP_PATH/RabbyMobile" || exit 1
+
 # 计算总哈希
 OVERALL_HASH=$(find "$APP_PATH" -type f ! -name ".DS_Store" -print0 |
   sort -z |
