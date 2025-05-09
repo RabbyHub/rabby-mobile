@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# --- 配置 ---
-# 无需配置，路径将从命令行参数获取
-
-# --- 函数定义 ---
-# (无复杂函数需要)
-
 # --- 主逻辑 ---
 
 if [ "$#" -ne 2 ]; then
@@ -34,64 +28,86 @@ echo "Build 2: ${BUILD_2_INTERMEDIATES_DIR}"
 echo "-----------------------------------------------------"
 
 DIFFERENCES_FOUND=false
-DIFFERENCES_FILE="manual_object_file_differences.txt"
-DETAILED_DIFFS_DIR="detailed_o_diffs" # 目录用于存放每个不同 .o 文件的详细 diff
+SUMMARY_DIFFERENCES_FILE="manual_object_file_differences_summary.txt"
+DETAILED_DIFFS_DIR="detailed_o_diffs"
 
-> "${DIFFERENCES_FILE}" # 清空或创建差异记录文件
-rm -rf "${DETAILED_DIFFS_DIR}" # 清理旧的详细 diff 目录
+# 清理旧的报告文件和目录
+> "${SUMMARY_DIFFERENCES_FILE}"
+rm -rf "${DETAILED_DIFFS_DIR}"
 mkdir -p "${DETAILED_DIFFS_DIR}"
+
+echo "Starting comparison..."
 
 # 递归查找 BUILD_1_INTERMEDIATES_DIR 中的所有 .o 文件
 find "${BUILD_1_INTERMEDIATES_DIR}" -type f -name "*.o" -print0 | while IFS= read -r -d $'\0' file1_o; do
-  # 从 <path_to_intermediates_build1>/Path/To/File.o 得到 Path/To/File.o
   relative_path_o="${file1_o#${BUILD_1_INTERMEDIATES_DIR}/}"
   file2_o="${BUILD_2_INTERMEDIATES_DIR}/${relative_path_o}"
 
-  if [ -f "${file2_o}" ]; then
-    # echo "Comparing: ${relative_path_o}" # 可以取消注释以获得更详细的输出
+  # 替换路径中的 / 为 _，用于后续文件名
+  sanitized_relative_path_o=$(echo "${relative_path_o}" | tr '/' '_')
 
-    # 先用 cmp 快速判断二进制是否相同
+  # 打印当前正在比较的文件，避免长时间无输出
+  echo -n "Comparing: ${relative_path_o} ... "
+
+  if [ -f "${file2_o}" ]; then
     cmp -s "${file1_o}" "${file2_o}"
-    if [ $? -ne 0 ]; then
-      echo "DIFFERENCE (binary): ${relative_path_o}" | tee -a "${DIFFERENCES_FILE}"
+    cmp_exit_code=$?
+
+    if [ ${cmp_exit_code} -ne 0 ]; then
+      echo "DIFFERENT (binary)" | tee -a "${SUMMARY_DIFFERENCES_FILE}"
+      echo "File: ${relative_path_o}" >> "${SUMMARY_DIFFERENCES_FILE}"
       DIFFERENCES_FOUND=true
 
-      # 如果二进制不同，再进行 otool diff 来查看汇编差异
-      # 并将详细 diff 保存到单独的文件中
-      sanitized_relative_path_o=$(echo "${relative_path_o}" | tr '/' '_') # 将路径中的 / 替换为 _，用于文件名
-      diff_output_file="${DETAILED_DIFFS_DIR}/${sanitized_relative_path_o}.diff"
-
-      echo "  -> Performing otool diff, output to: ${diff_output_file}"
-      # diff -u <(otool -tV "${file1_o}") <(otool -tV "${file2_o}") > "${diff_output_file}" 2>&1
-      # 使用 process substitution 来避免临时文件，并将 stderr 重定向到 stdout
+      # 进行 otool 反汇编 diff
+      otool_diff_output_file="${DETAILED_DIFFS_DIR}/${sanitized_relative_path_o}.asm.diff"
+      echo "  -> Performing otool disassembly diff..."
+      # 将 stderr 重定向到 stdout 以捕获 otool 可能的错误
       diff_result=$(diff -u <(otool -tV "${file1_o}" 2>&1) <(otool -tV "${file2_o}" 2>&1))
 
       if [ -n "$diff_result" ]; then
-          echo "${diff_result}" > "${diff_output_file}"
-          echo "     OTool Disassembly DIFFERENCE details saved to ${diff_output_file}" >> "${DIFFERENCES_FILE}"
+          echo "${diff_result}" > "${otool_diff_output_file}"
+          echo "     OTool Disassembly DIFFERENCE details saved to ${otool_diff_output_file}" >> "${SUMMARY_DIFFERENCES_FILE}"
       else
-          # 这种情况理论上不应该发生，如果 cmp 说不同，otool diff 应该也显示不同
-          # 除非 otool 本身在两次运行时有细微输出差异但不影响指令
-          echo "     OTool Disassembly shows NO textual difference (despite binary difference). Check manually or otool error." >> "${DIFFERENCES_FILE}"
-          # 尝试保存 otool 的原始输出以便调试
-          otool -tV "${file1_o}" > "${DETAILED_DIFFS_DIR}/${sanitized_relative_path_o}_build1.txt" 2>&1
-          otool -tV "${file2_o}" > "${DETAILED_DIFFS_DIR}/${sanitized_relative_path_o}_build2.txt" 2>&1
+          echo "     OTool Disassembly shows NO textual difference (despite binary difference)." >> "${SUMMARY_DIFFERENCES_FILE}"
+          # 保存原始 otool 输出
+          otool_build1_raw_output="${DETAILED_DIFFS_DIR}/${sanitized_relative_path_o}_build1.asm.txt"
+          otool_build2_raw_output="${DETAILED_DIFFS_DIR}/${sanitized_relative_path_o}_build2.asm.txt"
+          otool -tV "${file1_o}" > "${otool_build1_raw_output}" 2>&1
+          otool -tV "${file2_o}" > "${otool_build2_raw_output}" 2>&1
+          echo "     Raw otool outputs saved for manual inspection." >> "${SUMMARY_DIFFERENCES_FILE}"
+
+          # 进行 hexdump diff
+          hex_diff_output_file="${DETAILED_DIFFS_DIR}/${sanitized_relative_path_o}.hex.diff"
+          echo "  -> Performing hexdump diff..."
+          cmpl_output_file="${DETAILED_DIFFS_DIR}/${sanitized_relative_path_o}.bytes.cmpl"
+          cmp -l "${file1_o}" "${file2_o}" > "${cmpl_output_file}"
+          if [ -s "${cmpl_output_file}" ]; then
+            echo "     Byte-level DIFFERENCES (cmp -l) saved to ${cmpl_output_file}" >> "${SUMMARY_DIFFERENCES_FILE}"
+          else
+            echo "     cmp -l reported no byte differences, which is unusual if cmp -s reported a difference. Check file sizes or corruption." >> "${SUMMARY_DIFFERENCES_FILE}"
+            diff -u <(hexdump -C "${file1_o}") <(hexdump -C "${file2_o}") > "${hex_diff_output_file}"
+            echo "     Full hexdump diff (may be large) saved to ${hex_diff_output_file}" >> "${SUMMARY_DIFFERENCES_FILE}"
+          fi
       fi
-      echo "----------------------------------------" >> "${DIFFERENCES_FILE}"
-    # else
-      # echo "  Identical (binary): ${relative_path_o}" # 可以取消注释
+      echo "----------------------------------------" >> "${SUMMARY_DIFFERENCES_FILE}"
+    else
+      echo "Identical"
     fi
   else
-    echo "WARNING: Corresponding file not found in second build: ${file2_o}" | tee -a "${DIFFERENCES_FILE}"
-    DIFFERENCES_FOUND=true # 认为文件缺失也是一种差异
+    echo "MISSING in Build 2" | tee -a "${SUMMARY_DIFFERENCES_FILE}"
+    echo "File: ${file2_o} (expected)" >> "${SUMMARY_DIFFERENCES_FILE}"
+    echo "----------------------------------------" >> "${SUMMARY_DIFFERENCES_FILE}"
+    DIFFERENCES_FOUND=true
   fi
 done
 
+echo "" #换行
 echo "-----------------------------------------------------"
+echo "Comparison finished."
 if [ "$DIFFERENCES_FOUND" = true ]; then
   echo "Differences found in .o files."
-  echo "Summary of differing files (or missing files): ${DIFFERENCES_FILE}"
-  echo "Detailed disassembly diffs (for files that differed): ./${DETAILED_DIFFS_DIR}/"
+  echo "Summary of differing/missing files: ${SUMMARY_DIFFERENCES_FILE}"
+  echo "Detailed diffs (if any) are in directory: ./${DETAILED_DIFFS_DIR}/"
 else
   echo "No differences found in .o files between the two provided intermediate directories."
 fi

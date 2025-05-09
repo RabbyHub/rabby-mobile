@@ -1,3 +1,4 @@
+_objc_msgSend.got
 _$s10Foundation10CocoaErrorV03_nsC0So7NSErrorCvg
 _$s10Foundation10CocoaErrorV19fileWriteFileExistsAC4CodeVvgZ
 _$s10Foundation10CocoaErrorV4CodeV14fileNoSuchFileAEvgZ
@@ -3400,7 +3401,6 @@ _objc_initWeak
 _objc_loadWeakRetained
 _objc_lookUpClass
 _objc_moveWeak
-_objc_msgSend
 _objc_msgSendSuper2
 _objc_opt_class
 _objc_opt_isKindOfClass

@@ -41,7 +41,10 @@ rm -rf "./ios/build"
 rm -rf "./ios/DerivedData"
 
 # macOS 的 APFS 文件系统在文件扫描时不保证顺序一致。尝试在 pod install 后，对 Pods/ 下文件执行一次排序构建
-cd ./ios && bundle exec pod install --deployment && find Pods -type f -print0 | sort -z | xargs -0 cat > /dev/null && cd ..
+# find Pods -type f -print0 | sort -z | xargs -0 cat > /dev/null
+cd ./ios && bundle exec pod install --deployment && cd ..
+
+# cp ./ios/Pods/Pods.xcodeproj/project.pbxproj "$EXPORT_DIR/Pods.xcodeproj.project.pbxproj"
 
 git checkout ./ios/RabbyMobile.xcodeproj/project.pbxproj
 
