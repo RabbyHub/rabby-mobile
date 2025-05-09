@@ -866,6 +866,7 @@ const getStyles = createGetStyles2024(({ colors, isLight, colors2024 }) => ({
     paddingVertical: 10,
   },
   btnContainer: {
+    marginTop: 34,
     paddingHorizontal: 20,
     paddingVertical: 20,
     justifyContent: 'flex-end',
