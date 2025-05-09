@@ -7,6 +7,7 @@ import { Tab, TabView } from '@rneui/themed';
 import React from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import AutoLockView from '@/components/AutoLockView';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 interface ContentProps {
   abi?: ExplainTxResponse['abi_str'];
@@ -57,7 +58,7 @@ const getStyles = (colors: AppColorsVariants) =>
       borderRadius: 8,
     },
     tabContainerView: {
-      padding: 12,
+      paddingHorizontal: 12,
     },
     tab: {
       backgroundColor: colors['neutral-line'],
@@ -88,7 +89,7 @@ export const ViewRawDetail = ({
   const num = Number(hasRaw) + Number(hasAbi) + Number(hasHex);
 
   return (
-    <AutoLockView as="BottomSheetView" style={styles.popupView}>
+    <AutoLockView as="View" style={styles.popupView}>
       <Tab
         value={index}
         onChange={setIndex}
@@ -118,19 +119,29 @@ export const ViewRawDetail = ({
         onChange={setIndex}>
         {hasRaw && (
           <TabView.Item>
-            <ScrollView style={styles.tabContainerView}>
-              <Text style={styles.tabContentText}>{stringify(raw)}</Text>
-            </ScrollView>
+            <BottomSheetScrollView style={styles.tabContainerView}>
+              <Text style={styles.tabContentText} selectable>
+                {stringify(raw)}
+              </Text>
+            </BottomSheetScrollView>
           </TabView.Item>
         )}
         {hasAbi && (
-          <TabView.Item style={styles.tabContainerView}>
-            <Text style={styles.tabContentText}>{abi}</Text>
+          <TabView.Item>
+            <BottomSheetScrollView style={styles.tabContainerView}>
+              <Text style={styles.tabContentText} selectable>
+                {abi}
+              </Text>
+            </BottomSheetScrollView>
           </TabView.Item>
         )}
         {hasHex && (
-          <TabView.Item style={styles.tabContainerView}>
-            <Text style={styles.tabContentText}>{raw?.data}</Text>
+          <TabView.Item>
+            <BottomSheetScrollView style={styles.tabContainerView}>
+              <Text style={styles.tabContentText} selectable>
+                {raw?.data}
+              </Text>
+            </BottomSheetScrollView>
           </TabView.Item>
         )}
       </TabView>
