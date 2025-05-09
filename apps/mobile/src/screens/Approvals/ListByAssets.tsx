@@ -143,7 +143,7 @@ export default function ListByAssets() {
         // makeDebugBorder('red')
       ]}>
       <Tabs.SectionList<AssetApprovalItem>
-        initialNumToRender={8}
+        initialNumToRender={20}
         maxToRenderPerBatch={20}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
