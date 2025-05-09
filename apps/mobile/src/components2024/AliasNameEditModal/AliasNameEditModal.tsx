@@ -18,6 +18,7 @@ import {
   visibleAtom,
   accountAtom,
   accountIconUriAtom,
+  confirmCallBack,
 } from './useAliasNameEditModal';
 
 export const AliasNameEditModal: React.FC = () => {
@@ -31,6 +32,7 @@ export const AliasNameEditModal: React.FC = () => {
   const [loading, setLoading] = React.useState(false);
   const onCancel = React.useCallback(() => {
     setVisible(false);
+    confirmCallBack.value = undefined;
   }, [setVisible]);
 
   const onConfirm = React.useCallback(() => {
@@ -38,9 +40,14 @@ export const AliasNameEditModal: React.FC = () => {
       return;
     }
     setLoading(true);
-    updateAliasName(input || ellipsisAddress(account.address));
+    if (confirmCallBack.value) {
+      confirmCallBack.value(input || ellipsisAddress(account.address));
+    } else {
+      updateAliasName(input || ellipsisAddress(account.address));
+    }
     setLoading(false);
     setVisible(false);
+    confirmCallBack.value = undefined;
     setInput('');
   }, [account, input, setVisible, updateAliasName]);
 
