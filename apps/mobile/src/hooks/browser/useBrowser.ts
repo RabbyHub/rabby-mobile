@@ -73,6 +73,13 @@ export function useBrowser() {
     });
   });
 
+  const closeAllTabs = useMemoizedFn(() => {
+    updateBrowserTabs({
+      tabs: [emptyTab],
+      activeTabId: emptyTab.id,
+    });
+  });
+
   const updateTab = useMemoizedFn(
     (tabId: string, payload: Partial<Omit<Tab, 'id'>>) => {
       const _payload =
@@ -143,5 +150,6 @@ export function useBrowser() {
     closeTab,
     updateTab,
     openTab,
+    closeAllTabs,
   };
 }

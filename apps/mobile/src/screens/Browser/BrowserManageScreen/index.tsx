@@ -86,43 +86,6 @@ export function BrowserManageScreen(): JSX.Element {
           <BrowserBookmarkList />
         </View>
       ) : null}
-      {/* <Tabs.Container
-        ref={tabRef}
-        renderTabBar={renderTabBar}
-        headerHeight={0}
-        initialTabName={activeTab}
-        revealHeaderOnScroll={false}
-        tabBarHeight={90}
-        onTabChange={data => {
-          console.log('onTabchange', data);
-          setActiveTab(data.tabName);
-        }}>
-        <Tabs.Tab name="tab" label={'Tab'}>
-          <View style={styles.tabList}>
-            <BrowserTabList />
-          </View>
-        </Tabs.Tab>
-        <Tabs.Tab name="history" label={'History'}>
-          <View style={styles.historyList}>
-            <View style={styles.tabHeader}>
-              <Text style={styles.tabTitle}>History</Text>
-            </View>
-            <BrowserHistoryList />
-          </View>
-        </Tabs.Tab>
-        <Tabs.Tab name="favorites" label={'Favorites'}>
-          <View style={styles.favoritesList}>
-            <View style={styles.tabHeader}>
-              <Text style={styles.tabTitle}>Favorites</Text>
-            </View>
-            <DappCardList
-              data={favoriteApps}
-              onFavoritePress={handleFavoriteDapp}
-              onPress={handleOpenURLDebounced}
-            />
-          </View>
-        </Tabs.Tab>
-      </Tabs.Container> */}
     </NormalScreenContainer2024>
   );
 }
