@@ -87,6 +87,7 @@ import {
   eventBus,
   EVENTS,
 } from '@/utils/events';
+import AutoLockView from '@/components/AutoLockView';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -1221,7 +1222,7 @@ export const MiniApproval = ({
         // containerStyle={{ zIndex: 2001 }}
         onChange={onChange}>
         <BottomSheetView>
-          <View
+          <AutoLockView
             style={{
               minHeight: 164,
             }}>
@@ -1249,7 +1250,7 @@ export const MiniApproval = ({
                 onSubmitted={onSubmitted}
               />
             ) : null}
-          </View>
+          </AutoLockView>
         </BottomSheetView>
       </AppBottomSheetModal>
 
