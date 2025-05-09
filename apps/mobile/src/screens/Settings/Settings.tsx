@@ -116,6 +116,7 @@ import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
+import { OpenApiPopup } from './components/OpenApiPopup';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -465,6 +466,7 @@ function DevSettingsBlocks() {
   const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
+  const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -520,6 +522,13 @@ function DevSettingsBlocks() {
               ),
               // TODO: only show in non-production mode
               visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'Backend Service URL',
+              icon: RcCode,
+              onPress: async () => {
+                setIsShowOpenApiPopup(true);
+              },
             },
             {
               label: '[Security] Wallet Lock & Password',
@@ -743,6 +752,12 @@ function DevSettingsBlocks() {
       <DevUIWipModal />
       <DevUIPlaygroundModal />
       <DevDataPlayground />
+      <OpenApiPopup
+        visible={isShowOpenApiPopup}
+        onClose={() => {
+          setIsShowOpenApiPopup(false);
+        }}
+      />
     </>
   );
 }
