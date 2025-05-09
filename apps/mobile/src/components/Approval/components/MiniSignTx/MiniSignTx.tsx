@@ -1169,7 +1169,10 @@ export const MiniApproval = ({
   const dismissedByCodeRef = useRef(false);
   const handleReject = useMemoizedFn(() => {
     onReject?.();
+  });
+  const handleClearTask = useMemoizedFn(() => {
     task.clear();
+    onVisibleChange?.(false);
   });
 
   const onChange = useCallback(
@@ -1234,7 +1237,7 @@ export const MiniApproval = ({
                 onSubmit={() => {
                   setIsSubmitting(true);
                 }}
-                onReject={handleReject}
+                onReject={handleClearTask}
                 onResolve={res => {
                   setIsSubmitting(false);
                   onResolve?.(res);
@@ -1250,7 +1253,7 @@ export const MiniApproval = ({
       <MiniWaiting
         visible={!!task.error}
         error={task.error}
-        onCancel={handleReject}
+        onCancel={handleClearTask}
         onRetry={async () => {
           try {
             onSubmitting?.();
