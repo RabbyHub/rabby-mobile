@@ -1173,6 +1173,9 @@ export const MiniApproval = ({
   const handleClearTask = useMemoizedFn(() => {
     task.clear();
     onVisibleChange?.(false);
+    if (!visible) {
+      onReject?.();
+    }
   });
 
   const onChange = useCallback(
