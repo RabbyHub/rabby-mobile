@@ -120,21 +120,27 @@ export const ViewRawDetail = ({
         {hasRaw && (
           <TabView.Item>
             <BottomSheetScrollView style={styles.tabContainerView}>
-              <Text style={styles.tabContentText}>{stringify(raw)}</Text>
+              <Text style={styles.tabContentText} selectable>
+                {stringify(raw)}
+              </Text>
             </BottomSheetScrollView>
           </TabView.Item>
         )}
         {hasAbi && (
           <TabView.Item>
             <BottomSheetScrollView style={styles.tabContainerView}>
-              <Text style={styles.tabContentText}>{abi}</Text>
+              <Text style={styles.tabContentText} selectable>
+                {abi}
+              </Text>
             </BottomSheetScrollView>
           </TabView.Item>
         )}
         {hasHex && (
           <TabView.Item>
             <BottomSheetScrollView style={styles.tabContainerView}>
-              <Text style={styles.tabContentText}>{raw?.data}</Text>
+              <Text style={styles.tabContentText} selectable>
+                {raw?.data}
+              </Text>
             </BottomSheetScrollView>
           </TabView.Item>
         )}
