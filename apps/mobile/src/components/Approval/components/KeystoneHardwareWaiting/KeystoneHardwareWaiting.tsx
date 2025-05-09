@@ -23,6 +23,7 @@ import Reader from './Reader';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
+import { Spin } from '@/components/Spin';
 
 enum QR_HARDWARE_STATUS {
   SYNC,
@@ -87,6 +88,11 @@ const getStyles = (colors: AppColorsVariants) =>
     container: {
       marginTop: 30,
     },
+    payloadEmptyContainer: {
+      width: '100%',
+      height: '100%',
+      marginBottom: -100,
+    },
   });
 
 export const KeystoneHardwareWaiting = ({
@@ -129,14 +135,13 @@ export const KeystoneHardwareWaiting = ({
       params.isGnosis ? true : approval?.data.approvalType !== 'SignTx',
     );
 
-    let currentSignId: string | null = null;
-    if (account.brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName) {
-      currentSignId = await apiKeystone.exportCurrentSignRequestIdIfExist();
-    }
-
     eventBus.addListener(
       EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED,
-      ({ request }) => {
+      async ({ request }) => {
+        let currentSignId: string | null = null;
+        if (account.brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName) {
+          currentSignId = await apiKeystone.exportCurrentSignRequestIdIfExist();
+        }
         if (currentSignId) {
           if (currentSignId === request.requestId) {
             setSignPayload(request);
@@ -187,7 +192,7 @@ export const KeystoneHardwareWaiting = ({
     emitSignComponentAmounted();
     setTimeout(() => {
       apiKeystone.acquireKeystoneMemStoreData();
-    }, 100);
+    }, 500);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -333,16 +338,21 @@ export const KeystoneHardwareWaiting = ({
         />
       ) : (
         <>
-          {status === QR_HARDWARE_STATUS.SYNC && signPayload && (
-            <Player
-              layoutStyle={'compact'}
-              playerSize={165}
-              type={signPayload.payload.type}
-              cbor={signPayload.payload.cbor}
-              onSign={handleRequestSignature}
-              brandName={account?.brandName}
-            />
-          )}
+          {status === QR_HARDWARE_STATUS.SYNC &&
+            (signPayload ? (
+              <Player
+                layoutStyle={'compact'}
+                playerSize={165}
+                type={signPayload.payload.type}
+                cbor={signPayload.payload.cbor}
+                onSign={handleRequestSignature}
+                brandName={account?.brandName}
+              />
+            ) : (
+              <Spin size="large" hasMask={false}>
+                <View style={styles.payloadEmptyContainer} />
+              </Spin>
+            ))}
           {status === QR_HARDWARE_STATUS.SIGN && (
             <Reader
               onBack={() => setStatus(QR_HARDWARE_STATUS.SYNC)}
