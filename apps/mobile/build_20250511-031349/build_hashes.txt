@@ -1,7 +1,7 @@
 7955ca14127b30412c114eb13cfd702b5dab265feb1880d1695d73caa824cde1  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/AntDesign.ttf
 4074a8a5dda28c09a8282ef8a77a1899dbfd150ab8773b31c42cbbd38ad83f14  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/AppAuthCore_Privacy.bundle/Info.plist
 5ade962faaea1eddbbdd06c4cf8a872cec554f64c55a00e00136004d378e1ced  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/AppAuthCore_Privacy.bundle/PrivacyInfo.xcprivacy
-3c1c06d7470bdf2321131d95ed77a4217cdbd2caa0db6c635a007c2e543ab659  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/AppConfig.xcconfig
+57d0ba92b127a9b3b401b560afc74448cd0b55e7ad6ed95396dda32ec8eb9b6d  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/AppConfig.xcconfig
 4913394f68b2f73e0a41b7cd22881f8e9ce6f59c99fb18b48c89d3aa2dcf0e79  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/AppIconRegression60x60@2x.png
 864d8021f849fd777ea833ddaae1170cd7eb76ad1a0bf1e8e61d2dffa24cc10e  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/Assets.car.json
 16f92298587bab2b469bc13c0dfc6d5d171bca10bad0c9053ad16bc023bf717d  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/Entypo.ttf
@@ -169,7 +169,7 @@ c6e78324c3a5b0ea7666901b03cab311d2e4610769a5da7b7dbdaefb93488261  ./ios/Package/
 2a0ffa47393571034e59ee1f74a966702073fd5699def6ad5e47e3975bd976d2  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/RCTI18nStrings.bundle/zh-Hant.lproj/fbt_language_pack.bin
 c6e78324c3a5b0ea7666901b03cab311d2e4610769a5da7b7dbdaefb93488261  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/RCTI18nStrings.bundle/zu.lproj/Localizable.strings
 2b48d9ab74ee04788c9c8f8f1a9902b8cb66a42688b65d9689ecd3fad43f4ff5  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/RCTI18nStrings.bundle/zu.lproj/fbt_language_pack.bin
-d25048f18af9d9cb4e78adff7a407a4490a62f51cca67b5cb2d64e465ee5932f  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/RabbyMobile
+c1e4dab60ab610775ed4e8a642a7607500931f968b3b6fbe3c34948f63374b92  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/RabbyMobile
 7a3e60060c5bbf6f095bb09da2b109e17bf0f8a22ebb988cdbcc0a2b1f2a353b  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/SF-Pro-Rounded-Bold.otf
 d0c243ed80e7a06c4e39a27f16ff3bfc8980637303eb73c07a5dc80758a2b5d6  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/SF-Pro-Rounded-Heavy.otf
 6e08ae4cc262158de43a44f9ee1f57c1d821bbdfbe2c749abf975746e236dd89  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/SF-Pro-Rounded-Medium.otf
@@ -325,18 +325,18 @@ f3353bb84e833370a032fc6d7f093843038e8daddf2348c60744c4fb9f16016f  ./ios/Package/
 cb95e8280af3f35f79e922a80bf1e7790068c45f18ddd602bc0697047d212423  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/assets/src/assets2024/singleHome/home-profit-bg-2.png
 0b5b5d69bc388ca159fe05eb3d741ec6856b590ce01e48e08d05ac7d2c7ddbca  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/assets/src/assets2024/singleHome/home-profit-dark-bg-1.png
 738beb76363ec1fb3de540ffad590fc22e0813e789a908eee032561c47262a22  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/assets/src/assets2024/singleHome/home-profit-dark-bg-2.png
-10b05316f4145263830b3b648e021813b52cf3e987dee5aa445afab754c73cc9  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/main.jsbundle
+d16453377b1c0f1a22f6ade260bf6e639b5e94cdaa5ad05a2f86074a379e198c  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/main.jsbundle
 8bb976fe903d08516109dafd73cbcd10cbfd4eae7643dad966b9beeaf8cbaf76  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/modules.json
 a41140d503717d33db1c4e295d039c6d29879821a8dc43c6eee374bc0d5887d3  ./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/vconsole.min.js
 
 {
   "platform": "ios",
-  "build_time": "2025-05-10 22:02:17 CST",
+  "build_time": "2025-05-11 03:23:10 CST",
   "xcode_version": "16.2",
   "cocoapods_version": "1.14.3",
   "clang_version": "Apple clang version 16.0.0 (clang-1600.0.26.6)",
   "swift_version": "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)",
-  "hash": "9fd8f400a383e6c9338bc8c7b8c7d13dfcc806d2502249813656ff1901d4f8ab",
-  "bundle_hash": "10b05316f4145263830b3b648e021813b52cf3e987dee5aa445afab754c73cc9"
+  "hash": "a616bc6690835b9aa514579d2839a0f6bdefe16bfc7294cbf5e63b84d4631562",
+  "bundle_hash": "d16453377b1c0f1a22f6ade260bf6e639b5e94cdaa5ad05a2f86074a379e198c"
 }
 

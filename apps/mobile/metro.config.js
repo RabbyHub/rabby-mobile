@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const {
   createSentryMetroSerializer,
@@ -18,18 +19,29 @@ const {
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
 
+const LOG_FILE = path.join(__dirname, 'jsModuleId.log');
+
 // 保证 module 的顺序
 // https://github.com/getsentry/sentry-react-native/blob/432a4cbf65883f74c4ee6b20c1148e2c599041fe/packages/core/src/js/tools/vendor/metro/utils.ts#L60
-function stableStringHash(path) {
+function stableStringHash(pathStr) {
   // 初始化参数（选用高熵值参数）
   const BASE = 257n; // 大于 ASCII 范围的质数
   const MOD = 2n ** 53n - 1n; // JS 最大安全整数
   let hash = 0n;
-  for (let i = 0; i < path.length; i++) {
-    const charCode = BigInt(path.charCodeAt(i));
+  for (let i = 0; i < pathStr.length; i++) {
+    const charCode = BigInt(pathStr.charCodeAt(i));
     hash = (hash * BASE + charCode) % MOD;
   }
-  return Number(hash);
+
+  const result = Number(hash);
+  // 日志记录逻辑
+  const logEntry = `${pathStr}\t${result}\n`;
+  try {
+    fs.appendFileSync(LOG_FILE, logEntry, 'utf8');
+  } catch (err) {
+    console.error('写入日志失败:', err);
+  }
+  return result;
 }
 
 /**
