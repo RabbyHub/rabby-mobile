@@ -24,6 +24,7 @@ import { useBatchRevokeTask } from './useBatchRevokeTask';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, eventBus } from '@/utils/events';
 
 const ItemSeparatorComponent = () => {
   const { styles } = useTheme2024({
@@ -129,8 +130,13 @@ export const BatchRevokeScreen = () => {
     }
   }, [colors2024, navigation, t, task]);
 
+  const [accountDepositVisible, setAccountDepositVisible] =
+    React.useState(false);
+
   UNSTABLE_usePreventRemove(
-    task.status !== 'idle' && task.status !== 'completed',
+    task.status !== 'idle' &&
+      task.status !== 'completed' &&
+      !accountDepositVisible,
     e => {
       Alert.alert(
         t('page.approvals.stopTheRevokeProcess'),
@@ -152,6 +158,18 @@ export const BatchRevokeScreen = () => {
       );
     },
   );
+
+  React.useEffect(() => {
+    const listen = visible => {
+      setAccountDepositVisible(visible);
+    };
+
+    eventBus.addListener(EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, listen);
+
+    return () => {
+      eventBus.removeListener(EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, listen);
+    };
+  }, []);
 
   React.useEffect(() => {
     if (Platform.OS === 'android') {
