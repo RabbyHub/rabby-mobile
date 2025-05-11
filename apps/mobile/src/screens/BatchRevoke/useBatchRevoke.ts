@@ -52,20 +52,28 @@ export const useBatchRevoke = () => {
       if (revokeList.length === 0) {
         return;
       }
+      // not support batch revoke
       if (
         currentAccount &&
         (currentAccount.type === KEYRING_TYPE.KeystoneKeyring ||
           currentAccount.type === KEYRING_TYPE.WatchAddressKeyring ||
           currentAccount.type === KEYRING_TYPE.GnosisKeyring)
       ) {
-        return apiApprovals.revoke({ list: revokeList });
+        forceUpdate();
+        await apiApprovals.revoke({ list: revokeList });
+        loadApprovals();
+        return;
       }
+
+      // only one item
       if (revokeList.length === 1) {
         forceUpdate();
         await handleRevokeOne(revokeList[0]);
         loadApprovals();
         return;
       }
+
+      // batch revoke
       return handleRevoke(revokeList, dataSource);
     },
     [currentAccount, handleRevoke, forceUpdate, handleRevokeOne, loadApprovals],
