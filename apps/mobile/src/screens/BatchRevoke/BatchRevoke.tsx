@@ -53,7 +53,9 @@ export const BatchRevokeScreen = () => {
   };
 
   React.useEffect(() => {
-    task.init(dataSource, revokeList);
+    if (task.status === 'idle') {
+      task.init(dataSource, revokeList);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataSource, revokeList]);
 
@@ -162,13 +164,19 @@ export const BatchRevokeScreen = () => {
   React.useEffect(() => {
     const listen = visible => {
       setAccountDepositVisible(visible);
+      if (visible) {
+        task.pause();
+      } else {
+        task.continue();
+      }
     };
 
-    eventBus.addListener(EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, listen);
+    eventBus.on(EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, listen);
 
     return () => {
-      eventBus.removeListener(EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, listen);
+      eventBus.off(EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, listen);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {

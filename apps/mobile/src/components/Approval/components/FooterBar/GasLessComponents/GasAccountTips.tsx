@@ -7,6 +7,7 @@ import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, eventBus } from '@/utils/events';
 
 export const GasAccountTips: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -30,6 +31,10 @@ export const GasAccountTips: React.FC<{
   const { styles } = useTheme2024({ getStyle });
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
+
+  useEffect(() => {
+    eventBus.emit(EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, tipPopupVisible);
+  }, [tipPopupVisible]);
 
   const [tip, btnText] = useMemo(() => {
     if (!noCustomRPC) {

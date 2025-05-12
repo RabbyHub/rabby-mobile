@@ -9,7 +9,6 @@ import { ThemeColors2024 } from '@/constant/theme';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { GasAccountDepositTipPopup } from '@/screens/GasAccount/components/GasAccountDepositTipPopup';
-import { EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, eventBus } from '@/utils/events';
 
 export const GasLessNotEnough: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -38,10 +37,6 @@ export const GasLessNotEnough: React.FC<{
       setTipPopupVisible(false);
     };
   }, []);
-
-  useEffect(() => {
-    eventBus.emit(EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, tipPopupVisible);
-  }, [tipPopupVisible]);
 
   return (
     <>
