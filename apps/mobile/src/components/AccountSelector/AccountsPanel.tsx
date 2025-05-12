@@ -27,6 +27,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { IS_ANDROID } from '@/core/native/utils';
 import { AddressItemContextMenu } from '@/screens/Address/components/AddressItemContextMenu';
 import { QrCircleCC } from '@/assets2024/icons/address';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 interface CombineDataInterface {
   title: AccountPannelSectionTitle;
@@ -202,7 +203,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['brand-light-1'],
     },
     addressItemContainer: {
-      borderRadius: 20,
+      borderRadius: 16,
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       padding: 16,
       paddingRight: 24,
@@ -478,6 +479,8 @@ export function AccountsPanelInSheetModal({
     [safeAddressNavCollapsed, isGasAccount, watchAddressNavCollapsed],
   );
 
+  const { safeOffBottom } = useSafeSizes();
+
   return (
     <View style={[styles.panel, containerStyle]}>
       <View style={styles.scrollViewContainer}>
@@ -517,7 +520,7 @@ export function AccountsPanelInSheetModal({
                       <View
                         key={`${item.address}-${item.type}-${item.brandName}-${index}`}
                         style={[
-                          { borderRadius: 20 },
+                          { borderRadius: 16 },
                           index > 0 && styles.addressItemTopGap,
                         ]}>
                         {isReceive ? (
@@ -541,7 +544,7 @@ export function AccountsPanelInSheetModal({
             </View>
           )}
           keyExtractor={(item, index) => `${item.type}-${index}`}
-          ListFooterComponent={<View style={{ height: 20 + 40 }} />}
+          ListFooterComponent={<View style={{ height: 40 + safeOffBottom }} />}
         />
       </View>
     </View>

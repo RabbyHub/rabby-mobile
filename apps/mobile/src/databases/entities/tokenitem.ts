@@ -412,6 +412,60 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .where('owner_addr = :owner_addr', { owner_addr })
       .execute();
   }
+  static async getCexIds(tokenId: string, chain: string) {
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+    const result = await repo
+      .createQueryBuilder('tokenitem')
+      .select('tokenitem.cex_ids', 'cex_ids')
+      .where('tokenitem.id = :tokenId', { tokenId })
+      .andWhere('tokenitem.chain = :chain', { chain })
+      .getOne();
+
+    return {
+      find: !!result,
+      cex_ids: columnConverter.jsonStringToObj(result?.cex_ids || '[]'),
+    };
+  }
+  // 获取原生代币列表中美元总价值最大的一个token
+  static async getTokenWithMaxUsdValue(
+    owner_addr: string,
+    tokenList: { chain: string; tokenId: string }[],
+  ) {
+    await prepareAppDataSource();
+
+    const repo = this.getRepository();
+    const chainAndTokenIds = tokenList.map(item => ({
+      chain: item.chain,
+      id: item.tokenId,
+    }));
+    const result = await repo
+      .createQueryBuilder('tokenitem')
+      .select([
+        `(${correctBadRealOnSql('tokenitem.price')} * ${correctBadRealOnSql(
+          'tokenitem.amount',
+        )}) AS tokenitem_token_usd_value`,
+        'tokenitem',
+      ])
+      .where('tokenitem.owner_addr = :owner_addr', { owner_addr })
+      .andWhere(
+        chainAndTokenIds.length > 0
+          ? 'tokenitem.chain IN (:...chains) AND tokenitem.id IN (:...tokenIds)'
+          : '1=1',
+        {
+          chains: chainAndTokenIds.map(item => item.chain),
+          tokenIds: chainAndTokenIds.map(item => item.id),
+        },
+      )
+      .andWhere('tokenitem.is_core = 1')
+      .orderBy('tokenitem_token_usd_value', 'DESC')
+      .take(1)
+      .getOne();
+
+    return result;
+  }
+
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

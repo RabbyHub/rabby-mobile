@@ -80,6 +80,11 @@ const injectCss = () => {
   display: none !important;
 }
 
+/* jump popup */
+#stUuGf {
+  display: none !important;
+}
+
 /* bottom ads */
 #bottomads {
   display: none !important;
@@ -152,6 +157,12 @@ const injectCss = () => {
     width: 12px;
     height: 12px;
     border-radius: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .x-rabby-list-by-label {
+      color: #D3D8E0;
+    } 
   }
   `;
 

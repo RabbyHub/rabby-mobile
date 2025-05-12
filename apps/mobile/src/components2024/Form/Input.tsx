@@ -338,11 +338,6 @@ const NextInputComponent = React.forwardRef<
   },
 );
 
-export const NextInput = Object.assign(NextInputComponent, {
-  Password: PasswordInput,
-  TextArea: TextAreaInput,
-});
-
 export type NextInputProps = React.ComponentProps<typeof NextInput>;
 
 function PasswordInput({
@@ -417,7 +412,10 @@ const getPasswordInputStyles = createGetStyles2024(ctx => {
   };
 });
 
-function TextAreaInput(props: Omit<NextInputProps, 'fieldName'>) {
+function TextAreaInput(
+  props: Omit<React.ComponentProps<typeof NextInputComponent>, 'fieldName'>,
+  ref: React.ForwardedRef<TextInput>,
+) {
   const { styles } = useTheme2024({ getStyle: getTextAreaInputStyles });
 
   const customIconProp = useMemo(() => {
@@ -432,12 +430,13 @@ function TextAreaInput(props: Omit<NextInputProps, 'fieldName'>) {
       }) as NextInputProps['customIcon'];
     }
 
-    return customIconProp;
+    return prop_customIcon;
   }, [props.customIcon, styles.overrideCustomIconStyle]);
 
   return (
     <NextInput
       {...props}
+      ref={ref}
       fieldName=""
       containerStyle={[styles.taContainer, props.containerStyle]}
       customIcon={customIconProp}
@@ -453,6 +452,13 @@ function TextAreaInput(props: Omit<NextInputProps, 'fieldName'>) {
     />
   );
 }
+
+const ForwardedTextAreaInput = React.forwardRef(TextAreaInput);
+
+export const NextInput = Object.assign(NextInputComponent, {
+  Password: PasswordInput,
+  TextArea: ForwardedTextAreaInput,
+});
 
 const getTextAreaInputStyles = createGetStyles2024(ctx => {
   return {

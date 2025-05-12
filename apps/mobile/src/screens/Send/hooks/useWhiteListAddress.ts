@@ -8,7 +8,7 @@ import { getTokenSettings } from '@/utils/getTokenSettings';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils/src/types';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useLayoutEffect, useState } from 'react';
 
 export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
   const { whitelist, isAddrOnWhitelist } = useWhitelist({
@@ -16,7 +16,7 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
   });
   const { accounts } = useAccounts({ disableAutoFetch: true });
   const [list, setList] = useState<KeyringAccountWithAlias[]>([]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     (async () => {
       const importAddress: KeyringAccountWithAlias[] = accounts
         .filter(acc => isAddrOnWhitelist(acc.address))

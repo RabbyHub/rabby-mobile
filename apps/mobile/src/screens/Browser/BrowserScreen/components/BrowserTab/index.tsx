@@ -199,7 +199,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleGoTo = useMemoizedFn(async (urlToGo: string) => {
-      if (!urlToGo) {
+      if (!urlToGo || !/^https?:\/\//.test(urlToGo)) {
         return;
       }
       if (isEmptyTab) {
@@ -329,16 +329,18 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     return (
       <AutoLockView style={[style, styles.dappWebViewControl]}>
-        <BrowserHeader
-          url={webviewState.url}
-          isFocused={isShowSearch}
-          searchText={searchText}
-          onSearchTextChange={setSearchText}
-          onFocusChange={v => {
-            setIsShowSearch(v);
-          }}
-          onSearch={handleSearch}
-        />
+        {isActive ? (
+          <BrowserHeader
+            url={webviewState.url}
+            isFocused={isShowSearch}
+            searchText={searchText}
+            onSearchTextChange={setSearchText}
+            onFocusChange={v => {
+              setIsShowSearch(v);
+            }}
+            onSearch={handleSearch}
+          />
+        ) : null}
 
         {isShowSearch && searchText ? (
           <BrowserSearchAutoComplete
@@ -526,7 +528,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             )}
           </View>
         </ViewShot>
-        {isShowSearch ? null : (
+        {isShowSearch ? null : isActive ? (
           <View style={styles.dappWebViewNavControl}>
             <BrowserFooter
               url={webviewState.url}
@@ -548,7 +550,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               canViewMore={!!url}
             />
           </View>
-        )}
+        ) : null}
       </AutoLockView>
     );
   },

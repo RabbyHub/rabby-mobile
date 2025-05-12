@@ -336,8 +336,8 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 16,
   },
   fieldErrorContainerStyle: {
-    paddingLeft: 4,
     marginTop: 8,
+    width: '100%',
   },
   switchContainer: {
     // width: '100%',

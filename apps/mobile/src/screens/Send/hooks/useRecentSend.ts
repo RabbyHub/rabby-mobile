@@ -27,9 +27,7 @@ function markFirstItems(
       data: item,
       time:
         ('time_at' in item ? item.time_at * 1000 : undefined) ||
-        ('completedAt' in item && item.completedAt
-          ? item.completedAt
-          : new Date().getTime()),
+        ('completedAt' in item && item.completedAt ? item.completedAt : 0),
     };
 
     const prev = arr[i - 1];
@@ -40,11 +38,9 @@ function markFirstItems(
       const curDate = dayjs(newItem.time);
       const prevTime =
         ('time_at' in prev ? prev.time_at * 1000 : undefined) ||
-        ('completedAt' in prev && prev.completedAt
-          ? prev.completedAt
-          : new Date().getTime());
+        ('completedAt' in prev && prev.completedAt ? prev.completedAt : 0);
       const prevDate = dayjs(prevTime);
-      if (!curDate.isSame(prevDate, 'day')) {
+      if (newItem.time && !curDate.isSame(prevDate, 'day')) {
         newItem.isDateStart = true;
       }
     }

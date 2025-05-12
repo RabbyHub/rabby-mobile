@@ -641,6 +641,7 @@
       "ContractAddress": "Contract Address",
       "noSupprotTokenForDex": "This token may not be supported by this exchange. Check before proceeding to avoid loss",
       "noSupprotTokenForSafe": "The Safe address you're sending tokens to isn't deployed on this chain. Check before proceeding to avoid loss.",
+      "noSupportTokenForChain": "Recipient address is a contract address on a different chain. Check before proceeding to avoid loss",
       "noSupportBtns": {
         "confirm": "Proceed",
         "cancel": "Cancel"
@@ -1854,6 +1855,9 @@
         "history": "History",
         "favorites": "Favorites"
       },
+      "BrowserTabList": {
+        "closeAllTabs": "Close all tabs"
+      },
       "BrowserBookmarkList": {
         "title": "Favorites"
       },
@@ -2054,6 +2058,7 @@
     "Balance": "Balance",
     "Done": "Done",
     "Nonce": "Nonce",
+    "Edit": "Edit",
     "cancel": "Cancel",
     "Paste": "Paste",
     "Price": "Price",

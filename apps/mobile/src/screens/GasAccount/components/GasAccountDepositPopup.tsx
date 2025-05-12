@@ -2,15 +2,12 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GasAccountDepositSelect } from './GasAccountDepositSelect';
 import { GasAccountDepositWithPay } from './GasAccountDepositWithPay';
 import { GasAccountDepositWithToken } from './GasAccountDepositWithToken';
 import { useWindowDimensions } from 'react-native';
-import { min } from 'lodash';
-import { toast } from '@/components2024/Toast';
-import { useTranslation } from 'react-i18next';
 
 export const GasAccountDepositPopup: React.FC<{
   type?: 'token' | 'pay';
@@ -19,12 +16,11 @@ export const GasAccountDepositPopup: React.FC<{
   onClose?(): void;
   onDeposit?(): void;
 }> = props => {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyles,
   });
   const modalRef = useRef<AppBottomSheetModal>(null);
   const [step, setStep] = useState<'token' | 'pay' | undefined>(props.type);
-  const { t } = useTranslation();
 
   useEffect(() => {
     if (!props?.visible) {
@@ -67,7 +63,7 @@ export const GasAccountDepositPopup: React.FC<{
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       {...makeBottomSheetProps({
-        linearGradientType: 'linear',
+        linearGradientType: 'bg1',
         colors: colors2024,
       })}>
       <BottomSheetScrollView style={styles.popup}>

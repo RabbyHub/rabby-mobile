@@ -26,6 +26,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { openapi } from '@/core/request';
+import { debounce } from 'lodash';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -40,6 +41,18 @@ const ERROR_MESSAGE = {
     "The address you're are trying to import is duplicated",
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
+
+const debouncedGetEnsAddress = debounce(
+  (
+    input: string,
+    callback: (result: any) => void,
+    errorCallback: (e: any) => void,
+  ) => {
+    openapi.getEnsAddressByName(input).then(callback).catch(errorCallback);
+  },
+  500,
+  { leading: false, trailing: true },
+);
 
 const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -70,6 +83,9 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
     }
 
     let address = input;
+    if (ensResult && input !== ensResult.addr) {
+      address = ensResult.addr;
+    }
     if (!isValidHexAddress(address as any)) {
       setError(INPUT_ERROR.INVALID_ADDRESS);
       return;
@@ -133,6 +149,7 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
   const onSubmitEditing = React.useCallback(() => {
     if (!error && ensResult && input !== ensResult.addr) {
       setInput(ensResult.addr);
+      setEnsResult(null);
     }
   }, [error, ensResult, input]);
 
@@ -145,9 +162,10 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
       setError(undefined);
       return;
     }
-    openapi
-      .getEnsAddressByName(input)
-      .then(result => {
+
+    debouncedGetEnsAddress(
+      input,
+      result => {
         if (result && result.addr) {
           setEnsResult(result);
           setError(undefined);
@@ -155,12 +173,12 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
           setEnsResult(null);
           setError(INPUT_ERROR.INVALID_ADDRESS);
         }
-      })
-      .catch(e => {
-        console.log(e);
+      },
+      () => {
         setEnsResult(null);
         setError(INPUT_ERROR.INVALID_ADDRESS);
-      });
+      },
+    );
   }, [input]);
 
   return (

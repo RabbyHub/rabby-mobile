@@ -7,10 +7,8 @@ import React, {
 import {
   StyleSheet,
   View,
-  Text,
   TouchableWithoutFeedback,
   Keyboard,
-  Modal,
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { StackActions, useNavigation } from '@react-navigation/native';
@@ -61,18 +59,38 @@ import {
 } from '@/hooks/accountsSwitcher';
 import { useTranslation } from 'react-i18next';
 import ToAddressControl2024 from './components/ToAddressControl2024';
-import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 import { openapi } from '@/core/request';
 import { BlockedAddressDialog } from '@/components/Dialogs/BlockedAddressDialog';
 import FromAddressControl2024 from './components/FromAddressControl';
 import { useAtom } from 'jotai';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
-import { lowcaseSame } from '@/utils/common';
-import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
+import {
+  getAddrDescWithCexLocalCacheSync,
+  getInitDescWithCexLocalCache,
+} from '@/databases/hooks/cex';
 import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { usePollSendPendingCount } from './hooks/useSendPendingCount';
+import { getRecommendToken } from '@/utils/addressSupport';
+import { lowcaseSame } from '@/utils/common';
+
+const EMPTY_TOKEN_ITEM = {
+  decimals: 18,
+  logo_url: '',
+  symbol: '',
+  display_symbol: '',
+  optimized_symbol: '',
+  is_core: false,
+  is_verified: false,
+  is_wallet: false,
+  is_scam: false,
+  is_suspicious: false,
+  name: '',
+  time_at: 0,
+  amount: 0,
+  price: 0,
+};
+
 function SendScreen({
   isForMultipleAdderss = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
@@ -111,7 +129,7 @@ function SendScreen({
     useSendTokenScreenChainToken();
   const [addrDesc, setAddrDesc] = useState<
     AddrDescResponse['desc'] | undefined
-  >(navParams?.addrDesc);
+  >(navParams?.addrDesc || getInitDescWithCexLocalCache(navParams?.toAddress));
   useEffect(() => {
     if (addrDesc || !navParams?.toAddress) {
       return;
@@ -171,6 +189,18 @@ function SendScreen({
             reason: t('page.sendToken.noSupprotTokenForSafe'),
           };
         }
+        const contactChains = Object.entries(addrDesc?.contract || {}).map(
+          ([chain]) => chain?.toLocaleLowerCase(),
+        );
+        if (
+          contactChains.length > 0 &&
+          !contactChains.includes(token?.chain?.toLocaleLowerCase())
+        ) {
+          return {
+            disable: true,
+            reason: t('page.sendToken.noSupportTokenForChain'),
+          };
+        }
       }
       return {
         disable: false,
@@ -187,11 +217,7 @@ function SendScreen({
     handleFieldChange,
     handleClickMaxButton,
     handleGasLevelChanged,
-    depositeModalInfo,
-    setDepositeModalInfol,
 
-    tmpToken,
-    setTmpToken,
     checkCexSupport,
     loadCurrentToken,
     handleCurrentTokenChange,
@@ -213,6 +239,7 @@ function SendScreen({
 
   const initByCache = async () => {
     const account = (await preferenceService.getCurrentAccount())!;
+    let targetToken: TokenItem | null = null;
     if (
       navParams &&
       'safeInfo' in navParams &&
@@ -224,31 +251,12 @@ function SendScreen({
         safeInfo: safeInfo,
       });
 
-      const hideLoading = toastLoading('Loading Token...');
-      try {
-        if (!target) {
-          await Promise.race([
-            await loadCurrentToken(
-              currentToken.id,
-              currentToken.chain,
-              account.address,
-            ),
-            sleep(5000),
-          ]);
-        } else {
-          setChainEnum(target.enum);
-          await Promise.race([
-            await loadCurrentToken(
-              target.nativeTokenAddress,
-              target.serverId,
-              account.address,
-            ),
-            sleep(5000),
-          ]);
-        }
-      } finally {
-        hideLoading();
-      }
+      targetToken = {
+        id: target ? target?.nativeTokenAddress : currentToken.id,
+        chain: target ? target?.serverId : currentToken.chain,
+        ...EMPTY_TOKEN_ITEM,
+      };
+      target?.enum && setChainEnum(target.enum);
     } else if (
       navParams &&
       'chainEnum' in navParams &&
@@ -261,89 +269,95 @@ function SendScreen({
         isManualChangeToken ? routeParams.chainEnum : navParams?.chainEnum,
       );
 
-      const hideLoading = toastLoading('Loading Token...');
-      try {
-        if (!target) {
-          await Promise.race([
-            await loadCurrentToken(
-              currentToken.id,
-              currentToken.chain,
-              account.address,
-            ),
-            sleep(5000),
-          ]);
-        } else {
-          setChainEnum(target.enum);
-          await Promise.race([
-            await loadCurrentToken(
-              isManualChangeToken ? routeParams.tokenId : navParams?.tokenId,
-              target.serverId,
-              account.address,
-            ),
-            sleep(5000),
-          ]);
-        }
-      } finally {
-        hideLoading();
-      }
+      targetToken = {
+        chain: target ? target?.serverId : currentToken.chain,
+        id: target
+          ? isManualChangeToken
+            ? routeParams.tokenId
+            : navParams?.tokenId
+          : currentToken.id,
+        ...EMPTY_TOKEN_ITEM,
+      };
+      target && setChainEnum(target.enum);
     } else {
       const isManualChangeToken =
         routeParams?.tokenId && routeParams?.chainEnum;
       if (isManualChangeToken) {
         const target = findChainByEnum(routeParams.chainEnum);
-        target &&
-          loadCurrentToken(
-            routeParams.tokenId,
-            target?.serverId,
-            account.address,
-          );
-        return;
-      }
-      let tokenFromOrder: TokenItem | null = null;
-
-      const _lastTimeToken = await preferenceService.getLastTimeSendToken(
-        account.address,
-      );
-      const lastTimeToken =
-        chainItem && chainItem.serverId === _lastTimeToken?.chain
-          ? _lastTimeToken
-          : null;
-      if (lastTimeToken) {
-        if (
-          !lowcaseSame(lastTimeToken.chain, currentToken.chain) ||
-          !lowcaseSame(lastTimeToken.id, currentToken.id)
-        ) {
-          setCurrentToken(lastTimeToken);
+        if (target) {
+          targetToken = {
+            chain: target.serverId,
+            id: routeParams.tokenId,
+            ...EMPTY_TOKEN_ITEM,
+          };
         }
-      } else {
+      }
+
+      if (!targetToken) {
+        targetToken = await preferenceService.getLastTimeSendToken(
+          account.address,
+        );
+      }
+      if (!targetToken) {
         const { firstChain } = await fetchOrderedChainList({
           supportChains: undefined,
         });
-
-        tokenFromOrder = firstChain ? makeTokenFromChain(firstChain) : null;
-        if (firstChain) {
-          if (
-            !lowcaseSame(firstChain.serverId, currentToken.chain) ||
-            !lowcaseSame(firstChain.nativeTokenAddress, currentToken.id)
-          ) {
-            setCurrentToken(tokenFromOrder!);
-          }
+        targetToken = firstChain ? makeTokenFromChain(firstChain) : null;
+      }
+      if (!targetToken) {
+        targetToken = currentToken;
+      }
+    }
+    const hideLoading = toastLoading('Loading Token...');
+    try {
+      if (navParams?.toAddress) {
+        const res = await getRecommendToken({
+          from: account.address,
+          to: navParams?.toAddress || '',
+          tokenId: targetToken.id,
+          chain: targetToken.chain,
+        });
+        if (
+          !lowcaseSame(res.chain, targetToken.chain) ||
+          !lowcaseSame(res.tokenId, targetToken.id)
+        ) {
+          targetToken = {
+            chain: res.chain,
+            id: res.tokenId,
+            ...EMPTY_TOKEN_ITEM,
+          };
         }
       }
-
-      let needLoadToken: TokenItem =
-        lastTimeToken || tokenFromOrder || currentToken;
-
-      if (chainItem && needLoadToken.chain !== chainItem.serverId) {
-        const target = findChainByServerID(needLoadToken.chain);
+      // 更新页面状态
+      if (chainItem && targetToken.chain !== chainItem.serverId) {
+        const target = findChainByServerID(targetToken.chain);
         if (target?.enum) {
           setChainEnum(target.enum);
         }
       }
-      if (!chainItem) {
-        setChainEnum(CHAINS_ENUM.ETH);
-      }
-      loadCurrentToken(needLoadToken.id, needLoadToken.chain, account.address);
+      // // 不知道为什么要，感觉可以不要
+      // if (!chainItem) {
+      //   setChainEnum(CHAINS_ENUM.ETH);
+      // }
+      // // 应该去了也可以
+      // if (targetToken) {
+      //   if (
+      //     !lowcaseSame(targetToken.chain, currentToken.chain) ||
+      //     !lowcaseSame(targetToken.id, currentToken.id)
+      //   ) {
+      //     // setCurrentToken(targetToken);
+      //   }
+      // }
+      await Promise.race([
+        await loadCurrentToken(
+          targetToken.id,
+          targetToken.chain,
+          account.address,
+        ),
+        sleep(5000),
+      ]);
+    } finally {
+      hideLoading();
     }
   };
 
@@ -505,48 +519,6 @@ function SendScreen({
             <BottomArea />
           </View>
         </TouchableWithoutFeedback>
-        <Modal
-          visible={depositeModalInfo.visable}
-          onRequestClose={() => {
-            setDepositeModalInfol({
-              visable: false,
-              tips: '',
-            });
-          }}
-          transparent
-          animationType="fade">
-          <View style={styles.overlay}>
-            <View
-              style={styles.modalContent}
-              onStartShouldSetResponder={() => true}>
-              <Text style={styles.alertModalText}>
-                {depositeModalInfo.tips}
-              </Text>
-              <FooterButtonGroup
-                style={styles.btns}
-                confirmText={t('page.sendToken.noSupportBtns.confirm')}
-                confirmType="ghost"
-                cancelText={t('page.sendToken.noSupportBtns.cancel')}
-                onCancel={() => {
-                  setDepositeModalInfol({
-                    visable: false,
-                    tips: '',
-                  });
-                }}
-                onConfirm={() => {
-                  if (tmpToken) {
-                    handleCurrentTokenChange(tmpToken);
-                    setTmpToken(tmpToken);
-                    setDepositeModalInfol({
-                      visable: false,
-                      tips: '',
-                    });
-                  }
-                }}
-              />
-            </View>
-          </View>
-        </Modal>
         <TokenInfoPopup />
         <BlockedAddressDialog
           visible={isShowBlockedTransactionDialog}

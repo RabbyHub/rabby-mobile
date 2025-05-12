@@ -782,7 +782,7 @@ const getStyles = createGetStyles2024(({ colors, isLight, colors2024 }) => ({
   container: {
     width: '100%',
     flex: 1,
-    paddingBottom: 44,
+    paddingBottom: 20,
   },
   handleStyle: {
     backgroundColor: 'transparent',
@@ -923,6 +923,7 @@ const getStyles = createGetStyles2024(({ colors, isLight, colors2024 }) => ({
     paddingVertical: 10,
   },
   btnContainer: {
+    marginTop: 34,
     paddingHorizontal: 20,
     paddingVertical: 20,
     justifyContent: 'flex-end',

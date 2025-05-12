@@ -116,6 +116,7 @@ import { abortAllSyncTasks } from '@/databases/sync/_task';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
+import { OpenApiPopup } from './components/OpenApiPopup';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -465,6 +466,7 @@ function DevSettingsBlocks() {
   const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
+  const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -520,6 +522,13 @@ function DevSettingsBlocks() {
               ),
               // TODO: only show in non-production mode
               visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'Backend Service URL',
+              icon: RcCode,
+              onPress: async () => {
+                setIsShowOpenApiPopup(true);
+              },
             },
             {
               label: '[Security] Wallet Lock & Password',
@@ -743,6 +752,12 @@ function DevSettingsBlocks() {
       <DevUIWipModal />
       <DevUIPlaygroundModal />
       <DevDataPlayground />
+      <OpenApiPopup
+        visible={isShowOpenApiPopup}
+        onClose={() => {
+          setIsShowOpenApiPopup(false);
+        }}
+      />
     </>
   );
 }
@@ -770,6 +785,7 @@ export default function SettingsScreen(): JSX.Element {
   return (
     <RootScreenContainer
       fitStatuBar
+      hideBottomBar
       style={[
         styles.container,
         {
@@ -807,7 +823,9 @@ const getStyles = createGetStyles2024(ctx => {
       flex: 0,
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: ctx.classicalColors['neutral-bg-2'],
+      backgroundColor: ctx.isLight
+        ? ctx.classicalColors['neutral-bg-2']
+        : ctx.colors2024['neutral-bg-1'],
       // paddingBottom: LAYOUTS.fiexedFooterHeight,
     },
     scrollableContentStyle: {

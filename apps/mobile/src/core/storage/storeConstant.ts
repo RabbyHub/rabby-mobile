@@ -24,6 +24,7 @@ export const enum APP_STORE_NAMES {
   'offlineChain' = 'offlineChain',
 
   'browser' = 'browser',
+  'openapi' = 'openapi',
 }
 
 export type STORE_SERVICE_MAP = {

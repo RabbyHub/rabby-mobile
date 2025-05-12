@@ -136,7 +136,7 @@ export async function acquireKeystoneMemStoreData() {
     KEYRING_TYPE.KeystoneKeyring,
   );
 
-  keyring.getInteraction().on(MemStoreDataReady, request => {
+  keyring.getInteraction().once(MemStoreDataReady, request => {
     eventBus.emit(EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED, {
       request,
     });

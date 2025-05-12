@@ -245,6 +245,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 17,
     fontWeight: '700',
-    paddingRight: 1,
   },
 }));

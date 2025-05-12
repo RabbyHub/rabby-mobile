@@ -8,6 +8,7 @@ interface SpinProps {
   children?: ReactNode;
   spinning?: boolean;
   size?: 'small' | 'default' | 'large';
+  hasMask?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -37,7 +38,12 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const Spin = ({ children, size, spinning = true }: SpinProps) => {
+export const Spin = ({
+  children,
+  size,
+  spinning = true,
+  hasMask = true,
+}: SpinProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const indicatorSize = React.useMemo(() => {
@@ -73,7 +79,7 @@ export const Spin = ({ children, size, spinning = true }: SpinProps) => {
 
   return (
     <View style={StyleSheet.flatten([styles.spin])}>
-      {spinning && <View style={styles.mask} />}
+      {spinning && hasMask && <View style={styles.mask} />}
       {spinning && (
         <View style={styles.indicatorWrapper}>
           <Animated.View

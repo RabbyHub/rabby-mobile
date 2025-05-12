@@ -53,6 +53,9 @@ export function SettingNavigator() {
             headerTitle: () => (
               <I18nRouteScreenTitle
                 i18nTitle={({ t }) => t('page.setting.screenTitle')}
+                style={{
+                  fontWeight: '900',
+                }}
               />
             ),
             headerTitleAlign: 'center',
