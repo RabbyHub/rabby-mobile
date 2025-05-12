@@ -4,6 +4,10 @@ import { atom, useAtom } from 'jotai';
 import { useClearMiniApprovalTask } from './useMiniApprovalTask';
 import { uniqueId } from 'lodash';
 import { sendTransaction } from '@/utils/sendTransaction';
+import {
+  notificationService,
+  transactionHistoryService,
+} from '@/core/services';
 
 export const miniApprovalAtom = atom<{
   txs?: Tx[];
@@ -12,6 +16,7 @@ export const miniApprovalAtom = atom<{
   onResolve?: (res: Awaited<ReturnType<typeof sendTransaction>>[]) => void;
   onVisibleChange?: (v: boolean) => void;
   ga?: Record<string, any>;
+  id?: string;
 }>({
   txs: [],
 });
@@ -23,22 +28,30 @@ export const useMiniApproval = () => {
 
   const sendMiniTransactions = useMemoizedFn(
     ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
-      // clear();
+      clear();
       // const currentApprovalId = uniqueId('mini-approval');
       return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(
         (resolve, reject) => {
           setState(prev => {
             return {
               ...prev,
+              id: uniqueId('mini-approval'),
               txs,
               ga,
               visible: true,
               onReject: e => {
                 setState(prev => ({ ...prev, txs: [], visible: false }));
+                const signingTxId =
+                  notificationService.currentMiniApproval?.signingTxId;
+                if (signingTxId) {
+                  transactionHistoryService.removeSigningTx(signingTxId);
+                  notificationService.currentMiniApproval = null;
+                }
                 reject(e);
               },
               onResolve: res => {
                 setState(prev => ({ ...prev, txs: [], visible: false }));
+                notificationService.currentMiniApproval = null;
                 resolve(res);
               },
             };

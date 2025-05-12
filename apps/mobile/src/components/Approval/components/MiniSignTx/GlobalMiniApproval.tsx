@@ -51,7 +51,7 @@ export const GlobalMiniApproval = () => {
   return (
     <MiniApproval
       {...state}
-      key={`${currentAccount?.type}-${currentAccount?.address}`}
+      key={`${currentAccount?.type}-${currentAccount?.address}-${state.id}`}
       onSubmitting={handleSubmitting}
       onSubmitted={handleSubmitted}
       onVisibleChange={v => {

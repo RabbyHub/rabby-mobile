@@ -7,7 +7,11 @@ import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import {
+  notificationService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { OP_STACK_ENUMS } from '@/constant/gas';
 import { openapi } from '@/core/request';
 import BigNumber from 'bignumber.js';
@@ -273,11 +277,14 @@ export const generateApproveTokenTx = ({
 export const ethSendTransaction = async (
   ...args: Parameters<typeof providerController.ethSendTransaction>
 ) => {
+  const signingTxId = args?.[0]?.approvalRes?.signingTxId;
   try {
+    notificationService.currentMiniApproval = {
+      signingTxId,
+    };
     const res = await providerController.ethSendTransaction(...args);
     return res;
   } catch (e) {
-    const signingTxId = args?.[0]?.approvalRes?.signingTxId;
     if (signingTxId != null) {
       transactionHistoryService.removeSigningTx(signingTxId);
     }
