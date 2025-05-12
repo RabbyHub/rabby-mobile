@@ -26,6 +26,8 @@ import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from './type';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { useRequest } from 'ahooks';
+import { transactionHistoryService } from '@/core/services';
 
 interface ItemProps {
   status: number;
@@ -64,6 +66,20 @@ export const HistoryBottomBtn = ({
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useMyAccounts();
 
+  const { data: transactionTxs } = useRequest(async () => {
+    const { completeds } = transactionHistoryService.getList(
+      data.tx?.from_addr || '',
+    );
+
+    const item = completeds.find(
+      i =>
+        findChain({
+          id: i.chainId,
+        })?.serverId === data.chain && i.maxGasTx.hash === data.id,
+    );
+    return item;
+  });
+
   const fromAddrIsImported = useMemo(() => {
     return accounts.find(account =>
       addressUtils.isSameAddress(account.address, data.tx?.from_addr || ''),
@@ -82,12 +98,22 @@ export const HistoryBottomBtn = ({
   }, [styles.buttonContainer, buttonContainerStyle]);
   const { navigateToSendPolyScreen } = useSendRoutes();
 
+  const source = useMemo(
+    () => transactionTxs?.$ctx?.ga?.source ?? '',
+    [transactionTxs],
+  );
+
   if (!fromAddrIsImported) {
     return null;
   }
 
   switch (type) {
     case HistoryItemCateType.Send: {
+      const isLocalSend = source === 'sendNFT' || source === 'sendToken';
+      if (!isLocalSend) {
+        return null;
+      }
+
       const isNft = sends[0]?.token_id?.length === 32;
       return isNft ? null : (
         <View style={btnContainerViewStyle}>
@@ -183,6 +209,12 @@ export const HistoryBottomBtn = ({
     case HistoryItemCateType.Recieve:
       return null;
     case HistoryItemCateType.Swap:
+      const isLocalSwap =
+        source === 'approvalAndSwap|swap' || source === 'swap';
+      if (!isLocalSwap) {
+        return null;
+      }
+
       return (
         <View style={btnContainerViewStyle}>
           <Button
