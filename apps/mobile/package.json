@@ -72,7 +72,7 @@
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.12",
     "@rabby-wallet/rabby-api": "0.9.21",
-    "@rabby-wallet/rabby-security-engine": "2.0.7",
+    "@rabby-wallet/rabby-security-engine": "2.0.10",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
     "@rabby-wallet/rabby-swap": "0.0.54",
     "@rabby-wallet/react-native-sqlite-storage": "7.0.0-alpha.1",
