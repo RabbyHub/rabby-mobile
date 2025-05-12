@@ -744,9 +744,9 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
             !!checkErrors.find(item => item.level === 'forbidden')
           }
           tooltipContent={
-            checkErrors.find(item => item.level === 'forbidden')
-              ? checkErrors.find(item => item.level === 'forbidden')!.msg
-              : cantProcessReason
+            cantProcessReason ||
+            checkErrors.find(item => item.level === 'forbidden')?.msg ||
+            ''
           }
           disabledProcess={
             !isReady ||
