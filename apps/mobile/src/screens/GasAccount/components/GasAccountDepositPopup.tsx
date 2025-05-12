@@ -66,19 +66,21 @@ export const GasAccountDepositPopup: React.FC<{
         linearGradientType: 'bg1',
         colors: colors2024,
       })}>
-      <BottomSheetScrollView style={styles.popup}>
-        {step === 'pay' ? (
+      {step === 'pay' ? (
+        <BottomSheetScrollView style={styles.popup}>
           <GasAccountDepositWithPay
             visible={props.visible}
             onDeposit={props.onDeposit}
             gasAccountAddress={props.gasAccountAddress}
           />
-        ) : step === 'token' ? (
-          <GasAccountDepositWithToken onClose={props.onClose} />
-        ) : (
+        </BottomSheetScrollView>
+      ) : step === 'token' ? (
+        <GasAccountDepositWithToken onClose={props.onClose} />
+      ) : (
+        <BottomSheetScrollView style={styles.popup}>
           <GasAccountDepositSelect onSelect={setStep} />
-        )}
-      </BottomSheetScrollView>
+        </BottomSheetScrollView>
+      )}
     </AppBottomSheetModal>
   );
 };
