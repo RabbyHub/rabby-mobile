@@ -76,7 +76,7 @@ function Chart({
             <>
               <LineChart
                 height={114}
-                width={ScreenWidth - 40}
+                width={ScreenWidth - 32}
                 shape={d3Shape.curveMonotoneX}
                 style={{ position: 'relative' }}>
                 <LineChart.Path
@@ -274,7 +274,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     height: HEADER_CHART_HEIGHT,
     width: ScreenWidth,
-    marginLeft: -16,
   },
   chartContainer: {
     paddingLeft: 16,
