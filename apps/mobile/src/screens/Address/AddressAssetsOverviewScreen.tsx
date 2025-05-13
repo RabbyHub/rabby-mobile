@@ -48,28 +48,7 @@ export function AddressAssetsOverview(): JSX.Element {
           paddingTop: Math.max(safeTop, 80),
         },
       ]}>
-      <Animated.View
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '100%',
-          height: Math.max(headerHeight, 180),
-          opacity: fadeAnim,
-        }}>
-        <ImageBackground
-          source={topBg}
-          resizeMode="cover"
-          style={{
-            width: '100%',
-            height: Math.max(headerHeight, 180),
-          }}
-        />
-      </Animated.View>
-      <MultiAssets
-        onUpdateIsDecrease={setIsDecrease}
-        onReachTopStatusChange={handleReachTopStatusChange}
-      />
+      <MultiAssets />
     </AddressListScreenContainer>
   );
 }

@@ -16,17 +16,14 @@ import { MultiChart } from './RenderRow/CurveChart';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from './hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import {
-  Tabs,
-  MaterialTabBar,
-  MaterialTabItem,
-} from 'react-native-collapsible-tab-view';
+import { Tabs, MaterialTabItem } from 'react-native-collapsible-tab-view';
+import { CustomMaterialTabBar } from './Tabs/CustomMaterialTabBar';
 
 export const MultiAssets = () => {
   const { styles, colors2024, colors } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const { top10Addresses } = useAccountInfo();
+  const { top10Addresses, list } = useAccountInfo();
 
   const { getTotalBalance } = useAccountsBalance({
     cacheTime: 10 * 60 * 1000,
@@ -44,33 +41,25 @@ export const MultiAssets = () => {
   );
 
   const renderTabItem = React.useCallback(
-    (props: any) => <MaterialTabItem {...props} inactiveOpacity={1} />,
+    (props: any) => (
+      <MaterialTabItem {...props} pressOpacity={1} inactiveOpacity={1} />
+    ),
     [],
   );
 
   const renderTabBar = React.useCallback(
     (props: any) => (
-      <MaterialTabBar
+      <CustomMaterialTabBar
         {...props}
-        scrollEnabled={false}
-        indicatorStyle={styles.indicator}
         tabStyle={styles.tabBar}
+        indicatorStyle={styles.indicator}
         TabItemComponent={renderTabItem}
-        activeColor={colors2024['brand-default']}
-        inactiveColor={colors['neutral-body']}
+        activeColor={colors2024['neutral-title-1']}
+        inactiveColor={colors2024['neutral-secondary']}
         labelStyle={styles.label}
-        indicatorContainerStyle={styles.tabBarIndicator}
       />
     ),
-    [
-      colors,
-      colors2024,
-      renderTabItem,
-      styles.indicator,
-      styles.label,
-      styles.tabBar,
-      styles.tabBarIndicator,
-    ],
+    [colors2024, renderTabItem, styles.indicator, styles.label, styles.tabBar],
   );
   const pathColor = useMemo(
     () =>
@@ -102,7 +91,9 @@ export const MultiAssets = () => {
       renderHeader={renderHeader}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab
-        label={t('page.multiAddressAssets.tabs.address')}
+        label={`${t('page.multiAddressAssets.tabs.address')} ${
+          list.length ? `(${list.length})` : ''
+        }`}
         name="address">
         <AddressList />
       </Tabs.Tab>
@@ -228,17 +219,16 @@ const getStyles = createGetStyles2024(ctx => ({
       : ctx.colors2024['neutral-bg-1'],
   },
   label: {
-    fontSize: 16,
-    fontWeight: '500',
-    textTransform: 'none',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
+    color: ctx.colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
   },
   indicator: {
-    backgroundColor: ctx.colors['blue-default'],
-    height: 2,
-  },
-  tabBarIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: ctx.colors2024['brand-default'],
+    height: 4,
+    borderRadius: 100,
   },
 }));
