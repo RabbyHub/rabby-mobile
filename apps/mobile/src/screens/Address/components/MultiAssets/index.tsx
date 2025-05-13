@@ -1,12 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, View } from 'react-native';
-import {
-  TabView,
-  SceneMap,
-  SceneRendererProps,
-  TabBar,
-} from 'react-native-tab-view';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_LIST_HEADER,
@@ -19,17 +12,19 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressList } from './AddressList';
 import { Portfolios } from './Portfolios';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import { MultiChart } from './RenderRow/CurveChart';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from './hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
+import {
+  Tabs,
+  MaterialTabBar,
+  MaterialTabItem,
+} from 'react-native-collapsible-tab-view';
 
 export const MultiAssets = () => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, colors } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-
-  const [index, setIndex] = React.useState(0);
 
   const { top10Addresses } = useAccountInfo();
 
@@ -47,34 +42,35 @@ export const MultiAssets = () => {
     false,
     top10Balance,
   );
-  const [routes] = React.useState([
-    { key: 'first', title: t('page.multiAddressAssets.tabs.address') },
-    { key: 'second', title: t('page.multiAddressAssets.tabs.portfolio') },
-  ]);
 
-  const addressListRender = useCallback(() => {
-    return <AddressList />;
-  }, []);
-  const portfolioListRender = useCallback(() => {
-    return <Portfolios />;
-  }, []);
+  const renderTabItem = React.useCallback(
+    (props: any) => <MaterialTabItem {...props} inactiveOpacity={1} />,
+    [],
+  );
 
-  const renderTabBar = useCallback(
-    (sceneProps: SceneRendererProps) => {
-      return (
-        <Animated.View entering={FadeIn} style={[]}>
-          <TabBar
-            {...sceneProps}
-            // indicatorStyle={}
-            navigationState={{ index: 1, routes }}
-            pressColor="transparent" // Android only
-            style={styles.tabItem}
-            tabStyle={styles.tabsContainer}
-          />
-        </Animated.View>
-      );
-    },
-    [routes, styles.tabItem, styles.tabsContainer],
+  const renderTabBar = React.useCallback(
+    (props: any) => (
+      <MaterialTabBar
+        {...props}
+        scrollEnabled={false}
+        indicatorStyle={styles.indicator}
+        tabStyle={styles.tabBar}
+        TabItemComponent={renderTabItem}
+        activeColor={colors2024['brand-default']}
+        inactiveColor={colors['neutral-body']}
+        labelStyle={styles.label}
+        indicatorContainerStyle={styles.tabBarIndicator}
+      />
+    ),
+    [
+      colors,
+      colors2024,
+      renderTabItem,
+      styles.indicator,
+      styles.label,
+      styles.tabBar,
+      styles.tabBarIndicator,
+    ],
   );
   const pathColor = useMemo(
     () =>
@@ -84,8 +80,8 @@ export const MultiAssets = () => {
     [colors2024, combineData.isLoss],
   );
 
-  return (
-    <View style={styles.container}>
+  const renderHeader = useCallback(() => {
+    return (
       <MultiChart
         isOffline={false}
         data={combineData}
@@ -93,19 +89,29 @@ export const MultiAssets = () => {
         pathColor={pathColor}
         isNoAssets={false}
       />
+    );
+  }, [combineData, isLoadingCurve, pathColor]);
 
-      <TabView
-        lazy
-        navigationState={{ index, routes }} // 当前索引和 tab 列表
-        renderScene={SceneMap({
-          first: addressListRender,
-          second: portfolioListRender,
-        })} // 每个 tab 的内容
-        onIndexChange={setIndex} // 切换时更新索引
-        renderTabBar={renderTabBar}
-        initialLayout={{ width: Dimensions.get('window').width }} // 初始宽度
-      />
-    </View>
+  return (
+    <Tabs.Container
+      lazy
+      containerStyle={styles.container}
+      minHeaderHeight={0}
+      renderTabBar={renderTabBar}
+      tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
+      renderHeader={renderHeader}
+      headerContainerStyle={styles.tabBarWrap}>
+      <Tabs.Tab
+        label={t('page.multiAddressAssets.tabs.address')}
+        name="address">
+        <AddressList />
+      </Tabs.Tab>
+      <Tabs.Tab
+        label={t('page.multiAddressAssets.tabs.portfolio')}
+        name="portfolios">
+        <Portfolios />
+      </Tabs.Tab>
+    </Tabs.Container>
   );
 };
 
@@ -122,16 +128,9 @@ const getStyles = createGetStyles2024(ctx => ({
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
   },
-  stickyHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: SWITCH_HEADER_HEIGHT,
-    overflow: 'hidden',
-    backgroundColor: ctx.colors2024['neutral-bg-0'],
-    // height: ASSETS_SECTION_HEADER,
-    zIndex: 1,
+  tabBarWrap: {
+    backgroundColor: 'transparent',
+    shadowColor: 'transparent',
   },
   bgContainer: {
     backgroundColor: ctx.isLight
@@ -220,6 +219,26 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
+    backgroundColor: 'transparent',
+  },
+  tabBar: {
+    height: SWITCH_HEADER_HEIGHT - 16,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    textTransform: 'none',
+  },
+  indicator: {
+    backgroundColor: ctx.colors['blue-default'],
+    height: 2,
+  },
+  tabBarIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     backgroundColor: 'transparent',
   },
 }));

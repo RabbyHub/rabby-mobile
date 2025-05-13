@@ -1,12 +1,7 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import {
   ASSETS_EMPTY_ROW_HIGHT,
@@ -42,12 +37,6 @@ import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useAssets } from '@/screens/Search/useAssets';
 import { ItemLoader } from '@/screens/Search/components/Skeleton';
-import {
-  RecyclerListView,
-  DataProvider,
-  LayoutProvider,
-} from 'recyclerlistview';
-import { getItemId } from '@/screens/Home/utils/listRenderId';
 import { chunk } from 'lodash';
 import { useAccountInfo } from './hooks';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
@@ -64,22 +53,6 @@ import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-type RecyclerListViewRef = React.ElementRef<typeof RecyclerListView>;
-
-const ViewTypes = {
-  HEADER: 0,
-  BODY: 1,
-  OVERVIEW: 2,
-  EMPTY_TOKEN: 3,
-  EMPTY_ASSETS: 4,
-  EMPTY_DEFI: 5,
-  DEFI: 6,
-  SWITCH_HEADER: 7,
-  ADDRESS_ENTRY: 8,
-  SAFE_ADDRESS_NAV: 9,
-  WATCH_ADDRESS_NAV: 10,
-  ASSET_HEADER: 11,
-};
 
 export const Portfolios = ({ isRefreshing }: { isRefreshing?: boolean }) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
@@ -87,7 +60,7 @@ export const Portfolios = ({ isRefreshing }: { isRefreshing?: boolean }) => {
 
   const { triggerUpdate } = useAccountsBalance({
     cacheTime: 10 * 60 * 1000,
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+    accountsNoUnique: true,
   });
 
   const {
@@ -99,34 +72,14 @@ export const Portfolios = ({ isRefreshing }: { isRefreshing?: boolean }) => {
     isLoading,
   } = useAssets();
 
-  const listRef = useRef<RecyclerListViewRef>(null);
   const [isListVisable, setIsListVisable] = useState(false);
 
   const { t } = useTranslation();
-  const dataProvider = useMemo(
-    () =>
-      new DataProvider((r1, r2) => {
-        return getItemId(r1) !== getItemId(r2);
-      }),
-    [],
-  );
 
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
-  const [extendedState, setExtendedState] = useState<{
-    isLight: boolean;
-  }>({
-    isLight: isLight,
-  });
 
-  useEffect(() => {
-    setExtendedState(prev => ({ ...prev, isLight }));
-  }, [isLight]);
-
-  const [listData, setListData] = useState(() =>
-    dataProvider.cloneWithRows([]),
-  );
   useBalanceUpdate(triggerUpdate);
 
   const portfolioListData = useMemo(() => {
@@ -180,14 +133,14 @@ export const Portfolios = ({ isRefreshing }: { isRefreshing?: boolean }) => {
       2,
     ).map(item => ({
       type: 'fold_defi',
-      data: item,
+      data: item as DisplayedProject[],
     }));
     const unFoldDefiList: ActionItem[] = chunk(
       portfolios.filter(i => !i._isFold),
       2,
     ).map(item => ({
       type: 'unfold_defi',
-      data: item,
+      data: item as DisplayedProject[],
     }));
     const itemData: Array<{
       show: boolean;
@@ -273,13 +226,6 @@ export const Portfolios = ({ isRefreshing }: { isRefreshing?: boolean }) => {
       .map(item => item.data)
       .flat();
   }, [foldDefi, foldHideList, foldScam, isLoading, portfolios, t, tokens]);
-
-  useEffect(() => {
-    if (isRefreshing) {
-      return;
-    }
-    setListData(dataProvider.cloneWithRows(portfolioListData));
-  }, [dataProvider, isRefreshing, portfolioListData]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -374,6 +320,7 @@ export const Portfolios = ({ isRefreshing }: { isRefreshing?: boolean }) => {
     },
     [isLight, tokenRefresh, t],
   );
+
   const getDefiOrNftMenuAction = useCallback(
     (type: 'defi', data: DisplayedProject): MenuAction[] => {
       const isFold = data._isFold;
@@ -409,176 +356,136 @@ export const Portfolios = ({ isRefreshing }: { isRefreshing?: boolean }) => {
     [isLight, t, tokenRefresh],
   );
 
-  const renderItem = (_type, _data) => {
-    const { type, data } = _data;
-    switch (type) {
-      case 'unfold_token':
-      case 'fold_token':
-        return (
-          <View style={styles.rowWrap}>
-            <TokenRow
-              data={data}
-              onTokenPress={handleOpenTokenDetail}
-              logoSize={46}
-              style={styles.renderItemWrapper}
-              chainLogoSize={18}
-              menuActions={getTokenMenuActions(data)}
-            />
-          </View>
-        );
-      case 'unfold_defi':
-      case 'fold_defi':
-        return (
-          <View style={styles.defiGroups}>
-            <DefiRow
-              data={data[0]}
-              style={StyleSheet.flatten([
-                styles.renderDefiItemWrapper,
-                !isLight && styles.bg2,
-              ])}
-              menuActions={getDefiOrNftMenuAction('defi', data[0])}
-              logoSize={40}
-              onPress={() =>
-                handleOpenDefiDetail(data[0], [...(data[0]._portfolios || [])])
-              }
-            />
-            {data[1] && (
+  const renderItem = useCallback(
+    ({ item }) => {
+      const { type, data } = item;
+      switch (type) {
+        case 'unfold_token':
+        case 'fold_token':
+          return (
+            <View style={styles.rowWrap}>
+              <TokenRow
+                data={data}
+                onTokenPress={handleOpenTokenDetail}
+                logoSize={46}
+                style={styles.renderItemWrapper}
+                chainLogoSize={18}
+                menuActions={getTokenMenuActions(data)}
+              />
+            </View>
+          );
+        case 'unfold_defi':
+        case 'fold_defi':
+          return (
+            <View style={styles.defiGroups}>
               <DefiRow
-                data={data[1]}
+                data={data[0]}
                 style={StyleSheet.flatten([
                   styles.renderDefiItemWrapper,
                   !isLight && styles.bg2,
                 ])}
-                menuActions={getDefiOrNftMenuAction('defi', data[1])}
+                menuActions={getDefiOrNftMenuAction('defi', data[0])}
                 logoSize={40}
                 onPress={() =>
-                  handleOpenDefiDetail(data[1], [
-                    ...(data[1]._portfolios || []),
+                  handleOpenDefiDetail(data[0], [
+                    ...(data[0]._portfolios || []),
                   ])
                 }
               />
-            )}
-          </View>
-        );
-      case 'scam_token':
-        return (
-          <ScamTokenHeader
-            total={data.total}
-            logoUrls={data.logoUrls}
-            style={StyleSheet.flatten([
-              styles.renderItemWrapper,
-              !isLight && styles.bg2,
-            ])}
-            onPress={() => {
-              setFoldScam(false);
-            }}
-          />
-        );
-      case 'toggle_token_fold':
-        return (
-          <TokenRowSectionHeader
-            style={styles.tokenSectionHeader}
-            str={getTotalFoldToken(tokens.filter(i => i._isFold))}
-            fold={foldHideList}
-            onPressFold={() => {
-              if (!foldHideList) {
-                setFoldScam(true);
-              }
-              setFoldHideList(pre => !pre);
-            }}
-          />
-        );
-      case 'defi_header':
-        return (
-          <Text style={[styles.sectionHeader, styles.sectionTextHeader]}>
-            {t('page.search.sectionHeader.Defi')}
-          </Text>
-        );
-      case 'toggle_defi_fold':
-        return (
-          <TokenRowSectionHeader
-            str={getAllDefiCount(portfolios.filter(i => i._isFold))}
-            fold={foldDefi}
-            style={styles.sectionHeader}
-            buttonStyle={StyleSheet.flatten([
-              styles.buttonHeader,
-              !isLight && styles.bg2,
-            ])}
-            onPressFold={() => setFoldDefi(pre => !pre)}
-          />
-        );
-      case 'empty-assets':
-      case 'empty-defi':
-        return (
-          <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
-        );
-      case 'loading-skeleton':
-        return <ItemLoader style={{ height: ASSETS_ITEM_HEIGHT_NEW }} />;
-      case 'loading-defi-skeleton':
-        return <DefiItemLoader style={styles.defiLoading} />;
-      default:
-        return null;
-    }
-  };
-
-  const layoutProvider = useMemo(() => {
-    return new LayoutProvider(
-      index => {
-        const item = listData.getDataForIndex(index);
-        if (item.type === 'empty-token') {
-          return ViewTypes.EMPTY_TOKEN;
-        }
-        if (item.type === 'empty-assets') {
-          return ViewTypes.EMPTY_ASSETS;
-        }
-        if (item.type === 'empty-defi') {
-          return ViewTypes.EMPTY_DEFI;
-        }
-        if (
-          item.type === 'fold_defi' ||
-          item.type === 'unfold_defi' ||
-          item.type === 'loading-defi-skeleton'
-        ) {
-          return ViewTypes.DEFI;
-        }
-        if (item?.type?.includes('_header')) {
-          return ViewTypes.ASSET_HEADER;
-        }
-        if (item?.type?.includes('toggle_')) {
-          return ViewTypes.HEADER;
-        }
-        return ViewTypes.BODY;
-      },
-      (type, dim) => {
-        switch (type) {
-          case ViewTypes.ASSET_HEADER:
-            dim.width = SCREEN_WIDTH - 32;
-            dim.height = ASSETS_LIST_HEADER + ASSETS_SEPARATOR_HEIGHT;
-            break;
-          case ViewTypes.HEADER:
-            dim.width = SCREEN_WIDTH - 32;
-            dim.height = ASSETS_SECTION_HEADER + TOGGLE_SPLIT_HEIGHT;
-            break;
-          case ViewTypes.EMPTY_TOKEN:
-            dim.width = SCREEN_WIDTH - 32;
-            dim.height = TOKEN_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
-            break;
-          case ViewTypes.EMPTY_ASSETS:
-          case ViewTypes.EMPTY_DEFI:
-            dim.width = SCREEN_WIDTH - 32;
-            dim.height = ASSETS_EMPTY_ROW_HIGHT + ASSETS_SEPARATOR_HEIGHT;
-            break;
-          case ViewTypes.DEFI:
-            dim.width = SCREEN_WIDTH - 32;
-            dim.height = DEFI_ITEM_HEIGHT + DEFI_SEPARATOR_HEIGHT;
-            break;
-          default:
-            dim.width = SCREEN_WIDTH - 32;
-            dim.height = ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT;
-        }
-      },
-    );
-  }, [listData]);
+              {data[1] && (
+                <DefiRow
+                  data={data[1]}
+                  style={StyleSheet.flatten([
+                    styles.renderDefiItemWrapper,
+                    !isLight && styles.bg2,
+                  ])}
+                  menuActions={getDefiOrNftMenuAction('defi', data[1])}
+                  logoSize={40}
+                  onPress={() =>
+                    handleOpenDefiDetail(data[1], [
+                      ...(data[1]._portfolios || []),
+                    ])
+                  }
+                />
+              )}
+            </View>
+          );
+        case 'scam_token':
+          return (
+            <ScamTokenHeader
+              total={data.total}
+              logoUrls={data.logoUrls}
+              style={StyleSheet.flatten([
+                styles.renderItemWrapper,
+                !isLight && styles.bg2,
+              ])}
+              onPress={() => {
+                setFoldScam(false);
+              }}
+            />
+          );
+        case 'toggle_token_fold':
+          return (
+            <TokenRowSectionHeader
+              style={styles.tokenSectionHeader}
+              str={getTotalFoldToken(tokens.filter(i => i._isFold))}
+              fold={foldHideList}
+              onPressFold={() => {
+                if (!foldHideList) {
+                  setFoldScam(true);
+                }
+                setFoldHideList(pre => !pre);
+              }}
+            />
+          );
+        case 'defi_header':
+          return (
+            <Text style={[styles.sectionHeader, styles.sectionTextHeader]}>
+              {t('page.search.sectionHeader.Defi')}
+            </Text>
+          );
+        case 'toggle_defi_fold':
+          return (
+            <TokenRowSectionHeader
+              str={getAllDefiCount(
+                portfolios.filter(i => i._isFold) as DisplayedProject[],
+              )}
+              fold={foldDefi}
+              style={styles.sectionHeader}
+              buttonStyle={StyleSheet.flatten([
+                styles.buttonHeader,
+                !isLight && styles.bg2,
+              ])}
+              onPressFold={() => setFoldDefi(pre => !pre)}
+            />
+          );
+        case 'empty-assets':
+        case 'empty-defi':
+          return (
+            <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
+          );
+        case 'loading-skeleton':
+          return <ItemLoader style={{ height: ASSETS_ITEM_HEIGHT_NEW }} />;
+        case 'loading-defi-skeleton':
+          return <DefiItemLoader style={styles.defiLoading} />;
+        default:
+          return null;
+      }
+    },
+    [
+      foldDefi,
+      foldHideList,
+      getDefiOrNftMenuAction,
+      getTokenMenuActions,
+      handleOpenDefiDetail,
+      handleOpenTokenDetail,
+      isLight,
+      portfolios,
+      styles,
+      t,
+      tokens,
+    ],
+  );
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -601,17 +508,81 @@ export const Portfolios = ({ isRefreshing }: { isRefreshing?: boolean }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [top10Addresses.length, isListVisable]);
 
+  const getItemType = useCallback((item: ActionItem) => {
+    if (item.type === 'empty-token') {
+      return 'empty_token';
+    }
+    if (item.type === 'empty-assets') {
+      return 'empty_assets';
+    }
+    if (item.type === 'empty-defi') {
+      return 'empty_defi';
+    }
+    if (
+      item.type === 'fold_defi' ||
+      item.type === 'unfold_defi' ||
+      item.type === 'loading-defi-skeleton'
+    ) {
+      return 'defi';
+    }
+    if (item?.type?.includes('_header')) {
+      return 'asset_header';
+    }
+    if (item?.type?.includes('toggle_')) {
+      return 'header';
+    }
+    return 'body';
+  }, []);
+
+  const overrideItemLayout = useCallback(
+    (layout: { span?: number; size?: number }, item: ActionItem) => {
+      const type = getItemType(item);
+      switch (type) {
+        case 'asset_header':
+          layout.size = ASSETS_LIST_HEADER;
+          break;
+        case 'header':
+          layout.size = ASSETS_SECTION_HEADER;
+          break;
+        case 'empty_token':
+          layout.size = TOKEN_EMPTY_ROW_HIGHT;
+          break;
+        case 'empty_assets':
+        case 'empty_defi':
+          layout.size = ASSETS_EMPTY_ROW_HIGHT;
+          break;
+        case 'defi':
+          layout.size = DEFI_ITEM_HEIGHT;
+          break;
+        default:
+          layout.size = ASSETS_ITEM_HEIGHT_NEW;
+      }
+    },
+    [getItemType],
+  );
+
+  const ListRenderSeparator = useCallback(() => {
+    return <View style={{ height: 8 }} />;
+  }, []);
+  const ListRenderFooter = useCallback(() => {
+    return <View style={{ height: 58 }} />;
+  }, []);
+
   return (
-    <RecyclerListView
-      style={styles.list}
-      dataProvider={listData}
-      extendedState={extendedState}
-      layoutProvider={layoutProvider}
-      ref={listRef}
-      onVisibleIndicesChanged={() => {
+    <Tabs.FlashList
+      data={portfolioListData}
+      renderItem={renderItem}
+      estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
+      getItemType={getItemType}
+      overrideItemLayout={overrideItemLayout}
+      ItemSeparatorComponent={ListRenderSeparator}
+      onViewableItemsChanged={() => {
         setIsListVisable(true);
       }}
-      rowRenderer={renderItem}
+      ListHeaderComponent={ListRenderSeparator}
+      ListFooterComponent={ListRenderFooter}
+      style={styles.container}
+      contentContainerStyle={styles.list}
     />
   );
 };
@@ -619,7 +590,8 @@ export const Portfolios = ({ isRefreshing }: { isRefreshing?: boolean }) => {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
-    // marginTop: -10,
+    borderWidth: 1,
+    borderColor: 'red',
   },
   list: {
     flex: 1,
@@ -636,7 +608,6 @@ const getStyles = createGetStyles2024(ctx => ({
     height: SWITCH_HEADER_HEIGHT,
     overflow: 'hidden',
     backgroundColor: ctx.colors2024['neutral-bg-0'],
-    // height: ASSETS_SECTION_HEADER,
     zIndex: 1,
   },
   bgContainer: {
@@ -644,7 +615,6 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-    // paddingBottom: 12,
   },
   emptyHolder: {
     marginTop: 65,
@@ -689,7 +659,6 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   rowWrap: {
     height: ASSETS_ITEM_HEIGHT_NEW,
-    marginBottom: ASSETS_SEPARATOR_HEIGHT,
   },
   renderItemWrapper: {
     height: ASSETS_ITEM_HEIGHT_NEW,

@@ -96,6 +96,7 @@
     "@safe-global/protocol-kit": "5.0.3",
     "@safe-global/types-kit": "1.0.2",
     "@sentry/react-native": "5.31.0",
+    "@shopify/flash-list": "^1.8.0",
     "@types/highlight-words-core": "1.2.3",
     "@types/lodash.debounce": "^4.0.9",
     "@types/pump": "^1.1.3",

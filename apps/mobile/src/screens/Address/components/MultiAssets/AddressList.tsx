@@ -22,6 +22,7 @@ import { useMultiCurve } from '@/hooks/useMultiCurve';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useBalanceUpdate } from './hooks/balance';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 export const AddressList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -171,9 +172,12 @@ export const AddressList = () => {
     ],
   );
   return (
-    <FlatList
+    <Tabs.FlatList
       data={addressListData}
       renderItem={renderItem}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+      }}
       ListFooterComponent={renderFooter}
     />
   );
@@ -185,6 +189,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   footerCard: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
+    marginTop: 16,
     marginBottom: 22,
     padding: 16,
     borderRadius: 20,
