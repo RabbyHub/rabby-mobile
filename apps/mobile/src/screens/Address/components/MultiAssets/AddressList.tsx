@@ -176,6 +176,8 @@ export const AddressList = () => {
     <Tabs.FlatList
       data={addressListData}
       renderItem={renderItem}
+      showsHorizontalScrollIndicator={false}
+      showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.list}
       ListFooterComponent={renderFooter}
     />

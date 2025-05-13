@@ -590,6 +590,8 @@ export const Portfolios = () => {
       }}
       ListHeaderComponent={ListRenderSeparator}
       ListFooterComponent={ListRenderFooter}
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
       style={styles.container}
       contentContainerStyle={styles.list}
     />

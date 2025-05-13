@@ -166,6 +166,8 @@ const getStyles = createGetStyles2024(ctx => ({
   tabBarWrap: {
     backgroundColor: 'transparent',
     shadowColor: 'transparent',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   bgContainer: {
     backgroundColor: ctx.isLight

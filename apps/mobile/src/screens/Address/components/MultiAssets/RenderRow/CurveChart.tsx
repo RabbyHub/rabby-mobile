@@ -74,7 +74,7 @@ function Chart({
           top: 0,
           left: 0,
           width: '100%',
-          height: 150,
+          height: 189,
         }}
       />
       <View style={styles.chartContainer}>
@@ -289,6 +289,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     height: HEADER_CHART_HEIGHT,
     width: ScreenWidth,
+    overflow: 'hidden',
   },
   chartContainer: {
     paddingLeft: 16,
