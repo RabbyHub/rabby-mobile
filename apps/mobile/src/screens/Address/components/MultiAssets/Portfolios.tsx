@@ -10,10 +10,8 @@ import {
   ASSETS_SECTION_HEADER,
   ASSETS_SEPARATOR_HEIGHT,
   DEFI_ITEM_HEIGHT,
-  DEFI_SEPARATOR_HEIGHT,
   RootNames,
   SWITCH_HEADER_HEIGHT,
-  TOGGLE_SPLIT_HEIGHT,
   TOKEN_EMPTY_ROW_HIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -52,9 +50,7 @@ import { DisplayedProject } from '@/screens/Home/utils/project';
 import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-
-export const Portfolios = ({ isRefreshing }: { isRefreshing?: boolean }) => {
+export const Portfolios = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { top10Addresses } = useAccountInfo();
 
@@ -594,7 +590,6 @@ const getStyles = createGetStyles2024(ctx => ({
     borderColor: 'red',
   },
   list: {
-    flex: 1,
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],

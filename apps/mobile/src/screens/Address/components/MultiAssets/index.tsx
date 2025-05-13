@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ASSETS_ITEM_HEIGHT_NEW,
@@ -6,6 +6,7 @@ import {
   ASSETS_SECTION_HEADER,
   ASSETS_SEPARATOR_HEIGHT,
   DEFI_ITEM_HEIGHT,
+  HEADER_CHART_HEIGHT,
   SWITCH_HEADER_HEIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -18,10 +19,19 @@ import { useAccountInfo } from './hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { Tabs, MaterialTabItem } from 'react-native-collapsible-tab-view';
 import { CustomMaterialTabBar } from './Tabs/CustomMaterialTabBar';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { HeaderTitle } from './HeaderTitle';
 
-export const MultiAssets = () => {
-  const { styles, colors2024, colors } = useTheme2024({ getStyle: getStyles });
+export const MultiAssets = ({
+  onUpdateIsDecrease,
+  onReachTopStatusChange,
+}: {
+  onUpdateIsDecrease: (isDecrease: boolean) => void;
+  onReachTopStatusChange?: (status: boolean) => void;
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const { top10Addresses, list } = useAccountInfo();
 
@@ -39,12 +49,26 @@ export const MultiAssets = () => {
     false,
     top10Balance,
   );
+  useEffect(() => {
+    onUpdateIsDecrease(combineData.isLoss);
+  }, [combineData.isLoss, onUpdateIsDecrease]);
 
   const renderTabItem = React.useCallback(
     (props: any) => (
       <MaterialTabItem {...props} pressOpacity={1} inactiveOpacity={1} />
     ),
     [],
+  );
+
+  const getHeaderTitle = useCallback(
+    () => (
+      <HeaderTitle
+        netWorth={combineData.netWorth}
+        changePercent={combineData.changePercent}
+        isLoss={combineData.isLoss}
+      />
+    ),
+    [combineData.changePercent, combineData.isLoss, combineData.netWorth],
   );
 
   const renderTabBar = React.useCallback(
@@ -61,12 +85,32 @@ export const MultiAssets = () => {
     ),
     [colors2024, renderTabItem, styles.indicator, styles.label, styles.tabBar],
   );
+
   const pathColor = useMemo(
     () =>
       !combineData.isLoss
         ? colors2024['green-default']
         : colors2024['red-default'],
     [colors2024, combineData.isLoss],
+  );
+
+  const handleScroll = useCallback(
+    (y: number) => {
+      const isHideHeader = y > HEADER_CHART_HEIGHT;
+      if (isHideHeader) {
+        setNavigationOptions({
+          headerTitle: getHeaderTitle,
+          headerTitleAlign: 'left',
+        });
+      } else {
+        setNavigationOptions({
+          headerTitle: '',
+          headerTitleAlign: 'left',
+        });
+      }
+      onReachTopStatusChange?.(!isHideHeader);
+    },
+    [getHeaderTitle, onReachTopStatusChange, setNavigationOptions],
   );
 
   const renderHeader = useCallback(() => {
@@ -77,15 +121,17 @@ export const MultiAssets = () => {
         loading={isLoadingCurve}
         pathColor={pathColor}
         isNoAssets={false}
+        handleScroll={handleScroll}
       />
     );
-  }, [combineData, isLoadingCurve, pathColor]);
+  }, [combineData, handleScroll, isLoadingCurve, pathColor]);
 
   return (
     <Tabs.Container
       lazy
       containerStyle={styles.container}
       minHeaderHeight={0}
+      headerHeight={HEADER_CHART_HEIGHT}
       renderTabBar={renderTabBar}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
       renderHeader={renderHeader}
@@ -108,9 +154,7 @@ export const MultiAssets = () => {
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {
-    flex: 1,
-    // alignItems: 'center',
-    // marginTop: -10,
+    overflow: 'hidden',
   },
   list: {
     flex: 1,

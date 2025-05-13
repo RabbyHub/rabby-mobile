@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
@@ -171,13 +171,12 @@ export const AddressList = () => {
       t,
     ],
   );
+
   return (
     <Tabs.FlatList
       data={addressListData}
       renderItem={renderItem}
-      contentContainerStyle={{
-        paddingHorizontal: 16,
-      }}
+      contentContainerStyle={styles.list}
       ListFooterComponent={renderFooter}
     />
   );
@@ -210,5 +209,8 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   itemGap: {
     marginTop: 8,
+  },
+  list: {
+    paddingHorizontal: 16,
   },
 }));

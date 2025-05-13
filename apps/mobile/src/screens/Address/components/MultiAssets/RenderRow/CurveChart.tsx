@@ -8,7 +8,9 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { formChartData } from '@/hooks/useCurve';
 import { HEADER_CHART_HEIGHT } from '@/constant/layout';
 import {
+  runOnJS,
   useAnimatedProps,
+  useAnimatedReaction,
   useAnimatedStyle,
   useDerivedValue,
 } from 'react-native-reanimated';
@@ -16,6 +18,7 @@ import AnimateableText from 'react-native-animateable-text';
 import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/CurveLoader';
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -25,12 +28,14 @@ function Chart({
   loading,
   isNoAssets,
   pathColor,
+  handleScroll,
 }: {
   isOffline: boolean;
   data: ReturnType<typeof formChartData>;
   loading: boolean;
   isNoAssets: boolean;
   pathColor: string;
+  handleScroll: (y: number) => void;
 }) {
   const { styles, colors, isLight } = useTheme2024({ getStyle });
   const topBg = useMemo(() => {
@@ -48,6 +53,16 @@ function Chart({
       }
     }
   }, [data.isLoss, isLight]);
+
+  const scrollY = useCurrentTabScrollY();
+
+  useAnimatedReaction(
+    () => scrollY.value,
+    currentScrollY => {
+      runOnJS(handleScroll)(currentScrollY);
+    },
+  );
+
   return (
     <View style={styles.container}>
       <ImageBackground
