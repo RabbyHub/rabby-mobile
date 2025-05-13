@@ -6,7 +6,7 @@ import { findChain } from '@/utils/chain';
 import { SendRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import dayjs from 'dayjs';
-import { unionBy } from 'lodash';
+import { sortBy, unionBy } from 'lodash';
 import { useMemo } from 'react';
 
 interface DisplayHistoryItem {
@@ -100,6 +100,7 @@ export const useRecentSend = ({
     const sortedList = historyList?.sort(
       (a, b) => (b?.completedAt || 0) - (a?.completedAt || 0),
     );
+
     return markFirstItems(
       unionBy(sortedList, item => {
         if ('projectDict' in item) {
@@ -121,6 +122,7 @@ export const useRecentSend = ({
             toAddress: item.data.sends[0].to_addr,
             time: item.time / 1000,
             isFailed: item.data.tx?.status !== 1,
+            isPending: false,
           };
         } else {
           return {
@@ -134,15 +136,31 @@ export const useRecentSend = ({
               item.data.isSubmitFailed ||
               item.data.isFailed ||
               item.data.isWithdrawed,
+            isPending: item.data.isPending,
           };
         }
       })
-      .filter(item => item.toAddress.length && item.time && !item.isFailed)
+      .filter(
+        item =>
+          item.toAddress.length &&
+          item.time &&
+          !item.isFailed &&
+          !item.isPending,
+      )
       .slice(0, 3);
   }, [markedList]);
 
+  const finalMarkedList = useMemo(() => {
+    return sortBy(markedList, item => {
+      if ('isPending' in item.data && item.data.isPending) {
+        return -Number.MAX_SAFE_INTEGER;
+      }
+      return -item.time;
+    });
+  }, [markedList]);
+
   return {
-    markedList,
+    markedList: finalMarkedList,
     runAsync,
     recentHistory,
   };

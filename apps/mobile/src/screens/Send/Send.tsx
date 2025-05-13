@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -73,6 +74,7 @@ import { SendHeaderRight } from './SubScreens/SelectPolyScreen/HeaderRight';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { getRecommendToken } from '@/utils/addressSupport';
 import { lowcaseSame } from '@/utils/common';
+import { noop } from 'lodash';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -236,7 +238,7 @@ function SendScreen({
   );
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances();
-
+  const isShowLoadingRef = useRef(true);
   const initByCache = async () => {
     const account = (await preferenceService.getCurrentAccount())!;
     let targetToken: TokenItem | null = null;
@@ -308,7 +310,9 @@ function SendScreen({
         targetToken = currentToken;
       }
     }
-    const hideLoading = toastLoading('Loading Token...');
+    const hideLoading = isShowLoadingRef.current
+      ? toastLoading('Loading Token...')
+      : noop;
     try {
       if (navParams?.toAddress) {
         const res = await getRecommendToken({
@@ -358,6 +362,7 @@ function SendScreen({
       ]);
     } finally {
       hideLoading();
+      isShowLoadingRef.current = true;
     }
   };
 
@@ -412,6 +417,7 @@ function SendScreen({
       sendTokenEvents,
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
+        isShowLoadingRef.current = false;
         resetScreenState();
         // navigation.dispatch(
         //   StackActions.replace(RootNames.StackRoot, {
