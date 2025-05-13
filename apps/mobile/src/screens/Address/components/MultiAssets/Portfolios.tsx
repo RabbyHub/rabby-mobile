@@ -49,6 +49,8 @@ import { useTriggerTagAssets } from '@/screens/Home/hooks/refresh';
 import { DisplayedProject } from '@/screens/Home/utils/project';
 import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
+import { RefreshControl } from 'react-native-gesture-handler';
+import { useMultiCurve } from '@/hooks/useMultiCurve';
 
 export const Portfolios = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
@@ -56,7 +58,7 @@ export const Portfolios = () => {
   const focusedTab = useFocusedTab();
   const isFocused = focusedTab === 'portfolios';
 
-  const { triggerUpdate } = useAccountsBalance({
+  const { triggerUpdate, getTotalBalance } = useAccountsBalance({
     cacheTime: 10 * 60 * 1000,
     accountsNoUnique: true,
   });
@@ -72,6 +74,7 @@ export const Portfolios = () => {
 
   const [isListVisable, setIsListVisable] = useState(false);
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { t } = useTranslation();
 
   const [foldHideList, setFoldHideList] = useState(true);
@@ -234,6 +237,16 @@ export const Portfolios = () => {
       });
     },
     [],
+  );
+
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
+
+  const { refresh: refreshCurve } = useMultiCurve(
+    top10Addresses,
+    false,
+    top10Balance,
   );
 
   const handleOpenDefiDetail = useCallback(
@@ -594,6 +607,26 @@ export const Portfolios = () => {
       showsHorizontalScrollIndicator={false}
       style={styles.container}
       contentContainerStyle={styles.list}
+      refreshControl={
+        <RefreshControl
+          style={styles.bgContainer}
+          onRefresh={async () => {
+            setIsRefreshing(true);
+            try {
+              await Promise.all([
+                triggerUpdate(true),
+                refreshCurve(true),
+                checkIsExpireAndUpdate(true, { disableNFT: true }),
+              ]);
+              setIsRefreshing(false);
+            } catch (error) {
+              console.error('Refresh failed:', error);
+              setIsRefreshing(false);
+            }
+          }}
+          refreshing={isRefreshing}
+        />
+      }
     />
   );
 };

@@ -156,107 +156,11 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     overflow: 'hidden',
   },
-  list: {
-    flex: 1,
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
-  },
   tabBarWrap: {
     backgroundColor: 'transparent',
     shadowColor: 'transparent',
     shadowOpacity: 0,
     elevation: 0,
-  },
-  bgContainer: {
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-    paddingHorizontal: 16,
-    // paddingBottom: 12,
-  },
-  emptyHolder: {
-    marginTop: 65,
-  },
-  emptyImg: {
-    width: 160,
-    height: 117,
-  },
-  emptyText: {
-    marginTop: 21,
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: ctx.colors2024['neutral-info'],
-  },
-  sectionHeader: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 22,
-    height: ASSETS_SECTION_HEADER,
-    color: ctx.colors2024['neutral-secondary'],
-    paddingLeft: 0,
-    paddingRight: 0,
-    backgroundColor: ctx.isLight
-      ? ctx.colors2024['neutral-bg-0']
-      : ctx.colors2024['neutral-bg-1'],
-  },
-  sectionTextHeader: {
-    height: ASSETS_LIST_HEADER,
-  },
-  tokenSectionHeader: {
-    paddingLeft: 0,
-    paddingRight: 0,
-  },
-  emptyAssets: {
-    marginHorizontal: 0,
-  },
-  defiLoading: {
-    paddingHorizontal: 0,
-  },
-  rowWrap: {
-    height: ASSETS_ITEM_HEIGHT_NEW,
-    marginBottom: ASSETS_SEPARATOR_HEIGHT,
-  },
-  renderItemWrapper: {
-    height: ASSETS_ITEM_HEIGHT_NEW,
-  },
-  footer: {
-    minHeight: 400,
-  },
-  defiGroups: {
-    flexDirection: 'row',
-    height: DEFI_ITEM_HEIGHT,
-    gap: 12,
-    justifyContent: 'flex-start',
-  },
-  renderDefiItemWrapper: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 16,
-    height: DEFI_ITEM_HEIGHT,
-    paddingLeft: 12,
-    paddingRight: 16,
-  },
-  bg2: {
-    backgroundColor: ctx.colors2024['neutral-bg-2'],
-  },
-  buttonHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-  },
-  tabsContainer: {
-    backgroundColor: 'transparent',
-  },
-  tabItem: {
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '800',
-    color: ctx.colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    backgroundColor: 'transparent',
   },
   tabBar: {
     height: SWITCH_HEADER_HEIGHT - 16,

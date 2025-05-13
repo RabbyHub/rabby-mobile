@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
@@ -23,16 +23,19 @@ import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useBalanceUpdate } from './hooks/balance';
 import { Tabs } from 'react-native-collapsible-tab-view';
+import { RefreshControl } from 'react-native-gesture-handler';
 
 export const AddressList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const {
     top10Addresses,
     list: _rawList,
     hasWatchAddress,
     hasSafeAddress,
+    fetchAccounts,
   } = useAccountInfo();
 
   const { triggerUpdate, getTotalBalance, balanceAccounts } =
@@ -44,7 +47,12 @@ export const AddressList = () => {
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
-  const { multiTimeStamp } = useMultiCurve(top10Addresses, false, top10Balance);
+
+  const { multiTimeStamp, refresh: refreshCurve } = useMultiCurve(
+    top10Addresses,
+    false,
+    top10Balance,
+  );
 
   useBalanceUpdate(triggerUpdate);
 
@@ -180,6 +188,26 @@ export const AddressList = () => {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.list}
       ListFooterComponent={renderFooter}
+      refreshControl={
+        <RefreshControl
+          style={styles.bgContainer}
+          onRefresh={async () => {
+            setIsRefreshing(true);
+            try {
+              await Promise.all([
+                triggerUpdate(true),
+                refreshCurve(true),
+                fetchAccounts(),
+              ]);
+              setIsRefreshing(false);
+            } catch (error) {
+              console.error('Refresh failed:', error);
+              setIsRefreshing(false);
+            }
+          }}
+          refreshing={isRefreshing}
+        />
+      }
     />
   );
 };
@@ -213,6 +241,12 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 8,
   },
   list: {
+    paddingHorizontal: 16,
+  },
+  bgContainer: {
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
   },
 }));
