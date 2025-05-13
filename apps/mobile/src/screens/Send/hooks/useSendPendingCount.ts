@@ -1,9 +1,11 @@
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { eventBus, EVENTS } from '@/utils/events';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { unionBy } from 'lodash';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 const pendingCountAtom = atom(0);
 
@@ -45,11 +47,26 @@ export const usePollSendPendingCount = (params?: {
   };
   const [, setCount] = useAtom(pendingCountAtom);
 
-  return useRequest(fetchPendingCount, {
+  const res = useRequest(fetchPendingCount, {
     onSuccess(v) {
       setCount(v);
     },
     refreshDeps: [isForMultipleAddress],
-    pollingInterval: pollingInterval,
   });
+
+  const { runAsync } = res;
+
+  useFocusEffect(
+    useCallback(() => {
+      const refresh = () => {
+        runAsync();
+      };
+      eventBus.addListener(EVENTS.RELOAD_TX, refresh);
+      return () => {
+        eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
+      };
+    }, [runAsync]),
+  );
+
+  return res;
 };

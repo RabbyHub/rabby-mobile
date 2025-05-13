@@ -17,7 +17,7 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
     disableAutoFetch: true,
   });
 
-  return useRequest(
+  const res = useRequest(
     async () => {
       if (!account?.address) {
         return 0;
@@ -35,12 +35,35 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
     },
     {
       refreshDeps: [account],
-      pollingInterval: timer,
       onSuccess(v) {
         setCount(v);
       },
     },
   );
+
+  const timerRef = useRef<NodeJS.Timeout>();
+
+  const { loading, error, data: value, runAsync } = res;
+
+  useEffect(() => {
+    if ((!loading && value !== undefined) || error) {
+      timerRef.current = setTimeout(() => {
+        runAsync();
+      }, timer);
+    }
+
+    return () => {
+      timerRef.current && clearTimeout(timerRef.current);
+    };
+  }, [loading, value, error, timer, runAsync]);
+
+  useEffect(() => {
+    return () => {
+      timerRef.current && clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  return res;
 };
 
 export const useBridgeHistory = () => {

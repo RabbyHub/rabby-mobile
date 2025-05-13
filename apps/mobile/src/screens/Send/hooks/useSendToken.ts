@@ -40,7 +40,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { navigate, naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { useNavigationState } from '@react-navigation/native';
+import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import { isAccountSupportMiniApproval } from '@/utils/account';
@@ -48,6 +48,8 @@ import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { toast } from '@/components2024/Toast';
 import { usePollSendPendingCount } from './useSendPendingCount';
+import { eventBus, EVENTS } from '@/utils/events';
+import { useMemoizedFn } from 'ahooks';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -1393,6 +1395,23 @@ export function useSendTokenForm(
     setFormValues({ ...DF_SEND_TOKEN_FORM });
     formik.resetForm();
   }, [setFormValues, formik]);
+
+  const refreshCurrentToken = useMemoizedFn(async () => {
+    return loadCurrentToken(
+      currentToken.id,
+      currentToken.chain,
+      currentAccount!.address,
+    );
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      eventBus.addListener(EVENTS.RELOAD_TX, refreshCurrentToken);
+      return () => {
+        eventBus.removeListener(EVENTS.RELOAD_TX, refreshCurrentToken);
+      };
+    }, [refreshCurrentToken]),
+  );
 
   return {
     chainEnum,
