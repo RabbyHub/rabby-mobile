@@ -327,6 +327,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
     }, [isActive, isEmptyTab, isFocused, switchSceneCurrentAccount, dappInfo]);
 
+    const [refreshKey, setRefreshKey] = useState(0);
+
     return (
       <AutoLockView style={[style, styles.dappWebViewControl]}>
         {isActive ? (
@@ -393,7 +395,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   />
                 ) : null}
                 <WebView
-                  key={contentMode}
+                  key={`${refreshKey}-${contentMode}`}
                   cacheEnabled
                   startInLoadingState={false}
                   renderLoading={() => <View style={styles.hidden} />}
@@ -491,7 +493,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   }}
                   onContentProcessDidTerminate={syntheticEvent => {
                     const { nativeEvent } = syntheticEvent;
-                    console.warn('Content process terminated', nativeEvent);
+                    console.warn('IOS Content process terminated', nativeEvent);
 
                     if (isActive) {
                       handleReload();
@@ -499,6 +501,24 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       onUpdateTab?.({
                         initialUrl: nativeEvent.url,
                         url: nativeEvent.url,
+                        isTerminate: true,
+                      });
+                    }
+                  }}
+                  onRenderProcessGone={syntheticEvent => {
+                    const { nativeEvent } = syntheticEvent;
+                    console.warn(
+                      'Android Content process terminated',
+                      nativeEvent,
+                    );
+
+                    if (isActive) {
+                      // handleReload();
+                      setRefreshKey(key => key + 1);
+                    } else {
+                      onUpdateTab?.({
+                        initialUrl: webviewState.url,
+                        url: webviewState.url,
                         isTerminate: true,
                       });
                     }
