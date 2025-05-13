@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  usePollBridgePendingNumber,
+  useReadBridgePendingCount,
   useSetSettingVisible,
   useSettingVisible,
 } from '../hooks';
@@ -34,7 +34,7 @@ export const BridgeHeader = () => {
 
   const [historyVisible, setHistoryVisible] = useState(false);
 
-  const loadingNumber = usePollBridgePendingNumber();
+  const loadingNumber = useReadBridgePendingCount();
 
   const closeHistory = useCallback(() => {
     setHistoryVisible(false);

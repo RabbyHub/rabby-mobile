@@ -18,6 +18,7 @@ import {
 import IconError from '@/assets2024/icons/common/cancel.svg';
 import React from 'react';
 import { ThemeColors2024 } from '@/constant/theme';
+import { Dots } from '@/components/Approval/components/Popup/Dots';
 
 const config: ToastOptions = {
   position: Toast.positions.TOP + 80,
@@ -190,6 +191,48 @@ export const toastLoadingSuccess = (msg?: string, options?: ToastOptions) => {
       shadow: false,
       ...options,
     },
+  );
+  return () => Toast.hide(_toast);
+};
+
+export const toastWithDotAnimation = (
+  message?: string | ((ctx: ToastRenderCtx) => React.ReactNode),
+  _config?: Partial<ToastOptions>,
+) => {
+  const msgNode =
+    typeof message === 'function' ? (
+      message({
+        textStyle: StyleSheet.flatten([
+          styles.content,
+          styles.selfDefinedContent,
+        ]),
+        config: _config,
+      }) || null
+    ) : (
+      <Text style={styles.content}>{message || ' '}</Text>
+    );
+
+  const _toast = Toast.show(
+    (
+      <View style={styles.container}>
+        {msgNode}
+        <Dots style={styles.content} />
+      </View>
+    ) as any,
+    Object.assign(
+      {},
+      config,
+      _config,
+      Platform.OS === 'ios'
+        ? {
+            containerStyle: {
+              ...(config.containerStyle as any),
+              ...(_config?.containerStyle as any),
+              paddingBottom: 5,
+            },
+          }
+        : {},
+    ),
   );
   return () => Toast.hide(_toast);
 };

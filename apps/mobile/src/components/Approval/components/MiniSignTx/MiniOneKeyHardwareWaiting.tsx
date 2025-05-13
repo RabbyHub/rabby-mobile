@@ -1,8 +1,8 @@
+import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 import { toast } from '@/components/Toast';
 import { useTheme2024 } from '@/hooks/theme';
 import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -15,7 +15,6 @@ interface Props {
   onDone?: () => void;
   error: NonNullable<MiniApprovalTaskType['error']>;
 }
-
 const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
     brandIcon: {
@@ -49,7 +48,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
   }),
 );
 
-export const MiniPrivatekeyWaiting = ({
+export const MiniOneKeyHardwareWaiting = ({
   onCancel,
   onDone,
   onRetry,
@@ -65,32 +64,50 @@ export const MiniPrivatekeyWaiting = ({
     onRetry?.();
   };
 
-  const renderContent = useMemoizedFn(({ contentColor }) => (
-    <View style={styles.contentWrapper}>
-      <Text
-        style={StyleSheet.flatten([
-          styles.content,
-          {
-            color: colors[contentColor],
-          },
-        ])}>
-        {error?.content}
-      </Text>
-    </View>
-  ));
+  const currentDescription = React.useMemo(() => {
+    const description = error.description;
+    return description;
+  }, [error.description]);
+
+  const renderContent = React.useCallback(
+    ({ contentColor }) => (
+      <View style={styles.contentWrapper}>
+        <Text
+          style={StyleSheet.flatten([
+            styles.content,
+            {
+              color: colors[contentColor],
+            },
+          ])}>
+          {error.content}
+        </Text>
+      </View>
+    ),
+    [colors, error.content, styles.content, styles.contentWrapper],
+  );
 
   return (
     <View>
+      {/* <View style={styles.titleWrapper}>
+        <OneKeySVG width={20} height={20} style={styles.brandIcon} />
+        <Text style={styles.title}>
+          {t('page.signFooterBar.qrcode.signWith', { brand: 'OneKey' })}
+        </Text>
+      </View> */}
+
       <MiniApprovalPopupContainer
         showAnimation
-        hdType={'privatekey'}
-        status={error?.status}
-        onRetry={handleRetry}
-        content={renderContent}
-        description={error.description}
+        hdType="onekey"
+        status={error.status}
+        onRetry={() => handleRetry()}
         onDone={onDone}
         onCancel={onCancel}
-        hasMoreDescription={!!error.description}
+        description={currentDescription}
+        content={renderContent}
+        BrandIcon={OneKeySVG}
+        hasMoreDescription={
+          error.status === 'REJECTED' || error.status === 'FAILED'
+        }
       />
     </View>
   );

@@ -11,6 +11,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
+  usePollBridgePendingNumber,
   useQuoteVisible,
   useSetQuoteVisible,
   useSetRefreshId,
@@ -52,6 +53,8 @@ import {
 } from '@/components/ExternalSwapBridgeDappPopup';
 import { Tip } from '@/components';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { isAccountSupportMiniApproval } from '@/utils/account';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -190,6 +193,8 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
 
+  const { runAsync: runFetchBridgePendingCount } = usePollBridgePendingNumber();
+
   const { currentAccount } = useCurrentAccount();
 
   const quoteVisible = useQuoteVisible();
@@ -316,7 +321,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           status: tx ? 'success' : 'fail',
           payAmount: amount,
         });
-        bridgeToken(
+        await bridgeToken(
           {
             to: tx.to,
             value: tx.value,
@@ -356,6 +361,8 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             },
           },
         );
+        handleAmountChange('');
+        runFetchBridgePendingCount();
       } catch (error) {
         toast.info((error as any)?.message || String(error));
         stats.report('bridgeQuoteResult', {
@@ -477,43 +484,47 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     manual: true,
   });
 
-  const showLoss = useMemo(() => {
-    const impact = tokenPriceImpact(
-      fromToken,
-      toToken,
-      amount,
-      selectedBridgeQuote?.to_token_amount,
-    );
-    return !!impact?.showLoss;
-  }, [fromToken, amount, selectedBridgeQuote?.to_token_amount, toToken]);
-
   const runBuildSwapTxsRef = useRef<ReturnType<typeof runBuildTxs>>();
+  const {
+    prepareMiniTransactions,
+    sendPrepareMiniTransactions,
+    sendMiniTransactions,
+  } = useMiniApproval();
 
-  const canUseMiniTx =
-    !toToken?.low_credit_score &&
-    !toToken?.is_scam &&
-    toToken?.is_verified !== false &&
-    !isSlippageHigh &&
-    !isSlippageLow &&
-    !showLoss &&
-    [
-      KEYRING_TYPE.SimpleKeyring,
-      KEYRING_TYPE.HdKeyring,
-      KEYRING_CLASS.HARDWARE.LEDGER,
-    ].includes((currentAccount?.type || '') as any);
+  const canUseMiniTx = isAccountSupportMiniApproval(currentAccount?.type);
 
   const handleBridge = useMemoizedFn(async () => {
     if (canUseMiniTx) {
       try {
+        clearExpiredTimer();
         setFetchingBridgeQuote(true);
-        await runBuildSwapTxsRef.current;
+        const res = await runBuildSwapTxsRef.current;
+        if (res?.length) {
+          try {
+            await sendMiniTransactions({
+              txs: res,
+              ga: {
+                category: 'Bridge',
+                source: 'bridge',
+                // trigger: rbiSource,
+              },
+            });
+            setIsShowSign(false);
+            mutateTxs([]);
+            handleAmountChange('');
+            runFetchBridgePendingCount();
+          } catch (e) {
+            console.error(e);
+            mutateTxs([]);
+            refresh(e => e + 1);
+            setIsShowSign(false);
+          }
+        }
       } catch (error) {
         console.error('runBuildSwapTxsRef', error);
       } finally {
         setFetchingBridgeQuote(false);
       }
-      setIsShowSign(true);
-      clearExpiredTimer();
     } else {
       gotoBridge();
     }
@@ -595,6 +606,19 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
 
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
+
+  // useEffect(() => {
+  //   if (!isShowSign) {
+  //     prepareMiniTransactions({
+  //       txs: txs || [],
+  //       ga: {
+  //         category: 'Bridge',
+  //         source: 'bridge',
+  //         // trigger: rbiSource,
+  //       },
+  //     });
+  //   }
+  // }, [txs, prepareMiniTransactions, isShowSign]);
 
   return (
     <NormalScreenContainer overwriteStyle={styles.screen}>
@@ -798,7 +822,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
         />
       ) : null}
 
-      <MiniApproval
+      {/* <MiniApproval
         visible={isShowSign}
         txs={txs}
         ga={{
@@ -823,7 +847,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             );
           }, 500);
         }}
-      />
+      /> */}
     </NormalScreenContainer>
   );
 };

@@ -95,24 +95,26 @@ export const ActionsContainer: React.FC<
 
   return (
     <View style={styles.wrapper}>
-      <Button
-        type="ghost"
-        containerStyle={{
-          flex: 1,
-        }}
-        buttonStyle={styles.button}
-        titleStyle={styles.buttonText}
-        onPress={displayPopup ? activeCancelPopup : onCancel}
-        title={
-          <View style={styles.cancelWrapper}>
-            <Text style={styles.buttonText}>{t('global.cancelButton')}</Text>
-            {displayPopup && (
-              //@ts-expect-error
-              <ArrowDownCC style={styles.cancelIcon} width={12} />
-            )}
-          </View>
-        }
-      />
+      {isMiniSignTx ? null : (
+        <Button
+          type="ghost"
+          containerStyle={{
+            flex: 1,
+          }}
+          buttonStyle={styles.button}
+          titleStyle={styles.buttonText}
+          onPress={displayPopup ? activeCancelPopup : onCancel}
+          title={
+            <View style={styles.cancelWrapper}>
+              <Text style={styles.buttonText}>{t('global.cancelButton')}</Text>
+              {displayPopup && (
+                //@ts-expect-error
+                <ArrowDownCC style={styles.cancelIcon} width={12} />
+              )}
+            </View>
+          }
+        />
+      )}
 
       {children}
     </View>

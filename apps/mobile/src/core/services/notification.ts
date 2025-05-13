@@ -79,6 +79,7 @@ type RequestApprovaParam =
 // should only open one window, unfocus will close the current notification
 export class NotificationService extends Events {
   currentApproval: Approval | null = null;
+  currentMiniApproval: { signingTxId?: string } | null = null;
   dappManager = new Map<
     string,
     {

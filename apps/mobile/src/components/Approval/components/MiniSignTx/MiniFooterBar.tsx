@@ -1,36 +1,30 @@
-import { Tip } from '@/components/Tip';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
+import { Chain } from '@/constant/chains';
+import { RootNames } from '@/constant/layout';
 import { SecurityEngineLevel } from '@/constant/security';
 import { AppColorsVariants } from '@/constant/theme';
 import { dappService, preferenceService } from '@/core/services';
+import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { Chain } from '@/constant/chains';
+import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
+import { navigate } from '@/utils/navigation';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { DappInfo } from '@/core/services/dappService';
 import clsx from 'clsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
+import { Props as ActionGroupProps } from '../FooterBar/ActionGroup';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
-import {
-  ActionGroup,
-  Props as ActionGroupProps,
-} from '../FooterBar/ActionGroup';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { MiniLedgerAction } from './MiniLedgerAction';
-import { MiniCommonAction } from './MiniCommonAction';
-import { BatchSignTxTaskType } from './useBatchSignTxTask';
-import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { GasAccountTips } from '../FooterBar/GasLessComponents/GasAccountTips';
-import { GasLessNotEnough } from '../FooterBar/GasLessComponents/GasLessNotEnough';
-import { navigate } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
 import { GasLessActivityToSign } from '../FooterBar/GasLessComponents/GasLessActivityToSign';
+import { GasLessNotEnough } from '../FooterBar/GasLessComponents/GasLessNotEnough';
+import { MiniActionGroup } from './MiniActionGroup';
+import { MiniActionStatus } from './MiniActionStatus';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -52,7 +46,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   Header?: React.ReactNode;
   gasLessConfig?: GasLessConfig;
   isGasNotEnough?: boolean;
-  task: BatchSignTxTaskType;
+  task: MiniApprovalTaskType;
   gasMethod?: 'native' | 'gasAccount';
   gasAccountCost?: GasAccountCheckResult;
   onChangeGasAccount?: () => void;
@@ -74,10 +68,10 @@ const getStyles = (colors: AppColorsVariants) =>
     wrapper: {
       paddingHorizontal: 20,
       paddingTop: 10,
-      paddingBottom: 40,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      backgroundColor: colors['neutral-bg-1'],
+      paddingBottom: 52,
+      // borderTopLeftRadius: 16,
+      // borderTopRightRadius: 16,
+      // backgroundColor: colors['neutral-bg-1'],
       position: 'relative',
       // shadow
       // shadowColor: colors['neutral-line'],
@@ -444,10 +438,9 @@ export const MiniFooterBar: React.FC<Props> = ({
         )}
 
         <View style={styles.actions}>
-          {account.type === KEYRING_CLASS.HARDWARE.LEDGER ? (
-            <MiniLedgerAction
+          {task.status === 'idle' ? (
+            <MiniActionGroup
               isMiniSignTx
-              task={task}
               account={account}
               gasLess={useGasLess && !payGasByGasAccount}
               {...props}
@@ -459,9 +452,7 @@ export const MiniFooterBar: React.FC<Props> = ({
                   : props.disabledProcess
               }
               enableTooltip={
-                account.type === KEYRING_TYPE.WatchAddressKeyring
-                  ? true
-                  : payGasByGasAccount
+                payGasByGasAccount
                   ? false
                   : useGasLess
                   ? false
@@ -472,36 +463,9 @@ export const MiniFooterBar: React.FC<Props> = ({
                   ? gasLessConfig?.dark_color
                   : gasLessConfig?.theme_color
               }
-              footer={footer}
             />
           ) : (
-            <MiniCommonAction
-              isMiniSignTx
-              task={task}
-              account={account}
-              gasLess={useGasLess && !payGasByGasAccount}
-              {...props}
-              disabledProcess={
-                payGasByGasAccount
-                  ? !gasAccountCanPay
-                  : useGasLess
-                  ? false
-                  : props.disabledProcess
-              }
-              enableTooltip={
-                payGasByGasAccount
-                  ? false
-                  : useGasLess
-                  ? false
-                  : props.enableTooltip
-              }
-              gasLessThemeColor={
-                isDarkTheme
-                  ? gasLessConfig?.dark_color
-                  : gasLessConfig?.theme_color
-              }
-              footer={footer}
-            />
+            <MiniActionStatus account={account} task={task} />
           )}
         </View>
       </View>

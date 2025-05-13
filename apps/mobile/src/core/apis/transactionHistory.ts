@@ -8,6 +8,7 @@ import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { groupBy } from 'lodash';
 import { findChain } from '@/utils/chain';
 import { requestETHRpc } from './provider';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 class ApisTransactionHistory {
   removeLocalPendingTx = ({
@@ -112,6 +113,17 @@ class ApisTransactionHistory {
     }
 
     return res;
+  };
+
+  getRabbySendPendingTxs = ({ address }: { address: string }) => {
+    const { pendings } = transactionHistoryService.getList(address);
+
+    return pendings.filter(
+      item =>
+        isSameAddress(address, item.address) &&
+        item.action?.actionData.send &&
+        item.$ctx?.ga?.source === 'sendToken',
+    );
   };
 }
 

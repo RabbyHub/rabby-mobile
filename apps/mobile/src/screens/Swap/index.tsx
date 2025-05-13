@@ -21,6 +21,7 @@ import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import {
   CompositeScreenProps,
   StackActions,
+  useFocusEffect,
   useIsFocused,
   useNavigation,
   useNavigationState,
@@ -46,6 +47,7 @@ import { QuoteList } from './components/Quotes';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
 import {
   useDetectLoss,
+  usePollSwapPendingNumber,
   useSlippageStore,
   useSwapUnlimitedAllowance,
   useTokenPair,
@@ -87,6 +89,9 @@ import {
 } from '@/components/ExternalSwapBridgeDappPopup';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { Tip } from '@/components';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { isAccountSupportMiniApproval } from '@/utils/account';
+import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -117,6 +122,7 @@ const Swap = ({
       headerRight,
     });
   }, [headerRight, setNavigationOptions]);
+  const { runAsync: runFetchSwapPendingCount } = usePollSwapPendingNumber(5000);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
@@ -259,6 +265,12 @@ const Swap = ({
 
   const navigation = useNavigation<SwapRouteProps['navigation']>();
 
+  const {
+    sendMiniTransactions,
+    prepareMiniTransactions,
+    sendPrepareMiniTransactions,
+  } = useMiniApproval();
+
   useEffect(() => {
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     const isBuy = navState?.type === 'Buy';
@@ -326,11 +338,10 @@ const Swap = ({
 
   const { safeOffBottom } = useSafeSizes();
 
-  const [isShowSign, setIsShowSign] = useState(false);
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
-        dexSwap(
+        await dexSwap(
           {
             swapPreferMEVGuarded: !!preferMEVGuarded,
             chain,
@@ -375,6 +386,8 @@ const Swap = ({
             },
           },
         );
+        handleAmountChange('');
+        runFetchSwapPendingCount();
       } catch (error) {
         console.error(error);
       }
@@ -443,62 +456,65 @@ const Swap = ({
     manual: true,
   });
 
-  const showLoss = useDetectLoss({
-    payToken: payToken,
-    payAmount: payAmount,
-    receiveRawAmount: activeProvider?.actualReceiveAmount || 0,
-    receiveToken: receiveToken,
-  });
-
   const [_, setRecentSwapToToken] = useSwapRecentToTokens();
 
   const chainServerId = useMemo(() => {
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
   }, [chain]);
 
-  const handleSwap = useMemoizedFn(() => {
-    if (receiveToken) {
-      setRecentSwapToToken(receiveToken);
-    }
-    if (
-      [
-        KEYRING_TYPE.SimpleKeyring,
-        KEYRING_TYPE.HdKeyring,
-        KEYRING_CLASS.HARDWARE.LEDGER,
-      ].includes((currentAccount?.type || '') as any) &&
-      !receiveToken?.low_credit_score &&
-      !receiveToken?.is_scam &&
-      receiveToken?.is_verified !== false &&
-      !isSlippageHigh &&
-      !isSlippageLow &&
-      !showLoss
-    ) {
-      // runBuildSwapTxs();
-      setIsShowSign(true);
-      clearExpiredTimer();
-    } else {
-      gotoSwap();
-    }
-    preferenceService.setReportActionTs(
-      REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN,
-      {
-        chain: chainServerId,
-      },
-    );
-  });
+  const { loading: isSubmitting, runAsync: handleSwap } = useRequest(
+    async () => {
+      if (receiveToken) {
+        setRecentSwapToToken(receiveToken);
+      }
+      if (isAccountSupportMiniApproval(currentAccount?.type)) {
+        clearExpiredTimer();
+        try {
+          if (txs?.length) {
+            await sendPrepareMiniTransactions();
+          } else {
+            const res = await runBuildSwapTxs();
+            if (res) {
+              await sendMiniTransactions({
+                txs: res,
+                ga: {
+                  category: 'Swap',
+                  source: 'swap',
+                  swapUseSlider,
+                },
+              });
+            }
+          }
+          mutateTxs([]);
+          handleAmountChange('');
+          runFetchSwapPendingCount();
+          preferenceService.setReportActionTs(
+            REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
+            {
+              chain: chainServerId,
+            },
+          );
+        } catch (e) {
+          console.error(e);
+          mutateTxs([]);
+          refresh(e => e + 1);
+        }
+      } else {
+        gotoSwap();
+      }
+      preferenceService.setReportActionTs(
+        REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN,
+        {
+          chain: chainServerId,
+        },
+      );
+    },
+    {
+      manual: true,
+    },
+  );
 
-  const canUseMiniTx =
-    [
-      KEYRING_TYPE.SimpleKeyring,
-      KEYRING_TYPE.HdKeyring,
-      KEYRING_CLASS.HARDWARE.LEDGER,
-    ].includes((currentAccount?.type || '') as any) &&
-    !receiveToken?.low_credit_score &&
-    !receiveToken?.is_scam &&
-    receiveToken?.is_verified !== false &&
-    !isSlippageHigh &&
-    !isSlippageLow &&
-    !showLoss;
+  const canUseMiniTx = isAccountSupportMiniApproval(currentAccount?.type || '');
 
   const amountAvailable = useMemo(
     () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
@@ -515,7 +531,8 @@ const Swap = ({
     !receiveToken ||
     !amountAvailable ||
     inSufficient ||
-    !activeProvider;
+    !activeProvider ||
+    isSubmitting;
 
   useEffect(() => {
     if (!swapBtnDisabled && activeProvider && canUseMiniTx) {
@@ -529,6 +546,19 @@ const Swap = ({
     runBuildSwapTxs,
     mutateTxs,
   ]);
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      prepareMiniTransactions({
+        txs: txs || [],
+        ga: {
+          category: 'Swap',
+          source: 'swap',
+          swapUseSlider,
+        },
+      });
+    }
+  }, [txs, prepareMiniTransactions, swapUseSlider, isSubmitting]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -553,6 +583,18 @@ const Swap = ({
     setLowCreditVisible,
     navState,
   ]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const listener = () => {
+        handleAmountChange('');
+      };
+      eventBus.addListener(EVENT_MINI_APPROVAL_START_SIGN, listener);
+      return () => {
+        eventBus.removeListener(EVENT_MINI_APPROVAL_START_SIGN, listener);
+      };
+    }, [handleAmountChange]),
+  );
 
   const [showMoreOpen, setShowMoreOpen] = useState(false);
 
@@ -919,40 +961,6 @@ const Swap = ({
         dexName={dexName}
         dexFeeDesc={dexFeeDesc}
         onClose={() => setIsShowRabbyFeePopup({ visible: false })}
-      />
-      <MiniApproval
-        visible={isShowSign}
-        txs={txs}
-        ga={{
-          category: 'Swap',
-          source: 'swap',
-          swapUseSlider,
-
-          // trigger: rbiSource,
-        }}
-        onReject={() => {
-          setIsShowSign(false);
-          mutateTxs([]);
-          refresh(e => e + 1);
-        }}
-        onResolve={() => {
-          setTimeout(() => {
-            setIsShowSign(false);
-            mutateTxs([]);
-
-            navigation.dispatch(
-              StackActions.replace(RootNames.StackRoot, {
-                screen: RootNames.Home,
-              }),
-            );
-          }, 500);
-          preferenceService.setReportActionTs(
-            REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
-            {
-              chain: chainServerId,
-            },
-          );
-        }}
       />
 
       <LowCreditModal

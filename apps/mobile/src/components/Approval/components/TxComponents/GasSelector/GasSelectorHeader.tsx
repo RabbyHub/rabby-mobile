@@ -26,8 +26,8 @@ import {
   L2_ENUMS,
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
-import { getStyles } from './styles';
-import { useThemeColors } from '@/hooks/theme';
+import { getStyle } from './styles';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import SecurityLevelTagNoText from '../../SecurityEngine/SecurityLevelTagNoText';
 import {
   AppBottomSheetModal,
@@ -594,8 +594,9 @@ export const GasSelectorHeader = ({
     }
   }, [gasList]);
 
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { colors, colors2024, styles } = useTheme2024({
+    getStyle,
+  });
   const modalRef = useRef<AppBottomSheetModal>(null);
   useEffect(() => {
     if (modalVisible) {
@@ -689,6 +690,7 @@ export const GasSelectorHeader = ({
                 borderStyle: 'solid',
                 borderColor: colors['neutral-line'],
                 marginRight: 12,
+                pointerEvents: isDisabledGasPopup ? 'none' : undefined,
               }}>
               <GasMethod
                 active={gasMethod === 'native'}
@@ -741,24 +743,14 @@ export const GasSelectorHeader = ({
                       setIsGasAccountHovering(true);
                     }}>
                     <Text numberOfLines={1}>
-                      <Text
-                        style={{
-                          color: colors['blue-default'],
-                          fontSize: 16,
-                          fontWeight: '500',
-                        }}>
+                      <Text style={styles.gasSelectorCardAmountLabelUsd}>
                         {formatGasHeaderUsdValue(
                           (gasAccountCost?.gas_account_cost.estimate_tx_cost ||
                             0) +
                             (gasAccountCost?.gas_account_cost.gas_cost || 0),
                         )}
                       </Text>
-                      <Text
-                        style={{
-                          paddingLeft: 4,
-                          fontSize: 14,
-                          color: colors['neutral-body'],
-                        }}>
+                      <Text style={styles.gasSelectorCardAmountLabelAmount}>
                         {' '}
                         ~
                         {calcGasAccountUsd(
@@ -844,27 +836,17 @@ export const GasSelectorHeader = ({
                         styles.gasSelectorCardAmountLabel,
                         !processedRules.includes('1118') &&
                         engineResultMap['1118']?.level === 'danger'
-                          ? { color: colors['red-default'] }
+                          ? { color: colors2024['red-default'] }
                           : {},
                         !processedRules.includes('1118') &&
                         engineResultMap['1118']?.level === 'warning'
-                          ? { color: colors['orange-default'] }
+                          ? { color: colors2024['orange-default'] }
                           : {},
                       ])}>
-                      <Text
-                        style={{
-                          color: colors['blue-default'],
-                          fontSize: 16,
-                          fontWeight: '500',
-                        }}>
+                      <Text style={styles.gasSelectorCardAmountLabelUsd}>
                         {gasCostUsdStr}
                       </Text>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          color: colors['neutral-body'],
-                          fontWeight: '400',
-                        }}>
+                      <Text style={styles.gasSelectorCardAmountLabelAmount}>
                         {` ~${gasCostAmountStr}`}
                       </Text>
                     </Text>
@@ -874,15 +856,15 @@ export const GasSelectorHeader = ({
                         styles.gasSelectorCardAmountLabel,
                         !processedRules.includes('1118') &&
                         engineResultMap['1118']?.level === 'danger'
-                          ? { color: colors['red-default'] }
+                          ? { color: colors2024['red-default'] }
                           : {},
                         !processedRules.includes('1118') &&
                         engineResultMap['1118']?.level === 'warning'
-                          ? { color: colors['orange-default'] }
+                          ? { color: colors2024['orange-default'] }
                           : {},
                       ])}>
                       {gasMethod ? (
-                        <Text style={{ color: colors['blue-default'] }}>
+                        <Text style={{ color: colors2024['brand-default'] }}>
                           {gasCostAmountStr}
                         </Text>
                       ) : (

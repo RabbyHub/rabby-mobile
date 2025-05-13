@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { SendHistory } from './SendHistory';
+import PendingTx from '@/screens/Bridge/components/PendingTx';
+import { useReadSendPendingCount } from '../../hooks/useSendPendingCount';
 
 interface IProps {
   isForMultipleAdderss?: boolean;
@@ -32,11 +34,17 @@ export const SendHeaderRight = ({
     setHistoryVisible(true);
   }, []);
 
+  const loadingNumber = useReadSendPendingCount();
+
   return (
     <>
       <View style={styles.container}>
         <TouchableOpacity onPress={openHistory}>
-          <RcIconSwapHistory color={colors2024['neutral-body']} />
+          {loadingNumber ? (
+            <PendingTx number={loadingNumber} onClick={openHistory} />
+          ) : (
+            <RcIconSwapHistory color={colors2024['neutral-body']} />
+          )}
         </TouchableOpacity>
       </View>
 

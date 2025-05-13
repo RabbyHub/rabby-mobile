@@ -1,6 +1,12 @@
 import { calcMaxPriorityFee, checkGasAndNonce } from '@/utils/transaction';
 
-import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  ExplainTxResponse,
+  GasLevel,
+  ParseTxResponse,
+  Tx,
+  TxPushType,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, isTestnet } from './chain';
 import {
   keyringService,
@@ -116,6 +122,7 @@ export const sendTransaction = async ({
   onUseGasAccount,
   ga,
   sig,
+  extra,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -123,6 +130,10 @@ export const sendTransaction = async ({
   ignoreGasNotEnoughCheck?: boolean;
   onProgress?: (status: ProgressStatus) => void;
   onUseGasAccount?: () => void;
+  extra?: {
+    preExecResult?: ExplainTxResponse;
+    actionData?: ParseTxResponse;
+  };
   gasLevel?: GasLevel;
   lowGasDeadline?: number;
   isGasLess?: boolean;
@@ -144,10 +155,12 @@ export const sendTransaction = async ({
   const support1559 = chain.eip['1559'];
   const { address, ...currentAccount } =
     (await preferenceService.getCurrentAccount())!;
-  const recommendNonce = await apiProvider.getRecommendNonce({
-    from: tx.from,
-    chainId: chain.id,
-  });
+  const recommendNonce =
+    tx.nonce ||
+    (await apiProvider.getRecommendNonce({
+      from: tx.from,
+      chainId: chain.id,
+    }));
 
   // get gas
   let normalGas = gasLevel;
@@ -173,22 +186,24 @@ export const sendTransaction = async ({
   });
 
   // pre exec tx
-  const preExecResult = await openapi.preExecTx({
-    tx: {
-      ...tx,
-      nonce: recommendNonce,
-      data: tx.data,
-      value: tx.value || '0x0',
-      gasPrice: intToHex(Math.round(normalGas.price)),
-    },
-    origin: INTERNAL_REQUEST_ORIGIN,
-    address: address,
-    updateNonce: true,
-    pending_tx_list: await apisTransactionHistory.getPendingTxs({
-      recommendNonce,
-      address,
-    }),
-  });
+  const preExecResult =
+    extra?.preExecResult ||
+    (await openapi.preExecTx({
+      tx: {
+        ...tx,
+        nonce: recommendNonce,
+        data: tx.data,
+        value: tx.value || '0x0',
+        gasPrice: intToHex(Math.round(normalGas.price)),
+      },
+      origin: INTERNAL_REQUEST_ORIGIN,
+      address: address,
+      updateNonce: true,
+      pending_tx_list: await apisTransactionHistory.getPendingTxs({
+        recommendNonce,
+        address,
+      }),
+    }));
 
   const balance = await getNativeTokenBalance({
     chainId: chain.id,
@@ -313,8 +328,11 @@ export const sendTransaction = async ({
     };
   }
 
-  const maxPriorityFee = calcMaxPriorityFee([], normalGas, chain.id, true);
-  const maxFeePerGas = intToHex(Math.round(normalGas.price));
+  const maxPriorityFee =
+    +(tx.maxPriorityFeePerGas || '') ||
+    calcMaxPriorityFee([], normalGas, chain.id, true);
+  const maxFeePerGas =
+    tx.maxFeePerGas || tx.gasPrice || intToHex(Math.round(normalGas.price));
 
   if (support1559) {
     transaction.maxFeePerGas = maxFeePerGas;
@@ -327,18 +345,20 @@ export const sendTransaction = async ({
   }
 
   // fetch action data
-  const actionData = await openapi.parseTx({
-    chainId: chain.serverId,
-    tx: {
-      ...tx,
-      gas: '0x0',
-      nonce: recommendNonce || '0x1',
-      value: tx.value || '0x0',
-      to: tx.to || '',
-    },
-    origin: INTERNAL_REQUEST_SESSION.origin || '',
-    addr: address,
-  });
+  const actionData =
+    extra?.actionData ||
+    (await openapi.parseTx({
+      chainId: chain.serverId,
+      tx: {
+        ...tx,
+        gas: '0x0',
+        nonce: recommendNonce || '0x1',
+        value: tx.value || '0x0',
+        to: tx.to || '',
+      },
+      origin: INTERNAL_REQUEST_SESSION.origin || '',
+      addr: address,
+    }));
   const parsed = parseAction({
     type: 'transaction',
     data: actionData.action,

@@ -1,22 +1,23 @@
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { toast } from '@/components/Toast';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
+import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
-import { BatchSignTxTaskType } from './useBatchSignTxTask';
+import { MiniApprovalPopupContainer } from '../Popup/MiniApprovalPopupContainer';
 
 interface Props {
   onCancel?: () => void;
   onRetry?: () => void;
   onDone?: () => void;
-  error: NonNullable<BatchSignTxTaskType['error']>;
+  error: NonNullable<MiniApprovalTaskType['error']>;
 }
 
-const getStyles = (colors: AppColorsVariants) =>
+const getStyle = createGetStyles2024(({ colors2024 }) =>
   StyleSheet.create({
     brandIcon: {
       width: 20,
@@ -33,26 +34,30 @@ const getStyles = (colors: AppColorsVariants) =>
     title: {
       fontSize: 16,
       fontWeight: '500',
-      color: colors['neutral-title-1'],
+      color: colors2024['neutral-title-1'],
     },
     content: {
       fontSize: 20,
-      fontWeight: '500',
+      textAlign: 'center',
+      fontFamily: 'SF Pro Rounded',
+      fontWeight: '700',
       lineHeight: 24,
+      color: colors2024['red-default'],
     },
     contentWrapper: {
       flexDirection: 'row',
     },
-  });
-
+  }),
+);
 export const MiniLedgerHardwareWaiting = ({
   onCancel,
   onDone,
   onRetry,
   error,
 }: Props) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors } = useTheme2024({
+    getStyle,
+  });
   const { t } = useTranslation();
 
   const handleRetry = async () => {
@@ -96,14 +101,14 @@ export const MiniLedgerHardwareWaiting = ({
 
   return (
     <View>
-      <View style={styles.titleWrapper}>
+      {/* <View style={styles.titleWrapper}>
         <LedgerSVG width={20} height={20} style={styles.brandIcon} />
         <Text style={styles.title}>
           {t('page.signFooterBar.qrcode.signWith', { brand: 'Ledger' })}
         </Text>
-      </View>
+      </View> */}
 
-      <ApprovalPopupContainer
+      <MiniApprovalPopupContainer
         showAnimation
         hdType="ledger"
         status={error.status}
@@ -111,6 +116,7 @@ export const MiniLedgerHardwareWaiting = ({
         onDone={onDone}
         onCancel={onCancel}
         description={currentDescription}
+        BrandIcon={LedgerSVG}
         content={renderContent}
         hasMoreDescription={
           error.status === 'REJECTED' || error.status === 'FAILED'

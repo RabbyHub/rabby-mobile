@@ -9,7 +9,11 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { ListItem } from '@/components2024/ListItem/ListItem';
 import { toast } from '@/components2024/Toast';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
-import { topUpGasAccount } from '@/core/apis/gasAccount';
+import {
+  afterTopUpGasAccount,
+  buildTopUpGasAccount,
+  topUpGasAccount,
+} from '@/core/apis/gasAccount';
 import { openapi } from '@/core/request';
 import { preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
@@ -52,8 +56,12 @@ import useAsync from 'react-use/lib/useAsync';
 import { useGasAccountHistoryRefresh, useGasAccountSign } from '../hooks/atom';
 import { SelectGasAccountList } from './SelectGasAccountList';
 import { maxBy } from 'lodash';
-import { filterMyAccounts } from '@/utils/account';
+import {
+  filterMyAccounts,
+  isAccountSupportMiniApproval,
+} from '@/utils/account';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
 
 const amountList = [10, 100];
 
@@ -474,6 +482,55 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
     }
   };
 
+  const { sendMiniTransactions } = useMiniApproval();
+
+  const handleTopUp = async () => {
+    if (isAccountSupportMiniApproval(depositAccount.type)) {
+      if (token && depositAccount && !loading) {
+        setLoading(true);
+        const chainEnum = findChainByServerID(token.chain)!;
+        await switchSceneSigningAccount(
+          'GasAccount',
+          depositAccount as KeyringAccountWithAlias,
+        );
+        try {
+          const tx = await buildTopUpGasAccount({
+            to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
+            chainServerId: chainEnum.serverId,
+            tokenId: token.id,
+            amount: depositAmount,
+            rawAmount: new BigNumber(depositAmount)
+              .times(10 ** token.decimals)
+              .toFixed(0),
+          });
+          if (tx) {
+            const res = await sendMiniTransactions({
+              txs: [tx],
+            });
+            const hash = res?.[0]?.txHash;
+
+            await afterTopUpGasAccount({
+              to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
+              chainServerId: chainEnum.serverId,
+              tokenId: token.id,
+              amount: depositAmount,
+              rawAmount: new BigNumber(depositAmount)
+                .times(10 ** token.decimals)
+                .toFixed(0),
+              tx: hash,
+            });
+          }
+          onClose();
+          refreshHistoryList();
+        } catch (error) {}
+        await switchSceneSigningAccount('GasAccount', null);
+        setLoading(false);
+      }
+    } else {
+      topUp();
+    }
+  };
+
   const onInputChange = useCallback((value: string) => {
     let inputValue = value.replace(/[^0-9]/g, '');
     // only integer and no string
@@ -693,7 +750,7 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
           loading={loading}
           type="primary"
           containerStyle={styles.confirmButton}
-          onPress={topUp}
+          onPress={handleTopUp}
           disabled={!token}
           title={t('global.confirm')}
         />

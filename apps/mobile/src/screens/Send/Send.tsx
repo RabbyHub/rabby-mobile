@@ -413,11 +413,11 @@ function SendScreen({
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
         resetScreenState();
-        navigation.dispatch(
-          StackActions.replace(RootNames.StackRoot, {
-            screen: RootNames.Home,
-          }),
-        );
+        // navigation.dispatch(
+        //   StackActions.replace(RootNames.StackRoot, {
+        //     screen: RootNames.Home,
+        //   }),
+        // );
       },
       { disposeRets },
     );

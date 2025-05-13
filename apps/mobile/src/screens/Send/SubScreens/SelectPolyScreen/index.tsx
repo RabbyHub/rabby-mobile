@@ -24,6 +24,7 @@ import { useInputSwitch } from '../SendInput/useInputSwitch';
 import { SendHeaderLeft } from './HeaderLeft';
 import { navigate } from '@/utils/navigation';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { usePollSendPendingCount } from '../../hooks/useSendPendingCount';
 
 interface IHeaderProps {
   gotoAddWhitelist: () => void;
@@ -75,6 +76,10 @@ const SendPolyScreen = () => {
       headerLeft: HeaderLeft,
     });
   }, [Header, HeaderLeft, setNavigationOptions]);
+
+  usePollSendPendingCount({
+    isForMultipleAddress: !isSingleAddress,
+  });
 
   const handleGotoInputAddress = (autoScan: boolean) => {
     toggleInput();

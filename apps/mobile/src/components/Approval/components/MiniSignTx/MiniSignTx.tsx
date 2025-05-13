@@ -1,4 +1,4 @@
-import { AppBottomSheetModal } from '@/components';
+import { AppBottomSheetModal, Text } from '@/components';
 import { toast } from '@/components/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { Chain } from '@/constant/chains';
@@ -9,14 +9,14 @@ import { preferenceService } from '@/core/services';
 import { Account, ChainGas } from '@/core/services/preference';
 import { useCurrentAccount } from '@/hooks/account';
 import { useSecurityEngine } from '@/hooks/securityEngine';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { intToHex } from '@/utils/number';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import {
   calcMaxPriorityFee,
   checkGasAndNonce,
@@ -24,10 +24,11 @@ import {
 } from '@/utils/transaction';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   ExplainTxResponse,
   GasLevel,
+  ParseTxResponse,
   Tx,
   TxPushType,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -73,6 +74,20 @@ import { apiCustomRPC, apiProvider } from '@/core/apis';
 import { toast as toast2024 } from '@/components2024/Toast';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { sleep } from '@/utils/async';
+import {
+  MiniApprovalTaskType,
+  useMiniApprovalTask,
+} from '@/hooks/useMiniApprovalTask';
+import { View } from 'react-native';
+import { sendTransaction } from '@/utils/sendTransaction';
+import {
+  EVENT_MINI_APPROVAL_START_SIGN,
+  eventBus,
+  EVENTS,
+} from '@/utils/events';
+import AutoLockView from '@/components/AutoLockView';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -118,12 +133,20 @@ const MiniSignTx = ({
   onResolve,
   onSubmit,
   ga,
+  onVisibleChange,
+  task,
+  onSubmitting,
+  onSubmitted,
 }: {
   txs: Tx[];
-  onReject?: () => void;
-  onResolve?: () => void;
+  onReject?: (e?: any) => void;
+  onResolve?: (res: Awaited<ReturnType<typeof sendTransaction>>[]) => void;
   onSubmit?: () => void;
   ga?: Record<string, any>;
+  onVisibleChange?: (v: boolean) => void;
+  task: MiniApprovalTaskType;
+  onSubmitting?: () => void;
+  onSubmitted?: (isSuccess: boolean) => void;
 }) => {
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
@@ -279,6 +302,7 @@ const MiniSignTx = ({
       gasLimit: string;
       recommendGasLimitRatio: number;
       gasCost: Awaited<ReturnType<typeof explainGas>>;
+      actionData: ParseTxResponse;
     }[]
   >([]);
 
@@ -479,9 +503,6 @@ const MiniSignTx = ({
   );
   const { activeApprovalPopup } = useCommonPopupView();
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
-  const task = useBatchSignTxTask({
-    ga,
-  });
 
   const handleInitTask = useMemoizedFn(() => {
     task.init(
@@ -498,6 +519,10 @@ const MiniSignTx = ({
             ignoreGasCheck: true,
             ignoreGasNotEnoughCheck: true,
             sig,
+            extra: {
+              preExecResult: item.preExecResult,
+              actionData: item.actionData,
+            },
           },
           status: 'idle',
         };
@@ -521,8 +546,25 @@ const MiniSignTx = ({
     if (!txsResult?.length || !selectedGas) {
       return;
     }
-    await task.start();
-    onResolve?.();
+    if (
+      [KEYRING_CLASS.MNEMONIC, KEYRING_CLASS.PRIVATE_KEY].includes(
+        currentAccount?.type || ('' as any),
+      )
+    ) {
+      onVisibleChange?.(false);
+    }
+    onSubmitting?.();
+    try {
+      eventBus.emit(EVENT_MINI_APPROVAL_START_SIGN, {});
+      const res = await task.start();
+      // todo check this
+      onResolve?.(res || []);
+      onSubmitted?.(true);
+    } catch (e) {
+      console.error(e);
+      onSubmitted?.(false);
+      throw e;
+    }
   });
 
   const handleGasChange = (gas: GasSelectorResponse) => {
@@ -940,15 +982,6 @@ const MiniSignTx = ({
 
   return (
     <>
-      <MiniWaiting
-        visible={!!task.error}
-        error={task.error}
-        onCancel={onReject}
-        onRetry={async () => {
-          await task.retry();
-          onResolve?.();
-        }}
-      />
       <MiniFooterBar
         task={task}
         Header={
@@ -1092,17 +1125,24 @@ export const MiniApproval = ({
   visible,
   onResolve,
   onReject,
+  onVisibleChange,
   ga,
+  onSubmitting,
+  onSubmitted,
 }: {
   txs?: Tx[];
   visible?: boolean;
-  onReject?: () => void;
-  onResolve?: () => void;
+  onReject?: (e?: any) => void;
+  onResolve?: (res: Awaited<ReturnType<typeof sendTransaction>>[]) => void;
+  onVisibleChange?: (v: boolean) => void;
   ga?: Record<string, any>;
+  onSubmitting?: () => void;
+  onSubmitted?: (isSuccess: boolean) => void;
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const colors = useThemeColors();
-  const styles = useMemo(() => getSheetStyles(colors), [colors]);
+  const { colors2024, styles } = useTheme2024({
+    getStyle: getSheetStyles,
+  });
   // const { isDarkTheme } = useThemeMode();
   useEffect(() => {
     if (visible) {
@@ -1127,48 +1167,132 @@ export const MiniApproval = ({
   }, [sheetModalRef, txs]);
 
   const indexRef = useRef(-1);
+  const dismissedByCodeRef = useRef(false);
+  const handleReject = useMemoizedFn(() => {
+    onReject?.();
+  });
+  const handleClearTask = useMemoizedFn(() => {
+    task.clear();
+    onVisibleChange?.(false);
+    if (!visible) {
+      onReject?.();
+    }
+  });
 
   const onChange = useCallback(
     (index: number) => {
       if (index === -1 && indexRef.current > -1) {
-        onReject?.();
+        // handleReject?.();
+        if (!dismissedByCodeRef.current) {
+          handleReject?.();
+        }
+        dismissedByCodeRef.current = false;
       }
+
       indexRef.current = index;
     },
-    [onReject],
+    [handleReject],
   );
 
+  const task = useMiniApprovalTask({
+    ga,
+  });
+
+  if (!txs?.length) {
+    return null;
+  }
+
   return (
-    <AppBottomSheetModal
-      index={visible ? 0 : -1}
-      ref={sheetModalRef}
-      enableDismissOnClose
-      handleStyle={styles.sheetBg}
-      enableDynamicSizing
-      backgroundStyle={styles.sheetBg}
-      onChange={onChange}>
-      <BottomSheetView>
-        {txs?.length ? (
-          <MiniSignTx
-            txs={txs}
-            ga={ga}
-            onSubmit={() => {
-              setIsSubmitting(true);
-            }}
-            onReject={onReject}
-            onResolve={() => {
-              setIsSubmitting(false);
-              onResolve?.();
-            }}
-          />
-        ) : null}
-      </BottomSheetView>
-    </AppBottomSheetModal>
+    <>
+      <AppBottomSheetModal
+        index={visible ? 0 : -1}
+        ref={sheetModalRef}
+        enableDismissOnClose={false}
+        style={styles.sheet}
+        handleStyle={styles.handleStyle}
+        handleIndicatorStyle={styles.handleIndicatorStyle}
+        enableDynamicSizing
+        backgroundStyle={styles.sheetBg}
+        // backdropProps={{
+        //   style: {
+        //     zIndex: 2000,
+        //     height: '100%',
+        //   },
+        // }}
+        // containerStyle={{ zIndex: 2001 }}
+        onChange={onChange}>
+        <BottomSheetView>
+          <AutoLockView
+            style={{
+              minHeight: 164,
+            }}>
+            {txs?.length ? (
+              <MiniSignTx
+                task={task}
+                txs={txs}
+                ga={ga}
+                onVisibleChange={v => {
+                  onVisibleChange?.(v);
+                  if (!v) {
+                    dismissedByCodeRef.current = true;
+                  }
+                }}
+                onSubmit={() => {
+                  setIsSubmitting(true);
+                }}
+                onReject={handleClearTask}
+                onResolve={res => {
+                  setIsSubmitting(false);
+                  onResolve?.(res);
+                  dismissedByCodeRef.current = true;
+                }}
+                onSubmitting={onSubmitting}
+                onSubmitted={onSubmitted}
+              />
+            ) : null}
+          </AutoLockView>
+        </BottomSheetView>
+      </AppBottomSheetModal>
+
+      <MiniWaiting
+        visible={!!task.error}
+        error={task.error}
+        onCancel={handleClearTask}
+        onRetry={async () => {
+          try {
+            onSubmitting?.();
+            const res = await task.retry();
+            // todo check this
+            onResolve?.(res || []);
+            onSubmitted?.(true);
+            dismissedByCodeRef.current = true;
+          } catch (e) {
+            console.error(e);
+            onSubmitted?.(false);
+          }
+        }}
+      />
+    </>
   );
 };
 
-const getSheetStyles = createGetStyles(colors => ({
+const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
   sheetBg: {
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  handleStyle: {
+    paddingTop: 10,
+    backgroundColor: colors2024['neutral-bg-1'],
+    height: 36,
+  },
+  handleIndicatorStyle: {
+    backgroundColor: colors2024['neutral-line'],
+    height: 6,
+    width: 50,
+  },
+  sheet: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
 }));

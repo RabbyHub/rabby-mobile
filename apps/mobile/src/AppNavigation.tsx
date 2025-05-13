@@ -82,6 +82,8 @@ import WebViewControlPreload from './components/WebView/WebViewControlPreload';
 import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
 import { BrowserScreen } from './screens/Browser/BrowserScreen';
 import { BrowserNavigator } from './screens/Navigators/BrowserNavigator';
+import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
+import { EVENT_ROUTE_CHANGE, eventBus } from './utils/events';
 // import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
@@ -396,6 +398,11 @@ export default function AppNavigation({
       if (previousRouteName !== currentRouteName) {
         onRouteChange(currentRouteName);
 
+        eventBus.emit(EVENT_ROUTE_CHANGE, {
+          currentRouteName,
+          previousRouteName,
+        });
+
         analytics.logScreenView({
           screen_name: routeNameRef.current,
           screen_class: routeNameRef.current,
@@ -425,7 +432,6 @@ export default function AppNavigation({
       <GlobalBottomSheetModal />
       <GlobalBottomSheetModal2024 />
       {/* <GlobalAccountSwitcherStub /> */}
-
       <NavigationContainer
         linking={linking}
         ref={navigationRef}
@@ -485,8 +491,8 @@ export default function AppNavigation({
       </NavigationContainer>
       <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />
-
       <FloatViewAutoLockCount />
+      <GlobalMiniApproval />
     </AutoLockView.ForAppNav>
   );
 }

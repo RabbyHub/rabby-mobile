@@ -13,7 +13,12 @@ export const ledgerStatusAtom = atom<'CONNECTED' | 'DISCONNECTED' | undefined>(
   'CONNECTED',
 );
 
-export const useLedgerStatus = (address: string) => {
+export const useLedgerStatus = (
+  address: string,
+  extra?: {
+    onDismiss?(): void;
+  },
+) => {
   const [status, setStatus] = useAtom(ledgerStatusAtom);
   const [deviceId, setDeviceId] = React.useState<string>();
 
@@ -47,9 +52,12 @@ export const useLedgerStatus = (address: string) => {
             setStatus('DISCONNECTED');
           }
         },
+        bottomSheetModalProps: {
+          onDismiss: extra?.onDismiss,
+        },
       });
     },
-    [address, deviceId, setStatus],
+    [address, deviceId, extra?.onDismiss, setStatus],
   );
 
   return {
