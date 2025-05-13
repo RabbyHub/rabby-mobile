@@ -362,7 +362,9 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           },
         );
         handleAmountChange('');
-        runFetchBridgePendingCount();
+        setTimeout(() => {
+          runFetchBridgePendingCount();
+        }, 500);
       } catch (error) {
         toast.info((error as any)?.message || String(error));
         stats.report('bridgeQuoteResult', {
@@ -512,7 +514,10 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             setIsShowSign(false);
             mutateTxs([]);
             handleAmountChange('');
-            runFetchBridgePendingCount();
+
+            setTimeout(() => {
+              runFetchBridgePendingCount();
+            }, 500);
           } catch (e) {
             console.error(e);
             mutateTxs([]);

@@ -127,7 +127,7 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
   const [, setCount] = useAtom(swapPendingCountAtom);
 
   const { currentAccount } = useCurrentAccount();
-  return useRequest(
+  const res = useRequest(
     async () => {
       const account = currentAccount;
       if (!account?.address) {
@@ -149,7 +149,30 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
         setCount(v);
       },
       refreshDeps: [currentAccount],
-      pollingInterval: timer,
     },
   );
+
+  const timerRef = useRef<NodeJS.Timeout>();
+
+  const { loading, error, data: value, runAsync } = res;
+
+  useEffect(() => {
+    if ((!loading && value !== undefined) || error) {
+      timerRef.current = setTimeout(() => {
+        runAsync();
+      }, timer);
+    }
+
+    return () => {
+      timerRef.current && clearTimeout(timerRef.current);
+    };
+  }, [loading, value, error, timer, runAsync]);
+
+  useEffect(() => {
+    return () => {
+      timerRef.current && clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  return res;
 };

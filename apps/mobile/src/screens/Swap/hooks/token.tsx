@@ -25,6 +25,8 @@ import { trigger } from 'react-native-haptic-feedback';
 import { apiProvider } from '@/core/apis';
 import { isSwapWrapToken } from '../utils';
 import { RequestRateLimiter } from './rateLimit';
+import { useFocusEffect } from '@react-navigation/native';
+import { eventBus, EVENTS } from '@/utils/events';
 
 export const enableInsufficientQuote = true;
 
@@ -793,6 +795,18 @@ export const useTokenPair = (userAddress: string) => {
     setSwapUseSlider(false);
     setIsDraggingSlider(false);
   }, [userAddress]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const refresh = () => {
+        setRefreshId(e => e + 1);
+      };
+      eventBus.addListener(EVENTS.RELOAD_TX, refresh);
+      return () => {
+        eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
+      };
+    }, [setRefreshId]),
+  );
 
   return {
     bestQuoteDex,

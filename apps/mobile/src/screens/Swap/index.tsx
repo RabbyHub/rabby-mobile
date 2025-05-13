@@ -387,7 +387,9 @@ const Swap = ({
           },
         );
         handleAmountChange('');
-        runFetchSwapPendingCount();
+        setTimeout(() => {
+          runFetchSwapPendingCount();
+        }, 500);
       } catch (error) {
         console.error(error);
       }
@@ -487,7 +489,14 @@ const Swap = ({
           }
           mutateTxs([]);
           handleAmountChange('');
-          runFetchSwapPendingCount();
+          const start = Date.now();
+          setTimeout(() => {
+            console.log('[start]', start);
+            runFetchSwapPendingCount().then(v => {
+              const end = Date.now();
+              console.log('[end]', end - start, end, v);
+            });
+          }, 1000);
           preferenceService.setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
             {

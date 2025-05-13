@@ -25,9 +25,10 @@ import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { apiProvider } from '@/core/apis';
 import { useMount } from 'ahooks';
-import { useNavigationState } from '@react-navigation/native';
+import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
+import { eventBus, EVENTS } from '@/utils/events';
 
 export const enableInsufficientQuote = true;
 
@@ -895,6 +896,18 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     setSlider(0);
     setIsDraggingSlider(false);
   }, [fromChain, setIsDraggingSlider, setSlider]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const refresh = () => {
+        setRefreshId(e => e + 1);
+      };
+      eventBus.addListener(EVENTS.RELOAD_TX, refresh);
+      return () => {
+        eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
+      };
+    }, [setRefreshId]),
+  );
 
   return {
     clearExpiredTimer,
