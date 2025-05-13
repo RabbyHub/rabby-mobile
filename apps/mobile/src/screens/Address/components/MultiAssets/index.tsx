@@ -96,7 +96,8 @@ export const MultiAssets = ({
 
   const handleScroll = useCallback(
     (y: number) => {
-      const isHideHeader = y > HEADER_CHART_HEIGHT;
+      // 10 is buffer
+      const isHideHeader = y > HEADER_CHART_HEIGHT - 10;
       if (isHideHeader) {
         setNavigationOptions({
           headerTitle: getHeaderTitle,
@@ -128,7 +129,6 @@ export const MultiAssets = ({
 
   return (
     <Tabs.Container
-      lazy
       containerStyle={styles.container}
       minHeaderHeight={0}
       headerHeight={HEADER_CHART_HEIGHT}

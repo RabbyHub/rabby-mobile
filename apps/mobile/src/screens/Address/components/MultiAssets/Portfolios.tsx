@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { StyleSheet, Text, View } from 'react-native';
+import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 
 import {
   ASSETS_EMPTY_ROW_HIGHT,
@@ -53,6 +53,8 @@ import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/Scam
 export const Portfolios = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { top10Addresses } = useAccountInfo();
+  const focusedTab = useFocusedTab();
+  const isFocused = focusedTab === 'portfolios';
 
   const { triggerUpdate } = useAccountsBalance({
     cacheTime: 10 * 60 * 1000,
@@ -485,17 +487,28 @@ export const Portfolios = () => {
 
   useEffect(() => {
     const id = setTimeout(() => {
+      if (!isFocused) {
+        return;
+      }
+      checkIsExpireAndUpdate(false, {
+        disableNFT: true,
+        realTimeAddresses: top10Addresses,
+      });
+    }, 200);
+    return () => {
+      id && clearTimeout(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocused, top10Addresses.length]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
       if (!isListVisable) {
         return;
       }
       getCacheTop10Assets({
         disableNFT: true,
         realTimeAddresses: top10Addresses,
-      }).finally(() => {
-        checkIsExpireAndUpdate(false, {
-          disableNFT: true,
-          realTimeAddresses: top10Addresses,
-        });
       });
     }, 200);
     return () => {
