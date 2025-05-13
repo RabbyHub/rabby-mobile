@@ -20,6 +20,7 @@ export async function approveToken(
   $ctx?: any,
   gasPrice?: number,
   extra?: { isSwap: boolean; swapPreferMEVGuarded?: boolean },
+  isBuild = false,
 ) {
   const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(t('background.error.noCurrentAccount'));
@@ -67,13 +68,14 @@ export async function approveToken(
       ...extra,
     };
   }
-  await sendRequest(
+  return await sendRequest(
     {
       $ctx,
       method: 'eth_sendTransaction',
       params: [tx],
     },
     INTERNAL_REQUEST_SESSION,
+    isBuild,
   );
 }
 
@@ -366,6 +368,7 @@ export async function revokeNFTApprove(
     nftTokenId?: string | null;
   },
   $ctx?: any,
+  isBuild = false,
 ) {
   const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(t('background.error.noCurrentAccount'));
@@ -375,7 +378,7 @@ export async function revokeNFTApprove(
   if (!chainId) throw new Error(t('background.error.invalidChainId'));
   if (abi === 'ERC721') {
     if (isApprovedForAll) {
-      await sendRequest(
+      return await sendRequest(
         {
           $ctx,
           method: 'eth_sendTransaction',
@@ -384,7 +387,7 @@ export async function revokeNFTApprove(
               from: account.address,
               to: contractId,
               chainId: chainId,
-              data: abiCoder.encodeFunctionCall(
+              data: (abiCoder as unknown as AbiCoder).encodeFunctionCall(
                 {
                   inputs: [
                     {
@@ -409,9 +412,10 @@ export async function revokeNFTApprove(
           ],
         },
         INTERNAL_REQUEST_SESSION,
+        isBuild,
       );
     } else {
-      await sendRequest(
+      return await sendRequest(
         {
           $ctx,
           method: 'eth_sendTransaction',
@@ -420,7 +424,7 @@ export async function revokeNFTApprove(
               from: account.address,
               to: contractId,
               chainId: chainId,
-              data: abiCoder.encodeFunctionCall(
+              data: (abiCoder as unknown as AbiCoder).encodeFunctionCall(
                 {
                   constant: false,
                   inputs: [
@@ -446,10 +450,11 @@ export async function revokeNFTApprove(
           ],
         },
         INTERNAL_REQUEST_SESSION,
+        isBuild,
       );
     }
   } else if (abi === 'ERC1155') {
-    await sendRequest(
+    return await sendRequest(
       {
         $ctx,
         method: 'eth_sendTransaction',
@@ -477,6 +482,7 @@ export async function revokeNFTApprove(
         ],
       },
       INTERNAL_REQUEST_SESSION,
+      isBuild,
     );
   } else {
     throw new Error(t('background.error.unknownAbi'));
@@ -564,13 +570,16 @@ export async function revoke({
   }
 }
 
-export async function lockdownPermit2(input: {
-  id: string;
-  chainServerId: string;
-  tokenSpenders: TokenSpenderPair[];
-  $ctx?: any;
-  gasPrice?: number;
-}) {
+export async function lockdownPermit2(
+  input: {
+    id: string;
+    chainServerId: string;
+    tokenSpenders: TokenSpenderPair[];
+    $ctx?: any;
+    gasPrice?: number;
+  },
+  isBuild = false,
+) {
   const {
     chainServerId,
     id,
@@ -634,5 +643,6 @@ export async function lockdownPermit2(input: {
       params: [tx],
     },
     INTERNAL_REQUEST_SESSION,
+    isBuild,
   );
 }

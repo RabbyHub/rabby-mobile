@@ -1,13 +1,19 @@
 import React from 'react';
-import { View, Text, SectionListProps, ActivityIndicator } from 'react-native';
-
+import {
+  View,
+  Text,
+  SectionListProps,
+  ActivityIndicator,
+  SectionList,
+} from 'react-native';
 import { AppBottomSheetModal } from '@/components';
 import {
   BottomSheetModalProps,
-  BottomSheetSectionList,
+  BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 import {
   ApprovalAssetsItem,
+  useApprovalsPage,
   useFocusedApprovalOnApprovals,
   useRevokeAssetSpenders,
 } from '../useApprovalsPage';
@@ -16,18 +22,20 @@ import { useTheme2024 } from '@/hooks/theme';
 import { MiniButton } from '@/components/Button';
 import ApprovalCardAsset from './ApprovalCardAsset';
 import { InModalApprovalAssetRow } from './InModalApprovalAssetRow';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import AutoLockView from '@/components/AutoLockView';
+import { useTranslation } from 'react-i18next';
+import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 
 export default function BottomSheetApprovalAsset({
   modalProps,
 }: {
   modalProps?: BottomSheetModalProps;
 }) {
+  const { t } = useTranslation();
   const {
     sheetModalRefs: { approvalAssetDetail: modalRef },
     assetFocusingRevokeMap,
@@ -45,6 +53,21 @@ export default function BottomSheetApprovalAsset({
     () => Object.keys(assetFocusingRevokeMap).length,
     [assetFocusingRevokeMap],
   );
+
+  const { displaySortedAssetsList } = useApprovalsPage();
+  const batchRevoke = useBatchRevoke();
+
+  const handleRevoke = React.useCallback(() => {
+    const currentRevokeList = Object.values(assetFocusingRevokeMap);
+
+    if (currentRevokeList.length > 1) {
+      modalRef?.current?.close();
+    }
+
+    batchRevoke(currentRevokeList, displaySortedAssetsList).finally(() => {
+      modalRef?.current?.close();
+    });
+  }, [batchRevoke, assetFocusingRevokeMap, displaySortedAssetsList, modalRef]);
 
   const { styles } = useTheme2024({ getStyle });
 
@@ -75,7 +98,11 @@ export default function BottomSheetApprovalAsset({
   >(
     ({ item, section: _, index }) => {
       return (
-        <View key={`${item.$assetParent?.chain}-${item.id}-${index}`}>
+        <View
+          key={`${item.$assetParent?.chain}-${item.id}-${index}`}
+          style={{
+            marginTop: index === 0 ? 0 : 8,
+          }}>
           <InModalApprovalAssetRow
             approval={focusedAssetApproval!}
             spender={item}
@@ -102,7 +129,7 @@ export default function BottomSheetApprovalAsset({
       style={styles.sheetModalContainer}
       handleStyle={[styles.handle, styles.bg]}
       enablePanDownToClose={true}
-      enableContentPanningGesture={false}
+      enableContentPanningGesture={true}
       backgroundStyle={styles.bg}
       keyboardBlurBehavior="restore"
       onDismiss={() => {
@@ -112,73 +139,78 @@ export default function BottomSheetApprovalAsset({
         return (
           <BottomSheetModalFooterButton
             title={[
-              'Confirm',
+              t('page.approvals.component.RevokeButton.btnText'),
+
               confirmingAssetsCount && ` (${confirmingAssetsCount})`,
             ]
               .filter(Boolean)
               .join('')}
-            onPress={() => {
-              toggleFocusedAssetItem({
-                assetItemToBlur: focusedAssetApproval,
-                isConfirmSelected: true,
-              });
-            }}
+            onPress={handleRevoke}
           />
         );
       }}
-      snapPoints={['90%']}
+      snapPoints={['75%']}
       bottomInset={1}>
       {focusedAssetApproval && (
-        <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
-          <BottomSheetHandlableView style={styles.staticArea}>
-            <ApprovalCardAsset assetItem={focusedAssetApproval} inDetailModal />
+        <AutoLockView as="View" style={[styles.bodyContainer]}>
+          <BottomSheetScrollView>
+            <View style={styles.staticArea}>
+              <ApprovalCardAsset
+                assetItem={focusedAssetApproval}
+                inDetailModal
+                style={styles.headerTitle}
+              />
 
-            <View style={styles.listHeadOps}>
-              <Text style={styles.listHeadText}>
-                Approved Contracts and Amount
-              </Text>
-              <MiniButton
-                disabled={!focusedAssetApproval?.list.length}
-                style={styles.miniBtn}
-                onPress={() =>
-                  onSelectAllAsset(
-                    focusedAssetApproval!,
-                    nextShouldPickAllFocusingAsset,
-                    'focusing',
-                  )
-                }>
-                {nextShouldPickAllFocusingAsset ? 'Select All' : 'Unselect All'}
-              </MiniButton>
+              <View style={styles.listHeadOps}>
+                <Text style={styles.listHeadText}>
+                  {t('page.approvals.approvedAssets')}
+                </Text>
+                <MiniButton
+                  disabled={!focusedAssetApproval?.list.length}
+                  style={styles.miniBtn}
+                  onPress={() =>
+                    onSelectAllAsset(
+                      focusedAssetApproval!,
+                      nextShouldPickAllFocusingAsset,
+                      'focusing',
+                    )
+                  }>
+                  {nextShouldPickAllFocusingAsset
+                    ? 'Select All'
+                    : 'Unselect All'}
+                </MiniButton>
+              </View>
             </View>
-          </BottomSheetHandlableView>
 
-          <BottomSheetSectionList
-            initialNumToRender={4}
-            maxToRenderPerBatch={20}
-            ListFooterComponent={
-              sectionList.length >= 20 ? (
-                <View style={styles.listFooterContainer}>
-                  {isFetchingNextPage ? <ActivityIndicator /> : null}
-                </View>
-              ) : null
-            }
-            style={[styles.scrollableView, styles.scrollableArea]}
-            contentContainerStyle={styles.listContainer}
-            renderItem={renderItem}
-            sections={sectionList}
-            keyExtractor={keyExtractor}
-            ListEmptyComponent={ListEmptyComponent}
-            stickySectionHeadersEnabled={false}
-            onEndReached={onEndReached}
-            onEndReachedThreshold={0.3}
-          />
+            <SectionList
+              scrollEnabled={false}
+              initialNumToRender={4}
+              maxToRenderPerBatch={20}
+              ListFooterComponent={
+                sectionList.length >= 20 ? (
+                  <View style={styles.listFooterContainer}>
+                    {isFetchingNextPage ? <ActivityIndicator /> : null}
+                  </View>
+                ) : null
+              }
+              style={[styles.scrollableView, styles.scrollableArea]}
+              contentContainerStyle={styles.listContainer}
+              renderItem={renderItem}
+              sections={sectionList}
+              keyExtractor={keyExtractor}
+              ListEmptyComponent={ListEmptyComponent}
+              stickySectionHeadersEnabled={false}
+              onEndReached={onEndReached}
+              onEndReachedThreshold={0.3}
+            />
+          </BottomSheetScrollView>
         </AutoLockView>
       )}
     </AppBottomSheetModal>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     sheetModalContainer: {
       paddingVertical: 0,
@@ -190,7 +222,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: 20,
     },
     bg: {
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
     },
     bodyContainer: {
       paddingVertical: 8,
@@ -202,18 +236,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingHorizontal: 16,
       flexShrink: 0,
     },
+    headerTitle: {
+      marginTop: 20,
+    },
     listHeadOps: {
-      marginTop: 30,
+      marginTop: 14,
       width: '100%',
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      marginBottom: 4,
     },
     listHeadText: {
       color: colors2024['neutral-foot'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '700',
+      lineHeight: 18,
     },
     miniBtn: {
       backgroundColor: 'transparent',
@@ -221,7 +260,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     scrollableArea: {
       flexShrink: 1,
       height: '100%',
-      marginTop: 12,
+      marginTop: 2,
       paddingBottom: 16,
     },
     scrollableView: {
@@ -230,10 +269,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
-      borderRadius: 24,
-      borderWidth: 1,
       overflow: 'hidden',
-      borderColor: colors2024['neutral-line'],
     },
     listFooterContainer: {
       flexDirection: 'row',

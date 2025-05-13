@@ -132,6 +132,7 @@ export const RootNames = {
   MultiSwap: 'MultiSwap',
   GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
+  BatchRevoke: 'BatchRevoke',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
   HistoryDetail: 'HistoryDetail',
@@ -372,6 +373,7 @@ function makeScreenSpecConfig() {
       SetPassword2024: bg1Default2024Conf,
       SetBiometricsAuthentication: bg1DefaultConf,
       Scanner: transparentDefault2024Conf,
+      BatchRevoke: transparentDefault2024Conf,
       // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
     };
 

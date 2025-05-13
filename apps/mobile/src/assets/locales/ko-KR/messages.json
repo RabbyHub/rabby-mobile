@@ -842,9 +842,6 @@
       }
     },
     "approvals": {
-      "RevokeApprovalModal": {
-        "contractTitle": "승인 세부정보"
-      },
       "search": {
         "placeholder": "이름/주소로 검색"
       },

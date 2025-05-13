@@ -117,6 +117,9 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ClearPendingPopup } from './components/ClearPendingPopup';
 import { OpenApiPopup } from './components/OpenApiPopup';
+import MockBatchRevokeModal, {
+  useDevMockBatchRevokeVisible,
+} from './sheetModals/DevMockBatchRevoke';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -467,6 +470,7 @@ function DevSettingsBlocks() {
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
+  const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -595,6 +599,13 @@ function DevSettingsBlocks() {
                   />
                 </View>
               ),
+            },
+            {
+              label: 'Mock Batch Revoke',
+              icon: RcCode,
+              onPress: () => {
+                setMockBatchRevokeVisible(true);
+              },
             },
           ],
         },
@@ -758,6 +769,7 @@ function DevSettingsBlocks() {
           setIsShowOpenApiPopup(false);
         }}
       />
+      <MockBatchRevokeModal />
     </>
   );
 }

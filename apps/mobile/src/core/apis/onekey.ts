@@ -150,7 +150,12 @@ export async function isConnected(
 
   keyring.setDeviceConnectId(detail.connectId);
 
-  return [true, detail.connectId];
+  try {
+    await keyring.trySearchDevice(true);
+    return [true, detail.connectId];
+  } catch (e) {
+    return [false, detail.connectId];
+  }
 }
 
 export function getMaxAccountLimit() {

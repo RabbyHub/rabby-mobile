@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Platform, Dimensions } from 'react-native';
+import { View, Platform } from 'react-native';
 import {
   Tabs,
   MaterialTabBar,
@@ -12,7 +12,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ApprovalsBottomArea } from './components/Layout';
-import { ApprovalsLayouts, IOS_SWIPABLE_LEFT_OFFSET } from './layout';
+import { ApprovalsLayouts } from './layout';
 import ListByAssets from './ListByAssets';
 import ListByContracts from './ListByContracts';
 import {
@@ -23,19 +23,17 @@ import {
 } from './useApprovalsPage';
 import BottomSheetApprovalContract from './components/BottomSheetApprovalContract';
 import BottomSheetApprovalAsset from './components/BottomSheetApprovalAsset';
-import { IS_IOS } from '@/core/native/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { ellipsisAddress } from '@/utils/address';
 import { HeaderRight } from './components/Headers/HeaderRight';
 import { HeaderCenter } from './components/Headers/HeaderCenter';
+import { ellipsisAddress } from '@/utils/address';
 const isAndroid = Platform.OS === 'android';
 
 const ApprovalScreenContainer = () => {
   const { currentAccount } = useCurrentAccount();
-  const [isSearching, setIsSearching] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const { filterType, searchKw, setSearchKw, setFilterType } =
+  const { filterType, setFilterType, searchKw, setSearchKw } =
     useApprovalsPage();
 
   const { t } = useTranslation();
@@ -81,6 +79,8 @@ const ApprovalScreenContainer = () => {
     ],
   );
 
+  const [isSearching, setIsSearching] = React.useState(false);
+
   const getHeaderTitle = React.useCallback(() => {
     return (
       <HeaderCenter
@@ -94,16 +94,10 @@ const ApprovalScreenContainer = () => {
         inputValue={searchKw}
         inputOnChange={setSearchKw}
         isSearching={isSearching}
+        currentAccount={currentAccount}
       />
     );
-  }, [
-    currentAccount?.address,
-    currentAccount?.aliasName,
-    filterType,
-    isSearching,
-    searchKw,
-    setSearchKw,
-  ]);
+  }, [currentAccount, filterType, isSearching, searchKw, setSearchKw]);
 
   const getHeaderRight = React.useCallback(() => {
     return (
@@ -123,12 +117,15 @@ const ApprovalScreenContainer = () => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
       headerRight: getHeaderRight,
+      headerStyle: {
+        backgroundColor: colors2024['neutral-bg-1'],
+      },
     });
   }, [
     setNavigationOptions,
     getHeaderTitle,
     currentAccount?.aliasName,
-    isSearching,
+    colors2024,
     getHeaderRight,
   ]);
 
@@ -137,10 +134,6 @@ const ApprovalScreenContainer = () => {
   }
   return (
     <Tabs.Container
-      {...(IS_IOS && {
-        // leave horizontal space to make swipable-to-back area larger
-        width: Dimensions.get('window').width - IOS_SWIPABLE_LEFT_OFFSET * 2,
-      })}
       initialTabName={filterType}
       onTabChange={({ tabName }) => {
         setFilterType(tabName as any);
@@ -153,7 +146,7 @@ const ApprovalScreenContainer = () => {
       containerStyle={[styles.tabContainer]}
       renderTabBar={renderTabBar}
       // disable horizontal swiping-scroll-to-switch
-      pagerProps={{ scrollEnabled: false }}
+      // pagerProps={{ scrollEnabled: false }}
       headerContainerStyle={styles.tabHeaderContainer}>
       <Tabs.Tab
         label={t('page.approvals.tab-switch.contract')}
@@ -176,7 +169,7 @@ export default function ApprovalsScreen() {
 
   const { loadApprovals } = approvalsPageCtx;
 
-  useEffect(() => {
+  React.useEffect(() => {
     loadApprovals();
   }, [loadApprovals]);
 
@@ -196,7 +189,7 @@ export default function ApprovalsScreen() {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   root: {
     // backgroundColor: colors2024['neutral-bg-2'],
   },
@@ -205,15 +198,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     position: 'relative',
   },
-  title: {
-    color: colors2024['neutral-title-1'],
-    fontWeight: '800',
-    fontSize: 20,
-    fontFamily: 'SF Pro Rounded',
-    lineHeight: 24,
-  },
   tabContainer: {
-    // backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   tabHeaderContainer: {
     shadowColor: 'transparent',

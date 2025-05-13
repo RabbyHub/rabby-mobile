@@ -1,22 +1,27 @@
 import React from 'react';
-import { View, Text, SectionListProps, ActivityIndicator } from 'react-native';
-
+import {
+  View,
+  Text,
+  SectionListProps,
+  ActivityIndicator,
+  SectionList,
+} from 'react-native';
 import { AppBottomSheetModal } from '@/components';
 import {
   BottomSheetModalProps,
-  BottomSheetSectionList,
+  BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 import {
   ContractApprovalItem,
+  useApprovalsPage,
   useFocusedApprovalOnApprovals,
   useRevokeContractSpenders,
 } from '../useApprovalsPage';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ApprovalCardContract from './ApprovalCardContract';
 import { MiniButton } from '@/components/Button';
 import { InModalApprovalContractRow } from './InModalApprovalContractRow';
-import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
@@ -24,6 +29,7 @@ import { parseContractApprovalListItem } from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
+import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 
 export default function BottomSheetApprovalContract({
   modalProps,
@@ -48,6 +54,26 @@ export default function BottomSheetApprovalContract({
     () => Object.keys(contractFocusingRevokeMap).length,
     [contractFocusingRevokeMap],
   );
+
+  const { displaySortedAssetsList } = useApprovalsPage();
+  const batchRevoke = useBatchRevoke();
+
+  const handleRevoke = React.useCallback(() => {
+    const currentRevokeList = Object.values(contractFocusingRevokeMap);
+
+    if (currentRevokeList.length > 1) {
+      modalRef?.current?.close();
+    }
+
+    batchRevoke(currentRevokeList, displaySortedAssetsList).finally(() => {
+      modalRef?.current?.close();
+    });
+  }, [
+    batchRevoke,
+    contractFocusingRevokeMap,
+    displaySortedAssetsList,
+    modalRef,
+  ]);
 
   const { styles } = useTheme2024({ getStyle });
 
@@ -86,7 +112,14 @@ export default function BottomSheetApprovalContract({
       }
 
       return (
-        <View key={`${chain}-${id}-${index}`} style={[styles.rowItem]}>
+        <View
+          key={`${chain}-${id}-${index}`}
+          style={[
+            styles.rowItem,
+            {
+              marginTop: index === 0 ? 0 : 8,
+            },
+          ]}>
           {/* {__DEV__ && (
             <Text
               style={[styles.rowOrderText, { marginRight: 4, flexShrink: 0 }]}>
@@ -134,78 +167,76 @@ export default function BottomSheetApprovalContract({
         return (
           <BottomSheetModalFooterButton
             title={[
-              'Confirm',
+              t('page.approvals.component.RevokeButton.btnText'),
               confirmingContractCount && ` (${confirmingContractCount})`,
             ]
               .filter(Boolean)
               .join('')}
-            onPress={() => {
-              toggleFocusedContractItem({
-                contractItemToBlur: focusedContractApproval,
-                isConfirmSelected: true,
-              });
-            }}
+            onPress={handleRevoke}
           />
         );
       }}
-      snapPoints={['90%']}
+      snapPoints={['75%']}
       bottomInset={1}>
       {focusedContractApproval && (
-        <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
-          <BottomSheetHandlableView style={styles.staticArea}>
-            <Text style={styles.headerTitle}>
-              {t('page.approvals.RevokeApprovalModal.contractTitle')}
-            </Text>
-            <ApprovalCardContract contract={focusedContractApproval} />
+        <AutoLockView as="View" style={[styles.bodyContainer]}>
+          <BottomSheetScrollView>
+            <View style={styles.staticArea}>
+              <ApprovalCardContract
+                style={styles.headerTitle}
+                contract={focusedContractApproval}
+              />
 
-            <View style={styles.listHeadOps}>
-              <Text style={styles.listHeadText}>
-                Approved Assets and Amount
-              </Text>
-              <MiniButton
-                disabled={!focusedContractApproval?.list.length}
-                style={styles.miniBtn}
-                onPress={() =>
-                  onSelectAllContractApprovals(
-                    focusedContractApproval!,
-                    nextShouldPickAllFocusingContracts,
-                    'focusing',
-                  )
-                }>
-                {nextShouldPickAllFocusingContracts
-                  ? 'Select All'
-                  : 'Unselect All'}
-              </MiniButton>
+              <View style={styles.listHeadOps}>
+                <Text style={styles.listHeadText}>
+                  {t('page.approvals.approvedContracts')}
+                </Text>
+                <MiniButton
+                  disabled={!focusedContractApproval?.list.length}
+                  style={styles.miniBtn}
+                  onPress={() =>
+                    onSelectAllContractApprovals(
+                      focusedContractApproval!,
+                      nextShouldPickAllFocusingContracts,
+                      'focusing',
+                    )
+                  }>
+                  {nextShouldPickAllFocusingContracts
+                    ? t('page.approvals.selectAll')
+                    : t('page.approvals.unselectAll')}
+                </MiniButton>
+              </View>
             </View>
-          </BottomSheetHandlableView>
 
-          <BottomSheetSectionList
-            initialNumToRender={4}
-            maxToRenderPerBatch={20}
-            ListFooterComponent={
-              sectionList.length >= 15 ? (
-                <View style={styles.listFooterContainer}>
-                  {isFetchingNextPage ? <ActivityIndicator /> : null}
-                </View>
-              ) : null
-            }
-            style={[styles.scrollableView, styles.scrollableArea]}
-            contentContainerStyle={styles.listContainer}
-            renderItem={renderItem}
-            sections={sectionList}
-            keyExtractor={keyExtractor}
-            ListEmptyComponent={ListEmptyComponent}
-            stickySectionHeadersEnabled={false}
-            onEndReached={onEndReached}
-            onEndReachedThreshold={0.3}
-          />
+            <SectionList
+              scrollEnabled={false}
+              initialNumToRender={4}
+              maxToRenderPerBatch={20}
+              ListFooterComponent={
+                sectionList.length >= 15 ? (
+                  <View style={styles.listFooterContainer}>
+                    {isFetchingNextPage ? <ActivityIndicator /> : null}
+                  </View>
+                ) : null
+              }
+              style={[styles.scrollableView, styles.scrollableArea]}
+              contentContainerStyle={styles.listContainer}
+              renderItem={renderItem}
+              sections={sectionList}
+              keyExtractor={keyExtractor}
+              ListEmptyComponent={ListEmptyComponent}
+              stickySectionHeadersEnabled={false}
+              onEndReached={onEndReached}
+              onEndReachedThreshold={0.3}
+            />
+          </BottomSheetScrollView>
         </AutoLockView>
       )}
     </AppBottomSheetModal>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => {
   return {
     sheetModalContainer: {
       paddingVertical: 0,
@@ -217,7 +248,9 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       height: 20,
     },
     bg: {
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
     },
     bodyContainer: {
       paddingVertical: 8,
@@ -229,27 +262,24 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       paddingHorizontal: 16,
       flexShrink: 0,
     },
+
     headerTitle: {
-      marginTop: 8,
-      marginBottom: 30,
-      fontSize: 20,
-      fontWeight: '800',
-      color: colors2024['neutral-title-1'],
-      textAlign: 'center',
-      fontFamily: 'SF Pro Rounded',
+      marginTop: 20,
     },
     listHeadOps: {
-      marginTop: 30,
+      marginTop: 14,
       width: '100%',
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      marginBottom: 4,
     },
     listHeadText: {
       color: colors2024['neutral-foot'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontWeight: '700',
+      lineHeight: 18,
     },
     miniBtn: {
       backgroundColor: 'transparent',
@@ -257,7 +287,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
     scrollableArea: {
       flexShrink: 1,
       height: '100%',
-      marginTop: 12,
+      marginTop: 2,
       paddingBottom: 16,
     },
     scrollableView: {
@@ -266,10 +296,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
-      borderRadius: 24,
-      borderWidth: 1,
       overflow: 'hidden',
-      borderColor: colors2024['neutral-line'],
     },
     listFooterContainer: {
       flexDirection: 'row',

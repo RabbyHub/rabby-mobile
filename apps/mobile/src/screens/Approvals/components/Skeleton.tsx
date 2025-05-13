@@ -33,20 +33,18 @@ export const SkeletonListByContracts = memo(() => {
   return (
     <View
       style={{
-        paddingHorizontal:
-          ApprovalsLayouts.innerContainerHorizontalOffset -
-          IOS_SWIPABLE_LEFT_OFFSET,
+        paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
       }}>
-      {Array(5)
+      {Array(8)
         .fill(0)
         .map((e, i) => (
           <View
             key={i}
             style={[
               cardStyles.container,
-              { height: 122 },
+              { height: 74 },
               i > 0 && {
-                marginTop: 12,
+                marginTop: 8,
               },
             ]}>
             <View
@@ -56,17 +54,11 @@ export const SkeletonListByContracts = memo(() => {
                 flexDirection: 'column',
                 justifyContent: 'space-evenly',
               }}>
-              <View
-                style={[
-                  skeletonStyles.skeletonFloor,
-                  {
-                    marginBottom: 14,
-                  },
-                ]}>
+              <View style={[skeletonStyles.skeletonFloor]}>
                 <Skeleton
-                  width={27}
+                  width={46}
                   animation="wave"
-                  height={27}
+                  height={46}
                   circle
                   LinearGradientComponent={LinearGradient}
                   style={[skeletonStyles.skeletonBg]}
@@ -82,32 +74,6 @@ export const SkeletonListByContracts = memo(() => {
                   ]}
                 />
               </View>
-              <View
-                style={[
-                  skeletonStyles.skeletonFloor,
-                  {
-                    marginBottom: 5,
-                  },
-                ]}>
-                <Skeleton
-                  animation="wave"
-                  width={'100%'}
-                  circle
-                  LinearGradientComponent={LinearGradient}
-                  height={22}
-                  style={[skeletonStyles.skeletonBg]}
-                />
-              </View>
-              <View style={[skeletonStyles.skeletonFloor]}>
-                <Skeleton
-                  height={22}
-                  animation="wave"
-                  width={'100%'}
-                  LinearGradientComponent={LinearGradient}
-                  circle
-                  style={skeletonStyles.skeletonBg}
-                />
-              </View>
             </View>
           </View>
         ))}
@@ -119,13 +85,17 @@ export const SkeletonListByAssets = memo(() => {
   const { styles: cardStyles } = useTheme2024({ getStyle: getCardStyles });
   return (
     <View>
-      {Array(15)
+      {Array(8)
         .fill(0)
         .map((e, i) => (
           <View
             key={i}
             style={[
               cardStyles.container,
+              { height: 74 },
+              i > 0 && {
+                marginTop: 8,
+              },
               {
                 height: ApprovalsLayouts.assetsItemHeight,
                 borderWidth: 0,

@@ -773,9 +773,40 @@
           }
         }
       },
-      "RevokeApprovalModal": {
-        "contractTitle": "Approval Details"
-      }
+      "revokeModal": {
+        "gasNotEnough": "Insufficient Gas to submit",
+        "gasTooHigh": "Gas fee is high",
+        "submitTxFailed": "Fail to Submit",
+        "defaultFailed": "Transaction failed",
+        "stillRevoke": "Still Revoke",
+        "paused": "Paused",
+        "simulationFailed": "Simulation Failed",
+        "approvalCount": "{{count}} approval",
+        "approvalCount_one": "{{count}} approval",
+        "approvalCount_other": "{{count}} approvals",
+        "iGotIt": "I Got it"
+      },
+      "contractAddress": "Contract Address",
+      "allApprovals": "All Approvals",
+      "approvedAssetsAndAmount": "Approved Assets and Amount",
+      "unselectAll": "Unselect All",
+      "selectAll": "Select All",
+      "approvedContracts": "Approved Assets Amount & Balance",
+      "approvedAssets": "Approved Contracts & Amount",
+      "myBalance": "My Balance",
+      "unknownContract": "Unknown Contract",
+      "startRevoke": "Start Revoke",
+      "asset": "Asset",
+      "revokeFrom": "Revoke From",
+      "gasFee": "Gas Fee",
+      "continueRevoke": "Continue",
+      "pauseRevoke": "Pause",
+      "revokeCompleted": "Done",
+      "errorReason": {
+        "title": "Fail to Revoke"
+      },
+      "stopTheRevokeProcess": "Stop the revoke process?",
+      "leavingThisPageWillStopTheRevokeProcess": "Leaving this page will stop the revoke process."
     },
     "gasTopUp": {
       "No_Tokens": "No Tokens",

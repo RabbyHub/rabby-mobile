@@ -24,6 +24,7 @@ import { SectionListProps } from 'react-native';
 import ApprovalContractRow from './components/ApprovalContractRow';
 import { SkeletonListByContracts } from './components/Skeleton';
 import { ApprovalsLayouts, IOS_SWIPABLE_LEFT_OFFSET } from './layout';
+import { useFocusEffect } from '@react-navigation/native';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -53,11 +54,10 @@ export default function ListByContracts() {
         <View
           style={[
             styles.itemWrapper,
-            isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
+            isFirstItem ? { marginTop: 0 } : { marginTop: 8 },
             {
               paddingHorizontal:
-                ApprovalsLayouts.innerContainerHorizontalOffset -
-                IOS_SWIPABLE_LEFT_OFFSET,
+                ApprovalsLayouts.innerContainerHorizontalOffset,
             },
           ]}>
           <ApprovalContractRow contract={item} />
@@ -90,13 +90,19 @@ export default function ListByContracts() {
     resetPage();
 
     try {
-      await loadApprovals();
       resetRevokeMaps('contract');
+      await loadApprovals();
     } catch (err) {
       console.error(err);
     } finally {
     }
   }, [resetRevokeMaps, resetPage, loadApprovals]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   const ListEmptyComponent = React.useMemo(() => {
     return isLoading ? (
@@ -139,7 +145,7 @@ export default function ListByContracts() {
         // makeDebugBorder('red')
       ]}>
       <Tabs.SectionList<ContractApprovalItem>
-        initialNumToRender={4}
+        initialNumToRender={20}
         maxToRenderPerBatch={20}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>

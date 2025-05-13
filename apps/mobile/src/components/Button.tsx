@@ -18,7 +18,6 @@ import {
 
 import { useThemeColors, useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { renderText } from '@/utils/renderNode';
-import TouchableView from './Touchable/TouchableView';
 import { createGetStyles2024 } from '@/utils/styles';
 
 export type ButtonProps = TouchableOpacityProps &
@@ -355,7 +354,7 @@ export function MiniButton({
   title = children,
   textStyle,
   ...props
-}: React.ComponentProps<typeof TouchableView> & {
+}: React.ComponentProps<typeof TouchableOpacity> & {
   children?: string;
   title?: string;
   textStyle?: StyleProp<TextStyle>;
@@ -363,9 +362,9 @@ export function MiniButton({
   const { styles } = useTheme2024({ getStyle: getMiniButtonStyle });
 
   return (
-    <TouchableView {...props} style={[styles.miniBtnView, props.style]}>
+    <TouchableOpacity {...props} style={[styles.miniBtnView, props.style]}>
       {renderText(title, { style: [styles.miniBtnTextView, textStyle] })}
-    </TouchableView>
+    </TouchableOpacity>
   );
 }
 

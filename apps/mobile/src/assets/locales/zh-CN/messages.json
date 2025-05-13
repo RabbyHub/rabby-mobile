@@ -819,9 +819,6 @@
           }
         }
       },
-      "RevokeApprovalModal": {
-        "contractTitle": "批准详情"
-      },
       "search": {
         "placeholder": "通过名称/地址搜索"
       },

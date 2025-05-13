@@ -1,33 +1,26 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   Platform,
   View,
   Text,
   Dimensions,
   StatusBar,
-  Modal,
   TouchableOpacity,
 } from 'react-native';
 import { useTheme2024, useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { Button } from '@/components2024/Button';
-import { useTranslation, Trans } from 'react-i18next';
-
+import { useTranslation } from 'react-i18next';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-
 import { RcIconPartChecked } from '../icons';
 import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
-
 import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
-import { apiApprovals } from '@/core/apis';
-import { useRefState } from '@/hooks/common/useRefState';
 import { ApprovalsLayouts } from '../layout';
 import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
 import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
-
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
-import { useApprovalAlertCounts } from '@/screens/Home/hooks/approvals';
+import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
+
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
 
@@ -89,18 +82,10 @@ export function ApprovalsBottomArea() {
 
   const { styles } = useTheme2024({ getStyle });
 
-  const [showModal, setShowModal] = useState(false);
+  const { filterType } = useApprovalsPage();
+  const { contractRevokeMap, assetRevokeMap } = useRevokeApprovals();
 
-  const { forceUpdate } = useApprovalAlertCounts(10 * 60 * 1000);
-  const {
-    filterType,
-    loadApprovals,
-    safeSizeInfo: { safeSizes },
-  } = useApprovalsPage();
-  const { contractRevokeMap, assetRevokeMap, resetRevokeMaps } =
-    useRevokeApprovals();
-
-  const timeoutId = React.useRef<ReturnType<typeof setTimeout>>();
+  const { displaySortedAssetsList } = useApprovalsPage();
 
   const { currentRevokeList, revokeSummary } = React.useMemo(() => {
     const list =
@@ -117,11 +102,8 @@ export function ApprovalsBottomArea() {
 
   const { couldSubmit, buttonTitle } = useMemo(() => {
     const revokeCount = revokeSummary.statics.txCount;
-    const buttonTitle = [
-      `${t('page.approvals.component.RevokeButton.btnText', {
-        // count: revokeList.length,
-        // count: revokeCount,
-      })}`,
+    const _buttonTitle = [
+      t('page.approvals.component.RevokeButton.btnText'),
       revokeCount && ` (${currentRevokeList.length})`,
     ]
       .filter(Boolean)
@@ -129,69 +111,20 @@ export function ApprovalsBottomArea() {
 
     return {
       couldSubmit: !!revokeCount,
-      buttonTitle,
+      buttonTitle: _buttonTitle,
     };
   }, [revokeSummary.statics.txCount, t, currentRevokeList.length]);
 
-  const {
-    state: isSubmitLoading,
-    setRefState: setIsSubmitLoading,
-    stateRef: isSubmitLoadingRef,
-  } = useRefState(false);
   const { safeOffBottom } = useSafeSizes();
 
-  useEffect(() => {
-    return () => {
-      if (timeoutId.current) {
-        clearTimeout(timeoutId.current);
-      }
-    };
-  }, []);
+  const batchRevoke = useBatchRevoke();
 
   const handleRevoke = React.useCallback(() => {
-    setShowModal(false);
-    if (isSubmitLoadingRef.current) {
-      return;
-    }
-    setIsSubmitLoading(true, true);
-
-    apiApprovals
-      .revoke({ list: currentRevokeList })
-      .then(() => {
-        if (timeoutId.current) {
-          clearTimeout(timeoutId.current);
-          timeoutId.current = undefined;
-        }
-        forceUpdate();
-        timeoutId.current = setTimeout(() => {
-          loadApprovals();
-        }, 1000);
-        resetRevokeMaps();
-      })
-      .catch(err => {
-        console.error(err);
-      })
-      .finally(() => {
-        setIsSubmitLoading(false, true);
-      });
-  }, [
-    isSubmitLoadingRef,
-    setIsSubmitLoading,
-    currentRevokeList,
-    forceUpdate,
-    resetRevokeMaps,
-    loadApprovals,
-  ]);
+    batchRevoke(currentRevokeList, displaySortedAssetsList);
+  }, [batchRevoke, currentRevokeList, displaySortedAssetsList]);
 
   const onRevoke = () => {
-    const hasPackedPermit2Sign = Object.values(
-      revokeSummary.permit2Revokes,
-    ).some(x => x.tokenSpenders.length > 1);
-
-    if (!hasPackedPermit2Sign) {
-      return handleRevoke();
-    }
-    setShowModal(true);
+    return handleRevoke();
   };
 
   return (
@@ -203,44 +136,9 @@ export function ApprovalsBottomArea() {
       <Button
         disabled={!couldSubmit}
         title={buttonTitle}
-        loading={isSubmitLoading}
         onPress={onRevoke}
+        buttonStyle={styles.buttonContainer}
       />
-      <Modal
-        visible={showModal}
-        transparent={true}
-        onRequestClose={() => setShowModal(false)}>
-        <TouchableOpacity
-          style={styles.modalContainer}
-          onPress={() => setShowModal(false)}>
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.modalContent}
-            onPress={e => e.stopPropagation()}>
-            <Text style={styles.modalTitle}>
-              <Trans
-                i18nKey="page.approvals.component.RevokeButton.permit2Batch.modalTitle"
-                values={{ count: revokeSummary.statics.txCount }}>
-                A total of{' '}
-                <Text style={styles.highlightText}>
-                  {revokeSummary.statics.txCount}
-                </Text>{' '}
-                signature is required
-              </Trans>
-            </Text>
-            <Text style={styles.modalBody}>
-              {t(
-                'page.approvals.component.RevokeButton.permit2Batch.modalContent',
-              )}
-            </Text>
-            <FooterButtonGroup
-              style={styles.btns}
-              onCancel={() => setShowModal(false)}
-              onConfirm={handleRevoke}
-            />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
     </View>
   );
 }
@@ -257,12 +155,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 
   buttonContainer: {
-    width: '100%',
-    height: 52,
-    borderRadius: 6,
-    ...(!isAndroid && {
-      marginBottom: 16,
-    }),
+    borderRadius: 16,
   },
 
   buttonText: {
@@ -467,6 +360,7 @@ export function BottomSheetModalFooterButton({
           styles.footerButtonContainer,
           buttonProps?.containerStyle,
         ]}
+        buttonStyle={[styles.buttonStyle]}
       />
     </View>
   );
@@ -487,9 +381,11 @@ const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
       alignItems: 'center',
     },
     footerButtonContainer: {
-      minWidth: 248,
-      height: 52,
       width: '100%',
+      height: 56,
+    },
+    buttonStyle: {
+      borderRadius: 16,
     },
     footerText: {
       color: colors['neutral-title2'],

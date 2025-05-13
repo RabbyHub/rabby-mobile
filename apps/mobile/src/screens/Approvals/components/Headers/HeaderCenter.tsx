@@ -1,8 +1,10 @@
-import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { TopSearch } from '../TopSearch';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 interface IProps {
   isSearching?: boolean;
@@ -10,6 +12,7 @@ interface IProps {
   type: 'contract' | 'assets';
   inputValue: string;
   inputOnChange: (s: string) => void;
+  currentAccount?: KeyringAccountWithAlias | null;
 }
 export const HeaderCenter = (props: IProps) => {
   const { styles } = useTheme2024({ getStyle });
@@ -18,9 +21,17 @@ export const HeaderCenter = (props: IProps) => {
       {props.isSearching ? (
         <TopSearch value={props.inputValue} onChange={props.inputOnChange} />
       ) : (
-        <HeaderTitleText2024 style={styles.title}>
-          {props.textTitle}
-        </HeaderTitleText2024>
+        <View style={styles.title}>
+          <WalletIcon
+            type={props.currentAccount?.brandName as KEYRING_TYPE}
+            width={25}
+            height={25}
+            borderRadius={6}
+          />
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.titleText}>
+            {props.currentAccount?.aliasName || props.currentAccount?.brandName}
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -31,6 +42,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
   },
   title: {
+    gap: 8,
+    flexDirection: 'row',
+  },
+  titleText: {
     color: colors2024['neutral-title-1'],
     fontWeight: '800',
     fontSize: 20,

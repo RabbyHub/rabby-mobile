@@ -785,9 +785,6 @@
           }
         }
       },
-      "RevokeApprovalModal": {
-        "contractTitle": "Detalles de Approval"
-      },
       "tableConfig": {
         "byAssets": {
           "columnCell": {

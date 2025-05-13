@@ -768,9 +768,6 @@
             }
           }
         }
-      },
-      "RevokeApprovalModal": {
-        "contractTitle": "Onay Detayları"
       }
     },
     "gasTopUp": {

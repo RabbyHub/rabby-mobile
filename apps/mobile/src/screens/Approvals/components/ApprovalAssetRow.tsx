@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, Dimensions } from 'react-native';
-
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   type AssetApprovalItem,
@@ -9,16 +8,14 @@ import {
   useFocusedApprovalOnApprovals,
   useRevokeAssetSpenders,
 } from '../useApprovalsPage';
-
-import { RcIconRightEntryCC, RcIconUnknown } from '../icons';
-import { SelectionCheckbox, getSelectableContainerStyle } from './Layout';
-import { ApprovalsLayouts } from '../layout';
-import TouchableView from '@/components/Touchable/TouchableView';
+import { RcIconRightEntryMiniCC, RcIconUnknown } from '../icons';
+import { SelectionCheckbox } from './Layout';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import ApprovalNFTBadge from './NFTBadge';
 import { parseApprovalSpenderSelection } from '../utils';
 import { HighlightText } from '@/components2024/HighlightText';
+import { useTranslation } from 'react-i18next';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -29,17 +26,17 @@ export const ContractFloorLayouts = {
 function RightTouchableView({
   children,
   ...props
-}: React.ComponentProps<typeof TouchableView>) {
+}: React.ComponentProps<typeof TouchableOpacity>) {
   const { styles } = useTheme2024({
     getStyle: getAssetsApprovalRowStyles,
   });
 
   return (
-    <TouchableView
+    <TouchableOpacity
       {...props}
       style={[styles.floorRight, { height: '100%' }, props.style]}>
       <View style={styles.rowCenter}>{children}</View>
-    </TouchableView>
+    </TouchableOpacity>
   );
 }
 
@@ -48,6 +45,7 @@ function AssetsApprovalRowProto({
 }: {
   assetApproval: AssetApprovalItem;
 } & RNViewProps) {
+  const { t } = useTranslation();
   const { colors, styles, colors2024 } = useTheme2024({
     getStyle: getAssetsApprovalRowStyles,
   });
@@ -100,7 +98,7 @@ function AssetsApprovalRowProto({
   }, [assetApproval]);
 
   return (
-    <TouchableView
+    <TouchableOpacity
       style={[
         styles.container,
         (isSelectedAll || isSelectedPartial) && styles.selectedContainer,
@@ -119,76 +117,74 @@ function AssetsApprovalRowProto({
           />
           <View style={styles.basicInfo}>
             <View style={styles.basicInfoF1}>
-              {assetApproval?.logo_url ? (
-                <AssetAvatar
-                  style={styles.chainIcon}
-                  logo={assetApproval?.logo_url}
-                  logoStyle={{ backgroundColor: colors['neutral-foot'] }}
-                  chain={assetApproval?.chain}
-                  chainIconPosition="tr"
-                  size={40}
-                  chainSize={16}
-                />
-              ) : (
-                <RcIconUnknown
-                  width={40}
-                  height={40}
-                  style={styles.chainIcon}
-                />
-              )}
-              <HighlightText
-                style={[
-                  styles.assetNameText,
-                  { flexShrink: 1, maxWidth: '85%' },
-                ]}
-                highlightStyle={styles.highlightText}
-                numberOfLines={1}
-                searchWords={[searchKw]}
-                textToHighlight={approvalInfo.floor1Text}
+              <AssetAvatar
+                style={styles.chainIcon}
+                logo={assetApproval?.logo_url}
+                logoStyle={{ backgroundColor: colors2024['neutral-foot'] }}
+                chain={assetApproval?.chain}
+                chainIconPosition="br"
+                size={46}
+                chainSize={16}
               />
             </View>
-            {approvalInfo.hasFloor2 && (
-              <View style={styles.basicInfoF2}>
-                {/* <Text style={styles.floor2Text}>{approvalInfo.floor2Text}</Text> */}
-                {approvalInfo.nftType && (
-                  <ApprovalNFTBadge type={approvalInfo.nftType} />
-                )}
-              </View>
-            )}
           </View>
+        </View>
+        <View style={styles.title}>
+          <HighlightText
+            style={[styles.assetNameText, { flexShrink: 1 }]}
+            highlightStyle={styles.highlightText}
+            numberOfLines={1}
+            searchWords={[searchKw]}
+            textToHighlight={approvalInfo.floor1Text}
+          />
+          {approvalInfo.hasFloor2 && (
+            <View style={styles.basicInfoF2}>
+              {/* <Text style={styles.floor2Text}>{approvalInfo.floor2Text}</Text> */}
+              {approvalInfo.nftType && (
+                <ApprovalNFTBadge type={approvalInfo.nftType} />
+              )}
+            </View>
+          )}
         </View>
         <RightTouchableView
           onPress={evt => {
             toggleFocusedAssetItem({ assetItem: assetApproval });
             evt.stopPropagation();
           }}>
-          <Text style={styles.entryText}>{assetApproval.list.length}</Text>
-          <RcIconRightEntryCC
-            style={{ marginLeft: 4, top: 1 }}
-            width={16}
-            height={16}
+          <Text style={styles.entryText}>
+            {t('page.approvals.revokeModal.approvalCount', {
+              count: assetApproval.list.length,
+            })}
+          </Text>
+          <RcIconRightEntryMiniCC
+            width={14}
+            height={14}
             color={colors2024['neutral-foot']}
           />
         </RightTouchableView>
       </View>
-    </TouchableView>
+    </TouchableOpacity>
   );
 }
 
 export const getAssetsApprovalRowStyles = createGetStyles2024(ctx => {
-  const { colors, colors2024 } = ctx;
+  const { colors, colors2024, isLight } = ctx;
 
   return {
     container: {
-      backgroundColor: colors2024['neutral-bg-1'],
+      borderRadius: 16,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       flexDirection: 'column',
       justifyContent: 'center',
-      height: ApprovalsLayouts.assetsItemHeight,
+      paddingVertical: 14,
+      paddingHorizontal: 12,
       width: '100%',
-      padding: ApprovalsLayouts.assetsItemPadding,
-      maxWidth:
-        Dimensions.get('window').width -
-        ApprovalsLayouts.innerContainerHorizontalOffset * 2,
+      borderStyle: 'solid',
+      borderWidth: 1,
+      borderColor: 'transparent',
+      height: 74,
     },
     selectedContainer: {
       backgroundColor: colors2024['brand-light-1'],
@@ -239,7 +235,7 @@ export const getAssetsApprovalRowStyles = createGetStyles2024(ctx => {
       lineHeight: 18,
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
-      color: colors2024['neutral-body'],
+      color: colors2024['neutral-title-1'],
     },
     rowCenter: {
       flexDirection: 'row',
@@ -268,19 +264,21 @@ export const getAssetsApprovalRowStyles = createGetStyles2024(ctx => {
       fontSize: 16,
       lineHeight: 20,
       fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     highlightText: {
       color: colors2024['brand-default'],
     },
-    contractName: {
-      color: colors['neutral-foot'],
-      fontSize: 14,
-      marginLeft: 6,
-    },
+
     contractCheckbox: {
       marginRight: 12,
       width: 20,
       height: 20,
+    },
+    title: {
+      flex: 1,
+      height: 50,
+      justifyContent: 'center',
     },
   };
 });

@@ -19,6 +19,7 @@ import {
   useRevokeApprovals,
 } from './useApprovalsPage';
 import { Tabs } from 'react-native-collapsible-tab-view';
+import { useFocusEffect } from '@react-navigation/native';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { SectionListProps } from 'react-native';
 import { SkeletonListByAssets } from './components/Skeleton';
@@ -48,9 +49,15 @@ export default function ListByAssets() {
   const renderItem = React.useCallback<
     SectionListProps<AssetApprovalItem>['renderItem'] & object
   >(
-    ({ item }) => {
+    ({ item, index }) => {
+      const isFirstItem = index === 0;
+
       return (
-        <View style={styles.itemWrapper}>
+        <View
+          style={[
+            styles.itemWrapper,
+            isFirstItem ? { marginTop: 0 } : { marginTop: 8 },
+          ]}>
           <ApprovalAssetRow assetApproval={item} />
         </View>
       );
@@ -81,13 +88,19 @@ export default function ListByAssets() {
     resetPage();
 
     try {
-      await loadApprovals();
       resetRevokeMaps('assets');
+      await loadApprovals();
     } catch (err) {
       console.error(err);
     } finally {
     }
   }, [resetRevokeMaps, resetPage, loadApprovals]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   const ListEmptyComponent = React.useMemo(() => {
     return isLoading ? (
@@ -130,7 +143,7 @@ export default function ListByAssets() {
         // makeDebugBorder('red')
       ]}>
       <Tabs.SectionList<AssetApprovalItem>
-        initialNumToRender={4}
+        initialNumToRender={20}
         maxToRenderPerBatch={20}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
@@ -140,15 +153,10 @@ export default function ListByAssets() {
         style={[
           styles.list,
           {
-            paddingHorizontal:
-              ApprovalsLayouts.innerContainerHorizontalOffset -
-              IOS_SWIPABLE_LEFT_OFFSET,
+            paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
           },
         ]}
-        contentContainerStyle={[
-          styles.listContainer,
-          !!sectionList.length && styles.round,
-        ]}
+        contentContainerStyle={styles.listContainer}
         renderItem={renderItem}
         // renderSectionHeader={renderSectionHeader}
         renderSectionFooter={() => <View style={styles.footContainer} />}
@@ -185,31 +193,19 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => {
       flexDirection: 'column',
     },
 
-    list: {
-      paddingTop: 20,
-      paddingBottom: 0,
-      paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
-    },
-    round: {
-      borderRadius: 24,
-      overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: colors2024['neutral-line'],
-    },
-    listContainer: {
-      backgroundColor: colors2024['neutral-bg-1'],
-      // repair top offset due to special contentInset in iOS
-      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
-      // height: '100%',
-      paddingTop: 0,
-      // ...makeDebugBorder('yellow'),
-    },
+    list: {},
     listFooterContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       height: ApprovalsLayouts.listFooterComponentHeight,
       // ...makeDebugBorder('green'),
+    },
+    listContainer: {
+      paddingTop: 20,
+      paddingBottom: 0,
+      // repair top offset due to special contentInset in iOS
+      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
     },
     itemWrapper: {
       width: '100%',

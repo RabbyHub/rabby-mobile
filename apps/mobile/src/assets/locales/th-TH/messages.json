@@ -423,9 +423,6 @@
           }
         }
       },
-      "RevokeApprovalModal": {
-        "contractTitle": "รายละเอียดการอนุมัติ"
-      },
       "tableConfig": {
         "byAssets": {
           "columnCell": {

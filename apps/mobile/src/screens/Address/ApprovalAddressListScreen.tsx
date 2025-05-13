@@ -126,9 +126,7 @@ export function ApprovalAddressListScreen(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(() => ({
-  root: {
-    paddingBottom: 56,
-  },
+  root: {},
   listContainer: {
     flex: 1,
     paddingHorizontal: 20,

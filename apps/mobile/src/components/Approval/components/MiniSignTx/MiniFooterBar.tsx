@@ -25,6 +25,10 @@ import { GasLessActivityToSign } from '../FooterBar/GasLessComponents/GasLessAct
 import { GasLessNotEnough } from '../FooterBar/GasLessComponents/GasLessNotEnough';
 import { MiniActionGroup } from './MiniActionGroup';
 import { MiniActionStatus } from './MiniActionStatus';
+import {
+  EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY,
+  eventBus,
+} from '@/utils/events';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -320,6 +324,15 @@ export const MiniFooterBar: React.FC<Props> = ({
     onChangeGasAccount,
     showGasLess,
   ]);
+
+  useEffect(() => {
+    if (!gasAccountCanPay) {
+      eventBus.emit(
+        EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY,
+        payGasByGasAccount,
+      );
+    }
+  }, [gasAccountCanPay, payGasByGasAccount]);
 
   if (!account) {
     return null;
