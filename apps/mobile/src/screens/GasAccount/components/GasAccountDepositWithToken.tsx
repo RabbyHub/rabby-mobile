@@ -626,125 +626,129 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
     //   // style={styles.container}
     //   contentContainerStyle={styles.container}>
     <View style={styles.container}>
-      <View style={styles.containerHorizontal}>
-        <Text style={styles.title}>
-          {t('page.gasAccount.depositPopup.title')}
-        </Text>
-        <Text style={styles.description}>
-          {t('page.gasAccount.depositPopup.desc')}
-        </Text>
+      <BottomSheetScrollView style={styles.popup}>
+        <View style={styles.containerHorizontal}>
+          <Text style={styles.title}>
+            {t('page.gasAccount.depositPopup.title')}
+          </Text>
+          <Text style={styles.description}>
+            {t('page.gasAccount.depositPopup.desc')}
+          </Text>
 
-        <Text style={styles.tokenLabel}>
-          {t('page.gasAccount.depositPopup.amount')}
-        </Text>
-        <View style={styles.amountSelector}>
-          {amountList.map(amount => (
-            <CustomTouchableOpacity
-              key={amount}
-              onPress={() => setAmount(amount)}
+          <Text style={styles.tokenLabel}>
+            {t('page.gasAccount.depositPopup.amount')}
+          </Text>
+          <View style={styles.amountSelector}>
+            {amountList.map(amount => (
+              <CustomTouchableOpacity
+                key={amount}
+                onPress={() => setAmount(amount)}
+                style={[
+                  styles.amountButton,
+                  selectedAmount === amount && styles.selectedAmountButton,
+                ]}>
+                <Text style={styles.amountText}>${amount}</Text>
+              </CustomTouchableOpacity>
+            ))}
+
+            <BottomSheetTextInput
+              placeholder="$1-500"
+              placeholderTextColor={
+                selectedAmount === CUSTOM_AMOUNT
+                  ? colors2024['neutral-info']
+                  : colors2024['neutral-body']
+              }
+              value={formattedValue}
+              onFocus={selectCustomAmount}
+              onChangeText={onInputChange}
               style={[
-                styles.amountButton,
-                selectedAmount === amount && styles.selectedAmountButton,
-              ]}>
-              <Text style={styles.amountText}>${amount}</Text>
-            </CustomTouchableOpacity>
-          ))}
+                styles.input,
+                selectedAmount === CUSTOM_AMOUNT
+                  ? {
+                      borderColor: colors2024['brand-default'],
+                    }
+                  : {},
+                errorTips ? { borderColor: colors2024['red-default'] } : {},
+              ]}
+              keyboardType="numeric"
+              inputMode="numeric"
+              onBlur={() => Keyboard.dismiss()}
+            />
+          </View>
 
-          <BottomSheetTextInput
-            placeholder="$1-500"
-            placeholderTextColor={
-              selectedAmount === CUSTOM_AMOUNT
-                ? colors2024['neutral-info']
-                : colors2024['neutral-body']
-            }
-            value={formattedValue}
-            onFocus={selectCustomAmount}
-            onChangeText={onInputChange}
-            style={[
-              styles.input,
-              selectedAmount === CUSTOM_AMOUNT
-                ? {
-                    borderColor: colors2024['brand-default'],
-                  }
-                : {},
-              errorTips ? { borderColor: colors2024['red-default'] } : {},
-            ]}
-            keyboardType="numeric"
-            inputMode="numeric"
-            onBlur={() => Keyboard.dismiss()}
-          />
-        </View>
+          {errorTips && <Text style={styles.errorTips}>{errorTips}</Text>}
 
-        {errorTips && <Text style={styles.errorTips}>{errorTips}</Text>}
-
-        <Text style={styles.tokenLabel}>
-          {t('page.gasAccount.depositPopup.paymentAddress')}
-        </Text>
-        <ListItem
-          disabled={!amountPass}
-          title=""
-          content={
-            <AddressItem account={depositAccount}>
-              {({ WalletIcon, WalletAddress }) => (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    gap: 8,
-                    alignItems: 'center',
-                  }}>
-                  <WalletIcon
+          <Text style={styles.tokenLabel}>
+            {t('page.gasAccount.depositPopup.paymentAddress')}
+          </Text>
+          <ListItem
+            disabled={!amountPass}
+            title=""
+            content={
+              <AddressItem account={depositAccount}>
+                {({ WalletIcon, WalletAddress }) => (
+                  <View
                     style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: 8,
-                    }}
-                  />
-                  <View style={{ gap: 3 }}>
-                    <Text style={styles.walletName}>{aliasName}</Text>
-                    <WalletAddress
+                      flexDirection: 'row',
+                      gap: 8,
+                      alignItems: 'center',
+                    }}>
+                    <WalletIcon
                       style={{
-                        fontSize: 12,
-                        fontWeight: '500',
-                        lineHeight: 16,
+                        width: 30,
+                        height: 30,
+                        borderRadius: 8,
                       }}
                     />
+                    <View style={{ gap: 3 }}>
+                      <Text style={styles.walletName}>{aliasName}</Text>
+                      <WalletAddress
+                        style={{
+                          fontSize: 12,
+                          fontWeight: '500',
+                          lineHeight: 16,
+                        }}
+                      />
+                    </View>
                   </View>
+                )}
+              </AddressItem>
+            }
+            style={[styles.tokenContainer]}
+            onPress={openAccountList}
+          />
+
+          <Text style={styles.tokenLabel}>
+            {t('page.gasAccount.depositPopup.token')}
+          </Text>
+          <ListItem
+            disabled={!amountPass}
+            title=""
+            content={
+              token ? (
+                <View style={styles.tokenContent}>
+                  <AssetAvatar
+                    size={30}
+                    chain={token.chain}
+                    logo={token.logo_url}
+                    chainSize={12}
+                  />
+                  <Text style={styles.tokenSymbol}>
+                    {getTokenSymbol(token)}
+                  </Text>
                 </View>
-              )}
-            </AddressItem>
-          }
-          style={[styles.tokenContainer]}
-          onPress={openAccountList}
-        />
-
-        <Text style={styles.tokenLabel}>
-          {t('page.gasAccount.depositPopup.token')}
-        </Text>
-        <ListItem
-          disabled={!amountPass}
-          title=""
-          content={
-            token ? (
-              <View style={styles.tokenContent}>
-                <AssetAvatar
-                  size={30}
-                  chain={token.chain}
-                  logo={token.logo_url}
-                  chainSize={12}
-                />
-                <Text style={styles.tokenSymbol}>{getTokenSymbol(token)}</Text>
-              </View>
-            ) : (
-              <Text style={styles.tokenPlaceholder}>
-                {t('page.gasAccount.depositPopup.selectToken')}
-              </Text>
-            )
-          }
-          style={[styles.tokenContainer]}
-          onPress={openTokenList}
-        />
-      </View>
-
+              ) : (
+                <Text style={styles.tokenPlaceholder}>
+                  {t('page.gasAccount.depositPopup.selectToken')}
+                </Text>
+              )
+            }
+            style={[styles.tokenContainer]}
+            onPress={openTokenList}
+          />
+        </View>
+        <View style={{ height: styles.btnContainer.height }}></View>
+      </BottomSheetScrollView>
       <View style={styles.btnContainer}>
         <Button
           loading={loading}
@@ -781,8 +785,16 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
 const getStyles = createGetStyles2024(({ colors, isLight, colors2024 }) => ({
   container: {
     width: '100%',
-    flex: 1,
+    // flex: 1
+    height: '100%',
+    position: 'relative',
     paddingBottom: 20,
+  },
+  popup: {
+    margin: 0,
+    // paddingBottom: 156,
+    width: '100%',
+    flex: 1,
   },
   handleStyle: {
     backgroundColor: 'transparent',
@@ -917,17 +929,17 @@ const getStyles = createGetStyles2024(({ colors, isLight, colors2024 }) => ({
     height: 52,
     marginBottom: 35,
   },
-  popup: {
-    margin: 0,
-    height: '100%',
-    paddingVertical: 10,
-  },
   btnContainer: {
-    marginTop: 34,
+    backgroundColor: colors2024['neutral-bg-1'],
+    // marginTop: 34,
+    width: '100%',
+    bottom: 0,
+    height: 126,
+    position: 'absolute',
     paddingHorizontal: 20,
     paddingVertical: 20,
     justifyContent: 'flex-end',
-    flex: 1,
+    // flex: 1,
   },
 
   box: { flexDirection: 'row', alignItems: 'center' },

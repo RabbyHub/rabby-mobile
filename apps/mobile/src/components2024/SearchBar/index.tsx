@@ -182,7 +182,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     height: 46,
     fontSize: 16,
-    lineHeight: 20,
+    // lineHeight: 20, // to avoid multi row show text
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     textAlignVertical: 'center',
