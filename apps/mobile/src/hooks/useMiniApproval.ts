@@ -26,16 +26,15 @@ export const useMiniApproval = () => {
   const [state, setState] = useAtom(miniApprovalAtom);
   const { clear } = useClearMiniApprovalTask();
 
-  const sendMiniTransactions = useMemoizedFn(
-    ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
-      clear();
+  const _sendMiniTransactions = useMemoizedFn(
+    ({ txs, ga, id }: { txs: Tx[]; ga?: Record<string, any>; id?: string }) => {
       // const currentApprovalId = uniqueId('mini-approval');
       return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(
         (resolve, reject) => {
           setState(prev => {
             return {
               ...prev,
-              id: uniqueId('mini-approval'),
+              id: id || prev.id,
               txs,
               ga,
               visible: true,
@@ -61,11 +60,24 @@ export const useMiniApproval = () => {
     },
   );
 
+  const sendMiniTransactions = useMemoizedFn(
+    ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
+      clear();
+      return _sendMiniTransactions({
+        txs,
+        ga,
+        id: uniqueId('mini-approval'),
+      });
+    },
+  );
+
   const prepareMiniTransactions = useMemoizedFn(
     ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
+      clear();
       setState(prev => {
         return {
           ...prev,
+          id: uniqueId('mini-approval'),
           txs,
           ga,
         };
@@ -75,7 +87,7 @@ export const useMiniApproval = () => {
 
   const sendPrepareMiniTransactions = useMemoizedFn(async () => {
     if (state.txs?.length) {
-      await sendMiniTransactions({
+      await _sendMiniTransactions({
         txs: state.txs,
         ga: state.ga,
       });
