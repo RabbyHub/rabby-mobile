@@ -489,13 +489,8 @@ const Swap = ({
           }
           mutateTxs([]);
           handleAmountChange('');
-          const start = Date.now();
           setTimeout(() => {
-            console.log('[start]', start);
-            runFetchSwapPendingCount().then(v => {
-              const end = Date.now();
-              console.log('[end]', end - start, end, v);
-            });
+            runFetchSwapPendingCount();
           }, 1000);
           preferenceService.setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
@@ -593,17 +588,17 @@ const Swap = ({
     navState,
   ]);
 
-  useFocusEffect(
-    useCallback(() => {
-      const listener = () => {
-        handleAmountChange('');
-      };
-      eventBus.addListener(EVENT_MINI_APPROVAL_START_SIGN, listener);
-      return () => {
-        eventBus.removeListener(EVENT_MINI_APPROVAL_START_SIGN, listener);
-      };
-    }, [handleAmountChange]),
-  );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const listener = () => {
+  //       handleAmountChange('');
+  //     };
+  //     eventBus.addListener(EVENT_MINI_APPROVAL_START_SIGN, listener);
+  //     return () => {
+  //       eventBus.removeListener(EVENT_MINI_APPROVAL_START_SIGN, listener);
+  //     };
+  //   }, [handleAmountChange]),
+  // );
 
   const [showMoreOpen, setShowMoreOpen] = useState(false);
 
