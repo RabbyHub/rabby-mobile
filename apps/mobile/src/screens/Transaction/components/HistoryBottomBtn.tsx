@@ -219,14 +219,14 @@ export const HistoryBottomBtn = ({
         <View style={btnContainerViewStyle}>
           <Button
             buttonStyle={buttonStyle}
-            onPress={() => {
+            onPress={async () => {
               const chainItem = !chain ? null : findChainByServerID(chain);
-              if (!isForMultipleAdderss) {
-                switchSceneCurrentAccount(
-                  'MakeTransactionAbout',
-                  currentAccount,
-                );
-              }
+              // if (!isForMultipleAdderss) {
+              await switchSceneCurrentAccount(
+                'MakeTransactionAbout',
+                isForMultipleAdderss ? fromAddrIsImported : currentAccount,
+              );
+              // }
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
                   screen: isForMultipleAdderss

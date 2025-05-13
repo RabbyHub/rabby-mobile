@@ -29,6 +29,7 @@ import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
+import { transactionHistoryService } from '@/core/services';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -237,6 +238,7 @@ export const SwapTxHistory = ({
   const { colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { projectDict, tokenDict } = useHistoryTokenDict();
+  const { currentAccount } = useCurrentAccount();
 
   const onDismiss = useCallback(() => {
     setVisible(false);
@@ -264,9 +266,34 @@ export const SwapTxHistory = ({
             title: t('page.swap.swapped'),
           },
         });
+      } else {
+        const { pendings, completeds } = transactionHistoryService.getList(
+          currentAccount?.address ?? '',
+        );
+        const arr = pendings.concat(completeds);
+        const itemData = arr.find(i => i.maxGasTx.hash === txId);
+
+        if (itemData) {
+          onDismiss();
+          navigate(RootNames.StackTransaction, {
+            screen: RootNames.HistoryLocalDetail,
+            params: {
+              isForMultipleAdderss,
+              data: itemData,
+              title: t('page.swap.swapped'),
+            },
+          });
+        }
       }
     },
-    [onDismiss, projectDict, t, tokenDict, isForMultipleAdderss],
+    [
+      onDismiss,
+      projectDict,
+      t,
+      tokenDict,
+      isForMultipleAdderss,
+      currentAccount?.address,
+    ],
   );
 
   useEffect(() => {
@@ -280,7 +307,6 @@ export const SwapTxHistory = ({
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
   const { syncSingleAddress } = useSyncHistoryDB();
-  const { currentAccount } = useCurrentAccount();
   useEffect(() => {
     if (currentAccount?.address) {
       syncSingleAddress(currentAccount?.address);

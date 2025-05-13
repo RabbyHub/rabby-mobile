@@ -34,6 +34,8 @@ import { StackActions } from '@react-navigation/native';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ellipsisAddress } from '@/utils/address';
 import { formatIntlTimestamp } from '@/utils/time';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 interface Props {
   data: TransactionGroup;
@@ -105,6 +107,14 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
       isSingleAddress,
     });
   });
+
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const fromAddrIsImported = useMemo(() => {
+    return accounts.find(account =>
+      isSameAddress(account.address, data.address || ''),
+    );
+  }, [accounts, data]);
 
   const receiveToken: ReceiveTokenItem =
     actionData.minReceive || actionData.receiveToken;
@@ -280,7 +290,13 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
         <View style={styles.buttonContainer}>
           <View style={{ flex: 1 }}>
             <Button
-              onPress={() => {
+              onPress={async () => {
+                await switchSceneCurrentAccount(
+                  'MakeTransactionAbout',
+                  !isSingleAddress && fromAddrIsImported
+                    ? fromAddrIsImported
+                    : currentAccount,
+                );
                 navigation.dispatch(
                   StackActions.push(RootNames.StackTransaction, {
                     screen: !isSingleAddress
