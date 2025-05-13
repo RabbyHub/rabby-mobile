@@ -315,6 +315,12 @@ export const useBatchRevokeTask = () => {
     return list.findIndex(item => item.$status?.status === 'pending');
   }, [list]);
 
+  const resetCurrent = React.useCallback(() => {
+    if (currentApprovalRef.current) {
+      addRevokeTask(currentApprovalRef.current, 0);
+    }
+  }, [addRevokeTask]);
+
   return {
     list,
     init,
@@ -328,6 +334,7 @@ export const useBatchRevokeTask = () => {
     revokedApprovals,
     currentApprovalIndex,
     currentApprovalRef,
+    resetCurrent,
   };
 };
 

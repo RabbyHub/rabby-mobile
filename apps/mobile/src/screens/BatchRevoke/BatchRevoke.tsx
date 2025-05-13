@@ -24,7 +24,10 @@ import { useBatchRevokeTask } from './useBatchRevokeTask';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, eventBus } from '@/utils/events';
+import {
+  EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY,
+  eventBus,
+} from '@/utils/events';
 
 const ItemSeparatorComponent = () => {
   const { styles } = useTheme2024({
@@ -171,10 +174,10 @@ export const BatchRevokeScreen = () => {
       }
     };
 
-    eventBus.on(EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, listen);
+    eventBus.on(EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY, listen);
 
     return () => {
-      eventBus.off(EVENT_VISIBLE_GAS_ACCOUNT_DEPOSIT, listen);
+      eventBus.off(EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY, listen);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -192,6 +195,15 @@ export const BatchRevokeScreen = () => {
       return () => backHandler.remove();
     }
   }, [navigation]);
+
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      task.pause();
+      task.resetCurrent();
+    });
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task.resetCurrent]);
 
   React.useEffect(() => {
     const subscription = AppState.addEventListener('change', state => {
