@@ -151,7 +151,7 @@ export async function isConnected(
   keyring.setDeviceConnectId(detail.connectId);
 
   try {
-    await keyring.unlock();
+    await keyring.trySearchDevice(true);
     return [true, detail.connectId];
   } catch (e) {
     return [false, detail.connectId];

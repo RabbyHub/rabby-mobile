@@ -147,49 +147,58 @@ class OneKeyKeyring extends EventEmitter {
     this.hdk = new HDKey();
   }
 
+  async trySearchDevice(needCancel = false) {
+    const devicePromise = this._deviceConnectId
+      ? this.bridge.getFeatures(this._deviceConnectId).then(res => {
+          if (!res.success) {
+            throw new Error(res.payload?.error || 'searchDevices failed');
+          }
+
+          return {
+            deviceId: res.payload.device_id,
+            connectId: this._deviceConnectId,
+          };
+        })
+      : this.bridge.searchDevices().then(res => {
+          if (!res.success) {
+            throw new Error(res.payload?.error || 'searchDevices failed');
+          }
+
+          if (res.payload.length <= 0) {
+            throw new Error('No OneKey Device found');
+          }
+
+          return res.payload[0];
+        });
+
+    return devicePromise.then(device => {
+      if (!device) {
+        throw new Error('no device');
+      }
+      const { deviceId, connectId } = device;
+
+      if (!deviceId || !connectId) {
+        throw new Error('no deviceId or connectId');
+      }
+
+      if (needCancel) {
+        this.bridge.cancel(connectId);
+      }
+
+      return {
+        deviceId,
+        connectId,
+      };
+    });
+  }
+
   unlock(): Promise<string> {
     if (this.isUnlocked()) {
       return Promise.resolve('already unlocked');
     }
     return new Promise((resolve, reject) => {
-      const devicePromise = this._deviceConnectId
-        ? this.bridge.getFeatures(this._deviceConnectId).then(res => {
-            if (!res.success) {
-              reject(res.payload?.error || 'searchDevices failed');
-              return undefined;
-            }
-
-            return {
-              deviceId: res.payload.device_id,
-              connectId: this._deviceConnectId,
-            };
-          })
-        : this.bridge.searchDevices().then(res => {
-            if (!res.success) {
-              reject(res.payload?.error || 'searchDevices failed');
-              return undefined;
-            }
-
-            if (res.payload.length <= 0) {
-              reject('No OneKey Device found');
-              return undefined;
-            }
-
-            return res.payload[0];
-          });
-
-      devicePromise
-        .then(async device => {
-          if (!device) {
-            reject('no device');
-            return;
-          }
-          const { deviceId, connectId } = device;
-
-          if (!deviceId || !connectId) {
-            reject('no deviceId or connectId');
-            return;
-          }
+      this.trySearchDevice()
+        .then(async ({ deviceId, connectId }) => {
           if (
             this.deviceId &&
             this.connectId &&
