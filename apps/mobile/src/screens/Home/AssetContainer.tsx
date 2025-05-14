@@ -545,7 +545,7 @@ export const AssetContainer: React.FC<Props> = ({
           onUpdateIsDecrease={onUpdateIsDecrease}
         />
         <AssestAllHeader
-          style={styles.assetHeader}
+          style={[styles.assetHeader, notBorn && styles.hidden]}
           currentSection={currentSection}
           chainLength={chainsInfo.chainLength}
           onChainClick={handleOnChainClick}
@@ -562,10 +562,12 @@ export const AssetContainer: React.FC<Props> = ({
     firstRowType,
     handleOnChainClick,
     handleSwitchTab,
+    notBorn,
     onUpdateIsDecrease,
     renderStickHeader,
     selectChainItem?.chain,
     styles.assetHeader,
+    styles.hidden,
   ]);
   const renderTabBar = useCallback(() => {
     return null;
@@ -679,6 +681,9 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingLeft: 12 + 16,
     paddingRight: 16,
     width: '100%',
+  },
+  hidden: {
+    display: 'none',
   },
   symbol: {
     fontSize: 16,

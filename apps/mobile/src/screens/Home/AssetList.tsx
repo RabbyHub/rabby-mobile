@@ -673,6 +673,7 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
     marginTop: -ASSETS_SECTION_HEADER,
+    paddingTop: 10,
   },
   list: {
     flex: 1,
