@@ -24,6 +24,33 @@ function findSpecificObjcMsgSendGotAddressStrings(linkMapContent) {
   return gotAddressStrings;
 }
 
+/**
+ * 二进制文件对齐 _objc_msgSend.got
+ * 1. 同一台机器，同样的配置
+ * 2. 生成了同样的 LinkMap.txt，
+ * 3. 使用的 order_file 也是固定的，里面也包含了 _objc_msgSend
+ * 4. 比较过 ios/DerivedData/Build/Intermediates.noindex 其中的 o 文件也是相同的
+ * 5. 提取过两次编译日志中的 Ld ... 命令，其内容也是一样的，我使用 diff 工具对其进行比较过
+ * 6. 并不是每一次都不一样，实际上只是偶尔不一样
+ * 7. 比较过 otool -L，也相同
+ * 8. -alias, -alias_list 也不管用
+ * 9. [2406] 的地址是： /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/lib/libobjc.A.tbd
+ * 10. OTHER_LDFLAGS 中的参数，是一个个加上来的，没有用
+
+ * 不同点：
+ * 位于 RabbyMobile.app/RabbyMobile 的二进制文件中，对其进行 otool -tV 来查看对比：/ *
+ * ```
+ *   000000000053955c	adrp	x8, 1601 ; 0xb7a000
+ *   ++++ 0000000000531730	ldr	x8, [x8, #0x3c0] ; literal pool symbol address: _objc_msgSend
+ *   ---- 0000000000531730	ldr	x8, [x8, #0x3c8] ; literal pool symbol address: _objc_msgSend
+ * ```
+
+ * 在 LinkMap.txt 中，存在相同的符号：
+ * ```
+ *   0x00B7A3C0	0x00000008	[2406] _objc_msgSend.got
+ *   0x00B7A3C8	0x00000008	[2406] _objc_msgSend.got
+ * ```
+ */
 function normalizeOtoolFilePureString(otoolSContent, linkMapGotAddressStrings) {
   if (!linkMapGotAddressStrings || linkMapGotAddressStrings.length < 1) {
     return otoolSContent;
@@ -102,6 +129,11 @@ function normalizeOtoolFilePureString(otoolSContent, linkMapGotAddressStrings) {
   );
 }
 
+// 去除路径信息，实际上应该 binutils 的 strip -S 可以做到的，不想在其他机器上装这个工具
+function removeFilePath(otoolSContent) {
+  return otoolSContent?.replace(/literal pool for: \"\/Users\/[^\n]+/g, '');
+}
+
 async function main() {
   const args = process.argv.slice(2);
   let otoolSFilePath = null;
@@ -155,8 +187,10 @@ async function main() {
     process.exit(1);
   }
 
+  const otoolSContentWithoutFilePath = removeFilePath(otoolSContent);
+
   const result = normalizeOtoolFilePureString(
-    otoolSContent,
+    otoolSContentWithoutFilePath,
     linkMapGotAddressStrings,
   );
 
