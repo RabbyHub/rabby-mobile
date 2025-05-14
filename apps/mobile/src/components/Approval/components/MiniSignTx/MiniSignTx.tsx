@@ -1168,8 +1168,8 @@ export const MiniApproval = ({
 
   const indexRef = useRef(-1);
   const dismissedByCodeRef = useRef(false);
-  const handleReject = useMemoizedFn(() => {
-    onReject?.();
+  const handleReject = useMemoizedFn((reason: string) => {
+    onReject?.(reason);
   });
   const handleClearTask = useMemoizedFn(() => {
     task.clear();
@@ -1184,7 +1184,7 @@ export const MiniApproval = ({
       if (index === -1 && indexRef.current > -1) {
         // handleReject?.();
         if (!dismissedByCodeRef.current) {
-          handleReject?.();
+          handleReject?.('DISMISS_MODAL');
         }
         dismissedByCodeRef.current = false;
       }

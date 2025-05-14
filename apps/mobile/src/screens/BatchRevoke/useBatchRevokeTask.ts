@@ -153,6 +153,11 @@ export const useBatchRevokeTask = () => {
   );
   const currentApprovalRef = React.useRef<AssetApprovalSpender>();
 
+  const pause = React.useCallback(() => {
+    queueRef.current.pause();
+    setStatus('paused');
+  }, []);
+
   const addRevokeTask = React.useCallback(
     async (
       item: AssetApprovalSpender,
@@ -237,9 +242,13 @@ export const useBatchRevokeTask = () => {
             cloneItem.$status = {
               status: 'fail',
               failedCode: failedCode,
-              failedReason: e?.message,
+              failedReason: e?.message ?? e,
               gasCost: e?.gasCost,
             };
+
+            if (e === 'DISMISS_MODAL') {
+              pause();
+            }
           } finally {
             setList(prev => updateAssetApprovalSpender(prev, cloneItem));
             setTxStatus('idle');
@@ -254,6 +263,7 @@ export const useBatchRevokeTask = () => {
       gasAccount.sig,
       revokeList,
       sendMiniTransactions,
+      pause,
     ],
   );
 
@@ -277,11 +287,6 @@ export const useBatchRevokeTask = () => {
     },
     [],
   );
-
-  const pause = React.useCallback(() => {
-    queueRef.current.pause();
-    setStatus('paused');
-  }, []);
 
   const handleContinue = React.useCallback(() => {
     queueRef.current.start();
