@@ -756,7 +756,9 @@
       },
       "cancelCurrentConnection": "Cancelar la conexión actual",
       "keystoneSign": "Firmar",
-      "startSigning": "Comenzar a Firmar"
+      "startSigning": "Comenzar a Firmar",
+      "ledgerConfirm": "Confirmar",
+      "oneKeyConfirm": "Confirmar"
     },
     "approvals": {
       "search": {
@@ -813,7 +815,41 @@
             "revokeWarningTitle": "Contract 24h Revoke doble que Revoke"
           }
         }
-      }
+      },
+      "revokeModal": {
+        "gasNotEnough": "Gas insuficiente para enviar",
+        "paused": "Pausado",
+        "simulationFailed": "Simulación fallida",
+        "approvalCount_one": "{{count}} aprobación",
+        "approvalCount_other": "{{count}} aprobaciones",
+        "gasTooHigh": "La tarifa de Gas es alta.",
+        "submitTxFailed": "Error al enviar",
+        "approvalCount": "{{count}} aprobación",
+        "defaultFailed": "Transacción fallida",
+        "stillRevoke": "Aún Revocar",
+        "iGotIt": "Lo tengo"
+      },
+      "errorReason": {
+        "title": "Fallo al Revocar"
+      },
+      "unknownContract": "Contrato desconocido",
+      "asset": "Activo",
+      "approvedAssetsAndAmount": "Activos y Cantidad Aprobados",
+      "allApprovals": "Todas las aprobaciones",
+      "approvedContracts": "Cantidad y saldo de activos aprobados",
+      "startRevoke": "Iniciar Revocación",
+      "pauseRevoke": "Pausa",
+      "continueRevoke": "Continuar",
+      "revokeFrom": "Revocar de",
+      "gasFee": "Gas Fee",
+      "unselectAll": "Deseleccionar todo",
+      "myBalance": "Mi saldo",
+      "contractAddress": "Dirección del contrato",
+      "selectAll": "Seleccionar todo",
+      "revokeCompleted": "Hecho",
+      "leavingThisPageWillStopTheRevokeProcess": "Salir de esta página detendrá el proceso de revocación.",
+      "stopTheRevokeProcess": "¿Detener el proceso de revocación?",
+      "approvedAssets": "Contratos Aprobados y Monto"
     },
     "sendToken": {
       "whitelistAlert__temporaryGranted": "Permiso temporal concedido",
@@ -873,7 +909,8 @@
       },
       "noSupprotTokenForDex": "Este token puede no ser compatible con este exchange. Verifique antes de continuar para evitar pérdidas",
       "From": "Desde",
-      "noSupprotTokenForSafe": "La dirección Safe a la que estás enviando tokens no está desplegada en esta cadena. Verifica antes de continuar para evitar pérdidas."
+      "noSupprotTokenForSafe": "La dirección Safe a la que estás enviando tokens no está desplegada en esta cadena. Verifica antes de continuar para evitar pérdidas.",
+      "noSupportTokenForChain": "La dirección del destinatario es una dirección de contrato en una cadena diferente. Verifica antes de continuar para evitar pérdidas."
     },
     "gasTopUp": {
       "No_Tokens": "Sin tokens",
@@ -1934,7 +1971,8 @@
       "SendHistory": "Historial de Envíos",
       "sendTimeHeader": "Enviar",
       "SelectFromHistory": "Seleccionar del historial",
-      "recent": "Reciente"
+      "recent": "Reciente",
+      "sentTimeHeader": "Enviado"
     },
     "confirmAddress": {
       "risks": {
@@ -2022,6 +2060,9 @@
       },
       "BrowserHistoryList": {
         "title": "Historial"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "Cerrar todas las pestañas"
       }
     },
     "scan": {
@@ -2070,7 +2111,8 @@
     "Unknown": "Desconocido",
     "unlimited": "ilimitado",
     "Addresses": "Direcciones",
-    "24h": "24h"
+    "24h": "24h",
+    "Edit": "Editar"
   },
   "bluetooth": {
     "powered_off_alert": {

@@ -235,7 +235,8 @@
     "Unknown": "Desconhecido",
     "unlimited": "ilimitado",
     "Addresses": "Endereços",
-    "24h": "24h"
+    "24h": "24h",
+    "Edit": "Editar"
   },
   "page": {
     "getStart": {
@@ -794,7 +795,8 @@
       },
       "noSupprotTokenForDex": "Este token pode não ser suportado por esta bolsa. Verifique antes de continuar para evitar perdas",
       "From": "De",
-      "noSupprotTokenForSafe": "O endereço Safe para o qual está a enviar tokens não está implantado nesta cadeia. Verifique antes de prosseguir para evitar perdas."
+      "noSupprotTokenForSafe": "O endereço Safe para o qual está a enviar tokens não está implantado nesta cadeia. Verifique antes de prosseguir para evitar perdas.",
+      "noSupportTokenForChain": "O endereço do destinatário é um endereço de contrato em uma cadeia diferente. Verifique antes de prosseguir para evitar perdas."
     },
     "signFooterBar": {
       "importedByLedger": "Importado por Ledger",
@@ -855,7 +857,9 @@
         "updateFirmwareAlert": "Por favor, atualize o firmware e o aplicativo Ethereum no seu Ledger."
       },
       "startSigning": "Começar a Assinar",
-      "keystoneSign": "Assinar"
+      "keystoneSign": "Assinar",
+      "oneKeyConfirm": "Confirmar",
+      "ledgerConfirm": "Confirmar"
     },
     "sendTokenComponents": {
       "GasReserved": "Reservado <1>0</1> {{ tokenName }} para custo de gás"
@@ -1106,7 +1110,41 @@
             "revokeDangerTitle": "Tendências de Revogação de Contratos em 24h > 4"
           }
         }
-      }
+      },
+      "revokeModal": {
+        "submitTxFailed": "Falha ao Submeter",
+        "approvalCount_one": "{{count}} aprovação",
+        "defaultFailed": "Transação falhou",
+        "approvalCount_other": "{{count}} aprovações",
+        "approvalCount": "{{count}} aprovação",
+        "paused": "Pausado",
+        "gasTooHigh": "A taxa de Gas é alta",
+        "simulationFailed": "Simulação Falhou",
+        "stillRevoke": "Ainda Revogar",
+        "gasNotEnough": "Gas insuficiente para submeter",
+        "iGotIt": "Eu entendi"
+      },
+      "errorReason": {
+        "title": "Falha ao Revogar"
+      },
+      "myBalance": "O Meu Saldo",
+      "contractAddress": "Endereço do Contrato",
+      "continueRevoke": "Continuar",
+      "revokeFrom": "Revogar de",
+      "selectAll": "Selecionar Tudo",
+      "approvedContracts": "Ativos Aprovados - Montante & Saldo",
+      "gasFee": "Taxa de Gas",
+      "approvedAssets": "Contratos Aprovados e Montante",
+      "startRevoke": "Começar a Revogar",
+      "approvedAssetsAndAmount": "Ativos e Quantidade Aprovados",
+      "unknownContract": "Contrato Desconhecido",
+      "asset": "Ativo",
+      "allApprovals": "Todas as Aprovações",
+      "unselectAll": "Deselecionar Tudo",
+      "pauseRevoke": "Pausar",
+      "leavingThisPageWillStopTheRevokeProcess": "Sair desta página irá interromper o processo de revogação.",
+      "revokeCompleted": "Concluído",
+      "stopTheRevokeProcess": "Parar o processo de revogação?"
     },
     "nextComponent": {
       "addAddress": {
@@ -1976,7 +2014,8 @@
       "recent": "Recente",
       "SelectFromHistory": "Selecionar do Histórico",
       "sendTimeHeader": "Enviar",
-      "innerEnterAddress": "Introduzir Endereço / ENS"
+      "innerEnterAddress": "Introduzir Endereço / ENS",
+      "sentTimeHeader": "Enviado"
     },
     "confirmAddress": {
       "risks": {
@@ -2064,6 +2103,9 @@
       },
       "BrowserHistoryList": {
         "title": "Histórico"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "Fechar todas as abas"
       }
     },
     "scan": {

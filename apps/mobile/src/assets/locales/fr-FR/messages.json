@@ -591,7 +591,9 @@
         "signWith": "Signer avec {{brand}}"
       },
       "startSigning": "Commencer à signer",
-      "keystoneSign": "Signer"
+      "keystoneSign": "Signer",
+      "oneKeyConfirm": "Confirmer",
+      "ledgerConfirm": "Confirmer"
     },
     "sendNFT": {
       "sendButton": "Envoyer"
@@ -654,7 +656,41 @@
             }
           }
         }
-      }
+      },
+      "revokeModal": {
+        "paused": "En pause",
+        "gasNotEnough": "Gaz insuffisant pour soumettre",
+        "approvalCount_other": "{{count}} approbations",
+        "iGotIt": "J'ai compris",
+        "defaultFailed": "Transaction échoué",
+        "approvalCount_one": "{{count}} approbation",
+        "approvalCount": "{{count}} approbation",
+        "submitTxFailed": "Échec de l'envoi",
+        "simulationFailed": "Simulation échouée",
+        "gasTooHigh": "Les frais de gaz sont élevés",
+        "stillRevoke": "Toujours Révoquer"
+      },
+      "errorReason": {
+        "title": "Échec de la révocation"
+      },
+      "selectAll": "Tout sélectionner",
+      "gasFee": "Frais de Gas",
+      "revokeFrom": "Révoquer depuis",
+      "myBalance": "Mon Solde",
+      "pauseRevoke": "Pause",
+      "asset": "Actif",
+      "continueRevoke": "Continuer",
+      "startRevoke": "Commencer à Révoquer",
+      "approvedAssetsAndAmount": "Actifs et montants approuvés",
+      "unknownContract": "Contrat Inconnu",
+      "unselectAll": "Désélectionner tout",
+      "contractAddress": "Adresse de contrat",
+      "approvedContracts": "Montant et solde des actifs approuvés",
+      "approvedAssets": "Contrats approuvés et montant",
+      "allApprovals": "Toutes les approbations",
+      "leavingThisPageWillStopTheRevokeProcess": "Quitter cette page mettra fin au processus de révocation.",
+      "stopTheRevokeProcess": "Arrêter le processus de révocation ?",
+      "revokeCompleted": "Fait"
     },
     "sendToken": {
       "Amount": "Montant :",
@@ -714,7 +750,8 @@
       },
       "noSupprotTokenForDex": "Ce token peut ne pas être pris en charge par cet échange. Vérifiez avant de procéder pour éviter toute perte.",
       "From": "De",
-      "noSupprotTokenForSafe": "L'adresse Safe à laquelle vous envoyez des jetons n'est pas déployée sur cette chaîne. Vérifiez avant de continuer pour éviter toute perte."
+      "noSupprotTokenForSafe": "L'adresse Safe à laquelle vous envoyez des jetons n'est pas déployée sur cette chaîne. Vérifiez avant de continuer pour éviter toute perte.",
+      "noSupportTokenForChain": "L'adresse du destinataire est une adresse de contrat sur une autre chaîne. Vérifiez avant de continuer pour éviter toute perte."
     },
     "gasTopUp": {
       "Value": "Valeur",
@@ -1775,7 +1812,8 @@
       "SendHistory": "Historique des envois",
       "recent": "Récent",
       "innerEnterAddress": "Entrez l'adresse / ENS",
-      "SelectFromHistory": "Sélectionner dans l'historique"
+      "SelectFromHistory": "Sélectionner dans l'historique",
+      "sentTimeHeader": "Envoyé"
     },
     "confirmAddress": {
       "risks": {
@@ -1863,6 +1901,9 @@
       },
       "BrowserHistoryList": {
         "title": "Histoire"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "Fermer tous les onglets"
       }
     },
     "scan": {
@@ -2099,7 +2140,8 @@
     "Unknown": "Inconnu",
     "unlimited": "illimité",
     "Addresses": "Adresses",
-    "24h": "24h"
+    "24h": "24h",
+    "Edit": "Modifier"
   },
   "background": {
     "transactionWatcher": {

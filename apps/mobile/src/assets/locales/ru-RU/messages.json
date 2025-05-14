@@ -82,7 +82,8 @@
     "Unknown": "Неизвестный",
     "unlimited": "неограниченный",
     "Addresses": "Адреса",
-    "24h": "24ч"
+    "24h": "24ч",
+    "Edit": "Редактировать"
   },
   "page": {
     "getStart": {
@@ -283,7 +284,9 @@
         "txRejected": "Транзакция отклонена"
       },
       "startSigning": "Начать подпись",
-      "keystoneSign": "Подписать"
+      "keystoneSign": "Подписать",
+      "ledgerConfirm": "Подтвердить",
+      "oneKeyConfirm": "Подтвердить"
     },
     "activities": {
       "signedTx": {
@@ -698,7 +701,8 @@
       },
       "noSupprotTokenForDex": "Эта токен может не поддерживаться этой биржей. Проверьте перед продолжением, чтобы избежать потерь",
       "From": "С ",
-      "noSupprotTokenForSafe": "Адрес Safe, на который вы отправляете токены, не развернут в этой сети. Проверьте перед продолжением, чтобы избежать потерь."
+      "noSupprotTokenForSafe": "Адрес Safe, на который вы отправляете токены, не развернут в этой сети. Проверьте перед продолжением, чтобы избежать потерь.",
+      "noSupportTokenForChain": "Адрес получателя является адресом контракта на другой цепочке. Проверьте перед продолжением, чтобы избежать потери."
     },
     "receive": {
       "title": "Получить {{token}} на {{chain}}",
@@ -762,7 +766,41 @@
             }
           }
         }
-      }
+      },
+      "revokeModal": {
+        "submitTxFailed": "Не удалось отправить",
+        "simulationFailed": "Симуляция не удалась",
+        "paused": "Приостановлено",
+        "approvalCount": "{{count}} одобрение",
+        "iGotIt": "Я понял это",
+        "approvalCount_other": "{{count}} одобрений",
+        "gasTooHigh": "Газовые сборы высоки",
+        "stillRevoke": "Еще отозвать",
+        "defaultFailed": "Транзакция не удалась",
+        "gasNotEnough": "Недостаточно Gas для отправки",
+        "approvalCount_one": "{{count}} одобрение"
+      },
+      "errorReason": {
+        "title": "Не удалось аннулировать"
+      },
+      "revokeFrom": "Отозвать от",
+      "gasFee": "Газовая плата",
+      "approvedContracts": "Одобренная сумма активов и баланс",
+      "unknownContract": "Неизвестный контракт",
+      "approvedAssetsAndAmount": "Утвержденные активы и сумма",
+      "asset": "Актив",
+      "myBalance": "Мой баланс",
+      "unselectAll": "Снять все выделения",
+      "startRevoke": "Начать отзыв",
+      "pauseRevoke": "Пауза",
+      "contractAddress": "Адрес контракта",
+      "approvedAssets": "Одобренные контракты и сумма",
+      "continueRevoke": "Продолжить",
+      "selectAll": "Выбрать все",
+      "allApprovals": "Все одобрения",
+      "revokeCompleted": "Сделано",
+      "stopTheRevokeProcess": "Остановить процесс отмены?",
+      "leavingThisPageWillStopTheRevokeProcess": "Покинув эту страницу, вы остановите процесс отмены."
     },
     "gasTopUp": {
       "Token": "Тoken",
@@ -1823,7 +1861,8 @@
       "SendHistory": "История отправлений",
       "SelectFromHistory": "Выбрать из истории",
       "recent": "Недавний",
-      "sendTimeHeader": "Отправить"
+      "sendTimeHeader": "Отправить",
+      "sentTimeHeader": "Отправлено"
     },
     "confirmAddress": {
       "risks": {
@@ -1911,6 +1950,9 @@
       },
       "BrowserHistoryList": {
         "title": "История"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "Закрыть все вкладки"
       }
     },
     "scan": {

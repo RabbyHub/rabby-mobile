@@ -386,7 +386,8 @@
       },
       "noSupprotTokenForDex": "โทเค็นนี้อาจไม่ได้รับการสนับสนุนโดยการแลกเปลี่ยนนี้ โปรดตรวจสอบก่อนดำเนินการเพื่อหลีกเลี่ยงการสูญเสีย",
       "From": "จาก",
-      "noSupprotTokenForSafe": "ที่อยู่ Safe ที่คุณส่งโทเคนไปยังไม่ได้ถูกปรับใช้ในเครือข่ายนี้ กรุณาตรวจสอบก่อนดำเนินการเพื่อลดความเสี่ยงในการสูญเสีย。"
+      "noSupprotTokenForSafe": "ที่อยู่ Safe ที่คุณส่งโทเคนไปยังไม่ได้ถูกปรับใช้ในเครือข่ายนี้ กรุณาตรวจสอบก่อนดำเนินการเพื่อลดความเสี่ยงในการสูญเสีย。",
+      "noSupportTokenForChain": "ที่อยู่ผู้รับเป็นที่อยู่สัญญาบนเชนที่ต่างกัน โปรดตรวจสอบก่อนดำเนินการเพื่อหลีกเลี่ยงการสูญเสีย"
     },
     "importSuccess": {
       "importMore": "นำเข้าที่อยู่เพิ่มเติม",
@@ -451,7 +452,41 @@
             "contractTrustValueDanger": "มูลค่าความเชื่อถือของสัญญา < $10,000"
           }
         }
-      }
+      },
+      "revokeModal": {
+        "stillRevoke": "ยังคงเพิกถอน",
+        "approvalCount_one": "{{count}} การอนุมัติ",
+        "approvalCount": "{{count}} การอนุมัติ",
+        "gasTooHigh": "ค่าธรรมเนียมแก๊สสูง",
+        "iGotIt": "ฉันเข้าใจแล้ว",
+        "simulationFailed": "การจำลองล้มเหลว",
+        "defaultFailed": "ธุรกรรมล้มเหลว",
+        "gasNotEnough": "มี Gas ไม่เพียงพอในการส่ง",
+        "submitTxFailed": "ไม่สามารถส่งได้",
+        "paused": "หยุดชั่วคราว",
+        "approvalCount_other": "{{count}} การอนุมัติ"
+      },
+      "errorReason": {
+        "title": "ล้มเหลวในการเพิกถอน"
+      },
+      "selectAll": "เลือกทั้งหมด",
+      "contractAddress": "ที่อยู่สัญญา",
+      "unselectAll": "ยกเลิกการเลือกทั้งหมด",
+      "revokeFrom": "เพิกถอนจาก",
+      "approvedAssetsAndAmount": "สินทรัพย์และจำนวนที่อนุมัติ",
+      "unknownContract": "สัญญาที่ไม่รู้จัก",
+      "approvedAssets": "สัญญาที่อนุมัติ & เงินจำนวน",
+      "gasFee": "ค่าธรรมเนียมแก๊ส",
+      "myBalance": "ยอดเงินของฉัน",
+      "continueRevoke": "ดำเนินการต่อ",
+      "startRevoke": "เริ่มยกเลิก",
+      "pauseRevoke": "หยุด",
+      "approvedContracts": "จำนวนและยอดคงเหลือสินทรัพย์ที่ได้รับอนุมัติ",
+      "allApprovals": "การอนุมัติทั้งหมด",
+      "asset": "สินทรัพย์",
+      "revokeCompleted": "เสร็จสิ้น",
+      "stopTheRevokeProcess": "หยุดกระบวนการยกเลิก?",
+      "leavingThisPageWillStopTheRevokeProcess": "การออกจากหน้านี้จะหยุดกระบวนการยกเลิก"
     },
     "signTx": {
       "chain": "Chain",
@@ -794,7 +829,9 @@
         "afterSignDesc": "สแกนรหัส QR บน Keystone เพื่อรับลายเซ็น"
       },
       "keystoneSign": "ลงชื่อ",
-      "startSigning": "เริ่มต้นการลงนาม"
+      "startSigning": "เริ่มต้นการลงนาม",
+      "oneKeyConfirm": "ยืนยัน",
+      "ledgerConfirm": "ยืนยัน"
     },
     "home": {
       "services": {
@@ -1919,7 +1956,8 @@
       "SendHistory": "ประวัติการส่ง",
       "recent": "ล่าสุด",
       "innerEnterAddress": "ป้อนที่อยู่ / ENS",
-      "sendTimeHeader": "ส่ง"
+      "sendTimeHeader": "ส่ง",
+      "sentTimeHeader": "ส่งแล้ว"
     },
     "confirmAddress": {
       "risks": {
@@ -2007,6 +2045,9 @@
       },
       "BrowserHistoryList": {
         "title": "ประวัติ"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "ปิดแท็บทั้งหมด"
       }
     },
     "scan": {
@@ -2070,7 +2111,8 @@
     "Unknown": "ไม่ทราบ",
     "unlimited": "ไม่จำกัด",
     "Addresses": "ที่อยู่",
-    "24h": "24ชั่วโมง"
+    "24h": "24ชั่วโมง",
+    "Edit": "แก้ไข"
   },
   "background": {
     "transactionWatcher": {
