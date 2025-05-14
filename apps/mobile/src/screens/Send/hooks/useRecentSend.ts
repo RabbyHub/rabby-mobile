@@ -27,7 +27,11 @@ function markFirstItems(
       data: item,
       time:
         ('time_at' in item ? item.time_at * 1000 : undefined) ||
-        ('completedAt' in item && item.completedAt ? item.completedAt : 0),
+        ('completedAt' in item && item.completedAt
+          ? item.completedAt
+          : 'isPending' in item && item.isPending
+          ? Date.now()
+          : 0),
     };
 
     const prev = arr[i - 1];
@@ -38,7 +42,11 @@ function markFirstItems(
       const curDate = dayjs(newItem.time);
       const prevTime =
         ('time_at' in prev ? prev.time_at * 1000 : undefined) ||
-        ('completedAt' in prev && prev.completedAt ? prev.completedAt : 0);
+        ('completedAt' in prev && prev.completedAt
+          ? prev.completedAt
+          : 'isPending' in prev && prev.isPending
+          ? Date.now()
+          : 0);
       const prevDate = dayjs(prevTime);
       if (newItem.time && !curDate.isSame(prevDate, 'day')) {
         newItem.isDateStart = true;
@@ -98,7 +106,9 @@ export const useRecentSend = ({
 
   const markedList = useMemo(() => {
     const sortedList = historyList?.sort(
-      (a, b) => (b?.completedAt || 0) - (a?.completedAt || 0),
+      (a, b) =>
+        (b.isPending ? Date.now() : b?.completedAt || 0) -
+        (a.isPending ? Date.now() : a?.completedAt || 0),
     );
 
     return markFirstItems(
@@ -150,17 +160,8 @@ export const useRecentSend = ({
       .slice(0, 3);
   }, [markedList]);
 
-  const finalMarkedList = useMemo(() => {
-    return sortBy(markedList, item => {
-      if ('isPending' in item.data && item.data.isPending) {
-        return -Number.MAX_SAFE_INTEGER;
-      }
-      return -item.time;
-    });
-  }, [markedList]);
-
   return {
-    markedList: finalMarkedList,
+    markedList,
     runAsync,
     recentHistory,
   };
