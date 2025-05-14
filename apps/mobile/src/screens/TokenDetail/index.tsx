@@ -345,7 +345,6 @@ export const TokenDetailScreen = () => {
       }
 
       const res = await openapi.getTokenEntity(token._tokenId, token.chain);
-      console.log('tokenEntity', res, token._tokenId, token.chain);
       return res;
     },
     {
