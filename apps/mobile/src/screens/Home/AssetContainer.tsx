@@ -78,7 +78,6 @@ export const AssetContainer: React.FC<Props> = ({
   const { currentAccount, switchAccount } = useCurrentAccount();
 
   const [firstRowType, setFirstRowType] = useState('');
-  console.log('CUSTOM_LOGGER:=>: firstRowType', firstRowType);
   const [selectChainItem, setSelectChainItem] = useState<
     ChainListItem | undefined
   >();
@@ -534,7 +533,13 @@ export const AssetContainer: React.FC<Props> = ({
   );
   const renderHeader = useCallback(() => {
     return (
-      <View>
+      <View
+        style={{
+          height:
+            HEADER_TOP_AREA_HEIGHT +
+            ASSETS_SECTION_HEADER +
+            ASSETS_SECTION_HEADER,
+        }}>
         <HomeTopArea
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
@@ -578,9 +583,11 @@ export const AssetContainer: React.FC<Props> = ({
     <Tabs.Container
       containerStyle={styles.container}
       minHeaderHeight={ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER}
-      headerHeight={HEADER_TOP_AREA_HEIGHT}
+      headerHeight={
+        HEADER_TOP_AREA_HEIGHT + ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER
+      }
       renderTabBar={renderTabBar}
-      tabBarHeight={ASSETS_SECTION_HEADER}
+      tabBarHeight={0}
       renderHeader={renderHeader}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab label="Assets" name="assets">
@@ -668,7 +675,7 @@ const getStyles = createGetStyles2024(ctx => ({
   assetHeader: {
     backgroundColor: ctx.colors2024['neutral-bg-gray'],
     height: ASSETS_SECTION_HEADER,
-    paddingBottom: 8,
+    // paddingBottom: 8,
     paddingLeft: 12 + 16,
     paddingRight: 16,
     width: '100%',

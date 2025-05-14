@@ -73,16 +73,17 @@ interface Props {
   onRefresh?: () => void;
   onReachTopStatusChange?: (status: boolean) => void;
   foldHideList: boolean;
-  setFoldHideList: (foldHideList: boolean) => void;
   foldNft: boolean;
-  setFoldNft: (foldNft: boolean) => void;
   foldDefi: boolean;
-  setFoldDefi: (foldDefi: boolean) => void;
-  setFoldScam: (foldScam: boolean) => void;
   refreshing: boolean;
-  setFirstRowType: (firstRowType: string) => void;
+  setFoldHideList: React.Dispatch<React.SetStateAction<boolean>>;
+  setFoldNft: React.Dispatch<React.SetStateAction<boolean>>;
+  setFoldDefi: React.Dispatch<React.SetStateAction<boolean>>;
+  setFoldScam: React.Dispatch<React.SetStateAction<boolean>>;
+  setFirstRowType: React.Dispatch<React.SetStateAction<string>>;
 }
 const FOOTER_HEIGHT = 56;
+const SPACING_HEIGHT = 8;
 
 export const AssetList = forwardRef<FlashList<any>, Props>(
   (
@@ -562,7 +563,7 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       ],
     );
     const ListRenderSeparator = useCallback(() => {
-      return <View style={{ height: 8 }} />;
+      return <View style={{ height: SPACING_HEIGHT }} />;
     }, []);
 
     const ListRenderFooter = useCallback(() => {
