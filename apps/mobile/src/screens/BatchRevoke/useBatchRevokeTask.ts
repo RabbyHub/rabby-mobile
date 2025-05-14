@@ -246,7 +246,7 @@ export const useBatchRevokeTask = () => {
               gasCost: e?.gasCost,
             };
 
-            if (e === 'DISMISS_MODAL') {
+            if (e === 'PRESS_BACKDROP') {
               pause();
             }
           } finally {
