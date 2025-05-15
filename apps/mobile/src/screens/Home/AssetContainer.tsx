@@ -76,6 +76,9 @@ export const AssetContainer: React.FC<Props> = ({
   const { t } = useTranslation();
 
   const { currentAccount, switchAccount } = useCurrentAccount();
+  const chainSelectModalRef = useRef<
+    ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
+  >();
 
   const [firstRowType, setFirstRowType] = useState('');
   const [selectChainItem, setSelectChainItem] = useState<
@@ -415,7 +418,11 @@ export const AssetContainer: React.FC<Props> = ({
         return;
       }
 
-      const id = createGlobalBottomSheetModal2024({
+      if (chainSelectModalRef.current) {
+        removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
+        chainSelectModalRef.current = undefined;
+      }
+      chainSelectModalRef.current = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
         value: selectChainItem,
         bottomSheetModalProps: {
@@ -431,10 +438,16 @@ export const AssetContainer: React.FC<Props> = ({
         titleText: t('page.receiveAddressList.selectChainTitle'),
         onChange: (v: ChainListItem) => {
           setSelectChainItem(v);
-          removeGlobalBottomSheetModal2024(id);
+          if (chainSelectModalRef.current) {
+            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
+            chainSelectModalRef.current = undefined;
+          }
         },
         onClose: () => {
-          removeGlobalBottomSheetModal2024(id);
+          if (chainSelectModalRef.current) {
+            removeGlobalBottomSheetModal2024(chainSelectModalRef.current);
+            chainSelectModalRef.current = undefined;
+          }
         },
       });
     },
