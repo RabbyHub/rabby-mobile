@@ -3,19 +3,19 @@
   "data": [
     {
       "path": "assets/fonts/SF-Pro-Rounded-Bold.otf",
-      "sha1": "cdd39cc963a7fb3093abd2cfaa4340a42bd4ebf1"
+      "sha1": "033dd161b975c7ffa733ccd63392d32226a1d7b2"
     },
     {
       "path": "assets/fonts/SF-Pro-Rounded-Heavy.otf",
-      "sha1": "1fcebff6d74754c73a3333344aab894fd953b6c2"
+      "sha1": "8d92170f01b3e165f43e12452bc9b1f9b18ef178"
     },
     {
       "path": "assets/fonts/SF-Pro-Rounded-Medium.otf",
-      "sha1": "cb9b87e13f1dae7302b892436538873085eb2d66"
+      "sha1": "4973d1891c249e34f21aa9b302c3c07e4772257b"
     },
     {
       "path": "assets/fonts/SF-Pro-Rounded-Regular.otf",
-      "sha1": "5fb4e36094c38db08a95bde5e075dc0efaf50039"
+      "sha1": "a26ce0d3256edb63d607ad0f3cf7a70705dcbfbc"
     },
     {
       "path": "assets/custom/InpageBridgeWeb3.js",
