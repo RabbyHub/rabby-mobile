@@ -18,8 +18,33 @@ export SOURCE_DATE_EPOCH=1600000000
 # 不上传 sentry 报告了，没啥用
 export SENTRY_DISABLE_AUTO_UPLOAD=true
 # https://www.npmjs.com/package/react-native-dotenv#override-envname
-# 覆写 .env
 export APP_ENV=hashing
+
+# 覆写 .env.local
+OVERRIDE_ENV_FILE=".env.${APP_ENV}"
+
+if [ -f "$OVERRIDE_ENV_FILE" ]; then
+  echo "ℹ️ Loading environment variables from $OVERRIDE_ENV_FILE..."
+  # 使用 set -a 来自动导出之后设置的变量
+  # 读取文件，忽略注释和空行，然后导出
+  # 注意：这种方法对于包含特殊字符（如空格、#）的值处理可能需要更复杂的解析
+  # 一个更健壮的方法是逐行读取和解析
+  while IFS='=' read -r key value || [ -n "$key" ]; do
+    # 移除可能的注释 (从第一个'#'开始)
+    key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1') # awk '{$1=$1};1' 用于去除首尾空格
+    value_cleaned=$(echo "$value" | sed 's/#.*//' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//') # 去除首尾空格
+
+    # 移除可能存在于值两边的引号 (单引号或双引号)
+    value_cleaned=$(echo "$value_cleaned" | sed -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
+
+    if [ -n "$key_cleaned" ]; then # 确保 key 不是空的 (例如，空行或纯注释行)
+      export "$key_cleaned=$value_cleaned"
+    fi
+  done < <(grep -v '^[[:space:]]*#' "$OVERRIDE_ENV_FILE" | grep -v '^[[:space:]]*$') # 先过滤掉纯注释行和空行
+  echo "✅ Environment variables from $OVERRIDE_ENV_FILE loaded and exported."
+else
+  echo "⚠️ Override file $OVERRIDE_ENV_FILE not found. No overrides applied."
+fi
 
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
 EXPORT_DIR="${EXPORT_DIR}/build_${TIMESTAMP}"
