@@ -64,10 +64,14 @@ rm -rf ~/Library/Developer/Xcode/DerivedData/RabbyMobile-*
 rm -rf "./ios/Package"
 rm -rf "./ios/build"
 rm -rf "./ios/DerivedData"
+rm -rf node_modules
+
+# 使用 yarn 安装依赖, 这里使用 --frozen-lockfile 来确保安装的依赖与 lockfile 一致
+yarn install --frozen-lockfile
 
 # macOS 的 APFS 文件系统在文件扫描时不保证顺序一致。尝试在 pod install 后，对 Pods/ 下文件执行一次排序构建
 # find Pods -type f -print0 | sort -z | xargs -0 cat > /dev/null
-cd ./ios && bundle exec pod install --deployment && cd ..
+cd ./ios && bundle exec pod deintegrate && bundle exec pod install --deployment && cd ..
 
 # cp ./ios/Pods/Pods.xcodeproj/project.pbxproj "$EXPORT_DIR/Pods.xcodeproj.project.pbxproj"
 
@@ -149,7 +153,11 @@ fi
   "clang_version": "$(clang --version | head -n1)",
   "swift_version": "$(swift --version | head -n1)",
   "hash": "$OVERALL_HASH",
-  "bundle_hash": "$BUNDLE_HASH"
+  "bundle_hash": "$BUNDLE_HASH",
+  "ruby_version": "$(ruby -v | head -n1)",
+  "node_version": "$(node -v | head -n1)",
+  "npm_version": "$(npm -v | head -n1)",
+  "yarn_version": "$(yarn -v | head -n1)",
 }
 
 EOF
