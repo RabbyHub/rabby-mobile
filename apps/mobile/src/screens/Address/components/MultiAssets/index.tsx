@@ -1,14 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ASSETS_ITEM_HEIGHT_NEW,
-  ASSETS_LIST_HEADER,
-  ASSETS_SECTION_HEADER,
-  ASSETS_SEPARATOR_HEIGHT,
-  DEFI_ITEM_HEIGHT,
-  HEADER_CHART_HEIGHT,
-  SWITCH_HEADER_HEIGHT,
-} from '@/constant/layout';
+import { HEADER_CHART_HEIGHT, SWITCH_HEADER_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressList } from './AddressList';

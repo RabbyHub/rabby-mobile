@@ -419,7 +419,7 @@ export const AssetContainer: React.FC<Props> = ({
         name: MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE,
         value: selectChainItem,
         bottomSheetModalProps: {
-          // enableContentPanningGesture: true,
+          enableContentPanningGesture: true,
           enablePanDownToClose: true,
           handleStyle: {
             backgroundColor: isLight

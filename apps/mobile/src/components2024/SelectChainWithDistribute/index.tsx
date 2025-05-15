@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Pressable, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -10,6 +10,8 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 
 import MixedFlatChainList from './MixedFlatChainList';
+import { NextSearchBar } from '../SearchBar';
+import { useForceUpdate } from '@/hooks/useForceUpdate';
 
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
 
@@ -36,6 +38,7 @@ export default function SelectChainWithDistribute({
   const [search, setSearch] = useState('');
   const { t } = useTranslation();
   const inputRef = useRef<TextInput | null>(null);
+  const forceUpdate = useForceUpdate();
 
   const handleToggleSearch = () => {
     if (!canSearch) {
@@ -62,6 +65,11 @@ export default function SelectChainWithDistribute({
       ) || []
     );
   }, [chainList, search]);
+
+  useEffect(() => {
+    forceUpdate();
+  }, [forceUpdate]);
+
   return (
     <AutoLockView
       style={{
@@ -73,27 +81,18 @@ export default function SelectChainWithDistribute({
       <BottomSheetHandlableView>
         {canSearch ? (
           <View style={styles.titleView}>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={{
-                  ...styles.inputText,
-                  ...styles.inputContainerStyle,
-                  backgroundColor: isLight
-                    ? '#E8E9E9' // There is no more suitable color, use a temporary color number to replace it first
-                    : colors2024['neutral-bg-2'],
-                }}
-                placeholderTextColor={colors2024['neutral-info']}
-                placeholder="Search chain"
-                value={search}
-                onChangeText={text => {
-                  setSearch(text);
-                }}
-                ref={inputRef}
-              />
-            </View>
-            <Pressable onPress={handleToggleSearch}>
-              <Text style={styles.cancelText}>{t('global.cancel')}</Text>
-            </Pressable>
+            <NextSearchBar
+              alwaysShowCancel={true}
+              onCancel={handleToggleSearch}
+              style={styles.searchBar}
+              placeholder={t('page.search.header.SearchChain')}
+              value={search}
+              onChangeText={v => {
+                setSearch(v);
+              }}
+              returnKeyType="done"
+              ref={inputRef}
+            />
           </View>
         ) : (
           <View style={{ ...styles.titleView, ...styles.titleViewWithText }}>
@@ -156,6 +155,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  searchBar: {
+    flex: 1,
   },
 
   titleViewWithText: {
