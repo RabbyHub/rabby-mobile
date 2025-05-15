@@ -10,7 +10,7 @@ import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from './hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { Tabs, MaterialTabItem } from 'react-native-collapsible-tab-view';
-import { CustomMaterialTabBar } from './Tabs/CustomMaterialTabBar';
+import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterialTabBar';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
 
