@@ -21,7 +21,7 @@ export SENTRY_DISABLE_AUTO_UPLOAD=true
 export APP_ENV=hashing
 
 # 覆写 .env.local
-OVERRIDE_ENV_FILE=".env.${APP_ENV}"
+OVERRIDE_ENV_FILE=".env"
 
 if [ -f "$OVERRIDE_ENV_FILE" ]; then
   echo "ℹ️ Loading environment variables from $OVERRIDE_ENV_FILE..."
