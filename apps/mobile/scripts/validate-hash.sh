@@ -131,7 +131,9 @@ if [ -n "$EXPORT_DIR" ]; then
   cp "$PROJECT_PATH/ios/Package/RabbyMobile-RabbyMobileRegression.log" "$EXPORT_DIR/RabbyMobile-RabbyMobileRegression.log"
   # cp -r "$PROJECT_PATH/ios/DerivedData/Build/Intermediates.noindex" "$EXPORT_DIR/"
   mv "$PROJECT_PATH/jsModuleId.log" "$EXPORT_DIR/jsModuleId.log"
-  mv "$PROJECT_PATH/ios/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/RabbyMobileRegression/IntermediateBuildFilesPath/RabbyMobile.build/Regression-iphoneos/RabbyMobile.build/Objects-normal/arm64/RabbyMobile.LinkFileList" "$EXPORT_DIR/RabbyMobile.LinkFileList"
+  # mv "$PROJECT_PATH/ios/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/RabbyMobileRegression/IntermediateBuildFilesPath/RabbyMobile.build/Regression-iphoneos/RabbyMobile.build/Objects-normal/arm64/RabbyMobile.LinkFileList" "$EXPORT_DIR/RabbyMobile.LinkFileList"
+
+  python3 ~/playground/hermes-dec/hbc_decompiler.py "./$EXPORT_DIR/main.jsbundle" "./$EXPORT_DIR/decompile.main.jsbundle"
 
   echo "✅ Exported to:"
   echo "   - Binary: $BINARY_DEST"
