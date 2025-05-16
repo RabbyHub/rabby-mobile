@@ -82,6 +82,7 @@ platform :ios do
       skip_codesigning: true,
       # skip_archive: true,
       # xcargs: "-jobs 1", # 禁用并行编译
+      xcconfig: "./ios/RabbyMobile/ValidHash.xcconfig",
       buildlog_path: './ios/Package'
     )
   end
