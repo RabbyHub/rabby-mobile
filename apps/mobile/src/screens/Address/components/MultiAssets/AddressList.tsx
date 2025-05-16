@@ -25,6 +25,7 @@ import { useBalanceUpdate } from './hooks/balance';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { RefreshControl } from 'react-native-gesture-handler';
 
+const SPACING_HEIGHT = 8;
 export const AddressList = ({ disableClick }: { disableClick?: boolean }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -188,7 +189,7 @@ export const AddressList = ({ disableClick }: { disableClick?: boolean }) => {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.list}
       ListFooterComponent={renderFooter}
-      ListHeaderComponent={<View style={{ height: 8 }} />}
+      ListHeaderComponent={<View style={{ height: SPACING_HEIGHT }} />}
       refreshControl={
         <RefreshControl
           style={styles.bgContainer}
@@ -239,7 +240,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   itemGap: {
-    marginTop: 8,
+    marginTop: SPACING_HEIGHT,
   },
   list: {
     paddingHorizontal: 16,

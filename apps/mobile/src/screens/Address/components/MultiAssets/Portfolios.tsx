@@ -57,6 +57,10 @@ import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/Scam
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 
+const SPACING_HEIGHT = 8;
+const FOOTER_HEIGHT = 58;
+const HEADER_PADDING_HEIGHT = 16;
+
 export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { top10Addresses } = useAccountInfo();
@@ -73,7 +77,6 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
     portfolios,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
-    refreshing,
     isLoading,
   } = useAssets();
 
@@ -606,10 +609,10 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
   );
 
   const ListRenderSeparator = useCallback(() => {
-    return <View style={{ height: 8 }} />;
+    return <View style={{ height: SPACING_HEIGHT }} />;
   }, []);
   const ListRenderFooter = useCallback(() => {
-    return <View style={{ height: 58 }} />;
+    return <View style={{ height: FOOTER_HEIGHT }} />;
   }, []);
 
   return (
@@ -623,7 +626,7 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
       onViewableItemsChanged={() => {
         setIsListVisable(true);
       }}
-      ListHeaderComponent={<View style={{ height: 16 }} />}
+      ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
