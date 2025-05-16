@@ -195,7 +195,7 @@ function Chart({
         <>
           <LineChart
             height={114}
-            shape={d3Shape.curveLinear}
+            shape={d3Shape.curveCatmullRom}
             style={{ position: 'relative' }}>
             <LineChart.Path
               showInactivePath={false}
