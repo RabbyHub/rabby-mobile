@@ -144,6 +144,19 @@ const config = {
   ],
 };
 
+if (process.env.APP_ENV === 'hashing') {
+  // hash 一致性时，防止 sentry 干扰
+  delete config.serializer.customSerializer;
+
+  config.serializer.createModuleIdFactory = createModuleIdFactory;
+
+  config.transformer.minifierConfig = {
+    compress: {
+      switches: false, // 禁用 switches 优化
+    },
+  };
+}
+
 module.exports = wrapWithReanimatedMetroConfig(
   mergeConfig(defaultConfig, config),
 );
