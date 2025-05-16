@@ -93,8 +93,8 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100099
-        versionName "0.6.16"
+        versionCode 100100
+        versionName "0.6.17"
         missingDimensionStrategy "store", "play"
     }
     splits {
