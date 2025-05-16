@@ -1,18 +1,18 @@
 diff --git a/android/build.gradle b/android/build.gradle
-index 45e323e8fe045f2d9c74c912a446cfc81ce35b6b..983cae1b63a52826fa51e4a48398f46abeb28117 100644
+index 2caa753ed480a81cfcde9ce8ac33adbd540a800d..d9bee8db6433bae32d29a3bf965f9f08ee28dbe4 100644
 --- a/android/build.gradle
 +++ b/android/build.gradle
 @@ -112,7 +112,7 @@ android {
      externalNativeBuild {
        cmake {
          cppFlags "-O2 -frtti -fexceptions -Wall -Wno-unused-variable -fstack-protector-all -DANDROID"
--        arguments "-DANDROID_STL=c++_shared"
+-        arguments "-DANDROID_STL=c++_shared", "-DNODE_MODULES_DIR=${nodeModules}"
 +        arguments "-DANDROID_STL=c++_shared", "-DNODE_MODULES_DIR=${nodeModules}", "-DRABBY_QUICK_CRYPTO_BUILD_TYPE=${resolveBuildType()}"
          abiFilters (*reactNativeArchitectures())
        }
      }
 diff --git a/lib/module/index.js b/lib/module/index.js
-index f52cc589a4aef892833ecb2c43a547927c435a3d..8f5e1575519fcbbfed7e35ecc3bdfa1a2743c84b 100644
+index f52cc589a4aef892833ecb2c43a547927c435a3d..e9e13042193216db232e2d6ed2713d0caf614c92 100644
 --- a/lib/module/index.js
 +++ b/lib/module/index.js
 @@ -12,7 +12,7 @@ import { constants } from './constants';

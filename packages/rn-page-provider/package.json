@@ -2,17 +2,25 @@
   "name": "@rabby-wallet/rn-page-provider",
   "version": "0.1.0",
   "description": "",
-  "keywords": [],
-  "license": "ISC",
-  "author": "",
   "main": "dist/index.js",
   "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup -c",
-    "prepublishOnly": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-image": "^2.1.1",
+    "@rollup/plugin-typescript": "^8.3.2",
+    "@types/webextension-polyfill": "^0.10.4",
+    "jest": "^28.1.0",
+    "rollup": "^2.73.0",
+    "typescript": "^4.6.4"
   },
   "dependencies": {
-    "@ledgerhq/devices": "8.4.4",
+    "@ledgerhq/devices": "^6.27.1",
     "@types/chrome": "^0.0.186",
     "@types/events": "^3.0.0",
     "@types/node": "^20.14.8",
@@ -21,14 +29,6 @@
     "events": "^3.3.0",
     "lodash": "^4.17.21",
     "webextension-polyfill": "0.7.0"
-  },
-  "devDependencies": {
-    "@rollup/plugin-image": "^2.1.1",
-    "@rollup/plugin-typescript": "^8.3.2",
-    "@types/webextension-polyfill": "^0.10.4",
-    "jest": "^28.1.0",
-    "rollup": "^2.73.0",
-    "typescript": "^4.6.4"
   },
   "installConfig": {
     "hoistingLimits": "workspaces"

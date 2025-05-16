@@ -12,10 +12,13 @@ const HomeNonTabStack =
   createCustomNativeStackNavigator<HomeNonTabNavigatorParamsList>();
 
 export default function HomeNonTabNavigator() {
+  const colors = useThemeColors();
+
   return (
     <HomeNonTabStack.Navigator
       screenOptions={{
         headerShown: false,
+        statusBarColor: colors['blue-default'],
       }}
       initialRouteName={RootNames.Search}>
       <HomeNonTabStack.Screen
