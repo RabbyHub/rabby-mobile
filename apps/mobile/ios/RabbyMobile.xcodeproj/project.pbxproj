@@ -27,10 +27,10 @@
 		B2AE283CF1B1758A141448EF /* Pods_RabbyMobile_RabbyMobileTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 069D82E82D2D813C144A5695 /* Pods_RabbyMobile_RabbyMobileTests.framework */; };
 		F20F80EEAE1D50D91E66759B /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E754316B4EBC7A6FD407FED1 /* Pods_RabbyMobile.framework */; };
 		73CE3503124B4D148E887D73 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = C1C227A720CF48B1A81AA514 /* InpageBridgeWeb3.js */; };
-		9329F5C372C8490FAE65344B /* subset-SFRounded-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 33BF39E9539C4B06BA9E5878 /* subset-SFRounded-Bold.ttf */; };
-		98F64175C5DD4DB6872D657D /* subset-SFRounded-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9090B84540204B2E930CC5CE /* subset-SFRounded-Heavy.ttf */; };
-		84A17FA4E00040DD855A8B46 /* subset-SFRounded-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F894ADC0C062462894B2390B /* subset-SFRounded-Medium.ttf */; };
-		6259A165D36A4197A0E24BC0 /* subset-SFRounded-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DC84A444458C495587FD5372 /* subset-SFRounded-Regular.ttf */; };
+		814437A65952497FB76C8692 /* SF-Pro-Rounded-Bold-subset.otf in Resources */ = {isa = PBXBuildFile; fileRef = 09BEE06CF7B3444285F739C3 /* SF-Pro-Rounded-Bold-subset.otf */; };
+		4CEBC4EF258C4CEEAB4AF30D /* SF-Pro-Rounded-Heavy-subset.otf in Resources */ = {isa = PBXBuildFile; fileRef = 91B8BA5880534D049D655440 /* SF-Pro-Rounded-Heavy-subset.otf */; };
+		999114350C8C4536B405AF5F /* SF-Pro-Rounded-Medium-subset.otf in Resources */ = {isa = PBXBuildFile; fileRef = 00A54E3865F645069F8BF366 /* SF-Pro-Rounded-Medium-subset.otf */; };
+		055366681B834158BEA24049 /* SF-Pro-Rounded-Regular-subset.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5E6025E4645E4DE69DB01EB8 /* SF-Pro-Rounded-Regular-subset.otf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,10 +82,10 @@
 		F1884AD849DF48B89EE1A709 /* Pods-RabbyMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.release.xcconfig"; sourceTree = "<group>"; };
 		F4997D11389601E920E11DFC /* Pods-RabbyMobile.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.regression.xcconfig"; sourceTree = "<group>"; };
 		C1C227A720CF48B1A81AA514 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; name = "InpageBridgeWeb3.js"; path = "../assets/custom/InpageBridgeWeb3.js"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		33BF39E9539C4B06BA9E5878 /* subset-SFRounded-Bold.ttf */ = {isa = PBXFileReference; name = "subset-SFRounded-Bold.ttf"; path = "../assets/fonts/subset-SFRounded-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		9090B84540204B2E930CC5CE /* subset-SFRounded-Heavy.ttf */ = {isa = PBXFileReference; name = "subset-SFRounded-Heavy.ttf"; path = "../assets/fonts/subset-SFRounded-Heavy.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		F894ADC0C062462894B2390B /* subset-SFRounded-Medium.ttf */ = {isa = PBXFileReference; name = "subset-SFRounded-Medium.ttf"; path = "../assets/fonts/subset-SFRounded-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		DC84A444458C495587FD5372 /* subset-SFRounded-Regular.ttf */ = {isa = PBXFileReference; name = "subset-SFRounded-Regular.ttf"; path = "../assets/fonts/subset-SFRounded-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		09BEE06CF7B3444285F739C3 /* SF-Pro-Rounded-Bold-subset.otf */ = {isa = PBXFileReference; name = "SF-Pro-Rounded-Bold-subset.otf"; path = "../assets/fonts/SF-Pro-Rounded-Bold-subset.otf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		91B8BA5880534D049D655440 /* SF-Pro-Rounded-Heavy-subset.otf */ = {isa = PBXFileReference; name = "SF-Pro-Rounded-Heavy-subset.otf"; path = "../assets/fonts/SF-Pro-Rounded-Heavy-subset.otf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		00A54E3865F645069F8BF366 /* SF-Pro-Rounded-Medium-subset.otf */ = {isa = PBXFileReference; name = "SF-Pro-Rounded-Medium-subset.otf"; path = "../assets/fonts/SF-Pro-Rounded-Medium-subset.otf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		5E6025E4645E4DE69DB01EB8 /* SF-Pro-Rounded-Regular-subset.otf */ = {isa = PBXFileReference; name = "SF-Pro-Rounded-Regular-subset.otf"; path = "../assets/fonts/SF-Pro-Rounded-Regular-subset.otf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -215,10 +215,10 @@
 			children = (
 				A5FDCD7CC73A48D1BD873FF0 /* vconsole.min.js */,
 				C1C227A720CF48B1A81AA514 /* InpageBridgeWeb3.js */,
-				33BF39E9539C4B06BA9E5878 /* subset-SFRounded-Bold.ttf */,
-				9090B84540204B2E930CC5CE /* subset-SFRounded-Heavy.ttf */,
-				F894ADC0C062462894B2390B /* subset-SFRounded-Medium.ttf */,
-				DC84A444458C495587FD5372 /* subset-SFRounded-Regular.ttf */,
+				09BEE06CF7B3444285F739C3 /* SF-Pro-Rounded-Bold-subset.otf */,
+				91B8BA5880534D049D655440 /* SF-Pro-Rounded-Heavy-subset.otf */,
+				00A54E3865F645069F8BF366 /* SF-Pro-Rounded-Medium-subset.otf */,
+				5E6025E4645E4DE69DB01EB8 /* SF-Pro-Rounded-Regular-subset.otf */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -328,10 +328,10 @@
 				ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */,
 				096900DC3A7A4F9FB3367687 /* vconsole.min.js in Resources */,
 				73CE3503124B4D148E887D73 /* InpageBridgeWeb3.js in Resources */,
-				9329F5C372C8490FAE65344B /* subset-SFRounded-Bold.ttf in Resources */,
-				98F64175C5DD4DB6872D657D /* subset-SFRounded-Heavy.ttf in Resources */,
-				84A17FA4E00040DD855A8B46 /* subset-SFRounded-Medium.ttf in Resources */,
-				6259A165D36A4197A0E24BC0 /* subset-SFRounded-Regular.ttf in Resources */,
+				814437A65952497FB76C8692 /* SF-Pro-Rounded-Bold-subset.otf in Resources */,
+				4CEBC4EF258C4CEEAB4AF30D /* SF-Pro-Rounded-Heavy-subset.otf in Resources */,
+				999114350C8C4536B405AF5F /* SF-Pro-Rounded-Medium-subset.otf in Resources */,
+				055366681B834158BEA24049 /* SF-Pro-Rounded-Regular-subset.otf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

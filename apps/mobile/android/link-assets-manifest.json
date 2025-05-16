@@ -2,20 +2,20 @@
   "migIndex": 1,
   "data": [
     {
-      "path": "assets/fonts/subset-SFRounded-Bold.ttf",
-      "sha1": "5e5a89ad0b26af3a011427ecb6c1476b5b2761ec"
+      "path": "assets/fonts/SF-Pro-Rounded-Bold-subset.otf",
+      "sha1": "756e23d47648e3e60171530fc19c3d08fa616865"
     },
     {
-      "path": "assets/fonts/subset-SFRounded-Heavy.ttf",
-      "sha1": "a50979ba19e42bc164da47a405dab7392550d9f2"
+      "path": "assets/fonts/SF-Pro-Rounded-Heavy-subset.otf",
+      "sha1": "2772ed7aedadae1fc5afc1cab4b4fa3e21902f07"
     },
     {
-      "path": "assets/fonts/subset-SFRounded-Medium.ttf",
-      "sha1": "3e9e9aaef40dbc1a37d33601ac9a4bc6124bfab5"
+      "path": "assets/fonts/SF-Pro-Rounded-Medium-subset.otf",
+      "sha1": "d45d548d437b9ad2a3fdff77b89af508e152b22d"
     },
     {
-      "path": "assets/fonts/subset-SFRounded-Regular.ttf",
-      "sha1": "d6e4fd3e5748b71194e648d21d7e0a89d9ab3354"
+      "path": "assets/fonts/SF-Pro-Rounded-Regular-subset.otf",
+      "sha1": "c42ac204c247265b9cb1379f28c18f35400225e4"
     },
     {
       "path": "assets/custom/InpageBridgeWeb3.js",
