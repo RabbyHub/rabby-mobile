@@ -80,7 +80,7 @@
   <!-- Android < 12 -->
   <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
   <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
-  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <!-- <uses-permission android:name="android.permission.VIBRATE"/> -->
 
   <!-- Add this line if your application always requires BLE. More info can be found on:
