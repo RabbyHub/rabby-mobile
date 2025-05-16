@@ -613,7 +613,7 @@ export const Portfolios = ({ disableClick }: { disableClick: boolean }) => {
       onViewableItemsChanged={() => {
         setIsListVisable(true);
       }}
-      ListHeaderComponent={ListRenderSeparator}
+      ListHeaderComponent={<View style={{ height: 16 }} />}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}

@@ -188,6 +188,7 @@ export const AddressList = ({ disableClick }: { disableClick: boolean }) => {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.list}
       ListFooterComponent={renderFooter}
+      ListHeaderComponent={<View style={{ height: 8 }} />}
       refreshControl={
         <RefreshControl
           style={styles.bgContainer}
