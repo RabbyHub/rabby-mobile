@@ -1168,8 +1168,8 @@ export const MiniApproval = ({
 
   const indexRef = useRef(-1);
   const dismissedByCodeRef = useRef(false);
-  const handleReject = useMemoizedFn(() => {
-    onReject?.();
+  const handleReject = useMemoizedFn((reason?: string) => {
+    onReject?.(reason);
   });
   const handleClearTask = useMemoizedFn(() => {
     task.clear();
@@ -1179,12 +1179,19 @@ export const MiniApproval = ({
     }
   });
 
+  const pressBackdropRef = useRef(false);
+
   const onChange = useCallback(
     (index: number) => {
       if (index === -1 && indexRef.current > -1) {
         // handleReject?.();
         if (!dismissedByCodeRef.current) {
-          handleReject?.();
+          const reason = pressBackdropRef.current
+            ? 'PRESS_BACKDROP'
+            : undefined;
+
+          handleReject?.(reason);
+          pressBackdropRef.current = false;
         }
         dismissedByCodeRef.current = false;
       }
@@ -1213,12 +1220,11 @@ export const MiniApproval = ({
         handleIndicatorStyle={styles.handleIndicatorStyle}
         enableDynamicSizing
         backgroundStyle={styles.sheetBg}
-        // backdropProps={{
-        //   style: {
-        //     zIndex: 2000,
-        //     height: '100%',
-        //   },
-        // }}
+        backdropProps={{
+          onPress() {
+            pressBackdropRef.current = true;
+          },
+        }}
         // containerStyle={{ zIndex: 2001 }}
         onChange={onChange}>
         <BottomSheetView>
