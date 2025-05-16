@@ -69,9 +69,7 @@ rm -rf node_modules
 # 使用 yarn 安装依赖, 这里使用 --frozen-lockfile 来确保安装的依赖与 lockfile 一致
 yarn install --frozen-lockfile
 
-# macOS 的 APFS 文件系统在文件扫描时不保证顺序一致。尝试在 pod install 后，对 Pods/ 下文件执行一次排序构建
-# find Pods -type f -print0 | sort -z | xargs -0 cat > /dev/null
-cd ./ios && bundle exec pod deintegrate && bundle exec pod install --deployment && cd ..
+cd ./ios && bundle exec pod deintegrate && RCT_NEW_ARCH_ENABLED=0 bundle exec pod install --deployment --repo-update && cd ..
 
 # cp ./ios/Pods/Pods.xcodeproj/project.pbxproj "$EXPORT_DIR/Pods.xcodeproj.project.pbxproj"
 
@@ -139,10 +137,11 @@ if [ -n "$EXPORT_DIR" ]; then
 
   # otool -tV "$BINARY_DEST" >"$EXPORT_DIR/RabbyMobile.s"
   mv "$PROJECT_PATH/ios/LinkMap.txt" "$EXPORT_DIR/LinkMap.txt"
-  cp "$PROJECT_PATH/ios/Package/RabbyMobile-RabbyMobileRegression.log" "$EXPORT_DIR/RabbyMobile-RabbyMobileRegression.log"
+  cp "$PROJECT_PATH/ios/Package/RabbyMobile-RabbyMobile.log" "$EXPORT_DIR/RabbyMobile-RabbyMobile.log"
+  cp "$PROJECT_PATH/ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app/modules.json" "$EXPORT_DIR/modules.json"
   # cp -r "$PROJECT_PATH/ios/DerivedData/Build/Intermediates.noindex" "$EXPORT_DIR/"
   mv "$PROJECT_PATH/jsModuleId.log" "$EXPORT_DIR/jsModuleId.log"
-  # mv "$PROJECT_PATH/ios/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/RabbyMobileRegression/IntermediateBuildFilesPath/RabbyMobile.build/Regression-iphoneos/RabbyMobile.build/Objects-normal/arm64/RabbyMobile.LinkFileList" "$EXPORT_DIR/RabbyMobile.LinkFileList"
+  # mv "$PROJECT_PATH/ios/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/RabbyMobile/IntermediateBuildFilesPath/RabbyMobile.build/Release-iphoneos/RabbyMobile.build/Objects-normal/arm64/RabbyMobile.LinkFileList" "$EXPORT_DIR/RabbyMobile.LinkFileList"
 
   echo "✅ Exported to:"
   echo "   - Binary: $BINARY_DEST"

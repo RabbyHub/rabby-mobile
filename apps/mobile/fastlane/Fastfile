@@ -64,9 +64,9 @@ platform :ios do
   desc "Valid ios adhoc"
   lane :hashcheck do
     gym(
-      scheme: 'RabbyMobileRegression',
+      scheme: 'RabbyMobile',
       workspace: './ios/RabbyMobile.xcworkspace',
-      configuration: 'Regression',
+      configuration: 'Release',
       output_directory: "./ios/Package",
       # build_path: "./ios/Package/adhoc",
       destination: "generic/platform=iOS",

@@ -22,7 +22,7 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 const LOG_FILE = path.join(__dirname, 'jsModuleId.log');
 
 // 保证 module 的顺序
-// https://github.com/getsentry/sentry-react-native/blob/432a4cbf65883f74c4ee6b20c1148e2c599041fe/packages/core/src/js/tools/vendor/metro/utils.ts#L60
+// https://github.com/facebook/metro/blob/d7c74eac8d277ea321a0b81336732764cc0b7e1f/packages/metro/src/lib/createModuleIdFactory.js#L14
 const createModuleIdFactory = () => {
   const projPathReg = new RegExp(`^${path.resolve(__dirname, '../..')}/`);
 

@@ -10,7 +10,6 @@
 
 RABBY_MOBILE_CODE = RABBY_MOBILE_CODE_DEV
 
-// 解决 literal pool symbol address: _objc_msgSend 地址不稳定的问题
 GCC_OPTIMIZATION_LEVEL = 0
 SWIFT_OPTIMIZATION_LEVEL = -Onone
 LD_NO_PIE = YES
