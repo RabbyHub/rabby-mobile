@@ -600,7 +600,9 @@
       "detectedMultipleRequestsFromThisDapp": "このDappからの複数のリクエストが検出されました。",
       "cancelTransaction": "トランザクションをキャンセル",
       "keystoneSign": "サイン",
-      "startSigning": "署名を開始"
+      "startSigning": "署名を開始",
+      "oneKeyConfirm": "確認",
+      "ledgerConfirm": "確認"
     },
     "gasTopUp": {
       "InsufficientBalanceTips": "残高不足",
@@ -666,7 +668,41 @@
             "contractTrustValue": "Trust valueは、このコントラクトによって消費された総資産価値を指します。Trust valueが低い場合、リスクがあるか、180日間の非活動を示しています。"
           }
         }
-      }
+      },
+      "revokeModal": {
+        "paused": "一時停止",
+        "approvalCount_one": "{{count}} 承認",
+        "iGotIt": "分かりました",
+        "defaultFailed": "取引に失敗しました",
+        "gasNotEnough": "ガスが不十分で送信できません",
+        "submitTxFailed": "送信に失敗しました",
+        "approvalCount_other": "{{count}} の承認",
+        "approvalCount": "{{count}} 承認",
+        "simulationFailed": "シミュレーションに失敗しました",
+        "gasTooHigh": "ガス料金が高い",
+        "stillRevoke": "まだ取り消す"
+      },
+      "errorReason": {
+        "title": "権限を取り消すことに失敗しました"
+      },
+      "allApprovals": "すべての承認",
+      "revokeFrom": "Revoke From",
+      "continueRevoke": "続ける",
+      "myBalance": "私の残高",
+      "asset": "アセット",
+      "approvedAssetsAndAmount": "承認された資産と金額",
+      "gasFee": "ガス料金",
+      "startRevoke": "開始取り消し",
+      "selectAll": "すべて選択",
+      "pauseRevoke": "一時停止",
+      "unknownContract": "不明な契約",
+      "approvedAssets": "承認された契約および金額",
+      "contractAddress": "契約アドレス",
+      "approvedContracts": "承認された資産の額と残高",
+      "unselectAll": "すべて選択解除",
+      "revokeCompleted": "完了",
+      "leavingThisPageWillStopTheRevokeProcess": "このページを離れると、取り消しプロセスが停止します。",
+      "stopTheRevokeProcess": " revokeプロセスを停止しますか？"
     },
     "sendToken": {
       "sectionBalance": {
@@ -726,7 +762,8 @@
       },
       "noSupprotTokenForDex": "このトークンはこの取引所でサポートされていない可能性があります。損失を避けるために、事前に確認してください。",
       "From": "から",
-      "noSupprotTokenForSafe": "あなたがトークンを送信しているSafeアドレスは、このチェーンにデプロイされていません。損失を避けるために、進む前に確認してください。"
+      "noSupprotTokenForSafe": "あなたがトークンを送信しているSafeアドレスは、このチェーンにデプロイされていません。損失を避けるために、進む前に確認してください。",
+      "noSupportTokenForChain": "受取人アドレスは異なるチェーン上のコントラクトアドレスです。損失を避けるために、進む前に確認してください。"
     },
     "swap": {
       "hidden-no-quote-rates_other": "{{count}} のレートが利用できません。",
@@ -1818,7 +1855,8 @@
       "recent": "最近",
       "sendTimeHeader": "送信",
       "SelectFromHistory": "履歴から選択",
-      "SendHistory": "送信履歴"
+      "SendHistory": "送信履歴",
+      "sentTimeHeader": "送信しました"
     },
     "confirmAddress": {
       "risks": {
@@ -1906,6 +1944,9 @@
       },
       "BrowserHistoryList": {
         "title": "履歴"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "すべてのタブを閉じる"
       }
     },
     "scan": {
@@ -1954,7 +1995,8 @@
     "Unknown": "不明",
     "unlimited": "無制限",
     "Addresses": "アドレス",
-    "24h": "24時間"
+    "24h": "24時間",
+    "Edit": "編集"
   },
   "bluetooth": {
     "powered_off_alert": {

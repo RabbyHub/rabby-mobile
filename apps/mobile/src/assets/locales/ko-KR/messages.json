@@ -192,7 +192,9 @@
       },
       "cancelAll": "모든 {{count}}개의 Dapp 요청 취소",
       "keystoneSign": "서명",
-      "startSigning": "서명 시작"
+      "startSigning": "서명 시작",
+      "oneKeyConfirm": "확인",
+      "ledgerConfirm": "확인"
     },
     "gasTopUp": {
       "InsufficientBalanceTips": "잔액 부족",
@@ -311,7 +313,8 @@
       },
       "noSupprotTokenForDex": "이 토큰은 이 거래소에서 지원되지 않을 수 있습니다. 손실을 피하기 위해 진행하기 전에 확인하십시오.",
       "noSupprotTokenForSafe": "전송하려는 토큰의 Safe 주소가 이 체인에 배포되어 있지 않습니다. 손실을 피하기 위해 진행하기 전에 확인하십시오.",
-      "From": "에서"
+      "From": "에서",
+      "noSupportTokenForChain": "수신자 주소는 다른 체인의 계약 주소입니다. 손실을 방지하기 위해 진행하기 전에 확인하십시오."
     },
     "signTx": {
       "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.  \n가스 한도가 낮습니다. 거래가 실패할 가능성이 1% 있습니다.",
@@ -896,7 +899,41 @@
             "normalTrustValueDanger": "컨트랙트 신뢰 가치: {{ contractUsdText }}"
           }
         }
-      }
+      },
+      "revokeModal": {
+        "simulationFailed": "시뮬레이션 실패",
+        "approvalCount": "{{count}} 승인",
+        "stillRevoke": "아직 철회",
+        "approvalCount_one": "{{count}} 승인",
+        "approvalCount_other": "{{count}} 승인",
+        "defaultFailed": "거래 실패",
+        "submitTxFailed": "제출에 실패했습니다",
+        "iGotIt": "알겠습니다",
+        "gasTooHigh": "가스 요금이 비쌉니다",
+        "paused": "일시 중지됨",
+        "gasNotEnough": "제출할 가스가 부족합니다."
+      },
+      "errorReason": {
+        "title": "철회 실패"
+      },
+      "asset": "자산",
+      "startRevoke": "시작 철회",
+      "pauseRevoke": "일시 정지",
+      "revokeFrom": "Revoke From",
+      "continueRevoke": "계속",
+      "allApprovals": "모든 승인",
+      "approvedAssets": "승인된 계약 및 금액",
+      "unknownContract": "알 수 없는 계약",
+      "myBalance": "내 잔액",
+      "gasFee": "가스 요금",
+      "selectAll": "모두 선택",
+      "approvedAssetsAndAmount": "승인된 자산 및 금액",
+      "unselectAll": "모두 선택 해제",
+      "contractAddress": "계약 주소",
+      "revokeCompleted": "완료",
+      "stopTheRevokeProcess": "취소 프로세스를 중단하시겠습니까?",
+      "leavingThisPageWillStopTheRevokeProcess": "이 페이지를 떠나면 권한 철회 과정이 중단됩니다.",
+      "approvedContracts": "승인된 자산 금액 및 잔액"
     },
     "nextComponent": {
       "addAddress": {
@@ -1766,7 +1803,8 @@
       "SelectFromHistory": "기록에서 선택하십시오",
       "sendTimeHeader": "전송",
       "innerEnterAddress": "주소 / ENS 입력",
-      "SendHistory": "전송 내역"
+      "SendHistory": "전송 내역",
+      "sentTimeHeader": "보냈습니다"
     },
     "confirmAddress": {
       "risks": {
@@ -1854,6 +1892,9 @@
       },
       "BrowserHistoryList": {
         "title": "기록"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "모든 탭 닫기"
       }
     },
     "scan": {
@@ -1902,7 +1943,8 @@
     "Unknown": "알 수 없음",
     "unlimited": "무제한",
     "Addresses": "주소",
-    "24h": "24시간"
+    "24h": "24시간",
+    "Edit": "편집"
   },
   "native": {
     "biometrics": {

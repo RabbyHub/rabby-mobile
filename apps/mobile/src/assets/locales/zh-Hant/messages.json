@@ -91,7 +91,8 @@
     "Unknown": "未知",
     "unlimited": "unlimited",
     "Addresses": "地址",
-    "24h": "24小時"
+    "24h": "24小時",
+    "Edit": "編輯"
   },
   "background": {
     "transactionWatcher": {
@@ -312,7 +313,8 @@
       },
       "noSupprotTokenForDex": "該代幣可能不受此交易所支持。在繼續之前請檢查以避免損失。",
       "From": "從",
-      "noSupprotTokenForSafe": "您要发送令牌的 Safe 地址未在此链上部署。请在继续操作之前检查，以避免损失。"
+      "noSupprotTokenForSafe": "您要发送令牌的 Safe 地址未在此链上部署。请在继续操作之前检查，以避免损失。",
+      "noSupportTokenForChain": "收件人地址是不同链上的合约地址。在继续之前请检查，以避免损失。"
     },
     "sendTokenComponents": {
       "GasReserved": "預留 <1>0</1> {{ tokenName }} 用於 gas 費用"
@@ -767,7 +769,41 @@
             "contractTrustValue": "信任價值是指此合約花費的資產總價值。信任價值低表明存在風險或者180天不活躍。"
           }
         }
-      }
+      },
+      "revokeModal": {
+        "iGotIt": "我明白了",
+        "submitTxFailed": "提交失敗",
+        "approvalCount": "{{count}} 授權",
+        "paused": "暫停",
+        "simulationFailed": "模擬失敗",
+        "stillRevoke": "仍然撤销",
+        "gasNotEnough": "提交的 Gas 不足",
+        "defaultFailed": "交易失敗",
+        "gasTooHigh": "Gas費用很高",
+        "approvalCount_other": "{{count}} 次批准",
+        "approvalCount_one": "{{count}} 批准"
+      },
+      "errorReason": {
+        "title": "無法撤銷"
+      },
+      "unknownContract": "未知合約",
+      "pauseRevoke": "暫停",
+      "asset": "資產",
+      "contractAddress": "合約地址",
+      "unselectAll": "取消全選",
+      "approvedAssetsAndAmount": "批准的資產和金額",
+      "myBalance": "我的餘額",
+      "revokeFrom": "撤銷自",
+      "gasFee": "Gas費用",
+      "approvedAssets": "核准的合約與金額",
+      "startRevoke": "開始撤銷",
+      "selectAll": "選擇全部",
+      "approvedContracts": "已批准資產金額與餘額",
+      "allApprovals": "所有授權",
+      "continueRevoke": "繼續",
+      "revokeCompleted": "完成",
+      "stopTheRevokeProcess": "停止撤销流程？",
+      "leavingThisPageWillStopTheRevokeProcess": "離開此頁面將停止撤回過程。"
     },
     "manageAddress": {
       "confirm": "確認",
@@ -949,7 +985,9 @@
         "siging": "發送簽名請求"
       },
       "keystoneSign": "簽署",
-      "startSigning": "開始簽署"
+      "startSigning": "開始簽署",
+      "ledgerConfirm": "確認",
+      "oneKeyConfirm": "確認"
     },
     "switchChain": {
       "requestRabbyToSupport": "請求 Rabby 支援",
@@ -1880,7 +1918,8 @@
       "innerEnterAddress": "輸入地址 / ENS",
       "SendHistory": "發送歷史",
       "SelectFromHistory": "從歷史中選擇",
-      "recent": "最近"
+      "recent": "最近",
+      "sentTimeHeader": "已發送"
     },
     "confirmAddress": {
       "risks": {
@@ -1968,6 +2007,9 @@
       },
       "BrowserHistoryList": {
         "title": "歷史"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "關閉所有標籤頁"
       }
     },
     "scan": {
