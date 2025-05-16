@@ -146,23 +146,23 @@ function mutateStyles<T extends NamedStyles<T> | NamedStyles<any>>(
         switch (fwTypeResult.supertype) {
           case FontWeightEnum.heavy: {
             input[key].fontFamily = FontNames.sf_pro_rounded_heavy;
-            // delete input[key].fontWeight;
+            delete input[key].fontWeight;
             break;
           }
           case FontWeightEnum.bold: {
             input[key].fontFamily = FontNames.sf_pro_rounded_bold;
-            // delete input[key].fontWeight;
+            delete input[key].fontWeight;
             break;
           }
           case FontWeightEnum.medium: {
             input[key].fontFamily = FontNames.sf_pro_rounded_medium;
-            // delete input[key].fontWeight;
+            delete input[key].fontWeight;
             break;
           }
           case FontWeightEnum.normal:
           default: {
             input[key].fontFamily = FontNames.sf_pro_rounded_regular;
-            // delete input[key].fontWeight;
+            delete input[key].fontWeight;
             break;
           }
         }
