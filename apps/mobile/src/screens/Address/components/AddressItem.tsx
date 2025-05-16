@@ -41,6 +41,7 @@ interface AddressItemProps {
   style?: StyleProp<ViewStyle>;
   disableMenu?: boolean;
   onSelect?: () => void;
+  disableClick?: boolean;
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
   const {
@@ -50,6 +51,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     changePercent,
     isLoss,
     disableMenu,
+    disableClick,
   } = props;
   const { switchAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });
@@ -84,7 +86,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([styles.root, props.style])}
         delayLongPress={200} // long press delay
-        onPress={onDetail}
+        onPress={disableClick ? undefined : onDetail}
         onLongPress={() => {
           trigger('impactLight', {
             enableVibrateFallback: true,

@@ -52,7 +52,7 @@ import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/Scam
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 
-export const Portfolios = () => {
+export const Portfolios = ({ disableClick }: { disableClick: boolean }) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { top10Addresses } = useAccountInfo();
   const focusedTab = useFocusedTab();
@@ -230,13 +230,16 @@ export const Portfolios = () => {
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
+      if (disableClick) {
+        return;
+      }
       navigate(RootNames.TokenDetail, {
         token: token,
         unHold: token._unHold,
         needUseCacheToken: true,
       });
     },
-    [],
+    [disableClick],
   );
 
   const top10Balance = useMemo(() => {
@@ -251,19 +254,25 @@ export const Portfolios = () => {
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
+      if (disableClick) {
+        return;
+      }
       navigate(RootNames.DeFiDetail, {
         data,
         portfolioList: itemList,
         cache: true,
       });
     },
-    [],
+    [disableClick],
   );
 
   const { tokenRefresh } = useTriggerTagAssets();
 
   const getTokenMenuActions = useCallback(
     (data: AbstractPortfolioToken): MenuAction[] => {
+      if (disableClick) {
+        return [];
+      }
       return [
         {
           title: data._isFold
@@ -329,11 +338,14 @@ export const Portfolios = () => {
         },
       ];
     },
-    [isLight, tokenRefresh, t],
+    [disableClick, t, isLight, tokenRefresh],
   );
 
   const getDefiOrNftMenuAction = useCallback(
     (type: 'defi', data: DisplayedProject): MenuAction[] => {
+      if (disableClick) {
+        return [];
+      }
       const isFold = data._isFold;
       return [
         {
@@ -364,7 +376,7 @@ export const Portfolios = () => {
         },
       ];
     },
-    [isLight, t, tokenRefresh],
+    [disableClick, isLight, t, tokenRefresh],
   );
 
   const renderItem = useCallback(

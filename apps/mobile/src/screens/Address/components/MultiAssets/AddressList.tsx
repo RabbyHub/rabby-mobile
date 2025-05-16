@@ -25,7 +25,7 @@ import { useBalanceUpdate } from './hooks/balance';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { RefreshControl } from 'react-native-gesture-handler';
 
-export const AddressList = () => {
+export const AddressList = ({ disableClick }: { disableClick: boolean }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
@@ -96,11 +96,11 @@ export const AddressList = () => {
     ({ item }) => {
       return (
         <View style={styles.itemGap}>
-          <AddressEntry data={item} />
+          <AddressEntry data={item} disableClick={disableClick} />
         </View>
       );
     },
-    [styles.itemGap],
+    [disableClick, styles.itemGap],
   );
 
   const onGotoWatchAddress = useCallback(() => {

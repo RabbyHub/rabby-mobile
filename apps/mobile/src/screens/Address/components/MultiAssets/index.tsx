@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HEADER_CHART_HEIGHT, SWITCH_HEADER_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -118,7 +118,7 @@ export const MultiAssets = ({
       />
     );
   }, [combineData, handleScroll, isLoadingCurve, pathColor]);
-
+  const [isSwiping, setIsSwiping] = useState(false);
   return (
     <Tabs.Container
       containerStyle={styles.container}
@@ -127,18 +127,23 @@ export const MultiAssets = ({
       renderTabBar={renderTabBar}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
       renderHeader={renderHeader}
+      pagerProps={{
+        onPageScrollStateChanged: event => {
+          setIsSwiping(event?.nativeEvent?.pageScrollState !== 'idle');
+        },
+      }}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab
         label={`${t('page.multiAddressAssets.tabs.address')} ${
           list.length ? `(${list.length})` : ''
         }`}
         name="address">
-        <AddressList />
+        <AddressList disableClick={isSwiping} />
       </Tabs.Tab>
       <Tabs.Tab
         label={t('page.multiAddressAssets.tabs.portfolio')}
         name="portfolios">
-        <Portfolios />
+        <Portfolios disableClick={isSwiping} />
       </Tabs.Tab>
     </Tabs.Container>
   );
