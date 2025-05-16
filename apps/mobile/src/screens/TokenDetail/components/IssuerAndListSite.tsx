@@ -133,7 +133,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
                     : t('page.tokenDetail.IssuerWebsite')}
                 </Text>
                 <DomainUrlLink
-                  url={`https://www.${tokenEntity?.domain_id}`}
+                  url={`https://${tokenEntity?.domain_id}`}
                   name={tokenEntity?.domain_id}
                 />
               </View>
