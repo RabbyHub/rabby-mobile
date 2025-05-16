@@ -79,6 +79,13 @@ git checkout ./ios/RabbyMobile.xcodeproj/project.pbxproj
 
 bundle exec fastlane ios hashcheck
 
+node ./scripts/validate-module-ids.js "$PROJECT_PATH/jsModuleId.log"
+
+if [ $? -ne 0 ]; then
+  echo "❌: Metro 解析 module 时的 createModuleIdFactory 存在 id 碰撞，此验证脚本不再可靠"
+  exit 1;
+fi
+
 # Assets.car 特殊处理，它里面有个 Timestamp，还没法指定，只能先解析成 json，再把 timestamp 移除，对比 json 的 hash
 if [ -f "$APP_PATH/Assets.car" ]; then
   xcrun assetutil --info "$APP_PATH/Assets.car" >"$APP_PATH/Assets.car.json" || exit 1

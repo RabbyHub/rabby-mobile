@@ -23,26 +23,32 @@ const LOG_FILE = path.join(__dirname, 'jsModuleId.log');
 
 // 保证 module 的顺序
 // https://github.com/getsentry/sentry-react-native/blob/432a4cbf65883f74c4ee6b20c1148e2c599041fe/packages/core/src/js/tools/vendor/metro/utils.ts#L60
-function stableStringHash(pathStr) {
-  // 初始化参数（选用高熵值参数）
-  const BASE = 257n; // 大于 ASCII 范围的质数
-  const MOD = 2n ** 53n - 1n; // JS 最大安全整数
-  let hash = 0n;
-  for (let i = 0; i < pathStr.length; i++) {
-    const charCode = BigInt(pathStr.charCodeAt(i));
-    hash = (hash * BASE + charCode) % MOD;
-  }
+const createModuleIdFactory = () => {
+  const projPathReg = new RegExp(`^${path.resolve(__dirname, '../..')}/`);
 
-  const result = Number(hash);
-  // 日志记录逻辑
-  const logEntry = `${pathStr}\t${result}\n`;
-  try {
-    fs.appendFileSync(LOG_FILE, logEntry, 'utf8');
-  } catch (err) {
-    console.error('写入日志失败:', err);
-  }
-  return result;
-}
+  return function stableStringHash(pathStr) {
+    // 初始化参数（选用高熵值参数）
+    const BASE = 257n; // 大于 ASCII 范围的质数
+    const MOD = 2n ** 53n - 1n; // JS 最大安全整数
+    let hash = 0n;
+    const _path = pathStr.replace(projPathReg, 'root/');
+
+    for (let i = 0; i < _path.length; i++) {
+      const charCode = BigInt(_path.charCodeAt(i));
+      hash = (hash * BASE + charCode) % MOD;
+    }
+
+    const result = Number(hash);
+    // 日志记录逻辑
+    const logEntry = `${_path}\t${result}\n`;
+    try {
+      fs.appendFileSync(LOG_FILE, logEntry, 'utf8');
+    } catch (err) {
+      console.error('写入日志失败:', err);
+    }
+    return result;
+  };
+};
 
 /**
  * Metro configuration
