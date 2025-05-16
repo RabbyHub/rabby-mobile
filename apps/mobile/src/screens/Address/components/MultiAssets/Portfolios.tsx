@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
@@ -40,7 +46,6 @@ import { useAccountInfo } from './hooks';
 import { EmptyAssets } from '@/screens/Home/components/AssetRenderItems/EmptyAssets';
 import { DefiItemLoader } from '@/screens/Home/components/Skeleton';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { useBalanceUpdate } from './hooks/balance';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 import { icons } from '@/screens/Home/AssetContainer';
 import { preferenceService } from '@/core/services';
@@ -52,7 +57,7 @@ import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/Scam
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 
-export const Portfolios = ({ disableClick }: { disableClick: boolean }) => {
+export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { top10Addresses } = useAccountInfo();
   const focusedTab = useFocusedTab();
@@ -80,8 +85,6 @@ export const Portfolios = ({ disableClick }: { disableClick: boolean }) => {
   const [foldHideList, setFoldHideList] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
-
-  useBalanceUpdate(triggerUpdate);
 
   const portfolioListData = useMemo(() => {
     const unFoldList: ActionItem[] = tokens
@@ -134,14 +137,14 @@ export const Portfolios = ({ disableClick }: { disableClick: boolean }) => {
       2,
     ).map(item => ({
       type: 'fold_defi',
-      data: item as DisplayedProject[],
+      data: item as unknown as DisplayedProject[],
     }));
     const unFoldDefiList: ActionItem[] = chunk(
       portfolios.filter(i => !i._isFold),
       2,
     ).map(item => ({
       type: 'unfold_defi',
-      data: item as DisplayedProject[],
+      data: item as unknown as DisplayedProject[],
     }));
     const itemData: Array<{
       show: boolean;
@@ -471,7 +474,9 @@ export const Portfolios = ({ disableClick }: { disableClick: boolean }) => {
           return (
             <TokenRowSectionHeader
               str={getAllDefiCount(
-                portfolios.filter(i => i._isFold) as DisplayedProject[],
+                portfolios.filter(
+                  i => i._isFold,
+                ) as unknown as DisplayedProject[],
               )}
               fold={foldDefi}
               style={styles.sectionHeader}
@@ -510,11 +515,16 @@ export const Portfolios = ({ disableClick }: { disableClick: boolean }) => {
     ],
   );
 
+  const inited = useRef(false);
   useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
     const id = setTimeout(() => {
-      if (!isFocused) {
+      if (inited.current) {
         return;
       }
+      inited.current = true;
       checkIsExpireAndUpdate(false, {
         disableNFT: true,
         realTimeAddresses: top10Addresses,
@@ -535,7 +545,7 @@ export const Portfolios = ({ disableClick }: { disableClick: boolean }) => {
         disableNFT: true,
         realTimeAddresses: top10Addresses,
       });
-    }, 200);
+    }, 100);
     return () => {
       id && clearTimeout(id);
     };

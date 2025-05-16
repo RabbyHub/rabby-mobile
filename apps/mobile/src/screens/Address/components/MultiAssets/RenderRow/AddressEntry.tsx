@@ -11,7 +11,7 @@ export const AddressEntry = ({
     changPercent?: string;
     isLoss?: boolean;
   };
-  disableClick: boolean;
+  disableClick?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
 

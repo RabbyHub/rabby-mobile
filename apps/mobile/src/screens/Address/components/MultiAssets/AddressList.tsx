@@ -25,7 +25,7 @@ import { useBalanceUpdate } from './hooks/balance';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { RefreshControl } from 'react-native-gesture-handler';
 
-export const AddressList = ({ disableClick }: { disableClick: boolean }) => {
+export const AddressList = ({ disableClick }: { disableClick?: boolean }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
