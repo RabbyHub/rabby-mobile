@@ -172,8 +172,8 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '800',
-    color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    textTransform: 'none',
     textAlign: 'center',
   },
   indicator: {
