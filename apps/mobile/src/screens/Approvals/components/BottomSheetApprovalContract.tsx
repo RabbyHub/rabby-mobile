@@ -25,11 +25,25 @@ import { InModalApprovalContractRow } from './InModalApprovalContractRow';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
-import { parseContractApprovalListItem } from '../utils';
+import {
+  parseContractApprovalListItem,
+  querySelectedContractSpender,
+} from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
+
+const MemoInModalApprovalContractRow = React.memo(
+  InModalApprovalContractRow,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.isSelected === nextProps.isSelected &&
+      parseContractApprovalListItem(prevProps.contractApproval).id ===
+        parseContractApprovalListItem(nextProps.contractApproval).id
+    );
+  },
+);
 
 export default function BottomSheetApprovalContract({
   modalProps,
@@ -111,6 +125,12 @@ export default function BottomSheetApprovalContract({
         return null;
       }
 
+      const isSelected = !!querySelectedContractSpender(
+        contractFocusingRevokeMap,
+        focusedContractApproval,
+        item,
+      );
+
       return (
         <View
           key={`${chain}-${id}-${index}`}
@@ -126,10 +146,11 @@ export default function BottomSheetApprovalContract({
               {index + 1}.
             </Text>
           )} */}
-          <InModalApprovalContractRow
+          <MemoInModalApprovalContractRow
             style={{ flexShrink: 1 }}
             approval={focusedContractApproval}
             contractApproval={item}
+            isSelected={isSelected}
             onToggleSelection={ctx =>
               toggleSelectContractSpender(ctx, 'focusing')
             }
@@ -137,7 +158,12 @@ export default function BottomSheetApprovalContract({
         </View>
       );
     },
-    [toggleSelectContractSpender, focusedContractApproval, styles],
+    [
+      focusedContractApproval,
+      contractFocusingRevokeMap,
+      styles.rowItem,
+      toggleSelectContractSpender,
+    ],
   );
 
   const onEndReached = React.useCallback(() => {

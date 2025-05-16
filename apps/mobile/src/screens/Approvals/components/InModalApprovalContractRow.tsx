@@ -11,7 +11,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 import {
   getContractNFTType,
-  querySelectedContractSpender,
   maybeNFTLikeItem,
   checkoutContractSpender,
 } from '../utils';
@@ -19,7 +18,6 @@ import {
 import {
   ContractApprovalItem,
   ToggleSelectApprovalSpenderCtx,
-  useRevokeApprovals,
 } from '../useApprovalsPage';
 import ApprovalNFTBadge from './NFTBadge';
 import { useTranslation } from 'react-i18next';
@@ -143,6 +141,7 @@ export function InModalApprovalContractRow({
   approval,
   contractApproval,
   onToggleSelection,
+  isSelected,
 }: {
   approval: ContractApprovalItem;
   contractApproval: ContractApprovalItem['list'][number];
@@ -152,26 +151,21 @@ export function InModalApprovalContractRow({
       contractApproval: ContractApprovalItem['list'][number];
     },
   ) => void;
+  isSelected: boolean;
 } & RNViewProps) {
   const { colors, styles } = useTheme2024({
     getStyle: getApprovalContractRowStyles,
   });
 
-  const { contractFocusingRevokeMap } = useRevokeApprovals();
-  const { spender, isSelected, associatedSpender } = React.useMemo(() => {
+  const { spender, associatedSpender } = React.useMemo(() => {
     return {
       spender: checkoutContractSpender(contractApproval),
       associatedSpender:
         '$indexderSpender' in contractApproval
           ? contractApproval.$indexderSpender
           : null,
-      isSelected: !!querySelectedContractSpender(
-        contractFocusingRevokeMap,
-        approval,
-        contractApproval,
-      ),
     };
-  }, [contractFocusingRevokeMap, approval, contractApproval]);
+  }, [contractApproval]);
 
   const { itemName, maybeTokenInfo, maybeNFTInfo, spenderValues } =
     React.useMemo(() => {

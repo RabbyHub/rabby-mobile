@@ -11,10 +11,8 @@ import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 import {
   AssetApprovalItem,
   ToggleSelectApprovalSpenderCtx,
-  useRevokeApprovals,
 } from '../useApprovalsPage';
 import { getTooltipContentStyles } from './Layout';
-import { querySelectedAssetSpender } from '../utils';
 import Permit2Badge from './Permit2Badge';
 
 function ApprovalAmountInfo({
@@ -104,21 +102,17 @@ export function InModalApprovalAssetRow({
   approval,
   spender,
   onToggleSelection,
+  isSelected,
 }: {
   approval: AssetApprovalItem;
   spender: AssetApprovalItem['list'][number];
   onToggleSelection?: (
     ctx: ToggleSelectApprovalSpenderCtx & { approval: AssetApprovalItem },
   ) => void;
+  isSelected: boolean;
 } & RNViewProps) {
   const { t } = useTranslation();
   const { colors, styles } = useTheme2024({ getStyle: getStyle });
-
-  const { assetFocusingRevokeMap } = useRevokeApprovals();
-  const isSelected = React.useMemo(
-    () => !!querySelectedAssetSpender(assetFocusingRevokeMap, spender),
-    [spender, assetFocusingRevokeMap],
-  );
 
   const { spenderInfo, spenderValues } = React.useMemo(() => {
     const risky = ['danger', 'warning'].includes(spender.risk_level);
