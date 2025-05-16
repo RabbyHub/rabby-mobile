@@ -1,5 +1,5 @@
 import { useIsFocused } from '@react-navigation/native';
-import { StatusBar, StatusBarProps } from 'react-native';
+import { StatusBarProps } from 'react-native';
 
 import { useThemeColors, useGetBinaryMode } from '@/hooks/theme';
 import {
@@ -7,6 +7,7 @@ import {
   useScreenAppStatusBarConf,
 } from './AppStatusBar';
 import { AppRootName } from '@/constant/layout';
+import { SystemBars } from 'react-native-edge-to-edge';
 
 /**
  * @description this component can be ONLY used in navigation screens
@@ -21,14 +22,7 @@ export const FocusAwareStatusBar = (props: StatusBarProps) => {
   const colors = useThemeColors();
   const isLight = useGetBinaryMode() === 'light';
 
-  return isFocused ? (
-    <StatusBar
-      backgroundColor={colors['neutral-bg-1']}
-      barStyle={isLight ? 'dark-content' : 'light-content'}
-      translucent={USE_ANDROID_STATUS_BAR_TRANSPARENT}
-      {...props}
-    />
-  ) : null;
+  return isFocused ? <SystemBars {...props} /> : null;
 };
 
 export const ScreenSpecificStatusBar = ({
