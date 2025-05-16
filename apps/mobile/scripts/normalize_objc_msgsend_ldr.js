@@ -98,18 +98,6 @@ function normalizeOtoolFilePureString(otoolSContent, linkMapGotAddressStrings) {
         x.endsWith(otoolTargetCombinedStr),
       );
 
-      if (
-        adrpPageBaseStrNo0x === 'bb2000' &&
-        originalLdrOffsetStrNo0x === 'e0'
-      ) {
-        console.log(
-          'match',
-          adrpPageBaseStrNo0x,
-          originalLdrOffsetStrNo0x,
-          matchedIdx,
-        );
-      }
-
       if (matchedIdx === -1) {
         return match;
       }
@@ -120,9 +108,12 @@ function normalizeOtoolFilePureString(otoolSContent, linkMapGotAddressStrings) {
         return match;
       }
 
-      shouldReplacedLdr = firstGotAddrLM_FullStr
-        .slice(-LDR_HEX_LENGTH)
-        .toLowerCase();
+      shouldReplacedLdr =
+        shouldReplacedLdr ||
+        firstGotAddrLM_FullStr
+          .slice(-LDR_HEX_LENGTH)
+          .toLowerCase()
+          .replace(/^0+(?!$)/, ''); // 去除 开头的 0，因为观察 otool -tV 得知
 
       return `${adrpLineContent}\n${ldrPrefixIncludingHashAnd0x}${shouldReplacedLdr}${ldrSuffix}`;
     },
