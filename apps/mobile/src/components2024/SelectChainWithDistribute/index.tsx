@@ -67,7 +67,7 @@ export default function SelectChainWithDistribute({
   }, [chainList, search]);
 
   useEffect(() => {
-    // 应该有状态没刷新导致列表不能滚动，前置刷新下就解决了
+    // 应该有状态没刷新导致列表不能滚动，强制刷新下就解决了
     forceUpdate();
   }, [forceUpdate]);
 

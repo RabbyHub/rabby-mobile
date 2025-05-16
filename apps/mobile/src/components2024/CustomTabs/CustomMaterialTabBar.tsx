@@ -3,6 +3,7 @@ import { MaterialTabBar } from 'react-native-collapsible-tab-view';
 import { Indicator } from './CustomIndicator';
 
 const screenWidth = Dimensions.get('window').width;
+// 只针对了2个tab，后面再动态适配两个以上tab的场景
 export const CustomMaterialTabBar = (props: any) => {
   return (
     <View>
