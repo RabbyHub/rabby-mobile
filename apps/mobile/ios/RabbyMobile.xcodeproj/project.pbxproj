@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00042FC3F6D623009F1C9A0C /* Pods_RabbyMobile_RabbyMobileTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B058EEE4A749EF25D46127C /* Pods_RabbyMobile_RabbyMobileTests.framework */; };
 		00E356F31AD99517003FC87E /* RabbyMobileTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* RabbyMobileTests.m */; };
 		0120B2102D082C0000FCB1B1 /* RNHelpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0120B20F2D082C0000FCB1B1 /* RNHelpers.mm */; };
 		014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */; };
@@ -29,8 +30,8 @@
 		73CE3503124B4D148E887D73 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = C1C227A720CF48B1A81AA514 /* InpageBridgeWeb3.js */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */; };
+		AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */; };
 		E576F98C62E44D04A874C8B7 /* SF-Pro-Rounded-Heavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */; };
-		F20F80EEAE1D50D91E66759B /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E754316B4EBC7A6FD407FED1 /* Pods_RabbyMobile.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,11 +69,13 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = RabbyMobile/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = RabbyMobile/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = RabbyMobile/main.m; sourceTree = "<group>"; };
+		1B2D9C4676E5EA7E90C5705F /* Pods-RabbyMobile.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.regression.xcconfig"; sourceTree = "<group>"; };
 		322D3F7B9B8D39882C19A512 /* Pods-RabbyMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.release.xcconfig"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-RabbyMobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.debug.xcconfig"; sourceTree = "<group>"; };
 		48A3C610244545BBA590D079 /* SF-Pro-Rounded-Regular.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Regular.otf"; path = "../assets/fonts/SF-Pro-Rounded-Regular.otf"; sourceTree = "<group>"; };
 		5B9880A4659D4B78872720D4 /* SF-Pro-Rounded-Bold.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Bold.otf"; path = "../assets/fonts/SF-Pro-Rounded-Bold.otf"; sourceTree = "<group>"; };
 		6B576D0FC998649BFE6FCB60 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig"; sourceTree = "<group>"; };
+		78D83D9843CA8EDE71C932CD /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7B058EEE4A749EF25D46127C /* Pods_RabbyMobile_RabbyMobileTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile_RabbyMobileTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = RabbyMobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -80,12 +83,10 @@
 		A5FDCD7CC73A48D1BD873FF0 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
 		A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobile.entitlements; path = RabbyMobile/RabbyMobile.entitlements; sourceTree = "<group>"; };
 		ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1C227A720CF48B1A81AA514 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = InpageBridgeWeb3.js; path = ../assets/custom/InpageBridgeWeb3.js; sourceTree = "<group>"; };
-		E754316B4EBC7A6FD407FED1 /* Pods_RabbyMobile.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F13B8F76DB574CA1A0D00501 /* SF-Pro-Rounded-Heavy.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Heavy.otf"; path = "../assets/fonts/SF-Pro-Rounded-Heavy.otf"; sourceTree = "<group>"; };
-		F1884AD849DF48B89EE1A709 /* Pods-RabbyMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.release.xcconfig"; sourceTree = "<group>"; };
-		F4997D11389601E920E11DFC /* Pods-RabbyMobile.regression.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.regression.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.regression.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,7 +94,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F33C5E5F32F73D7DCA08C75E /* Pods_RabbyMobile_RabbyMobileTests.framework in Frameworks */,
+				00042FC3F6D623009F1C9A0C /* Pods_RabbyMobile_RabbyMobileTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,7 +103,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				61119C058F0C8F2FBCC8530A /* BuildFile in Frameworks */,
-				FC65AF4A54D1406DED6B55B8 /* Pods_RabbyMobile.framework in Frameworks */,
+				AFC5B63787113E4A1E28D98C /* Pods_RabbyMobile.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -158,8 +159,8 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				B12D9E2615825EB6A642B8FA /* Pods_RabbyMobile.framework */,
 				7B058EEE4A749EF25D46127C /* Pods_RabbyMobile_RabbyMobileTests.framework */,
+				B5BE4C088335CB76F76458F0 /* Pods_RabbyMobile.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -205,8 +206,8 @@
 				89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */,
 				6B576D0FC998649BFE6FCB60 /* Pods-RabbyMobile-RabbyMobileTests.regression.xcconfig */,
 				322D3F7B9B8D39882C19A512 /* Pods-RabbyMobile.release.xcconfig */,
-				F19C4A1111CD885C0EF2286A /* Pods-RabbyMobile.regression.xcconfig */,
-				E104E4935B7967AAB2C31C34 /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */,
+				1B2D9C4676E5EA7E90C5705F /* Pods-RabbyMobile.regression.xcconfig */,
+				78D83D9843CA8EDE71C932CD /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -552,7 +553,7 @@
 /* Begin XCBuildConfiguration section */
 		00E356F61AD99517003FC87E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E104E4935B7967AAB2C31C34 /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */;
+			baseConfigurationReference = 78D83D9843CA8EDE71C932CD /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -743,7 +744,7 @@
 		};
 		0169DF5D2D1286360098402E /* Regression */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F19C4A1111CD885C0EF2286A /* Pods-RabbyMobile.regression.xcconfig */;
+			baseConfigurationReference = 1B2D9C4676E5EA7E90C5705F /* Pods-RabbyMobile.regression.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconRegression;
 				CLANG_ENABLE_MODULES = YES;
