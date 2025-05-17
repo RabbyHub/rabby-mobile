@@ -290,8 +290,8 @@
         "fromMySeedPhrase": "私のシードフレーズから",
         "addressBalanceTitle": "アドレスバランス",
         "contractNotOnThisChain": "このチェーンにはありません",
-        "sendToken": "トークンを送信する",
-        "title": "トークンを送信"
+        "sendToken": "トークンを送る",
+        "title": "トークン送金"
       },
       "swap": {
         "notPaymentAddress": "支払いアドレスではありません",
@@ -299,7 +299,7 @@
         "payToken": "支払う",
         "simulationFailed": "トランザクションシミュレーションに失敗しました。",
         "receiveToken": "受け取る",
-        "receiver": "Receiver",
+        "receiver": "受取先",
         "minReceive": "最小受取量",
         "failLoadReceiveToken": "読み込みに失敗しました",
         "unknownAddress": "不明なアドレス",
@@ -396,7 +396,7 @@
       },
       "unwrap": "トークンをアンラップ",
       "sendNFT": {
-        "title": "NFTを送信",
+        "title": "NFTを送る",
         "nftNotSupport": "NFTはサポートされていません。"
       },
       "revokePermit": {
@@ -465,7 +465,7 @@
       }
     },
     "sendNFT": {
-      "sendButton": "送信"
+      "sendButton": "送る"
     },
     "sendTokenComponents": {
       "GasReserved": "ガスコストのために <1>0</1> {{ tokenName }} を予約しました。"
@@ -497,10 +497,10 @@
           "withdrawed": "クイックキャンセル",
           "failed": "失敗しました",
           "pendingBroadcast": "保留中: 送信待ち",
-          "pendingBroadcasted": "保留中: broadcasted",
+          "pendingBroadcasted": "保留中: 送信完了",
           "canceled": "キャンセルされました",
           "submitFailed": "送信に失敗しました。",
-          "pendingBroadcastFailed": "保留中: Broadcast failed"
+          "pendingBroadcastFailed": "保留中: 送信失敗"
         },
         "CancelTxPopup": {
           "title": "トランザクションをキャンセル",
@@ -877,7 +877,7 @@
         "approvals": "承認",
         "bridge": "Bridge",
         "queue": "Queue",
-        "send": "送信",
+        "send": "送る",
         "websites": "ウェブサイト",
         "search": "Search Token"
       }
@@ -887,8 +887,8 @@
         "pin": "Pin",
         "totalBalance": "総残高",
         "services": "サービス",
-        "noAssets": "資産なし？",
-        "receiveCrypto": "暗号を受け取る",
+        "noAssets": "暗号資産なし？",
+        "receiveCrypto": "暗号資産を受け取る",
         "importAddress": "アドレスをインポート",
         "buyWithFiat": "法定通貨で購入",
         "fundYourWallet": "ウォレットに資金を追加",
@@ -1032,7 +1032,7 @@
         "noTransactions": "トランザクションなし",
         "selectedCustom": "TokenはRabbyにリストされていません。トークンリストにカスタムで追加しました。",
         "notSelectedCustom": "トークンはRabbyにリストされていません。スイッチをオンにすると、トークンリストに追加されます。",
-        "send": "送信"
+        "send": "送る"
       },
       "offlineChain": {
         "chain": "{{chain}}は間もなく統合されなくなります。",
@@ -1062,7 +1062,7 @@
         "usePassword": "パスワードを使用してアンロックに切り替えました。",
         "enableBiometricAlert": {
           "title": "{{ bioType }} を有効にする",
-          "no": "キャンセル",
+          "no": "いいえ",
           "yes": "はい",
           "content": "{{ bioType }}でRabby Walletをアンロックすることを許可しますか？"
         }
@@ -1457,7 +1457,7 @@
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 残高",
         "balance": "残高",
-        "address": "住所"
+        "address": "アドレス"
       },
       "switchAccount": "GasAccount を変更",
       "depositSuccess": "入金が成功しました",
@@ -1497,7 +1497,7 @@
         "totalChain_one": "合計 {{count}} チェーン"
       },
       "emptyToken": {
-        "receiveHeader": "暗号を受け取る",
+        "receiveHeader": "暗号資産を受け取る",
         "buyHeader": "法定通貨で購入",
         "receiveBody": "別のアドレスからトークンを転送します",
         "title": "ウォレットに資金を入れる",
@@ -1561,7 +1561,7 @@
         "title": "このトランザクションを置き換える方法を選択",
         "options": {
           "reject": "トランザクションを拒否",
-          "send": "トークンを送信"
+          "send": "トークンを送る"
         }
       },
       "title": "キュー ({{total}})"
@@ -1586,7 +1586,7 @@
       "action": {
         "pin": "ピン",
         "Buy": "購入する",
-        "send": "送信",
+        "send": "送る",
         "includeBalance": "残高に含める",
         "less": "少ない",
         "unfold": "展開",
@@ -1838,7 +1838,7 @@
       "modals": {
         "importedAddress": "インポートされたアドレス",
         "addAddress": "新しいアドレス",
-        "recentAddress": "最近の送信先住所",
+        "recentAddress": "最近の送信したアドレス",
         "header": "アドレスをホワイトリストに追加",
         "content": "アドレスの追加方法を選択してください。"
       },
