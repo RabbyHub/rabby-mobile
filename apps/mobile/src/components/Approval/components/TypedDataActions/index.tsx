@@ -27,13 +27,7 @@ import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
 import { Chain } from '@/constant/chains';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Tip } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import CoboSafeCreate from './CoboSafeCreate';
@@ -53,6 +47,7 @@ import RevokePermit2 from '../Actions/RevokePermit2';
 import { getActionTypeText } from './utils';
 import { TransactionActionList } from '../Actions/components/TransactionActionList';
 import { noop } from 'lodash';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 const Actions = ({
   data,
@@ -315,7 +310,8 @@ const Actions = ({
         </Card>
       </View>
       <Card style={styles.messageCard}>
-        <ScrollView
+        <BottomSheetScrollView
+          nestedScrollEnabled
           style={StyleSheet.flatten([
             styles.messageContent,
             data ? {} : styles.noAction,
@@ -337,7 +333,7 @@ const Actions = ({
             </Text>
           </View>
           <Text style={styles.messageText}>{message}</Text>
-        </ScrollView>
+        </BottomSheetScrollView>
       </Card>
     </View>
   );

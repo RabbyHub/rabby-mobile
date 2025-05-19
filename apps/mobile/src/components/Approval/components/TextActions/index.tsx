@@ -5,13 +5,7 @@ import { getActionTypeText } from './utils';
 import CreateKey from './CreateKey';
 import VerifyAddress from './VerifyAddress';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Tip } from '@/components/Tip';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
@@ -24,6 +18,7 @@ import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
 import { getActionsStyle } from '../Actions';
 import { ParsedTextActionData } from '@rabby-wallet/rabby-action';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 export const getMessageStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -187,7 +182,8 @@ const Actions = ({
         </Card>
       </View>
       <Card style={styles.messageCard}>
-        <ScrollView
+        <BottomSheetScrollView
+          nestedScrollEnabled
           style={StyleSheet.flatten([
             styles.messageContent,
             data ? {} : styles.noAction,
@@ -209,7 +205,7 @@ const Actions = ({
             </Text>
           </View>
           <Text style={styles.messageText}>{message}</Text>
-        </ScrollView>
+        </BottomSheetScrollView>
       </Card>
     </View>
   );
