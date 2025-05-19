@@ -1,4 +1,7 @@
-import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
+import {
+  RABBY_MOBILE_KR_PWD,
+  RABBY_MOBILE_KR_PWD_0617,
+} from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
 import { keyringService, sessionService } from '../services';
 import { makeEEClass } from './event';
@@ -45,7 +48,10 @@ export function parseValidationBehavior(props?: ValidationBehaviorProps) {
 }
 
 function getInitError(password: string) {
-  if (password === RABBY_MOBILE_KR_PWD) {
+  if (
+    password === RABBY_MOBILE_KR_PWD ||
+    password === RABBY_MOBILE_KR_PWD_0617
+  ) {
     return {
       error: 'Incorret Password',
     };
@@ -98,7 +104,19 @@ export async function setupWalletPassword(newPassword: string) {
     }
     await keyringService.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
   } catch (error: any) {
-    result.error = error?.message || 'Failed to set password';
+    try {
+      const r = await safeVerifyPassword(RABBY_MOBILE_KR_PWD_0617);
+      if (r.error) {
+        console.log('r.error', r.error, RABBY_MOBILE_KR_PWD_0617);
+        throw new Error(ERRORS.CURRENT_IS_INCORRET);
+      }
+      await keyringService.updatePassword(
+        RABBY_MOBILE_KR_PWD_0617,
+        newPassword,
+      );
+    } catch (error: any) {
+      result.error = error?.message || 'Failed to set password';
+    }
   }
 
   return result;
@@ -227,7 +245,16 @@ export async function getRabbyLockInfo() {
       ? PasswordStatus.UseBuiltIn
       : PasswordStatus.Custom;
   } catch (e) {
-    info.pwdStatus = PasswordStatus.Unknown;
+    try {
+      // RABBY_MOBILE_KR_PWD_0617 是 0.6.17 版本因为环境变量错误引入的错误默认密码，临时兼容确保用正确和错误默认密码的用户都可以使用
+      // TODO: migrate wrong password to correct password
+      const verifyResult = await safeVerifyPassword(RABBY_MOBILE_KR_PWD_0617);
+      info.pwdStatus = verifyResult.success
+        ? PasswordStatus.UseBuiltIn
+        : PasswordStatus.Custom;
+    } catch (e) {
+      info.pwdStatus = PasswordStatus.Unknown;
+    }
   }
 
   info.isUseBuiltInPwd = info.pwdStatus === PasswordStatus.UseBuiltIn;
@@ -252,7 +279,15 @@ async function tryAutoUnlockRabbyMobile() {
 
   try {
     if (lockInfo.isUseBuiltInPwd && !keyringService.isUnlocked()) {
-      await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
+      try {
+        await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
+      } catch (e) {
+        try {
+          await keyringService.submitPassword(RABBY_MOBILE_KR_PWD_0617);
+        } catch (e) {
+          throw e;
+        }
+      }
     }
   } catch (e) {
     console.error('[tryAutoUnlockRabbyMobile]');

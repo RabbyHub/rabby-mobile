@@ -8,6 +8,7 @@ declare module '@env' {
     RABBY_MOBILE_KR_PWD: string;
     RABBY_MOBILE_CODE: string;
     DEV_CONSOLE_URL: string;
+    RABBY_MOBILE_KR_PWD_0617: string;
   };
 
   export = Env;
