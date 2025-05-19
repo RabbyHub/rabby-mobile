@@ -47,7 +47,7 @@ const config = {
     extraNodeModules: {
       ...require('node-libs-react-native'),
       assert: require.resolve('assert'),
-      crypto: require.resolve('react-native-quick-crypto'),
+      // crypto: require.resolve('react-native-quick-crypto'),
       stream: require.resolve('readable-stream'),
       'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
     },
