@@ -252,7 +252,7 @@ export class PreferenceService {
         storage: options?.storageAdapter,
       },
     );
-    if (this.store.currentVersion === '0') {
+    if (this.store.currentVersion !== '0') {
       // if user download App before 0.6.17, the currentVersion will be '0', otherwise will be the version code
       this.setMigratedWrongDefaultPassword();
     }
