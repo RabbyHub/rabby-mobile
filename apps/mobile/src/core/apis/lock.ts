@@ -96,11 +96,15 @@ export async function setupWalletPassword(newPassword: string) {
 
   try {
     const r = await safeVerifyPassword(RABBY_MOBILE_KR_PWD);
-    if (r.error) {
-      console.log('r.error', r.error, RABBY_MOBILE_KR_PWD);
+    const r2 = await safeVerifyPassword(RABBY_MOBILE_KR_PWD_0617);
+    if (r.error && r2.error) {
       throw new Error(ERRORS.CURRENT_IS_INCORRET);
     }
-    await keyringService.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
+    let currentPassword = RABBY_MOBILE_KR_PWD;
+    if (r2.success) {
+      currentPassword = RABBY_MOBILE_KR_PWD_0617;
+    }
+    await keyringService.updatePassword(currentPassword, newPassword);
   } catch (error: any) {
     result.error = error?.message || 'Failed to set password';
   }

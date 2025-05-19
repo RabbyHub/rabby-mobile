@@ -42,8 +42,6 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { AddressNavigatorParamList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { stats } from '@/utils/stats';
-import { IS_IOS } from '@/core/native/utils';
 
 const INIT_FORM_DATA = __DEV__
   ? {
