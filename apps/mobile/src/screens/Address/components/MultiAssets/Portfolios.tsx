@@ -511,6 +511,11 @@ export const Portfolios = () => {
   );
 
   const inited = useRef(false);
+
+  useEffect(() => {
+    inited.current = false;
+  }, [top10Addresses.length]);
+
   useEffect(() => {
     if (!isFocused) {
       return;
