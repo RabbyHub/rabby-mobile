@@ -14,6 +14,17 @@ import { MMKV_FILE_NAMES, walkThroughMMKVFiles } from '../utils/appFS';
 import RNHelpers from '../native/RNHelpers';
 import { IS_IOS } from '../native/utils';
 
+function checkIfDuplicatedStringifiedJsonObjectString(input: any) {
+  return (
+    typeof input === 'string' &&
+    (input.startsWith('"{\\') || input.startsWith('"['))
+  );
+}
+
+function checkIfJsonStringifiedString(input: any) {
+  return typeof input === 'string' && input.startsWith('"');
+}
+
 export function makeAppStorage(options?: MMKVConfiguration) {
   const mmkv = new MMKV(options);
 
@@ -23,6 +34,33 @@ export function makeAppStorage(options?: MMKVConfiguration) {
     return !value
       ? null
       : stringUtils.safeParseJSON(value, { defaultValue: null });
+  }
+
+  function getJsonValueStringCompat(key: string): string | null {
+    const raw = mmkv.getString(key);
+    if (!raw) return null;
+    let finalString: string | null = null;
+
+    try {
+      if (checkIfDuplicatedStringifiedJsonObjectString(raw)) {
+        finalString = stringUtils.safeParseJSON(raw, {
+          defaultValue: raw,
+        });
+      } else if (checkIfJsonStringifiedString(raw)) {
+        finalString = stringUtils.safeParseJSON(raw, {
+          defaultValue: raw,
+        });
+      }
+    } catch (e) {
+      if (__DEV__) {
+        console.warn(
+          `[getJsonValueStringCompat::${options?.id}] Failed to parse item with key "${key}":`,
+          e,
+        );
+      }
+    }
+
+    return finalString ?? null;
   }
 
   function setItem<T>(key: string, value: T): void {
@@ -47,10 +85,21 @@ export function makeAppStorage(options?: MMKVConfiguration) {
     },
   };
 
+  function setRawString(key: string, value: string): void {
+    mmkv.set(key, value);
+  }
+
+  function getRawString(key: string): string | null {
+    return mmkv.getString(key) ?? null;
+  }
+
   const methods = {
     getItem,
     setItem,
+    getJsonValueStringCompat,
     removeItem,
+    setRawString,
+    getRawString,
     clearAll,
   };
 
@@ -102,32 +151,86 @@ export const IS_BOOTED_USER =
   !!appStorage.getItem('keyringState') ||
   !!keyringStorage.getItem('keyringState');
 
-export function makeJsonStore<T = any>(options?: {
-  storage?: /* AsyncStringStorage |  */ SyncStringStorage;
-}) {
+export const enum MMKVStorageStrategy {
+  'legacy' = -1,
+  'compatJson' = 0,
+  'compatString' = 1,
+  'next' = 11,
+}
+type StringStorageOption =
+  /* AsyncStringStorage |  */
+  | SyncStringStorage
+  /** @deprecated */
+  | MMKVStorageStrategy.legacy
+  | MMKVStorageStrategy.compatJson
+  | MMKVStorageStrategy.compatString;
+/**
+ * persist item as json, read it as its original type
+ *
+ * @baddesign In the past, `makeJsonStore` use storage consist with appStorage,
+ * which also persist value as json, and treat it as json on parsing. This duplicates
+ * the logic of `makeJsonStore`, and is not a good design, that is, one value would
+ * be JSON.stringify twice and JSON.parse twice. This is a bad behavior.
+ */
+function makeJsonStore<T = any>(options?: { storage?: StringStorageOption }) {
   const { storage } = options || {};
 
-  const jsonStore = storage
-    ? createJSONStorage<T>(() => storage)
-    : createJSONStorage<T>(() => ({
-        getItem: appMethods.getItem,
-        setItem: appMethods.setItem,
-        removeItem: appMethods.removeItem,
-        clearAll: appMethods.clearAll,
-      }));
+  const jsonStore =
+    storage === MMKVStorageStrategy.legacy ||
+    storage === MMKVStorageStrategy.compatJson ||
+    storage === MMKVStorageStrategy.compatString
+      ? createJSONStorage<T>(() => GET_STRING_STORAGE_FOR_JSON_STORE(storage))
+      : storage
+      ? createJSONStorage<T>(() => storage)
+      : createJSONStorage<T>(() => ({
+          getItem: appMethods.getRawString,
+          setItem: appMethods.setRawString,
+          removeItem: appMethods.removeItem,
+          clearAll: appMethods.clearAll,
+        }));
 
   return jsonStore;
 }
 
-export const appJsonStore = makeJsonStore<any>({
+/**
+ * @deprecated
+ */
+export const duplicatelyStringifiedAppJsonStore = makeJsonStore<any>({
   storage: appStorage as SyncStringStorage,
 });
+
+const GET_STRING_STORAGE_FOR_JSON_STORE = (strategy: MMKVStorageStrategy) => {
+  switch (strategy) {
+    case MMKVStorageStrategy.legacy: {
+      return {
+        getItem: appMethods.getItem,
+        setItem: appMethods.setItem,
+        removeItem: appMethods.removeItem,
+      };
+    }
+    case MMKVStorageStrategy.compatJson:
+    case MMKVStorageStrategy.compatString: {
+      return {
+        getItem: appMethods.getJsonValueStringCompat,
+        setItem: appMethods.setRawString,
+        removeItem: appMethods.removeItem,
+      };
+    }
+    default: {
+      return {
+        getItem: appMethods.getRawString,
+        setItem: appMethods.setRawString,
+        removeItem: appMethods.removeItem,
+      };
+    }
+  }
+};
 
 export const atomByMMKV = <T = any>(
   key: string,
   initialValue: T,
   options?: {
-    storage?: /* AsyncStringStorage |  */ SyncStringStorage;
+    storage?: StringStorageOption;
     setupSubscribe?(ctx: {
       jsonStore: SyncStorage<T>;
     }): /* subscribe */ SyncStorage<T>['subscribe'] & Function;

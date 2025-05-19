@@ -16,7 +16,7 @@ import {
   TransactionHistoryItem,
 } from '@/core/services/transactionHistory';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
-import { appJsonStore } from '@/core/storage/mmkv';
+import { duplicatelyStringifiedAppJsonStore } from '@/core/storage/mmkv';
 import { HistoryItemCateType } from './type';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
@@ -244,8 +244,11 @@ export const judgeIsSmallUsdTxInApi = (
 };
 
 const localHistoryFillTokenDict = (token: TokenItem) => {
-  const resTokenDict = appJsonStore.getItem('@HistoryTokenDict', {});
-  appJsonStore.setItem('@HistoryTokenDict', {
+  const resTokenDict = duplicatelyStringifiedAppJsonStore.getItem(
+    '@HistoryTokenDict',
+    {},
+  );
+  duplicatelyStringifiedAppJsonStore.setItem('@HistoryTokenDict', {
     ...resTokenDict,
     [`${token.chain}_token:${token.id}`]: token,
   });
