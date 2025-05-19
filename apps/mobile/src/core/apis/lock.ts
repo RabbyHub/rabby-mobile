@@ -224,23 +224,23 @@ export async function getRabbyLockInfo() {
     isUseCustomPwd: false,
     isUseBiometrics: false,
   };
-
   try {
     const verifyResult = await safeVerifyPassword(RABBY_MOBILE_KR_PWD);
     info.pwdStatus = verifyResult.success
       ? PasswordStatus.UseBuiltIn
       : PasswordStatus.Custom;
-  } catch (e) {
-    if (preferenceService.hasMigratedWrongDefaultPassword() || !IS_IOS) {
-      info.pwdStatus = PasswordStatus.Unknown;
-    } else {
-      try {
-        await keyringService.verifyPassword(RABBY_MOBILE_KR_PWD_0617);
-        info.pwdStatus = PasswordStatus.UseBuiltIn;
-      } catch (e) {
+    if (!verifyResult.success) {
+      if (preferenceService.hasMigratedWrongDefaultPassword() || !IS_IOS) {
         info.pwdStatus = PasswordStatus.Unknown;
+      } else {
+        const verifyResult = await safeVerifyPassword(RABBY_MOBILE_KR_PWD_0617);
+        info.pwdStatus = verifyResult.success
+          ? PasswordStatus.UseBuiltIn
+          : PasswordStatus.Custom;
       }
     }
+  } catch (e) {
+    info.pwdStatus = PasswordStatus.Unknown;
   }
 
   info.isUseBuiltInPwd = info.pwdStatus === PasswordStatus.UseBuiltIn;
@@ -288,7 +288,6 @@ async function tryAutoUnlockRabbyMobile() {
         }
       } else {
         console.error('[tryAutoUnlockRabbyMobile]');
-        console.error('Not only hardware wallet');
       }
     }
   } finally {
