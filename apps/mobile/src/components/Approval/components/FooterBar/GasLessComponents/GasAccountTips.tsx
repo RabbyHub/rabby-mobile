@@ -88,23 +88,36 @@ export const GasAccountTips: React.FC<{
           <Text style={styles.gasAccountTipBtnText}>{btnText}</Text>
         </TouchableOpacity>
       ) : null}
-      <GasAccountDepositTipPopup
-        gasAccountAddress={gasAccountAddress}
-        visible={
-          // !isWalletConnect && isGasAccountLogin ? tipPopupVisible : false
-          !isWalletConnect ? tipPopupVisible : false
-        }
-        onClose={() => setTipPopupVisible(false)}
-        onDeposit={() => {
-          setTipPopupVisible(false);
-          onDeposit?.();
-        }}
-        onGotoGasAccount={() => {
-          setTipPopupVisible(false);
-          onGotoGasAccount?.();
-        }}
-        minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
-      />
+      {Platform.OS === 'ios' ? (
+        <GasAccountDepositTipPopup
+          gasAccountAddress={gasAccountAddress}
+          visible={
+            // !isWalletConnect && isGasAccountLogin ? tipPopupVisible : false
+            !isWalletConnect ? tipPopupVisible : false
+          }
+          onClose={() => setTipPopupVisible(false)}
+          onDeposit={() => {
+            setTipPopupVisible(false);
+            onDeposit?.();
+          }}
+          onGotoGasAccount={() => {
+            setTipPopupVisible(false);
+            onGotoGasAccount?.();
+          }}
+          minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
+        />
+      ) : (
+        <GasAccountDepositWithTokenAlertModal
+          visible={tipPopupVisible}
+          onCancel={() => {
+            setTipPopupVisible(false);
+          }}
+          onConfirm={() => {
+            setTipPopupVisible(false);
+            onGotoGasAccount?.();
+          }}
+        />
+      )}
 
       {/* <GasAccountLogInTipPopup
         visible={
