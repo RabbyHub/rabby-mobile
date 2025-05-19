@@ -3,7 +3,7 @@ import {
   RABBY_MOBILE_KR_PWD_0617,
 } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
-import { keyringService, sessionService } from '../services';
+import { keyringService, sessionService, preferenceService } from '../services';
 import { makeEEClass } from './event';
 import { formatTimeReadable } from '@/utils/time';
 import {
@@ -11,6 +11,7 @@ import {
   checkMultipleFailed,
   shouldRejectUnlockDueToMultipleFailed,
 } from '../utils/unlockRateLimit';
+import { IS_IOS } from '../native/utils';
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -48,10 +49,7 @@ export function parseValidationBehavior(props?: ValidationBehaviorProps) {
 }
 
 function getInitError(password: string) {
-  if (
-    password === RABBY_MOBILE_KR_PWD ||
-    password === RABBY_MOBILE_KR_PWD_0617
-  ) {
+  if (password === RABBY_MOBILE_KR_PWD) {
     return {
       error: 'Incorret Password',
     };
@@ -104,19 +102,7 @@ export async function setupWalletPassword(newPassword: string) {
     }
     await keyringService.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
   } catch (error: any) {
-    try {
-      const r = await safeVerifyPassword(RABBY_MOBILE_KR_PWD_0617);
-      if (r.error) {
-        console.log('r.error', r.error, RABBY_MOBILE_KR_PWD_0617);
-        throw new Error(ERRORS.CURRENT_IS_INCORRET);
-      }
-      await keyringService.updatePassword(
-        RABBY_MOBILE_KR_PWD_0617,
-        newPassword,
-      );
-    } catch (error: any) {
-      result.error = error?.message || 'Failed to set password';
-    }
+    result.error = error?.message || 'Failed to set password';
   }
 
   return result;
@@ -245,15 +231,15 @@ export async function getRabbyLockInfo() {
       ? PasswordStatus.UseBuiltIn
       : PasswordStatus.Custom;
   } catch (e) {
-    try {
-      // RABBY_MOBILE_KR_PWD_0617 是 0.6.17 版本因为环境变量错误引入的错误默认密码，临时兼容确保用正确和错误默认密码的用户都可以使用
-      // TODO: migrate wrong password to correct password
-      const verifyResult = await safeVerifyPassword(RABBY_MOBILE_KR_PWD_0617);
-      info.pwdStatus = verifyResult.success
-        ? PasswordStatus.UseBuiltIn
-        : PasswordStatus.Custom;
-    } catch (e) {
+    if (preferenceService.hasMigratedWrongDefaultPassword() || !IS_IOS) {
       info.pwdStatus = PasswordStatus.Unknown;
+    } else {
+      try {
+        await keyringService.verifyPassword(RABBY_MOBILE_KR_PWD_0617);
+        info.pwdStatus = PasswordStatus.UseBuiltIn;
+      } catch (e) {
+        info.pwdStatus = PasswordStatus.Unknown;
+      }
     }
   }
 
@@ -279,19 +265,34 @@ async function tryAutoUnlockRabbyMobile() {
 
   try {
     if (lockInfo.isUseBuiltInPwd && !keyringService.isUnlocked()) {
-      try {
-        await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
-      } catch (e) {
-        try {
-          await keyringService.submitPassword(RABBY_MOBILE_KR_PWD_0617);
-        } catch (e) {
-          throw e;
-        }
-      }
+      await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
     }
   } catch (e) {
-    console.error('[tryAutoUnlockRabbyMobile]');
-    console.error(e);
+    const hasMigratedWrongDefaultPassword =
+      preferenceService.hasMigratedWrongDefaultPassword();
+    if (hasMigratedWrongDefaultPassword) {
+      console.error('[tryAutoUnlockRabbyMobile]');
+      console.error(e);
+    } else {
+      const onlyHW = !keyringService.hasEncryptedKeyringData();
+      if (onlyHW && IS_IOS) {
+        try {
+          await keyringService.submitPassword(RABBY_MOBILE_KR_PWD_0617);
+          await keyringService.updatePassword(
+            RABBY_MOBILE_KR_PWD_0617,
+            RABBY_MOBILE_KR_PWD,
+          );
+        } catch (e) {
+          console.error('[tryAutoUnlockRabbyMobile]');
+          console.error(e);
+        }
+      } else {
+        console.error('[tryAutoUnlockRabbyMobile]');
+        console.error('Not only hardware wallet');
+      }
+    }
+  } finally {
+    preferenceService.setMigratedWrongDefaultPassword();
   }
 
   return {

@@ -165,6 +165,11 @@ export interface PreferenceStore {
    * For temporary account switch
    */
   tempCurrentAccount?: Account;
+
+  /**
+   * For migrate wrong default password which set in 0.6.17
+   */
+  hasMigratedWrongDefaultPassword?: boolean;
 }
 
 export interface AddressSortStore {
@@ -239,6 +244,7 @@ export class PreferenceService {
           tempCurrentAccount: undefined,
           tokenManageSettingMap: {},
           safeSelfHostConfirm: {},
+          hasMigratedWrongDefaultPassword: true,
         },
       },
       {
@@ -253,6 +259,20 @@ export class PreferenceService {
       this.store.safeSelfHostConfirm = {};
     }
   }
+
+  hasMigratedWrongDefaultPassword = () => {
+    if (this.store.hasMigratedWrongDefaultPassword) {
+      return true;
+    }
+    return false;
+  };
+  /**
+   * @deprecated
+   * @description for migrate wrong default password which set in 0.6.17
+   */
+  setMigratedWrongDefaultPassword = () => {
+    this.store.hasMigratedWrongDefaultPassword = true;
+  };
 
   hasConfirmSafeSelfHost = (networkId: string) => {
     if (this.store.safeSelfHostConfirm?.[networkId]) {
