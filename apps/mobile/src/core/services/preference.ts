@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import i18n, { SupportedLang } from '@/utils/i18n';
+import i18n from '@/utils/i18n';
 import dayjs from 'dayjs';
 import {
   TokenItem,
@@ -17,10 +17,9 @@ import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { appServiceEvents } from './_utils';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { stats } from '@/utils/stats';
-import { IS_IOS } from '../native/utils';
 import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
+import { APP_VERSIONS } from '@/constant';
 
 const { isSameAddress } = addressUtils;
 
@@ -116,6 +115,7 @@ export interface PreferenceStore {
   pinAddresses: IPinAddress[];
   gasCache: GasCache;
   currentVersion: string;
+  downloadVersion: string;
   pinnedChain: string[];
 
   tokenApprovalChain: Record<string, CHAINS_ENUM>;
@@ -221,7 +221,8 @@ export class PreferenceService {
           foldNfts: [],
           unFoldNfts: [],
           gasCache: {},
-          currentVersion: '0',
+          currentVersion: APP_VERSIONS.fromJs,
+          downloadVersion: APP_VERSIONS.fromJs,
           pinnedChain: [],
           tokenApprovalChain: {},
           nftApprovalChain: {},
@@ -244,13 +245,17 @@ export class PreferenceService {
           tempCurrentAccount: undefined,
           tokenManageSettingMap: {},
           safeSelfHostConfirm: {},
-          hasMigratedWrongDefaultPassword: true,
+          hasMigratedWrongDefaultPassword: false,
         },
       },
       {
         storage: options?.storageAdapter,
       },
     );
+    if (this.store.currentVersion === '0') {
+      // if user download App before 0.6.17, the currentVersion will be '0', otherwise will be the version code
+      this.setMigratedWrongDefaultPassword();
+    }
     // reset current account if app not closed properly
     if (this.store.tempCurrentAccount) {
       this.store.currentAccount = this.store.tempCurrentAccount;
