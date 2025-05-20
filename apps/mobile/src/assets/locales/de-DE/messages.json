@@ -82,7 +82,8 @@
     "Unknown": "Unbekannt",
     "unlimited": "unbegrenzt",
     "Addresses": "Adressen",
-    "24h": "24h"
+    "24h": "24h",
+    "Edit": "Bearbeiten"
   },
   "component": {
     "accountSwitcher": {
@@ -797,7 +798,8 @@
       },
       "noSupprotTokenForDex": "Dieser Token wird möglicherweise von dieser Börse nicht unterstützt. Überprüfen Sie es, bevor Sie fortfahren, um Verluste zu vermeiden.",
       "From": "Von",
-      "noSupprotTokenForSafe": "Die Safe-Adresse, an die Sie Tokens senden, ist nicht auf dieser Chain bereitgestellt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden."
+      "noSupprotTokenForSafe": "Die Safe-Adresse, an die Sie Tokens senden, ist nicht auf dieser Chain bereitgestellt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden.",
+      "noSupportTokenForChain": "Der Empfängeradresse ist eine Vertragsadresse auf einer anderen Kette. Überprüfen Sie dies, bevor Sie fortfahren, um einen Verlust zu vermeiden."
     },
     "signFooterBar": {
       "signAndSubmitButton": "Signieren",
@@ -858,7 +860,9 @@
       },
       "blockDappFromSendingRequests": "Blockiere Dapp für 1 Minute vom Senden von Anfragen",
       "keystoneSign": "Unterzeichnen",
-      "startSigning": "Beginnen Sie mit dem Signieren"
+      "startSigning": "Beginnen Sie mit dem Signieren",
+      "ledgerConfirm": "Bestätigen",
+      "oneKeyConfirm": "Bestätigen"
     },
     "gasTopUp": {
       "Loading_Tokens": "Lade Tokens...",
@@ -924,7 +928,41 @@
             }
           }
         }
-      }
+      },
+      "revokeModal": {
+        "submitTxFailed": "Fehler beim Einreichen",
+        "iGotIt": "Ich hab's verstanden.",
+        "simulationFailed": "Simulation fehlgeschlagen",
+        "paused": "Pausiert",
+        "approvalCount_one": "{{count}} Genehmigungen",
+        "stillRevoke": "Immer noch Widerrufen",
+        "gasNotEnough": "Unzureichendes Gas zur Einreichung",
+        "defaultFailed": "Transaktion fehlgeschlagen",
+        "approvalCount": "{{count}} Genehmigung",
+        "approvalCount_other": "{{count}} Genehmigungen",
+        "gasTooHigh": "Die Gasgebühren sind hoch."
+      },
+      "errorReason": {
+        "title": "Widerruf fehlgeschlagen"
+      },
+      "selectAll": "Alle auswählen",
+      "contractAddress": "Vertrag Adresse",
+      "unselectAll": "Alle abwählen",
+      "asset": "Vermögen",
+      "gasFee": "Gasgebühr",
+      "continueRevoke": "Fortfahren",
+      "unknownContract": "Unbekannter Vertrag",
+      "startRevoke": "Start Revoke",
+      "revokeFrom": "Widerrufen von",
+      "approvedContracts": "Genehmigte Vermögenswerte Betrag & Bilanz",
+      "approvedAssetsAndAmount": "Genehmigte Vermögenswerte und Betrag",
+      "approvedAssets": "Genehmigte Verträge & Betrag",
+      "pauseRevoke": "Pause",
+      "myBalance": "Mein Guthaben",
+      "revokeCompleted": "Fertig",
+      "stopTheRevokeProcess": "Prozess der Widerrufung stoppen?",
+      "leavingThisPageWillStopTheRevokeProcess": "Das Verlassen dieser Seite stoppt den Widerrufsprozess.",
+      "allApprovals": "Alle Genehmigungen"
     },
     "home": {
       "services": {
@@ -1976,7 +2014,8 @@
       "SendHistory": "Send Verlauf",
       "SelectFromHistory": "Aus der Geschichte auswählen",
       "recent": "Aktuell",
-      "innerEnterAddress": "Gib Adresse / ENS ein"
+      "innerEnterAddress": "Gib Adresse / ENS ein",
+      "sentTimeHeader": "Gesendet"
     },
     "confirmAddress": {
       "risks": {
@@ -2064,6 +2103,9 @@
       },
       "BrowserHistoryList": {
         "title": "Geschichte"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "Alle Tabs schließen"
       }
     },
     "scan": {

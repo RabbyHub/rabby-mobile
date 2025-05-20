@@ -27,6 +27,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderRight } from './components/Headers/HeaderRight';
 import { HeaderCenter } from './components/Headers/HeaderCenter';
 import { ellipsisAddress } from '@/utils/address';
+import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterialTabBar';
 const isAndroid = Platform.OS === 'android';
 
 const ApprovalScreenContainer = () => {
@@ -57,7 +58,7 @@ const ApprovalScreenContainer = () => {
     React.ComponentProps<typeof Tabs.Container>['renderTabBar'] & object
   >(
     props => (
-      <MaterialTabBar
+      <CustomMaterialTabBar
         {...props}
         scrollEnabled={false}
         style={styles.tabBarWrap}

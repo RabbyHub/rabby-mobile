@@ -471,7 +471,9 @@
       "cancelCurrentTransaction": "Mevcut işlemi iptal et",
       "cancelTransaction": "İşlemi İptal Et",
       "cancelConnection": "Bağlantıyı iptal et",
-      "blockDappFromSendingRequests": "Blok Dapp'ın istek göndermesini 1 dakika boyunca engelle."
+      "blockDappFromSendingRequests": "Blok Dapp'ın istek göndermesini 1 dakika boyunca engelle.",
+      "oneKeyConfirm": "Onayla",
+      "ledgerConfirm": "Onayla"
     },
     "signTypedData": {
       "permit": {
@@ -642,7 +644,8 @@
       "whitelistAlert__notWhitelisted": "Adres beyaz listeye alınmamıştır. Geçici olarak transfer izni vermeyi kabul ediyorum.",
       "whitelistAlert__disabled": "Beyaz liste devre dışı. İstediğiniz herhangi bir adrese transfer yapabilirsiniz.",
       "noSupprotTokenForDex": "Bu token bu borsa tarafından desteklenmeyebilir. Kaybı önlemek için işlem yapmadan önce kontrol edin.",
-      "noSupprotTokenForSafe": "Gönderdiğiniz tokenların olduğu Safe adresi bu zincirde dağıtılmamıştır. Devam etmeden önce kontrol edin, kaybı önlemek için."
+      "noSupprotTokenForSafe": "Gönderdiğiniz tokenların olduğu Safe adresi bu zincirde dağıtılmamıştır. Devam etmeden önce kontrol edin, kaybı önlemek için.",
+      "noSupportTokenForChain": "Alıcı adresi farklı bir zincirde bir kontrat adresidir. İşleme devam etmeden önce kontrol edin, kayıpları önlemek için."
     },
     "sendPoly": {
       "modals": {
@@ -665,7 +668,8 @@
       "sendTimeHeader": "Gönder",
       "innerEnterAddress": "Adres / ENS Girin",
       "SendHistory": "Gönderim Geçmişi",
-      "recent": "Son zamanlarda"
+      "recent": "Son zamanlarda",
+      "sentTimeHeader": "Gönderildi"
     },
     "confirmAddress": {
       "risks": {
@@ -768,7 +772,41 @@
             }
           }
         }
-      }
+      },
+      "revokeModal": {
+        "paused": "Duraklatıldı",
+        "gasNotEnough": "Gas göndermek için yetersiz。",
+        "simulationFailed": "Simülasyon Başarısız",
+        "gasTooHigh": "Gaz ücreti yüksek",
+        "submitTxFailed": "Gönderim Başarısız",
+        "approvalCount": "{{count}} onay",
+        "stillRevoke": "Hala İptal Et",
+        "approvalCount_one": "{{count}} onay",
+        "iGotIt": "Tamamdır",
+        "approvalCount_other": "{{count}} onaylar",
+        "defaultFailed": "İşlem başarısız oldu"
+      },
+      "errorReason": {
+        "title": "Geri Alma Başarısızlığı"
+      },
+      "allApprovals": "Tüm Onaylar",
+      "selectAll": "Tümünü Seç",
+      "revokeFrom": "Revoke From",
+      "unknownContract": "Bilinmeyen Sözleşme",
+      "pauseRevoke": "Durdur",
+      "approvedAssetsAndAmount": "Onaylı Varlıklar ve Miktar",
+      "continueRevoke": "Devam et",
+      "myBalance": "Bakiyem",
+      "contractAddress": "Sözleşme Adresi",
+      "startRevoke": "Başlat İptal Et",
+      "gasFee": "Gaz Ücreti",
+      "approvedContracts": "Onaylanan Varlık Miktarı & Bakiyesi",
+      "approvedAssets": "Onaylanan Kontratlar ve Miktar",
+      "asset": "Varlık",
+      "unselectAll": "Tüm Seçimleri Kaldır",
+      "revokeCompleted": "Tamamlandı",
+      "stopTheRevokeProcess": "İptal sürecini durdurmak mı?",
+      "leavingThisPageWillStopTheRevokeProcess": "Bu sayfadan ayrılmak, yetkiyi iptal etme işlemini durduracaktır."
     },
     "gasTopUp": {
       "InsufficientBalanceTips": "Yetersiz bakiye",
@@ -1853,6 +1891,9 @@
       },
       "BrowserHistoryList": {
         "title": "Geçmiş"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "Tüm sekmeleri kapat"
       }
     },
     "scan": {
@@ -2069,7 +2110,8 @@
     "Paste": "Yapıştır",
     "Balance": "Bakiye",
     "unlimited": "sınırsız",
-    "24h": "24s"
+    "24h": "24s",
+    "Edit": "Düzenle"
   },
   "background": {
     "error": {

@@ -13,7 +13,7 @@ import { BSheetModal, Tip } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { toast } from '@/components/Toast';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { RootNames } from '@/constant/layout';
+import { HEADER_TOP_AREA_HEIGHT, RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { useTheme2024 } from '@/hooks/theme';
@@ -565,6 +565,7 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     paddingTop: 7,
     position: 'relative',
+    height: HEADER_TOP_AREA_HEIGHT,
   },
   header: {
     flexDirection: 'row',

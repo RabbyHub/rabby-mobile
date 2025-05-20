@@ -1,45 +1,56 @@
 const path = require('path');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-
 const {
   createSentryMetroSerializer,
 } = require('@sentry/react-native/dist/js/tools/sentryMetroSerializer');
+const {
+  wrapWithReanimatedMetroConfig,
+} = require('react-native-reanimated/metro-config');
 
-const defaultModuleResolver =
-  getDefaultConfig(__dirname).resolver.resolveRequest;
+const defaultConfig = getDefaultConfig(__dirname);
+const {
+  assetExts,
+  sourceExts,
+  nodeModulesPaths,
+  resolveRequest: defaultModuleResolver,
+} = defaultConfig.resolver;
+
+const projectRoot = __dirname;
+const workspaceRoot = path.resolve(projectRoot, '../..');
 
 /**
  * Metro configuration
- * https://facebook.github.io/metro/docs/configuration
+ * https://reactnative.dev/docs/metro
  *
- * @return {import('metro-config').MetroConfig}
+ * @type {import('metro-config').MetroConfig}
  */
-const getAppConfig = function () {
-  const config = getDefaultConfig(__dirname);
-
-  const { resolver, transformer, serializer } = config;
-
-  config.serializer = {
-    ...serializer,
-    customSerializer: createSentryMetroSerializer(),
-  };
-
-  config.transformer = {
-    ...transformer,
-    babelTransformerPath: require.resolve('react-native-svg-transformer'),
+const config = {
+  projectRoot,
+  transformer: {
+    babelTransformerPath: require.resolve(
+      'react-native-svg-transformer/react-native',
+    ),
     getTransformOptions: async () => ({
       transform: {
         experimentalImportSupport: false,
         inlineRequires: false,
       },
     }),
-  };
-  config.resolver = {
-    ...resolver,
+  },
+  serializer: {
+    customSerializer: createSentryMetroSerializer(),
+  },
+  resolver: {
+    assetExts: assetExts.filter(ext => ext !== 'svg'),
+    sourceExts: [...sourceExts, 'svg'],
     enableGlobalPackages: true,
-    extraNodeModules: require('node-libs-react-native'),
-    assetExts: resolver.assetExts.filter(ext => ext !== 'svg'),
-    sourceExts: [...resolver.sourceExts, 'svg'],
+    extraNodeModules: {
+      ...require('node-libs-react-native'),
+      assert: require.resolve('assert'),
+      crypto: require.resolve('react-native-quick-crypto'),
+      stream: require.resolve('readable-stream'),
+      'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
+    },
     /**
      * fix ledger import issue
      * https://github.com/LedgerHQ/ledger-live/issues/6173#issuecomment-2008939013
@@ -57,10 +68,7 @@ const getAppConfig = function () {
 
       try {
         const resolution = require.resolve(moduleName, {
-          paths: [
-            path.dirname(context.originModulePath),
-            ...config.resolver.nodeModulesPaths,
-          ],
+          paths: [path.dirname(context.originModulePath), ...nodeModulesPaths],
         });
 
         if (path.isAbsolute(resolution)) {
@@ -96,15 +104,14 @@ const getAppConfig = function () {
         console.warn('\n5️⃣ getDefaultConfig cannot resolve: ', moduleName);
       }
     },
-  };
-  config.watchFolders = [
-    path.resolve(__dirname, '../../node_modules'),
-    path.resolve(__dirname, 'node_modules'),
-    path.resolve(__dirname, '../../packages'),
-  ];
-
-  return config;
+  },
+  watchFolders: [
+    path.resolve(projectRoot, 'node_modules'),
+    path.resolve(workspaceRoot, 'node_modules'),
+    path.resolve(workspaceRoot, 'packages'),
+  ],
 };
 
-// module.exports = mergeConfig(getDefaultConfig(__dirname), getAppConfig());
-module.exports = getAppConfig();
+module.exports = wrapWithReanimatedMetroConfig(
+  mergeConfig(defaultConfig, config),
+);

@@ -82,7 +82,8 @@
     "Unknown": "Không xác định",
     "unlimited": "không giới hạn",
     "Addresses": "Địa chỉ",
-    "24h": "24h"
+    "24h": "24h",
+    "Edit": "Chỉnh sửa"
   },
   "page": {
     "transactions": {
@@ -286,7 +287,9 @@
       },
       "detectedMultipleRequestsFromThisDapp": "Phát hiện nhiều yêu cầu từ Dapp này",
       "keystoneSign": "Ký tên",
-      "startSigning": "Bắt đầu ký"
+      "startSigning": "Bắt đầu ký",
+      "ledgerConfirm": "Xác nhận",
+      "oneKeyConfirm": "Xác nhận"
     },
     "activities": {
       "signedTx": {
@@ -702,7 +705,8 @@
       },
       "noSupprotTokenForDex": "Token này có thể không được hỗ trợ bởi sàn giao dịch này. Kiểm tra trước khi tiếp tục để tránh mất mát.",
       "From": "Từ",
-      "noSupprotTokenForSafe": "Địa chỉ Safe mà bạn đang gửi token không được triển khai trên chuỗi này. Vui lòng kiểm tra trước khi tiếp tục để tránh mất mát."
+      "noSupprotTokenForSafe": "Địa chỉ Safe mà bạn đang gửi token không được triển khai trên chuỗi này. Vui lòng kiểm tra trước khi tiếp tục để tránh mất mát.",
+      "noSupportTokenForChain": "Địa chỉ người nhận là một địa chỉ hợp đồng trên một chuỗi khác. Kiểm tra trước khi tiếp tục để tránh mất mát."
     },
     "approvals": {
       "list": {
@@ -759,7 +763,41 @@
             "modalTitle_other": "Tổng cộng cần <2>{{count}}</2> chữ ký"
           }
         }
-      }
+      },
+      "revokeModal": {
+        "iGotIt": "Tôi đã hiểu rồi",
+        "gasNotEnough": "Không đủ Gas để gửi",
+        "approvalCount_other": "{{count}} phê duyệt",
+        "stillRevoke": "Vẫn thu hồi",
+        "submitTxFailed": "Không thể gửi",
+        "gasTooHigh": "Phí gas cao",
+        "approvalCount": "{{count}} phê duyệt",
+        "approvalCount_one": "{{count}} phê duyệt",
+        "defaultFailed": "Giao dịch thất bại",
+        "simulationFailed": "Mô phỏng thất bại",
+        "paused": "Tạm dừng"
+      },
+      "errorReason": {
+        "title": "Không thể thu hồi"
+      },
+      "continueRevoke": "Tiếp tục",
+      "asset": "Tài sản",
+      "myBalance": "Số dư của tôi",
+      "unknownContract": "Hợp đồng không xác định",
+      "revokeFrom": "Hủy từ",
+      "startRevoke": "Bắt đầu thu hồi",
+      "pauseRevoke": "Tạm dừng",
+      "selectAll": "Chọn Tất cả",
+      "unselectAll": "Bỏ chọn tất cả",
+      "allApprovals": "Tất cả các phê duyệt",
+      "approvedAssetsAndAmount": "Tài sản và số tiền đã phê duyệt",
+      "gasFee": "Phí Gas",
+      "approvedAssets": "Hợp đồng đã phê duyệt & Số tiền",
+      "contractAddress": "Địa chỉ hợp đồng",
+      "revokeCompleted": "Hoàn tất",
+      "approvedContracts": "Số lượng tài sản đã phê duyệt & Số dư",
+      "stopTheRevokeProcess": "Dừng quá trình thu hồi?",
+      "leavingThisPageWillStopTheRevokeProcess": "Rời khỏi trang này sẽ dừng quá trình thu hồi."
     },
     "gasTopUp": {
       "Loading_Tokens": "Đang tải Tokens...",
@@ -1823,7 +1861,8 @@
       "innerEnterAddress": "Nhập Địa Chỉ / ENS",
       "recent": "Gần đây",
       "SendHistory": "Lịch sử Gửi",
-      "SelectFromHistory": "Chọn từ Lịch sử"
+      "SelectFromHistory": "Chọn từ Lịch sử",
+      "sentTimeHeader": "Đã gửi"
     },
     "confirmAddress": {
       "risks": {
@@ -1911,6 +1950,9 @@
       },
       "BrowserHistoryList": {
         "title": "Lịch sử"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "Đóng tất cả các tab"
       }
     },
     "scan": {

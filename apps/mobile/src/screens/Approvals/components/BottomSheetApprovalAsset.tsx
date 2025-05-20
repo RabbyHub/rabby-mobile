@@ -17,7 +17,7 @@ import {
   useFocusedApprovalOnApprovals,
   useRevokeAssetSpenders,
 } from '../useApprovalsPage';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { MiniButton } from '@/components/Button';
 import ApprovalCardAsset from './ApprovalCardAsset';
@@ -29,6 +29,19 @@ import { ApprovalsLayouts } from '../layout';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
+import { querySelectedAssetSpender } from '../utils';
+
+const MemoInModalApprovalAssetRow = React.memo(
+  InModalApprovalAssetRow,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.spender.$assetParent?.chain ===
+        nextProps.spender.$assetContract?.chain &&
+      prevProps.spender.id === nextProps.spender.id &&
+      prevProps.isSelected === nextProps.isSelected
+    );
+  },
+);
 
 export default function BottomSheetApprovalAsset({
   modalProps,
@@ -96,22 +109,28 @@ export default function BottomSheetApprovalAsset({
   const renderItem = React.useCallback<
     SectionListProps<ApprovalAssetsItem>['renderItem'] & object
   >(
-    ({ item, section: _, index }) => {
+    ({ item, index }) => {
+      const isSelected = !!querySelectedAssetSpender(
+        assetFocusingRevokeMap,
+        item,
+      );
+
       return (
         <View
           key={`${item.$assetParent?.chain}-${item.id}-${index}`}
           style={{
             marginTop: index === 0 ? 0 : 8,
           }}>
-          <InModalApprovalAssetRow
+          <MemoInModalApprovalAssetRow
             approval={focusedAssetApproval!}
             spender={item}
+            isSelected={isSelected}
             onToggleSelection={ctx => toggleSelectAssetSpender(ctx, 'focusing')}
           />
         </View>
       );
     },
-    [toggleSelectAssetSpender, focusedAssetApproval],
+    [assetFocusingRevokeMap, focusedAssetApproval, toggleSelectAssetSpender],
   );
 
   const onEndReached = React.useCallback(() => {

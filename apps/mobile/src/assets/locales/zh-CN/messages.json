@@ -82,7 +82,8 @@
     "Unknown": "未知",
     "unlimited": "unlimited",
     "Addresses": "Addresses",
-    "24h": "24小时"
+    "24h": "24小时",
+    "Edit": "编辑"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -606,7 +607,8 @@
       },
       "noSupprotTokenForDex": "该交易所可能不支持此代币。请在继续操作前检查以避免损失。",
       "From": "来自",
-      "noSupprotTokenForSafe": "您要发送代币的安全地址未在此链上部署。请在继续之前检查，以避免损失。"
+      "noSupprotTokenForSafe": "您要发送代币的安全地址未在此链上部署。请在继续之前检查，以避免损失。",
+      "noSupportTokenForChain": "收件人地址是另一个链上的合约地址。请在继续之前进行检查，以避免损失。"
     },
     "receive": {
       "title": "接收{{chain}}上的{{token}}",
@@ -714,7 +716,9 @@
         "afterSignDesc": "扫描 Keystone 上的二维码以获取签名"
       },
       "keystoneSign": "签名",
-      "startSigning": "开始签名"
+      "startSigning": "开始签名",
+      "oneKeyConfirm": "确认",
+      "ledgerConfirm": "确认"
     },
     "gasTopUp": {
       "Token": "Token",
@@ -850,7 +854,41 @@
             }
           }
         }
-      }
+      },
+      "revokeModal": {
+        "submitTxFailed": "提交失败",
+        "gasTooHigh": "Gas费用很高",
+        "iGotIt": "我明白了",
+        "approvalCount": "{{count}} 审批",
+        "gasNotEnough": "Gas不足以提交",
+        "stillRevoke": "仍然撤销",
+        "paused": "已暂停",
+        "simulationFailed": "模拟失败",
+        "defaultFailed": "交易失败",
+        "approvalCount_one": "{{count}} 授权",
+        "approvalCount_other": "{{count}} 个批准"
+      },
+      "errorReason": {
+        "title": "无法撤销"
+      },
+      "asset": "资产",
+      "startRevoke": "开始撤回",
+      "revokeFrom": "撤销来自",
+      "pauseRevoke": "暂停",
+      "unknownContract": "未知合约",
+      "contractAddress": "合约地址",
+      "selectAll": "选择全部",
+      "approvedContracts": "已批准资产金额与余额",
+      "myBalance": "我的余额",
+      "unselectAll": "取消全选",
+      "approvedAssets": "已批准的合约和金额",
+      "continueRevoke": "继续",
+      "approvedAssetsAndAmount": "审核的资产和数量",
+      "gasFee": "Gas费用",
+      "revokeCompleted": "完成",
+      "stopTheRevokeProcess": "停止撤回过程？",
+      "leavingThisPageWillStopTheRevokeProcess": "离开此页面将停止撤销过程。",
+      "allApprovals": "所有授权"
     },
     "swap": {
       "unable-to-fetch-the-price": "无法获取价格",
@@ -1832,7 +1870,8 @@
       "innerEnterAddress": "输入地址 / ENS",
       "recent": "最近",
       "SelectFromHistory": "从历史中选择",
-      "SendHistory": "发送历史"
+      "SendHistory": "发送历史",
+      "sentTimeHeader": "发送"
     },
     "confirmAddress": {
       "risks": {
@@ -1920,6 +1959,9 @@
       },
       "BrowserHistoryList": {
         "title": "历史"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "关闭所有标签页"
       }
     },
     "scan": {

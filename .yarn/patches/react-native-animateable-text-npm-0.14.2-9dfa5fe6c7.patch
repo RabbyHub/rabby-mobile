@@ -1,0 +1,13 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 7a48e72293b5b3900ac618b7c942884d6084121e..0eb5443aa561aa6a5ac1395417c8ba6b8bf58d5f 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -4,7 +4,7 @@ buildscript {
+ 
+   repositories {
+     google()
+-    jcenter()
++    mavenCentral()
+   }
+ 
+   dependencies {

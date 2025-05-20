@@ -471,7 +471,9 @@
       "detectedMultipleRequestsFromThisDapp": "Terdeteksi beberapa permintaan dari Dapp ini",
       "submitTx": "Kirim Transaksi",
       "cancelCurrentTransaction": "Batalkan transaksi saat ini",
-      "resend": "Coba lagi"
+      "resend": "Coba lagi",
+      "ledgerConfirm": "Konfirmasi",
+      "oneKeyConfirm": "Konfirmasi"
     },
     "signTypedData": {
       "permit": {
@@ -642,7 +644,8 @@
       "noSupprotTokenForSafe": "Alamat Safe yang Anda kirimkan token tidak dikerahkan di rantai ini. Periksa sebelum melanjutkan untuk menghindari kehilangan.",
       "whitelistAlert__notWhitelisted": "Alamat tidak ada dalam daftar putih. Saya setuju untuk memberikan izin sementara untuk mentransfer.",
       "whitelistAlert__temporaryGranted": "Izin sementara diberikan",
-      "whitelistAlert__whitelisted": "Alamat telah tercantum dalam daftar putih"
+      "whitelistAlert__whitelisted": "Alamat telah tercantum dalam daftar putih",
+      "noSupportTokenForChain": "Alamat penerima adalah alamat kontrak di rantai yang berbeda. Periksa sebelum melanjutkan untuk menghindari kerugian."
     },
     "sendPoly": {
       "modals": {
@@ -665,7 +668,8 @@
       "sendTimeHeader": "Kirim",
       "innerEnterAddress": "Masukkan Alamat / ENS",
       "SendHistory": "Kirim Riwayat",
-      "SelectFromHistory": "Pilih Dari Riwayat"
+      "SelectFromHistory": "Pilih Dari Riwayat",
+      "sentTimeHeader": "Terkirim"
     },
     "confirmAddress": {
       "risks": {
@@ -768,7 +772,41 @@
             }
           }
         }
-      }
+      },
+      "revokeModal": {
+        "iGotIt": "Saya mengerti",
+        "gasTooHigh": "Biaya gas tinggi",
+        "defaultFailed": "Transaksi gagal",
+        "submitTxFailed": "Gagal Mengirim",
+        "simulationFailed": "Simulasi Gagal",
+        "stillRevoke": "Masih Mencabut",
+        "paused": "Dijeda",
+        "approvalCount": "{{count}} persetujuan",
+        "approvalCount_other": "{{count}} persetujuan",
+        "gasNotEnough": "Gas tidak cukup untuk mengirim",
+        "approvalCount_one": "{{count}} persetujuan"
+      },
+      "errorReason": {
+        "title": "Gagal untuk Mencabut"
+      },
+      "pauseRevoke": "Jeda",
+      "contractAddress": "Alamat Kontrak",
+      "continueRevoke": "Lanjutkan",
+      "allApprovals": "Semua Persetujuan",
+      "revokeFrom": "Cabut Dari",
+      "unselectAll": "Batalkan Pilihan Semua",
+      "myBalance": "Saldo saya",
+      "approvedAssetsAndAmount": "Aset yang Disetujui dan Jumlah",
+      "unknownContract": "Kontrak Tidak Dikenal",
+      "approvedContracts": "Jumlah & Saldo Aset yang Disetujui",
+      "gasFee": "Biaya Gas",
+      "approvedAssets": "Kontrak & Jumlah yang Disetujui",
+      "asset": "Aset",
+      "startRevoke": "Mulai Batalkan",
+      "selectAll": "Pilih Semua",
+      "revokeCompleted": "Selesai",
+      "stopTheRevokeProcess": "Hentikan proses pembatalan?",
+      "leavingThisPageWillStopTheRevokeProcess": "Meninggalkan halaman ini akan menghentikan proses pencabutan."
     },
     "gasTopUp": {
       "Token": "Token",
@@ -1853,6 +1891,9 @@
       },
       "BrowserHistoryList": {
         "title": "Riwayat"
+      },
+      "BrowserTabList": {
+        "closeAllTabs": "Tutup semua tab"
       }
     },
     "scan": {
@@ -2069,7 +2110,8 @@
     "Unknown": "Tidak Dikenal",
     "Paste": "Tempel",
     "appDescription": "Dompet yang mengubah permainan untuk Ethereum dan semua rantai EVM",
-    "24h": "24j"
+    "24h": "24j",
+    "Edit": "Sunting"
   },
   "background": {
     "error": {
