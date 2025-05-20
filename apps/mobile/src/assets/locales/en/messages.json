@@ -1734,7 +1734,10 @@
         "totalChain_other": "Total {{count}} Chains"
       },
       "emptyToken": {
-        "title": "Fund Your Wallet",
+        "title": "You’ve got no assets",
+        "desc": "Fund quickly now",
+        "importHeader": "Import an Address",
+        "importBody": "Add an existing address with funds.",
         "receiveHeader": "Receive Crypto",
         "receiveBody": "Transfer tokens from another address",
         "buyHeader": "Buy with Fiat",

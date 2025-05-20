@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 
@@ -42,7 +36,6 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { ChainListItem } from '@/components2024/SelectChainWithDistribute';
 import { collectionNftList } from './hooks/nft';
 import { chunk } from 'lodash';
-import { getAddrDescWithCexLocalCacheSync } from '@/databases/hooks/cex';
 import { isScamHidenToken } from './utils/collection';
 import { AssetList } from './AssetList';
 import { Tabs } from 'react-native-collapsible-tab-view';
@@ -88,7 +81,6 @@ export const AssetContainer: React.FC<Props> = ({
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
-  const [notBorn, setNotBorn] = useState(false);
 
   const {
     tokens: _rawTokens,
@@ -374,16 +366,6 @@ export const AssetContainer: React.FC<Props> = ({
     unFoldNftList,
   ]);
 
-  useLayoutEffect(() => {
-    if (currentAccount?.address && !currentAccount.balance) {
-      getAddrDescWithCexLocalCacheSync(currentAccount?.address).then(res => {
-        if (!res?.born_at) {
-          setNotBorn(true);
-        }
-      });
-    }
-  }, [currentAccount?.address, currentAccount?.balance]);
-
   const handleSwitchTab = useCallback(
     (key: AsssetKey) => {
       setFoldHideList(true);
@@ -558,7 +540,7 @@ export const AssetContainer: React.FC<Props> = ({
           onUpdateIsDecrease={onUpdateIsDecrease}
         />
         <AssestAllHeader
-          style={[styles.assetHeader, notBorn && styles.hidden]}
+          style={[styles.assetHeader]}
           currentSection={currentSection}
           chainLength={chainsInfo.chainLength}
           onChainClick={handleOnChainClick}
@@ -575,12 +557,10 @@ export const AssetContainer: React.FC<Props> = ({
     firstRowType,
     handleOnChainClick,
     handleSwitchTab,
-    notBorn,
     onUpdateIsDecrease,
     renderStickHeader,
     selectChainItem?.chain,
     styles.assetHeader,
-    styles.hidden,
   ]);
   const renderTabBar = useCallback(() => {
     return null;
@@ -590,6 +570,14 @@ export const AssetContainer: React.FC<Props> = ({
     refreshPositions(true);
     onRefresh?.();
   }, [onRefresh, refreshPositions]);
+  const hasNotAssets = useMemo(() => {
+    return (
+      chainsInfo.chainLength === 0 &&
+      !loadingPortfolio &&
+      !loadingToken &&
+      !loadingNft
+    );
+  }, [chainsInfo.chainLength, loadingNft, loadingPortfolio, loadingToken]);
 
   if (!currentAccount?.address) {
     return null;
@@ -608,7 +596,7 @@ export const AssetContainer: React.FC<Props> = ({
       <Tabs.Tab label="Assets" name="assets">
         <AssetList
           ref={listRef}
-          dataList={notBorn ? [{ type: 'empty-token' }] : dataList}
+          dataList={hasNotAssets ? [{ type: 'empty-token' }] : dataList}
           foldNftAmount={foldNftList.length}
           totalFoldTokenValue={getTotalFoldToken(
             sortTokens.filter(i => i._isFold),

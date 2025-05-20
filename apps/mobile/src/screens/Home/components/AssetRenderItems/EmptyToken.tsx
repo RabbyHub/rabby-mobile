@@ -5,14 +5,20 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { Card } from '@/components2024/Card';
-import { RcIconOldReceive, RcIconBuy } from '@/assets2024/singleHome';
+import {
+  RcIconOldReceive,
+  RcIconBuy,
+  RcIconImport,
+} from '@/assets2024/singleHome';
 interface IProps {
   onReceive: () => void;
   onBuy: () => void;
+  onImport: () => void;
 }
-export const EmptyTokenRow = memo(({ onBuy, onReceive }: IProps) => {
+export const EmptyTokenRow = memo(({ onBuy, onReceive, onImport }: IProps) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
+
   return (
     <View style={[styles.constainer]}>
       <ImageBackground
@@ -22,7 +28,21 @@ export const EmptyTokenRow = memo(({ onBuy, onReceive }: IProps) => {
         <Text style={styles.header}>
           {t('page.singleHome.emptyToken.title')}
         </Text>
+        <Text style={styles.desc}>{t('page.singleHome.emptyToken.desc')}</Text>
         <View style={styles.cardList}>
+          <Card onPress={onImport} style={styles.card}>
+            <View style={styles.icon}>
+              <RcIconImport width={16.8} height={16.8} />
+            </View>
+            <View style={styles.sectionDescription}>
+              <Text style={styles.sectionHeader}>
+                {t('page.singleHome.emptyToken.importHeader')}
+              </Text>
+              <Text style={styles.sectionBody}>
+                {t('page.singleHome.emptyToken.importBody')}
+              </Text>
+            </View>
+          </Card>
           <Card onPress={onReceive} style={styles.card}>
             <View style={styles.icon}>
               <RcIconOldReceive width={16.8} height={16.8} />
@@ -91,9 +111,17 @@ const getStyle = createGetStyles2024(ctx => ({
     lineHeight: 36,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
-    marginTop: 42,
-    marginBottom: 42,
+    marginTop: 30,
     color: ctx.colors2024['neutral-title-1'],
+  },
+  desc: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    marginTop: 6,
+    marginBottom: 20,
+    color: ctx.colors2024['neutral-secondary'],
   },
   cardList: {
     gap: 12,
