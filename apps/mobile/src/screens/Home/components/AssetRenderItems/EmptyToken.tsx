@@ -1,5 +1,11 @@
 import React, { memo } from 'react';
-import { View, Text, ImageBackground } from 'react-native';
+import {
+  View,
+  Text,
+  ImageBackground,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import { TOKEN_EMPTY_ROW_HIGHT } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
@@ -14,66 +20,71 @@ interface IProps {
   onReceive: () => void;
   onBuy: () => void;
   onImport: () => void;
+  style?: StyleProp<ViewStyle>;
 }
-export const EmptyTokenRow = memo(({ onBuy, onReceive, onImport }: IProps) => {
-  const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+export const EmptyTokenRow = memo(
+  ({ onBuy, onReceive, onImport, style }: IProps) => {
+    const { t } = useTranslation();
+    const { styles } = useTheme2024({ getStyle });
 
-  return (
-    <View style={[styles.constainer]}>
-      <ImageBackground
-        source={require('@/assets/icons/token/empty-token.png')}
-        style={styles.imageBackground}
-        resizeMode="cover">
-        <Text style={styles.header}>
-          {t('page.singleHome.emptyToken.title')}
-        </Text>
-        <Text style={styles.desc}>{t('page.singleHome.emptyToken.desc')}</Text>
-        <View style={styles.cardList}>
-          <Card onPress={onImport} style={styles.card}>
-            <View style={styles.icon}>
-              <RcIconImport width={16.8} height={16.8} />
-            </View>
-            <View style={styles.sectionDescription}>
-              <Text style={styles.sectionHeader}>
-                {t('page.singleHome.emptyToken.importHeader')}
-              </Text>
-              <Text style={styles.sectionBody}>
-                {t('page.singleHome.emptyToken.importBody')}
-              </Text>
-            </View>
-          </Card>
-          <Card onPress={onReceive} style={styles.card}>
-            <View style={styles.icon}>
-              <RcIconOldReceive width={16.8} height={16.8} />
-            </View>
-            <View style={styles.sectionDescription}>
-              <Text style={styles.sectionHeader}>
-                {t('page.singleHome.emptyToken.receiveHeader')}
-              </Text>
-              <Text style={styles.sectionBody}>
-                {t('page.singleHome.emptyToken.receiveBody')}
-              </Text>
-            </View>
-          </Card>
-          <Card onPress={onBuy} style={styles.card}>
-            <View style={styles.icon}>
-              <RcIconBuy width={16.8} height={16.8} />
-            </View>
-            <View style={styles.sectionDescription}>
-              <Text style={styles.sectionHeader}>
-                {t('page.singleHome.emptyToken.buyHeader')}
-              </Text>
-              <Text style={styles.sectionBody}>
-                {t('page.singleHome.emptyToken.buyBody')}
-              </Text>
-            </View>
-          </Card>
-        </View>
-      </ImageBackground>
-    </View>
-  );
-});
+    return (
+      <View style={[styles.constainer, style]}>
+        <ImageBackground
+          source={require('@/assets/icons/token/empty-token.png')}
+          style={styles.imageBackground}
+          resizeMode="cover">
+          <Text style={styles.header}>
+            {t('page.singleHome.emptyToken.title')}
+          </Text>
+          <Text style={styles.desc}>
+            {t('page.singleHome.emptyToken.desc')}
+          </Text>
+          <View style={styles.cardList}>
+            <Card onPress={onImport} style={styles.card}>
+              <View style={styles.icon}>
+                <RcIconImport width={16.8} height={16.8} />
+              </View>
+              <View style={styles.sectionDescription}>
+                <Text style={styles.sectionHeader}>
+                  {t('page.singleHome.emptyToken.importHeader')}
+                </Text>
+                <Text style={styles.sectionBody}>
+                  {t('page.singleHome.emptyToken.importBody')}
+                </Text>
+              </View>
+            </Card>
+            <Card onPress={onReceive} style={styles.card}>
+              <View style={styles.icon}>
+                <RcIconOldReceive width={16.8} height={16.8} />
+              </View>
+              <View style={styles.sectionDescription}>
+                <Text style={styles.sectionHeader}>
+                  {t('page.singleHome.emptyToken.receiveHeader')}
+                </Text>
+                <Text style={styles.sectionBody}>
+                  {t('page.singleHome.emptyToken.receiveBody')}
+                </Text>
+              </View>
+            </Card>
+            <Card onPress={onBuy} style={styles.card}>
+              <View style={styles.icon}>
+                <RcIconBuy width={16.8} height={16.8} />
+              </View>
+              <View style={styles.sectionDescription}>
+                <Text style={styles.sectionHeader}>
+                  {t('page.singleHome.emptyToken.buyHeader')}
+                </Text>
+                <Text style={styles.sectionBody}>
+                  {t('page.singleHome.emptyToken.buyBody')}
+                </Text>
+              </View>
+            </Card>
+          </View>
+        </ImageBackground>
+      </View>
+    );
+  },
+);
 
 const getStyle = createGetStyles2024(ctx => ({
   constainer: {

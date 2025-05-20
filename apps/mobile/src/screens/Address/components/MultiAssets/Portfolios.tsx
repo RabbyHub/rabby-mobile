@@ -10,6 +10,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 
 import {
+  AppRootName,
   ASSETS_EMPTY_ROW_HIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_LIST_HEADER,
@@ -57,6 +58,15 @@ import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/Scam
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { isTabsSwiping } from './hooks';
+import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useSetPasswordFirst } from '@/hooks/useLock';
+import { StackActions } from '@react-navigation/native';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
@@ -81,6 +91,7 @@ export const Portfolios = () => {
     isLoading,
   } = useAssets();
 
+  const { navigation } = useSafeSetNavigationOptions();
   const [isListVisable, setIsListVisable] = useState(false);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -377,6 +388,46 @@ export const Portfolios = () => {
     [isLight, t, tokenRefresh],
   );
 
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+
+  const hasNotAssets = useMemo(() => {
+    return tokens.length === 0 && portfolios.length === 0 && !isLoading;
+  }, [tokens, portfolios, isLoading]);
+
+  const handleOnReceive = useCallback(() => {
+    navigation.dispatch(
+      StackActions.push(RootNames.StackAddress, {
+        screen: RootNames.ReceiveAddressList,
+        params: {},
+      }),
+    );
+  }, [navigation]);
+
+  const handleOnBuy = useCallback(() => {
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.MultiBuy,
+      params: {},
+    });
+  }, [navigation]);
+
+  const handleOnImport = useCallback(() => {
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+      shouldRedirectToSetPasswordBefore2024,
+      navigateTo: (screen: AppRootName, params?: object) => {
+        navigation.dispatch(
+          StackActions.push(RootNames.StackAddress, {
+            screen,
+            params,
+          }),
+        );
+      },
+    });
+  }, [navigation, shouldRedirectToSetPasswordBefore2024]);
+
   const renderItem = useCallback(
     ({ item }) => {
       const { type, data } = item;
@@ -491,6 +542,15 @@ export const Portfolios = () => {
           return <ItemLoader style={{ height: ASSETS_ITEM_HEIGHT_NEW }} />;
         case 'loading-defi-skeleton':
           return <DefiItemLoader style={styles.defiLoading} />;
+        case 'empty-token':
+          return (
+            <EmptyTokenRow
+              style={styles.emptyTokenHolder}
+              onReceive={handleOnReceive}
+              onBuy={handleOnBuy}
+              onImport={handleOnImport}
+            />
+          );
         default:
           return null;
       }
@@ -500,11 +560,25 @@ export const Portfolios = () => {
       foldHideList,
       getDefiOrNftMenuAction,
       getTokenMenuActions,
+      handleOnBuy,
+      handleOnImport,
+      handleOnReceive,
       handleOpenDefiDetail,
       handleOpenTokenDetail,
       isLight,
       portfolios,
-      styles,
+      styles.bg2,
+      styles.buttonHeader,
+      styles.defiGroups,
+      styles.defiLoading,
+      styles.emptyAssets,
+      styles.emptyTokenHolder,
+      styles.renderDefiItemWrapper,
+      styles.renderItemWrapper,
+      styles.rowWrap,
+      styles.sectionHeader,
+      styles.sectionTextHeader,
+      styles.tokenSectionHeader,
       t,
       tokens,
     ],
@@ -614,7 +688,7 @@ export const Portfolios = () => {
 
   return (
     <Tabs.FlashList
-      data={portfolioListData}
+      data={hasNotAssets ? [{ type: 'empty-token' }] : portfolioListData}
       renderItem={renderItem}
       estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
       getItemType={getItemType}
@@ -718,6 +792,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   emptyAssets: {
     marginHorizontal: 0,
+  },
+  emptyTokenHolder: {
+    paddingHorizontal: 0,
   },
   defiLoading: {
     paddingHorizontal: 0,
