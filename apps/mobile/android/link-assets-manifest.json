@@ -2,19 +2,19 @@
   "migIndex": 1,
   "data": [
     {
-      "path": "assets/fonts/SF-Pro-Rounded-Bold-subset.otf",
+      "path": "assets/fonts/SF-Pro-Rounded-Bold.otf",
       "sha1": "756e23d47648e3e60171530fc19c3d08fa616865"
     },
     {
-      "path": "assets/fonts/SF-Pro-Rounded-Heavy-subset.otf",
+      "path": "assets/fonts/SF-Pro-Rounded-Heavy.otf",
       "sha1": "2772ed7aedadae1fc5afc1cab4b4fa3e21902f07"
     },
     {
-      "path": "assets/fonts/SF-Pro-Rounded-Medium-subset.otf",
+      "path": "assets/fonts/SF-Pro-Rounded-Medium.otf",
       "sha1": "d45d548d437b9ad2a3fdff77b89af508e152b22d"
     },
     {
-      "path": "assets/fonts/SF-Pro-Rounded-Regular-subset.otf",
+      "path": "assets/fonts/SF-Pro-Rounded-Regular.otf",
       "sha1": "c42ac204c247265b9cb1379f28c18f35400225e4"
     },
     {
