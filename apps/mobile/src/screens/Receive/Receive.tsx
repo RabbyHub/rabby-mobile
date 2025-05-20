@@ -103,6 +103,7 @@ function ReceiveScreen(): JSX.Element {
           <>
             <WalletIcon
               type={account?.type as KEYRING_TYPE}
+              address={account?.address}
               width={styles.walletIcon.width}
               height={styles.walletIcon.height}
               style={styles.walletIcon}
@@ -136,7 +137,17 @@ function ReceiveScreen(): JSX.Element {
         </Pressable>
       </View>
     ),
-    [account?.aliasName, account?.type, showName, colors2024, styles],
+    [
+      styles.headerTitle,
+      styles.walletIcon,
+      styles.titleText,
+      styles.headerIconEye,
+      showName,
+      account?.type,
+      account?.address,
+      account?.aliasName,
+      colors2024,
+    ],
   );
 
   useLayoutEffect(() => {

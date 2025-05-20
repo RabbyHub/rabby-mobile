@@ -297,6 +297,7 @@ export const ImportSuccessScreen2024 = () => {
             <View style={styles.itemContainer}>
               <WalletIcon
                 type={state?.type}
+                address={importAddresses?.[0]?.address}
                 width={100}
                 height={100}
                 style={styles.icon}
@@ -321,7 +322,12 @@ export const ImportSuccessScreen2024 = () => {
                 showsHorizontalScrollIndicator={false}>
                 {importAddresses.map(item => (
                   <Card key={item.address} style={styles.addressItem}>
-                    <WalletIcon type={state?.type} width={46} height={46} />
+                    <WalletIcon
+                      type={state?.type}
+                      address={item.address}
+                      width={46}
+                      height={46}
+                    />
                     <View>
                       <Text style={styles.listInput}>{item.aliasName}</Text>
                       {loadingBalance ? (

@@ -411,6 +411,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
           <>
             <WalletIcon
               type={params.type}
+              address={params.account.address}
               width={91}
               height={91}
               borderRadius={25}

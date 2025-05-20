@@ -50,6 +50,7 @@ export function WebViewHeaderRight({
       ) : (
         <WalletIcon
           type={finalSceneCurrentAccount?.type}
+          address={finalSceneCurrentAccount?.address}
           width={24}
           height={24}
           style={{ borderRadius: 6 }}

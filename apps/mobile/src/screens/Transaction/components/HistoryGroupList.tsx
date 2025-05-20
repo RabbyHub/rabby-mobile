@@ -14,9 +14,7 @@ import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem2025';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { KeyringAccountWithAlias } from '@/hooks/account';
 import { Empty } from '../components/Empty';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { formatTimestamp } from '@/utils/time';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -72,24 +70,6 @@ function markFirstItems(
 
   return newArr;
 }
-
-const AddressInfo = ({ account }: { account?: KeyringAccountWithAlias }) => {
-  const { styles } = useTheme2024({ getStyle });
-  if (account) {
-    return (
-      <View style={styles.addressInfo}>
-        <WalletIcon
-          type={account.type}
-          width={16}
-          height={16}
-          borderRadius={4}
-        />
-        <Text style={styles.aliasName}>{account.aliasName}</Text>
-      </View>
-    );
-  }
-  return null;
-};
 
 export const HistoryList = forwardRef(
   (
