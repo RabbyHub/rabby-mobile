@@ -1036,6 +1036,8 @@
         "services": "Services",
         "totalBalance": "Total Balance",
         "noAssets": "No Assets?",
+        "foundGuideTitle": "Fund quickly",
+        "foundGuideDesc": "Add tokens to your wallet to get started.",
         "fundYourWallet": "Fund Your Wallet",
         "importAddress": "Import an Address",
         "importAddressDesc": "Add an existing address with funds",

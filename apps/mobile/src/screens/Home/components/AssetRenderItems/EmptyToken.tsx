@@ -30,7 +30,7 @@ export const EmptyTokenRow = memo(
     return (
       <View style={[styles.constainer, style]}>
         <ImageBackground
-          source={require('@/assets/icons/token/empty-token.png')}
+          source={require('@/assets2024/icons/home/buy-bg.png')}
           style={styles.imageBackground}
           resizeMode="cover">
           <Text style={styles.header}>
@@ -46,10 +46,10 @@ export const EmptyTokenRow = memo(
               </View>
               <View style={styles.sectionDescription}>
                 <Text style={styles.sectionHeader}>
-                  {t('page.singleHome.emptyToken.importHeader')}
+                  {t('page.nextComponent.multiAddressHome.importAddress')}
                 </Text>
                 <Text style={styles.sectionBody}>
-                  {t('page.singleHome.emptyToken.importBody')}
+                  {t('page.nextComponent.multiAddressHome.importAddressDesc')}
                 </Text>
               </View>
             </Card>
@@ -95,6 +95,7 @@ const getStyle = createGetStyles2024(ctx => ({
     borderRadius: 20,
     height: TOKEN_EMPTY_ROW_HIGHT,
     paddingHorizontal: 16,
+    overflow: 'hidden',
   },
   imageBackground: {
     flex: 1,
@@ -118,10 +119,11 @@ const getStyle = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['brand-light-1'],
   },
   header: {
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
     marginTop: 30,
     color: ctx.colors2024['neutral-title-1'],
   },

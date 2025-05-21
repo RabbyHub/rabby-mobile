@@ -10,7 +10,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 
 import {
-  AppRootName,
   ASSETS_EMPTY_ROW_HIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_LIST_HEADER,
@@ -60,12 +59,6 @@ import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { isTabsSwiping } from './hooks';
 import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { useSetPasswordFirst } from '@/hooks/useLock';
 import { StackActions } from '@react-navigation/native';
 
 const SPACING_HEIGHT = 8;
@@ -388,8 +381,6 @@ export const Portfolios = () => {
     [isLight, t, tokenRefresh],
   );
 
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
-
   const hasNotAssets = useMemo(() => {
     return tokens.length === 0 && portfolios.length === 0 && !isLoading;
   }, [tokens, portfolios, isLoading]);
@@ -411,22 +402,16 @@ export const Portfolios = () => {
   }, [navigation]);
 
   const handleOnImport = useCallback(() => {
-    const id = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-      onDone: () => {
-        removeGlobalBottomSheetModal2024(id);
-      },
-      shouldRedirectToSetPasswordBefore2024,
-      navigateTo: (screen: AppRootName, params?: object) => {
-        navigation.dispatch(
-          StackActions.push(RootNames.StackAddress, {
-            screen,
-            params,
-          }),
-        );
-      },
-    });
-  }, [navigation, shouldRedirectToSetPasswordBefore2024]);
+    navigation.dispatch(
+      StackActions.push(RootNames.StackAddress, {
+        screen: RootNames.ImportMethods,
+        params: {
+          isNotNewUserProc: true,
+          isFromEmptyAddress: true,
+        },
+      }),
+    );
+  }, [navigation]);
 
   const renderItem = useCallback(
     ({ item }) => {

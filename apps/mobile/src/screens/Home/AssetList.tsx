@@ -14,7 +14,6 @@ import {
   DisplayNftItem,
 } from './types';
 import {
-  AppRootName,
   ASSETS_EMPTY_ROW_HIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
@@ -54,7 +53,6 @@ import { ScamTokenHeader } from './components/AssetRenderItems/ScamTokenHeader';
 import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
-import { useSetPasswordFirst } from '@/hooks/useLock';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -367,24 +365,17 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       });
     }, [currentAccount, navigation, switchSceneCurrentAccount]);
 
-    const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
     const handleOnImport = useCallback(async () => {
-      const id = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-        onDone: () => {
-          removeGlobalBottomSheetModal2024(id);
-        },
-        shouldRedirectToSetPasswordBefore2024,
-        navigateTo: (screen: AppRootName, params?: object) => {
-          navigation.dispatch(
-            StackActions.push(RootNames.StackAddress, {
-              screen,
-              params,
-            }),
-          );
-        },
-      });
-    }, [navigation, shouldRedirectToSetPasswordBefore2024]);
+      navigation.dispatch(
+        StackActions.push(RootNames.StackAddress, {
+          screen: RootNames.ImportMethods,
+          params: {
+            isNotNewUserProc: true,
+            isFromEmptyAddress: true,
+          },
+        }),
+      );
+    }, [navigation]);
 
     const renderItem = useCallback(
       (_type, _data) => {

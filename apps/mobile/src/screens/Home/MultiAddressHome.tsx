@@ -62,8 +62,7 @@ import { debounce, unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
 import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
-import IconRabby from '@/assets2024/icons/home/IconRabby.svg';
-import { FundYourWallet } from './FundYourWallet';
+import { FoundYourWalletGuide } from './FundYourWallet';
 import { OfflineChainNotify } from './components/OfflineChainNotify';
 import { colord } from 'colord';
 import { BlurView } from '@/components';
@@ -714,25 +713,9 @@ function MultiAddressHome(): JSX.Element {
               </TouchableOpacity>
             </View>
           )}
-          <OfflineChainNotify />
-          {displayFundWallet && (
-            <>
-              <View
-                style={[styles.menuHeader, { justifyContent: 'flex-start' }]}>
-                <IconRabby />
-                <Text style={styles.headerText}>
-                  {t('page.nextComponent.multiAddressHome.noAssets')}
-                </Text>
-              </View>
-              <FundYourWallet />
-            </>
-          )}
-          <View
-            style={[
-              { marginTop: 0 },
-              styles.grid,
-              displayFundWallet && styles.hidden,
-            ]}>
+          <OfflineChainNotify showEmptyHolder={!displayFundWallet} />
+          {displayFundWallet && <FoundYourWalletGuide />}
+          <View style={[{ marginTop: 0 }, styles.grid]}>
             {MENU_ARR.map((el, index) => {
               return (
                 <TouchableOpacity
