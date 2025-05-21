@@ -157,10 +157,10 @@ export const FoundYourWalletGuide = () => {
   };
   return (
     <Pressable style={styles.foundGuideContainer} onPress={onPress}>
-      {/* <Image
-        source={require('@/assets2024/icons/home/buy-bg-b1.png')}
+      <Image
+        source={require('@/assets2024/icons/home/guide.png')}
         style={styles.bgb2}
-      /> */}
+      />
       <View style={styles.foundGuideContent}>
         <View style={styles.foundGuideTitleWrapper}>
           <Text style={styles.foundGuideTitle}>

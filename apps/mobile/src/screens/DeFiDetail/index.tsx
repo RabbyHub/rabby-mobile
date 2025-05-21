@@ -348,6 +348,7 @@ export const DeFiDetailScreen = () => {
           <View className="relative">
             <WalletIcon
               type={section.type as KEYRING_TYPE}
+              address={section.address}
               width={styles.walletIcon.width}
               height={styles.walletIcon.height}
               style={styles.walletIcon}
