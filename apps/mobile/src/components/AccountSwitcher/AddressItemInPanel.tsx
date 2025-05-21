@@ -88,7 +88,12 @@ export function AddressItemInPanel({
             {({ WalletIcon, WalletAddress, WalletBalance, WalletName }) => {
               return (
                 <View style={styles.addressItemInner}>
-                  <WalletIcon style={styles.walletIcon} />
+                  <WalletIcon
+                    borderRadius={14}
+                    width={46}
+                    height={46}
+                    style={styles.walletIcon}
+                  />
                   <View style={styles.centerInfo}>
                     <View style={styles.nameAndAdderss}>
                       <WalletName style={styles.addressAliasName} />
@@ -161,7 +166,7 @@ const getAddressItemInPanelStyle = createGetStyles2024(ctx => {
       height: 52,
       width: '100%',
     },
-    walletIcon: { marginRight: 8, width: 46, height: 46 },
+    walletIcon: { marginRight: 8 },
     centerInfo: {
       flexDirection: 'column',
       flexShrink: 1,

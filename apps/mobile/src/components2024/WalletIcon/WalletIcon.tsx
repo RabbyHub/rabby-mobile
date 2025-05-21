@@ -5,6 +5,7 @@ import {
   showSubWalletIcon,
 } from '@/utils/walletInfo2024';
 import { KEYRING_TYPE, WALLET_NAME } from '@rabby-wallet/keyring-utils';
+import { useState } from 'react';
 import { ImageStyle, StyleProp, StyleSheet, View } from 'react-native';
 import { Image } from 'react-native';
 
@@ -24,12 +25,25 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   style,
   width = 40,
   height = 40,
-  borderRadius = 14,
+  borderRadius: _borderRadius,
   address,
 }) => {
   const { isLight } = useTheme2024();
   const avator = getWalletAvator2024(type, isLight, address);
   const Icon = getWalletIcon2024(type, isLight);
+  const styleProps = style ? StyleSheet.flatten(style) : {};
+  const {
+    width: styleWidth,
+    height: styleHeight,
+    borderRadius: styleBorderRadius,
+  } = styleProps;
+  const [size, setSize] = useState(Number(styleWidth?.valueOf() || width));
+  const borderRadius = _borderRadius || 14 * (size / 40);
+  const subWalletContainerSize = (27 * size) / 40;
+  const subWalletIconSize = (23 * size) / 40;
+  const subWalletIconBorderWidth = (3 * size) / 40;
+  const subWalletIconBorderRadius = (7 * size) / 40;
+
   if (!avator) {
     return (
       <Image
@@ -47,8 +61,12 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
       />
     );
   }
+
   return (
     <View
+      onLayout={evt => {
+        setSize(evt.nativeEvent.layout.width);
+      }}
       style={StyleSheet.flatten([
         {
           borderRadius,
@@ -64,33 +82,32 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
         height={height}
         style={StyleSheet.flatten([
           {
-            borderRadius,
-            width,
-            height,
+            borderRadius: styleBorderRadius || borderRadius,
+            width: styleWidth || width,
+            height: styleHeight || height,
           },
-          style,
         ])}
       />
       {Icon && showSubWalletIcon(type) && (
         <View
           style={{
             position: 'absolute',
-            right: -2,
-            bottom: -2,
-            width: 27,
-            height: 27,
-            borderWidth: 3,
+            right: -subWalletIconBorderWidth,
+            bottom: -subWalletIconBorderWidth,
+            width: subWalletContainerSize,
+            height: subWalletContainerSize,
+            borderWidth: subWalletIconBorderWidth,
             borderColor: 'white',
-            borderRadius: 7,
+            borderRadius: subWalletIconBorderRadius,
             alignItems: 'center',
             justifyContent: 'center',
           }}>
           <Image
             source={Icon}
             style={{
-              width: 23,
-              height: 23,
-              borderRadius: 7,
+              width: subWalletIconSize,
+              height: subWalletIconSize,
+              borderRadius: subWalletIconBorderRadius,
             }}
           />
         </View>

@@ -1719,6 +1719,10 @@
       "excludeBalanceTips": "This asset is excluded from your total balance for accuracy. You can tap it to view details and include it if preferred.",
       "excludeBalanceTipsButton": "I Got It."
     },
+    "defiDetail": {
+      "viewSiteInApp": "View in Dapp",
+      "viewSiteInWebsite": "View in Website"
+    },
     "approvalsAddressList": {
       "title": "Approvals"
     },

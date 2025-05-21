@@ -18,6 +18,9 @@ export const getWalletAvator2024 = (
   address?: string,
 ) => {
   const watchAvator = isLight ? WatchPNG : WatchDarkDark;
+  if (brandName === KEYRING_CLASS.GNOSIS) {
+    return SafePNG;
+  }
   if (brandName === KEYRING_CLASS.WATCH) {
     return watchAvator;
   }
@@ -64,7 +67,6 @@ export const showSubWalletIcon = (brandName: string | undefined) => {
     brandName === KEYRING_CLASS.HARDWARE.LEDGER ||
     brandName === KEYRING_CLASS.HARDWARE.ONEKEY ||
     brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName ||
-    brandName === KEYRING_CLASS.HARDWARE.KEYSTONE ||
-    brandName === KEYRING_CLASS.GNOSIS
+    brandName === KEYRING_CLASS.HARDWARE.KEYSTONE
   );
 };

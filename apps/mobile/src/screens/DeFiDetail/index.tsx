@@ -10,7 +10,6 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { trigger } from 'react-native-haptic-feedback';
 import { MemoItem } from '../Home/components/ProtocolMoreItem';
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { toast } from '@/components2024/Toast';
@@ -279,7 +278,7 @@ export const DeFiDetailScreen = () => {
       totalUsdValue: SectionListItem['totalUsdValue'];
       address: SectionListItem['address'];
     }[] = [];
-    Object.keys(assetsMap).map(address => {
+    Object.keys(assetsMap).forEach(address => {
       const { portfolios } = assetsMap[address];
 
       portfolios?.map(portfolio => {
@@ -294,7 +293,7 @@ export const DeFiDetailScreen = () => {
       });
     });
 
-    accounts.map(account => {
+    accounts.forEach(account => {
       const idx = tempList.findIndex(item =>
         isSameAddress(item.address, account.address),
       );
@@ -401,7 +400,11 @@ export const DeFiDetailScreen = () => {
         <View style={styles.footer}>
           <Button
             type="primary"
-            title={Platform.OS === 'ios' ? 'View in Website' : 'View in Dapp'}
+            title={
+              Platform.OS === 'ios'
+                ? t('page.defiDetail.viewSiteInWebsite')
+                : t('page.defiDetail.viewSiteInApp')
+            }
             onPress={() => {
               openTab(data.site_url);
             }}
