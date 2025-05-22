@@ -38,6 +38,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { Button } from '@/components2024/Button';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { usePortfolios } from '../Home/hooks/usePortfolio';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -152,7 +153,7 @@ export const DeFiDetailScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
   const {
-    data,
+    data: routeData,
     portfolioList,
     isSingleAddress,
     account: routeAccount,
@@ -168,6 +169,21 @@ export const DeFiDetailScreen = () => {
     account: KeyringAccountWithAlias;
     isSingleAddress?: boolean;
   };
+
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const finalAccount = useMemo(
+    () => routeAccount || currentAccount,
+    [routeAccount, currentAccount],
+  );
+
+  const { data: currentPortfolio, updateData: singleUpdateData } =
+    usePortfolios(finalAccount.address, false);
+
+  const data = useMemo(
+    // 优先使用内存defi列表中的实时数据，兜底用页面参数数据
+    () => currentPortfolio.find(item => item.id === routeData.id) || routeData,
+    [currentPortfolio, routeData],
+  );
 
   const { t } = useTranslation();
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
@@ -251,17 +267,11 @@ export const DeFiDetailScreen = () => {
     disableAutoFetch: true,
   });
 
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
-  const finalAccount = useMemo(
-    () => routeAccount || currentAccount,
-    [routeAccount, currentAccount],
-  );
-
   const sectionsMultiProject = useMemo(() => {
     const sectionsList: SectionListItem[] = [];
     if (isSingleAddress) {
       sectionsList.push({
-        data: portfolioList,
+        data: data._portfolios || portfolioList,
         project: data,
         totalUsdValue: new BigNumber(data.netWorth),
         type: finalAccount.type,
@@ -325,7 +335,12 @@ export const DeFiDetailScreen = () => {
       item: AbstractPortfolio;
       section: SectionListItem;
     }) => {
-      return <MemoItem item={item} key={`${item.id}-${section.address}`} />;
+      return (
+        <MemoItem
+          item={item}
+          key={`${item.id}-${section.address}-${section.totalUsdValue}`}
+        />
+      );
     },
     [],
   );
@@ -388,10 +403,14 @@ export const DeFiDetailScreen = () => {
         refreshControl={
           <RefreshControl
             onRefresh={() => {
-              checkIsExpireAndUpdate(true, {
-                disableNFT: true,
-                disableToken: true,
-              });
+              if (isSingleAddress) {
+                singleUpdateData(true);
+              } else {
+                checkIsExpireAndUpdate(true, {
+                  disableNFT: true,
+                  disableToken: true,
+                });
+              }
             }}
             refreshing={refreshing}
           />
