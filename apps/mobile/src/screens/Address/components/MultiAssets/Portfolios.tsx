@@ -383,7 +383,7 @@ export const Portfolios = () => {
 
   const hasNotAssets = useMemo(() => {
     return tokens.length === 0 && portfolios.length === 0 && !isLoading;
-  }, [tokens, portfolios, isLoading]);
+  }, [tokens.length, portfolios.length, isLoading]);
 
   const handleOnReceive = useCallback(() => {
     navigation.dispatch(

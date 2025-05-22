@@ -98,6 +98,7 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
             height: subWalletContainerSize,
             borderWidth: subWalletIconBorderWidth,
             borderColor: 'white',
+            backgroundColor: 'white',
             borderRadius: subWalletIconBorderRadius,
             alignItems: 'center',
             justifyContent: 'center',
