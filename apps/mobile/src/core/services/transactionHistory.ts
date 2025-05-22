@@ -974,7 +974,7 @@ export class TransactionGroup {
   }
 
   get $ctx() {
-    return this.maxGasTx.$ctx;
+    return this.maxGasTx.$ctx || this.txs[0].$ctx;
   }
 
   get action() {

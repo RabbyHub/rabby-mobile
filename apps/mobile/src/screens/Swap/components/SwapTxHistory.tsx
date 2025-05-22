@@ -275,7 +275,7 @@ export const SwapTxHistory = ({
           currentAccount?.address ?? '',
         );
         const arr = pendings.concat(completeds);
-        const itemData = arr.find(i => i.maxGasTx.hash === txId);
+        const itemData = arr.find(i => i.txs[0].hash === txId);
 
         if (itemData) {
           onDismiss();

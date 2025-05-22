@@ -162,7 +162,7 @@ export const fetchRefreshLocalData = (data: TransactionGroup) => {
     nonce,
   );
 
-  if (groups?.[0]) {
+  if (!groups?.[0].isPending) {
     return groups[0];
   }
 };
@@ -239,8 +239,12 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
     if (localPendingTxData) {
       const refreshTx = fetchRefreshLocalData(localPendingTxData);
       if (refreshTx) {
-        setLocalPendingTxData(refreshTx);
-        setSwapHistoryRedDot(true);
+        if (refreshTx.maxGasTx.action?.actionData?.cancelTx) {
+          setLocalPendingTxData(null);
+        } else {
+          setLocalPendingTxData(refreshTx);
+          setSwapHistoryRedDot(true);
+        }
       }
     }
   }, 1000);

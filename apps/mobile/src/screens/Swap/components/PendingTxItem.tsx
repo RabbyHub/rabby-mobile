@@ -54,7 +54,12 @@ export const PendingTxItem = ({
       params: {
         isForMultipleAdderss,
         data: data,
-        title: t('page.swap.swapped'),
+        title:
+          type === 'bridge'
+            ? t('page.transactions.itemTitle.Bridge')
+            : type === 'send'
+            ? t('page.transactions.itemTitle.Send')
+            : t('page.transactions.itemTitle.Swap'),
       },
     });
   };
