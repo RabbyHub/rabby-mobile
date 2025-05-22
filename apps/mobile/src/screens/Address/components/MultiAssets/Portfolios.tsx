@@ -56,12 +56,13 @@ import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { isTabsSwiping } from './hooks';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
 const HEADER_PADDING_HEIGHT = 16;
 
-export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
+export const Portfolios = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { top10Addresses } = useAccountInfo();
   const focusedTab = useFocusedTab();
@@ -236,7 +237,7 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      if (disableClick) {
+      if (isTabsSwiping.value) {
         return;
       }
       navigate(RootNames.TokenDetail, {
@@ -245,7 +246,7 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
         needUseCacheToken: true,
       });
     },
-    [disableClick],
+    [],
   );
 
   const top10Balance = useMemo(() => {
@@ -260,25 +261,19 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      if (disableClick) {
-        return;
-      }
       navigate(RootNames.DeFiDetail, {
         data,
         portfolioList: itemList,
         cache: true,
       });
     },
-    [disableClick],
+    [],
   );
 
   const { tokenRefresh } = useTriggerTagAssets();
 
   const getTokenMenuActions = useCallback(
     (data: AbstractPortfolioToken): MenuAction[] => {
-      if (disableClick) {
-        return [];
-      }
       return [
         {
           title: data._isFold
@@ -344,14 +339,11 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
         },
       ];
     },
-    [disableClick, t, isLight, tokenRefresh],
+    [t, isLight, tokenRefresh],
   );
 
   const getDefiOrNftMenuAction = useCallback(
     (type: 'defi', data: DisplayedProject): MenuAction[] => {
-      if (disableClick) {
-        return [];
-      }
       const isFold = data._isFold;
       return [
         {
@@ -382,7 +374,7 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
         },
       ];
     },
-    [disableClick, isLight, t, tokenRefresh],
+    [isLight, t, tokenRefresh],
   );
 
   const renderItem = useCallback(
@@ -519,6 +511,11 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
   );
 
   const inited = useRef(false);
+
+  useEffect(() => {
+    inited.current = false;
+  }, [top10Addresses.length]);
+
   useEffect(() => {
     if (!isFocused) {
       return;
