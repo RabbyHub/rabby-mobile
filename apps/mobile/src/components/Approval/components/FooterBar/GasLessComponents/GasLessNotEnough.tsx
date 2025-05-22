@@ -6,10 +6,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
 import { ThemeColors2024 } from '@/constant/theme';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { GasAccountDepositTipPopup } from '@/screens/GasAccount/components/GasAccountDepositTipPopup';
-import { GasAccountDepositWithTokenAlertModal } from '@/screens/GasAccount/components/GasAccountDepositWithTokenAlertModal';
 
 export const GasLessNotEnough: React.FC<{
   gasAccountCost?: GasAccountCheckResult;
@@ -69,33 +68,20 @@ export const GasLessNotEnough: React.FC<{
           </TouchableOpacity>
         ) : null}
       </View>
-      {Platform.OS === 'ios' ? (
-        <GasAccountDepositTipPopup
-          gasAccountAddress={gasAccountAddress}
-          visible={tipPopupVisible}
-          onClose={() => setTipPopupVisible(false)}
-          onDeposit={() => {
-            setTipPopupVisible(false);
-            onDeposit?.();
-          }}
-          onGotoGasAccount={() => {
-            setTipPopupVisible(false);
-            onGotoGasAccount?.();
-          }}
-          minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
-        />
-      ) : (
-        <GasAccountDepositWithTokenAlertModal
-          visible={tipPopupVisible}
-          onCancel={() => {
-            setTipPopupVisible(false);
-          }}
-          onConfirm={() => {
-            setTipPopupVisible(false);
-            onGotoGasAccount?.();
-          }}
-        />
-      )}
+      <GasAccountDepositTipPopup
+        gasAccountAddress={gasAccountAddress}
+        visible={tipPopupVisible}
+        onClose={() => setTipPopupVisible(false)}
+        onDeposit={() => {
+          setTipPopupVisible(false);
+          onDeposit?.();
+        }}
+        onGotoGasAccount={() => {
+          setTipPopupVisible(false);
+          onGotoGasAccount?.();
+        }}
+        minDepositPrice={gasAccountCost?.gas_account_cost?.total_cost}
+      />
     </>
   );
 };
