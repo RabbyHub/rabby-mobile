@@ -84,6 +84,7 @@ import { judgeIsSmallUsdTx } from '../Transaction/components/utils';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { HomePendingBadge } from './components/HomePending';
 
 const HeaderHeight = 24;
 
@@ -449,6 +450,8 @@ function MultiAddressHome(): JSX.Element {
 
   const getSuccessAndFailList = useCallback(async () => {
     const timestamp = transactionHistoryService.getClearSuccessAndFailListTs();
+    const clearSuccessAndFailListTsObj =
+      transactionHistoryService.getClearSuccessAndFailListTsObj();
     const list = await HistoryItemEntity.getAllHistoryItemSortedByTime(
       top10Addresses,
       200,
@@ -463,6 +466,11 @@ function MultiAddressHome(): JSX.Element {
       if (!isSmallTx) {
         const status = i.status ?? 1;
         const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
+        const addressTs =
+          clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? 0;
+        if (addressTs && addressTs / 1000 > i.time_at) {
+          return;
+        }
         if (status === 1) {
           transactionHistoryService.setSucceedList(id);
         } else {
@@ -692,28 +700,6 @@ function MultiAddressHome(): JSX.Element {
             loading={loading}
             loadingNewCurve={loadingNewCurve}
           />
-          {pendingTxCount > 0 && (
-            <View style={[styles.pendingContainer]} pointerEvents="box-none">
-              <TouchableOpacity
-                onPress={() => handleClickMenu(MultiHomeFeatTitle.History)}>
-                <BlurView
-                  style={styles.pendingBlur}
-                  blurType={appThemeMode ?? 'light'}
-                  blurAmount={2}>
-                  <Animated.View
-                    style={{
-                      transform: [{ rotate: spin }],
-                    }}>
-                    <RcPending width={21} height={21} />
-                  </Animated.View>
-                  <Text style={styles.pendingText}>{`${pendingTxCount} ${t(
-                    'page.bridge.Pending',
-                  )}`}</Text>
-                  <RcIconOrangeArrow width={21} height={21} />
-                </BlurView>
-              </TouchableOpacity>
-            </View>
-          )}
           <OfflineChainNotify />
           {displayFundWallet && (
             <>
@@ -750,12 +736,19 @@ function MultiAddressHome(): JSX.Element {
                   }}>
                   <View style={styles.iconWrapper}>
                     <el.icon width={28} height={28} />
-                    {!!el.badge && el.badge > 0 && (
-                      <BadgeText
-                        count={el.badge}
-                        isSuccess={el.isSuccess}
-                        style={[styles.badgeStyle]}
-                      />
+                    {el.key === MultiHomeFeatTitle.History &&
+                    pendingTxCount > 0 ? (
+                      <HomePendingBadge number={pendingTxCount} />
+                    ) : (
+                      <>
+                        {!!el.badge && el.badge > 0 && (
+                          <BadgeText
+                            count={el.badge}
+                            isSuccess={el.isSuccess}
+                            style={[styles.badgeStyle]}
+                          />
+                        )}
+                      </>
                     )}
                   </View>
                   <Text style={styles.gridText}>{el.title}</Text>

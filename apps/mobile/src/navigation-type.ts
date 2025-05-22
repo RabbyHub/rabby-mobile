@@ -250,6 +250,7 @@ export type TransactionNavigatorParamList = {
     isInTokenDetail?: boolean;
     isMultiAddress?: boolean;
     tokenItem?: AbstractPortfolioToken;
+    currentAddress?: string;
   };
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.HistoryDetail]: {

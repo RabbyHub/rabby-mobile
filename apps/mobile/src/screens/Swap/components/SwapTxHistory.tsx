@@ -100,8 +100,10 @@ const ItemSeparator = () => {
 
 const HistoryList = ({
   onGotoDetail,
+  recentShowTime,
 }: {
   onGotoDetail: (txId: string) => void;
+  recentShowTime: number;
 }) => {
   const { txList, loading, loadMore, noMore } = useSwapHistory();
   const { t } = useTranslation();
@@ -111,10 +113,10 @@ const HistoryList = ({
   const renderItem = useCallback(
     ({ item }) => (
       <TouchableOpacity onPress={() => onGotoDetail(item.tx_id)}>
-        <SwapHistoryItem data={item} />
+        <SwapHistoryItem data={item} recentShowTime={recentShowTime} />
       </TouchableOpacity>
     ),
-    [onGotoDetail],
+    [onGotoDetail, recentShowTime],
   );
 
   const ListHeaderComponent = useCallback(() => {
@@ -229,8 +231,10 @@ const HistoryList = ({
 
 export const SwapTxHistory = ({
   isForMultipleAdderss,
+  recentShowTime,
 }: {
   isForMultipleAdderss: boolean;
+  recentShowTime: number;
 }) => {
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
@@ -323,7 +327,7 @@ export const SwapTxHistory = ({
         colors: colors2024,
         linearGradientType: isDarkTheme ? 'bg1' : 'bg2',
       })}>
-      <HistoryList onGotoDetail={goToDetail} />
+      <HistoryList onGotoDetail={goToDetail} recentShowTime={recentShowTime} />
     </AppBottomSheetModal>
   );
 };

@@ -4,11 +4,13 @@ import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { uniqBy } from 'lodash';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { refreshIdAtom } from './atom';
-import { useRequest } from 'ahooks';
-
+import { useInterval, useMount, useRequest } from 'ahooks';
+import { swapService, transactionHistoryService } from '@/core/services';
+import { findChain } from '@/utils/chain';
+import { TransactionGroup } from '@/core/services/transactionHistory';
 const swapTxHistoryVisibleAtom = atom(false);
 
 export const useSwapTxHistoryVisible = () => {
@@ -120,33 +122,99 @@ export const useSwapHistory = () => {
 };
 
 export const swapPendingCountAtom = atom(0);
+export const swapPendingTxDataAtom = atom<SwapItem | null>(null);
+export const swapLocalTxDataAtom = atom<TransactionGroup | null>(null);
+export const swapHistoryRedDotAtom = atom(false);
 export const useReadPendingCount = () => {
   return useAtomValue(swapPendingCountAtom);
 };
+
+export const fetchLocalSwapPendingTx = (address: string) => {
+  const { completeds: _completeds, pendings: _pendings } =
+    transactionHistoryService.getList(address);
+
+  const txs = [..._pendings, ..._completeds].filter(item => {
+    const chain = findChain({ id: item.chainId });
+    return (
+      !chain?.isTestnet &&
+      item.isPending &&
+      !item.maxGasTx.action?.actionData.cancelTx &&
+      (item.$ctx?.ga?.source === 'swap' ||
+        item.$ctx?.ga?.source === 'approvalAndSwap|swap')
+    );
+  });
+
+  return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
+};
+
+export const fetchRefreshLocalData = (data: TransactionGroup) => {
+  if (!data.isPending) {
+    // has done
+    return;
+  }
+
+  const address = data.address;
+  const chainId = data.chainId;
+  const nonce = data.nonce;
+  const groups = transactionHistoryService.getPendingTxsByNonce(
+    address,
+    chainId,
+    nonce,
+  );
+
+  if (groups?.[0]) {
+    return groups[0];
+  }
+};
+
+export const usePendingTxData = () => {
+  return useAtomValue(swapPendingCountAtom);
+};
+
+export const useReadSwapHistoryRedDot = () => {
+  return useAtomValue(swapHistoryRedDotAtom);
+};
 export const usePollSwapPendingNumber = (timer = 10000) => {
   const [, setCount] = useAtom(swapPendingCountAtom);
-
+  const [, setTxData] = useAtom(swapPendingTxDataAtom);
+  const [localPendingTxData, setLocalPendingTxData] =
+    useAtom(swapLocalTxDataAtom);
+  const [, setSwapHistoryRedDot] = useAtom(swapHistoryRedDotAtom);
   const { currentAccount } = useCurrentAccount();
   const res = useRequest(
     async () => {
       const account = currentAccount;
       if (!account?.address) {
-        return 0;
+        return null;
       }
 
       const data = await openapi.getSwapTradeList({
         user_addr: account!.address,
         start: '0',
-        limit: '10',
+        limit: '20',
       });
-      return (
-        data?.history_list?.filter(item => item?.status === 'Pending')
-          ?.length || 0
-      );
+
+      const txData = data?.history_list
+        ?.filter(item => item?.status === 'Pending')
+        .sort((a, b) => b.create_at - a.create_at);
+
+      const openModalTs = swapService.getOpenSwapHistoryTs(account.address);
+      const ts = data?.history_list
+        ?.filter(item => item?.status !== 'Pending')
+        .sort((a, b) => b.finished_at - a.finished_at);
+      if (openModalTs) {
+        setSwapHistoryRedDot(ts?.[0]?.finished_at > openModalTs / 1000);
+      } else {
+        swapService.setOpenSwapHistoryTs(account.address);
+      }
+      // judge if the tx is in local storage todo
+      setTxData(txData?.[0] || null);
+
+      return txData?.[0] || null;
     },
     {
       onSuccess(v) {
-        setCount(v);
+        setTxData(v);
       },
       refreshDeps: [currentAccount],
     },
@@ -155,6 +223,31 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
   const timerRef = useRef<NodeJS.Timeout>();
 
   const { loading, error, data: value, runAsync } = res;
+
+  const runFetchLocalPendingTx = useCallback(() => {
+    if (currentAccount?.address) {
+      const resTx = fetchLocalSwapPendingTx(currentAccount.address);
+      setLocalPendingTxData(resTx);
+    }
+  }, [currentAccount?.address, setLocalPendingTxData]);
+
+  useEffect(() => {
+    runFetchLocalPendingTx();
+  }, [runFetchLocalPendingTx]);
+
+  useInterval(() => {
+    if (localPendingTxData) {
+      const refreshTx = fetchRefreshLocalData(localPendingTxData);
+      if (refreshTx) {
+        setLocalPendingTxData(refreshTx);
+        setSwapHistoryRedDot(true);
+      }
+    }
+  }, 1000);
+
+  const clearLocalPendingTxData = () => {
+    setLocalPendingTxData(null);
+  };
 
   useEffect(() => {
     if ((!loading && value !== undefined) || error) {
@@ -174,5 +267,21 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
     };
   }, []);
 
-  return res;
+  const clearSwapHistoryRedDot = useCallback(() => {
+    setSwapHistoryRedDot(false);
+    const currentTs = swapService.getOpenSwapHistoryTs(
+      currentAccount?.address!,
+    );
+    swapService.setOpenSwapHistoryTs(currentAccount?.address!);
+    return currentTs;
+  }, [setSwapHistoryRedDot, currentAccount?.address]);
+
+  return {
+    runAsync,
+    localPendingTxData,
+    clearLocalPendingTxData,
+    runFetchLocalPendingTx,
+    setSwapHistoryRedDot,
+    clearSwapHistoryRedDot,
+  };
 };

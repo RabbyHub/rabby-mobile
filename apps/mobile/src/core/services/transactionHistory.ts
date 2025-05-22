@@ -96,6 +96,7 @@ interface TxHistoryStore {
   failList: string[];
   isNeedFetchTxHistory: Record<string, boolean>;
   clearSuccessAndFailListTs: number;
+  clearSuccessAndFailListTsObj: Record<string, number>;
 }
 
 // TODO
@@ -124,6 +125,7 @@ export class TransactionHistoryService {
           failList: [],
           isNeedFetchTxHistory: {},
           clearSuccessAndFailListTs: new Date().getTime(),
+          clearSuccessAndFailListTsObj: {},
         },
       },
       {
@@ -148,6 +150,10 @@ export class TransactionHistoryService {
 
     if (typeof this.store.clearSuccessAndFailListTs !== 'number') {
       this.store.clearSuccessAndFailListTs = new Date().getTime();
+    }
+
+    if (typeof this.store.clearSuccessAndFailListTsObj !== 'object') {
+      this.store.clearSuccessAndFailListTsObj = {};
     }
 
     this.init();
@@ -183,8 +189,10 @@ export class TransactionHistoryService {
     });
   }
 
-  getSucceedCount() {
-    return this.store.successList.length;
+  getSucceedCount(address?: string) {
+    return this.store.successList.filter(item =>
+      address ? item.startsWith(address) : true,
+    ).length;
   }
 
   getSucceedList() {
@@ -203,12 +211,18 @@ export class TransactionHistoryService {
     }
   }
 
-  getFailedCount() {
-    return this.store.failList.length;
+  getFailedCount(address?: string) {
+    return this.store.failList.filter(item =>
+      address ? item.startsWith(address) : true,
+    ).length;
   }
 
   getClearSuccessAndFailListTs() {
     return this.store.clearSuccessAndFailListTs;
+  }
+
+  getClearSuccessAndFailListTsObj() {
+    return this.store.clearSuccessAndFailListTsObj;
   }
 
   setNeedFetchTxHistory(address: string) {
@@ -225,10 +239,27 @@ export class TransactionHistoryService {
     return res;
   }
 
-  clearSuccessAndFailList() {
-    this.store.successList = [];
-    this.store.failList = [];
-    this.store.clearSuccessAndFailListTs = new Date().getTime();
+  clearSuccessAndFailList(address?: string) {
+    if (address) {
+      this.store.successList = this.store.successList.filter(
+        item => !item.startsWith(address),
+      );
+      this.store.failList = this.store.failList.filter(
+        item => !item.startsWith(address),
+      );
+      this.store.clearSuccessAndFailListTsObj = {
+        ...this.store.clearSuccessAndFailListTsObj,
+        [address.toLowerCase()]: Date.now(),
+      };
+      return;
+    } else {
+      this.store.successList = [];
+      this.store.failList = [];
+      this.store.clearSuccessAndFailListTs = new Date().getTime();
+      Object.keys(this.store.clearSuccessAndFailListTsObj).map(
+        key => (this.store.clearSuccessAndFailListTsObj[key] = Date.now()),
+      );
+    }
   }
 
   clearSuccessAndFailSingleId(id: string) {

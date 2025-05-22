@@ -46,8 +46,10 @@ import { LowCreditModal } from './components/LowCreditModal';
 import { QuoteList } from './components/Quotes';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
 import {
+  fetchLocalSwapPendingTx,
   useDetectLoss,
   usePollSwapPendingNumber,
+  useReadPendingTxData,
   useSlippageStore,
   useSwapUnlimitedAllowance,
   useTokenPair,
@@ -92,7 +94,8 @@ import { Tip } from '@/components';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
-
+import { PendingTxItem } from './components/PendingTxItem';
+import { TransactionGroup } from '@/core/services/transactionHistory';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -113,16 +116,28 @@ const Swap = ({
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const {
+    runAsync: runFetchSwapPendingCount,
+    localPendingTxData,
+    clearLocalPendingTxData,
+    runFetchLocalPendingTx,
+    clearSwapHistoryRedDot,
+  } = usePollSwapPendingNumber(5000);
+
   const headerRight = useCallback(
-    () => <SwapHeader isForMultipleAdderss={isForMultipleAdderss} />,
-    [isForMultipleAdderss],
+    () => (
+      <SwapHeader
+        isForMultipleAdderss={isForMultipleAdderss}
+        clearSwapHistoryRedDot={clearSwapHistoryRedDot}
+      />
+    ),
+    [isForMultipleAdderss, clearSwapHistoryRedDot],
   );
   useEffect(() => {
     setNavigationOptions({
       headerRight,
     });
   }, [headerRight, setNavigationOptions]);
-  const { runAsync: runFetchSwapPendingCount } = usePollSwapPendingNumber(5000);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
@@ -204,7 +219,6 @@ const Swap = ({
     switchSceneCurrentAccount('@ActiveDappWebViewModal', currentAccount);
     _openTab(url);
   });
-
   const [swapDappOpen, setSwapDappOpen] = useState(false);
 
   const refresh = useSetAtom(refreshIdAtom);
@@ -387,6 +401,7 @@ const Swap = ({
           },
         );
         handleAmountChange('');
+        runFetchLocalPendingTx();
         setTimeout(() => {
           runFetchSwapPendingCount();
         }, 500);
@@ -492,6 +507,7 @@ const Swap = ({
           setTimeout(() => {
             runFetchSwapPendingCount();
           }, 1000);
+          runFetchLocalPendingTx();
           preferenceService.setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
             {
@@ -537,6 +553,24 @@ const Swap = ({
     inSufficient ||
     !activeProvider ||
     isSubmitting;
+
+  const isShowMoreVisible = useMemo(() => {
+    return (
+      showMoreVisible &&
+      Number(payAmount) > 0 &&
+      inSufficientCanGetQuote &&
+      !!amountAvailable &&
+      !!payToken &&
+      !!receiveToken
+    );
+  }, [
+    payAmount,
+    inSufficientCanGetQuote,
+    amountAvailable,
+    showMoreVisible,
+    payToken,
+    receiveToken,
+  ]);
 
   useEffect(() => {
     if (!swapBtnDisabled && activeProvider && canUseMiniTx) {
@@ -818,58 +852,62 @@ const Swap = ({
             <Text style={styles.errorTip}>{t('page.swap.no-quote-found')}</Text>
           ) : null}
 
-          {showMoreVisible &&
-            Number(payAmount) > 0 &&
-            inSufficientCanGetQuote &&
-            !!amountAvailable &&
-            !!payToken &&
-            !!receiveToken && (
-              <View
-                style={{
-                  marginHorizontal: -24,
-                }}>
-                <BridgeShowMore
-                  openFeePopup={openFeePopup}
-                  open={showMoreOpen}
-                  setOpen={setShowMoreOpen}
-                  sourceName={sourceName}
-                  sourceLogo={sourceLogo}
-                  slippage={slippageState}
-                  displaySlippage={slippage}
-                  onSlippageChange={setSlippage}
-                  fromToken={payToken}
-                  toToken={receiveToken}
-                  amount={payAmount}
-                  toAmount={
-                    isWrapToken
-                      ? payAmount
-                      : activeProvider?.actualReceiveAmount || 0
-                  }
-                  openQuotesList={openQuotesList}
-                  quoteLoading={quoteLoading}
-                  slippageError={isSlippageHigh || isSlippageLow}
-                  autoSlippage={!!autoSlippage}
-                  isCustomSlippage={isCustomSlippage}
-                  setAutoSlippage={setAutoSlippage}
-                  setIsCustomSlippage={setIsCustomSlippage}
-                  type="swap"
-                  isWrapToken={isWrapToken}
-                  isBestQuote={
-                    !!activeProvider &&
-                    !!bestQuoteDex &&
-                    bestQuoteDex === activeProvider?.name
-                  }
-                  showMEVGuardedSwitch={showMEVGuardedSwitch}
-                  originPreferMEVGuarded={originPreferMEVGuarded}
-                  switchPreferMEV={switchPreferMEV}
-                  recommendValue={
-                    slippageValidInfo?.is_valid
-                      ? undefined
-                      : slippageValidInfo?.suggest_slippage
-                  }
-                />
-              </View>
-            )}
+          {isShowMoreVisible && (
+            <View
+              style={{
+                marginHorizontal: -24,
+              }}>
+              <BridgeShowMore
+                openFeePopup={openFeePopup}
+                open={showMoreOpen}
+                setOpen={setShowMoreOpen}
+                sourceName={sourceName}
+                sourceLogo={sourceLogo}
+                slippage={slippageState}
+                displaySlippage={slippage}
+                onSlippageChange={setSlippage}
+                fromToken={payToken}
+                toToken={receiveToken}
+                amount={payAmount}
+                toAmount={
+                  isWrapToken
+                    ? payAmount
+                    : activeProvider?.actualReceiveAmount || 0
+                }
+                openQuotesList={openQuotesList}
+                quoteLoading={quoteLoading}
+                slippageError={isSlippageHigh || isSlippageLow}
+                autoSlippage={!!autoSlippage}
+                isCustomSlippage={isCustomSlippage}
+                setAutoSlippage={setAutoSlippage}
+                setIsCustomSlippage={setIsCustomSlippage}
+                type="swap"
+                isWrapToken={isWrapToken}
+                isBestQuote={
+                  !!activeProvider &&
+                  !!bestQuoteDex &&
+                  bestQuoteDex === activeProvider?.name
+                }
+                showMEVGuardedSwitch={showMEVGuardedSwitch}
+                originPreferMEVGuarded={originPreferMEVGuarded}
+                switchPreferMEV={switchPreferMEV}
+                recommendValue={
+                  slippageValidInfo?.is_valid
+                    ? undefined
+                    : slippageValidInfo?.suggest_slippage
+                }
+              />
+            </View>
+          )}
+
+          {Boolean(!isShowMoreVisible && localPendingTxData) && (
+            <PendingTxItem
+              isForMultipleAdderss={isForMultipleAdderss}
+              data={localPendingTxData!}
+              clearLocalPendingTxData={clearLocalPendingTxData}
+            />
+          )}
+
           {!isSupportedChain ? (
             <>
               <ExternalSwapBridgeDappTips
