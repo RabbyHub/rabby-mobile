@@ -1,13 +1,15 @@
 import { transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { fetchRefreshLocalData } from '@/screens/Swap/hooks';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { findChain } from '@/utils/chain';
 import { SendRequireData } from '@rabby-wallet/rabby-action';
-import { useMemoizedFn, useRequest } from 'ahooks';
+import { useInterval, useMemoizedFn, useRequest } from 'ahooks';
 import dayjs from 'dayjs';
+import { atom, useAtom } from 'jotai';
 import { sortBy, unionBy } from 'lodash';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -164,5 +166,61 @@ export const useRecentSend = ({
     markedList,
     runAsync,
     recentHistory,
+  };
+};
+
+export const fetchLocalSendPendingTx = (address: string) => {
+  const { completeds: _completeds, pendings: _pendings } =
+    transactionHistoryService.getList(address);
+
+  const txs = [..._pendings, ..._completeds].filter(item => {
+    const chain = findChain({ id: item.chainId });
+    return (
+      !chain?.isTestnet &&
+      item.isPending &&
+      !item.maxGasTx.action?.actionData.cancelTx &&
+      item.$ctx?.ga?.source === 'sendToken'
+    );
+  });
+
+  return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
+};
+
+const localPendingTxDataAtom = atom<TransactionGroup | null>(null);
+
+export const useRecentSendPendingTx = (isForMultipleAdderss: boolean) => {
+  const [localPendingTxData, setLocalPendingTxData] = useAtom(
+    localPendingTxDataAtom,
+  );
+  const { currentAccount } = useCurrentAccount();
+
+  const clearLocalPendingTxData = useCallback(() => {
+    setLocalPendingTxData(null);
+  }, [setLocalPendingTxData]);
+
+  const runFetchLocalPendingTx = useCallback(() => {
+    if (currentAccount?.address) {
+      const resTx = fetchLocalSendPendingTx(currentAccount.address);
+      setLocalPendingTxData(resTx);
+    }
+  }, [currentAccount?.address, setLocalPendingTxData]);
+
+  useEffect(() => {
+    runFetchLocalPendingTx();
+  }, [runFetchLocalPendingTx]);
+
+  useInterval(() => {
+    if (localPendingTxData) {
+      const refreshTx = fetchRefreshLocalData(localPendingTxData);
+      if (refreshTx) {
+        setLocalPendingTxData(refreshTx);
+      }
+    }
+  }, 1000);
+
+  return {
+    localPendingTxData,
+    clearLocalPendingTxData,
+    runFetchLocalPendingTx,
   };
 };

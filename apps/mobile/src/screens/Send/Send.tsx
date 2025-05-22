@@ -75,6 +75,9 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { getRecommendToken } from '@/utils/addressSupport';
 import { lowcaseSame } from '@/utils/common';
 import { noop } from 'lodash';
+import { PendingTxItem } from '../Swap/components/PendingTxItem';
+import { TransactionGroup } from '@/core/services/transactionHistory';
+import { useRecentSendPendingTx } from './hooks/useRecentSend';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -103,6 +106,8 @@ function SendScreen({
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
     useState(false);
+  const { localPendingTxData, clearLocalPendingTxData } =
+    useRecentSendPendingTx(isForMultipleAdderss);
 
   const navParams = useNavigationState(
     s =>
@@ -376,7 +381,9 @@ function SendScreen({
   };
 
   const checkIsAddressBlocked = async (to?: string) => {
-    if (!to) return;
+    if (!to) {
+      return;
+    }
     try {
       const { is_blocked } = await openapi.isBlockedAddress(to);
       if (is_blocked) {
@@ -521,6 +528,14 @@ function SendScreen({
                   style={styles.balance}
                 />
               </View>
+              {Boolean(localPendingTxData) && (
+                <PendingTxItem
+                  isForMultipleAdderss={isForMultipleAdderss}
+                  data={localPendingTxData!}
+                  type="send"
+                  clearLocalPendingTxData={clearLocalPendingTxData}
+                />
+              )}
             </KeyboardAwareScrollView>
             <BottomArea />
           </View>

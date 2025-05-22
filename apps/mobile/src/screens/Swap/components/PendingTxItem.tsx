@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components';
@@ -15,14 +15,19 @@ import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
+import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
+import { getAliasName } from '@/core/apis/contact';
+import { ellipsisAddress } from '@/utils/address';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
   isForMultipleAdderss,
+  type,
 }: {
   data: TransactionGroup;
   clearLocalPendingTxData: () => void;
   isForMultipleAdderss: boolean;
+  type: 'send' | 'swap' | 'bridge';
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -39,7 +44,6 @@ export const PendingTxItem = ({
   const { currentAccount } = useCurrentAccount();
 
   const handlePress = () => {
-    console.log('handlePress');
     if (!isPending) {
       clearLocalPendingTxData();
       swapService.setOpenSwapHistoryTs(currentAccount?.address ?? '');
@@ -55,13 +59,42 @@ export const PendingTxItem = ({
     });
   };
 
-  const actionData =
+  const swapActionData =
     data.maxGasTx.action?.actionData?.swap ||
     data.maxGasTx.action?.actionData?.unWrapToken ||
     data.maxGasTx.action?.actionData?.wrapToken;
 
-  const payToken = actionData?.payToken;
-  const receiveToken = actionData?.receiveToken;
+  const sendActionData = data.maxGasTx.action?.actionData?.send;
+  const payToken = swapActionData?.payToken;
+  const receiveToken = swapActionData?.receiveToken;
+
+  const titleTextStr = useMemo(() => {
+    if (type === 'send') {
+      return `${getTokenSymbol(sendActionData?.token)}`;
+    } else {
+      return `${getTokenSymbol(payToken)}→${getTokenSymbol(receiveToken)}`;
+    }
+  }, [type, sendActionData?.token, payToken, receiveToken]);
+
+  const subTitleTextStr = useMemo(() => {
+    if (type === 'send') {
+      let address = '';
+      const ToText = t('page.swap.to') + ' ';
+      const acData = data.maxGasTx?.action?.actionData.send;
+      const sendRequireData = data.maxGasTx?.action
+        ?.requiredData as SendRequireData;
+      const addr = acData?.to || sendRequireData?.protocol?.name;
+
+      if (!addr) {
+        address = t('page.transactions.detail.Unknown');
+      } else {
+        address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
+      }
+      return address;
+    } else {
+      return chainName;
+    }
+  }, [type, chainName, t, data.maxGasTx]);
 
   return (
     <>
@@ -72,23 +105,27 @@ export const PendingTxItem = ({
       </View>
       <TouchableOpacity style={styles.container} onPress={handlePress}>
         <View style={styles.leftContainer}>
-          <View style={styles.IconContainer}>
-            <View style={styles.leftIcon}>
-              {<AssetAvatar logo={payToken?.logo_url} size={23} />}
+          {type === 'send' ? (
+            <View style={styles.IconContainer}>
+              <AssetAvatar logo={sendActionData?.token?.logo_url} size={36} />
             </View>
-            <View style={styles.rightIcon}>
-              {<AssetAvatar logo={receiveToken?.logo_url} size={25} />}
+          ) : (
+            <View style={styles.IconContainer}>
+              <View style={styles.leftIcon}>
+                {<AssetAvatar logo={payToken?.logo_url} size={23} />}
+              </View>
+              <View style={styles.rightIcon}>
+                {<AssetAvatar logo={receiveToken?.logo_url} size={25} />}
+              </View>
+              <ArrowSwapSVG
+                style={styles.arrow}
+                color={colors2024['neutral-secondary']}
+              />
             </View>
-            <ArrowSwapSVG
-              style={styles.arrow}
-              color={colors2024['neutral-secondary']}
-            />
-          </View>
+          )}
           <View style={styles.mainContainer}>
             <View style={styles.titleContainer}>
-              <Text style={styles.titleText}>{`${getTokenSymbol(
-                payToken,
-              )}→${getTokenSymbol(receiveToken)}`}</Text>
+              <Text style={styles.titleText}>{titleTextStr}</Text>
             </View>
             <View style={styles.subTitleContainer}>
               <ChainIconImage
@@ -96,7 +133,7 @@ export const PendingTxItem = ({
                 chainEnum={chainItem?.enum}
                 isShowRPCStatus={true}
               />
-              <Text style={styles.subTitleText}>{chainName}</Text>
+              <Text style={styles.subTitleText}>{subTitleTextStr}</Text>
             </View>
           </View>
         </View>

@@ -241,51 +241,50 @@ export const Send: React.FC<Props> = ({
           </TouchableOpacity>
         </View>
       </View>
-      {data.isPending ? null : (
-        <View style={styles.buttonContainer}>
-          <View style={{ flex: 1 }}>
-            {isAddrOnWhitelist(actionData.to) && onPressBottomBtn ? (
-              <Tip content={t('page.whitelist.alreadyIn')}>
-                <Button
-                  disabled
-                  title={t('page.transactions.detail.AddToWhitelist')}
-                />
-              </Tip>
-            ) : (
+
+      <View style={styles.buttonContainer}>
+        <View style={{ flex: 1 }}>
+          {isAddrOnWhitelist(actionData.to) && onPressBottomBtn ? (
+            <Tip content={t('page.whitelist.alreadyIn')}>
               <Button
-                onPress={async () => {
-                  if (onPressBottomBtn) {
-                    onPressBottomBtn(actionData);
-                    return;
-                  }
-                  const fromAccount = accounts.find(account =>
-                    addressUtils.isSameAddress(
-                      account.address,
-                      data.maxGasTx.address || '',
-                    ),
-                  );
-                  if (!isSingleAddress && fromAccount) {
-                    await switchSceneCurrentAccount(
-                      'MakeTransactionAbout',
-                      fromAccount,
-                    );
-                  }
-                  navigateToSendPolyScreen(!!isSingleAddress, {
-                    chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-                    tokenId: actionData.token?.id,
-                    toAddress: actionData.to,
-                  });
-                }}
-                title={
-                  onPressBottomBtn
-                    ? t('page.transactions.detail.AddToWhitelist')
-                    : t('page.transactions.detail.SendAgain')
-                }
+                disabled
+                title={t('page.transactions.detail.AddToWhitelist')}
               />
-            )}
-          </View>
+            </Tip>
+          ) : (
+            <Button
+              onPress={async () => {
+                if (onPressBottomBtn) {
+                  onPressBottomBtn(actionData);
+                  return;
+                }
+                const fromAccount = accounts.find(account =>
+                  addressUtils.isSameAddress(
+                    account.address,
+                    data.maxGasTx.address || '',
+                  ),
+                );
+                if (!isSingleAddress && fromAccount) {
+                  await switchSceneCurrentAccount(
+                    'MakeTransactionAbout',
+                    fromAccount,
+                  );
+                }
+                navigateToSendPolyScreen(!!isSingleAddress, {
+                  chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+                  tokenId: actionData.token?.id,
+                  toAddress: actionData.to,
+                });
+              }}
+              title={
+                onPressBottomBtn
+                  ? t('page.transactions.detail.AddToWhitelist')
+                  : t('page.transactions.detail.SendAgain')
+              }
+            />
+          )}
         </View>
-      )}
+      </View>
     </>
   );
 };

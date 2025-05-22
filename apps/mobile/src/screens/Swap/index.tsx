@@ -902,6 +902,7 @@ const Swap = ({
 
           {Boolean(!isShowMoreVisible && localPendingTxData) && (
             <PendingTxItem
+              type="swap"
               isForMultipleAdderss={isForMultipleAdderss}
               data={localPendingTxData!}
               clearLocalPendingTxData={clearLocalPendingTxData}

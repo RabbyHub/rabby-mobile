@@ -286,7 +286,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
           </TouchableOpacity>
         </View>
       </View>
-      {data.isPending ? null : (
+      {
         <View style={styles.buttonContainer}>
           <View style={{ flex: 1 }}>
             <Button
@@ -317,7 +317,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             />
           </View>
         </View>
-      )}
+      }
     </>
   );
 };

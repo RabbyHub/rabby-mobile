@@ -94,6 +94,8 @@ interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
   successList: string[];
   failList: string[];
+  sendSuccessList: string[];
+  sendFailList: string[];
   isNeedFetchTxHistory: Record<string, boolean>;
   clearSuccessAndFailListTs: number;
   clearSuccessAndFailListTsObj: Record<string, number>;
@@ -123,6 +125,8 @@ export class TransactionHistoryService {
           transactions: [],
           successList: [],
           failList: [],
+          sendSuccessList: [],
+          sendFailList: [],
           isNeedFetchTxHistory: {},
           clearSuccessAndFailListTs: new Date().getTime(),
           clearSuccessAndFailListTsObj: {},
@@ -142,6 +146,14 @@ export class TransactionHistoryService {
 
     if (!Array.isArray(this.store.failList)) {
       this.store.failList = [];
+    }
+
+    if (!Array.isArray(this.store.sendSuccessList)) {
+      this.store.sendSuccessList = [];
+    }
+
+    if (!Array.isArray(this.store.sendFailList)) {
+      this.store.sendFailList = [];
     }
 
     if (typeof this.store.isNeedFetchTxHistory !== 'object') {
@@ -195,8 +207,26 @@ export class TransactionHistoryService {
     ).length;
   }
 
+  getSendSucceedCount(address?: string) {
+    return this.store.sendSuccessList.filter(item =>
+      address ? item.startsWith(address) : true,
+    ).length;
+  }
+
   getSucceedList() {
     return this.store.successList;
+  }
+
+  getSendSucceedList(address?: string) {
+    return this.store.sendSuccessList.filter(item =>
+      address ? item.startsWith(address) : true,
+    );
+  }
+
+  getSendFailedList(address?: string) {
+    return this.store.sendFailList.filter(item =>
+      address ? item.startsWith(address) : true,
+    );
   }
 
   setSucceedList(id: string) {
@@ -213,6 +243,12 @@ export class TransactionHistoryService {
 
   getFailedCount(address?: string) {
     return this.store.failList.filter(item =>
+      address ? item.startsWith(address) : true,
+    ).length;
+  }
+
+  getSendFailedCount(address?: string) {
+    return this.store.sendFailList.filter(item =>
       address ? item.startsWith(address) : true,
     ).length;
   }
@@ -262,6 +298,20 @@ export class TransactionHistoryService {
     }
   }
 
+  clearSendSuccessAndFailList(address?: string) {
+    if (address) {
+      this.store.sendSuccessList = this.store.sendSuccessList.filter(
+        item => !item.startsWith(address),
+      );
+      this.store.sendFailList = this.store.sendFailList.filter(
+        item => !item.startsWith(address),
+      );
+    } else {
+      this.store.sendSuccessList = [];
+      this.store.sendFailList = [];
+    }
+  }
+
   clearSuccessAndFailSingleId(id: string) {
     const successIdx = this.store.successList.findIndex(item => item === id);
     if (successIdx !== -1) {
@@ -272,6 +322,20 @@ export class TransactionHistoryService {
     const failIdx = this.store.failList.findIndex(item => item === id);
     if (failIdx !== -1) {
       this.store.failList.splice(failIdx, 1);
+    }
+  }
+
+  clearSendSuccessAndFailSingleId(id: string) {
+    const successIdx = this.store.sendSuccessList.findIndex(
+      item => item === id,
+    );
+    if (successIdx !== -1) {
+      this.store.sendSuccessList.splice(successIdx, 1);
+    }
+
+    const failIdx = this.store.sendFailList.findIndex(item => item === id);
+    if (failIdx !== -1) {
+      this.store.sendFailList.splice(failIdx, 1);
     }
   }
 
@@ -596,10 +660,15 @@ export class TransactionHistoryService {
         };
         this.updateTx(newTx);
         const id = tx.hash || tx.reqId;
+        const isSendToken = tx.$ctx?.ga?.source === 'sendToken';
         if (success) {
           id && this.store.successList.push(`${address.toLowerCase()}-${id}`);
+          isSendToken &&
+            this.store.sendSuccessList.push(`${address.toLowerCase()}-${id}`);
         } else {
           id && this.store.failList.push(`${address.toLowerCase()}-${id}`);
+          isSendToken &&
+            this.store.sendFailList.push(`${address.toLowerCase()}-${id}`);
         }
         loadTxSaveFromLocalStore(newTx); // send type tx save local db
         this.setNeedFetchTxHistory(address.toLowerCase());

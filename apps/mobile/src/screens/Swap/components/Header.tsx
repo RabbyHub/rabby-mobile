@@ -37,14 +37,10 @@ export const SwapHeader = ({
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={openSwapHistory} style={styles.iconContainer}>
-        {loadingNumber ? (
-          <PendingTx number={loadingNumber} onClick={openSwapHistory} />
-        ) : (
-          <RcIconSwapHistory
-            style={styles.icon}
-            color={colors2024['neutral-body']}
-          />
-        )}
+        <RcIconSwapHistory
+          style={styles.icon}
+          color={colors2024['neutral-body']}
+        />
         {Boolean(showRedDot) && <View style={styles.greenDot} />}
       </TouchableOpacity>
       <SwapTxHistory
