@@ -88,6 +88,7 @@ import {
   EVENTS,
 } from '@/utils/events';
 import AutoLockView from '@/components/AutoLockView';
+import { MiniApprovalError } from './error';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -137,6 +138,7 @@ const MiniSignTx = ({
   task,
   onSubmitting,
   onSubmitted,
+  visible,
 }: {
   txs: Tx[];
   onReject?: (e?: any) => void;
@@ -147,6 +149,7 @@ const MiniSignTx = ({
   task: MiniApprovalTaskType;
   onSubmitting?: () => void;
   onSubmitted?: (isSuccess: boolean) => void;
+  visible?: boolean;
 }) => {
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
@@ -811,130 +814,148 @@ const MiniSignTx = ({
 
   const { currentAccount } = useCurrentAccount();
 
+  const [simulateError, setSimulateError] = useState<Error | null>(null);
+
   const prepareTxs = useMemoizedFn(async () => {
-    if (!selectedGas || !inited || !currentAccount?.address) {
-      return;
-    }
+    try {
+      if (!selectedGas || !inited || !currentAccount?.address) {
+        return;
+      }
 
-    const recommendNonce = await getRecommendNonce({
-      tx: txs[0],
-      chainId: chain.id,
-    });
-    setRecommendNonce(recommendNonce);
+      const recommendNonce = await getRecommendNonce({
+        tx: txs[0],
+        chainId: chain.id,
+      });
+      setRecommendNonce(recommendNonce);
 
-    const tempTxs: Tx[] = [];
-    const res = await Promise.all(
-      txs.map(async (rawTx, index) => {
-        const normalizedTx = normalizeTxParams(rawTx);
-        let tx: Tx = {
-          chainId,
-          data: normalizedTx.data || '0x', // can not execute with empty string, use 0x instead
-          from: normalizedTx.from,
-          gas: normalizedTx.gas || rawTx.gasLimit,
-          nonce:
-            normalizedTx.nonce ||
-            intToHex(new BigNumber(recommendNonce).plus(index).toNumber()),
-          to: normalizedTx.to,
-          value: normalizedTx.value,
-          gasPrice: intToHex(selectedGas.price),
-        };
-        tempTxs.push(tx);
+      const tempTxs: Tx[] = [];
+      const res = await Promise.all(
+        txs.map(async (rawTx, index) => {
+          const normalizedTx = normalizeTxParams(rawTx);
+          let tx: Tx = {
+            chainId,
+            data: normalizedTx.data || '0x', // can not execute with empty string, use 0x instead
+            from: normalizedTx.from,
+            gas: normalizedTx.gas || rawTx.gasLimit,
+            nonce:
+              normalizedTx.nonce ||
+              intToHex(new BigNumber(recommendNonce).plus(index).toNumber()),
+            to: normalizedTx.to,
+            value: normalizedTx.value,
+            gasPrice: intToHex(selectedGas.price),
+          };
+          tempTxs.push(tx);
 
-        if (support1559) {
-          tx = convertLegacyTo1559(tx);
-        }
+          if (support1559) {
+            tx = convertLegacyTo1559(tx);
+          }
 
-        const preExecResult = await openapi.preExecTx({
-          tx: tx,
-          origin: INTERNAL_REQUEST_SESSION.origin,
-          address: currentAccount?.address,
-          updateNonce: true,
-          pending_tx_list: [
-            ...(await apisTransactionHistory.getPendingTxs({
-              recommendNonce,
-              address: currentAccount?.address,
-            })),
-            ...tempTxs.slice(0, index),
-          ],
-        });
-        let estimateGas = 0;
-        if (preExecResult.gas.success) {
-          estimateGas =
-            preExecResult.gas.gas_limit || preExecResult.gas.gas_used;
-        }
-        const {
-          gas: gasRaw,
-          needRatio,
-          gasUsed,
-        } = await getRecommendGas({
-          gasUsed: preExecResult.gas.gas_used,
-          gas: estimateGas,
-          tx: tx,
-          chainId: chain.id,
-        });
-        const gas = new BigNumber(gasRaw);
-
-        let gasLimit = tx.gas || tx.gasLimit || '';
-        let recommendGasLimitRatio = 1;
-
-        if (!gasLimit) {
-          const {
-            gasLimit: _gasLimit,
-            recommendGasLimitRatio: _recommendGasLimitRatio,
-          } = await calcGasLimit({
-            chain,
-            tx,
-            gas,
-            selectedGas: selectedGas,
-            nativeTokenBalance,
-            explainTx: preExecResult,
-            needRatio,
+          const preExecResult = await openapi.preExecTx({
+            tx: tx,
+            origin: INTERNAL_REQUEST_SESSION.origin,
+            address: currentAccount?.address,
+            updateNonce: true,
+            pending_tx_list: [
+              ...(await apisTransactionHistory.getPendingTxs({
+                recommendNonce,
+                address: currentAccount?.address,
+              })),
+              ...tempTxs.slice(0, index),
+            ],
           });
-          gasLimit = _gasLimit;
-          recommendGasLimitRatio = _recommendGasLimitRatio;
-        }
+          let estimateGas = 0;
+          if (preExecResult.gas.success) {
+            estimateGas =
+              preExecResult.gas.gas_limit || preExecResult.gas.gas_used;
+          }
+          const {
+            gas: gasRaw,
+            needRatio,
+            gasUsed,
+          } = await getRecommendGas({
+            gasUsed: preExecResult.gas.gas_used,
+            gas: estimateGas,
+            tx: tx,
+            chainId: chain.id,
+          });
+          const gas = new BigNumber(gasRaw);
 
-        // calc gasCost
-        const gasCost = await explainGas({
-          gasUsed,
-          gasPrice: selectedGas?.price,
-          chainId: chain.id,
-          nativeTokenPrice: preExecResult.native_token.price,
-          tx,
-          gasLimit,
-        });
+          let gasLimit = tx.gas || tx.gasLimit || '';
+          let recommendGasLimitRatio = 1;
 
-        tx.gas = gasLimit;
+          if (!gasLimit) {
+            const {
+              gasLimit: _gasLimit,
+              recommendGasLimitRatio: _recommendGasLimitRatio,
+            } = await calcGasLimit({
+              chain,
+              tx,
+              gas,
+              selectedGas: selectedGas,
+              nativeTokenBalance,
+              explainTx: preExecResult,
+              needRatio,
+            });
+            gasLimit = _gasLimit;
+            recommendGasLimitRatio = _recommendGasLimitRatio;
+          }
 
-        const actionData = await openapi.parseTx({
-          chainId: chain.serverId,
-          tx: {
-            ...tx,
-            gas: '0x0',
-            nonce: tx.nonce || '0x1',
-            value: tx.value || '0x0',
-            to: tx.to || '',
-          },
-          origin: INTERNAL_REQUEST_SESSION.origin || '',
-          addr: currentAccount.address,
-        });
+          // calc gasCost
+          const gasCost = await explainGas({
+            gasUsed,
+            gasPrice: selectedGas?.price,
+            chainId: chain.id,
+            nativeTokenPrice: preExecResult.native_token.price,
+            tx,
+            gasLimit,
+          });
 
-        return {
-          rawTx,
-          tx,
-          preExecResult,
-          gasUsed,
-          gasLimit,
-          recommendGasLimitRatio,
-          gasCost,
-          actionData,
-        };
-      }),
-    );
+          tx.gas = gasLimit;
 
-    setIsReady(true);
-    setTxsResult(res);
+          const actionData = await openapi.parseTx({
+            chainId: chain.serverId,
+            tx: {
+              ...tx,
+              gas: '0x0',
+              nonce: tx.nonce || '0x1',
+              value: tx.value || '0x0',
+              to: tx.to || '',
+            },
+            origin: INTERNAL_REQUEST_SESSION.origin || '',
+            addr: currentAccount.address,
+          });
+
+          return {
+            rawTx,
+            tx,
+            preExecResult,
+            gasUsed,
+            gasLimit,
+            recommendGasLimitRatio,
+            gasCost,
+            actionData,
+          };
+        }),
+      );
+
+      setIsReady(true);
+      setTxsResult(res);
+      setSimulateError(null);
+    } catch (e) {
+      setSimulateError(
+        new MiniApprovalError('Simulate Error', {
+          name: 'SimulateError',
+          cause: e as any,
+        }),
+      );
+    }
   });
+
+  useEffect(() => {
+    if (visible && simulateError) {
+      onReject?.(simulateError);
+    }
+  }, [onReject, simulateError, visible]);
 
   useEffect(() => {
     if (
@@ -1168,9 +1189,10 @@ export const MiniApproval = ({
 
   const indexRef = useRef(-1);
   const dismissedByCodeRef = useRef(false);
-  const handleReject = useMemoizedFn((reason?: string) => {
+  const handleReject = useMemoizedFn((reason?: string | Error) => {
     onReject?.(reason);
   });
+
   const handleClearTask = useMemoizedFn(() => {
     task.clear();
     onVisibleChange?.(false);
@@ -1183,8 +1205,7 @@ export const MiniApproval = ({
 
   const onChange = useCallback(
     (index: number) => {
-      if (index === -1 && indexRef.current > -1) {
-        // handleReject?.();
+      if (index === -1 && indexRef.current > -1 && visible) {
         if (!dismissedByCodeRef.current) {
           const reason = pressBackdropRef.current
             ? 'PRESS_BACKDROP'
@@ -1198,7 +1219,7 @@ export const MiniApproval = ({
 
       indexRef.current = index;
     },
-    [handleReject],
+    [handleReject, visible],
   );
 
   const task = useMiniApprovalTask({
@@ -1237,6 +1258,7 @@ export const MiniApproval = ({
                 task={task}
                 txs={txs}
                 ga={ga}
+                visible={visible}
                 onVisibleChange={v => {
                   onVisibleChange?.(v);
                   if (!v) {
@@ -1246,7 +1268,7 @@ export const MiniApproval = ({
                 onSubmit={() => {
                   setIsSubmitting(true);
                 }}
-                onReject={handleClearTask}
+                onReject={handleReject}
                 onResolve={res => {
                   setIsSubmitting(false);
                   onResolve?.(res);
@@ -1263,7 +1285,7 @@ export const MiniApproval = ({
       <MiniWaiting
         visible={!!task.error}
         error={task.error}
-        onCancel={handleClearTask}
+        onCancel={handleReject}
         onRetry={async () => {
           try {
             onSubmitting?.();

@@ -520,9 +520,13 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             }, 500);
           } catch (e) {
             console.error(e);
-            mutateTxs([]);
-            refresh(e => e + 1);
             setIsShowSign(false);
+            if ((e as any)?.name === 'SimulateError') {
+              gotoBridge();
+            } else {
+              mutateTxs([]);
+              refresh(e => e + 1);
+            }
           }
         }
       } catch (error) {

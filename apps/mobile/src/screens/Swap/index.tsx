@@ -500,8 +500,12 @@ const Swap = ({
           );
         } catch (e) {
           console.error(e);
-          mutateTxs([]);
-          refresh(e => e + 1);
+          if ((e as any)?.name === 'SimulateError') {
+            gotoSwap();
+          } else {
+            mutateTxs([]);
+            refresh(e => e + 1);
+          }
         }
       } else {
         gotoSwap();
