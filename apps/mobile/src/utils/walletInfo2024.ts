@@ -11,6 +11,7 @@ import WatchPNG from '@/assets2024/icons/wallet/watch.png';
 import WatchDarkDark from '@/assets2024/icons/wallet/watch_dark.png';
 import SafePNG from '@/assets2024/icons/wallet/safe.png';
 import blockies from 'ethereum-blockies-base64';
+import { preferenceService } from '@/core/services';
 
 export const getWalletAvator2024 = (
   brandName: string | undefined,
@@ -25,7 +26,13 @@ export const getWalletAvator2024 = (
     return watchAvator;
   }
   if (address) {
-    return { uri: blockies(address) };
+    const cacheAvatar = preferenceService.getAddressAvatar(address);
+    if (cacheAvatar) {
+      return { uri: cacheAvatar };
+    }
+    const avatar = blockies(address);
+    preferenceService.addAddressAvatar(address, avatar);
+    return { uri: avatar };
   }
   return undefined;
 };
