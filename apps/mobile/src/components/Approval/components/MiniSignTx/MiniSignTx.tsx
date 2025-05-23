@@ -864,6 +864,9 @@ const MiniSignTx = ({
             ],
           });
           let estimateGas = 0;
+          if (!preExecResult.pre_exec.success) {
+            throw new Error('Pre exec failed');
+          }
           if (preExecResult.gas.success) {
             estimateGas =
               preExecResult.gas.gas_limit || preExecResult.gas.gas_used;
