@@ -6,7 +6,6 @@ import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 
 // import FooterComponentForUpgrade from './FooterComponentForUpgrade';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { MarkdownInWebView } from '@/components/Markdown/InWebView';
 
 import {
   createGlobalBottomSheetModal,
@@ -102,6 +101,7 @@ export function UserAgreementLikeModalInner({ uri }: { uri: string }) {
             originWhitelist={['https://debank.com', 'https://rabby.io']}
             applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
             javaScriptEnabled
+            nestedScrollEnabled
             source={{ uri }}
             onShouldStartLoadWithRequest={nativeEvent => {
               // always allow first time loading
