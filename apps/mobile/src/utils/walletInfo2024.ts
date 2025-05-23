@@ -31,7 +31,7 @@ export const getWalletAvator2024 = (
       return { uri: cacheAvatar };
     }
     const avatar = blockies(address);
-    preferenceService.setAddressAvatar(address, avatar);
+    preferenceService.addAddressAvatar(address, avatar);
     return { uri: avatar };
   }
   return undefined;
