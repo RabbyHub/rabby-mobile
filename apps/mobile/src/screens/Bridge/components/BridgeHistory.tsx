@@ -24,15 +24,17 @@ const ItemSeparator = () => {
   return <View style={styles.item} />;
 };
 
-const HistoryList = () => {
+const HistoryList = ({ recentShowTime }: { recentShowTime: number }) => {
   const { styles, isLight } = useTheme2024({ getStyle });
   const { txList, loading, loadMore, noMore } = useBridgeHistory();
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
 
   const renderItem = useCallback(
-    ({ item }) => <BridgeHistoryItem data={item} />,
-    [],
+    ({ item }) => (
+      <BridgeHistoryItem data={item} recentShowTime={recentShowTime} />
+    ),
+    [recentShowTime],
   );
 
   const { currentAccount } = useCurrentAccount();
@@ -149,9 +151,11 @@ const HistoryList = () => {
 export const BridgeTxHistory = ({
   visible,
   onClose,
+  recentShowTime,
 }: {
   visible: boolean;
   onClose: () => void;
+  recentShowTime: number;
 }) => {
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const { colors2024 } = useTheme2024({ getStyle });
@@ -177,7 +181,7 @@ export const BridgeTxHistory = ({
         colors: colors2024,
         linearGradientType: isDarkTheme ? 'bg1' : 'bg2',
       })}>
-      <HistoryList />
+      <HistoryList recentShowTime={recentShowTime} />
     </AppBottomSheetModal>
   );
 };

@@ -2,7 +2,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
+import { BridgeHistory, SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
@@ -10,118 +10,69 @@ import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { findChain } from '@/utils/chain';
 import ArrowSwapSVG from '@/assets2024/icons/common/arrow-swap-cc.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
 import { bridgeService, swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
-import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
-import { getAliasName } from '@/core/apis/contact';
-import { ellipsisAddress } from '@/utils/address';
-export const PendingTxItem = ({
+export const BridgePendingTxItem = ({
   data,
   clearLocalPendingTxData,
-  isForMultipleAdderss,
-  type,
+  openHistory,
 }: {
-  data: TransactionGroup;
+  data: BridgeHistory;
   clearLocalPendingTxData: () => void;
-  isForMultipleAdderss: boolean;
-  type: 'send' | 'swap';
+  openHistory: () => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const chainItem = React.useMemo(
-    () =>
-      findChain({
-        id: data?.chainId,
-      }),
-    [data?.chainId],
-  );
-  const isPending = data.isPending;
-  const chainName = chainItem?.name || '';
+  const isPending = data.status === 'pending';
   const { currentAccount } = useCurrentAccount();
 
   const handlePress = () => {
     if (!isPending) {
       clearLocalPendingTxData();
-      type === 'send' &&
-        swapService.setOpenSwapHistoryTs(currentAccount?.address ?? '');
+      bridgeService.setOpenBridgeHistoryTs(currentAccount?.address ?? '');
     }
 
-    navigate(RootNames.StackTransaction, {
-      screen: RootNames.HistoryLocalDetail,
-      params: {
-        isForMultipleAdderss,
-        data: data,
-        title:
-          type === 'send'
-            ? t('page.transactions.itemTitle.Send')
-            : t('page.transactions.itemTitle.Swap'),
-      },
-    });
+    openHistory();
   };
 
-  const swapActionData =
-    data.maxGasTx.action?.actionData?.swap ||
-    data.maxGasTx.action?.actionData?.unWrapToken ||
-    data.maxGasTx.action?.actionData?.wrapToken;
-
-  const sendActionData = data.maxGasTx.action?.actionData?.send;
-  const payToken = swapActionData?.payToken;
-  const receiveToken = swapActionData?.receiveToken;
+  const payToken = data.from_token;
+  const receiveToken = data.to_token;
 
   const titleTextStr = useMemo(() => {
-    if (type === 'send') {
-      return `${getTokenSymbol(sendActionData?.token)}`;
-    } else {
-      return `${getTokenSymbol(payToken)}→${getTokenSymbol(receiveToken)}`;
-    }
-  }, [type, sendActionData?.token, payToken, receiveToken]);
+    return `${getTokenSymbol(payToken)}→${getTokenSymbol(receiveToken)}`;
+  }, [payToken, receiveToken]);
 
   const SubTitleContainer = useMemo(() => {
     const ToText = t('page.swap.to') + ' ';
-    if (type === 'send') {
-      let address = '';
-      const acData = data.maxGasTx?.action?.actionData.send;
-      const sendRequireData = data.maxGasTx?.action
-        ?.requiredData as SendRequireData;
-      const addr = acData?.to || sendRequireData?.protocol?.name;
+    const payChain = findChain({
+      serverId: payToken?.chain,
+    });
+    const receiveChain = findChain({
+      serverId: receiveToken?.chain,
+    });
 
-      if (!addr) {
-        address = t('page.transactions.detail.Unknown');
-      } else {
-        address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
-      }
-      return (
-        <View style={styles.subTitleContainer}>
-          <ChainIconImage
-            size={14}
-            chainEnum={chainItem?.enum}
-            isShowRPCStatus={true}
-          />
-          <Text style={styles.subTitleText}>{address}</Text>
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.subTitleContainer}>
-          <ChainIconImage
-            size={14}
-            chainEnum={chainItem?.enum}
-            isShowRPCStatus={true}
-          />
-          <Text style={styles.subTitleText}>{chainName}</Text>
-        </View>
-      );
-    }
+    return (
+      <View style={styles.subTitleContainer}>
+        <ChainIconImage
+          size={14}
+          chainServerId={payToken?.chain}
+          isShowRPCStatus={true}
+        />
+        <Text style={styles.subTitleText}>{payChain?.name}</Text>
+        <Text style={styles.subTitleText}>{ToText}</Text>
+        <ChainIconImage
+          size={14}
+          chainServerId={receiveToken?.chain}
+          isShowRPCStatus={true}
+        />
+        <Text style={styles.subTitleText}>{receiveChain?.name}</Text>
+      </View>
+    );
   }, [
-    type,
-    chainName,
     t,
-    data.maxGasTx,
-    chainItem,
+    payToken,
+    receiveToken,
     styles.subTitleContainer,
     styles.subTitleText,
   ]);
@@ -135,24 +86,18 @@ export const PendingTxItem = ({
       </View>
       <TouchableOpacity style={styles.container} onPress={handlePress}>
         <View style={styles.leftContainer}>
-          {type === 'send' ? (
-            <View style={styles.IconContainer}>
-              <AssetAvatar logo={sendActionData?.token?.logo_url} size={36} />
+          <View style={styles.IconContainer}>
+            <View style={styles.leftIcon}>
+              {<AssetAvatar logo={payToken?.logo_url} size={23} />}
             </View>
-          ) : (
-            <View style={styles.IconContainer}>
-              <View style={styles.leftIcon}>
-                {<AssetAvatar logo={payToken?.logo_url} size={23} />}
-              </View>
-              <View style={styles.rightIcon}>
-                {<AssetAvatar logo={receiveToken?.logo_url} size={25} />}
-              </View>
-              <ArrowSwapSVG
-                style={styles.arrow}
-                color={colors2024['neutral-secondary']}
-              />
+            <View style={styles.rightIcon}>
+              {<AssetAvatar logo={receiveToken?.logo_url} size={25} />}
             </View>
-          )}
+            <ArrowSwapSVG
+              style={styles.arrow}
+              color={colors2024['neutral-secondary']}
+            />
+          </View>
           <View style={styles.mainContainer}>
             <View style={styles.titleContainer}>
               <Text style={styles.titleText}>{titleTextStr}</Text>
@@ -185,6 +130,7 @@ export const PendingTxItem = ({
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
+    paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -215,6 +161,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     right: 2,
   },
   header: {
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
