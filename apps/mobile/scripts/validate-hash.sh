@@ -69,7 +69,16 @@ rm -rf node_modules
 # 使用 yarn 安装依赖, 这里使用 --frozen-lockfile 来确保安装的依赖与 lockfile 一致
 yarn install --frozen-lockfile
 
-cd ./ios && bundle exec pod deintegrate && RCT_NEW_ARCH_ENABLED=0 bundle exec pod install --deployment --repo-update && cd ..
+bundle install
+
+cd ./ios && bundle exec pod deintegrate && RCT_NEW_ARCH_ENABLED=0 bundle exec pod install --deployment --repo-update
+
+if [ $? -ne 0 ]; then
+  echo "❌: 安装 pods 依赖失败"
+  exit 1;
+fi
+
+cd ..
 
 # cp ./ios/Pods/Pods.xcodeproj/project.pbxproj "$EXPORT_DIR/Pods.xcodeproj.project.pbxproj"
 
