@@ -330,12 +330,13 @@ export const NFTDetailScreen = () => {
   }, []);
 
   const renderAccountHeader = useCallback(
-    (type: KEYRING_TYPE, aliasName: string) => {
+    (type: KEYRING_TYPE, aliasName: string, address?: string) => {
       return (
         <View style={styles.accountBox}>
           <View className="relative">
             <WalletIcon
               type={type as KEYRING_TYPE}
+              address={address}
               width={styles.walletIcon.width}
               height={styles.walletIcon.height}
               style={styles.walletIcon}
@@ -364,7 +365,9 @@ export const NFTDetailScreen = () => {
     }) => {
       return (
         <View key={`${address}-${iToken.id}`}>
-          {type && aliasName ? renderAccountHeader(type, aliasName) : null}
+          {type && aliasName
+            ? renderAccountHeader(type, aliasName, address)
+            : null}
           <Media
             failedPlaceholder={<IconDefaultNFT width={'100%'} height={360} />}
             type={iToken?.content_type}

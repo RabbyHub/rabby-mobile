@@ -10,14 +10,30 @@ import SeedPNG from '@/assets2024/icons/wallet/seed.png';
 import WatchPNG from '@/assets2024/icons/wallet/watch.png';
 import WatchDarkDark from '@/assets2024/icons/wallet/watch_dark.png';
 import SafePNG from '@/assets2024/icons/wallet/safe.png';
+import blockies from 'ethereum-blockies-base64';
+
+export const getWalletAvator2024 = (
+  brandName: string | undefined,
+  isLight?: boolean,
+  address?: string,
+) => {
+  const watchAvator = isLight ? WatchPNG : WatchDarkDark;
+  if (brandName === KEYRING_CLASS.GNOSIS) {
+    return SafePNG;
+  }
+  if (brandName === KEYRING_CLASS.WATCH) {
+    return watchAvator;
+  }
+  if (address) {
+    return { uri: blockies(address) };
+  }
+  return undefined;
+};
 
 export const getWalletIcon2024 = (
   brandName: string | undefined,
   isLight?: boolean,
 ) => {
-  if (brandName === KEYRING_CLASS.WATCH) {
-    return isLight ? WatchPNG : WatchDarkDark;
-  }
   if (brandName === KEYRING_CLASS.HARDWARE.LEDGER) {
     return LedgerPNG;
   }
@@ -44,10 +60,13 @@ export const getWalletIcon2024 = (
   if (brandName === KEYRING_CLASS.MNEMONIC) {
     return SeedPNG;
   }
-
-  if (brandName === KEYRING_CLASS.PRIVATE_KEY) {
-    return PrivateKeyPNG;
-  }
-
   return isLight ? WatchPNG : WatchDarkDark;
+};
+export const showSubWalletIcon = (brandName: string | undefined) => {
+  return (
+    brandName === KEYRING_CLASS.HARDWARE.LEDGER ||
+    brandName === KEYRING_CLASS.HARDWARE.ONEKEY ||
+    brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName ||
+    brandName === KEYRING_CLASS.HARDWARE.KEYSTONE
+  );
 };

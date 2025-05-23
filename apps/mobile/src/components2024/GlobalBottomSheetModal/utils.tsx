@@ -48,6 +48,7 @@ import { AddWhitelistSelectMethod } from '@/components/AddWhitelistSelectMethod'
 import ConfirmAddress from '@/screens/Send/components/ConfirmAddress';
 import SelectCex from '@/screens/Send/components/SelectCex';
 import { BatchRevokeErrorReason } from '@/screens/BatchRevoke/BatchRevokeErrorReason';
+import { FundYourWallet } from '@/screens/Home/FundYourWallet';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -90,6 +91,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]: [],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: [494],
+  [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: [470],
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: [492],
   [MODAL_NAMES.DESCRIPTION]: [674],
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: ['85%'],
@@ -126,6 +128,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: OneKeyPinOrPassphrase,
   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: SeedPhraseBackupToCloud,
   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: AddAddressSelectMethod,
+  [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: FundYourWallet,
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: AddWhitelistSelectMethod,
   [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: SeedPhraseManualBackup,
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: SeedPhraseRestoreFromCloud,

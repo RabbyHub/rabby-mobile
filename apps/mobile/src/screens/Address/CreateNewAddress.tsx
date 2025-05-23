@@ -10,7 +10,6 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { default as RcSeedPhrase } from '@/assets/icons/nextComponent/IconSeedPhrase.svg';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +30,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { replaceToFirst } from '@/utils/navigation';
 import { useCreateAddressProc } from '@/hooks/address/useNewUser';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 
 const MAX_ACCOUNT_COUNT = 50;
 const PROGRESS_BAR_STEP = {
@@ -201,7 +201,12 @@ function MainListBlocks() {
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.addressTopTips')}
         </Text>
-        <RcSeedPhrase style={styles.icon} />
+        <WalletIcon
+          style={styles.icon}
+          address={newAddress}
+          width={66}
+          height={66}
+        />
         {loading ? (
           <Skeleton
             circle
@@ -243,8 +248,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 10,
   },
   icon: {
-    marginTop: -12,
-    marginBottom: -68,
+    marginTop: 29,
+    marginBottom: 0,
     borderRadius: 16,
   },
   btnContainer: {

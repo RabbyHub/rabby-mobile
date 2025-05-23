@@ -29,6 +29,7 @@ import {
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { showSubWalletIcon } from '@/utils/walletInfo2024';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -148,7 +149,7 @@ export const RecentSendItem = ({
                       height={46}
                     />
                   )}
-                  {inWhiteList && (
+                  {inWhiteList && !showSubWalletIcon(account.brandName) && (
                     <RcIconLockCC
                       style={styles.lockIcon}
                       color={colors2024['brand-default']}

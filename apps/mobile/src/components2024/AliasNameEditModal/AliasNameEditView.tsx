@@ -43,6 +43,7 @@ export const AliasNameEditView: React.FC<Props> = ({
       ) : (
         <WalletIcon
           type={account.type}
+          address={account.address}
           width={iconSize}
           height={iconSize}
           borderRadius={iconBorderRadius}

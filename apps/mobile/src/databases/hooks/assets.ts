@@ -84,9 +84,7 @@ export const syncProtocols = async (
     return onlySync ? [] : PortocolItemEntity.batchQueryPortocols(address);
   }
   const snapshotRes = (await loadPortfolioSnapshot(address)) || [];
-  const { list, netWorth: snapshotNetWorth } = snapshot2Display(
-    snapshotRes || [],
-  );
+  const { list } = snapshot2Display(snapshotRes || []);
   const snapshotData = Object.values(list)?.sort(
     (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
   );

@@ -56,9 +56,10 @@ export default function HomeHeaderArea() {
               <TouchableOpacity hitSlop={24} onPress={goBack}>
                 <WalletIcon
                   type={currentAccount?.brandName as KEYRING_TYPE}
-                  width={styles.walletIcon.width}
-                  height={styles.walletIcon.height}
-                  style={styles.walletIcon}
+                  address={currentAccount?.address}
+                  width={28}
+                  height={28}
+                  borderRadius={7}
                 />
               </TouchableOpacity>
             </View>
@@ -94,13 +95,17 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   accountBox: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    borderWidth: 1,
+    borderColor: 'transparent', // 奇怪的问题，不加这个就会只展示content的内容
+    paddingRight: 4,
+    paddingBottom: 4,
+    overflow: 'visible',
   },
   titleText: {
     flexShrink: 1,

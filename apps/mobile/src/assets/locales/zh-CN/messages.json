@@ -1014,7 +1014,9 @@
         "receiveCrypto": "接收加密货币",
         "noAssets": "没有资产？",
         "buyWithFiatDesc": "简单的加密货币购买",
-        "receiveCryptoDesc": "从其他地址转移代币"
+        "receiveCryptoDesc": "从其他地址转移代币",
+        "foundGuideTitle": "快速充值",
+        "foundGuideDesc": "将代币添加到您的钱包以开始使用。"
       },
       "createNewAddress": {
         "verificationFailed": "验证失败",
@@ -1510,7 +1512,10 @@
         "receiveBody": "将代币从另一个地址转移",
         "buyHeader": "使用法币购买",
         "buyBody": "简单的加密货币购买",
-        "receiveHeader": "接收 Crypto"
+        "receiveHeader": "接收 Crypto",
+        "desc": "立即快速充值",
+        "importBody": "添加一个已有的带资金的地址。",
+        "importHeader": "导入地址"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1968,6 +1973,10 @@
       "noQRCodeFound": "未找到 QR-Code",
       "selectFromAlbum": "从相册中选择",
       "noCameraDevice": "无摄像头设备"
+    },
+    "defiDetail": {
+      "viewSiteInApp": "在 Dapp 中查看",
+      "viewSiteInWebsite": "在网站中查看"
     }
   },
   "component": {

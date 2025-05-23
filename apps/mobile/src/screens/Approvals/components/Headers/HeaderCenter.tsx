@@ -24,6 +24,7 @@ export const HeaderCenter = (props: IProps) => {
         <View style={styles.title}>
           <WalletIcon
             type={props.currentAccount?.brandName as KEYRING_TYPE}
+            address={props.currentAccount?.address}
             width={25}
             height={25}
             borderRadius={6}
