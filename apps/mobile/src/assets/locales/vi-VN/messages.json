@@ -989,7 +989,9 @@
         "fundYourWallet": "Nạp tiền vào Ví của bạn",
         "importAddressDesc": "Thêm một địa chỉ hiện có với quỹ",
         "receiveCryptoDesc": "Chuyển token từ địa chỉ khác",
-        "noAssets": "Không có tài sản?"
+        "noAssets": "Không có tài sản?",
+        "foundGuideDesc": "Thêm token vào ví của bạn để bắt đầu.",
+        "foundGuideTitle": "Nạp nhanh chóng"
       },
       "addAddress": {
         "hardwareWallet": "Ví phần cứng",
@@ -1400,7 +1402,10 @@
         "receiveHeader": "Nhận Crypto",
         "receiveBody": "Chuyển token từ địa chỉ khác",
         "buyHeader": "Mua bằng Fiat",
-        "buyBody": "Mua crypto đơn giản"
+        "buyBody": "Mua crypto đơn giản",
+        "importHeader": "Nhập một Địa chỉ",
+        "desc": "Nạp nhanh ngay bây giờ",
+        "importBody": "Thêm một địa chỉ hiện có có tiền."
       },
       "nft": {
         "floorPrice": "/Giá sàn:"
@@ -1959,6 +1964,10 @@
       "noCameraDevice": "Không có thiết bị camera",
       "selectFromAlbum": "Chọn từ Album",
       "noQRCodeFound": "Không tìm thấy mã QR"
+    },
+    "defiDetail": {
+      "viewSiteInApp": "Xem trong Dapp",
+      "viewSiteInWebsite": "Xem trên Website"
     }
   },
   "component": {

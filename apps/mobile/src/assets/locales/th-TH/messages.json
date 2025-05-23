@@ -1106,7 +1106,9 @@
         "fundYourWallet": "เติมเงินใน Wallet ของคุณ",
         "receiveCryptoDesc": "โอนโทเค็นจากที่อยู่อื่น",
         "importAddress": "นำเข้าที่อยู่",
-        "buyWithFiatDesc": "การซื้อสกุลเงินดิจิทัลที่ง่าย"
+        "buyWithFiatDesc": "การซื้อสกุลเงินดิจิทัลที่ง่าย",
+        "foundGuideTitle": "ระดมทุนอย่างรวดเร็ว",
+        "foundGuideDesc": "เพิ่มโทเค็นลงในกระเป๋าเงินของคุณเพื่อเริ่มต้น。"
       },
       "importAddress": {
         "importTitle": "นำเข้า Address",
@@ -1663,7 +1665,10 @@
         "receiveHeader": "รับ Crypto",
         "title": "เติมเงินให้กระเป๋าของคุณ",
         "buyBody": "การซื้อคริปโตอย่างง่าย",
-        "receiveBody": "โอนโทเค็นจากที่อยู่อื่น"
+        "receiveBody": "โอนโทเค็นจากที่อยู่อื่น",
+        "importBody": "เพิ่มที่อยู่ที่มีอยู่พร้อมด้วยเงินทุน",
+        "desc": "ขอเงินทุนอย่างรวดเร็วตอนนี้",
+        "importHeader": "นำเข้าที่อยู่"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -2054,6 +2059,10 @@
       "noQRCodeFound": "ไม่พบ QR-Code",
       "noCameraDevice": "ไม่มีอุปกรณ์กล้อง",
       "selectFromAlbum": "เลือกจากอัลบั้ม"
+    },
+    "defiDetail": {
+      "viewSiteInWebsite": "ดูในเว็บไซต์",
+      "viewSiteInApp": "ดูใน Dapp"
     }
   },
   "native": {

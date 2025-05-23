@@ -1042,7 +1042,9 @@
         "fundYourWallet": "Isi Ulang Dompet Anda",
         "services": "Layanan",
         "importAddressDesc": "Tambahkan alamat yang sudah ada dengan dana",
-        "buyWithFiatDesc": "Pembelian kripto sederhana"
+        "buyWithFiatDesc": "Pembelian kripto sederhana",
+        "foundGuideDesc": "Tambahkan token ke dompet Anda untuk memulai.",
+        "foundGuideTitle": "Danai dengan cepat"
       },
       "importAddress": {
         "tips": {
@@ -1738,7 +1740,10 @@
         "buyBody": "Pembelian crypto yang sederhana",
         "receiveBody": "Transfer token dari alamat lain",
         "title": "Danai Dompet Anda",
-        "receiveHeader": "Terima Crypto"
+        "receiveHeader": "Terima Crypto",
+        "importBody": "Tambahkan alamat yang sudah ada dengan dana.",
+        "desc": "Danai dengan cepat sekarang",
+        "importHeader": "Impor Alamat"
       },
       "nft": {
         "floorPrice": "/Harga Lantai:"
@@ -1900,6 +1905,10 @@
       "noQRCodeFound": "Tidak ada QR-Code yang ditemukan",
       "selectFromAlbum": "Pilih dari Album",
       "noCameraDevice": "Tidak Ada Perangkat Kamera"
+    },
+    "defiDetail": {
+      "viewSiteInApp": "Lihat di Dapp",
+      "viewSiteInWebsite": "Lihat di Situs Web"
     }
   },
   "component": {
