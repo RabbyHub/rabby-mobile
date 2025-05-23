@@ -34,7 +34,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { useMemoizedFn } from 'ahooks';
+import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
 import _ from 'lodash';
@@ -1192,17 +1192,15 @@ export const MiniApproval = ({
 
   const indexRef = useRef(-1);
   const dismissedByCodeRef = useRef(false);
-  const handleReject = useMemoizedFn((reason?: string | Error) => {
-    onReject?.(reason);
-  });
-
-  const handleClearTask = useMemoizedFn(() => {
-    task.clear();
-    onVisibleChange?.(false);
-    if (!visible) {
-      onReject?.();
-    }
-  });
+  const { run: handleReject } = useDebounceFn(
+    (reason?: string | Error) => {
+      task.clear();
+      onReject?.(reason);
+    },
+    {
+      wait: 100,
+    },
+  );
 
   const pressBackdropRef = useRef(false);
 
