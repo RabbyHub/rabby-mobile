@@ -873,7 +873,7 @@ export const GasSelectorHeader = ({
                     </Text>
                   )}
 
-                  {L2_ENUMS.includes(chain.enum) &&
+                  {chain.needEstimateGas &&
                     !CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum) && (
                       <View
                         style={StyleSheet.flatten({
