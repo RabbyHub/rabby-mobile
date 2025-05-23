@@ -32,7 +32,7 @@ import {
   whitelistService,
 } from '@/core/services';
 import { openapi, testOpenapi } from '@/core/request';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
@@ -59,6 +59,7 @@ import { useSetState } from 'ahooks';
 import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
 import { underline2Camelcase } from '@/core/utils/common';
 import { getCexInfo } from '@/hooks/useCexSupportList';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 interface SignTypedDataProps {
   method: string;
@@ -712,7 +713,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
 
   return (
     <View style={styles.wrapper}>
-      <ScrollView style={styles.approvalTx}>
+      <BottomSheetScrollView style={styles.approvalTx} nestedScrollEnabled>
         {isLoading && (
           <Skeleton
             style={{
@@ -741,7 +742,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
             }}
           />
         ) : null}
-      </ScrollView>
+      </BottomSheetScrollView>
 
       {isGnosisAccount && safeInfo ? (
         <GnosisDrawer
