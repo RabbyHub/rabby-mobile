@@ -545,21 +545,40 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
                   },
                 });
               }
-
-              mutateTxs([]);
-              handleAmountChange('');
-
-              setTimeout(() => {
-                runFetchBridgePendingCount();
-              }, 500);
             } catch (e) {
               console.error(e);
               mutateTxs([]);
               refresh(e => e + 1);
             }
+          } else {
+            if (canShowDirectSign) {
+              if (isDirectSigning) {
+                return;
+              } else {
+                setDirectSigning(true);
+              }
+            }
+            const res = await runBuildTxs();
+            await sendMiniTransactions({
+              txs: res!,
+              ga: {
+                category: 'Bridge',
+                source: 'bridge',
+                // trigger: rbiSource,
+              },
+              directSubmit: canShowDirectSign,
+            });
           }
+
+          mutateTxs([]);
+          handleAmountChange('');
+          setTimeout(() => {
+            runFetchBridgePendingCount();
+          }, 500);
         } catch (error) {
           setDirectSigning(false);
+          mutateTxs([]);
+          refresh(e => e + 1);
           console.error('runBuildSwapTxsRef', error);
         } finally {
           setFetchingBridgeQuote(false);
