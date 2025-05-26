@@ -21,7 +21,7 @@ export SENTRY_DISABLE_AUTO_UPLOAD=true
 export APP_ENV=hashing
 
 # 覆写 .env.local
-OVERRIDE_ENV_FILE=".env.${APP_ENV}"
+OVERRIDE_ENV_FILE=".env"
 
 if [ -f "$OVERRIDE_ENV_FILE" ]; then
   echo "ℹ️ Loading environment variables from $OVERRIDE_ENV_FILE..."
@@ -37,8 +37,10 @@ if [ -f "$OVERRIDE_ENV_FILE" ]; then
     # 移除可能存在于值两边的引号 (单引号或双引号)
     value_cleaned=$(echo "$value_cleaned" | sed -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
 
+    value_to_export="${value_cleaned:-pesudo_for_hashing}"
+
     if [ -n "$key_cleaned" ]; then # 确保 key 不是空的 (例如，空行或纯注释行)
-      export "$key_cleaned=$value_cleaned"
+      export "$key_cleaned=$value_to_export"
     fi
   done < <(grep -v '^[[:space:]]*#' "$OVERRIDE_ENV_FILE" | grep -v '^[[:space:]]*$') # 先过滤掉纯注释行和空行
   echo "✅ Environment variables from $OVERRIDE_ENV_FILE loaded and exported."
