@@ -1,0 +1,21 @@
+GCC_OPTIMIZATION_LEVEL = 0
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+LD_NO_PIE = YES
+LLVM_LTO = NO
+DEAD_CODE_STRIPPING = NO
+SWIFT_COMPILATION_MODE = wholemodule
+_EXPERIMENTAL_SWIFT_EXPLICIT_MODULES = YES
+
+// 针对 C/Objective-C 文件
+OTHER_CFLAGS = $(inherited) -O0 -mllvm -disable-post-ra -fno-common -fno-omit-frame-pointer -fno-inline -fno-align-functions -mllvm -enable-misched=false -mllvm --disable-cgp-gc-opts -fno-stack-protector -fno-optimize-sibling-calls -mllvm -enable-objc-arc-opts=false -mllvm -arm-promote-constant=false -fdebug-compilation-dir=. -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__= -D__TIME__= -D__TIMESTAMP__=
+
+// 针对 C++/Objective-C++ 文件
+OTHER_CPLUSPLUSFLAGS = $(inherited) -fno-optimize-sibling-calls -mllvm -enable-misched=false -mllvm -disable-post-ra -fno-common -fno-omit-frame-pointer -fno-align-functions -fdebug-compilation-dir=. -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__= -D__TIME__= -D__TIMESTAMP__=
+
+// 针对 Swift 间接影响 C++ 的情况（如桥接头文件）
+OTHER_SWIFT_FLAGS = $(inherited) -Xcc -fno-align-functions -Xcc -no-canonical-prefixes -Xcc -fdebug-compilation-dir=.
+
+// 链接器 (Linker) 额外参数
+// order 文件生成： nm your_binary | grep -o '[^ ]\+$' | sort -u > full.order
+
+OTHER_LDFLAGS = $(inherited) -Xlinker -no_uuid -Wl,-t -Wl,-objc_abi_version,2 -Wl,-no_order_inits -Wl,-no_objc_category_merging -Wl,-order_file,${SRCROOT}/../scripts/validate-hash.order -Wl,-rename_section,__TEXT,__objc_methname,__RODATA,__fixed_objc_methname -Wl,-rename_section,__TEXT,__cstring,__RODATA,__fixed_cstring -Wl,-sectalign,__DATA_CONST,__got,0x8 -Wl,-sectalign,__DATA,__objc_selrefs,0x1000 -Wl,-sectalign,__TEXT,__text,0x1000 -Wl,-sectalign,__TEXT,__const,0x1000 -Wl,-sectalign,__TEXT,__literal4,0x4 -Wl,-sectalign,__TEXT,__literal8,0x8 -Wl,-no_pie -Wl,-segprot,__DATA,rw,rw -Wl,-pagezero_size,0x4000 -Wl,-map,${SRCROOT}/LinkMap.txt

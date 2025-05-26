@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const {
   createSentryMetroSerializer,
@@ -17,6 +18,37 @@ const {
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
+
+const LOG_FILE = path.join(__dirname, 'jsModuleId.log');
+
+// 保证 module 的顺序
+// https://github.com/facebook/metro/blob/d7c74eac8d277ea321a0b81336732764cc0b7e1f/packages/metro/src/lib/createModuleIdFactory.js#L14
+const createModuleIdFactory = () => {
+  const projPathReg = new RegExp(`^${path.resolve(__dirname, '../..')}/`);
+
+  return function stableStringHash(pathStr) {
+    // 初始化参数（选用高熵值参数）
+    const BASE = 257n; // 大于 ASCII 范围的质数
+    const MOD = 2n ** 53n - 1n; // JS 最大安全整数
+    let hash = 0n;
+    const _path = pathStr.replace(projPathReg, 'root/');
+
+    for (let i = 0; i < _path.length; i++) {
+      const charCode = BigInt(_path.charCodeAt(i));
+      hash = (hash * BASE + charCode) % MOD;
+    }
+
+    const result = Number(hash);
+    // 日志记录逻辑
+    const logEntry = `${_path}\t${result}\n`;
+    try {
+      fs.appendFileSync(LOG_FILE, logEntry, 'utf8');
+    } catch (err) {
+      console.error('写入日志失败:', err);
+    }
+    return result;
+  };
+};
 
 /**
  * Metro configuration
@@ -111,6 +143,19 @@ const config = {
     path.resolve(workspaceRoot, 'packages'),
   ],
 };
+
+if (process.env.APP_ENV === 'hashing') {
+  // hash 一致性时，防止 sentry 干扰
+  delete config.serializer.customSerializer;
+
+  config.serializer.createModuleIdFactory = createModuleIdFactory;
+
+  config.transformer.minifierConfig = {
+    compress: {
+      switches: false, // 禁用 switches 优化
+    },
+  };
+}
 
 module.exports = wrapWithReanimatedMetroConfig(
   mergeConfig(defaultConfig, config),

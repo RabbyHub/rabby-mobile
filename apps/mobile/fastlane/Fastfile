@@ -61,6 +61,32 @@ platform :ios do
     # sh "/usr/libexec/PlistBuddy -c \"Set:items:0:metadata:title Rabby Wallet\" ../ios/Package/adhoc/manifest.plist"
   end
 
+  desc "Valid ios adhoc"
+  lane :hashcheck do
+    gym(
+      scheme: 'RabbyMobile',
+      workspace: './ios/RabbyMobile.xcworkspace',
+      configuration: 'Release',
+      output_directory: "./ios/Package",
+      # build_path: "./ios/Package/adhoc",
+      destination: "generic/platform=iOS",
+      clean: true,
+      ## if you wanna output log to stdout, uncomment below 2 lines
+      xcodebuild_formatter: '',
+      suppress_xcode_output: false,
+      skip_package_ipa: true,
+      skip_package_pkg: true,
+      export_method: 'ad-hoc',
+      derived_data_path: './ios/DerivedData',
+      archive_path: './ios/Package/RabbyMobile.xcarchive',
+      skip_codesigning: true,
+      # skip_archive: true,
+      # xcargs: "-jobs 1", # 禁用并行编译
+      xcconfig: "./ios/RabbyMobile/ValidHash.xcconfig",
+      buildlog_path: './ios/Package'
+    )
+  end
+
   desc "Release for the iOS production"
   lane :appstore do
       prepare_apple_sign(type: 'appstore', profile_name: "RabbyMobileAppStore")
