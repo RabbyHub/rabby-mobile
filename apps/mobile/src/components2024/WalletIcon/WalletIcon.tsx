@@ -5,7 +5,7 @@ import {
   showSubWalletIcon,
 } from '@/utils/walletInfo2024';
 import { KEYRING_TYPE, WALLET_NAME } from '@rabby-wallet/keyring-utils';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ImageStyle, StyleProp, StyleSheet, View } from 'react-native';
 import { Image } from 'react-native';
 
@@ -29,7 +29,10 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   address,
 }) => {
   const { isLight } = useTheme2024();
-  const avator = getWalletAvator2024(type, isLight, address);
+  const avator = useMemo(
+    () => getWalletAvator2024(type, isLight, address),
+    [type, isLight, address],
+  );
   const Icon = getWalletIcon2024(type, isLight);
   const styleProps = style ? StyleSheet.flatten(style) : {};
   const {
