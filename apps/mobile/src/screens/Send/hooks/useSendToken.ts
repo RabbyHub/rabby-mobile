@@ -822,6 +822,7 @@ export function useSendTokenForm(
               directSubmit: true,
             });
             runFetchPendingCount();
+            runFetchLocalPendingTx();
             handleFieldChange('amount', '');
             sendTokenEventsRef.current.emit(SendTokenEvents.ON_SIGNED_SUCCESS);
             return;
