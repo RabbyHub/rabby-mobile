@@ -894,7 +894,9 @@
         "fundYourWallet": "ウォレットに資金を追加",
         "buyWithFiatDesc": "シンプルな暗号購入",
         "importAddressDesc": "既存の資金があるアドレスを追加します",
-        "receiveCryptoDesc": "別のアドレスからトークンを転送します"
+        "receiveCryptoDesc": "別のアドレスからトークンを転送します",
+        "foundGuideTitle": "迅速に資金を充填",
+        "foundGuideDesc": "ウォレットにトークンを追加して開始してください。"
       },
       "addAddress": {
         "importAddress": "アドレスをインポート",
@@ -1501,7 +1503,10 @@
         "buyHeader": "法定通貨で購入",
         "receiveBody": "別のアドレスからトークンを転送します",
         "title": "ウォレットに資金を入れる",
-        "buyBody": "簡単な暗号通貨購入"
+        "buyBody": "簡単な暗号通貨購入",
+        "importHeader": "アドレスをインポート",
+        "importBody": "資金のある既存のアドレスを追加します。",
+        "desc": "今すぐ迅速に資金を追加してください。"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1953,6 +1958,10 @@
       "selectFromAlbum": "アルバムから選択してください",
       "noCameraDevice": "カメラデバイスがありません",
       "noQRCodeFound": "QRコードが見つかりませんでした。"
+    },
+    "defiDetail": {
+      "viewSiteInApp": "Dappで表示",
+      "viewSiteInWebsite": "ウェブサイトで表示"
     }
   },
   "global": {

@@ -70,7 +70,11 @@ const useOfflineChain = () => {
   };
 };
 
-export const OfflineChainNotify = () => {
+export const OfflineChainNotify = ({
+  showEmptyHolder = false,
+}: {
+  showEmptyHolder?: boolean;
+}) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { displayWillClosedChain, setClosedTipsChain } = useOfflineChain();
@@ -136,7 +140,7 @@ export const OfflineChainNotify = () => {
     styles.title,
   ]);
   if (!displayWillClosedChain || !chainInfo) {
-    return <View style={{ height: 30 }} />;
+    return <View style={{ height: showEmptyHolder ? 30 : 0 }} />;
   }
   return (
     <View style={styles.container}>

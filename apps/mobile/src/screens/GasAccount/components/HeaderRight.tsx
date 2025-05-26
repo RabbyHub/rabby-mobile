@@ -9,12 +9,9 @@ import {
   useGasAccountLoginVisible,
   useGasAccountLogoutVisible,
   useGasAccountSign,
-  useGasAccountSwitchVisible,
 } from '../hooks/atom';
 import { createGetStyles2024 } from '@/utils/styles';
 import { RcIconLogoutCC, RcIconSwitchCC } from '@/assets2024/icons/gas-account';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 export const GasAccountHeader: React.FC = () => {
   const color = useThemeColors();

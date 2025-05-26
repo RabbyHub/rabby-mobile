@@ -95,6 +95,7 @@ export const useMultiCurve = (
     async (addres: string[], force = false) => {
       try {
         if (!addres.length) {
+          setLoading(false);
           return;
         }
         setLoading(!!force);

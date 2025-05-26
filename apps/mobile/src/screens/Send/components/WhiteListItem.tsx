@@ -38,6 +38,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
+import { showSubWalletIcon } from '@/utils/walletInfo2024';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -209,7 +210,7 @@ export const WhiteListItem = ({
                       height={46}
                     />
                   )}
-                  {inWhiteList && (
+                  {inWhiteList && !showSubWalletIcon(account.brandName) && (
                     <RcIconLockCC
                       style={styles.lockIcon}
                       color={colors2024['brand-default']}
@@ -302,7 +303,7 @@ export const WhiteListItemSwitch = ({
                       height={46}
                     />
                   )}
-                  {inWhiteList && (
+                  {inWhiteList && !showSubWalletIcon(account.brandName) && (
                     <RcIconLockCC
                       style={styles.lockIcon}
                       color={colors2024['brand-default']}

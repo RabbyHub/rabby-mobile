@@ -1107,7 +1107,9 @@
         "receiveCryptoDesc": "Token von einer anderen Adresse übertragen",
         "fundYourWallet": "Finanzieren Sie Ihr Wallet",
         "buyWithFiatDesc": "Einfache Krypto-Käufe",
-        "importAddressDesc": "Füge eine bestehende Adresse mit Geldern hinzu"
+        "importAddressDesc": "Füge eine bestehende Adresse mit Geldern hinzu",
+        "foundGuideTitle": "Schnell finanzieren",
+        "foundGuideDesc": "Fügen Sie Tokens zu Ihrem Wallet hinzu, um zu beginnen."
       },
       "addAddress": {
         "importAddress": "Adresse importieren",
@@ -1679,7 +1681,10 @@
         "receiveHeader": "Krypto empfangen",
         "receiveBody": "Übertragen Sie Token von einer anderen Adresse",
         "title": "Finanzieren Sie Ihr Wallet",
-        "buyBody": "Einfacher Krypto-Kauf"
+        "buyBody": "Einfacher Krypto-Kauf",
+        "desc": "Jetzt schnell aufladen",
+        "importHeader": "Eine Adresse importieren",
+        "importBody": "Fügen Sie eine bestehende Adresse mit Guthaben hinzu."
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -2112,6 +2117,10 @@
       "noCameraDevice": "Kein Kamera-Gerät",
       "selectFromAlbum": "Aus Album auswählen",
       "noQRCodeFound": "Kein QR-Code gefunden"
+    },
+    "defiDetail": {
+      "viewSiteInApp": "In Dapp anzeigen",
+      "viewSiteInWebsite": "Auf der Website ansehen"
     }
   },
   "constant": {

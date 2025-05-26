@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import {
   appStorage,
   keyringStorage,
@@ -38,10 +39,24 @@ import { MockWalletConnectKeyring } from '../keyring-bridge/walletconnect/mock-w
 import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
 import { OfflineChainService } from './offlineChain';
 import { BrowserService } from './browserService';
+import { APP_STORE_NAMES } from '../storage/storeConstant';
 
 migrateAppStorage(appStorage);
 
 const keyringState = normalizeKeyringState().keyringData;
+
+try {
+  const data = appStorage.getItem(APP_STORE_NAMES.preference);
+  if (!data && keyringState) {
+    Sentry.captureException(
+      new Error('keyringState is not empty but preference is empty'),
+    );
+  }
+} catch (error) {
+  Sentry.captureException(
+    new Error('Failed to get preference from appStorage: ' + error),
+  );
+}
 
 // TODO: add other keyring classes
 const keyringClasses = [

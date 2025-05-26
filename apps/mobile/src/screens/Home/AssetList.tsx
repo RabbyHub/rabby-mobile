@@ -365,6 +365,18 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       });
     }, [currentAccount, navigation, switchSceneCurrentAccount]);
 
+    const handleOnImport = useCallback(async () => {
+      navigation.dispatch(
+        StackActions.push(RootNames.StackAddress, {
+          screen: RootNames.ImportMethods,
+          params: {
+            isNotNewUserProc: true,
+            isFromEmptyAddress: true,
+          },
+        }),
+      );
+    }, [navigation]);
+
     const renderItem = useCallback(
       (_type, _data) => {
         const { type, data } = _data;
@@ -513,7 +525,11 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
             );
           case 'empty-token':
             return (
-              <EmptyTokenRow onReceive={handleOnReceive} onBuy={handleOnBuy} />
+              <EmptyTokenRow
+                onReceive={handleOnReceive}
+                onBuy={handleOnBuy}
+                onImport={handleOnImport}
+              />
             );
           case 'empty-assets':
           case 'empty-defi':
@@ -540,6 +556,7 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
         getDefiOrNftMenuAction,
         getTokenMenuActions,
         handleOnBuy,
+        handleOnImport,
         handleOnReceive,
         handleOpenDefiDetail,
         handleOpenTokenDetail,

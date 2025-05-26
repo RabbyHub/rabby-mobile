@@ -56,12 +56,16 @@ import { isScamHidenToken } from '@/screens/Home/utils/collection';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { isTabsSwiping } from './hooks';
+import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { StackActions } from '@react-navigation/native';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
 const HEADER_PADDING_HEIGHT = 16;
 
-export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
+export const Portfolios = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { top10Addresses } = useAccountInfo();
   const focusedTab = useFocusedTab();
@@ -80,6 +84,7 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
     isLoading,
   } = useAssets();
 
+  const { navigation } = useSafeSetNavigationOptions();
   const [isListVisable, setIsListVisable] = useState(false);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -236,7 +241,7 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      if (disableClick) {
+      if (isTabsSwiping.value) {
         return;
       }
       navigate(RootNames.TokenDetail, {
@@ -245,7 +250,7 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
         needUseCacheToken: true,
       });
     },
-    [disableClick],
+    [],
   );
 
   const top10Balance = useMemo(() => {
@@ -260,25 +265,19 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      if (disableClick) {
-        return;
-      }
       navigate(RootNames.DeFiDetail, {
         data,
         portfolioList: itemList,
         cache: true,
       });
     },
-    [disableClick],
+    [],
   );
 
   const { tokenRefresh } = useTriggerTagAssets();
 
   const getTokenMenuActions = useCallback(
     (data: AbstractPortfolioToken): MenuAction[] => {
-      if (disableClick) {
-        return [];
-      }
       return [
         {
           title: data._isFold
@@ -344,14 +343,11 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
         },
       ];
     },
-    [disableClick, t, isLight, tokenRefresh],
+    [t, isLight, tokenRefresh],
   );
 
   const getDefiOrNftMenuAction = useCallback(
     (type: 'defi', data: DisplayedProject): MenuAction[] => {
-      if (disableClick) {
-        return [];
-      }
       const isFold = data._isFold;
       return [
         {
@@ -382,8 +378,40 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
         },
       ];
     },
-    [disableClick, isLight, t, tokenRefresh],
+    [isLight, t, tokenRefresh],
   );
+
+  const hasNotAssets = useMemo(() => {
+    return tokens.length === 0 && portfolios.length === 0 && !isLoading;
+  }, [tokens.length, portfolios.length, isLoading]);
+
+  const handleOnReceive = useCallback(() => {
+    navigation.dispatch(
+      StackActions.push(RootNames.StackAddress, {
+        screen: RootNames.ReceiveAddressList,
+        params: {},
+      }),
+    );
+  }, [navigation]);
+
+  const handleOnBuy = useCallback(() => {
+    navigation.push(RootNames.StackTransaction, {
+      screen: RootNames.MultiBuy,
+      params: {},
+    });
+  }, [navigation]);
+
+  const handleOnImport = useCallback(() => {
+    navigation.dispatch(
+      StackActions.push(RootNames.StackAddress, {
+        screen: RootNames.ImportMethods,
+        params: {
+          isNotNewUserProc: true,
+          isFromEmptyAddress: true,
+        },
+      }),
+    );
+  }, [navigation]);
 
   const renderItem = useCallback(
     ({ item }) => {
@@ -499,6 +527,15 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
           return <ItemLoader style={{ height: ASSETS_ITEM_HEIGHT_NEW }} />;
         case 'loading-defi-skeleton':
           return <DefiItemLoader style={styles.defiLoading} />;
+        case 'empty-token':
+          return (
+            <EmptyTokenRow
+              style={styles.emptyTokenHolder}
+              onReceive={handleOnReceive}
+              onBuy={handleOnBuy}
+              onImport={handleOnImport}
+            />
+          );
         default:
           return null;
       }
@@ -508,17 +545,36 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
       foldHideList,
       getDefiOrNftMenuAction,
       getTokenMenuActions,
+      handleOnBuy,
+      handleOnImport,
+      handleOnReceive,
       handleOpenDefiDetail,
       handleOpenTokenDetail,
       isLight,
       portfolios,
-      styles,
+      styles.bg2,
+      styles.buttonHeader,
+      styles.defiGroups,
+      styles.defiLoading,
+      styles.emptyAssets,
+      styles.emptyTokenHolder,
+      styles.renderDefiItemWrapper,
+      styles.renderItemWrapper,
+      styles.rowWrap,
+      styles.sectionHeader,
+      styles.sectionTextHeader,
+      styles.tokenSectionHeader,
       t,
       tokens,
     ],
   );
 
   const inited = useRef(false);
+
+  useEffect(() => {
+    inited.current = false;
+  }, [top10Addresses.length]);
+
   useEffect(() => {
     if (!isFocused) {
       return;
@@ -617,7 +673,7 @@ export const Portfolios = ({ disableClick }: { disableClick?: boolean }) => {
 
   return (
     <Tabs.FlashList
-      data={portfolioListData}
+      data={hasNotAssets ? [{ type: 'empty-token' }] : portfolioListData}
       renderItem={renderItem}
       estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
       getItemType={getItemType}
@@ -721,6 +777,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   emptyAssets: {
     marginHorizontal: 0,
+  },
+  emptyTokenHolder: {
+    paddingHorizontal: 0,
   },
   defiLoading: {
     paddingHorizontal: 0,

@@ -1,21 +1,82 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Pressable, Text, TouchableOpacity, View } from 'react-native';
 
 import RcIconImport from '@/assets2024/icons/home/IconImport.svg';
 import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
 import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
-
+import RcIconRightArrow from '@/assets2024/icons/home/rightArrow.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { StackActions } from '@react-navigation/native';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { SvgProps } from 'react-native-svg';
+import React from 'react';
 
-export const FundYourWallet = () => {
+export const FundYourWallet = ({
+  noAssetsList,
+  onClose,
+}: {
+  noAssetsList: {
+    title: string;
+    desc: string;
+    icon: React.FC<SvgProps>;
+    onPress: () => void;
+  }[];
+  onClose: () => void;
+}) => {
   const { t } = useTranslation();
-  const { navigation } = useSafeSetNavigationOptions();
   const { styles } = useTheme2024({ getStyle });
+
+  return (
+    <>
+      <Image
+        source={require('@/assets2024/icons/home/buy-bg.png')}
+        style={styles.bgb2}
+      />
+      <View style={styles.noAssetsContainer}>
+        <Text style={styles.header}>
+          {t('page.singleHome.emptyToken.title')}
+        </Text>
+        <Text style={styles.desc}>{t('page.singleHome.emptyToken.desc')}</Text>
+        <View style={styles.list}>
+          {noAssetsList.map(item => {
+            return (
+              <TouchableOpacity
+                key={item.title}
+                style={styles.noAssetsItem}
+                onPress={() => {
+                  onClose?.();
+                  item.onPress?.();
+                }}>
+                <View style={styles.itemInner}>
+                  <View style={styles.noAssetsIconWrapper}>
+                    <item.icon width={16.8} height={16.8} />
+                  </View>
+                  <View style={styles.noAssetsRight}>
+                    <Text style={styles.noAssetsItemName}>{item.title}</Text>
+                    <Text style={styles.noAssetsItemDesc}>{item.desc}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    </>
+  );
+};
+
+export const FoundYourWalletGuide = () => {
+  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { navigation } = useSafeSetNavigationOptions();
 
   const noAssetsList = useMemo(
     () => [
@@ -64,48 +125,65 @@ export const FundYourWallet = () => {
     ],
     [t, navigation],
   );
+
+  const onPress = () => {
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+        enableDismissOnClose: true,
+        handleStyle: {
+          height: 0,
+          backgroundColor: 'transparent',
+          overflow: 'visible',
+          padding: 0,
+          paddingTop: 0,
+          paddingStart: 0,
+          position: 'absolute',
+          top: 12,
+          left: '50%',
+          transform: [{ translateX: -25 }],
+        },
+      },
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+      noAssetsList,
+    });
+  };
   return (
-    <View style={styles.noAssetsContainer}>
+    <Pressable style={styles.foundGuideContainer} onPress={onPress}>
       <Image
-        source={require('@/assets2024/icons/home/buy-bg.png')}
+        source={require('@/assets2024/icons/home/guide.png')}
         style={styles.bgb2}
       />
-      <Text style={styles.noAssetsTitle}>
-        {t('page.nextComponent.multiAddressHome.fundYourWallet')}
-      </Text>
-      <View style={styles.list}>
-        {noAssetsList.map(item => {
-          return (
-            <TouchableOpacity
-              key={item.title}
-              style={styles.noAssetsItem}
-              onPress={item.onPress}>
-              <View style={styles.itemInner}>
-                <View style={styles.noAssetsIconWrapper}>
-                  <item.icon width={16.8} height={16.8} />
-                </View>
-                <View style={styles.noAssetsRight}>
-                  <Text style={styles.noAssetsItemName}>{item.title}</Text>
-                  <Text style={styles.noAssetsItemDesc}>{item.desc}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+      <View style={styles.foundGuideContent}>
+        <View style={styles.foundGuideTitleWrapper}>
+          <Text style={styles.foundGuideTitle}>
+            {t('page.nextComponent.multiAddressHome.foundGuideTitle')}
+          </Text>
+          <RcIconRightArrow
+            width={17}
+            height={21}
+            color={colors2024['neutral-title-1']}
+          />
+        </View>
+        <Text style={styles.foundGuideDesc}>
+          {t('page.nextComponent.multiAddressHome.foundGuideDesc')}
+        </Text>
       </View>
-    </View>
+    </Pressable>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   noAssetsContainer: {
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
-    borderRadius: 24,
-    overflow: 'hidden',
     marginHorizontal: 16,
-    height: 488,
+    height: 434,
   },
 
   bgb2: {
@@ -128,10 +206,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginVertical: 42,
   },
 
-  list: { gap: 12, paddingHorizontal: 16 },
+  list: { gap: 12, paddingHorizontal: 0 },
 
   noAssetsItem: {
-    height: 98,
+    height: 86,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -140,6 +218,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-1'],
+  },
+  header: {
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    marginTop: 48,
+    color: colors2024['neutral-title-1'],
+  },
+  desc: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    marginTop: 12,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: colors2024['neutral-secondary'],
   },
 
   itemInner: {
@@ -175,5 +272,47 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontStyle: 'normal',
     fontWeight: '400',
     lineHeight: 20,
+  },
+  foundGuideContainer: {
+    borderWidth: 1,
+    borderColor: colors2024['brand-light-1'],
+    backgroundColor: colors2024['brand-light-1'],
+    height: 76,
+    borderRadius: 12,
+    marginLeft: 15,
+    marginRight: 16,
+    marginTop: 14,
+    marginBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  foundGuideContent: {
+    gap: 4,
+  },
+  foundGuideTitle: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    lineHeight: 22,
+    fontStyle: 'normal',
+    fontWeight: '700',
+  },
+  foundGuideDesc: {
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontStyle: 'normal',
+    fontWeight: '400',
+  },
+  foundGuideTitleWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    justifyContent: 'space-between',
   },
 }));

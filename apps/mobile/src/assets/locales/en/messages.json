@@ -1036,6 +1036,8 @@
         "services": "Services",
         "totalBalance": "Total Balance",
         "noAssets": "No Assets?",
+        "foundGuideTitle": "Fund quickly",
+        "foundGuideDesc": "Add tokens to your wallet to get started.",
         "fundYourWallet": "Fund Your Wallet",
         "importAddress": "Import an Address",
         "importAddressDesc": "Add an existing address with funds",
@@ -1717,6 +1719,10 @@
       "excludeBalanceTips": "This asset is excluded from your total balance for accuracy. You can tap it to view details and include it if preferred.",
       "excludeBalanceTipsButton": "I Got It."
     },
+    "defiDetail": {
+      "viewSiteInApp": "View in Dapp",
+      "viewSiteInWebsite": "View in Website"
+    },
     "approvalsAddressList": {
       "title": "Approvals"
     },
@@ -1734,7 +1740,10 @@
         "totalChain_other": "Total {{count}} Chains"
       },
       "emptyToken": {
-        "title": "Fund Your Wallet",
+        "title": "You’ve got no assets",
+        "desc": "Fund quickly now",
+        "importHeader": "Import an Address",
+        "importBody": "Add an existing address with funds.",
         "receiveHeader": "Receive Crypto",
         "receiveBody": "Transfer tokens from another address",
         "buyHeader": "Buy with Fiat",

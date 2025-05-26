@@ -5,13 +5,11 @@ import { useTheme2024 } from '@/hooks/theme';
 
 export const AddressEntry = ({
   data,
-  disableClick,
 }: {
   data: KeyringAccountWithAlias & {
     changPercent?: string;
     isLoss?: boolean;
   };
-  disableClick?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
@@ -19,9 +17,7 @@ export const AddressEntry = ({
     <AddressItemEntry
       style={styles.root}
       account={data}
-      disableClick={disableClick}
       changePercent={data.changPercent}
-      // disableMenu
       isLoss={data.isLoss}
     />
   );

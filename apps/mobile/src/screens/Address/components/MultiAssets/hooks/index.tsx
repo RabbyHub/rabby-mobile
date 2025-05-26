@@ -5,6 +5,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import React, { useMemo } from 'react';
 
+export const isTabsSwiping = {
+  value: false,
+};
+
 export const useAccountInfo = () => {
   const { accounts, fetchAccounts } = useAccounts({
     disableAutoFetch: true,

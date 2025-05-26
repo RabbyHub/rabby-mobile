@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useSafeState } from '@/hooks/useSafeState';
 import { portfolio2Display } from '../utils/portfolio';
@@ -8,8 +8,9 @@ import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import { syncProtocols } from '@/databases/hooks/assets';
 import { singleDeFiNounceAtom } from './refresh';
-import { useAtom } from 'jotai';
+import { useAtom, atom } from 'jotai';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
@@ -90,8 +91,27 @@ export const log = (...args: any) => {
   // console.log(...args);
 };
 
+export const currentPortfolioAtom = atom<{
+  data: DisplayedProject[];
+  address: string;
+}>({ data: [], address: '' });
+
 export const usePortfolios = (userAddr: string | undefined, visible = true) => {
-  const [data, setData] = useSafeState<DisplayedProject[]>([]);
+  const [_data, _setData] = useAtom(currentPortfolioAtom);
+  const [data, setData] = useMemo(() => {
+    const innerSetData = (d: DisplayedProject[]) =>
+      _setData({
+        address: userAddr || '',
+        data: d,
+      });
+    if (!userAddr) {
+      return [[], innerSetData];
+    }
+    return [
+      isSameAddress(_data.address, userAddr) ? _data.data : [],
+      innerSetData,
+    ];
+  }, [_data.address, _data.data, _setData, userAddr]);
   const [isLoading, setLoading] = useSafeState(true);
   const [hasValue, setHasValue] = useSafeState(false);
   const [singleDeFiNounce, setSingleDeFiNounce] = useAtom(singleDeFiNounceAtom);
@@ -168,8 +188,11 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
 
-    setData(pre => tagProfiles(pre || [], tokenSettings));
-  }, [setData]);
+    _setData(pre => ({
+      ...pre,
+      data: tagProfiles(pre.data || [], tokenSettings),
+    }));
+  }, [_setData]);
 
   useEffect(() => {
     if (singleDeFiNounce > 0) {

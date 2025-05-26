@@ -140,6 +140,7 @@ export function BrowserHeader({
           {finalSceneCurrentAccount ? (
             <WalletIcon
               type={finalSceneCurrentAccount?.type}
+              address={finalSceneCurrentAccount?.address}
               width={24}
               height={24}
               style={styles.walletIcon}

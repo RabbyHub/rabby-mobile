@@ -2,6 +2,8 @@ import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 
+const isAndroid = Platform.OS === 'android';
+
 interface Props {
   children: React.ReactNode;
   blurAmount?: number;
@@ -13,7 +15,7 @@ export const BlurShadowView = ({
   isLight,
   blurAmount = 29,
 }: Props) => {
-  if (!isLight) {
+  if (!isLight || isAndroid) {
     return children;
   }
   return (
