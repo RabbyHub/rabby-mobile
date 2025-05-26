@@ -11,10 +11,18 @@ import { ModalAddToContacts } from '@/components/Address/SheetModalAddToContacts
 import { apiBalance } from '@/core/apis';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { Button } from '@/components2024/Button';
+import AuthButton from '@/components2024/AuthButton';
+import { useTranslation } from 'react-i18next';
+import {
+  canDirectSignAtom,
+  directSigningAtom,
+} from '@/hooks/useMiniApprovalDirectSign';
+import { useAtom } from 'jotai';
 
 const isAndroid = Platform.OS === 'android';
 
 export default function BottomArea() {
+  const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
 
   const { handleSubmit } = useSendTokenFormik();
@@ -22,7 +30,11 @@ export default function BottomArea() {
   const {
     formValues,
     screenState,
-    computed: { canSubmit, toAddressInContactBook },
+    computed: {
+      canSubmit,
+      canDirectSign: canShowDirectSign,
+      toAddressInContactBook,
+    },
     fns: { putScreenState, fetchContactAccounts },
   } = useSendTokenInternalContext();
 
@@ -33,19 +45,35 @@ export default function BottomArea() {
 
   const { safeOffBottom } = useSafeSizes();
 
+  const [isDirectSigning] = useAtom(directSigningAtom);
+
+  const [canDirectSign] = useAtom(canDirectSignAtom);
+
   return (
     <View
       style={[
         styles.bottomDockArea,
         isAndroid && { paddingBottom: 20 + safeOffBottom },
       ]}>
-      <Button
-        disabled={!canSubmit}
-        type="primary"
-        title={'Send'}
-        loading={isSubmitLoading}
-        onPress={handleSubmit}
-      />
+      {canShowDirectSign ? (
+        <AuthButton
+          authTitle={t('page.whitelist.confirmPassword')}
+          title={t('global.confirm')}
+          onFinished={handleSubmit}
+          disabled={!canSubmit || !canDirectSign}
+          loading={isDirectSigning}
+          type={'primary'}
+          syncUnlockTime
+        />
+      ) : (
+        <Button
+          disabled={!canSubmit}
+          type="primary"
+          title={'Send'}
+          loading={isSubmitLoading}
+          onPress={handleSubmit}
+        />
+      )}
 
       <ModalConfirmAllowTransfer
         toAddr={formValues.to}

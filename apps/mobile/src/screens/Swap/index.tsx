@@ -1,14 +1,9 @@
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
-import {
-  DEX_WITH_WRAP,
-  getChainDefaultToken,
-  SWAP_SUPPORT_CHAINS,
-} from '@/constant/swap';
+import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
 import { preferenceService, swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,19 +11,16 @@ import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import {
   CompositeScreenProps,
-  StackActions,
-  useFocusEffect,
   useIsFocused,
   useNavigation,
   useNavigationState,
 } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import { useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import React, {
   useCallback,
   useEffect,
@@ -46,7 +38,6 @@ import { LowCreditModal } from './components/LowCreditModal';
 import { QuoteList } from './components/Quotes';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
 import {
-  useDetectLoss,
   usePollSwapPendingNumber,
   useSlippageStore,
   useSwapUnlimitedAllowance,
@@ -90,8 +81,15 @@ import {
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { Tip } from '@/components';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
-import { isAccountSupportMiniApproval } from '@/utils/account';
-import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
+import {
+  isAccountSupportDirectSign,
+  isAccountSupportMiniApproval,
+} from '@/utils/account';
+import AuthButton from '@/components2024/AuthButton';
+import {
+  canDirectSignAtom,
+  directSigningAtom,
+} from '@/hooks/useMiniApprovalDirectSign';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -464,6 +462,11 @@ const Swap = ({
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
   }, [chain]);
 
+  const accountSupportDirectSign = useMemo(
+    () => isAccountSupportDirectSign(currentAccount?.type),
+    [currentAccount?.type],
+  );
+
   const { loading: isSubmitting, runAsync: handleSwap } = useRequest(
     async () => {
       if (receiveToken) {
@@ -471,9 +474,18 @@ const Swap = ({
       }
       if (isAccountSupportMiniApproval(currentAccount?.type)) {
         clearExpiredTimer();
+        if (accountSupportDirectSign) {
+          if (isDirectSigning) {
+            return;
+          } else {
+            setDirectSigning(true);
+          }
+        }
         try {
           if (txs?.length) {
-            await sendPrepareMiniTransactions();
+            await sendPrepareMiniTransactions({
+              directSubmit: accountSupportDirectSign,
+            });
           } else {
             const res = await runBuildSwapTxs();
             if (res) {
@@ -484,6 +496,7 @@ const Swap = ({
                   source: 'swap',
                   swapUseSlider,
                 },
+                directSubmit: accountSupportDirectSign,
               });
             }
           }
@@ -689,6 +702,9 @@ const Swap = ({
     setIsShowRabbyFeePopup,
   ]);
 
+  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
+  const [canDirectSign] = useAtom(canDirectSignAtom);
+
   return (
     <NormalScreenContainer2024 type="bg1">
       {isForMultipleAdderss && (
@@ -829,6 +845,9 @@ const Swap = ({
                   marginHorizontal: -24,
                 }}>
                 <BridgeShowMore
+                  supportDirectSign={isAccountSupportDirectSign(
+                    currentAccount?.type,
+                  )}
                   openFeePopup={openFeePopup}
                   open={showMoreOpen}
                   setOpen={setShowMoreOpen}
@@ -899,35 +918,47 @@ const Swap = ({
               : undefined
           }>
           <View>
-            <Button
-              onPress={() => {
-                if (!isSupportedChain && !externalDapps.length) {
-                  return;
+            {accountSupportDirectSign && isSupportedChain ? (
+              <AuthButton
+                authTitle={t('page.whitelist.confirmPassword')}
+                title={t('global.confirm')}
+                onFinished={handleSwap}
+                disabled={swapBtnDisabled || !canDirectSign}
+                loading={isDirectSigning}
+                type={'primary'}
+                syncUnlockTime
+              />
+            ) : (
+              <Button
+                onPress={() => {
+                  if (!isSupportedChain && !externalDapps.length) {
+                    return;
+                  }
+                  if (!isSupportedChain && externalDapps.length > 0) {
+                    setSwapDappOpen(true);
+                    return;
+                  }
+                  if (!activeProvider || slippageChanged) {
+                    refresh(e => e + 1);
+                    return;
+                  }
+                  if (activeProvider?.shouldTwoStepApprove) {
+                    setTwoStepApproveModalVisible(true);
+                    return;
+                  }
+                  // gotoSwap();
+                  handleSwap();
+                }}
+                title={btnText}
+                disabled={
+                  isSupportedChain
+                    ? swapBtnDisabled
+                    : externalDapps.length > 0
+                    ? false
+                    : true
                 }
-                if (!isSupportedChain && externalDapps.length > 0) {
-                  setSwapDappOpen(true);
-                  return;
-                }
-                if (!activeProvider || slippageChanged) {
-                  refresh(e => e + 1);
-                  return;
-                }
-                if (activeProvider?.shouldTwoStepApprove) {
-                  setTwoStepApproveModalVisible(true);
-                  return;
-                }
-                // gotoSwap();
-                handleSwap();
-              }}
-              title={btnText}
-              disabled={
-                isSupportedChain
-                  ? swapBtnDisabled
-                  : externalDapps.length > 0
-                  ? false
-                  : true
-              }
-            />
+              />
+            )}
           </View>
         </Tip>
       </View>

@@ -38,18 +38,20 @@ import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { useFindChain } from '@/hooks/useFindChain';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
-import { navigate, naviReplace } from '@/utils/navigation';
+import { naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
-import { isAccountSupportMiniApproval } from '@/utils/account';
+import {
+  isAccountSupportDirectSign,
+  isAccountSupportMiniApproval,
+} from '@/utils/account';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { toast } from '@/components2024/Toast';
 import { usePollSendPendingCount } from './useSendPendingCount';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useMemoizedFn } from 'ahooks';
+import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -544,7 +546,14 @@ export function useSendTokenForm(
     });
   }, [loadGasListAndResolve, putScreenState]);
 
-  const { sendMiniTransactions } = useMiniApproval();
+  const {
+    sendMiniTransactions,
+    prepareMiniTransactions,
+    sendPrepareMiniTransactions,
+  } = useMiniApproval();
+
+  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
+
   const { runAsync: runFetchPendingCount } = usePollSendPendingCount({
     isForMultipleAddress: isForMultipleAdderss,
   });
@@ -799,6 +808,21 @@ export function useSendTokenForm(
           isAccountSupportMiniApproval(currentAccount?.type || '') &&
           !chain.isTestnet
         ) {
+          if (isAccountSupportDirectSign(currentAccount?.type || '')) {
+            if (isDirectSigning) {
+              return;
+            } else {
+              setDirectSigning(true);
+            }
+            await prepareRef.current;
+            await sendPrepareMiniTransactions({
+              directSubmit: true,
+            });
+            runFetchPendingCount();
+            handleFieldChange('amount', '');
+            sendTokenEventsRef.current.emit(SendTokenEvents.ON_SIGNED_SUCCESS);
+            return;
+          }
           const res = await apiProvider.sendRequest(
             {
               method: 'eth_sendTransaction',
@@ -882,6 +906,7 @@ export function useSendTokenForm(
       currentToken,
       getParams,
       handleFieldChange,
+      isDirectSigning,
       isNativeToken,
       isShowMessageDataForToken,
       putScreenState,
@@ -890,6 +915,8 @@ export function useSendTokenForm(
       screenState.selectedGasLevel?.price,
       screenState.showGasReserved,
       sendMiniTransactions,
+      sendPrepareMiniTransactions,
+      setDirectSigning,
       toAddress,
     ],
   );
@@ -1382,13 +1409,21 @@ export function useSendTokenForm(
         !screenState.balanceError &&
         new BigNumber(formValues.amount).gte(0) &&
         !screenState.isLoading,
+
+      canDirectSign:
+        isAccountSupportMiniApproval(currentAccount?.type || '') &&
+        isAccountSupportDirectSign(currentAccount?.type) &&
+        !chainItem?.isTestnet,
     };
   }, [
     whitelist,
-    isAddrOnContactBook,
     formValues.to,
-    screenState,
     formValues.amount,
+    isAddrOnContactBook,
+    screenState.balanceError,
+    screenState.isLoading,
+    currentAccount?.type,
+    chainItem?.isTestnet,
   ]);
 
   const resetFormValues = useCallback(() => {
@@ -1403,6 +1438,144 @@ export function useSendTokenForm(
       currentAccount!.address,
     );
   });
+
+  const prepareRef = useRef<Promise<void>>();
+
+  useEffect(() => {
+    if (screenState.isSubmitLoading) {
+      return;
+    }
+
+    let init = true;
+
+    if (
+      isAccountSupportMiniApproval(currentAccount?.type || '') &&
+      !chainItem?.isTestnet
+    ) {
+      const prepare = async () => {
+        const chain = findChain({
+          serverId: currentToken.chain,
+        })!;
+        const {
+          to,
+          amount,
+          messageDataForSendToEoa,
+          messageDataForContractCall,
+        } = formValues;
+
+        const params = getParams({
+          to: to,
+          amount: amount,
+          messageDataForSendToEoa: messageDataForSendToEoa,
+          messageDataForContractCall: messageDataForContractCall,
+        });
+        if (isNativeToken) {
+          // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
+          const couldSpecifyIntrinsicGas =
+            !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
+
+          try {
+            const code = await apiProvider.requestETHRpc(
+              {
+                method: 'eth_getCode',
+                params: [to, 'latest'],
+              },
+              chain.serverId,
+            );
+            const notContract = !!code && (code === '0x' || code === '0x0');
+            let gasLimit = 0;
+
+            if (screenState.estimatedGas) {
+              gasLimit = screenState.estimatedGas;
+            }
+
+            /**
+             * we dont' need always fetch estimatedGas, if no `params.gas` set below,
+             * `params.gas` would be filled on Tx Page.
+             */
+            if (gasLimit > 0) {
+              params.gas = intToHex(gasLimit);
+            } else if (notContract && couldSpecifyIntrinsicGas) {
+              params.gas = intToHex(DEFAULT_GAS_USED);
+            }
+            if (!notContract) {
+              // not pre-set gasLimit if to address is contract address
+              delete params.gas;
+            }
+          } catch (e) {
+            if (couldSpecifyIntrinsicGas) {
+              params.gas = intToHex(DEFAULT_GAS_USED);
+            }
+          }
+          if (
+            isShowMessageDataForToken &&
+            (messageDataForContractCall || messageDataForSendToEoa)
+          ) {
+            delete params.gas;
+          }
+          if (screenState.showGasReserved) {
+            params.gasPrice = screenState.selectedGasLevel?.price;
+          }
+        }
+        if (
+          isAccountSupportMiniApproval(currentAccount?.type || '') &&
+          !chain.isTestnet
+        ) {
+          const res = await apiProvider.sendRequest(
+            {
+              method: 'eth_sendTransaction',
+              params: [params],
+              $ctx: {
+                ga: {
+                  category: 'Send',
+                  source: 'sendToken',
+                  toAddress,
+                  trigger: 'sendToken',
+                },
+              },
+            },
+            INTERNAL_REQUEST_SESSION,
+            true,
+          );
+          const tx = res.params?.[0];
+          if (tx && init && !isDirectSigning) {
+            await prepareMiniTransactions({
+              txs: [tx],
+              ga: {
+                category: 'Send',
+                source: 'sendToken',
+                toAddress,
+                trigger: 'sendToken',
+              },
+            });
+          }
+        }
+      };
+
+      if (computed.canSubmit) {
+        prepareRef.current = prepare();
+      }
+    }
+    return () => {
+      init = false;
+    };
+  }, [
+    isDirectSigning,
+    chainItem?.isTestnet,
+    computed.canSubmit,
+    currentAccount?.type,
+    currentToken.chain,
+    formValues,
+    getParams,
+    isNativeToken,
+    isShowMessageDataForToken,
+    prepareMiniTransactions,
+    screenState.estimatedGas,
+    screenState.selectedGasLevel?.price,
+    screenState.showGasReserved,
+    screenState.isSubmitLoading,
+    toAddress,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -1458,6 +1631,7 @@ type InternalContext = {
     currentTokenBalance: string;
     whitelistEnabled: boolean;
     canSubmit: boolean;
+    canDirectSign: boolean;
     toAddressInWhitelist: boolean;
     toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
@@ -1498,6 +1672,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     toAddressInWhitelist: false,
     toAddressIsValid: false,
     toAddressInContactBook: false,
+    canDirectSign: false,
   },
 
   formik: null as any,

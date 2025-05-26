@@ -7,7 +7,10 @@ import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
+import {
+  gasRelativeComponentAtom,
+  MiniApprovalTaskType,
+} from '@/hooks/useMiniApprovalTask';
 import { navigate } from '@/utils/navigation';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
@@ -29,6 +32,11 @@ import {
   EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY,
   eventBus,
 } from '@/utils/events';
+import { useSetAtom } from 'jotai';
+import {
+  canDirectSignAtom,
+  miniApprovalGasAtom,
+} from '@/hooks/useMiniApprovalDirectSign';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -220,6 +228,7 @@ export const MiniFooterBar: React.FC<Props> = ({
   gasAccountAddress,
   isFirstGasCostLoading,
   isFirstGasLessLoading,
+  isGasNotEnough,
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
@@ -302,6 +311,10 @@ export const MiniFooterBar: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const setMiniApprovalGas = useSetAtom(miniApprovalGasAtom);
+
+  const setCanDirectSign = useSetAtom(canDirectSignAtom);
+
   const isSetGasMethodRef = useRef(false);
   const [isInited, setIsInited] = useState(false);
   useEffect(() => {
@@ -326,6 +339,55 @@ export const MiniFooterBar: React.FC<Props> = ({
   ]);
 
   useEffect(() => {
+    if (isInited) {
+      if (
+        (showGasLess && !useGasLess && !canGotoUseGasAccount) ||
+        (payGasByGasAccount &&
+          !(
+            !isWalletConnect &&
+            gasAccountCost?.balance_is_enough &&
+            !gasAccountCost?.chain_not_support &&
+            noCustomRPC
+          ))
+      ) {
+        setCanDirectSign(false);
+      } else {
+        setCanDirectSign(true);
+      }
+
+      setMiniApprovalGas(pre =>
+        pre
+          ? {
+              ...pre,
+              showGasLevelPopup:
+                (showGasLess && !useGasLess && !canGotoUseGasAccount) ||
+                (payGasByGasAccount &&
+                  !(
+                    !isWalletConnect &&
+                    gasAccountCost?.balance_is_enough &&
+                    !gasAccountCost?.chain_not_support &&
+                    noCustomRPC
+                  )),
+            }
+          : pre,
+      );
+    }
+  }, [
+    canGotoUseGasAccount,
+    gasAccountCanPay,
+    isInited,
+    payGasByGasAccount,
+    setMiniApprovalGas,
+    showGasLess,
+    noCustomRPC,
+    isWalletConnect,
+    gasAccountCost?.balance_is_enough,
+    gasAccountCost?.chain_not_support,
+    setCanDirectSign,
+    useGasLess,
+  ]);
+
+  useEffect(() => {
     if (!gasAccountCanPay) {
       eventBus.emit(
         EVENT_PAY_GAS_BY_GAS_ACCOUNT_AND_NOT_CAN_PAY,
@@ -334,6 +396,106 @@ export const MiniFooterBar: React.FC<Props> = ({
     }
   }, [gasAccountCanPay, payGasByGasAccount]);
 
+  const setGasRelativeComponent = useSetAtom(gasRelativeComponentAtom);
+
+  useEffect(() => {
+    if (!account) {
+      setGasRelativeComponent(null);
+      return;
+    }
+    setGasRelativeComponent(
+      !isInited ? null : (
+        <>
+          {showGasLess &&
+          !payGasByGasAccount &&
+          (!securityLevel || !hasUnProcessSecurityResult) ? (
+            canUseGasLess ? (
+              <GasLessActivityToSign
+                gasLessEnable={useGasLess}
+                handleFreeGas={() => {
+                  enableGasLess?.();
+                }}
+                gasLessConfig={gasLessConfig}
+              />
+            ) : isWatchAddr ||
+              account?.type === KEYRING_TYPE.GnosisKeyring ? null : (
+              <GasLessNotEnough
+                inShowMore
+                canGotoUseGasAccount={canGotoUseGasAccount}
+                canDepositUseGasAccount={canDepositUseGasAccount}
+                onChangeGasAccount={onChangeGasAccount}
+                gasAccountAddress={gasAccountAddress!}
+                gasAccountCost={gasAccountCost}
+                onDeposit={() => {
+                  onDeposit?.();
+                  onChangeGasAccount?.();
+                }}
+                onGotoGasAccount={() => {
+                  rejectApproval?.();
+                  navigate(RootNames.StackTransaction, {
+                    screen: RootNames.GasAccount,
+                    params: {},
+                  });
+                }}
+              />
+            )
+          ) : null}
+
+          {payGasByGasAccount && !gasAccountCanPay ? (
+            isWatchAddr ||
+            account?.type === KEYRING_TYPE.GnosisKeyring ? null : (
+              <GasAccountTips
+                inShowMore
+                gasAccountAddress={gasAccountAddress!}
+                gasAccountCost={gasAccountCost}
+                isGasAccountLogin={isGasAccountLogin}
+                isWalletConnect={isWalletConnect}
+                noCustomRPC={noCustomRPC}
+                onDeposit={onDeposit}
+                onGotoGasAccount={() => {
+                  rejectApproval?.();
+                  navigate(RootNames.StackTransaction, {
+                    screen: RootNames.GasAccount,
+                    params: {},
+                  });
+                }}
+              />
+            )
+          ) : null}
+        </>
+      ),
+    );
+    return () => {
+      setGasRelativeComponent(null);
+    };
+  }, [
+    account,
+    account?.type,
+    canDepositUseGasAccount,
+    canGotoUseGasAccount,
+    canUseGasLess,
+    enableGasLess,
+    gasAccountAddress,
+    gasAccountCanPay,
+    gasAccountCost,
+    gasLessConfig,
+    hasUnProcessSecurityResult,
+    isGasAccountLogin,
+    isInited,
+    isWalletConnect,
+    isWatchAddr,
+    noCustomRPC,
+    onChangeGasAccount,
+    onDeposit,
+    payGasByGasAccount,
+    rejectApproval,
+    securityLevel,
+    setGasRelativeComponent,
+    showGasLess,
+    useGasLess,
+  ]);
+
+  useEffect(() => {}, []);
   if (!account) {
     return null;
   }

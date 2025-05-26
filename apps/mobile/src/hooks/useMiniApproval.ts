@@ -27,7 +27,17 @@ export const useMiniApproval = () => {
   const { clear } = useClearMiniApprovalTask();
 
   const _sendMiniTransactions = useMemoizedFn(
-    ({ txs, ga, id }: { txs: Tx[]; ga?: Record<string, any>; id?: string }) => {
+    ({
+      txs,
+      ga,
+      id,
+      directSubmit,
+    }: {
+      txs: Tx[];
+      ga?: Record<string, any>;
+      id?: string;
+      directSubmit?: boolean;
+    }) => {
       // const currentApprovalId = uniqueId('mini-approval');
       return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(
         (resolve, reject) => {
@@ -37,7 +47,7 @@ export const useMiniApproval = () => {
               id: id || prev.id,
               txs,
               ga,
-              visible: true,
+              visible: directSubmit ? false : true,
               onReject: e => {
                 setState(prev => ({ ...prev, txs: [], visible: false }));
                 const signingTxId =
@@ -61,11 +71,20 @@ export const useMiniApproval = () => {
   );
 
   const sendMiniTransactions = useMemoizedFn(
-    ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
+    ({
+      txs,
+      ga,
+      directSubmit,
+    }: {
+      txs: Tx[];
+      ga?: Record<string, any>;
+      directSubmit?: boolean;
+    }) => {
       clear();
       return _sendMiniTransactions({
         txs,
         ga,
+        directSubmit,
         id: uniqueId('mini-approval'),
       });
     },
@@ -85,16 +104,21 @@ export const useMiniApproval = () => {
     },
   );
 
-  const sendPrepareMiniTransactions = useMemoizedFn(async () => {
-    if (state.txs?.length) {
-      await _sendMiniTransactions({
-        txs: state.txs,
-        ga: state.ga,
-      });
-    } else {
-      throw new Error('txs is empty, please run prepareMiniTransactions first');
-    }
-  });
+  const sendPrepareMiniTransactions = useMemoizedFn(
+    async (params?: { directSubmit?: boolean }) => {
+      if (state.txs?.length) {
+        await _sendMiniTransactions({
+          txs: state.txs,
+          ga: state.ga,
+          directSubmit: !!params?.directSubmit,
+        });
+      } else {
+        throw new Error(
+          'txs is empty, please run prepareMiniTransactions first',
+        );
+      }
+    },
+  );
 
   return {
     sendMiniTransactions,

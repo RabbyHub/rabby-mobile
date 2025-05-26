@@ -1,10 +1,16 @@
-import React, { Dispatch, SetStateAction, useMemo, useState } from 'react';
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
   Image,
   TouchableOpacity,
-  ActivityIndicator,
   Animated,
   Pressable,
 } from 'react-native';
@@ -21,6 +27,12 @@ import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import useDebounce from 'react-use/lib/useDebounce';
 import { formatTokenAmount } from '@/utils/number';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import { useAtom } from 'jotai';
+import ShowMoreGasSelectModal from './ShowMoreGasModal';
+import { getGasLevelI18nKey } from '@/utils/trans';
+import { gasRelativeComponentAtom } from '@/hooks/useMiniApprovalTask';
+import { miniApprovalGasAtom } from '@/hooks/useMiniApprovalDirectSign';
 
 const RABBY_FEE = '0.25%';
 
@@ -51,6 +63,7 @@ const BridgeShowMore = ({
   switchPreferMEV,
   recommendValue,
   openFeePopup,
+  supportDirectSign,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -81,6 +94,7 @@ const BridgeShowMore = ({
   originPreferMEVGuarded?: boolean;
   switchPreferMEV?: (b: boolean) => void;
   recommendValue?: number;
+  supportDirectSign: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -193,7 +207,13 @@ const BridgeShowMore = ({
           }
           style={styles.listItem}>
           {quoteLoading ? (
-            <ActivityIndicator size="small" />
+            <CustomSkeleton
+              style={{
+                width: 131,
+                height: 24,
+                borderRadius: 100,
+              }}
+            />
           ) : (
             <TouchableOpacity
               onPress={openQuotesList}
@@ -242,6 +262,12 @@ const BridgeShowMore = ({
           recommendValue={recommendValue}
         />
 
+        <DirectSignGasInfo
+          supportDirectSign={supportDirectSign}
+          loading={!!quoteLoading}
+          openShowMore={setOpen}
+        />
+
         <ListItem
           name={t('page.swap.rabbyFee.title')}
           style={{
@@ -267,6 +293,203 @@ const BridgeShowMore = ({
             />
           </ListItem>
         )}
+      </View>
+    </View>
+  );
+};
+
+export const DirectSignGasInfo = ({
+  supportDirectSign,
+  loading,
+  openShowMore,
+}: {
+  supportDirectSign: boolean;
+  loading: boolean;
+  openShowMore: (v: boolean) => void;
+}) => {
+  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const [gasTipsComponent, setGasTipsComponent] = useAtom(
+    gasRelativeComponentAtom,
+  );
+  const [miniApprovalGas, setMiniApprovalGas] = useAtom(miniApprovalGasAtom);
+  const [gasModalVisible, setGasModalVisible] = useState(false);
+  const ref = useRef<View>(null);
+  const [gasModalXY, setGasModalXY] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+
+  useEffect(() => {
+    if (loading) {
+      setMiniApprovalGas(undefined);
+      setGasTipsComponent(null);
+    }
+  }, [loading, setGasTipsComponent, setMiniApprovalGas]);
+
+  useEffect(() => {
+    if (
+      !loading &&
+      !miniApprovalGas?.loading &&
+      miniApprovalGas?.showGasLevelPopup
+    ) {
+      openShowMore(true);
+      setGasModalVisible(true);
+    }
+  }, [
+    miniApprovalGas?.loading,
+    miniApprovalGas?.showGasLevelPopup,
+    loading,
+    openShowMore,
+  ]);
+
+  const showGasContent =
+    miniApprovalGas &&
+    !miniApprovalGas.loading &&
+    miniApprovalGas.gasCostUsdStr &&
+    !loading;
+
+  return supportDirectSign ? (
+    <>
+      <ListItem
+        name={'Gas Fee'}
+        style={{
+          marginTop: 20,
+        }}>
+        {showGasContent ? (
+          <>
+            <TouchableOpacity
+              ref={ref}
+              onPress={() => {
+                setGasModalVisible(true);
+              }}
+              onLayout={() => {
+                ref.current?.measureInWindow((x, y, width, height) => {
+                  setGasModalXY({ x, y, height, width });
+                });
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                }}>
+                <Text
+                  style={{
+                    color: colors2024['brand-default'],
+                    fontFamily: 'SF Pro Rounded',
+                    fontSize: 14,
+                    fontStyle: 'normal',
+                    fontWeight: '500',
+                    lineHeight: 16,
+                    paddingHorizontal: 6,
+                    paddingVertical: 4,
+                    borderRadius: 4,
+                    backgroundColor: colors2024['brand-light-1'],
+                    overflow: 'hidden',
+                  }}>
+                  {miniApprovalGas?.selectedGas?.level
+                    ? t(getGasLevelI18nKey(miniApprovalGas.selectedGas.level))
+                    : t(getGasLevelI18nKey('normal'))}
+                </Text>
+
+                <Text
+                  style={{
+                    color: colors2024['brand-default'],
+                    fontFamily: 'SF Pro Rounded',
+                    fontSize: 16,
+                    fontStyle: 'normal',
+                    fontWeight: '700',
+                    lineHeight: 18,
+                  }}>
+                  {miniApprovalGas!.gasCostUsdStr}
+                </Text>
+                <Animated.View
+                  style={{
+                    transform: [
+                      { rotate: gasModalVisible ? '-90deg' : '90deg' },
+                    ],
+                  }}>
+                  <RcIconBluePolygon
+                    style={styles.arrowIcon}
+                    color={colors2024['brand-default']}
+                  />
+                </Animated.View>
+              </View>
+            </TouchableOpacity>
+
+            <ShowMoreGasSelectModal
+              layout={gasModalXY}
+              visible={gasModalVisible}
+              onCancel={() => {
+                setGasModalVisible(false);
+              }}
+              onConfirm={() => {
+                setGasModalVisible(false);
+              }}
+            />
+          </>
+        ) : (
+          <CustomSkeleton
+            style={{
+              width: 131,
+              height: 24,
+              borderRadius: 100,
+            }}
+          />
+        )}
+      </ListItem>
+      {showGasContent ? (
+        <View style={{ marginTop: 6 }}>{gasTipsComponent}</View>
+      ) : null}
+    </>
+  ) : null;
+};
+
+export const SendShowMore = ({
+  open,
+  setOpen,
+  supportDirectSign,
+  loading,
+}: {
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  supportDirectSign: boolean;
+  loading: boolean;
+}) => {
+  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+
+  if (!supportDirectSign) {
+    return null;
+  }
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.dottedLine} />
+        <TouchableOpacity
+          onPress={() => setOpen(e => !e)}
+          style={styles.headerTextWrapper}>
+          <Text style={styles.headerText}>
+            {t('page.bridge.showMore.title')}
+          </Text>
+          <ArrowRightSVG
+            width={14}
+            height={14}
+            style={[styles.icon, open && { transform: [{ rotate: '-90deg' }] }]}
+            color={colors2024['neutral-secondary']}
+          />
+        </TouchableOpacity>
+        <View style={styles.dottedLine} />
+      </View>
+      <View style={[styles.body, !open && { height: 0 }]}>
+        <DirectSignGasInfo
+          supportDirectSign={supportDirectSign}
+          loading={loading}
+          openShowMore={setOpen}
+        />
       </View>
     </View>
   );

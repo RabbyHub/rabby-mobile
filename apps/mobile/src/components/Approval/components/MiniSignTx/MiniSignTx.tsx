@@ -80,7 +80,7 @@ import {
   MiniApprovalTaskType,
   useMiniApprovalTask,
 } from '@/hooks/useMiniApprovalTask';
-import { View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, View } from 'react-native';
 import { sendTransaction } from '@/utils/sendTransaction';
 import {
   EVENT_MINI_APPROVAL_START_SIGN,
@@ -88,6 +88,12 @@ import {
   EVENTS,
 } from '@/utils/events';
 import AutoLockView from '@/components/AutoLockView';
+import {
+  directSigningAtom,
+  useResetMiniApprovalDirectSignState,
+} from '@/hooks/useMiniApprovalDirectSign';
+import { useAtom } from 'jotai';
+import { isAccountSupportDirectSign } from '@/utils/account';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -567,6 +573,99 @@ const MiniSignTx = ({
     }
   });
 
+  const checkGasLevelIsNotEnough = useCallback(
+    (gas: GasSelectorResponse) => {
+      if (!isReady || !txsResult.length) {
+        return Promise.resolve([false, true]);
+      }
+      let _txsResult = txsResult;
+
+      return Promise.all(
+        txsResult.map(async item => {
+          const tx = {
+            ...item.tx,
+            ...(support1559
+              ? {
+                  maxFeePerGas: intToHex(Math.round(gas.price || 0)),
+                  maxPriorityFeePerGas:
+                    gas.maxPriorityFee <= 0
+                      ? item.tx.maxFeePerGas
+                      : intToHex(Math.round(gas.maxPriorityFee)),
+                }
+              : { gasPrice: intToHex(Math.round(gas.price)) }),
+          };
+          return {
+            ...item,
+            tx,
+            gasCost: await explainGas({
+              gasUsed: item.gasUsed,
+              gasPrice: gas.price,
+              chainId: chain.id,
+              nativeTokenPrice: item.preExecResult.native_token.price,
+              tx,
+              gasLimit: item.gasLimit,
+            }),
+          };
+        }),
+      ).then(arr => {
+        let balance = nativeTokenBalance;
+        _txsResult = arr;
+
+        if (!_txsResult.length) {
+          return [false, true];
+        }
+
+        return openapi
+          .checkGasAccountTxs({
+            sig: sig || '',
+            account_id: gasAccountAddress,
+            tx_list: arr.map((item, index) => {
+              return {
+                ...item.tx,
+                gas: item.gasLimit,
+                gasPrice: intToHex(gas.price),
+              };
+            }),
+          })
+          .then(gasAccountRes => {
+            const checkResult = _txsResult.map((item, index) => {
+              const result = checkGasAndNonce({
+                recommendGasLimitRatio: item.recommendGasLimitRatio,
+                recommendGasLimit: item.gasLimit,
+                recommendNonce: item.tx.nonce,
+                tx: item.tx,
+                gasLimit: item.gasLimit,
+                nonce: item.tx.nonce,
+                isCancel: false,
+                gasExplainResponse: item.gasCost,
+                isSpeedUp: false,
+                isGnosisAccount: false,
+                nativeTokenBalance: balance,
+              });
+              balance = new BigNumber(balance)
+                .minus(new BigNumber(item.tx.value || 0))
+                .minus(new BigNumber(item.gasCost.maxGasCostAmount || 0))
+                .toString();
+              return result;
+            });
+            return [
+              gasAccountRes.balance_is_enough,
+              _.flatten(checkResult)?.some(e => e.code === 3001),
+            ];
+          });
+      });
+    },
+    [
+      isReady,
+      chain.id,
+      gasAccountAddress,
+      nativeTokenBalance,
+      sig,
+      support1559,
+      txsResult,
+    ],
+  );
+
   const handleGasChange = (gas: GasSelectorResponse) => {
     setSelectedGas({
       level: gas.level,
@@ -980,6 +1079,41 @@ const MiniSignTx = ({
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
+  const gasCalcMethod = useCallback(
+    async price => {
+      const res = await Promise.all(
+        txsResult.map(item =>
+          explainGas({
+            gasUsed: item.gasUsed,
+            gasPrice: price,
+            chainId,
+            nativeTokenPrice: item.preExecResult.native_token.price || 0,
+            tx: item.tx,
+            gasLimit: item.gasLimit,
+          }),
+        ),
+      );
+      const totalCost = res.reduce(
+        (sum, item) => {
+          sum.gasCostAmount = sum.gasCostAmount.plus(item.gasCostAmount);
+          sum.gasCostUsd = sum.gasCostUsd.plus(item.gasCostUsd);
+
+          sum.maxGasCostAmount = sum.maxGasCostAmount.plus(
+            item.maxGasCostAmount,
+          );
+          return sum;
+        },
+        {
+          gasCostUsd: new BigNumber(0),
+          gasCostAmount: new BigNumber(0),
+          maxGasCostAmount: new BigNumber(0),
+        },
+      );
+      return totalCost;
+    },
+    [chainId, txsResult],
+  );
+
   return (
     <>
       <MiniFooterBar
@@ -1015,35 +1149,9 @@ const MiniSignTx = ({
             nativeTokenBalance={nativeTokenBalance}
             gasPriceMedian={gasPriceMedian}
             gas={totalGasCost}
-            gasCalcMethod={async price => {
-              const res = await Promise.all(
-                txsResult.map(item =>
-                  explainGas({
-                    gasUsed: item.gasUsed,
-                    gasPrice: price,
-                    chainId,
-                    nativeTokenPrice:
-                      item.preExecResult.native_token.price || 0,
-                    tx: item.tx,
-                    gasLimit: item.gasLimit,
-                  }),
-                ),
-              );
-              const totalCost = res.reduce(
-                (sum, item) => {
-                  sum.gasCostAmount = sum.gasCostAmount.plus(
-                    item.gasCostAmount,
-                  );
-                  sum.gasCostUsd = sum.gasCostUsd.plus(item.gasCostUsd);
-                  return sum;
-                },
-                {
-                  gasCostUsd: new BigNumber(0),
-                  gasCostAmount: new BigNumber(0),
-                },
-              );
-              return totalCost;
-            }}
+            gasCalcMethod={gasCalcMethod}
+            miniSign
+            checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
           />
         }
         isSwap={isSwap}
@@ -1170,10 +1278,40 @@ export const MiniApproval = ({
   const dismissedByCodeRef = useRef(false);
   const handleReject = useMemoizedFn((reason?: string) => {
     onReject?.(reason);
+    cancelOverlayLoading();
   });
+
+  const [overlayLoading, setOverlayLoading] = React.useState(false);
+  const { currentAccount } = useCurrentAccount();
+
+  const onSubmittingCb = useCallback(() => {
+    onSubmitting?.();
+    if (isAccountSupportDirectSign(currentAccount?.type)) {
+      setOverlayLoading(true);
+    }
+  }, [currentAccount?.type, onSubmitting]);
+
+  const onSubmittedCb = useCallback(
+    (isSuccess: boolean) => {
+      onSubmitted?.(isSuccess);
+      setOverlayLoading(false);
+    },
+    [onSubmitted],
+  );
+
+  const cancelOverlayLoading = useMemoizedFn(() => {
+    setOverlayLoading?.(false);
+  });
+
+  const resetMiniApprovalDirectSignState =
+    useResetMiniApprovalDirectSignState();
+
   const handleClearTask = useMemoizedFn(() => {
     task.clear();
+    resetMiniApprovalDirectSignState();
     onVisibleChange?.(false);
+    cancelOverlayLoading();
+
     if (!visible) {
       onReject?.();
     }
@@ -1204,6 +1342,24 @@ export const MiniApproval = ({
   const task = useMiniApprovalTask({
     ga,
   });
+
+  const [isDirectSigning] = useAtom(directSigningAtom);
+
+  useEffect(() => {
+    resetMiniApprovalDirectSignState();
+  }, [resetMiniApprovalDirectSignState, txs]);
+
+  useEffect(() => {
+    if (isDirectSigning) {
+      setOverlayLoading?.(true);
+    }
+  }, [isDirectSigning]);
+
+  useEffect(() => {
+    if (task.error) {
+      setOverlayLoading?.(false);
+    }
+  }, [task.error]);
 
   if (!txs?.length) {
     return null;
@@ -1252,8 +1408,8 @@ export const MiniApproval = ({
                   onResolve?.(res);
                   dismissedByCodeRef.current = true;
                 }}
-                onSubmitting={onSubmitting}
-                onSubmitted={onSubmitted}
+                onSubmitting={onSubmittingCb}
+                onSubmitted={onSubmittedCb}
               />
             ) : null}
           </AutoLockView>
@@ -1266,18 +1422,31 @@ export const MiniApproval = ({
         onCancel={handleClearTask}
         onRetry={async () => {
           try {
-            onSubmitting?.();
+            onSubmittingCb?.();
             const res = await task.retry();
             // todo check this
             onResolve?.(res || []);
-            onSubmitted?.(true);
+            onSubmittedCb?.(true);
             dismissedByCodeRef.current = true;
           } catch (e) {
             console.error(e);
-            onSubmitted?.(false);
+            onSubmittedCb?.(false);
           }
         }}
       />
+
+      <Modal
+        visible={overlayLoading}
+        transparent
+        animationType="fade"
+        onRequestClose={cancelOverlayLoading}
+        statusBarTranslucent>
+        <Pressable style={styles.overlay} onPress={cancelOverlayLoading}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="white" />
+          </View>
+        </Pressable>
+      </Modal>
     </>
   );
 };
@@ -1300,5 +1469,22 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+  },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    width: 58,
+    height: 58,
+    borderRadius: 8,
+    backgroundColor: 'rgba(30, 30, 30, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }));

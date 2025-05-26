@@ -75,6 +75,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { getRecommendToken } from '@/utils/addressSupport';
 import { lowcaseSame } from '@/utils/common';
 import { noop } from 'lodash';
+import { ShowMoreOnSend } from './components/SendShowMore';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -230,6 +231,7 @@ function SendScreen({
       toAddressIsValid,
       toAddressInWhitelist,
       canSubmit,
+      canDirectSign,
     },
   } = useSendTokenForm(
     navParams?.toAddress,
@@ -470,6 +472,7 @@ function SendScreen({
           whitelistEnabled,
           toAddressIsValid,
           toAddressInContactBook,
+          canDirectSign,
 
           chainItem,
           currentToken,
@@ -520,6 +523,7 @@ function SendScreen({
                   disableItemCheck={disableItemCheck}
                   style={styles.balance}
                 />
+                <ShowMoreOnSend />
               </View>
             </KeyboardAwareScrollView>
             <BottomArea />

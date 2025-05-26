@@ -1,11 +1,11 @@
-import { isLedgerLockError } from '@/utils/ledger';
 import { FailedCode, sendTransaction } from '@/utils/sendTransaction';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import _, { uniqueId } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useResetMiniApprovalDirectSignState } from './useMiniApprovalDirectSign';
 
 type TxStatus = 'sended' | 'signed' | 'idle' | 'failed';
 
@@ -194,11 +194,14 @@ export const useClearMiniApprovalTask = () => {
   const [, setList] = useAtom(taskListAtom);
   const [, setStatus] = useAtom(taskStatusAtom);
   const [, setError] = useAtom(taskErrorAtom);
+  const resetMiniApprovalDirectSignState =
+    useResetMiniApprovalDirectSignState();
 
   const clear = useMemoizedFn(() => {
     setList([]);
     setStatus('idle');
     setError(null);
+    resetMiniApprovalDirectSignState();
     globalCurrentTaskId = uniqueId();
   });
 
@@ -206,5 +209,7 @@ export const useClearMiniApprovalTask = () => {
     clear,
   };
 };
+
+export const gasRelativeComponentAtom = atom<ReactNode>(null);
 
 export type MiniApprovalTaskType = ReturnType<typeof useMiniApprovalTask>;

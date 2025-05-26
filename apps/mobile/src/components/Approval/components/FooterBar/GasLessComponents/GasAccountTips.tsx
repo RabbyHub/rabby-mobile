@@ -16,6 +16,7 @@ export const GasAccountTips: React.FC<{
   isWalletConnect?: boolean;
   noCustomRPC?: boolean;
   onGotoGasAccount?: () => void;
+  inShowMore?: boolean;
 }> = ({
   gasAccountCost,
   isGasAccountLogin,
@@ -24,10 +25,11 @@ export const GasAccountTips: React.FC<{
   onGotoGasAccount,
   onDeposit,
   gasAccountAddress,
+  inShowMore,
 }) => {
   const { t } = useTranslation();
 
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
 
@@ -78,9 +80,27 @@ export const GasAccountTips: React.FC<{
   }
 
   return (
-    <View style={[styles.container]}>
-      <View style={styles.tipTriangle} />
-      <Text style={[styles.text]}>{tip}</Text>
+    <View
+      style={[
+        styles.container,
+        inShowMore && { backgroundColor: colors2024['red-light-1'] },
+      ]}>
+      <View
+        style={[
+          styles.tipTriangle,
+          inShowMore && {
+            left: 10,
+            borderBottomColor: colors2024['red-light-1'],
+          },
+        ]}
+      />
+      <Text
+        style={[
+          styles.text,
+          inShowMore && { color: colors2024['red-default'] },
+        ]}>
+        {tip}
+      </Text>
       {btnText ? (
         <TouchableOpacity
           style={styles.gasAccountBtn}

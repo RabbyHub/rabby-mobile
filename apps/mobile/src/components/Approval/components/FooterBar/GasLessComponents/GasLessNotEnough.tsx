@@ -18,6 +18,7 @@ export const GasLessNotEnough: React.FC<{
   canDepositUseGasAccount?: boolean;
   onDeposit?(): void;
   onGotoGasAccount?(): void;
+  inShowMore?: boolean;
 }> = ({
   gasAccountCost,
   gasAccountAddress,
@@ -26,9 +27,10 @@ export const GasLessNotEnough: React.FC<{
   canDepositUseGasAccount,
   onDeposit,
   onGotoGasAccount,
+  inShowMore,
 }) => {
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
 
@@ -40,10 +42,29 @@ export const GasLessNotEnough: React.FC<{
 
   return (
     <>
-      <View style={[styles.container, {}]}>
-        <View style={styles.tipTriangle} />
+      <View
+        style={[
+          styles.container,
+          inShowMore && {
+            backgroundColor: colors2024['red-light-1'],
+          },
+        ]}>
+        <View
+          style={[
+            styles.tipTriangle,
+            inShowMore && {
+              borderBottomColor: colors2024['red-light-1'],
+            },
+          ]}
+        />
         <View>
-          <Text style={[styles.text]}>
+          <Text
+            style={[
+              styles.text,
+              inShowMore && {
+                color: colors2024['red-default'],
+              },
+            ]}>
             {t('page.signFooterBar.gasless.notEnough')}
           </Text>
         </View>
