@@ -79,9 +79,15 @@ export const AddressItem = (props: AddressItemProps) => {
 
   const WalletIconWrapper = useCallback(
     (_props: Omit<WalletIconProps, 'type'>) => {
-      return <WalletIcon type={account.brandName} {..._props} />;
+      return (
+        <WalletIcon
+          type={account.brandName}
+          address={account.address}
+          {..._props}
+        />
+      );
     },
-    [account.brandName],
+    [account.address, account.brandName],
   );
   const WalletName = useCallback(
     ({ style }: { style?: StyleProp<TextStyle> }) => {
@@ -134,6 +140,7 @@ export const AddressItem = (props: AddressItemProps) => {
           <View style={styles.leftContainer}>
             <WalletIconWrapper
               borderRadius={12}
+              address={account.address}
               width={styles.walletIcon.width}
               height={styles.walletIcon.height}
             />

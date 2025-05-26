@@ -105,6 +105,9 @@ export interface ITokenManageSettingMap {
 
 export interface PreferenceStore {
   currentAccount: Account | undefined | null;
+  addressAvatarMap: {
+    [address: string]: string;
+  };
   balanceMap: {
     [address: string]: TotalBalanceResponse;
   };
@@ -239,6 +242,7 @@ export class PreferenceService {
           tempCurrentAccount: undefined,
           tokenManageSettingMap: {},
           safeSelfHostConfirm: {},
+          addressAvatarMap: {},
         },
       },
       {
@@ -253,6 +257,28 @@ export class PreferenceService {
       this.store.safeSelfHostConfirm = {};
     }
   }
+
+  addAddressAvatar = (address: string, avatar: string) => {
+    const key = address.toLowerCase();
+    this.store.addressAvatarMap = {
+      ...this.store.addressAvatarMap,
+      [key]: avatar,
+    };
+  };
+
+  removeAddressAvatar = (address: string) => {
+    const key = address.toLowerCase();
+    if (key in this.store.addressAvatarMap) {
+      const map = this.store.addressAvatarMap;
+      delete map[key];
+      this.store.addressAvatarMap = map;
+    }
+  };
+
+  getAddressAvatar = (address: string) => {
+    const key = address.toLowerCase();
+    return this.store.addressAvatarMap[key];
+  };
 
   hasConfirmSafeSelfHost = (networkId: string) => {
     if (this.store.safeSelfHostConfirm?.[networkId]) {

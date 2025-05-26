@@ -1,7 +1,7 @@
 import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { WaitingSignComponent } from './map';
 import { FooterBar } from './FooterBar/FooterBar';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
@@ -49,6 +49,7 @@ import { GnosisDrawer } from './TxComponents/GnosisDrawer';
 import { GnosisAdminFooterBarPopup } from './TxComponents/GnosisAdminFooterBarPopup';
 import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
 import { useSetState } from 'ahooks';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 interface SignTextProps {
   data: string[];
@@ -479,7 +480,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
 
   return (
     <View style={styles.wrapper}>
-      <ScrollView style={styles.approvalTx}>
+      <BottomSheetScrollView style={styles.approvalTx} nestedScrollEnabled>
         {isLoading && (
           <Skeleton
             style={{
@@ -498,7 +499,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
             originLogo={params.session.icon}
           />
         )}
-      </ScrollView>
+      </BottomSheetScrollView>
       {isGnosisAccount && safeInfo ? (
         <GnosisDrawer
           visible={drawerVisible}

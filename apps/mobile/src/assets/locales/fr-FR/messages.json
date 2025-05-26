@@ -956,7 +956,9 @@
         "buyWithFiat": "Acheter avec Fiat",
         "fundYourWallet": "Alimentez votre portefeuille",
         "receiveCryptoDesc": "Transférer des tokens depuis une autre adresse",
-        "buyWithFiatDesc": "Achat de crypto simple"
+        "buyWithFiatDesc": "Achat de crypto simple",
+        "foundGuideTitle": "Financer rapidement",
+        "foundGuideDesc": "Ajoutez des tokens à votre keyring pour commencer."
       },
       "addAddress": {
         "createAddress": "Créer une adresse",
@@ -1453,7 +1455,10 @@
         "receiveHeader": "Recevoir des cryptos",
         "receiveBody": "Transférer des tokens depuis une autre adresse",
         "title": "Alimentez votre portefeuille",
-        "buyBody": "Achat simple de crypto"
+        "buyBody": "Achat simple de crypto",
+        "importHeader": "Importer une adresse",
+        "desc": "Financer rapidement maintenant",
+        "importBody": "Ajouter une adresse existante avec des fonds."
       },
       "nft": {
         "floorPrice": "/Prix plancher:"
@@ -1910,6 +1915,10 @@
       "noCameraDevice": "Aucun appareil photo",
       "noQRCodeFound": "Aucun QR-Code trouvé",
       "selectFromAlbum": "Sélectionner depuis l'Album"
+    },
+    "defiDetail": {
+      "viewSiteInApp": "Voir dans Dapp",
+      "viewSiteInWebsite": "Voir sur le site Web"
     }
   },
   "native": {

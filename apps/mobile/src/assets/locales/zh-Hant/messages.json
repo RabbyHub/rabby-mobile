@@ -1106,7 +1106,9 @@
         "buyWithFiat": "法幣購買",
         "importAddressDesc": "添加已有資金的地址",
         "receiveCryptoDesc": "從其他地址轉移代幣",
-        "buyWithFiatDesc": "簡單的加密貨幣購買"
+        "buyWithFiatDesc": "簡單的加密貨幣購買",
+        "foundGuideTitle": "快速充值",
+        "foundGuideDesc": "將代幣添加到您的錢包以開始使用。"
       },
       "createNewAddress": {
         "BackupSeedPhrase": "手動備份助記詞",
@@ -1475,7 +1477,10 @@
         "buyHeader": "使用法幣購買",
         "title": "為您的錢包充值",
         "receiveBody": "從另一個地址轉移 tokens",
-        "buyBody": "簡單的加密貨幣購買"
+        "buyBody": "簡單的加密貨幣購買",
+        "desc": "立即快速充值",
+        "importBody": "新增一個已有資金的地址。",
+        "importHeader": "導入一個地址"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -2016,6 +2021,10 @@
       "noCameraDevice": "無攝影機設備",
       "noQRCodeFound": "未找到 QR-Code",
       "selectFromAlbum": "從相簿中選擇"
+    },
+    "defiDetail": {
+      "viewSiteInApp": "在 Dapp 中查看",
+      "viewSiteInWebsite": "在網站中查看"
     }
   },
   "component": {

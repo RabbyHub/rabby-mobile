@@ -15,6 +15,7 @@ import { trigger } from 'react-native-haptic-feedback';
 import { AddressItemContextMenu } from './AddressItemContextMenu';
 import { AddressItemInner2024 } from './AddressItemInner2024';
 import { AddressItemShadowView } from './AddressItemShadowView';
+import { isTabsSwiping } from './MultiAssets/hooks';
 
 const { isSameAddress } = addressUtils;
 
@@ -41,7 +42,6 @@ interface AddressItemProps {
   style?: StyleProp<ViewStyle>;
   disableMenu?: boolean;
   onSelect?: () => void;
-  disableClick?: boolean;
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
   const {
@@ -51,13 +51,15 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     changePercent,
     isLoss,
     disableMenu,
-    disableClick,
   } = props;
   const { switchAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
 
   const onDetail = useCallback(() => {
+    if (isTabsSwiping.value) {
+      return;
+    }
     trigger('impactLight', {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
@@ -86,7 +88,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([styles.root, props.style])}
         delayLongPress={200} // long press delay
-        onPress={disableClick ? undefined : onDetail}
+        onPress={onDetail}
         onLongPress={() => {
           trigger('impactLight', {
             enableVibrateFallback: true,

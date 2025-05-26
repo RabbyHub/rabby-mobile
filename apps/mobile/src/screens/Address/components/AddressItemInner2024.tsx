@@ -139,7 +139,12 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
       <InnerAddressItem style={styles.rootItem} account={account}>
         {({ WalletIcon, WalletName, WalletBalance }) => (
           <View style={styles.item}>
-            <WalletIcon width={46} height={46} borderRadius={12} />
+            <WalletIcon
+              address={account.address}
+              width={46}
+              height={46}
+              borderRadius={12}
+            />
             <View style={styles.itemInfo}>
               <View style={styles.itemName}>
                 <WalletName style={StyleSheet.flatten([styles.itemNameText])} />

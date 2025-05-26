@@ -92,7 +92,7 @@ function Chart({
               <LineChart
                 height={114}
                 width={ScreenWidth - 32}
-                shape={d3Shape.curveMonotoneX}
+                shape={d3Shape.curveCatmullRom}
                 style={{ position: 'relative' }}>
                 <LineChart.Path
                   showInactivePath={false}

@@ -84,6 +84,7 @@ export const TokenArea: React.FC<Props> = ({
           <View style={styles.tokenBox}>
             <WalletIcon
               type={item?.type as KEYRING_TYPE}
+              address={item.address}
               width={styles.walletIcon.width}
               height={styles.walletIcon.height}
               style={styles.walletIcon}

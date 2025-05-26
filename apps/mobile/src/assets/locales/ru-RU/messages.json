@@ -1005,7 +1005,9 @@
         "buyWithFiat": "Купить за фиат",
         "buyWithFiatDesc": "Простая покупка криптовалюты",
         "receiveCryptoDesc": "Перевод токенов с другого адреса",
-        "fundYourWallet": "Пополните ваш кошелек"
+        "fundYourWallet": "Пополните ваш кошелек",
+        "foundGuideDesc": "Добавьте токены в ваш кошелек, чтобы начать.",
+        "foundGuideTitle": "Быстро пополнить"
       },
       "createNewAddress": {
         "Continue": "Продолжить",
@@ -1529,7 +1531,10 @@
         "title": "Пополните ваш кошелек",
         "receiveBody": "Переведите токены с другого адреса",
         "receiveHeader": "Получить Crypto",
-        "buyBody": "Простая покупка криптовалюты"
+        "buyBody": "Простая покупка криптовалюты",
+        "importBody": "Добавить существующий адрес с средствами.",
+        "desc": "Пополните быстро сейчас",
+        "importHeader": "Импортировать адрес"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1959,6 +1964,10 @@
       "noCameraDevice": "Нет устройства камеры",
       "noQRCodeFound": "Не найден QR-код",
       "selectFromAlbum": "Выбрать из Альбома"
+    },
+    "defiDetail": {
+      "viewSiteInApp": "Посмотреть в Dapp",
+      "viewSiteInWebsite": "Просмотреть на сайте"
     }
   },
   "component": {

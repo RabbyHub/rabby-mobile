@@ -19189,6 +19189,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ethereum-blockies-base64@npm:1.0.2":
+  version: 1.0.2
+  resolution: "ethereum-blockies-base64@npm:1.0.2"
+  dependencies:
+    pnglib: 0.0.1
+  checksum: 326cb27f36c03c8857853dfaa024a4ab3c09ea90989579a84dd138a12930773bbf0d89cbac951a844e28d32a5b540d82ac6fcafad2d06219b9acd0ee68054bfc
+  languageName: node
+  linkType: hard
+
 "ethereum-bloom-filters@npm:^1.0.6":
   version: 1.0.10
   resolution: "ethereum-bloom-filters@npm:1.0.10::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fethereum-bloom-filters%2F-%2Fethereum-bloom-filters-1.0.10.tgz"
@@ -28453,6 +28462,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pnglib@npm:0.0.1":
+  version: 0.0.1
+  resolution: "pnglib@npm:0.0.1"
+  checksum: 48b5ef961a257f7653e6bc4d03aac1a817e4590d048cddee4f09a63cb3ed4ac120d15470725d4e37e087d57b231915d0563b16e596dd88d69a72ed669746c2bd
+  languageName: node
+  linkType: hard
+
 "pony-cause@npm:^2.1.10, pony-cause@npm:^2.1.9":
   version: 2.1.10
   resolution: "pony-cause@npm:2.1.10::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fpony-cause%2F-%2Fpony-cause-2.1.10.tgz"
@@ -29995,6 +30011,7 @@ __metadata:
     eth-json-rpc-filters: ^6.0.1
     eth-json-rpc-middleware: ^9.0.1
     eth-rpc-errors: ^4.0.3
+    ethereum-blockies-base64: 1.0.2
     ethers: 5.4.2
     fflate: 0.8.2
     formik: ^2.4.5

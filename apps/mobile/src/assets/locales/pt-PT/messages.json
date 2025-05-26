@@ -1164,7 +1164,9 @@
         "buyWithFiat": "Comprar com Fiat",
         "fundYourWallet": "Financiar a sua Wallet",
         "receiveCryptoDesc": "Transferir tokens de outro endereço",
-        "buyWithFiatDesc": "Compra de criptomoeda simples"
+        "buyWithFiatDesc": "Compra de criptomoeda simples",
+        "foundGuideTitle": "Financiar rapidamente",
+        "foundGuideDesc": "Adicione tokens à sua keyring para começar."
       },
       "createNewAddress": {
         "Continue": "Continuar",
@@ -1699,7 +1701,10 @@
         "receiveBody": "Transferir tokens de outro endereço",
         "buyBody": "Compra simples de cripto",
         "title": "Financiar a Sua Wallet",
-        "buyHeader": "Comprar com Fiat"
+        "buyHeader": "Comprar com Fiat",
+        "desc": "Financie rapidamente agora",
+        "importBody": "Adicione um endereço existente com fundos.",
+        "importHeader": "Importar um Endereço"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -2112,6 +2117,10 @@
       "noQRCodeFound": "Nenhum QR-Code encontrado",
       "selectFromAlbum": "Selecionar do Álbum",
       "noCameraDevice": "Sem Dispositivo de Câmera"
+    },
+    "defiDetail": {
+      "viewSiteInApp": "Ver no Dapp",
+      "viewSiteInWebsite": "Ver no Website"
     }
   },
   "constant": {

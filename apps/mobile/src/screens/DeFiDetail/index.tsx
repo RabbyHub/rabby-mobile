@@ -10,7 +10,6 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { trigger } from 'react-native-haptic-feedback';
 import { MemoItem } from '../Home/components/ProtocolMoreItem';
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { toast } from '@/components2024/Toast';
@@ -39,6 +38,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { Button } from '@/components2024/Button';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { usePortfolios } from '../Home/hooks/usePortfolio';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -153,7 +153,7 @@ export const DeFiDetailScreen = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
   const {
-    data,
+    data: routeData,
     portfolioList,
     isSingleAddress,
     account: routeAccount,
@@ -169,6 +169,21 @@ export const DeFiDetailScreen = () => {
     account: KeyringAccountWithAlias;
     isSingleAddress?: boolean;
   };
+
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const finalAccount = useMemo(
+    () => routeAccount || currentAccount,
+    [routeAccount, currentAccount],
+  );
+
+  const { data: currentPortfolio, updateData: singleUpdateData } =
+    usePortfolios(finalAccount.address, false);
+
+  const data = useMemo(
+    // 优先使用内存defi列表中的实时数据，兜底用页面参数数据
+    () => currentPortfolio.find(item => item.id === routeData.id) || routeData,
+    [currentPortfolio, routeData],
+  );
 
   const { t } = useTranslation();
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
@@ -252,17 +267,11 @@ export const DeFiDetailScreen = () => {
     disableAutoFetch: true,
   });
 
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
-  const finalAccount = useMemo(
-    () => routeAccount || currentAccount,
-    [routeAccount, currentAccount],
-  );
-
   const sectionsMultiProject = useMemo(() => {
     const sectionsList: SectionListItem[] = [];
     if (isSingleAddress) {
       sectionsList.push({
-        data: portfolioList,
+        data: data._portfolios || portfolioList,
         project: data,
         totalUsdValue: new BigNumber(data.netWorth),
         type: finalAccount.type,
@@ -279,7 +288,7 @@ export const DeFiDetailScreen = () => {
       totalUsdValue: SectionListItem['totalUsdValue'];
       address: SectionListItem['address'];
     }[] = [];
-    Object.keys(assetsMap).map(address => {
+    Object.keys(assetsMap).forEach(address => {
       const { portfolios } = assetsMap[address];
 
       portfolios?.map(portfolio => {
@@ -294,7 +303,7 @@ export const DeFiDetailScreen = () => {
       });
     });
 
-    accounts.map(account => {
+    accounts.forEach(account => {
       const idx = tempList.findIndex(item =>
         isSameAddress(item.address, account.address),
       );
@@ -326,7 +335,12 @@ export const DeFiDetailScreen = () => {
       item: AbstractPortfolio;
       section: SectionListItem;
     }) => {
-      return <MemoItem item={item} key={`${item.id}-${section.address}`} />;
+      return (
+        <MemoItem
+          item={item}
+          key={`${item.id}-${section.address}-${section.totalUsdValue}`}
+        />
+      );
     },
     [],
   );
@@ -349,6 +363,7 @@ export const DeFiDetailScreen = () => {
           <View className="relative">
             <WalletIcon
               type={section.type as KEYRING_TYPE}
+              address={section.address}
               width={styles.walletIcon.width}
               height={styles.walletIcon.height}
               style={styles.walletIcon}
@@ -388,10 +403,14 @@ export const DeFiDetailScreen = () => {
         refreshControl={
           <RefreshControl
             onRefresh={() => {
-              checkIsExpireAndUpdate(true, {
-                disableNFT: true,
-                disableToken: true,
-              });
+              if (isSingleAddress) {
+                singleUpdateData(true);
+              } else {
+                checkIsExpireAndUpdate(true, {
+                  disableNFT: true,
+                  disableToken: true,
+                });
+              }
             }}
             refreshing={refreshing}
           />
@@ -401,7 +420,11 @@ export const DeFiDetailScreen = () => {
         <View style={styles.footer}>
           <Button
             type="primary"
-            title={Platform.OS === 'ios' ? 'View in Website' : 'View in Dapp'}
+            title={
+              Platform.OS === 'ios'
+                ? t('page.defiDetail.viewSiteInWebsite')
+                : t('page.defiDetail.viewSiteInApp')
+            }
             onPress={() => {
               openTab(data.site_url);
             }}

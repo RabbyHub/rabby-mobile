@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HEADER_CHART_HEIGHT, SWITCH_HEADER_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -13,6 +13,7 @@ import { Tabs, MaterialTabItem } from 'react-native-collapsible-tab-view';
 import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterialTabBar';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
+import { isTabsSwiping } from './hooks';
 
 export const MultiAssets = ({
   onUpdateIsDecrease,
@@ -118,7 +119,7 @@ export const MultiAssets = ({
       />
     );
   }, [combineData, handleScroll, isLoadingCurve, pathColor]);
-  const [isSwiping, setIsSwiping] = useState(false);
+
   return (
     <Tabs.Container
       containerStyle={styles.container}
@@ -129,7 +130,7 @@ export const MultiAssets = ({
       renderHeader={renderHeader}
       pagerProps={{
         onPageScrollStateChanged: event => {
-          setIsSwiping(event?.nativeEvent?.pageScrollState !== 'idle');
+          isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
         },
       }}
       headerContainerStyle={styles.tabBarWrap}>
@@ -138,12 +139,12 @@ export const MultiAssets = ({
           list.length ? `(${list.length})` : ''
         }`}
         name="address">
-        <AddressList disableClick={isSwiping} />
+        <AddressList />
       </Tabs.Tab>
       <Tabs.Tab
         label={t('page.multiAddressAssets.tabs.portfolio')}
         name="portfolios">
-        <Portfolios disableClick={isSwiping} />
+        <Portfolios />
       </Tabs.Tab>
     </Tabs.Container>
   );

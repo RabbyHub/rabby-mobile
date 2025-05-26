@@ -26,7 +26,7 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 const SPACING_HEIGHT = 8;
-export const AddressList = ({ disableClick }: { disableClick?: boolean }) => {
+export const AddressList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
@@ -97,11 +97,11 @@ export const AddressList = ({ disableClick }: { disableClick?: boolean }) => {
     ({ item }) => {
       return (
         <View style={styles.itemGap}>
-          <AddressEntry data={item} disableClick={disableClick} />
+          <AddressEntry data={item} />
         </View>
       );
     },
-    [disableClick, styles.itemGap],
+    [styles.itemGap],
   );
 
   const onGotoWatchAddress = useCallback(() => {

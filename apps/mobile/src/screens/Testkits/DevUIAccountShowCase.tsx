@@ -154,6 +154,7 @@ function DevUIAccountShowCase(): JSX.Element {
                     <WalletIcon
                       style={{ alignSelf: 'center', marginBottom: 8 }}
                       type={KEYRING_TYPE[codeKey]}
+                      address={TEST_ACCOUNT.address}
                       width={64}
                       height={64}
                     />
