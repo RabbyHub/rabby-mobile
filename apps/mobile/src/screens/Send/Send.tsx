@@ -21,6 +21,7 @@ import {
   SendTokenInternalContextProvider,
   subscribeEvent,
   useSendTokenForm,
+  useSendTokenInternalContext,
   useSendTokenScreenChainToken,
   useSendTokenScreenState,
 } from './hooks/useSendToken';
@@ -532,7 +533,7 @@ function SendScreen({
                 />
                 <ShowMoreOnSend />
               </View>
-              {Boolean(localPendingTxData) && (
+              {Boolean(localPendingTxData && !canSubmit) && (
                 <PendingTxItem
                   isForMultipleAdderss={isForMultipleAdderss}
                   data={localPendingTxData!}
