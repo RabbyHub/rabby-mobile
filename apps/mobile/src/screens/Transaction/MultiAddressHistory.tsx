@@ -114,7 +114,7 @@ function History({
         'MultiAddressHistory'
       >['route']
     >();
-  const { tokenItem, isInTokenDetail } = route.params || {};
+  const { tokenItem, isInTokenDetail, currentAddress } = route.params || {};
   const unionAccounts = useMemo(() => {
     return unionBy(sortedAccounts, account => account.address.toLowerCase());
   }, [sortedAccounts]);
@@ -518,7 +518,9 @@ function History({
   useMount(() => {
     const list = transactionHistoryService.getSucceedList();
     setHistorySuccessList(list);
-    transactionHistoryService.clearSuccessAndFailList();
+    transactionHistoryService.clearSuccessAndFailList(
+      isForMultipleAdderss ? undefined : currentAddress,
+    );
   });
 
   const displayList = useMemo(() => {

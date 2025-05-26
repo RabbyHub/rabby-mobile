@@ -52,6 +52,7 @@ import { usePollSendPendingCount } from './useSendPendingCount';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useMemoizedFn } from 'ahooks';
 import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
+import { useRecentSendPendingTx } from './useRecentSend';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -557,6 +558,8 @@ export function useSendTokenForm(
   const { runAsync: runFetchPendingCount } = usePollSendPendingCount({
     isForMultipleAddress: isForMultipleAdderss,
   });
+  const { runFetchLocalPendingTx } =
+    useRecentSendPendingTx(isForMultipleAdderss);
 
   /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
   const formik = useFormik({
@@ -854,6 +857,7 @@ export function useSendTokenForm(
             })
               .then(() => {
                 runFetchPendingCount();
+                runFetchLocalPendingTx();
                 handleFieldChange('amount', '');
                 sendTokenEventsRef.current.emit(
                   SendTokenEvents.ON_SIGNED_SUCCESS,
@@ -884,6 +888,7 @@ export function useSendTokenForm(
             )
             .then(() => {
               runFetchPendingCount();
+              runFetchLocalPendingTx();
               handleFieldChange('amount', '');
               sendTokenEventsRef.current.emit(
                 SendTokenEvents.ON_SIGNED_SUCCESS,
@@ -918,6 +923,7 @@ export function useSendTokenForm(
       sendPrepareMiniTransactions,
       setDirectSigning,
       toAddress,
+      runFetchLocalPendingTx,
     ],
   );
 

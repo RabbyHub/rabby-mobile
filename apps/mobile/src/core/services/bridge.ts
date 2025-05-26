@@ -26,6 +26,7 @@ export type BridgeServiceStore = {
   selectedToToken?: TokenItem;
   selectedAggregators?: string[];
   txQuotes?: Record<string, BridgeRecord>;
+  openBridgeHistoryTs: Record<string, number>;
 };
 
 export class BridgeService {
@@ -34,6 +35,7 @@ export class BridgeService {
     selectedFromToken: undefined,
     selectedToToken: undefined,
     selectedAggregators: undefined,
+    openBridgeHistoryTs: {},
   };
 
   constructor(options?: StorageAdapaterOptions) {
@@ -43,6 +45,7 @@ export class BridgeService {
         template: {
           selectedChain: null,
           txQuotes: {},
+          openBridgeHistoryTs: {},
         },
       },
       {
@@ -85,6 +88,14 @@ export class BridgeService {
   };
   setSelectedToToken = (token?: TokenItem) => {
     this.store.selectedToToken = token;
+  };
+
+  getOpenBridgeHistoryTs = (address: string) => {
+    return this.store.openBridgeHistoryTs[address] || 0;
+  };
+
+  setOpenBridgeHistoryTs = (address: string) => {
+    this.store.openBridgeHistoryTs[address] = Date.now();
   };
 
   txQuotes: Record<string, BridgeRecord> = {};

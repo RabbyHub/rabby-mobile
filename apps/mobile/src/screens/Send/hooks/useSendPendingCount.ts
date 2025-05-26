@@ -1,23 +1,37 @@
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { transactionHistoryService } from '@/core/services';
 import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { unionBy } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 const pendingCountAtom = atom(0);
+const successTxListAtom = atom<string[]>([]);
+const failTxListAtom = atom<string[]>([]);
 
 export const useReadSendPendingCount = () => {
   return useAtomValue(pendingCountAtom);
 };
+
+export const useReadSendSuccessTxList = () => {
+  return useAtomValue(successTxListAtom);
+};
+
+export const useReadSendFailTxList = () => {
+  return useAtomValue(failTxListAtom);
+};
+
 export const usePollSendPendingCount = (params?: {
   isForMultipleAddress?: boolean;
   pollingInterval?: number;
 }) => {
   const { isForMultipleAddress = false, pollingInterval = 10000 } =
     params || {};
+  const [successTxList, setSuccessTxList] = useAtom(successTxListAtom);
+  const [failTxList, setFailTxList] = useAtom(failTxListAtom);
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -43,6 +57,16 @@ export const usePollSendPendingCount = (params?: {
 
       total += data.length || 0;
     }
+    setSuccessTxList(
+      transactionHistoryService.getSendSucceedList(
+        isForMultipleAddress ? undefined : currentAccount?.address,
+      ),
+    );
+    setFailTxList(
+      transactionHistoryService.getSendFailedList(
+        isForMultipleAddress ? undefined : currentAccount?.address,
+      ),
+    );
     return total;
   };
   const [, setCount] = useAtom(pendingCountAtom);
@@ -61,6 +85,7 @@ export const usePollSendPendingCount = (params?: {
       const refresh = () => {
         runAsync();
       };
+      refresh();
       eventBus.addListener(EVENTS.RELOAD_TX, refresh);
       return () => {
         eventBus.removeListener(EVENTS.RELOAD_TX, refresh);

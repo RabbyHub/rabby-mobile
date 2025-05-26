@@ -6,63 +6,16 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { unionBy, orderBy, isUndefined, maxBy } from 'lodash';
-import { useInterval, useMemoizedFn, useRequest } from 'ahooks';
-import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
+import { useInterval, useMemoizedFn, useMount, useRequest } from 'ahooks';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-  useMyAccounts,
-} from '@/hooks/account';
-import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RcIconRightCC } from '@/assets/icons/common';
-import { toast } from '@/components2024/Toast';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  NFTItem,
-  TokenItem,
-  GasLevel,
-} from '@rabby-wallet/rabby-api/dist/types';
-import {
-  formatPrice,
-  formatTokenAmount,
-  intToHex,
-  numberWithCommasIsLtOne,
-} from '@/utils/number';
-import { getTokenSymbol } from '@/utils/token';
 import { StackActions, useRoute } from '@react-navigation/native';
-import { useSortAddressList } from '../Address/useSortAddressList';
-import { navigate, naviPush } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { getChain } from '@/utils/chain';
-import { openTxExternalUrl } from '@/utils/transaction';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
-import { Button } from '@/components2024/Button';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { AssetAvatar } from '@/components';
+
 import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useFindChain } from '@/hooks/useFindChain';
-import { TransactionPendingDetail } from '../TransactionRecord/components/TransactionPendingDetail';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { CANCEL_TX_TYPE, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { apiCustomTestnet, apiProvider } from '@/core/apis';
-import { sendRequest } from '@/core/apis/sendRequest';
-import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
-import { AddressItemInDetail, TxStatusItem } from './HistoryDetailScreen';
-import { ensureAbstractPortfolioToken } from '../Home/utils/token';
 import { transactionHistoryService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
 import { findMaxGasTx } from '@/core/utils/tx';
@@ -80,9 +33,6 @@ import { Send } from './components/Actions/Send';
 import { useTranslation } from 'react-i18next';
 import { UnknownAction } from './components/Actions/UnknownAction';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
-import { findAccountByPriority } from '@/utils/account';
-import { CancelTxPopup } from '../TransactionRecord/components/CancelTxPopup';
-import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
@@ -94,7 +44,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
     >();
   const {
     data: _data,
-    canCancel,
+    // canCancel,
     isForMultipleAdderss,
     title,
     onPressBottomBtn,
@@ -102,11 +52,9 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const [data, setData] = React.useState<TransactionGroup>(_data);
   const isPending = useMemo(() => data.isPending, [data]);
   const isFailed = useMemo(() => data.isFailed, [data]);
-  const { switchAccount } = useCurrentAccount();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
-  const [isShowCancelTxPopup, setIsShowCancelTxPopup] = useState(false);
 
   const fetchRefreshData = useCallback(() => {
     if (!isPending) {
@@ -123,7 +71,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
       nonce,
     );
 
-    console.debug('fetchRefreshData groups', JSON.stringify(groups));
     if (groups?.[0]) {
       setData(groups[0]);
     }
@@ -152,220 +99,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
       headerTitle: getHeaderTitle,
     });
   }, [setNavigationOptions, getHeaderTitle]);
-
-  const chainItem = useFindChain({
-    id: data.chainId,
-  });
-
-  const { accounts } = useAccounts({
-    disableAutoFetch: true,
-  });
-
-  const handleQuickCancel = async () => {
-    const maxGasTx = data.maxGasTx;
-    if (maxGasTx?.reqId) {
-      try {
-        // todo
-        // await wallet.quickCancelTx({
-        //   reqId: maxGasTx.reqId,
-        //   chainId: maxGasTx.rawTx.chainId,
-        //   nonce: +maxGasTx.rawTx.nonce,
-        //   address: maxGasTx.rawTx.from,
-        // });
-        // onQuickCancel?.();
-        toast.success(t('page.activities.signedTx.message.cancelSuccess'));
-      } catch (e) {
-        toast.info((e as any).message);
-      }
-    }
-  };
-
-  const navigation = useRabbyAppNavigation();
-  const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
-  const handleOnChainCancel = async () => {
-    if (!canCancel) {
-      return;
-    }
-    const keyringType = data.keyringType;
-    let account: KeyringAccountWithAlias | undefined;
-    const canUseAccountList = accounts.filter(acc => {
-      return (
-        isSameAddress(acc.address, data.address) &&
-        acc.type !== KEYRING_TYPE.WatchAddressKeyring
-      );
-    });
-    if (keyringType) {
-      account = canUseAccountList.find(acc => acc.type === data.keyringType);
-    }
-    if (!account) {
-      account = findAccountByPriority(canUseAccountList);
-    }
-    if (!account) {
-      throw Error('No account find');
-    }
-
-    await switchSceneSigningAccount('MultiHistory', account);
-    const maxGasTx = data.maxGasTx;
-    const maxGasPrice = Number(
-      maxGasTx.rawTx.gasPrice || maxGasTx.rawTx.maxFeePerGas || 0,
-    );
-    const gasLevels: GasLevel[] = chainItem?.isTestnet
-      ? await apiCustomTestnet.getCustomTestnetGasMarket({
-          chainId: chainItem?.id!,
-        })
-      : await apiProvider.gasMarketV2({
-          chain: chainItem!,
-          tx: maxGasTx.rawTx,
-        });
-    const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
-    try {
-      await sendRequest(
-        {
-          method: 'eth_sendTransaction',
-          params: [
-            {
-              from: maxGasTx.rawTx.from,
-              to: maxGasTx.rawTx.from,
-              gasPrice: intToHex(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
-              value: '0x0',
-              chainId: data.chainId,
-              nonce: intToHex(data.nonce),
-              isCancel: true,
-              reqId: maxGasTx.reqId,
-            },
-          ],
-        },
-        INTERNAL_REQUEST_SESSION,
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      await switchSceneSigningAccount('MultiHistory', null);
-    }
-    resetNavigationTo(navigation, 'Home');
-  };
-
-  /**
-   * @deprecated
-   */
-  const handleRemoveLocalPendingTx = useMemoizedFn(async () => {
-    const keyringType = data.keyringType;
-    let account: KeyringAccountWithAlias | undefined;
-    const canUseAccountList = accounts.filter(acc => {
-      return (
-        isSameAddress(acc.address, data.address) &&
-        acc.type !== KEYRING_TYPE.WatchAddressKeyring
-      );
-    });
-    if (keyringType) {
-      account = canUseAccountList.find(acc => acc.type === data.keyringType);
-    }
-    if (!account) {
-      account = findAccountByPriority(canUseAccountList);
-    }
-    if (!account) {
-      throw Error('No account find');
-    }
-
-    const maxGasTx = data.maxGasTx;
-    try {
-      apisTransactionHistory.removeLocalPendingTx({
-        chainId: maxGasTx.rawTx.chainId,
-        nonce: +maxGasTx.rawTx.nonce,
-        address: maxGasTx.rawTx.from,
-      });
-      toast.success(t('page.activities.signedTx.message.deleteSuccess'));
-      resetNavigationTo(navigation, 'Home');
-    } catch (e) {
-      toast.error((e as any).message);
-    }
-  });
-
-  const handleTxSpeedUp = useMemoizedFn(async () => {
-    if (!canCancel) {
-      return;
-    }
-    console.log('handleTxSpeedUp111');
-    const maxGasTx = data.maxGasTx;
-    const originTx = data.originTx!;
-    const keyringType = data.keyringType;
-    const maxGasPrice = Number(
-      maxGasTx.rawTx.gasPrice || maxGasTx.rawTx.maxFeePerGas || 0,
-    );
-    let account: KeyringAccountWithAlias | undefined;
-    const canUseAccountList = accounts.filter(acc => {
-      return (
-        isSameAddress(acc.address, data.address) &&
-        acc.type !== KEYRING_TYPE.WatchAddressKeyring
-      );
-    });
-    if (keyringType) {
-      account = canUseAccountList.find(acc => acc.type === data.keyringType);
-    }
-    if (!account) {
-      account = findAccountByPriority(canUseAccountList);
-    }
-    console.log('handleTxSpeedUp1222');
-    if (!account) {
-      throw Error('No account find');
-    }
-
-    await switchSceneSigningAccount('MultiHistory', account);
-    const gasLevels: GasLevel[] = chainItem?.isTestnet
-      ? await apiCustomTestnet.getCustomTestnetGasMarket({
-          chainId: chainItem?.id!,
-        })
-      : await apiProvider.gasMarketV2({
-          chain: chainItem!,
-          tx: originTx.rawTx,
-        });
-    const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
-
-    try {
-      await sendRequest(
-        {
-          method: 'eth_sendTransaction',
-          params: [
-            {
-              from: originTx.rawTx.from,
-              value: originTx.rawTx.value,
-              data: originTx.rawTx.data,
-              nonce: originTx.rawTx.nonce,
-              chainId: originTx.rawTx.chainId,
-              to: originTx.rawTx.to,
-              gasPrice: intToHex(
-                Math.round(Math.max(maxGasPrice * 2, maxGasMarketPrice)),
-              ),
-              isSpeedUp: true,
-              reqId: maxGasTx.reqId,
-            },
-          ],
-        },
-        INTERNAL_REQUEST_SESSION,
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      await switchSceneSigningAccount('MultiHistory', null);
-    }
-    resetNavigationTo(navigation, 'Home');
-  });
-
-  const handleTxCancelPress = useMemoizedFn(() => {
-    setIsShowCancelTxPopup(true);
-  });
-  const handleTxCancel = useMemoizedFn((mode: CANCEL_TX_TYPE) => {
-    if (mode === CANCEL_TX_TYPE.QUICK_CANCEL) {
-      handleQuickCancel();
-    }
-    if (mode === CANCEL_TX_TYPE.ON_CHAIN_CANCEL) {
-      handleOnChainCancel();
-    }
-    if (mode === CANCEL_TX_TYPE.REMOVE_LOCAL_PENDING_TX) {
-      handleRemoveLocalPendingTx();
-    }
-    setIsShowCancelTxPopup(false);
-  });
 
   const needUseSwap = useMemo(() => {
     return Boolean(
@@ -417,36 +150,6 @@ function HistoryLocalDetailScreen(): JSX.Element {
       ) : (
         <UnknownAction data={data} isSingleAddress={!isForMultipleAdderss} />
       )}
-      {isPending ? (
-        <>
-          <View style={styles.buttonContainer}>
-            <View style={{ flex: 1 }}>
-              <Button
-                titleStyle={[styles.ghostTitle]}
-                buttonStyle={[styles.ghostButton]}
-                onPress={handleTxCancelPress}
-                title={t('page.transactions.detail.Cancel')}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Button
-                titleStyle={[styles.primaryTitle]}
-                buttonStyle={[styles.primaryButton]}
-                onPress={handleTxSpeedUp}
-                title={t('page.transactions.detail.SpeedUp')}
-              />
-            </View>
-          </View>
-          <CancelTxPopup
-            tx={data.maxGasTx}
-            visible={isShowCancelTxPopup}
-            onCancelTx={handleTxCancel}
-            onClose={() => {
-              setIsShowCancelTxPopup(false);
-            }}
-          />
-        </>
-      ) : null}
     </NormalScreenContainer2024>
   );
 }

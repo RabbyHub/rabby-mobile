@@ -24,7 +24,7 @@ import BigNumber from 'bignumber.js';
 import { QuoteList } from './BridgeQuotes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { BridgeHeader } from './BridgeHeader';
+import { BridgeHeader, BridgeHeaderRef } from './BridgeHeader';
 import { openapi } from '@/core/request';
 import pRetry from 'p-retry';
 import { stats } from '@/utils/stats';
@@ -64,6 +64,7 @@ import {
   directSigningAtom,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
+import { BridgePendingTxItem } from './PendingTxItem';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -190,25 +191,43 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const { styles } = useTheme2024({ getStyle });
-
+  const headerRef = useRef<BridgeHeaderRef>(null);
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const Header = useCallback(() => <BridgeHeader />, []);
-  useEffect(() => {
-    setNavigationOptions({
-      headerRight: Header,
-    });
-  }, [Header, setNavigationOptions]);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
 
-  const { runAsync: runFetchBridgePendingCount } = usePollBridgePendingNumber();
+  const {
+    runAsync: runFetchBridgePendingCount,
+    pendingTxData,
+    clearLocalPendingTxData,
+    clearBridgeHistoryRedDot,
+  } = usePollBridgePendingNumber();
 
   const { currentAccount } = useCurrentAccount();
 
   const quoteVisible = useQuoteVisible();
 
   const setQuoteVisible = useSetQuoteVisible();
+
+  const openHistory = useMemoizedFn(() => {
+    headerRef.current?.openHistory();
+  });
+
+  const Header = useCallback(
+    () => (
+      <BridgeHeader
+        ref={headerRef}
+        clearBridgeHistoryRedDot={clearBridgeHistoryRedDot}
+      />
+    ),
+    [clearBridgeHistoryRedDot],
+  );
+  useEffect(() => {
+    setNavigationOptions({
+      headerRight: Header,
+    });
+  }, [Header, setNavigationOptions]);
 
   const {
     fromChain,
@@ -828,6 +847,17 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             </>
           )}
         </View>
+        {Boolean(
+          !(selectedBridgeQuote && inSufficientCanGetQuote) &&
+            !recommendFromToken &&
+            pendingTxData,
+        ) && (
+          <BridgePendingTxItem
+            openHistory={openHistory}
+            data={pendingTxData!}
+            clearLocalPendingTxData={clearLocalPendingTxData}
+          />
+        )}
       </KeyboardAwareScrollView>
 
       <View

@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
@@ -21,6 +21,8 @@ import { useCurrentAccount } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
+import { transactionHistoryService } from '@/core/services';
+import { useMemoizedFn } from 'ahooks';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -52,15 +54,28 @@ export const SendHistory = ({
   const { currentAccount } = useCurrentAccount({
     disableAutoFetch: true,
   });
+  const [successTxList, setSuccessTxList] = useState<string[]>([]);
+
+  const updateTxList = useMemoizedFn(() => {
+    const txList = transactionHistoryService.getSendSucceedList(
+      isForMultipleAdderss ? undefined : currentAccount?.address,
+    );
+    setSuccessTxList(txList);
+
+    transactionHistoryService.clearSendSuccessAndFailList(
+      isForMultipleAdderss ? undefined : currentAccount?.address,
+    );
+  });
 
   useEffect(() => {
     if (visible) {
       bottomRef.current?.present();
       runAsync();
+      updateTxList();
     } else {
       bottomRef.current?.dismiss();
     }
-  }, [visible, runAsync]);
+  }, [visible, runAsync, updateTxList]);
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
@@ -97,6 +112,7 @@ export const SendHistory = ({
             isInSendHistory={true}
             closeHistoryPopup={onClose}
             onPressBottomBtn={onPressBottomBtn}
+            historySuccessList={successTxList}
             // onRefresh={onRefresh}
           />
         </>

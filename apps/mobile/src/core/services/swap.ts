@@ -27,6 +27,7 @@ export type SwapServiceStore = {
   selectedToToken?: TokenItem;
   preferMEVGuarded: boolean;
   recentToTokens?: TokenItem[];
+  openSwapHistoryTs: Record<string, number>;
 
   /**
    * @deprecated
@@ -71,6 +72,7 @@ export class SwapService {
     tradeList: {} as SwapServiceStore['tradeList'],
     sortIncludeGasFee: false,
     preferMEVGuarded: false,
+    openSwapHistoryTs: {},
     recentToTokens: [],
   };
   constructor(options?: StorageAdapaterOptions) {
@@ -89,6 +91,7 @@ export class SwapService {
           preferMEVGuarded: false,
           sortIncludeGasFee: true,
           recentToTokens: [],
+          openSwapHistoryTs: {},
         },
       },
       {
@@ -124,6 +127,10 @@ export class SwapService {
           }
           return false;
         });
+      }
+
+      if (typeof storage.openSwapHistoryTs !== 'object') {
+        storage.openSwapHistoryTs = {};
       }
     }
     this.store = storage || this.store;
@@ -323,6 +330,14 @@ export class SwapService {
 
   getRecentSwapToTokens = () => {
     return this.store.recentToTokens || [];
+  };
+
+  getOpenSwapHistoryTs = (address: string) => {
+    return this.store.openSwapHistoryTs[address] || 0;
+  };
+
+  setOpenSwapHistoryTs = (address: string) => {
+    this.store.openSwapHistoryTs[address] = Date.now();
   };
 
   setRecentSwapToToken = (token: TokenItem) => {
