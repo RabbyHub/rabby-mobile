@@ -21,7 +21,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
@@ -34,7 +34,6 @@ import {
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenArea } from './components/TokenArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
-import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { RcIconMore } from '@/assets/icons/home';
@@ -54,7 +53,6 @@ import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import LinearGradient from 'react-native-linear-gradient';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
 import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
@@ -228,6 +226,7 @@ export const TokenDetailScreen = () => {
   });
 
   const { safeOffHeader, safeTop } = useSafeSizes();
+  const [isUp, setIsUp] = useState(true);
   const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
 
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
@@ -527,9 +526,13 @@ export const TokenDetailScreen = () => {
       overwriteStyle={styles.rootScreenContainer}>
       <ImageBackground
         source={
-          isLight
-            ? require('@/assets2024/icons/home/ImgSingleBgUp.png')
-            : require('@/assets2024/icons/home/ImgSingleBgUpDark.png')
+          isUp
+            ? isLight
+              ? require('@/assets2024/singleHome/home-profit-bg-1.png')
+              : require('@/assets2024/singleHome/home-profit-dark-bg-1.png')
+            : isLight
+            ? require('@/assets2024/singleHome/home-loss-bg-1.png')
+            : require('@/assets2024/singleHome/home-loss-dark-bg-1.png')
         }
         resizeMode="cover"
         style={{
@@ -543,9 +546,13 @@ export const TokenDetailScreen = () => {
       <ScrollView>
         <ImageBackground
           source={
-            isLight
-              ? require('@/assets2024/icons/home/ImgSingleBgDown.png')
-              : require('@/assets2024/icons/home/ImgSingleBgDownDark.png')
+            isUp
+              ? isLight
+                ? require('@/assets2024/singleHome/home-profit-bg-2.png')
+                : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
+              : isLight
+              ? require('@/assets2024/singleHome/home-loss-bg-2.png')
+              : require('@/assets2024/singleHome/home-loss-dark-bg-2.png')
           }
           resizeMode="cover"
           style={{
@@ -569,6 +576,7 @@ export const TokenDetailScreen = () => {
             token={tokenWithAmount || token}
             originToken={token}
             finalAccount={finalAccount}
+            onUpChange={b => setIsUp(b)}
             amountList={tokenFromAddress}
             relateDefiList={relateDefiList}
             isSingleAddress={isSingleAddress}
