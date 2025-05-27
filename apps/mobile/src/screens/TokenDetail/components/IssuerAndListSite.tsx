@@ -64,7 +64,7 @@ const DomainUrlLink = ({
 };
 
 const ExpandableDescription = ({ description }: { description: string }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -82,7 +82,14 @@ const ExpandableDescription = ({ description }: { description: string }) => {
             {t('page.tokenDetail.Fold')}
           </Text>
         </Text>
-        <View style={styles.horizontalLine} />
+        <View
+          style={{
+            ...styles.horizontalLine,
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-2']
+              : colors2024['neutral-line'],
+          }}
+        />
         <Text style={styles.contentBottomText}>
           {t('page.tokenDetail.ContentGeneratedByAI')}
         </Text>
@@ -125,11 +132,6 @@ export const IssuerAndListSite: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>
-          {t('page.tokenDetail.Introduction')}
-        </Text>
-      </View>
       {entityLoading ? (
         <Skeleton
           width={'100%'}
@@ -138,11 +140,18 @@ export const IssuerAndListSite: React.FC<Props> = ({
           LinearGradientComponent={LoadingLinear}
         />
       ) : (
-        <View style={styles.itemCard}>
-          {tokenEntity?.description && (
-            <ExpandableDescription description={tokenEntity.description} />
-          )}
-        </View>
+        <>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>
+              {t('page.tokenDetail.Introduction')}
+            </Text>
+          </View>
+          <View style={styles.itemCard}>
+            {tokenEntity?.description && (
+              <ExpandableDescription description={tokenEntity.description} />
+            )}
+          </View>
+        </>
       )}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.IssuedBy')}</Text>
@@ -421,7 +430,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 8,
     flex: 1,
     height: 1,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: colors2024['neutral-line'],
     // marginHorizontal: 4,
   },
   itemIssuerText: {
