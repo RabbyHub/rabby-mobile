@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -63,6 +63,55 @@ const DomainUrlLink = ({
   );
 };
 
+const ExpandableDescription = ({ description }: { description: string }) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleExpanded = useCallback(() => {
+    setIsExpanded(!isExpanded);
+  }, [isExpanded]);
+
+  if (isExpanded) {
+    return (
+      <View style={styles.descriptionContainer}>
+        <Text style={styles.introductionText}>
+          {description}
+          <Text style={styles.moreButtonText} onPress={toggleExpanded}>
+            {' '}
+            {t('page.tokenDetail.Fold')}
+          </Text>
+        </Text>
+        <View style={styles.horizontalLine} />
+        <Text style={styles.contentBottomText}>
+          {t('page.tokenDetail.ContentGeneratedByAI')}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.descriptionContainer}>
+      <View style={styles.textWithMoreContainer}>
+        <Text style={styles.introductionText} numberOfLines={2}>
+          {description}
+        </Text>
+        <TouchableOpacity
+          style={styles.inlineMoreButton}
+          onPress={toggleExpanded}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Text style={styles.introductionText}>
+            {'... '}
+            <Text style={styles.moreButtonText}>
+              {t('page.tokenDetail.ShowMore')}
+            </Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 export const IssuerAndListSite: React.FC<Props> = ({
   tokenEntity,
   entityLoading,
@@ -76,6 +125,25 @@ export const IssuerAndListSite: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>
+          {t('page.tokenDetail.Introduction')}
+        </Text>
+      </View>
+      {entityLoading ? (
+        <Skeleton
+          width={'100%'}
+          height={68}
+          style={styles.skeleton}
+          LinearGradientComponent={LoadingLinear}
+        />
+      ) : (
+        <View style={styles.itemCard}>
+          {tokenEntity?.description && (
+            <ExpandableDescription description={tokenEntity.description} />
+          )}
+        </View>
+      )}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.IssuedBy')}</Text>
       </View>
@@ -348,10 +416,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
   },
   horizontalLine: {
-    // width: 1,token
+    width: '100%',
+    marginTop: 12,
+    marginBottom: 8,
     flex: 1,
     height: 1,
-    backgroundColor: colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-2'],
     // marginHorizontal: 4,
   },
   itemIssuerText: {
@@ -360,6 +430,20 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '400',
+  },
+  introductionText: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+  contentBottomText: {
+    color: colors2024['neutral-info'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
   },
   itemIssuerTitle: {
     color: colors2024['neutral-secondary'],
@@ -416,7 +500,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
-    borderRadius: 64,
+    borderRadius: 8,
     padding: 8,
     paddingHorizontal: 10,
   },
@@ -433,5 +517,37 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   iconJump: {
     // marginLeft: 6,
+  },
+  descriptionContainer: {
+    width: '100%',
+    paddingVertical: 8,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  moreButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    marginTop: 8,
+  },
+  moreButtonText: {
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+  },
+  textWithMoreContainer: {
+    position: 'relative',
+    width: '100%',
+  },
+  inlineMoreButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    paddingLeft: 4,
   },
 }));
