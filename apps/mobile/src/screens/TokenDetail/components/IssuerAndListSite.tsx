@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useState } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useState, useMemo } from 'react';
+import { TouchableOpacity, View, Dimensions } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -63,59 +63,164 @@ const DomainUrlLink = ({
   );
 };
 
-const ExpandableDescription = ({ description }: { description: string }) => {
+const ExpandableDescription = ({
+  description,
+  entityLoading,
+}: {
+  description: string;
+  entityLoading: boolean;
+}) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [shouldTruncate, setShouldTruncate] = useState(false);
+  const [textToShow, setTextToShow] = useState(description);
+  const [hasCalculated, setHasCalculated] = useState(false);
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded(!isExpanded);
   }, [isExpanded]);
 
+  // When description changes, reset the calculation state
+  React.useEffect(() => {
+    setHasCalculated(false);
+    setTextToShow(description);
+    setShouldTruncate(false);
+  }, [description]);
+
+  // Handle text layout, detect if it exceeds 2 lines
+  const handleTextLayout = useCallback(
+    (event: any) => {
+      // Avoid duplicate calculations
+      if (hasCalculated) {
+        return;
+      }
+
+      const { lines } = event.nativeEvent;
+      if (lines.length > 2) {
+        setShouldTruncate(true);
+        // Use the first two lines of text, and leave space for the "Show more" button
+        const firstTwoLinesText = lines
+          .slice(0, 2)
+          .map((line: any) => line.text)
+          .join('');
+        // Leave space for the "Show more" button at the end of the second line
+        const showMoreSpace = 15;
+        const truncatedLength = Math.max(
+          firstTwoLinesText.length - showMoreSpace,
+          0,
+        );
+        setTextToShow(description.substring(0, truncatedLength) + '...');
+      } else {
+        setShouldTruncate(false);
+        setTextToShow(description);
+      }
+      setHasCalculated(true);
+    },
+    [description, hasCalculated],
+  );
+
+  // If the outer layer is loading, display the title and skeleton
+  if (entityLoading) {
+    return null;
+    // return (
+    //   <>
+    //     <View style={styles.header}>
+    //       <Text style={styles.headerTitle}>
+    //         {t('page.tokenDetail.Introduction')}
+    //       </Text>
+    //     </View>
+    //     <Skeleton
+    //       width={'100%'}
+    //       height={68}
+    //       style={styles.skeleton}
+    //       LinearGradientComponent={LoadingLinear}
+    //     />
+    //   </>
+    // );
+  }
+
+  if (!description) {
+    return null;
+  }
+
   if (isExpanded) {
     return (
-      <View style={styles.descriptionContainer}>
-        <Text style={styles.introductionText}>
-          {description}
-          <Text style={styles.moreButtonText} onPress={toggleExpanded}>
-            {' '}
-            {t('page.tokenDetail.Fold')}
+      <>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>
+            {t('page.tokenDetail.Introduction')}
           </Text>
-        </Text>
-        <View
-          style={{
-            ...styles.horizontalLine,
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-2']
-              : colors2024['neutral-line'],
-          }}
-        />
-        <Text style={styles.contentBottomText}>
-          {t('page.tokenDetail.ContentGeneratedByAI')}
-        </Text>
-      </View>
+        </View>
+        <View style={{ ...styles.itemCard, ...styles.descriptionContainer }}>
+          <Text style={styles.introductionText}>
+            {description}
+            <Text style={styles.moreButtonText} onPress={toggleExpanded}>
+              {' '}
+              {t('page.tokenDetail.Fold')}
+            </Text>
+          </Text>
+          <View
+            style={{
+              ...styles.horizontalLine,
+              backgroundColor: isLight
+                ? colors2024['neutral-bg-2']
+                : colors2024['neutral-line'],
+            }}
+          />
+          <Text style={styles.contentBottomText}>
+            {t('page.tokenDetail.ContentGeneratedByAI')}
+          </Text>
+        </View>
+      </>
+    );
+  }
+
+  // Calculated show loading
+  if (!hasCalculated && !isExpanded) {
+    return (
+      <>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>
+            {t('page.tokenDetail.Introduction')}
+          </Text>
+        </View>
+        <View style={{ ...styles.itemCard, ...styles.descriptionContainer }}>
+          {/* Hidden measurement text */}
+          <Text
+            style={[
+              styles.introductionText,
+              { opacity: 0, position: 'absolute' },
+            ]}
+            onTextLayout={handleTextLayout}>
+            {description}
+          </Text>
+          {/* Loading placeholder */}
+          <View style={styles.loadingPlaceholder} />
+        </View>
+      </>
     );
   }
 
   return (
-    <View style={styles.descriptionContainer}>
-      <View style={styles.textWithMoreContainer}>
-        <Text style={styles.introductionText} numberOfLines={2}>
-          {description}
+    <>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>
+          {t('page.tokenDetail.Introduction')}
         </Text>
-        <TouchableOpacity
-          style={styles.inlineMoreButton}
-          onPress={toggleExpanded}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={styles.introductionText}>
-            {'... '}
-            <Text style={styles.moreButtonText}>
-              {t('page.tokenDetail.ShowMore')}
-            </Text>
-          </Text>
-        </TouchableOpacity>
       </View>
-    </View>
+      <View style={{ ...styles.itemCard, ...styles.descriptionContainer }}>
+        <Text style={styles.introductionText}>
+          {isExpanded ? description : textToShow}
+          {shouldTruncate && !isExpanded && (
+            <Text style={styles.moreButtonText} onPress={toggleExpanded}>
+              {' '}
+              {'Show more'}
+            </Text>
+          )}
+        </Text>
+      </View>
+    </>
   );
 };
 
@@ -132,25 +237,10 @@ export const IssuerAndListSite: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      {entityLoading ? (
-        <Skeleton
-          width={'100%'}
-          height={68}
-          style={styles.skeleton}
-          LinearGradientComponent={LoadingLinear}
-        />
-      ) : tokenEntity?.description ? (
-        <>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>
-              {t('page.tokenDetail.Introduction')}
-            </Text>
-          </View>
-          <View style={styles.itemCard}>
-            <ExpandableDescription description={tokenEntity.description} />
-          </View>
-        </>
-      ) : null}
+      <ExpandableDescription
+        description={(tokenEntity as any)?.description ?? ''}
+        entityLoading={entityLoading}
+      />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.IssuedBy')}</Text>
       </View>
@@ -527,7 +617,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   descriptionContainer: {
     width: '100%',
-    paddingVertical: 8,
+    paddingVertical: 16,
+    gap: 0,
     flexDirection: 'column',
     alignItems: 'flex-start',
   },
@@ -556,5 +647,22 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     paddingLeft: 4,
+  },
+  loadingPlaceholder: {
+    width: '100%',
+    height: 40,
+  },
+  loadingLine1: {
+    height: 14,
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 4,
+    marginBottom: 8,
+    width: '100%',
+  },
+  loadingLine2: {
+    height: 14,
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 4,
+    width: '75%',
   },
 }));
