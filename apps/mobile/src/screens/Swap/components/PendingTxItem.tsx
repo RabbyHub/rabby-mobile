@@ -12,7 +12,7 @@ import ArrowSwapSVG from '@/assets2024/icons/common/arrow-swap-cc.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigate, naviPush } from '@/utils/navigation';
 import { bridgeService, swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
 import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
@@ -50,7 +50,7 @@ export const PendingTxItem = ({
         swapService.setOpenSwapHistoryTs(currentAccount?.address ?? '');
     }
 
-    navigate(RootNames.StackTransaction, {
+    naviPush(RootNames.StackTransaction, {
       screen: RootNames.HistoryLocalDetail,
       params: {
         isForMultipleAdderss,
