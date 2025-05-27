@@ -21,12 +21,26 @@ import * as ethUtil from 'ethereumjs-util';
 import log from 'loglevel';
 import * as bip39 from 'react-native-quick-bip39';
 
-import type { KeyringClassType, KeyringInstance } from './types';
-import { keyringSdks } from './types';
+import {
+  keyringSdks,
+  type KeyringClassType,
+  type KeyringInstance,
+} from './types';
 import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
 import { mergeVault } from './utils/mergeVault';
+
+const keyringTypes = [
+  KEYRING_TYPE.SimpleKeyring,
+  KEYRING_TYPE.HdKeyring,
+  KEYRING_TYPE.WatchAddressKeyring,
+  KEYRING_TYPE.WalletConnectKeyring,
+  KEYRING_TYPE.OneKeyKeyring,
+  KEYRING_TYPE.LedgerKeyring,
+  KEYRING_TYPE.KeystoneKeyring,
+  KEYRING_TYPE.GnosisKeyring,
+];
 
 const UNENCRYPTED_IGNORE_KEYRING = [
   KEYRING_TYPE.SimpleKeyring,
@@ -72,14 +86,6 @@ export class KeyringService extends RNEventEmitter {
 
   keyringClasses: KeyringClassType[] = [];
 
-  get keyringTypes() {
-    return this.keyringClasses;
-  }
-
-  set keyringTypes(value) {
-    this.keyringClasses = value;
-  }
-
   store!: ObservableStore<KeyringState>;
 
   memStore: ObservableStore<MemStoreState>;
@@ -115,7 +121,7 @@ export class KeyringService extends RNEventEmitter {
     this.keyringClasses = Object.values(keyringClasses);
     this.memStore = new ObservableStore({
       isUnlocked: false,
-      keyringTypes: this.keyringClasses.map(krt => krt.type),
+      keyringTypes,
       keyrings: [],
       preMnemonics: '',
     });
@@ -861,7 +867,7 @@ export class KeyringService extends RNEventEmitter {
    */
   getKeyringClassForType(type: KeyringTypeName): KeyringClassType {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return this.keyringTypes.find(kr => kr.type === type)!;
+    return this.keyringClasses.find(kr => kr.type === type)!;
   }
 
   /**

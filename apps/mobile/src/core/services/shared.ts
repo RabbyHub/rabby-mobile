@@ -17,29 +17,29 @@ import { TransactionHistoryService } from './transactionHistory';
 import { TransactionWatcherService } from './transactionWatcher';
 import { WhitelistService } from './whitelist';
 import { SessionService } from './session';
-import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
-import { GnosisKeyring } from '@rabby-wallet/eth-keyring-gnosis';
 import { KeyringService } from '@rabby-wallet/service-keyring';
 import RNEncryptor from './encryptor';
 import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
 import { RabbyPointsService } from './rabbyPoints';
-import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
-import { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
 import { SwapService } from './swap';
-import { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
-import SimpleKeyring from '@rabby-wallet/eth-simple-keyring';
-import HDKeyring from '@rabby-wallet/eth-hd-keyring';
 import { HDKeyringService } from './hdKeyringService';
 export { customTestnetService } from './customTestnetService';
 export { customRPCService } from './customRPCService';
 import { BridgeService } from './bridge';
 import { GasAccountService } from './gasAccount';
 import { BrowserHistoryService } from './browserHistoryService';
-import { MockWalletConnectKeyring } from '../keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
 import { OfflineChainService } from './offlineChain';
 import { BrowserService } from './browserService';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
+import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
+import { GnosisKeyring } from '@rabby-wallet/eth-keyring-gnosis';
+import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
+import { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
+import { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
+import SimpleKeyring from '@rabby-wallet/eth-simple-keyring';
+import HDKeyring from '@rabby-wallet/eth-hd-keyring';
+import { MockWalletConnectKeyring } from '../keyring-bridge/walletconnect/mock-walletconnect-keyring';
 
 migrateAppStorage(appStorage);
 
@@ -57,6 +57,32 @@ try {
     new Error('Failed to get preference from appStorage: ' + error),
   );
 }
+
+// const MockWalletConnectKeyring = Promise.resolve(
+//   require('../keyring-bridge/walletconnect/mock-walletconnect-keyring')
+//     .MockWalletConnectKeyring,
+// );
+// const SimpleKeyring = Promise.resolve(
+//   require('@rabby-wallet/eth-simple-keyring').default,
+// );
+// const HDKeyring = Promise.resolve(
+//   require('@rabby-wallet/eth-hd-keyring').default,
+// );
+// const LedgerKeyring = Promise.resolve(
+//   require('@rabby-wallet/eth-keyring-ledger').LedgerKeyring,
+// );
+// const KeystoneKeyring = Promise.resolve(
+//   require('@rabby-wallet/eth-keyring-keystone').KeystoneKeyring,
+// );
+// const OneKeyKeyring = Promise.resolve(
+//   require('@/core/keyring-bridge/onekey/onekey-keyring').OneKeyKeyring,
+// );
+// const GnosisKeyring = Promise.resolve(
+//   require('@rabby-wallet/eth-keyring-gnosis').GnosisKeyring,
+// );
+// const WatchKeyring = Promise.resolve(
+//   require('@rabby-wallet/eth-keyring-watch').default,
+// );
 
 // TODO: add other keyring classes
 const keyringClasses = [

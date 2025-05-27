@@ -10,30 +10,162 @@ import {
   makeTxPageBackgroundColors,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-
-import SendScreen from '../Send/Send';
-import SendNFTScreen from '../SendNFT/SendNFT';
-
-import HistoryFilterScamScreen from '../Transaction/HistoryFilterScamScreen';
-import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
-import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
-import { TransactionNavigatorParamList } from '@/navigation-type';
-import Swap from '../Swap';
-import ApprovalsScreen from '../Approvals';
-import ReceiveScreen from '../Receive/Receive';
-import { Bridge } from '../Bridge';
-import { GasAccountScreen } from '../GasAccount';
+import { registerAppScreen } from '@/perfs/apis';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
-import MultiAddressHistory from '../Transaction/MultiAddressHistory';
-import { BuyScreen } from '../Buy';
-import SendPolyScreen from '../Send/SubScreens/SelectPolyScreen';
-import SendInputScreen from '../Send/SubScreens/SendInput';
-import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
-import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
-import SendHistoryScreen from '../WhiteList/SelectSendTransationAddress';
-import { GnosisQueueScreen } from '../GnosisQueue';
-import WhitelistInputScreen from '../WhiteList/InputScreen';
-import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
+import { TransactionNavigatorParamList } from '@/navigation-type';
+
+const SendScreen = registerAppScreen<typeof import('../Send/Send').default>({
+  loader: () => import('../Send/Send'),
+  name: RootNames.Send,
+});
+const SendScreenForMultipleAddress = registerAppScreen<
+  typeof import('../Send/Send').default['ForMultipleAddress']
+>({
+  loader: () => import('../Send/Send').then(m => m.default.ForMultipleAddress),
+  name: RootNames.MultiSend,
+});
+const SendNFTScreen = registerAppScreen<
+  typeof import('../SendNFT/SendNFT').default
+>({
+  loader: () => import('../SendNFT/SendNFT'),
+  name: RootNames.SendNFT,
+});
+const HistoryFilterScamScreen = registerAppScreen<
+  typeof import('../Transaction/HistoryFilterScamScreen').default
+>({
+  loader: () => import('../Transaction/HistoryFilterScamScreen'),
+  name: RootNames.HistoryFilterScam,
+});
+const HistoryDetailScreen = registerAppScreen<
+  typeof import('../Transaction/HistoryDetailScreen').HistoryDetailScreen
+>({
+  loader: () =>
+    import('../Transaction/HistoryDetailScreen').then(
+      m => m.HistoryDetailScreen,
+    ),
+  name: RootNames.HistoryDetail,
+});
+const HistoryLocalDetailScreen = registerAppScreen<
+  typeof import('../Transaction/HistoryLocalDetailScreen').HistoryLocalDetailScreen
+>({
+  loader: () =>
+    import('../Transaction/HistoryLocalDetailScreen').then(
+      m => m.HistoryLocalDetailScreen,
+    ),
+  name: RootNames.HistoryLocalDetail,
+});
+const SwapScreen = registerAppScreen<typeof import('../Swap').default>({
+  loader: () => import('../Swap'),
+  name: RootNames.Swap,
+});
+const SwapScreenForMultipleAddress = registerAppScreen<
+  typeof import('../Swap').default['ForMultipleAddress']
+>({
+  loader: () => import('../Swap').then(m => m.default.ForMultipleAddress),
+  name: RootNames.MultiSwap,
+});
+const ApprovalsScreen = registerAppScreen<
+  typeof import('../Approvals').default
+>({
+  loader: () => import('../Approvals'),
+  name: RootNames.Approvals,
+});
+const ReceiveScreen = registerAppScreen<
+  typeof import('../Receive/Receive').default
+>({
+  loader: () => import('../Receive/Receive'),
+  name: RootNames.Receive,
+});
+const BridgeScreen = registerAppScreen<typeof import('../Bridge').Bridge>({
+  loader: () => import('../Bridge').then(m => m.Bridge),
+  name: RootNames.Bridge,
+});
+const BridgeScreenForMultipleAddress = registerAppScreen<
+  typeof import('../Bridge').Bridge['ForMultipleAddress']
+>({
+  loader: () => import('../Bridge').then(m => m.Bridge.ForMultipleAddress),
+  name: RootNames.MultiBridge,
+});
+const GasAccountScreen = registerAppScreen<
+  typeof import('../GasAccount').GasAccountScreen
+>({
+  loader: () => import('../GasAccount').then(m => m.GasAccountScreen),
+  name: RootNames.GasAccount,
+});
+const MultiAddressHistoryScreen = registerAppScreen<
+  typeof import('../Transaction/MultiAddressHistory').default
+>({
+  loader: () => import('../Transaction/MultiAddressHistory'),
+  name: RootNames.MultiAddressHistory,
+});
+const MultiAddressHistoryForSingleAddressScreen = registerAppScreen<
+  typeof import('../Transaction/MultiAddressHistory').default['ForSingleAddress']
+>({
+  loader: () =>
+    import('../Transaction/MultiAddressHistory').then(
+      m => m.default.ForSingleAddress,
+    ),
+  name: RootNames.History,
+});
+const BuyScreen = registerAppScreen<typeof import('../Buy').BuyScreen>({
+  loader: () => import('../Buy').then(m => m.BuyScreen),
+  name: RootNames.Buy,
+});
+const BuyScreenForMultipleAddress = registerAppScreen<
+  typeof import('../Buy').BuyScreen['ForMultipleAddress']
+>({
+  loader: () => import('../Buy').then(m => m.BuyScreen.ForMultipleAddress),
+  name: RootNames.MultiBuy,
+});
+const SendPolyScreen = registerAppScreen<
+  typeof import('../Send/SubScreens/SelectPolyScreen').default
+>({
+  loader: () => import('../Send/SubScreens/SelectPolyScreen'),
+  name: RootNames.SendTo,
+});
+const SendInputScreen = registerAppScreen<
+  typeof import('../Send/SubScreens/SendInput').default
+>({
+  loader: () => import('../Send/SubScreens/SendInput'),
+  name: RootNames.SendInput,
+});
+const SelectMyAddressScreen = registerAppScreen<
+  typeof import('../Send/SubScreens/SelectMyAddress').default
+>({
+  loader: () => import('../Send/SubScreens/SelectMyAddress'),
+  name: RootNames.SelectImportAddress,
+});
+const SelectWatchScreenScreen = registerAppScreen<
+  typeof import('../Send/SubScreens/SelectTypeAddress').default
+>({
+  loader: () => import('../Send/SubScreens/SelectTypeAddress'),
+  name: RootNames.SelectTypeAddress,
+});
+const SendHistoryScreen = registerAppScreen<
+  typeof import('../WhiteList/SelectSendTransationAddress').default
+>({
+  loader: () => import('../WhiteList/SelectSendTransationAddress'),
+  name: RootNames.SendHistory,
+});
+const GnosisQueueScreen = registerAppScreen<
+  typeof import('../GnosisQueue').GnosisQueueScreen
+>({
+  loader: () => import('../GnosisQueue').then(m => m.GnosisQueueScreen),
+  name: RootNames.GnosisTransactionQueue,
+});
+const WhitelistInputScreen = registerAppScreen<
+  typeof import('../WhiteList/InputScreen').default
+>({
+  loader: () => import('../WhiteList/InputScreen'),
+  name: RootNames.WhitelistInput,
+});
+const BatchRevokeScreen = registerAppScreen<
+  typeof import('../BatchRevoke/BatchRevoke').BatchRevokeScreen
+>({
+  loader: () =>
+    import('../BatchRevoke/BatchRevoke').then(m => m.BatchRevokeScreen),
+  name: RootNames.BatchRevoke,
+});
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -142,7 +274,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.MultiSend}
-        component={SendScreen.ForMultipleAddress}
+        component={SendScreenForMultipleAddress}
         options={mergeScreenOptions({
           title: 'Send',
           headerTitleStyle: {
@@ -176,7 +308,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.MultiAddressHistory}
-        component={MultiAddressHistory}
+        component={MultiAddressHistoryScreen}
         options={{
           title: 'Transactions',
           headerTitle: ctx => {
@@ -197,7 +329,7 @@ export default function TransactionNavigator() {
       />
       <TransactionStack.Screen
         name={RootNames.History}
-        component={MultiAddressHistory.ForSingleAddress}
+        component={MultiAddressHistoryForSingleAddressScreen}
         options={{
           title: 'Transactions',
           headerTitle: ctx => {
@@ -286,7 +418,7 @@ export default function TransactionNavigator() {
       {/* SwapScreen */}
       <TransactionStack.Screen
         name={RootNames.Swap}
-        component={Swap}
+        component={SwapScreen}
         options={mergeScreenOptions2024([
           {
             title: 'Swap',
@@ -305,7 +437,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.MultiSwap}
-        component={Swap.ForMultipleAddress}
+        component={SwapScreenForMultipleAddress}
         options={mergeScreenOptions2024([
           {
             title: 'Swap',
@@ -342,7 +474,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.Bridge}
-        component={Bridge}
+        component={BridgeScreen}
         options={mergeScreenOptions2024([
           {
             title: 'Bridge',
@@ -362,7 +494,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.MultiBridge}
-        component={Bridge.ForMultipleAddress}
+        component={BridgeScreenForMultipleAddress}
         options={mergeScreenOptions2024([
           {
             title: 'Bridge',
@@ -418,7 +550,7 @@ export default function TransactionNavigator() {
 
       <TransactionStack.Screen
         name={RootNames.MultiBuy}
-        component={BuyScreen.ForMultipleAddress}
+        component={BuyScreenForMultipleAddress}
         options={mergeScreenOptions({
           title: 'Buy',
           // ...headerPresets.withBgCard1_2024,

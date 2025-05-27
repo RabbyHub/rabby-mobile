@@ -1,37 +1,141 @@
+import React from 'react';
 import { APPROVAL_MODAL_NAMES, CreateParams, MODAL_NAMES } from './types';
-import { Approval } from '../Approval';
-import { SwitchAddress } from '../CommonPopup/SwitchAddress';
-import { SwitchChain } from '../CommonPopup/SwitchChain';
-import { CancelConnect } from '../CommonPopup/CancelConnect';
-import { CancelApproval } from '../CommonPopup/CancelApproval/CancelApproval';
-import SimpleConfirmInner from '../CommonPopup/SimpleConfirm';
-import { ViewRawDetail } from '../Approval/components/TxComponents/ViewRawModal';
-import { SelectChain } from '../SelectChain';
-import { CancelTxPopup } from '../CancelTxPopup';
-import { SelectSortedChain } from '../SelectSortedChain';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import type { ThemeColors } from '@/constant/theme';
-import { ConnectLedger } from '../ConnectLedger/ConnectLedger';
-import { SettingLedger } from '../HDSetting/SettingLedger';
-import { TipUpgradeModalInner } from '../Upgrade/TipUpgrade';
-import { ConnectKeystone } from '../ConnectKeystone/ConnectKeystone';
-import { SettingKeystone } from '../HDSetting/SettingKeystone';
-import { ConnectOneKey } from '../ConnectOneKey/ConnectOneKey';
-import { OneKeyInputPassphrase } from '../OneKeyModal/OneKeyInputPassphrase';
-import { OneKeyInputPin } from '../OneKeyModal/OneKeyInputPin';
-import { SettingOneKey } from '../HDSetting/SettingOneKey';
-import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
-import {
-  TipTermOfUseModalInner,
-  TipPrivacyPolicyInner,
-} from '@/screens/ManagePassword/components/UserAgreementLikeModalInner';
-import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
-import { SettingHDKeyring } from '../HDSetting/SettingHDKeyring';
-import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
-import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
-import { SeedPhraseBackupToCloud } from '../SeedPhraseBackupToCloud/SeedPhraseBackupToCloud';
-import { SeedPhraseRestoreFromCloud } from '../SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
-import { BackupNotAvailableScreen } from '../SeedPhraseBackupToCloud/BackupNotAvailableScreen';
+
+const Approval = React.lazy(() =>
+  import('../Approval').then(m => ({ default: m.Approval })),
+);
+const CancelApproval = React.lazy(() =>
+  import('../CommonPopup/CancelApproval/CancelApproval').then(m => ({
+    default: m.CancelApproval,
+  })),
+);
+const SwitchAddress = React.lazy(() =>
+  import('../CommonPopup/SwitchAddress').then(m => ({
+    default: m.SwitchAddress,
+  })),
+);
+const SwitchChain = React.lazy(() =>
+  import('../CommonPopup/SwitchChain').then(m => ({ default: m.SwitchChain })),
+);
+const CancelConnect = React.lazy(() =>
+  import('../CommonPopup/CancelConnect').then(m => ({
+    default: m.CancelConnect,
+  })),
+);
+const SelectChain = React.lazy(() =>
+  import('../SelectChain').then(m => ({ default: m.SelectChain })),
+);
+const SimpleConfirmInner = React.lazy(() =>
+  import('../CommonPopup/SimpleConfirm').then(m => ({ default: m.default })),
+);
+const SelectSortedChain = React.lazy(() =>
+  import('../SelectSortedChain').then(m => ({ default: m.SelectSortedChain })),
+);
+const ViewRawDetail = React.lazy(() =>
+  import('../Approval/components/TxComponents/ViewRawModal').then(m => ({
+    default: m.ViewRawDetail,
+  })),
+);
+const CancelTxPopup = React.lazy(() =>
+  import('../CancelTxPopup').then(m => ({ default: m.CancelTxPopup })),
+);
+const ConnectLedger = React.lazy(() =>
+  import('../ConnectLedger/ConnectLedger').then(m => ({
+    default: m.ConnectLedger,
+  })),
+);
+const SettingLedger = React.lazy(() =>
+  import('../HDSetting/SettingLedger').then(m => ({
+    default: m.SettingLedger,
+  })),
+);
+const TipUpgradeModalInner = React.lazy(() =>
+  import('../Upgrade/TipUpgrade').then(m => ({
+    default: m.TipUpgradeModalInner,
+  })),
+);
+const ConnectKeystone = React.lazy(() =>
+  import('../ConnectKeystone/ConnectKeystone').then(m => ({
+    default: m.ConnectKeystone,
+  })),
+);
+const SettingKeystone = React.lazy(() =>
+  import('../HDSetting/SettingKeystone').then(m => ({
+    default: m.SettingKeystone,
+  })),
+);
+const ConnectOneKey = React.lazy(() =>
+  import('../ConnectOneKey/ConnectOneKey').then(m => ({
+    default: m.ConnectOneKey,
+  })),
+);
+const OneKeyInputPassphrase = React.lazy(() =>
+  import('../OneKeyModal/OneKeyInputPassphrase').then(m => ({
+    default: m.OneKeyInputPassphrase,
+  })),
+);
+const OneKeyInputPin = React.lazy(() =>
+  import('../OneKeyModal/OneKeyInputPin').then(m => ({
+    default: m.OneKeyInputPin,
+  })),
+);
+const SettingOneKey = React.lazy(() =>
+  import('../HDSetting/SettingOneKey').then(m => ({
+    default: m.SettingOneKey,
+  })),
+);
+const OneKeyPinOrPassphrase = React.lazy(() =>
+  import('../OneKeyModal/OneKeyPinOrPassphrase').then(m => ({
+    default: m.OneKeyPinOrPassphrase,
+  })),
+);
+const TipTermOfUseModalInner = React.lazy(() =>
+  import(
+    '@/screens/ManagePassword/components/UserAgreementLikeModalInner'
+  ).then(m => ({ default: m.TipTermOfUseModalInner })),
+);
+const TipPrivacyPolicyInner = React.lazy(() =>
+  import(
+    '@/screens/ManagePassword/components/UserAgreementLikeModalInner'
+  ).then(m => ({ default: m.TipPrivacyPolicyInner })),
+);
+const AuthenticationModal = React.lazy(() =>
+  import('../AuthenticationModal/AuthenticationModal').then(m => ({
+    default: m.AuthenticationModal,
+  })),
+);
+const SettingHDKeyring = React.lazy(() =>
+  import('../HDSetting/SettingHDKeyring').then(m => ({
+    default: m.SettingHDKeyring,
+  })),
+);
+const MarkdownInWebViewInner = React.lazy(() =>
+  import('@/screens/Settings/sheetModals/MarkdownInWebViewTester').then(m => ({
+    default: m.MarkdownInWebViewInner,
+  })),
+);
+const NFTDetailPopupInner = React.lazy(() =>
+  import('@/screens/NftDetail/PopupInner').then(m => ({
+    default: m.NFTDetailPopupInner,
+  })),
+);
+const SeedPhraseBackupToCloud = React.lazy(() =>
+  import('../SeedPhraseBackupToCloud/SeedPhraseBackupToCloud').then(m => ({
+    default: m.SeedPhraseBackupToCloud,
+  })),
+);
+const SeedPhraseRestoreFromCloud = React.lazy(() =>
+  import('../SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud').then(
+    m => ({ default: m.SeedPhraseRestoreFromCloud }),
+  ),
+);
+const BackupNotAvailableScreen = React.lazy(() =>
+  import('../SeedPhraseBackupToCloud/BackupNotAvailableScreen').then(m => ({
+    default: m.BackupNotAvailableScreen,
+  })),
+);
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {

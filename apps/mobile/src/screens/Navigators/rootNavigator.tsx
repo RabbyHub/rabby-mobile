@@ -10,7 +10,6 @@ import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
 import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
 import MultiAddressHome from '@/screens/Home/MultiAddressHome';
-import { DappWebViewStubScreen } from '../Dapps/DappWebViewScreen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { preloadSettingsScreen } from '@/perfs/preloads';
 
