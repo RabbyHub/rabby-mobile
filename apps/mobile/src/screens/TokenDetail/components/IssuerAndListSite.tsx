@@ -139,7 +139,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
           style={styles.skeleton}
           LinearGradientComponent={LoadingLinear}
         />
-      ) : (
+      ) : tokenEntity?.description ? (
         <>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
@@ -147,12 +147,10 @@ export const IssuerAndListSite: React.FC<Props> = ({
             </Text>
           </View>
           <View style={styles.itemCard}>
-            {tokenEntity?.description && (
-              <ExpandableDescription description={tokenEntity.description} />
-            )}
+            <ExpandableDescription description={tokenEntity.description} />
           </View>
         </>
-      )}
+      ) : null}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.IssuedBy')}</Text>
       </View>
