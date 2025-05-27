@@ -3,22 +3,10 @@ import { IS_IOS } from '@/core/native/utils';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { BrowserNavigatorParamsList } from '@/navigation-type';
-import { registerAppScreen } from '@/perfs/apis';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import 'react-native-gesture-handler';
-
-const BrowserManageScreen = registerAppScreen<
-  typeof import('@/screens/Browser/BrowserManageScreen').BrowserManageScreen
->({
-  loader: () => import('@/screens/Browser/BrowserManageScreen'),
-  name: RootNames.BrowserManageScreen,
-});
-const BrowserScreen = registerAppScreen<
-  typeof import('@/screens/Browser/BrowserScreen').BrowserScreen
->({
-  loader: () => import('@/screens/Browser/BrowserScreen'),
-  name: RootNames.BrowserScreen,
-});
+import { BrowserManageScreen } from '../Browser/BrowserManageScreen';
+import { BrowserScreen } from '../Browser/BrowserScreen';
 
 const BrowserStack =
   createCustomNativeStackNavigator<BrowserNavigatorParamsList>();

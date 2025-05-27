@@ -1,13 +1,12 @@
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
+import { useStackScreenConfig } from '@/hooks/navigation';
+import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import GetStartedScreen from '../GetStarted/GetStarted';
+import GetStartedScreen2024 from '../GetStarted/NewUserGetStarted2024';
 import { HomeNonTabNavigatorParamsList } from '@/navigation-type';
-import { registerAppScreen } from '@/perfs/apis';
-
-const SearchScreen = registerAppScreen<typeof import('../Search').default>({
-  loader: () => import('../Search'),
-  name: RootNames.Search,
-});
+import SearchScreen from '../Search';
 
 const HomeNonTabStack =
   createCustomNativeStackNavigator<HomeNonTabNavigatorParamsList>();

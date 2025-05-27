@@ -3,22 +3,10 @@ import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { DappsNavigatorParamsList } from '@/navigation-type';
+import { DappsScreen } from '../Dapps/DappsScreen';
 import { IS_IOS } from '@/core/native/utils';
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { registerAppScreen } from '@/perfs/apis';
-
-const DappsScreen = registerAppScreen<
-  typeof import('@/screens/Dapps/DappsScreen').DappsScreen
->({
-  loader: () => import('@/screens/Dapps/DappsScreen'),
-  name: RootNames.Dapps,
-});
-const FavoriteDappsScreen = registerAppScreen<
-  typeof import('@/screens/Dapps/FavoriteDappsScreen').FavoriteDappsScreen
->({
-  loader: () => import('@/screens/Dapps/FavoriteDappsScreen'),
-  name: RootNames.FavoriteDapps,
-});
+import { FavoriteDappsScreen } from '../Dapps/FavoriteDappsScreen';
 
 const DappsStack = createCustomNativeStackNavigator<DappsNavigatorParamsList>();
 

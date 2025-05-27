@@ -27,10 +27,3 @@ configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
   strict: false, // Reanimated runs in strict mode by default
 });
-
-import { getTimeSinceStartup } from 'react-native-startup-time';
-
-// when you app is ready:
-getTimeSinceStartup().then(time => {
-  console.log(`当前启动时间: ${time} ms`);
-});

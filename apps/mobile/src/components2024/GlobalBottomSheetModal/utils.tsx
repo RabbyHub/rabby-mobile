@@ -1,233 +1,54 @@
 import { MODAL_NAMES } from './types';
+import { Approval } from '@/components//Approval';
+import { SwitchAddress } from '@/components/CommonPopup/SwitchAddress';
+import { SwitchChain } from '@/components/CommonPopup/SwitchChain';
+import { CancelConnect } from '@/components/CommonPopup/CancelConnect';
+import { CancelApproval } from '@/components/CommonPopup/CancelApproval/CancelApproval';
+import SimpleConfirmInner from '@/components/CommonPopup/SimpleConfirm';
+import { ViewRawDetail } from '@/components/Approval/components/TxComponents/ViewRawModal';
+import { SelectChain } from '@/components/SelectChain';
+import { CancelTxPopup } from '@/components/CancelTxPopup';
+import { SelectSortedChain } from '@/components2024/SelectSortedChain';
+import { SelectChainWithSummary } from '@/components2024/SelectChainWithSummary';
+import SelectChainWithDistribute from '@/components2024/SelectChainWithDistribute';
+import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
+import { SettingLedger } from '@/components/HDSetting/SettingLedger';
+import { TipUpgradeModalInner } from '@/components/Upgrade/TipUpgrade';
+import { ConnectKeystone } from '@/components/ConnectKeystone/ConnectKeystone';
+import { SettingKeystone } from '@/components/HDSetting/SettingKeystone';
+import { ConnectOneKey } from '@/components/ConnectOneKey/ConnectOneKey';
+import { OneKeyInputPassphrase } from '@/components/OneKeyModal/OneKeyInputPassphrase';
+import { OneKeyInputPin } from '@/components/OneKeyModal/OneKeyInputPin';
+import { SettingOneKey } from '@/components/HDSetting/SettingOneKey';
+import { OneKeyPinOrPassphrase } from '@/components/OneKeyModal/OneKeyPinOrPassphrase';
+import {
+  TipTermOfUseModalInner,
+  TipPrivacyPolicyInner,
+} from '@/screens/ManagePassword/components/UserAgreementLikeModalInner';
+import { AuthenticationModal2024 } from '@/components/AuthenticationModal/AuthenticationModal2024';
+import { SettingHDKeyring } from '@/components/HDSetting/SettingHDKeyring';
+import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
+import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
+import { SeedPhraseBackupToCloud } from '@/components/SeedPhraseBackupToCloud2024/SeedPhraseBackupToCloud';
+import { AddAddressSelectMethod } from '@/components/AddAddressSelectMethod';
+import { SeedPhraseManualBackup } from '@/components2024/SeedPhraseManualBackup';
+import { SeedPhraseRestoreFromCloud } from '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
+import { BackupNotAvailableScreen } from '@/components/SeedPhraseBackupToCloud/BackupNotAvailableScreen';
+import { Descriptions } from '@/components2024/Descriptions';
 import React from 'react';
+import { RestoreFromCloud2024 } from '@/screens/RestoreFromCloud/RestoreFromCloud2024';
+import { SeedPhraseRestoreFromCloud2024 } from '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud2024';
+import { AddressQuickManager } from '../AddressQuickManager/AddressQuickManager';
+import { AddressDetail } from '../AddressDetail/AddressDetail';
+import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
+import { NoLongerSupports } from '../NoLongerSupports/NoLongerSupports';
 import { Dimensions } from 'react-native';
-
-const Approval = React.lazy(() =>
-  import('@/components/Approval').then(m => ({ default: m.Approval })),
-);
-const CancelApproval = React.lazy(() =>
-  import('@/components/CommonPopup/CancelApproval/CancelApproval').then(m => ({
-    default: m.CancelApproval,
-  })),
-);
-const SwitchAddress = React.lazy(() =>
-  import('@/components/CommonPopup/SwitchAddress').then(m => ({
-    default: m.SwitchAddress,
-  })),
-);
-const SwitchChain = React.lazy(() =>
-  import('@/components/CommonPopup/SwitchChain').then(m => ({
-    default: m.SwitchChain,
-  })),
-);
-const CancelConnect = React.lazy(() =>
-  import('@/components/CommonPopup/CancelConnect').then(m => ({
-    default: m.CancelConnect,
-  })),
-);
-const SelectChain = React.lazy(() =>
-  import('@/components/SelectChain').then(m => ({ default: m.SelectChain })),
-);
-const SimpleConfirmInner = React.lazy(() =>
-  import('@/components/CommonPopup/SimpleConfirm').then(m => ({
-    default: m.default,
-  })),
-);
-const SelectSortedChain = React.lazy(() =>
-  import('@/components2024/SelectSortedChain').then(m => ({
-    default: m.SelectSortedChain,
-  })),
-);
-const SelectChainWithSummary = React.lazy(() =>
-  import('@/components2024/SelectChainWithSummary').then(m => ({
-    default: m.SelectChainWithSummary,
-  })),
-);
-const SelectChainWithDistribute = React.lazy(() =>
-  import('@/components2024/SelectChainWithDistribute').then(m => ({
-    default: m.default,
-  })),
-);
-const CollectionNFTs = React.lazy(() =>
-  import('@/components2024/CollectionNFTs').then(m => ({
-    default: m.CollectionNFTs,
-  })),
-);
-const ViewRawDetail = React.lazy(() =>
-  import('@/components/Approval/components/TxComponents/ViewRawModal').then(
-    m => ({ default: m.ViewRawDetail }),
-  ),
-);
-const CancelTxPopup = React.lazy(() =>
-  import('@/components/CancelTxPopup').then(m => ({
-    default: m.CancelTxPopup,
-  })),
-);
-const ConnectLedger = React.lazy(() =>
-  import('@/components/ConnectLedger/ConnectLedger').then(m => ({
-    default: m.ConnectLedger,
-  })),
-);
-const SettingLedger = React.lazy(() =>
-  import('@/components/HDSetting/SettingLedger').then(m => ({
-    default: m.SettingLedger,
-  })),
-);
-const ConnectKeystone = React.lazy(() =>
-  import('@/components/ConnectKeystone/ConnectKeystone').then(m => ({
-    default: m.ConnectKeystone,
-  })),
-);
-const SettingKeystone = React.lazy(() =>
-  import('@/components/HDSetting/SettingKeystone').then(m => ({
-    default: m.SettingKeystone,
-  })),
-);
-const ConnectOneKey = React.lazy(() =>
-  import('@/components/ConnectOneKey/ConnectOneKey').then(m => ({
-    default: m.ConnectOneKey,
-  })),
-);
-const SettingOneKey = React.lazy(() =>
-  import('@/components/HDSetting/SettingOneKey').then(m => ({
-    default: m.SettingOneKey,
-  })),
-);
-const SettingHDKeyring = React.lazy(() =>
-  import('@/components/HDSetting/SettingHDKeyring').then(m => ({
-    default: m.SettingHDKeyring,
-  })),
-);
-const OneKeyInputPin = React.lazy(() =>
-  import('@/components/OneKeyModal/OneKeyInputPin').then(m => ({
-    default: m.OneKeyInputPin,
-  })),
-);
-const OneKeyInputPassphrase = React.lazy(() =>
-  import('@/components/OneKeyModal/OneKeyInputPassphrase').then(m => ({
-    default: m.OneKeyInputPassphrase,
-  })),
-);
-const OneKeyPinOrPassphrase = React.lazy(() =>
-  import('@/components/OneKeyModal/OneKeyPinOrPassphrase').then(m => ({
-    default: m.OneKeyPinOrPassphrase,
-  })),
-);
-const SeedPhraseBackupToCloud = React.lazy(() =>
-  import(
-    '@/components/SeedPhraseBackupToCloud2024/SeedPhraseBackupToCloud'
-  ).then(m => ({ default: m.SeedPhraseBackupToCloud })),
-);
-const AddAddressSelectMethod = React.lazy(() =>
-  import('@/components/AddAddressSelectMethod').then(m => ({
-    default: m.AddAddressSelectMethod,
-  })),
-);
-const FundYourWallet = React.lazy(() =>
-  import('@/screens/Home/FundYourWallet').then(m => ({
-    default: m.FundYourWallet,
-  })),
-);
-const AddWhitelistSelectMethod = React.lazy(() =>
-  import('@/components/AddWhitelistSelectMethod').then(m => ({
-    default: m.AddWhitelistSelectMethod,
-  })),
-);
-const SeedPhraseManualBackup = React.lazy(() =>
-  import('@/components2024/SeedPhraseManualBackup').then(m => ({
-    default: m.SeedPhraseManualBackup,
-  })),
-);
-const SeedPhraseRestoreFromCloud = React.lazy(() =>
-  import(
-    '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud'
-  ).then(m => ({ default: m.SeedPhraseRestoreFromCloud })),
-);
-const SeedPhraseRestoreFromCloud2024 = React.lazy(() =>
-  import(
-    '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud2024'
-  ).then(m => ({ default: m.SeedPhraseRestoreFromCloud2024 })),
-);
-const BackupNotAvailableScreen = React.lazy(() =>
-  import('@/components/SeedPhraseBackupToCloud/BackupNotAvailableScreen').then(
-    m => ({ default: m.BackupNotAvailableScreen }),
-  ),
-);
-const TipUpgradeModalInner = React.lazy(() =>
-  import('@/components/Upgrade/TipUpgrade').then(m => ({
-    default: m.TipUpgradeModalInner,
-  })),
-);
-const MarkdownInWebViewInner = React.lazy(() =>
-  import('@/screens/Settings/sheetModals/MarkdownInWebViewTester').then(m => ({
-    default: m.MarkdownInWebViewInner,
-  })),
-);
-const TipPrivacyPolicyInner = React.lazy(() =>
-  import(
-    '@/screens/ManagePassword/components/UserAgreementLikeModalInner'
-  ).then(m => ({ default: m.TipPrivacyPolicyInner })),
-);
-const TipTermOfUseModalInner = React.lazy(() =>
-  import(
-    '@/screens/ManagePassword/components/UserAgreementLikeModalInner'
-  ).then(m => ({ default: m.TipTermOfUseModalInner })),
-);
-const AuthenticationModal2024 = React.lazy(() =>
-  import('@/components/AuthenticationModal/AuthenticationModal2024').then(
-    m => ({ default: m.AuthenticationModal2024 }),
-  ),
-);
-const ConfirmAddress = React.lazy(() =>
-  import('@/screens/Send/components/ConfirmAddress').then(m => ({
-    default: m.default,
-  })),
-);
-const SelectCex = React.lazy(() =>
-  import('@/screens/Send/components/SelectCex').then(m => ({
-    default: m.default,
-  })),
-);
-const NFTDetailPopupInner = React.lazy(() =>
-  import('@/screens/NftDetail/PopupInner').then(m => ({
-    default: m.NFTDetailPopupInner,
-  })),
-);
-const Descriptions = React.lazy(() =>
-  import('@/components2024/Descriptions').then(m => ({
-    default: m.Descriptions,
-  })),
-);
-const RestoreFromCloud2024 = React.lazy(() =>
-  import('@/screens/RestoreFromCloud/RestoreFromCloud2024').then(m => ({
-    default: m.RestoreFromCloud2024,
-  })),
-);
-const AddressQuickManager = React.lazy(() =>
-  import('../AddressQuickManager/AddressQuickManager').then(m => ({
-    default: m.AddressQuickManager,
-  })),
-);
-const AddressDetail = React.lazy(() =>
-  import('../AddressDetail/AddressDetail').then(m => ({
-    default: m.AddressDetail,
-  })),
-);
-const ImportMoreAddress = React.lazy(() =>
-  import('../ImportMoreAddress/ImportMoreAddress').then(m => ({
-    default: m.ImportMoreAddress,
-  })),
-);
-const NoLongerSupports = React.lazy(() =>
-  import('../NoLongerSupports/NoLongerSupports').then(m => ({
-    default: m.NoLongerSupports,
-  })),
-);
-const BatchRevokeErrorReason = React.lazy(() =>
-  import('@/screens/BatchRevoke/BatchRevokeErrorReason').then(m => ({
-    default: m.BatchRevokeErrorReason,
-  })),
-);
+import { CollectionNFTs } from '../CollectionNFTs';
+import { AddWhitelistSelectMethod } from '@/components/AddWhitelistSelectMethod';
+import ConfirmAddress from '@/screens/Send/components/ConfirmAddress';
+import SelectCex from '@/screens/Send/components/SelectCex';
+import { BatchRevokeErrorReason } from '@/screens/BatchRevoke/BatchRevokeErrorReason';
+import { FundYourWallet } from '@/screens/Home/FundYourWallet';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 

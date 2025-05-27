@@ -236,7 +236,6 @@
     "react-devtools": "^4.28.5",
     "react-native-asset": "^2.1.1",
     "react-native-bundle-visualizer": "3.1.0",
-    "react-native-startup-time": "^2.1.0",
     "react-native-svg-transformer": "1.5.0",
     "react-native-version": "^4.0.0",
     "react-test-renderer": "18.3.1",
