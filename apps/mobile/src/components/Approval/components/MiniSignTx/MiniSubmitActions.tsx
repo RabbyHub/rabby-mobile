@@ -32,6 +32,7 @@ export const MiniSubmitActions: React.FC<Props> = ({
   isMiniSignTx,
   chain,
   isSwap,
+  directSubmit,
 }) => {
   const { t } = useTranslation();
   const [isSign, setIsSign] = React.useState(!gasLess);
@@ -71,19 +72,20 @@ export const MiniSubmitActions: React.FC<Props> = ({
         isMiniSignTx &&
         !disabledProcess &&
         !pressedConfirm &&
-        directSigning
+        directSigning &&
+        directSubmit
       ) {
         handlePress();
       }
     },
-    10,
+    100,
     [
-      onSubmit,
       directSigning,
       disabledProcess,
       handlePress,
       isMiniSignTx,
       pressedConfirm,
+      directSubmit,
     ],
   );
 

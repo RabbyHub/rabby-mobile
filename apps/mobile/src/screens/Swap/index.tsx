@@ -38,10 +38,7 @@ import { LowCreditModal } from './components/LowCreditModal';
 import { QuoteList } from './components/Quotes';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
 import {
-  fetchLocalSwapPendingTx,
-  useDetectLoss,
   usePollSwapPendingNumber,
-  useReadPendingTxData,
   useSlippageStore,
   useSwapUnlimitedAllowance,
   useTokenPair,
@@ -90,12 +87,10 @@ import {
 } from '@/utils/account';
 import AuthButton from '@/components2024/AuthButton';
 import {
-  canDirectSignAtom,
   directSigningAtom,
+  useCanProcessDirectSubmit,
 } from '@/hooks/useMiniApprovalDirectSign';
-import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
 import { PendingTxItem } from './components/PendingTxItem';
-import { TransactionGroup } from '@/core/services/transactionHistory';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -479,9 +474,12 @@ const Swap = ({
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
   }, [chain]);
 
-  const accountSupportDirectSign = useMemo(
-    () => isAccountSupportDirectSign(currentAccount?.type),
-    [currentAccount?.type],
+  const canShowDirectSubmit = useMemo(
+    () =>
+      isAccountSupportDirectSign(currentAccount?.type) &&
+      isSupportedChain &&
+      !inSufficient,
+    [currentAccount?.type, inSufficient, isSupportedChain],
   );
 
   const { loading: isSubmitting, runAsync: handleSwap } = useRequest(
@@ -491,7 +489,7 @@ const Swap = ({
       }
       if (isAccountSupportMiniApproval(currentAccount?.type)) {
         clearExpiredTimer();
-        if (accountSupportDirectSign) {
+        if (canShowDirectSubmit) {
           if (isDirectSigning) {
             return;
           } else {
@@ -501,7 +499,7 @@ const Swap = ({
         try {
           if (txs?.length) {
             await sendPrepareMiniTransactions({
-              directSubmit: accountSupportDirectSign,
+              directSubmit: canShowDirectSubmit,
             });
           } else {
             const res = await runBuildSwapTxs();
@@ -513,7 +511,7 @@ const Swap = ({
                   source: 'swap',
                   swapUseSlider,
                 },
-                directSubmit: accountSupportDirectSign,
+                directSubmit: canShowDirectSubmit,
               });
             }
           }
@@ -601,7 +599,13 @@ const Swap = ({
   ]);
 
   useEffect(() => {
-    if (!isSubmitting) {
+    if (isFocused) {
+      refresh(e => e + 1);
+    }
+  }, [isFocused, refresh]);
+
+  useEffect(() => {
+    if (!isSubmitting && isFocused && canShowDirectSubmit) {
       prepareMiniTransactions({
         txs: txs || [],
         ga: {
@@ -609,9 +613,17 @@ const Swap = ({
           source: 'swap',
           swapUseSlider,
         },
+        directSubmit: canShowDirectSubmit,
       });
     }
-  }, [txs, prepareMiniTransactions, swapUseSlider, isSubmitting]);
+  }, [
+    txs,
+    prepareMiniTransactions,
+    swapUseSlider,
+    isSubmitting,
+    canShowDirectSubmit,
+    isFocused,
+  ]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -739,7 +751,7 @@ const Swap = ({
   ]);
 
   const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
-  const [canDirectSign] = useAtom(canDirectSignAtom);
+  const canDirectSign = useCanProcessDirectSubmit();
 
   return (
     <NormalScreenContainer2024 type="bg1">
@@ -876,9 +888,7 @@ const Swap = ({
                 marginHorizontal: -24,
               }}>
               <BridgeShowMore
-                supportDirectSign={isAccountSupportDirectSign(
-                  currentAccount?.type,
-                )}
+                supportDirectSign={canShowDirectSubmit}
                 openFeePopup={openFeePopup}
                 open={showMoreOpen}
                 setOpen={setShowMoreOpen}
@@ -959,13 +969,12 @@ const Swap = ({
               : undefined
           }>
           <View>
-            {accountSupportDirectSign && isSupportedChain ? (
+            {canShowDirectSubmit ? (
               <AuthButton
                 authTitle={t('page.whitelist.confirmPassword')}
                 title={t('global.confirm')}
                 onFinished={handleSwap}
-                disabled={swapBtnDisabled || !canDirectSign}
-                loading={isDirectSigning}
+                disabled={swapBtnDisabled || !canDirectSign || isDirectSigning}
                 type={'primary'}
                 syncUnlockTime
               />

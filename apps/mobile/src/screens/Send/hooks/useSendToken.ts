@@ -40,7 +40,11 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { useFocusEffect, useNavigationState } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigationState,
+} from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import {
@@ -733,6 +737,109 @@ export function useSendTokenForm(
     [formik, setFormValues, handleFormValuesChange],
   );
 
+  const prepareDirectSubmitMiniTx = useMemoizedFn(async (ref: number) => {
+    const chain = findChain({
+      serverId: currentToken.chain,
+    })!;
+
+    const { to, amount, messageDataForSendToEoa, messageDataForContractCall } =
+      formValues;
+
+    const params = getParams({
+      to: to,
+      amount: amount,
+      messageDataForSendToEoa: messageDataForSendToEoa,
+      messageDataForContractCall: messageDataForContractCall,
+    });
+    if (isNativeToken) {
+      // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
+      const couldSpecifyIntrinsicGas =
+        !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
+
+      try {
+        const code = await apiProvider.requestETHRpc(
+          {
+            method: 'eth_getCode',
+            params: [to, 'latest'],
+          },
+          chain.serverId,
+        );
+        const notContract = !!code && (code === '0x' || code === '0x0');
+        let gasLimit = 0;
+
+        if (screenState.estimatedGas) {
+          gasLimit = screenState.estimatedGas;
+        }
+
+        /**
+         * we dont' need always fetch estimatedGas, if no `params.gas` set below,
+         * `params.gas` would be filled on Tx Page.
+         */
+        if (gasLimit > 0) {
+          params.gas = intToHex(gasLimit);
+        } else if (notContract && couldSpecifyIntrinsicGas) {
+          params.gas = intToHex(DEFAULT_GAS_USED);
+        }
+        if (!notContract) {
+          // not pre-set gasLimit if to address is contract address
+          delete params.gas;
+        }
+      } catch (e) {
+        if (couldSpecifyIntrinsicGas) {
+          params.gas = intToHex(DEFAULT_GAS_USED);
+        }
+      }
+      if (
+        isShowMessageDataForToken &&
+        (messageDataForContractCall || messageDataForSendToEoa)
+      ) {
+        delete params.gas;
+      }
+      if (screenState.showGasReserved) {
+        params.gasPrice = screenState.selectedGasLevel?.price;
+      }
+    }
+
+    if (
+      ref === prepareCountRef.current &&
+      isAccountSupportMiniApproval(currentAccount?.type || '') &&
+      !chain.isTestnet
+    ) {
+      const res = await apiProvider.sendRequest(
+        {
+          method: 'eth_sendTransaction',
+          params: [params],
+          $ctx: {
+            ga: {
+              category: 'Send',
+              source: 'sendToken',
+              toAddress,
+              trigger: 'sendToken',
+            },
+          },
+        },
+        INTERNAL_REQUEST_SESSION,
+        true,
+      );
+      const tx = res.params?.[0];
+
+      if (ref === prepareCountRef.current) {
+        if (tx && !isDirectSigning) {
+          prepareMiniTransactions({
+            txs: [tx],
+            ga: {
+              category: 'Send',
+              source: 'sendToken',
+              toAddress,
+              trigger: 'sendToken',
+            },
+            directSubmit: true,
+          });
+        }
+      }
+    }
+  });
+
   const handleSubmit = useCallback(
     async ({
       to,
@@ -752,7 +859,11 @@ export function useSendTokenForm(
         messageDataForSendToEoa,
         messageDataForContractCall,
       });
-      if (isNativeToken) {
+      const directSubmit =
+        isAccountSupportMiniApproval(currentAccount?.type || '') &&
+        !chain.isTestnet &&
+        isAccountSupportDirectSign(currentAccount?.type || '');
+      if (isNativeToken && !directSubmit) {
         // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
         const couldSpecifyIntrinsicGas =
           !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
@@ -817,10 +928,19 @@ export function useSendTokenForm(
             } else {
               setDirectSigning(true);
             }
+
+            if (!prepareRef.current) {
+              prepareCountRef.current++;
+              prepareRef.current = prepareDirectSubmitMiniTx(
+                prepareCountRef.current,
+              );
+            }
             await prepareRef.current;
+
             await sendPrepareMiniTransactions({
               directSubmit: true,
             });
+
             runFetchPendingCount();
             runFetchLocalPendingTx();
             handleFieldChange('amount', '');
@@ -908,23 +1028,24 @@ export function useSendTokenForm(
       }
     },
     [
-      currentAccount,
+      putScreenState,
       currentToken,
       getParams,
-      handleFieldChange,
-      isDirectSigning,
       isNativeToken,
       isShowMessageDataForToken,
-      putScreenState,
-      runFetchPendingCount,
+      screenState.showGasReserved,
       screenState.estimatedGas,
       screenState.selectedGasLevel?.price,
-      screenState.showGasReserved,
-      sendMiniTransactions,
+      currentAccount,
+      toAddress,
+      isDirectSigning,
       sendPrepareMiniTransactions,
       setDirectSigning,
-      toAddress,
+      runFetchPendingCount,
       runFetchLocalPendingTx,
+      handleFieldChange,
+      prepareDirectSubmitMiniTx,
+      sendMiniTransactions,
     ],
   );
 
@@ -1447,141 +1568,32 @@ export function useSendTokenForm(
   });
 
   const prepareRef = useRef<Promise<void>>();
+  const prepareCountRef = useRef(0);
+
+  const isFocused = useIsFocused();
 
   useEffect(() => {
-    if (screenState.isSubmitLoading) {
-      return;
-    }
-
-    let init = true;
-
     if (
+      isFocused &&
+      !screenState.isSubmitLoading &&
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
-      !chainItem?.isTestnet
+      !chainItem?.isTestnet &&
+      computed.canSubmit
     ) {
-      const prepare = async () => {
-        const chain = findChain({
-          serverId: currentToken.chain,
-        })!;
-        const {
-          to,
-          amount,
-          messageDataForSendToEoa,
-          messageDataForContractCall,
-        } = formValues;
-
-        const params = getParams({
-          to: to,
-          amount: amount,
-          messageDataForSendToEoa: messageDataForSendToEoa,
-          messageDataForContractCall: messageDataForContractCall,
-        });
-        if (isNativeToken) {
-          // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
-          const couldSpecifyIntrinsicGas =
-            !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
-
-          try {
-            const code = await apiProvider.requestETHRpc(
-              {
-                method: 'eth_getCode',
-                params: [to, 'latest'],
-              },
-              chain.serverId,
-            );
-            const notContract = !!code && (code === '0x' || code === '0x0');
-            let gasLimit = 0;
-
-            if (screenState.estimatedGas) {
-              gasLimit = screenState.estimatedGas;
-            }
-
-            /**
-             * we dont' need always fetch estimatedGas, if no `params.gas` set below,
-             * `params.gas` would be filled on Tx Page.
-             */
-            if (gasLimit > 0) {
-              params.gas = intToHex(gasLimit);
-            } else if (notContract && couldSpecifyIntrinsicGas) {
-              params.gas = intToHex(DEFAULT_GAS_USED);
-            }
-            if (!notContract) {
-              // not pre-set gasLimit if to address is contract address
-              delete params.gas;
-            }
-          } catch (e) {
-            if (couldSpecifyIntrinsicGas) {
-              params.gas = intToHex(DEFAULT_GAS_USED);
-            }
-          }
-          if (
-            isShowMessageDataForToken &&
-            (messageDataForContractCall || messageDataForSendToEoa)
-          ) {
-            delete params.gas;
-          }
-          if (screenState.showGasReserved) {
-            params.gasPrice = screenState.selectedGasLevel?.price;
-          }
-        }
-        if (
-          isAccountSupportMiniApproval(currentAccount?.type || '') &&
-          !chain.isTestnet
-        ) {
-          const res = await apiProvider.sendRequest(
-            {
-              method: 'eth_sendTransaction',
-              params: [params],
-              $ctx: {
-                ga: {
-                  category: 'Send',
-                  source: 'sendToken',
-                  toAddress,
-                  trigger: 'sendToken',
-                },
-              },
-            },
-            INTERNAL_REQUEST_SESSION,
-            true,
-          );
-          const tx = res.params?.[0];
-          if (tx && init && !isDirectSigning) {
-            await prepareMiniTransactions({
-              txs: [tx],
-              ga: {
-                category: 'Send',
-                source: 'sendToken',
-                toAddress,
-                trigger: 'sendToken',
-              },
-            });
-          }
-        }
-      };
-
-      if (computed.canSubmit) {
-        prepareRef.current = prepare();
-      }
+      prepareCountRef.current += 1;
+      prepareRef.current = prepareDirectSubmitMiniTx(prepareCountRef.current);
     }
-    return () => {
-      init = false;
-    };
   }, [
-    isDirectSigning,
+    isFocused,
     chainItem?.isTestnet,
     computed.canSubmit,
+    formValues.to,
+    formValues.amount,
+    formValues.messageDataForSendToEoa,
+    formValues.messageDataForContractCall,
     currentAccount?.type,
-    currentToken.chain,
-    formValues,
-    getParams,
-    isNativeToken,
-    isShowMessageDataForToken,
-    prepareMiniTransactions,
-    screenState.estimatedGas,
-    screenState.selectedGasLevel?.price,
-    screenState.showGasReserved,
+    prepareDirectSubmitMiniTx,
     screenState.isSubmitLoading,
-    toAddress,
   ]);
 
   useFocusEffect(

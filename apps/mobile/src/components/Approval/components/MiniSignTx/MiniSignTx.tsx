@@ -22,7 +22,7 @@ import {
   checkGasAndNonce,
   convertLegacyTo1559,
 } from '@/utils/transaction';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetView, useBottomSheetModal } from '@gorhom/bottom-sheet';
 import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
@@ -94,6 +94,7 @@ import {
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
 import { isAccountSupportDirectSign } from '@/utils/account';
+import { SwapModal } from '@/screens/Swap/components/Modal';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -133,7 +134,7 @@ interface BlockInfo {
   uncles: string[];
 }
 
-const MiniSignTx = ({
+export const MiniSignTx = ({
   txs,
   onReject,
   onResolve,
@@ -143,6 +144,7 @@ const MiniSignTx = ({
   task,
   onSubmitting,
   onSubmitted,
+  directSubmit,
 }: {
   txs: Tx[];
   onReject?: (e?: any) => void;
@@ -153,6 +155,7 @@ const MiniSignTx = ({
   task: MiniApprovalTaskType;
   onSubmitting?: () => void;
   onSubmitted?: (isSuccess: boolean) => void;
+  directSubmit?: boolean;
 }) => {
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
@@ -576,7 +579,7 @@ const MiniSignTx = ({
   const checkGasLevelIsNotEnough = useCallback(
     (gas: GasSelectorResponse) => {
       if (!isReady || !txsResult.length) {
-        return Promise.resolve([false, true]);
+        return Promise.resolve([0, false, true]);
       }
       let _txsResult = txsResult;
 
@@ -612,7 +615,7 @@ const MiniSignTx = ({
         _txsResult = arr;
 
         if (!_txsResult.length) {
-          return [false, true];
+          return [0, false, true];
         }
 
         return openapi
@@ -649,6 +652,7 @@ const MiniSignTx = ({
               return result;
             });
             return [
+              gasAccountRes.gas_account_cost.total_cost,
               gasAccountRes.balance_is_enough,
               _.flatten(checkResult)?.some(e => e.code === 3001),
             ];
@@ -1117,6 +1121,7 @@ const MiniSignTx = ({
   return (
     <>
       <MiniFooterBar
+        directSubmit={directSubmit}
         task={task}
         Header={
           <GasSelectorHeader
@@ -1150,7 +1155,7 @@ const MiniSignTx = ({
             gasPriceMedian={gasPriceMedian}
             gas={totalGasCost}
             gasCalcMethod={gasCalcMethod}
-            miniSign
+            directSubmit={directSubmit}
             checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
           />
         }
@@ -1237,6 +1242,7 @@ export const MiniApproval = ({
   ga,
   onSubmitting,
   onSubmitted,
+  directSubmit,
 }: {
   txs?: Tx[];
   visible?: boolean;
@@ -1246,6 +1252,7 @@ export const MiniApproval = ({
   ga?: Record<string, any>;
   onSubmitting?: () => void;
   onSubmitted?: (isSuccess: boolean) => void;
+  directSubmit?: boolean;
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { colors2024, styles } = useTheme2024({
@@ -1278,40 +1285,11 @@ export const MiniApproval = ({
   const dismissedByCodeRef = useRef(false);
   const handleReject = useMemoizedFn((reason?: string) => {
     onReject?.(reason);
-    cancelOverlayLoading();
   });
-
-  const [overlayLoading, setOverlayLoading] = React.useState(false);
-  const { currentAccount } = useCurrentAccount();
-
-  const onSubmittingCb = useCallback(() => {
-    onSubmitting?.();
-    if (isAccountSupportDirectSign(currentAccount?.type)) {
-      setOverlayLoading(true);
-    }
-  }, [currentAccount?.type, onSubmitting]);
-
-  const onSubmittedCb = useCallback(
-    (isSuccess: boolean) => {
-      onSubmitted?.(isSuccess);
-      setOverlayLoading(false);
-    },
-    [onSubmitted],
-  );
-
-  const cancelOverlayLoading = useMemoizedFn(() => {
-    setOverlayLoading?.(false);
-  });
-
-  const resetMiniApprovalDirectSignState =
-    useResetMiniApprovalDirectSignState();
 
   const handleClearTask = useMemoizedFn(() => {
     task.clear();
-    resetMiniApprovalDirectSignState();
     onVisibleChange?.(false);
-    cancelOverlayLoading();
-
     if (!visible) {
       onReject?.();
     }
@@ -1342,24 +1320,6 @@ export const MiniApproval = ({
   const task = useMiniApprovalTask({
     ga,
   });
-
-  const [isDirectSigning] = useAtom(directSigningAtom);
-
-  useEffect(() => {
-    resetMiniApprovalDirectSignState();
-  }, [resetMiniApprovalDirectSignState, txs]);
-
-  useEffect(() => {
-    if (isDirectSigning) {
-      setOverlayLoading?.(true);
-    }
-  }, [isDirectSigning]);
-
-  useEffect(() => {
-    if (task.error) {
-      setOverlayLoading?.(false);
-    }
-  }, [task.error]);
 
   if (!txs?.length) {
     return null;
@@ -1408,8 +1368,8 @@ export const MiniApproval = ({
                   onResolve?.(res);
                   dismissedByCodeRef.current = true;
                 }}
-                onSubmitting={onSubmittingCb}
-                onSubmitted={onSubmittedCb}
+                onSubmitting={onSubmitting}
+                onSubmitted={onSubmitted}
               />
             ) : null}
           </AutoLockView>
@@ -1422,31 +1382,18 @@ export const MiniApproval = ({
         onCancel={handleClearTask}
         onRetry={async () => {
           try {
-            onSubmittingCb?.();
+            onSubmitting?.();
             const res = await task.retry();
             // todo check this
             onResolve?.(res || []);
-            onSubmittedCb?.(true);
+            onSubmitted?.(true);
             dismissedByCodeRef.current = true;
           } catch (e) {
             console.error(e);
-            onSubmittedCb?.(false);
+            onSubmitted?.(false);
           }
         }}
       />
-
-      <Modal
-        visible={overlayLoading}
-        transparent
-        animationType="fade"
-        onRequestClose={cancelOverlayLoading}
-        statusBarTranslucent>
-        <Pressable style={styles.overlay} onPress={cancelOverlayLoading}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="white" />
-          </View>
-        </Pressable>
-      </Modal>
     </>
   );
 };
@@ -1469,22 +1416,5 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-  },
-
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingContainer: {
-    width: 58,
-    height: 58,
-    borderRadius: 8,
-    backgroundColor: 'rgba(30, 30, 30, 0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 }));

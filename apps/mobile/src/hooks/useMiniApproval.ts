@@ -17,6 +17,7 @@ export const miniApprovalAtom = atom<{
   onVisibleChange?: (v: boolean) => void;
   ga?: Record<string, any>;
   id?: string;
+  directSubmit?: boolean;
 }>({
   txs: [],
 });
@@ -48,8 +49,13 @@ export const useMiniApproval = () => {
               txs,
               ga,
               visible: directSubmit ? false : true,
+              directSubmit: !!directSubmit,
               onReject: e => {
-                setState(prev => ({ ...prev, txs: [], visible: false }));
+                setState(prev => ({
+                  ...prev,
+                  txs: [],
+                  visible: false,
+                }));
                 const signingTxId =
                   notificationService.currentMiniApproval?.signingTxId;
                 if (signingTxId) {
@@ -59,7 +65,11 @@ export const useMiniApproval = () => {
                 reject(e);
               },
               onResolve: res => {
-                setState(prev => ({ ...prev, txs: [], visible: false }));
+                setState(prev => ({
+                  ...prev,
+                  txs: [],
+                  visible: false,
+                }));
                 notificationService.currentMiniApproval = null;
                 resolve(res);
               },
@@ -91,7 +101,15 @@ export const useMiniApproval = () => {
   );
 
   const prepareMiniTransactions = useMemoizedFn(
-    ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
+    ({
+      txs,
+      ga,
+      directSubmit,
+    }: {
+      txs: Tx[];
+      ga?: Record<string, any>;
+      directSubmit?: boolean;
+    }) => {
       clear();
       setState(prev => {
         return {
@@ -99,6 +117,7 @@ export const useMiniApproval = () => {
           id: uniqueId('mini-approval'),
           txs,
           ga,
+          directSubmit,
         };
       });
     },

@@ -14,8 +14,8 @@ import { Button } from '@/components2024/Button';
 import AuthButton from '@/components2024/AuthButton';
 import { useTranslation } from 'react-i18next';
 import {
-  canDirectSignAtom,
   directSigningAtom,
+  useCanProcessDirectSubmit,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
 
@@ -47,7 +47,7 @@ export default function BottomArea() {
 
   const [isDirectSigning] = useAtom(directSigningAtom);
 
-  const [canDirectSign] = useAtom(canDirectSignAtom);
+  const canDirectSign = useCanProcessDirectSubmit();
 
   return (
     <View
@@ -60,8 +60,7 @@ export default function BottomArea() {
           authTitle={t('page.whitelist.confirmPassword')}
           title={t('global.confirm')}
           onFinished={handleSubmit}
-          disabled={!canSubmit || !canDirectSign}
-          loading={isDirectSigning}
+          disabled={!canSubmit || !canDirectSign || isDirectSigning}
           type={'primary'}
           syncUnlockTime
         />

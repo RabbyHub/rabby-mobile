@@ -122,12 +122,14 @@ export default function ShowMoreGasSelectModal({
             const levelTitle = t(getGasLevelI18nKey(gas.level));
             const isActive = miniApprovalGas.selectedGas?.level === gas.level;
             const isCustom = gas.level === 'custom';
-            const costUsd = miniApprovalGas.gasUsdList[gas.level];
-            const isNotEnough = (
-              miniApprovalGas.gasMethod === 'native'
-                ? miniApprovalGas.gasIsNotEnough
-                : miniApprovalGas.gasAccountIsNotEnough
-            )[gas.level];
+            const costUsd =
+              miniApprovalGas?.gasMethod === 'native'
+                ? miniApprovalGas.gasUsdList?.[gas.level]
+                : miniApprovalGas?.gasAccountIsNotEnough?.[gas.level]?.[1];
+            const isNotEnough =
+              miniApprovalGas?.gasMethod === 'native'
+                ? miniApprovalGas?.gasIsNotEnough?.[gas.level]
+                : miniApprovalGas?.gasAccountIsNotEnough?.[gas.level]?.[0];
             return (
               <TouchableOpacity
                 key={gas.level}
@@ -139,13 +141,13 @@ export default function ShowMoreGasSelectModal({
                   },
                 ]}
                 onPress={() => {
-                  miniApprovalGas.externalPanelSelection(gas);
+                  miniApprovalGas?.externalPanelSelection?.(gas);
                   if (gas.level === 'custom') {
-                    miniApprovalGas.handleClickEdit();
+                    miniApprovalGas?.handleClickEdit?.();
                     onCancel();
                   }
                 }}>
-                <Text>
+                <Text style={styles.level}>
                   {levelTitle}
                   {!isCustom && (
                     <Text style={styles.gwei}> ({gwei} Gwei) </Text>
@@ -203,6 +205,12 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderStyle: 'solid',
     borderColor: colors2024['neutral-line'],
     backgroundColor: colors2024['neutral-bg-1'],
+    // box-shadow: 2px 4px 25.4px 15px rgba(0, 0, 0, 0.03);
+    shadowColor: 'rgba(0, 0, 0, 0.13)',
+    shadowOpacity: 1,
+    shadowRadius: 25.4,
+    shadowOffset: { width: 2, height: 4 },
+    elevation: 25.4,
   },
 
   header: {

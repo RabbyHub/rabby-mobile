@@ -142,7 +142,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors2024['neutral-bg-4'],
+      // backgroundColor: colors2024['neutral-bg-4'],
       paddingVertical: 4,
       paddingLeft: 12,
       paddingRight: 5,
@@ -151,6 +151,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginBottom: 8,
       marginTop: 5,
       minHeight: 36,
+      backgroundColor: colors2024['red-light-1'],
     },
     tipTriangle: {
       position: 'absolute',
@@ -167,16 +168,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderLeftColor: 'transparent',
       borderRightColor: 'transparent',
       borderTopColor: 'transparent',
-      borderBottomColor: colors2024['neutral-bg-4'],
+      // borderBottomColor: colors2024['neutral-bg-4'],
       alignItems: 'center',
+      borderBottomColor: colors2024['red-light-1'],
     },
     text: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontStyle: 'normal',
       fontWeight: '500',
-      color: colors2024['neutral-body'],
+      // color: colors2024['neutral-body'],
       lineHeight: 18,
+      color: colors2024['red-default'],
     },
 
     gasAccountBtn: {

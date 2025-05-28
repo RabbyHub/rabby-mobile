@@ -20,9 +20,7 @@ export const ShowMoreOnSend = () => {
     <View style={{ marginHorizontal: -20 }}>
       <SendShowMore
         open={open}
-        setOpen={() => {
-          setOpen(true);
-        }}
+        setOpen={setOpen}
         supportDirectSign={canDirectSign}
         loading={false}
       />

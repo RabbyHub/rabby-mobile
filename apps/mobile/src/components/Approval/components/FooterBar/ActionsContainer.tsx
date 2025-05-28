@@ -58,6 +58,7 @@ export interface Props {
   isGasNotEnough?: boolean;
   buttonIcon?: React.ReactNode;
   isMiniSignTx?: boolean;
+  directSubmit?: boolean;
 }
 
 export const ActionsContainer: React.FC<
