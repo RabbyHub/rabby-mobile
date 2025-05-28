@@ -10,7 +10,7 @@ import {
 // import { useGnosisSafeInfo } from '@/ui/hooks/useGnosisSafeInfo';
 // import { useAccount } from '@/ui/store-hooks';
 import { findChain } from '@/utils/chain';
-import { SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { SafeTransactionDataPartial } from '@safe-global/types-kit';
 // import { CHAINS_ENUM } from 'consts';
 // import { FlashList } from '@shopify/flash-list';
@@ -22,7 +22,7 @@ import { useGnosisSafeInfo } from '@/hooks/gnosis/useGnosisSafeInfo';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { generateTypedData } from '@safe-global/protocol-kit';
+import { generateTypedData } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { FlatList } from 'react-native-gesture-handler';
 import { verifyTypedData } from 'viem';

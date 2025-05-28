@@ -2,7 +2,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { timeago } from '@/utils/time';
-import { BasicSafeInfo, SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import type { BasicSafeInfo, SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { ParseTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';

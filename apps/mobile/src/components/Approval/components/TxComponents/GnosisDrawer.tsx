@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { groupBy } from 'lodash';
-import { BasicSafeInfo, SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import type { BasicSafeInfo, SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import {
   KeyringAccountWithAlias as Account,
   useAccounts,
@@ -18,11 +18,6 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlatList } from 'react-native-gesture-handler';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-// import { Button } from 'antd';
-// import { Account } from 'background/service/preference';
-// import { useWallet, isSameAddress } from 'ui/utils';
-// import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
-// import { AddressItem, ownerPriority } from './DrawerAddressItem';
 
 interface GnosisDrawerProps {
   safeInfo: BasicSafeInfo;

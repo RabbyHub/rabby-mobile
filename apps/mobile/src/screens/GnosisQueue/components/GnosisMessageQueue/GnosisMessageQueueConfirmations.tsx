@@ -8,7 +8,7 @@ import { useAccounts } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { StyleSheet, Text, View } from 'react-native';
 
 interface MessageConfirmationsProps {
