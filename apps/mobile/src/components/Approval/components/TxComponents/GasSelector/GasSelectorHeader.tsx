@@ -129,7 +129,9 @@ interface GasSelectorProps {
     chain_not_support: boolean;
   };
   directSubmit?: boolean;
-  checkGasLevelIsNotEnough?: (gas) => Promise<boolean[]>;
+  checkGasLevelIsNotEnough?: (
+    gas: GasSelectorResponse,
+  ) => Promise<[number, boolean, boolean]>;
 }
 
 const useExplainGas = ({
@@ -374,7 +376,7 @@ export const GasSelectorHeader = ({
             chainId,
             isCancel || isSpeedUp,
           ),
-        })
+        } as GasSelectorResponse)
           .then(arr => {
             if (init) {
               setGasAccountIsNotEnough(pre => ({

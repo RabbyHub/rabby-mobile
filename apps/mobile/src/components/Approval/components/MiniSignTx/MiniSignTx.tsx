@@ -577,7 +577,7 @@ export const MiniSignTx = ({
   });
 
   const checkGasLevelIsNotEnough = useCallback(
-    (gas: GasSelectorResponse) => {
+    (gas: GasSelectorResponse): Promise<[number, boolean, boolean]> => {
       if (!isReady || !txsResult.length) {
         return Promise.resolve([0, false, true]);
       }
