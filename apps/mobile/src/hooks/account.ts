@@ -3,7 +3,6 @@ import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
 import {
   KeyringAccount,
-  KEYRING_CLASS,
   CORE_KEYRING_TYPES,
 } from '@rabby-wallet/keyring-utils';
 import * as Sentry from '@sentry/react-native';

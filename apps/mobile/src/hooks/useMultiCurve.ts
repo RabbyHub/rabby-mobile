@@ -6,9 +6,10 @@ import {
 import { patchCurveData } from '@/utils/curve';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CurveDayType, formChartData } from './useCurve';
+import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
+import { CurveDayType } from '@/utils/curveDayType';
 
 const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
 

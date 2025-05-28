@@ -1,15 +1,11 @@
 import { getNetCurve } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
+import { CurveDayType } from '@/utils/curveDayType';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
-
-export enum CurveDayType {
-  DAY = 1,
-  WEEK = 7,
-}
 
 export const formChartData = (
   data: CurveList,
