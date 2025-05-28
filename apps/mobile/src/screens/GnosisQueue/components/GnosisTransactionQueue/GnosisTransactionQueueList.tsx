@@ -11,7 +11,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { validateEOASign, validateETHSign } from '@/utils/gnosis';
 import { createGetStyles } from '@/utils/styles';
-import { SafeTransactionDataPartial } from '@safe-global/types-kit';
+import type { SafeTransactionDataPartial } from '@safe-global/types-kit';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import type { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';

@@ -11,7 +11,7 @@ import {
 // import { useAccount } from '@/ui/store-hooks';
 import { findChain } from '@/utils/chain';
 import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
-import { SafeTransactionDataPartial } from '@safe-global/types-kit';
+import type { SafeTransactionDataPartial } from '@safe-global/types-kit';
 // import { CHAINS_ENUM } from 'consts';
 // import { FlashList } from '@shopify/flash-list';
 // import { isSameAddress, useWallet } from 'ui/utils';
