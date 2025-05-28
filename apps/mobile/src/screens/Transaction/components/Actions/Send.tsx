@@ -13,7 +13,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { SendAction, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -121,127 +121,132 @@ export const Send: React.FC<Props> = ({
 
   return (
     <>
-      <TouchableOpacity onPress={handleGotoTokenDetail}>
-        <View style={[styles.singleBox]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <HistoryItemIcon
-              isInDetail={true}
-              type={HistoryItemCateType.Send}
-              token={actionData.token}
-              isNft={false}
-            />
-            <View style={[styles.colomnBox]}>
-              <>
-                <Text style={[styles.tokenAmountText, styles.isSendTextColor]}>
-                  - {sendAmount} {getTokenSymbol(actionData.token as TokenItem)}
-                </Text>
-                <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
-              </>
+      <ScrollView>
+        <TouchableOpacity onPress={handleGotoTokenDetail}>
+          <View style={[styles.singleBox]}>
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <HistoryItemIcon
+                isInDetail={true}
+                type={HistoryItemCateType.Send}
+                token={actionData.token}
+                isNft={false}
+              />
+              <View style={[styles.colomnBox]}>
+                <>
+                  <Text
+                    style={[styles.tokenAmountText, styles.isSendTextColor]}>
+                    - {sendAmount}{' '}
+                    {getTokenSymbol(actionData.token as TokenItem)}
+                  </Text>
+                  <Text style={styles.usdValue}>≈{sendUsdValue}</Text>
+                </>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <RcIconSingleArrow
+                width={32}
+                height={32}
+                color={colors2024['neutral-bg-2']}
+              />
             </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <RcIconSingleArrow
-              width={32}
-              height={32}
-              color={colors2024['neutral-bg-2']}
-            />
-          </View>
-        </View>
-      </TouchableOpacity>
-      <View style={styles.detailContainer}>
-        {!data.isPending && data.maxGasTx.completedAt && (
+        </TouchableOpacity>
+        <View style={styles.detailContainer}>
+          {!data.isPending && data.maxGasTx.completedAt && (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.Date')}
+              </Text>
+              <View>
+                <Text style={styles.itemContentText}>
+                  {formatIntlTimestamp(data?.maxGasTx.completedAt)}
+                </Text>
+              </View>
+            </View>
+          )}
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.Date')}
+              {t('page.transactions.detail.Status')}
             </Text>
             <View>
-              <Text style={styles.itemContentText}>
-                {formatIntlTimestamp(data?.maxGasTx.completedAt)}
-              </Text>
+              <TxStatusItem
+                status={data.isFailed ? 0 : 1}
+                isPending={data.isPending}
+                withText={true}
+              />
             </View>
           </View>
-        )}
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.Status')}
-          </Text>
-          <View>
-            <TxStatusItem
-              status={data.isFailed ? 0 : 1}
-              isPending={data.isPending}
-              withText={true}
-            />
-          </View>
-        </View>
-        {data.isPending ? <TransactionPendingDetail data={data} /> : null}
+          {data.isPending ? <TransactionPendingDetail data={data} /> : null}
 
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.Chain')}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 4 }}>
-            <ChainIconImage
-              size={16}
-              chainEnum={chain?.enum}
-              isShowRPCStatus={true}
-            />
-            <Text style={[styles.itemContentText]}>{chain?.name}</Text>
-          </View>
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.From')}
-          </Text>
-          <AddressItemInDetail
-            address={data.maxGasTx.address}
-            accounts={unionAccounts}
-            switchAccount={switchAccount}
-          />
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.To')}
-          </Text>
-          <AddressItemInDetail
-            address={actionData.to}
-            accounts={unionAccounts}
-            switchAccount={switchAccount}
-          />
-        </View>
-
-        {Boolean(data.maxGasTx?.gasUSDValue) && (
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.GasFee')}
+              {t('page.transactions.detail.Chain')}
             </Text>
-            <Text style={styles.itemContentText}>
-              {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
-              {data.maxGasTx?.gasTokenSymbol || ''} ($
-              {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
-            </Text>
+            <View style={{ flexDirection: 'row', gap: 4 }}>
+              <ChainIconImage
+                size={16}
+                chainEnum={chain?.enum}
+                isShowRPCStatus={true}
+              />
+              <Text style={[styles.itemContentText]}>{chain?.name}</Text>
+            </View>
           </View>
-        )}
 
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>Hash</Text>
-          <TouchableOpacity
-            disabled={!chain?.scanLink}
-            onPress={handleOpenTxId}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <Text style={[styles.itemContentText]}>
-              {ellipsisAddress(data.maxGasTx.hash!)}
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.From')}
             </Text>
-            <RcIconExternalLinkCC
-              width={14}
-              height={14}
-              color={colors2024['neutral-foot']}
+            <AddressItemInDetail
+              address={data.maxGasTx.address}
+              accounts={unionAccounts}
+              switchAccount={switchAccount}
             />
-          </TouchableOpacity>
-        </View>
-      </View>
+          </View>
 
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.To')}
+            </Text>
+            <AddressItemInDetail
+              address={actionData.to}
+              accounts={unionAccounts}
+              switchAccount={switchAccount}
+            />
+          </View>
+
+          {Boolean(data.maxGasTx?.gasUSDValue) && (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.GasFee')}
+              </Text>
+              <Text style={styles.itemContentText}>
+                {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
+                {data.maxGasTx?.gasTokenSymbol || ''} ($
+                {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>Hash</Text>
+            <TouchableOpacity
+              disabled={!chain?.scanLink}
+              onPress={handleOpenTxId}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <Text style={[styles.itemContentText]}>
+                {ellipsisAddress(data.maxGasTx.hash!)}
+              </Text>
+              <RcIconExternalLinkCC
+                width={14}
+                height={14}
+                color={colors2024['neutral-foot']}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+      <View style={{ height: styles.buttonContainer.height }} />
       <View style={styles.buttonContainer}>
         <View style={{ flex: 1 }}>
           {isAddrOnWhitelist(actionData.to) && onPressBottomBtn ? (
@@ -293,7 +298,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
-    marginTop: 20,
+    marginTop: 12,
     borderRadius: 16,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
@@ -413,12 +418,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   buttonContainer: {
+    backgroundColor: colors2024['neutral-bg-2'],
     position: 'absolute',
     flexDirection: 'row',
-    height: 60,
-    bottom: 40,
+    height: 136,
+    bottom: 0,
     width: '100%',
     gap: 16,
+    paddingTop: 16,
     left: 16,
   },
   itemAliaName: {

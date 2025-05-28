@@ -347,15 +347,17 @@ export const TransactionPendingDetail = ({
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   container: {
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
   },
   ghostButton: {
     height: 36,
     backgroundColor: colors2024['neutral-bg-2'],
     borderColor: colors2024['neutral-info'],
+    borderRadius: 8,
   },
   primaryButton: {
     height: 36,
+    borderRadius: 8,
     backgroundColor: colors2024['neutral-bg-2'],
     borderColor: colors2024['brand-default'],
   },

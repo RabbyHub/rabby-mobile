@@ -7,7 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useEffect, useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { formatAmount } from '@/utils/number';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
@@ -125,167 +125,171 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
 
   return (
     <>
-      <View style={[styles.doubleBox]}>
-        <TouchableOpacity
-          style={[styles.fromTokenBox]}
-          onPress={() => handleGotoDetail(actionData.payToken)}>
-          <AssetAvatar
-            logo={actionData.payToken?.logo_url}
-            size={42}
-            chain={actionData.payToken?.chain}
-            chainSize={16}
-          />
-          <View style={[styles.rowBox, isFail && styles.isFailBox]}>
-            <Text style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-              {'-'} {formatTokenAmount(actionData.payToken.amount)}{' '}
-              {getTokenSymbol(actionData.payToken as TokenItem)}
-            </Text>
-            <RcIconRightCC
-              color={colors2024['neutral-foot']}
-              width={18}
-              height={18}
+      <ScrollView>
+        <View style={[styles.doubleBox]}>
+          <TouchableOpacity
+            style={[styles.fromTokenBox]}
+            onPress={() => handleGotoDetail(actionData.payToken)}>
+            <AssetAvatar
+              logo={actionData.payToken?.logo_url}
+              size={42}
+              chain={actionData.payToken?.chain}
+              chainSize={16}
             />
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toTokenBox]}
-          onPress={() => handleGotoDetail(receiveToken)}>
-          <AssetAvatar
-            logo={receiveToken?.logo_url}
-            size={42}
-            chain={receiveToken?.chain}
-            chainSize={16}
-          />
-          <View style={[styles.rowBox, isFail && styles.isFailBox]}>
-            <Text style={[styles.tokenAmountTextList]}>
-              {'+'}{' '}
-              {formatTokenAmount(
-                receiveToken.amount || receiveToken.min_amount,
-              )}{' '}
-              {getTokenSymbol(receiveToken as TokenItem)}
-            </Text>
-            <RcIconRightCC
-              color={colors2024['green-default']}
-              width={18}
-              height={18}
+            <View style={[styles.rowBox, isFail && styles.isFailBox]}>
+              <Text
+                style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
+                {'-'} {formatTokenAmount(actionData.payToken.amount)}{' '}
+                {getTokenSymbol(actionData.payToken as TokenItem)}
+              </Text>
+              <RcIconRightCC
+                color={colors2024['neutral-foot']}
+                width={18}
+                height={18}
+              />
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toTokenBox]}
+            onPress={() => handleGotoDetail(receiveToken)}>
+            <AssetAvatar
+              logo={receiveToken?.logo_url}
+              size={42}
+              chain={receiveToken?.chain}
+              chainSize={16}
             />
+            <View style={[styles.rowBox, isFail && styles.isFailBox]}>
+              <Text style={[styles.tokenAmountTextList]}>
+                {'+'}{' '}
+                {formatTokenAmount(
+                  receiveToken.amount || receiveToken.min_amount,
+                )}{' '}
+                {getTokenSymbol(receiveToken as TokenItem)}
+              </Text>
+              <RcIconRightCC
+                color={colors2024['green-default']}
+                width={18}
+                height={18}
+              />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.iconSwitchArrow}>
+            <RcIconSwitchArrow />
           </View>
-        </TouchableOpacity>
-        <View style={styles.iconSwitchArrow}>
-          <RcIconSwitchArrow />
         </View>
-      </View>
-      <View style={styles.detailContainer}>
-        {!data.isPending && data.maxGasTx.completedAt && (
+        <View style={styles.detailContainer}>
+          {!data.isPending && data.maxGasTx.completedAt && (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.Date')}
+              </Text>
+              <View>
+                <Text style={styles.itemContentText}>
+                  {formatIntlTimestamp(data?.maxGasTx.completedAt)}
+                </Text>
+              </View>
+            </View>
+          )}
           <View style={styles.detailItem}>
             <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.Date')}
+              {t('page.transactions.detail.Status')}
             </Text>
             <View>
-              <Text style={styles.itemContentText}>
-                {formatIntlTimestamp(data?.maxGasTx.completedAt)}
-              </Text>
+              <TxStatusItem
+                status={data.isFailed ? 0 : 1}
+                isPending={data.isPending}
+                withText={true}
+              />
             </View>
           </View>
-        )}
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.Status')}
-          </Text>
-          <View>
-            <TxStatusItem
-              status={data.isFailed ? 0 : 1}
-              isPending={data.isPending}
-              withText={true}
+          {data.isPending ? <TransactionPendingDetail data={data} /> : null}
+
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.Chain')}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 4 }}>
+              <ChainIconImage
+                size={16}
+                chainEnum={chain?.enum}
+                isShowRPCStatus={true}
+              />
+              <Text style={[styles.itemContentText]}>{chain?.name}</Text>
+            </View>
+          </View>
+
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.From')}
+            </Text>
+            <AddressItemInDetail
+              address={data.maxGasTx.address}
+              accounts={unionAccounts}
+              switchAccount={switchAccount}
             />
           </View>
-        </View>
-        {data.isPending ? <TransactionPendingDetail data={data} /> : null}
 
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.Chain')}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 4 }}>
-            <ChainIconImage
-              size={16}
-              chainEnum={chain?.enum}
-              isShowRPCStatus={true}
-            />
-            <Text style={[styles.itemContentText]}>{chain?.name}</Text>
-          </View>
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.From')}
-          </Text>
-          <AddressItemInDetail
-            address={data.maxGasTx.address}
-            accounts={unionAccounts}
-            switchAccount={switchAccount}
-          />
-        </View>
-
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>
-            {t('page.transactions.detail.InteractedContract')}
-          </Text>
-          <TouchableOpacity
-            style={{ alignItems: 'flex-end' }}
-            onPress={() => handleOpenTxAddress(requireData?.id)}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 4,
-              }}>
-              <AssetAvatar logo={requireData?.protocol?.logo_url} size={16} />
-              <Text style={[styles.itemContentText]}>
-                {requireData?.protocol?.name}
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>
+              {t('page.transactions.detail.InteractedContract')}
+            </Text>
+            <TouchableOpacity
+              style={{ alignItems: 'flex-end' }}
+              onPress={() => handleOpenTxAddress(requireData?.id)}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                }}>
+                <AssetAvatar logo={requireData?.protocol?.logo_url} size={16} />
+                <Text style={[styles.itemContentText]}>
+                  {requireData?.protocol?.name}
+                </Text>
+                <RcIconJumpCC
+                  width={14}
+                  height={14}
+                  color={colors2024['neutral-foot']}
+                />
+              </View>
+              <Text style={styles.itemAddressText}>
+                {ellipsisAddress(requireData?.id || '')}
               </Text>
-              <RcIconJumpCC
+            </TouchableOpacity>
+          </View>
+
+          {Boolean(data.maxGasTx?.gasUSDValue) && (
+            <View style={styles.detailItem}>
+              <Text style={styles.itemTitleText}>
+                {t('page.transactions.detail.GasFee')}
+              </Text>
+              <Text style={styles.itemContentText}>
+                {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
+                {data.maxGasTx?.gasTokenSymbol || ''} ($
+                {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.detailItem}>
+            <Text style={styles.itemTitleText}>Hash</Text>
+            <TouchableOpacity
+              disabled={!chain?.scanLink}
+              onPress={handleOpenTxId}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <Text style={[styles.itemContentText]}>
+                {ellipsisAddress(data.maxGasTx.hash!)}
+              </Text>
+              <RcIconExternalLinkCC
                 width={14}
                 height={14}
                 color={colors2024['neutral-foot']}
               />
-            </View>
-            <Text style={styles.itemAddressText}>
-              {ellipsisAddress(requireData?.id || '')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {Boolean(data.maxGasTx?.gasUSDValue) && (
-          <View style={styles.detailItem}>
-            <Text style={styles.itemTitleText}>
-              {t('page.transactions.detail.GasFee')}
-            </Text>
-            <Text style={styles.itemContentText}>
-              {formatAmount(data.maxGasTx?.gasTokenCount!)}{' '}
-              {data.maxGasTx?.gasTokenSymbol || ''} ($
-              {formatAmount(data.maxGasTx?.gasUSDValue ?? 0)})
-            </Text>
+            </TouchableOpacity>
           </View>
-        )}
-
-        <View style={styles.detailItem}>
-          <Text style={styles.itemTitleText}>Hash</Text>
-          <TouchableOpacity
-            disabled={!chain?.scanLink}
-            onPress={handleOpenTxId}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-            <Text style={[styles.itemContentText]}>
-              {ellipsisAddress(data.maxGasTx.hash!)}
-            </Text>
-            <RcIconExternalLinkCC
-              width={14}
-              height={14}
-              color={colors2024['neutral-foot']}
-            />
-          </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
+      <View style={{ height: styles.buttonContainer.height }} />
       {
         <View style={styles.buttonContainer}>
           <View style={{ flex: 1 }}>
@@ -326,7 +330,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
-    marginTop: 20,
+    marginTop: 12,
     borderRadius: 16,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']
@@ -374,7 +378,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
   },
   isSendTextColor: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-title-1'],
   },
   isFailBox: {
     opacity: 0.3,
@@ -452,11 +456,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   buttonContainer: {
+    backgroundColor: colors2024['neutral-bg-2'],
     position: 'absolute',
     flexDirection: 'row',
-    height: 60,
-    bottom: 40,
+    height: 136,
+    bottom: 0,
     width: '100%',
+    paddingTop: 16,
     gap: 16,
     left: 16,
   },
