@@ -36,6 +36,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import LinearGradient from 'react-native-linear-gradient';
 
 interface Props {
   data: TransactionGroup;
@@ -43,7 +44,7 @@ interface Props {
 }
 
 export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
@@ -291,7 +292,16 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
       </ScrollView>
       <View style={{ height: styles.buttonContainer.height }} />
       {
-        <View style={styles.buttonContainer}>
+        <LinearGradient
+          colors={
+            isLight
+              ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
+              : ['rgba(28, 28, 29, 0.30)', colors2024['neutral-bg-1']]
+          }
+          locations={[0.6393, 1]}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 0, y: 0 }}
+          style={styles.buttonContainer}>
           <View style={{ flex: 1 }}>
             <Button
               onPress={async () => {
@@ -320,7 +330,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
               title={t('page.transactions.detail.SwapAgain')}
             />
           </View>
-        </View>
+        </LinearGradient>
       }
     </>
   );
@@ -456,14 +466,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   buttonContainer: {
-    backgroundColor: colors2024['neutral-bg-2'],
+    // backgroundColor: colors2024['neutral-bg-1'],
     position: 'absolute',
     flexDirection: 'row',
-    height: 136,
+    height: 120,
     bottom: 0,
     width: '100%',
     paddingTop: 16,
-    gap: 16,
+    // gap: 16,
     left: 16,
   },
   itemAliaName: {

@@ -18,6 +18,8 @@ import { useCurrentAccount } from '@/hooks/account';
 import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
 import { getAliasName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
+import BigNumber from 'bignumber.js';
+import { formatTokenAmount } from '@/utils/number';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
@@ -74,7 +76,12 @@ export const PendingTxItem = ({
 
   const titleTextStr = useMemo(() => {
     if (type === 'send') {
-      return `${getTokenSymbol(sendActionData?.token)}`;
+      const amount = new BigNumber(sendActionData?.token.raw_amount || '0').div(
+        10 ** (sendActionData?.token.decimals || 18),
+      );
+
+      const sendAmount = formatTokenAmount(amount);
+      return `-${sendAmount} ${getTokenSymbol(sendActionData?.token)}`;
     } else {
       return `${getTokenSymbol(payToken)}→${getTokenSymbol(receiveToken)}`;
     }
