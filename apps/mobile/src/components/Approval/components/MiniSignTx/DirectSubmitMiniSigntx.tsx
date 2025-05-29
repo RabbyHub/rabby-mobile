@@ -17,6 +17,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { isAccountSupportDirectSign } from '@/utils/account';
 import { useMemoizedFn } from 'ahooks';
 import {
+  AbortedDirectSubmitError,
   directSigningAtom,
   useDirectSigningDisabledProcess,
   useResetMiniApprovalDirectSignState,
@@ -25,6 +26,7 @@ import { useMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
 import { useAtom } from 'jotai';
 import { MiniSignTx } from './MiniSignTx';
 import IconLoadingCC from '@/assets2024/icons/gas-account/loading-cc.svg';
+import { DirectSubmitReject } from '@/hooks/useMiniApproval';
 
 export const MiniDirectSubmitApproval = ({
   txs,
@@ -115,6 +117,7 @@ export const MiniDirectSubmitApproval = ({
   useEffect(() => {
     if (overlayLoading && cantSubmit) {
       setOverlayLoading?.(false);
+      DirectSubmitReject?.(new AbortedDirectSubmitError('abort'));
     }
   }, [cantSubmit, overlayLoading]);
 

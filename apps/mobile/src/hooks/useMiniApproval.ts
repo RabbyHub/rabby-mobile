@@ -9,6 +9,8 @@ import {
   transactionHistoryService,
 } from '@/core/services';
 
+export let DirectSubmitReject;
+
 export const miniApprovalAtom = atom<{
   txs?: Tx[];
   visible?: boolean;
@@ -42,6 +44,9 @@ export const useMiniApproval = () => {
       // const currentApprovalId = uniqueId('mini-approval');
       return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(
         (resolve, reject) => {
+          if (directSubmit) {
+            DirectSubmitReject = directSubmit ? reject : undefined;
+          }
           setState(prev => {
             return {
               ...prev,

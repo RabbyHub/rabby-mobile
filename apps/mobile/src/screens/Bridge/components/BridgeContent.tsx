@@ -59,6 +59,7 @@ import { useMiniApproval } from '@/hooks/useMiniApproval';
 import AuthButton from '@/components2024/AuthButton';
 import {
   directSigningAtom,
+  isAbortedDirectSubmitError,
   useCanProcessDirectSubmit,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
@@ -401,7 +402,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           status: 'fail',
           payAmount: amount,
         });
-        console.error(error);
+        console.log(error);
       } finally {
         setFetchingBridgeQuote(false);
       }
@@ -508,7 +509,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           status: 'fail',
           payAmount: amount,
         });
-        console.error(error);
+        console.debug(error);
       }
     }
   };
@@ -575,31 +576,25 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           const res = await runBuildSwapTxsRef.current;
 
           if (res?.length) {
-            try {
-              if (canShowDirectSubmit) {
-                if (isDirectSigning) {
-                  return;
-                } else {
-                  setDirectSigning(true);
-                }
-                await sendPrepareMiniTransactions({
-                  directSubmit: true,
-                });
+            if (canShowDirectSubmit) {
+              if (isDirectSigning) {
+                return;
               } else {
-                await sendMiniTransactions({
-                  txs: res,
-                  ga: {
-                    category: 'Bridge',
-                    source: 'bridge',
-                    // trigger: rbiSource,
-                  },
-                  directSubmit: false,
-                });
+                setDirectSigning(true);
               }
-            } catch (e) {
-              console.error(e);
-              mutateTxs([]);
-              refresh(e => e + 1);
+              await sendPrepareMiniTransactions({
+                directSubmit: true,
+              });
+            } else {
+              await sendMiniTransactions({
+                txs: res,
+                ga: {
+                  category: 'Bridge',
+                  source: 'bridge',
+                  // trigger: rbiSource,
+                },
+                directSubmit: false,
+              });
             }
           } else {
             if (canShowDirectSubmit) {
@@ -628,9 +623,15 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           }, 500);
         } catch (error) {
           setDirectSigning(false);
-          mutateTxs([]);
-          refresh(e => e + 1);
-          console.error('runBuildSwapTxsRef', error);
+          if ((error as any)?.name === 'SimulateError') {
+            gotoBridge();
+          } else if (isAbortedDirectSubmitError(error)) {
+            console.log('AbortedDirectSubmitError bridge');
+          } else {
+            mutateTxs([]);
+            refresh(e => e + 1);
+          }
+          console.error('handleBridge', error);
         } finally {
           setFetchingBridgeQuote(false);
         }

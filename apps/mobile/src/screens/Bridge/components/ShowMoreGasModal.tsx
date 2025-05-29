@@ -33,17 +33,12 @@ const GasMethod = (props: {
   const { colors2024, styles } = useTheme2024({ getStyle });
   return (
     <TouchableOpacity
-      style={{
-        flexDirection: 'row',
-        height: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 4,
-        backgroundColor: active ? colors2024['brand-default'] : 'transparent',
-        paddingVertical: 2,
-        paddingHorizontal: 8,
-        gap: 2,
-      }}
+      style={[
+        styles.gasHeaderItem,
+        {
+          backgroundColor: active ? colors2024['brand-default'] : 'transparent',
+        },
+      ]}
       onPress={onChange}>
       <ActiveComponent
         style={{
@@ -147,13 +142,13 @@ export default function ShowMoreGasSelectModal({
                     onCancel();
                   }
                 }}>
-                <Text style={styles.level}>
-                  {levelTitle}
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={styles.level}>{levelTitle}</Text>
                   {!isCustom && (
                     <Text style={styles.gwei}> ({gwei} Gwei) </Text>
                   )}
                   {isActive && <IconGasLevelChecked />}
-                </Text>
+                </View>
 
                 {isCustom ? (
                   <IconGasCustomRightArrowCC
@@ -180,6 +175,17 @@ export default function ShowMoreGasSelectModal({
 const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   overlay: {
     backgroundColor: 'transparent',
+  },
+  gasHeaderItem: {
+    flexDirection: 'row',
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 4,
+    // backgroundColor: active ? colors2024['brand-default'] : 'transparent',
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    gap: 2,
   },
 
   inactiveText: {

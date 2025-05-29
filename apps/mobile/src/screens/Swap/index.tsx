@@ -88,6 +88,7 @@ import {
 import AuthButton from '@/components2024/AuthButton';
 import {
   directSigningAtom,
+  isAbortedDirectSubmitError,
   useCanProcessDirectSubmit,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { PendingTxItem } from './components/PendingTxItem';
@@ -528,9 +529,14 @@ const Swap = ({
             },
           );
         } catch (e) {
-          console.error(e);
-          mutateTxs([]);
-          refresh(e => e + 1);
+          if ((e as any)?.name === 'SimulateError') {
+            gotoSwap();
+          } else if (isAbortedDirectSubmitError(e)) {
+            console.log('AbortedDirectSubmitError swap');
+          } else {
+            mutateTxs([]);
+            refresh(e => e + 1);
+          }
         }
       } else {
         gotoSwap();
@@ -585,8 +591,17 @@ const Swap = ({
     receiveToken,
   ]);
 
+  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
+  const canDirectSign = useCanProcessDirectSubmit();
+
   useEffect(() => {
-    if (!swapBtnDisabled && activeProvider && canUseMiniTx && isFocused) {
+    if (
+      !swapBtnDisabled &&
+      canDirectSign &&
+      activeProvider &&
+      canUseMiniTx &&
+      isFocused
+    ) {
       mutateTxs([]);
       runBuildSwapTxs().then(txs => {
         prepareMiniTransactions({
@@ -601,6 +616,7 @@ const Swap = ({
       });
     }
   }, [
+    canDirectSign,
     canUseMiniTx,
     swapBtnDisabled,
     activeProvider,
@@ -762,9 +778,6 @@ const Swap = ({
     isWrapToken,
     setIsShowRabbyFeePopup,
   ]);
-
-  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
-  const canDirectSign = useCanProcessDirectSubmit();
 
   return (
     <NormalScreenContainer2024 type="bg1">

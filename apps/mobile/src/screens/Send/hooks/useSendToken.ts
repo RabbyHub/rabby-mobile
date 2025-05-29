@@ -55,7 +55,11 @@ import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { usePollSendPendingCount } from './useSendPendingCount';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useMemoizedFn } from 'ahooks';
-import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
+import {
+  directSigningAtom,
+  isAbortedDirectSubmitError,
+  useCanProcessDirectSubmit,
+} from '@/hooks/useMiniApprovalDirectSign';
 import { useRecentSendPendingTx } from './useRecentSend';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
@@ -935,16 +939,34 @@ export function useSendTokenForm(
                 prepareCountRef.current,
               );
             }
-            await prepareRef.current;
+            try {
+              await prepareRef.current;
 
-            await sendPrepareMiniTransactions({
-              directSubmit: true,
-            });
+              await sendPrepareMiniTransactions({
+                directSubmit: true,
+              });
 
-            runFetchPendingCount();
-            runFetchLocalPendingTx();
-            handleFieldChange('amount', '');
-            sendTokenEventsRef.current.emit(SendTokenEvents.ON_SIGNED_SUCCESS);
+              runFetchPendingCount();
+              runFetchLocalPendingTx();
+              handleFieldChange('amount', '');
+              sendTokenEventsRef.current.emit(
+                SendTokenEvents.ON_SIGNED_SUCCESS,
+              );
+            } catch (error) {
+              if ((error as any)?.name === 'SimulateError') {
+                handleSubmit({
+                  to,
+                  amount,
+                  messageDataForSendToEoa,
+                  messageDataForContractCall,
+                  // isForceSignTx: true,
+                });
+              }
+              if (isAbortedDirectSubmitError(error)) {
+                console.log('AbortedDirectSubmitError useSendToken');
+              }
+            }
+
             return;
           }
           const res = await apiProvider.sendRequest(
@@ -985,7 +1007,18 @@ export function useSendTokenForm(
                 );
               })
               .catch(err => {
-                console.error(err);
+                if (err?.name === 'SimulateError') {
+                  handleSubmit({
+                    to,
+                    amount,
+                    messageDataForSendToEoa,
+                    messageDataForContractCall,
+                    // isForceSignTx: true,
+                  });
+                }
+                if (isAbortedDirectSubmitError(err)) {
+                  console.log('AbortedDirectSubmitError useSendToken');
+                }
                 // toast.info(err.message);
               });
           }
@@ -1571,6 +1604,7 @@ export function useSendTokenForm(
   const prepareCountRef = useRef(0);
 
   const isFocused = useIsFocused();
+  const canProcessDirectSign = useCanProcessDirectSubmit();
 
   useEffect(() => {
     if (
@@ -1609,12 +1643,14 @@ export function useSendTokenForm(
       !screenState.isSubmitLoading &&
       isAccountSupportDirectSign(currentAccount?.type || '') &&
       !chainItem?.isTestnet &&
-      computed.canSubmit
+      computed.canSubmit &&
+      canProcessDirectSign
     ) {
       prepareCountRef.current += 1;
       prepareRef.current = prepareDirectSubmitMiniTx(prepareCountRef.current);
     }
   }, [
+    canProcessDirectSign,
     isFocused,
     chainItem?.isTestnet,
     computed.canSubmit,

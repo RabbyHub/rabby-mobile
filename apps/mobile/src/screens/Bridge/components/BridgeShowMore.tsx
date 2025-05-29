@@ -39,6 +39,7 @@ import {
 import BigNumber from 'bignumber.js';
 // import { RcIconInfoCC } from '@/assets/icons/common';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const RABBY_FEE = '0.25%';
 
@@ -386,15 +387,20 @@ export const DirectSignGasInfo = ({
             {miniApprovalGas?.gasMethod === 'gasAccount' && (
               <Tip
                 isVisible={isGasAccountHovering}
+                // contentStyle={{ minHeight: 0 }}
                 onClose={() => {
                   setIsGasAccountHovering(false);
                 }}
                 content={
                   <View
-                    style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                    }}>
+                    style={[
+                      styles.gasAccountTipsBox,
+                      IS_ANDROID
+                        ? {
+                            minHeight: 116,
+                          }
+                        : {},
+                    ]}>
                     <View>
                       <Text style={styles.gasAccountTip}>
                         {t('page.signTx.gasAccount.estimatedGas')}
@@ -872,6 +878,10 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     fontSize: 13,
     fontWeight: '400',
     color: colors['neutral-title-2'],
+  },
+  gasAccountTipsBox: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
 }));
 
