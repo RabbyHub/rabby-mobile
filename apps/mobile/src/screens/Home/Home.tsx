@@ -53,12 +53,20 @@ function HomeScreen(): JSX.Element {
     },
     [fadeAnim],
   );
+  const renderHeaderTitle = React.useCallback(() => {
+    return <HomeScreen.HeaderArea />;
+  }, []);
 
   React.useEffect(() => {
     setNavigationOptions({
-      headerTitle: () => <HomeScreen.HeaderArea />,
+      headerTitle: renderHeaderTitle,
     });
-  }, [currentAccount?.address, navigation, setNavigationOptions]);
+  }, [
+    currentAccount?.address,
+    navigation,
+    renderHeaderTitle,
+    setNavigationOptions,
+  ]);
 
   return (
     <NormalScreenContainer2024

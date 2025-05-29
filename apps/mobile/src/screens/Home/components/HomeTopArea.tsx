@@ -16,8 +16,7 @@ import { HEADER_TOP_AREA_HEIGHT, RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { useTheme2024 } from '@/hooks/theme';
-import useCurrentBalance from '@/hooks/useCurrentBalance';
-import { useCurve } from '@/hooks/useCurve';
+import { formChartData } from '@/hooks/useCurve';
 import { RootStackParamsList } from '@/navigation-type';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -102,9 +101,13 @@ export function BadgeText({
 export const HomeTopArea = ({
   currentAccount,
   onUpdateIsDecrease,
+  curveData,
+  isLoadingCurve,
 }: {
   currentAccount?: KeyringAccountWithAlias | null;
   onUpdateIsDecrease?: (status: boolean) => void;
+  curveData?: ReturnType<typeof formChartData>;
+  isLoadingCurve: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
@@ -118,15 +121,6 @@ export const HomeTopArea = ({
   const { total: gnosisTotal, refreshAsync } = useGnosisQueueTotalPending({
     address: isGnosisKeyring ? currentAccount?.address : undefined,
   });
-  const { balance } = useCurrentBalance(currentAccount?.address, {
-    update: true,
-    noNeedBalance: false,
-  });
-  const { result: curveData, isLoading: isLoadingCurve } = useCurve(
-    currentAccount?.address,
-    0,
-    balance,
-  );
 
   useFocusEffect(
     useMemoizedFn(() => {

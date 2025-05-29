@@ -39,6 +39,8 @@ import { chunk } from 'lodash';
 import { isScamHidenToken } from './utils/collection';
 import { AssetList } from './AssetList';
 import { Tabs } from 'react-native-collapsible-tab-view';
+import { useCurve } from '@/hooks/useCurve';
+import useCurrentBalance from '@/hooks/useCurrentBalance';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -461,6 +463,15 @@ export const AssetContainer: React.FC<Props> = ({
       }
     }),
   );
+  const { balance } = useCurrentBalance(currentAccount?.address, {
+    update: true,
+    noNeedBalance: false,
+  });
+  const {
+    result: curveData,
+    isLoading: isLoadingCurve,
+    refresh: refreshCurve,
+  } = useCurve(currentAccount?.address, 0, balance);
 
   const renderStickHeader = useCallback(
     (type: string) => {
@@ -539,6 +550,8 @@ export const AssetContainer: React.FC<Props> = ({
         <HomeTopArea
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
+          curveData={curveData}
+          isLoadingCurve={isLoadingCurve}
         />
         <View style={{ height: SPACE_BETWEEN_HEADER_AND_CHART }} />
         <AssestAllHeader
@@ -556,9 +569,11 @@ export const AssetContainer: React.FC<Props> = ({
     chainsInfo.chainLength,
     currentAccount,
     currentSection,
+    curveData,
     firstRowType,
     handleOnChainClick,
     handleSwitchTab,
+    isLoadingCurve,
     onUpdateIsDecrease,
     renderStickHeader,
     selectChainItem?.chain,
@@ -571,7 +586,8 @@ export const AssetContainer: React.FC<Props> = ({
   const handleRefresh = useCallback(() => {
     refreshPositions(true);
     onRefresh?.();
-  }, [onRefresh, refreshPositions]);
+    refreshCurve();
+  }, [onRefresh, refreshCurve, refreshPositions]);
   const hasNotAssets = useMemo(() => {
     return (
       chainsInfo.chainLength === 0 &&
