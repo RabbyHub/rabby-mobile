@@ -8,6 +8,7 @@ import {
   notificationService,
   transactionHistoryService,
 } from '@/core/services';
+import { sleep } from '@/utils/async';
 
 export let DirectSubmitReject;
 
@@ -30,7 +31,7 @@ export const useMiniApproval = () => {
   const { clear } = useClearMiniApprovalTask();
 
   const _sendMiniTransactions = useMemoizedFn(
-    ({
+    async ({
       txs,
       ga,
       id,
@@ -42,6 +43,7 @@ export const useMiniApproval = () => {
       directSubmit?: boolean;
     }) => {
       // const currentApprovalId = uniqueId('mini-approval');
+      await sleep(200);
       return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(
         (resolve, reject) => {
           if (directSubmit) {

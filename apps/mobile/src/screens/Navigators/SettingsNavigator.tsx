@@ -88,7 +88,7 @@ export function SettingNavigator() {
           ...headerPresets.withBgCard2,
         }}
       />
-      <SettingsStack.Screen
+      {/* <SettingsStack.Screen
         name={RootNames.CustomRPC}
         component={CustomRPCScreen}
         options={{
@@ -96,7 +96,7 @@ export function SettingNavigator() {
           headerTitle: 'Modify RPC URL',
           ...headerPresets.withBgCard2,
         }}
-      />
+      /> */}
       {__DEV__ && (
         <SettingsStack.Screen
           name={RootNames.ProviderControllerTester}

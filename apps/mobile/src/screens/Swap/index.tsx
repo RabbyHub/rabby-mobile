@@ -92,6 +92,7 @@ import {
   useCanProcessDirectSubmit,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { PendingTxItem } from './components/PendingTxItem';
+import { error } from 'console';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -529,6 +530,7 @@ const Swap = ({
             },
           );
         } catch (e) {
+          console.debug('handleSwap error', error);
           if ((e as any)?.name === 'SimulateError') {
             gotoSwap();
           } else if (isAbortedDirectSubmitError(e)) {

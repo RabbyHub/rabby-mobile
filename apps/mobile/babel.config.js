@@ -5,9 +5,10 @@ const { version } = pkg;
 
 const buildGitInfo = (function getBuildEnvVars() {
   const BUILD_GIT_HASH = child_process
-    .execSync('git log --format="%h" -n 1')
+    .execSync('git log --format="%H" -n 1')
     .toString()
-    .trim();
+    .trim()
+    .slice(0, 8);
 
   const BUILD_GIT_HASH_TIME =
     process.platform === 'win32'
@@ -74,7 +75,7 @@ module.exports = {
       'transform-define',
       {
         'process.env.APP_VERSION': version,
-        'process.env.BUILD_TIME': new Date().toISOString(),
+        'process.env.BUILD_TIME': process.env.ZERO_AR_DATE || new Date().toISOString(),
         'process.env.BUILD_ENV': process.env.BUILD_ENV || 'production',
         'process.env.buildchannel': process.env.buildchannel || 'selfhost-reg',
         'process.env.BUILD_GIT_INFO': JSON.stringify({

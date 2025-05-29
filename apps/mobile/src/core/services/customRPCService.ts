@@ -70,7 +70,8 @@ class CustomRPCService {
   };
 
   hasCustomRPC = (chain: CHAINS_ENUM) => {
-    return this.store.customRPC[chain] && this.store.customRPC[chain].enable;
+    return false;
+    // return this.store.customRPC[chain] && this.store.customRPC[chain].enable;
   };
 
   getRPCByChain = (chain: CHAINS_ENUM) => {
@@ -78,7 +79,8 @@ class CustomRPCService {
   };
 
   getAllRPC = () => {
-    return this.store.customRPC;
+    return {};
+    // return this.store.customRPC;
   };
 
   setRPC = (chain: CHAINS_ENUM, url: string) => {
