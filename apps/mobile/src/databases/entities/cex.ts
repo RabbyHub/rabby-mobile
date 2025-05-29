@@ -75,6 +75,12 @@ export class CexEntity extends EntityAddressAssetBase {
     };
   }
 
+  static async getCexList(): Promise<CexEntity[]> {
+    await prepareAppDataSource();
+    console.debug('getCexList exec');
+    return this.getRepository().find();
+  }
+
   static async isExpired(owner_addr: string) {
     await prepareAppDataSource();
 

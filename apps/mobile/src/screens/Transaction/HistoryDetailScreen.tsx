@@ -58,6 +58,8 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { usePendingBuyItemData } from '../Buy/hooks/history';
 import { HistoryItemCateType } from './components/type';
 import { findAccountByPriority } from '@/utils/account';
+import { useGetCexList } from './hook';
+import FastImage from 'react-native-fast-image';
 
 export const TxStatusItem = ({
   status,
@@ -152,6 +154,11 @@ export const AddressItemInDetail = ({
     );
     return idx > -1;
   }, [accounts, address]);
+  const { getCexInfoByAddress } = useGetCexList();
+  const cexInfo = useMemo(
+    () => getCexInfoByAddress(address),
+    [address, getCexInfoByAddress],
+  );
 
   const handleGoAddressDetail = useCallback(() => {
     const idx = accounts.findIndex(account =>
@@ -177,6 +184,17 @@ export const AddressItemInDetail = ({
         onPress={handleGoAddressDetail}>
         <View style={{ alignItems: 'flex-end', flexDirection: 'column' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {cexInfo?.logo_url && (
+              <FastImage
+                source={{ uri: cexInfo.logo_url }}
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 4,
+                  marginRight: 4,
+                }}
+              />
+            )}
             <Text style={styles.itemContentText}>
               {getAlianName(address) || ellipsisAddress(address)}
             </Text>

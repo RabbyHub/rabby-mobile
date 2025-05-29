@@ -21,6 +21,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
+import { useGetCexList } from '@/screens/Transaction/hook';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -52,6 +53,7 @@ export const SendHistory = ({
   const { currentAccount } = useCurrentAccount({
     disableAutoFetch: true,
   });
+  const { getCexInfoByAddress } = useGetCexList();
 
   useEffect(() => {
     if (visible) {
@@ -77,6 +79,7 @@ export const SendHistory = ({
             projectDict={item.data.projectDict}
             cateDict={item.data.cateDict}
             tokenDict={item.data.tokenDict || {}}
+            getCexInfoByAddress={getCexInfoByAddress}
             // onPress={onPresssItem}
           />
         </>
@@ -94,6 +97,7 @@ export const SendHistory = ({
             // historySuccessList={historySuccessList}
             data={item.data}
             canCancel={canCancel}
+            getCexInfoByAddress={getCexInfoByAddress}
             isInSendHistory={true}
             closeHistoryPopup={onClose}
             onPressBottomBtn={onPressBottomBtn}
