@@ -52,7 +52,7 @@ export const icons = {
 };
 
 const MIN_HEADER_HEIGHT = ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER;
-
+const SPACE_BETWEEN_HEADER_AND_CHART = 17;
 interface Props {
   onRefresh(): void;
   onUpdateIsDecrease?: (isDecrease: boolean) => void;
@@ -533,12 +533,14 @@ export const AssetContainer: React.FC<Props> = ({
           height:
             HEADER_TOP_AREA_HEIGHT +
             ASSETS_SECTION_HEADER +
+            SPACE_BETWEEN_HEADER_AND_CHART +
             ASSETS_SECTION_HEADER,
         }}>
         <HomeTopArea
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
         />
+        <View style={{ height: SPACE_BETWEEN_HEADER_AND_CHART }} />
         <AssestAllHeader
           style={[styles.assetHeader]}
           currentSection={currentSection}
