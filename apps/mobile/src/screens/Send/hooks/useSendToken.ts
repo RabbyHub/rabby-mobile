@@ -58,7 +58,6 @@ import { useMemoizedFn } from 'ahooks';
 import {
   directSigningAtom,
   isAbortedDirectSubmitError,
-  useCanProcessDirectSubmit,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useRecentSendPendingTx } from './useRecentSend';
 
@@ -1604,7 +1603,6 @@ export function useSendTokenForm(
   const prepareCountRef = useRef(0);
 
   const isFocused = useIsFocused();
-  const canProcessDirectSign = useCanProcessDirectSubmit();
 
   useEffect(() => {
     if (
@@ -1643,14 +1641,12 @@ export function useSendTokenForm(
       !screenState.isSubmitLoading &&
       isAccountSupportDirectSign(currentAccount?.type || '') &&
       !chainItem?.isTestnet &&
-      computed.canSubmit &&
-      canProcessDirectSign
+      computed.canSubmit
     ) {
       prepareCountRef.current += 1;
       prepareRef.current = prepareDirectSubmitMiniTx(prepareCountRef.current);
     }
   }, [
-    canProcessDirectSign,
     isFocused,
     chainItem?.isTestnet,
     computed.canSubmit,

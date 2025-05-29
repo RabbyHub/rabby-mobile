@@ -64,6 +64,7 @@ import { RcIconInfoCC } from '@/assets/icons/common';
 import { apiProvider } from '@/core/apis';
 import { useSetAtom } from 'jotai';
 import { miniApprovalGasAtom } from '@/hooks/useMiniApprovalDirectSign';
+import useDebounce from 'react-use/lib/useDebounce';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -360,57 +361,65 @@ export const GasSelectorHeader = ({
     return formatGasHeaderUsdValue(n || '0');
   }, []);
 
-  useEffect(() => {
-    if (checkGasLevelIsNotEnough && gasList.length && directSubmit && isReady) {
-      let init = true;
-      ['slow', 'normal', 'fast'].map(level => {
-        const selectedGas = gasList.find(e => e.level === level);
-        return checkGasLevelIsNotEnough({
-          ...gasList.find(e => e.level === level),
-          gasLimit: Number(afterGasLimit),
-          nonce: Number(customNonce),
-          level: selectedGas!.level,
-          maxPriorityFee: calcMaxPriorityFee(
-            gasList,
-            selectedGas!,
-            chainId,
-            isCancel || isSpeedUp,
-          ),
-        } as GasSelectorResponse)
-          .then(arr => {
-            if (init) {
-              setGasAccountIsNotEnough(pre => ({
-                ...pre,
-                [level]: [
-                  !arr[1],
-                  calcGasAccountUsd((arr[0] as unknown as number) || 0),
-                ],
-              }));
-              setGasIsNotEnough(pre => ({ ...pre, [level]: arr[2] }));
-            }
-          })
-          .catch(e => {
-            console.log('checkGasLevelIsNotEnough error', e);
-          });
-      });
+  useDebounce(
+    () => {
+      if (
+        checkGasLevelIsNotEnough &&
+        gasList.length &&
+        directSubmit &&
+        isReady
+      ) {
+        let init = true;
+        ['slow', 'normal', 'fast'].map(level => {
+          const selectedGas = gasList.find(e => e.level === level);
+          return checkGasLevelIsNotEnough({
+            ...gasList.find(e => e.level === level),
+            gasLimit: Number(afterGasLimit),
+            nonce: Number(customNonce),
+            level: selectedGas!.level,
+            maxPriorityFee: calcMaxPriorityFee(
+              gasList,
+              selectedGas!,
+              chainId,
+              isCancel || isSpeedUp,
+            ),
+          } as GasSelectorResponse)
+            .then(arr => {
+              if (init) {
+                setGasAccountIsNotEnough(pre => ({
+                  ...pre,
+                  [level]: [
+                    !arr[1],
+                    calcGasAccountUsd((arr[0] as unknown as number) || 0),
+                  ],
+                }));
+                setGasIsNotEnough(pre => ({ ...pre, [level]: arr[2] }));
+              }
+            })
+            .catch(e => {
+              console.log('checkGasLevelIsNotEnough error', e);
+            });
+        });
 
-      return () => {
-        init = false;
-      };
-    }
-  }, [
-    isReady,
-    directSubmit,
-    afterGasLimit,
-    checkGasLevelIsNotEnough,
-    customNonce,
-    gasList,
-    maxPriorityFee,
-    chainId,
-    isCancel,
-    isSpeedUp,
-    calcGasAccountUsd,
-  ]);
+        return () => {
+          init = false;
+        };
+      }
+    },
+    100,
+    [
+      isReady,
+      directSubmit,
+      afterGasLimit,
+      checkGasLevelIsNotEnough,
+      customNonce,
+      gasList,
+      chainId,
+      isCancel,
+      isSpeedUp,
+      calcGasAccountUsd,
+    ],
+  );
 
   const handleConfirmGas = () => {
     if (!selectedGas) return;

@@ -578,14 +578,12 @@ const Swap = ({
       showMoreVisible &&
       Number(payAmount) > 0 &&
       inSufficientCanGetQuote &&
-      !!amountAvailable &&
       !!payToken &&
       !!receiveToken
     );
   }, [
     payAmount,
     inSufficientCanGetQuote,
-    amountAvailable,
     showMoreVisible,
     payToken,
     receiveToken,
@@ -595,13 +593,7 @@ const Swap = ({
   const canDirectSign = useCanProcessDirectSubmit();
 
   useEffect(() => {
-    if (
-      !swapBtnDisabled &&
-      canDirectSign &&
-      activeProvider &&
-      canUseMiniTx &&
-      isFocused
-    ) {
+    if (!swapBtnDisabled && activeProvider && canUseMiniTx && isFocused) {
       mutateTxs([]);
       runBuildSwapTxs().then(txs => {
         prepareMiniTransactions({
@@ -616,7 +608,6 @@ const Swap = ({
       });
     }
   }, [
-    canDirectSign,
     canUseMiniTx,
     swapBtnDisabled,
     activeProvider,

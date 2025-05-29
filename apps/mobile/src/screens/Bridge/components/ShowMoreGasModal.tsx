@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Text,
@@ -21,6 +21,7 @@ import IconGasLevelChecked from '@/assets2024/icons/gas-account/check.svg';
 import BigNumber from 'bignumber.js';
 import { getGasLevelI18nKey } from '@/utils/trans';
 import { miniApprovalGasAtom } from '@/hooks/useMiniApprovalDirectSign';
+import { formatGasHeaderUsdValue } from '@/utils/number';
 
 const GasMethod = (props: {
   active: boolean;
@@ -71,9 +72,17 @@ export default function ShowMoreGasSelectModal({
 }) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const [miniApprovalGas] = useAtom(miniApprovalGasAtom);
+  const [miniApprovalGas, setMiniApprovalGas] = useAtom(miniApprovalGasAtom);
 
   const { height, width } = useWindowDimensions();
+
+  const calcGasAccountUsd = useCallback((n: number | string) => {
+    const v = Number(n);
+    if (!Number.isNaN(v) && v < 0.0001) {
+      return `$${n}`;
+    }
+    return formatGasHeaderUsdValue(n || '0');
+  }, []);
 
   if (!miniApprovalGas) {
     return null;
@@ -117,7 +126,7 @@ export default function ShowMoreGasSelectModal({
             const levelTitle = t(getGasLevelI18nKey(gas.level));
             const isActive = miniApprovalGas.selectedGas?.level === gas.level;
             const isCustom = gas.level === 'custom';
-            const costUsd =
+            let costUsd =
               miniApprovalGas?.gasMethod === 'native'
                 ? miniApprovalGas.gasUsdList?.[gas.level]
                 : miniApprovalGas?.gasAccountIsNotEnough?.[gas.level]?.[1];
@@ -125,6 +134,15 @@ export default function ShowMoreGasSelectModal({
               miniApprovalGas?.gasMethod === 'native'
                 ? miniApprovalGas?.gasIsNotEnough?.[gas.level]
                 : miniApprovalGas?.gasAccountIsNotEnough?.[gas.level]?.[0];
+
+            costUsd = isActive
+              ? miniApprovalGas.gasMethod === 'gasAccount'
+                ? calcGasAccountUsd(
+                    miniApprovalGas?.gasAccountCost?.total_cost || '0',
+                  )
+                : miniApprovalGas!.gasCostUsdStr
+              : costUsd;
+
             return (
               <TouchableOpacity
                 key={gas.level}

@@ -374,6 +374,12 @@ export const DirectSignGasInfo = ({
 
   const [isGasAccountHovering, setIsGasAccountHovering] = useState(false);
 
+  useEffect(() => {
+    if (loading || !showGasContent || noQuote) {
+      setIsGasAccountHovering(false);
+    }
+  }, [loading, noQuote, showGasContent]);
+
   if (!supportDirectSign) {
     return null;
   }
@@ -384,66 +390,69 @@ export const DirectSignGasInfo = ({
         name={<>{'Gas Fee'}</>}
         LeftIcon={
           <>
-            {miniApprovalGas?.gasMethod === 'gasAccount' && (
-              <Tip
-                isVisible={isGasAccountHovering}
-                // contentStyle={{ minHeight: 0 }}
-                onClose={() => {
-                  setIsGasAccountHovering(false);
-                }}
-                content={
-                  <View
-                    style={[
-                      styles.gasAccountTipsBox,
-                      IS_ANDROID
-                        ? {
-                            minHeight: 116,
-                          }
-                        : {},
-                    ]}>
-                    <View>
-                      <Text style={styles.gasAccountTip}>
-                        {t('page.signTx.gasAccount.estimatedGas')}
-                        {calcGasAccountUsd(
-                          gasAccountCost?.estimate_tx_cost || 0,
-                        )}
-                      </Text>
-                    </View>
-                    <View>
-                      <Text style={styles.gasAccountTip}>
-                        {t('page.signTx.gasAccount.maxGas')}
+            {miniApprovalGas?.gasMethod === 'gasAccount' &&
+              !loading &&
+              showGasContent &&
+              !noQuote && (
+                <Tip
+                  isVisible={isGasAccountHovering}
+                  // contentStyle={{ minHeight: 0 }}
+                  onClose={() => {
+                    setIsGasAccountHovering(false);
+                  }}
+                  content={
+                    <View
+                      style={[
+                        styles.gasAccountTipsBox,
+                        IS_ANDROID
+                          ? {
+                              minHeight: 116,
+                            }
+                          : {},
+                      ]}>
+                      <View>
+                        <Text style={styles.gasAccountTip}>
+                          {t('page.signTx.gasAccount.estimatedGas')}
+                          {calcGasAccountUsd(
+                            gasAccountCost?.estimate_tx_cost || 0,
+                          )}
+                        </Text>
+                      </View>
+                      <View>
+                        <Text style={styles.gasAccountTip}>
+                          {t('page.signTx.gasAccount.maxGas')}
 
-                        {calcGasAccountUsd(gasAccountCost?.total_cost || '0')}
-                      </Text>
-                    </View>
-                    <View>
-                      <Text style={styles.gasAccountTip}>
-                        {t('page.signTx.gasAccount.sendGas')}
-                        {calcGasAccountUsd(gasAccountCost?.total_cost || '0')}
-                      </Text>
-                    </View>
+                          {calcGasAccountUsd(gasAccountCost?.total_cost || '0')}
+                        </Text>
+                      </View>
+                      <View>
+                        <Text style={styles.gasAccountTip}>
+                          {t('page.signTx.gasAccount.sendGas')}
+                          {calcGasAccountUsd(gasAccountCost?.total_cost || '0')}
+                        </Text>
+                      </View>
 
-                    <View>
-                      <Text style={styles.gasAccountTip}>
-                        {t('page.signTx.gasAccount.gasCost')}
-                        {calcGasAccountUsd(gasAccountCost?.gas_cost || '0')}
-                      </Text>
+                      <View>
+                        <Text style={styles.gasAccountTip}>
+                          {t('page.signTx.gasAccount.gasCost')}
+                          {calcGasAccountUsd(gasAccountCost?.gas_cost || '0')}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                }>
-                <Pressable
-                  onPress={() => {
-                    setIsGasAccountHovering(true);
-                  }}>
-                  <RcIconInfoCC
-                    style={{ marginLeft: 4 }}
-                    width={16}
-                    height={16}
-                    color={colors2024['neutral-info']}
-                  />
-                </Pressable>
-              </Tip>
-            )}
+                  }>
+                  <Pressable
+                    onPress={() => {
+                      setIsGasAccountHovering(true);
+                    }}>
+                    <RcIconInfoCC
+                      style={{ marginLeft: 4 }}
+                      width={16}
+                      height={16}
+                      color={colors2024['neutral-info']}
+                    />
+                  </Pressable>
+                </Tip>
+              )}
           </>
         }
         style={{
