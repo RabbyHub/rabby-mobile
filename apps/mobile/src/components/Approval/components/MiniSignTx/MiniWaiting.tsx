@@ -10,6 +10,7 @@ import { MiniLedgerHardwareWaiting } from './MiniLedgerHardwareWaiting';
 import { MiniPrivatekeyWaiting } from './MiniPrivatekeyWaiting';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { MiniOneKeyHardwareWaiting } from './MiniOneKeyHardwareWaiting';
+import { useMemoizedFn } from 'ahooks';
 
 export const MiniWaiting = ({
   visible,
@@ -20,7 +21,7 @@ export const MiniWaiting = ({
 }: {
   visible?: boolean;
   onRetry?: () => void;
-  onCancel?: () => void;
+  onCancel?: (e?: any) => void;
   onDone?: () => void;
   error?: BatchSignTxTaskType['error'];
 }) => {
@@ -39,6 +40,10 @@ export const MiniWaiting = ({
   }, [sheetModalRef, visible]);
 
   const { currentAccount } = useCurrentAccount();
+
+  const handleCancel = useMemoizedFn(() => {
+    onCancel?.(error?.description);
+  });
 
   return (
     <AppBottomSheetModal
@@ -59,21 +64,21 @@ export const MiniWaiting = ({
             {currentAccount?.type === KEYRING_TYPE.LedgerKeyring ? (
               <MiniLedgerHardwareWaiting
                 error={error}
-                onCancel={onCancel}
+                onCancel={handleCancel}
                 onDone={onDone}
                 onRetry={onRetry}
               />
             ) : currentAccount?.type === KEYRING_TYPE.OneKeyKeyring ? (
               <MiniOneKeyHardwareWaiting
                 error={error}
-                onCancel={onCancel}
+                onCancel={handleCancel}
                 onDone={onDone}
                 onRetry={onRetry}
               />
             ) : (
               <MiniPrivatekeyWaiting
                 error={error}
-                onCancel={onCancel}
+                onCancel={handleCancel}
                 onDone={onDone}
                 onRetry={onRetry}
               />

@@ -8,6 +8,7 @@ import {
   notificationService,
   transactionHistoryService,
 } from '@/core/services';
+import { sleep } from '@/utils/async';
 
 export const miniApprovalAtom = atom<{
   txs?: Tx[];
@@ -27,8 +28,17 @@ export const useMiniApproval = () => {
   const { clear } = useClearMiniApprovalTask();
 
   const _sendMiniTransactions = useMemoizedFn(
-    ({ txs, ga, id }: { txs: Tx[]; ga?: Record<string, any>; id?: string }) => {
+    async ({
+      txs,
+      ga,
+      id,
+    }: {
+      txs: Tx[];
+      ga?: Record<string, any>;
+      id?: string;
+    }) => {
       // const currentApprovalId = uniqueId('mini-approval');
+      await sleep(200);
       return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(
         (resolve, reject) => {
           setState(prev => {
