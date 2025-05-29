@@ -727,7 +727,10 @@ export function useSendTokenForm(
       amount,
       messageDataForSendToEoa,
       messageDataForContractCall,
-    }: FormSendToken) => {
+      isForceSignTx,
+    }: FormSendToken & {
+      isForceSignTx?: boolean;
+    }) => {
       sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
       putScreenState({ isSubmitLoading: true });
       const chain = findChain({
@@ -796,6 +799,7 @@ export function useSendTokenForm(
         );
         // await persistPageStateCache();
         if (
+          !isForceSignTx &&
           isAccountSupportMiniApproval(currentAccount?.type || '') &&
           !chain.isTestnet
         ) {
@@ -836,7 +840,15 @@ export function useSendTokenForm(
                 );
               })
               .catch(err => {
-                console.error(err);
+                if (err?.name === 'SimulateError') {
+                  handleSubmit({
+                    to,
+                    amount,
+                    messageDataForSendToEoa,
+                    messageDataForContractCall,
+                    isForceSignTx: true,
+                  });
+                }
                 // toast.info(err.message);
               });
           }
