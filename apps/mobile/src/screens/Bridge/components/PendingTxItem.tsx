@@ -77,6 +77,8 @@ export const BridgePendingTxItem = ({
     styles.subTitleText,
   ]);
 
+  const isFail = (data.status as any) === 'failed';
+
   return (
     <>
       <View style={styles.header}>
@@ -116,9 +118,11 @@ export const BridgePendingTxItem = ({
             </View>
           ) : (
             <View style={styles.statusContainer}>
-              <TxStatusItem status={1} showSuccess={true} />
+              <TxStatusItem status={isFail ? 0 : 1} showSuccess={true} />
               <Text style={styles.statusText}>
-                {t('page.transactions.detail.Succeeded')}
+                {isFail
+                  ? t('page.transactions.detail.Failed')
+                  : t('page.transactions.detail.Succeeded')}
               </Text>
             </View>
           )}

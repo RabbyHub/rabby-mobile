@@ -133,6 +133,10 @@ export const PendingTxItem = ({
     styles.subTitleText,
   ]);
 
+  const isFailed = useMemo(() => {
+    return data.isFailed || data.isSubmitFailed || data.isWithdrawed;
+  }, [data]);
+
   return (
     <>
       <View style={styles.header}>
@@ -178,9 +182,11 @@ export const PendingTxItem = ({
             </View>
           ) : (
             <View style={styles.statusContainer}>
-              <TxStatusItem status={1} showSuccess={true} />
+              <TxStatusItem status={isFailed ? 0 : 1} showSuccess={true} />
               <Text style={styles.statusText}>
-                {t('page.transactions.detail.Succeeded')}
+                {isFailed
+                  ? t('page.transactions.detail.Failed')
+                  : t('page.transactions.detail.Succeeded')}
               </Text>
             </View>
           )}
