@@ -547,6 +547,24 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
 
   const canDirectSign = useCanProcessDirectSubmit();
 
+  useEffect(() => {
+    if (canShowDirectSubmit && isFocused) {
+      prepareMiniTransactions({
+        txs: [],
+        ga: {
+          category: 'Bridge',
+          source: 'bridge',
+        },
+        directSubmit: true,
+      });
+    }
+  }, [
+    selectedBridgeQuote,
+    canShowDirectSubmit,
+    prepareMiniTransactions,
+    isFocused,
+  ]);
+
   const { loading: isSubmitting, runAsync: handleBridge } = useRequest(
     async () => {
       if (canUseMiniTx) {

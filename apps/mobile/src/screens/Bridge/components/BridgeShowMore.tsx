@@ -32,8 +32,10 @@ import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { useAtom } from 'jotai';
 import ShowMoreGasSelectModal from './ShowMoreGasModal';
 import { getGasLevelI18nKey } from '@/utils/trans';
-import { gasRelativeComponentAtom } from '@/hooks/useMiniApprovalTask';
-import { miniApprovalGasAtom } from '@/hooks/useMiniApprovalDirectSign';
+import {
+  gasRelativeComponentAtom,
+  miniApprovalGasAtom,
+} from '@/hooks/useMiniApprovalDirectSign';
 import BigNumber from 'bignumber.js';
 // import { RcIconInfoCC } from '@/assets/icons/common';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
@@ -333,7 +335,8 @@ export const DirectSignGasInfo = ({
     !!miniApprovalGas &&
     !miniApprovalGas.loading &&
     !!miniApprovalGas.gasCostUsdStr &&
-    !loading;
+    !loading &&
+    !noQuote;
 
   useEffect(() => {
     if (loading) {

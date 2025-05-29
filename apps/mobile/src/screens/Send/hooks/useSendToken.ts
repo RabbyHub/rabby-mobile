@@ -1576,7 +1576,38 @@ export function useSendTokenForm(
     if (
       isFocused &&
       !screenState.isSubmitLoading &&
-      isAccountSupportMiniApproval(currentAccount?.type || '') &&
+      isAccountSupportDirectSign(currentAccount?.type || '') &&
+      !chainItem?.isTestnet
+    ) {
+      prepareMiniTransactions({
+        txs: [],
+        ga: {
+          category: 'Send',
+          source: 'sendToken',
+          toAddress,
+          trigger: 'sendToken',
+        },
+        directSubmit: true,
+      });
+    }
+  }, [
+    prepareMiniTransactions,
+    formValues.to,
+    formValues.amount,
+    formValues.messageDataForSendToEoa,
+    formValues.messageDataForContractCall,
+    currentAccount?.type,
+    isFocused,
+    screenState.isSubmitLoading,
+    chainItem?.isTestnet,
+    toAddress,
+  ]);
+
+  useEffect(() => {
+    if (
+      isFocused &&
+      !screenState.isSubmitLoading &&
+      isAccountSupportDirectSign(currentAccount?.type || '') &&
       !chainItem?.isTestnet &&
       computed.canSubmit
     ) {

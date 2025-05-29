@@ -78,7 +78,7 @@ export const MiniSubmitActions: React.FC<Props> = ({
         handlePress();
       }
     },
-    100,
+    300,
     [
       directSigning,
       disabledProcess,

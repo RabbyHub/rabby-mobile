@@ -7,10 +7,7 @@ import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
-import {
-  gasRelativeComponentAtom,
-  MiniApprovalTaskType,
-} from '@/hooks/useMiniApprovalTask';
+import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { navigate } from '@/utils/navigation';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
@@ -35,6 +32,7 @@ import {
 import { useSetAtom } from 'jotai';
 import {
   canDirectSignAtom,
+  gasRelativeComponentAtom,
   miniApprovalGasAtom,
 } from '@/hooks/useMiniApprovalDirectSign';
 

@@ -1,6 +1,6 @@
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useCallback, useEffect } from 'react';
+import { ReactNode, useCallback, useEffect } from 'react';
 
 export const miniApprovalGasAtom = atom<
   | {
@@ -46,6 +46,8 @@ const directSigningDisabledProcessAtom = atom(
   get => get(miniApprovalGasAtom)?.disabledProcess,
 );
 
+export const gasRelativeComponentAtom = atom<ReactNode>(null);
+
 export const useDirectSigningDisabledProcess = () =>
   useAtomValue(directSigningDisabledProcessAtom);
 
@@ -61,6 +63,7 @@ export const useCanProcessDirectSubmit = () => {
 
 export const useResetMiniApprovalDirectSignState = () => {
   const setMiniApprovalGasState = useSetAtom(miniApprovalGasAtom);
+  const setGasRelativeComponent = useSetAtom(gasRelativeComponentAtom);
 
   const [directSigning, setDirectSigning] = useAtom(directSigningAtom);
   const [canDirectSign, setCanDirectSign] = useAtom(canDirectSignAtom);
@@ -75,7 +78,13 @@ export const useResetMiniApprovalDirectSignState = () => {
     setMiniApprovalGasState(undefined);
     setDirectSigning(false);
     setCanDirectSign(true);
-  }, [setCanDirectSign, setDirectSigning, setMiniApprovalGasState]);
+    setGasRelativeComponent(null);
+  }, [
+    setCanDirectSign,
+    setDirectSigning,
+    setGasRelativeComponent,
+    setMiniApprovalGasState,
+  ]);
 
   return resetState;
 };

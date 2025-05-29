@@ -211,6 +211,4 @@ export const useClearMiniApprovalTask = () => {
   };
 };
 
-export const gasRelativeComponentAtom = atom<ReactNode>(null);
-
 export type MiniApprovalTaskType = ReturnType<typeof useMiniApprovalTask>;

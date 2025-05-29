@@ -586,9 +586,19 @@ const Swap = ({
   ]);
 
   useEffect(() => {
-    if (!swapBtnDisabled && activeProvider && canUseMiniTx) {
+    if (!swapBtnDisabled && activeProvider && canUseMiniTx && isFocused) {
       mutateTxs([]);
-      runBuildSwapTxs();
+      runBuildSwapTxs().then(txs => {
+        prepareMiniTransactions({
+          txs: activeProvider ? txs || [] : [],
+          ga: {
+            category: 'Swap',
+            source: 'swap',
+            swapUseSlider,
+          },
+          directSubmit: canShowDirectSubmit,
+        });
+      });
     }
   }, [
     canUseMiniTx,
@@ -596,18 +606,16 @@ const Swap = ({
     activeProvider,
     runBuildSwapTxs,
     mutateTxs,
+    prepareMiniTransactions,
+    swapUseSlider,
+    canShowDirectSubmit,
+    isFocused,
   ]);
 
   useEffect(() => {
     if (isFocused) {
-      refresh(e => e + 1);
-    }
-  }, [isFocused, refresh]);
-
-  useEffect(() => {
-    if (!isSubmitting && isFocused && canShowDirectSubmit) {
       prepareMiniTransactions({
-        txs: txs || [],
+        txs: [],
         ga: {
           category: 'Swap',
           source: 'swap',
@@ -617,13 +625,18 @@ const Swap = ({
       });
     }
   }, [
-    txs,
+    isFocused,
+    activeProvider,
+    canShowDirectSubmit,
     prepareMiniTransactions,
     swapUseSlider,
-    isSubmitting,
-    canShowDirectSubmit,
-    isFocused,
   ]);
+
+  useEffect(() => {
+    if (isFocused) {
+      refresh(e => e + 1);
+    }
+  }, [isFocused, refresh]);
 
   useEffect(() => {
     if (!isFocused) {
