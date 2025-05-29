@@ -68,6 +68,15 @@
                          withObject:@{@"User-Agent": userAgent}];
   }
 
+  // set RCTSetCustomNSURLSessionConfigurationProvider
+  RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
+    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    configuration.HTTPAdditionalHeaders = @{ @"User-Agent": userAgent };
+
+    // configure the session
+    return configuration;
+  });
+
   RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
                                                    moduleName:self.moduleName
                                             initialProperties:self.initialProps];
