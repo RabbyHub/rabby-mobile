@@ -23,7 +23,7 @@ import {
   convertLegacyTo1559,
 } from '@/utils/transaction';
 import { BottomSheetView, useBottomSheetModal } from '@gorhom/bottom-sheet';
-import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
+import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   ExplainTxResponse,
@@ -1065,6 +1065,12 @@ export const MiniSignTx = ({
   }, [onReject, simulateError, visible]);
 
   useEffect(() => {
+    if (directSubmit && simulateError) {
+      onReject?.(simulateError);
+    }
+  }, [onReject, simulateError, directSubmit]);
+
+  useEffect(() => {
     if (
       isReady &&
       txsResult.length &&
@@ -1267,7 +1273,6 @@ export const MiniApproval = ({
   ga,
   onSubmitting,
   onSubmitted,
-  directSubmit,
 }: {
   txs?: Tx[];
   visible?: boolean;
@@ -1277,7 +1282,6 @@ export const MiniApproval = ({
   ga?: Record<string, any>;
   onSubmitting?: () => void;
   onSubmitted?: (isSuccess: boolean) => void;
-  directSubmit?: boolean;
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { colors2024, styles } = useTheme2024({
