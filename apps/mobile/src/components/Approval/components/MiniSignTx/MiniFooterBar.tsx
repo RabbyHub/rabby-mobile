@@ -327,9 +327,15 @@ export const MiniFooterBar: React.FC<Props> = ({
       if (showGasLess && !canUseGasLess && canGotoUseGasAccount) {
         onChangeGasAccount?.();
       }
+
+      if (showGasLess && directSubmit && canGotoUseGasAccount) {
+        onChangeGasAccount?.();
+      }
+
       setIsInited(true);
     }
   }, [
+    directSubmit,
     canGotoUseGasAccount,
     canUseGasLess,
     isFirstGasCostLoading,
@@ -413,7 +419,7 @@ export const MiniFooterBar: React.FC<Props> = ({
       !isInited ? null : (
         <>
           {showGasLess &&
-          !gasAccountCanPay &&
+          !canGotoUseGasAccount &&
           (!securityLevel || !hasUnProcessSecurityResult) ? (
             canUseGasLess ? (
               <GasLessActivityToSign

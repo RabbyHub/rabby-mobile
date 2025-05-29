@@ -74,7 +74,7 @@ export const DEX = {
   [DEX_ENUM.MAGPIE]: {
     id: DEX_ENUM.MAGPIE,
     logo: LogoMagpie,
-    name: 'Magpie',
+    name: 'Fly',
     chains: DEX_SUPPORT_CHAINS[DEX_ENUM.MAGPIE],
   },
 };
