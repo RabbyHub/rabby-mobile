@@ -12,7 +12,7 @@ import {
   AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
-} from '@/screens/home/types';
+} from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -43,7 +43,7 @@ import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { CombineTokensItem } from '../Home/hooks/store';
 import { RelatedDeFi } from './components/RelatedDeFi';
-import { navigate, naviPush } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -84,7 +84,7 @@ export const RightMore: React.FC<{
   isMultiAddress?: boolean;
   triggerUpdate: () => void;
   refreshTags: () => void;
-}> = ({ token, triggerUpdate, isMultiAddress, refreshTags }) => {
+}> = ({ token, triggerUpdate, refreshTags }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
 
@@ -182,7 +182,7 @@ export const RightMore: React.FC<{
 };
 
 export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: getStyle,
   });
   const { t } = useTranslation();
@@ -217,15 +217,14 @@ export const TokenDetailScreen = () => {
     needUseCacheToken,
     unHold: _unHold,
     isSingleAddress,
-    isSwapToTokenDetail,
     tokenSelectType,
   } = route.params || {};
 
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, isLight } = useTheme2024({
     getStyle,
   });
 
-  const { safeOffHeader, safeTop } = useSafeSizes();
+  const { safeOffHeader } = useSafeSizes();
   const [isUp, setIsUp] = useState(true);
   const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
 
@@ -395,22 +394,6 @@ export const TokenDetailScreen = () => {
     navigateToSendPolyScreen(!!isSingleAddress, {
       chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
       tokenId: token?._tokenId,
-    });
-  });
-
-  const handleBridge = useMemoizedFn(async () => {
-    const chain = findChain({
-      serverId: token.chain,
-    });
-    if (isSingleAddress) {
-      await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
-    }
-    navigation.push(RootNames.StackTransaction, {
-      screen: isSingleAddress ? RootNames.Bridge : RootNames.MultiBridge,
-      params: {
-        chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-        tokenId: token?._tokenId,
-      },
     });
   });
 
