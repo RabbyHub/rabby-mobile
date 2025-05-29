@@ -7,10 +7,6 @@ export interface UIContactBookItem {
 }
 
 export function getAliasName(address: string) {
-  // const contact = contactService.getContactByAddress(address);
-
-  // return contact?.name || undefined;
-
   const aliasItem = contactService.getAliasByAddress(address);
 
   return aliasItem?.alias || undefined;
