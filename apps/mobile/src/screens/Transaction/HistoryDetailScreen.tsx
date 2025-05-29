@@ -155,10 +155,12 @@ export const AddressItemInDetail = ({
     return idx > -1;
   }, [accounts, address]);
   const { getCexInfoByAddress } = useGetCexList();
-  const cexInfo = useMemo(
-    () => getCexInfoByAddress(address),
-    [address, getCexInfoByAddress],
-  );
+  const cexInfo = useMemo(() => {
+    console.debug(' exe getCexInfo', address);
+    const cexInfo = getCexInfoByAddress(address);
+    console.debug(' exe getCexInfo done', cexInfo);
+    return cexInfo;
+  }, [address, getCexInfoByAddress]);
 
   const handleGoAddressDetail = useCallback(() => {
     const idx = accounts.findIndex(account =>
@@ -694,7 +696,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexShrink: 1,
   },
   detailContainer: {
-    // flex: 1,
     width: '100%',
     marginTop: 12,
     borderRadius: 16,
@@ -732,7 +733,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'right',
-    width: 165,
+    width: 170,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '400',

@@ -75,10 +75,22 @@ export class CexEntity extends EntityAddressAssetBase {
     };
   }
 
+  private static cexListCache: CexEntity[] = [];
+  private static cacheExpiry: number = 0;
+  private static readonly CACHE_DURATION = 60 * 1000; // 1 min
+
   static async getCexList(): Promise<CexEntity[]> {
+    if (this.cexListCache && Date.now() < this.cacheExpiry) {
+      return this.cexListCache;
+    }
+
     await prepareAppDataSource();
-    console.debug('getCexList exec');
-    return this.getRepository().find();
+    const result = await this.getRepository().find();
+
+    this.cexListCache = result;
+    this.cacheExpiry = Date.now() + this.CACHE_DURATION;
+
+    return result;
   }
 
   static async isExpired(owner_addr: string) {
