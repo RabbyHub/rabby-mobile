@@ -1,6 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useState, useMemo } from 'react';
-import { TouchableOpacity, View, Dimensions } from 'react-native';
+import {
+  TouchableOpacity,
+  View,
+  Dimensions,
+  TouchableWithoutFeedback,
+} from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -155,10 +160,12 @@ const ExpandableDescription = ({
         <View style={{ ...styles.itemCard, ...styles.descriptionContainer }}>
           <Text style={styles.introductionText}>
             {description}
-            <Text style={styles.moreButtonText} onPress={toggleExpanded}>
-              {' '}
-              {t('page.tokenDetail.Fold')}
-            </Text>
+            <TouchableWithoutFeedback onPress={toggleExpanded}>
+              <Text style={styles.moreButtonText}>
+                {' '}
+                {t('page.tokenDetail.Fold')}
+              </Text>
+            </TouchableWithoutFeedback>
           </Text>
           <View
             style={{
@@ -213,10 +220,9 @@ const ExpandableDescription = ({
         <Text style={styles.introductionText}>
           {isExpanded ? description : textToShow}
           {shouldTruncate && !isExpanded && (
-            <Text style={styles.moreButtonText} onPress={toggleExpanded}>
-              {' '}
-              {'Show more'}
-            </Text>
+            <TouchableWithoutFeedback onPress={toggleExpanded}>
+              <Text style={styles.moreButtonText}> {'Show more'}</Text>
+            </TouchableWithoutFeedback>
           )}
         </Text>
       </View>
