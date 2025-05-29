@@ -70,7 +70,8 @@
     "react-native-webview@13.10.5": "patch:react-native-webview@npm%3A13.10.5#./.yarn/patches/react-native-webview-npm-13.10.5-714eb41569.patch",
     "react-use@17.4.2": "patch:react-use@npm%3A17.4.2#./.yarn/patches/react-use-npm-17.4.2-d0e8220eaa.patch",
     "typeorm@^0.3.20": "patch:typeorm@npm%3A0.3.20#./.yarn/patches/typeorm-npm-0.3.20-3cdc45367a.patch",
-    "zeego@1.10.0": "patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch"
+    "zeego@1.10.0": "patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch",
+    "react-native-bundle-visualizer@3.1.0": "patch:react-native-bundle-visualizer@npm%3A3.1.0#./.yarn/patches/react-native-bundle-visualizer-npm-3.1.0-6744c68ec9.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
