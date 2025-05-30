@@ -91,6 +91,7 @@ import AutoLockView from '@/components/AutoLockView';
 import {
   directSigningAtom,
   useResetMiniApprovalDirectSignState,
+  useSetDirectSubmitInnerError,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
 import { isAccountSupportDirectSign } from '@/utils/account';
@@ -711,6 +712,8 @@ export const MiniSignTx = ({
     );
   };
 
+  const setDirectSubmitInnerError = useSetDirectSubmitInnerError();
+
   const init = async () => {
     if (!chainId) {
       return;
@@ -811,6 +814,9 @@ export const MiniSignTx = ({
       setInited(true);
     } catch (e: any) {
       toast.show(e.message || JSON.stringify(e));
+      if (directSubmit) {
+        setDirectSubmitInnerError(true);
+      }
     }
   };
 
@@ -1393,7 +1399,10 @@ export const MiniApproval = ({
                 onSubmit={() => {
                   setIsSubmitting(true);
                 }}
-                onReject={handleReject}
+                onReject={e => {
+                  handleReject(e);
+                  dismissedByCodeRef.current = true;
+                }}
                 onResolve={res => {
                   setIsSubmitting(false);
                   onResolve?.(res);

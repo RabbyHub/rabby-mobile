@@ -1879,7 +1879,11 @@
       "OriginIssue": "Nativ auf dieser Blockchain ausgegeben",
       "fdvContent": "Die Marktkapitalisierung, wenn das maximale Angebot im Umlauf wäre. Vollständig verwässerte Bewertung (FDV) = Preis × Maximalangebot. Wenn das Maximalangebot null ist, gilt: FDV = Preis × Gesamtangebot. Wenn weder das Maximalangebot noch das Gesamtangebot definiert oder unendlich ist, wird FDV nicht angezeigt.",
       "HoldingValue": "Wert halten",
-      "Price": "Preis"
+      "Price": "Preis",
+      "Fold": "Falt",
+      "ContentGeneratedByAI": "Dieser Inhalt wurde von KI generiert",
+      "ShowMore": "Weitere anzeigen",
+      "Introduction": "Einleitung"
     },
     "setting": {
       "currentVersion": "Aktuelle Version",

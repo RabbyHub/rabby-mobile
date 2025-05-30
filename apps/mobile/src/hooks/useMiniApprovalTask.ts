@@ -5,7 +5,10 @@ import { atom, useAtom } from 'jotai';
 import _, { uniqueId } from 'lodash';
 import React, { ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useResetMiniApprovalDirectSignState } from './useMiniApprovalDirectSign';
+import {
+  useResetMiniApprovalDirectSignState,
+  useSetDirectSubmitInnerError,
+} from './useMiniApprovalDirectSign';
 import { sleep } from '@/utils/async';
 
 type TxStatus = 'sended' | 'signed' | 'idle' | 'failed';

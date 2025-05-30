@@ -573,46 +573,45 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           clearExpiredTimer();
 
           setFetchingBridgeQuote(true);
-          const res = await runBuildSwapTxsRef.current;
 
-          if (res?.length) {
-            if (canShowDirectSubmit) {
-              if (isDirectSigning) {
-                return;
-              } else {
-                setDirectSigning(true);
-              }
-              await sendPrepareMiniTransactions({
-                directSubmit: true,
-              });
-            } else {
-              await sendMiniTransactions({
-                txs: res,
+          let res = await runBuildSwapTxsRef.current;
+          if (!res?.length) {
+            res = await runBuildTxs();
+            if (res?.length && canShowDirectSubmit && !isDirectSigning) {
+              prepareMiniTransactions({
+                txs: res!,
                 ga: {
                   category: 'Bridge',
                   source: 'bridge',
                   // trigger: rbiSource,
                 },
-                directSubmit: false,
+                directSubmit: canShowDirectSubmit,
               });
             }
-          } else {
-            if (canShowDirectSubmit) {
-              if (isDirectSigning) {
-                return;
-              } else {
-                setDirectSigning(true);
-              }
+          }
+
+          if (!res?.length) {
+            toast.info('please retry');
+            throw new Error('no txs');
+          }
+          if (canShowDirectSubmit) {
+            if (isDirectSigning) {
+              return;
+            } else {
+              setDirectSigning(true);
             }
-            const res = await runBuildTxs();
+            await sendPrepareMiniTransactions({
+              directSubmit: true,
+            });
+          } else {
             await sendMiniTransactions({
-              txs: res!,
+              txs: res,
               ga: {
                 category: 'Bridge',
                 source: 'bridge',
                 // trigger: rbiSource,
               },
-              directSubmit: canShowDirectSubmit,
+              directSubmit: false,
             });
           }
 
@@ -914,6 +913,12 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               disabled={btnDisabled || !canDirectSign || isDirectSigning}
               type={'primary'}
               syncUnlockTime
+              onBeforeAuth={() => {
+                clearExpiredTimer();
+              }}
+              onCancel={() => {
+                refresh(e => e + 1);
+              }}
             />
           ) : (
             <Button

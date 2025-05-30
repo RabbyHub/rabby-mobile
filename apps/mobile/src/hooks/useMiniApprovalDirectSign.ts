@@ -55,15 +55,22 @@ export const directSigningAtom = atom(false);
 
 export const canDirectSignAtom = atom(true);
 
+const innerError = atom(false);
+export const useSetDirectSubmitInnerError = () => useSetAtom(innerError);
+export const useGetDirectSubmitInnerError = () => useAtomValue(innerError);
+
 export const useCanProcessDirectSubmit = () => {
   const disabledProcess = useDirectSigningDisabledProcess();
   const canDirectSign = useAtomValue(canDirectSignAtom);
-  return !disabledProcess && canDirectSign;
+  const directSubmitInnerError = useGetDirectSubmitInnerError();
+
+  return !disabledProcess && canDirectSign && !directSubmitInnerError;
 };
 
 export const useResetMiniApprovalDirectSignState = () => {
   const setMiniApprovalGasState = useSetAtom(miniApprovalGasAtom);
   const setGasRelativeComponent = useSetAtom(gasRelativeComponentAtom);
+  const setDirectSubmitInnerError = useSetDirectSubmitInnerError();
 
   const [directSigning, setDirectSigning] = useAtom(directSigningAtom);
   const [canDirectSign, setCanDirectSign] = useAtom(canDirectSignAtom);
@@ -79,7 +86,9 @@ export const useResetMiniApprovalDirectSignState = () => {
     setDirectSigning(false);
     setCanDirectSign(true);
     setGasRelativeComponent(null);
+    setDirectSubmitInnerError(false);
   }, [
+    setDirectSubmitInnerError,
     setCanDirectSign,
     setDirectSigning,
     setGasRelativeComponent,
