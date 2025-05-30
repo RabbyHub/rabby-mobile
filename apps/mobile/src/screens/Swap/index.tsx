@@ -646,7 +646,7 @@ const Swap = ({
   ]);
 
   useEffect(() => {
-    if (isFocused) {
+    if (isFocused && canShowDirectSubmit) {
       prepareMiniTransactions({
         txs: [],
         ga: {
