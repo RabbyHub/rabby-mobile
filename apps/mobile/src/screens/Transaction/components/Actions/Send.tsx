@@ -422,7 +422,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   buttonContainer: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     flexDirection: 'row',
     // height: 120,
     paddingTop: 20,
