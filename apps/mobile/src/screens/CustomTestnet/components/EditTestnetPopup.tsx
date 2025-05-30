@@ -103,10 +103,10 @@ export const EditCustomTestnetPopup = ({
     if ('error' in res) {
       formik.setFieldError(res.error.key, res.error.message);
 
-      if (!isEdit && res.error.status === 'alreadySupported') {
-        setIsShowModifyRpcModal(true);
-        // setFormValues(formik.values);
-      }
+      // if (!isEdit && res.error.status === 'alreadySupported') {
+      //   setIsShowModifyRpcModal(true);
+      //   // setFormValues(formik.values);
+      // }
     } else {
       onConfirm?.(res);
     }
