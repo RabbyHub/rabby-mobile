@@ -370,18 +370,18 @@ function PasswordInput({
           {passwordVisible ? (
             <RcIconEyeCC
               style={ctx.iconStyle}
-              color={props.iconColor || '#090A0B'}
+              color={props.iconColor || colors2024['neutral-title-1']}
             />
           ) : (
             <RcIconEyeCloseCC
               style={ctx.iconStyle}
-              color={props.iconColor || '#090A0B'}
+              color={props.iconColor || colors2024['neutral-title-1']}
             />
           )}
         </TouchableView>
       )) as React.FC<RenderCtx>)
     );
-  }, [props.customIcon, props.iconColor, passwordVisible]);
+  }, [props.customIcon, props.iconColor, passwordVisible, colors2024]);
   // const inputRef = React.useRef<TextInput>(null);
 
   return (

@@ -1,4 +1,4 @@
-import { ellipsis } from '@/utils/address';
+import { ellipsis } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { createPersistStore } from '@rabby-wallet/persist-store';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 
