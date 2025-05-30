@@ -111,7 +111,7 @@ export default function TransactionNavigator() {
         name={RootNames.SelectImportAddress}
         component={SelectMyAddressScreen}
         options={mergeScreenOptions({
-          title: 'Select Imported Wallets',
+          title: 'Select Imported Address',
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             fontWeight: '900',

@@ -6,7 +6,7 @@
       "ImportNewAddress": "Add an Address",
       "ImportHardwareAddress": "Connect Hardware Wallets",
       "ImportSuccess": "Added successfully",
-      "ImportWatchAddress2024": "Add Watch-Only Address",
+      "ImportWatchAddress2024": "Add Watch-only Address",
       "ImportMethods": "Select Import Method",
       "ImportSafeAddress2024": "Add Safe Address",
       "CreateSelectMethod": "1. Select Creation Method",
@@ -184,7 +184,7 @@
         "slippageFailToLoad": "Fail to load",
         "slippageTolerance": "Slippage tolerance",
         "receiver": "Receiver",
-        "notPaymentAddress": "Not the payment Wallet",
+        "notPaymentAddress": "Not the payment address",
         "unknownAddress": "Unknown address"
       },
       "safeTx": {
@@ -424,7 +424,7 @@
         "GetFreeGasToSign": "Get Free Gas",
         "customRpcUnavailableTip": "Custom RPCs are not supported for Free Gas",
         "walletConnectUnavailableTip": "Mobile wallet connected via WalletConnect is not supported for Free Gas",
-        "watchUnavailableTip": "Watch-Only address is not supported for Free Gas"
+        "watchUnavailableTip": "Watch-only address is not supported for Free Gas"
       },
       "gasAccount": {
         "customRPC": "Not supported when using custom RPC",
@@ -651,9 +651,9 @@
       "enterAddress": "Enter Address",
       "innerEnterAddress": "Enter Address / ENS",
       "whitelistTitle": "Whitelist",
-      "sendToImportedAddress": "Send to My Imported Wallets",
-      "sendToWatchAddress": "Send to Watch-Only Wallets",
-      "sendToSafeAddress": "Send to Safe Wallets",
+      "sendToImportedAddress": "Send to My Imported Addresses",
+      "sendToWatchAddress": "Send to Watch-only Addresses",
+      "sendToSafeAddress": "Send to Safe Addresses",
       "emptyWhitelistHeader": "Add Whitelist Address",
       "emptyWhitelistContent": "Add trusted addresses to whitelist for fast transfers—no confirmation needed next time",
       "emptyWhitelistTip": "No whitelisted addresses yet, ",
@@ -687,7 +687,7 @@
       "checkbox": "I understand the risks and want to continue"
     },
     "selectAddress": {
-      "selectWatchAddress": "Select from Watch-Only addresses",
+      "selectWatchAddress": "Select from Watch-only addresses",
       "selectSafeAddress": "Select from Safe addresses"
     },
     "whitelist": {
@@ -1052,8 +1052,8 @@
         "privateKey": "Import Private Key",
         "safeTitle": "Import Safe Address",
         "safe": "Safe",
-        "watchOnlyTitle": "Import Watch-Only Address",
-        "watch": "Watch-Only Address",
+        "watchOnlyTitle": "Import Watch-only Addres",
+        "watch": "Watch-only Address",
         "hardWare": "Connect Hardware Wallets",
         "tips": {
           "title": "Is it safe to import into Rabby?",
@@ -1344,7 +1344,7 @@
       "remove-from-whitelist": "Remove from Whitelist",
       "backup-private-key": "Backup Private Key",
       "backup-seed-phrase": "Backup Seed Phrase",
-      "delete-address": "Delete wallet",
+      "delete-address": "Delete address",
       "delete-desc-needpassword": "Before you delete, keep the following points in mind to understand how to protect your assets.",
       "delete-desc": "Are you sure you want to delete this address?",
       "admins": "Admins",
@@ -1363,8 +1363,8 @@
         "addWatchAddress": "Add Watch-Only Addresses"
       },
       "addressListScreen": {
-        "importSafeAddress": "Safe Wallets",
-        "importWatchAddress": "Imported Watch-Only Wallets",
+        "importSafeAddress": "Imported Safe Addresses",
+        "importWatchAddress": "Imported Watch-only Addresses",
         "unpin": "Unpin",
         "pin": "Pin",
         "edit": "Edit",
@@ -1593,7 +1593,7 @@
         "invalidAmount": "Must be under 500",
         "amount": "Amount",
         "token": "Token",
-        "paymentAddress": "Payment Wallet",
+        "paymentAddress": "Payment Address",
         "selectToken": "Select Token",
         "inSufficientTip1": "This address doesn't have enough tokens Please choose a different address",
         "followingTokenInSufficient": "The following token balance is insufficient",
@@ -1603,8 +1603,8 @@
         "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals"
       },
       "paymentAddressPopup": {
-        "title": "Select payment Wallet",
-        "address": "Payment Wallet",
+        "title": "Select Payment address",
+        "address": "Payment address",
         "balance": "Balance",
         "confirm": "Confirm"
       },
@@ -1657,7 +1657,6 @@
       "switchAccount": "Switch GasAccount",
       "gasAccountList": {
         "address": "Address",
-        "wallet": "Wallet",
         "balance": "Balance",
         "gasAccountBalance": "GasAccount Balance"
       },
@@ -1728,7 +1727,7 @@
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Wallet to Receive",
+      "title": "Select Receive Address",
       "selectChainTitle": "Select Chain"
     },
     "singleHome": {
@@ -1875,9 +1874,7 @@
     "multiAddressAssets": {
       "tabs": {
         "portfolio": "Portfolio",
-        "address": "Address",
-        "wallet_one": "Wallet",
-        "wallet_other": "Wallets"
+        "address": "Address"
       },
       "scamTokenHeader": "Scam tokens"
     },
@@ -1935,7 +1932,7 @@
         "login": "Log in GasAccount"
       },
       "loginConfirmModal": {
-        "title": "Select Wallet to Login",
+        "title": "Select An Address to Login",
         "desc": "Once login, you can only deposit it at this address"
       },
       "depositPopup": {
@@ -1962,8 +1959,8 @@
     },
     "accountSwitcher": {
       "all": "All",
-      "screenHeaderSubTitle_one": "1 wallet",
-      "screenHeaderSubTitle_other": "{{count}} wallets"
+      "screenHeaderSubTitle_one": "1 address",
+      "screenHeaderSubTitle_other": "{{count}} addresses"
     },
     "AccountSelectDrawer": {
       "btn": {
@@ -2118,7 +2115,6 @@
     },
     "unlimited": "unlimited",
     "Addresses": "Addresses",
-    "Wallets": "Select Wallet",
     "24h": "24h"
   },
   "background": {

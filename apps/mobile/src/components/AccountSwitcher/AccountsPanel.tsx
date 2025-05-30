@@ -174,7 +174,7 @@ AccountSwitcherAopProps<{
       {...linearContainerProps}
       style={[styles.panel, containerStyle]}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('global.Wallets')}</Text>
+        <Text style={styles.title}>{t('global.Addresses')}</Text>
       </View>
       <View style={styles.scrollViewContainer}>
         <View

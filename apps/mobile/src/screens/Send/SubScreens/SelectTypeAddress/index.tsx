@@ -27,7 +27,7 @@ const SelectTypeScreenScreen = () => {
   const getHeaderTitle = React.useCallback(() => {
     return (
       <HeaderTitleText2024 style={styles.headerTitleStyle}>
-        Select {type === 'watch' ? 'Watch-Only' : 'Safe'} Wallets
+        Select {type === 'watch' ? 'Watch-Only' : 'Safe'} Address
       </HeaderTitleText2024>
     );
   }, [styles.headerTitleStyle, type]);
