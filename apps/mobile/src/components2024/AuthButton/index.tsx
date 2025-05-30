@@ -10,28 +10,51 @@ import { Button, ButtonProps } from '../Button';
 import RcIconLock from '@/assets2024/icons/common/lock-cc.svg';
 import RcIconKeychainFaceIdCC from '@/assets2024/icons/common/fack_id.svg';
 import RcIconKeychainFingerprintCC from '@/assets2024/icons/common/fingerprint.svg';
+import { updateUnlockTime } from '@/core/apis/lock';
 
 export type IAuthButtonProps = Omit<ButtonProps, 'onPress'> & {
   onFinished?: () => void;
+  onCancel?: () => void;
+  onBeforeAuth?: () => void;
+  authTitle?: string;
+  syncUnlockTime?: boolean;
 };
 
-const AuthButton: React.FC<IAuthButtonProps> = ({ onFinished, ...props }) => {
+const AuthButton: React.FC<IAuthButtonProps> = ({
+  onFinished: _onFinished,
+  onBeforeAuth,
+  onCancel,
+  authTitle,
+  syncUnlockTime,
+  ...props
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const {
     computed: { isBiometricsEnabled, isFaceID },
   } = useBiometrics({ autoFetch: true });
 
+  const onFinished = useCallback(() => {
+    if (syncUnlockTime) {
+      updateUnlockTime();
+    }
+    _onFinished?.();
+  }, [syncUnlockTime, _onFinished]);
+
   const validationHandler = password => {
     return apisLock.throwErrorIfInvalidPwd(password);
   };
   const unlockWithBiometrics = useCallback(async () => {
+    onBeforeAuth?.();
     if (!isBiometricsEnabled) {
       AuthenticationModal2024.show({
-        title: t('page.addressDetail.add-to-whitelist'),
+        title: authTitle || t('page.addressDetail.add-to-whitelist'),
         authType: ['password'],
         onFinished: () => {
           onFinished?.();
+        },
+        onCancel: () => {
+          onCancel?.();
         },
         validationHandler(password) {
           return apisLock.throwErrorIfInvalidPwd(password);
@@ -51,17 +74,20 @@ const AuthButton: React.FC<IAuthButtonProps> = ({ onFinished, ...props }) => {
         console.error(error);
       }
       AuthenticationModal2024.show({
-        title: t('page.addressDetail.add-to-whitelist'),
+        title: authTitle || t('page.addressDetail.add-to-whitelist'),
         authType: ['password'],
         onFinished: () => {
           onFinished?.();
+        },
+        onCancel: () => {
+          onCancel?.();
         },
         validationHandler(password) {
           return apisLock.throwErrorIfInvalidPwd(password);
         },
       });
     }
-  }, [isBiometricsEnabled, onFinished, t]);
+  }, [onBeforeAuth, isBiometricsEnabled, authTitle, t, onFinished, onCancel]);
 
   return (
     <Button

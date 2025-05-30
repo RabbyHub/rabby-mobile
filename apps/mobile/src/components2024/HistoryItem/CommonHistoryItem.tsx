@@ -5,6 +5,7 @@ import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
 import { Card } from '../Card';
 import RcPending from '@/assets/icons/swap/pending.svg';
 import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
+import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 
 interface Props {
   icon: React.ReactNode;
@@ -15,6 +16,7 @@ interface Props {
   receiveTokenAmount?: React.ReactNode;
   rightContainer?: React.ReactNode;
   isFailed?: boolean;
+  showSuccess?: boolean;
 }
 
 export const CommonHistoryItem: React.FC<Props> = ({
@@ -26,6 +28,7 @@ export const CommonHistoryItem: React.FC<Props> = ({
   payTokenAmount,
   receiveTokenAmount,
   rightContainer,
+  showSuccess,
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
@@ -55,6 +58,9 @@ export const CommonHistoryItem: React.FC<Props> = ({
         <View style={styles.mainContainer}>
           <View style={styles.titleContainer}>
             <Text style={styles.titleText}>{title}</Text>
+            {/* {showSuccess && !isPending && !isFailed && (
+              <TxStatusItem status={1} showSuccess={true} />
+            )} */}
             {isFailed && (
               <RcIconFail style={styles.arrowIcon} width={18} height={18} />
             )}

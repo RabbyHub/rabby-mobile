@@ -18,6 +18,7 @@ export const GasLessNotEnough: React.FC<{
   canDepositUseGasAccount?: boolean;
   onDeposit?(): void;
   onGotoGasAccount?(): void;
+  inShowMore?: boolean;
 }> = ({
   gasAccountCost,
   gasAccountAddress,
@@ -26,9 +27,10 @@ export const GasLessNotEnough: React.FC<{
   canDepositUseGasAccount,
   onDeposit,
   onGotoGasAccount,
+  inShowMore,
 }) => {
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
 
@@ -40,10 +42,29 @@ export const GasLessNotEnough: React.FC<{
 
   return (
     <>
-      <View style={[styles.container, {}]}>
-        <View style={styles.tipTriangle} />
+      <View
+        style={[
+          styles.container,
+          inShowMore && {
+            backgroundColor: colors2024['red-light-1'],
+          },
+        ]}>
+        <View
+          style={[
+            styles.tipTriangle,
+            inShowMore && {
+              borderBottomColor: colors2024['red-light-1'],
+            },
+          ]}
+        />
         <View>
-          <Text style={[styles.text]}>
+          <Text
+            style={[
+              styles.text,
+              inShowMore && {
+                color: colors2024['red-default'],
+              },
+            ]}>
             {t('page.signFooterBar.gasless.notEnough')}
           </Text>
         </View>
@@ -92,7 +113,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors2024['neutral-bg-4'],
+      // backgroundColor: colors2024['neutral-bg-4'],
       paddingVertical: 4,
       paddingLeft: 12,
       paddingRight: 5,
@@ -101,6 +122,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginBottom: 8,
       marginTop: 5,
       minHeight: 36,
+      backgroundColor: colors2024['red-light-1'],
     },
     tipTriangle: {
       position: 'absolute',
@@ -117,16 +139,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderLeftColor: 'transparent',
       borderRightColor: 'transparent',
       borderTopColor: 'transparent',
-      borderBottomColor: colors2024['neutral-bg-4'],
+      // borderBottomColor: colors2024['neutral-bg-4'],
       alignItems: 'center',
+      borderBottomColor: colors2024['red-light-1'],
     },
     text: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
       fontStyle: 'normal',
       fontWeight: '500',
-      color: colors2024['neutral-body'],
+      // color: colors2024['neutral-body'],
       lineHeight: 18,
+      color: colors2024['red-default'],
     },
 
     gasAccountBtn: {
@@ -135,7 +159,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       minWidth: 72,
       height: 28,
       backgroundColor: colors2024['brand-default'],
-      borderRadius: 100,
+      borderRadius: 6,
       marginLeft: 'auto',
       paddingHorizontal: 12,
     },

@@ -17,6 +17,7 @@ type AssetAvatarProps = {
   failedPlaceholder?: ReactNode;
   style?: RNViewProps['style'];
   logoStyle?: ViewStyle;
+  innerChainStyle?: ViewStyle;
 };
 
 // 没有用 svg 因为在 虚拟列表中，会有问题
@@ -54,6 +55,7 @@ export const AssetAvatar = memo(
     size = 28,
     style,
     logoStyle,
+    innerChainStyle,
   }: AssetAvatarProps) => {
     const { styles, isLight } = useThemeStyles(getStyles);
     const { on, turnOn } = useSwitch();
@@ -70,9 +72,10 @@ export const AssetAvatar = memo(
           chainIconPosition === 'bl' && styles.chainIconBL,
           chainIconPosition === 'br' && styles.chainIconBR,
           chainIconPosition === 'tr' && styles.chainIconTR,
+          innerChainStyle,
           { width: chainSize, height: chainSize, borderRadius: chainSize / 2 },
         ]),
-      [chainSize, chainIconPosition, styles],
+      [chainSize, chainIconPosition, styles, innerChainStyle],
     );
 
     const source = useMemo(

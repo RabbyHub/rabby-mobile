@@ -7,13 +7,16 @@ import { extend } from 'colord';
 import mixPlugin from 'colord/plugins/mix';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { ActionsContainer, Props } from '../FooterBar/ActionsContainer';
 import { GasLessAnimatedWrapper } from '../FooterBar/GasLessComponents';
 import { useSubmitAction } from '../FooterBar/useSubmitAction';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Button } from '@/components2024/Button';
+import { useAtomValue } from 'jotai';
+import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
+import useDebounce from 'react-use/lib/useDebounce';
 
 extend([mixPlugin]);
 
@@ -29,6 +32,7 @@ export const MiniSubmitActions: React.FC<Props> = ({
   isMiniSignTx,
   chain,
   isSwap,
+  directSubmit,
 }) => {
   const { t } = useTranslation();
   const [isSign, setIsSign] = React.useState(!gasLess);
@@ -59,6 +63,31 @@ export const MiniSubmitActions: React.FC<Props> = ({
     );
     onPress(onSubmit, () => setPressedConfirm(false));
   }, [onSubmit, setPressedConfirm, onPress]);
+
+  const directSigning = useAtomValue(directSigningAtom);
+
+  useDebounce(
+    () => {
+      if (
+        isMiniSignTx &&
+        !disabledProcess &&
+        !pressedConfirm &&
+        directSigning &&
+        directSubmit
+      ) {
+        handlePress();
+      }
+    },
+    300,
+    [
+      directSigning,
+      disabledProcess,
+      handlePress,
+      isMiniSignTx,
+      pressedConfirm,
+      directSubmit,
+    ],
+  );
 
   return (
     <ActionsContainer onCancel={onCancel} isMiniSignTx={isMiniSignTx}>

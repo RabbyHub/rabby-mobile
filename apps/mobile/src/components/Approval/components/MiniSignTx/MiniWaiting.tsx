@@ -10,6 +10,8 @@ import { MiniLedgerHardwareWaiting } from './MiniLedgerHardwareWaiting';
 import { MiniPrivatekeyWaiting } from './MiniPrivatekeyWaiting';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { MiniOneKeyHardwareWaiting } from './MiniOneKeyHardwareWaiting';
+import { miniApprovalAtom } from '@/hooks/useMiniApproval';
+import { useAtom } from 'jotai';
 import { useMemoizedFn } from 'ahooks';
 
 export const MiniWaiting = ({
@@ -17,7 +19,7 @@ export const MiniWaiting = ({
   onRetry,
   onCancel,
   onDone,
-  error,
+  error: _error,
 }: {
   visible?: boolean;
   onRetry?: () => void;
@@ -25,6 +27,18 @@ export const MiniWaiting = ({
   onDone?: () => void;
   error?: BatchSignTxTaskType['error'];
 }) => {
+  const [{ ga }] = useAtom(miniApprovalAtom);
+
+  const error = useMemo(() => {
+    if (ga?.category && _error?.status === 'FAILED') {
+      return {
+        ..._error,
+        content: `Failed to ${ga?.category}`,
+      } as BatchSignTxTaskType['error'];
+    }
+    return _error;
+  }, [_error, ga?.category]);
+
   const { styles } = useTheme2024({
     getStyle,
   });

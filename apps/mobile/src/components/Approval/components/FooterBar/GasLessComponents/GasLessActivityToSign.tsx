@@ -260,7 +260,9 @@ export function GasLessActivityToSign({
               ? {
                   backgroundColor: 'transparent',
                 }
-              : {},
+              : {
+                  backgroundColor: colors2024['red-light-1'],
+                },
           ]}>
           {isActivityFreeGas && isColorDefined ? (
             <ActivityFreeGasBg
@@ -366,7 +368,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: 'transparent',
-    borderBottomColor: colors2024['neutral-bg-4'],
+    borderBottomColor: colors2024['red-light-1'],
     alignItems: 'center',
   },
 
@@ -414,7 +416,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
   },
   gasText: {
     flex: 1,
-    color: colors2024['neutral-body'],
+    color: colors2024['red-default'],
   },
   linearGradient: {
     marginHorizontal: 'auto',
@@ -436,7 +438,7 @@ const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
     minWidth: 72,
     height: 28,
     backgroundColor: colors2024['brand-default'],
-    borderRadius: 100,
+    borderRadius: 6,
     marginLeft: 'auto',
     paddingHorizontal: 12,
   },

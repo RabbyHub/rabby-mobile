@@ -8206,6 +8206,7 @@ __metadata:
   resolution: "@rabby-wallet/service-address@workspace:packages/service-address"
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
+    "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/persist-store": ^0.1.0
     "@types/jest": ^27.4.1
     "@types/node": ^20.14.8

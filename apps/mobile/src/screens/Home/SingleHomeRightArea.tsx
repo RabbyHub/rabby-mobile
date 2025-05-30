@@ -17,6 +17,7 @@ import { View } from 'react-native';
 import { AbstractPortfolioToken } from './types';
 import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
+import { HomePendingBadge } from './components/HomePending';
 
 const hitSlop = {
   top: 10,
@@ -48,10 +49,29 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
   const { currentAccount } = useCurrentAccount();
-
+  const [historyCount, setHistoryCount] = useState<{
+    success: number;
+    fail: number;
+  }>();
+  console.log('historyCount', historyCount);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const fetchHistory = useCallback(() => {
+    if (!currentAccount) {
+      return;
+    }
+
+    const failCount = transactionHistoryService.getFailedCount(
+      currentAccount.address,
+    );
+    const successCount = transactionHistoryService.getSucceedCount(
+      currentAccount.address,
+    );
+    setHistoryCount({
+      success: successCount,
+      fail: failCount,
+    });
+
     if (tokenItem) {
       // single token no pending tx
       return;
@@ -85,6 +105,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
           isInTokenDetail,
           tokenItem,
           isMultiAddress,
+          currentAddress: currentAccount?.address.toLowerCase(),
         },
       }),
     );
@@ -99,13 +120,37 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
 
   return (
     <CustomTouchableOpacity hitSlop={historyHitSlop} onPress={openHistory}>
-      <View style={{ marginRight: 18 }}>
-        {pendingTxCount ? (
-          <PendingTx number={pendingTxCount} onClick={openHistory} />
-        ) : (
-          <RcIconHistory color={colors2024['neutral-body']} />
-        )}
-      </View>
+      {pendingTxCount > 0 ? (
+        <View
+          style={{ marginRight: 16, position: 'relative', paddingVertical: 4 }}>
+          <HomePendingBadge number={pendingTxCount} />
+        </View>
+      ) : (
+        <View
+          style={{ marginRight: 16, position: 'relative', paddingVertical: 4 }}>
+          <RcIconHistory
+            color={colors2024['neutral-body']}
+            width={22}
+            height={22}
+          />
+          {Boolean(historyCount?.success || historyCount?.fail) && (
+            <View
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor:
+                  colors2024[
+                    historyCount?.fail ? 'red-default' : 'green-default'
+                  ],
+                position: 'absolute',
+                top: 0,
+                right: -4,
+              }}
+            />
+          )}
+        </View>
+      )}
     </CustomTouchableOpacity>
   );
 };
