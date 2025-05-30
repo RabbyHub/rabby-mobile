@@ -5,7 +5,7 @@ import { useAccounts } from '@/hooks/account';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
+import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { useRequest } from 'ahooks';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';

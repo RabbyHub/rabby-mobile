@@ -22,7 +22,7 @@ import {
   checkGasAndNonce,
   convertLegacyTo1559,
 } from '@/utils/transaction';
-import { BottomSheetView, useBottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {

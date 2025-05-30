@@ -39,6 +39,8 @@ import { chunk } from 'lodash';
 import { isScamHidenToken } from './utils/collection';
 import { AssetList } from './AssetList';
 import { Tabs } from 'react-native-collapsible-tab-view';
+import { useCurve } from '@/hooks/useCurve';
+import useCurrentBalance from '@/hooks/useCurrentBalance';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -52,7 +54,7 @@ export const icons = {
 };
 
 const MIN_HEADER_HEIGHT = ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER;
-
+const SPACE_BETWEEN_HEADER_AND_CHART = 17;
 interface Props {
   onRefresh(): void;
   onUpdateIsDecrease?: (isDecrease: boolean) => void;
@@ -461,6 +463,15 @@ export const AssetContainer: React.FC<Props> = ({
       }
     }),
   );
+  const { balance } = useCurrentBalance(currentAccount?.address, {
+    update: true,
+    noNeedBalance: false,
+  });
+  const {
+    result: curveData,
+    isLoading: isLoadingCurve,
+    refresh: refreshCurve,
+  } = useCurve(currentAccount?.address, 0, balance);
 
   const renderStickHeader = useCallback(
     (type: string) => {
@@ -533,12 +544,16 @@ export const AssetContainer: React.FC<Props> = ({
           height:
             HEADER_TOP_AREA_HEIGHT +
             ASSETS_SECTION_HEADER +
+            SPACE_BETWEEN_HEADER_AND_CHART +
             ASSETS_SECTION_HEADER,
         }}>
         <HomeTopArea
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
+          curveData={curveData}
+          isLoadingCurve={isLoadingCurve}
         />
+        <View style={{ height: SPACE_BETWEEN_HEADER_AND_CHART }} />
         <AssestAllHeader
           style={[styles.assetHeader]}
           currentSection={currentSection}
@@ -554,9 +569,11 @@ export const AssetContainer: React.FC<Props> = ({
     chainsInfo.chainLength,
     currentAccount,
     currentSection,
+    curveData,
     firstRowType,
     handleOnChainClick,
     handleSwitchTab,
+    isLoadingCurve,
     onUpdateIsDecrease,
     renderStickHeader,
     selectChainItem?.chain,
@@ -569,7 +586,8 @@ export const AssetContainer: React.FC<Props> = ({
   const handleRefresh = useCallback(() => {
     refreshPositions(true);
     onRefresh?.();
-  }, [onRefresh, refreshPositions]);
+    refreshCurve();
+  }, [onRefresh, refreshCurve, refreshPositions]);
   const hasNotAssets = useMemo(() => {
     return (
       chainsInfo.chainLength === 0 &&

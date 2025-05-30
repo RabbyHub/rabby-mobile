@@ -8219,6 +8219,8 @@ __metadata:
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
     typescript: 5.7.3
+  peerDependencies:
+    "@rabby-wallet/base-utils": "*"
   languageName: unknown
   linkType: soft
 
@@ -29945,7 +29947,6 @@ __metadata:
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": 5.0.2
-    "@rabby-wallet/gnosis-sdk": 1.4.3
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.12
@@ -29978,8 +29979,6 @@ __metadata:
     "@rematch/core": ^2.2.0
     "@rneui/base": ^4.0.0-rc.8
     "@rneui/themed": ^4.0.0-rc.8
-    "@safe-global/protocol-kit": 5.0.3
-    "@safe-global/types-kit": 1.0.2
     "@sentry/react-native": 6.10.0
     "@shopify/flash-list": ^1.8.0
     "@tsconfig/react-native": 3.0.5
@@ -30102,7 +30101,6 @@ __metadata:
     react-use: 17.4.2
     reactotron-react-native: ^5.0.4
     readable-stream: 4.7.0
-    recyclerlistview: 4.2.1
     reflect-metadata: 0.1.13
     rimraf: ^3.0.2
     ripple-keypairs: ^2.0.0
@@ -30595,6 +30593,22 @@ __metadata:
   bin:
     react-native-bundle-visualizer: src/react-native-bundle-visualizer.js
   checksum: efddc8218835fdc6c5e9df87a0933ad9e8285e6e104548b619c92ef9daf4617f942ca5801fcda546b9f03f8c8001f164adbef4b1d447aae8a75767f7b2851cf1
+  languageName: node
+  linkType: hard
+
+"react-native-bundle-visualizer@patch:react-native-bundle-visualizer@npm%3A3.1.0#./.yarn/patches/react-native-bundle-visualizer-npm-3.1.0-6744c68ec9.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 3.1.0
+  resolution: "react-native-bundle-visualizer@patch:react-native-bundle-visualizer@npm%3A3.1.0#./.yarn/patches/react-native-bundle-visualizer-npm-3.1.0-6744c68ec9.patch::version=3.1.0&hash=799c99&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    chalk: ^4.1.2
+    execa: ^5.1.1
+    fs-extra: ^10.0.0
+    minimist: ^1.2.5
+    open: ^8.4.0
+    source-map-explorer: ^2.5.2
+  bin:
+    react-native-bundle-visualizer: src/react-native-bundle-visualizer.js
+  checksum: 3c5d47bc2398d921bf923d17b10a3445bbc09e47be2cabb7c046f6cb34001f5d828ddd006af7021e43c6751142afa957066498ca69db725dd47461c830f060f2
   languageName: node
   linkType: hard
 
@@ -31850,20 +31864,6 @@ __metadata:
   dependencies:
     minimatch: ^3.0.5
   checksum: 88ec96e276237290607edc0872b4f9842837b95cfde0cdbb1e00ba9623dfdf3514d44cdd14496ab60a0c2dd180a6ef8a3f1c34599e6cf2273afac9b72a6fb2b5
-  languageName: node
-  linkType: hard
-
-"recyclerlistview@npm:4.2.1":
-  version: 4.2.1
-  resolution: "recyclerlistview@npm:4.2.1"
-  dependencies:
-    lodash.debounce: 4.0.8
-    prop-types: 15.8.1
-    ts-object-utils: 0.0.5
-  peerDependencies:
-    react: ">= 15.2.1"
-    react-native: ">= 0.30.0"
-  checksum: 48e84937f803ac2acb510b2bc36b3ef1ea9c5383540a832f80c87d7e7f933b26c59e4ffc2d7de529be55e14a8d551c4f6660a450ad220142f351e6bf6e630450
   languageName: node
   linkType: hard
 

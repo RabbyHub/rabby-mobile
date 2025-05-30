@@ -1,7 +1,7 @@
 import { MMKV } from 'react-native-mmkv';
 import { MMKV_FILE_NAMES } from '@/core/utils/appFS';
 import { openapi } from '@/core/request';
-import { CurveDayType } from '@/hooks/useCurve';
+import { CurveDayType } from './curveDayType';
 
 export interface ITIME_STEP_ITEM {
   timestamp: number;

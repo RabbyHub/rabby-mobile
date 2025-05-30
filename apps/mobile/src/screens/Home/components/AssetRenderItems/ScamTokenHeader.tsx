@@ -47,7 +47,7 @@ export const ScamTokenHeader = memo(
                 key={index}
                 logo={logoUrls?.[index] || ''}
                 size={28}
-                style={logoSize}
+                style={{ ...logoSize, marginLeft: index === 0 ? 0 : -19.5 }}
               />
             ))}
           </View>
@@ -81,7 +81,6 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingRight: 16,
   },
   logo: {
-    gap: -19.5,
     flexDirection: 'row',
   },
   title: {

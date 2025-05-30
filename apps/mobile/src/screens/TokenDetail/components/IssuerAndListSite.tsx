@@ -1,6 +1,12 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useState, useMemo } from 'react';
-import { TouchableOpacity, View, Dimensions } from 'react-native';
+import {
+  TouchableOpacity,
+  View,
+  Dimensions,
+  TouchableWithoutFeedback,
+  Text,
+} from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -9,7 +15,7 @@ import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
 import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
-import { AssetAvatar, Text } from '@/components';
+import { AssetAvatar } from '@/components';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
@@ -155,7 +161,10 @@ const ExpandableDescription = ({
         <View style={{ ...styles.itemCard, ...styles.descriptionContainer }}>
           <Text style={styles.introductionText}>
             {description}
-            <Text style={styles.moreButtonText} onPress={toggleExpanded}>
+            <Text
+              style={styles.moreButtonText}
+              onPress={toggleExpanded}
+              suppressHighlighting={true}>
               {' '}
               {t('page.tokenDetail.Fold')}
             </Text>
@@ -213,9 +222,11 @@ const ExpandableDescription = ({
         <Text style={styles.introductionText}>
           {isExpanded ? description : textToShow}
           {shouldTruncate && !isExpanded && (
-            <Text style={styles.moreButtonText} onPress={toggleExpanded}>
-              {' '}
-              {'Show more'}
+            <Text
+              style={styles.moreButtonText}
+              onPress={toggleExpanded}
+              suppressHighlighting={true}>
+              {' Show more'}
             </Text>
           )}
         </Text>
