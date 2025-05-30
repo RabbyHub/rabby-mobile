@@ -20,6 +20,7 @@ import {
   AbortedDirectSubmitError,
   directSigningAtom,
   useDirectSigningDisabledProcess,
+  useGetDirectSubmitInnerError,
   useResetMiniApprovalDirectSignState,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
@@ -96,6 +97,7 @@ export const MiniDirectSubmitApproval = ({
   });
 
   const [isDirectSigning] = useAtom(directSigningAtom);
+  const directSubmitInnerError = useGetDirectSubmitInnerError();
 
   useEffect(() => {
     resetMiniApprovalDirectSignState();
@@ -106,6 +108,13 @@ export const MiniDirectSubmitApproval = ({
       setOverlayLoading?.(true);
     }
   }, [isDirectSigning]);
+
+  useEffect(() => {
+    if (overlayLoading && directSubmitInnerError) {
+      setOverlayLoading?.(false);
+      DirectSubmitReject?.(new AbortedDirectSubmitError('abort'));
+    }
+  }, [overlayLoading, directSubmitInnerError]);
 
   useEffect(() => {
     if (task.error) {

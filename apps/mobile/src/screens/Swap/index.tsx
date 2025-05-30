@@ -93,6 +93,7 @@ import {
 } from '@/hooks/useMiniApprovalDirectSign';
 import { PendingTxItem } from './components/PendingTxItem';
 import { error } from 'console';
+import { toast } from '@/components2024/Toast';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -491,23 +492,15 @@ const Swap = ({
       }
       if (isAccountSupportMiniApproval(currentAccount?.type)) {
         clearExpiredTimer();
-        if (canShowDirectSubmit) {
-          if (isDirectSigning) {
-            return;
-          } else {
-            setDirectSigning(true);
-          }
-        }
+
         try {
-          if (txs?.length) {
-            await sendPrepareMiniTransactions({
-              directSubmit: canShowDirectSubmit,
-            });
-          } else {
-            const res = await runBuildSwapTxs();
-            if (res) {
-              await sendMiniTransactions({
-                txs: res,
+          let currentTxs = txs;
+          if (!currentTxs?.length) {
+            currentTxs = await runBuildSwapTxs();
+
+            if (canShowDirectSubmit && currentTxs?.length && !isDirectSigning) {
+              prepareMiniTransactions({
+                txs: currentTxs || [],
                 ga: {
                   category: 'Swap',
                   source: 'swap',
@@ -517,6 +510,32 @@ const Swap = ({
               });
             }
           }
+
+          if (!currentTxs?.length) {
+            toast.info('please retry');
+            throw new Error('no txs');
+          }
+
+          if (canShowDirectSubmit) {
+            if (isDirectSigning) {
+              return;
+            } else {
+              setDirectSigning(true);
+            }
+            await sendPrepareMiniTransactions({
+              directSubmit: canShowDirectSubmit,
+            });
+          } else {
+            await sendMiniTransactions({
+              txs: currentTxs,
+              ga: {
+                category: 'Swap',
+                source: 'swap',
+                swapUseSlider,
+              },
+            });
+          }
+
           mutateTxs([]);
           handleAmountChange('');
           setTimeout(() => {
@@ -530,6 +549,7 @@ const Swap = ({
             },
           );
         } catch (e) {
+          setDirectSigning(false);
           console.debug('handleSwap error', error);
           if ((e as any)?.name === 'SimulateError') {
             gotoSwap();
@@ -1020,6 +1040,12 @@ const Swap = ({
                 disabled={swapBtnDisabled || !canDirectSign || isDirectSigning}
                 type={'primary'}
                 syncUnlockTime
+                onBeforeAuth={() => {
+                  clearExpiredTimer();
+                }}
+                onCancel={() => {
+                  refresh(e => e + 1);
+                }}
               />
             ) : (
               <Button

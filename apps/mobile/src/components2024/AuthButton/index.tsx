@@ -14,12 +14,16 @@ import { updateUnlockTime } from '@/core/apis/lock';
 
 export type IAuthButtonProps = Omit<ButtonProps, 'onPress'> & {
   onFinished?: () => void;
+  onCancel?: () => void;
+  onBeforeAuth?: () => void;
   authTitle?: string;
   syncUnlockTime?: boolean;
 };
 
 const AuthButton: React.FC<IAuthButtonProps> = ({
   onFinished: _onFinished,
+  onBeforeAuth,
+  onCancel,
   authTitle,
   syncUnlockTime,
   ...props
@@ -41,12 +45,16 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
     return apisLock.throwErrorIfInvalidPwd(password);
   };
   const unlockWithBiometrics = useCallback(async () => {
+    onBeforeAuth?.();
     if (!isBiometricsEnabled) {
       AuthenticationModal2024.show({
         title: authTitle || t('page.addressDetail.add-to-whitelist'),
         authType: ['password'],
         onFinished: () => {
           onFinished?.();
+        },
+        onCancel: () => {
+          onCancel?.();
         },
         validationHandler(password) {
           return apisLock.throwErrorIfInvalidPwd(password);
@@ -71,12 +79,15 @@ const AuthButton: React.FC<IAuthButtonProps> = ({
         onFinished: () => {
           onFinished?.();
         },
+        onCancel: () => {
+          onCancel?.();
+        },
         validationHandler(password) {
           return apisLock.throwErrorIfInvalidPwd(password);
         },
       });
     }
-  }, [authTitle, isBiometricsEnabled, onFinished, t]);
+  }, [onBeforeAuth, isBiometricsEnabled, authTitle, t, onFinished, onCancel]);
 
   return (
     <Button
