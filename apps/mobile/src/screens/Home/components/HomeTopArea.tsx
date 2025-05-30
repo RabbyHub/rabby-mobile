@@ -1,4 +1,4 @@
-import { RcArrowRightCC, RcIconRightCC } from '@/assets/icons/common';
+import { RcIconRightCC } from '@/assets/icons/common';
 import {
   RcIconApproval,
   RcIconBridge,
@@ -8,8 +8,7 @@ import {
   RcIconSend,
   RcIconSwap,
 } from '@/assets2024/singleHome';
-import RcInfoCC from '@/assets/icons/home/info-cc.svg';
-import { BSheetModal, Tip } from '@/components';
+import { BSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { toast } from '@/components/Toast';
 import TouchableView from '@/components/Touchable/TouchableView';
@@ -17,10 +16,8 @@ import { HEADER_TOP_AREA_HEIGHT, RootNames } from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { useTheme2024 } from '@/hooks/theme';
-import useCurrentBalance from '@/hooks/useCurrentBalance';
-import { useCurve } from '@/hooks/useCurve';
+import { formChartData } from '@/hooks/useCurve';
 import { RootStackParamsList } from '@/navigation-type';
-import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -30,48 +27,28 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Skeleton } from '@rneui/base';
 import { useMemoizedFn } from 'ahooks';
-import usePrevious from 'ahooks/lib/usePrevious';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
   Platform,
   StyleProp,
-  StyleSheet,
   Text,
   TextStyle,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useApprovalAlert } from '../hooks/approvals';
-import { CurveBottomSheetModal } from './CurveBottomSheet';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import LinearGradient from 'react-native-linear-gradient';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useGnosisQueueTotalPending } from '@/hooks/gnosis/useGnosisQueueTotalPending';
+import { HomeTopChart } from './HomeTopChart';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
 const MORE_SHEET_MODAL_SNAPPOINTS = (actionsNum: number) => [
   80 + 70 * actionsNum,
 ];
-
-const ZERO_PERCENT = '+0%';
-
-const Linear = () => {
-  const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
-
-  return (
-    <LinearGradient
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.linear}
-      colors={[colors2024['neutral-bg-2'], colors2024['neutral-bg-1']]}
-    />
-  );
-};
 
 const isAndroid = Platform.OS === 'android';
 
@@ -124,9 +101,13 @@ export function BadgeText({
 export const HomeTopArea = ({
   currentAccount,
   onUpdateIsDecrease,
+  curveData,
+  isLoadingCurve,
 }: {
   currentAccount?: KeyringAccountWithAlias | null;
   onUpdateIsDecrease?: (status: boolean) => void;
+  curveData?: ReturnType<typeof formChartData>;
+  isLoadingCurve: boolean;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
@@ -140,46 +121,11 @@ export const HomeTopArea = ({
   const { total: gnosisTotal, refreshAsync } = useGnosisQueueTotalPending({
     address: isGnosisKeyring ? currentAccount?.address : undefined,
   });
-  const {
-    balance,
-    balanceLoading,
-    balanceFromCache,
-    balanceUpdating,
-    missingList,
-  } = useCurrentBalance(currentAccount?.address, {
-    update: true,
-    noNeedBalance: false,
-  });
-  const {
-    result: curveData,
-    isLoading: isLoadingCurve,
-    refresh: refreshCurveData,
-  } = useCurve(currentAccount?.address, 0, balance);
-
-  const curveBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
   useFocusEffect(
     useMemoizedFn(() => {
       refreshAsync();
     }),
-  );
-
-  const usd = useMemo(() => {
-    const b = balance || 0;
-    return '$' + splitNumberByStep(b > 10 ? Math.floor(b) : b.toFixed(2));
-  }, [balance]);
-
-  const latestPercent = useMemo(
-    () =>
-      !curveData?.changePercent
-        ? ''
-        : (curveData?.isLoss ? '-' : '+') + curveData?.changePercent,
-    [curveData?.changePercent, curveData?.isLoss],
-  );
-  const previousAddr = usePrevious(currentAccount?.address);
-  const previousPercent = usePrevious(
-    latestPercent,
-    () => previousAddr !== currentAccount?.address,
   );
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
@@ -349,18 +295,13 @@ export const HomeTopArea = ({
     }
   }, [isDecrease, isLight]);
 
-  const percent = useMemo(() => {
-    return latestPercent || previousPercent;
-  }, [latestPercent, previousPercent]);
-
-  const isZeroPercent = percent === ZERO_PERCENT;
-
-  const handlePressBalanceSection = React.useCallback(() => {
-    curveBottomSheetModalRef.current?.dismiss();
-    curveBottomSheetModalRef.current?.present();
-
-    refreshCurveData();
-  }, [refreshCurveData]);
+  const pathColor = useMemo(
+    () =>
+      !curveData?.isLoss
+        ? colors2024['green-default']
+        : colors2024['red-default'],
+    [colors2024, curveData?.isLoss],
+  );
 
   useEffect(() => {
     if (isDecrease !== undefined) {
@@ -383,79 +324,23 @@ export const HomeTopArea = ({
             height: 150,
           }}
         />
-        <View style={styles.opacityWrapper}>
-          <TouchableOpacity
-            style={styles.textBox}
-            onPress={handlePressBalanceSection}>
-            <View style={styles.header}>
-              <Text style={styles.usdText}>
-                {balanceLoading ||
-                balance === null ||
-                (balanceFromCache && balance === 0) ||
-                balanceUpdating ? (
-                  <Skeleton
-                    LinearGradientComponent={Linear}
-                    circle
-                    skeletonStyle={styles.skeleton}
-                    width={140}
-                    height={42}
-                  />
-                ) : (
-                  usd
-                )}
-              </Text>
-
-              {isLoadingCurve ? (
-                <Skeleton
-                  circle
-                  style={{ marginLeft: 1 }}
-                  LinearGradientComponent={Linear}
-                  skeletonStyle={styles.skeleton}
-                  width={50}
-                  height={16}
-                />
-              ) : (
-                !!percent && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.percent,
-                        isDecrease && styles.decrease,
-                        isZeroPercent && styles.zeroPercent,
-                      ])}>
-                      {'  '}
-                      {isZeroPercent ? '0%' : percent}
-                    </Text>
-                    <RcArrowRightCC
-                      width={16}
-                      height={16}
-                      color={
-                        isZeroPercent
-                          ? colors2024['neutral-secondary']
-                          : isDecrease
-                          ? colors2024['red-default']
-                          : colors2024['green-default']
-                      }
-                    />
-                    {!isLoadingCurve && missingList?.length ? (
-                      <Tip
-                        content={t('page.dashboard.home.missingDataTooltip', {
-                          text:
-                            missingList.join(t('page.dashboard.home.chain')) +
-                            t('page.dashboard.home.chainEnd'),
-                        })}>
-                        <RcInfoCC
-                          style={{ marginLeft: 4 }}
-                          color={colors2024['neutral-foot']}
-                        />
-                      </Tip>
-                    ) : null}
-                  </View>
-                )
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
+        <HomeTopChart
+          loading={isLoadingCurve}
+          data={
+            curveData || {
+              list: [],
+              netWorthWithDot: '',
+              netWorth: '',
+              change: '',
+              changePercent: '',
+              isLoss: false,
+              isEmptyAssets: false,
+            }
+          }
+          pathColor={pathColor}
+          isNoAssets={false}
+          isOffline={false}
+        />
         <View style={styles.group}>
           {actions.map(item => (
             <TouchableView
@@ -497,7 +382,9 @@ export const HomeTopArea = ({
                     alignItems: 'center',
                     transform: [
                       {
-                        translateX: -(72 - styles.actionIconWrapper.width) / 2,
+                        translateX:
+                          -(72 - Number(styles.actionIconWrapper.width || 0)) /
+                          2,
                       },
                     ],
                   }}>
@@ -549,13 +436,6 @@ export const HomeTopArea = ({
           ))}
         </AutoLockView>
       </BSheetModal>
-
-      {currentAccount?.address && (
-        <CurveBottomSheetModal
-          key={currentAccount?.address}
-          ref={curveBottomSheetModalRef}
-        />
-      )}
     </>
   );
 };
@@ -563,7 +443,6 @@ export const HomeTopArea = ({
 const BADGE_SIZE = 18;
 const getStyles = createGetStyles2024(ctx => ({
   container: {
-    paddingTop: 7,
     position: 'relative',
     height: HEADER_TOP_AREA_HEIGHT,
   },
@@ -577,7 +456,7 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'center',
   },
   group: {
-    marginTop: 16,
+    marginTop: 11,
     justifyContent: 'space-between',
     flexDirection: 'row',
     paddingHorizontal: 24,

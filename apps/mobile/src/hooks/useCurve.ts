@@ -174,13 +174,13 @@ export const useCurve = (
     [days],
   );
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (!address) {
       return;
     }
     setIsLoading(true);
     await fetch(address, true);
-  };
+  }, [address, fetch]);
 
   useEffect(() => {
     setIsLoading(true);

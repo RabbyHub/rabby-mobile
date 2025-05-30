@@ -41,6 +41,7 @@ interface Props {
   amountList: TokenFromAddressItem[];
   isSingleAddress?: boolean;
   relateDefiList?: RelatedDeFiType[];
+  onUpChange?: (isUp: boolean) => void;
 }
 export function TokenPriceChart(props: Props) {
   const {
@@ -50,6 +51,7 @@ export function TokenPriceChart(props: Props) {
     amountList,
     finalAccount,
     relateDefiList,
+    onUpChange,
   } = props;
   const { colors2024, styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -124,6 +126,14 @@ export function TokenPriceChart(props: Props) {
     }
     return timeMachMapping[activeKey as keyof typeof timeMachMapping];
   }, [activeKey, realTimeData, timeMachMapping]);
+
+  useEffect(() => {
+    if (data?.list?.length) {
+      onUpChange?.(
+        data?.list?.[0]?.value < data?.list?.[data?.list?.length - 1]?.value,
+      );
+    }
+  }, [data?.list, onUpChange]);
 
   const { isUp, percent } = useMemo(() => {
     if (data?.list?.length) {

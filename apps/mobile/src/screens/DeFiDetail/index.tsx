@@ -444,10 +444,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   accountBox: {
     flexDirection: 'row',
-    marginLeft: 25,
+    paddingLeft: 25,
     gap: 4,
-    marginTop: 20,
-    marginBottom: 8,
+    paddingTop: 20,
+    paddingBottom: 8,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   backButtonStyle: {
     // width: 56,
