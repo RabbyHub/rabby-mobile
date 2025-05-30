@@ -5,6 +5,7 @@ import {
   View,
   Dimensions,
   TouchableWithoutFeedback,
+  Text,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -14,7 +15,7 @@ import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
 import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
-import { AssetAvatar, Text } from '@/components';
+import { AssetAvatar } from '@/components';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
