@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo } from 'react';
@@ -146,29 +147,82 @@ export const PendingTxItem = ({
       </View>
       <TouchableOpacity style={styles.container} onPress={handlePress}>
         <View style={styles.leftContainer}>
-          {type === 'send' ? (
-            <View style={styles.IconContainer}>
-              <AssetAvatar logo={sendActionData?.token?.logo_url} size={36} />
-            </View>
-          ) : (
-            <View style={styles.IconContainer}>
-              <View style={styles.leftIcon}>
-                {<AssetAvatar logo={payToken?.logo_url} size={23} />}
+          {
+            type === 'send' ? (
+              <View style={styles.IconContainer}>
+                <AssetAvatar
+                  logo={sendActionData?.token?.logo_url}
+                  chain={chainItem?.serverId}
+                  chainSize={14}
+                  size={25}
+                  innerChainStyle={styles.innerChainStyle}
+                />
               </View>
-              <View style={styles.rightIcon}>
-                {<AssetAvatar logo={receiveToken?.logo_url} size={25} />}
-              </View>
-              <ArrowSwapSVG
-                style={styles.arrow}
-                color={colors2024['neutral-secondary']}
-              />
-            </View>
-          )}
+            ) : null
+            // <View style={styles.IconContainer}>
+            //   <View style={styles.leftIcon}>
+            //     {
+            //       <AssetAvatar
+            //         logo={payToken?.logo_url}
+            //         size={25}
+            //         chain={payToken?.chain}
+            //         chainSize={14}
+            //         innerChainStyle={styles.innerChainStyle}
+            //       />
+            //     }
+            //   </View>
+            //   <View style={styles.rightIcon}>
+            //     {
+            //       <AssetAvatar
+            //         logo={receiveToken?.logo_url}
+            //         size={25}
+            //         chain={receiveToken?.chain}
+            //         chainSize={14}
+            //         innerChainStyle={styles.innerChainStyle}
+            //       />
+            //     }
+            //   </View>
+            //   <ArrowSwapSVG
+            //     style={styles.arrow}
+            //     color={colors2024['neutral-secondary']}
+            //   />
+            // </View>
+          }
           <View style={styles.mainContainer}>
             <View style={styles.titleContainer}>
-              <Text style={styles.titleText}>{titleTextStr}</Text>
+              {type === 'send' ? (
+                <Text style={styles.titleText}>{titleTextStr}</Text>
+              ) : (
+                <>
+                  <AssetAvatar
+                    logo={payToken?.logo_url}
+                    chain={payToken?.chain}
+                    chainSize={14}
+                    size={25}
+                    innerChainStyle={styles.innerChainStyle}
+                  />
+                  <Text
+                    style={{
+                      ...styles.titleText,
+                      marginRight: 10,
+                      marginLeft: 4,
+                    }}>
+                    {` ${getTokenSymbol(payToken)} →`}
+                  </Text>
+                  <AssetAvatar
+                    logo={receiveToken?.logo_url}
+                    chain={receiveToken?.chain}
+                    chainSize={14}
+                    size={25}
+                    innerChainStyle={styles.innerChainStyle}
+                  />
+                  <Text style={styles.titleText}>
+                    {getTokenSymbol(receiveToken)}
+                  </Text>
+                </>
+              )}
             </View>
-            {SubTitleContainer}
+            {/* {SubTitleContainer} */}
           </View>
         </View>
 
@@ -204,8 +258,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   IconContainer: {
     position: 'relative',
-    width: 36,
-    height: 36,
+    width: 26,
+    height: 26,
+  },
+  innerChainStyle: {
+    width: 14,
+    height: 14,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-bg-1'],
   },
   leftIcon: {
     position: 'absolute',
