@@ -1,5 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useCallback, useMemo } from 'react';
+import BigNumber from 'bignumber.js';
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
 import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import { Text, View, TouchableOpacity } from 'react-native';
@@ -31,6 +32,8 @@ import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
 
 import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 import { HistoryItemCateType } from './type';
+
+const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1);
 
 const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
@@ -186,10 +189,13 @@ export const HistoryTokenList = ({
       const singlePrice = (
         isApprove ? approve?.price : receives?.[0]?.price || sends?.[0]?.price
       ) as number;
+      const isUnlimited =
+        singleAmount &&
+        new BigNumber(singleAmount).gte(new BigNumber(10).pow(18).times(1e9));
       const appvoveAmmountStr = singleAmount
-        ? singleAmount < 1e9
-          ? formatTokenAmount(singleAmount || 0)
-          : t('page.transactions.detail.Unlimited')
+        ? isUnlimited
+          ? t('page.transactions.detail.Unlimited')
+          : formatTokenAmount(singleAmount || 0)
         : '0';
       const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
       const isSend = type === HistoryItemCateType.Send;
@@ -208,6 +214,7 @@ export const HistoryTokenList = ({
               <View
                 style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
                 <Text
+                  numberOfLines={1}
                   style={[
                     styles.tokenAmountText,
                     isSend && styles.isSendTextColor,
@@ -223,7 +230,7 @@ export const HistoryTokenList = ({
                       )}
                 </Text>
                 {}
-                {Boolean(!tokenIsNft && singleAmount && singleAmount < 1e9) && (
+                {Boolean(!tokenIsNft && singleAmount && !isUnlimited) && (
                   <HistoryItemTokenPrice
                     tokenId={tokenId}
                     chainId={chain}
@@ -471,6 +478,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
   },
   singleColomnBox: {
+    // flex: 1,
     flexDirection: 'column',
     // alignItems: 'center',
   },
