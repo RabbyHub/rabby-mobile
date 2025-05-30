@@ -20,6 +20,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useGetCexList } from '../hook';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -106,6 +107,8 @@ export const HistoryList = forwardRef(
       flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     }, []);
 
+    const { getCexInfoByAddress } = useGetCexList();
+
     useImperativeHandle(ref, () => ({
       scrollToTop,
     }));
@@ -144,6 +147,7 @@ export const HistoryList = forwardRef(
               projectDict={item.data.projectDict}
               cateDict={item.data.cateDict}
               tokenDict={item.data.tokenDict || {}}
+              getCexInfoByAddress={getCexInfoByAddress}
               onPress={onPresssItem}
             />
           </>
@@ -171,6 +175,7 @@ export const HistoryList = forwardRef(
               </Text>
             ) : null}
             <TransactionItem
+              getCexInfoByAddress={getCexInfoByAddress}
               isForMultipleAdderss={isForMultipleAdderss}
               historySuccessList={historySuccessList}
               data={item.data}

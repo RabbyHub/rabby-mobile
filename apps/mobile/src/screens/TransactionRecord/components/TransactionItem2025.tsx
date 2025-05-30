@@ -3,6 +3,7 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
   GasLevel,
+  ProjectItem,
   SendAction,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -33,6 +34,7 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { ellipsisAddress } from '@/utils/address';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import { naviPush } from '@/utils/navigation';
+import FastImage from 'react-native-fast-image';
 
 export const TransactionItem = ({
   historySuccessList,
@@ -43,9 +45,11 @@ export const TransactionItem = ({
   isInSendHistory,
   onPressBottomBtn,
   closeHistoryPopup,
+  getCexInfoByAddress,
 }: {
   historySuccessList?: string[];
   isForMultipleAdderss?: boolean;
+  getCexInfoByAddress?: (address: string) => ProjectItem;
   data: TransactionGroup;
   canCancel?: boolean;
   onRefresh?: () => void;
@@ -298,7 +302,7 @@ export const TransactionItem = ({
     const ToText = t('page.swap.to') + ' ';
 
     const chain = findChain({ id: data.maxGasTx.chainId });
-    let address = '';
+    let address: string | React.ReactNode = '';
 
     switch (formatType) {
       case HistoryItemCateType.GAS_DEPOSIT:
@@ -309,11 +313,33 @@ export const TransactionItem = ({
         const sendRequireData = data.maxGasTx?.action
           ?.requiredData as SendRequireData;
         const addr = acData?.to || sendRequireData?.protocol?.name;
+        const cexInfo = getCexInfoByAddress?.(addr || '');
 
         if (!addr) {
           address = t('page.transactions.detail.Unknown');
         } else {
-          address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
+          if (cexInfo) {
+            address = (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.describeText}>{ToText}</Text>
+                <FastImage
+                  source={{ uri: cexInfo.logo_url }}
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: 4,
+                    marginHorizontal: 4,
+                  }}
+                />
+                <Text style={styles.describeText}>
+                  {getAliasName(addr) || ellipsisAddress(addr)}
+                </Text>
+              </View>
+            );
+            break;
+          } else {
+            address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
+          }
         }
         break;
       case HistoryItemCateType.Swap:
@@ -338,10 +364,14 @@ export const TransactionItem = ({
           chainEnum={chain?.enum}
           isShowRPCStatus={true}
         />
-        <Text style={styles.describeText}>{address}</Text>
+        {typeof address === 'string' ? (
+          <Text style={styles.describeText}>{address}</Text>
+        ) : (
+          address
+        )}
       </View>
     );
-  }, [formatType, data, t, styles.describeText]);
+  }, [formatType, data, t, styles.describeText, getCexInfoByAddress]);
 
   // const navigation = useRabbyAppNavigation();
   const hanldeNavigateDetail = useCallback(() => {
