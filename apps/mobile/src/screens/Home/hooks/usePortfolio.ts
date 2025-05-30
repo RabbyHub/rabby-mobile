@@ -62,6 +62,9 @@ export const tagProfiles = (
         if (unFoldDefisSet.has(i.id)) {
           return false;
         }
+        if (isExcludeBalance) {
+          return true;
+        }
         if (hasExpandSwitch && (i.netWorth || 0) < threshold) {
           return true;
         }
@@ -69,7 +72,7 @@ export const tagProfiles = (
       })();
 
       i._isExcludeBalance = isExcludeBalance;
-      i._isFold = isFold || isExcludeBalance;
+      i._isFold = isFold;
       i._isManualFold = isManualFold;
 
       return i;
