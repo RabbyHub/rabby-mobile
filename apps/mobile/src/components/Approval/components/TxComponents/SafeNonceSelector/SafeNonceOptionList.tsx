@@ -3,7 +3,7 @@ import { apisSafe } from '@/core/apis/safe';
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
+import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { useRequest } from 'ahooks';
 import { maxBy, sortBy, uniqBy } from 'lodash';
 import React, { useMemo } from 'react';

@@ -1,65 +1,24 @@
-import { atomByMMKV } from '@/core/storage/mmkv';
-
 import type { Account, IPinAddress } from '@/core/services/preference';
 import { useAccounts, useCurrentAccount, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
 import { useAtom } from 'jotai';
-import { sortAccountList } from '@/screens/Address/useSortAddressList';
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { apisAccountSwitch } from '@/core/apis';
 import cloneDeep from 'lodash/cloneDeep';
 import { RootNames } from '@/constant/layout';
 import { Platform } from 'react-native';
-
-type SceneAccountInfo = {
-  currentAccount: KeyringAccount | null;
-  /**
-   * @description account used to sign for current scene
-   */
-  signingAccount: KeyringAccount | null;
-  /**
-   * @description use all accounts in this scene, not only one "current" account
-   *
-   * in some scenes it means fetch all data from all accounts, such as transaction history
-   */
-  useAllAccounts?: boolean;
-};
-
-function makeSceneAccount(): SceneAccountInfo {
-  return {
-    currentAccount: null,
-    signingAccount: null,
-    useAllAccounts: false,
-  };
-}
-const AccountSwitcherInfos = {
-  MakeTransactionAbout: makeSceneAccount(),
-  // Send: makeSceneAccount(),
-  SendNFT: makeSceneAccount(),
-  // Swap: makeSceneAccount(),
-  // Bridge: makeSceneAccount(),
-
-  History: makeSceneAccount(),
-  MultiHistory: makeSceneAccount(),
-  // HistoryFilterScam: makeSceneAccount(), // treat HistoryFilterScam screen as History screen
-
-  Receive: makeSceneAccount(),
-  GasAccount: makeSceneAccount(),
-
-  Approvals: makeSceneAccount(),
-
-  '@ActiveDappWebViewModal': makeSceneAccount(),
-};
+import { sortAccountList } from '@/utils/sortAccountList';
+import {
+  AccountSwitcherInfos,
+  AccountSwitcherScene,
+  makeSceneAccount,
+  SceneAccountInfo,
+  sceneAccountInfoAtom,
+} from './sceneAccountInfoAtom';
 
 export type PropsForAccountSwitchScreen<T extends void | object = void> = {
   isForMultipleAdderss?: boolean;
 } & (T extends void ? {} : T);
-
-export type AccountSwitcherScene = keyof typeof AccountSwitcherInfos;
-
-type SceneAccounts = {
-  [K in AccountSwitcherScene]?: SceneAccountInfo;
-};
 
 export function normalizeSceneKeyringAccount(
   input: Account | KeyringAccount,
@@ -87,12 +46,6 @@ export function sceneKeyringAccountToAccount(
 
 export const AccountSwitcherContext = React.createContext<SceneAccountInfo>(
   makeSceneAccount(),
-);
-
-// TODO: maybe we should trim all siginingAccount on bootstrap?
-export const sceneAccountInfoAtom = atomByMMKV<SceneAccounts>(
-  '@SceneAccounts',
-  AccountSwitcherInfos,
 );
 
 export function useResetSceneAccountInfo() {

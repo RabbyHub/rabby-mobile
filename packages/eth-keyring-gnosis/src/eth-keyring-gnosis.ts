@@ -2,14 +2,14 @@
 /* eslint-disable jsdoc/require-returns */
 import Safe from '@rabby-wallet/gnosis-sdk';
 import type { KeyringIntf } from '@rabby-wallet/keyring-utils';
+import { SigningMethod } from '@safe-global/protocol-kit/dist/src/types/signing';
+import { hashSafeMessage } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
+import EthSafeMessage from '@safe-global/protocol-kit/dist/src/utils/messages/SafeMessage';
 import {
+  adjustVInSignature,
   buildSignatureBytes,
-  EthSafeMessage,
   EthSafeSignature,
-  hashSafeMessage,
-  SigningMethod,
-} from '@safe-global/protocol-kit';
-import { adjustVInSignature } from '@safe-global/protocol-kit/dist/src/utils';
+} from '@safe-global/protocol-kit/dist/src/utils/signatures';
 import type {
   SafeTransaction,
   SafeTransactionDataPartial,

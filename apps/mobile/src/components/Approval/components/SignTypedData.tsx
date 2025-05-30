@@ -51,7 +51,7 @@ import { useGetCurrentSafeInfo } from '@/hooks/gnosis/useGetCurrentSafeInfo';
 import { useGetMessageHash } from '@/hooks/gnosis/useGetCurrentMessageHash';
 import { useCheckCurrentSafeMessage } from '@/hooks/gnosis/useCheckCurrentSafeMessage';
 import { apisSafe } from '@/core/apis/safe';
-import { generateTypedData } from '@safe-global/protocol-kit';
+import { generateTypedData } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
 import { apisKeyring } from '@/core/apis/keyring';
 import { GnosisDrawer } from './TxComponents/GnosisDrawer';
 import { GnosisAdminFooterBarPopup } from './TxComponents/GnosisAdminFooterBarPopup';

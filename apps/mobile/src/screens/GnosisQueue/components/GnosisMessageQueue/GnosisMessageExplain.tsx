@@ -6,7 +6,7 @@ import { openapi } from '@/core/request';
 import { useThemeColors } from '@/hooks/theme';
 import { RcIconUnknown } from '@/screens/Approvals/icons';
 import { createGetStyles } from '@/utils/styles';
-import { SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { parseAction } from '@rabby-wallet/rabby-action';
 import { Skeleton } from '@rneui/themed';
 import { useRequest } from 'ahooks';

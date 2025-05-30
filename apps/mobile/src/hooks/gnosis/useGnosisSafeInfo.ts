@@ -1,5 +1,5 @@
 import { apisSafe } from '@/core/apis/safe';
-import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
+import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { useRequest } from 'ahooks';
 import type { Options } from 'ahooks/lib/useRequest/src/types';
 

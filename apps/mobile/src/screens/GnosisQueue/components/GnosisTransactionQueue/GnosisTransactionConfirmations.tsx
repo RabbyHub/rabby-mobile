@@ -1,4 +1,4 @@
-import { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
+import type { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 

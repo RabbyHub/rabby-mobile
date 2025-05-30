@@ -7,7 +7,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { findChainByID } from '@/utils/chain';
 import { createGetStyles } from '@/utils/styles';
 import { intToHex } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
-import { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
+import type { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
 import { useRequest } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { getActionTypeTextByType } from '../../Actions/utils';

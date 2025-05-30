@@ -7,7 +7,7 @@ import { findChain, findChainByEnum } from '@/utils/chain';
 import { createGetStyles } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
-import { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
+import type { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
 import dayjs from 'dayjs';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
