@@ -485,7 +485,16 @@ const Swap = ({
     [currentAccount?.type, inSufficient, isSupportedChain],
   );
 
-  const { loading: isSubmitting, runAsync: handleSwap } = useRequest(
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setIsSubmitting(false);
+  }, [payAmount, payToken?.id, receiveToken?.id, chain]);
+
+  const {
+    //  loading: isSubmitting,
+    runAsync: handleSwap,
+  } = useRequest(
     async () => {
       if (receiveToken) {
         setRecentSwapToToken(receiveToken);
@@ -494,7 +503,11 @@ const Swap = ({
         clearExpiredTimer();
 
         try {
+          setIsSubmitting(true);
+
           let currentTxs = txs;
+          currentTxs = await runBuildSwapTxs();
+
           if (!currentTxs?.length) {
             currentTxs = await runBuildSwapTxs();
 
@@ -559,6 +572,8 @@ const Swap = ({
             mutateTxs([]);
             refresh(e => e + 1);
           }
+        } finally {
+          setIsSubmitting(false);
         }
       } else {
         gotoSwap();
