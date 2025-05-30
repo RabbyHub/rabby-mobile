@@ -543,7 +543,7 @@ export const TokenDetailScreen = () => {
             top: 0,
             left: 0,
             width: '100%',
-            height: 250,
+            height: 150,
           }}
         />
         <View style={styles.riskContainer}>
