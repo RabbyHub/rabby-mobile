@@ -755,7 +755,11 @@ export const MiniSignTx = ({
       const lastTimeGas: ChainGas | null =
         await preferenceService.getLastTimeGasSelection(chainId);
       let customGasPrice = 0;
-      if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
+      if (
+        lastTimeGas?.lastTimeSelect === 'gasPrice' &&
+        lastTimeGas.gasPrice &&
+        !directSubmit
+      ) {
         // use cached gasPrice if exist
         customGasPrice = lastTimeGas.gasPrice;
       }
