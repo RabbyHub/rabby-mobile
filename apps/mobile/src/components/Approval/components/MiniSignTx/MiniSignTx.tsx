@@ -413,7 +413,7 @@ export const MiniSignTx = ({
       balance = new BigNumber(balance)
         .minus(new BigNumber(item.tx.value || 0))
         .minus(new BigNumber(item.gasCost.maxGasCostAmount || 0))
-        .toString();
+        .toFixed();
       return result;
     });
     return _.flatten(res);
@@ -900,7 +900,7 @@ export const MiniSignTx = ({
               balance = new BigNumber(balance)
                 .minus(new BigNumber(item.tx.value || 0))
                 .minus(new BigNumber(item.gasCost.maxGasCostAmount || 0))
-                .toString();
+                .toFixed();
               return result;
             });
             return [
