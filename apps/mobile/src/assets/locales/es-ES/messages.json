@@ -1777,7 +1777,11 @@
       "OriginalToken": "Token Original",
       "fdvContent": "La capitalización de mercado si el suministro máximo estuviera en circulación. Valuación Totalmente Diluida (FDV) = Precio × Suministro Máximo. Si el Suministro Máximo es nulo, FDV = Precio × Suministro Total. Si ni el Suministro Máximo ni el Suministro Total están definidos o son infinitos, la FDV no se muestra.",
       "Price": "Precio",
-      "HoldingValue": "Valor de Holding"
+      "HoldingValue": "Valor de Holding",
+      "ContentGeneratedByAI": "Este contenido fue generado por IA",
+      "Introduction": "Introducción",
+      "ShowMore": "Mostrar más",
+      "Fold": "Plegar"
     },
     "setting": {
       "feedback": "Comentarios",

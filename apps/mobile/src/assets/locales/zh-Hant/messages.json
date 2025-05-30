@@ -712,7 +712,7 @@
       "InsufficientBalanceTips": "餘額不足",
       "Token": "Token",
       "Loading_Tokens": "正在加載代幣...",
-      "Balance": "Balance\n"
+      "Balance": "Balance"
     },
     "approvals": {
       "search": {
@@ -1634,7 +1634,7 @@
         "withdrawalLimit": "提現限額",
         "title": "提領",
         "desc": "您可以將您的 GasAccount 餘額提取到您的 DeBank L2 Wallet。登錄到您的 DeBank L2 Wallet 以根據需要將資金轉移到受支持的區塊鏈上。",
-        "amount": "Amount\n",
+        "amount": "Amount",
         "to": "至",
         "selectChain": "選擇鏈",
         "recipientAddress": "Recipient address 接收者地址",
@@ -1730,7 +1730,11 @@
       "NoSupportedExchanges": "沒有可用的支援交易所",
       "fdvContent": "市值如果最大供應量在流通中。完全稀釋估值（FDV） = 價格 × 最大供應量。如果最大供應量為空，FDV = 價格 × 總供應量。如果最大供應量和總供應量均未定義或無限，則不顯示FDV。",
       "Price": "價格",
-      "HoldingValue": "持有價值"
+      "HoldingValue": "持有價值",
+      "Introduction": "簡介",
+      "Fold": "摺疊",
+      "ContentGeneratedByAI": "此內容由 AI 產生",
+      "ShowMore": "顯示更多"
     },
     "customTestnet": {
       "add": "添加自定義網絡",
