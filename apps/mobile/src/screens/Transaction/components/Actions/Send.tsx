@@ -122,7 +122,7 @@ export const Send: React.FC<Props> = ({
 
   return (
     <>
-      <ScrollView>
+      <ScrollView style={{ paddingHorizontal: 16 }}>
         <TouchableOpacity onPress={handleGotoTokenDetail}>
           <View style={[styles.singleBox]}>
             <View
@@ -247,7 +247,6 @@ export const Send: React.FC<Props> = ({
           </View>
         </View>
       </ScrollView>
-      <View style={{ height: styles.buttonContainer.height }} />
       {
         <LinearGradient
           colors={
@@ -431,14 +430,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
 
   buttonContainer: {
     // backgroundColor: colors2024['neutral-bg-1'],
-    position: 'absolute',
     flexDirection: 'row',
     height: 120,
+    marginTop: 12,
     bottom: 0,
     width: '100%',
+    paddingBottom: 16,
+    // paddingTop: 16,
+    alignItems: 'center',
     // gap: 16,
-    paddingTop: 16,
-    left: 16,
+    // left: 16,
+    paddingHorizontal: 16,
   },
   itemAliaName: {
     flexDirection: 'row',

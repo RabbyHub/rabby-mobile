@@ -115,7 +115,8 @@ function HistoryLocalDetailScreen(): JSX.Element {
         // position: 'relative',
         paddingBottom: bottom,
         paddingTop: 24,
-        paddingHorizontal: 16,
+        paddingHorizontal:
+          needUseSwap || data.maxGasTx.action?.actionData?.send ? 0 : 16,
       }}>
       {data.maxGasTx.action?.actionData?.approveToken ? (
         <ApproveToken data={data} isSingleAddress={!isForMultipleAdderss} />
