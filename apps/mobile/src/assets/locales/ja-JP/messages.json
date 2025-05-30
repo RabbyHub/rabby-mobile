@@ -1634,7 +1634,11 @@
       "NoSupportedExchanges": "サポートされている取引所はありません。",
       "fdvContent": "発行済みの最大供給量に基づく時価総額。完全希釈後の評価（FDV）＝価格 × 最大供給量。最大供給量が不明の場合、FDV ＝ 価格 × 総供給量。最大供給量と総供給量の両方が未定義または無限の場合、FDV は表示されません。",
       "HoldingValue": "保有価値",
-      "Price": "価格"
+      "Price": "価格",
+      "ContentGeneratedByAI": "このコンテンツはAIによって生成されました",
+      "Introduction": "はじめに",
+      "Fold": "フォールド",
+      "ShowMore": "もっと表示する"
     },
     "customTestnet": {
       "add": "カスタムネットワークを追加",

@@ -1068,7 +1068,7 @@
       "foundForbiddenRisk": "금지된 위험이 발견되었습니다. 연결이 차단되었습니다.",
       "trusted": "신뢰할 수 있는",
       "manageWhiteBlackList": "화이트리스트/블랙리스트 관리",
-      "flagByScamSniffer": "Flagged by ScamSniffer\n",
+      "flagByScamSniffer": "Flagged by ScamSniffer",
       "onYourWhitelist": "허용 목록에 추가됨",
       "flagByMM": "MetaMask에 의해 플래그 처리됨",
       "popularLevelLow": "낮음"
@@ -1154,7 +1154,7 @@
     },
     "rabbyPoints": {
       "claimItem": {
-        "claim": "Claim  \n"
+        "claim": "Claim  "
       },
       "initialPointsClaimEnded": "초기 포인트 청구 종료",
       "firstRoundEnded": "🎉 첫 번째 라운드 Rabby Points가 종료되었습니다.",
@@ -1710,7 +1710,11 @@
       "OriginalToken": "오리지널 토큰",
       "fdvContent": "최대 공급량이 유통 중일 경우의 시가 총액입니다. 완전히 희석된 평가(FDV) = 가격 × 최대 공급량. 최대 공급량이 null인 경우, FDV = 가격 × 총 공급량. 최대 공급량 또는 총 공급량이 정의되지 않거나 무한한 경우, FDV는 표시되지 않습니다.",
       "Price": "가격",
-      "HoldingValue": "보유 가치"
+      "HoldingValue": "보유 가치",
+      "Fold": "접히다",
+      "ContentGeneratedByAI": "이 내용은 AI가 생성했습니다.",
+      "ShowMore": "더보기",
+      "Introduction": "소개"
     },
     "setting": {
       "screenTitle": "설정",

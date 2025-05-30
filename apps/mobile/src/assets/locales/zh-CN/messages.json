@@ -1748,7 +1748,11 @@
       "BridgeIssue": "由第三方桥接的代币",
       "fdvContent": "如果最大供应量在流通中，则市值为。完全稀释估值 (FDV) = 价格 × 最大供应量。如果最大供应量为零，FDV = 价格 × 总供应量。如果最大供应量和总供应量均未定义或无穷大，则不显示 FDV。",
       "HoldingValue": "持有价值",
-      "Price": "价格"
+      "Price": "价格",
+      "ContentGeneratedByAI": "此内容由 AI 生成",
+      "ShowMore": "显示更多",
+      "Introduction": "介绍",
+      "Fold": "折叠"
     },
     "customRpc": {
       "add": "修改 RPC URL",

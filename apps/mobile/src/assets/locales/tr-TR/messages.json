@@ -1604,7 +1604,7 @@
       },
       "withdrawPopup": {
         "destinationChain": "Hedef zincir",
-        "to": "To\n\n",
+        "to": "To\n",
         "selectDestinationChain": "Hedef zinciri seçin",
         "selectChain": "Zincir Seçin",
         "noEnoughGas": "Gas ücreti ödemek için miktar çok düşük.",
@@ -1717,7 +1717,11 @@
       "fdvTitle": "FDV nedir?",
       "excludeBalanceTipsButton": "Tamam.",
       "fdvContent": "Piyasa değeri, maksimum arz sirkülasyonda olduğunda. Tam Seyreltme Değeri (FDV) = Fiyat × Maksimum Arz. Eğer Maksimum Arz yoksa, FDV = Fiyat × Toplam Arz. Eğer ne Maksimum Arz ne de Toplam Arz tanımlı veya sonsuzsa, FDV gösterilmez.",
-      "excludeBalanceTips": "Bu varlık, doğruluk için toplam bakiyenizden hariç tutulmuştur. Detayları görmek ve tercih ederseniz dahil etmek için üzerine dokunabilirsiniz."
+      "excludeBalanceTips": "Bu varlık, doğruluk için toplam bakiyenizden hariç tutulmuştur. Detayları görmek ve tercih ederseniz dahil etmek için üzerine dokunabilirsiniz.",
+      "ShowMore": "Daha fazla göster",
+      "ContentGeneratedByAI": "Bu içerik yapay zekâ tarafından oluşturuldu",
+      "Fold": "Katlan",
+      "Introduction": "Giriş"
     },
     "approvalsAddressList": {
       "title": "Onaylar"

@@ -1399,7 +1399,10 @@ export const MiniApproval = ({
                 onSubmit={() => {
                   setIsSubmitting(true);
                 }}
-                onReject={handleReject}
+                onReject={e => {
+                  handleReject(e);
+                  dismissedByCodeRef.current = true;
+                }}
                 onResolve={res => {
                   setIsSubmitting(false);
                   onResolve?.(res);

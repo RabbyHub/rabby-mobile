@@ -1642,7 +1642,11 @@
       "fdvContent": "La capitalisation boursière si le maximum de l'approvisionnement était en circulation. Évaluation entièrement diluée (FDV) = Prix × Approvisionnement maximum. Si l'approvisionnement maximum est nul, FDV = Prix × Approvisionnement total. Si ni l'approvisionnement maximum ni l'approvisionnement total ne sont définis ou infinis, la FDV n'est pas affichée.",
       "BridgeProvider": "Fournisseur de Bridge",
       "Price": "Prix",
-      "HoldingValue": "Valeur détenue"
+      "HoldingValue": "Valeur détenue",
+      "Introduction": "Introduction",
+      "ShowMore": "Afficher plus",
+      "Fold": "Pliez",
+      "ContentGeneratedByAI": "Ce contenu a été généré par l'IA"
     },
     "rabbyPoints": {
       "earn-points": "Gagnez des Points",

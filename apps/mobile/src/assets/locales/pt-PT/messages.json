@@ -1787,7 +1787,11 @@
       "fdvContent": "A capitalização de mercado se o fornecimento máximo estivesse em circulação. Avaliação Totalmente Diluída (FDV) = Preço × Fornecimento Máximo. Se o Fornecimento Máximo for nulo, FDV = Preço × Fornecimento Total. Se nem o Fornecimento Máximo nem o Fornecimento Total estiverem definidos ou forem infinitos, a FDV não é exibida.",
       "BridgeProvider": "Provedor de Bridge",
       "Price": "Preço",
-      "HoldingValue": "Valor Retido"
+      "HoldingValue": "Valor Retido",
+      "Introduction": "Introdução",
+      "ContentGeneratedByAI": "Este conteúdo foi gerado por IA",
+      "Fold": "Dobre",
+      "ShowMore": "Mostrar mais"
     },
     "customTestnet": {
       "add": "Adicionar Rede Personalizada",
