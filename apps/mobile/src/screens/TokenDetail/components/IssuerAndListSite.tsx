@@ -161,12 +161,13 @@ const ExpandableDescription = ({
         <View style={{ ...styles.itemCard, ...styles.descriptionContainer }}>
           <Text style={styles.introductionText}>
             {description}
-            <TouchableWithoutFeedback onPress={toggleExpanded}>
-              <Text style={styles.moreButtonText}>
-                {' '}
-                {t('page.tokenDetail.Fold')}
-              </Text>
-            </TouchableWithoutFeedback>
+            <Text
+              style={styles.moreButtonText}
+              onPress={toggleExpanded}
+              suppressHighlighting={true}>
+              {' '}
+              {t('page.tokenDetail.Fold')}
+            </Text>
           </Text>
           <View
             style={{
@@ -221,9 +222,12 @@ const ExpandableDescription = ({
         <Text style={styles.introductionText}>
           {isExpanded ? description : textToShow}
           {shouldTruncate && !isExpanded && (
-            <TouchableWithoutFeedback onPress={toggleExpanded}>
-              <Text style={styles.moreButtonText}> {'Show more'}</Text>
-            </TouchableWithoutFeedback>
+            <Text
+              style={styles.moreButtonText}
+              onPress={toggleExpanded}
+              suppressHighlighting={true}>
+              {' Show more'}
+            </Text>
           )}
         </Text>
       </View>
