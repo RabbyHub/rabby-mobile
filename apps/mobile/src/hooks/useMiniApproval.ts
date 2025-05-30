@@ -38,7 +38,7 @@ export const useMiniApproval = () => {
       id?: string;
     }) => {
       // const currentApprovalId = uniqueId('mini-approval');
-      await sleep(200);
+      // await sleep(200);
       return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(
         (resolve, reject) => {
           setState(prev => {
@@ -71,8 +71,12 @@ export const useMiniApproval = () => {
   );
 
   const sendMiniTransactions = useMemoizedFn(
-    ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
+    async ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
       clear();
+      /**
+       * wait popup close
+       */
+      await sleep(600);
       return _sendMiniTransactions({
         txs,
         ga,
