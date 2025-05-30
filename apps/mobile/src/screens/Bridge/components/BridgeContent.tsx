@@ -664,11 +664,11 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     !quoteList?.length;
 
   useEffect(() => {
-    if (!btnDisabled && selectedBridgeQuote && canUseMiniTx) {
+    if (selectedBridgeQuote && canUseMiniTx) {
       mutateTxs([]);
       runBuildSwapTxsRef.current = runBuildTxs();
     }
-  }, [runBuildTxs, canUseMiniTx, btnDisabled, selectedBridgeQuote, mutateTxs]);
+  }, [runBuildTxs, canUseMiniTx, selectedBridgeQuote, mutateTxs]);
 
   const btnText = useMemo(() => {
     if (showExternalDappTips) {
