@@ -10,7 +10,7 @@ import { SelectChain } from '../SelectChain';
 import { CancelTxPopup } from '../CancelTxPopup';
 import { SelectSortedChain } from '../SelectSortedChain';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import type { ThemeColors } from '@/constant/theme';
+import type { ThemeColors, ThemeColors2024 } from '@/constant/theme';
 import { ConnectLedger } from '../ConnectLedger/ConnectLedger';
 import { SettingLedger } from '../HDSetting/SettingLedger';
 import { TipUpgradeModalInner } from '../Upgrade/TipUpgrade';
@@ -101,18 +101,23 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
 export function makeClassicalBottomSheetProps(ctx: {
   params: CreateParams;
   colors: (typeof ThemeColors)['light'];
+  colors2024: (typeof ThemeColors2024)['light'];
   prevProps?: any;
 }): Pick<
   Partial<React.ComponentProps<typeof AppBottomSheetModal>>,
-  'handleStyle' | 'handleIndicatorStyle' | 'backgroundStyle'
+  'handleStyle' | 'handleIndicatorStyle' | 'backgroundStyle' | 'style'
 > {
   if (ctx.params.approvalComponent === 'Connect') {
     return {
+      style: {
+        overflow: 'hidden',
+        borderRadius: 32,
+      },
       handleStyle: {
-        backgroundColor: ctx.colors['neutral-bg-1'],
+        backgroundColor: ctx.colors2024['neutral-bg-0'],
       },
       handleIndicatorStyle: {
-        backgroundColor: ctx.colors['neutral-line'],
+        backgroundColor: ctx.colors2024['neutral-line'],
       },
     };
   }

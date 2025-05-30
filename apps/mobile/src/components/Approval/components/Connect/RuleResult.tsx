@@ -1,72 +1,69 @@
-import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import IconEdit from '@/assets/icons/approval/editpen.svg';
+import { Tip } from '@/components/Tip';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import SecurityLevelTag from '../SecurityEngine/SecurityLevelTagNoText';
-import IconEdit from '@/assets/icons/approval/editpen.svg';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
-import { Tip } from '@/components/Tip';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import SecurityLevelTag from '../SecurityEngine/SecurityLevelTagNoText';
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    ruleResultWrapper: {
-      display: 'flex',
-      alignItems: 'center',
-      minHeight: 56,
-      padding: 15,
-      paddingRight: 24,
-      backgroundColor: colors['neutral-card-2'],
-      border: 'none',
-      borderRadius: 8,
-      marginBottom: 8,
-      position: 'relative',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    ruleDesc: {
-      fontWeight: '400',
-      fontSize: 13,
-      lineHeight: 15,
-      color: colors['neutral-body'],
-      width: '49%',
-      alignContent: 'center',
-    },
-    ruleValue: {
-      display: 'flex',
-      justifyContent: 'flex-end',
-      flexDirection: 'row',
-      flex: 1,
-      fontWeight: '500',
-      fontSize: 15,
-      lineHeight: 18,
-      color: colors['neutral-title-1'],
-    },
-    collectList: {
-      display: 'flex',
-      flexWrap: 'wrap',
-      flexDirection: 'row',
-      gap: 8,
-      marginRight: -8,
-    },
-    collectListItemImage: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-    },
-    icon: {
-      marginLeft: 6,
-    },
-    markButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    tag: {
-      marginTop: 2,
-    },
-  });
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
+  ruleResultWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    minHeight: 56,
+    padding: 16,
+    paddingRight: 24,
+    border: 'none',
+    position: 'relative',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  ruleDesc: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    width: '49%',
+    alignContent: 'center',
+  },
+  ruleValue: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    flexDirection: 'row',
+    flex: 1,
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['neutral-body'],
+  },
+  collectList: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  collectListItemImage: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
+  icon: {
+    marginLeft: 6,
+  },
+  markButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tag: {
+    marginTop: 2,
+  },
+}));
 
 const RuleResult = ({
   rule,
@@ -90,8 +87,9 @@ const RuleResult = ({
   onEditUserList(): void;
 }) => {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({
+    getStyle,
+  });
   const commonStyle = useCommonStyle();
   const handleClick = () => {
     if (!rule.result) return;

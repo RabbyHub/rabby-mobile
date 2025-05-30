@@ -1,5 +1,5 @@
 import React from 'react';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,7 +35,7 @@ export const GlobalBottomSheetModal = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
   const [modals, setModals] = React.useState<ModalData[]>([]);
 
-  const colors = useThemeColors();
+  const { colors, colors2024 } = useTheme2024();
 
   React.useEffect(() => {
     modalRefs.current = modals.reduce((acc, modal) => {
@@ -208,6 +208,7 @@ export const GlobalBottomSheetModal = () => {
             {...makeClassicalBottomSheetProps({
               params: modal.params,
               colors,
+              colors2024,
             })}
           />
         );

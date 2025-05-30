@@ -333,6 +333,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       <AutoLockView style={[style, styles.dappWebViewControl]}>
         {isActive ? (
           <BrowserHeader
+            dapp={dappInfo}
             url={webviewState.url}
             isFocused={isShowSearch}
             searchText={searchText}

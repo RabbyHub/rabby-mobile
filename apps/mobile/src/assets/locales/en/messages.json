@@ -1336,7 +1336,8 @@
       "SignTestnetPermission": {
         "title": "Signing permission"
       },
-      "ignoreAll": "Ignore all"
+      "ignoreAll": "Ignore all",
+      "connectWallet": "Connect Wallet"
     },
     "addressDetail": {
       "add-to-whitelist": "Add to Whitelist",
@@ -1903,6 +1904,11 @@
       },
       "BrowserHistoryList": {
         "title": "History"
+      }
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "Select Chain"
       }
     }
   },
