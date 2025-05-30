@@ -113,7 +113,8 @@ function HistoryLocalDetailScreen(): JSX.Element {
       type={!isLight ? 'bg1' : 'bg2'}
       style={{
         // position: 'relative',
-        paddingBottom: bottom,
+        paddingBottom:
+          needUseSwap || data.maxGasTx.action?.actionData?.send ? 0 : bottom,
         paddingTop: 24,
         paddingHorizontal:
           needUseSwap || data.maxGasTx.action?.actionData?.send ? 0 : 16,

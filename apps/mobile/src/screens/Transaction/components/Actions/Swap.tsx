@@ -12,6 +12,7 @@ import { formatAmount } from '@/utils/number';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
 import RcIconSwitchArrow from '@/assets2024/icons/history/IconSwitchArrow.svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
@@ -47,6 +48,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaInsets();
   const navigation = useRabbyAppNavigation();
   const { actionData, requireData, chain } = useMemo(() => {
     const maxGasTx = data.maxGasTx;
@@ -291,16 +293,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
         </View>
       </ScrollView>
       {
-        <LinearGradient
-          colors={
-            isLight
-              ? ['#FFF', 'rgba(249, 249, 249, 0.30)']
-              : ['rgba(28, 28, 29, 0.30)', colors2024['neutral-bg-1']]
-          }
-          locations={[0.6393, 1]}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 0, y: 0 }}
-          style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { paddingBottom: bottom + 27 }]}>
           <View style={{ flex: 1 }}>
             <Button
               onPress={async () => {
@@ -329,7 +322,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
               title={t('page.transactions.detail.SwapAgain')}
             />
           </View>
-        </LinearGradient>
+        </View>
       }
     </>
   );
@@ -465,17 +458,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   buttonContainer: {
-    // backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     flexDirection: 'row',
-    height: 120,
+    // height: 120,
     marginTop: 12,
     bottom: 0,
     width: '100%',
-    paddingBottom: 16,
-    // paddingTop: 16,
+    paddingTop: 20,
+    paddingBottom: 27,
     alignItems: 'center',
-    // gap: 16,
-    // left: 16,
     paddingHorizontal: 16,
   },
   itemAliaName: {
