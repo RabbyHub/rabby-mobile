@@ -595,11 +595,36 @@ const Swap = ({
   const canDirectSign = useCanProcessDirectSubmit();
 
   useEffect(() => {
-    if (!swapBtnDisabled && activeProvider && canUseMiniTx && isFocused) {
+    if (!isSubmitting && canUseMiniTx && !canShowDirectSubmit) {
+      prepareMiniTransactions({
+        txs: txs || [],
+        ga: {
+          category: 'Swap',
+          source: 'swap',
+          swapUseSlider,
+        },
+      });
+    }
+  }, [
+    canUseMiniTx,
+    txs,
+    prepareMiniTransactions,
+    swapUseSlider,
+    isSubmitting,
+    canShowDirectSubmit,
+  ]);
+
+  useEffect(() => {
+    if (
+      !swapBtnDisabled &&
+      activeProvider &&
+      canUseMiniTx &&
+      canShowDirectSubmit
+    ) {
       mutateTxs([]);
       runBuildSwapTxs().then(txs => {
         prepareMiniTransactions({
-          txs: activeProvider ? txs || [] : [],
+          txs: txs || [],
           ga: {
             category: 'Swap',
             source: 'swap',
@@ -610,15 +635,14 @@ const Swap = ({
       });
     }
   }, [
-    canUseMiniTx,
-    swapBtnDisabled,
     activeProvider,
-    runBuildSwapTxs,
+    canShowDirectSubmit,
+    canUseMiniTx,
     mutateTxs,
     prepareMiniTransactions,
+    runBuildSwapTxs,
+    swapBtnDisabled,
     swapUseSlider,
-    canShowDirectSubmit,
-    isFocused,
   ]);
 
   useEffect(() => {
