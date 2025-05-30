@@ -112,7 +112,7 @@ export const SendHistory = ({
             isInSendHistory={true}
             closeHistoryPopup={onClose}
             onPressBottomBtn={onPressBottomBtn}
-            historySuccessList={successTxList}
+            // historySuccessList={successTxList}
             // onRefresh={onRefresh}
           />
         </>

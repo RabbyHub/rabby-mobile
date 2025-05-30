@@ -41,7 +41,8 @@ export const SwapHeader = ({
           style={styles.icon}
           color={colors2024['neutral-body']}
         />
-        {Boolean(showRedDot) && <View style={styles.greenDot} />}
+        {/* not very accurate */}
+        {/* {Boolean(showRedDot) && <View style={styles.greenDot} />} */}
       </TouchableOpacity>
       <SwapTxHistory
         isForMultipleAdderss={isForMultipleAdderss}

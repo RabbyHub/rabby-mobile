@@ -57,7 +57,8 @@ export const SendHeaderRight = ({
       <View style={styles.container}>
         <TouchableOpacity onPress={openHistory} style={styles.iconContainer}>
           <RcIconSwapHistory color={colors2024['neutral-body']} />
-          {Boolean(isShowDot) && <View style={styles.greenDot} />}
+          {/* not very accurate */}
+          {/* {Boolean(isShowDot) && <View style={styles.greenDot} />} */}
         </TouchableOpacity>
       </View>
 

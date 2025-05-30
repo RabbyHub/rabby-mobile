@@ -95,7 +95,8 @@ export const BridgeHeader = forwardRef<
       <View style={styles.container}>
         <TouchableOpacity onPress={openHistory} style={styles.iconContainer}>
           <RcIconSwapHistory color={colors2024['neutral-body']} />
-          {Boolean(showRedDot) && <View style={styles.greenDot} />}
+          {/* not very accurate */}
+          {/* {Boolean(showRedDot) && <View style={styles.greenDot} />} */}
         </TouchableOpacity>
       </View>
 
