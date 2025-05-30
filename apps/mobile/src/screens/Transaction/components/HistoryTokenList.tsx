@@ -502,7 +502,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'relative',
   },
   iconSwitchArrow: {
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: !isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     borderRadius: 200,
     width: 45,
     height: 45,
