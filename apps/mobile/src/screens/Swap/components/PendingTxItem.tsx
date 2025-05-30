@@ -21,6 +21,7 @@ import { getAliasName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
 import BigNumber from 'bignumber.js';
 import { formatTokenAmount } from '@/utils/number';
+import { sendToken } from '@/core/apis/token';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
@@ -74,6 +75,9 @@ export const PendingTxItem = ({
   const sendActionData = data.maxGasTx.action?.actionData?.send;
   const payToken = swapActionData?.payToken;
   const receiveToken = swapActionData?.receiveToken;
+  const sendTokenList = data.maxGasTx.explain?.balance_change?.send_token_list;
+  const receiveTokenList =
+    data.maxGasTx.explain?.balance_change?.receive_token_list;
 
   const titleTextStr = useMemo(() => {
     if (type === 'send') {
@@ -147,47 +151,20 @@ export const PendingTxItem = ({
       </View>
       <TouchableOpacity style={styles.container} onPress={handlePress}>
         <View style={styles.leftContainer}>
-          {
-            type === 'send' ? (
-              <View style={styles.IconContainer}>
-                <AssetAvatar
-                  logo={sendActionData?.token?.logo_url}
-                  chain={chainItem?.serverId}
-                  chainSize={14}
-                  size={25}
-                  innerChainStyle={styles.innerChainStyle}
-                />
-              </View>
-            ) : null
-            // <View style={styles.IconContainer}>
-            //   <View style={styles.leftIcon}>
-            //     {
-            //       <AssetAvatar
-            //         logo={payToken?.logo_url}
-            //         size={25}
-            //         chain={payToken?.chain}
-            //         chainSize={14}
-            //         innerChainStyle={styles.innerChainStyle}
-            //       />
-            //     }
-            //   </View>
-            //   <View style={styles.rightIcon}>
-            //     {
-            //       <AssetAvatar
-            //         logo={receiveToken?.logo_url}
-            //         size={25}
-            //         chain={receiveToken?.chain}
-            //         chainSize={14}
-            //         innerChainStyle={styles.innerChainStyle}
-            //       />
-            //     }
-            //   </View>
-            //   <ArrowSwapSVG
-            //     style={styles.arrow}
-            //     color={colors2024['neutral-secondary']}
-            //   />
-            // </View>
-          }
+          {type === 'send' ? (
+            <View style={styles.IconContainer}>
+              <AssetAvatar
+                logo={
+                  sendActionData?.token?.logo_url ||
+                  sendTokenList?.[0]?.logo_url
+                }
+                chain={chainItem?.serverId}
+                chainSize={14}
+                size={25}
+                innerChainStyle={styles.innerChainStyle}
+              />
+            </View>
+          ) : null}
           <View style={styles.mainContainer}>
             <View style={styles.titleContainer}>
               {type === 'send' ? (
@@ -195,7 +172,7 @@ export const PendingTxItem = ({
               ) : (
                 <>
                   <AssetAvatar
-                    logo={payToken?.logo_url}
+                    logo={payToken?.logo_url || sendTokenList?.[0]?.logo_url}
                     chain={payToken?.chain}
                     chainSize={14}
                     size={25}
@@ -210,7 +187,9 @@ export const PendingTxItem = ({
                     {` ${getTokenSymbol(payToken)} →`}
                   </Text>
                   <AssetAvatar
-                    logo={receiveToken?.logo_url}
+                    logo={
+                      receiveToken?.logo_url || receiveTokenList?.[0]?.logo_url
+                    }
                     chain={receiveToken?.chain}
                     chainSize={14}
                     size={25}
