@@ -433,7 +433,7 @@ export class PreferenceService {
   ) => {
     this.store.currentAccount = account;
     if (account) {
-      this._notifyAccountsChanged(account, !!options?.needSyncToSession);
+      // this._notifyAccountsChanged(account, !!options?.needSyncToSession);
       appServiceEvents.emit('currentAccountChanged', account);
     }
   };

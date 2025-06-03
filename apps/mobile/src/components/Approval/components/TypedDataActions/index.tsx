@@ -48,6 +48,7 @@ import { getActionTypeText } from './utils';
 import { TransactionActionList } from '../Actions/components/TransactionActionList';
 import { noop } from 'lodash';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { Account } from '@/core/services/preference';
 
 const Actions = ({
   data,
@@ -58,6 +59,7 @@ const Actions = ({
   message,
   origin,
   originLogo,
+  account,
 }: {
   data: ParsedTypedDataActionData | null;
   requireData: ActionRequireData;
@@ -67,6 +69,7 @@ const Actions = ({
   message: string;
   origin: string;
   originLogo?: string;
+  account: Account;
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -121,6 +124,7 @@ const Actions = ({
                   isLight
                   content={
                     <NoActionAlert
+                      account={account}
                       data={{
                         origin,
                         text: message,

@@ -18,6 +18,7 @@ import { TouchableOpacity } from 'react-native';
 import { Card } from '../Actions/components/Card';
 import { Radio } from '@/components/Radio';
 import { findChain } from '@/utils/chain';
+import { Account } from '@/core/services/preference';
 
 interface BroadcastModeProps {
   value: {
@@ -30,6 +31,7 @@ interface BroadcastModeProps {
   isSpeedUp?: boolean;
   isCancel?: boolean;
   isGasTopUp?: boolean;
+  account: Account;
 }
 export const BroadcastMode = ({
   value,
@@ -39,12 +41,12 @@ export const BroadcastMode = ({
   isSpeedUp,
   isCancel,
   isGasTopUp,
+  account,
 }: BroadcastModeProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [drawerVisible, setDrawerVisible] = React.useState(false);
   const { t } = useTranslation();
-  const { currentAccount: account } = useCurrentAccount();
   const { data: supportedPushType } = useRequest(
     () =>
       openapi.gasSupportedPushType(

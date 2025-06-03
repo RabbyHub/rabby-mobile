@@ -7,6 +7,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { openapi } from '@/core/request';
 import RcIconAlert from '@/assets/icons/sign/tx/alert-currentcolor.svg';
+import { Account } from '@/core/services/preference';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -47,12 +48,15 @@ type SupportSelector = {
 
 interface Props {
   data: SupportOrigin | SupportSelector;
+  account: Account;
 }
 
-export const NoActionAlert: React.FC<Props> = ({ data }) => {
+export const NoActionAlert: React.FC<Props> = ({
+  data,
+  account: currentAccount,
+}) => {
   const { t } = useTranslation();
   const [isRequested, setIsRequested] = React.useState<boolean>(false);
-  const { currentAccount } = useCurrentAccount();
   const [requestedCount, setRequestedCount] = React.useState<number>(1);
   const [isRequesting, setIsRequesting] = React.useState<boolean>(false);
   const colors = useThemeColors();

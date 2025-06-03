@@ -1,6 +1,6 @@
 import type { Account, IPinAddress } from '@/core/services/preference';
 import { useAccounts, usePinAddresses } from '@/hooks/account';
-import { sortAccountList } from '@/screens/Address/useSortAddressList';
+import { sortAccountList } from '@/utils/sortAccountList';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useCallback, useMemo } from 'react';
 

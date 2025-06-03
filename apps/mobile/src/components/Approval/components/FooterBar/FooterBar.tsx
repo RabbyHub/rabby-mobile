@@ -28,6 +28,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   isSwap?: boolean;
   chain?: Chain;
   gnosisAccount?: Account;
+  account: Account;
   securityLevel?: Level;
   origin?: string;
   originLogo?: string;
@@ -183,6 +184,7 @@ export const FooterBar: React.FC<Props> = ({
   origin,
   originLogo,
   gnosisAccount,
+  account: currentAccount,
   securityLevel,
   engineResults = [],
   hasUnProcessSecurityResult,
@@ -212,7 +214,7 @@ export const FooterBar: React.FC<Props> = ({
   isFirstGasLessLoading,
   ...props
 }) => {
-  const [account, setAccount] = React.useState<Account>();
+  const account = gnosisAccount || currentAccount;
   const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
     null,
   );
@@ -270,11 +272,6 @@ export const FooterBar: React.FC<Props> = ({
   };
 
   const init = async () => {
-    const currentAccount =
-      gnosisAccount || (await preferenceService.getCurrentAccount());
-    if (currentAccount) {
-      setAccount(currentAccount);
-    }
     apiApprovalSecurityEngine.init();
   };
   const binaryTheme = useGetBinaryMode();

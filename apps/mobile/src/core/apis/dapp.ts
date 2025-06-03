@@ -146,7 +146,8 @@ export const createDappBySession = ({
   const id = origin.replace(/^https?:\/\//, '');
   return {
     origin,
-    chainId: CHAINS_ENUM.ETH,
+    chainId: undefined as any,
+    name: '',
     info: {
       id,
       name: name || '',
@@ -210,4 +211,8 @@ export const syncBasicDappsInfo = async () => {
       }, {} as Record<DappInfo['origin'], Partial<DappInfo>>),
     );
   }
+};
+
+export const updateDappChain = (dapp: DappInfo) => {
+  dappService.updateDapp(dapp);
 };

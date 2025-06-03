@@ -69,6 +69,8 @@ import { CustomTestnetTokenBase } from '../services/customTestnetService';
 import { PENDGING_TIME } from '@/constant/expireTime';
 import { isString } from 'lodash';
 import { updateExpiredTime } from '@/databases/sync/utils';
+import { assertProviderRequest } from '../utils/assertProviderRequest';
+import { ProviderRequest } from './type';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -136,6 +138,7 @@ interface ApprovalRes extends Tx {
   isGasAccount?: boolean;
   logId?: string;
   sig?: string;
+  $account?: Account;
 }
 
 interface Web3WalletPermission {
@@ -157,14 +160,14 @@ const v1SignTypedDataVlidation = ({
   data: {
     params: [_, from],
   },
+  account,
 }: {
   data: {
     params: SignTypeDataParams;
   };
+  account?: Account | null;
 }) => {
-  const currentAddress = preferenceService
-    .getCurrentAccount()
-    ?.address.toLowerCase();
+  const currentAddress = account?.address?.toLowerCase();
   if (from.toLowerCase() !== currentAddress)
     throw ethErrors.rpc.invalidParams('from should be same as current address');
 };
@@ -174,11 +177,13 @@ const signTypedDataVlidation = ({
     params: [from, data],
   },
   session,
+  account,
 }: {
   data: {
     params: SignTypeDataParams;
   };
   session: Session;
+  account?: Account | null;
 }) => {
   let jsonData;
   try {
@@ -201,9 +206,7 @@ const signTypedDataVlidation = ({
       );
     }
   }
-  const currentAddress = preferenceService
-    .getCurrentAccount()
-    ?.address.toLowerCase();
+  const currentAddress = account?.address.toLowerCase();
   if (from.toLowerCase() !== currentAddress)
     throw ethErrors.rpc.invalidParams('from should be same as current address');
 };
@@ -227,6 +230,7 @@ class ProviderController extends BaseController {
     req: {
       data: RPCRequest;
       session: Session;
+      account?: Account;
     },
     forceChainServerId?: string,
   ) => {
@@ -252,8 +256,7 @@ class ProviderController extends BaseController {
       chainServerId = forceChainServerId;
     }
 
-    const currentAddress =
-      preferenceService.getCurrentAccount()?.address.toLowerCase() || '0x';
+    const currentAddress = req?.account?.address.toLowerCase() || '0x';
     const cache = RpcCache.get(currentAddress, {
       method,
       params,
@@ -316,19 +319,24 @@ class ProviderController extends BaseController {
     }
   };
 
-  ethRequestAccounts = async ({
-    session: { origin },
-  }: {
-    session: Session;
-  }) => {
+  ethRequestAccounts = async (req: { session: Session; account?: Account }) => {
+    const {
+      session: { origin },
+    } = req;
+    console.log(req);
+    assertProviderRequest(req as any);
     if (!dappService.getDapp(origin)?.isConnected) {
       throw ethErrors.provider.unauthorized();
     }
 
-    const _account = await this.getCurrentAccount();
+    const _account = req.account;
     const account = _account ? [_account.address.toLowerCase()] : [];
 
-    sessionService.broadcastEvent(BroadcastEvent.accountsChanged, account);
+    sessionService.broadcastEvent(
+      BroadcastEvent.accountsChanged,
+      account,
+      origin,
+    );
     const connectSite = dappService.getConnectedDapp(origin);
 
     if (connectSite) {
@@ -353,7 +361,13 @@ class ProviderController extends BaseController {
   };
 
   @Reflect.metadata('SAFE', true)
-  ethAccounts = async ({ session: { origin } }: { session: Session }) => {
+  ethAccounts = async ({
+    session: { origin },
+    account,
+  }: {
+    session: Session;
+    account?: Account;
+  }) => {
     if (
       !dappService.getDapp(origin)?.isConnected ||
       !keyringService.isUnlocked()
@@ -361,16 +375,20 @@ class ProviderController extends BaseController {
       return [];
     }
 
-    const account = await this.getCurrentAccount();
     return account ? [account.address.toLowerCase()] : [];
   };
 
-  ethCoinbase = async ({ session: { origin } }: { session: Session }) => {
+  ethCoinbase = async ({
+    session: { origin },
+    account,
+  }: {
+    session: Session;
+    account?: Account;
+  }) => {
     if (!dappService.getDapp(origin)?.isConnected) {
       return null;
     }
 
-    const account = await this.getCurrentAccount();
     return account ? account.address.toLowerCase() : null;
   };
 
@@ -384,20 +402,16 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('APPROVAL', [
     'SignTx',
-    ({
-      data: {
-        params: [tx],
-      },
-      session,
-    }: {
-      data: {
-        params: any[];
-      };
-      session: Session;
-    }) => {
-      const currentAddress = preferenceService
-        .getCurrentAccount()
-        ?.address.toLowerCase();
+    (req: ProviderRequest) => {
+      assertProviderRequest(req);
+      const {
+        data: {
+          params: [tx],
+        },
+        session,
+        account,
+      } = req;
+      const currentAddress = account?.address?.toLowerCase();
       const currentChain = dappService.isInternalDapp(session.origin)
         ? findChain({ id: tx.chainId })!.enum
         : dappService.getConnectedDapp(session.origin)?.chainId;
@@ -426,7 +440,9 @@ class ProviderController extends BaseController {
     approvalRes: ApprovalRes;
     pushed: boolean;
     result: any;
+    account: Account;
   }) => {
+    assertProviderRequest(options as any);
     if (options.pushed) {
       return options.result;
     }
@@ -436,8 +452,10 @@ class ProviderController extends BaseController {
       },
       session: { origin },
       approvalRes,
+      account,
     } = cloneDeep(options);
-    const keyring = await this._checkAddress(txParams.from);
+    const currentAccount = account;
+    const keyring = await this._checkAddress(txParams.from, options);
     const isSend = !!txParams.isSend;
     const isSpeedUp = !!txParams.isSpeedUp;
     const isCancel = !!txParams.isCancel;
@@ -470,6 +488,7 @@ class ProviderController extends BaseController {
     delete approvalRes.isGasLess;
     delete approvalRes.isGasAccount;
     delete approvalRes.sig;
+    delete approvalRes.$account;
 
     let is1559 = is1559Tx(approvalRes);
     if (
@@ -493,7 +512,6 @@ class ProviderController extends BaseController {
     const tx = TransactionFactory.fromTxData(txData, {
       common,
     });
-    const currentAccount = preferenceService.getCurrentAccount()!;
     let opts;
     opts = extra;
     if (currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
@@ -893,35 +911,31 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('APPROVAL', [
     'SignText',
-    ({
-      data: {
-        params: [_, from],
-      },
-    }: {
-      data: {
-        params: string[];
-      };
-    }) => {
-      const currentAddress = preferenceService
-        .getCurrentAccount()
-        ?.address.toLowerCase();
+    req => {
+      assertProviderRequest(req);
+      const {
+        data: {
+          params: [_, from],
+        },
+        account,
+      } = req;
+      const currentAddress = account.address.toLowerCase();
       if (from.toLowerCase() !== currentAddress)
         throw ethErrors.rpc.invalidParams(
           'from should be same as current address',
         );
     },
   ])
-  personalSign = async ({
-    data,
-    approvalRes,
-  }: {
+  personalSign = async (req: {
     data: {
       params: SignTypeDataParams;
     };
+    account: Account;
     approvalRes: Pick<ApprovalRes, 'extra'>;
   }) => {
+    assertProviderRequest(req as any);
+    const { data, approvalRes, account: currentAccount } = req;
     if (!data.params) return;
-    const currentAccount = preferenceService.getCurrentAccount()!;
     if (
       currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
       isString(approvalRes)
@@ -931,7 +945,7 @@ class ProviderController extends BaseController {
     try {
       const [string, from] = data.params;
       const hex = isHexString(string) ? string : stringToHex(string);
-      const keyring = await this._checkAddress(from);
+      const keyring = await this._checkAddress(from, req);
       const result = await keyringService.signPersonalMessage(
         keyring,
         { data: hex, from },
@@ -962,19 +976,26 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('PRIVATE', true)
   private _signTypedData = async (
-    from: string,
-    data: string,
-    version: string,
-    extra?: any,
+    {
+      from,
+      data,
+      version,
+      extra,
+    }: {
+      from: string;
+      data: any;
+      version: string;
+      extra: any;
+    },
+    req: ProviderRequest,
   ) => {
+    const keyring = await this._checkAddress(from, req);
     let _data = data;
     if (version !== 'V1') {
       if (typeof data === 'string') {
         _data = JSON.parse(data);
       }
     }
-
-    const keyring = await this._checkAddress(from);
 
     return keyringService.signTypedMessage(
       keyring,
@@ -987,18 +1008,16 @@ class ProviderController extends BaseController {
   };
 
   @Reflect.metadata('APPROVAL', ['SignTypedData', v1SignTypedDataVlidation])
-  ethSignTypedData = async ({
-    data: {
-      params: [data, from],
-    },
-    approvalRes,
-  }: {
-    data: {
-      params: SignTypeDataParams;
-    };
-    approvalRes: ApprovalRes;
-  }) => {
-    const currentAccount = preferenceService.getCurrentAccount()!;
+  ethSignTypedData = async req => {
+    const {
+      data: {
+        params: [data, from],
+      },
+      session,
+      approvalRes,
+    } = req;
+    assertProviderRequest(req);
+    const currentAccount = req.account;
     if (
       currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
       isString(approvalRes)
@@ -1007,10 +1026,13 @@ class ProviderController extends BaseController {
     }
     try {
       const result = await this._signTypedData(
-        from,
-        data,
-        'V1',
-        approvalRes?.extra,
+        {
+          from,
+          data,
+          version: 'V1',
+          extra: approvalRes?.extra,
+        },
+        req,
       );
       // TODO
       // signTextHistoryService.createHistory({
@@ -1036,18 +1058,16 @@ class ProviderController extends BaseController {
   };
 
   @Reflect.metadata('APPROVAL', ['SignTypedData', v1SignTypedDataVlidation])
-  ethSignTypedDataV1 = async ({
-    data: {
-      params: [data, from],
-    },
-    approvalRes,
-  }: {
-    data: {
-      params: SignTypeDataParams;
-    };
-    approvalRes: ApprovalRes;
-  }) => {
-    const currentAccount = preferenceService.getCurrentAccount()!;
+  ethSignTypedDataV1 = async req => {
+    assertProviderRequest(req);
+    const {
+      data: {
+        params: [data, from],
+      },
+      approvalRes,
+      account,
+    } = req;
+    const currentAccount = account;
     if (
       currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
       isString(approvalRes)
@@ -1056,10 +1076,13 @@ class ProviderController extends BaseController {
     }
     try {
       const result = await this._signTypedData(
-        from,
-        data,
-        'V1',
-        approvalRes?.extra,
+        {
+          from,
+          data,
+          version: 'V1',
+          extra: approvalRes?.extra,
+        },
+        req,
       );
       // signTextHistoryService.createHistory({
       //   address: from,
@@ -1084,18 +1107,16 @@ class ProviderController extends BaseController {
   };
 
   @Reflect.metadata('APPROVAL', ['SignTypedData', signTypedDataVlidation])
-  ethSignTypedDataV3 = async ({
-    data: {
-      params: [from, data],
-    },
-    approvalRes,
-  }: {
-    data: {
-      params: SignTypeDataParams;
-    };
-    approvalRes: ApprovalRes;
-  }) => {
-    const currentAccount = preferenceService.getCurrentAccount()!;
+  ethSignTypedDataV3 = async req => {
+    assertProviderRequest(req);
+    const {
+      data: {
+        params: [from, data],
+      },
+      session,
+      approvalRes,
+      account: currentAccount,
+    } = req;
     if (
       currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
       isString(approvalRes)
@@ -1104,10 +1125,13 @@ class ProviderController extends BaseController {
     }
     try {
       const result = await this._signTypedData(
-        from,
-        data,
-        'V3',
-        approvalRes?.extra,
+        {
+          from,
+          data,
+          version: 'V3',
+          extra: approvalRes?.extra,
+        },
+        req,
       );
       // signTextHistoryService.createHistory({
       //   address: from,
@@ -1132,18 +1156,16 @@ class ProviderController extends BaseController {
   };
 
   @Reflect.metadata('APPROVAL', ['SignTypedData', signTypedDataVlidation])
-  ethSignTypedDataV4 = async ({
-    data: {
-      params: [from, data],
-    },
-    approvalRes,
-  }: {
-    data: {
-      params: SignTypeDataParams;
-    };
-    approvalRes: ApprovalRes;
-  }) => {
-    const currentAccount = preferenceService.getCurrentAccount()!;
+  ethSignTypedDataV4 = async req => {
+    const {
+      data: {
+        params: [from, data],
+      },
+      session,
+      approvalRes,
+      account: currentAccount,
+    } = req;
+    assertProviderRequest(req);
     if (
       currentAccount.type === KEYRING_TYPE.GnosisKeyring &&
       isString(approvalRes)
@@ -1152,10 +1174,13 @@ class ProviderController extends BaseController {
     }
     try {
       const result = await this._signTypedData(
-        from,
-        data,
-        'V4',
-        approvalRes?.extra,
+        {
+          from,
+          data,
+          version: 'V4',
+          extra: approvalRes?.extra,
+        },
+        req,
       );
       // signTextHistoryService.createHistory({
       //   address: from,
@@ -1452,10 +1477,9 @@ class ProviderController extends BaseController {
   };
 
   @Reflect.metadata('PRIVATE', true)
-  private _checkAddress = async (address: string) => {
+  private _checkAddress = async (address: string, req: any) => {
     // eslint-disable-next-line prefer-const
-    let { address: currentAddress, type } =
-      (await this.getCurrentAccount()) || {};
+    let { address: currentAddress, type } = req.account || {};
     currentAddress = currentAddress?.toLowerCase();
     if (
       !currentAddress ||

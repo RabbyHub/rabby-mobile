@@ -18,7 +18,7 @@ import { AccountSelectorPopup } from './AccountSelectorPopup';
 
 interface Props {
   style?: StyleProp<ViewStyle>;
-  value?: Account;
+  value?: Account | null;
   onChange?: (v: Account) => void;
 }
 
@@ -40,7 +40,12 @@ export const AccountSelector: React.FC<Props> = memo(
           onPress={handleSelect}>
           {account ? (
             <View>
-              <WalletIcon type={account.brandName} address={account.address} />
+              <WalletIcon
+                type={account.brandName}
+                address={account.address}
+                width={24}
+                height={24}
+              />
             </View>
           ) : null}
           <Text style={styles.text}>{alias || 'Select Account'}</Text>

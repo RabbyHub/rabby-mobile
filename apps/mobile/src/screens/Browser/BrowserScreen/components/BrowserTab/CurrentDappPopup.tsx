@@ -13,6 +13,7 @@ import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
 import { useTranslation } from 'react-i18next';
+import { dappService, preferenceService } from '@/core/services';
 
 interface Props {
   visible?: boolean;
@@ -72,11 +73,13 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
               </Text>
               <View>
                 <ChainSelector
-                  value={CHAINS_ENUM.ETH}
-                  onChange={function (value: CHAINS_ENUM): void {
-                    throw new Error('Function not implemented.');
-                  }} // value={defaultChain}
-                  // onChange={handleChainChange}
+                  value={dapp.chainId || CHAINS_ENUM.ETH}
+                  onChange={v => {
+                    dappService.updateDapp({
+                      ...dapp,
+                      chainId: v,
+                    });
+                  }}
                 />
               </View>
             </View>
@@ -85,7 +88,17 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
                 {t('page.connect.connectWallet')}
               </Text>
               <View>
-                <AccountSelector />
+                <AccountSelector
+                  value={
+                    dapp.currentAccount || preferenceService.getCurrentAccount()
+                  }
+                  onChange={v => {
+                    dappService.updateDapp({
+                      ...dapp,
+                      currentAccount: v,
+                    });
+                  }}
+                />
               </View>
             </View>
           </View>

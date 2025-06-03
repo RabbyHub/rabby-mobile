@@ -1,11 +1,10 @@
-import { useTranslation } from 'react-i18next';
-import React from 'react';
-import clsx from 'clsx';
-import { noop } from 'lodash';
 import IconEmail from '@/assets/icons/add-chain/email.svg';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { noop } from 'lodash';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Props {
   isRequested?: boolean;

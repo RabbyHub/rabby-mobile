@@ -230,7 +230,7 @@ export function BrowserHeader({
           <CurrentDappPopup
             visible={isShowCurrentDappPopup}
             onClose={() => {
-              setIsShowAccountPopup(false);
+              setIsShowCurrentDappPopup(false);
             }}
             dapp={dapp}
           />
