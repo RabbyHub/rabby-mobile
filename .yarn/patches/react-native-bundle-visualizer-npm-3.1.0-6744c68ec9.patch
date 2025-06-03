@@ -1,0 +1,12 @@
+diff --git a/src/react-native-bundle-visualizer.js b/src/react-native-bundle-visualizer.js
+index 6487b5c3c791a6808454ff2ff0dca42d1db0f8f9..ba078bdc242a327d44402c6c2367ae07e779c1a7 100755
+--- a/src/react-native-bundle-visualizer.js
++++ b/src/react-native-bundle-visualizer.js
+@@ -154,6 +154,7 @@ bundlePromise
+         },
+         {
+           onlyMapped,
++          noBorderChecks: true,
+           output: {
+             format,
+             filename: bundleOutputExplorerFile,

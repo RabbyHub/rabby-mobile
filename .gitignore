@@ -13,6 +13,7 @@ folder-alias.json
 
 .DS_STORE
 .idea
+.vscfavoriterc
 # Build preview message
 preview-build-message.txt
 
@@ -34,3 +35,6 @@ preview-build-message.txt
 /packages*/*/*.tsbuildinfo
 
 /scripts/inpage-bridge/dist
+
+# Cursor AI rules (local development only)
+.cursor/

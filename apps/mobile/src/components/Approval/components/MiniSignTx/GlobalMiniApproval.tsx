@@ -5,9 +5,10 @@ import { EVENT_ROUTE_CHANGE, eventBus } from '@/utils/events';
 import { useMemoizedFn, useMount } from 'ahooks';
 import { useAtom } from 'jotai';
 import React, { useRef } from 'react';
-import { MiniApproval } from './MiniSignTx';
-import { toast, toastWithDotAnimation } from '@/components2024/Toast';
+import { toastWithDotAnimation } from '@/components2024/Toast';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { MiniDirectSubmitApproval } from './DirectSubmitMiniSigntx';
+import { MiniApproval } from './MiniSignTx';
 
 export const GlobalMiniApproval = () => {
   const [state, setState] = useAtom(miniApprovalAtom);
@@ -23,7 +24,8 @@ export const GlobalMiniApproval = () => {
     if (
       [KEYRING_CLASS.MNEMONIC, KEYRING_CLASS.PRIVATE_KEY].includes(
         currentAccount?.type || ('' as any),
-      )
+      ) &&
+      !state?.directSubmit
     ) {
       submittingToastRef?.current?.();
       submittingToastRef.current = toastWithDotAnimation(
@@ -43,10 +45,29 @@ export const GlobalMiniApproval = () => {
     eventBus.on(EVENT_ROUTE_CHANGE, () => {
       clear();
       state?.onReject?.();
-      setState({ txs: [], visible: false });
+      setState({ txs: [], visible: false, directSubmit: false });
       submittingToastRef?.current?.();
     });
   });
+
+  if (state.directSubmit) {
+    return (
+      <MiniDirectSubmitApproval
+        {...state}
+        key={`${currentAccount?.type}-${currentAccount?.address}-${state.id}`}
+        onSubmitting={handleSubmitting}
+        onSubmitted={handleSubmitted}
+        onVisibleChange={v => {
+          setState(prev => {
+            return {
+              ...prev,
+              visible: v,
+            };
+          });
+        }}
+      />
+    );
+  }
 
   return (
     <MiniApproval

@@ -1,7 +1,7 @@
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { intToHex } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
-import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
+import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

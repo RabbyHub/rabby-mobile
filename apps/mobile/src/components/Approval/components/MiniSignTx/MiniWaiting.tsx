@@ -10,20 +10,35 @@ import { MiniLedgerHardwareWaiting } from './MiniLedgerHardwareWaiting';
 import { MiniPrivatekeyWaiting } from './MiniPrivatekeyWaiting';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { MiniOneKeyHardwareWaiting } from './MiniOneKeyHardwareWaiting';
+import { miniApprovalAtom } from '@/hooks/useMiniApproval';
+import { useAtom } from 'jotai';
+import { useMemoizedFn } from 'ahooks';
 
 export const MiniWaiting = ({
   visible,
   onRetry,
   onCancel,
   onDone,
-  error,
+  error: _error,
 }: {
   visible?: boolean;
   onRetry?: () => void;
-  onCancel?: () => void;
+  onCancel?: (e?: any) => void;
   onDone?: () => void;
   error?: BatchSignTxTaskType['error'];
 }) => {
+  const [{ ga }] = useAtom(miniApprovalAtom);
+
+  const error = useMemo(() => {
+    if (ga?.category && _error?.status === 'FAILED') {
+      return {
+        ..._error,
+        content: `Failed to ${ga?.category}`,
+      } as BatchSignTxTaskType['error'];
+    }
+    return _error;
+  }, [_error, ga?.category]);
+
   const { styles } = useTheme2024({
     getStyle,
   });
@@ -39,6 +54,10 @@ export const MiniWaiting = ({
   }, [sheetModalRef, visible]);
 
   const { currentAccount } = useCurrentAccount();
+
+  const handleCancel = useMemoizedFn(() => {
+    onCancel?.(error?.description);
+  });
 
   return (
     <AppBottomSheetModal
@@ -59,21 +78,21 @@ export const MiniWaiting = ({
             {currentAccount?.type === KEYRING_TYPE.LedgerKeyring ? (
               <MiniLedgerHardwareWaiting
                 error={error}
-                onCancel={onCancel}
+                onCancel={handleCancel}
                 onDone={onDone}
                 onRetry={onRetry}
               />
             ) : currentAccount?.type === KEYRING_TYPE.OneKeyKeyring ? (
               <MiniOneKeyHardwareWaiting
                 error={error}
-                onCancel={onCancel}
+                onCancel={handleCancel}
                 onDone={onDone}
                 onRetry={onRetry}
               />
             ) : (
               <MiniPrivatekeyWaiting
                 error={error}
-                onCancel={onCancel}
+                onCancel={handleCancel}
                 onDone={onDone}
                 onRetry={onRetry}
               />

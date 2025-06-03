@@ -1637,7 +1637,11 @@
       "NoIssuer": "Không có thông tin nhà phát hành có sẵn",
       "fdvContent": "Vốn hóa thị trường nếu tổng cung tối đa đang lưu thông. Định giá suy giảm hoàn toàn (FDV) = Giá × Tổng cung tối đa. Nếu Tổng cung tối đa là null, FDV = Giá × Tổng cung. Nếu cả Tổng cung tối đa và Tổng cung đều không được xác định hoặc vô hạn, FDV sẽ không được hiển thị.",
       "HoldingValue": "Giữ giá trị",
-      "Price": "Giá"
+      "Price": "Giá",
+      "ContentGeneratedByAI": "Nội dung này được tạo bởi AI",
+      "ShowMore": "Hiển thị thêm",
+      "Introduction": "Giới thiệu",
+      "Fold": "Gập"
     },
     "backupPrivateKey": {
       "clickToShow": "Nhấn để hiển thị private key",

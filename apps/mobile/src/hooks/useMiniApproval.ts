@@ -8,6 +8,9 @@ import {
   notificationService,
   transactionHistoryService,
 } from '@/core/services';
+import { sleep } from '@/utils/async';
+
+export let DirectSubmitReject;
 
 export const miniApprovalAtom = atom<{
   txs?: Tx[];
@@ -17,6 +20,7 @@ export const miniApprovalAtom = atom<{
   onVisibleChange?: (v: boolean) => void;
   ga?: Record<string, any>;
   id?: string;
+  directSubmit?: boolean;
 }>({
   txs: [],
 });
@@ -27,19 +31,38 @@ export const useMiniApproval = () => {
   const { clear } = useClearMiniApprovalTask();
 
   const _sendMiniTransactions = useMemoizedFn(
-    ({ txs, ga, id }: { txs: Tx[]; ga?: Record<string, any>; id?: string }) => {
+    async ({
+      txs,
+      ga,
+      id,
+      directSubmit,
+    }: {
+      txs: Tx[];
+      ga?: Record<string, any>;
+      id?: string;
+      directSubmit?: boolean;
+    }) => {
       // const currentApprovalId = uniqueId('mini-approval');
+      // await sleep(200);
       return new Promise<Awaited<ReturnType<typeof sendTransaction>>[]>(
         (resolve, reject) => {
+          if (directSubmit) {
+            DirectSubmitReject = directSubmit ? reject : undefined;
+          }
           setState(prev => {
             return {
               ...prev,
               id: id || prev.id,
               txs,
               ga,
-              visible: true,
+              visible: directSubmit ? false : true,
+              directSubmit: !!directSubmit,
               onReject: e => {
-                setState(prev => ({ ...prev, txs: [], visible: false }));
+                setState(prev => ({
+                  ...prev,
+                  txs: [],
+                  visible: false,
+                }));
                 const signingTxId =
                   notificationService.currentMiniApproval?.signingTxId;
                 if (signingTxId) {
@@ -49,7 +72,11 @@ export const useMiniApproval = () => {
                 reject(e);
               },
               onResolve: res => {
-                setState(prev => ({ ...prev, txs: [], visible: false }));
+                setState(prev => ({
+                  ...prev,
+                  txs: [],
+                  visible: false,
+                }));
                 notificationService.currentMiniApproval = null;
                 resolve(res);
               },
@@ -61,18 +88,39 @@ export const useMiniApproval = () => {
   );
 
   const sendMiniTransactions = useMemoizedFn(
-    ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
+    async ({
+      txs,
+      ga,
+      directSubmit,
+    }: {
+      txs: Tx[];
+      ga?: Record<string, any>;
+      directSubmit?: boolean;
+    }) => {
       clear();
+      /**
+       * wait popup close
+       */
+      await sleep(600);
       return _sendMiniTransactions({
         txs,
         ga,
+        directSubmit,
         id: uniqueId('mini-approval'),
       });
     },
   );
 
   const prepareMiniTransactions = useMemoizedFn(
-    ({ txs, ga }: { txs: Tx[]; ga?: Record<string, any> }) => {
+    ({
+      txs,
+      ga,
+      directSubmit,
+    }: {
+      txs: Tx[];
+      ga?: Record<string, any>;
+      directSubmit?: boolean;
+    }) => {
       clear();
       setState(prev => {
         return {
@@ -80,21 +128,27 @@ export const useMiniApproval = () => {
           id: uniqueId('mini-approval'),
           txs,
           ga,
+          directSubmit,
         };
       });
     },
   );
 
-  const sendPrepareMiniTransactions = useMemoizedFn(async () => {
-    if (state.txs?.length) {
-      await _sendMiniTransactions({
-        txs: state.txs,
-        ga: state.ga,
-      });
-    } else {
-      throw new Error('txs is empty, please run prepareMiniTransactions first');
-    }
-  });
+  const sendPrepareMiniTransactions = useMemoizedFn(
+    async (params?: { directSubmit?: boolean }) => {
+      if (state.txs?.length) {
+        await _sendMiniTransactions({
+          txs: state.txs,
+          ga: state.ga,
+          directSubmit: !!params?.directSubmit,
+        });
+      } else {
+        throw new Error(
+          'txs is empty, please run prepareMiniTransactions first',
+        );
+      }
+    },
+  );
 
   return {
     sendMiniTransactions,

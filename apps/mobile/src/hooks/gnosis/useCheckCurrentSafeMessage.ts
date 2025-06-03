@@ -1,6 +1,6 @@
 import { apisSafe } from '@/core/apis/safe';
 import { Account } from '@/core/services/preference';
-import { SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useRequest } from 'ahooks';
 import type { Options } from 'ahooks/lib/useRequest/src/types';

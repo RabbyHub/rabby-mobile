@@ -9,10 +9,10 @@ import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { cached } from '@/utils/cache';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { getAllAccountsToDisplay } from './account';
-import { sortAccountList } from '@/screens/Address/useSortAddressList';
-import { sceneAccountInfoAtom } from '@/hooks/accountsSwitcher';
 import { getDefaultStore } from 'jotai';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { sortAccountList } from '@/utils/sortAccountList';
+import { sceneAccountInfoAtom } from '@/hooks/sceneAccountInfoAtom';
 
 export const removeDapp = (origin: string) => {
   disconnect(origin);

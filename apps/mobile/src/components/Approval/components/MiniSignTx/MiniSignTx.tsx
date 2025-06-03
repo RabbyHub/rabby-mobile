@@ -23,7 +23,7 @@ import {
   convertLegacyTo1559,
 } from '@/utils/transaction';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
+import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   ExplainTxResponse,
@@ -34,7 +34,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { useMemoizedFn } from 'ahooks';
+import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
 import _ from 'lodash';
@@ -80,7 +80,7 @@ import {
   MiniApprovalTaskType,
   useMiniApprovalTask,
 } from '@/hooks/useMiniApprovalTask';
-import { View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, View } from 'react-native';
 import { sendTransaction } from '@/utils/sendTransaction';
 import {
   EVENT_MINI_APPROVAL_START_SIGN,
@@ -88,6 +88,15 @@ import {
   EVENTS,
 } from '@/utils/events';
 import AutoLockView from '@/components/AutoLockView';
+import {
+  directSigningAtom,
+  useResetMiniApprovalDirectSignState,
+  useSetDirectSubmitInnerError,
+} from '@/hooks/useMiniApprovalDirectSign';
+import { useAtom } from 'jotai';
+import { isAccountSupportDirectSign } from '@/utils/account';
+import { SwapModal } from '@/screens/Swap/components/Modal';
+import { MiniApprovalError } from './error';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -127,7 +136,7 @@ interface BlockInfo {
   uncles: string[];
 }
 
-const MiniSignTx = ({
+export const MiniSignTx = ({
   txs,
   onReject,
   onResolve,
@@ -137,6 +146,8 @@ const MiniSignTx = ({
   task,
   onSubmitting,
   onSubmitted,
+  directSubmit,
+  visible,
 }: {
   txs: Tx[];
   onReject?: (e?: any) => void;
@@ -147,6 +158,8 @@ const MiniSignTx = ({
   task: MiniApprovalTaskType;
   onSubmitting?: () => void;
   onSubmitted?: (isSuccess: boolean) => void;
+  directSubmit?: boolean;
+  visible?: boolean;
 }) => {
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
@@ -401,7 +414,7 @@ const MiniSignTx = ({
       balance = new BigNumber(balance)
         .minus(new BigNumber(item.tx.value || 0))
         .minus(new BigNumber(item.gasCost.maxGasCostAmount || 0))
-        .toString();
+        .toFixed();
       return result;
     });
     return _.flatten(res);
@@ -699,6 +712,8 @@ const MiniSignTx = ({
     );
   };
 
+  const setDirectSubmitInnerError = useSetDirectSubmitInnerError();
+
   const init = async () => {
     if (!chainId) {
       return;
@@ -743,7 +758,11 @@ const MiniSignTx = ({
       const lastTimeGas: ChainGas | null =
         await preferenceService.getLastTimeGasSelection(chainId);
       let customGasPrice = 0;
-      if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
+      if (
+        lastTimeGas?.lastTimeSelect === 'gasPrice' &&
+        lastTimeGas.gasPrice &&
+        !directSubmit
+      ) {
         // use cached gasPrice if exist
         customGasPrice = lastTimeGas.gasPrice;
       }
@@ -795,6 +814,9 @@ const MiniSignTx = ({
       setInited(true);
     } catch (e: any) {
       toast.show(e.message || JSON.stringify(e));
+      if (directSubmit) {
+        setDirectSubmitInnerError(true);
+      }
     }
   };
 
@@ -811,130 +833,252 @@ const MiniSignTx = ({
 
   const { currentAccount } = useCurrentAccount();
 
-  const prepareTxs = useMemoizedFn(async () => {
-    if (!selectedGas || !inited || !currentAccount?.address) {
-      return;
-    }
+  const [initdTxs, setInitdTxs] = useState<typeof txsResult>([]);
 
-    const recommendNonce = await getRecommendNonce({
-      tx: txs[0],
-      chainId: chain.id,
-    });
-    setRecommendNonce(recommendNonce);
-
-    const tempTxs: Tx[] = [];
-    const res = await Promise.all(
-      txs.map(async (rawTx, index) => {
-        const normalizedTx = normalizeTxParams(rawTx);
-        let tx: Tx = {
-          chainId,
-          data: normalizedTx.data || '0x', // can not execute with empty string, use 0x instead
-          from: normalizedTx.from,
-          gas: normalizedTx.gas || rawTx.gasLimit,
-          nonce:
-            normalizedTx.nonce ||
-            intToHex(new BigNumber(recommendNonce).plus(index).toNumber()),
-          to: normalizedTx.to,
-          value: normalizedTx.value,
-          gasPrice: intToHex(selectedGas.price),
-        };
-        tempTxs.push(tx);
-
-        if (support1559) {
-          tx = convertLegacyTo1559(tx);
-        }
-
-        const preExecResult = await openapi.preExecTx({
-          tx: tx,
-          origin: INTERNAL_REQUEST_SESSION.origin,
-          address: currentAccount?.address,
-          updateNonce: true,
-          pending_tx_list: [
-            ...(await apisTransactionHistory.getPendingTxs({
-              recommendNonce,
-              address: currentAccount?.address,
-            })),
-            ...tempTxs.slice(0, index),
-          ],
-        });
-        let estimateGas = 0;
-        if (preExecResult.gas.success) {
-          estimateGas =
-            preExecResult.gas.gas_limit || preExecResult.gas.gas_used;
-        }
-        const {
-          gas: gasRaw,
-          needRatio,
-          gasUsed,
-        } = await getRecommendGas({
-          gasUsed: preExecResult.gas.gas_used,
-          gas: estimateGas,
-          tx: tx,
-          chainId: chain.id,
-        });
-        const gas = new BigNumber(gasRaw);
-
-        let gasLimit = tx.gas || tx.gasLimit || '';
-        let recommendGasLimitRatio = 1;
-
-        if (!gasLimit) {
-          const {
-            gasLimit: _gasLimit,
-            recommendGasLimitRatio: _recommendGasLimitRatio,
-          } = await calcGasLimit({
-            chain,
+  const checkGasLevelIsNotEnough = useCallback(
+    (gas: GasSelectorResponse): Promise<[number, boolean, boolean]> => {
+      if (!isReady || !initdTxs.length) {
+        return Promise.resolve([0, false, true]);
+      }
+      let _txsResult = initdTxs;
+      return Promise.all(
+        initdTxs.map(async item => {
+          const tx = {
+            ...item.tx,
+            ...(support1559
+              ? {
+                  maxFeePerGas: intToHex(Math.round(gas.price || 0)),
+                  maxPriorityFeePerGas:
+                    gas.maxPriorityFee <= 0
+                      ? item.tx.maxFeePerGas
+                      : intToHex(Math.round(gas.maxPriorityFee)),
+                }
+              : { gasPrice: intToHex(Math.round(gas.price)) }),
+          };
+          return {
+            ...item,
             tx,
-            gas,
-            selectedGas: selectedGas,
-            nativeTokenBalance,
-            explainTx: preExecResult,
-            needRatio,
-          });
-          gasLimit = _gasLimit;
-          recommendGasLimitRatio = _recommendGasLimitRatio;
+            gasCost: await explainGas({
+              gasUsed: item.gasUsed,
+              gasPrice: gas.price,
+              chainId: chain.id,
+              nativeTokenPrice: item.preExecResult.native_token.price,
+              tx,
+              gasLimit: item.gasLimit,
+            }),
+          };
+        }),
+      ).then(arr => {
+        let balance = nativeTokenBalance;
+        _txsResult = arr;
+
+        if (!_txsResult.length) {
+          return [0, false, true];
         }
 
-        // calc gasCost
-        const gasCost = await explainGas({
-          gasUsed,
-          gasPrice: selectedGas?.price,
-          chainId: chain.id,
-          nativeTokenPrice: preExecResult.native_token.price,
-          tx,
-          gasLimit,
-        });
+        return openapi
+          .checkGasAccountTxs({
+            sig: sig || '',
+            account_id: gasAccountAddress,
+            tx_list: arr.map((item, index) => {
+              return {
+                ...item.tx,
+                gas: item.gasLimit,
+                gasPrice: intToHex(gas.price),
+              };
+            }),
+          })
+          .then(gasAccountRes => {
+            const checkResult = _txsResult.map((item, index) => {
+              const result = checkGasAndNonce({
+                recommendGasLimitRatio: item.recommendGasLimitRatio,
+                recommendGasLimit: item.gasLimit,
+                recommendNonce: item.tx.nonce,
+                tx: item.tx,
+                gasLimit: item.gasLimit,
+                nonce: item.tx.nonce,
+                isCancel: false,
+                gasExplainResponse: item.gasCost,
+                isSpeedUp: false,
+                isGnosisAccount: false,
+                nativeTokenBalance: balance,
+              });
+              balance = new BigNumber(balance)
+                .minus(new BigNumber(item.tx.value || 0))
+                .minus(new BigNumber(item.gasCost.maxGasCostAmount || 0))
+                .toFixed();
+              return result;
+            });
+            return [
+              gasAccountRes.gas_account_cost.total_cost,
+              gasAccountRes.balance_is_enough,
+              _.flatten(checkResult)?.some(e => e.code === 3001),
+            ];
+          });
+      });
+    },
+    [
+      isReady,
+      chain.id,
+      gasAccountAddress,
+      nativeTokenBalance,
+      sig,
+      support1559,
+      initdTxs,
+    ],
+  );
+  const [simulateError, setSimulateError] = useState<Error | null>(null);
 
-        tx.gas = gasLimit;
+  const prepareTxs = useMemoizedFn(async () => {
+    try {
+      if (!selectedGas || !inited || !currentAccount?.address) {
+        return;
+      }
 
-        const actionData = await openapi.parseTx({
-          chainId: chain.serverId,
-          tx: {
-            ...tx,
-            gas: '0x0',
-            nonce: tx.nonce || '0x1',
-            value: tx.value || '0x0',
-            to: tx.to || '',
-          },
-          origin: INTERNAL_REQUEST_SESSION.origin || '',
-          addr: currentAccount.address,
-        });
+      const recommendNonce = await getRecommendNonce({
+        tx: txs[0],
+        chainId: chain.id,
+      });
+      setRecommendNonce(recommendNonce);
 
-        return {
-          rawTx,
-          tx,
-          preExecResult,
-          gasUsed,
-          gasLimit,
-          recommendGasLimitRatio,
-          gasCost,
-          actionData,
-        };
-      }),
-    );
+      const tempTxs: Tx[] = [];
+      const res = await Promise.all(
+        txs.map(async (rawTx, index) => {
+          const normalizedTx = normalizeTxParams(rawTx);
+          let tx: Tx = {
+            chainId,
+            data: normalizedTx.data || '0x', // can not execute with empty string, use 0x instead
+            from: normalizedTx.from,
+            gas: normalizedTx.gas || rawTx.gasLimit,
+            nonce:
+              normalizedTx.nonce ||
+              intToHex(new BigNumber(recommendNonce).plus(index).toNumber()),
+            to: normalizedTx.to,
+            value: normalizedTx.value,
+            gasPrice: intToHex(selectedGas.price),
+          };
+          tempTxs.push(tx);
 
-    setIsReady(true);
-    setTxsResult(res);
+          if (support1559) {
+            tx = convertLegacyTo1559(tx);
+          }
+
+          const preExecResult = await openapi.preExecTx({
+            tx: tx,
+            origin: INTERNAL_REQUEST_SESSION.origin,
+            address: currentAccount?.address,
+            updateNonce: true,
+            pending_tx_list: [
+              ...(await apisTransactionHistory.getPendingTxs({
+                recommendNonce,
+                address: currentAccount?.address,
+              })),
+              ...tempTxs.slice(0, index),
+            ],
+          });
+          let estimateGas = 0;
+          if (!preExecResult.pre_exec.success) {
+            throw new Error('Pre exec failed');
+          }
+          if (preExecResult.gas.success) {
+            estimateGas =
+              preExecResult.gas.gas_limit || preExecResult.gas.gas_used;
+          }
+          const {
+            gas: gasRaw,
+            needRatio,
+            gasUsed,
+          } = await getRecommendGas({
+            gasUsed: preExecResult.gas.gas_used,
+            gas: estimateGas,
+            tx: tx,
+            chainId: chain.id,
+          });
+          const gas = new BigNumber(gasRaw);
+
+          let gasLimit = tx.gas || tx.gasLimit || '';
+          let recommendGasLimitRatio = 1;
+
+          if (!gasLimit) {
+            const {
+              gasLimit: _gasLimit,
+              recommendGasLimitRatio: _recommendGasLimitRatio,
+            } = await calcGasLimit({
+              chain,
+              tx,
+              gas,
+              selectedGas: selectedGas,
+              nativeTokenBalance,
+              explainTx: preExecResult,
+              needRatio,
+            });
+            gasLimit = _gasLimit;
+            recommendGasLimitRatio = _recommendGasLimitRatio;
+          }
+
+          // calc gasCost
+          const gasCost = await explainGas({
+            gasUsed,
+            gasPrice: selectedGas?.price,
+            chainId: chain.id,
+            nativeTokenPrice: preExecResult.native_token.price,
+            tx,
+            gasLimit,
+          });
+
+          tx.gas = gasLimit;
+
+          const actionData = await openapi.parseTx({
+            chainId: chain.serverId,
+            tx: {
+              ...tx,
+              gas: '0x0',
+              nonce: tx.nonce || '0x1',
+              value: tx.value || '0x0',
+              to: tx.to || '',
+            },
+            origin: INTERNAL_REQUEST_SESSION.origin || '',
+            addr: currentAccount.address,
+          });
+
+          return {
+            rawTx,
+            tx,
+            preExecResult,
+            gasUsed,
+            gasLimit,
+            recommendGasLimitRatio,
+            gasCost,
+            actionData,
+          };
+        }),
+      );
+
+      setIsReady(true);
+      setTxsResult(res);
+      setInitdTxs(res);
+      setSimulateError(null);
+    } catch (e) {
+      setSimulateError(
+        new MiniApprovalError('Simulate Error', {
+          name: 'SimulateError',
+          cause: e as any,
+        }),
+      );
+    }
   });
+
+  useEffect(() => {
+    if (visible && simulateError) {
+      onReject?.(simulateError);
+    }
+  }, [onReject, simulateError, visible]);
+
+  useEffect(() => {
+    if (directSubmit && simulateError) {
+      onReject?.(simulateError);
+    }
+  }, [onReject, simulateError, directSubmit]);
 
   useEffect(() => {
     if (
@@ -980,9 +1124,45 @@ const MiniSignTx = ({
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
+  const gasCalcMethod = useCallback(
+    async price => {
+      const res = await Promise.all(
+        txsResult.map(item =>
+          explainGas({
+            gasUsed: item.gasUsed,
+            gasPrice: price,
+            chainId,
+            nativeTokenPrice: item.preExecResult.native_token.price || 0,
+            tx: item.tx,
+            gasLimit: item.gasLimit,
+          }),
+        ),
+      );
+      const totalCost = res.reduce(
+        (sum, item) => {
+          sum.gasCostAmount = sum.gasCostAmount.plus(item.gasCostAmount);
+          sum.gasCostUsd = sum.gasCostUsd.plus(item.gasCostUsd);
+
+          sum.maxGasCostAmount = sum.maxGasCostAmount.plus(
+            item.maxGasCostAmount,
+          );
+          return sum;
+        },
+        {
+          gasCostUsd: new BigNumber(0),
+          gasCostAmount: new BigNumber(0),
+          maxGasCostAmount: new BigNumber(0),
+        },
+      );
+      return totalCost;
+    },
+    [chainId, txsResult],
+  );
+
   return (
     <>
       <MiniFooterBar
+        directSubmit={directSubmit}
         task={task}
         Header={
           <GasSelectorHeader
@@ -1015,35 +1195,9 @@ const MiniSignTx = ({
             nativeTokenBalance={nativeTokenBalance}
             gasPriceMedian={gasPriceMedian}
             gas={totalGasCost}
-            gasCalcMethod={async price => {
-              const res = await Promise.all(
-                txsResult.map(item =>
-                  explainGas({
-                    gasUsed: item.gasUsed,
-                    gasPrice: price,
-                    chainId,
-                    nativeTokenPrice:
-                      item.preExecResult.native_token.price || 0,
-                    tx: item.tx,
-                    gasLimit: item.gasLimit,
-                  }),
-                ),
-              );
-              const totalCost = res.reduce(
-                (sum, item) => {
-                  sum.gasCostAmount = sum.gasCostAmount.plus(
-                    item.gasCostAmount,
-                  );
-                  sum.gasCostUsd = sum.gasCostUsd.plus(item.gasCostUsd);
-                  return sum;
-                },
-                {
-                  gasCostUsd: new BigNumber(0),
-                  gasCostAmount: new BigNumber(0),
-                },
-              );
-              return totalCost;
-            }}
+            gasCalcMethod={gasCalcMethod}
+            directSubmit={directSubmit}
+            checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
           />
         }
         isSwap={isSwap}
@@ -1168,23 +1322,21 @@ export const MiniApproval = ({
 
   const indexRef = useRef(-1);
   const dismissedByCodeRef = useRef(false);
-  const handleReject = useMemoizedFn((reason?: string) => {
-    onReject?.(reason);
-  });
-  const handleClearTask = useMemoizedFn(() => {
-    task.clear();
-    onVisibleChange?.(false);
-    if (!visible) {
-      onReject?.();
-    }
-  });
+  const { run: handleReject } = useDebounceFn(
+    (reason?: string | Error) => {
+      task.clear();
+      onReject?.(reason);
+    },
+    {
+      wait: 100,
+    },
+  );
 
   const pressBackdropRef = useRef(false);
 
   const onChange = useCallback(
     (index: number) => {
-      if (index === -1 && indexRef.current > -1) {
-        // handleReject?.();
+      if (index === -1 && indexRef.current > -1 && visible) {
         if (!dismissedByCodeRef.current) {
           const reason = pressBackdropRef.current
             ? 'PRESS_BACKDROP'
@@ -1198,7 +1350,7 @@ export const MiniApproval = ({
 
       indexRef.current = index;
     },
-    [handleReject],
+    [handleReject, visible],
   );
 
   const task = useMiniApprovalTask({
@@ -1237,6 +1389,7 @@ export const MiniApproval = ({
                 task={task}
                 txs={txs}
                 ga={ga}
+                visible={visible}
                 onVisibleChange={v => {
                   onVisibleChange?.(v);
                   if (!v) {
@@ -1246,7 +1399,10 @@ export const MiniApproval = ({
                 onSubmit={() => {
                   setIsSubmitting(true);
                 }}
-                onReject={handleClearTask}
+                onReject={e => {
+                  handleReject(e);
+                  dismissedByCodeRef.current = true;
+                }}
                 onResolve={res => {
                   setIsSubmitting(false);
                   onResolve?.(res);
@@ -1263,7 +1419,7 @@ export const MiniApproval = ({
       <MiniWaiting
         visible={!!task.error}
         error={task.error}
-        onCancel={handleClearTask}
+        onCancel={handleReject}
         onRetry={async () => {
           try {
             onSubmitting?.();

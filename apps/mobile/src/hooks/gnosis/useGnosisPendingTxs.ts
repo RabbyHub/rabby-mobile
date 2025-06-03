@@ -1,6 +1,6 @@
 import { useRequest } from 'ahooks';
 import type { Options } from 'ahooks/lib/useRequest/src/types';
-import { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
+import type { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
 import { apisSafe } from '@/core/apis/safe';
 
 export const useGnosisPendingTxs = (

@@ -235,20 +235,20 @@ function SettingsBlocks() {
               );
             },
           },
-          {
-            label: t('page.setting.modifyRPCURL'),
-            icon: RcRPC,
-            onPress: () => {
-              navigation.dispatch(
-                StackActions.push(RootNames.StackSettings, {
-                  screen: RootNames.CustomRPC,
-                  params: {
-                    source: 'settings',
-                  },
-                }),
-              );
-            },
-          },
+          // {
+          //   label: t('page.setting.modifyRPCURL'),
+          //   icon: RcRPC,
+          //   onPress: () => {
+          //     navigation.dispatch(
+          //       StackActions.push(RootNames.StackSettings, {
+          //         screen: RootNames.CustomRPC,
+          //         params: {
+          //           source: 'settings',
+          //         },
+          //       }),
+          //     );
+          //   },
+          // },
           {
             visible: SHOULD_SUPPORT_DARK_MODE,
             label: t('page.setting.themeMode'),

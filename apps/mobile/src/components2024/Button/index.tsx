@@ -234,7 +234,7 @@ const getStyle = createGetStyles2024(ctx => ({
     alignItems: 'center',
     paddingHorizontal: 0,
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 12,
     height: 56,
   },
   shadowButton: {

@@ -1,6 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
 import { getChain } from '@/utils/chain';
-import { TokenItem, TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  ProjectItem,
+  TokenItem,
+  TxDisplayItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import {
   StyleProp,
@@ -26,11 +30,13 @@ import { HistoryItemCateType } from './type';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { HistoryItemTokenArea } from './HistoryItemTokenArea';
 import { getTokenSymbol } from '@/utils/token';
+import FastImage from 'react-native-fast-image';
 
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
   isForMultipleAdderss?: boolean;
+  getCexInfoByAddress?: (address: string) => ProjectItem;
   onPress?: (data: HistoryDisplayItem) => void;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
@@ -49,6 +55,7 @@ export const HistoryItem = React.memo(
     style,
     isForMultipleAdderss,
     onPress,
+    getCexInfoByAddress,
   }: HistoryItemProps) => {
     const { t } = useTranslation();
     const isFailed = data.tx?.status === 0;
@@ -133,7 +140,7 @@ export const HistoryItem = React.memo(
     const formatDescribe = useMemo(() => {
       const FromText = t('page.swap.from') + ' ';
       const ToText = t('page.swap.to') + ' ';
-      let address = '';
+      let address: string | React.ReactNode = '';
       const project = data.project_id
         ? data.projectDict[data.project_id]
         : null;
@@ -153,9 +160,32 @@ export const HistoryItem = React.memo(
             ? data.sends[0].to_addr
             : data.receives[0].from_addr;
 
+          const cexInfo = getCexInfoByAddress?.(addr || '');
+
           const name = project
             ? project.name
             : getAliasName(addr) || ellipsisAddress(addr);
+
+          if (cexInfo) {
+            address = (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.describeText}>{ToText}</Text>
+                <FastImage
+                  source={{ uri: cexInfo.logo_url }}
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: 4,
+                    marginHorizontal: 4,
+                  }}
+                />
+                <Text style={styles.describeText}>
+                  {getAliasName(addr) || ellipsisAddress(addr)}
+                </Text>
+              </View>
+            );
+            break;
+          }
           address = (isSend ? ToText : FromText) + name;
           break;
 
@@ -181,10 +211,21 @@ export const HistoryItem = React.memo(
             chainEnum={chainItem?.enum}
             isShowRPCStatus={true}
           />
-          <Text style={styles.describeText}>{address}</Text>
+          {typeof address === 'string' ? (
+            <Text style={styles.describeText}>{address}</Text>
+          ) : (
+            address
+          )}
         </View>
       );
-    }, [formatType, data, chainItem, t, styles.describeText]);
+    }, [
+      formatType,
+      data,
+      chainItem,
+      t,
+      styles.describeText,
+      getCexInfoByAddress,
+    ]);
 
     const navigation = useRabbyAppNavigation();
     const handleNavigateDetail = useCallback(() => {

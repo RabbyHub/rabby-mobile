@@ -1717,7 +1717,11 @@
       "SupportedExchanges": "Bursa Didukung",
       "excludeBalanceTipsButton": "Saya Mengerti.",
       "excludeBalanceTips": "Aset ini dikecualikan dari total saldo Anda untuk akurasi. Anda dapat mengetuknya untuk melihat detail dan menyertakannya jika diinginkan.",
-      "IssuedBy": "Diterbitkan oleh"
+      "IssuedBy": "Diterbitkan oleh",
+      "ContentGeneratedByAI": "Konten ini dihasilkan oleh AI",
+      "ShowMore": "Tampilkan lebih banyak",
+      "Introduction": "Pendahuluan",
+      "Fold": "Fold"
     },
     "approvalsAddressList": {
       "title": "Persetujuan"

@@ -24,23 +24,21 @@ import BigNumber from 'bignumber.js';
 import { QuoteList } from './BridgeQuotes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { BridgeHeader } from './BridgeHeader';
+import { BridgeHeader, BridgeHeaderRef } from './BridgeHeader';
 import { openapi } from '@/core/request';
 import pRetry from 'p-retry';
 import { stats } from '@/utils/stats';
 import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
 import { toast } from '@/components/Toast';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
-import { StackActions, useNavigation } from '@react-navigation/native';
+import { useIsFocused } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import BridgeToken from './BridgeToken';
 import BridgeSwitchBtn from './BridgeSwitchBtn';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import BridgeShowMore, { RecommendFromToken } from './BridgeShowMore';
-import { tokenPriceImpact, useBridge } from '../hooks/token';
+import { useBridge } from '../hooks/token';
 import { Button } from '@/components2024/Button';
 
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
@@ -53,8 +51,19 @@ import {
 } from '@/components/ExternalSwapBridgeDappPopup';
 import { Tip } from '@/components';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { isAccountSupportMiniApproval } from '@/utils/account';
+import {
+  isAccountSupportDirectSign,
+  isAccountSupportMiniApproval,
+} from '@/utils/account';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
+import AuthButton from '@/components2024/AuthButton';
+import {
+  directSigningAtom,
+  isAbortedDirectSubmitError,
+  useCanProcessDirectSubmit,
+} from '@/hooks/useMiniApprovalDirectSign';
+import { useAtom } from 'jotai';
+import { BridgePendingTxItem } from './PendingTxItem';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -181,25 +190,43 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const { styles } = useTheme2024({ getStyle });
-
+  const headerRef = useRef<BridgeHeaderRef>(null);
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-  const Header = useCallback(() => <BridgeHeader />, []);
-  useEffect(() => {
-    setNavigationOptions({
-      headerRight: Header,
-    });
-  }, [Header, setNavigationOptions]);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
 
-  const { runAsync: runFetchBridgePendingCount } = usePollBridgePendingNumber();
+  const {
+    runAsync: runFetchBridgePendingCount,
+    pendingTxData,
+    clearLocalPendingTxData,
+    clearBridgeHistoryRedDot,
+  } = usePollBridgePendingNumber();
 
   const { currentAccount } = useCurrentAccount();
 
   const quoteVisible = useQuoteVisible();
 
   const setQuoteVisible = useSetQuoteVisible();
+
+  const openHistory = useMemoizedFn(() => {
+    headerRef.current?.openHistory();
+  });
+
+  const Header = useCallback(
+    () => (
+      <BridgeHeader
+        ref={headerRef}
+        clearBridgeHistoryRedDot={clearBridgeHistoryRedDot}
+      />
+    ),
+    [clearBridgeHistoryRedDot],
+  );
+  useEffect(() => {
+    setNavigationOptions({
+      headerRight: Header,
+    });
+  }, [Header, setNavigationOptions]);
 
   const {
     fromChain,
@@ -280,8 +307,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
   const refresh = useSetRefreshId();
 
   const [fetchingBridgeQuote, setFetchingBridgeQuote] = useState(false);
-
-  const [isShowSign, setIsShowSign] = useState(false);
 
   const gotoBridge = useMemoizedFn(async () => {
     if (
@@ -377,7 +402,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           status: 'fail',
           payAmount: amount,
         });
-        console.error(error);
+        console.log(error);
       } finally {
         setFetchingBridgeQuote(false);
       }
@@ -393,24 +418,20 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
       currentAccount?.address
     ) {
       try {
-        const { tx } = await pRetry(
-          () =>
-            openapi.getBridgeQuoteTxV2({
-              aggregator_id: selectedBridgeQuote.aggregator.id,
-              bridge_id: selectedBridgeQuote.bridge_id,
-              from_token_id: fromToken.id,
-              user_addr: currentAccount?.address,
-              from_chain_id: fromToken.chain,
-              from_token_raw_amount: new BigNumber(amount)
-                .times(10 ** fromToken.decimals)
-                .toFixed(0, 1)
-                .toString(),
-              to_chain_id: toToken.chain,
-              to_token_id: toToken.id,
-              slippage: new BigNumber(slippageState).div(100).toString(10),
-            }),
-          { retries: 1 },
-        );
+        const { tx } = await openapi.getBridgeQuoteTxV2({
+          aggregator_id: selectedBridgeQuote.aggregator.id,
+          bridge_id: selectedBridgeQuote.bridge_id,
+          from_token_id: fromToken.id,
+          user_addr: currentAccount?.address,
+          from_chain_id: fromToken.chain,
+          from_token_raw_amount: new BigNumber(amount)
+            .times(10 ** fromToken.decimals)
+            .toFixed(0, 1)
+            .toString(),
+          to_chain_id: toToken.chain,
+          to_token_id: toToken.id,
+          slippage: new BigNumber(slippageState).div(100).toString(10),
+        });
         stats.report('bridgeQuoteResult', {
           aggregatorIds: selectedBridgeQuote.aggregator.id,
           bridgeId: selectedBridgeQuote.bridge_id,
@@ -421,6 +442,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           status: tx ? 'success' : 'fail',
           payAmount: amount,
         });
+
         return buildBridgeToken(
           {
             to: tx.to,
@@ -460,8 +482,22 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               trigger: 'bridge',
             },
           },
-        );
+        ).then(res => {
+          if (canShowDirectSubmit) {
+            prepareMiniTransactions({
+              txs: res || [],
+              ga: {
+                category: 'Bridge',
+                source: 'bridge',
+              },
+              directSubmit: canShowDirectSubmit,
+            });
+          }
+
+          return res;
+        });
       } catch (error) {
+        setDirectSigning(false);
         toast.info((error as any)?.message || String(error));
         stats.report('bridgeQuoteResult', {
           aggregatorIds: selectedBridgeQuote.aggregator.id,
@@ -473,7 +509,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           status: 'fail',
           payAmount: amount,
         });
-        console.error(error);
+        console.debug(error);
       }
     }
   };
@@ -486,6 +522,14 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     manual: true,
   });
 
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused) {
+      refresh(e => e + 1);
+    }
+  }, [isFocused, refresh]);
+
   const runBuildSwapTxsRef = useRef<ReturnType<typeof runBuildTxs>>();
   const {
     prepareMiniTransactions,
@@ -495,14 +539,71 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
 
   const canUseMiniTx = isAccountSupportMiniApproval(currentAccount?.type);
 
-  const handleBridge = useMemoizedFn(async () => {
-    if (canUseMiniTx) {
-      try {
-        clearExpiredTimer();
-        setFetchingBridgeQuote(true);
-        const res = await runBuildSwapTxsRef.current;
-        if (res?.length) {
-          try {
+  const canShowDirectSubmit =
+    isAccountSupportDirectSign(currentAccount?.type) &&
+    isSupportedChain &&
+    !inSufficient;
+
+  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
+
+  const canDirectSign = useCanProcessDirectSubmit();
+
+  useEffect(() => {
+    if (canShowDirectSubmit && isFocused) {
+      prepareMiniTransactions({
+        txs: [],
+        ga: {
+          category: 'Bridge',
+          source: 'bridge',
+        },
+        directSubmit: true,
+      });
+    }
+  }, [
+    selectedBridgeQuote,
+    canShowDirectSubmit,
+    prepareMiniTransactions,
+    isFocused,
+  ]);
+
+  const { loading: isSubmitting, runAsync: handleBridge } = useRequest(
+    async () => {
+      if (canUseMiniTx) {
+        try {
+          clearExpiredTimer();
+
+          setFetchingBridgeQuote(true);
+
+          let res = await runBuildSwapTxsRef.current;
+          if (!res?.length) {
+            res = await runBuildTxs();
+            if (res?.length && canShowDirectSubmit && !isDirectSigning) {
+              prepareMiniTransactions({
+                txs: res!,
+                ga: {
+                  category: 'Bridge',
+                  source: 'bridge',
+                  // trigger: rbiSource,
+                },
+                directSubmit: canShowDirectSubmit,
+              });
+            }
+          }
+
+          if (!res?.length) {
+            toast.info('please retry');
+            throw new Error('no txs');
+          }
+          if (canShowDirectSubmit) {
+            if (isDirectSigning) {
+              return;
+            } else {
+              setDirectSigning(true);
+            }
+            await sendPrepareMiniTransactions({
+              directSubmit: true,
+            });
+          } else {
             await sendMiniTransactions({
               txs: res,
               ga: {
@@ -510,30 +611,37 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
                 source: 'bridge',
                 // trigger: rbiSource,
               },
+              directSubmit: false,
             });
-            setIsShowSign(false);
-            mutateTxs([]);
-            handleAmountChange('');
+          }
 
-            setTimeout(() => {
-              runFetchBridgePendingCount();
-            }, 500);
-          } catch (e) {
-            console.error(e);
+          mutateTxs([]);
+          handleAmountChange('');
+          setTimeout(() => {
+            runFetchBridgePendingCount();
+          }, 500);
+        } catch (error) {
+          setDirectSigning(false);
+          if ((error as any)?.name === 'SimulateError') {
+            gotoBridge();
+          } else if (isAbortedDirectSubmitError(error)) {
+            console.log('AbortedDirectSubmitError bridge');
+          } else {
             mutateTxs([]);
             refresh(e => e + 1);
-            setIsShowSign(false);
           }
+          console.error('handleBridge', error);
+        } finally {
+          setFetchingBridgeQuote(false);
         }
-      } catch (error) {
-        console.error('runBuildSwapTxsRef', error);
-      } finally {
-        setFetchingBridgeQuote(false);
+      } else {
+        gotoBridge();
       }
-    } else {
-      gotoBridge();
-    }
-  });
+    },
+    {
+      manual: true,
+    },
+  );
 
   const amountAvailable = useMemo(() => Number(amount) > 0, [amount]);
 
@@ -555,11 +663,11 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     !quoteList?.length;
 
   useEffect(() => {
-    if (!btnDisabled && selectedBridgeQuote && canUseMiniTx) {
+    if (selectedBridgeQuote && canUseMiniTx) {
       mutateTxs([]);
       runBuildSwapTxsRef.current = runBuildTxs();
     }
-  }, [runBuildTxs, canUseMiniTx, btnDisabled, selectedBridgeQuote, mutateTxs]);
+  }, [runBuildTxs, canUseMiniTx, selectedBridgeQuote, mutateTxs]);
 
   const btnText = useMemo(() => {
     if (showExternalDappTips) {
@@ -579,8 +687,6 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     selectedBridgeQuote?.shouldApproveToken,
     t,
   ]);
-
-  const navigation = useNavigation();
 
   const handleConfirm = () => {
     if (showExternalDappTips && externalDapps.length > 0) {
@@ -725,6 +831,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
         <View>
           {selectedBridgeQuote && inSufficientCanGetQuote && (
             <BridgeShowMore
+              supportDirectSign={canShowDirectSubmit}
               openFeePopup={openFeePopup}
               open={showMoreOpen}
               setOpen={setShowMoreOpen}
@@ -772,6 +879,17 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
             </>
           )}
         </View>
+        {Boolean(
+          !(selectedBridgeQuote && inSufficientCanGetQuote) &&
+            !recommendFromToken &&
+            pendingTxData,
+        ) && (
+          <BridgePendingTxItem
+            openHistory={openHistory}
+            data={pendingTxData!}
+            clearLocalPendingTxData={clearLocalPendingTxData}
+          />
+        )}
       </KeyboardAwareScrollView>
 
       <View
@@ -787,17 +905,34 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               ? t('component.externalSwapBrideDappPopup.noDapps')
               : undefined
           }>
-          <Button
-            onPress={handleConfirm}
-            title={btnText}
-            titleStyle={styles.btnTitle}
-            loading={fetchingBridgeQuote}
-            disabled={
-              !isSupportedChain && externalDapps.length > 0
-                ? false
-                : btnDisabled
-            }
-          />
+          {canShowDirectSubmit ? (
+            <AuthButton
+              authTitle={t('page.whitelist.confirmPassword')}
+              title={t('global.confirm')}
+              onFinished={handleBridge}
+              disabled={btnDisabled || !canDirectSign || isDirectSigning}
+              type={'primary'}
+              syncUnlockTime
+              onBeforeAuth={() => {
+                clearExpiredTimer();
+              }}
+              onCancel={() => {
+                refresh(e => e + 1);
+              }}
+            />
+          ) : (
+            <Button
+              onPress={handleConfirm}
+              title={btnText}
+              titleStyle={styles.btnTitle}
+              loading={fetchingBridgeQuote}
+              disabled={
+                !isSupportedChain && externalDapps.length > 0
+                  ? false
+                  : btnDisabled
+              }
+            />
+          )}
         </Tip>
       </View>
 

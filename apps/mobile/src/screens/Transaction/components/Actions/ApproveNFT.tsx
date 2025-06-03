@@ -289,7 +289,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   detailContainer: {
     // flex: 1,
     width: '100%',
-    marginTop: 20,
+    marginTop: 12,
     borderRadius: 16,
     backgroundColor: !isLight
       ? colors2024['neutral-bg-2']

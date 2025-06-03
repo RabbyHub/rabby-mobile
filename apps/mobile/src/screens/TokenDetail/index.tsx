@@ -12,7 +12,7 @@ import {
   AbstractPortfolio,
   AbstractPortfolioToken,
   AbstractProject,
-} from '@/screens/home/types';
+} from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -21,7 +21,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
@@ -34,7 +34,6 @@ import {
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenArea } from './components/TokenArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
-import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { RcIconMore } from '@/assets/icons/home';
@@ -44,7 +43,7 @@ import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { CombineTokensItem } from '../Home/hooks/store';
 import { RelatedDeFi } from './components/RelatedDeFi';
-import { navigate, naviPush } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -54,7 +53,6 @@ import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
-import LinearGradient from 'react-native-linear-gradient';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
 import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
@@ -86,7 +84,7 @@ export const RightMore: React.FC<{
   isMultiAddress?: boolean;
   triggerUpdate: () => void;
   refreshTags: () => void;
-}> = ({ token, triggerUpdate, isMultiAddress, refreshTags }) => {
+}> = ({ token, triggerUpdate, refreshTags }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
 
@@ -184,7 +182,7 @@ export const RightMore: React.FC<{
 };
 
 export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle: getStyle,
   });
   const { t } = useTranslation();
@@ -219,15 +217,15 @@ export const TokenDetailScreen = () => {
     needUseCacheToken,
     unHold: _unHold,
     isSingleAddress,
-    isSwapToTokenDetail,
     tokenSelectType,
   } = route.params || {};
 
-  const { styles, colors2024, isLight } = useTheme2024({
+  const { styles, isLight } = useTheme2024({
     getStyle,
   });
 
-  const { safeOffHeader, safeTop } = useSafeSizes();
+  const { safeOffHeader } = useSafeSizes();
+  const [isUp, setIsUp] = useState(true);
   const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
 
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
@@ -399,22 +397,6 @@ export const TokenDetailScreen = () => {
     });
   });
 
-  const handleBridge = useMemoizedFn(async () => {
-    const chain = findChain({
-      serverId: token.chain,
-    });
-    if (isSingleAddress) {
-      await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
-    }
-    navigation.push(RootNames.StackTransaction, {
-      screen: isSingleAddress ? RootNames.Bridge : RootNames.MultiBridge,
-      params: {
-        chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-        tokenId: token?._tokenId,
-      },
-    });
-  });
-
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
     if (isSingleAddress && token.amount) {
@@ -527,9 +509,13 @@ export const TokenDetailScreen = () => {
       overwriteStyle={styles.rootScreenContainer}>
       <ImageBackground
         source={
-          isLight
-            ? require('@/assets2024/icons/home/ImgSingleBgUp.png')
-            : require('@/assets2024/icons/home/ImgSingleBgUpDark.png')
+          isUp
+            ? isLight
+              ? require('@/assets2024/singleHome/home-profit-bg-1.png')
+              : require('@/assets2024/singleHome/home-profit-dark-bg-1.png')
+            : isLight
+            ? require('@/assets2024/singleHome/home-loss-bg-1.png')
+            : require('@/assets2024/singleHome/home-loss-dark-bg-1.png')
         }
         resizeMode="cover"
         style={{
@@ -543,9 +529,13 @@ export const TokenDetailScreen = () => {
       <ScrollView>
         <ImageBackground
           source={
-            isLight
-              ? require('@/assets2024/icons/home/ImgSingleBgDown.png')
-              : require('@/assets2024/icons/home/ImgSingleBgDownDark.png')
+            isUp
+              ? isLight
+                ? require('@/assets2024/singleHome/home-profit-bg-2.png')
+                : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
+              : isLight
+              ? require('@/assets2024/singleHome/home-loss-bg-2.png')
+              : require('@/assets2024/singleHome/home-loss-dark-bg-2.png')
           }
           resizeMode="cover"
           style={{
@@ -553,7 +543,7 @@ export const TokenDetailScreen = () => {
             top: 0,
             left: 0,
             width: '100%',
-            height: 250,
+            height: 150,
           }}
         />
         <View style={styles.riskContainer}>
@@ -569,6 +559,7 @@ export const TokenDetailScreen = () => {
             token={tokenWithAmount || token}
             originToken={token}
             finalAccount={finalAccount}
+            onUpChange={b => setIsUp(b)}
             amountList={tokenFromAddress}
             relateDefiList={relateDefiList}
             isSingleAddress={isSingleAddress}

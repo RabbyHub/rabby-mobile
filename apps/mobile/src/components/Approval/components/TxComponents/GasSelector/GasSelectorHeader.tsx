@@ -62,6 +62,9 @@ import { default as RcIconGasAccountActive } from '@/assets/icons/sign/tx/gas-ac
 import { SvgProps } from 'react-native-svg';
 import { RcIconInfoCC } from '@/assets/icons/common';
 import { apiProvider } from '@/core/apis';
+import { useSetAtom } from 'jotai';
+import { miniApprovalGasAtom } from '@/hooks/useMiniApprovalDirectSign';
+import useDebounce from 'react-use/lib/useDebounce';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -99,6 +102,7 @@ interface GasSelectorProps {
   gasCalcMethod: (price: number) => Promise<{
     gasCostUsd: BigNumber;
     gasCostAmount: BigNumber;
+    maxGasCostAmount?: BigNumber;
   }>;
   disabled?: boolean;
   manuallyChangeGasLimit: boolean;
@@ -125,6 +129,10 @@ interface GasSelectorProps {
     balance_is_enough: boolean;
     chain_not_support: boolean;
   };
+  directSubmit?: boolean;
+  checkGasLevelIsNotEnough?: (
+    gas: GasSelectorResponse,
+  ) => Promise<[number, boolean, boolean]>;
 }
 
 const useExplainGas = ({
@@ -137,11 +145,13 @@ const useExplainGas = ({
   value: {
     gasCostUsd: BigNumber;
     gasCostAmount: BigNumber;
+    maxGasCostAmount?: BigNumber;
   };
 }) => {
   const [result, setResult] = useState<{
     gasCostUsd: BigNumber;
     gasCostAmount: BigNumber;
+    maxGasCostAmount?: BigNumber;
   }>(value);
   useEffect(() => {
     method(price).then(setResult);
@@ -176,6 +186,8 @@ export const GasSelectorHeader = ({
   gasAccountCost,
   onChangeGasMethod,
   tx,
+  checkGasLevelIsNotEnough,
+  directSubmit,
 }: GasSelectorProps) => {
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
@@ -299,6 +311,116 @@ export const GasSelectorHeader = ({
     },
   });
 
+  const gasSlowUsd = useExplainGas({
+    price: gasList.find(e => e.level === 'slow')?.price || 0,
+    method: gasCalcMethod,
+    value: {
+      gasCostAmount: new BigNumber(gas.gasCostAmount),
+      gasCostUsd: new BigNumber(gas.gasCostUsd),
+    },
+  }).gasCostUsd;
+
+  const gasNormalUsd = useExplainGas({
+    price: gasList.find(e => e.level === 'normal')?.price || 0,
+    method: gasCalcMethod,
+    value: {
+      gasCostAmount: new BigNumber(gas.gasCostAmount),
+      gasCostUsd: new BigNumber(gas.gasCostUsd),
+    },
+  }).gasCostUsd;
+
+  const gasFastUsd = useExplainGas({
+    price: gasList.find(e => e.level === 'fast')?.price || 0,
+    method: gasCalcMethod,
+    value: {
+      gasCostAmount: new BigNumber(gas.gasCostAmount),
+      gasCostUsd: new BigNumber(gas.gasCostUsd),
+    },
+  }).gasCostUsd;
+
+  const [gasIsNotEnough, setGasIsNotEnough] = useState({
+    slow: false,
+    normal: false,
+    fast: false,
+  });
+  const [gasAccountIsNotEnough, setGasAccountIsNotEnough] = useState<{
+    slow: [boolean, string];
+    normal: [boolean, string];
+    fast: [boolean, string];
+  }>({
+    slow: [false, ''],
+    normal: [false, ''],
+    fast: [false, ''],
+  });
+
+  const calcGasAccountUsd = useCallback((n: number | string) => {
+    const v = Number(n);
+    if (!Number.isNaN(v) && v < 0.0001) {
+      return `$${n}`;
+    }
+    return formatGasHeaderUsdValue(n || '0');
+  }, []);
+
+  useDebounce(
+    () => {
+      if (
+        checkGasLevelIsNotEnough &&
+        gasList.length &&
+        directSubmit &&
+        isReady
+      ) {
+        let init = true;
+        ['slow', 'normal', 'fast'].map(level => {
+          const selectedGas = gasList.find(e => e.level === level);
+          return checkGasLevelIsNotEnough({
+            ...gasList.find(e => e.level === level),
+            gasLimit: Number(afterGasLimit),
+            nonce: Number(customNonce),
+            level: selectedGas!.level,
+            maxPriorityFee: calcMaxPriorityFee(
+              gasList,
+              selectedGas!,
+              chainId,
+              isCancel || isSpeedUp,
+            ),
+          } as GasSelectorResponse)
+            .then(arr => {
+              if (init) {
+                setGasAccountIsNotEnough(pre => ({
+                  ...pre,
+                  [level]: [
+                    !arr[1],
+                    calcGasAccountUsd((arr[0] as unknown as number) || 0),
+                  ],
+                }));
+                setGasIsNotEnough(pre => ({ ...pre, [level]: arr[2] }));
+              }
+            })
+            .catch(e => {
+              console.log('checkGasLevelIsNotEnough error', e);
+            });
+        });
+
+        return () => {
+          init = false;
+        };
+      }
+    },
+    100,
+    [
+      isReady,
+      directSubmit,
+      afterGasLimit,
+      checkGasLevelIsNotEnough,
+      customNonce,
+      gasList,
+      chainId,
+      isCancel,
+      isSpeedUp,
+      calcGasAccountUsd,
+    ],
+  );
+
   const handleConfirmGas = () => {
     if (!selectedGas) return;
     if (selectedGas.level === 'custom') {
@@ -341,7 +463,7 @@ export const GasSelectorHeader = ({
   };
 
   const [isSelectCustom, setIsSelectCustom] = useState(false);
-  const handleClickEdit = () => {
+  const handleClickEdit = useCallback(() => {
     setModalVisible(true);
     modalRef.current?.expand();
     if (rawSelectedGas?.level !== 'custom') {
@@ -358,7 +480,7 @@ export const GasSelectorHeader = ({
     setTimeout(() => {
       customerInputRef.current?.focus();
     }, 50);
-  };
+  }, [chain?.serverId, gasLimit, nonce, rawSelectedGas]);
 
   const panelSelection = (e, gas: GasLevel) => {
     e.stopPropagation();
@@ -389,39 +511,51 @@ export const GasSelectorHeader = ({
     }
   };
 
-  const externalPanelSelection = (gas: GasLevel) => {
-    const target = gas;
+  const externalPanelSelection = useCallback(
+    (gas: GasLevel) => {
+      const target = gas;
 
-    if (gas.level === 'custom') {
-      if (!changedCustomGas) return;
-      onChange({
-        ...target,
-        level: 'custom',
-        price: Number(target.price),
-        gasLimit: Number(afterGasLimit),
-        nonce: Number(customNonce),
-        maxPriorityFee: calcMaxPriorityFee(
-          gasList,
-          target,
-          chainId,
-          isCancel || isSpeedUp,
-        ),
-      });
-    } else {
-      onChange({
-        ...gas,
-        gasLimit: Number(afterGasLimit),
-        nonce: Number(customNonce),
-        level: gas?.level,
-        maxPriorityFee: calcMaxPriorityFee(
-          gasList,
-          target,
-          chainId,
-          isCancel || isSpeedUp,
-        ),
-      });
-    }
-  };
+      if (gas.level === 'custom') {
+        if (!changedCustomGas) return;
+        onChange({
+          ...target,
+          level: 'custom',
+          price: Number(target.price),
+          gasLimit: Number(afterGasLimit),
+          nonce: Number(customNonce),
+          maxPriorityFee: calcMaxPriorityFee(
+            gasList,
+            target,
+            chainId,
+            isCancel || isSpeedUp,
+          ),
+        });
+      } else {
+        onChange({
+          ...gas,
+          gasLimit: Number(afterGasLimit),
+          nonce: Number(customNonce),
+          level: gas?.level,
+          maxPriorityFee: calcMaxPriorityFee(
+            gasList,
+            target,
+            chainId,
+            isCancel || isSpeedUp,
+          ),
+        });
+      }
+    },
+    [
+      afterGasLimit,
+      chainId,
+      changedCustomGas,
+      customNonce,
+      gasList,
+      isCancel,
+      isSpeedUp,
+      onChange,
+    ],
+  );
 
   const customGasConfirm = e => {
     const customGas = gasList.find(item => item.level === 'custom')!;
@@ -622,14 +756,6 @@ export const GasSelectorHeader = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalExplainGas?.gasCostAmount]);
 
-  const calcGasAccountUsd = useCallback((n: number | string) => {
-    const v = Number(n);
-    if (!Number.isNaN(v) && v < 0.0001) {
-      return `$${n}`;
-    }
-    return formatGasHeaderUsdValue(n || '0');
-  }, []);
-
   const [isGasHovering, setIsGasHovering] = useState(false);
 
   const [isGasAccountHovering, setIsGasAccountHovering] = useState(false);
@@ -656,6 +782,66 @@ export const GasSelectorHeader = ({
     }
     return v;
   }, [hasFee, hasTip]);
+
+  const setMiniApprovalGasState = useSetAtom(miniApprovalGasAtom);
+
+  useEffect(() => {
+    if (
+      isFirstTimeLoad ||
+      disabled ||
+      !isReady ||
+      !selectedGas ||
+      !directSubmit
+    ) {
+      setMiniApprovalGasState(undefined);
+      return;
+    }
+
+    setMiniApprovalGasState(pre => ({
+      ...pre,
+      gasIsNotEnough,
+      gasAccountIsNotEnough,
+      loading: !isReady && !isFirstTimeLoad,
+      gasMethod,
+      onChangeGasMethod,
+      isDisabledGasPopup,
+      gasList,
+      selectedGas,
+      externalPanelSelection,
+      handleClickEdit,
+      changedCustomGas,
+      gasCostUsdStr,
+      gasUsdList: {
+        slow: formatGasHeaderUsdValue(new BigNumber(gasSlowUsd).toString(10)),
+        normal: formatGasHeaderUsdValue(
+          new BigNumber(gasNormalUsd).toString(10),
+        ),
+        fast: formatGasHeaderUsdValue(new BigNumber(gasFastUsd).toString(10)),
+      },
+      gasAccountCost: gasAccountCost?.gas_account_cost,
+    }));
+  }, [
+    gasAccountIsNotEnough,
+    gasIsNotEnough,
+    directSubmit,
+    isReady,
+    isFirstTimeLoad,
+    disabled,
+    setMiniApprovalGasState,
+    gasMethod,
+    onChangeGasMethod,
+    isDisabledGasPopup,
+    gasList,
+    selectedGas,
+    externalPanelSelection,
+    handleClickEdit,
+    changedCustomGas,
+    gasCostUsdStr,
+    gasSlowUsd,
+    gasNormalUsd,
+    gasFastUsd,
+    gasAccountCost?.gas_account_cost,
+  ]);
 
   if (!isReady && isFirstTimeLoad) {
     return (

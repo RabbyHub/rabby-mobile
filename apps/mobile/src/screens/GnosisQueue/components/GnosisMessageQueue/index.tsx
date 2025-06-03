@@ -1,23 +1,18 @@
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useCurrentAccount } from '@/hooks/account';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
-import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
 import { useThemeColors } from '@/hooks/theme';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { createGetStyles } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
-import { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
 import dayjs from 'dayjs';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { GnosisTransactionQueueList } from './components/GnosisTransactionQueueList';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apisSafe } from '@/core/apis/safe';
 import { useGnosisPendingMessages } from '@/hooks/gnosis/useGnosisPendingMessages';
-import { SafeMessage } from '@rabby-wallet/gnosis-sdk';
+import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { GnosisMessageQueueList } from './GnosisMessageQueueList';
 
 const getTabs = (

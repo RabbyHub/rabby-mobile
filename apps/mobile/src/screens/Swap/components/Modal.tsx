@@ -1,6 +1,12 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { Modal, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import {
+  Modal,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  ViewStyle,
+} from 'react-native';
 
 export const SwapModal = ({
   visible,
@@ -9,12 +15,14 @@ export const SwapModal = ({
   modalStyle,
   overlayStyle,
   children,
+  overlayClose,
 }: React.PropsWithChildren<{
   visible: boolean;
   onCancel: () => void;
   // onConfirm: () => void;
   modalStyle?: StyleProp<ViewStyle>;
   overlayStyle?: StyleProp<ViewStyle>;
+  overlayClose?: boolean;
 }>) => {
   const { styles } = useThemeStyles(getStyles);
   return (
@@ -24,10 +32,12 @@ export const SwapModal = ({
       onRequestClose={onCancel}
       visible={visible}
       style={[styles.modal, modalStyle]}>
-      <View style={[styles.overlay, overlayStyle]}>
+      <Pressable
+        style={[styles.overlay, overlayStyle]}
+        onPress={() => (overlayClose ? onCancel() : undefined)}>
         {children}
         {/* <Inner onCancel={onCancel} onConfirm={onConfirm} /> */}
-      </View>
+      </Pressable>
     </Modal>
   );
 };

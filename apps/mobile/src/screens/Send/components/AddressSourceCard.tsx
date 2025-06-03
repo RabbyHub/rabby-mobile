@@ -25,7 +25,6 @@ import {
 } from '@rabby-wallet/keyring-utils/dist/types';
 import { Skeleton } from '@rneui/themed';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
-import { showSubWalletIcon } from '@/utils/walletInfo2024';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -80,7 +79,7 @@ const AddressSource = ({ account, style, addressDesc, loading }: IProps) => {
                     height={46}
                   />
                 )}
-                {inWhiteList && !showSubWalletIcon(account.brandName) && (
+                {inWhiteList && (
                   <RcIconLockCC
                     style={styles.lockIcon}
                     color={colors2024['brand-default']}

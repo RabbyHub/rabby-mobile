@@ -68,3 +68,12 @@ export const isAccountSupportMiniApproval = (type?: string) => {
     ] as string[]
   ).includes(type);
 };
+
+export const isAccountSupportDirectSign = (type?: string) => {
+  if (!type) {
+    return false;
+  }
+  return (
+    [KEYRING_CLASS.MNEMONIC, KEYRING_CLASS.PRIVATE_KEY] as string[]
+  ).includes(type);
+};

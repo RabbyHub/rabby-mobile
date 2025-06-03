@@ -1,14 +1,9 @@
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
-import {
-  DEX_WITH_WRAP,
-  getChainDefaultToken,
-  SWAP_SUPPORT_CHAINS,
-} from '@/constant/swap';
+import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
 import { preferenceService, swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,19 +11,16 @@ import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import {
   CompositeScreenProps,
-  StackActions,
-  useFocusEffect,
   useIsFocused,
   useNavigation,
   useNavigationState,
 } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import { useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import React, {
   useCallback,
   useEffect,
@@ -46,7 +38,6 @@ import { LowCreditModal } from './components/LowCreditModal';
 import { QuoteList } from './components/Quotes';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
 import {
-  useDetectLoss,
   usePollSwapPendingNumber,
   useSlippageStore,
   useSwapUnlimitedAllowance,
@@ -90,9 +81,19 @@ import {
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { Tip } from '@/components';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
-import { isAccountSupportMiniApproval } from '@/utils/account';
-import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
-
+import {
+  isAccountSupportDirectSign,
+  isAccountSupportMiniApproval,
+} from '@/utils/account';
+import AuthButton from '@/components2024/AuthButton';
+import {
+  directSigningAtom,
+  isAbortedDirectSubmitError,
+  useCanProcessDirectSubmit,
+} from '@/hooks/useMiniApprovalDirectSign';
+import { PendingTxItem } from './components/PendingTxItem';
+import { error } from 'console';
+import { toast } from '@/components2024/Toast';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -113,16 +114,28 @@ const Swap = ({
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const {
+    runAsync: runFetchSwapPendingCount,
+    localPendingTxData,
+    clearLocalPendingTxData,
+    runFetchLocalPendingTx,
+    clearSwapHistoryRedDot,
+  } = usePollSwapPendingNumber(5000);
+
   const headerRight = useCallback(
-    () => <SwapHeader isForMultipleAdderss={isForMultipleAdderss} />,
-    [isForMultipleAdderss],
+    () => (
+      <SwapHeader
+        isForMultipleAdderss={isForMultipleAdderss}
+        clearSwapHistoryRedDot={clearSwapHistoryRedDot}
+      />
+    ),
+    [isForMultipleAdderss, clearSwapHistoryRedDot],
   );
   useEffect(() => {
     setNavigationOptions({
       headerRight,
     });
   }, [headerRight, setNavigationOptions]);
-  const { runAsync: runFetchSwapPendingCount } = usePollSwapPendingNumber(5000);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
@@ -204,7 +217,6 @@ const Swap = ({
     switchSceneCurrentAccount('@ActiveDappWebViewModal', currentAccount);
     _openTab(url);
   });
-
   const [swapDappOpen, setSwapDappOpen] = useState(false);
 
   const refresh = useSetAtom(refreshIdAtom);
@@ -387,6 +399,7 @@ const Swap = ({
           },
         );
         handleAmountChange('');
+        runFetchLocalPendingTx();
         setTimeout(() => {
           runFetchSwapPendingCount();
         }, 500);
@@ -464,6 +477,14 @@ const Swap = ({
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
   }, [chain]);
 
+  const canShowDirectSubmit = useMemo(
+    () =>
+      isAccountSupportDirectSign(currentAccount?.type) &&
+      isSupportedChain &&
+      !inSufficient,
+    [currentAccount?.type, inSufficient, isSupportedChain],
+  );
+
   const { loading: isSubmitting, runAsync: handleSwap } = useRequest(
     async () => {
       if (receiveToken) {
@@ -471,27 +492,56 @@ const Swap = ({
       }
       if (isAccountSupportMiniApproval(currentAccount?.type)) {
         clearExpiredTimer();
+
         try {
-          if (txs?.length) {
-            await sendPrepareMiniTransactions();
-          } else {
-            const res = await runBuildSwapTxs();
-            if (res) {
-              await sendMiniTransactions({
-                txs: res,
+          let currentTxs = txs;
+          if (!currentTxs?.length) {
+            currentTxs = await runBuildSwapTxs();
+
+            if (canShowDirectSubmit && currentTxs?.length && !isDirectSigning) {
+              prepareMiniTransactions({
+                txs: currentTxs || [],
                 ga: {
                   category: 'Swap',
                   source: 'swap',
                   swapUseSlider,
                 },
+                directSubmit: canShowDirectSubmit,
               });
             }
           }
+
+          if (!currentTxs?.length) {
+            toast.info('please retry');
+            throw new Error('no txs');
+          }
+
+          if (canShowDirectSubmit) {
+            if (isDirectSigning) {
+              return;
+            } else {
+              setDirectSigning(true);
+            }
+            await sendPrepareMiniTransactions({
+              directSubmit: canShowDirectSubmit,
+            });
+          } else {
+            await sendMiniTransactions({
+              txs: currentTxs,
+              ga: {
+                category: 'Swap',
+                source: 'swap',
+                swapUseSlider,
+              },
+            });
+          }
+
           mutateTxs([]);
           handleAmountChange('');
           setTimeout(() => {
             runFetchSwapPendingCount();
           }, 1000);
+          runFetchLocalPendingTx();
           preferenceService.setReportActionTs(
             REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_CONFIRM,
             {
@@ -499,9 +549,16 @@ const Swap = ({
             },
           );
         } catch (e) {
-          console.error(e);
-          mutateTxs([]);
-          refresh(e => e + 1);
+          setDirectSigning(false);
+          console.debug('handleSwap error', error);
+          if ((e as any)?.name === 'SimulateError') {
+            gotoSwap();
+          } else if (isAbortedDirectSubmitError(e)) {
+            console.log('AbortedDirectSubmitError swap');
+          } else {
+            mutateTxs([]);
+            refresh(e => e + 1);
+          }
         }
       } else {
         gotoSwap();
@@ -538,21 +595,27 @@ const Swap = ({
     !activeProvider ||
     isSubmitting;
 
-  useEffect(() => {
-    if (!swapBtnDisabled && activeProvider && canUseMiniTx) {
-      mutateTxs([]);
-      runBuildSwapTxs();
-    }
+  const isShowMoreVisible = useMemo(() => {
+    return (
+      showMoreVisible &&
+      Number(payAmount) > 0 &&
+      inSufficientCanGetQuote &&
+      !!payToken &&
+      !!receiveToken
+    );
   }, [
-    canUseMiniTx,
-    swapBtnDisabled,
-    activeProvider,
-    runBuildSwapTxs,
-    mutateTxs,
+    payAmount,
+    inSufficientCanGetQuote,
+    showMoreVisible,
+    payToken,
+    receiveToken,
   ]);
 
+  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
+  const canDirectSign = useCanProcessDirectSubmit();
+
   useEffect(() => {
-    if (!isSubmitting) {
+    if (!isSubmitting && canUseMiniTx && !canShowDirectSubmit) {
       prepareMiniTransactions({
         txs: txs || [],
         ga: {
@@ -562,7 +625,71 @@ const Swap = ({
         },
       });
     }
-  }, [txs, prepareMiniTransactions, swapUseSlider, isSubmitting]);
+  }, [
+    canUseMiniTx,
+    txs,
+    prepareMiniTransactions,
+    swapUseSlider,
+    isSubmitting,
+    canShowDirectSubmit,
+  ]);
+
+  useEffect(() => {
+    if (
+      !swapBtnDisabled &&
+      activeProvider &&
+      canUseMiniTx &&
+      canShowDirectSubmit
+    ) {
+      mutateTxs([]);
+      runBuildSwapTxs().then(txs => {
+        prepareMiniTransactions({
+          txs: txs || [],
+          ga: {
+            category: 'Swap',
+            source: 'swap',
+            swapUseSlider,
+          },
+          directSubmit: canShowDirectSubmit,
+        });
+      });
+    }
+  }, [
+    activeProvider,
+    canShowDirectSubmit,
+    canUseMiniTx,
+    mutateTxs,
+    prepareMiniTransactions,
+    runBuildSwapTxs,
+    swapBtnDisabled,
+    swapUseSlider,
+  ]);
+
+  useEffect(() => {
+    if (isFocused && canShowDirectSubmit) {
+      prepareMiniTransactions({
+        txs: [],
+        ga: {
+          category: 'Swap',
+          source: 'swap',
+          swapUseSlider,
+        },
+        directSubmit: canShowDirectSubmit,
+      });
+    }
+  }, [
+    isFocused,
+    activeProvider,
+    canShowDirectSubmit,
+    prepareMiniTransactions,
+    swapUseSlider,
+  ]);
+
+  useEffect(() => {
+    if (isFocused) {
+      refresh(e => e + 1);
+    }
+  }, [isFocused, refresh]);
 
   useEffect(() => {
     if (!isFocused) {
@@ -818,58 +945,64 @@ const Swap = ({
             <Text style={styles.errorTip}>{t('page.swap.no-quote-found')}</Text>
           ) : null}
 
-          {showMoreVisible &&
-            Number(payAmount) > 0 &&
-            inSufficientCanGetQuote &&
-            !!amountAvailable &&
-            !!payToken &&
-            !!receiveToken && (
-              <View
-                style={{
-                  marginHorizontal: -24,
-                }}>
-                <BridgeShowMore
-                  openFeePopup={openFeePopup}
-                  open={showMoreOpen}
-                  setOpen={setShowMoreOpen}
-                  sourceName={sourceName}
-                  sourceLogo={sourceLogo}
-                  slippage={slippageState}
-                  displaySlippage={slippage}
-                  onSlippageChange={setSlippage}
-                  fromToken={payToken}
-                  toToken={receiveToken}
-                  amount={payAmount}
-                  toAmount={
-                    isWrapToken
-                      ? payAmount
-                      : activeProvider?.actualReceiveAmount || 0
-                  }
-                  openQuotesList={openQuotesList}
-                  quoteLoading={quoteLoading}
-                  slippageError={isSlippageHigh || isSlippageLow}
-                  autoSlippage={!!autoSlippage}
-                  isCustomSlippage={isCustomSlippage}
-                  setAutoSlippage={setAutoSlippage}
-                  setIsCustomSlippage={setIsCustomSlippage}
-                  type="swap"
-                  isWrapToken={isWrapToken}
-                  isBestQuote={
-                    !!activeProvider &&
-                    !!bestQuoteDex &&
-                    bestQuoteDex === activeProvider?.name
-                  }
-                  showMEVGuardedSwitch={showMEVGuardedSwitch}
-                  originPreferMEVGuarded={originPreferMEVGuarded}
-                  switchPreferMEV={switchPreferMEV}
-                  recommendValue={
-                    slippageValidInfo?.is_valid
-                      ? undefined
-                      : slippageValidInfo?.suggest_slippage
-                  }
-                />
-              </View>
-            )}
+          {isShowMoreVisible && (
+            <View
+              style={{
+                marginHorizontal: -24,
+              }}>
+              <BridgeShowMore
+                supportDirectSign={canShowDirectSubmit}
+                openFeePopup={openFeePopup}
+                open={showMoreOpen}
+                setOpen={setShowMoreOpen}
+                sourceName={sourceName}
+                sourceLogo={sourceLogo}
+                slippage={slippageState}
+                displaySlippage={slippage}
+                onSlippageChange={setSlippage}
+                fromToken={payToken}
+                toToken={receiveToken}
+                amount={payAmount}
+                toAmount={
+                  isWrapToken
+                    ? payAmount
+                    : activeProvider?.actualReceiveAmount || 0
+                }
+                openQuotesList={openQuotesList}
+                quoteLoading={quoteLoading}
+                slippageError={isSlippageHigh || isSlippageLow}
+                autoSlippage={!!autoSlippage}
+                isCustomSlippage={isCustomSlippage}
+                setAutoSlippage={setAutoSlippage}
+                setIsCustomSlippage={setIsCustomSlippage}
+                type="swap"
+                isWrapToken={isWrapToken}
+                isBestQuote={
+                  !!activeProvider &&
+                  !!bestQuoteDex &&
+                  bestQuoteDex === activeProvider?.name
+                }
+                showMEVGuardedSwitch={showMEVGuardedSwitch}
+                originPreferMEVGuarded={originPreferMEVGuarded}
+                switchPreferMEV={switchPreferMEV}
+                recommendValue={
+                  slippageValidInfo?.is_valid
+                    ? undefined
+                    : slippageValidInfo?.suggest_slippage
+                }
+              />
+            </View>
+          )}
+
+          {Boolean(!isShowMoreVisible && localPendingTxData) && (
+            <PendingTxItem
+              type="swap"
+              isForMultipleAdderss={isForMultipleAdderss}
+              data={localPendingTxData!}
+              clearLocalPendingTxData={clearLocalPendingTxData}
+            />
+          )}
+
           {!isSupportedChain ? (
             <>
               <ExternalSwapBridgeDappTips
@@ -899,35 +1032,52 @@ const Swap = ({
               : undefined
           }>
           <View>
-            <Button
-              onPress={() => {
-                if (!isSupportedChain && !externalDapps.length) {
-                  return;
-                }
-                if (!isSupportedChain && externalDapps.length > 0) {
-                  setSwapDappOpen(true);
-                  return;
-                }
-                if (!activeProvider || slippageChanged) {
+            {canShowDirectSubmit ? (
+              <AuthButton
+                authTitle={t('page.whitelist.confirmPassword')}
+                title={t('global.confirm')}
+                onFinished={handleSwap}
+                disabled={swapBtnDisabled || !canDirectSign || isDirectSigning}
+                type={'primary'}
+                syncUnlockTime
+                onBeforeAuth={() => {
+                  clearExpiredTimer();
+                }}
+                onCancel={() => {
                   refresh(e => e + 1);
-                  return;
+                }}
+              />
+            ) : (
+              <Button
+                onPress={() => {
+                  if (!isSupportedChain && !externalDapps.length) {
+                    return;
+                  }
+                  if (!isSupportedChain && externalDapps.length > 0) {
+                    setSwapDappOpen(true);
+                    return;
+                  }
+                  if (!activeProvider || slippageChanged) {
+                    refresh(e => e + 1);
+                    return;
+                  }
+                  if (activeProvider?.shouldTwoStepApprove) {
+                    setTwoStepApproveModalVisible(true);
+                    return;
+                  }
+                  // gotoSwap();
+                  handleSwap();
+                }}
+                title={btnText}
+                disabled={
+                  isSupportedChain
+                    ? swapBtnDisabled
+                    : externalDapps.length > 0
+                    ? false
+                    : true
                 }
-                if (activeProvider?.shouldTwoStepApprove) {
-                  setTwoStepApproveModalVisible(true);
-                  return;
-                }
-                // gotoSwap();
-                handleSwap();
-              }}
-              title={btnText}
-              disabled={
-                isSupportedChain
-                  ? swapBtnDisabled
-                  : externalDapps.length > 0
-                  ? false
-                  : true
-              }
-            />
+              />
+            )}
           </View>
         </Tip>
       </View>

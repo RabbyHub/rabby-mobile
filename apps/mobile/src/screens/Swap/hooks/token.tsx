@@ -798,6 +798,7 @@ export const useTokenPair = (userAddress: string) => {
 
   useFocusEffect(
     useCallback(() => {
+      console.log('useFocusEffect refresh');
       const refresh = () => {
         setRefreshId(e => e + 1);
       };

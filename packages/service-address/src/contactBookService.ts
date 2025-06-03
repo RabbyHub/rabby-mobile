@@ -1,3 +1,4 @@
+import { ellipsis } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { createPersistStore } from '@rabby-wallet/persist-store';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 
@@ -82,7 +83,7 @@ export class ContactBookService {
     }
     const alias = this.store.aliases[address.toLocaleLowerCase()];
     if (!alias) {
-      return undefined;
+      return ellipsis(address, 6);
     }
 
     return alias;

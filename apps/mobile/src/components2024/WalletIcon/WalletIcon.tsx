@@ -5,7 +5,7 @@ import {
   showSubWalletIcon,
 } from '@/utils/walletInfo2024';
 import { KEYRING_TYPE, WALLET_NAME } from '@rabby-wallet/keyring-utils';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ImageStyle, StyleProp, StyleSheet, View } from 'react-native';
 import { Image } from 'react-native';
 
@@ -29,7 +29,10 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   address,
 }) => {
   const { isLight } = useTheme2024();
-  const avator = getWalletAvator2024(type, isLight, address);
+  const avator = useMemo(
+    () => getWalletAvator2024(type, isLight, address),
+    [type, isLight, address],
+  );
   const Icon = getWalletIcon2024(type, isLight);
   const styleProps = style ? StyleSheet.flatten(style) : {};
   const {
@@ -39,10 +42,10 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   } = styleProps;
   const [size, setSize] = useState(Number(styleWidth?.valueOf() || width));
   const borderRadius = _borderRadius || 14 * (size / 40);
-  const subWalletContainerSize = (27 * size) / 40;
-  const subWalletIconSize = (23 * size) / 40;
-  const subWalletIconBorderWidth = (3 * size) / 40;
-  const subWalletIconBorderRadius = (7 * size) / 40;
+  const subWalletContainerSize = (19 * size) / 40;
+  const subWalletIconSize = (15.7 * size) / 40;
+  const subWalletIconBorderWidth = (2 * size) / 40;
+  const subWalletIconBorderRadius = (5 * size) / 40;
 
   if (!avator) {
     return (
@@ -92,8 +95,8 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
         <View
           style={{
             position: 'absolute',
-            right: -subWalletIconBorderWidth,
-            bottom: -subWalletIconBorderWidth,
+            top: -subWalletIconBorderWidth,
+            left: -subWalletIconBorderWidth,
             width: subWalletContainerSize,
             height: subWalletContainerSize,
             borderWidth: subWalletIconBorderWidth,

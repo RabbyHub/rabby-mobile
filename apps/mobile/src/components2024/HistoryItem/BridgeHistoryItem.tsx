@@ -9,9 +9,13 @@ import { getTokenAmountText } from './getTokenAmountText';
 
 interface Props {
   data: BridgeHistory;
+  recentShowTime: number;
 }
 
-export const BridgeHistoryItem: React.FC<Props> = ({ data }) => {
+export const BridgeHistoryItem: React.FC<Props> = ({
+  data,
+  recentShowTime,
+}) => {
   const { t } = useTranslation();
   const isPending = data.status === 'pending';
   const fromChainItem = React.useMemo(
@@ -36,6 +40,9 @@ export const BridgeHistoryItem: React.FC<Props> = ({ data }) => {
           leftIcon={<AssetAvatar logo={data.from_token.logo_url} size={30} />}
           rightIcon={<AssetAvatar logo={data.to_token.logo_url} size={32} />}
         />
+      }
+      showSuccess={
+        Boolean(recentShowTime) && data.create_at > recentShowTime / 1000
       }
       title={t('page.bridge.bridged')}
       subTitle={`${fromChainItem?.name} -> ${toChainItem?.name}`}

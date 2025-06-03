@@ -9,9 +9,10 @@ import { getTokenAmountText } from './getTokenAmountText';
 
 interface Props {
   data: SwapItem;
+  recentShowTime: number;
 }
 
-export const SwapHistoryItem: React.FC<Props> = ({ data }) => {
+export const SwapHistoryItem: React.FC<Props> = ({ data, recentShowTime }) => {
   const { t } = useTranslation();
   const isPending = data.status === 'Pending';
   const chainItem = React.useMemo(
@@ -32,6 +33,9 @@ export const SwapHistoryItem: React.FC<Props> = ({ data }) => {
             <AssetAvatar logo={data.receive_token.logo_url} size={32} />
           }
         />
+      }
+      showSuccess={
+        Boolean(recentShowTime) && data.finished_at > recentShowTime / 1000
       }
       title={t('page.swap.swapped')}
       subTitle={chainName}
