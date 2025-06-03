@@ -11,14 +11,22 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GnosisMessageQueue } from './components/GnosisMessageQueue';
 import { GnosisTransactionQueue } from './components/GnosisTransactionQueue';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenNavigationProps } from '@/navigation-type';
 
 export const GnosisQueueScreen = () => {
+  const route =
+    useRoute<
+      GetNestedScreenNavigationProps<
+        'TransactionNavigatorParamList',
+        'GnosisTransactionQueue'
+      >['route']
+    >();
+  const account = route.params.account;
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
-
-  const { currentAccount: account } = useCurrentAccount();
 
   const { bottom } = useSafeAreaInsets();
 
@@ -68,9 +76,9 @@ export const GnosisQueueScreen = () => {
       </View>
       <View style={styles.body}>
         {activeKey === 'transaction' ? (
-          <GnosisTransactionQueue />
+          <GnosisTransactionQueue account={account} />
         ) : (
-          <GnosisMessageQueue />
+          <GnosisMessageQueue account={account} />
         )}
       </View>
     </NormalScreenContainer>

@@ -41,6 +41,7 @@ import { AssetList } from './AssetList';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { useCurve } from '@/hooks/useCurve';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
+import { Account } from '@/core/services/preference';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -59,6 +60,7 @@ interface Props {
   onRefresh(): void;
   onUpdateIsDecrease?: (isDecrease: boolean) => void;
   onReachTopStatusChange?: (status: boolean) => void;
+  account: Account;
 }
 const FOOTER_HEIGHT = 56;
 
@@ -66,11 +68,11 @@ export const AssetContainer: React.FC<Props> = ({
   onRefresh,
   onUpdateIsDecrease,
   onReachTopStatusChange,
+  account: currentAccount,
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const { currentAccount, switchAccount } = useCurrentAccount();
   const chainSelectModalRef = useRef<
     ReturnType<typeof createGlobalBottomSheetModal2024> | undefined
   >();
@@ -439,7 +441,6 @@ export const AssetContainer: React.FC<Props> = ({
   );
 
   const listRef = useRef<FlashList<any>>(null);
-  const preAccount = useRef<KeyringAccountWithAlias | null>(null);
 
   const currentSection = useMemo(() => {
     if (firstRowType.includes('token')) {
@@ -454,15 +455,6 @@ export const AssetContainer: React.FC<Props> = ({
     return 'token';
   }, [firstRowType]);
 
-  useFocusEffect(
-    useMemoizedFn(() => {
-      if (preAccount.current) {
-        switchAccount(preAccount.current);
-      } else {
-        preAccount.current = currentAccount;
-      }
-    }),
-  );
   const { balance } = useCurrentBalance(currentAccount?.address, {
     update: true,
     noNeedBalance: false,
@@ -631,6 +623,7 @@ export const AssetContainer: React.FC<Props> = ({
           onRefresh={handleRefresh}
           setFirstRowType={setFirstRowType}
           onReachTopStatusChange={onReachTopStatusChange}
+          account={currentAccount}
         />
       </Tabs.Tab>
     </Tabs.Container>

@@ -380,108 +380,117 @@ export async function revokeNFTApprove(
     if (isApprovedForAll) {
       return await sendRequest(
         {
-          $ctx,
-          method: 'eth_sendTransaction',
-          params: [
-            {
-              from: account.address,
-              to: contractId,
-              chainId: chainId,
-              data: (abiCoder as unknown as AbiCoder).encodeFunctionCall(
-                {
-                  inputs: [
-                    {
-                      internalType: 'address',
-                      name: 'operator',
-                      type: 'address',
-                    },
-                    {
-                      internalType: 'bool',
-                      name: 'approved',
-                      type: 'bool',
-                    },
-                  ],
-                  name: 'setApprovalForAll',
-                  outputs: [],
-                  stateMutability: 'nonpayable',
-                  type: 'function',
-                },
-                [spender, false] as any,
-              ),
-            },
-          ],
+          data: {
+            $ctx,
+            method: 'eth_sendTransaction',
+            params: [
+              {
+                from: account.address,
+                to: contractId,
+                chainId: chainId,
+                data: (abiCoder as unknown as AbiCoder).encodeFunctionCall(
+                  {
+                    inputs: [
+                      {
+                        internalType: 'address',
+                        name: 'operator',
+                        type: 'address',
+                      },
+                      {
+                        internalType: 'bool',
+                        name: 'approved',
+                        type: 'bool',
+                      },
+                    ],
+                    name: 'setApprovalForAll',
+                    outputs: [],
+                    stateMutability: 'nonpayable',
+                    type: 'function',
+                  },
+                  [spender, false] as any,
+                ),
+              },
+            ],
+          },
+          session: INTERNAL_REQUEST_SESSION,
+          account,
         },
-        INTERNAL_REQUEST_SESSION,
         isBuild,
       );
     } else {
       return await sendRequest(
         {
-          $ctx,
-          method: 'eth_sendTransaction',
-          params: [
-            {
-              from: account.address,
-              to: contractId,
-              chainId: chainId,
-              data: (abiCoder as unknown as AbiCoder).encodeFunctionCall(
-                {
-                  constant: false,
-                  inputs: [
-                    { internalType: 'address', name: 'to', type: 'address' },
-                    {
-                      internalType: 'uint256',
-                      name: 'tokenId',
-                      type: 'uint256',
-                    },
-                  ],
-                  name: 'approve',
-                  outputs: [],
-                  payable: false,
-                  stateMutability: 'nonpayable',
-                  type: 'function',
-                },
-                [
-                  '0x0000000000000000000000000000000000000000',
-                  nftTokenId,
-                ] as any,
-              ),
-            },
-          ],
+          data: {
+            $ctx,
+            method: 'eth_sendTransaction',
+            params: [
+              {
+                from: account.address,
+                to: contractId,
+                chainId: chainId,
+                data: (abiCoder as unknown as AbiCoder).encodeFunctionCall(
+                  {
+                    constant: false,
+                    inputs: [
+                      { internalType: 'address', name: 'to', type: 'address' },
+                      {
+                        internalType: 'uint256',
+                        name: 'tokenId',
+                        type: 'uint256',
+                      },
+                    ],
+                    name: 'approve',
+                    outputs: [],
+                    payable: false,
+                    stateMutability: 'nonpayable',
+                    type: 'function',
+                  },
+                  [
+                    '0x0000000000000000000000000000000000000000',
+                    nftTokenId,
+                  ] as any,
+                ),
+              },
+            ],
+          },
+          session: INTERNAL_REQUEST_SESSION,
+          account,
         },
-        INTERNAL_REQUEST_SESSION,
         isBuild,
       );
     }
   } else if (abi === 'ERC1155') {
     return await sendRequest(
       {
-        $ctx,
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: account.address,
-            to: contractId,
-            data: abiCoder.encodeFunctionCall(
-              {
-                constant: false,
-                inputs: [
-                  { internalType: 'address', name: 'to', type: 'address' },
-                  { internalType: 'bool', name: 'approved', type: 'bool' },
-                ],
-                name: 'setApprovalForAll',
-                outputs: [],
-                payable: false,
-                stateMutability: 'nonpayable',
-                type: 'function',
-              },
-              [spender, false] as any,
-            ),
-            chainId,
-          },
-        ],
+        data: {
+          $ctx,
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: account.address,
+              to: contractId,
+              data: abiCoder.encodeFunctionCall(
+                {
+                  constant: false,
+                  inputs: [
+                    { internalType: 'address', name: 'to', type: 'address' },
+                    { internalType: 'bool', name: 'approved', type: 'bool' },
+                  ],
+                  name: 'setApprovalForAll',
+                  outputs: [],
+                  payable: false,
+                  stateMutability: 'nonpayable',
+                  type: 'function',
+                },
+                [spender, false] as any,
+              ),
+              chainId,
+            },
+          ],
+        },
+        session: INTERNAL_REQUEST_SESSION,
+        account,
       },
-      INTERNAL_REQUEST_SESSION,
       isBuild,
     );
   } else {
@@ -638,11 +647,14 @@ export async function lockdownPermit2(
 
   return await sendRequest(
     {
-      $ctx,
-      method: 'eth_sendTransaction',
-      params: [tx],
+      data: {
+        $ctx,
+        method: 'eth_sendTransaction',
+        params: [tx],
+      },
+      session: INTERNAL_REQUEST_SESSION,
+      account,
     },
-    INTERNAL_REQUEST_SESSION,
     isBuild,
   );
 }

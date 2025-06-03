@@ -197,11 +197,11 @@ const generateTempBuyHistoryData = ({
 export const BuyHistory = ({
   visible,
   onClose,
-  isForMultipleAdderss,
+  isForMultipleAddress,
 }: {
   visible: boolean;
   onClose: () => void;
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
 }) => {
   const { t } = useTranslation();
   const bottomRef = useRef<BottomSheetModalMethods>(null);
@@ -238,13 +238,13 @@ export const BuyHistory = ({
       naviPush(RootNames.StackTransaction, {
         screen: RootNames.HistoryDetail,
         params: {
-          isForMultipleAdderss,
+          isForMultipleAddress,
           data: detailData,
           title: t('page.transactions.itemTitle.Buy'),
         },
       });
     },
-    [projectDict, tokenDict, onClose, isForMultipleAdderss, t],
+    [projectDict, tokenDict, onClose, isForMultipleAddress, t],
   );
 
   useEffect(() => {

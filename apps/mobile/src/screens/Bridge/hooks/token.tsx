@@ -119,7 +119,7 @@ const useToken = (type: 'from' | 'to') => {
   return [chain, token, setToken, switchChain] as const;
 };
 
-export const useBridge = (isForMultipleAdderss?: boolean) => {
+export const useBridge = (isForMultipleAddress?: boolean) => {
   const { currentAccount } = useCurrentAccount();
   const userAddress = currentAccount?.address;
   const refreshId = useRefreshId();
@@ -242,7 +242,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
       s.routes.find(
         r =>
           r.name ===
-          (isForMultipleAdderss ? RootNames.MultiBridge : RootNames.Bridge),
+          (isForMultipleAddress ? RootNames.MultiBridge : RootNames.Bridge),
       )?.params,
   ) as
     | {

@@ -1,10 +1,13 @@
+import { Button, Tip } from '@/components';
+import { toast } from '@/components/Toast';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apisSafe } from '@/core/apis/safe';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { openapi } from '@/core/request';
 import { Account } from '@/core/services/preference';
-import { useCurrentAccount } from '@/hooks/account';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useThemeColors } from '@/hooks/theme';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { findChainByID } from '@/utils/chain';
 import { createGetStyles } from '@/utils/styles';
 import { timeago } from '@/utils/time';
@@ -13,30 +16,16 @@ import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import type { SafeTransactionItem } from '@rabby-wallet/gnosis-sdk/dist/api';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { ParseTxResponse } from '@rabby-wallet/rabby-api/dist/types';
+import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewProps,
-  ViewStyle,
-} from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { StyleProp, Text, View, ViewStyle } from 'react-native';
 import { toChecksumAddress } from 'web3-utils';
-import { GnosisTransactionExplain } from './GnosisTransactionExplain';
 import { GnosisTransactionConfirmations } from './GnosisTransactionConfirmations';
-import { Skeleton } from '@rneui/themed';
-import { Button, Tip } from '@/components';
+import { GnosisTransactionExplain } from './GnosisTransactionExplain';
 import { ReplacePopup } from './ReplacePopup';
-import { toast } from '@/components/Toast';
-import { navigate } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 
 export type ConfirmationProps = {
   owner: string;
@@ -52,6 +41,7 @@ export const GnosisTransactionItem = ({
   onSubmit,
   style,
   reload,
+  account: currentAccount,
 }: {
   data: SafeTransactionItem;
   networkId: string;
@@ -59,6 +49,7 @@ export const GnosisTransactionItem = ({
   onSubmit(data: SafeTransactionItem): void;
   style?: StyleProp<ViewStyle>;
   reload?: () => void;
+  account: Account;
 }) => {
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
@@ -68,7 +59,6 @@ export const GnosisTransactionItem = ({
   const submitAt = dayjs(data.submissionDate).valueOf();
 
   const [isShowReplacePopup, setIsShowReplacePopup] = useState(false);
-  const { currentAccount } = useCurrentAccount();
 
   const now = dayjs().valueOf();
   const ago = timeago(now, submitAt);
@@ -115,6 +105,7 @@ export const GnosisTransactionItem = ({
   });
 
   const handleView = async () => {
+    console.log('handleView', currentAccount);
     if (!currentAccount) {
       return;
     }
@@ -153,8 +144,8 @@ export const GnosisTransactionItem = ({
           );
         }),
       );
-      await sendRequest(
-        {
+      await sendRequest({
+        data: {
           method: 'eth_sendTransaction',
           params: [
             {
@@ -163,8 +154,9 @@ export const GnosisTransactionItem = ({
             },
           ],
         },
-        INTERNAL_REQUEST_SESSION,
-      );
+        session: INTERNAL_REQUEST_SESSION,
+        account,
+      });
       reload?.();
     } catch (err: any) {
       console.error(err);
@@ -198,13 +190,14 @@ export const GnosisTransactionItem = ({
         gasPrice: '0',
         baseGas: 0,
       };
-      await sendRequest(
-        {
+      await sendRequest({
+        data: {
           method: 'eth_sendTransaction',
           params: [params],
         },
-        INTERNAL_REQUEST_SESSION,
-      );
+        session: INTERNAL_REQUEST_SESSION,
+        account: currentAccount!,
+      });
       reload?.();
     }
   };

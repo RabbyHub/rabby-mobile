@@ -153,7 +153,7 @@ export const AccountSelectorPopupContent: React.FC<{
               )} */}
               {myAddresses.map((account, index) => {
                 const key = `account-${account.address}-${account.brandName}-${index}`;
-                const isCurrent = isSameAccount(account);
+                const isCurrent = isSameAccount(account, selectedAccount);
 
                 return (
                   <AddressItemInPanel

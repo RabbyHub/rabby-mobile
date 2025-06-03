@@ -25,12 +25,12 @@ import { sendToken } from '@/core/apis/token';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
-  isForMultipleAdderss,
+  isForMultipleAddress,
   type,
 }: {
   data: TransactionGroup;
   clearLocalPendingTxData: () => void;
-  isForMultipleAdderss: boolean;
+  isForMultipleAddress: boolean;
   type: 'send' | 'swap';
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -57,7 +57,7 @@ export const PendingTxItem = ({
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.HistoryLocalDetail,
       params: {
-        isForMultipleAdderss,
+        isForMultipleAddress,
         data: data,
         title:
           type === 'send'

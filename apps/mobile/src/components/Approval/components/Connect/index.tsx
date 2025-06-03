@@ -47,6 +47,7 @@ import { Button } from '@/components2024/Button';
 import { toast } from '@/components2024/Toast';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { AccountSelector } from '@/components2024/AccountSelector';
+import { Account } from '@/core/services/preference';
 
 const RuleDesc = [
   {
@@ -121,9 +122,12 @@ export const Connect = ({
 ConnectProps) => {
   // const { currentAccount } = useCurrentAccount();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
-    forScene: '@ActiveDappWebViewModal',
-  });
+  // const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
+  //   forScene: '@ActiveDappWebViewModal',
+  // });
+  const [selectedAccount, setSelectedAccount] = useState<
+    Account | undefined | null
+  >(preferenceService.getCurrentAccount());
   const { colors, styles, colors2024 } = useTheme2024({ getStyle });
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
@@ -347,6 +351,9 @@ ConnectProps) => {
 
   const init = async () => {
     const site = await dappService.getDapp(origin);
+    const _selectedAccount =
+      site?.currentAccount || preferenceService.getCurrentAccount();
+    setSelectedAccount(_selectedAccount);
     let level: 'very_low' | 'low' | 'medium' | 'high' = 'low';
     let collectList: { name: string; logo_url: string }[] = [];
     let defaultChain = CHAINS_ENUM.ETH;
@@ -380,7 +387,7 @@ ConnectProps) => {
     queue.add(async () => {
       try {
         const recommendChains = await openapi.getRecommendChains(
-          account!.address,
+          _selectedAccount!.address,
           origin,
         );
         let targetChain: Chain | undefined;
@@ -448,17 +455,9 @@ ConnectProps) => {
   const handleAllow = useCallback(async () => {
     resolveApproval({
       defaultChain,
-      signPermission,
-    }).then(() => {
-      switchSceneCurrentAccount('@ActiveDappWebViewModal', account);
+      defaultAccount: selectedAccount,
     });
-  }, [
-    defaultChain,
-    resolveApproval,
-    signPermission,
-    switchSceneCurrentAccount,
-    account,
-  ]);
+  }, [defaultChain, resolveApproval, selectedAccount]);
 
   const handleRuleDrawerClose = (update: boolean) => {
     if (update) {
@@ -632,7 +631,12 @@ ConnectProps) => {
               {t('page.connect.connectWallet')}
             </Text>
             <View>
-              <AccountSelector />
+              <AccountSelector
+                value={selectedAccount}
+                onChange={account => {
+                  setSelectedAccount(account);
+                }}
+              />
             </View>
           </View>
           <View style={styles.footer}>

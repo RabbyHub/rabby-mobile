@@ -86,8 +86,8 @@ export const bridgeToken = async (
     if (info) {
       bridgeService.addTx(chainObj.enum, data, info);
     }
-    await sendRequest(
-      {
+    await sendRequest({
+      data: {
         $ctx:
           shouldApprove && payTokenId !== chainObj.nativeTokenAddress
             ? {
@@ -112,8 +112,9 @@ export const bridgeToken = async (
           },
         ],
       },
-      INTERNAL_REQUEST_SESSION,
-    ).then(() => {
+      session: INTERNAL_REQUEST_SESSION,
+      account,
+    }).then(() => {
       navigationRef.dispatch(
         StackActions.replace(RootNames.StackRoot, {
           screen: RootNames.Home,
@@ -206,31 +207,34 @@ export const buildBridgeToken = async (
     }
     const res = await sendRequest(
       {
-        $ctx:
-          shouldApprove && payTokenId !== chainObj.nativeTokenAddress
-            ? {
-                ga: {
-                  ...$ctx?.ga,
-                  source: 'approvalAndBridge|bridge',
-                },
-              }
-            : $ctx,
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: account.address,
-            to: to,
-            data: data || '0x',
-            value: `0x${new BigNumber(value || '0').toString(16)}`,
-            chainId: chainObj.id,
-            gasPrice: gasPrice
-              ? `0x${new BigNumber(gasPrice).toString(16)}`
-              : undefined,
-            isBridge: true,
-          },
-        ],
+        data: {
+          $ctx:
+            shouldApprove && payTokenId !== chainObj.nativeTokenAddress
+              ? {
+                  ga: {
+                    ...$ctx?.ga,
+                    source: 'approvalAndBridge|bridge',
+                  },
+                }
+              : $ctx,
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: account.address,
+              to: to,
+              data: data || '0x',
+              value: `0x${new BigNumber(value || '0').toString(16)}`,
+              chainId: chainObj.id,
+              gasPrice: gasPrice
+                ? `0x${new BigNumber(gasPrice).toString(16)}`
+                : undefined,
+              isBridge: true,
+            },
+          ],
+        },
+        session: INTERNAL_REQUEST_SESSION,
+        account,
       },
-      INTERNAL_REQUEST_SESSION,
       true,
     );
     txs.push(res.params[0]);

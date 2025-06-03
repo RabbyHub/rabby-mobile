@@ -1,3 +1,4 @@
+import { sendRequest } from '@/core/apis/sendRequest';
 // this script is injected into webpage's context
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -11,6 +12,7 @@ import { getGlobalTmpStore, setGlobalProvider } from './globalProvider';
 import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 import { CHAINS } from '@debank/common';
 import { underline2Camelcase } from '../utils/common';
+import { Account } from '../services/preference';
 
 interface StateProvider {
   accounts: string[] | null;
@@ -80,7 +82,6 @@ export class EthereumProvider extends EventEmitter {
       session: INTERNAL_REQUEST_SESSION,
     };
     const mapMethod = underline2Camelcase(method);
-    const currentAccount = preferenceService.getCurrentAccount()!;
     const networkId = this.chainId || CHAINS[CHAINS_ENUM.ETH].id.toString();
 
     const chain = findChain({
@@ -114,25 +115,26 @@ export class EthereumProvider extends EventEmitter {
           ...data.params[0],
           chainId: Number(networkId),
         };
-        preferenceService.setCurrentAccount({
-          address: this.currentAccount,
-          type: this.currentAccountType as any,
-          brandName: this.currentAccountBrand,
-        });
         if (txParams.gas) {
           delete txParams.gas;
         }
-        const sendRequest = getGlobalTmpStore('sendRequest');
-        return sendRequest(
-          {
+        const sendRequest = (await import('@/core/apis/sendRequest'))
+          .sendRequest;
+
+        return sendRequest({
+          data: {
             $ctx: this.$ctx,
             method: 'eth_sendTransaction',
             params: [txParams],
           },
-          INTERNAL_REQUEST_SESSION,
-        ).finally(() => {
-          preferenceService.setCurrentAccount(currentAccount);
-          eventBus.emit(EVENT_SWITCH_ACCOUNT, currentAccount);
+          session: INTERNAL_REQUEST_SESSION,
+          account: this.currentAccount
+            ? ({
+                address: this.currentAccount,
+                type: this.currentAccountType,
+                brandName: this.currentAccountBrand,
+              } as Account)
+            : preferenceService.getCurrentAccount()!,
         });
       }
       case 'eth_chainId':

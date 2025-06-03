@@ -241,7 +241,9 @@ export type AccountNavigatorParamList = {
 };
 
 export type SingleAddressNavigatorParamList = {
-  [RootNames.SingleAddressHome]?: {};
+  [RootNames.SingleAddressHome]: {
+    account: Account;
+  };
 };
 
 export type TransactionNavigatorParamList = {
@@ -255,13 +257,13 @@ export type TransactionNavigatorParamList = {
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
-    isForMultipleAdderss?: boolean;
+    isForMultipleAddress?: boolean;
     title?: string;
   };
   [RootNames.HistoryLocalDetail]: {
     data: TransactionGroup;
     canCancel?: boolean;
-    isForMultipleAdderss?: boolean;
+    isForMultipleAddress?: boolean;
     title?: string;
     onPressBottomBtn?: (data: SendAction) => void;
     isInSendHistory?: boolean;
@@ -297,7 +299,9 @@ export type TransactionNavigatorParamList = {
     isFromSwap?: boolean;
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
-  [RootNames.GnosisTransactionQueue]?: {};
+  [RootNames.GnosisTransactionQueue]: {
+    account: Account;
+  };
   [RootNames.Receive]?: {};
   [RootNames.Approvals]?: {};
   [RootNames.Bridge]?: {};

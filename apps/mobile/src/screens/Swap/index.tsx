@@ -94,6 +94,7 @@ import {
 import { PendingTxItem } from './components/PendingTxItem';
 import { error } from 'console';
 import { toast } from '@/components2024/Toast';
+import { Account } from '@/core/services/preference';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -102,11 +103,18 @@ type SwapRouteProps = CompositeScreenProps<
 >;
 
 const Swap = ({
-  isForMultipleAdderss = false,
+  isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen) => {
-  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
+
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+
+  useEffect(() => {
+    console.log('eff', currentAccount);
+  }, [currentAccount]);
 
   const { t } = useTranslation();
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
@@ -125,11 +133,11 @@ const Swap = ({
   const headerRight = useCallback(
     () => (
       <SwapHeader
-        isForMultipleAdderss={isForMultipleAdderss}
+        isForMultipleAddress={isForMultipleAddress}
         clearSwapHistoryRedDot={clearSwapHistoryRedDot}
       />
     ),
-    [isForMultipleAdderss, clearSwapHistoryRedDot],
+    [isForMultipleAddress, clearSwapHistoryRedDot],
   );
   useEffect(() => {
     setNavigationOptions({
@@ -139,8 +147,6 @@ const Swap = ({
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
-
-  const { currentAccount } = useCurrentAccount();
 
   const [visible, setVisible] = useQuoteVisible();
 
@@ -212,9 +218,7 @@ const Swap = ({
     data: externalDapps,
     openTab: _openTab,
   } = useExternalSwapBridgeDapps(chain, 'swap');
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const openTab = useMemoizedFn((url: string) => {
-    switchSceneCurrentAccount('@ActiveDappWebViewModal', currentAccount);
     _openTab(url);
   });
   const [swapDappOpen, setSwapDappOpen] = useState(false);
@@ -250,7 +254,7 @@ const Swap = ({
       s.routes.find(
         r =>
           r.name ===
-          (isForMultipleAdderss ? RootNames.MultiSwap : RootNames.Swap),
+          (isForMultipleAddress ? RootNames.MultiSwap : RootNames.Swap),
       )?.params,
   ) as TransactionNavigatorParamList['Swap'] | undefined;
 
@@ -388,6 +392,7 @@ const Swap = ({
               },
               dex_id: activeProvider?.name || 'WrapToken',
             },
+            account: currentAccount!,
           },
           {
             ga: {
@@ -447,6 +452,7 @@ const Swap = ({
               },
               dex_id: activeProvider?.name || 'WrapToken',
             },
+            account: currentAccount!,
           },
           {
             ga: {
@@ -507,6 +513,7 @@ const Swap = ({
                   swapUseSlider,
                 },
                 directSubmit: canShowDirectSubmit,
+                account: currentAccount!,
               });
             }
           }
@@ -533,6 +540,7 @@ const Swap = ({
                 source: 'swap',
                 swapUseSlider,
               },
+              account: currentAccount!,
             });
           }
 
@@ -623,6 +631,7 @@ const Swap = ({
           source: 'swap',
           swapUseSlider,
         },
+        account: currentAccount!,
       });
     }
   }, [
@@ -632,6 +641,7 @@ const Swap = ({
     swapUseSlider,
     isSubmitting,
     canShowDirectSubmit,
+    currentAccount,
   ]);
 
   useEffect(() => {
@@ -651,6 +661,7 @@ const Swap = ({
             swapUseSlider,
           },
           directSubmit: canShowDirectSubmit,
+          account: currentAccount!,
         });
       });
     }
@@ -658,6 +669,7 @@ const Swap = ({
     activeProvider,
     canShowDirectSubmit,
     canUseMiniTx,
+    currentAccount,
     mutateTxs,
     prepareMiniTransactions,
     runBuildSwapTxs,
@@ -675,6 +687,7 @@ const Swap = ({
           swapUseSlider,
         },
         directSubmit: canShowDirectSubmit,
+        account: currentAccount!,
       });
     }
   }, [
@@ -683,6 +696,7 @@ const Swap = ({
     canShowDirectSubmit,
     prepareMiniTransactions,
     swapUseSlider,
+    currentAccount,
   ]);
 
   useEffect(() => {
@@ -818,7 +832,7 @@ const Swap = ({
 
   return (
     <NormalScreenContainer2024 type="bg1">
-      {isForMultipleAdderss && (
+      {isForMultipleAddress && (
         <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}
       <KeyboardAwareScrollView
@@ -873,7 +887,7 @@ const Swap = ({
                   setPayToken(token);
                 };
 
-                if (!isForMultipleAdderss) {
+                if (!isForMultipleAddress) {
                   normalSetChainToken();
                 } else {
                   const { accountSwitchTo } = switchAccountOnSelectedToken({
@@ -901,7 +915,7 @@ const Swap = ({
             />
             <Divider color={colors2024['neutral-line']} />
 
-            <SwapTokenItem
+            {/* <SwapTokenItem
               valueLoading={quoteLoading}
               token={receiveToken}
               onTokenChange={token => {
@@ -933,7 +947,7 @@ const Swap = ({
               // placeholder={t('page.swap.search-by-name-address')}
               excludeTokens={payToken?.id ? [payToken?.id] : undefined}
               finishedQuotes={finishedQuotes}
-            />
+            /> */}
             <BridgeSwitchBtn
               onPress={exchangeToken}
               style={styles.arrowWrapper}
@@ -997,7 +1011,7 @@ const Swap = ({
           {Boolean(!isShowMoreVisible && localPendingTxData) && (
             <PendingTxItem
               type="swap"
-              isForMultipleAdderss={isForMultipleAdderss}
+              isForMultipleAddress={isForMultipleAddress}
               data={localPendingTxData!}
               clearLocalPendingTxData={clearLocalPendingTxData}
             />
@@ -1146,7 +1160,7 @@ const ForMultipleAddress = (
         ofScreen: 'MultiSwap',
         sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSwap`,
       }}>
-      <Swap {...props} isForMultipleAdderss />
+      <Swap {...props} isForMultipleAddress />
     </ScreenSceneAccountProvider>
   );
 };

@@ -188,7 +188,7 @@ export const fetchLocalSendPendingTx = (address: string) => {
 
 const localPendingTxDataAtom = atom<TransactionGroup | null>(null);
 
-export const useRecentSendPendingTx = (isForMultipleAdderss: boolean) => {
+export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
   const [localPendingTxData, setLocalPendingTxData] = useAtom(
     localPendingTxDataAtom,
   );

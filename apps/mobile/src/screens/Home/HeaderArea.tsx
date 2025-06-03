@@ -1,23 +1,26 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 
-import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 
-import { useCurrentAccount } from '@/hooks/account';
 import { Text } from '@/components';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import Clipboard from '@react-native-clipboard/clipboard';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { Account } from '@/core/services/preference';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
 
-export default function HomeHeaderArea() {
+export default function HomeHeaderArea({
+  account: currentAccount,
+}: {
+  account: Account;
+}) {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { currentAccount } = useCurrentAccount();
 
   const name = useMemo(
     () => currentAccount?.aliasName || currentAccount?.brandName,

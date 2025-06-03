@@ -213,6 +213,7 @@ export const useBatchRevokeTask = () => {
                   category: 'Security',
                   source: 'tokenApproval',
                 },
+                account: currentAccount,
               });
               // update status
               cloneItem.$status = {
@@ -223,6 +224,7 @@ export const useBatchRevokeTask = () => {
             } else {
               const [result] = await sendMiniTransactions({
                 txs: [tx],
+                account: currentAccount!,
               });
 
               // update status
@@ -258,10 +260,10 @@ export const useBatchRevokeTask = () => {
       );
     },
     [
-      currentAccount?.type,
-      gasAccount.accountId,
-      gasAccount.sig,
       revokeList,
+      currentAccount,
+      gasAccount.sig,
+      gasAccount.accountId,
       sendMiniTransactions,
       pause,
     ],

@@ -76,13 +76,13 @@ const useTokenInfo = ({
   return [token, setToken] as const;
 };
 
-export const useBuy = (isForMultipleAdderss?: boolean) => {
+export const useBuy = (isForMultipleAddress?: boolean) => {
   const navState = useNavigationState(
     s =>
       s.routes.find(
         r =>
           r.name ===
-          (isForMultipleAdderss ? RootNames.MultiBuy : RootNames.Buy),
+          (isForMultipleAddress ? RootNames.MultiBuy : RootNames.Buy),
       )?.params,
   ) as TransactionNavigatorParamList['Buy'] | undefined;
 

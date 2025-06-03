@@ -12,10 +12,10 @@ import {
 import { SwapTxHistory } from './SwapTxHistory';
 
 export const SwapHeader = ({
-  isForMultipleAdderss,
+  isForMultipleAddress,
   clearSwapHistoryRedDot,
 }: {
-  isForMultipleAdderss: boolean;
+  isForMultipleAddress: boolean;
   clearSwapHistoryRedDot: () => number;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -45,7 +45,7 @@ export const SwapHeader = ({
         {/* {Boolean(showRedDot) && <View style={styles.greenDot} />} */}
       </TouchableOpacity>
       <SwapTxHistory
-        isForMultipleAdderss={isForMultipleAdderss}
+        isForMultipleAddress={isForMultipleAddress}
         recentShowTime={recentShowTime}
       />
     </View>

@@ -31,8 +31,8 @@ export async function transferNFT(
   })?.id;
   if (!chainId) throw new Error(t('background.error.invalidChainId'));
   if (abi === 'ERC721') {
-    await sendRequest(
-      {
+    await sendRequest({
+      data: {
         $ctx,
         method: 'eth_sendTransaction',
         params: [
@@ -63,11 +63,12 @@ export async function transferNFT(
           },
         ],
       },
-      INTERNAL_REQUEST_SESSION,
-    );
+      session: INTERNAL_REQUEST_SESSION,
+      account,
+    });
   } else if (abi === 'ERC1155') {
-    await sendRequest(
-      {
+    await sendRequest({
+      data: {
         $ctx,
         method: 'eth_sendTransaction',
         params: [
@@ -114,8 +115,9 @@ export async function transferNFT(
           },
         ],
       },
-      INTERNAL_REQUEST_SESSION,
-    );
+      session: INTERNAL_REQUEST_SESSION,
+      account,
+    });
   } else {
     throw new Error(t('background.error.unknownAbi'));
   }
@@ -183,11 +185,14 @@ export const sendToken = async ({
 
   return await sendRequest(
     {
-      method: 'eth_sendTransaction',
-      params: [params],
-      $ctx,
+      data: {
+        method: 'eth_sendTransaction',
+        params: [params],
+        $ctx,
+      },
+      session: INTERNAL_REQUEST_SESSION,
+      account,
     },
-    INTERNAL_REQUEST_SESSION,
     isBuild,
   );
 };

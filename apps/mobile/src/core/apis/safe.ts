@@ -206,14 +206,15 @@ class ApisSafe {
   ) => {
     const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
     if (keyring) {
-      buildinProvider.currentProvider.currentAccount = account.address;
-      buildinProvider.currentProvider.currentAccountType = account.type;
-      buildinProvider.currentProvider.currentAccountBrand = account.brandName;
-      buildinProvider.currentProvider.chainId = networkId;
+      const currentProvider = new EthereumProvider();
+      currentProvider.currentAccount = account.address;
+      currentProvider.currentAccountType = account.type;
+      currentProvider.currentAccountBrand = account.brandName;
+      currentProvider.chainId = networkId;
       await keyring.buildTransaction(
         safeAddress,
         tx,
-        new ethers.providers.Web3Provider(buildinProvider.currentProvider),
+        new ethers.providers.Web3Provider(currentProvider),
         version,
         networkId,
       );

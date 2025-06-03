@@ -207,6 +207,9 @@ export const HomeTopArea = ({
             onPress: () => {
               navigation.push(RootNames.StackTransaction, {
                 screen: RootNames.GnosisTransactionQueue,
+                params: {
+                  account: currentAccount,
+                },
               });
             },
             badgeStyle: {

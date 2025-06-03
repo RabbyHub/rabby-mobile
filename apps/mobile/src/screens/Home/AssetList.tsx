@@ -53,6 +53,7 @@ import { ScamTokenHeader } from './components/AssetRenderItems/ScamTokenHeader';
 import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
+import { Account } from '@/core/services/preference';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -81,6 +82,7 @@ interface Props {
   setFoldDefi: React.Dispatch<React.SetStateAction<boolean>>;
   setFoldScam: React.Dispatch<React.SetStateAction<boolean>>;
   setFirstRowType: React.Dispatch<React.SetStateAction<string>>;
+  account: Account;
 }
 const FOOTER_HEIGHT = 56;
 const SPACING_HEIGHT = 8;
@@ -103,6 +105,7 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       setFoldScam,
       refreshing,
       setFirstRowType,
+      account: currentAccount,
     },
     ref,
   ) => {
@@ -114,8 +117,6 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       useNavigation<
         NativeStackScreenProps<RootStackParamsList>['navigation']
       >();
-
-    const { currentAccount } = useCurrentAccount();
 
     const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 

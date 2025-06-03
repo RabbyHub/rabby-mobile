@@ -44,6 +44,7 @@ import { getCexInfo } from '@/hooks/useCexSupportList';
 import { isNonPublicProductionEnv, isSelfhostRegPkg } from '@/constant/env';
 import { getDefaultStore } from 'jotai';
 import { mockBatchRevokeAtom } from '@/hooks/appSettings';
+import { Account } from '@/core/services/preference';
 
 // fail code
 export enum FailedCode {
@@ -128,6 +129,7 @@ export const sendTransaction = async ({
   sig,
   extra,
   ignoreSimulationFailed,
+  account,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -153,6 +155,7 @@ export const sendTransaction = async ({
   pushType?: TxPushType;
   ga?: Record<string, any>;
   sig?: string;
+  account: Account;
 }) => {
   const MOCK_BATCH_REVOKE = getDefaultStore().get(mockBatchRevokeAtom);
   console.log('MOCK_BATCH_REVOKE', MOCK_BATCH_REVOKE);
@@ -162,8 +165,8 @@ export const sendTransaction = async ({
     serverId: chainServerId,
   })!;
   const support1559 = chain.eip['1559'];
-  const { address, ...currentAccount } =
-    (await preferenceService.getCurrentAccount())!;
+  const { address, ...currentAccount } = account;
+
   const recommendNonce =
     tx.nonce ||
     (await apiProvider.getRecommendNonce({
@@ -529,6 +532,7 @@ export const sendTransaction = async ({
       },
       pushed: false,
       result: undefined,
+      account,
     });
     await handleSendAfter();
   } catch (e) {

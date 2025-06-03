@@ -3,25 +3,29 @@ import React from 'react';
 import { ImageBackground, View, Animated } from 'react-native';
 import HeaderArea from './HeaderArea';
 import { AssetContainer } from './AssetContainer';
-
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
-import { useCurrentAccount } from '@/hooks/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenNavigationProps } from '@/navigation-type';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const [isDecrease, setIsDecrease] = React.useState<boolean>(false);
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
-
+  const route =
+    useRoute<
+      GetNestedScreenNavigationProps<
+        'SingleAddressNavigatorParamList',
+        'SingleAddressHome'
+      >['route']
+    >();
+  const currentAccount = route?.params?.account;
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
-  const { currentAccount } = useCurrentAccount({
-    disableAutoFetch: true,
-  });
   const headerHeight = useHeaderHeight();
   const topBg = React.useMemo(() => {
     if (isDecrease) {
@@ -54,8 +58,8 @@ function HomeScreen(): JSX.Element {
     [fadeAnim],
   );
   const renderHeaderTitle = React.useCallback(() => {
-    return <HomeScreen.HeaderArea />;
-  }, []);
+    return <HomeScreen.HeaderArea account={currentAccount} />;
+  }, [currentAccount]);
 
   React.useEffect(() => {
     setNavigationOptions({
@@ -95,6 +99,7 @@ function HomeScreen(): JSX.Element {
           onRefresh={triggerUpdate}
           onUpdateIsDecrease={handleUpdateIsDecrease}
           onReachTopStatusChange={handleReachTopStatusChange}
+          account={currentAccount}
         />
       </View>
     </NormalScreenContainer2024>

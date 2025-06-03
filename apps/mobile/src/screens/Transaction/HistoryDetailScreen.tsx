@@ -171,6 +171,9 @@ export const AddressItemInDetail = ({
       switchAccount(accounts[idx]);
       navigate(RootNames.SingleAddressStack, {
         screen: RootNames.SingleAddressHome,
+        params: {
+          account: accounts[idx],
+        },
       });
     } else {
       // popup
@@ -223,7 +226,7 @@ function HistoryDetailScreen(): JSX.Element {
         'HistoryDetail'
       >['route']
     >();
-  const { data: _data, isForMultipleAdderss, title } = route.params || {};
+  const { data: _data, isForMultipleAddress, title } = route.params || {};
 
   const buyItemData = usePendingBuyItemData(
     _data.address,
@@ -460,7 +463,7 @@ function HistoryDetailScreen(): JSX.Element {
       <ScrollView style={[styles.scrollView]}>
         <HistoryTokenList
           data={data}
-          isForMultipleAdderss={isForMultipleAdderss}
+          isForMultipleAddress={isForMultipleAddress}
           chain={data.chain}
           receives={data.receives}
           sends={data.sends}
@@ -677,7 +680,7 @@ function HistoryDetailScreen(): JSX.Element {
           chain={data.chain}
           status={status || 0}
           data={data}
-          isForMultipleAdderss={isForMultipleAdderss}
+          isForMultipleAddress={isForMultipleAddress}
           tokenDict={data.tokenDict}
           buttonContainerStyle={buttonContainerStyle}
         />

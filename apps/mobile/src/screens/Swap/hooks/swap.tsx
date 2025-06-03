@@ -13,6 +13,7 @@ import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { Account } from '@/core/services/preference';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
@@ -79,11 +80,14 @@ export const approveToken = async (
   }
   return await sendRequest(
     {
-      $ctx,
-      method: 'eth_sendTransaction',
-      params: [tx],
+      data: {
+        $ctx,
+        method: 'eth_sendTransaction',
+        params: [tx],
+      },
+      session: INTERNAL_REQUEST_SESSION,
+      account,
     },
-    INTERNAL_REQUEST_SESSION,
     isBuild,
   );
 };
@@ -100,6 +104,7 @@ export const dexSwap = async (
     shouldTwoStepApprove,
     postSwapParams,
     swapPreferMEVGuarded,
+    account,
   }: {
     chain: CHAINS_ENUM;
     quote: QuoteResult;
@@ -115,10 +120,10 @@ export const dexSwap = async (
       Parameters<OpenApiService['postSwap']>[0],
       'tx_id' | 'tx'
     >;
+    account: Account;
   },
   $ctx?: any,
 ) => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(i18n.t('background.error.noCurrentAccount'));
   }
@@ -175,8 +180,8 @@ export const dexSwap = async (
       swapService.addTx(chain, quote.tx.data, postSwapParams);
     }
 
-    await sendRequest(
-      {
+    await sendRequest({
+      data: {
         $ctx:
           needApprove && pay_token_id !== chainObj.nativeTokenAddress
             ? {
@@ -202,8 +207,9 @@ export const dexSwap = async (
           },
         ],
       },
-      INTERNAL_REQUEST_SESSION,
-    )
+      session: INTERNAL_REQUEST_SESSION,
+      account,
+    })
       .then(() => {
         console.log('after swap');
         preferenceService.setReportActionTs(
@@ -241,6 +247,7 @@ export const buildDexSwap = async (
     shouldTwoStepApprove,
     postSwapParams,
     swapPreferMEVGuarded,
+    account,
   }: {
     chain: CHAINS_ENUM;
     quote: QuoteResult;
@@ -256,10 +263,10 @@ export const buildDexSwap = async (
       Parameters<OpenApiService['postSwap']>[0],
       'tx_id' | 'tx'
     >;
+    account: Account;
   },
   $ctx?: any,
 ) => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(i18n.t('background.error.noCurrentAccount'));
   }
@@ -323,32 +330,35 @@ export const buildDexSwap = async (
 
     const res = await sendRequest(
       {
-        $ctx:
-          needApprove && pay_token_id !== chainObj.nativeTokenAddress
-            ? {
-                ga: {
-                  ...$ctx?.ga,
-                  source: 'approvalAndSwap|swap',
-                },
-              }
-            : $ctx,
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: quote.tx.from,
-            to: quote.tx.to,
-            data: quote.tx.data || '0x',
-            value: `0x${new BigNumber(quote.tx.value || '0').toString(16)}`,
-            chainId: chainObj.id,
-            gasPrice: gasPrice
-              ? `0x${new BigNumber(gasPrice).toString(16)}`
-              : undefined,
-            isSwap: true,
-            swapPreferMEVGuarded,
-          },
-        ],
+        data: {
+          $ctx:
+            needApprove && pay_token_id !== chainObj.nativeTokenAddress
+              ? {
+                  ga: {
+                    ...$ctx?.ga,
+                    source: 'approvalAndSwap|swap',
+                  },
+                }
+              : $ctx,
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: quote.tx.from,
+              to: quote.tx.to,
+              data: quote.tx.data || '0x',
+              value: `0x${new BigNumber(quote.tx.value || '0').toString(16)}`,
+              chainId: chainObj.id,
+              gasPrice: gasPrice
+                ? `0x${new BigNumber(gasPrice).toString(16)}`
+                : undefined,
+              isSwap: true,
+              swapPreferMEVGuarded,
+            },
+          ],
+        },
+        session: INTERNAL_REQUEST_SESSION,
+        account,
       },
-      INTERNAL_REQUEST_SESSION,
       true,
     );
 

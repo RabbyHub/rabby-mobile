@@ -66,6 +66,9 @@ export const DuplicateAddressModal: React.FC = () => {
       switchAccount(currentAccount);
       navigate(RootNames.SingleAddressStack, {
         screen: RootNames.SingleAddressHome,
+        params: {
+          account: currentAccount,
+        },
       });
     }
   }, [currentAccount, switchAccount]);

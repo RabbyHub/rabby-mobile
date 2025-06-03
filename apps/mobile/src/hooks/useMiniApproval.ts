@@ -9,6 +9,7 @@ import {
   transactionHistoryService,
 } from '@/core/services';
 import { sleep } from '@/utils/async';
+import { Account } from '@/core/services/preference';
 
 export let DirectSubmitReject;
 
@@ -21,6 +22,7 @@ export const miniApprovalAtom = atom<{
   ga?: Record<string, any>;
   id?: string;
   directSubmit?: boolean;
+  account?: Account;
 }>({
   txs: [],
 });
@@ -36,11 +38,13 @@ export const useMiniApproval = () => {
       ga,
       id,
       directSubmit,
+      account,
     }: {
       txs: Tx[];
       ga?: Record<string, any>;
       id?: string;
       directSubmit?: boolean;
+      account: Account;
     }) => {
       // const currentApprovalId = uniqueId('mini-approval');
       // await sleep(200);
@@ -57,6 +61,7 @@ export const useMiniApproval = () => {
               ga,
               visible: directSubmit ? false : true,
               directSubmit: !!directSubmit,
+              account,
               onReject: e => {
                 setState(prev => ({
                   ...prev,
@@ -92,10 +97,12 @@ export const useMiniApproval = () => {
       txs,
       ga,
       directSubmit,
+      account,
     }: {
       txs: Tx[];
       ga?: Record<string, any>;
       directSubmit?: boolean;
+      account: Account;
     }) => {
       clear();
       /**
@@ -107,6 +114,7 @@ export const useMiniApproval = () => {
         ga,
         directSubmit,
         id: uniqueId('mini-approval'),
+        account,
       });
     },
   );
@@ -116,10 +124,12 @@ export const useMiniApproval = () => {
       txs,
       ga,
       directSubmit,
+      account,
     }: {
       txs: Tx[];
       ga?: Record<string, any>;
       directSubmit?: boolean;
+      account: Account;
     }) => {
       clear();
       setState(prev => {
@@ -129,6 +139,7 @@ export const useMiniApproval = () => {
           txs,
           ga,
           directSubmit,
+          account,
         };
       });
     },
@@ -136,15 +147,16 @@ export const useMiniApproval = () => {
 
   const sendPrepareMiniTransactions = useMemoizedFn(
     async (params?: { directSubmit?: boolean }) => {
-      if (state.txs?.length) {
+      if (state.txs?.length && state.account) {
         await _sendMiniTransactions({
           txs: state.txs,
           ga: state.ga,
           directSubmit: !!params?.directSubmit,
+          account: state.account,
         });
       } else {
         throw new Error(
-          'txs is empty, please run prepareMiniTransactions first',
+          'txs  or account is empty, please run prepareMiniTransactions first',
         );
       }
     },

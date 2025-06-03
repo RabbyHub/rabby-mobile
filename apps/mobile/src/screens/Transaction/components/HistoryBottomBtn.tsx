@@ -41,7 +41,7 @@ interface ItemProps {
   data: HistoryDisplayItem;
   currentApprove: number;
   noRemainValue: boolean;
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
   buttonContainerStyle?: RNViewProps['style'];
 }
 
@@ -56,7 +56,7 @@ export const HistoryBottomBtn = ({
   approve,
   chain,
   receives,
-  isForMultipleAdderss = true,
+  isForMultipleAddress = true,
   buttonContainerStyle,
 }: ItemProps) => {
   const { t } = useTranslation();
@@ -128,9 +128,9 @@ export const HistoryBottomBtn = ({
               });
               await switchSceneCurrentAccount(
                 'MakeTransactionAbout',
-                isForMultipleAdderss ? fromAddrIsImported : currentAccount,
+                isForMultipleAddress ? fromAddrIsImported : currentAccount,
               );
-              navigateToSendPolyScreen(!isForMultipleAdderss, {
+              navigateToSendPolyScreen(!isForMultipleAddress, {
                 chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
                 tokenId: sends[0]?.token_id,
                 toAddress: sends[0]?.to_addr,
@@ -221,15 +221,15 @@ export const HistoryBottomBtn = ({
             buttonStyle={buttonStyle}
             onPress={async () => {
               const chainItem = !chain ? null : findChainByServerID(chain);
-              // if (!isForMultipleAdderss) {
+              // if (!isForMultipleAddress) {
               await switchSceneCurrentAccount(
                 'MakeTransactionAbout',
-                isForMultipleAdderss ? fromAddrIsImported : currentAccount,
+                isForMultipleAddress ? fromAddrIsImported : currentAccount,
               );
               // }
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
-                  screen: isForMultipleAdderss
+                  screen: isForMultipleAddress
                     ? RootNames.MultiSwap
                     : RootNames.Swap,
                   params: {
@@ -254,16 +254,16 @@ export const HistoryBottomBtn = ({
           <Button
             buttonStyle={buttonStyle}
             onPress={() => {
-              if (!isForMultipleAdderss) {
+              if (!isForMultipleAddress) {
                 switchSceneCurrentAccount(
                   'MakeTransactionAbout',
                   currentAccount,
                 );
               }
-              console.log('isForMultipleAdderss', isForMultipleAdderss);
+              console.log('isForMultipleAddress', isForMultipleAddress);
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
-                  screen: isForMultipleAdderss
+                  screen: isForMultipleAddress
                     ? RootNames.MultiBuy
                     : RootNames.Buy,
                   params: {

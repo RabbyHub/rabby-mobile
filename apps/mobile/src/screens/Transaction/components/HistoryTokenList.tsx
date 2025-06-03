@@ -48,7 +48,7 @@ interface ItemProps {
   approve: TxDisplayItem['token_approve'];
   receives: TxDisplayItem['receives'];
   sends: TxDisplayItem['sends'];
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
 }
 
 const TokenItemInlist = ({
@@ -134,7 +134,7 @@ export const HistoryTokenList = ({
   data,
   receives,
   approve,
-  isForMultipleAdderss,
+  isForMultipleAddress,
 }: ItemProps) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -150,7 +150,7 @@ export const HistoryTokenList = ({
       if (tokenIsNft) {
         naviPush(RootNames.NftDetail, {
           token: { ...token },
-          isSingleAddress: !isForMultipleAdderss,
+          isSingleAddress: !isForMultipleAddress,
         });
       } else {
         // if (address) {
@@ -161,11 +161,11 @@ export const HistoryTokenList = ({
           token: ensureAbstractPortfolioToken(singeToken as TokenItem),
           // account: address,
           needUseCacheToken: true,
-          isSingleAddress: !isForMultipleAdderss,
+          isSingleAddress: !isForMultipleAddress,
         });
       }
     },
-    [isForMultipleAdderss, token],
+    [isForMultipleAddress, token],
   );
 
   switch (type) {

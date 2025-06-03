@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   Image,
   Text,
   TouchableOpacity,
@@ -10,27 +9,24 @@ import {
 
 import { RcIconCloseCC } from '@/assets/icons/common';
 import { RcIconDisconnectCC, RcIconGoogle } from '@/assets/icons/dapp';
-import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
+import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
+import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { IS_IOS } from '@/core/native/utils';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { dappService, preferenceService } from '@/core/services';
+import { DappInfo } from '@/core/services/dappService';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
+import { useDapps } from '@/hooks/useDapps';
+import { getAddressBarTitle } from '@/utils/browser';
+import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
-import { getAddressBarTitle } from '@/utils/browser';
-import { useBrowser } from '@/hooks/browser/useBrowser';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useDapps } from '@/hooks/useDapps';
 import { CurrentDappPopup } from './CurrentDappPopup';
-import { DappInfo } from '@/core/services/dappService';
-import { findChain } from '@/utils/chain';
-import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
-import { disconnect } from 'process';
-import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
-import { dappService } from '@/core/services';
 
 export function BrowserHeader({
   dapp,
@@ -68,22 +64,11 @@ export function BrowserHeader({
     return null;
   }, [tabs, activeTabId]);
 
-  const activeDappConnected = useMemo(() => {
-    if (!activeDappOrigin) {
-      return false;
-    }
-    return isDappConnected(activeDappOrigin);
-  }, [activeDappOrigin, isDappConnected]);
-
   const navigation = useRabbyAppNavigation();
-  const forScene = '@ActiveDappWebViewModal';
-  const { finalSceneCurrentAccount, sceneCurrentAccount } = useSceneAccountInfo(
-    {
-      forScene,
-    },
-  );
-  const { isVisible: isOpen, toggleSceneVisible } =
-    useAccountSceneVisible(forScene);
+
+  const account = useMemo(() => {
+    return dapp?.currentAccount || preferenceService.getCurrentAccount();
+  }, [dapp?.currentAccount]);
 
   const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
   const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
@@ -165,10 +150,10 @@ export function BrowserHeader({
                 setIsShowAccountPopup(true);
               }
             }}>
-            {finalSceneCurrentAccount ? (
+            {account ? (
               <WalletIcon
-                type={finalSceneCurrentAccount?.type}
-                address={finalSceneCurrentAccount?.address}
+                type={account?.type}
+                address={account?.address}
                 width={24}
                 height={24}
                 style={styles.walletIcon}
@@ -230,7 +215,7 @@ export function BrowserHeader({
           <CurrentDappPopup
             visible={isShowCurrentDappPopup}
             onClose={() => {
-              setIsShowAccountPopup(false);
+              setIsShowCurrentDappPopup(false);
             }}
             dapp={dapp}
           />

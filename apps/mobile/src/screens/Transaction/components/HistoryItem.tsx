@@ -35,7 +35,7 @@ import FastImage from 'react-native-fast-image';
 type HistoryItemProps = {
   style?: StyleProp<ViewStyle>;
   data: HistoryDisplayItem;
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
   getCexInfoByAddress?: (address: string) => ProjectItem;
   onPress?: (data: HistoryDisplayItem) => void;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
@@ -53,7 +53,7 @@ export const HistoryItem = React.memo(
     data,
     tokenDict,
     style,
-    isForMultipleAdderss,
+    isForMultipleAddress,
     onPress,
     getCexInfoByAddress,
   }: HistoryItemProps) => {
@@ -236,12 +236,12 @@ export const HistoryItem = React.memo(
       navigation.push(RootNames.StackTransaction, {
         screen: RootNames.HistoryDetail,
         params: {
-          isForMultipleAdderss,
+          isForMultipleAddress,
           data,
           title: formatTitle,
         },
       });
-    }, [onPress, navigation, isForMultipleAdderss, data, formatTitle]);
+    }, [onPress, navigation, isForMultipleAddress, data, formatTitle]);
 
     const noNeedTokenChangeType = useMemo(
       () =>

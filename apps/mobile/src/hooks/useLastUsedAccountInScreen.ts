@@ -4,6 +4,8 @@ import { useCurrentAccount } from './account';
 
 /**
  *
+ * @deprecated
+ *
  * @description auto activate and inactivate last used account in screen
  *
  * @warning make sure only this hook can be ONLY called ONCE in nested components,

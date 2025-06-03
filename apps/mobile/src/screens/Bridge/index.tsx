@@ -14,15 +14,15 @@ import {
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
 
 export const Bridge = ({
-  isForMultipleAdderss,
+  isForMultipleAddress,
 }: PropsForAccountSwitchScreen) => {
-  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
+  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAddress });
 
   return (
     <SettingVisibleProvider>
       <RefreshIdProvider>
         <QuoteVisibleProvider>
-          <BridgeContent isForMultipleAdderss={isForMultipleAdderss} />
+          <BridgeContent isForMultipleAddress={isForMultipleAddress} />
         </QuoteVisibleProvider>
       </RefreshIdProvider>
       <TokenInfoPopup />
@@ -46,7 +46,7 @@ const ForMultipleAddress = (
         ofScreen: 'MultiBridge',
         sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiBridge`,
       }}>
-      <Bridge {...props} isForMultipleAdderss />
+      <Bridge {...props} isForMultipleAddress />
     </ScreenSceneAccountProvider>
   );
 };

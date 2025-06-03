@@ -14,6 +14,7 @@ import {
 import { GasSelectorSkeleton } from '../GasSelector/GasSelectorSkeleton';
 import { SafeNonceOptionList } from './SafeNonceOptionList';
 import { RcArrowDownCC } from '@/assets/icons/common';
+import { Account } from '@/core/services/preference';
 
 interface SafeNonceSelectorProps {
   value?: string;
@@ -22,6 +23,7 @@ interface SafeNonceSelectorProps {
   chainId: number;
   safeInfo?: BasicSafeInfo | null;
   disabled?: boolean;
+  account: Account;
 }
 
 export const SafeNonceSelector = ({
@@ -31,6 +33,7 @@ export const SafeNonceSelector = ({
   chainId,
   safeInfo,
   disabled,
+  account,
 }: SafeNonceSelectorProps) => {
   const { t } = useTranslation();
   const [isShowOptionList, setIsShowOptionList] = useState(false);
@@ -103,6 +106,7 @@ export const SafeNonceSelector = ({
         {isShowOptionList ? (
           <View>
             <SafeNonceOptionList
+              account={account}
               chainId={chainId}
               value={val === '' ? undefined : val}
               onChange={handleOnChange}

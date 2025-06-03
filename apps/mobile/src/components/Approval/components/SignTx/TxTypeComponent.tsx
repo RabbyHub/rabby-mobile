@@ -2,10 +2,14 @@ import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import React from 'react';
-import { ActionRequireData, ParsedActionData } from '../Actions/utils';
 import Actions from '../Actions';
 import Loading from '../TxComponents/Loading';
 import { findChain } from '@/utils/chain';
+import {
+  ActionRequireData,
+  ParsedActionData,
+} from '@rabby-wallet/rabby-action';
+import { Account } from '@/core/services/preference';
 
 export const TxTypeComponent = ({
   actionRequireData,
@@ -19,6 +23,7 @@ export const TxTypeComponent = ({
   txDetail,
   origin,
   originLogo,
+  account,
 }: {
   actionRequireData: ActionRequireData;
   actionData: ParsedActionData;
@@ -31,6 +36,7 @@ export const TxTypeComponent = ({
   engineResults: Result[];
   origin?: string;
   originLogo?: string;
+  account: Account;
 }) => {
   if (!isReady) {
     return <Loading />;
@@ -39,6 +45,7 @@ export const TxTypeComponent = ({
   if (actionData && actionRequireData) {
     return (
       <Actions
+        account={account}
         data={actionData}
         requireData={actionRequireData}
         chain={

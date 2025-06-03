@@ -75,8 +75,9 @@ export const Approval = () => {
     return <View />;
   }
 
+  console.log({ approval });
   const { data } = approval;
-  const { approvalComponent, params, origin } = data;
+  const { approvalComponent, params, origin, account } = data;
 
   const fromTabId =
     params.$mobileCtx?.fromTabId ||
@@ -104,5 +105,11 @@ export const Approval = () => {
   const CurrentApprovalComponent =
     ApprovalComponent[approvalComponent] ?? ApprovalComponent.Unknown;
 
-  return <CurrentApprovalComponent params={params} origin={origin} />;
+  return (
+    <CurrentApprovalComponent
+      params={params}
+      origin={origin}
+      account={account}
+    />
+  );
 };

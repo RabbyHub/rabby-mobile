@@ -230,10 +230,10 @@ const HistoryList = ({
 };
 
 export const SwapTxHistory = ({
-  isForMultipleAdderss,
+  isForMultipleAddress,
   recentShowTime,
 }: {
-  isForMultipleAdderss: boolean;
+  isForMultipleAddress: boolean;
   recentShowTime: number;
 }) => {
   const bottomRef = useRef<BottomSheetModalMethods>(null);
@@ -265,7 +265,7 @@ export const SwapTxHistory = ({
         navigate(RootNames.StackTransaction, {
           screen: RootNames.HistoryDetail,
           params: {
-            isForMultipleAdderss,
+            isForMultipleAddress,
             data: detailData,
             title: t('page.swap.swapped'),
           },
@@ -282,7 +282,7 @@ export const SwapTxHistory = ({
           navigate(RootNames.StackTransaction, {
             screen: RootNames.HistoryLocalDetail,
             params: {
-              isForMultipleAdderss,
+              isForMultipleAddress,
               data: itemData,
               title: t('page.swap.swapped'),
             },
@@ -295,7 +295,7 @@ export const SwapTxHistory = ({
       projectDict,
       t,
       tokenDict,
-      isForMultipleAdderss,
+      isForMultipleAddress,
       currentAccount?.address,
     ],
   );
