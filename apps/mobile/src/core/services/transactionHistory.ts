@@ -90,8 +90,25 @@ export interface TransactionSigningItem {
   isSubmitted?: boolean;
 }
 
+export interface SwapTxHistoryItem {
+  address: string;
+  chainId: number;
+  fromToken: TokenItem;
+  toToken: TokenItem;
+  slippage: number;
+  fromAmount: number;
+  toAmount: number;
+  dexId: string;
+  status: 'pending' | 'success' | 'failed';
+  hash: string;
+  createdAt: number;
+  completedAt?: number;
+  nonce?: number;
+}
+
 interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
+  swapTxHistory: SwapTxHistoryItem[];
   successList: string[];
   failList: string[];
   sendSuccessList: string[];
@@ -123,6 +140,7 @@ export class TransactionHistoryService {
         name: APP_STORE_NAMES.txHistory,
         template: {
           transactions: [],
+          swapTxHistory: [],
           successList: [],
           failList: [],
           sendSuccessList: [],
@@ -150,6 +168,10 @@ export class TransactionHistoryService {
 
     if (!Array.isArray(this.store.sendSuccessList)) {
       this.store.sendSuccessList = [];
+    }
+
+    if (!Array.isArray(this.store.swapTxHistory)) {
+      this.store.swapTxHistory = [];
     }
 
     if (!Array.isArray(this.store.sendFailList)) {
@@ -266,6 +288,58 @@ export class TransactionHistoryService {
       setTimeout(() => {
         this.store.isNeedFetchTxHistory[address] = true;
       }, 5000);
+    }
+  }
+
+  addSwapTxHistory(tx: SwapTxHistoryItem) {
+    this.store.swapTxHistory.push(tx);
+    this.store.swapTxHistory = this.store.swapTxHistory
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 100);
+  }
+
+  getRecentPendingSwapTxHistory(address: string) {
+    return this.store.swapTxHistory
+      .filter(item => {
+        return (
+          isSameAddress(address, item.address) && item.status === 'pending'
+        );
+      })
+      .sort((a, b) => b.createdAt - a.createdAt)[0];
+  }
+
+  getSwapTxHistory(address: string, hash: string, chainId: number) {
+    return this.store.swapTxHistory.find(
+      item =>
+        isSameAddress(address, item.address) &&
+        item.hash === hash &&
+        item.chainId === chainId,
+    );
+  }
+
+  completeSwapTxHistory(
+    hash: string,
+    chainId: number,
+    nonce: number,
+    status: SwapTxHistoryItem['status'],
+  ) {
+    const index = this.store.swapTxHistory.findIndex(
+      item => item.hash === hash && item.chainId === chainId,
+    );
+    if (index !== -1) {
+      this.store.swapTxHistory[index].status = status;
+      this.store.swapTxHistory[index].nonce = nonce;
+      this.store.swapTxHistory[index].completedAt = Date.now();
+      const completeItem = this.store.swapTxHistory[index];
+      // clear before pending by nonce lower than complete item
+      this.store.swapTxHistory = this.store.swapTxHistory.filter(item => {
+        return !(
+          isSameAddress(completeItem.address, item.address) &&
+          item.chainId === completeItem.chainId &&
+          item.createdAt < completeItem.createdAt &&
+          item.status === 'pending'
+        );
+      });
     }
   }
 
@@ -778,6 +852,12 @@ export class TransactionHistoryService {
         reqId: completedTx.reqId,
         gasUsed: completed.gas_used,
       });
+      this.completeSwapTxHistory(
+        completedTx.hash!,
+        chainId,
+        completedTx.nonce!,
+        completed.status === 1 ? 'success' : 'failed',
+      );
       eventBus.emit(EVENTS.RELOAD_TX, {
         addressList: [address],
       });

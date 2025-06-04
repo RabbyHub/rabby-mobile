@@ -10,7 +10,10 @@ import { refreshIdAtom } from './atom';
 import { useInterval, useMount, useRequest } from 'ahooks';
 import { swapService, transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import {
+  SwapTxHistoryItem,
+  TransactionGroup,
+} from '@/core/services/transactionHistory';
 const swapTxHistoryVisibleAtom = atom(false);
 
 export const useSwapTxHistoryVisible = () => {
@@ -123,47 +126,33 @@ export const useSwapHistory = () => {
 
 export const swapPendingCountAtom = atom(0);
 export const swapPendingTxDataAtom = atom<SwapItem | null>(null);
-export const swapLocalTxDataAtom = atom<TransactionGroup | null>(null);
+export const swapLocalTxDataAtom = atom<SwapTxHistoryItem | null>(null);
 export const swapHistoryRedDotAtom = atom(false);
 export const useReadPendingCount = () => {
   return useAtomValue(swapPendingCountAtom);
 };
 
 export const fetchLocalSwapPendingTx = (address: string) => {
-  const { completeds: _completeds, pendings: _pendings } =
-    transactionHistoryService.getList(address);
-
-  const txs = [..._pendings, ..._completeds].filter(item => {
-    const chain = findChain({ id: item.chainId });
-    return (
-      !chain?.isTestnet &&
-      item.isPending &&
-      !item.maxGasTx.action?.actionData.cancelTx &&
-      (item.$ctx?.ga?.source === 'swap' ||
-        item.$ctx?.ga?.source === 'approvalAndSwap|swap')
-    );
-  });
-
-  return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
+  return transactionHistoryService.getRecentPendingSwapTxHistory(address);
 };
 
-export const fetchRefreshLocalData = (data: TransactionGroup) => {
-  if (!data.isPending) {
+export const fetchRefreshLocalData = (data: SwapTxHistoryItem) => {
+  if (data.status !== 'pending') {
     // has done
     return;
   }
 
   const address = data.address;
   const chainId = data.chainId;
-  const nonce = data.nonce;
-  const groups = transactionHistoryService.getPendingTxsByNonce(
+  const hash = data.hash;
+  const newData = transactionHistoryService.getSwapTxHistory(
     address,
+    hash,
     chainId,
-    nonce,
   );
 
-  if (!groups?.[0].isPending) {
-    return groups[0];
+  if (newData?.status !== 'pending') {
+    return newData;
   }
 };
 
@@ -239,12 +228,12 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
     if (localPendingTxData) {
       const refreshTx = fetchRefreshLocalData(localPendingTxData);
       if (refreshTx) {
-        if (refreshTx.maxGasTx.action?.actionData?.cancelTx) {
-          setLocalPendingTxData(null);
-        } else {
-          setLocalPendingTxData(refreshTx);
-          setSwapHistoryRedDot(true);
-        }
+        // if (refreshTx.maxGasTx.action?.actionData?.cancelTx) {
+        //   setLocalPendingTxData(null);
+        // } else {
+        setLocalPendingTxData(refreshTx);
+        setSwapHistoryRedDot(true);
+        // }
       }
     }
   }, 1000);

@@ -533,14 +533,14 @@ function SendScreen({
                 />
                 <ShowMoreOnSend />
               </View>
-              {Boolean(localPendingTxData && !canSubmit) && (
+              {/* {Boolean(localPendingTxData && !canSubmit) && (
                 <PendingTxItem
                   isForMultipleAdderss={isForMultipleAdderss}
                   data={localPendingTxData!}
                   type="send"
                   clearLocalPendingTxData={clearLocalPendingTxData}
                 />
-              )}
+              )} */}
             </KeyboardAwareScrollView>
             <BottomArea />
           </View>
