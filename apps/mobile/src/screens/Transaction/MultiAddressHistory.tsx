@@ -665,7 +665,6 @@ const HistoryScreen = ({ isForMultipleAddress = true }) => {
     tokenDetailAddress,
     setTokenDetailAddress,
   } = useGeneralTokenDetailSheetModal();
-  useLastUsedAccountInScreen();
 
   const { styles } = useTheme2024({ getStyle });
 

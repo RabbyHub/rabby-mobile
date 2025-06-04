@@ -351,6 +351,9 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       navigation.dispatch(
         StackActions.push(RootNames.StackTransaction, {
           screen: RootNames.Receive,
+          params: {
+            account: currentAccount,
+          },
         }),
       );
     }, [currentAccount, navigation, switchSceneCurrentAccount]);

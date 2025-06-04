@@ -8,6 +8,7 @@ import useAsync from 'react-use/lib/useAsync';
 import useAsyncRetry from 'react-use/lib/useAsyncRetry';
 
 export const useRabbyPoints = () => {
+  // todo remove this some time
   const { currentAccount: account } = useCurrentAccount();
 
   const { value: campaignIsEnded, loading: campaignIsEndedLoading } =
@@ -133,6 +134,7 @@ export const useRabbyPoints = () => {
 };
 
 export const useRabbyPointsInvitedCodeCheck = (invitedCode?: string) => {
+  // todo remove this some time
   const { currentAccount: account } = useCurrentAccount();
 
   const { value: codeStatus, loading: codeLoading } = useAsync(async () => {

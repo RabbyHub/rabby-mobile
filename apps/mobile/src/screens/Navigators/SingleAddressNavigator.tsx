@@ -4,7 +4,6 @@ import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavig
 import { RootNames } from '@/constant/layout';
 import SingleAddressHome from '../Home/Home';
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { RightArea } from '../Home/SingleHomeRightArea';
 const SingleAddressStack = createCustomNativeStackNavigator();
 
 export function SingleAddressNavigator() {
@@ -26,7 +25,7 @@ export function SingleAddressNavigator() {
           title: '',
           headerTitle: '',
           headerShown: true,
-          headerRight: RightArea,
+          // headerRight: RightArea,
           headerStyle: {
             backgroundColor: 'transparent',
           },

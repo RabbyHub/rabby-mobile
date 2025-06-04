@@ -13,6 +13,7 @@ import ArrowSwapSVG from '@/assets2024/icons/common/arrow-swap-cc.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { bridgeService, swapService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 export const BridgePendingTxItem = ({
   data,
   clearLocalPendingTxData,
@@ -26,7 +27,9 @@ export const BridgePendingTxItem = ({
   const { t } = useTranslation();
 
   const isPending = data.status === 'pending';
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const handlePress = () => {
     if (!isPending) {

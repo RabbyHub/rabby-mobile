@@ -3,6 +3,7 @@ import { RootNames } from '@/constant/layout';
 import { sendRequest } from '@/core/apis/provider';
 import { bridgeService, preferenceService } from '@/core/services';
 import { BridgeRecord } from '@/core/services/bridge';
+import { Account } from '@/core/services/preference';
 import { approveToken } from '@/screens/Swap/hooks/swap';
 import { findChain } from '@/utils/chain';
 import i18n from '@/utils/i18n';
@@ -23,6 +24,7 @@ export const bridgeToken = async (
     gasPrice,
     info,
     value,
+    account,
   }: {
     data: string;
     to: string;
@@ -35,10 +37,10 @@ export const bridgeToken = async (
     payTokenRawAmount: string;
     gasPrice?: number;
     info: BridgeRecord;
+    account: Account;
   },
   $ctx?: any,
 ) => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(i18n.t('background.error.noCurrentAccount'));
   }
@@ -50,37 +52,39 @@ export const bridgeToken = async (
   }
   try {
     if (shouldTwoStepApprove) {
-      await approveToken(
-        payTokenChainServerId,
-        payTokenId,
-        to,
-        0,
-        {
+      await approveToken({
+        chainServerId: payTokenChainServerId,
+        id: payTokenId,
+        spender: to,
+        amount: 0,
+        $ctx: {
           ga: {
             ...$ctx?.ga,
             source: 'approvalAndBridge|tokenApproval',
           },
         },
         gasPrice,
-        { isBridge: true },
-      );
+        extra: { isBridge: true },
+        account,
+      });
     }
 
     if (shouldApprove) {
-      await approveToken(
-        payTokenChainServerId,
-        payTokenId,
-        to,
-        payTokenRawAmount,
-        {
+      await approveToken({
+        chainServerId: payTokenChainServerId,
+        id: payTokenId,
+        spender: to,
+        amount: payTokenRawAmount,
+        $ctx: {
           ga: {
             ...$ctx?.ga,
             source: 'approvalAndBridge|tokenApproval',
           },
         },
         gasPrice,
-        { isBridge: true },
-      );
+        extra: { isBridge: true },
+        account,
+      });
     }
 
     if (info) {
@@ -136,6 +140,7 @@ export const buildBridgeToken = async (
     gasPrice,
     info,
     value,
+    account,
   }: {
     data: string;
     to: string;
@@ -148,10 +153,10 @@ export const buildBridgeToken = async (
     payTokenRawAmount: string;
     gasPrice?: number;
     info: BridgeRecord;
+    account: Account;
   },
   $ctx?: any,
 ) => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(i18n.t('background.error.noCurrentAccount'));
   }
@@ -164,41 +169,43 @@ export const buildBridgeToken = async (
   const txs: Tx[] = [];
   try {
     if (shouldTwoStepApprove) {
-      const res = await approveToken(
-        payTokenChainServerId,
-        payTokenId,
-        to,
-        0,
-        {
+      const res = await approveToken({
+        chainServerId: payTokenChainServerId,
+        id: payTokenId,
+        spender: to,
+        amount: 0,
+        $ctx: {
           ga: {
             ...$ctx?.ga,
             source: 'approvalAndBridge|tokenApproval',
           },
         },
         gasPrice,
-        { isBridge: true },
-        true,
-      );
+        extra: { isBridge: true },
+        isBuild: true,
+        account,
+      });
 
       txs.push(res.params[0]);
     }
 
     if (shouldApprove) {
-      const res = await approveToken(
-        payTokenChainServerId,
-        payTokenId,
-        to,
-        payTokenRawAmount,
-        {
+      const res = await approveToken({
+        chainServerId: payTokenChainServerId,
+        id: payTokenId,
+        spender: to,
+        amount: payTokenRawAmount,
+        $ctx: {
           ga: {
             ...$ctx?.ga,
             source: 'approvalAndBridge|tokenApproval',
           },
         },
         gasPrice,
-        { isBridge: true },
-        true,
-      );
+        extra: { isBridge: true },
+        isBuild: true,
+        account,
+      });
       txs.push(res.params[0]);
     }
 

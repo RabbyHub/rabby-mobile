@@ -14,11 +14,7 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 import ViewMore from '@/components/Approval/components/Actions/components/ViewMore';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { ellipsisAddress } from '@/utils/address';
@@ -89,8 +85,6 @@ export const ApproveNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
     }
     return account;
   }, [accounts, data.address, data.keyringType]);
-
-  const { switchAccount } = useCurrentAccount();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -240,7 +234,6 @@ export const ApproveNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
           <AddressItemInDetail
             address={data.maxGasTx.address}
             accounts={unionAccounts}
-            switchAccount={switchAccount}
           />
         </View>
 

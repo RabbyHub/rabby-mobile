@@ -4,8 +4,6 @@ import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript
 import React, { useCallback, useRef, useState } from 'react';
 import { RcIconMore } from '@/assets/icons/home';
 import { useAddressDetailModal } from '../Address/useAddressDetailModal';
-import { useCurrentAccount } from '@/hooks/account';
-import PendingTx from '../Bridge/components/PendingTx';
 import RcIconHistory from '@/assets2024/singleHome/history.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { transactionHistoryService } from '@/core/services';
@@ -18,6 +16,7 @@ import { AbstractPortfolioToken } from './types';
 import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { HomePendingBadge } from './components/HomePending';
+import { Account } from '@/core/services/preference';
 
 const hitSlop = {
   top: 10,
@@ -37,18 +36,19 @@ interface HeaderRightHistoryProps {
   isInTokenDetail?: boolean;
   isMultiAddress?: boolean;
   tokenItem?: AbstractPortfolioToken;
+  account: Account;
 }
 
 export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   isInTokenDetail,
   isMultiAddress,
   tokenItem,
+  account: currentAccount,
 }) => {
   const [pendingTxCount, setPendingTxCount] = useState(0);
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
-  const { currentAccount } = useCurrentAccount();
   const [historyCount, setHistoryCount] = useState<{
     success: number;
     fail: number;
@@ -155,8 +155,9 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   );
 };
 
-export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
-  const { currentAccount } = useCurrentAccount();
+export const RightArea: React.FC<{
+  account: Account;
+}> = ({ account: currentAccount }) => {
   const showAddressDetail = useAddressDetailModal();
   const { navigation } = useSafeSetNavigationOptions();
   const { colors2024 } = useTheme2024();
@@ -176,7 +177,7 @@ export const RightArea: React.FC<HeaderButtonProps> = ({}) => {
 
   return (
     <>
-      <HeaderRightHistory />
+      <HeaderRightHistory account={currentAccount} />
       <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
         <RcIconMore width={24} height={24} color={colors2024['neutral-body']} />
       </CustomTouchableOpacity>

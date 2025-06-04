@@ -187,6 +187,7 @@ export const AddAsset = ({
         handleChainChanged?.(v);
         removeGlobalBottomSheetModal(id);
       },
+      account,
 
       bottomSheetModalProps: {
         onDismiss() {

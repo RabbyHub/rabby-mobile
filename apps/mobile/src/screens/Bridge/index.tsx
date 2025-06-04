@@ -1,23 +1,20 @@
-import React from 'react';
-import {
-  QuoteVisibleProvider,
-  RefreshIdProvider,
-  SettingVisibleProvider,
-} from './hooks';
-import { BridgeContent } from './components/BridgeContent';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import {
   PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
+import React from 'react';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
+import { BridgeContent } from './components/BridgeContent';
+import {
+  QuoteVisibleProvider,
+  RefreshIdProvider,
+  SettingVisibleProvider,
+} from './hooks';
 
 export const Bridge = ({
   isForMultipleAddress,
 }: PropsForAccountSwitchScreen) => {
-  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAddress });
-
   return (
     <SettingVisibleProvider>
       <RefreshIdProvider>

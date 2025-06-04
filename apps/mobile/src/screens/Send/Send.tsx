@@ -38,10 +38,7 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
-import {
-  useCurrentAccount,
-  useLoadMatteredChainBalances,
-} from '@/hooks/account';
+import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -110,6 +107,9 @@ function SendScreen({
     useState(false);
   const { localPendingTxData, clearLocalPendingTxData } =
     useRecentSendPendingTx(isForMultipleAddress);
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const navParams = useNavigationState(
     s =>
@@ -243,13 +243,14 @@ function SendScreen({
     toAddress: navParams?.toAddress,
     isForMultipleAddress: isForMultipleAddress,
     disableItemCheck,
-    currentAccount,
+    currentAccount: currentAccount!,
   });
 
-  const { fetchOrderedChainList } = useLoadMatteredChainBalances();
+  const { fetchOrderedChainList } = useLoadMatteredChainBalances({
+    account: currentAccount!,
+  });
   const isShowLoadingRef = useRef(true);
   const initByCache = async () => {
-    const account = (await preferenceService.getCurrentAccount())!;
     let targetToken: TokenItem | null = null;
     if (
       navParams &&
@@ -306,7 +307,7 @@ function SendScreen({
 
       if (!targetToken) {
         targetToken = await preferenceService.getLastTimeSendToken(
-          account.address,
+          currentAccount!.address,
         );
       }
       if (!targetToken) {
@@ -325,7 +326,7 @@ function SendScreen({
     try {
       if (navParams?.toAddress) {
         const res = await getRecommendToken({
-          from: account.address,
+          from: currentAccount!.address,
           to: navParams?.toAddress || '',
           tokenId: targetToken.id,
           chain: targetToken.chain,
@@ -365,7 +366,7 @@ function SendScreen({
         await loadCurrentToken(
           targetToken.id,
           targetToken.chain,
-          account.address,
+          currentAccount!.address,
         ),
         sleep(5000),
       ]);
@@ -376,8 +377,7 @@ function SendScreen({
   };
 
   const init = async () => {
-    const account = await preferenceService.getCurrentAccount()!;
-    if (!account) {
+    if (!currentAccount) {
       redirectBackErrorHandler(navigation);
       return;
     }
@@ -398,10 +398,6 @@ function SendScreen({
       // NOTHING
     }
   };
-
-  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
-    forScene: 'MakeTransactionAbout',
-  });
 
   useEffect(() => {
     if (screenState.inited) {

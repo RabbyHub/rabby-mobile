@@ -5,6 +5,7 @@ import {
 } from '@/constant/swap';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useCurrentAccount } from '@/hooks/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -91,7 +92,9 @@ export const useRecommendSwapToken = (params: {
     changeFromToken: setPayToken,
     changeToToken: setReceiveToken,
   } = params;
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const chainObj = useMemo(() => findChain({ enum: chainEnum }), [chainEnum]);
 

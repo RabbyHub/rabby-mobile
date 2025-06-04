@@ -242,6 +242,7 @@ export const TokenDetailScreen = () => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
+  // todo check this
   const { currentAccount, switchAccount } = useCurrentAccount({
     disableAutoFetch: true,
   });

@@ -52,13 +52,16 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
   });
 
   const handleRevoke = useMemoizedFn(async () => {
-    await switchSceneSigningAccount('MultiHistory', account);
     try {
-      await approveToken(token.chain, token.id, spender, 0);
+      await approveToken({
+        chainServerId: token.chain,
+        id: token.id,
+        spender,
+        amount: 0,
+        account,
+      });
     } catch (error) {
       console.error(error);
-    } finally {
-      await switchSceneSigningAccount('MultiHistory', null);
     }
 
     resetNavigationTo(navigation, 'Home');

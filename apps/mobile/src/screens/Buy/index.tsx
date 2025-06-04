@@ -34,8 +34,6 @@ export const BuyScreen = ({
 }: {
   isForMultipleAddress?: boolean;
 }) => {
-  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAddress });
-
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();

@@ -1,6 +1,5 @@
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { apisSafe } from '@/core/apis/safe';
-import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';

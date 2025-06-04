@@ -7,7 +7,6 @@ import { apisSafe } from '@/core/apis/safe';
 import { openapi } from '@/core/request';
 import { preferenceService } from '@/core/services';
 import { Account, ChainGas } from '@/core/services/preference';
-import { useCurrentAccount } from '@/hooks/account';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
@@ -970,6 +969,7 @@ export const MiniSignTx = ({
           });
           let estimateGas = 0;
           if (!preExecResult.pre_exec.success) {
+            console.log(preExecResult);
             throw new Error('Pre exec failed');
           }
           if (preExecResult.gas.success) {
@@ -1051,6 +1051,7 @@ export const MiniSignTx = ({
       setInitdTxs(res);
       setSimulateError(null);
     } catch (e) {
+      console.error(e);
       setSimulateError(
         new MiniApprovalError('Simulate Error', {
           name: 'SimulateError',
@@ -1429,6 +1430,7 @@ export const MiniApproval = ({
             onSubmitted?.(false);
           }
         }}
+        account={account}
       />
     </>
   );

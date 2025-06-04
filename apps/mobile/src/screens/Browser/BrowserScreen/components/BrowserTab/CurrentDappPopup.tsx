@@ -69,11 +69,12 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
               <Text style={styles.connectOrigin}>{dapp.origin}</Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.labelText}>
-                {t('page.connect.connectWallet')}
-              </Text>
+              <Text style={styles.labelText}>Connect Chain</Text>
               <View>
                 <ChainSelector
+                  account={
+                    dapp.currentAccount || preferenceService.getCurrentAccount()
+                  }
                   value={dapp.chainId || CHAINS_ENUM.ETH}
                   onChange={v => {
                     apisDapp.updateDappChain({

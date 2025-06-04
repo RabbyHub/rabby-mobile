@@ -1,4 +1,3 @@
-import { useCurrentAccount } from '@/hooks/account';
 import { miniApprovalAtom } from '@/hooks/useMiniApproval';
 import { useClearMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
 import { EVENT_ROUTE_CHANGE, eventBus } from '@/utils/events';

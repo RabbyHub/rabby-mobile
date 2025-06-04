@@ -30,6 +30,7 @@ import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
 import { querySelectedAssetSpender } from '../utils';
+import { Account } from '@/core/services/preference';
 
 const MemoInModalApprovalAssetRow = React.memo(
   InModalApprovalAssetRow,
@@ -45,8 +46,10 @@ const MemoInModalApprovalAssetRow = React.memo(
 
 export default function BottomSheetApprovalAsset({
   modalProps,
+  account,
 }: {
   modalProps?: BottomSheetModalProps;
+  account: Account;
 }) {
   const { t } = useTranslation();
   const {
@@ -68,7 +71,7 @@ export default function BottomSheetApprovalAsset({
   );
 
   const { displaySortedAssetsList } = useApprovalsPage();
-  const batchRevoke = useBatchRevoke();
+  const batchRevoke = useBatchRevoke({ account });
 
   const handleRevoke = React.useCallback(() => {
     const currentRevokeList = Object.values(assetFocusingRevokeMap);

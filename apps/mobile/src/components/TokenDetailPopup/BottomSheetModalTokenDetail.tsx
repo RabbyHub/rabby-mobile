@@ -469,7 +469,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       data?: RedirectToType;
     }) => void;
     hideOperationButtons?: boolean;
-    address?: KeyringAccountWithAlias;
+    address?: KeyringAccountWithAlias | null;
     nextTxRedirectAccount?: Account | null;
   }
 >(
@@ -487,8 +487,9 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     },
     ref,
   ) => {
-    const { styles, colors } = useThemeStyles(getStyles);
+    const { styles } = useThemeStyles(getStyles);
     const { t } = useTranslation();
+    // todo check this
     const { currentAccount } = useCurrentAccount();
     const finalAccount = address || currentAccount;
     const [tokenLoad, setTokenLoad] = React.useState<{
@@ -800,6 +801,8 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
               params: {
                 chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
                 tokenSymbol: token?.symbol,
+                // todo fix this
+                account: currentAccount,
               },
             });
             break;
@@ -815,6 +818,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         nextTxRedirectAccount,
         navigation,
         navigateToSendPolyScreen,
+        currentAccount,
       ],
     );
 

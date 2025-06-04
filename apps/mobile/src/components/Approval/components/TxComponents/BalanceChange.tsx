@@ -22,6 +22,7 @@ import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPop
 import NoBalanceSVG from '@/assets/icons/sign/no-balance-cc.svg';
 import NFTDefaultSVG from '@/assets/nft-default.svg';
 import TouchableText from '@/components/Touchable/TouchableText';
+import { Account } from '@/core/services/preference';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -193,12 +194,14 @@ const NFTBalanceChange = ({
 const BalanceChange = ({
   data,
   version,
+  account,
 }: {
   data?: IBalanceChange;
   isSupport?: boolean;
   isGnosis?: boolean;
   chainEnum?: CHAINS_ENUM;
   version: 'v0' | 'v1' | 'v2';
+  account?: Account;
 }) => {
   const { t } = useTranslation();
   const isSuccess = data?.success;
@@ -237,9 +240,9 @@ const BalanceChange = ({
   const { openTokenDetailPopup } = useTokenDetailSheetModalOnApprovals();
   const handleClickToken = useCallback(
     (t: TokenItem) => {
-      openTokenDetailPopup(t);
+      openTokenDetailPopup(t, account);
     },
-    [openTokenDetailPopup],
+    [account, openTokenDetailPopup],
   );
 
   if (version === 'v0') {

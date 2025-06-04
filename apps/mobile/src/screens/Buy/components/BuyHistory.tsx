@@ -22,7 +22,7 @@ import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
-import { useCurrentAccount } from '@/hooks/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -51,7 +51,9 @@ const HistoryList = ({
     [onGoToDetail],
   );
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const ListHeaderComponent = useCallback(() => {
     return (

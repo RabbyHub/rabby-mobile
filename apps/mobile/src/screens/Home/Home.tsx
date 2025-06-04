@@ -11,6 +11,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useRoute } from '@react-navigation/native';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { RightArea } from './SingleHomeRightArea';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -61,13 +62,19 @@ function HomeScreen(): JSX.Element {
     return <HomeScreen.HeaderArea account={currentAccount} />;
   }, [currentAccount]);
 
+  const renderHeaderRight = React.useCallback(() => {
+    return <RightArea account={currentAccount} />;
+  }, [currentAccount]);
+
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: renderHeaderTitle,
+      headerRight: renderHeaderRight,
     });
   }, [
-    currentAccount?.address,
+    currentAccount.address,
     navigation,
+    renderHeaderRight,
     renderHeaderTitle,
     setNavigationOptions,
   ]);

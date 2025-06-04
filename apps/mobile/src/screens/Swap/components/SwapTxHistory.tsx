@@ -24,12 +24,12 @@ import { navigate } from '@/utils/navigation';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
-import { useCurrentAccount } from '@/hooks/account';
 import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { transactionHistoryService } from '@/core/services';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -108,7 +108,9 @@ const HistoryList = ({
   const { txList, loading, loadMore, noMore } = useSwapHistory();
   const { t } = useTranslation();
   const { styles, isLight } = useTheme2024({ getStyle });
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const renderItem = useCallback(
     ({ item }) => (
@@ -242,7 +244,9 @@ export const SwapTxHistory = ({
   const { colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { projectDict, tokenDict } = useHistoryTokenDict();
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const onDismiss = useCallback(() => {
     setVisible(false);

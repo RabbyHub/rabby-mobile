@@ -1,9 +1,10 @@
 import { apiProvider } from '@/core/apis';
-import { preferenceService } from '@/core/services';
+import { Account } from '@/core/services/preference';
 import { matomoRequestEvent } from './analytics';
 import { eventBus, EVENTS } from './events';
 import { stats } from './stats';
 import { getKRCategoryByType } from './transaction';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 
 // fail code
 export enum FailedCode {
@@ -54,15 +55,14 @@ type ProgressStatus = 'building' | 'builded' | 'signed' | 'submitted';
 export const sendPersonalMessage = async ({
   data,
   onProgress,
+  account: currentAccount,
 }: {
   data: string[];
   onProgress?: (status: ProgressStatus) => void;
   ga?: Record<string, any>;
+  account: Account;
 }) => {
   onProgress?.('building');
-  const currentAccount = (await preferenceService.getCurrentAccount())!;
-
-  console.log('current', currentAccount);
 
   report({
     action: 'createSignText',
@@ -93,6 +93,8 @@ export const sendPersonalMessage = async ({
           signTextMethod: 'personalSign',
         },
       },
+      session: INTERNAL_REQUEST_SESSION,
+      account: currentAccount,
     });
     await handleSendAfter();
   } catch (e) {

@@ -1,18 +1,12 @@
 import TouchableView from '@/components/Touchable/TouchableView';
-import { createGetStyles2024 } from '@/utils/styles';
 import { ScreenLayouts2 } from '@/constant/layout';
-import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
+import { createGetStyles2024 } from '@/utils/styles';
 
-import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
-import { DappInfo } from '@/core/services/dappService';
-import {
-  isSameAccount,
-  useSceneAccountInfo,
-  useSwitchSceneCurrentAccount,
-} from '@/hooks/accountsSwitcher';
-import { useEffect } from 'react';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { RcWalletCC } from '@/assets/icons/common';
+import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { DappInfo } from '@/core/services/dappService';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 
 export function WebViewHeaderRight({

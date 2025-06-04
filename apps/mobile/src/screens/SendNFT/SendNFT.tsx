@@ -35,6 +35,7 @@ export default function SendNFT() {
 
   const nftItem = navParams?.nftItem;
   const chainItem = findChain({ serverId: nftItem?.chain });
+  const account = navParams?.account;
 
   const {
     sendNFTScreenState: screenState,
@@ -55,7 +56,7 @@ export default function SendNFT() {
       toAddressInWhitelist,
       canSubmit,
     },
-  } = useSendNFTForm(nftItem);
+  } = useSendNFTForm({ nftToken: nftItem, account });
 
   const { fetchContactAccounts } = useContactAccounts();
 
@@ -89,7 +90,9 @@ export default function SendNFT() {
     };
   }, [resetScreenState]);
 
-  if (!nftItem || !chainItem) return null;
+  if (!nftItem || !chainItem || !account) {
+    return null;
+  }
 
   return (
     <SendNFTInternalContextProvider
@@ -135,7 +138,7 @@ export default function SendNFT() {
               {/* From */}
               <View style={{ marginTop: 20 }}>
                 <Text style={styles.sectionTitle}>From</Text>
-                <FromAddressInfo style={{ marginTop: 8 }} />
+                <FromAddressInfo style={{ marginTop: 8 }} account={account} />
               </View>
 
               {/* To */}

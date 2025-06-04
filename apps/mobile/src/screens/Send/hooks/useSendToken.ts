@@ -23,7 +23,6 @@ import { Account, ChainGas } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
-import { useCurrentAccount } from '@/hooks/account';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
 import { formatTxInputDataOnERC20 } from '@/utils/transaction';
 import {
@@ -1238,7 +1237,6 @@ export function useSendTokenForm({
       if (screenState.showGasReserved) {
         putScreenState({ showGasReserved: false });
       }
-      const account = preferenceService.getCurrentAccount();
       if (!account) {
         console.error('[handleCurrentTokenChange] no account');
       }
@@ -1275,6 +1273,7 @@ export function useSendTokenForm({
     },
     [
       screenState.showGasReserved,
+      account,
       currentToken.id,
       currentToken.chain,
       putChainToken,
@@ -1508,7 +1507,6 @@ export function useSendTokenForm({
   const handleChainChanged = useCallback(
     async (val: CHAINS_ENUM) => {
       putScreenState(prev => ({ ...prev, clickedMax: false }));
-      const account = preferenceService.getCurrentAccount()!;
       // fallback to eth, but we don't expect this to happen
       const chain = findChainByEnum(val, { fallback: true })!;
       setRouteParams(pre => ({
@@ -1569,6 +1567,7 @@ export function useSendTokenForm({
       patchFormValues,
       handleFormValuesChange,
       loadCurrentToken,
+      account.address,
     ],
   );
 
@@ -1640,6 +1639,7 @@ export function useSendTokenForm({
           trigger: 'sendToken',
         },
         directSubmit: true,
+        account,
       });
     }
   }, [
@@ -1653,6 +1653,7 @@ export function useSendTokenForm({
     screenState.isSubmitLoading,
     chainItem?.isTestnet,
     toAddress,
+    account,
   ]);
 
   useEffect(() => {

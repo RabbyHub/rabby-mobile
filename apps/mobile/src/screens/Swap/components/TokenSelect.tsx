@@ -200,7 +200,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         tokenSelectorVisible,
       ]);
 
-    const allRemoteTokens = useSortToken(tokens);
+    const allRemoteTokens = useSortToken(tokens, accountInScreen);
 
     const searchedLocalTokensWithOwner = useMemo(
       () =>

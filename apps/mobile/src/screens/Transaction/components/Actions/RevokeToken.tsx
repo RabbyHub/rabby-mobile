@@ -4,11 +4,7 @@ import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
-import {
-  formatAmount,
-  formatTokenAmount,
-  formatUsdValue,
-} from '@/utils/number';
+import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -21,24 +17,20 @@ import ViewMore from '@/components/Approval/components/Actions/components/ViewMo
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { ellipsisAddress } from '@/utils/address';
 import { naviPush } from '@/utils/navigation';
+import { formatIntlTimestamp } from '@/utils/time';
 import { openTxExternalUrl } from '@/utils/transaction';
-import {
-  ApproveTokenRequireData,
-  RevokeTokenApproveRequireData,
-} from '@rabby-wallet/rabby-action';
+import { RevokeTokenApproveRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
-import BigNumber from 'bignumber.js';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemIcon } from '../HistoryItemIcon';
-import { formatIntlTimestamp } from '@/utils/time';
 import { HistoryItemCateType } from '../type';
 
 interface Props {
@@ -75,8 +67,6 @@ export const RevokeToken: React.FC<Props> = ({ data, isSingleAddress }) => {
   const unionAccounts = useMemo(() => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
-
-  const { switchAccount } = useCurrentAccount();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -215,7 +205,6 @@ export const RevokeToken: React.FC<Props> = ({ data, isSingleAddress }) => {
           <AddressItemInDetail
             address={data.maxGasTx.address}
             accounts={unionAccounts}
-            switchAccount={switchAccount}
           />
         </View>
 

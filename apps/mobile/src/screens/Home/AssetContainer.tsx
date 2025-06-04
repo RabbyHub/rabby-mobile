@@ -120,7 +120,7 @@ export const AssetContainer: React.FC<Props> = ({
       ),
     };
   }, [_rawNftList, _rawPortfolios, _rawTokens, selectChainItem?.chain]);
-  const sortTokens = useSortToken(tokens);
+  const sortTokens = useSortToken(tokens || [], currentAccount);
 
   const throttleUpdateTokens = useCallback(
     () => throttle(updateTokens, 4000),

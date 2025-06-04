@@ -11,11 +11,14 @@ import { FailedCode, sendTransaction } from '@/utils/sendTransaction';
 import { t } from 'i18next';
 import { useGasAccountSign } from '../GasAccount/hooks/atom';
 import { findIndexRevokeList } from './utils';
-import { useCurrentAccount } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { Account } from '@/core/services/preference';
 
-export async function buildTx(item: ApprovalSpenderItemToBeRevoked) {
+export async function buildTx(
+  item: ApprovalSpenderItemToBeRevoked,
+  account: Account,
+) {
   // generate tx
   let tx: Tx;
   if (item.permit2Id) {
@@ -29,29 +32,35 @@ export async function buildTx(item: ApprovalSpenderItemToBeRevoked) {
             spender: item.spender,
           },
         ],
+        account,
       },
       true,
     );
     tx = data.params[0];
   } else if ('nftTokenId' in item) {
-    const data = await apiApprovals.revokeNFTApprove(item, undefined, true);
+    const data = await apiApprovals.revokeNFTApprove(
+      { ...item, account },
+      undefined,
+      true,
+    );
     tx = data.params[0];
   } else {
-    const data = await apiApprovals.approveToken(
-      item.chainServerId,
-      item.id,
-      item.spender,
-      0,
-      {
+    const data = await apiApprovals.approveToken({
+      chainServerId: item.chainServerId,
+      id: item.id,
+      spender: item.spender,
+      amount: 0,
+      $ctx: {
         ga: {
           category: 'Security',
           source: 'tokenApproval',
         },
       },
-      undefined,
-      undefined,
-      true,
-    );
+      gasPrice: undefined,
+      extra: undefined,
+      isBuild: true,
+      account,
+    });
     tx = data.params[0];
   }
 
@@ -134,8 +143,11 @@ const cloneAssetApprovalSpender = (item: AssetApprovalSpender) => {
   return cloneItem;
 };
 
-export const useBatchRevokeTask = () => {
-  const { currentAccount } = useCurrentAccount();
+export const useBatchRevokeTask = ({
+  account: currentAccount,
+}: {
+  account: Account;
+}) => {
   const { sendMiniTransactions } = useMiniApproval();
   const gasAccount = useGasAccountSign();
   const queueRef = React.useRef(
@@ -180,7 +192,7 @@ export const useBatchRevokeTask = () => {
           cloneItem.$status!.status = 'pending';
           setList(prev => updateAssetApprovalSpender(prev, cloneItem));
           try {
-            const tx = await buildTx(revokeItem);
+            const tx = await buildTx(revokeItem, currentAccount);
             if (
               currentAccount?.type === KEYRING_TYPE.SimpleKeyring ||
               currentAccount?.type === KEYRING_TYPE.HdKeyring

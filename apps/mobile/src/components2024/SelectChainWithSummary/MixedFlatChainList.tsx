@@ -7,11 +7,12 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import ChainItem from './ChainItem';
 import { useLocalTokens } from '@/screens/Home/hooks/token';
-import { useChainBalances, useCurrentAccount } from '@/hooks/account';
+import { useChainBalances } from '@/hooks/account';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { useAssets } from '@/screens/Search/useAssets';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
+import { Account } from '@/core/services/preference';
 
 export default function MixedFlatChainList({
   style,
@@ -23,6 +24,7 @@ export default function MixedFlatChainList({
   unmatteredList = [],
   supportChains,
   disabledTips = 'Not supported',
+  account: currentAccount,
 }: RNViewProps & {
   value?: CHAINS_ENUM;
   onChange?(value: CHAINS_ENUM): void;
@@ -34,8 +36,8 @@ export default function MixedFlatChainList({
     | ((event: NativeSyntheticEvent<NativeScrollEvent>) => void)
     | undefined;
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
+  account?: Account | null;
 }) {
-  const { currentAccount } = useCurrentAccount();
   const { tokens: cacheAssets, getCacheTop10Assets } = useAssets();
   const { styles } = useTheme2024({ getStyle });
   const { tokenList } = useLocalTokens(currentAccount?.address);

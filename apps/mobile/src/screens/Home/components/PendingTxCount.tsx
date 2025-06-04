@@ -21,6 +21,7 @@ export const PendingTxCount = ({
 }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
+  // todo remove this some time
   const { currentAccount } = useCurrentAccount();
   const { data: count, runAsync: runGetPendingCount } = useRequest(
     async () => {

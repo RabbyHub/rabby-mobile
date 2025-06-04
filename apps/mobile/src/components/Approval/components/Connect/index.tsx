@@ -120,11 +120,6 @@ export const Connect = ({
  */
 // forScene = '@ActiveDappWebViewModal'
 ConnectProps) => {
-  // const { currentAccount } = useCurrentAccount();
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  // const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
-  //   forScene: '@ActiveDappWebViewModal',
-  // });
   const [selectedAccount, setSelectedAccount] = useState<
     Account | undefined | null
   >(preferenceService.getCurrentAccount());
@@ -522,6 +517,7 @@ ConnectProps) => {
                 {t('page.connect.title')}
               </Text>
               <ChainSelector
+                account={selectedAccount}
                 style={styles.chainSelector}
                 value={defaultChain}
                 onChange={handleChainChange}

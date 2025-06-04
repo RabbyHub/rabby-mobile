@@ -33,6 +33,7 @@ import { EmptyHolder } from '@/components/EmptyHolder';
 import AutoLockView from '@/components/AutoLockView';
 import { useTranslation } from 'react-i18next';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
+import { Account } from '@/core/services/preference';
 
 const MemoInModalApprovalContractRow = React.memo(
   InModalApprovalContractRow,
@@ -47,8 +48,10 @@ const MemoInModalApprovalContractRow = React.memo(
 
 export default function BottomSheetApprovalContract({
   modalProps,
+  account,
 }: {
   modalProps?: BottomSheetModalProps;
+  account: Account;
 }) {
   const {
     sheetModalRefs: { approvalContractDetail: modalRef },
@@ -70,7 +73,7 @@ export default function BottomSheetApprovalContract({
   );
 
   const { displaySortedAssetsList } = useApprovalsPage();
-  const batchRevoke = useBatchRevoke();
+  const batchRevoke = useBatchRevoke({ account });
 
   const handleRevoke = React.useCallback(() => {
     const currentRevokeList = Object.values(contractFocusingRevokeMap);

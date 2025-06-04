@@ -40,10 +40,9 @@ interface ChainSelectorProps {
   excludeChains?: CHAINS_ENUM[];
   needAllAddresses?: boolean;
   onClose?: () => void;
-  account?: Account;
+  account?: Account | null;
 }
 
-// todo account
 export const ChainSelector = ({
   value,
   onChange,
@@ -83,6 +82,7 @@ export const ChainSelector = ({
       excludeChains,
       needAllAddresses,
       titleText: titleText || t('page.component.ChainSelector.title'),
+      account,
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
       },

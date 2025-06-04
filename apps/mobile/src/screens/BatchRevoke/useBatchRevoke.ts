@@ -1,28 +1,32 @@
+import { RootNames } from '@/constant/layout';
+import { apiApprovals } from '@/core/apis';
+import { naviPush } from '@/utils/navigation';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
   useApprovalsPage,
 } from '../Approvals/useApprovalsPage';
-import { RootNames } from '@/constant/layout';
-import { naviPush } from '@/utils/navigation';
-import { findIndexRevokeList } from './utils';
-import { useRevokeOne } from './useRevokeOne';
 import { useApprovalAlertCounts } from '../Home/hooks/approvals';
-import { useCurrentAccount } from '@/hooks/account';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { apiApprovals } from '@/core/apis';
+import { useRevokeOne } from './useRevokeOne';
+import { findIndexRevokeList } from './utils';
+import { Account } from '@/core/services/preference';
 
-export const useBatchRevoke = () => {
+export const useBatchRevoke = ({
+  account: currentAccount,
+}: {
+  account: Account;
+}) => {
   const handleRevokeOne = useRevokeOne();
   const { forceUpdate } = useApprovalAlertCounts(10 * 60 * 1000);
   const { loadApprovals } = useApprovalsPage();
-  const { currentAccount } = useCurrentAccount();
 
   const handleRevoke = React.useCallback(
     (
       revokeList: ApprovalSpenderItemToBeRevoked[],
       dataSource: AssetApprovalSpender[],
+      account: Account,
     ) => {
       const filteredDataSource = dataSource.filter(record => {
         return (
@@ -38,6 +42,7 @@ export const useBatchRevoke = () => {
         params: {
           revokeList: revokeList,
           dataSource: filteredDataSource,
+          account,
         },
       });
     },
@@ -60,7 +65,10 @@ export const useBatchRevoke = () => {
           currentAccount.type === KEYRING_TYPE.GnosisKeyring)
       ) {
         forceUpdate();
-        await apiApprovals.revoke({ list: revokeList });
+        await apiApprovals.revoke({
+          list: revokeList,
+          account: currentAccount,
+        });
         loadApprovals();
         return;
       }
@@ -68,13 +76,14 @@ export const useBatchRevoke = () => {
       // only one item
       if (revokeList.length === 1) {
         forceUpdate();
-        await handleRevokeOne(revokeList[0]);
+
+        await handleRevokeOne(revokeList[0], currentAccount);
         loadApprovals();
         return;
       }
 
       // batch revoke
-      return handleRevoke(revokeList, dataSource);
+      return handleRevoke(revokeList, dataSource, currentAccount);
     },
     [currentAccount, handleRevoke, forceUpdate, handleRevokeOne, loadApprovals],
   );

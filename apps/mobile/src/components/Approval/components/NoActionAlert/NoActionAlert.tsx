@@ -3,7 +3,6 @@ import React from 'react';
 import { NoActionBody } from './NoActionBody';
 import { AppColorsVariants } from '@/constant/theme';
 import { StyleSheet, Text, View } from 'react-native';
-import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { openapi } from '@/core/request';
 import RcIconAlert from '@/assets/icons/sign/tx/alert-currentcolor.svg';

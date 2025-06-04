@@ -13,7 +13,6 @@ import { MiniWaiting } from './MiniWaiting';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useCallback, useEffect, useRef } from 'react';
 import React from 'react';
-import { useCurrentAccount } from '@/hooks/account';
 import { isAccountSupportDirectSign } from '@/utils/account';
 import { useMemoizedFn } from 'ahooks';
 import {
@@ -60,7 +59,7 @@ export const MiniDirectSubmitApproval = ({
   const dismissedByCodeRef = useRef(false);
 
   const [overlayLoading, setOverlayLoading] = React.useState(false);
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = account;
 
   const onSubmittingCb = useCallback(() => {
     onSubmitting?.();
@@ -204,6 +203,7 @@ export const MiniDirectSubmitApproval = ({
             onSubmittedCb?.(false);
           }
         }}
+        account={account}
       />
 
       <Modal

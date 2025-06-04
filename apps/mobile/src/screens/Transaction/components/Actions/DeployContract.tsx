@@ -10,11 +10,10 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
 import { toast } from '@/components2024/Toast';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { openTxExternalUrl } from '@/utils/transaction';
-import { CancelTxRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -56,8 +55,6 @@ export const DeployContact: React.FC<Props> = ({ data, isSingleAddress }) => {
   const unionAccounts = useMemo(() => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
-
-  const { switchAccount } = useCurrentAccount();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -119,7 +116,6 @@ export const DeployContact: React.FC<Props> = ({ data, isSingleAddress }) => {
           <AddressItemInDetail
             address={data.maxGasTx.address}
             accounts={unionAccounts}
-            switchAccount={switchAccount}
           />
         </View>
 

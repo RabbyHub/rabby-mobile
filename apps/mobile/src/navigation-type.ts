@@ -284,10 +284,11 @@ export type TransactionNavigatorParamList = {
     type: 'watch' | 'safe';
   };
   [RootNames.MultiSend]?: {};
-  [RootNames.SendNFT]?: {
+  [RootNames.SendNFT]: {
     nftItem: NFTItem;
     collectionName?: string;
     address?: string;
+    account: Account;
   };
   [RootNames.Swap]?: {
     chainEnum?: CHAINS_ENUM | undefined;
@@ -302,8 +303,12 @@ export type TransactionNavigatorParamList = {
   [RootNames.GnosisTransactionQueue]: {
     account: Account;
   };
-  [RootNames.Receive]?: {};
-  [RootNames.Approvals]?: {};
+  [RootNames.Receive]: {
+    account: Account;
+  };
+  [RootNames.Approvals]: {
+    account: Account;
+  };
   [RootNames.Bridge]?: {};
   [RootNames.MultiBridge]?: {};
   [RootNames.GasAccount]?: {};
@@ -311,9 +316,10 @@ export type TransactionNavigatorParamList = {
     receiveToken?: TokenItem;
   };
   [RootNames.MultiBuy]?: TransactionNavigatorParamList['Buy'] & object;
-  [RootNames.BatchRevoke]?: {
+  [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];
     dataSource: AssetApprovalSpender[];
+    account: Account;
   };
 };
 

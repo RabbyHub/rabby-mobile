@@ -1,8 +1,7 @@
 import { AppBottomSheetModal, Text } from '@/components';
-import { useCurrentAccount } from '@/hooks/account';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useEffect, useMemo, useRef } from 'react';
@@ -13,6 +12,7 @@ import { MiniOneKeyHardwareWaiting } from './MiniOneKeyHardwareWaiting';
 import { miniApprovalAtom } from '@/hooks/useMiniApproval';
 import { useAtom } from 'jotai';
 import { useMemoizedFn } from 'ahooks';
+import { Account } from '@/core/services/preference';
 
 export const MiniWaiting = ({
   visible,
@@ -20,12 +20,14 @@ export const MiniWaiting = ({
   onCancel,
   onDone,
   error: _error,
+  account,
 }: {
   visible?: boolean;
   onRetry?: () => void;
   onCancel?: (e?: any) => void;
   onDone?: () => void;
   error?: BatchSignTxTaskType['error'];
+  account: Account;
 }) => {
   const [{ ga }] = useAtom(miniApprovalAtom);
 
@@ -53,7 +55,7 @@ export const MiniWaiting = ({
     }
   }, [sheetModalRef, visible]);
 
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = account;
 
   const handleCancel = useMemoizedFn(() => {
     onCancel?.(error?.description);

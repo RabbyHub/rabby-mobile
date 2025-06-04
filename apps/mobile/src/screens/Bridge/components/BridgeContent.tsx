@@ -17,7 +17,6 @@ import {
   useSetRefreshId,
   useSetSettingVisible,
 } from '../hooks';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
 import { TwpStepApproveModal } from '@/screens/Swap/components/TwoStepApproveModal';
 import BigNumber from 'bignumber.js';
@@ -50,7 +49,10 @@ import {
   SwapBridgeDappPopup,
 } from '@/components/ExternalSwapBridgeDappPopup';
 import { Tip } from '@/components';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import {
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '@/hooks/accountsSwitcher';
 import {
   isAccountSupportDirectSign,
   isAccountSupportMiniApproval,
@@ -203,7 +205,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     clearBridgeHistoryRedDot,
   } = usePollBridgePendingNumber();
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const quoteVisible = useQuoteVisible();
 
@@ -291,9 +295,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     loading: externalDappsLoading,
     openTab: _openTab,
   } = useExternalSwapBridgeDapps(chains, 'bridge');
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const openTab = useMemoizedFn((url: string) => {
-    switchSceneCurrentAccount('@ActiveDappWebViewModal', currentAccount);
     _openTab(url);
   });
   const [externalDappOpen, setExternalDappOpen] = useState(false);
@@ -377,6 +379,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
               slippage: new BigNumber(slippage).div(100).toNumber(),
             },
+            account: currentAccount,
           },
           {
             ga: {
@@ -474,6 +477,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
               slippage: new BigNumber(slippageState).div(100).toNumber(),
             },
+            account: currentAccount,
           },
           {
             ga: {
@@ -491,6 +495,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                 source: 'bridge',
               },
               directSubmit: canShowDirectSubmit,
+              account: currentAccount!,
             });
           }
 
@@ -557,6 +562,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
           source: 'bridge',
         },
         directSubmit: true,
+        account: currentAccount!,
       });
     }
   }, [
@@ -564,6 +570,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     canShowDirectSubmit,
     prepareMiniTransactions,
     isFocused,
+    currentAccount,
   ]);
 
   const { loading: isSubmitting, runAsync: handleBridge } = useRequest(
@@ -586,6 +593,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                   // trigger: rbiSource,
                 },
                 directSubmit: canShowDirectSubmit,
+                account: currentAccount!,
               });
             }
           }
@@ -612,6 +620,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                 // trigger: rbiSource,
               },
               directSubmit: false,
+              account: currentAccount!,
             });
           }
 

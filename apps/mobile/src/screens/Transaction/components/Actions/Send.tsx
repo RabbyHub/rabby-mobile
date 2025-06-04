@@ -19,7 +19,7 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
@@ -42,7 +42,6 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { Tip } from '@/components/Tip';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
@@ -96,7 +95,6 @@ export const Send: React.FC<Props> = ({
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
 
-  const { switchAccount } = useCurrentAccount();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const { navigateToSendPolyScreen, navigateToSendScreen } = useSendRoutes();
@@ -203,7 +201,6 @@ export const Send: React.FC<Props> = ({
             <AddressItemInDetail
               address={data.maxGasTx.address}
               accounts={unionAccounts}
-              switchAccount={switchAccount}
             />
           </View>
 
@@ -214,7 +211,6 @@ export const Send: React.FC<Props> = ({
             <AddressItemInDetail
               address={actionData.to}
               accounts={unionAccounts}
-              switchAccount={switchAccount}
             />
           </View>
 

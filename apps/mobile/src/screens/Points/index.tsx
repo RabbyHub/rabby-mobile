@@ -40,6 +40,7 @@ export const PointScreen = () => {
     Record<number, boolean>
   >({});
 
+  // todo remove this some time
   const { currentAccount: account } = useCurrentAccount();
   const resetState = React.useCallback(() => {
     setClaimedIds([]);

@@ -5,9 +5,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
 import { preferenceService, swapService } from '@/core/services';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
@@ -112,10 +110,6 @@ const Swap = ({
     forScene: 'MakeTransactionAbout',
   });
 
-  useEffect(() => {
-    console.log('eff', currentAccount);
-  }, [currentAccount]);
-
   const { t } = useTranslation();
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
 
@@ -204,7 +198,9 @@ const Swap = ({
     clearExpiredTimer,
     finishedQuotes,
     inSufficientCanGetQuote,
-  } = useTokenPair(currentAccount!.address);
+  } = useTokenPair({
+    account: currentAccount!,
+  });
 
   const {
     autoSlippage,
@@ -857,6 +853,7 @@ const Swap = ({
             onChange={switchChain}
             // supportChains={SWAP_SUPPORT_CHAINS}
             hideTestnetTab
+            account={currentAccount!}
           />
           <View style={styles.swapContainer}>
             <View style={styles.flex1}>
@@ -915,7 +912,7 @@ const Swap = ({
             />
             <Divider color={colors2024['neutral-line']} />
 
-            {/* <SwapTokenItem
+            <SwapTokenItem
               valueLoading={quoteLoading}
               token={receiveToken}
               onTokenChange={token => {
@@ -947,7 +944,7 @@ const Swap = ({
               // placeholder={t('page.swap.search-by-name-address')}
               excludeTokens={payToken?.id ? [payToken?.id] : undefined}
               finishedQuotes={finishedQuotes}
-            /> */}
+            />
             <BridgeSwitchBtn
               onPress={exchangeToken}
               style={styles.arrowWrapper}

@@ -233,6 +233,7 @@ const Actions = ({
             <BalanceChange
               version={txDetail.pre_exec_version}
               data={txDetail.balance_change}
+              account={account}
             />
           </>
         )}

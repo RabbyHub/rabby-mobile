@@ -9,7 +9,6 @@ import { View, Text, TouchableOpacity, Keyboard } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import useAsync from 'react-use/lib/useAsync';
 import { useTokens } from '@/hooks/chainAndToken/useToken';
-import { useCurrentAccount } from '@/hooks/account';
 import { getTokenSymbol } from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +32,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { preferenceService } from '@/core/services';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -40,7 +40,9 @@ interface TokenSelectProps {
 }
 
 export const BuyTokenSelect = ({ token, onTokenChange }: TokenSelectProps) => {
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
 
   const handleCurrentTokenChange = (token: TokenItem) => {
@@ -126,7 +128,9 @@ const TokenSelectorInner = ({
   const handleQueryChange = (value: string) => {
     setQuery(value);
   };
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const { value: pinedQueue } = useAsync(async () => {
     if (currentAccount?.address) {

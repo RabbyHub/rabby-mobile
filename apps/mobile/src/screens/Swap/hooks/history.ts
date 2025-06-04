@@ -11,6 +11,7 @@ import { useInterval, useMount, useRequest } from 'ahooks';
 import { swapService, transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
 import { TransactionGroup } from '@/core/services/transactionHistory';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 const swapTxHistoryVisibleAtom = atom(false);
 
 export const useSwapTxHistoryVisible = () => {
@@ -35,7 +36,9 @@ const getSwapList = async (addr: string, start = 0, limit = 5) => {
 };
 
 export const useSwapHistory = () => {
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const addr = currentAccount?.address || '';
 
   const refreshSwapTxListCount = useAtomValue(refreshIdAtom);
@@ -180,7 +183,9 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
   const [localPendingTxData, setLocalPendingTxData] =
     useAtom(swapLocalTxDataAtom);
   const [, setSwapHistoryRedDot] = useAtom(swapHistoryRedDotAtom);
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const res = useRequest(
     async () => {
       const account = currentAccount;

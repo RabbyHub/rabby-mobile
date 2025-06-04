@@ -5,6 +5,7 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { t } from 'i18next';
 import { AbiCoder } from 'web3-eth-abi';
 import { addHexPrefix, unpadHexString } from 'ethereumjs-util';
+import { Account } from '../services/preference';
 
 export async function transferNFT(
   {
@@ -14,6 +15,7 @@ export async function transferNFT(
     abi,
     tokenId,
     amount,
+    account,
   }: {
     to: string;
     chainServerId: string;
@@ -21,10 +23,10 @@ export async function transferNFT(
     abi: 'ERC721' | 'ERC1155';
     tokenId: string;
     amount?: number;
+    account: Account;
   },
   $ctx?: any,
 ) {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(t('background.error.noCurrentAccount'));
   const chainId = findChain({
     serverId: chainServerId,
@@ -130,6 +132,7 @@ export const sendToken = async ({
   rawAmount,
   $ctx,
   isBuild,
+  account,
 }: {
   to: string;
   chainServerId: string;
@@ -137,8 +140,8 @@ export const sendToken = async ({
   rawAmount: string;
   isBuild?: boolean;
   $ctx?: any;
+  account: Account;
 }) => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(t('background.error.noCurrentAccount'));
   }

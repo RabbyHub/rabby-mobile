@@ -10,6 +10,7 @@ import { bridgeService, transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
 import { fetchRefreshLocalData } from '@/screens/Swap/hooks/history';
 import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const pendingCountAtom = atom(0);
 const bridgeLocalTxDataAtom = atom<TransactionGroup | null>(null);
@@ -50,8 +51,9 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
   // );
 
   const [, setBridgeHistoryRedDot] = useAtom(bridgeHistoryRedDotAtom);
-  const { currentAccount: account } = useCurrentAccount({
-    disableAutoFetch: true,
+
+  const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
   });
 
   useEffect(() => {
@@ -191,7 +193,9 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
 };
 
 export const useBridgeHistory = () => {
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const addr = currentAccount?.address || '';
 

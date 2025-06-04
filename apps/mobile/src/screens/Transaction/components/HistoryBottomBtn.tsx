@@ -22,12 +22,13 @@ import { approveToken, revokeNFTApprove } from '@/core/apis/approvals';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
-import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from './type';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useRequest } from 'ahooks';
 import { transactionHistoryService } from '@/core/services';
+import { Account } from '@/core/services/preference';
 
 interface ItemProps {
   status: number;
@@ -43,6 +44,7 @@ interface ItemProps {
   noRemainValue: boolean;
   isForMultipleAddress?: boolean;
   buttonContainerStyle?: RNViewProps['style'];
+  account: Account;
 }
 
 export const HistoryBottomBtn = ({
@@ -58,11 +60,11 @@ export const HistoryBottomBtn = ({
   receives,
   isForMultipleAddress = true,
   buttonContainerStyle,
+  account: currentAccount,
 }: ItemProps) => {
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
   const { styles } = useTheme2024({ getStyle });
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useMyAccounts();
 
@@ -183,17 +185,25 @@ export const HistoryBottomBtn = ({
                       contractId: (data.tx as any)?.id,
                       abi: 'ERC721',
                       isApprovedForAll: true,
+                      account: currentAccount,
                     },
                     {
                       ga: { category: 'Security', source: 'tokenApproval' },
                     },
                   );
                 } else {
-                  await approveToken(chain, tokenId, approve?.spender!, 0, {
-                    ga: {
-                      category: 'Security',
-                      source: 'tokenApproval',
+                  await approveToken({
+                    chainServerId: chain,
+                    id: tokenId,
+                    spender: approve?.spender!,
+                    amount: 0,
+                    $ctx: {
+                      ga: {
+                        category: 'Security',
+                        source: 'tokenApproval',
+                      },
                     },
+                    account: currentAccount,
                   });
                 }
                 resetNavigationTo(navigation, 'Home');

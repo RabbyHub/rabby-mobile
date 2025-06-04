@@ -27,6 +27,7 @@ import { isSwapWrapToken } from '../utils';
 import { RequestRateLimiter } from './rateLimit';
 import { useFocusEffect } from '@react-navigation/native';
 import { eventBus, EVENTS } from '@/utils/events';
+import { Account } from '@/core/services/preference';
 
 export const enableInsufficientQuote = true;
 
@@ -103,7 +104,8 @@ export interface FeeProps {
   symbol?: string;
 }
 
-export const useTokenPair = (userAddress: string) => {
+export const useTokenPair = ({ account }: { account: Account }) => {
+  const userAddress = account.address;
   const refreshId = useAtomValue(refreshIdAtom);
   const setRefreshId = useSetAtom(refreshIdAtom);
 
@@ -269,6 +271,7 @@ export const useTokenPair = (userAddress: string) => {
         switchChain(firstEnum);
       }
     },
+    account,
   });
 
   useEffect(() => {

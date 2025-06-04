@@ -23,8 +23,6 @@ import {
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 export const GasAccountScreen = () => {
-  useLastUsedAccountInScreen();
-
   const { t } = useTranslation();
   const [depositState, setDepositState] = useState<{
     isOpen?: boolean;

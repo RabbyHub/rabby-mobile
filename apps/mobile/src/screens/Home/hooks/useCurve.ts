@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import useAsyncRetry from 'react-use/lib/useAsyncRetry';
 
 export const use24hOrWeekCurveData = (isWeek?: boolean) => {
+  // todo remove this some time
   const { currentAccount } = useCurrentAccount();
   const { balance, success, hasValueChainBalances, balanceLoading } =
     useCurrentBalance(currentAccount?.address);
@@ -127,6 +128,7 @@ export const formatTimeMachineCurve = (range: number[], data?: AssetsCurve) => {
 };
 
 export const useTimeMachineData = (enabled = false) => {
+  // todo remove this some time
   const { currentAccount } = useCurrentAccount();
 
   const [cached, setCached] = useState(false);

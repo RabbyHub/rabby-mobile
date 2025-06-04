@@ -100,7 +100,7 @@ export const TestnetActions = ({
       <Card>
         <OriginInfo chain={chain} origin={origin} originLogo={originLogo} />
         <Divide />
-        <BalanceChange version="v0" />
+        <BalanceChange version="v0" account={account} />
       </Card>
 
       <Card>

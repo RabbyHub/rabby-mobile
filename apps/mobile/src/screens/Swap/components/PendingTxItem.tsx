@@ -1,27 +1,24 @@
 /* eslint-disable react-native/no-inline-styles */
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components';
-import { useTranslation } from 'react-i18next';
-import { getTokenSymbol } from '@/utils/token';
-import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
-import { findChain } from '@/utils/chain';
-import ArrowSwapSVG from '@/assets2024/icons/common/arrow-swap-cc.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { TransactionGroup } from '@/core/services/transactionHistory';
 import { RootNames } from '@/constant/layout';
-import { navigate, naviPush } from '@/utils/navigation';
-import { bridgeService, swapService } from '@/core/services';
-import { useCurrentAccount } from '@/hooks/account';
-import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
 import { getAliasName } from '@/core/apis/contact';
+import { swapService } from '@/core/services';
+import { TransactionGroup } from '@/core/services/transactionHistory';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useTheme2024 } from '@/hooks/theme';
+import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { ellipsisAddress } from '@/utils/address';
-import BigNumber from 'bignumber.js';
+import { findChain } from '@/utils/chain';
+import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
-import { sendToken } from '@/core/apis/token';
+import { createGetStyles2024 } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
+import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
+import BigNumber from 'bignumber.js';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Text, TouchableOpacity, View } from 'react-native';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
@@ -45,7 +42,9 @@ export const PendingTxItem = ({
   );
   const isPending = data.isPending;
   const chainName = chainItem?.name || '';
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const handlePress = () => {
     if (!isPending) {

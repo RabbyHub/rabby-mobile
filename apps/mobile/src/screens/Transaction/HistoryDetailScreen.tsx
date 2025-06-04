@@ -19,11 +19,7 @@ import RcIconSuccess from '@/assets2024/icons/history/IconSuccess.svg';
 import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import RcIconFail from '@/assets2024/icons/history/IconFail.svg';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
@@ -140,10 +136,8 @@ export const TxStatusItem = ({
 export const AddressItemInDetail = ({
   address,
   accounts,
-  switchAccount,
 }: {
   address: string;
-  switchAccount: (account: KeyringAccountWithAlias) => void;
   accounts: KeyringAccountWithAlias[];
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -168,7 +162,6 @@ export const AddressItemInDetail = ({
     );
 
     if (idx > -1) {
-      switchAccount(accounts[idx]);
       navigate(RootNames.SingleAddressStack, {
         screen: RootNames.SingleAddressHome,
         params: {
@@ -179,7 +172,7 @@ export const AddressItemInDetail = ({
       // popup
       console.debug('itemAliaName press open popup', address);
     }
-  }, [accounts, address, switchAccount]);
+  }, [accounts, address]);
 
   return (
     <View>
@@ -252,7 +245,6 @@ function HistoryDetailScreen(): JSX.Element {
     () => (data?.buyDetails?.status === 'failed' ? 0 : data.tx?.status) ?? 1,
     [data],
   );
-  const { switchAccount } = useCurrentAccount();
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
@@ -472,6 +464,7 @@ function HistoryDetailScreen(): JSX.Element {
           token={formatToken}
           status={status}
           tokenDict={data.tokenDict}
+          account={txAccount}
         />
         <View style={[styles.detailContainer, styles.detailContainerLastOne]}>
           <View style={styles.detailItem}>
@@ -560,11 +553,7 @@ function HistoryDetailScreen(): JSX.Element {
               <Text style={styles.itemTitleText}>
                 {t('page.transactions.detail.From')}
               </Text>
-              <AddressItemInDetail
-                address={fromAddr!}
-                accounts={accounts}
-                switchAccount={switchAccount}
-              />
+              <AddressItemInDetail address={fromAddr!} accounts={accounts} />
             </View>
           )}
           {data.isLocalBuy && (
@@ -575,7 +564,6 @@ function HistoryDetailScreen(): JSX.Element {
               <AddressItemInDetail
                 address={data.buyDetails?.service_provider?.name || ''}
                 accounts={accounts}
-                switchAccount={switchAccount}
               />
             </View>
           )}
@@ -595,11 +583,7 @@ function HistoryDetailScreen(): JSX.Element {
                     ? t('page.transactions.detail.RecipientAddress')
                     : t('page.transactions.detail.To')}
                 </Text>
-                <AddressItemInDetail
-                  address={toAddr!}
-                  accounts={accounts}
-                  switchAccount={switchAccount}
-                />
+                <AddressItemInDetail address={toAddr!} accounts={accounts} />
               </View>
             )}
           <View style={styles.detailItem}>
@@ -683,6 +667,7 @@ function HistoryDetailScreen(): JSX.Element {
           isForMultipleAddress={isForMultipleAddress}
           tokenDict={data.tokenDict}
           buttonContainerStyle={buttonContainerStyle}
+          account={txAccount}
         />
       ) : null}
     </NormalScreenContainer2024>

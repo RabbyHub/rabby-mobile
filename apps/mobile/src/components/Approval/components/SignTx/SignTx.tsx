@@ -150,7 +150,7 @@ interface BlockInfo {
 }
 
 const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
-  const { isGnosis, account } = params;
+  const { isGnosis } = params;
   const currentAccount = params.isGnosis ? params.account! : $account;
   console.log({
     currentAccount,
@@ -928,7 +928,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         extra: {
           brandName: currentAccount.brandName,
         },
-        $account: account,
+        $account: currentAccount,
         $ctx: params.$ctx,
         signingTxId: approval.signingTxId,
         pushType: pushInfo.type,

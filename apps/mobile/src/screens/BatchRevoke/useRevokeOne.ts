@@ -9,7 +9,7 @@ export const useRevokeOne = () => {
 
   const handleRevokeOne = React.useCallback(
     async (revokeItem: ApprovalSpenderItemToBeRevoked, account: Account) => {
-      const tx = await buildTx(revokeItem);
+      const tx = await buildTx(revokeItem, account);
       return sendMiniTransactions({
         txs: [tx],
         account,

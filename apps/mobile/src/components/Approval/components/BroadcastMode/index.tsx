@@ -9,7 +9,6 @@ import {
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useCurrentAccount } from '@/hooks/account';
 import { openapi } from '@/core/request';
 import { Tip } from '@/components/Tip';
 import { useThemeColors } from '@/hooks/theme';

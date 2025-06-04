@@ -170,6 +170,7 @@ export const DeFiDetailScreen = () => {
     isSingleAddress?: boolean;
   };
 
+  // todo check this
   const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const finalAccount = useMemo(
     () => routeAccount || currentAccount,

@@ -54,6 +54,7 @@ import {
 } from './utils';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { ApprovalsLayouts } from './layout';
+import { Account } from '@/core/services/preference';
 
 export const FILTER_TYPES = {
   contract: 'contract',
@@ -172,9 +173,11 @@ function sortContractApproval<T extends ContractApprovalItem>(
   ];
 }
 
-export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
-  const { currentAccount } = useCurrentAccount();
-
+export function useApprovalsPageOnTop(options: {
+  isTestnet?: boolean;
+  account: Account;
+}) {
+  const { account: currentAccount } = options;
   const [filterType, setFilterType] = useState<keyof typeof FILTER_TYPES>(
     __DEV__ ? 'contract' : 'contract',
   );

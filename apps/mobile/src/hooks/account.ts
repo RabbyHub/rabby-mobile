@@ -355,7 +355,11 @@ export function useChainBalances() {
   };
 }
 
-export function useLoadMatteredChainBalances() {
+export function useLoadMatteredChainBalances({
+  account: currentAccount,
+}: {
+  account: Account;
+}) {
   const {
     matteredChainBalances,
     setMattredChainBalances,
@@ -367,7 +371,6 @@ export function useLoadMatteredChainBalances() {
     setTestMattredChainBalances,
   } = useChainBalances();
 
-  const { currentAccount } = useCurrentAccount();
   const currentAccountAddr = currentAccount?.address;
 
   const isShowTestnet = false;

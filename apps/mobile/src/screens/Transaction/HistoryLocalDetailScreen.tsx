@@ -142,7 +142,11 @@ function HistoryLocalDetailScreen(): JSX.Element {
       ) : data.maxGasTx.action?.actionData?.deployContract ? (
         <DeployContact data={data} isSingleAddress={!isForMultipleAddress} />
       ) : needUseSwap ? (
-        <Swap data={data} isSingleAddress={!isForMultipleAddress} />
+        <Swap
+          data={data}
+          isSingleAddress={!isForMultipleAddress}
+          // account={txAccount}
+        />
       ) : data.maxGasTx.action?.actionData?.send ? (
         <Send
           data={data}

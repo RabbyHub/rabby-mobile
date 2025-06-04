@@ -37,8 +37,6 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
-
   const { data: isApproved } = useRequest(async () => {
     const approvedToAddress = await getErc721Approved({
       chainServerId: nft.chain,
@@ -50,7 +48,6 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
   });
 
   const handleRevoke = useMemoizedFn(async () => {
-    await switchSceneSigningAccount('MultiHistory', account);
     try {
       await revokeNFTApprove({
         chainServerId: nft.chain,
@@ -59,11 +56,10 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
         contractId: nft.contract_id,
         abi: 'ERC721',
         isApprovedForAll: false,
+        account: account,
       });
     } catch (e) {
       console.error(e);
-    } finally {
-      await switchSceneSigningAccount('MultiHistory', null);
     }
 
     resetNavigationTo(navigation, 'Home');
