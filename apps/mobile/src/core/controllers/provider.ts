@@ -1479,7 +1479,6 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('PRIVATE', true)
   private _checkAddress = async (address: string, req: any) => {
-    console.log('checkAddress', req);
     // eslint-disable-next-line prefer-const
     let { address: currentAddress, type } = req.account || {};
     currentAddress = currentAddress?.toLowerCase();
