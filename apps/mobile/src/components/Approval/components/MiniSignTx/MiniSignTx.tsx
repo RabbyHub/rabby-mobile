@@ -780,7 +780,8 @@ export const MiniSignTx = ({
         gas = gasList.find(item => item.level === 'custom')!;
       } else if (
         lastTimeGas?.lastTimeSelect &&
-        lastTimeGas?.lastTimeSelect === 'gasLevel'
+        lastTimeGas?.lastTimeSelect === 'gasLevel' &&
+        !directSubmit
       ) {
         const target = gasList.find(
           item => item.level === lastTimeGas?.gasLevel,
