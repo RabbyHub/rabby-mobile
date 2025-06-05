@@ -93,6 +93,11 @@ import { useTipsDollarDialog } from '../CopyTrading/component/hooks';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
 import { useExposureRateGuide } from '@/components/RateModal/hooks';
 import { RateModal } from '@/components/RateModal/RateModal';
+import {
+  GlobalWarning,
+  GlobalWarningType,
+} from '@/components2024/GlobalWarning/Warining';
+import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
 
 const HeaderHeight = 24;
 
@@ -172,6 +177,19 @@ function MultiAddressHomeHeader(
           {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
+      <GlobalWarning
+        type={GlobalWarningType.Network}
+        description={t('component.globalWarning.networkError.globalDesc')}
+        style={styles.globalWarning}
+        onRefresh={() => {
+          console.log('CUSTOM_LOGGER:=>: onRefresh');
+        }}
+      />
+      <NetWorkError
+        onRefresh={() => {
+          console.log('CUSTOM_LOGGER:=>: NetWorkError');
+        }}
+      />
       <View style={styles.curveBox}>
         <BlurShadowView isLight={isLight}>
           <Card
@@ -1300,6 +1318,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     marginLeft: 4,
+  },
+  globalWarning: {
+    marginHorizontal: 16,
+    marginTop: 16,
   },
 }));
 
