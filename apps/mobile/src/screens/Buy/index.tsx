@@ -23,7 +23,6 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import { BuyToIcon } from './components/ToIcon';
 import { toast } from '@/components2024/Toast';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { RootNames } from '@/constant/layout';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 

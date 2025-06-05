@@ -98,7 +98,6 @@ const EMPTY_TOKEN_ITEM = {
 function SendScreen({
   isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
-  useLastUsedAccountInScreen({ disableAutoEffect: !isForMultipleAddress });
   const navigation = useNavigation();
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
