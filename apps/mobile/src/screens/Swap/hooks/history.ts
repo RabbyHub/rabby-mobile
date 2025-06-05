@@ -12,7 +12,7 @@ import { swapService, transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
 import {
   SwapTxHistoryItem,
-  TransactionGroup,
+  SendTxHistoryItem,
 } from '@/core/services/transactionHistory';
 const swapTxHistoryVisibleAtom = atom(false);
 
@@ -133,10 +133,13 @@ export const useReadPendingCount = () => {
 };
 
 export const fetchLocalSwapPendingTx = (address: string) => {
-  return transactionHistoryService.getRecentPendingSwapTxHistory(address);
+  return transactionHistoryService.getRecentPendingTxHistory(address, 'swap');
 };
 
-export const fetchRefreshLocalData = (data: SwapTxHistoryItem) => {
+export const fetchRefreshLocalData = (
+  data: SwapTxHistoryItem | SendTxHistoryItem,
+  type: 'swap' | 'send',
+) => {
   if (data.status !== 'pending') {
     // has done
     return;
@@ -145,10 +148,11 @@ export const fetchRefreshLocalData = (data: SwapTxHistoryItem) => {
   const address = data.address;
   const chainId = data.chainId;
   const hash = data.hash;
-  const newData = transactionHistoryService.getSwapTxHistory(
+  const newData = transactionHistoryService.getRecentTxHistory(
     address,
     hash,
     chainId,
+    type,
   );
 
   if (newData?.status !== 'pending') {
@@ -226,7 +230,10 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
 
   useInterval(() => {
     if (localPendingTxData) {
-      const refreshTx = fetchRefreshLocalData(localPendingTxData);
+      const refreshTx = fetchRefreshLocalData(
+        localPendingTxData,
+        'swap',
+      ) as SwapTxHistoryItem;
       if (refreshTx) {
         // if (refreshTx.maxGasTx.action?.actionData?.cancelTx) {
         //   setLocalPendingTxData(null);

@@ -13,7 +13,7 @@ import ArrowSwapSVG from '@/assets2024/icons/common/arrow-swap-cc.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import {
   SwapTxHistoryItem,
-  TransactionGroup,
+  SendTxHistoryItem,
 } from '@/core/services/transactionHistory';
 import { RootNames } from '@/constant/layout';
 import { navigate, naviPush } from '@/utils/navigation';
@@ -36,7 +36,7 @@ export const PendingTxItem = ({
   isForMultipleAdderss,
   type,
 }: {
-  data: SwapTxHistoryItem;
+  data: SwapTxHistoryItem | SendTxHistoryItem;
   clearLocalPendingTxData: () => void;
   isForMultipleAdderss: boolean;
   type: 'send' | 'swap';
@@ -94,17 +94,14 @@ export const PendingTxItem = ({
   // const receiveTokenList =
   //   data.maxGasTx.explain?.balance_change?.receive_token_list;
 
-  const titleTextStr = useMemo(() => {
+  const sendTitleTextStr = useMemo(() => {
     if (type === 'send') {
-      // const amount = new BigNumber(sendActionData?.token.raw_amount || '0').div(
-      //   10 ** (sendActionData?.token.decimals || 18),
-      // );
-      // const sendAmount = formatTokenAmount(amount);
-      // return `-${sendAmount} ${getTokenSymbol(sendActionData?.token)}`;
-    } else {
-      return `${getTokenSymbol(payToken)}→${getTokenSymbol(receiveToken)}`;
+      const sendData = data as SendTxHistoryItem;
+      const sendAmount = formatTokenAmount(sendData?.amount);
+      return `-${sendAmount} ${getTokenSymbol(sendData?.token)}`;
     }
-  }, [type, payToken, receiveToken]);
+    return '';
+  }, [type, data]);
 
   const isFailed = useMemo(() => {
     return data.status === 'failed';
@@ -119,21 +116,19 @@ export const PendingTxItem = ({
       </View>
       <TouchableOpacity style={styles.container} onPress={handlePress}>
         <View style={styles.leftContainer}>
-          {type === 'send' ? (
-            <View style={styles.IconContainer}>
-              <AssetAvatar
-                logo={sendActionData?.token?.logo_url}
-                chain={chainItem?.serverId}
-                chainSize={14}
-                size={25}
-                innerChainStyle={styles.innerChainStyle}
-              />
-            </View>
-          ) : null}
           <View style={styles.mainContainer}>
             <View style={styles.titleContainer}>
               {type === 'send' ? (
-                <Text style={styles.titleText}>{titleTextStr}</Text>
+                <>
+                  <AssetAvatar
+                    logo={(data as SendTxHistoryItem)?.token?.logo_url}
+                    chain={chainItem?.serverId}
+                    chainSize={14}
+                    size={25}
+                    innerChainStyle={styles.innerChainStyle}
+                  />
+                  <Text style={styles.titleText}>{sendTitleTextStr}</Text>
+                </>
               ) : (
                 <>
                   <AssetAvatar
