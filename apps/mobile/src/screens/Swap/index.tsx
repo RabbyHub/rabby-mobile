@@ -591,7 +591,6 @@ const Swap = ({
           );
         } catch (e) {
           setDirectSigning(false);
-          console.debug('handleSwap error', error, e);
           if ((e as any)?.name === 'SimulateError') {
             gotoSwap();
           } else if (isAbortedDirectSubmitError(e)) {
