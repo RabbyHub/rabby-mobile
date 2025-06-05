@@ -85,6 +85,7 @@ export const HistoryList = forwardRef(
       localTxList,
       onRefresh,
       onPresssItem,
+      isNeedFetchFromApi,
       isForMultipleAdderss = true,
     }: {
       firstFetchDone?: boolean;
@@ -98,6 +99,7 @@ export const HistoryList = forwardRef(
       onPresssItem?: (data: HistoryDisplayItem) => void;
       loadMore?: () => void;
       onRefresh?: () => void;
+      isNeedFetchFromApi?: boolean;
     },
     ref,
   ) => {
@@ -204,7 +206,17 @@ export const HistoryList = forwardRef(
         renderItem={renderItem}
         windowSize={5}
         initialNumToRender={Math.min(markedList.length, 50)}
-        ListEmptyComponent={loading ? null : firstFetchDone ? <Empty /> : null}
+        ListEmptyComponent={
+          loading ? null : firstFetchDone ? (
+            <Empty
+              title={
+                isNeedFetchFromApi
+                  ? t('page.activities.signedTx.empty.title')
+                  : t('page.activities.signedTx.empty.titleLastThreeMonths')
+              }
+            />
+          ) : null
+        }
         style={styles.container}
         keyExtractor={(item, index) =>
           `${
