@@ -121,6 +121,7 @@ import MockBatchRevokeModal, {
   useDevMockBatchRevokeVisible,
 } from './sheetModals/DevMockBatchRevoke';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
+import { browserService } from '@/core/services';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -410,6 +411,23 @@ function SettingsBlocks() {
                     },
                   },
                 ],
+              );
+            },
+          },
+          {
+            label: '[debug] show opened urls',
+            onPress: () => {
+              const data = browserService.getBrowserTabs();
+              const activeTab = data.tabs.find(
+                item => item.id === data.activeTabId,
+              );
+              Alert.alert(
+                'debug',
+                '[urls]:' +
+                  data.tabs.map(item => item.url || item.initialUrl).join(' ') +
+                  ' [activeUrl]: ' +
+                  (activeTab?.url || activeTab?.initialUrl),
+                [{ text: 'OK', onPress: () => {} }],
               );
             },
           },
