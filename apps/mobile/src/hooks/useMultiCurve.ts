@@ -91,12 +91,14 @@ export const useMultiCurve = (
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useState(true);
+  const [errorType, setErrorType] = useState<'network' | 'service'>();
 
   const fetch = useCallback(
     async (addres: string[], force = false) => {
       try {
         if (!addres.length) {
           setLoading(false);
+          setErrorType(undefined);
           return;
         }
         setLoading(!!force);
@@ -146,6 +148,7 @@ export const useMultiCurve = (
             }));
           });
         queue.clear();
+        setErrorType(undefined);
         Array.from(nextCheckAddress).forEach(_addr => {
           try {
             const addr = _addr.toLocaleLowerCase();
@@ -157,34 +160,41 @@ export const useMultiCurve = (
                   loading: true,
                 },
               }));
-              const curve = await getNetCurve(addr, CurveDayType.DAY, force);
-              const start = dayjs()
-                .add(-24, 'hours')
-                .add(10, 'minutes')
-                .valueOf();
-              const step = 5 * 60 * 1000;
-              const result = patchCurveData(
-                curve.map(item => {
-                  return {
-                    timestamp: item.timestamp * 1000,
-                    price: item.usd_value,
-                  };
-                }),
-                start,
-                step,
-              );
-              setMultiTimeStamp(prev => ({
-                ...prev,
-                [addr]: {
-                  loading: false,
-                  data: result.map(item => {
+              try {
+                const curve = await getNetCurve(addr, CurveDayType.DAY, force);
+                const start = dayjs()
+                  .add(-24, 'hours')
+                  .add(10, 'minutes')
+                  .valueOf();
+                const step = 5 * 60 * 1000;
+                const result = patchCurveData(
+                  curve.map(item => {
                     return {
-                      timestamp: dayjs(item.timestamp).unix(),
-                      usd_value: item.price,
+                      timestamp: item.timestamp * 1000,
+                      price: item.usd_value,
                     };
                   }),
-                },
-              }));
+                  start,
+                  step,
+                );
+                setMultiTimeStamp(prev => ({
+                  ...prev,
+                  [addr]: {
+                    loading: false,
+                    data: result.map(item => {
+                      return {
+                        timestamp: dayjs(item.timestamp).unix(),
+                        usd_value: item.price,
+                      };
+                    }),
+                  },
+                }));
+              } catch (error) {
+                const isNetworkError =
+                  typeof error?.message === 'string' &&
+                  error?.message?.includes?.('Network Error');
+                setErrorType(isNetworkError ? 'network' : 'service');
+              }
             });
           } catch (error) {}
         });
@@ -249,5 +259,6 @@ export const useMultiCurve = (
     loading,
     fetch,
     refresh,
+    errorType,
   };
 };

@@ -30,8 +30,8 @@ export function GlobalWarning({
 
   const title = useMemo(() => {
     return isNetWorkError
-      ? t('component.globalWarning.networkError.title')
-      : t('component.globalWarning.serviceError.title');
+      ? t('component.globalWarning.serviceError.title')
+      : t('component.globalWarning.networkError.title');
   }, [isNetWorkError, t]);
 
   return (

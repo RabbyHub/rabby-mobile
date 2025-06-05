@@ -20,8 +20,6 @@ import {
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
-import RcPending from '@/assets2024/icons/home/pending.svg';
-import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
 import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -65,7 +63,6 @@ import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
 import { FoundYourWalletGuide } from './FundYourWallet';
 import { OfflineChainNotify } from './components/OfflineChainNotify';
 import { colord } from 'colord';
-import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
@@ -88,12 +85,11 @@ import {
   GlobalWarning,
   GlobalWarningType,
 } from '@/components2024/GlobalWarning/Warining';
-import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
 
 const HeaderHeight = 24;
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
-  const { loading, data, loadingNewCurve } = prop;
+  const { loading, data, loadingNewCurve, errorType, onRefresh } = prop;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -162,19 +158,24 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
           {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
-      <GlobalWarning
-        type={GlobalWarningType.Network}
-        description={t('component.globalWarning.networkError.globalDesc')}
-        style={styles.globalWarning}
-        onRefresh={() => {
-          console.log('CUSTOM_LOGGER:=>: onRefresh');
-        }}
-      />
-      <NetWorkError
-        onRefresh={() => {
-          console.log('CUSTOM_LOGGER:=>: NetWorkError');
-        }}
-      />
+      {!!errorType && (
+        <GlobalWarning
+          type={
+            errorType === 'network'
+              ? GlobalWarningType.Network
+              : GlobalWarningType.Service
+          }
+          description={
+            errorType === 'network'
+              ? t('component.globalWarning.networkError.globalDesc')
+              : t('component.globalWarning.serviceError.globalDesc')
+          }
+          style={styles.globalWarning}
+          onRefresh={() => {
+            onRefresh?.();
+          }}
+        />
+      )}
       <View style={styles.curveBox}>
         <BlurShadowView isLight={isLight}>
           <Card
@@ -254,7 +255,7 @@ const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const { styles, colors2024, isLight, appThemeMode } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
   const appThemeConfig = useAppThemeConfig();
@@ -273,10 +274,6 @@ function MultiAddressHome(): JSX.Element {
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
 
   const spinValue = useRef(new Animated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
   const {
     alertInfo,
     forceUpdate,
@@ -382,7 +379,6 @@ function MultiAddressHome(): JSX.Element {
     balanceAccounts,
     balanceCacheAccounts,
     triggerUpdate,
-    balanceLoading,
     getTotalBalance,
   } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
@@ -398,6 +394,7 @@ function MultiAddressHome(): JSX.Element {
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
+    errorType,
   } = useMultiCurve(top10Addresses, true, top10Balance);
   useCexSupportList();
   useFetchCexInfo();
@@ -564,11 +561,15 @@ function MultiAddressHome(): JSX.Element {
   );
 
   const onRefresh = useCallback(() => {
-    triggerUpdate(true); // force update balance from server api
-    forceUpdate();
-    syncTop10Assets(true);
-    syncTop10History(true);
-    refreshCurve(true);
+    Promise.all([
+      triggerUpdate(true), // force update balance from server api
+      refreshCurve(true),
+    ]).finally(() => {
+      // update at background
+      forceUpdate();
+      syncTop10Assets(true);
+      syncTop10History(true);
+    });
   }, [
     triggerUpdate,
     forceUpdate,
@@ -716,6 +717,8 @@ function MultiAddressHome(): JSX.Element {
             data={combineData}
             loading={loading}
             loadingNewCurve={loadingNewCurve}
+            errorType={errorType}
+            onRefresh={onRefresh}
           />
           <OfflineChainNotify showEmptyHolder={!displayFundWallet} />
           {displayFundWallet && <FoundYourWalletGuide />}
@@ -1227,6 +1230,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   globalWarning: {
     marginHorizontal: 16,
     marginTop: 16,
+    marginBottom: -16,
   },
 }));
 
