@@ -285,6 +285,14 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
     }
   }
 
+  clearBrowserData = () => {
+    this.history.reset();
+    this.store.browserTabs = {
+      activeTabId: emptyTab.id,
+      tabs: [emptyTab],
+    };
+  };
+
   getDefaultUserAgent = () => {
     return this.userAgent;
   };

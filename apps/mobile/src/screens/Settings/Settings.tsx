@@ -120,6 +120,7 @@ import { OpenApiPopup } from './components/OpenApiPopup';
 import MockBatchRevokeModal, {
   useDevMockBatchRevokeVisible,
 } from './sheetModals/DevMockBatchRevoke';
+import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -185,6 +186,8 @@ function SettingsBlocks() {
   const biometricsComputed = useBiometricsComputed();
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
+
+  const { clearBrowserData } = useClearBrowserData();
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -385,6 +388,27 @@ function SettingsBlocks() {
                           await dropAppDataSourceAndQuitApp();
                         },
                       },
+                ],
+              );
+            },
+          },
+          {
+            label: t('page.setting.clearBrowserData'),
+            icon: RcClearPending,
+            onPress: () => {
+              Alert.alert(
+                t('page.settingModal.clearBrowserData.title'),
+                t('page.settingModal.clearBrowserData.desc'),
+                [
+                  { text: t('common.dialog.button.cancel'), onPress: () => {} },
+                  {
+                    text: t('page.settingModal.clearBrowserData.button'),
+                    style: 'destructive',
+                    onPress: async () => {
+                      clearBrowserData();
+                      toast.success('Cleared');
+                    },
+                  },
                 ],
               );
             },

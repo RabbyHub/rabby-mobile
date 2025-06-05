@@ -9,10 +9,12 @@ import { useMemo } from 'react';
 import { dappsAtom } from '../useDapps';
 import { useBrowserBookmark } from './useBrowserBookmark';
 
-const browserHistoryAtom = atom<EntityState<BrowserHistoryItem, string>>({
-  ids: [],
-  entities: {},
-});
+export const browserHistoryAtom = atom<EntityState<BrowserHistoryItem, string>>(
+  {
+    ids: [],
+    entities: {},
+  },
+);
 
 export function useBrowserHistory() {
   const [store, setStore] = useAtom(browserHistoryAtom);
