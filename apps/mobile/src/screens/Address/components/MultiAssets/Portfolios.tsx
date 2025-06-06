@@ -587,6 +587,7 @@ export const Portfolios = () => {
       checkIsExpireAndUpdate(false, {
         disableNFT: true,
         realTimeAddresses: top10Addresses,
+        ignoreLoading: !top10Balance,
       });
     }, 200);
     return () => {

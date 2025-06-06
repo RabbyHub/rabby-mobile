@@ -283,6 +283,7 @@ export const useAssets = () => {
       disableDefi?: boolean;
       disableNFT?: boolean;
       realTimeAddresses?: string[];
+      ignoreLoading?: boolean;
     },
   ) => {
     const top10Account = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
@@ -291,7 +292,9 @@ export const useAssets = () => {
     ];
     removeUnNeedAssets(addresses);
     const { disableToken, disableDefi, disableNFT } = options || {};
-    setLoading(true);
+    if (!options?.ignoreLoading) {
+      setLoading(true);
+    }
     try {
       for (const address of addresses) {
         try {

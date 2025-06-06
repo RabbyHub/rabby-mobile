@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -29,14 +29,10 @@ import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from './components/UserAgreementLikeModalInner';
 import { ConfirmSetPasswordModal } from './components/ConfirmModal';
-import { StackActions, useNavigationState } from '@react-navigation/native';
+import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { SettingNavigatorParamList } from '@/navigation-type';
-import {
-  sheetModalRefsNeedLock,
-  useLoadLockInfo,
-  useSetPasswordFirstState,
-} from '@/hooks/useLock';
+import { sheetModalRefsNeedLock, useLoadLockInfo } from '@/hooks/useLock';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { IS_IOS } from '@/core/native/utils';
 
@@ -137,12 +133,7 @@ function useSetupPasswordForm() {
               } else if (navParams.actionType === 'setAutoLockTime') {
                 sheetModalRefsNeedLock.selectAutolockTimeRef.current?.present();
               }
-              navigation.dispatch(
-                StackActions.push(RootNames.StackSettings, {
-                  screen: RootNames.Settings,
-                  params: {},
-                }),
-              );
+              navigation.canGoBack() && navigation.goBack();
               break;
             }
           }
@@ -278,7 +269,7 @@ export default function SetPasswordScreen() {
                   }}>
                   Term of Use
                 </TouchableText>
-                <Text> and </Text>
+                <Text style={styles.agreementText}> and </Text>
                 <TouchableText
                   style={styles.userAgreementTouchText}
                   touchableProps={{ style: styles.userAgreementTouchable }}
