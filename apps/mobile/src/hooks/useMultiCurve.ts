@@ -10,6 +10,7 @@ import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
 import { CurveDayType } from '@/utils/curveDayType';
+import { useGlobalStatus } from './useGlobalStatus';
 
 const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
 
@@ -39,7 +40,7 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
       usd_value: 0,
     }));
 
-  const result = windows.map((window, i) => {
+  const result = windows.map(window => {
     const windowStart = window.timestamp;
     const windowEnd = windowStart + interval;
     let sum = 0;
@@ -91,14 +92,23 @@ export const useMultiCurve = (
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useState(true);
-  const [errorType, setErrorType] = useState<'network' | 'service'>();
+  const { netWorkStatus, serviceStatus, clearStatus } = useGlobalStatus();
 
+  const errorType = useMemo(() => {
+    if (netWorkStatus) {
+      return 'network';
+    }
+    if (serviceStatus['/v1/user/total_net_curve']) {
+      return 'service';
+    }
+    return undefined;
+  }, [netWorkStatus, serviceStatus]);
   const fetch = useCallback(
     async (addres: string[], force = false) => {
       try {
         if (!addres.length) {
           setLoading(false);
-          setErrorType(undefined);
+          clearStatus();
           return;
         }
         setLoading(!!force);
@@ -148,7 +158,7 @@ export const useMultiCurve = (
             }));
           });
         queue.clear();
-        setErrorType(undefined);
+        clearStatus();
         Array.from(nextCheckAddress).forEach(_addr => {
           try {
             const addr = _addr.toLocaleLowerCase();
@@ -189,12 +199,7 @@ export const useMultiCurve = (
                     }),
                   },
                 }));
-              } catch (error) {
-                const isNetworkError =
-                  typeof error?.message === 'string' &&
-                  error?.message?.includes?.('Network Error');
-                setErrorType(isNetworkError ? 'network' : 'service');
-              }
+              } catch (error) {}
             });
           } catch (error) {}
         });
@@ -205,7 +210,7 @@ export const useMultiCurve = (
         setLoading(false);
       }
     },
-    [setMultiTimeStamp],
+    [clearStatus, setMultiTimeStamp],
   );
 
   const refresh = useCallback(

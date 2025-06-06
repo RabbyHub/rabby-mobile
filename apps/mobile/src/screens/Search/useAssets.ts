@@ -14,7 +14,6 @@ import { filterDisplayToken } from '../Home/hooks/token';
 import { portfolio2Display } from '../Home/utils/portfolio';
 import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { useMyAccounts } from '@/hooks/account';
-import { useState } from 'react';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { tagNfts } from '../Home/hooks/nft';
 import { syncNFTs, syncProtocols, syncTokens } from '@/databases/hooks/assets';
@@ -23,14 +22,17 @@ import _ from 'lodash';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { atom, useAtom } from 'jotai';
 
+export const loadingAtom = atom(true);
+export const isFirstFetchAtom = atom(true);
 export const useAssets = () => {
-  const [isLoading, setLoading] = useSafeState(true);
+  const [isLoading, setLoading] = useAtom(loadingAtom);
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
   const sortedAccounts = useSortAddressList(accounts);
-  const [isFirstFetch, setIsFirstFetch] = useState(true);
+  const [isFirstFetch, setIsFirstFetch] = useAtom(isFirstFetchAtom);
   const {
     tokens,
     portfolios,
