@@ -48,6 +48,9 @@ import { toast } from '@/components2024/Toast';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { AccountSelector } from '@/components2024/AccountSelector';
 import { Account } from '@/core/services/preference';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import LinearGradient from 'react-native-linear-gradient';
+import { ConnectSkeleton } from './ConnectSkeleton';
 
 const RuleDesc = [
   {
@@ -507,44 +510,62 @@ ConnectProps) => {
     : {};
   const LevelTipColorIcon = LevelTipColor.icon;
 
+  if (isLoading) {
+    return <ConnectSkeleton />;
+  }
+
   return (
-    <Spin spinning={isLoading}>
-      <View style={styles.connectWrapper}>
-        <BottomSheetScrollView style={{ flex: 1 }}>
-          <View style={styles.approvalConnect}>
-            <View style={styles.titleWrapper}>
-              <Text style={styles.approvalTitle}>
-                {t('page.connect.title')}
-              </Text>
-              <ChainSelector
-                account={selectedAccount}
-                style={styles.chainSelector}
-                value={defaultChain}
-                onChange={handleChainChange}
-              />
-            </View>
+    <View style={styles.connectWrapper}>
+      <BottomSheetScrollView style={{ flex: 1 }}>
+        <View style={styles.approvalConnect}>
+          <View style={styles.titleWrapper}>
+            <Text style={styles.approvalTitle}>{t('page.connect.title')}</Text>
+            <ChainSelector
+              account={selectedAccount}
+              style={styles.chainSelector}
+              value={defaultChain}
+              onChange={handleChainChange}
+            />
+          </View>
+        </View>
+
+        <View style={styles.connectContent}>
+          <View style={styles.connectCard}>
+            <DappIcon
+              origin={origin}
+              source={dappIcon ? { uri: dappIcon } : undefined}
+              style={styles.dappIcon}
+            />
+            <Text style={styles.connectOrigin}>{origin}</Text>
           </View>
 
-          <View style={styles.connectContent}>
-            <View style={styles.connectCard}>
-              <DappIcon
-                origin={origin}
-                source={dappIcon ? { uri: dappIcon } : undefined}
-                style={styles.dappIcon}
-              />
-              <Text style={styles.connectOrigin}>{origin}</Text>
-            </View>
-
-            <View style={styles.ruleList}>
-              {RuleDesc.map((rule, index) => {
-                if (rule.id === '1006') {
+          <View style={styles.ruleList}>
+            {RuleDesc.map((rule, index) => {
+              if (rule.id === '1006') {
+                return (
+                  <RuleResult
+                    rule={{
+                      id: '1006',
+                      desc: t('page.connect.markRuleText'),
+                      result: userListResult || null,
+                    }}
+                    onSelect={handleSelectRule}
+                    collectList={collectList}
+                    popularLevel={originPopularLevel}
+                    userListResult={userListResult}
+                    ignored={processedRules.includes(rule.id)}
+                    hasSafe={hasSafe}
+                    hasForbidden={hasForbidden}
+                    onEditUserList={handleEditUserDataList}
+                    key={`${rule.id}_${index}`}
+                  />
+                );
+              } else {
+                if (sortRules.find(item => item.id === rule.id) || rule.fixed) {
                   return (
                     <RuleResult
-                      rule={{
-                        id: '1006',
-                        desc: t('page.connect.markRuleText'),
-                        result: userListResult || null,
-                      }}
+                      rule={sortRules.find(item => item.id === rule.id)!}
+                      key={`${rule.id}_${index}`}
                       onSelect={handleSelectRule}
                       collectList={collectList}
                       popularLevel={originPopularLevel}
@@ -553,137 +574,116 @@ ConnectProps) => {
                       hasSafe={hasSafe}
                       hasForbidden={hasForbidden}
                       onEditUserList={handleEditUserDataList}
-                      key={`${rule.id}_${index}`}
                     />
                   );
                 } else {
-                  if (
-                    sortRules.find(item => item.id === rule.id) ||
-                    rule.fixed
-                  ) {
-                    return (
-                      <RuleResult
-                        rule={sortRules.find(item => item.id === rule.id)!}
-                        key={`${rule.id}_${index}`}
-                        onSelect={handleSelectRule}
-                        collectList={collectList}
-                        popularLevel={originPopularLevel}
-                        userListResult={userListResult}
-                        ignored={processedRules.includes(rule.id)}
-                        hasSafe={hasSafe}
-                        hasForbidden={hasForbidden}
-                        onEditUserList={handleEditUserDataList}
-                      />
-                    );
-                  } else {
-                    return null;
-                  }
+                  return null;
                 }
-              })}
-            </View>
+              }
+            })}
           </View>
-        </BottomSheetScrollView>
+        </View>
+      </BottomSheetScrollView>
 
-        {connectBtnStatus.text && (
-          <View
+      {connectBtnStatus.text && (
+        <View
+          style={[
+            styles.securityTip,
+            {
+              backgroundColor: LevelTipColor.bg,
+            },
+          ]}>
+          <LevelTipColorIcon
             style={[
-              styles.securityTip,
+              styles.securityTipIcon,
               {
-                backgroundColor: LevelTipColor.bg,
+                color: LevelTipColor.text,
+              },
+            ]}
+          />
+          <Text
+            style={[
+              styles.securityTipText,
+              {
+                color: LevelTipColor.text,
               },
             ]}>
-            <LevelTipColorIcon
-              style={[
-                styles.securityTipIcon,
-                {
-                  color: LevelTipColor.text,
-                },
-              ]}
-            />
-            <Text
-              style={[
-                styles.securityTipText,
-                {
-                  color: LevelTipColor.text,
-                },
-              ]}>
-              {connectBtnStatus.text}
-            </Text>
-            <Text
-              style={[
-                styles.securityTipBtn,
-                // {
-                //   color: LevelTipColor.text,
-                // },
-              ]}
-              onPress={onIgnoreAllRules}>
-              {t('page.connect.ignoreAll')}
-            </Text>
-          </View>
-        )}
-        <View style={styles.footerContainer}>
-          <View style={styles.connectWalletRow}>
-            <Text style={styles.connectWalletText}>
-              {t('page.connect.connectWallet')}
-            </Text>
-            <View style={styles.connectWalletValue}>
-              <AccountSelector
-                value={selectedAccount}
-                onChange={account => {
-                  setSelectedAccount(account);
-                }}
-              />
-            </View>
-          </View>
-          <View style={styles.footer}>
-            <Button
-              type="ghost"
-              containerStyle={[styles.button]}
-              onPress={
-                displayBlockedRequestApproval ? activeCancelPopup : handleCancel
-              }
-              title={
-                <View style={styles.cancelButtonTextView}>
-                  <Text style={styles.cancelButtonText}>
-                    {connectBtnStatus.cancelBtnText}
-                  </Text>
-                  {displayBlockedRequestApproval && (
-                    <ArrowDownSVG className="w-16" />
-                  )}
-                </View>
-              }
-            />
-            <Button
-              containerStyle={[styles.button]}
-              type="primary"
-              onPress={() => handleAllow()}
-              disabled={isLoading || connectBtnStatus.disabled}
-              disabledTitleStyle={{
-                color: colors['neutral-title-2'],
+            {connectBtnStatus.text}
+          </Text>
+          <Text
+            style={[
+              styles.securityTipBtn,
+              // {
+              //   color: LevelTipColor.text,
+              // },
+            ]}
+            onPress={onIgnoreAllRules}>
+            {t('page.connect.ignoreAll')}
+          </Text>
+        </View>
+      )}
+      <View style={styles.footerContainer}>
+        <View style={styles.connectWalletRow}>
+          <Text style={styles.connectWalletText}>
+            {t('page.connect.connectWallet')}
+          </Text>
+          <View style={styles.connectWalletValue}>
+            <AccountSelector
+              value={selectedAccount}
+              onChange={account => {
+                setSelectedAccount(account);
               }}
-              title={t('page.connect.connectBtn')}
             />
           </View>
         </View>
-        <RuleDrawer
-          selectRule={selectRule}
-          visible={ruleDrawerVisible}
-          onIgnore={handleIgnoreRule}
-          onUndo={handleUndoIgnore}
-          onRuleEnableStatusChange={handleRuleEnableStatusChange}
-          onClose={handleRuleDrawerClose}
-        />
-        <UserListDrawer
-          origin={origin}
-          logo={icon}
-          onWhitelist={isInWhitelist}
-          onBlacklist={isInBlacklist}
-          visible={listDrawerVisible}
-          onChange={handleUserListChange}
-          onClose={() => setListDrawerVisible(false)}
-        />
+        <View style={styles.footer}>
+          <Button
+            type="ghost"
+            containerStyle={[styles.button]}
+            onPress={
+              displayBlockedRequestApproval ? activeCancelPopup : handleCancel
+            }
+            title={
+              <View style={styles.cancelButtonTextView}>
+                <Text style={styles.cancelButtonText}>
+                  {connectBtnStatus.cancelBtnText}
+                </Text>
+                {displayBlockedRequestApproval && (
+                  <ArrowDownSVG className="w-16" />
+                )}
+              </View>
+            }
+          />
+          <Button
+            containerStyle={[styles.button]}
+            type="primary"
+            onPress={() => handleAllow()}
+            disabled={isLoading || connectBtnStatus.disabled}
+            disabledTitleStyle={{
+              color: colors['neutral-title-2'],
+            }}
+            title={t('page.connect.connectBtn')}
+          />
+        </View>
       </View>
-    </Spin>
+      <RuleDrawer
+        selectRule={selectRule}
+        visible={ruleDrawerVisible}
+        onIgnore={handleIgnoreRule}
+        onUndo={handleUndoIgnore}
+        onRuleEnableStatusChange={handleRuleEnableStatusChange}
+        onClose={handleRuleDrawerClose}
+      />
+      <UserListDrawer
+        origin={origin}
+        logo={icon}
+        onWhitelist={isInWhitelist}
+        onBlacklist={isInBlacklist}
+        visible={listDrawerVisible}
+        onChange={handleUserListChange}
+        onClose={() => setListDrawerVisible(false)}
+      />
+    </View>
   );
 };
 
