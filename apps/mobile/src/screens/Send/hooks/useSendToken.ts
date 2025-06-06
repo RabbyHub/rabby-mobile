@@ -19,7 +19,6 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
-import { ChainGas } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
@@ -311,6 +310,9 @@ export function makeSendTokenValidationSchema(options: {
 }
 
 function findInstanceLevel(gasList: GasLevel[]) {
+  if (gasList.length === 0) {
+    return null;
+  }
   return gasList.reduce((prev, current) =>
     prev.price >= current.price ? prev : current,
   );
@@ -325,49 +327,6 @@ const fetchGasList = async (chainItem: Chain | null, params: Tx) => {
 
   return list;
 };
-function calcGasCost({
-  chainEnum,
-  gasPriceMap,
-}: {
-  chainEnum: CHAINS_ENUM;
-  gasPriceMap: Record<string, { list: GasLevel[]; expireAt: number }>;
-}) {
-  const targetChain = findChainByEnum(chainEnum)!;
-  const gasList = gasPriceMap[targetChain.enum]?.list;
-
-  if (!gasList) {
-    return new BigNumber(0);
-  }
-
-  const lastTimeGas: ChainGas | null =
-    preferenceService.getLastTimeGasSelection(targetChain.id);
-
-  let gasLevel: GasLevel;
-  if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
-    // use cached gasPrice if exist
-    gasLevel = {
-      level: 'custom',
-      price: lastTimeGas.gasPrice,
-      front_tx_count: 0,
-      estimated_seconds: 0,
-      base_fee: 0,
-      priority_price: null,
-    };
-  } else if (
-    lastTimeGas?.lastTimeSelect &&
-    lastTimeGas?.lastTimeSelect === 'gasLevel'
-  ) {
-    const target = gasList.find(item => item.level === lastTimeGas?.gasLevel)!;
-    gasLevel = target;
-  } else {
-    // no cache, use the fast level in gasMarket
-    gasLevel = gasList.find(item => item.level === 'fast')!;
-  }
-  const costTokenAmount = new BigNumber(gasLevel.price)
-    .times(DEFAULT_GAS_USED)
-    .div(1e18);
-  return costTokenAmount;
-}
 
 const DEFAULT_GAS_USED = 21000;
 
