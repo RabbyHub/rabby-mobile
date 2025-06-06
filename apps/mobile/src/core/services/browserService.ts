@@ -150,28 +150,22 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         ...this.store.browserTabs,
       };
 
-      let isValidActiveTabId = false;
-      let hasEmpty = false;
-      browserTabsStore.tabs = browserTabsStore.tabs.map(tab => {
+      const tabs: Tab[] = [emptyTab];
+      browserTabsStore.tabs.forEach(tab => {
         const isActive = tab.id === browserTabsStore.activeTabId;
-        if (isActive) {
-          isValidActiveTabId = true;
-        }
-        if (tab.id === emptyTab.id) {
-          hasEmpty = true;
-        }
-        return {
+        const res = {
           ...tab,
           initialUrl: tab.url || tab.initialUrl,
           isTerminate: !isActive,
         };
+        if (/^https?:\/\//.test(res.initialUrl) && res.id !== emptyTab.id) {
+          tabs.push(res);
+        }
       });
-      if (!isValidActiveTabId) {
-        browserTabsStore.activeTabId = emptyTab.id;
-      }
-      if (!hasEmpty) {
-        browserTabsStore.tabs = [emptyTab, ...browserTabsStore.tabs];
-      }
+      browserTabsStore.activeTabId =
+        tabs.find(tab => tab.id === browserTabsStore.activeTabId)?.id ||
+        emptyTab.id;
+      browserTabsStore.tabs = tabs;
       this.store.browserTabs = browserTabsStore;
     } catch (e) {
       console.error(e);
