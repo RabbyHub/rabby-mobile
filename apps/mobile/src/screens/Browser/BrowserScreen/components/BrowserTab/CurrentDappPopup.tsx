@@ -23,7 +23,7 @@ interface Props {
 }
 
 export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
-  const { colors2024, styles } = useTheme2024({
+  const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
 
@@ -48,8 +48,8 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
       }}
       {...makeBottomSheetProps({
         colors: colors2024,
-      })}
-      handleStyle={styles.handleStyle}>
+        linearGradientType: isLight ? 'bg0' : 'bg1',
+      })}>
       <AutoLockView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>
@@ -123,12 +123,14 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
     </AppBottomSheetModal>
   );
 }
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   handleStyle: {
     backgroundColor: colors2024['neutral-bg-0'],
   },
   container: {
-    backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
@@ -155,7 +157,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   connectContent: {
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-card-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     marginHorizontal: 16,
   },
   connectCard: {
