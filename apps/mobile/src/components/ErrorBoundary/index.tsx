@@ -13,12 +13,15 @@ const appErrorHandler = (error: Error) => {
 };
 
 const ErrorFallback: React.ComponentType<FallbackProps> = ({
+  error,
   resetErrorBoundary,
 }) => {
   return (
     <View style={[styles.container]}>
       <View>
-        <Text>Something went wrong: </Text>
+        <Text>
+          Something went wrong: {JSON.stringify(error?.message || error)}
+        </Text>
         <Button title="Try Again" onPress={resetErrorBoundary} />
       </View>
     </View>
@@ -39,6 +42,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignContent: 'center',
     paddingHorizontal: 12,
+    backgroundColor: '#fff',
   },
 });
 

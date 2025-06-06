@@ -2,8 +2,18 @@
 import { AssetAvatar } from '@/components';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { RootNames } from '@/constant/layout';
+import {
+  SwapTxHistoryItem,
+  SendTxHistoryItem,
+} from '@/core/services/transactionHistory';
+import {
+  bridgeService,
+  swapService,
+  transactionHistoryService,
+} from '@/core/services';
+import { useCurrentAccount } from '@/hooks/account';
+import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
 import { getAliasName } from '@/core/apis/contact';
-import { swapService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
@@ -14,18 +24,19 @@ import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
 import BigNumber from 'bignumber.js';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { sendToken } from '@/core/apis/token';
+import { useMemoizedFn } from 'ahooks';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
   isForMultipleAddress,
   type,
 }: {
-  data: TransactionGroup;
+  data: SwapTxHistoryItem | SendTxHistoryItem;
   clearLocalPendingTxData: () => void;
   isForMultipleAddress: boolean;
   type: 'send' | 'swap';
@@ -40,105 +51,62 @@ export const PendingTxItem = ({
       }),
     [data?.chainId],
   );
-  const isPending = data.isPending;
+  const isPending = data.status === 'pending';
   const chainName = chainItem?.name || '';
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
 
-  const handlePress = () => {
+  const handlePress = useMemoizedFn(() => {
     if (!isPending) {
       clearLocalPendingTxData();
       type === 'send' &&
         swapService.setOpenSwapHistoryTs(currentAccount?.address ?? '');
     }
 
+    const { pendings, completeds } = transactionHistoryService.getList(
+      currentAccount?.address ?? '',
+    );
+    const naviData = isPending ? pendings : completeds;
+    const groupData = naviData.find(
+      item =>
+        item.chainId === data.chainId &&
+        item.txs.find(tx => tx.hash === data.hash),
+    );
+    if (!groupData) {
+      return;
+    }
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.HistoryLocalDetail,
       params: {
         isForMultipleAddress,
-        data: data,
+        data: groupData,
         title:
           type === 'send'
             ? t('page.transactions.itemTitle.Send')
             : t('page.transactions.itemTitle.Swap'),
       },
     });
-  };
+  });
 
-  const swapActionData =
-    data.maxGasTx.action?.actionData?.swap ||
-    data.maxGasTx.action?.actionData?.unWrapToken ||
-    data.maxGasTx.action?.actionData?.wrapToken;
+  // const sendActionData = data.maxGasTx.action?.actionData?.send;
+  const payToken = data?.fromToken;
+  const receiveToken = data?.toToken;
+  // const sendTokenList = data.maxGasTx.explain?.balance_change?.send_token_list;
+  // const receiveTokenList =
+  //   data.maxGasTx.explain?.balance_change?.receive_token_list;
 
-  const sendActionData = data.maxGasTx.action?.actionData?.send;
-  const payToken = swapActionData?.payToken;
-  const receiveToken = swapActionData?.receiveToken;
-  const sendTokenList = data.maxGasTx.explain?.balance_change?.send_token_list;
-  const receiveTokenList =
-    data.maxGasTx.explain?.balance_change?.receive_token_list;
-
-  const titleTextStr = useMemo(() => {
+  const sendTitleTextStr = useMemo(() => {
     if (type === 'send') {
-      const amount = new BigNumber(sendActionData?.token.raw_amount || '0').div(
-        10 ** (sendActionData?.token.decimals || 18),
-      );
-
-      const sendAmount = formatTokenAmount(amount);
-      return `-${sendAmount} ${getTokenSymbol(sendActionData?.token)}`;
-    } else {
-      return `${getTokenSymbol(payToken)}→${getTokenSymbol(receiveToken)}`;
+      const sendData = data as SendTxHistoryItem;
+      const sendAmount = formatTokenAmount(sendData?.amount);
+      return `-${sendAmount} ${getTokenSymbol(sendData?.token)}`;
     }
-  }, [type, sendActionData?.token, payToken, receiveToken]);
-
-  const SubTitleContainer = useMemo(() => {
-    const ToText = t('page.swap.to') + ' ';
-    if (type === 'send') {
-      let address = '';
-      const acData = data.maxGasTx?.action?.actionData.send;
-      const sendRequireData = data.maxGasTx?.action
-        ?.requiredData as SendRequireData;
-      const addr = acData?.to || sendRequireData?.protocol?.name;
-
-      if (!addr) {
-        address = t('page.transactions.detail.Unknown');
-      } else {
-        address = ToText + (getAliasName(addr) || ellipsisAddress(addr));
-      }
-      return (
-        <View style={styles.subTitleContainer}>
-          <ChainIconImage
-            size={14}
-            chainEnum={chainItem?.enum}
-            isShowRPCStatus={true}
-          />
-          <Text style={styles.subTitleText}>{address}</Text>
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.subTitleContainer}>
-          <ChainIconImage
-            size={14}
-            chainEnum={chainItem?.enum}
-            isShowRPCStatus={true}
-          />
-          <Text style={styles.subTitleText}>{chainName}</Text>
-        </View>
-      );
-    }
-  }, [
-    type,
-    chainName,
-    t,
-    data.maxGasTx,
-    chainItem,
-    styles.subTitleContainer,
-    styles.subTitleText,
-  ]);
+    return '';
+  }, [type, data]);
 
   const isFailed = useMemo(() => {
-    return data.isFailed || data.isSubmitFailed || data.isWithdrawed;
+    return data.status === 'failed';
   }, [data]);
 
   return (
@@ -150,28 +118,23 @@ export const PendingTxItem = ({
       </View>
       <TouchableOpacity style={styles.container} onPress={handlePress}>
         <View style={styles.leftContainer}>
-          {type === 'send' ? (
-            <View style={styles.IconContainer}>
-              <AssetAvatar
-                logo={
-                  sendActionData?.token?.logo_url ||
-                  sendTokenList?.[0]?.logo_url
-                }
-                chain={chainItem?.serverId}
-                chainSize={14}
-                size={25}
-                innerChainStyle={styles.innerChainStyle}
-              />
-            </View>
-          ) : null}
           <View style={styles.mainContainer}>
             <View style={styles.titleContainer}>
               {type === 'send' ? (
-                <Text style={styles.titleText}>{titleTextStr}</Text>
+                <>
+                  <AssetAvatar
+                    logo={(data as SendTxHistoryItem)?.token?.logo_url}
+                    chain={chainItem?.serverId}
+                    chainSize={14}
+                    size={25}
+                    innerChainStyle={styles.innerChainStyle}
+                  />
+                  <Text style={styles.titleText}>{sendTitleTextStr}</Text>
+                </>
               ) : (
                 <>
                   <AssetAvatar
-                    logo={payToken?.logo_url || sendTokenList?.[0]?.logo_url}
+                    logo={payToken?.logo_url}
                     chain={payToken?.chain}
                     chainSize={14}
                     size={25}
@@ -186,9 +149,7 @@ export const PendingTxItem = ({
                     {` ${getTokenSymbol(payToken)} →`}
                   </Text>
                   <AssetAvatar
-                    logo={
-                      receiveToken?.logo_url || receiveTokenList?.[0]?.logo_url
-                    }
+                    logo={receiveToken?.logo_url}
                     chain={receiveToken?.chain}
                     chainSize={14}
                     size={25}

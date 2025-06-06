@@ -9,8 +9,10 @@ import { Image, Text, View, ViewProps } from 'react-native';
 export const Empty = ({
   style,
   isShowDesc = true,
+  title,
 }: {
   style?: ViewProps['style'];
+  title?: string;
   isShowDesc?: boolean;
 }) => {
   const { t } = useTranslation();
@@ -25,7 +27,7 @@ export const Empty = ({
           style={styles.image}
         />
         <Text style={styles.title}>
-          {t('page.activities.signedTx.empty.title')}
+          {title || t('page.activities.signedTx.empty.title')}
         </Text>
       </View>
     </View>

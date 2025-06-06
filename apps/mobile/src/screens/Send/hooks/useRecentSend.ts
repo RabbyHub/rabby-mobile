@@ -1,7 +1,10 @@
 import { transactionHistoryService } from '@/core/services';
-import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useMyAccounts } from '@/hooks/account';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import {
+  TransactionGroup,
+  SendTxHistoryItem,
+} from '@/core/services/transactionHistory';
 import { fetchRefreshLocalData } from '@/screens/Swap/hooks';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { findChain } from '@/utils/chain';
@@ -173,23 +176,24 @@ export const useRecentSend = ({
 };
 
 export const fetchLocalSendPendingTx = (address: string) => {
-  const { completeds: _completeds, pendings: _pendings } =
-    transactionHistoryService.getList(address);
+  // const { completeds: _completeds, pendings: _pendings } =
+  //   transactionHistoryService.getList(address);
 
-  const txs = [..._pendings, ..._completeds].filter(item => {
-    const chain = findChain({ id: item.chainId });
-    return (
-      !chain?.isTestnet &&
-      item.isPending &&
-      !item.maxGasTx.action?.actionData.cancelTx &&
-      item.$ctx?.ga?.source === 'sendToken'
-    );
-  });
+  // const txs = [..._pendings, ..._completeds].filter(item => {
+  //   const chain = findChain({ id: item.chainId });
+  //   return (
+  //     !chain?.isTestnet &&
+  //     item.isPending &&
+  //     !item.maxGasTx.action?.actionData.cancelTx &&
+  //     item.$ctx?.ga?.source === 'sendToken'
+  //   );
+  // });
 
-  return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
+  // return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
+  return transactionHistoryService.getRecentPendingTxHistory(address, 'send');
 };
 
-const localPendingTxDataAtom = atom<TransactionGroup | null>(null);
+const localPendingTxDataAtom = atom<SendTxHistoryItem | null>(null);
 
 export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
   const [localPendingTxData, setLocalPendingTxData] = useAtom(
@@ -205,7 +209,9 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
 
   const runFetchLocalPendingTx = useCallback(() => {
     if (currentAccount?.address) {
-      const resTx = fetchLocalSendPendingTx(currentAccount.address);
+      const resTx = fetchLocalSendPendingTx(
+        currentAccount.address,
+      ) as SendTxHistoryItem;
       setLocalPendingTxData(resTx);
     }
   }, [currentAccount?.address, setLocalPendingTxData]);
@@ -216,7 +222,10 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
 
   useInterval(() => {
     if (localPendingTxData) {
-      const refreshTx = fetchRefreshLocalData(localPendingTxData);
+      const refreshTx = fetchRefreshLocalData(
+        localPendingTxData,
+        'send',
+      ) as SendTxHistoryItem;
       if (refreshTx) {
         setLocalPendingTxData(refreshTx);
       }
