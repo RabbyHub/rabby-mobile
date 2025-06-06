@@ -67,7 +67,9 @@ export const AccountSelectorPopup: React.FC<{
 const getModalStyle = createGetStyles2024(ctx => {
   return {
     handleStyle: {
-      backgroundColor: ctx.colors2024['neutral-bg-0'],
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-0']
+        : ctx.colors2024['neutral-bg-1'],
       paddingTop: 10,
       height: 36,
     },

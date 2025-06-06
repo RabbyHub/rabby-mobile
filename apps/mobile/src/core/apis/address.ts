@@ -1,14 +1,18 @@
+import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
   contactService,
+  dappService,
   keyringService,
   preferenceService,
+  sessionService,
   transactionHistoryService,
   whitelistService,
 } from '../services';
 import { getKeyring } from './keyring';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { BroadcastEvent } from '@/constant/event';
 
 export async function addWatchAddress(address: string) {
   const keyring = await getKeyring(KEYRING_TYPE.WatchAddressKeyring);
@@ -70,6 +74,25 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
   ) {
     await resetCurrentAccount();
   }
+
+  const newCurrentAccount = getCurrentAccount();
+  Object.entries(dappService.getDapps()).forEach(([origin, dapp]) => {
+    if (isSameAccount(account, dapp.currentAccount)) {
+      dappService.updateDapp({
+        ...dapp,
+        currentAccount: newCurrentAccount,
+      });
+      if (dapp?.isConnected) {
+        sessionService.broadcastEvent(
+          BroadcastEvent.accountsChanged,
+          newCurrentAccount?.address
+            ? [newCurrentAccount.address.toLowerCase()]
+            : [],
+          origin,
+        );
+      }
+    }
+  });
 }
 
 export async function getAllAccounts() {

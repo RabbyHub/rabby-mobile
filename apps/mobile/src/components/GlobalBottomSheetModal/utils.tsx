@@ -102,6 +102,7 @@ export function makeClassicalBottomSheetProps(ctx: {
   params: CreateParams;
   colors: (typeof ThemeColors)['light'];
   colors2024: (typeof ThemeColors2024)['light'];
+  isLight?: boolean;
   prevProps?: any;
 }): Pick<
   Partial<React.ComponentProps<typeof AppBottomSheetModal>>,
@@ -114,7 +115,9 @@ export function makeClassicalBottomSheetProps(ctx: {
         borderRadius: 32,
       },
       handleStyle: {
-        backgroundColor: ctx.colors2024['neutral-bg-0'],
+        backgroundColor: ctx.isLight
+          ? ctx.colors2024['neutral-bg-0']
+          : ctx.colors2024['neutral-bg-1'],
       },
       handleIndicatorStyle: {
         backgroundColor: ctx.colors2024['neutral-line'],

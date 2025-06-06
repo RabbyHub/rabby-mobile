@@ -35,7 +35,7 @@ export const GlobalBottomSheetModal = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
   const [modals, setModals] = React.useState<ModalData[]>([]);
 
-  const { colors, colors2024 } = useTheme2024();
+  const { colors, colors2024, isLight } = useTheme2024();
 
   React.useEffect(() => {
     modalRefs.current = modals.reduce((acc, modal) => {
@@ -209,6 +209,7 @@ export const GlobalBottomSheetModal = () => {
               params: modal.params,
               colors,
               colors2024,
+              isLight,
             })}
           />
         );

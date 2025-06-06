@@ -52,7 +52,9 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
       handleStyle={styles.handleStyle}>
       <AutoLockView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Current Dapp</Text>
+          <Text style={styles.title}>
+            {t('page.browser.CurrentPopup.title')}
+          </Text>
         </View>
         <View style={styles.body}>
           <View style={styles.connectContent}>
@@ -69,7 +71,9 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
               <Text style={styles.connectOrigin}>{dapp.origin}</Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.labelText}>Connect Chain</Text>
+              <Text style={styles.labelText}>
+                {t('page.browser.CurrentPopup.connectChain')}
+              </Text>
               <View>
                 <ChainSelector
                   account={
@@ -87,9 +91,9 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
             </View>
             <View style={styles.row}>
               <Text style={styles.labelText}>
-                {t('page.connect.connectWallet')}
+                {t('page.browser.CurrentPopup.connectWallet')}
               </Text>
-              <View>
+              <View style={styles.rowValue}>
                 <AccountSelector
                   value={
                     dapp.currentAccount || preferenceService.getCurrentAccount()
@@ -110,7 +114,9 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
               onClose?.();
             }}>
             <RcIconDisconnectCC color={colors2024['red-default']} />
-            <Text style={styles.buttonText}>Disconnect</Text>
+            <Text style={styles.buttonText}>
+              {t('page.browser.CurrentPopup.disconnect')}
+            </Text>
           </TouchableOpacity>
         </View>
       </AutoLockView>
@@ -134,7 +140,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   title: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 24,
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
@@ -187,6 +193,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
+  },
+  rowValue: {
+    flexShrink: 1,
   },
   footer: {
     paddingHorizontal: 20,

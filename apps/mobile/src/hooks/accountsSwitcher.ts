@@ -269,7 +269,7 @@ export function isSameAccount(
   if (!saccount) return false;
 
   return (
-    saccount?.address === account.address &&
+    saccount?.address?.toLowerCase() === account.address.toLowerCase() &&
     saccount?.brandName === account.brandName &&
     saccount?.type === account.type
   );

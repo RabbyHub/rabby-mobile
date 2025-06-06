@@ -626,7 +626,7 @@ ConnectProps) => {
             <Text style={styles.connectWalletText}>
               {t('page.connect.connectWallet')}
             </Text>
-            <View>
+            <View style={styles.connectWalletValue}>
               <AccountSelector
                 value={selectedAccount}
                 onChange={account => {
@@ -687,12 +687,13 @@ ConnectProps) => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   connectWrapper: {
     height: '100%',
     flexDirection: 'column',
-    // backgroundColor: colors2024['neutral-bg-0'],
-    backgroundColor: '#F6F7F7',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
     display: 'flex',
   },
   approvalConnect: {
@@ -702,7 +703,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 30,
   },
   approvalTitle: {
-    fontWeight: '700',
+    fontWeight: '900',
     fontSize: 17,
     lineHeight: 22,
     color: colors2024['neutral-title-1'],
@@ -718,7 +719,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   connectContent: {
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-card-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     marginHorizontal: 16,
   },
   connectCard: {
@@ -761,6 +764,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
     marginBottom: 14,
     paddingHorizontal: 24,
+  },
+  connectWalletValue: {
+    flexShrink: 1,
   },
   connectWalletText: {
     fontFamily: 'SF Pro Rounded',

@@ -15,6 +15,7 @@ import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { useAlias } from '@/hooks/alias';
 import { useMemoizedFn } from 'ahooks';
 import { AccountSelectorPopup } from './AccountSelectorPopup';
+import { ellipsisAddress } from '@/utils/address';
 
 interface Props {
   style?: StyleProp<ViewStyle>;
@@ -39,16 +40,23 @@ export const AccountSelector: React.FC<Props> = memo(
           style={[styles.wrapper, style]}
           onPress={handleSelect}>
           {account ? (
-            <View>
-              <WalletIcon
-                type={account.brandName}
-                address={account.address}
-                width={24}
-                height={24}
-              />
-            </View>
-          ) : null}
-          <Text style={styles.text}>{alias || 'Select Account'}</Text>
+            <>
+              <View>
+                <WalletIcon
+                  type={account.brandName}
+                  address={account.address}
+                  width={24}
+                  height={24}
+                />
+              </View>
+              <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
+                {alias || ellipsisAddress(account.address)}
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.text}>{'Select Wallet'}</Text>
+          )}
+
           <RcIconArrowRight style={styles.buttonIcon} />
         </TouchableOpacity>
         <AccountSelectorPopup
@@ -96,6 +104,7 @@ const getStyle = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['neutral-bg-5'],
       gap: 6,
       height: 32,
+      minWidth: 0,
     },
     text: {
       fontSize: 16,
@@ -103,6 +112,8 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '500',
       color: ctx.colors2024['neutral-title-1'],
       fontFamily: 'SF Pro Rounded',
+      flexShrink: 1,
+      minWidth: 30,
     },
     buttonIcon: {
       transform: [{ rotate: '90deg' }],

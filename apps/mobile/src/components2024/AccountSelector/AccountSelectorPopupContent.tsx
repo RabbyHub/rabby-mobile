@@ -130,7 +130,7 @@ export const AccountSelectorPopupContent: React.FC<{
   return (
     <View style={[styles.panel, containerStyle]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Select Wallet</Text>
+        <Text style={styles.title}>{t('component.AccountSelector.title')}</Text>
       </View>
       <View style={styles.scrollViewContainer}>
         <View
@@ -264,7 +264,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     title: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 20,
-      fontWeight: '800',
+      fontWeight: '900',
       lineHeight: 24,
       color: ctx.colors2024['neutral-title-1'],
       textAlign: 'center',

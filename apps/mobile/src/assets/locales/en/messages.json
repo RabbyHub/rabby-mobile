@@ -1892,6 +1892,12 @@
       "BrowserHeader": {
         "searchIos": "Search Website",
         "searchAndroid": "Search Dapp"
+      },
+      "CurrentPopup": {
+        "title": "Current Dapp",
+        "connectChain": "Connect Chain",
+        "connectWallet": "Connect Wallet",
+        "disconnect": "Disconnect"
       }
     },
     "browserManage": {
@@ -2067,6 +2073,9 @@
     },
     "selectCexModal": {
       "title": "Select Exchange Source"
+    },
+    "AccountSelector": {
+      "title": "Select Wallet"
     }
   },
   "native": {
