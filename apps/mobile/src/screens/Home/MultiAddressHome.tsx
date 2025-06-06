@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -94,6 +95,7 @@ import {
   GlobalWarning,
   GlobalWarningType,
 } from '@/components2024/GlobalWarning/Warining';
+import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 
 const HeaderHeight = 24;
 
@@ -284,6 +286,7 @@ function MultiAddressHome(): JSX.Element {
     fail: number;
   }>();
   const { top10Addresses } = useAccountInfo();
+  const { initRequestHooks } = useGlobalStatus();
 
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
@@ -378,6 +381,10 @@ function MultiAddressHome(): JSX.Element {
       }[],
     [alertInfo.total, t, historyCount],
   );
+  useLayoutEffect(() => {
+    initRequestHooks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (pendingTxCount) {
