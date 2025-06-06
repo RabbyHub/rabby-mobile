@@ -182,12 +182,6 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
       };
     }
 
-    // for test todo remove
-    this.store.browserTabs = {
-      tabs: this.store.browserTabs.tabs || [emptyTab],
-      activeTabId: emptyTab.id,
-    };
-
     const bookmarkAdapter = createEntityAdapter<BrowserBookmarkItem>({
       selectId: item => item?.url,
       sortComparer: (a, b) => (a?.createdAt > b?.createdAt ? -1 : 1),
