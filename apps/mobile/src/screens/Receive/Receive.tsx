@@ -332,22 +332,13 @@ function ReceiveScreen(): JSX.Element {
             </Pressable>
           </View>
           <Button
-            title={
-              <View style={styles.copyButtonTextWrapper}>
-                <RcIconMCopy color={colors2024['brand-default']} />
-                <Text style={styles.copyButtonText}>
-                  {t('page.receive.copyAddress')}
-                </Text>
-              </View>
-            }
+            title={t('page.receive.copyAddress')}
+            icon={<RcIconMCopy color={colors2024['neutral-InvertHighlight']} />}
             onPress={handleCopy}
             disabled={isShowWatchModeModal}
-            buttonStyle={styles.copyButtonStyle}
+            type="primary"
             containerStyle={{
               width: '100%',
-            }}
-            titleStyle={{
-              color: colors2024['brand-default'],
             }}
           />
         </View>
@@ -528,24 +519,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   headerIconEye: {
     marginLeft: 4,
-  },
-  copyButtonStyle: {
-    backgroundColor: colors2024['brand-light-1'],
-    borderWidth: 1,
-    borderColor: colors2024['brand-default'],
-  },
-  copyButtonTextWrapper: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  copyButtonText: {
-    fontSize: 20,
-    fontFamily: 'SF Pro',
-    fontWeight: '700',
-    lineHeight: 24,
-    color: colors2024['brand-default'],
-    marginLeft: 6,
   },
   safeChainLogo: {
     borderColor: colors2024['neutral-bg-2'],
