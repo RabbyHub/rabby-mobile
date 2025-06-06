@@ -17,7 +17,9 @@ export const AccountSelectorPopup: React.FC<{
 }> = ({ visible, onClose, value, onChange }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
-  const { styles, colors2024 } = useTheme2024({ getStyle: getModalStyle });
+  const { styles, colors2024, isLight } = useTheme2024({
+    getStyle: getModalStyle,
+  });
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -44,11 +46,11 @@ export const AccountSelectorPopup: React.FC<{
       // snapPoints={snapPoints}
       {...makeBottomSheetProps({
         colors: colors2024,
+        linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       onDismiss={onClose}
       enableDynamicSizing
-      maxDynamicContentSize={maxHeight}
-      handleStyle={styles.handleStyle}>
+      maxDynamicContentSize={maxHeight}>
       <BottomSheetScrollView ref={scrollViewRef}>
         <AutoLockView style={[styles.container]}>
           <View style={[styles.panelContainer]}>
@@ -76,7 +78,9 @@ const getModalStyle = createGetStyles2024(ctx => {
     container: {
       height: '100%',
       minHeight: 364,
-      backgroundColor: ctx.colors2024['neutral-bg-0'],
+      backgroundColor: ctx.isLight
+        ? ctx.colors2024['neutral-bg-0']
+        : ctx.colors2024['neutral-bg-1'],
     },
     panelContainer: {
       position: 'relative',
