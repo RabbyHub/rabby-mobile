@@ -27,7 +27,6 @@ import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID } from '@/core/native/utils';
 import { browserService } from '@/core/services';
 import { FontNames } from '@/core/utils/fonts';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
@@ -36,7 +35,7 @@ import { sleep } from '@/utils/async';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import ViewShot from 'react-native-view-shot';
 import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
@@ -313,19 +312,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         return () => {};
       }, [isActive, isEmptyTab]),
     );
-
-    const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-    const forScene = '@ActiveDappWebViewModal';
-
-    const isFocused = useIsFocused();
-
-    useEffect(() => {
-      if (isFocused && isActive && !isEmptyTab && dappInfo) {
-        setTimeout(() => {
-          switchSceneCurrentAccount(forScene, dappInfo.currentAccount || null);
-        }, 500);
-      }
-    }, [isActive, isEmptyTab, isFocused, switchSceneCurrentAccount, dappInfo]);
 
     const [refreshKey, setRefreshKey] = useState(0);
 

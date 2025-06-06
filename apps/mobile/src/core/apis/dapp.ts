@@ -60,17 +60,6 @@ export const connect = async ({
     myAccounts?.[0] ||
     accounts?.[0] ||
     preferenceService.getCurrentAccount();
-  const store = getDefaultStore();
-  const originValue = store.get(sceneAccountInfoAtom);
-  store.set(sceneAccountInfoAtom, {
-    ...originValue,
-    '@ActiveDappWebViewModal': {
-      ...originValue['@ActiveDappWebViewModal'],
-      signingAccount:
-        originValue['@ActiveDappWebViewModal']?.signingAccount || null,
-      currentAccount: account || null,
-    },
-  });
 
   if (dapp) {
     dappService.patchDapps({
