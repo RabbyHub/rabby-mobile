@@ -14,11 +14,6 @@ export const useGlobalStatus = () => {
   const initRequestHooks = useCallback(() => {
     openapi.request.interceptors.response.use(
       response => {
-        console.log(
-          '--- 捕获到成功响应 ---',
-          response.config.url,
-          response.status,
-        );
         setNetWorkStatus(false);
         const url = response?.config?.url;
         if (typeof url === 'string') {
@@ -30,11 +25,6 @@ export const useGlobalStatus = () => {
         return response;
       },
       error => {
-        console.error(
-          '--- 捕获到错误响应 ---',
-          error.config.url,
-          error.message,
-        );
         if (
           typeof error?.message === 'string' &&
           error.message.includes('Network Error')
@@ -54,9 +44,8 @@ export const useGlobalStatus = () => {
   }, [setNetWorkStatus, setServiceStatus]);
 
   const clearStatus = useCallback(() => {
-    setNetWorkStatus(false);
     setServiceStatus({});
-  }, [setNetWorkStatus, setServiceStatus]);
+  }, [setServiceStatus]);
 
   return {
     netWorkStatus,
