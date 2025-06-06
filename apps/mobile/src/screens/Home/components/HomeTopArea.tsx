@@ -114,7 +114,9 @@ export const HomeTopArea = ({
 
   const navigation = useNavigation<HomeProps['navigation']>();
   const moresheetModalRef = React.useRef<BottomSheetModal>(null);
-  const { approvalRiskAlert, loadApprovalStatus } = useApprovalAlert();
+  const { approvalRiskAlert, loadApprovalStatus } = useApprovalAlert({
+    account: currentAccount,
+  });
   const totalAlertCount = useMemo(() => approvalRiskAlert, [approvalRiskAlert]);
 
   const isGnosisKeyring = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
@@ -189,10 +191,12 @@ export const HomeTopArea = ({
         if (!currentAccount) {
           return;
         }
-        await switchSceneCurrentAccount('Receive', currentAccount);
         navigation.dispatch(
           StackActions.push(RootNames.StackTransaction, {
             screen: RootNames.Receive,
+            params: {
+              account: currentAccount,
+            },
           }),
         );
       },
@@ -207,6 +211,9 @@ export const HomeTopArea = ({
             onPress: () => {
               navigation.push(RootNames.StackTransaction, {
                 screen: RootNames.GnosisTransactionQueue,
+                params: {
+                  account: currentAccount,
+                },
               });
             },
             badgeStyle: {
@@ -234,9 +241,11 @@ export const HomeTopArea = ({
               if (!currentAccount) {
                 return;
               }
-              await switchSceneCurrentAccount('Approvals', currentAccount);
               navigation.push(RootNames.StackTransaction, {
                 screen: RootNames.Approvals,
+                params: {
+                  account: currentAccount,
+                },
               });
               moresheetModalRef.current?.dismiss();
             },
@@ -266,8 +275,14 @@ export const HomeTopArea = ({
       key: t('page.home.services.approvals'),
       Icon: RcIconApproval,
       onPress: () => {
+        if (!currentAccount) {
+          return;
+        }
         navigation.push(RootNames.StackTransaction, {
           screen: RootNames.Approvals,
+          params: {
+            account: currentAccount,
+          },
         });
         moresheetModalRef.current?.dismiss();
       },

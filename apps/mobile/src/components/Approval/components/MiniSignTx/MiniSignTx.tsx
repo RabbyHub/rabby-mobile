@@ -7,7 +7,6 @@ import { apisSafe } from '@/core/apis/safe';
 import { openapi } from '@/core/request';
 import { preferenceService } from '@/core/services';
 import { Account, ChainGas } from '@/core/services/preference';
-import { useCurrentAccount } from '@/hooks/account';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
@@ -148,6 +147,7 @@ export const MiniSignTx = ({
   onSubmitted,
   directSubmit,
   visible,
+  account,
 }: {
   txs: Tx[];
   onReject?: (e?: any) => void;
@@ -160,6 +160,7 @@ export const MiniSignTx = ({
   onSubmitted?: (isSuccess: boolean) => void;
   directSubmit?: boolean;
   visible?: boolean;
+  account: Account;
 }) => {
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
@@ -234,6 +235,8 @@ export const MiniSignTx = ({
   const { t } = useTranslation();
   const [preprocessSuccess, setPreprocessSuccess] = useState(true);
 
+  const currentAccount = account;
+
   const chainId = txs[0].chainId;
   const chain = useFindChain({
     id: chainId,
@@ -277,9 +280,8 @@ export const MiniSignTx = ({
     },
   ]);
 
-  const [currentAccountType, setCurrentAccountType] = useState<
-    undefined | string
-  >();
+  const currentAccountType = currentAccount.type;
+
   const [gasLessLoading, setGasLessLoading] = useState(false);
   const [canUseGasLess, setCanUseGasLess] = useState(false);
   const [isFirstGasLessLoading, setIsFirstGasLessLoading] = useState(true);
@@ -302,10 +304,6 @@ export const MiniSignTx = ({
   const [footerShowShadow, setFooterShowShadow] = useState(false);
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
     useApprovalSecurityEngine();
-
-  const _currentAccount = useMemo(() => {
-    return preferenceService.getCurrentAccount()!;
-  }, []);
 
   const [txsResult, setTxsResult] = useState<
     {
@@ -494,7 +492,7 @@ export const MiniSignTx = ({
     txs: gasAccountTxs,
     noCustomRPC,
     isSupportedAddr,
-    currentAccount: _currentAccount,
+    currentAccount,
   });
 
   useEffect(() => {
@@ -536,6 +534,7 @@ export const MiniSignTx = ({
               preExecResult: item.preExecResult,
               actionData: item.actionData,
             },
+            account: currentAccount,
           },
           status: 'idle',
         };
@@ -658,8 +657,6 @@ export const MiniSignTx = ({
   };
 
   const checkCanProcess = async () => {
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
-
     if (currentAccount.type === KEYRING_TYPE.WatchAddressKeyring) {
       setCanProcess(false);
       setCantProcessReason(t('page.signTx.canOnlyUseImportedAddress'));
@@ -719,10 +716,6 @@ export const MiniSignTx = ({
       return;
     }
     try {
-      const currentAccount = (await preferenceService.getCurrentAccount())!;
-
-      setCurrentAccountType(currentAccount.type);
-
       const is1559 =
         support1559 &&
         SUPPORT_1559_KEYRING_TYPE.includes(currentAccount.type as any);
@@ -831,8 +824,6 @@ export const MiniSignTx = ({
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const { currentAccount } = useCurrentAccount();
 
   const [initdTxs, setInitdTxs] = useState<typeof txsResult>([]);
 
@@ -979,6 +970,7 @@ export const MiniSignTx = ({
           });
           let estimateGas = 0;
           if (!preExecResult.pre_exec.success) {
+            console.log(preExecResult);
             throw new Error('Pre exec failed');
           }
           if (preExecResult.gas.success) {
@@ -1060,6 +1052,7 @@ export const MiniSignTx = ({
       setInitdTxs(res);
       setSimulateError(null);
     } catch (e) {
+      console.error(e);
       setSimulateError(
         new MiniApprovalError('Simulate Error', {
           name: 'SimulateError',
@@ -1241,6 +1234,7 @@ export const MiniSignTx = ({
         // hasUnProcessSecurityResult={hasUnProcessSecurityResult}
         securityLevel={securityLevel}
         gnosisAccount={undefined}
+        account={currentAccount}
         chain={chain}
         isTestnet={chain.isTestnet}
         onCancel={handleCancel}
@@ -1284,6 +1278,7 @@ export const MiniApproval = ({
   ga,
   onSubmitting,
   onSubmitted,
+  account,
 }: {
   txs?: Tx[];
   visible?: boolean;
@@ -1293,6 +1288,7 @@ export const MiniApproval = ({
   ga?: Record<string, any>;
   onSubmitting?: () => void;
   onSubmitted?: (isSuccess: boolean) => void;
+  account: Account;
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { colors2024, styles } = useTheme2024({
@@ -1411,6 +1407,7 @@ export const MiniApproval = ({
                 }}
                 onSubmitting={onSubmitting}
                 onSubmitted={onSubmitted}
+                account={account}
               />
             ) : null}
           </AutoLockView>
@@ -1434,6 +1431,7 @@ export const MiniApproval = ({
             onSubmitted?.(false);
           }
         }}
+        account={account}
       />
     </>
   );

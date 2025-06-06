@@ -12,7 +12,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { useNavigationState } from '@react-navigation/native';
+import { useNavigationState, useRoute } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
@@ -26,7 +26,6 @@ import { trigger } from 'react-native-haptic-feedback';
 import QRCode from 'react-native-qrcode-svg';
 import { default as RcIconMCopy } from '@/assets2024/icons/address/mcopy-cc.svg';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import {
   createGlobalBottomSheetModal2024,
@@ -38,13 +37,22 @@ import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc
 import { RcArrowRightCC } from '@/assets/icons/common';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
+import { GetNestedScreenNavigationProps } from '@/navigation-type';
 
 function ReceiveScreen(): JSX.Element {
   const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
-  const { currentAccount: account } = useCurrentAccount();
+  const route =
+    useRoute<
+      GetNestedScreenNavigationProps<
+        'TransactionNavigatorParamList',
+        'Receive'
+      >['route']
+    >();
+
+  const account = route.params.account;
 
   const isSafe = useMemo(() => {
     return account?.type === KEYRING_TYPE.GnosisKeyring;
@@ -83,8 +91,6 @@ function ReceiveScreen(): JSX.Element {
 
     return [prefix, middle, suffix];
   }, [account]);
-
-  useLastUsedAccountInScreen({ disableAutoEffect: false });
 
   const isWatchMode = useMemo(
     () => account?.type === KEYRING_CLASS.WATCH,
@@ -179,6 +185,7 @@ function ReceiveScreen(): JSX.Element {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       value: selectedChain,
+      account: account,
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,

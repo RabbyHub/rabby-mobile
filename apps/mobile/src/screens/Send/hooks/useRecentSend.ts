@@ -1,9 +1,10 @@
 import { transactionHistoryService } from '@/core/services';
+import { useMyAccounts } from '@/hooks/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import {
   TransactionGroup,
   SendTxHistoryItem,
 } from '@/core/services/transactionHistory';
-import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
 import { fetchRefreshLocalData } from '@/screens/Swap/hooks';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { findChain } from '@/utils/chain';
@@ -78,7 +79,9 @@ export const useRecentSend = ({
     return batchFetchLocalTx();
   });
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const batchFetchLocalTx = async () => {
     const list: TransactionGroup[] = [];
@@ -192,11 +195,13 @@ export const fetchLocalSendPendingTx = (address: string) => {
 
 const localPendingTxDataAtom = atom<SendTxHistoryItem | null>(null);
 
-export const useRecentSendPendingTx = (isForMultipleAdderss: boolean) => {
+export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
   const [localPendingTxData, setLocalPendingTxData] = useAtom(
     localPendingTxDataAtom,
   );
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const clearLocalPendingTxData = useCallback(() => {
     setLocalPendingTxData(null);

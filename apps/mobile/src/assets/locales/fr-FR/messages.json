@@ -462,7 +462,8 @@
         },
         "empty": {
           "desc": "Toutes les transactions signées via Rabby seront listées ici.",
-          "title": "Aucune transaction signée pour le moment"
+          "title": "Aucune transaction signée pour le moment",
+          "titleLastThreeMonths": "Aucun historique de transactions depuis 90 jours"
         },
         "tips": {
           "canNotCancel": "Impossible d'accélérer ou d'annuler : Pas la première txn en attente",
@@ -1095,7 +1096,8 @@
       "noMark": "Pas de marque",
       "markAsTrustToast": "Marquer comme \"Trusted\"",
       "onYourWhitelist": "Sur votre whitelist",
-      "foundForbiddenRisk": "Risques interdits détectés. La connexion est bloquée."
+      "foundForbiddenRisk": "Risques interdits détectés. La connexion est bloquée.",
+      "connectWallet": "Connect Wallet"
     },
     "unlock": {
       "password": {
@@ -1748,7 +1750,8 @@
       "appCache": "Effacer le cache de l'application",
       "clearPendingToast": "Transaction en attente local supprimée",
       "clearPendingWarning": "La transaction supprimée peut toujours être confirmée sur la chaîne, à moins qu'elle ne soit remplacée.",
-      "clearPendingResetDesc": "Réinitialiser également mes données de nonce locales et mon enregistrement de signature."
+      "clearPendingResetDesc": "Réinitialiser également mes données de nonce locales et mon enregistrement de signature.",
+      "clearBrowserData": "Effacer les données du navigateur"
     },
     "settingModal": {
       "themeMode": {
@@ -1763,6 +1766,11 @@
         "clearAppCacheDesc": "Cela supprimera les fichiers cache temporaires sans affecter vos données personnelles ou paramètres. L'application doit redémarrer pour terminer le processus. Souhaitez-vous continuer ?",
         "iOSToastTitle": "Effacer le cache avec succès",
         "iOSToastDesc": "Vous devez redémarrer l'application pour prendre effet."
+      },
+      "clearBrowserData": {
+        "title": "Effacer les données du navigateur",
+        "button": "Effacer",
+        "desc": "Cela fermera tous les onglets du navigateur et supprimera tout l'historique de navigation."
       }
     },
     "buy": {
@@ -1897,6 +1905,12 @@
       "BrowserHeader": {
         "searchIos": "Rechercher le site Web",
         "searchAndroid": "Rechercher Dapp"
+      },
+      "CurrentPopup": {
+        "connectWallet": "Connecter le portefeuille",
+        "disconnect": "Déconnecter",
+        "title": "Dapp actuel",
+        "connectChain": "Connect Chain"
       }
     },
     "browserManage": {
@@ -1923,6 +1937,11 @@
     "defiDetail": {
       "viewSiteInApp": "Voir dans Dapp",
       "viewSiteInWebsite": "Voir sur le site Web"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "Sélectionner la chaîne"
+      }
     }
   },
   "native": {
@@ -2111,6 +2130,9 @@
     },
     "selectCexModal": {
       "title": "Sélectionner la source d'échange"
+    },
+    "AccountSelector": {
+      "title": "Sélectionner le portefeuille"
     }
   },
   "global": {

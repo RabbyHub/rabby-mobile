@@ -39,7 +39,6 @@ const ItemSeparatorComponent = () => {
 
 export const BatchRevokeScreen = () => {
   const { t } = useTranslation();
-  const task = useBatchRevokeTask();
   const params = useNavigationState(state => {
     const route = state.routes[state.index];
     if (route.name === RootNames.BatchRevoke) {
@@ -50,10 +49,12 @@ export const BatchRevokeScreen = () => {
     getStyle: getStyle,
   });
 
-  const { dataSource, revokeList } = params ?? {
+  const { dataSource, revokeList, account } = params ?? {
     dataSource: [],
     revokeList: [],
   };
+
+  const task = useBatchRevokeTask({ account: account! });
 
   React.useEffect(() => {
     if (task.status === 'idle') {

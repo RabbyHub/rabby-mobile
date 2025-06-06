@@ -38,10 +38,7 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
-import {
-  useCurrentAccount,
-  useLoadMatteredChainBalances,
-} from '@/hooks/account';
+import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection } from './Section';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -99,9 +96,8 @@ const EMPTY_TOKEN_ITEM = {
 };
 
 function SendScreen({
-  isForMultipleAdderss = false,
+  isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen): JSX.Element {
-  useLastUsedAccountInScreen({ disableAutoEffect: !isForMultipleAdderss });
   const navigation = useNavigation();
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
@@ -109,14 +105,17 @@ function SendScreen({
   const [isShowBlockedTransactionDialog, setIsShowBlockedTransactionDialog] =
     useState(false);
   const { localPendingTxData, clearLocalPendingTxData } =
-    useRecentSendPendingTx(isForMultipleAdderss);
+    useRecentSendPendingTx(isForMultipleAddress);
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const navParams = useNavigationState(
     s =>
       s.routes.find(
         r =>
           r.name ===
-          (isForMultipleAdderss ? RootNames.MultiSend : RootNames.Send),
+          (isForMultipleAddress ? RootNames.MultiSend : RootNames.Send),
       )?.params,
   ) as
     | {
@@ -155,8 +154,8 @@ function SendScreen({
     resetScreenState,
   } = useSendTokenScreenState();
   const Header = useCallback(
-    () => <SendHeaderRight isForMultipleAdderss={isForMultipleAdderss} />,
-    [isForMultipleAdderss],
+    () => <SendHeaderRight isForMultipleAddress={isForMultipleAddress} />,
+    [isForMultipleAddress],
   );
   useEffect(() => {
     setNavigationOptions({
@@ -239,16 +238,18 @@ function SendScreen({
       canSubmit,
       canDirectSign,
     },
-  } = useSendTokenForm(
-    navParams?.toAddress,
-    isForMultipleAdderss,
+  } = useSendTokenForm({
+    toAddress: navParams?.toAddress,
+    isForMultipleAddress: isForMultipleAddress,
     disableItemCheck,
-  );
+    currentAccount: currentAccount!,
+  });
 
-  const { fetchOrderedChainList } = useLoadMatteredChainBalances();
+  const { fetchOrderedChainList } = useLoadMatteredChainBalances({
+    account: currentAccount!,
+  });
   const isShowLoadingRef = useRef(true);
   const initByCache = async () => {
-    const account = (await preferenceService.getCurrentAccount())!;
     let targetToken: TokenItem | null = null;
     if (
       navParams &&
@@ -305,7 +306,7 @@ function SendScreen({
 
       if (!targetToken) {
         targetToken = await preferenceService.getLastTimeSendToken(
-          account.address,
+          currentAccount!.address,
         );
       }
       if (!targetToken) {
@@ -324,7 +325,7 @@ function SendScreen({
     try {
       if (navParams?.toAddress) {
         const res = await getRecommendToken({
-          from: account.address,
+          from: currentAccount!.address,
           to: navParams?.toAddress || '',
           tokenId: targetToken.id,
           chain: targetToken.chain,
@@ -364,7 +365,7 @@ function SendScreen({
         await loadCurrentToken(
           targetToken.id,
           targetToken.chain,
-          account.address,
+          currentAccount!.address,
         ),
         sleep(5000),
       ]);
@@ -375,8 +376,7 @@ function SendScreen({
   };
 
   const init = async () => {
-    const account = await preferenceService.getCurrentAccount()!;
-    if (!account) {
+    if (!currentAccount) {
       redirectBackErrorHandler(navigation);
       return;
     }
@@ -397,8 +397,6 @@ function SendScreen({
       // NOTHING
     }
   };
-
-  const { currentAccount } = useCurrentAccount();
 
   useEffect(() => {
     if (screenState.inited) {
@@ -502,7 +500,7 @@ function SendScreen({
         },
       }}>
       <NormalScreenContainer2024 type="bg1">
-        {isForMultipleAdderss && (
+        {isForMultipleAddress && (
           <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
         )}
         <TouchableWithoutFeedback
@@ -515,7 +513,7 @@ function SendScreen({
               {/* FromToSection */}
               <View>
                 {/* From */}
-                <FromAddressControl2024 disableSwitch={!isForMultipleAdderss} />
+                <FromAddressControl2024 disableSwitch={!isForMultipleAddress} />
                 {/* To */}
                 <ToAddressControl2024
                   style={{
@@ -535,7 +533,7 @@ function SendScreen({
               </View>
               {Boolean(localPendingTxData && !canSubmit) && (
                 <PendingTxItem
-                  isForMultipleAdderss={isForMultipleAdderss}
+                  isForMultipleAddress={isForMultipleAddress}
                   data={localPendingTxData!}
                   type="send"
                   clearLocalPendingTxData={clearLocalPendingTxData}
@@ -577,7 +575,7 @@ const ForMultipleAddress = (
         ofScreen: 'MultiSend',
         sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSend`,
       }}>
-      <SendScreen {...props} isForMultipleAdderss />
+      <SendScreen {...props} isForMultipleAddress />
     </ScreenSceneAccountProvider>
   );
 };

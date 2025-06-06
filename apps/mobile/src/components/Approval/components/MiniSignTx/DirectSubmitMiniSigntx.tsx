@@ -13,7 +13,6 @@ import { MiniWaiting } from './MiniWaiting';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useCallback, useEffect, useRef } from 'react';
 import React from 'react';
-import { useCurrentAccount } from '@/hooks/account';
 import { isAccountSupportDirectSign } from '@/utils/account';
 import { useMemoizedFn } from 'ahooks';
 import {
@@ -28,6 +27,7 @@ import { useAtom } from 'jotai';
 import { MiniSignTx } from './MiniSignTx';
 import IconLoadingCC from '@/assets2024/icons/gas-account/loading-cc.svg';
 import { DirectSubmitReject } from '@/hooks/useMiniApproval';
+import { Account } from '@/core/services/preference';
 
 export const MiniDirectSubmitApproval = ({
   txs,
@@ -39,6 +39,7 @@ export const MiniDirectSubmitApproval = ({
   onSubmitting,
   onSubmitted,
   id,
+  account,
 }: {
   txs?: Tx[];
   visible?: boolean;
@@ -49,6 +50,7 @@ export const MiniDirectSubmitApproval = ({
   onSubmitting?: () => void;
   onSubmitted?: (isSuccess: boolean) => void;
   id?: string;
+  account: Account;
 }) => {
   const { styles } = useTheme2024({
     getStyle: getSheetStyles,
@@ -57,7 +59,7 @@ export const MiniDirectSubmitApproval = ({
   const dismissedByCodeRef = useRef(false);
 
   const [overlayLoading, setOverlayLoading] = React.useState(false);
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = account;
 
   const onSubmittingCb = useCallback(() => {
     onSubmitting?.();
@@ -179,6 +181,7 @@ export const MiniDirectSubmitApproval = ({
             }}
             onSubmitting={onSubmittingCb}
             onSubmitted={onSubmittedCb}
+            account={account}
           />
         </View>
       ) : null}
@@ -200,6 +203,7 @@ export const MiniDirectSubmitApproval = ({
             onSubmittedCb?.(false);
           }
         }}
+        account={account}
       />
 
       <Modal

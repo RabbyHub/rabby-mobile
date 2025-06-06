@@ -16,7 +16,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   APPROVAL_MODAL_NAMES,
   (string | number)[]
 > = {
-  [APPROVAL_MODAL_NAMES.Connect]: ['90%'],
+  [APPROVAL_MODAL_NAMES.Connect]: ['80%'],
   [APPROVAL_MODAL_NAMES.SignText]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTypedData]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],

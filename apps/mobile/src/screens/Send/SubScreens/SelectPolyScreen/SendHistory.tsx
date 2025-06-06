@@ -17,13 +17,12 @@ import { Empty } from '@/screens/Transaction/components/Empty';
 import { useTranslation } from 'react-i18next';
 import { useRecentSend } from '../../hooks/useRecentSend';
 import { SendAction } from '@rabby-wallet/rabby-api/dist/types';
-import { useCurrentAccount } from '@/hooks/account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { transactionHistoryService } from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import { useGetCexList } from '@/screens/Transaction/hook';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -35,14 +34,14 @@ interface IProps {
   visible: boolean;
   onClose: () => void;
   title?: string;
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
   onPressBottomBtn?: (data: SendAction) => void;
 }
 export const SendHistory = ({
   visible,
   onClose,
   title,
-  isForMultipleAdderss = true,
+  isForMultipleAddress = true,
   onPressBottomBtn,
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -50,21 +49,22 @@ export const SendHistory = ({
   const { t } = useTranslation();
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
   const { markedList, runAsync } = useRecentSend({
-    useAllHistory: isForMultipleAdderss,
+    useAllHistory: isForMultipleAddress,
   });
-  const { currentAccount } = useCurrentAccount({
-    disableAutoFetch: true,
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
   });
+
   const [successTxList, setSuccessTxList] = useState<string[]>([]);
 
   const updateTxList = useMemoizedFn(() => {
     const txList = transactionHistoryService.getSendSucceedList(
-      isForMultipleAdderss ? undefined : currentAccount?.address,
+      isForMultipleAddress ? undefined : currentAccount?.address,
     );
     setSuccessTxList(txList);
 
     transactionHistoryService.clearSendSuccessAndFailList(
-      isForMultipleAdderss ? undefined : currentAccount?.address,
+      isForMultipleAddress ? undefined : currentAccount?.address,
     );
   });
   const { getCexInfoByAddress } = useGetCexList();
@@ -90,7 +90,7 @@ export const SendHistory = ({
           ) : null}
           <HistoryItem
             data={item.data}
-            isForMultipleAdderss={isForMultipleAdderss}
+            isForMultipleAddress={isForMultipleAddress}
             projectDict={item.data.projectDict}
             cateDict={item.data.cateDict}
             tokenDict={item.data.tokenDict || {}}
@@ -108,7 +108,7 @@ export const SendHistory = ({
             <Text style={[styles.date]}>{formatTimestamp(item.time, t)}</Text>
           ) : null}
           <TransactionItem
-            isForMultipleAdderss={isForMultipleAdderss}
+            isForMultipleAddress={isForMultipleAddress}
             // historySuccessList={historySuccessList}
             data={item.data}
             canCancel={canCancel}
@@ -147,7 +147,7 @@ export const SendHistory = ({
           marginBottom: 10,
         }}
       />
-      {Boolean(!isForMultipleAdderss && currentAccount) && (
+      {Boolean(!isForMultipleAddress && currentAccount) && (
         <AddressItem account={currentAccount!}>
           {({ WalletIcon, WalletAddress }) => {
             return (
@@ -176,7 +176,7 @@ export const SendHistory = ({
           loading={false}
           firstFetchDone={true}
           refreshLoading={false}
-          isForMultipleAdderss
+          isForMultipleAddress
           // onPresssItem={handlePressItem}
         /> */}
       {/* </BottomSheetScrollView> */}

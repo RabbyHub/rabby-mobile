@@ -28,6 +28,7 @@ import { FlatList } from 'react-native-gesture-handler';
 import { verifyTypedData } from 'viem';
 import { GnosisMessageQueueItem } from './GnosisMessageQueueItem';
 import { apisSafe } from '@/core/apis/safe';
+import { Account } from '@/core/services/preference';
 
 interface TransactionConfirmationsProps {
   confirmations: SafeMessage['confirmations'];
@@ -94,8 +95,9 @@ export const GnosisMessageQueueList = (props: {
   pendingTxs?: SafeMessage[];
   loading?: boolean;
   reload?(): void;
+  account: Account;
 }) => {
-  const { usefulChain: chain, pendingTxs, loading } = props;
+  const { usefulChain: chain, pendingTxs, loading, account } = props;
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
   const networkId =
@@ -103,7 +105,6 @@ export const GnosisMessageQueueList = (props: {
       enum: chain,
     })?.network || '';
   const { t } = useTranslation();
-  const { currentAccount: account } = useCurrentAccount();
 
   const { data: safeInfo, loading: isSafeInfoLoading } = useGnosisSafeInfo({
     address: account?.address,
@@ -146,6 +147,7 @@ export const GnosisMessageQueueList = (props: {
     ({ item }: ListRenderItemInfo<SafeMessage>) => {
       return safeInfo ? (
         <GnosisMessageQueueItem
+          account={account}
           safeInfo={safeInfo}
           data={item}
           networkId={networkId}

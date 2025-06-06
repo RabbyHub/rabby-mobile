@@ -67,6 +67,7 @@ export const TokenArea: React.FC<Props> = ({
           screen: RootNames.SingleAddressHome,
           params: {
             scrollToToken: token.id, // to do
+            account: account,
           },
         });
       }

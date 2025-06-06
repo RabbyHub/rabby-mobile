@@ -1,10 +1,16 @@
 import { preferenceService } from '../services';
 import { Account } from '../services/preference';
 
+/**
+ * @deprecated
+ */
 export async function getLastUsedAccount() {
   return preferenceService.getLastUsedAccount();
 }
 
+/**
+ * @deprecated
+ */
 export async function enableSceneAccount(
   account?: Account,
   options?: {
@@ -26,6 +32,9 @@ export async function enableSceneAccount(
   };
 }
 
+/**
+ * @deprecated
+ */
 export async function inactivateSceneAccount() {
   return preferenceService.inactivateLastUsedAccount();
 }

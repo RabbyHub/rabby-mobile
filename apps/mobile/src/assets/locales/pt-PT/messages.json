@@ -193,6 +193,9 @@
     },
     "selectCexModal": {
       "title": "Selecionar Fonte de Câmbio"
+    },
+    "AccountSelector": {
+      "title": "Selecionar Carteira"
     }
   },
   "global": {
@@ -375,7 +378,8 @@
         },
         "empty": {
           "title": "Ainda não há transações assinadas",
-          "desc": "Todas as transações assinadas via Rabby serão listadas aqui."
+          "desc": "Todas as transações assinadas via Rabby serão listadas aqui.",
+          "titleLastThreeMonths": "Sem histórico de transações nos últimos 90 dias"
         },
         "explain": {
           "send": "Enviar {{amount}} {{symbol}}",
@@ -1483,7 +1487,8 @@
       "flagByRabby": "Sinalizado por Rabby",
       "noMark": "Sem marca",
       "ignoreAll": "Ignorar tudo",
-      "foundForbiddenRisk": "Encontrados riscos proibidos. A conexão está bloqueada."
+      "foundForbiddenRisk": "Encontrados riscos proibidos. A conexão está bloqueada.",
+      "connectWallet": "Conectar Carteira"
     },
     "customRpc": {
       "closed": "Fechado",
@@ -1849,7 +1854,8 @@
       "currentLanguage": "Idioma Atual",
       "clearPendingToast": "Transação pendente local removida",
       "clearPendingResetDesc": "Também redefina meus dados locais de nonce e registro de assinatura.",
-      "clearPendingWarning": "A transação removida pode ainda estar confirmada na cadeia, a menos que seja substituída."
+      "clearPendingWarning": "A transação removida pode ainda estar confirmada na cadeia, a menos que seja substituída.",
+      "clearBrowserData": "Limpar dados do navegador"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -1965,6 +1971,11 @@
         "clearAppCacheDesc": "'Isto removerá ficheiros temporários em cache sem afetar os seus dados pessoais ou definições. A aplicação precisa de reiniciar para concluir o processo. Deseja continuar?'",
         "iOSToastTitle": "Sucesso claro do cache",
         "iOSToastDesc": "Precisa de reiniciar a aplicação para que tenha efeito."
+      },
+      "clearBrowserData": {
+        "button": "Limpar",
+        "title": "Limpar Dados do Navegador",
+        "desc": "Isto fechará todas as abas do navegador e apagará todo o histórico de navegação."
       }
     },
     "buy": {
@@ -2099,6 +2110,12 @@
       "BrowserHeader": {
         "searchAndroid": "Pesquisar Dapp",
         "searchIos": "Pesquisar Website"
+      },
+      "CurrentPopup": {
+        "title": "Dapp Atual",
+        "disconnect": "Desconectar",
+        "connectChain": "Conectar Chain",
+        "connectWallet": "Conectar Wallet"
       }
     },
     "browserManage": {
@@ -2125,6 +2142,11 @@
     "defiDetail": {
       "viewSiteInApp": "Ver no Dapp",
       "viewSiteInWebsite": "Ver no Website"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "Selecionar Cadeia"
+      }
     }
   },
   "constant": {

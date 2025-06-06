@@ -1,4 +1,3 @@
-import { useCurrentAccount } from '@/hooks/account';
 import { miniApprovalAtom } from '@/hooks/useMiniApproval';
 import { useClearMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
 import { EVENT_ROUTE_CHANGE, eventBus } from '@/utils/events';
@@ -12,9 +11,8 @@ import { MiniApproval } from './MiniSignTx';
 
 export const GlobalMiniApproval = () => {
   const [state, setState] = useAtom(miniApprovalAtom);
-  const { currentAccount } = useCurrentAccount({
-    disableAutoFetch: true,
-  });
+  const currentAccount = state.account;
+  console.log('currentAccountMini', currentAccount);
   const { clear } = useClearMiniApprovalTask();
   // const [currentRoute, setCurrentRoute] = useState(getLatestNavigationName());
   const submittingToastRef = useRef<ReturnType<
@@ -49,11 +47,15 @@ export const GlobalMiniApproval = () => {
       submittingToastRef?.current?.();
     });
   });
+  if (!currentAccount) {
+    return null;
+  }
 
   if (state.directSubmit) {
     return (
       <MiniDirectSubmitApproval
         {...state}
+        account={currentAccount}
         key={`${currentAccount?.type}-${currentAccount?.address}-${state.id}`}
         onSubmitting={handleSubmitting}
         onSubmitted={handleSubmitted}
@@ -72,6 +74,7 @@ export const GlobalMiniApproval = () => {
   return (
     <MiniApproval
       {...state}
+      account={currentAccount}
       key={`${currentAccount?.type}-${currentAccount?.address}-${state.id}`}
       onSubmitting={handleSubmitting}
       onSubmitted={handleSubmitted}

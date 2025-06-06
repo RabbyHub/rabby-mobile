@@ -23,7 +23,7 @@ import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
 import { dappService, preferenceService } from '@/core/services';
 import { CustomTestnetToken } from '@/core/services/customTestnetService';
-import { Token } from '@/core/services/preference';
+import { Account, Token } from '@/core/services/preference';
 import { useThemeStyles } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { ellipsisAddress } from '@/utils/address';
@@ -84,7 +84,13 @@ interface TokenHistoryItem extends TxHistoryItem {
   tokenDict: TxHistoryResult['token_dict'];
 }
 
-export const AddAsset = ({ params }: { params: AddAssetProps }) => {
+export const AddAsset = ({
+  params,
+  account,
+}: {
+  params: AddAssetProps;
+  account: Account;
+}) => {
   // const wallet = useWallet();
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
@@ -181,6 +187,7 @@ export const AddAsset = ({ params }: { params: AddAssetProps }) => {
         handleChainChanged?.(v);
         removeGlobalBottomSheetModal(id);
       },
+      account,
 
       bottomSheetModalProps: {
         onDismiss() {
@@ -197,7 +204,6 @@ export const AddAsset = ({ params }: { params: AddAssetProps }) => {
 
   // console.log(token, customTokens, customTestnetToken, params);
   const init = useMemoizedFn(async () => {
-    const account = await preferenceService.getCurrentAccount();
     const site = await dappService.getDapp(params.session.origin);
     const chain = findChain({
       enum: site?.chainId,
@@ -251,8 +257,10 @@ export const AddAsset = ({ params }: { params: AddAssetProps }) => {
   });
 
   const getTokenHistory = useMemoizedFn(async (token: TokenItem) => {
-    const currentAccount = await preferenceService.getCurrentAccount();
-    if (!currentAccount) return;
+    const currentAccount = account;
+    if (!currentAccount) {
+      return;
+    }
     const history = await openapi.listTxHisotry({
       id: currentAccount.address,
       chain_id: token.chain,

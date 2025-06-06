@@ -17,7 +17,7 @@ import {
 } from './sceneAccountInfoAtom';
 
 export type PropsForAccountSwitchScreen<T extends void | object = void> = {
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
 } & (T extends void ? {} : T);
 
 export function normalizeSceneKeyringAccount(
@@ -123,12 +123,12 @@ export function useSwitchSceneCurrentAccount() {
 
           try {
             if (finalResult.nextEnableAccount) {
-              await apisAccountSwitch.enableSceneAccount(
-                finalResult.nextEnableAccount,
-                { activeLastUsedAccountOptions: { needSyncToSession } },
-              );
+              // await apisAccountSwitch.enableSceneAccount(
+              //   finalResult.nextEnableAccount,
+              //   { activeLastUsedAccountOptions: { needSyncToSession } },
+              // );
             } else if (finalResult.nextEnableAccount === null) {
-              await apisAccountSwitch.inactivateSceneAccount();
+              // await apisAccountSwitch.inactivateSceneAccount();
             }
           } catch (error) {
             if (__DEV__) {
@@ -200,7 +200,7 @@ export function useSwitchSceneCurrentAccount() {
         };
 
         if (account) {
-          const result = await apisAccountSwitch.enableSceneAccount(account);
+          // const result = await apisAccountSwitch.enableSceneAccount(account);
           // // leave here for debug
           // if (__DEV__) console.warn('result', result);
 
@@ -269,7 +269,7 @@ export function isSameAccount(
   if (!saccount) return false;
 
   return (
-    saccount?.address === account.address &&
+    saccount?.address?.toLowerCase() === account.address.toLowerCase() &&
     saccount?.brandName === account.brandName &&
     saccount?.type === account.type
   );

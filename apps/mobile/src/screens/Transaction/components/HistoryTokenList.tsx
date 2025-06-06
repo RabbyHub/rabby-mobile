@@ -25,13 +25,13 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
-import { useCurrentAccount } from '@/hooks/account';
 import { ellipsisOverflowedText } from '@/utils/text';
 import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';
 import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
 
 import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 import { HistoryItemCateType } from './type';
+import { Account } from '@/core/services/preference';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1);
 
@@ -48,7 +48,8 @@ interface ItemProps {
   approve: TxDisplayItem['token_approve'];
   receives: TxDisplayItem['receives'];
   sends: TxDisplayItem['sends'];
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
+  account: Account;
 }
 
 const TokenItemInlist = ({
@@ -134,11 +135,11 @@ export const HistoryTokenList = ({
   data,
   receives,
   approve,
-  isForMultipleAdderss,
+  isForMultipleAddress,
+  account: currentAccount,
 }: ItemProps) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { currentAccount } = useCurrentAccount();
 
   const isFail = useMemo(() => status !== 1, [status]);
   const handlePress = useCallback(
@@ -150,7 +151,7 @@ export const HistoryTokenList = ({
       if (tokenIsNft) {
         naviPush(RootNames.NftDetail, {
           token: { ...token },
-          isSingleAddress: !isForMultipleAdderss,
+          isSingleAddress: !isForMultipleAddress,
         });
       } else {
         // if (address) {
@@ -161,11 +162,11 @@ export const HistoryTokenList = ({
           token: ensureAbstractPortfolioToken(singeToken as TokenItem),
           // account: address,
           needUseCacheToken: true,
-          isSingleAddress: !isForMultipleAdderss,
+          isSingleAddress: !isForMultipleAddress,
         });
       }
     },
-    [isForMultipleAdderss, token],
+    [isForMultipleAddress, token],
   );
 
   switch (type) {

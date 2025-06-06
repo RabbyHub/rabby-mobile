@@ -324,7 +324,8 @@
         },
         "empty": {
           "title": "Chưa có giao dịch nào được ký kết",
-          "desc": "Tất cả giao dịch được ký qua Rabby sẽ được liệt kê ở đây."
+          "desc": "Tất cả giao dịch được ký qua Rabby sẽ được liệt kê ở đây.",
+          "titleLastThreeMonths": "Không có lịch sử giao dịch trong 90 ngày"
         },
         "CancelTxPopup": {
           "options": {
@@ -1140,7 +1141,8 @@
       "myMark": "Dấu ấn của tôi",
       "foundForbiddenRisk": "Phát hiện rủi ro bị cấm. Kết nối đã bị chặn.",
       "markAsTrustToast": "Đánh dấu là \"Trusted\"",
-      "onYourWhitelist": "Trong danh sách trắng của bạn"
+      "onYourWhitelist": "Trong danh sách trắng của bạn",
+      "connectWallet": "Kết nối Ví"
     },
     "newAddress": {
       "createNewAddress": "Tạo địa chỉ mới",
@@ -1584,7 +1586,8 @@
       "appCache": "Xóa bộ nhớ cache của ứng dụng",
       "clearPendingToast": "Giao dịch chờ địa phương đã bị xóa",
       "clearPendingResetDesc": "Cũng đặt lại dữ liệu nonce địa phương và bản ghi chữ ký của tôi",
-      "clearPendingWarning": "Giao dịch đã bị xóa có thể vẫn được xác nhận trên chuỗi trừ khi nó bị thay thế."
+      "clearPendingWarning": "Giao dịch đã bị xóa có thể vẫn được xác nhận trên chuỗi trừ khi nó bị thay thế.",
+      "clearBrowserData": "Xóa Dữ Liệu Trình Duyệt"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -1812,6 +1815,11 @@
         "title": "Xóa bộ nhớ đệm của ứng dụng",
         "iOSToastTitle": "Xóa bộ nhớ đệm thành công",
         "iOSToastDesc": "Bạn cần khởi động lại ứng dụng để có hiệu lực."
+      },
+      "clearBrowserData": {
+        "button": "Rõ ràng",
+        "desc": "Điều này sẽ đóng tất cả các tab trình duyệt và xóa toàn bộ lịch sử duyệt web.",
+        "title": "Xóa Dữ Liệu Trình Duyệt"
       }
     },
     "buy": {
@@ -1946,6 +1954,12 @@
       "BrowserHeader": {
         "searchIos": "Tìm kiếm Website",
         "searchAndroid": "Tìm kiếm Dapp"
+      },
+      "CurrentPopup": {
+        "disconnect": "Ngắt kết nối",
+        "connectChain": "Kết nối Chuỗi",
+        "connectWallet": "Kết nối Ví",
+        "title": "Dapp hiện tại"
       }
     },
     "browserManage": {
@@ -1972,6 +1986,11 @@
     "defiDetail": {
       "viewSiteInApp": "Xem trong Dapp",
       "viewSiteInWebsite": "Xem trên Website"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "Chọn Chuỗi"
+      }
     }
   },
   "component": {
@@ -2125,6 +2144,9 @@
     },
     "selectCexModal": {
       "title": "Chọn Nguồn Giao Dịch"
+    },
+    "AccountSelector": {
+      "title": "Chọn Ví"
     }
   },
   "constant": {

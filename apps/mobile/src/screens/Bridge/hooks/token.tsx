@@ -29,6 +29,7 @@ import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { eventBus, EVENTS } from '@/utils/events';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 export const enableInsufficientQuote = true;
 
@@ -71,7 +72,9 @@ export const tokenPriceImpact = (
 const useToken = (type: 'from' | 'to') => {
   const refreshId = useRefreshId();
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const userAddress = currentAccount?.address;
 
   const [chain, setChain] = useState<CHAINS_ENUM>();
@@ -119,8 +122,10 @@ const useToken = (type: 'from' | 'to') => {
   return [chain, token, setToken, switchChain] as const;
 };
 
-export const useBridge = (isForMultipleAdderss?: boolean) => {
-  const { currentAccount } = useCurrentAccount();
+export const useBridge = (isForMultipleAddress?: boolean) => {
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const userAddress = currentAccount?.address;
   const refreshId = useRefreshId();
 
@@ -226,7 +231,9 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
     }
   }, [slippageObj, isSameToken, isSameTokenLoading]);
 
-  const { fetchOrderedChainList } = useLoadMatteredChainBalances();
+  const { fetchOrderedChainList } = useLoadMatteredChainBalances({
+    account: currentAccount!,
+  });
   const supportedChains = useBridgeSupportedChains();
   // the most worth chain is the first
   // useAsyncInitializeChainList({
@@ -242,7 +249,7 @@ export const useBridge = (isForMultipleAdderss?: boolean) => {
       s.routes.find(
         r =>
           r.name ===
-          (isForMultipleAdderss ? RootNames.MultiBridge : RootNames.Bridge),
+          (isForMultipleAddress ? RootNames.MultiBridge : RootNames.Bridge),
       )?.params,
   ) as
     | {

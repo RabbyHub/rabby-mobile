@@ -20,6 +20,7 @@ import abiCoder, { AbiCoder } from 'web3-eth-abi';
 import { IExtractFromPromise } from '@/utils/type';
 import { findChain } from '@/utils/chain';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import { Account } from '../services/preference';
 
 function buildTxParams(txMeta) {
   return {
@@ -54,11 +55,13 @@ export { sendRequest } from './sendRequest';
 export const requestETHRpc = <T = any>(
   data: { method: string; params: any },
   chainId: string,
+  account?: Account,
 ): Promise<IExtractFromPromise<T>> => {
   return providerController.ethRpc(
     {
       data,
       session: INTERNAL_REQUEST_SESSION,
+      account,
     },
     chainId,
   );

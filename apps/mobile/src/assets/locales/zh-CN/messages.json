@@ -488,7 +488,8 @@
         },
         "empty": {
           "title": "没有已签名的交易",
-          "desc": "所有通过 Rabby 签名的交易将列在这里。"
+          "desc": "所有通过 Rabby 签名的交易将列在这里。",
+          "titleLastThreeMonths": "90天内没有交易记录"
         },
         "tips": {
           "canNotCancel": "无法加速或取消：不是第一个待处理的交易。",
@@ -1345,7 +1346,8 @@
       "popularLevelMedium": "Medium",
       "listedBy": "Listed by",
       "flagByScamSniffer": "被 ScamSniffer 标记",
-      "popularLevelHigh": "高"
+      "popularLevelHigh": "高",
+      "connectWallet": "连接钱包"
     },
     "addToken": {
       "noTokenFound": "未找到 token",
@@ -1806,7 +1808,8 @@
       "currentLanguage": "当前语言",
       "clearPendingWarning": "被移除的交易可能仍会在链上确认，除非它被替换。",
       "clearPendingResetDesc": "还重置了我的本地 nonce 数据和签名记录。",
-      "clearPendingToast": "本地待处理交易已被移除"
+      "clearPendingToast": "本地待处理交易已被移除",
+      "clearBrowserData": "清除浏览器数据"
     },
     "settingModal": {
       "themeMode": {
@@ -1821,6 +1824,11 @@
         "clearAppCacheDesc": "这将删除临时缓存文件，而不会影响您的个人数据或设置。应用程序需要重新启动以完成此过程。您希望继续吗？",
         "iOSToastTitle": "清除缓存成功",
         "iOSToastDesc": "您需要重新启动应用程序才能生效。"
+      },
+      "clearBrowserData": {
+        "button": "清除",
+        "title": "清除浏览器数据",
+        "desc": "这将关闭所有浏览器标签页并删除所有浏览历史。"
       }
     },
     "buy": {
@@ -1955,6 +1963,12 @@
       "BrowserHeader": {
         "searchIos": "搜索网站",
         "searchAndroid": "搜索 Dapp"
+      },
+      "CurrentPopup": {
+        "disconnect": "断开连接",
+        "title": "当前 Dapp",
+        "connectWallet": "连接钱包",
+        "connectChain": "连接链"
       }
     },
     "browserManage": {
@@ -1981,6 +1995,11 @@
     "defiDetail": {
       "viewSiteInApp": "在 Dapp 中查看",
       "viewSiteInWebsite": "在网站中查看"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "选择链"
+      }
     }
   },
   "component": {
@@ -2134,6 +2153,9 @@
     },
     "selectCexModal": {
       "title": "选择交易所来源"
+    },
+    "AccountSelector": {
+      "title": "选择钱包"
     }
   },
   "bluetooth": {

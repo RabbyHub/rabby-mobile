@@ -30,7 +30,7 @@ function HistoryFilterScamScreen({
   route?: {
     params: {
       addresses: KeyringAccountWithAlias[];
-      isForMultipleAdderss: boolean;
+      isForMultipleAddress: boolean;
     };
   };
 }): JSX.Element {
@@ -130,7 +130,7 @@ function HistoryFilterScamScreen({
         <HistoryList
           loading={loading}
           list={data?.list}
-          isForMultipleAdderss={route?.params.isForMultipleAdderss}
+          isForMultipleAddress={route?.params.isForMultipleAddress}
         />
       </View>
     </NormalScreenContainer2024>

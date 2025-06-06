@@ -35,6 +35,8 @@ export function makeBottomSheetProps({
               ? colors['neutral-bg-1']
               : linearGradientType === 'bg1'
               ? colors['neutral-bg-1']
+              : linearGradientType === 'bg0'
+              ? colors['neutral-bg-0']
               : colors['neutral-bg-2'],
         };
       }

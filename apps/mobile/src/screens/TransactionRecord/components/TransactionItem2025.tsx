@@ -41,14 +41,14 @@ export const TransactionItem = ({
   data,
   canCancel,
   onRefresh,
-  isForMultipleAdderss,
+  isForMultipleAddress,
   isInSendHistory,
   onPressBottomBtn,
   closeHistoryPopup,
   getCexInfoByAddress,
 }: {
   historySuccessList?: string[];
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
   getCexInfoByAddress?: (address: string) => ProjectItem;
   data: TransactionGroup;
   canCancel?: boolean;
@@ -381,7 +381,7 @@ export const TransactionItem = ({
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.HistoryLocalDetail,
       params: {
-        isForMultipleAdderss,
+        isForMultipleAddress,
         data,
         canCancel,
         title: formatTitle,
@@ -389,7 +389,7 @@ export const TransactionItem = ({
       },
     });
   }, [
-    isForMultipleAdderss,
+    isForMultipleAddress,
     canCancel,
     data,
     formatTitle,

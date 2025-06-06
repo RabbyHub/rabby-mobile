@@ -3,7 +3,7 @@ import { BottomSheetModalTokenDetail } from './BottomSheetModalTokenDetail';
 import { useTokenDetailSheetModalOnApprovals } from './hooks';
 
 export default function ApprovalTokenDetailSheetModalStub() {
-  const { focusingToken, onFocusToken, sheetModalRef } =
+  const { focusingToken, onFocusToken, sheetModalRef, selectedAccount } =
     useTokenDetailSheetModalOnApprovals();
 
   return (
@@ -18,6 +18,7 @@ export default function ApprovalTokenDetailSheetModalStub() {
         onDismiss={() => {
           onFocusToken(null);
         }}
+        address={selectedAccount}
       />
     </>
   );

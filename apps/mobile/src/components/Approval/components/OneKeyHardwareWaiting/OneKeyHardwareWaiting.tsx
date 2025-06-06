@@ -77,8 +77,10 @@ const getStyles = (colors: AppColorsVariants) =>
 
 export const OneKeyHardwareWaiting = ({
   params,
+  account: $account,
 }: {
   params: ApprovalParams;
+  account: Account;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -126,9 +128,7 @@ export const OneKeyHardwareWaiting = ({
   };
 
   const init = async () => {
-    const account = params.isGnosis
-      ? params.account!
-      : (await preferenceService.getCurrentAccount())!;
+    const account = params.isGnosis ? params.account! : $account;
     const approval = (await getApproval())!;
 
     const isSignText = params.isGnosis

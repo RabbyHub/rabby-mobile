@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
+  Image,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -8,23 +8,28 @@ import {
 } from 'react-native';
 
 import { RcIconCloseCC } from '@/assets/icons/common';
-import { RcIconGoogle } from '@/assets/icons/dapp';
-import { useAccountSceneVisible } from '@/components/AccountSwitcher/hooks';
+import { RcIconDisconnectCC, RcIconGoogle } from '@/assets/icons/dapp';
+import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
+import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { IS_IOS } from '@/core/native/utils';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { dappService, preferenceService } from '@/core/services';
+import { DappInfo } from '@/core/services/dappService';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
+import { useDapps } from '@/hooks/useDapps';
+import { getAddressBarTitle } from '@/utils/browser';
+import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
-import { getAddressBarTitle } from '@/utils/browser';
-import { useBrowser } from '@/hooks/browser/useBrowser';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useDapps } from '@/hooks/useDapps';
+import { CurrentDappPopup } from './CurrentDappPopup';
 
 export function BrowserHeader({
+  dapp,
   url,
   isFocused,
   onFocusChange,
@@ -32,6 +37,7 @@ export function BrowserHeader({
   searchText,
   onSearchTextChange,
 }: {
+  dapp?: DappInfo;
   url?: string;
   isFocused?: boolean;
   onFocusChange?(isFocused: boolean): void;
@@ -58,26 +64,27 @@ export function BrowserHeader({
     return null;
   }, [tabs, activeTabId]);
 
-  const activeDappConnected = useMemo(() => {
-    if (!activeDappOrigin) {
-      return false;
-    }
-    return isDappConnected(activeDappOrigin);
-  }, [activeDappOrigin, isDappConnected]);
-
   const navigation = useRabbyAppNavigation();
-  const forScene = '@ActiveDappWebViewModal';
-  const { finalSceneCurrentAccount, sceneCurrentAccount } = useSceneAccountInfo(
-    {
-      forScene,
-    },
-  );
-  const { isVisible: isOpen, toggleSceneVisible } =
-    useAccountSceneVisible(forScene);
+
+  const account = useMemo(() => {
+    return dapp?.currentAccount || preferenceService.getCurrentAccount();
+  }, [dapp?.currentAccount]);
+
+  const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
+  const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
 
   const handleClose = useMemoizedFn(() => {
     navigation.goBack();
   });
+
+  const chain = useMemo(() => {
+    if (!dapp?.isConnected) {
+      return null;
+    }
+    return findChain({
+      enum: dapp.chainId,
+    });
+  }, [dapp?.chainId, dapp?.isConnected]);
 
   // const urlInfo = useMemo(() => urlUtils.canoicalizeDappUrl(url || ''), [url]);
   const inputRef = useRef<any>(null);
@@ -131,52 +138,104 @@ export function BrowserHeader({
   }
 
   return (
-    <View style={styles.header}>
-      {activeDappConnected && (
-        <TouchableOpacity
-          onPress={() => {
-            toggleSceneVisible(forScene, !isOpen);
-          }}>
-          {finalSceneCurrentAccount ? (
-            <WalletIcon
-              type={finalSceneCurrentAccount?.type}
-              address={finalSceneCurrentAccount?.address}
-              width={24}
-              height={24}
-              style={styles.walletIcon}
-            />
-          ) : null}
-        </TouchableOpacity>
-      )}
-      <View style={styles.addressBar}>
-        <TouchableWithoutFeedback
-          onPress={() => {
-            onSearchTextChange?.(url || '');
-            onFocusChange?.(true);
-          }}>
-          {url ? (
-            <Text style={styles.addressBarText}>{renderText}</Text>
-          ) : (
-            <Text style={styles.addressBarPlaceholder}>
-              {IS_IOS
-                ? t('page.browser.BrowserHeader.searchIos')
-                : t('page.browser.BrowserHeader.searchAndroid')}
-            </Text>
-          )}
-        </TouchableWithoutFeedback>
+    <>
+      <View style={styles.header}>
+        {url ? (
+          <TouchableOpacity
+            style={styles.account}
+            onPress={() => {
+              if (dapp?.isConnected) {
+                setIsShowCurrentDappPopup(true);
+              } else {
+                setIsShowAccountPopup(true);
+              }
+            }}>
+            {account ? (
+              <WalletIcon
+                type={account?.type}
+                address={account?.address}
+                width={24}
+                height={24}
+                style={styles.walletIcon}
+              />
+            ) : null}
+            {chain ? (
+              chain.isTestnet ? (
+                <TestnetChainLogo name={chain.name} style={styles.chain} />
+              ) : (
+                <Image
+                  source={{
+                    uri: chain.logo,
+                  }}
+                  style={styles.chain}
+                />
+              )
+            ) : (
+              <View style={[styles.chain, styles.disconnect]}>
+                <RcIconDisconnectCC
+                  color={colors2024['neutral-foot']}
+                  width={14}
+                  height={14}
+                />
+              </View>
+            )}
+          </TouchableOpacity>
+        ) : null}
+        <View style={styles.addressBar}>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              onSearchTextChange?.(url || '');
+              onFocusChange?.(true);
+            }}>
+            {url ? (
+              <Text style={styles.addressBarText}>{renderText}</Text>
+            ) : (
+              <Text style={styles.addressBarPlaceholder}>
+                {IS_IOS
+                  ? t('page.browser.BrowserHeader.searchIos')
+                  : t('page.browser.BrowserHeader.searchAndroid')}
+              </Text>
+            )}
+          </TouchableWithoutFeedback>
+        </View>
+        <View>
+          <TouchableOpacity onPress={handleClose}>
+            <View style={styles.iconCloseCircle}>
+              <RcIconCloseCC
+                width={21}
+                height={21}
+                color={colors2024['neutral-title-1']}
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
-      <View>
-        <TouchableOpacity onPress={handleClose}>
-          <View style={styles.iconCloseCircle}>
-            <RcIconCloseCC
-              width={21}
-              height={21}
-              color={colors2024['neutral-title-1']}
-            />
-          </View>
-        </TouchableOpacity>
-      </View>
-    </View>
+      {dapp ? (
+        <>
+          <CurrentDappPopup
+            visible={isShowCurrentDappPopup}
+            onClose={() => {
+              setIsShowCurrentDappPopup(false);
+            }}
+            dapp={dapp}
+          />
+          <AccountSelectorPopup
+            visible={isShowAccountPopup}
+            onClose={() => {
+              setIsShowAccountPopup(false);
+            }}
+            value={dapp.currentAccount}
+            onChange={v => {
+              dappService.updateDapp({
+                ...dapp,
+                currentAccount: v,
+              });
+              setIsShowAccountPopup(false);
+            }}
+          />
+        </>
+      ) : null}
+    </>
   );
 }
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -192,7 +251,27 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // borderBottomWidth: 1,
     // borderBottomColor: colors2024['neutral-line'],
   },
-  walletIcon: { borderRadius: 6 },
+  walletIcon: { borderRadius: 6, width: 32, height: 32 },
+  account: {
+    position: 'relative',
+  },
+  chain: {
+    position: 'absolute',
+    borderRadius: 1000,
+    width: 16,
+    height: 16,
+    borderColor: colors2024['neutral-bg-1'],
+    borderWidth: 2,
+    borderStyle: 'solid',
+    right: -3,
+    bottom: -3,
+  },
+  disconnect: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   addressBar: {
     minWidth: 0,
     flex: 1,

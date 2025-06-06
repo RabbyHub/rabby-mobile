@@ -85,8 +85,8 @@ export const HistoryList = forwardRef(
       localTxList,
       onRefresh,
       onPresssItem,
+      isForMultipleAddress = true,
       isNeedFetchFromApi,
-      isForMultipleAdderss = true,
     }: {
       firstFetchDone?: boolean;
       historySuccessList?: string[];
@@ -95,7 +95,7 @@ export const HistoryList = forwardRef(
       loading?: boolean;
       loadingMore?: boolean;
       refreshLoading?: boolean;
-      isForMultipleAdderss?: boolean;
+      isForMultipleAddress?: boolean;
       onPresssItem?: (data: HistoryDisplayItem) => void;
       loadMore?: () => void;
       onRefresh?: () => void;
@@ -138,14 +138,14 @@ export const HistoryList = forwardRef(
               <Text
                 style={[
                   styles.date,
-                  !isForMultipleAdderss && styles.marginBottom,
+                  !isForMultipleAddress && styles.marginBottom,
                 ]}>
                 {formatTimestamp(item.time, t)}
               </Text>
             ) : null}
             <HistoryItem
               data={item.data}
-              isForMultipleAdderss={isForMultipleAdderss}
+              isForMultipleAddress={isForMultipleAddress}
               projectDict={item.data.projectDict}
               cateDict={item.data.cateDict}
               tokenDict={item.data.tokenDict || {}}
@@ -171,14 +171,14 @@ export const HistoryList = forwardRef(
               <Text
                 style={[
                   styles.date,
-                  !isForMultipleAdderss && styles.marginBottom,
+                  !isForMultipleAddress && styles.marginBottom,
                 ]}>
                 {formatTimestamp(item.time, t)}
               </Text>
             ) : null}
             <TransactionItem
               getCexInfoByAddress={getCexInfoByAddress}
-              isForMultipleAdderss={isForMultipleAdderss}
+              isForMultipleAddress={isForMultipleAddress}
               historySuccessList={historySuccessList}
               data={item.data}
               canCancel={canCancel}

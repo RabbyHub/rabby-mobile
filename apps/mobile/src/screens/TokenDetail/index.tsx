@@ -242,6 +242,7 @@ export const TokenDetailScreen = () => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
+  // todo check this
   const { currentAccount, switchAccount } = useCurrentAccount({
     disableAutoFetch: true,
   });
@@ -590,7 +591,7 @@ export const TokenDetailScreen = () => {
         <HistoryList
           accounts={accounts}
           finalAccount={finalAccount}
-          isForMultipleAdderss={!isSingleAddress}
+          isForMultipleAddress={!isSingleAddress}
           token={token}
         />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />

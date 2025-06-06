@@ -2,10 +2,10 @@
 import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
-import { findChain, getChain } from '@/utils/chain';
+import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { formatAmount } from '@/utils/number';
@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
@@ -37,7 +37,8 @@ import { ellipsisAddress } from '@/utils/address';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import LinearGradient from 'react-native-linear-gradient';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/dist/types';
+import { findAccountByPriority } from '@/utils/account';
 
 interface Props {
   data: TransactionGroup;
@@ -77,12 +78,27 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
 
+  const txAccount = useMemo(() => {
+    let account: KeyringAccountWithAlias | undefined;
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        isSameAddress(acc.address, data.address) &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    if (data.keyringType) {
+      account = canUseAccountList.find(acc => acc.type === data.keyringType);
+    }
+    if (!account) {
+      account = findAccountByPriority(canUseAccountList);
+    }
+    return account;
+  }, [accounts, data.address, data.keyringType]);
+
   const isFail = useMemo(
     () => data.isFailed || data.isSubmitFailed || data.isWithdrawed,
     [data.isFailed, data.isSubmitFailed, data.isWithdrawed],
   );
-
-  const { switchAccount } = useCurrentAccount();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -111,7 +127,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     });
   });
 
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const fromAddrIsImported = useMemo(() => {
     return accounts.find(account =>
@@ -228,7 +243,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             <AddressItemInDetail
               address={data.maxGasTx.address}
               accounts={unionAccounts}
-              switchAccount={switchAccount}
             />
           </View>
 
@@ -301,7 +315,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
                   'MakeTransactionAbout',
                   !isSingleAddress && fromAddrIsImported
                     ? fromAddrIsImported
-                    : currentAccount,
+                    : txAccount,
                 );
                 navigation.dispatch(
                   StackActions.push(RootNames.StackTransaction, {

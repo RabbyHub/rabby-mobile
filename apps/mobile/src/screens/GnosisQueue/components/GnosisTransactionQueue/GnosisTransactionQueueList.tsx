@@ -36,6 +36,7 @@ import { intToHex } from '@/utils/number';
 import { toast } from '@/components/Toast';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { Account } from '@/core/services/preference';
 
 export type ConfirmationProps = {
   owner: string;
@@ -89,6 +90,7 @@ const Item = React.memo(
     networkId,
     onSubmit,
     reload,
+    account,
   }: {
     nonce: string;
     txs: SafeTransactionItem[];
@@ -96,6 +98,7 @@ const Item = React.memo(
     networkId?: string | null;
     onSubmit(data: SafeTransactionItem): void;
     reload?: () => void;
+    account: Account;
   }) => {
     const themeColors = useThemeColors();
     const styles = useMemo(() => getStyles(themeColors), [themeColors]);
@@ -131,6 +134,7 @@ const Item = React.memo(
                 key={transaction.safeTxHash}
                 onSubmit={onSubmit}
                 reload={reload}
+                account={account}
               />
             ))}
           </View>
@@ -143,6 +147,7 @@ const Item = React.memo(
               key={transaction.safeTxHash}
               onSubmit={onSubmit}
               reload={reload}
+              account={account}
             />
           ))
         )}
@@ -156,10 +161,17 @@ export const GnosisTransactionQueueList = (props: {
   usefulChain: CHAINS_ENUM;
   pendingTxs?: SafeTransactionItem[];
   loading?: boolean;
+  account: Account;
 }) => {
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
-  const { usefulChain: chain, pendingTxs, loading, reload } = props;
+  const {
+    usefulChain: chain,
+    pendingTxs,
+    loading,
+    reload,
+    account: currentAccount,
+  } = props;
   const networkId = findChain({
     enum: chain,
   })?.network;
@@ -174,7 +186,6 @@ export const GnosisTransactionQueueList = (props: {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadFailed, setIsLoadFailed] = useState(false);
-  const { currentAccount } = useCurrentAccount();
 
   const { data: safeInfo, loading: isSafeInfoLoading } = useGnosisSafeInfo({
     address: currentAccount?.address,
@@ -191,6 +202,7 @@ export const GnosisTransactionQueueList = (props: {
           txs.map(async safeTx => {
             const tx: SafeTransactionDataPartial = {
               data: safeTx.data || '0x',
+              // todo fix this
               gasPrice: safeTx.gasPrice ? Number(safeTx.gasPrice) : 0,
               gasToken: safeTx.gasToken,
               refundReceiver: safeTx.refundReceiver,
@@ -341,6 +353,7 @@ export const GnosisTransactionQueueList = (props: {
     const nonce = item.item;
     return (
       <Item
+        account={currentAccount}
         nonce={nonce}
         safeInfo={safeInfo}
         txs={transactionsGroup[nonce]}

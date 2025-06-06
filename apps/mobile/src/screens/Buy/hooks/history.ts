@@ -3,7 +3,7 @@ import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { syncRemoteBuyHistory } from '@/databases/sync/assets';
-import { useCurrentAccount } from '@/hooks/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import {
   BuyHistoryItem,
   BuyHistoryList,
@@ -117,7 +117,9 @@ const getList = async (addr: string, start = 0, limit = 20) => {
 };
 
 export const useBuyHistory = () => {
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const addr = currentAccount?.address || '';
 
   const [refresh, setRefresh] = useState(0);
@@ -207,7 +209,9 @@ export const useBuyHistory = () => {
 export const usePollBuyPendingNumber = (timer = 10000) => {
   const [refetchCount, setRefetchCount] = useState(0);
 
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const {
     value: pendingData,

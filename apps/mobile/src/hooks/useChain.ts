@@ -4,6 +4,7 @@ import { findChainByEnum, varyAndSortChainItems } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@debank/common';
 import { useChainBalances, useLoadMatteredChainBalances } from './account';
 import { preferenceService } from '@/core/services';
+import { Account } from '@/core/services/preference';
 
 export type ChainSelectorPurpose =
   | 'dashboard'
@@ -20,9 +21,11 @@ type FetchDataStage = false | 'fetching' | 'fetched' | 'inited';
 export function useAsyncInitializeChainList({
   supportChains,
   onChainInitializedAsync,
+  account,
 }: {
   supportChains?: Chain['enum'][];
   onChainInitializedAsync?: (firstEnum: CHAINS_ENUM) => void;
+  account: Account;
 }) {
   const { matteredChainBalances } = useChainBalances();
 
@@ -52,7 +55,9 @@ export function useAsyncInitializeChainList({
     [],
   );
 
-  const { getMatteredChainBalance } = useLoadMatteredChainBalances();
+  const { getMatteredChainBalance } = useLoadMatteredChainBalances({
+    account: account,
+  });
 
   const fetchDataOnce = useCallback(async () => {
     if (fetchChainDataStageRef.current) return;

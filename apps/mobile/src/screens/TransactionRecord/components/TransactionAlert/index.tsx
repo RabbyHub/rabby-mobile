@@ -198,8 +198,8 @@ export const TransactionAlert = ({
           });
       const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
       try {
-        await sendRequest(
-          {
+        await sendRequest({
+          data: {
             method: 'eth_sendTransaction',
             params: [
               {
@@ -213,8 +213,9 @@ export const TransactionAlert = ({
               },
             ],
           },
-          INTERNAL_REQUEST_SESSION,
-        );
+          session: INTERNAL_REQUEST_SESSION,
+          account,
+        });
       } catch (error) {
         console.error(error);
       } finally {

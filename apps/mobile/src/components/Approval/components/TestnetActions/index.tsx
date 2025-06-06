@@ -45,6 +45,7 @@ import Loading from '../TxComponents/Loading';
 import ViewRawModal from '../TxComponents/ViewRawModal';
 import BalanceChange from '../TxComponents/BalanceChange';
 import { getMessageStyles } from '../TextActions';
+import { Account } from '@/core/services/preference';
 
 export const TestnetActions = ({
   chain,
@@ -53,6 +54,7 @@ export const TestnetActions = ({
   origin,
   originLogo,
   isReady,
+  account,
 }: {
   chain: Chain;
   raw: Record<string, string | number>;
@@ -60,6 +62,7 @@ export const TestnetActions = ({
   origin?: string;
   originLogo?: string;
   isReady?: boolean;
+  account: Account;
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -97,7 +100,7 @@ export const TestnetActions = ({
       <Card>
         <OriginInfo chain={chain} origin={origin} originLogo={originLogo} />
         <Divide />
-        <BalanceChange version="v0" />
+        <BalanceChange version="v0" account={account} />
       </Card>
 
       <Card>
@@ -129,6 +132,7 @@ export const TestnetActions = ({
                 isLight
                 content={
                   <NoActionAlert
+                    account={account}
                     data={{
                       chainId: chain.serverId,
                       selector: raw.data.toString(),

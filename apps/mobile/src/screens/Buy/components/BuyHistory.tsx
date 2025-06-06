@@ -22,7 +22,7 @@ import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
-import { useCurrentAccount } from '@/hooks/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -51,7 +51,9 @@ const HistoryList = ({
     [onGoToDetail],
   );
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const ListHeaderComponent = useCallback(() => {
     return (
@@ -197,11 +199,11 @@ const generateTempBuyHistoryData = ({
 export const BuyHistory = ({
   visible,
   onClose,
-  isForMultipleAdderss,
+  isForMultipleAddress,
 }: {
   visible: boolean;
   onClose: () => void;
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
 }) => {
   const { t } = useTranslation();
   const bottomRef = useRef<BottomSheetModalMethods>(null);
@@ -238,13 +240,13 @@ export const BuyHistory = ({
       naviPush(RootNames.StackTransaction, {
         screen: RootNames.HistoryDetail,
         params: {
-          isForMultipleAdderss,
+          isForMultipleAddress,
           data: detailData,
           title: t('page.transactions.itemTitle.Buy'),
         },
       });
     },
-    [projectDict, tokenDict, onClose, isForMultipleAdderss, t],
+    [projectDict, tokenDict, onClose, isForMultipleAddress, t],
   );
 
   useEffect(() => {

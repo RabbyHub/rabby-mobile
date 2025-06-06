@@ -490,7 +490,8 @@
         },
         "empty": {
           "title": "まだ署名されたトランザクションはありません。",
-          "desc": "Rabbyを通じて署名されたすべてのトランザクションがここに一覧表示されます。"
+          "desc": "Rabbyを通じて署名されたすべてのトランザクションがここに一覧表示されます。",
+          "titleLastThreeMonths": "90日間取引履歴がありません"
         },
         "status": {
           "pending": "保留中",
@@ -1134,7 +1135,8 @@
         "title": "署名権限"
       },
       "flagByMM": "MetaMask によってフラグされています",
-      "manageWhiteBlackList": "ホワイトリスト/ブラックリストを管理する"
+      "manageWhiteBlackList": "ホワイトリスト/ブラックリストを管理する",
+      "connectWallet": "ウォレットを接続する"
     },
     "newAddress": {
       "Quick": "クイック",
@@ -1791,7 +1793,8 @@
       "currentLanguage": "現在の言語",
       "clearPendingToast": "ローカルの保留中のトランザクションが削除されました",
       "clearPendingResetDesc": "ローカルの nonce データと署名記録もリセットします。",
-      "clearPendingWarning": "削除されたトランザクションは、置き換えられない限り、オンチェーンでまだ確認される可能性があります。"
+      "clearPendingWarning": "削除されたトランザクションは、置き換えられない限り、オンチェーンでまだ確認される可能性があります。",
+      "clearBrowserData": "ブラウザデータをクリア"
     },
     "settingModal": {
       "themeMode": {
@@ -1806,6 +1809,11 @@
         "clearAppCacheDesc": "これにより、一時的なキャッシュファイルが削除されますが、個人データや設定には影響しません。プロセスを完了するにはアプリを再起動する必要があります。続行しますか？",
         "iOSToastTitle": "キャッシュのクリアに成功しました",
         "iOSToastDesc": "有効にするには、アプリを再起動する必要があります。"
+      },
+      "clearBrowserData": {
+        "button": "クリア",
+        "title": "ブラウザデータをクリア",
+        "desc": "これにより、すべてのブラウザタブが閉じられ、すべての閲覧履歴が削除されます。"
       }
     },
     "buy": {
@@ -1940,6 +1948,12 @@
       "BrowserHeader": {
         "searchAndroid": "Dappを検索",
         "searchIos": "ウェブサイトを検索"
+      },
+      "CurrentPopup": {
+        "disconnect": "切断接続",
+        "title": "現在のDapp",
+        "connectChain": "チェーンを接続する",
+        "connectWallet": "ウォレットを接続"
       }
     },
     "browserManage": {
@@ -1966,6 +1980,11 @@
     "defiDetail": {
       "viewSiteInApp": "Dappで表示",
       "viewSiteInWebsite": "ウェブサイトで表示"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "チェーンを選択"
+      }
     }
   },
   "global": {
@@ -2182,6 +2201,9 @@
     },
     "selectCexModal": {
       "title": "交換元を選択してください"
+    },
+    "AccountSelector": {
+      "title": "ウォレットを選択してください"
     }
   },
   "common": {

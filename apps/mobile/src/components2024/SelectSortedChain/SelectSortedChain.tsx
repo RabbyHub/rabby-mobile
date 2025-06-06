@@ -23,6 +23,7 @@ import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { Account } from '@/core/services/preference';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
@@ -30,16 +31,20 @@ const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
 const useChainSeletorList = ({
   supportChains,
   netTabKey,
+  account,
 }: {
   supportChains?: Chain['enum'][];
   netTabKey?: NetSwitchTabsKey;
+  account: Account;
 }) => {
   const [search, setSearch] = useState('');
   const {
     testnetMatteredChainBalances,
     matteredChainBalances,
     fetchMatteredChainBalance,
-  } = useLoadMatteredChainBalances();
+  } = useLoadMatteredChainBalances({
+    account,
+  });
   useEffect(() => {
     fetchMatteredChainBalance();
   }, [fetchMatteredChainBalance]);
@@ -107,6 +112,7 @@ export type SelectSortedChainProps = {
   titleText?: string;
   excludeChains?: CHAINS_ENUM[];
   onClose?: () => void;
+  account: Account;
 };
 export default function SelectSortedChain({
   value,
@@ -118,6 +124,7 @@ export default function SelectSortedChain({
   onClose,
   excludeChains,
   titleText,
+  account,
 }: RNViewProps & SelectSortedChainProps) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
@@ -132,6 +139,7 @@ export default function SelectSortedChain({
     // set undefined to allow all main chains
     supportChains: supportChains,
     netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
+    account,
   });
 
   const [matteredList, unmatteredList] = useMemo(() => {

@@ -1337,7 +1337,8 @@
       "SignTestnetPermission": {
         "title": "Signing permission"
       },
-      "ignoreAll": "Ignore all"
+      "ignoreAll": "Ignore all",
+      "connectWallet": "Connect Wallet"
     },
     "addressDetail": {
       "add-to-whitelist": "Add to Whitelist",
@@ -1898,6 +1899,12 @@
       "BrowserHeader": {
         "searchIos": "Search Website",
         "searchAndroid": "Search Dapp"
+      },
+      "CurrentPopup": {
+        "title": "Current Dapp",
+        "connectChain": "Connect Chain",
+        "connectWallet": "Connect Wallet",
+        "disconnect": "Disconnect"
       }
     },
     "browserManage": {
@@ -1914,6 +1921,11 @@
       },
       "BrowserHistoryList": {
         "title": "History"
+      }
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "Select Chain"
       }
     }
   },
@@ -2068,6 +2080,9 @@
     },
     "selectCexModal": {
       "title": "Select Exchange Source"
+    },
+    "AccountSelector": {
+      "title": "Select Wallet"
     }
   },
   "native": {

@@ -68,6 +68,9 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     onSelect?.();
     navigate(RootNames.SingleAddressStack, {
       screen: RootNames.SingleAddressHome,
+      params: {
+        account,
+      },
     });
   }, [account, onSelect, switchAccount]);
 

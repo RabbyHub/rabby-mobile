@@ -40,7 +40,6 @@ export const RevokeNFTCollectionBtn = ({
   });
 
   const handleRevoke = useMemoizedFn(async () => {
-    await switchSceneSigningAccount('MultiHistory', account);
     try {
       await revokeNFTApprove({
         chainServerId: collection.chain || (collection as any).chain_id,
@@ -48,11 +47,10 @@ export const RevokeNFTCollectionBtn = ({
         contractId: collection.id,
         abi: 'ERC721',
         isApprovedForAll: true,
+        account,
       });
     } catch (error) {
       console.error(error);
-    } finally {
-      await switchSceneSigningAccount('MultiHistory', null);
     }
 
     resetNavigationTo(navigation, 'Home');

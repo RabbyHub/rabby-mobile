@@ -72,6 +72,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   isFirstGasCostLoading?: boolean;
   isFirstGasLessLoading?: boolean;
   directSubmit?: boolean;
+  account: Account;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -229,9 +230,9 @@ export const MiniFooterBar: React.FC<Props> = ({
   isFirstGasLessLoading,
   isGasNotEnough,
   directSubmit,
+  account,
   ...props
 }) => {
-  const [account, setAccount] = React.useState<Account>();
   const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
     null,
   );
@@ -289,11 +290,6 @@ export const MiniFooterBar: React.FC<Props> = ({
   };
 
   const init = async () => {
-    const currentAccount =
-      gnosisAccount || (await preferenceService.getCurrentAccount());
-    if (currentAccount) {
-      setAccount(currentAccount);
-    }
     apiApprovalSecurityEngine.init();
   };
   const binaryTheme = useGetBinaryMode();

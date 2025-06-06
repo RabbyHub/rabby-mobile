@@ -1,28 +1,25 @@
-import React from 'react';
-import {
-  QuoteVisibleProvider,
-  RefreshIdProvider,
-  SettingVisibleProvider,
-} from './hooks';
-import { BridgeContent } from './components/BridgeContent';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import {
   PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
 } from '@/hooks/accountsSwitcher';
+import React from 'react';
 import { TokenInfoPopup } from '../Swap/components/TokenInfoPopup';
+import { BridgeContent } from './components/BridgeContent';
+import {
+  QuoteVisibleProvider,
+  RefreshIdProvider,
+  SettingVisibleProvider,
+} from './hooks';
 
 export const Bridge = ({
-  isForMultipleAdderss,
+  isForMultipleAddress,
 }: PropsForAccountSwitchScreen) => {
-  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
-
   return (
     <SettingVisibleProvider>
       <RefreshIdProvider>
         <QuoteVisibleProvider>
-          <BridgeContent isForMultipleAdderss={isForMultipleAdderss} />
+          <BridgeContent isForMultipleAddress={isForMultipleAddress} />
         </QuoteVisibleProvider>
       </RefreshIdProvider>
       <TokenInfoPopup />
@@ -46,7 +43,7 @@ const ForMultipleAddress = (
         ofScreen: 'MultiBridge',
         sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiBridge`,
       }}>
-      <Bridge {...props} isForMultipleAdderss />
+      <Bridge {...props} isForMultipleAddress />
     </ScreenSceneAccountProvider>
   );
 };

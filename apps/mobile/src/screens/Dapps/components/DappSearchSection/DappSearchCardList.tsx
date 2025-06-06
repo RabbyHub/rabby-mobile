@@ -26,6 +26,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { Account } from '@/core/services/preference';
 
 export const DappSearchCardList = ({
   keyword,
@@ -38,6 +39,7 @@ export const DappSearchCardList = ({
   onChainChange,
   loading,
   ListEmptyComponent,
+  account,
 }: {
   keyword?: string;
   data: DappInfo[];
@@ -49,6 +51,7 @@ export const DappSearchCardList = ({
   onChainChange?: (chain?: CHAINS_ENUM) => void;
   loading?: boolean;
   ListEmptyComponent?: FlatListProps<any>['ListEmptyComponent'];
+  account: Account;
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
@@ -62,6 +65,7 @@ export const DappSearchCardList = ({
       value: chain,
       hideTestnetTab: true,
       titleText: t('page.receiveAddressList.selectChainTitle'),
+      account,
       onChange: (v: CHAINS_ENUM) => {
         onChainChange?.(v);
         removeGlobalBottomSheetModal2024(id);

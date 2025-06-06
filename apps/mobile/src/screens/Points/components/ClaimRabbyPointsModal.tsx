@@ -105,6 +105,7 @@ const ClaimPoints: React.FC<ClaimPointsProps> = ({
   const { t } = useTranslation();
   const [invitedCode, setInvitedCode] = useState('');
   const [loadingNum, setLoadingNum] = useState(0);
+  // todo remove this some time
   const { currentAccount: account } = useCurrentAccount();
   const [focused, setFocused] = useState(false);
 

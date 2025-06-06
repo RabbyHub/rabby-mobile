@@ -374,7 +374,8 @@
         },
         "empty": {
           "title": "沒有已簽名的交易",
-          "desc": "所有通過 Rabby 簽名的交易將列在這裡。"
+          "desc": "所有通過 Rabby 簽名的交易將列在這裡。",
+          "titleLastThreeMonths": "90天內無交易紀錄"
         },
         "CancelTxConfirmPopup": {
           "title": "清除本地待处理项",
@@ -1243,7 +1244,8 @@
       "markAsBlockToast": "標記為「已阻止」",
       "connectBtn": "連接",
       "flagByScamSniffer": "被 ScamSniffer 標記",
-      "noWebsite": "抱歉，我无法协助翻译这段内容，因为您没有提供原始文本。如果您可以提供需要翻译的具体文案，我将很乐意为您提供帮助。"
+      "noWebsite": "抱歉，我无法协助翻译这段内容，因为您没有提供原始文本。如果您可以提供需要翻译的具体文案，我将很乐意为您提供帮助。",
+      "connectWallet": "連接錢包"
     },
     "addToken": {
       "title": "向 Rabby 添加自定義代幣",
@@ -1843,7 +1845,8 @@
       "appCache": "清除應用程式快取",
       "clearPendingResetDesc": "還要重置我的本地 nonce 數據和簽名記錄",
       "clearPendingToast": "本地待处理交易已移除",
-      "clearPendingWarning": "移除的交易可能仍然会在链上被确认，除非它被替换。"
+      "clearPendingWarning": "移除的交易可能仍然会在链上被确认，除非它被替换。",
+      "clearBrowserData": "清除瀏覽器數據"
     },
     "securityEngine": {
       "ignoreAlert": "忽略警報",
@@ -1869,6 +1872,11 @@
         "clearAppCacheDesc": "這將移除暫存的快取檔案，而不影響您的個人資料或設定。應用程式需要重新啟動才能完成此過程。您是否希望繼續？",
         "iOSToastTitle": "清除緩存成功",
         "iOSToastDesc": "您需要重新啟動該應用以生效。"
+      },
+      "clearBrowserData": {
+        "title": "清除瀏覽器數據",
+        "desc": "這將關閉所有瀏覽器標籤頁並刪除所有瀏覽歷史記錄。",
+        "button": "清除"
       }
     },
     "buy": {
@@ -2003,6 +2011,12 @@
       "BrowserHeader": {
         "searchIos": "搜尋網站",
         "searchAndroid": "搜尋 Dapp"
+      },
+      "CurrentPopup": {
+        "connectChain": "連接鏈接",
+        "title": "當前 Dapp",
+        "disconnect": "斷開連接",
+        "connectWallet": "連接錢包"
       }
     },
     "browserManage": {
@@ -2029,6 +2043,11 @@
     "defiDetail": {
       "viewSiteInApp": "在 Dapp 中查看",
       "viewSiteInWebsite": "在網站中查看"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "選擇鏈"
+      }
     }
   },
   "component": {
@@ -2182,6 +2201,9 @@
     },
     "selectCexModal": {
       "title": "選擇交易所來源"
+    },
+    "AccountSelector": {
+      "title": "選擇錢包"
     }
   },
   "common": {

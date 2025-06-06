@@ -63,7 +63,7 @@ const SendPolyScreen = () => {
   const { isSingleAddress } = useSendRoutes();
 
   const Header = useCallback(
-    () => <SendHeaderRight isForMultipleAdderss={!isSingleAddress} />,
+    () => <SendHeaderRight isForMultipleAddress={!isSingleAddress} />,
     [isSingleAddress],
   );
   const HeaderLeft = useCallback(

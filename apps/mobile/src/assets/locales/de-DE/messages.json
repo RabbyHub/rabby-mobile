@@ -236,6 +236,9 @@
     },
     "selectCexModal": {
       "title": "Quelle auswählen"
+    },
+    "AccountSelector": {
+      "title": "Wallet auswählen"
     }
   },
   "page": {
@@ -378,7 +381,8 @@
         },
         "empty": {
           "desc": "Alle Transaktionen, die über Rabby signiert wurden, werden hier aufgeführt.",
-          "title": "Noch keine signierten Transaktionen"
+          "title": "Noch keine signierten Transaktionen",
+          "titleLastThreeMonths": "Keine Transaktionshistorie in 90 Tagen"
         },
         "explain": {
           "send": "Senden {{amount}} {{symbol}}",
@@ -1662,7 +1666,8 @@
       "listedBy": "Gelistet von",
       "noMark": "Kein Markierung",
       "markAsTrustToast": "Als „Vertrauenswürdig“ markieren",
-      "sitePopularity": "Website-Beliebtheit"
+      "sitePopularity": "Website-Beliebtheit",
+      "connectWallet": "Wallet verbinden"
     },
     "sign": {
       "transactionSpeed": "Transaktionsgeschwindigkeit"
@@ -1908,7 +1913,8 @@
       "appCache": "App-Cache löschen",
       "clearPendingResetDesc": "Setze auch meine lokalen Nonce-Daten und Signaturaufzeichnungen zurück.",
       "clearPendingToast": "Lokale ausstehende Transaktion entfernt",
-      "clearPendingWarning": "Die entfernte Transaktion kann weiterhin on-chain bestätigt werden, es sei denn, sie wird ersetzt."
+      "clearPendingWarning": "Die entfernte Transaktion kann weiterhin on-chain bestätigt werden, es sei denn, sie wird ersetzt.",
+      "clearBrowserData": "Browser-Daten löschen"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",
@@ -1965,6 +1971,11 @@
         "clearAppCacheDesc": "'Dadurch werden temporäre zwischengespeicherte Dateien entfernt, ohne Ihre persönlichen Daten oder Einstellungen zu beeinträchtigen. Die App muss neu gestartet werden, um den Vorgang abzuschließen. Möchten Sie fortfahren?'",
         "iOSToastTitle": "Cache erfolgreich löschen",
         "iOSToastDesc": "Sie müssen die App neu starten, damit sie wirksam wird."
+      },
+      "clearBrowserData": {
+        "button": "Löschen",
+        "title": "Browser-Daten löschen",
+        "desc": "Dies schließt alle Browser-Tabs und löscht den gesamten Browserverlauf."
       }
     },
     "buy": {
@@ -2099,6 +2110,12 @@
       "BrowserHeader": {
         "searchIos": "Website durchsuchen",
         "searchAndroid": "Suche Dapp"
+      },
+      "CurrentPopup": {
+        "connectWallet": "Wallet verbinden",
+        "disconnect": "Trennen",
+        "title": "Aktuelle Dapp",
+        "connectChain": "Chain verbinden"
       }
     },
     "browserManage": {
@@ -2125,6 +2142,11 @@
     "defiDetail": {
       "viewSiteInApp": "In Dapp anzeigen",
       "viewSiteInWebsite": "Auf der Website ansehen"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "Kette auswählen"
+      }
     }
   },
   "constant": {

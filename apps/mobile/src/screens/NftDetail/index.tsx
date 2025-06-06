@@ -219,6 +219,7 @@ export const NFTDetailScreen = () => {
     [],
   );
 
+  // todo check this
   const { currentAccount } = useCurrentAccount();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -227,16 +228,16 @@ export const NFTDetailScreen = () => {
     () => routeAccount || currentAccount,
     [routeAccount, currentAccount],
   );
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const handleSend = useCallback(
     async (iToken: NFTItem, address: string, accountType: KEYRING_TYPE) => {
       const toAccount =
         address && accountType
-          ? accounts.find(i => isSameAddress(address, i.address)) ||
-            currentAccount
-          : currentAccount;
-      await switchSceneCurrentAccount('SendNFT', toAccount);
+          ? accounts.find(i => isSameAddress(address, i.address))
+          : undefined;
+      if (!toAccount) {
+        return;
+      }
       navigate(RootNames.StackTransaction, {
         screen: RootNames.SendNFT,
         params: {
@@ -244,10 +245,11 @@ export const NFTDetailScreen = () => {
             iToken.contract_name || iToken?.collection?.name || '',
           nftItem: iToken,
           address,
+          account: toAccount,
         },
       });
     },
-    [accounts, currentAccount, switchSceneCurrentAccount],
+    [accounts],
   );
 
   const { assetsMap, getCacheTop10Assets } = useAssets();
@@ -259,7 +261,7 @@ export const NFTDetailScreen = () => {
       type?: KEYRING_TYPE;
       aliasName?: string;
     }[] = [];
-    if (isSingleAddress) {
+    if (isSingleAddress && finalAccount) {
       console.debug('relateNFTList isSingleAddress');
       resList.push({
         data: token,

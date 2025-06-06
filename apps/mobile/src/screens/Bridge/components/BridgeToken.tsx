@@ -205,6 +205,7 @@ const BridgeToken = ({
           style={styles.chainSelector}
           chainEnum={chain}
           onChange={onChangeChain}
+          account={account!}
           // excludeChains={excludeChains}
           // supportChains={supportedChains}
         />

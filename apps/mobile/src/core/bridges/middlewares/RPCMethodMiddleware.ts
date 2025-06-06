@@ -150,13 +150,13 @@ RPCMethodsMiddleParameters) =>
           );
         }
         // res.result = await rpcMethods['@reject']();
-        res.result = await sendRequest(
-          {
+        res.result = await sendRequest({
+          data: {
             method: req.method,
             params: req.params,
           },
-          providerSessionBase,
-        );
+          session: providerSessionBase,
+        });
       }
       if (__DEV__) {
         console.debug(

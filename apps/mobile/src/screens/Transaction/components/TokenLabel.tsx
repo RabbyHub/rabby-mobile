@@ -23,7 +23,7 @@ export default function TokenLabel({
 }: RNViewProps & {
   isMyOwn?: boolean;
   disableClickToken?: boolean;
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
   address?: KeyringAccountWithAlias;
 } & (
     | {

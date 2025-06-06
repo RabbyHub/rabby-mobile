@@ -45,7 +45,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
   const {
     data: _data,
     // canCancel,
-    isForMultipleAdderss,
+    isForMultipleAddress,
     title,
     onPressBottomBtn,
   } = route.params || {};
@@ -120,37 +120,41 @@ function HistoryLocalDetailScreen(): JSX.Element {
           needUseSwap || data.maxGasTx.action?.actionData?.send ? 0 : 16,
       }}>
       {data.maxGasTx.action?.actionData?.approveToken ? (
-        <ApproveToken data={data} isSingleAddress={!isForMultipleAdderss} />
+        <ApproveToken data={data} isSingleAddress={!isForMultipleAddress} />
       ) : data.maxGasTx.action?.actionData?.approveNFT ? (
-        <ApproveNFT data={data} isSingleAddress={!isForMultipleAdderss} />
+        <ApproveNFT data={data} isSingleAddress={!isForMultipleAddress} />
       ) : data.maxGasTx.action?.actionData?.approveNFTCollection ? (
         <ApproveNFTCollection
           data={data}
-          isSingleAddress={!isForMultipleAdderss}
+          isSingleAddress={!isForMultipleAddress}
         />
       ) : data.maxGasTx.action?.actionData?.revokeNFT ? (
-        <RevokeNFT data={data} isSingleAddress={!isForMultipleAdderss} />
+        <RevokeNFT data={data} isSingleAddress={!isForMultipleAddress} />
       ) : data.maxGasTx.action?.actionData?.revokeNFTCollection ? (
         <RevokeNFTCollection
           data={data}
-          isSingleAddress={!isForMultipleAdderss}
+          isSingleAddress={!isForMultipleAddress}
         />
       ) : data.maxGasTx.action?.actionData?.revokeToken ? (
-        <RevokeToken data={data} isSingleAddress={!isForMultipleAdderss} />
+        <RevokeToken data={data} isSingleAddress={!isForMultipleAddress} />
       ) : data.maxGasTx.action?.actionData?.cancelTx ? (
-        <CancelTx data={data} isSingleAddress={!isForMultipleAdderss} />
+        <CancelTx data={data} isSingleAddress={!isForMultipleAddress} />
       ) : data.maxGasTx.action?.actionData?.deployContract ? (
-        <DeployContact data={data} isSingleAddress={!isForMultipleAdderss} />
+        <DeployContact data={data} isSingleAddress={!isForMultipleAddress} />
       ) : needUseSwap ? (
-        <Swap data={data} isSingleAddress={!isForMultipleAdderss} />
+        <Swap
+          data={data}
+          isSingleAddress={!isForMultipleAddress}
+          // account={txAccount}
+        />
       ) : data.maxGasTx.action?.actionData?.send ? (
         <Send
           data={data}
-          isSingleAddress={!isForMultipleAdderss}
+          isSingleAddress={!isForMultipleAddress}
           onPressBottomBtn={onPressBottomBtn}
         />
       ) : (
-        <UnknownAction data={data} isSingleAddress={!isForMultipleAdderss} />
+        <UnknownAction data={data} isSingleAddress={!isForMultipleAddress} />
       )}
     </NormalScreenContainer2024>
   );

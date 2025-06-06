@@ -23,10 +23,10 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
+import { Account, ChainGas } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
-import { useCurrentAccount } from '@/hooks/account';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
 import { formatTxInputDataOnERC20 } from '@/utils/transaction';
 import {
@@ -352,15 +352,21 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
 /**
  * @description only called once at top level
  */
-export function useSendTokenForm(
-  toAddress?: string,
-  isForMultipleAdderss = false,
-  disableItemCheck?: ITokenCheck,
-) {
+export function useSendTokenForm({
+  toAddress,
+  isForMultipleAddress = false,
+  disableItemCheck,
+  currentAccount,
+}: {
+  toAddress?: string;
+  isForMultipleAddress: boolean;
+  disableItemCheck?: ITokenCheck;
+  currentAccount: Account;
+}) {
   const { t } = useTranslation();
 
   const sendTokenEventsRef = useRef(new EventEmitter());
-  const { currentAccount } = useCurrentAccount();
+  const account = currentAccount;
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
 
@@ -527,10 +533,10 @@ export function useSendTokenForm(
   const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
 
   const { runAsync: runFetchPendingCount } = usePollSendPendingCount({
-    isForMultipleAddress: isForMultipleAdderss,
+    isForMultipleAddress: isForMultipleAddress,
   });
   const { runFetchLocalPendingTx } =
-    useRecentSendPendingTx(isForMultipleAdderss);
+    useRecentSendPendingTx(isForMultipleAddress);
 
   /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
   const formik = useFormik({
@@ -774,18 +780,21 @@ export function useSendTokenForm(
     ) {
       const res = await apiProvider.sendRequest(
         {
-          method: 'eth_sendTransaction',
-          params: [params],
-          $ctx: {
-            ga: {
-              category: 'Send',
-              source: 'sendToken',
-              toAddress,
-              trigger: 'sendToken',
+          data: {
+            method: 'eth_sendTransaction',
+            params: [params],
+            $ctx: {
+              ga: {
+                category: 'Send',
+                source: 'sendToken',
+                toAddress,
+                trigger: 'sendToken',
+              },
             },
           },
+          session: INTERNAL_REQUEST_SESSION,
+          account,
         },
-        INTERNAL_REQUEST_SESSION,
         true,
       );
       const tx = res.params?.[0];
@@ -801,6 +810,7 @@ export function useSendTokenForm(
               trigger: 'sendToken',
             },
             directSubmit: true,
+            account,
           });
         }
       }
@@ -950,19 +960,22 @@ export function useSendTokenForm(
           }
           const res = await apiProvider.sendRequest(
             {
-              method: 'eth_sendTransaction',
-              params: [params],
-              $ctx: {
-                ga: {
-                  category: 'Send',
-                  source: 'sendToken',
-                  toAddress,
-                  // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-                  trigger: 'sendToken',
+              data: {
+                method: 'eth_sendTransaction',
+                params: [params],
+                $ctx: {
+                  ga: {
+                    category: 'Send',
+                    source: 'sendToken',
+                    toAddress,
+                    // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                    trigger: 'sendToken',
+                  },
                 },
               },
+              session: INTERNAL_REQUEST_SESSION,
+              account,
             },
-            INTERNAL_REQUEST_SESSION,
             true,
           );
           const tx = res.params?.[0];
@@ -976,6 +989,7 @@ export function useSendTokenForm(
                 // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
                 trigger: 'sendToken',
               },
+              account,
             })
               .then(resp => {
                 transactionHistoryService.addSendTxHistory({
@@ -1015,8 +1029,8 @@ export function useSendTokenForm(
           }
         } else {
           await apiProvider
-            .sendRequest(
-              {
+            .sendRequest({
+              data: {
                 method: 'eth_sendTransaction',
                 params: [params],
                 $ctx: {
@@ -1029,8 +1043,9 @@ export function useSendTokenForm(
                   },
                 },
               },
-              INTERNAL_REQUEST_SESSION,
-            )
+              session: INTERNAL_REQUEST_SESSION,
+              account,
+            })
             .then(resp => {
               const hash = resp as string;
               console.debug('hash', hash);
@@ -1069,20 +1084,21 @@ export function useSendTokenForm(
       putScreenState,
       currentToken,
       getParams,
+      currentAccount,
       isNativeToken,
       isShowMessageDataForToken,
       screenState.showGasReserved,
       screenState.estimatedGas,
       screenState.selectedGasLevel?.price,
-      currentAccount,
       toAddress,
+      account,
       isDirectSigning,
-      sendPrepareMiniTransactions,
       setDirectSigning,
+      prepareDirectSubmitMiniTx,
+      sendPrepareMiniTransactions,
       runFetchPendingCount,
       runFetchLocalPendingTx,
       handleFieldChange,
-      prepareDirectSubmitMiniTx,
       sendMiniTransactions,
     ],
   );
@@ -1224,7 +1240,6 @@ export function useSendTokenForm(
       if (screenState.showGasReserved) {
         putScreenState({ showGasReserved: false });
       }
-      const account = preferenceService.getCurrentAccount();
       if (!account) {
         console.error('[handleCurrentTokenChange] no account');
       }
@@ -1261,6 +1276,7 @@ export function useSendTokenForm(
     },
     [
       screenState.showGasReserved,
+      account,
       currentToken.id,
       currentToken.chain,
       putChainToken,
@@ -1275,7 +1291,7 @@ export function useSendTokenForm(
     async (token: TokenItem) => {
       const { reason } = disableItemCheck?.(token) || {};
       const confirmCallback = () => {
-        if (!isForMultipleAdderss) {
+        if (!isForMultipleAddress) {
           handleCurrentTokenChange(token);
         } else {
           const { accountSwitchTo } = switchAccountOnSelectedToken({
@@ -1316,7 +1332,7 @@ export function useSendTokenForm(
       currentAccount,
       disableItemCheck,
       handleCurrentTokenChange,
-      isForMultipleAdderss,
+      isForMultipleAddress,
       multiNavParams,
       switchAccountOnSelectedToken,
       t,
@@ -1494,7 +1510,6 @@ export function useSendTokenForm(
   const handleChainChanged = useCallback(
     async (val: CHAINS_ENUM) => {
       putScreenState(prev => ({ ...prev, clickedMax: false }));
-      const account = preferenceService.getCurrentAccount()!;
       // fallback to eth, but we don't expect this to happen
       const chain = findChainByEnum(val, { fallback: true })!;
       setRouteParams(pre => ({
@@ -1555,6 +1570,7 @@ export function useSendTokenForm(
       patchFormValues,
       handleFormValuesChange,
       loadCurrentToken,
+      account.address,
     ],
   );
 
@@ -1626,6 +1642,7 @@ export function useSendTokenForm(
           trigger: 'sendToken',
         },
         directSubmit: true,
+        account,
       });
     }
   }, [
@@ -1639,6 +1656,7 @@ export function useSendTokenForm(
     screenState.isSubmitLoading,
     chainItem?.isTestnet,
     toAddress,
+    account,
   ]);
 
   useEffect(() => {

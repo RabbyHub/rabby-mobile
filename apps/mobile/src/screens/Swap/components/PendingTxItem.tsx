@@ -1,22 +1,11 @@
 /* eslint-disable react-native/no-inline-styles */
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components';
-import { useTranslation } from 'react-i18next';
-import { getTokenSymbol } from '@/utils/token';
-import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
-import { findChain } from '@/utils/chain';
-import ArrowSwapSVG from '@/assets2024/icons/common/arrow-swap-cc.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { RootNames } from '@/constant/layout';
 import {
   SwapTxHistoryItem,
   SendTxHistoryItem,
 } from '@/core/services/transactionHistory';
-import { RootNames } from '@/constant/layout';
-import { navigate, naviPush } from '@/utils/navigation';
 import {
   bridgeService,
   swapService,
@@ -25,20 +14,31 @@ import {
 import { useCurrentAccount } from '@/hooks/account';
 import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
 import { getAliasName } from '@/core/apis/contact';
+import { TransactionGroup } from '@/core/services/transactionHistory';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useTheme2024 } from '@/hooks/theme';
+import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { ellipsisAddress } from '@/utils/address';
-import BigNumber from 'bignumber.js';
+import { findChain } from '@/utils/chain';
+import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
+import { createGetStyles2024 } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
+import BigNumber from 'bignumber.js';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { sendToken } from '@/core/apis/token';
 import { useMemoizedFn } from 'ahooks';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
-  isForMultipleAdderss,
+  isForMultipleAddress,
   type,
 }: {
   data: SwapTxHistoryItem | SendTxHistoryItem;
   clearLocalPendingTxData: () => void;
-  isForMultipleAdderss: boolean;
+  isForMultipleAddress: boolean;
   type: 'send' | 'swap';
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -53,7 +53,9 @@ export const PendingTxItem = ({
   );
   const isPending = data.status === 'pending';
   const chainName = chainItem?.name || '';
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const handlePress = useMemoizedFn(() => {
     if (!isPending) {
@@ -77,7 +79,7 @@ export const PendingTxItem = ({
     naviPush(RootNames.StackTransaction, {
       screen: RootNames.HistoryLocalDetail,
       params: {
-        isForMultipleAdderss,
+        isForMultipleAddress,
         data: groupData,
         title:
           type === 'send'

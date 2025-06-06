@@ -16,6 +16,7 @@ export const AddTestnetCustomTokenPopup = (
   props: Pick<AddCustomTokenPopupProps, 'visible' | 'onClose' | 'onAddToken'>,
 ) => {
   const { addCustomToken } = useManageTestnetTokenList();
+  // todo remove this some time
   const { currentAccount } = useCurrentAccount();
   const searchToken = useMemoizedFn(
     async ({

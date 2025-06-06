@@ -22,6 +22,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal/types';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useTranslation } from 'react-i18next';
+import { Account } from '@/core/services/preference';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
@@ -64,6 +65,7 @@ export function ChainInfo({
   titleStyle,
   excludeChains,
   type,
+  account,
 }: React.PropsWithChildren<
   RNViewProps & {
     chainEnum?: CHAINS_ENUM;
@@ -76,6 +78,7 @@ export function ChainInfo({
     excludeChains?: CHAINS_ENUM[];
     rightArrowIcon?: React.ReactNode;
     titleStyle?: StyleProp<TextStyle>;
+    account: Account;
   }
 >) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -102,6 +105,7 @@ export function ChainInfo({
       hideMainnetTab,
       hideTestnetTab,
       excludeChains,
+      account,
       titleText:
         type === 'from'
           ? t('page.bridge.bridgeFrom')
@@ -115,16 +119,17 @@ export function ChainInfo({
       },
     });
   }, [
-    type,
-    excludeChains,
     chainEnum,
+    removeChainModal,
+    supportChains,
     disabledTips,
     hideMainnetTab,
     hideTestnetTab,
-    onChange,
-    removeChainModal,
-    supportChains,
+    excludeChains,
+    account,
+    type,
     t,
+    onChange,
   ]);
 
   return (

@@ -16,6 +16,7 @@ import { checkIfTokenBalanceEnough } from '@/utils/token';
 import { noop } from 'lodash';
 import { TokenAmountInput } from '@/components/Token/TokenAmountInput';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 export function BalanceSection({
   style,
@@ -26,7 +27,9 @@ export function BalanceSection({
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const {
     screenState,
 

@@ -191,7 +191,7 @@ function SendHistoryScreen() {
         loading={fetchFromDbLoading}
         firstFetchDone={firstFetchDone}
         refreshLoading={false}
-        isForMultipleAdderss
+        isForMultipleAddress
         onRefresh={refresh}
         onPresssItem={handlePressItem}
       />

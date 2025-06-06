@@ -9,11 +9,13 @@ import { apiBalance } from '@/core/apis';
 import { useCurrentAccount } from '@/hooks/account';
 import { AbstractPortfolioToken } from '../types';
 import { devLog } from '@/utils/logger';
+import { Account } from '@/core/services/preference';
 
 const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
-  list?: T[],
+  list: T[],
+  account?: Account | null,
 ) => {
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = account;
   const [result, setResult] = useState<T[]>([]);
 
   const sortByChainBalance = async (list: T[]) => {
@@ -107,6 +109,7 @@ export default useSortToken;
 export function useSortTokenPure<T extends TokenItem | AbstractPortfolioToken>(
   list?: T[],
 ) {
+  // todo remove this some time
   const { currentAccount } = useCurrentAccount();
   // const [, setSpinner] = useState(false);
   const [balanceCache, setBalanceCache] = useState<TotalBalanceResponse | null>(

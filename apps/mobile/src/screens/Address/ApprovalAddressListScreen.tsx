@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList } from 'react-native';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressItemEntry } from './components/ApprovalAddressItem';
 import { useFocusEffect, useNavigation } from '@react-navigation/core';
@@ -49,8 +45,6 @@ export function ApprovalAddressListScreen(): JSX.Element {
     .sort((a, b) => b.approvalCount - a.approvalCount)
     .sort((a, b) => b.alertCount - a.alertCount);
 
-  const { switchAccount } = useCurrentAccount();
-
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const isInitialLoadRef = React.useRef(true);
@@ -83,10 +77,11 @@ export function ApprovalAddressListScreen(): JSX.Element {
   );
 
   const handleSelect = (account: KeyringAccountWithAlias) => {
-    // set =>> currentAccountAtom
-    switchAccount(account);
     navigation.push(RootNames.StackTransaction, {
       screen: RootNames.Approvals,
+      params: {
+        account,
+      },
     });
   };
 

@@ -22,12 +22,13 @@ import { approveToken, revokeNFTApprove } from '@/core/apis/approvals';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
-import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from './type';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useRequest } from 'ahooks';
 import { transactionHistoryService } from '@/core/services';
+import { Account } from '@/core/services/preference';
 
 interface ItemProps {
   status: number;
@@ -41,8 +42,9 @@ interface ItemProps {
   data: HistoryDisplayItem;
   currentApprove: number;
   noRemainValue: boolean;
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
   buttonContainerStyle?: RNViewProps['style'];
+  account: Account;
 }
 
 export const HistoryBottomBtn = ({
@@ -56,13 +58,13 @@ export const HistoryBottomBtn = ({
   approve,
   chain,
   receives,
-  isForMultipleAdderss = true,
+  isForMultipleAddress = true,
   buttonContainerStyle,
+  account: currentAccount,
 }: ItemProps) => {
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
   const { styles } = useTheme2024({ getStyle });
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useMyAccounts();
 
@@ -128,9 +130,9 @@ export const HistoryBottomBtn = ({
               });
               await switchSceneCurrentAccount(
                 'MakeTransactionAbout',
-                isForMultipleAdderss ? fromAddrIsImported : currentAccount,
+                isForMultipleAddress ? fromAddrIsImported : currentAccount,
               );
-              navigateToSendPolyScreen(!isForMultipleAdderss, {
+              navigateToSendPolyScreen(!isForMultipleAddress, {
                 chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
                 tokenId: sends[0]?.token_id,
                 toAddress: sends[0]?.to_addr,
@@ -183,17 +185,25 @@ export const HistoryBottomBtn = ({
                       contractId: (data.tx as any)?.id,
                       abi: 'ERC721',
                       isApprovedForAll: true,
+                      account: currentAccount,
                     },
                     {
                       ga: { category: 'Security', source: 'tokenApproval' },
                     },
                   );
                 } else {
-                  await approveToken(chain, tokenId, approve?.spender!, 0, {
-                    ga: {
-                      category: 'Security',
-                      source: 'tokenApproval',
+                  await approveToken({
+                    chainServerId: chain,
+                    id: tokenId,
+                    spender: approve?.spender!,
+                    amount: 0,
+                    $ctx: {
+                      ga: {
+                        category: 'Security',
+                        source: 'tokenApproval',
+                      },
                     },
+                    account: currentAccount,
                   });
                 }
                 resetNavigationTo(navigation, 'Home');
@@ -221,15 +231,15 @@ export const HistoryBottomBtn = ({
             buttonStyle={buttonStyle}
             onPress={async () => {
               const chainItem = !chain ? null : findChainByServerID(chain);
-              // if (!isForMultipleAdderss) {
+              // if (!isForMultipleAddress) {
               await switchSceneCurrentAccount(
                 'MakeTransactionAbout',
-                isForMultipleAdderss ? fromAddrIsImported : currentAccount,
+                isForMultipleAddress ? fromAddrIsImported : currentAccount,
               );
               // }
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
-                  screen: isForMultipleAdderss
+                  screen: isForMultipleAddress
                     ? RootNames.MultiSwap
                     : RootNames.Swap,
                   params: {
@@ -254,16 +264,16 @@ export const HistoryBottomBtn = ({
           <Button
             buttonStyle={buttonStyle}
             onPress={() => {
-              if (!isForMultipleAdderss) {
+              if (!isForMultipleAddress) {
                 switchSceneCurrentAccount(
                   'MakeTransactionAbout',
                   currentAccount,
                 );
               }
-              console.log('isForMultipleAdderss', isForMultipleAdderss);
+              console.log('isForMultipleAddress', isForMultipleAddress);
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
-                  screen: isForMultipleAdderss
+                  screen: isForMultipleAddress
                     ? RootNames.MultiBuy
                     : RootNames.Buy,
                   params: {

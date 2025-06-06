@@ -423,7 +423,7 @@ const WhitelistInputScreen = () => {
       <SendHistory
         visible={historyVisible}
         onClose={closeHistory}
-        isForMultipleAdderss={!isSingleAddress}
+        isForMultipleAddress={!isSingleAddress}
         title={t('page.sendPoly.SelectFromHistory')}
         onPressBottomBtn={data => {
           if (data?.to && isValidHexAddress(data?.to as Hex)) {

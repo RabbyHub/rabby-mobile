@@ -96,6 +96,7 @@ function Inner() {
     };
   }, [data]);
 
+  // todo remove this some time
   const { currentAccount } = useCurrentAccount();
   const { balance } = useCurrentBalance(currentAccount?.address);
 

@@ -76,7 +76,13 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const PrivatekeyWaiting = ({ params }: { params: ApprovalParams }) => {
+export const PrivatekeyWaiting = ({
+  params,
+  account: $account,
+}: {
+  params: ApprovalParams;
+  account: Account;
+}) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { setTitle, setVisible, closePopup, setHeight } = useCommonPopupView();
@@ -133,9 +139,7 @@ export const PrivatekeyWaiting = ({ params }: { params: ApprovalParams }) => {
   }, [type, isLight]);
 
   const init = async () => {
-    const account = params.isGnosis
-      ? params.account!
-      : (await preferenceService.getCurrentAccount())!;
+    const account = params.isGnosis ? params.account! : $account;
 
     const approval = (await getApproval())!;
 

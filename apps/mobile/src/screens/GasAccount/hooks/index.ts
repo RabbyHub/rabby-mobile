@@ -112,9 +112,8 @@ export const useGasAccountMethods = () => {
   const setGasAccount = useSetGasAccount();
 
   const login = useCallback(
-    async (selectAccount: Account | null) => {
-      const account =
-        selectAccount || (await preferenceService.getCurrentAccount());
+    async (selectAccount: Account) => {
+      const account = selectAccount;
       if (!account) {
         throw new Error('background.error.noCurrentAccount');
       }
@@ -129,17 +128,20 @@ export const useGasAccountMethods = () => {
       if (noSignType) {
         const { txHash } = await sendPersonalMessage({
           data: [text, account.address],
+          account: account,
         });
         signature = txHash;
       } else {
-        signature = await sendRequest<string>(
-          {
+        signature = await sendRequest<string>({
+          data: {
             method: 'personal_sign',
             params: [text, account.address],
           },
-          INTERNAL_REQUEST_SESSION,
-        );
+          session: INTERNAL_REQUEST_SESSION,
+          account,
+        });
       }
+      console.log(signature);
       if (signature) {
         const result = await pRetry(
           async () =>

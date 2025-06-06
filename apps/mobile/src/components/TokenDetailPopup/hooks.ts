@@ -7,6 +7,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { KeyringAccountWithAlias } from '@/hooks/account';
+import { Account } from '@/core/services/preference';
 
 const popups = {
   generalTokenDetailPopup: {
@@ -19,6 +20,7 @@ const popups = {
   },
   tokenDetailPopupOnSendToken: {
     atom: atom(null as AbstractPortfolioToken | null),
+    accountAtom: atom(null as Account | null | undefined),
     ref: React.createRef<BottomSheetModalMethods>(),
   },
 };
@@ -81,12 +83,17 @@ export function useTokenDetailSheetModalOnApprovals() {
     popups.tokenDetailPopupOnSendToken.ref,
   );
 
+  const [selectedAccount, setSelectedAccount] = useAtom(
+    popups.tokenDetailPopupOnSendToken.accountAtom,
+  );
+
   const openTokenDetailPopup = useCallback(
-    (token: TokenItem | AbstractPortfolioToken) => {
+    (token: TokenItem | AbstractPortfolioToken, account?: Account) => {
+      setSelectedAccount(account);
       onFocusToken(ensureAbstractPortfolioToken(token));
       toggleShowSheetModal(true);
     },
-    [onFocusToken, toggleShowSheetModal],
+    [onFocusToken, setSelectedAccount, toggleShowSheetModal],
   );
 
   const cleanFocusingToken = useCallback(() => {
@@ -100,5 +107,6 @@ export function useTokenDetailSheetModalOnApprovals() {
     sheetModalRef,
     openTokenDetailPopup,
     cleanFocusingToken,
+    selectedAccount,
   };
 }

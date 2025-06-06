@@ -31,7 +31,6 @@ import {
 import { HistoryList } from './components/HistoryGroupList';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
@@ -98,10 +97,10 @@ const waitQueueFinished = (q: PQueue) => {
 
 function History({
   isTestnet = false,
-  isForMultipleAdderss,
+  isForMultipleAddress,
 }: {
   isTestnet?: boolean;
-  isForMultipleAdderss: boolean;
+  isForMultipleAddress: boolean;
 }): JSX.Element {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -133,7 +132,7 @@ function History({
     finalSceneCurrentAccount,
     sceneCurrentAccountDepKey,
   } = useSceneAccountInfo({
-    forScene: isForMultipleAdderss ? 'MultiHistory' : 'History',
+    forScene: isForMultipleAddress ? 'MultiHistory' : 'History',
   });
   const [firstFetchDone, setFirstFetchDone] = useState(false);
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
@@ -519,7 +518,7 @@ function History({
     const list = transactionHistoryService.getSucceedList();
     setHistorySuccessList(list);
     transactionHistoryService.clearSuccessAndFailList(
-      isForMultipleAdderss ? undefined : currentAddress,
+      isForMultipleAddress ? undefined : currentAddress,
     );
   });
 
@@ -572,7 +571,7 @@ function History({
   const getHeaderTitle = useCallback(() => {
     return (
       <ScreenHeaderAccountSwitcher
-        forScene={isForMultipleAdderss ? 'MultiHistory' : 'History'}
+        forScene={isForMultipleAddress ? 'MultiHistory' : 'History'}
         titleText={
           <View style={styles.headerTitle}>
             <AssetAvatar
@@ -585,10 +584,10 @@ function History({
             <Text style={styles.titleText}>Transactions</Text>
           </View>
         }
-        disableSwitch={!isForMultipleAdderss}
+        disableSwitch={!isForMultipleAddress}
       />
     );
-  }, [tokenItem, isForMultipleAdderss, styles.titleText, styles.headerTitle]);
+  }, [tokenItem, isForMultipleAddress, styles.titleText, styles.headerTitle]);
 
   React.useEffect(() => {
     if (isInTokenDetail && tokenItem) {
@@ -649,7 +648,7 @@ function History({
           firstFetchDone={firstFetchDone}
           loadingMore={loadingMore}
           refreshLoading={isNeedFetchFromApi && loading}
-          isForMultipleAdderss={isForMultipleAdderss}
+          isForMultipleAddress={isForMultipleAddress}
           loadMore={loadMore}
           onRefresh={refresh}
         />
@@ -658,7 +657,7 @@ function History({
   );
 }
 
-const HistoryScreen = ({ isForMultipleAdderss = true }) => {
+const HistoryScreen = ({ isForMultipleAddress = true }) => {
   const {
     sheetModalRef: tokenDetailModalRef,
     cleanFocusingToken,
@@ -666,13 +665,12 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
     tokenDetailAddress,
     setTokenDetailAddress,
   } = useGeneralTokenDetailSheetModal();
-  useLastUsedAccountInScreen();
 
   const { styles } = useTheme2024({ getStyle });
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
-      {isForMultipleAdderss && (
+      {isForMultipleAddress && (
         <AccountSwitcherModal
           forScene="MultiHistory"
           inScreen
@@ -680,7 +678,7 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
         />
       )}
       <ScreenSpecificStatusBar screenName={RootNames.History} />
-      <History isTestnet={false} isForMultipleAdderss={isForMultipleAdderss} />
+      <History isTestnet={false} isForMultipleAddress={isForMultipleAddress} />
       <BottomSheetModalTokenDetail
         __shouldSwitchSceneAccountBeforeRedirect__
         ref={tokenDetailModalRef}
@@ -804,7 +802,7 @@ const ForSingleAddress = () => {
   //   forScene: 'MakeTransactionAbout',
   // });
 
-  return <HistoryScreen isForMultipleAdderss={false} />;
+  return <HistoryScreen isForMultipleAddress={false} />;
 };
 
 HistoryScreen.ForSingleAddress = ForSingleAddress;
