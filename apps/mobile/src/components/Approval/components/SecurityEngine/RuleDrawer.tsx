@@ -155,7 +155,7 @@ const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-2'],
     },
     proceed: {
-      backgroundColor: colors['neutral-card-3'],
+      backgroundColor: colors['neutral-card-2'],
     },
   });
 
