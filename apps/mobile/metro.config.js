@@ -155,6 +155,13 @@ if (process.env.APP_ENV === 'hashing') {
       switches: false, // 禁用 switches 优化
     },
   };
+
+  config.transformer.getTransformOptions = async () => ({
+    transform: {
+      experimentalImportSupport: false,
+      inlineRequires: false,
+    },
+  });
 }
 
 module.exports = wrapWithReanimatedMetroConfig(
