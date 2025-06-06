@@ -700,7 +700,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginHorizontal: 16,
     paddingLeft: 8,
     marginBottom: 16,
-    marginTop: 30,
+    marginTop: 18,
   },
   approvalTitle: {
     fontWeight: '900',

@@ -137,7 +137,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   header: {
     marginBottom: 20,
-    marginTop: 24,
   },
   title: {
     fontFamily: 'SF Pro Rounded',
