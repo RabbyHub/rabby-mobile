@@ -386,7 +386,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     maxHeight: webviewContainerMaxHeight,
                   },
             ]}>
-            {!url || !entryScriptWeb3Loaded ? null : (
+            {!url ||
+            !/^https?:\/\//.test(url) ||
+            !entryScriptWeb3Loaded ? null : (
               <>
                 {isLoading ? (
                   <BrowserProgressBar
