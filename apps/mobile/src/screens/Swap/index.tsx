@@ -4,7 +4,11 @@ import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
-import { preferenceService, swapService } from '@/core/services';
+import {
+  preferenceService,
+  swapService,
+  transactionHistoryService,
+} from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
@@ -94,6 +98,8 @@ import {
 import { PendingTxItem } from './components/PendingTxItem';
 import { error } from 'console';
 import { toast } from '@/components2024/Toast';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { last } from 'lodash';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -353,6 +359,14 @@ const Swap = ({
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
+        const receive_token_amount = new BigNumber(
+          activeProvider?.quote.toTokenAmount,
+        )
+          .div(
+            10 **
+              (activeProvider?.quote.toTokenDecimals || receiveToken.decimals),
+          )
+          .toNumber();
         await dexSwap(
           {
             swapPreferMEVGuarded: !!preferMEVGuarded,
@@ -375,15 +389,7 @@ const Swap = ({
                 pay_token_id: payToken.id,
                 pay_token_amount: Number(payAmount),
                 receive_token_id: receiveToken!.id,
-                receive_token_amount: new BigNumber(
-                  activeProvider?.quote.toTokenAmount,
-                )
-                  .div(
-                    10 **
-                      (activeProvider?.quote.toTokenDecimals ||
-                        receiveToken.decimals),
-                  )
-                  .toNumber(),
+                receive_token_amount: receive_token_amount,
                 slippage: new BigNumber(slippage).div(100).toNumber(),
               },
               dex_id: activeProvider?.name || 'WrapToken',
@@ -398,6 +404,19 @@ const Swap = ({
             },
           },
         );
+        transactionHistoryService.addSwapTxHistory({
+          hash: activeProvider.quote.tx.data,
+          chainId: findChainByEnum(chain)?.id || 0,
+          address: currentAccount?.address!,
+          fromToken: payToken,
+          toToken: receiveToken,
+          slippage: new BigNumber(slippage).div(100).toNumber(),
+          fromAmount: Number(payAmount),
+          toAmount: receive_token_amount,
+          dexId: activeProvider?.name || 'WrapToken',
+          createdAt: Date.now(),
+          status: 'pending',
+        });
         handleAmountChange('');
         runFetchLocalPendingTx();
         setTimeout(() => {
@@ -529,17 +548,19 @@ const Swap = ({
             throw new Error('no txs');
           }
 
+          let txHash = '';
           if (canShowDirectSubmit) {
             if (isDirectSigning) {
               return;
             } else {
               setDirectSigning(true);
             }
-            await sendPrepareMiniTransactions({
+            const res = await sendPrepareMiniTransactions({
               directSubmit: canShowDirectSubmit,
             });
+            txHash = last(res)?.txHash || '';
           } else {
-            await sendMiniTransactions({
+            const res = await sendMiniTransactions({
               txs: currentTxs,
               ga: {
                 category: 'Swap',
@@ -547,9 +568,29 @@ const Swap = ({
                 swapUseSlider,
               },
             });
+            txHash = last(res)?.txHash || '';
           }
 
           mutateTxs([]);
+          transactionHistoryService.addSwapTxHistory({
+            hash: txHash,
+            chainId: findChainByEnum(chain)?.id || 0,
+            address: currentAccount?.address!,
+            fromToken: payToken!,
+            toToken: receiveToken!,
+            slippage: new BigNumber(slippage).div(100).toNumber(),
+            fromAmount: Number(payAmount),
+            toAmount: new BigNumber(activeProvider?.quote?.toTokenAmount!)
+              .div(
+                10 **
+                  (activeProvider?.quote?.toTokenDecimals ||
+                    receiveToken!.decimals),
+              )
+              .toNumber(),
+            dexId: activeProvider?.name || 'WrapToken',
+            createdAt: Date.now(),
+            status: 'pending',
+          });
           handleAmountChange('');
           setTimeout(() => {
             runFetchSwapPendingCount();
@@ -563,7 +604,6 @@ const Swap = ({
           );
         } catch (e) {
           setDirectSigning(false);
-          console.debug('handleSwap error', error);
           if ((e as any)?.name === 'SimulateError') {
             gotoSwap();
           } else if (isAbortedDirectSubmitError(e)) {

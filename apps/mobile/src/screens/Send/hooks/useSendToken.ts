@@ -6,7 +6,11 @@ import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
 import { EventEmitter } from 'events';
 
-import { customTestnetService, preferenceService } from '@/core/services';
+import {
+  customTestnetService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { GasLevel, TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
@@ -59,6 +63,7 @@ import {
   isAbortedDirectSubmitError,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useRecentSendPendingTx } from './useRecentSend';
+import { last } from 'lodash';
 
 function makeDefaultToken(): TokenItem & { tokenId?: string } {
   return {
@@ -904,8 +909,20 @@ export function useSendTokenForm(
             try {
               await prepareRef.current;
 
-              await sendPrepareMiniTransactions({
+              const res = await sendPrepareMiniTransactions({
                 directSubmit: true,
+              });
+
+              transactionHistoryService.addSendTxHistory({
+                token: currentToken,
+                amount: Number(amount),
+                to,
+                from: currentAccount?.address!,
+                chainId: chain.id,
+                hash: last(res)?.txHash!,
+                address: currentAccount?.address!,
+                status: 'pending',
+                createdAt: Date.now(),
               });
 
               runFetchPendingCount();
@@ -960,7 +977,19 @@ export function useSendTokenForm(
                 trigger: 'sendToken',
               },
             })
-              .then(() => {
+              .then(resp => {
+                transactionHistoryService.addSendTxHistory({
+                  token: currentToken,
+                  amount: Number(amount),
+                  to,
+                  from: currentAccount?.address!,
+                  chainId: chain.id,
+                  hash: last(resp)?.txHash!,
+                  address: currentAccount?.address!,
+                  status: 'pending',
+                  createdAt: Date.now(),
+                });
+
                 runFetchPendingCount();
                 runFetchLocalPendingTx();
                 handleFieldChange('amount', '');
@@ -1002,7 +1031,21 @@ export function useSendTokenForm(
               },
               INTERNAL_REQUEST_SESSION,
             )
-            .then(() => {
+            .then(resp => {
+              const hash = resp as string;
+              console.debug('hash', hash);
+              transactionHistoryService.addSendTxHistory({
+                token: currentToken,
+                amount: Number(amount),
+                to,
+                from: currentAccount?.address!,
+                chainId: chain.id,
+                hash,
+                address: currentAccount?.address!,
+                status: 'pending',
+                createdAt: Date.now(),
+              });
+
               runFetchPendingCount();
               runFetchLocalPendingTx();
               handleFieldChange('amount', '');

@@ -645,6 +645,7 @@ function History({
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}
           loading={isNeedFetchFromApi ? loading : fetchFromDbLoading}
+          isNeedFetchFromApi={isNeedFetchFromApi}
           firstFetchDone={firstFetchDone}
           loadingMore={loadingMore}
           refreshLoading={isNeedFetchFromApi && loading}

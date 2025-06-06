@@ -137,7 +137,7 @@ export const useMiniApproval = () => {
   const sendPrepareMiniTransactions = useMemoizedFn(
     async (params?: { directSubmit?: boolean }) => {
       if (state.txs?.length) {
-        await _sendMiniTransactions({
+        return await _sendMiniTransactions({
           txs: state.txs,
           ga: state.ga,
           directSubmit: !!params?.directSubmit,
