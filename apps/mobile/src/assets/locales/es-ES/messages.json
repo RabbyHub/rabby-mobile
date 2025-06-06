@@ -193,6 +193,9 @@
     },
     "selectCexModal": {
       "title": "Seleccionar fuente de intercambio"
+    },
+    "AccountSelector": {
+      "title": "Seleccionar billetera"
     }
   },
   "page": {
@@ -651,7 +654,8 @@
         },
         "empty": {
           "title": "Aún no hay transacciones firmadas",
-          "desc": "Todas las transacciones firmadas a través de Rabby se mostrarán aquí."
+          "desc": "Todas las transacciones firmadas a través de Rabby se mostrarán aquí.",
+          "titleLastThreeMonths": "Sin historial de transacciones en 90 días"
         },
         "status": {
           "submitFailed": "Error al enviar",
@@ -1542,7 +1546,8 @@
       "trusted": "Confiable",
       "title": "Conectar a Dapp",
       "popularLevelMedium": "Medio",
-      "blocked": "Bloqueado"
+      "blocked": "Bloqueado",
+      "connectWallet": "Conectar Wallet"
     },
     "backupSeedPhrase": {
       "showQrCode": "Mostrar código QR",
@@ -1806,7 +1811,8 @@
       "appCache": "Borrar caché de la aplicación",
       "clearPendingResetDesc": "También restablecer mis datos de nonce locales y el registro de firmas.",
       "clearPendingToast": "Transacción pendiente local eliminada",
-      "clearPendingWarning": "La transacción eliminada todavía puede ser confirmada en la cadena a menos que sea reemplazada."
+      "clearPendingWarning": "La transacción eliminada todavía puede ser confirmada en la cadena a menos que sea reemplazada.",
+      "clearBrowserData": "Borrar datos del navegador"
     },
     "gasAccount": {
       "deposit": "Depósito",
@@ -1922,6 +1928,11 @@
         "clearAppCacheDesc": "Esto eliminará los archivos temporales almacenados en caché sin afectar tus datos personales o configuraciones. La aplicación necesita reiniciarse para completar el proceso. ¿Deseas continuar?",
         "iOSToastTitle": "Borrar caché con éxito",
         "iOSToastDesc": "Debes reiniciar la aplicación para que surta efecto."
+      },
+      "clearBrowserData": {
+        "button": "Claro",
+        "title": "Borrar datos del navegador",
+        "desc": "Esto cerrará todas las pestañas del navegador y eliminará todo el historial de navegación."
       }
     },
     "buy": {
@@ -2056,6 +2067,12 @@
       "BrowserHeader": {
         "searchIos": "Buscar sitio web",
         "searchAndroid": "Buscar Dapp"
+      },
+      "CurrentPopup": {
+        "connectChain": "Conectar Cadena",
+        "disconnect": "Desconectar",
+        "connectWallet": "Conectar Wallet",
+        "title": "Dapp actual"
       }
     },
     "browserManage": {
@@ -2082,6 +2099,11 @@
     "defiDetail": {
       "viewSiteInApp": "Ver en Dapp",
       "viewSiteInWebsite": "Ver en el sitio web"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "Seleccionar cadena"
+      }
     }
   },
   "global": {

@@ -676,7 +676,8 @@
         },
         "empty": {
           "title": "아직 서명된 거래 없음",
-          "desc": "Rabby를 통해 서명된 모든 거래가 여기에 나열됩니다."
+          "desc": "Rabby를 통해 서명된 모든 거래가 여기에 나열됩니다.",
+          "titleLastThreeMonths": "90일 이내 거래 내역 없음"
         },
         "explain": {
           "singleNFTApproval": "{{protocol}}에 대한 단일 NFT 승인",
@@ -1071,7 +1072,8 @@
       "flagByScamSniffer": "Flagged by ScamSniffer",
       "onYourWhitelist": "허용 목록에 추가됨",
       "flagByMM": "MetaMask에 의해 플래그 처리됨",
-      "popularLevelLow": "낮음"
+      "popularLevelLow": "낮음",
+      "connectWallet": "지갑 연결"
     },
     "securityEngine": {
       "yes": "네",
@@ -1754,6 +1756,11 @@
         "clearAppCacheDesc": "\"이 작업은 개인 데이터나 설정에 영향을 미치지 않고 임시 캐시 파일을 제거합니다. 프로세스를 완료하려면 앱을 다시 시작해야 합니다. 계속하시겠습니까?\"",
         "iOSToastTitle": "클리어 캐시 성공",
         "iOSToastDesc": "발효하려면 앱을 다시 시작해야합니다."
+      },
+      "clearBrowserData": {
+        "title": "브라우저 데이터 지우기",
+        "button": "명확히 하기",
+        "desc": "이 작업은 모든 브라우저 탭을 닫고 모든 탐색 기록을 삭제합니다."
       }
     },
     "buy": {
@@ -1888,6 +1895,12 @@
       "BrowserHeader": {
         "searchAndroid": "Dapp 검색",
         "searchIos": "웹사이트 검색"
+      },
+      "CurrentPopup": {
+        "disconnect": "연결 해제",
+        "connectWallet": "지갑 연결",
+        "connectChain": "체인 연결",
+        "title": "현재 Dapp"
       }
     },
     "browserManage": {
@@ -1914,6 +1927,11 @@
     "defiDetail": {
       "viewSiteInWebsite": "웹사이트에서 보기",
       "viewSiteInApp": "Dapp에서 보기"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "체인 선택"
+      }
     }
   },
   "global": {
@@ -2125,6 +2143,9 @@
     },
     "selectCexModal": {
       "title": "교환 소스 선택"
+    },
+    "AccountSelector": {
+      "title": "지갑 선택"
     }
   },
   "constant": {

@@ -519,7 +519,8 @@
       "signedTx": {
         "empty": {
           "title": "Tidak ada riwayat Transaksi",
-          "desc": "Semua transaksi yang ditandatangani melalui Rabby akan terdaftar di sini."
+          "desc": "Semua transaksi yang ditandatangani melalui Rabby akan terdaftar di sini.",
+          "titleLastThreeMonths": "Tidak ada riwayat Transaksi dalam 90 Hari"
         },
         "common": {
           "unknownProtocol": "Protokol tidak dikenal",
@@ -1336,7 +1337,8 @@
       "sitePopularity": "Popularitas situs",
       "trusted": "Dipercayai",
       "popularLevelHigh": "Tinggi",
-      "blocked": "Diblokir"
+      "blocked": "Diblokir",
+      "connectWallet": "Sambungkan Dompet"
     },
     "addressDetail": {
       "safeAddressListScreen": {
@@ -1802,7 +1804,8 @@
       "clearPendingWarning": "Transaksi yang dihapus mungkin masih dikonfirmasi di on-chain kecuali jika diganti.",
       "clearPendingDesc2": "Ini tidak akan mengubah saldo di akun Anda atau mengharuskan Anda untuk memasukkan kembali frase benih Anda. Semua aset dan informasi akun Anda akan tetap aman.",
       "modifyRPCURL": "Ubah URL RPC",
-      "clearPendingDesc1": "Ini akan menghapus semua transaksi yang tertunda. Ini bisa membantu Anda menyelesaikan masalah bahwa dalam beberapa kasus status transaksi di Rabby tidak sesuai dengan status on-chain."
+      "clearPendingDesc1": "Ini akan menghapus semua transaksi yang tertunda. Ini bisa membantu Anda menyelesaikan masalah bahwa dalam beberapa kasus status transaksi di Rabby tidak sesuai dengan status on-chain.",
+      "clearBrowserData": "Hapus Data Peramban"
     },
     "settingModal": {
       "themeMode": {
@@ -1817,6 +1820,11 @@
         "iOSToastTitle": "Bersihkan Cache Berhasil",
         "iOSToastDesc": "Anda perlu memulai ulang aplikasi untuk memberikan efek.",
         "clearAppCacheDesc": "Ini akan menghapus file cache sementara tanpa mempengaruhi data pribadi atau pengaturan Anda. Aplikasi perlu di-restart untuk menyelesaikan proses. Apakah Anda ingin melanjutkan?"
+      },
+      "clearBrowserData": {
+        "title": "Bersihkan Data Browser",
+        "button": "Bersihkan",
+        "desc": "Ini akan menutup semua tab browser dan menghapus semua riwayat penelusuran."
       }
     },
     "buy": {
@@ -1887,6 +1895,12 @@
       "BrowserHeader": {
         "searchIos": "Cari Situs Web",
         "searchAndroid": "Cari Dapp"
+      },
+      "CurrentPopup": {
+        "connectChain": "Sambungkan Rantai",
+        "title": "Dapp Saat Ini",
+        "disconnect": "Putuskan hubungan",
+        "connectWallet": "Sambungkan Dompet"
       }
     },
     "browserManage": {
@@ -1913,6 +1927,11 @@
     "defiDetail": {
       "viewSiteInApp": "Lihat di Dapp",
       "viewSiteInWebsite": "Lihat di Situs Web"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "Pilih Rantai"
+      }
     }
   },
   "component": {
@@ -2066,6 +2085,9 @@
     },
     "selectCexModal": {
       "title": "Pilih Sumber Pertukaran"
+    },
+    "AccountSelector": {
+      "title": "Pilih Dompet"
     }
   },
   "native": {

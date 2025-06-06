@@ -519,7 +519,8 @@
       "signedTx": {
         "empty": {
           "title": "No Transaction history",
-          "desc": "Tüm Rabby aracılığıyla imzalanan işlemler burada listelenecektir."
+          "desc": "Tüm Rabby aracılığıyla imzalanan işlemler burada listelenecektir.",
+          "titleLastThreeMonths": "Son 90 Günde İşlem Geçmişi Yok"
         },
         "common": {
           "unknownProtocol": "Bilinmeyen protokol",
@@ -1336,7 +1337,8 @@
       "flagByRabby": "Rabby tarafından işaretlendi",
       "connectBtn": "Bağlanın",
       "noWebsite": "Hiçbiri",
-      "markRuleText": "Benim işaretim"
+      "markRuleText": "Benim işaretim",
+      "connectWallet": "Cüzdanı Bağla"
     },
     "addressDetail": {
       "safeAddressListScreen": {
@@ -1802,7 +1804,8 @@
       "clearPendingWarning": "Kaldırılan işlem, yerine geçilmediği sürece hala zincir üzerinde onaylanabilir.",
       "clearPendingDesc1": "Bu, tüm bekleyen işlemlerinizi temizleyecektir. Bu, bazı durumlarda Rabby'deki işlemin durumunun zincirdeki durumla eşleşmemesi sorununu çözmenize yardımcı olabilir.",
       "clearPendingDesc2": "Bu, hesaplarınızdaki bakiyeleri değiştirmeyecek veya seed phrase'inizi yeniden girmenizi gerektirmeyecektir. Tüm varlıklarınız ve hesap bilgilerinizi güvende kalacaktır.",
-      "addCustomNetwork": "Özel Ağ Ekle"
+      "addCustomNetwork": "Özel Ağ Ekle",
+      "clearBrowserData": "Tarayıcı Verilerini Temizle"
     },
     "settingModal": {
       "themeMode": {
@@ -1817,6 +1820,11 @@
         "iOSToastTitle": "Önbellek Başarıyla Temizlendi",
         "iOSToastDesc": "Uygulamanın etkili olması için yeniden başlatmanız gerekiyor.",
         "clearAppCacheDesc": "Bu, kişisel verilerinizi veya ayarlarınızı etkilemeden geçici önbellek dosyalarını kaldıracaktır. Süreci tamamlamak için uygulamanın yeniden başlatılması gerekiyor. Devam etmek istiyor musunuz?"
+      },
+      "clearBrowserData": {
+        "title": "Tarayıcı Verilerini Temizle",
+        "desc": "Bu, tüm tarayıcı sekmelerini kapatacak ve tüm tarama geçmişini silecek.",
+        "button": "Temizle"
       }
     },
     "buy": {
@@ -1887,6 +1895,12 @@
       "BrowserHeader": {
         "searchIos": "Websitesini Ara",
         "searchAndroid": "Dapp Ara"
+      },
+      "CurrentPopup": {
+        "connectWallet": "Cüzdanı Bağla",
+        "disconnect": "Bağlantıyı Kaldır",
+        "connectChain": "Ağa Bağlan",
+        "title": "Mevcut Dapp"
       }
     },
     "browserManage": {
@@ -1913,6 +1927,11 @@
     "defiDetail": {
       "viewSiteInApp": "Dapp'ta Görüntüle",
       "viewSiteInWebsite": "Websitesi Görüntüle"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "Zincir Seçin"
+      }
     }
   },
   "component": {
@@ -2066,6 +2085,9 @@
     },
     "selectCexModal": {
       "title": "Borsa Kaynağını Seçin"
+    },
+    "AccountSelector": {
+      "title": "Cüzdan Seçin"
     }
   },
   "native": {
