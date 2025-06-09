@@ -93,7 +93,7 @@ export const syncProtocols = async (
     snapshotData.map(i => i.id),
     5,
   );
-
+  let errCount = 0;
   const protocols: ComplexProtocol[] = [];
   await Promise.all(
     chunkIds.map(async ids => {
@@ -102,8 +102,12 @@ export const syncProtocols = async (
         return;
       }
       protocols.push(...projects.filter(i => !!i));
+      errCount += projects.filter(i => !i).length;
     }),
   );
+  if (errCount > Math.floor(chunkIds.length / 10)) {
+    throw new Error('portfolio service Error');
+  }
   runOnJS(syncRemotePortocols)(address, [...protocols]);
   return protocols;
 };

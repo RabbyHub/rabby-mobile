@@ -8,6 +8,7 @@ import { syncNFTs } from '@/databases/hooks/assets';
 import { singleNFTNounceAtom } from './refresh';
 import { useAtom } from 'jotai';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
+import { useGlobalStatus, ServiceErrorType } from '@/hooks/useGlobalStatus';
 
 export const tagNfts = (
   nfts: NFTItem[],
@@ -43,7 +44,7 @@ export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(true);
   const [list, setList] = useSafeState<DisplayNftItem[]>([]);
   const [singleNFTNounce, setSingleNFTNounce] = useAtom(singleNFTNounceAtom);
-
+  const { setTargetServicesError } = useGlobalStatus();
   const fetchData = useCallback(
     async (force?: boolean) => {
       if (!addr) {
@@ -54,14 +55,16 @@ export const useQueryNft = (addr?: string, visible = true) => {
         const tokenSetting = await preferenceService.getUserTokenSettings();
         setList(tagNfts(cacheNfts, tokenSetting));
         const nfts = await syncNFTs(addr, force);
+        force && setTargetServicesError([ServiceErrorType.NFT], false);
         setList(tagNfts(nfts, tokenSetting));
       } catch (e) {
-        console.error(e);
+        console.error('ServiceErrorType.NFT', e);
+        setTargetServicesError([ServiceErrorType.NFT], true);
       } finally {
         setIsLoading(false);
       }
     },
-    [addr, setList],
+    [addr, setList, setTargetServicesError],
   );
 
   const refreshTagNft = useCallback(async () => {
