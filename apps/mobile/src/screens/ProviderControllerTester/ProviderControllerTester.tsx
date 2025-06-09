@@ -107,6 +107,7 @@ const TEST_DAPP_INFO = {
   name: 'Rabby Tester',
   tags: [],
   user_range: 'User >10k',
+  chain_ids: [CHAINS_ENUM.ETH],
 };
 
 const TEST_SESSION = {
@@ -434,6 +435,7 @@ function ProviderControllerTester(): JSX.Element {
       info: TEST_DAPP_INFO,
       chainId: CHAINS_ENUM.ETH,
       origin: TEST_DAPP_INFO.id,
+      name: TEST_DAPP_INFO.name,
     });
   }, [addDapp]);
 

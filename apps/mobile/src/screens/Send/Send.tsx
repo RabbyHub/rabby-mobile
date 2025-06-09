@@ -164,7 +164,7 @@ function SendScreen({
   }, [Header, setNavigationOptions]);
 
   const disableItemCheck = useCallback(
-    (token: TokenItem) => {
+    (token: TokenItem & { cex_ids?: string[] }) => {
       if (!addrDesc) {
         return {
           disable: false,
@@ -604,15 +604,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
       marginBottom: 8,
-    },
-    bottomDockArea: {
-      bottom: 0,
-      width: '100%',
-      padding: 20,
-      borderTopWidth: 0.5,
-      borderTopStyle: 'solid',
-      borderTopColor: colors2024['neutral-line'],
-      position: 'absolute',
     },
     buttonContainer: {
       width: '100%',

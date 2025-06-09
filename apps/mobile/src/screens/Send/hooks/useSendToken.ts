@@ -65,7 +65,10 @@ import {
 import { useRecentSendPendingTx } from './useRecentSend';
 import { last } from 'lodash';
 
-function makeDefaultToken(): TokenItem & { tokenId?: string } {
+function makeDefaultToken(): TokenItem & {
+  tokenId?: string;
+  cex_ids?: string[];
+} {
   return {
     id: 'eth',
     chain: 'eth',
