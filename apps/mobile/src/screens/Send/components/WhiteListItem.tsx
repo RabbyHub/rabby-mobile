@@ -270,7 +270,11 @@ export const WhiteListItemSwitch = ({
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { navigation } = useSafeSetNavigationOptions();
-  const cexDes = addrDesc?.cex;
+  const [cacheCexDes, setCacheCexDes] = useState<Cex | undefined>();
+  const cexDes = useMemo(
+    () => addrDesc?.cex || cacheCexDes,
+    [addrDesc?.cex, cacheCexDes],
+  );
   const { formatName, hideTail } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
     const name = account.aliasName || ellipisName;
@@ -279,6 +283,18 @@ export const WhiteListItemSwitch = ({
       hideTail: name.toLocaleLowerCase() === ellipisName.toLocaleLowerCase(),
     };
   }, [account.address, account.aliasName]);
+
+  useLayoutEffect(() => {
+    if (cacheCexDes || cexDes) {
+      return;
+    }
+    getCexWithLocalCache(account.address, false, true).then(res => {
+      if (res?.id) {
+        setCacheCexDes(res);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AddressItemShadowView>
