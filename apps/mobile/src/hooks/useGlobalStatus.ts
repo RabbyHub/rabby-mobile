@@ -1,58 +1,77 @@
-import { openapi } from '@/core/request';
+import { useCallback, useMemo } from 'react';
+import { useNetInfo } from '@react-native-community/netinfo';
 import { atom, useAtom } from 'jotai';
-import { useCallback } from 'react';
 
-export const netWorkErrorAtom = atom<boolean>(false);
-export const serviceErrorAtom = atom<{
-  [serviceKey: string]: boolean;
-}>({});
+export const enum ServiceErrorType {
+  'Curve' = 'Curve',
+  'Balance' = 'Balance',
+  'Tokens' = 'Tokens',
+  'Defi' = 'Defi',
+  'NFT' = 'NFT',
+}
+export const PageMainServices = {
+  MultiHome: [ServiceErrorType.Balance, ServiceErrorType.Curve],
+  MultiAssets: [
+    ServiceErrorType.Balance,
+    ServiceErrorType.Curve,
+    ServiceErrorType.Tokens,
+    ServiceErrorType.Defi,
+  ],
+  SingleHome: [
+    ServiceErrorType.Balance,
+    ServiceErrorType.Curve,
+    ServiceErrorType.Tokens,
+    ServiceErrorType.Defi,
+    ServiceErrorType.NFT,
+  ],
+};
+export type ErrorType = 'network' | 'service' | undefined;
 
-export const useGlobalStatus = () => {
-  const [netWorkStatus, setNetWorkStatus] = useAtom(netWorkErrorAtom);
-  const [serviceStatus, setServiceStatus] = useAtom(serviceErrorAtom);
+export const serviceErrorMapAtom = atom<
+  Partial<Record<ServiceErrorType, boolean>>
+>({});
 
-  const initRequestHooks = useCallback(() => {
-    openapi.request.interceptors.response.use(
-      response => {
-        setNetWorkStatus(false);
-        const url = response?.config?.url;
-        if (typeof url === 'string') {
-          setServiceStatus(pre => ({
-            ...pre,
-            [url]: !!response?.status && response?.status !== 200,
-          }));
-        }
-        return response;
-      },
-      error => {
-        if (
-          typeof error?.message === 'string' &&
-          error.message.includes('Network Error')
-        ) {
-          setNetWorkStatus(true);
-        } else {
-          if (typeof error?.config?.url === 'string') {
-            setServiceStatus(pre => ({
-              ...pre,
-              [error.config.url]: true,
-            }));
-          }
-        }
-        return Promise.reject(error);
-      },
-    );
-  }, [setNetWorkStatus, setServiceStatus]);
+export const useGlobalStatus = (serviceKeys: ServiceErrorType[] = []) => {
+  const { isConnected } = useNetInfo();
+  const [serviceErrorMap, setServiceErrorMap] = useAtom(serviceErrorMapAtom);
 
-  const clearStatus = useCallback(() => {
-    setServiceStatus({});
-  }, [setServiceStatus]);
+  const errorType: ErrorType = useMemo(() => {
+    if (isConnected === false) {
+      return 'network';
+    }
+    if (serviceKeys?.some(key => serviceErrorMap[key])) {
+      return 'service';
+    }
+    return undefined;
+  }, [isConnected, serviceErrorMap, serviceKeys]);
+
+  const setTargetServicesError = useCallback(
+    (keys: ServiceErrorType[], target: boolean) => {
+      setServiceErrorMap(pre => {
+        const tmp = {
+          ...pre,
+        };
+        keys.forEach(key => {
+          tmp[key] = target;
+        });
+        return tmp;
+      });
+    },
+    [setServiceErrorMap],
+  );
+
+  const clearServicesError = useCallback(() => {
+    setTargetServicesError(serviceKeys, false);
+  }, [serviceKeys, setTargetServicesError]);
+
+  const setServicesError = useCallback(() => {
+    setTargetServicesError(serviceKeys, true);
+  }, [serviceKeys, setTargetServicesError]);
 
   return {
-    netWorkStatus,
-    serviceStatus,
-    setNetWorkStatus,
-    setServiceStatus,
-    initRequestHooks,
-    clearStatus,
+    errorType,
+    setTargetServicesError,
+    clearServicesError,
+    setServicesError,
   };
 };

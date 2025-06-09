@@ -18,7 +18,7 @@ import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterial
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
 import { isTabsSwiping } from './hooks';
-import { useGlobalStatus } from '@/hooks/useGlobalStatus';
+import { useGlobalStatus, PageMainServices } from '@/hooks/useGlobalStatus';
 import { useAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 
@@ -50,22 +50,7 @@ export const MultiAssets = ({
     top10Balance,
   );
 
-  const { netWorkStatus, serviceStatus, clearStatus } = useGlobalStatus();
-  const errorType = useMemo(() => {
-    if (netWorkStatus) {
-      return 'network';
-    }
-    if (
-      serviceStatus['/v1/user/total_net_curve'] ||
-      serviceStatus['/v2/user/total_balance'] ||
-      serviceStatus['/v1/user/complex_protocol_list'] ||
-      serviceStatus['/v1/user/used_chain_list'] ||
-      serviceStatus['/v1/user/token_list']
-    ) {
-      return 'service';
-    }
-    return undefined;
-  }, [netWorkStatus, serviceStatus]);
+  const { errorType } = useGlobalStatus(PageMainServices.MultiAssets);
 
   useEffect(() => {
     onUpdateIsDecrease(combineData.isLoss);
@@ -151,18 +136,10 @@ export const MultiAssets = ({
         pathColor={pathColor}
         isNoAssets={false}
         errorType={errorType}
-        clearStatus={clearStatus}
         handleScroll={handleScroll}
       />
     );
-  }, [
-    clearStatus,
-    combineData,
-    errorType,
-    handleScroll,
-    isLoadingCurve,
-    pathColor,
-  ]);
+  }, [combineData, errorType, handleScroll, isLoadingCurve, pathColor]);
 
   const listLength = useMemo(() => {
     return list.length > 10 ? 10 : list.length;

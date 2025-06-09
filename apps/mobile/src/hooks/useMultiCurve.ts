@@ -10,7 +10,7 @@ import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
 import { CurveDayType } from '@/utils/curveDayType';
-import { useGlobalStatus } from './useGlobalStatus';
+import { useGlobalStatus, ServiceErrorType } from './useGlobalStatus';
 
 const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
 
@@ -92,23 +92,13 @@ export const useMultiCurve = (
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useState(true);
-  const { netWorkStatus, serviceStatus, clearStatus } = useGlobalStatus();
+  const { setTargetServicesError } = useGlobalStatus();
 
-  const errorType = useMemo(() => {
-    if (netWorkStatus) {
-      return 'network';
-    }
-    if (serviceStatus['/v1/user/total_net_curve']) {
-      return 'service';
-    }
-    return undefined;
-  }, [netWorkStatus, serviceStatus]);
   const fetch = useCallback(
     async (addres: string[], force = false) => {
       try {
         if (!addres.length) {
           setLoading(false);
-          clearStatus();
           return;
         }
         setLoading(!!force);
@@ -158,7 +148,9 @@ export const useMultiCurve = (
             }));
           });
         queue.clear();
-        clearStatus();
+        if (nextCheckAddress.size) {
+          setTargetServicesError([ServiceErrorType.Curve], false);
+        }
         Array.from(nextCheckAddress).forEach(_addr => {
           try {
             const addr = _addr.toLocaleLowerCase();
@@ -199,7 +191,9 @@ export const useMultiCurve = (
                     }),
                   },
                 }));
-              } catch (error) {}
+              } catch (error) {
+                setTargetServicesError([ServiceErrorType.Curve], true);
+              }
             });
           } catch (error) {}
         });
@@ -210,7 +204,7 @@ export const useMultiCurve = (
         setLoading(false);
       }
     },
-    [clearStatus, setMultiTimeStamp],
+    [setMultiTimeStamp, setTargetServicesError],
   );
 
   const refresh = useCallback(
@@ -264,6 +258,5 @@ export const useMultiCurve = (
     loading,
     fetch,
     refresh,
-    errorType,
   };
 };

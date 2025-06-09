@@ -7,6 +7,7 @@ import { useMemoizedFn } from 'ahooks';
 import PQueue from 'p-queue';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { unionBy } from 'lodash';
+import { useGlobalStatus, ServiceErrorType } from './useGlobalStatus';
 
 export interface balanceAccountType {
   address: string;
@@ -40,6 +41,7 @@ export default function useAccountsBalance(opts?: {
   const [accountsLength, setAccountsLength] = useAtom(lengthAtom);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const lastTimeStamps = useRef<number>(0);
+  const { setTargetServicesError } = useGlobalStatus();
 
   const isNeedFetchData = useMemoizedFn(() => {
     const currentTime = Date.now();
@@ -100,6 +102,7 @@ export default function useAccountsBalance(opts?: {
             interval: 2000,
             intervalCap: 10,
           });
+          let errorCount = 0;
           for (let i = 0; i < uniqueList.length; i++) {
             const { type, address, brandName } = uniqueList[i];
             const account = address.toLowerCase();
@@ -109,6 +112,7 @@ export default function useAccountsBalance(opts?: {
                 const resData = await apiBalance.getAddressBalance(account, {
                   force: true,
                 });
+                setTargetServicesError([ServiceErrorType.Balance], false);
                 if (uniqueList.find(o => isSameAddress(o.address, account))) {
                   queueBalanceArr.push({
                     address: account,
@@ -119,6 +123,7 @@ export default function useAccountsBalance(opts?: {
                 }
               } catch (e) {
                 console.log('fetchTotalBalance  error', e);
+                errorCount++;
                 // api fetch error fallback get from cache store
                 const cacheData = preferenceService.getAddressBalance(account);
                 if (uniqueList.find(o => isSameAddress(o.address, account))) {
@@ -133,6 +138,9 @@ export default function useAccountsBalance(opts?: {
             });
           }
           await waitQueueFinished(queue);
+          if (errorCount === uniqueList.length) {
+            setTargetServicesError([ServiceErrorType.Balance], true);
+          }
           setBalanceAccounts(queueBalanceArr);
         }
       } catch (e) {

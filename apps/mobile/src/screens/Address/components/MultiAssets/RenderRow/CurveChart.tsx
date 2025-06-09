@@ -24,6 +24,7 @@ import {
 } from '@/components2024/GlobalWarning/Warining';
 import { useTranslation } from 'react-i18next';
 import { useTriggerUpdate } from '../hooks/triggerUpdate';
+import { ErrorType } from '@/hooks/useGlobalStatus';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -34,7 +35,6 @@ function Chart({
   isNoAssets,
   pathColor,
   handleScroll,
-  clearStatus,
   errorType,
 }: {
   isOffline: boolean;
@@ -42,8 +42,7 @@ function Chart({
   loading: boolean;
   isNoAssets: boolean;
   pathColor: string;
-  clearStatus: () => void;
-  errorType: 'network' | 'service' | undefined;
+  errorType: ErrorType;
   handleScroll: (y: number) => void;
 }) {
   const { styles, colors, isLight } = useTheme2024({ getStyle });
@@ -113,7 +112,6 @@ function Chart({
           }
           style={styles.globalWarning}
           onRefresh={() => {
-            clearStatus();
             setTriggerUpdate(true);
           }}
         />

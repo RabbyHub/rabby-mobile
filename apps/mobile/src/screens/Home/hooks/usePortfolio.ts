@@ -11,6 +11,7 @@ import { singleDeFiNounceAtom } from './refresh';
 import { useAtom, atom } from 'jotai';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { ServiceErrorType, useGlobalStatus } from '@/hooks/useGlobalStatus';
 export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
@@ -118,6 +119,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
   const [isLoading, setLoading] = useSafeState(true);
   const [hasValue, setHasValue] = useSafeState(false);
   const [singleDeFiNounce, setSingleDeFiNounce] = useAtom(singleDeFiNounceAtom);
+  const { setTargetServicesError } = useGlobalStatus();
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -166,25 +168,29 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
           setHasValue(!!cachePortocols.length);
         }
       }
-
-      let projectDict: Record<string, DisplayedProject> | null = {};
-      const protocols = await syncProtocols(userAddr, force);
-      protocols.forEach(project => {
-        if (projectDict) {
-          projectDict = produce(projectDict, draft => {
-            project && portfolio2Display(project, draft);
-          });
-        }
-      });
-      const realtimeData = Object.values(projectDict)?.sort(
-        (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-      );
-      const tokenSetting = await preferenceService.getUserTokenSettings();
-      setData(tagProfiles(realtimeData, tokenSetting));
-      setHasValue(!!protocols.length);
-      setLoading(false);
+      try {
+        let projectDict: Record<string, DisplayedProject> | null = {};
+        const protocols = await syncProtocols(userAddr, force);
+        force && setTargetServicesError([ServiceErrorType.Defi], false);
+        protocols.forEach(project => {
+          if (projectDict) {
+            projectDict = produce(projectDict, draft => {
+              project && portfolio2Display(project, draft);
+            });
+          }
+        });
+        const realtimeData = Object.values(projectDict)?.sort(
+          (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
+        );
+        const tokenSetting = await preferenceService.getUserTokenSettings();
+        setData(tagProfiles(realtimeData, tokenSetting));
+        setHasValue(!!protocols.length);
+        setLoading(false);
+      } catch (error) {
+        setTargetServicesError([ServiceErrorType.Defi], true);
+      }
     },
-    [setData, setHasValue, setLoading, userAddr],
+    [setData, setHasValue, setLoading, setTargetServicesError, userAddr],
   );
 
   const refreshTagPortfolio = useCallback(async () => {
