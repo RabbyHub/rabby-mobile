@@ -32,18 +32,18 @@ export const serviceErrorMapAtom = atom<
 >({});
 
 export const useGlobalStatus = (serviceKeys: ServiceErrorType[] = []) => {
-  const { isConnected } = useNetInfo();
+  const { isInternetReachable, isConnected } = useNetInfo();
   const [serviceErrorMap, setServiceErrorMap] = useAtom(serviceErrorMapAtom);
 
   const errorType: ErrorType = useMemo(() => {
-    if (isConnected === false) {
+    if (isInternetReachable === false || isConnected === false) {
       return 'network';
     }
     if (serviceKeys?.some(key => serviceErrorMap[key])) {
       return 'service';
     }
     return undefined;
-  }, [isConnected, serviceErrorMap, serviceKeys]);
+  }, [isConnected, isInternetReachable, serviceErrorMap, serviceKeys]);
 
   const setTargetServicesError = useCallback(
     (keys: ServiceErrorType[], target: boolean) => {
