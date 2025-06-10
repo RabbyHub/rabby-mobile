@@ -148,7 +148,8 @@ export type AddressNavigatorParamList = {
       | typeof RootNames.ImportSuccess2024
       | typeof RootNames.ImportMnemonic2024
       | typeof RootNames.CreateChooseBackup
-      | typeof RootNames.ImportPrivateKey2024;
+      | typeof RootNames.ImportPrivateKey2024
+      | typeof RootNames.SelectImportAddress;
     title?: string;
     hideProgress?: boolean;
     delaySetPassword?: boolean;
