@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
@@ -22,9 +22,8 @@ import { useMultiCurve } from '@/hooks/useMultiCurve';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useBalanceUpdate } from './hooks/balance';
-import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { RefreshControl } from 'react-native-gesture-handler';
-import { useTriggerUpdate } from './hooks/triggerUpdate';
 
 const SPACING_HEIGHT = 8;
 export const AddressList = () => {
@@ -46,10 +45,6 @@ export const AddressList = () => {
       accountsNoUnique: true, // balanceAccounts has filter same address accounts
     });
 
-  const focusedTab = useFocusedTab();
-  const isFocused = useMemo(() => focusedTab === 'address', [focusedTab]);
-  const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
-    useTriggerUpdate();
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
   }, [top10Addresses, getTotalBalance]);
@@ -200,13 +195,6 @@ export const AddressList = () => {
       setIsRefreshing(false);
     }
   }, [fetchAccounts, refreshCurve, triggerUpdate]);
-
-  useEffect(() => {
-    if (triggerRefresh && isFocused) {
-      onRefresh();
-      setTriggerRefresh(false);
-    }
-  }, [isFocused, onRefresh, setTriggerRefresh, triggerRefresh]);
 
   return (
     <Tabs.FlatList
