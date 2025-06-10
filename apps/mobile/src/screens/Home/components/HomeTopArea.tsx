@@ -12,7 +12,11 @@ import { BSheetModal } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { toast } from '@/components/Toast';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { HEADER_TOP_AREA_HEIGHT, RootNames } from '@/constant/layout';
+import {
+  ALERT_HEIGHT,
+  HEADER_TOP_AREA_HEIGHT,
+  RootNames,
+} from '@/constant/layout';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import useCachedValue from '@/hooks/common/useCachedValue';
 import { useTheme2024 } from '@/hooks/theme';
@@ -43,6 +47,11 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useGnosisQueueTotalPending } from '@/hooks/gnosis/useGnosisQueueTotalPending';
 import { HomeTopChart } from './HomeTopChart';
+import {
+  GlobalWarning,
+  GlobalWarningType,
+} from '@/components2024/GlobalWarning/Warining';
+import { ErrorType } from '@/hooks/useGlobalStatus';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -103,11 +112,15 @@ export const HomeTopArea = ({
   onUpdateIsDecrease,
   curveData,
   isLoadingCurve,
+  errorType,
+  onRefresh,
 }: {
   currentAccount?: KeyringAccountWithAlias | null;
   onUpdateIsDecrease?: (status: boolean) => void;
   curveData?: ReturnType<typeof formChartData>;
   isLoadingCurve: boolean;
+  errorType: ErrorType;
+  onRefresh: () => void;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
@@ -326,7 +339,11 @@ export const HomeTopArea = ({
 
   return (
     <>
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          { height: HEADER_TOP_AREA_HEIGHT + (errorType ? ALERT_HEIGHT : 0) },
+        ]}>
         <ImageBackground
           source={topBg}
           resizeMode="cover"
@@ -339,6 +356,22 @@ export const HomeTopArea = ({
             height: 150,
           }}
         />
+        {!!errorType && (
+          <GlobalWarning
+            type={
+              errorType === 'network'
+                ? GlobalWarningType.Network
+                : GlobalWarningType.Service
+            }
+            description={
+              errorType === 'network'
+                ? t('component.globalWarning.networkError.globalDesc')
+                : t('component.globalWarning.serviceError.globalDesc')
+            }
+            style={styles.globalWarning}
+            onRefresh={onRefresh}
+          />
+        )}
         <HomeTopChart
           loading={isLoadingCurve}
           data={
@@ -375,9 +408,7 @@ export const HomeTopArea = ({
               <View
                 style={[
                   styles.actionBadgeWrapper,
-                  item.key === 'Approvals' && {
-                    right: 0,
-                  },
+                  item.key === 'Approvals' && styles.rightZero,
                 ]}>
                 {!!item.badge && item.badge > 0 && (
                   <BadgeText count={item.badge} style={item.badgeStyle} />
@@ -497,6 +528,9 @@ const getStyles = createGetStyles2024(ctx => ({
     top: -4,
     right: -(BADGE_SIZE / 2),
     // ...makeDebugBorder(),
+  },
+  rightZero: {
+    right: 0,
   },
   actionIcon: {
     width: 24,
@@ -624,5 +658,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   skeleton: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
+  },
+  globalWarning: {
+    marginHorizontal: 16,
+    marginBottom: 13,
   },
 }));
