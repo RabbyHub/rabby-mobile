@@ -35,18 +35,26 @@ export const useGlobalStatus = (serviceKeys: ServiceErrorType[] = []) => {
   const { isInternetReachable, isConnected } = useNetInfo();
   const [serviceErrorMap, setServiceErrorMap] = useAtom(serviceErrorMapAtom);
 
+  const isDisConnnect = useMemo(() => {
+    return isInternetReachable === false || isConnected === false;
+  }, [isConnected, isInternetReachable]);
+
   const errorType: ErrorType = useMemo(() => {
-    if (isInternetReachable === false || isConnected === false) {
+    if (isDisConnnect) {
       return 'network';
     }
     if (serviceKeys?.some(key => serviceErrorMap[key])) {
       return 'service';
     }
     return undefined;
-  }, [isConnected, isInternetReachable, serviceErrorMap, serviceKeys]);
+  }, [isDisConnnect, serviceErrorMap, serviceKeys]);
 
   const setTargetServicesError = useCallback(
     (keys: ServiceErrorType[], target: boolean) => {
+      if (isDisConnnect && target) {
+        // 如果网络断开，忽略服务错误
+        return;
+      }
       setServiceErrorMap(pre => {
         const tmp = {
           ...pre,
@@ -57,7 +65,7 @@ export const useGlobalStatus = (serviceKeys: ServiceErrorType[] = []) => {
         return tmp;
       });
     },
-    [setServiceErrorMap],
+    [isDisConnnect, setServiceErrorMap],
   );
 
   const clearServicesError = useCallback(() => {

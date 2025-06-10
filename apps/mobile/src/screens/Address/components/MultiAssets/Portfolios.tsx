@@ -677,7 +677,6 @@ export const Portfolios = () => {
   }, []);
 
   const onRefresh = useCallback(async () => {
-    setIsRefreshing(true);
     try {
       await Promise.all([triggerUpdate(true), refreshCurve(true)]);
       setIsRefreshing(false);
@@ -715,7 +714,10 @@ export const Portfolios = () => {
       refreshControl={
         <RefreshControl
           style={styles.bgContainer}
-          onRefresh={onRefresh}
+          onRefresh={() => {
+            setIsRefreshing(true);
+            onRefresh();
+          }}
           refreshing={isRefreshing}
         />
       }
