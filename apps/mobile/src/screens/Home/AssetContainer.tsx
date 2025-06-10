@@ -7,6 +7,7 @@ import useSortToken from './hooks/useSortTokens';
 import { getTotalFoldToken, getAllDefiCount } from './utils/converAssets';
 import { ActionItem, CombineToken } from './types';
 import {
+  ALERT_HEIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
   DEFI_ITEM_HEIGHT,
@@ -38,6 +39,7 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { useCurve } from '@/hooks/useCurve';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { Account } from '@/core/services/preference';
+import { PageMainServices, useGlobalStatus } from '@/hooks/useGlobalStatus';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -81,6 +83,8 @@ export const AssetContainer: React.FC<Props> = ({
   const [foldNft, setFoldNft] = useState(true);
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
+
+  const { errorType } = useGlobalStatus(PageMainServices.SingleHome);
 
   const {
     tokens: _rawTokens,
@@ -461,6 +465,15 @@ export const AssetContainer: React.FC<Props> = ({
     refresh: refreshCurve,
   } = useCurve(currentAccount?.address, 0, balance);
 
+  const handleRefresh = useCallback(
+    (ignoreLoading?: boolean) => {
+      refreshPositions(true, ignoreLoading);
+      onRefresh?.();
+      refreshCurve();
+    },
+    [onRefresh, refreshCurve, refreshPositions],
+  );
+
   const renderStickHeader = useCallback(
     (type: string) => {
       switch (type) {
@@ -533,13 +546,17 @@ export const AssetContainer: React.FC<Props> = ({
             HEADER_TOP_AREA_HEIGHT +
             ASSETS_SECTION_HEADER +
             SPACE_BETWEEN_HEADER_AND_CHART +
-            ASSETS_SECTION_HEADER,
+            ASSETS_SECTION_HEADER +
+            (errorType ? ALERT_HEIGHT : 0),
         }}>
         <HomeTopArea
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
           curveData={curveData}
           isLoadingCurve={isLoadingCurve}
+          errorType={errorType}
+          // TODO: 顶部loading转圈
+          onRefresh={() => handleRefresh(true)}
         />
         <View style={{ height: SPACE_BETWEEN_HEADER_AND_CHART }} />
         <AssestAllHeader
@@ -558,8 +575,10 @@ export const AssetContainer: React.FC<Props> = ({
     currentAccount,
     currentSection,
     curveData,
+    errorType,
     firstRowType,
     handleOnChainClick,
+    handleRefresh,
     handleSwitchTab,
     isLoadingCurve,
     onUpdateIsDecrease,
@@ -571,11 +590,6 @@ export const AssetContainer: React.FC<Props> = ({
     return null;
   }, []);
 
-  const handleRefresh = useCallback(() => {
-    refreshPositions(true);
-    onRefresh?.();
-    refreshCurve();
-  }, [onRefresh, refreshCurve, refreshPositions]);
   const hasNotAssets = useMemo(() => {
     return (
       chainsInfo.chainLength === 0 &&
@@ -593,7 +607,10 @@ export const AssetContainer: React.FC<Props> = ({
       containerStyle={styles.container}
       minHeaderHeight={ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER}
       headerHeight={
-        HEADER_TOP_AREA_HEIGHT + ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER
+        HEADER_TOP_AREA_HEIGHT +
+        ASSETS_SECTION_HEADER +
+        ASSETS_SECTION_HEADER +
+        (errorType ? ALERT_HEIGHT : 0)
       }
       renderTabBar={renderTabBar}
       tabBarHeight={0}
@@ -711,5 +728,9 @@ const getStyles = createGetStyles2024(ctx => ({
     shadowColor: 'transparent',
     shadowOpacity: 0,
     elevation: 0,
+  },
+  globalWarning: {
+    marginHorizontal: 16,
+    marginBottom: 13,
   },
 }));

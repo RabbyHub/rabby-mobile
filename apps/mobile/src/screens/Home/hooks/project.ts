@@ -26,9 +26,9 @@ export const useQueryProjects = (userAddr: string | undefined) => {
   } = useQueryNft(userAddr, false);
 
   const refreshPositions = useCallback(
-    async (force?: boolean) => {
+    async (force?: boolean, ignoreLoading?: boolean) => {
       try {
-        if (force) {
+        if (force && !ignoreLoading) {
           setRefreshing(true);
         }
         await updateTokens(force);
