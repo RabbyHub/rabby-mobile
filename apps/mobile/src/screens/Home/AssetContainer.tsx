@@ -21,8 +21,6 @@ import {
   AssestAllHeader,
   AsssetKey,
 } from './components/AssetRenderItems/SectionHeaders';
-import { useFocusEffect } from '@react-navigation/native';
-import useMemoizedFn from 'ahooks/lib/useMemoizedFn';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import throttle from 'lodash/throttle';
