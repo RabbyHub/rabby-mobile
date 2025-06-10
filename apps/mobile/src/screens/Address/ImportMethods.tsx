@@ -18,7 +18,6 @@ import { Card } from '@/components2024/Card';
 
 import { RootNames } from '@/constant/layout';
 
-import IconGoogleDrive from '@/assets2024/icons/common/IconGoogleDrive.svg';
 import SeedPhraseIcon from '@/assets2024/icons/common/seed-phrase.svg';
 import PrivateKeyIcon from '@/assets2024/icons/common/private-key.svg';
 import HardWareIcon from '@/assets2024/icons/common/IconHardWare.png';
