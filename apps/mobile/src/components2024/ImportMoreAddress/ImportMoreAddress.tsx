@@ -419,13 +419,13 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
             <Text style={styles.nameText}>{params.account.aliasName}</Text>
           </>
         ) : (
-          <Text style={styles.title}>Import more address</Text>
+          <Text style={styles.title}>Import more wallets</Text>
         )}
         <View style={styles.loading}>
           <Text style={styles.loadingText}>
             {!accounts.length
-              ? 'Generating addresses, please wait...'
-              : 'Select addresses to add'}
+              ? 'Generating wallets, please wait...'
+              : 'Select wallets to add'}
           </Text>
         </View>
       </View>

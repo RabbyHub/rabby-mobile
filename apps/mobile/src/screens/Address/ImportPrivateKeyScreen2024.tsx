@@ -200,7 +200,7 @@ export const ImportPrivateKeyScreen2024 = () => {
                 sections: [
                   {
                     description:
-                      'A private key is a string of letters and numbers used to access and control your address. You can use it to recover your address on any device.',
+                      'A private key is a string of letters and numbers used to access and control your wallet. You can use it to recover your wallet on any device.',
                   },
                   {
                     title: 'Backup',

@@ -46,10 +46,10 @@ export const useDeleteAccountModal = () => {
           : 1;
       const title =
         account.type === KEYRING_TYPE.SimpleKeyring
-          ? 'Delete Address and Private Key'
+          ? 'Delete Wallet and Private Key'
           : account.type === KEYRING_TYPE.HdKeyring && count <= 1
-          ? 'Delete Address and Seed Phrase'
-          : 'Delete Address';
+          ? 'Delete Wallet and Seed Phrase'
+          : 'Delete Wallet';
       const needAuth =
         account.type === KEYRING_TYPE.SimpleKeyring ||
         (account.type === KEYRING_TYPE.HdKeyring && count <= 1);

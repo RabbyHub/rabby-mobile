@@ -241,7 +241,7 @@ export const ImportSuccessScreen = () => {
             <TouchableOpacity
               onPress={handleImportMore}
               style={styles.ledgerButton}>
-              <Text style={styles.ledgerButtonText}>Import more address</Text>
+              <Text style={styles.ledgerButtonText}>Import more wallets</Text>
               <RcIconRightCC
                 width={16}
                 height={16}

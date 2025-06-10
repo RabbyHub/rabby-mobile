@@ -159,7 +159,7 @@ export const ImportWatchAddressScreen = () => {
           <WatchLogoSVG />
           <Text style={styles.title}>Add Contacts</Text>
           <Text style={styles.description}>
-            You can also use it as watch-only address
+            You can also use it as watch-only wallet
           </Text>
         </View>
         <View style={styles.inputContainer}>
