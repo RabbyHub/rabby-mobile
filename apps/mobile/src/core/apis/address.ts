@@ -19,6 +19,7 @@ export async function addWatchAddress(address: string) {
 
   keyring.setAccountToAdd(address);
   const result = await keyringService.addNewAccount(keyring);
+  preferenceService.initCurrentAccount();
 
   return result;
 }

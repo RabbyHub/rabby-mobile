@@ -407,6 +407,12 @@ export class PreferenceService {
     };
   };
 
+  initCurrentAccount = async () => {
+    if (!this.store.currentAccount) {
+      return await this.resetCurrentAccount();
+    }
+  };
+
   toggleAllowNotifyAccountsChanged(allowed: boolean = false) {
     this._allowedToNotifyAccountsChanged = allowed;
   }

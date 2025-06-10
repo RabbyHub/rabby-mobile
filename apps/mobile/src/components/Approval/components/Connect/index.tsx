@@ -51,6 +51,7 @@ import { Account } from '@/core/services/preference';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import LinearGradient from 'react-native-linear-gradient';
 import { ConnectSkeleton } from './ConnectSkeleton';
+import { useCurrentAccount } from '@/hooks/account';
 
 const RuleDesc = [
   {
@@ -123,9 +124,12 @@ export const Connect = ({
  */
 // forScene = '@ActiveDappWebViewModal'
 ConnectProps) => {
+  const { currentAccount } = useCurrentAccount({
+    disableAutoFetch: true,
+  });
   const [selectedAccount, setSelectedAccount] = useState<
     Account | undefined | null
-  >(preferenceService.getCurrentAccount());
+  >(currentAccount);
   const { colors, styles, colors2024 } = useTheme2024({ getStyle });
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
@@ -349,8 +353,7 @@ ConnectProps) => {
 
   const init = async () => {
     const site = await dappService.getDapp(origin);
-    const _selectedAccount =
-      site?.currentAccount || preferenceService.getCurrentAccount();
+    const _selectedAccount = site?.currentAccount || currentAccount;
     setSelectedAccount(_selectedAccount);
     let level: 'very_low' | 'low' | 'medium' | 'high' = 'low';
     let collectList: { name: string; logo_url: string }[] = [];

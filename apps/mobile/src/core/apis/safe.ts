@@ -103,6 +103,7 @@ class ApisSafe {
         });
       });
     });
+    preferenceService.initCurrentAccount();
   };
   syncAllGnosisNetworks = async () => {
     const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
