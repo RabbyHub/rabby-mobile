@@ -466,6 +466,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
             }
           },
           inSufficient,
+          account,
         });
       }
     },
