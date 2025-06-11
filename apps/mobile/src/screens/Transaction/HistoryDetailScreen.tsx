@@ -345,10 +345,13 @@ function HistoryDetailScreen(): JSX.Element {
     const tokenUUID = `${data.chain}_token:${tokenId}`;
     const singeToken = data.tokenDict[tokenId] || data.tokenDict[tokenUUID];
 
+    // todo debug
     const allowance = await getERC20Allowance(
       data.chain,
       singeToken.id,
       data.token_approve?.spender!,
+      data.account?.address || data.address,
+      data.account!,
     );
 
     const amount = new BigNumber(allowance)
@@ -357,7 +360,14 @@ function HistoryDetailScreen(): JSX.Element {
 
     setNoRemainValue(!amount);
     setCurrentApprove(amount);
-  }, [data]);
+  }, [
+    data.account,
+    data.address,
+    data.chain,
+    data.tokenDict,
+    data.token_approve?.spender,
+    data.token_approve?.token_id,
+  ]);
 
   useEffect(() => {
     if (formatType === HistoryItemCateType.Approve) {

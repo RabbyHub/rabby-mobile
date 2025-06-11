@@ -345,9 +345,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   );
 
   const { value: gasList } = useAsync(() => {
-    return apiProvider.gasMarketV2({
-      chainId: chainInfo.serverId,
-    });
+    return apiProvider.gasMarketV2(
+      {
+        chainId: chainInfo.serverId,
+      },
+      currentAccount!,
+    );
   }, [chainInfo?.serverId]);
 
   const [passGasPrice, setUseGasPrice] = useState(false);
@@ -666,6 +669,8 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
                   fromToken.chain,
                   fromToken.id,
                   quote.approve_contract_id,
+                  currentAccount.address,
+                  currentAccount,
                 );
                 tokenApproved = new BigNumber(allowance).gte(
                   new BigNumber(amount).times(10 ** fromToken.decimals),

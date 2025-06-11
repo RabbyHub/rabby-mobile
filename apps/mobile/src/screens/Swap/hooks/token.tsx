@@ -314,9 +314,12 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   );
 
   const { value: gasList } = useAsync(() => {
-    return apiProvider.gasMarketV2({
-      chainId: chainInfo.serverId,
-    });
+    return apiProvider.gasMarketV2(
+      {
+        chainId: chainInfo.serverId,
+      },
+      account,
+    );
   }, [chainInfo?.serverId]);
 
   const normalGasPrice = useMemo(

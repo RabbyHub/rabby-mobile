@@ -186,10 +186,13 @@ export function useCurrentAccount(options?: {
     return fetchCurrentAccount();
   }, [fetchCurrentAccount]);
 
-  const switchAccount = useCallback((account: Account) => {
-    // preferenceService.setCurrentAccount(account);
-    // setCurrentAccount(account);
-  }, []);
+  const switchAccount = useCallback(
+    (account: Account) => {
+      preferenceService.setCurrentAccount(account);
+      setCurrentAccount(account);
+    },
+    [setCurrentAccount],
+  );
 
   const { disableAutoFetch = false, isTop = false } = options || {};
 

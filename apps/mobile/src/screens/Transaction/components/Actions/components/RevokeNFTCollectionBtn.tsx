@@ -36,6 +36,7 @@ export const RevokeNFTCollectionBtn = ({
       contractAddress: collection.id,
       spender: spender,
       address: account.address,
+      account,
     });
   });
 

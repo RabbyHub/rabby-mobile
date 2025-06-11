@@ -514,6 +514,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         recommendNonce = await getRecommendNonce({
           tx,
           chainId,
+          account: currentAccount,
         });
         setRecommendNonce(recommendNonce);
       } catch (e) {
@@ -582,6 +583,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
               params: ['latest', false],
             },
             chain.serverId,
+            currentAccount,
           );
           setBlockInfo(block);
         } catch (e) {
@@ -1074,11 +1076,14 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     chain: Chain,
     custom?: number,
   ): Promise<GasLevel[]> => {
-    const list = await apiProvider.gasMarketV2({
-      chain,
-      customGas: custom && custom > 0 ? custom : undefined,
-      tx,
-    });
+    const list = await apiProvider.gasMarketV2(
+      {
+        chain,
+        customGas: custom && custom > 0 ? custom : undefined,
+        tx,
+      },
+      currentAccount,
+    );
     setGasList(list);
     return list;
   };
@@ -1281,6 +1286,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         const balance = await getNativeTokenBalance({
           chainId,
           address: currentAccount.address,
+          account: currentAccount,
         });
 
         setNativeTokenBalance(balance);

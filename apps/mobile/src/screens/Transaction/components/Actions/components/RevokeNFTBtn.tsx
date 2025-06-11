@@ -42,6 +42,7 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
       chainServerId: nft.chain,
       nftTokenId: nft.inner_id,
       contractAddress: nft.contract_id,
+      account,
     });
 
     return isSameAddress(spender, approvedToAddress);

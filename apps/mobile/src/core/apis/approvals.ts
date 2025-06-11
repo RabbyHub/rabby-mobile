@@ -98,11 +98,13 @@ export async function getNFTApprovedForAll({
   contractAddress,
   address,
   spender,
+  account,
 }: {
   chainServerId: string;
   contractAddress: string;
   spender: string;
   address: string;
+  account: Account;
 }) {
   const abi = [
     {
@@ -143,6 +145,7 @@ export async function getNFTApprovedForAll({
       params: [{ to: contractAddress, data }, 'latest'],
     },
     chainServerId,
+    account,
   );
 
   return decodeAbiParameters(abi[0].outputs, res)[0];
@@ -152,10 +155,12 @@ export async function getErc721Approved({
   chainServerId,
   contractAddress,
   nftTokenId,
+  account,
 }: {
   chainServerId: string;
   contractAddress: string;
   nftTokenId: string;
+  account: Account;
 }) {
   const abi = [
     {
@@ -190,6 +195,7 @@ export async function getErc721Approved({
       params: [{ to: contractAddress, data }, 'latest'],
     },
     chainServerId,
+    account,
   );
 
   return decodeAbiParameters(abi[0].outputs, res)[0];

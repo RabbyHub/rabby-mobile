@@ -193,9 +193,12 @@ export const TransactionAlert = ({
         ? await apiCustomTestnet.getCustomTestnetGasMarket({
             chainId: chainId,
           })
-        : await apiProvider.gasMarketV2({
-            chainId: chain.serverId,
-          });
+        : await apiProvider.gasMarketV2(
+            {
+              chainId: chain.serverId,
+            },
+            account,
+          );
       const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
       try {
         await sendRequest({

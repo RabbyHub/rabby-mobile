@@ -12,6 +12,7 @@ import {
 } from '@/constant/gas';
 import { transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
+import { Account } from '@/core/services/preference';
 
 export const getRecommendGas = async ({
   gas,
@@ -70,9 +71,11 @@ export const getRecommendGas = async ({
 export const getRecommendNonce = async ({
   tx,
   chainId,
+  account,
 }: {
   tx: Tx;
   chainId: number;
+  account: Account;
 }) => {
   const chain = findChain({
     id: chainId,
@@ -86,6 +89,7 @@ export const getRecommendNonce = async ({
       params: [tx.from, 'latest'],
     },
     chain.serverId,
+    account,
   );
   const localNonce =
     (await transactionHistoryService.getNonceByChain(tx.from, chainId)) || 0;
@@ -95,9 +99,11 @@ export const getRecommendNonce = async ({
 export const getNativeTokenBalance = async ({
   address,
   chainId,
+  account,
 }: {
   address: string;
   chainId: number;
+  account: Account;
 }): Promise<string> => {
   const chain = findChain({
     id: chainId,
@@ -111,6 +117,7 @@ export const getNativeTokenBalance = async ({
       params: [address, 'latest'],
     },
     chain.serverId,
+    account,
   );
   return balance;
 };
@@ -122,6 +129,7 @@ export const explainGas = async ({
   nativeTokenPrice,
   tx,
   gasLimit,
+  account,
 }: {
   gasUsed: number | string;
   gasPrice: number | string;
@@ -129,6 +137,7 @@ export const explainGas = async ({
   nativeTokenPrice: number;
   tx: Tx;
   gasLimit: string | undefined;
+  account: Account;
 }) => {
   let gasCostTokenAmount = new BigNumber(gasUsed).times(gasPrice).div(1e18);
   let maxGasCostAmount = new BigNumber(gasLimit || 0).times(gasPrice).div(1e18);
@@ -138,6 +147,7 @@ export const explainGas = async ({
     const res = await apiProvider.fetchEstimatedL1Fee(
       {
         txParams: tx,
+        account,
       },
       chain.enum,
     );
@@ -161,6 +171,7 @@ export const useExplainGas = ({
   tx,
   gasLimit,
   isReady,
+  account,
 }: {
   gasUsed: number | string;
   gasPrice: number | string;
@@ -169,6 +180,7 @@ export const useExplainGas = ({
   tx: Tx;
   gasLimit: string | undefined;
   isReady: boolean;
+  account: Account;
 }) => {
   const [result, setResult] = useState({
     gasCostUsd: new BigNumber(0),
@@ -186,12 +198,22 @@ export const useExplainGas = ({
         nativeTokenPrice,
         tx,
         gasLimit,
+        account,
       }).then(data => {
         setResult(data);
         setIsLoading(false);
       });
     }
-  }, [gasUsed, gasPrice, chainId, nativeTokenPrice, tx, gasLimit, isReady]);
+  }, [
+    gasUsed,
+    gasPrice,
+    chainId,
+    nativeTokenPrice,
+    tx,
+    gasLimit,
+    isReady,
+    account,
+  ]);
 
   return useMemo(() => {
     return {

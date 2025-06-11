@@ -383,7 +383,11 @@ export function useSendTokenForm({
     ...DF_SEND_TOKEN_FORM,
   });
 
-  const { addressType } = useCheckAddressType(formValues.to, chainItem);
+  const { addressType } = useCheckAddressType(
+    formValues.to,
+    chainItem,
+    account,
+  );
 
   const { isShowMessageDataForToken, isShowMessageDataForContract } =
     useMemo(() => {
@@ -736,6 +740,7 @@ export function useSendTokenForm({
             params: [to, 'latest'],
           },
           chain.serverId,
+          account,
         );
         const notContract = !!code && (code === '0x' || code === '0x0');
         let gasLimit = 0;
@@ -855,6 +860,7 @@ export function useSendTokenForm({
               params: [to, 'latest'],
             },
             chain.serverId,
+            account,
           );
           const notContract = !!code && (code === '0x' || code === '0x0');
           let gasLimit = 0;
@@ -1162,6 +1168,7 @@ export function useSendTokenForm({
             ],
           },
           lastestChainItem.serverId,
+          account,
         );
       } catch (err) {
         console.error(err);
@@ -1173,7 +1180,14 @@ export function useSendTokenForm({
 
       return doReturn(Number(gasUsed));
     },
-    [currentAccount, chainItem, formik, currentToken, putScreenState],
+    [
+      chainItem,
+      currentToken,
+      currentAccount?.address,
+      formik.values.to,
+      putScreenState,
+      account,
+    ],
   );
 
   const loadCurrentToken = useCallback(
@@ -1434,6 +1448,7 @@ export function useSendTokenForm({
                   gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
                   data: '0x',
                 },
+                account,
               },
               chainItem.enum,
             );
@@ -1465,19 +1480,20 @@ export function useSendTokenForm({
     },
     [
       currentAccount,
-      currentToken,
-      estimateGasOnChain,
-      screenState.selectedGasLevel,
-      loadGasListAndResolve,
-      formik,
-      patchFormValues,
-      onGasChange,
-      putScreenState,
-      couldReserveGas,
-      chainItem,
-      screenState.isEstimatingGas,
-      screenState.isGnosisSafe,
       screenState.isLoading,
+      screenState.isEstimatingGas,
+      screenState.selectedGasLevel,
+      screenState.isGnosisSafe,
+      currentToken,
+      formik.values,
+      loadGasListAndResolve,
+      couldReserveGas,
+      patchFormValues,
+      putScreenState,
+      estimateGasOnChain,
+      chainItem,
+      onGasChange,
+      account,
     ],
   );
   const handleGasLevelChanged = useCallback(

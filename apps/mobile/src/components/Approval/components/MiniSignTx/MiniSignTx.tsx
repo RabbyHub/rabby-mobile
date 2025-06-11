@@ -620,6 +620,7 @@ export const MiniSignTx = ({
             nativeTokenPrice: item.preExecResult.native_token.price,
             tx,
             gasLimit: item.gasLimit,
+            account,
           }),
         };
       }),
@@ -641,11 +642,14 @@ export const MiniSignTx = ({
     chain: Chain,
     custom?: number,
   ): Promise<GasLevel[]> => {
-    const list = await apiProvider.gasMarketV2({
-      chain,
-      customGas: custom && custom > 0 ? custom : undefined,
-      tx: txs[0],
-    });
+    const list = await apiProvider.gasMarketV2(
+      {
+        chain,
+        customGas: custom && custom > 0 ? custom : undefined,
+        tx: txs[0],
+      },
+      account,
+    );
     setGasList(list);
     return list;
   };
@@ -728,6 +732,7 @@ export const MiniSignTx = ({
       const balance = await getNativeTokenBalance({
         chainId,
         address: currentAccount.address,
+        account,
       });
 
       setNativeTokenBalance(balance);
@@ -857,6 +862,7 @@ export const MiniSignTx = ({
               nativeTokenPrice: item.preExecResult.native_token.price,
               tx,
               gasLimit: item.gasLimit,
+              account,
             }),
           };
         }),
@@ -911,12 +917,13 @@ export const MiniSignTx = ({
     },
     [
       isReady,
+      initdTxs,
+      support1559,
       chain.id,
-      gasAccountAddress,
+      account,
       nativeTokenBalance,
       sig,
-      support1559,
-      initdTxs,
+      gasAccountAddress,
     ],
   );
   const [simulateError, setSimulateError] = useState<Error | null>(null);
@@ -930,6 +937,7 @@ export const MiniSignTx = ({
       const recommendNonce = await getRecommendNonce({
         tx: txs[0],
         chainId: chain.id,
+        account,
       });
       setRecommendNonce(recommendNonce);
 
@@ -1004,6 +1012,7 @@ export const MiniSignTx = ({
               nativeTokenBalance,
               explainTx: preExecResult,
               needRatio,
+              account,
             });
             gasLimit = _gasLimit;
             recommendGasLimitRatio = _recommendGasLimitRatio;
@@ -1017,6 +1026,7 @@ export const MiniSignTx = ({
             nativeTokenPrice: preExecResult.native_token.price,
             tx,
             gasLimit,
+            account,
           });
 
           tx.gas = gasLimit;
