@@ -18,10 +18,7 @@ import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/Cu
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
-import {
-  GlobalWarning,
-  GlobalWarningType,
-} from '@/components2024/GlobalWarning/Warining';
+import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useTranslation } from 'react-i18next';
 import { useTriggerUpdate } from '../hooks/triggerUpdate';
 import { ErrorType } from '@/hooks/useGlobalStatus';
@@ -98,24 +95,20 @@ function Chart({
           height: 150,
         }}
       />
-      {!!errorType && (
-        <GlobalWarning
-          type={
-            errorType === 'network'
-              ? GlobalWarningType.Network
-              : GlobalWarningType.Service
-          }
-          description={
-            errorType === 'network'
-              ? t('component.globalWarning.networkError.globalDesc')
-              : t('component.globalWarning.serviceError.globalDesc')
-          }
-          style={styles.globalWarning}
-          onRefresh={() => {
-            setTriggerUpdate(true);
-          }}
-        />
-      )}
+
+      <GlobalWarning
+        errorType={errorType}
+        description={
+          errorType === 'network'
+            ? t('component.globalWarning.networkError.globalDesc')
+            : t('component.globalWarning.serviceError.globalDesc')
+        }
+        style={styles.globalWarning}
+        onRefresh={() => {
+          setTriggerUpdate(true);
+        }}
+      />
+
       <View style={styles.chartContainer}>
         <LineChart.Provider data={data.list}>
           <ChartHeader
@@ -131,7 +124,7 @@ function Chart({
               height={114}
               width={ScreenWidth - 32}
               shape={d3Shape.curveCatmullRom}
-              style={{ position: 'relative' }}>
+              style={styles.relative}>
               <LineChart.Path
                 showInactivePath={false}
                 color={pathColor}
@@ -344,4 +337,5 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingTop: 20,
     paddingHorizontal: 0,
   },
+  relative: { position: 'relative' },
 }));

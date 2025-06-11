@@ -3,36 +3,65 @@ import RcServiceCC from '@/assets2024/icons/common/service-cc.svg';
 import RcOfflineCC from '@/assets2024/icons/common/offline-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { refresh } from '@react-native-community/netinfo';
+import { ErrorType } from '@/hooks/useGlobalStatus';
 
 export enum GlobalWarningType {
   Network = 'network',
   Service = 'service',
 }
 interface GlobalWarningProps {
-  type: GlobalWarningType;
+  errorType: ErrorType;
   description: string;
   style?: StyleProp<ViewStyle>;
   onRefresh?: () => void;
 }
 export function GlobalWarning({
-  type = GlobalWarningType.Network,
+  errorType,
   description,
   style,
   onRefresh,
 }: GlobalWarningProps) {
   const { t } = useTranslation();
-  const isNetWorkError = type === GlobalWarningType.Network;
   const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
+  const type = useMemo(() => {
+    if (errorType === 'network') {
+      return GlobalWarningType.Network;
+    }
+    if (errorType === 'service') {
+      return GlobalWarningType.Service;
+    }
+    return undefined;
+  }, [errorType]);
+
+  const isNetWorkError = useMemo(
+    () => type === GlobalWarningType.Network,
+    [type],
+  );
 
   const title = useMemo(() => {
     return isNetWorkError
       ? t('component.globalWarning.serviceError.title')
       : t('component.globalWarning.networkError.title');
   }, [isNetWorkError, t]);
+
+  const preTypeRef = useRef<GlobalWarningType | undefined>(undefined);
+  useEffect(() => {
+    if (!type && preTypeRef.current === GlobalWarningType.Network) {
+      // auto refresh when network fine
+      onRefresh?.();
+    }
+    preTypeRef.current = type;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
+
+  if (!type) {
+    return null;
+  }
 
   return (
     <View style={[styles.container, style]}>
@@ -53,7 +82,15 @@ export function GlobalWarning({
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.text}>{description}</Text>
         {onRefresh && (
-          <Text onPress={onRefresh} style={styles.refreshText}>
+          <Text
+            onPress={() => {
+              if (isNetWorkError) {
+                refresh();
+              } else {
+                onRefresh();
+              }
+            }}
+            style={styles.refreshText}>
             {t('component.globalWarning.buttonText')}
           </Text>
         )}

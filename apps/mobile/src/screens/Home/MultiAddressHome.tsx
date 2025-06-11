@@ -90,10 +90,7 @@ import { useTipsDollarDialog } from '../CopyTrading/component/hooks';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
 import { useExposureRateGuide } from '@/components/RateModal/hooks';
 import { RateModal } from '@/components/RateModal/RateModal';
-import {
-  GlobalWarning,
-  GlobalWarningType,
-} from '@/components2024/GlobalWarning/Warining';
+import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useGlobalStatus, PageMainServices } from '@/hooks/useGlobalStatus';
 
 const HeaderHeight = 24;
@@ -176,24 +173,20 @@ function MultiAddressHomeHeader(
           {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
-      {!!errorType && (
-        <GlobalWarning
-          type={
-            errorType === 'network'
-              ? GlobalWarningType.Network
-              : GlobalWarningType.Service
-          }
-          description={
-            errorType === 'network'
-              ? t('component.globalWarning.networkError.globalDesc')
-              : t('component.globalWarning.serviceError.globalDesc')
-          }
-          style={styles.globalWarning}
-          onRefresh={() => {
-            onRefresh?.();
-          }}
-        />
-      )}
+
+      <GlobalWarning
+        errorType={errorType}
+        description={
+          errorType === 'network'
+            ? t('component.globalWarning.networkError.globalDesc')
+            : t('component.globalWarning.serviceError.globalDesc')
+        }
+        style={styles.globalWarning}
+        onRefresh={() => {
+          onRefresh?.();
+        }}
+      />
+
       <View style={styles.curveBox}>
         <BlurShadowView isLight={isLight}>
           <Card
@@ -786,9 +779,7 @@ function MultiAddressHome(): JSX.Element {
         start: { x: 0.5, y: 0 },
         end: { x: 0.5, y: 0.26 },
       }}
-      overwriteStyle={{
-        paddingTop: 64,
-      }}>
+      overwriteStyle={styles.screenContainer}>
       <View style={styles.paddingContainer}>
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -859,6 +850,9 @@ function MultiAddressHome(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  screenContainer: {
+    paddingTop: 64,
+  },
   paddingContainer: {
     paddingHorizontal: 0,
     flex: 1,
@@ -1071,6 +1065,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 12,
   },
   contentBetweenHeaderAndMatrixEmpty: {},
+  menuContainer: {
+    marginTop: 0,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
