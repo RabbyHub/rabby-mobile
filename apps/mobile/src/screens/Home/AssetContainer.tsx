@@ -466,10 +466,10 @@ export const AssetContainer: React.FC<Props> = ({
   } = useCurve(currentAccount?.address, 0, balance);
 
   const handleRefresh = useCallback(
-    (ignoreLoading?: boolean) => {
-      refreshPositions(true, ignoreLoading);
+    async (ignoreLoading?: boolean) => {
       onRefresh?.();
-      refreshCurve();
+      await refreshCurve(ignoreLoading);
+      refreshPositions(true);
     },
     [onRefresh, refreshCurve, refreshPositions],
   );
@@ -555,7 +555,6 @@ export const AssetContainer: React.FC<Props> = ({
           curveData={curveData}
           isLoadingCurve={isLoadingCurve}
           errorType={errorType}
-          // TODO: 顶部loading转圈
           onRefresh={() => handleRefresh(true)}
         />
         <View style={{ height: SPACE_BETWEEN_HEADER_AND_CHART }} />
@@ -632,7 +631,7 @@ export const AssetContainer: React.FC<Props> = ({
           foldDefi={foldDefi}
           setFoldDefi={setFoldDefi}
           setFoldScam={setFoldScam}
-          refreshing={refreshing}
+          refreshing={isLoadingCurve}
           onRefresh={handleRefresh}
           setFirstRowType={setFirstRowType}
           onReachTopStatusChange={onReachTopStatusChange}
