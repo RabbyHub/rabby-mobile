@@ -62,6 +62,7 @@ import { debounce, unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
 import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
+import RcIconCopyTrading from '@/assets2024/icons/home/IconCopyTrading.svg';
 import { FoundYourWalletGuide } from './FundYourWallet';
 import { OfflineChainNotify } from './components/OfflineChainNotify';
 import { colord } from 'colord';
@@ -289,9 +290,9 @@ function MultiAddressHome(): JSX.Element {
           icon: RcIconBridge,
         },
         {
-          key: MultiHomeFeatTitle.Buy,
-          title: t('page.buy.title'),
-          icon: RcIconBuy,
+          key: MultiHomeFeatTitle.CopyTrading,
+          title: t('page.home.services.copyTrading'),
+          icon: RcIconCopyTrading,
         },
         {
           key: MultiHomeFeatTitle.History,
@@ -637,6 +638,12 @@ function MultiAddressHome(): JSX.Element {
         case MultiHomeFeatTitle.Buy:
           navigation.push(RootNames.StackTransaction, {
             screen: RootNames.MultiBuy,
+            params: {},
+          });
+          break;
+        case MultiHomeFeatTitle.CopyTrading:
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.CopyTrading,
             params: {},
           });
           break;

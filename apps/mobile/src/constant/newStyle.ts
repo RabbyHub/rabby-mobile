@@ -13,6 +13,7 @@ export enum MultiHomeFeatTitle {
   Points = 'Rabby Points',
   Buy = 'Buy',
   Search = 'Search',
+  CopyTrading = 'Copy Trading',
 }
 
 export enum AccountPannelSectionTitle {

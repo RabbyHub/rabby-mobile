@@ -254,6 +254,7 @@ export type TransactionNavigatorParamList = {
     tokenItem?: AbstractPortfolioToken;
     currentAddress?: string;
   };
+  [RootNames.CopyTrading]?: {};
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
