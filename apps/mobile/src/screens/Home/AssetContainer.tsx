@@ -601,8 +601,10 @@ export const AssetContainer: React.FC<Props> = ({
   }, [chainsInfo.chainLength, loadingNft, loadingPortfolio, loadingToken]);
 
   const netWorkErrorNotAssets = useMemo(() => {
-    return errorType === 'network' && hasNotAssets && hasNoCurveData;
-  }, [errorType, hasNoCurveData, hasNotAssets]);
+    return (
+      errorType === 'network' && chainsInfo.chainLength === 0 && hasNoCurveData
+    );
+  }, [chainsInfo.chainLength, errorType, hasNoCurveData]);
 
   if (!currentAccount?.address) {
     return null;
