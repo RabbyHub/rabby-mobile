@@ -549,7 +549,7 @@ export const TokenDetailScreen = () => {
         />
         <View style={styles.riskContainer}>
           {token.is_verified === false && <RiskTokenTips isDanger={true} />}
-          {token.is_verified !== false && token.is_scam && (
+          {token.is_verified !== false && token.is_suspicious && (
             <RiskTokenTips isDanger={false} />
           )}
         </View>
