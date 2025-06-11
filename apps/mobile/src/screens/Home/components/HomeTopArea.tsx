@@ -47,10 +47,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useGnosisQueueTotalPending } from '@/hooks/gnosis/useGnosisQueueTotalPending';
 import { HomeTopChart } from './HomeTopChart';
-import {
-  GlobalWarning,
-  GlobalWarningType,
-} from '@/components2024/GlobalWarning/Warining';
+import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { ErrorType } from '@/hooks/useGlobalStatus';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
@@ -356,22 +353,18 @@ export const HomeTopArea = ({
             height: 150,
           }}
         />
-        {!!errorType && (
-          <GlobalWarning
-            type={
-              errorType === 'network'
-                ? GlobalWarningType.Network
-                : GlobalWarningType.Service
-            }
-            description={
-              errorType === 'network'
-                ? t('component.globalWarning.networkError.globalDesc')
-                : t('component.globalWarning.serviceError.globalDesc')
-            }
-            style={styles.globalWarning}
-            onRefresh={onRefresh}
-          />
-        )}
+
+        <GlobalWarning
+          errorType={errorType}
+          description={
+            errorType === 'network'
+              ? t('component.globalWarning.networkError.globalDesc')
+              : t('component.globalWarning.serviceError.globalDesc')
+          }
+          style={styles.globalWarning}
+          onRefresh={onRefresh}
+        />
+
         <HomeTopChart
           loading={isLoadingCurve}
           data={

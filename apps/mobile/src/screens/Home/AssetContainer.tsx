@@ -94,7 +94,6 @@ export const AssetContainer: React.FC<Props> = ({
     loadingToken,
     loadingNft,
     loadingPortfolio,
-    refreshing,
     updateTokens,
     updatePortfolio,
     reloadNftList,

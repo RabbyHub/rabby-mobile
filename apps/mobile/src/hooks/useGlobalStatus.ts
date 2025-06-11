@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { atom, useAtom } from 'jotai';
 
@@ -32,12 +32,12 @@ export const serviceErrorMapAtom = atom<
 >({});
 
 export const useGlobalStatus = (serviceKeys: ServiceErrorType[] = []) => {
-  const { isInternetReachable, isConnected } = useNetInfo();
+  const { isConnected } = useNetInfo();
   const [serviceErrorMap, setServiceErrorMap] = useAtom(serviceErrorMapAtom);
 
   const isDisConnnect = useMemo(() => {
-    return isInternetReachable === false || isConnected === false;
-  }, [isConnected, isInternetReachable]);
+    return isConnected === false;
+  }, [isConnected]);
 
   const errorType: ErrorType = useMemo(() => {
     if (isDisConnnect) {
@@ -48,6 +48,13 @@ export const useGlobalStatus = (serviceKeys: ServiceErrorType[] = []) => {
     }
     return undefined;
   }, [isDisConnnect, serviceErrorMap, serviceKeys]);
+
+  useEffect(() => {
+    if (errorType === 'network') {
+      // ignore all "service error" when "network error"
+      setServiceErrorMap({});
+    }
+  }, [errorType, setServiceErrorMap]);
 
   const setTargetServicesError = useCallback(
     (keys: ServiceErrorType[], target: boolean) => {
