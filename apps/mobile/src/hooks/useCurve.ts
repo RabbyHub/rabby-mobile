@@ -4,6 +4,7 @@ import { CurveDayType } from '@/utils/curveDayType';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useGlobalStatus, ServiceErrorType } from './useGlobalStatus';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
 
@@ -141,6 +142,7 @@ export const useCurve = (
     }[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { setTargetServicesError } = useGlobalStatus();
   const select = useMemo(() => {
     return formChartData(
       data,
@@ -152,33 +154,39 @@ export const useCurve = (
 
   const fetch = useCallback(
     async (addr: string, force = false) => {
-      const curve = await getNetCurve(addr, days, force);
-      const start =
-        days === CurveDayType.DAY
-          ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
-          : dayjs().add(-7, 'days').add(1, 'hours').valueOf();
-      const step = days === CurveDayType.DAY ? 5 * 60 * 1000 : 60 * 60 * 1000;
-      const result = patchCurveData(
-        curve.map(item => {
-          return {
-            timestamp: item.timestamp * 1000,
-            price: item.usd_value,
-          };
-        }),
-        start,
-        step,
-      );
-      setData(
-        result.map(item => {
-          return {
-            timestamp: dayjs(item.timestamp).unix(),
-            usd_value: item.price,
-          };
-        }),
-      );
-      setIsLoading(false);
+      try {
+        const curve = await getNetCurve(addr, days, force);
+        force && setTargetServicesError([ServiceErrorType.Curve], false);
+        const start =
+          days === CurveDayType.DAY
+            ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
+            : dayjs().add(-7, 'days').add(1, 'hours').valueOf();
+        const step = days === CurveDayType.DAY ? 5 * 60 * 1000 : 60 * 60 * 1000;
+        const result = patchCurveData(
+          curve.map(item => {
+            return {
+              timestamp: item.timestamp * 1000,
+              price: item.usd_value,
+            };
+          }),
+          start,
+          step,
+        );
+        setData(
+          result.map(item => {
+            return {
+              timestamp: dayjs(item.timestamp).unix(),
+              usd_value: item.price,
+            };
+          }),
+        );
+      } catch (error) {
+        setTargetServicesError([ServiceErrorType.Curve], true);
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [days],
+    [days, setTargetServicesError],
   );
 
   const refresh = useCallback(
@@ -211,5 +219,6 @@ export const useCurve = (
     result: isLoading ? undefined : select,
     isLoading,
     refresh,
+    hasNoData: !data.length && !isLoading,
   };
 };

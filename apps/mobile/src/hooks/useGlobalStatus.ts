@@ -4,6 +4,7 @@ import { atom, useAtom } from 'jotai';
 
 export const enum ServiceErrorType {
   'Curve' = 'Curve',
+  'SingleCurve' = 'SingleCurve',
   'Balance' = 'Balance',
   'Tokens' = 'Tokens',
   'Defi' = 'Defi',
@@ -19,7 +20,7 @@ export const PageMainServices = {
   ],
   SingleHome: [
     ServiceErrorType.Balance,
-    ServiceErrorType.Curve,
+    ServiceErrorType.SingleCurve,
     ServiceErrorType.Tokens,
     ServiceErrorType.Defi,
     ServiceErrorType.NFT,
