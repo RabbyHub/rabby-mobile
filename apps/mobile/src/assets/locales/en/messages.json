@@ -694,7 +694,7 @@
     },
     "whitelist": {
       "addToWhitelist": "Add to Whitelist",
-      "removeWhitelist": "Remove from Whitelist",
+      "removeWhitelist": "Remove",
       "copyAddress": "Copy Address",
       "confirm": "Confirm",
       "cancel": "Cancel",
