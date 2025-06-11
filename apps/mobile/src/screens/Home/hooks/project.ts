@@ -1,11 +1,13 @@
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo } from 'react';
 import { useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
 import BigNumber from 'bignumber.js';
+import { atom, useAtom } from 'jotai';
 
+export const refreshingAtom = atom(false);
 export const useQueryProjects = (userAddr: string | undefined) => {
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useAtom(refreshingAtom);
   const {
     tokens,
     updateData: updateTokens,
@@ -39,7 +41,7 @@ export const useQueryProjects = (userAddr: string | undefined) => {
         setRefreshing(false);
       }
     },
-    [updatePortfolio, updateTokens, reloadNftList],
+    [updateTokens, updatePortfolio, reloadNftList, setRefreshing],
   );
 
   const chainsInfo = useMemo(() => {
