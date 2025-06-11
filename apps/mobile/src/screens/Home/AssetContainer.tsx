@@ -40,6 +40,8 @@ import { useCurve } from '@/hooks/useCurve';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { Account } from '@/core/services/preference';
 import { PageMainServices, useGlobalStatus } from '@/hooks/useGlobalStatus';
+import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
+import { refresh as refreshNetWorkStatus } from '@react-native-community/netinfo';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -462,6 +464,7 @@ export const AssetContainer: React.FC<Props> = ({
     result: curveData,
     isLoading: isLoadingCurve,
     refresh: refreshCurve,
+    hasNoData: hasNoCurveData,
   } = useCurve(currentAccount?.address, 0, balance);
 
   const handleRefresh = useCallback(
@@ -597,8 +600,20 @@ export const AssetContainer: React.FC<Props> = ({
     );
   }, [chainsInfo.chainLength, loadingNft, loadingPortfolio, loadingToken]);
 
+  const netWorkErrorNotAssets = useMemo(() => {
+    return errorType === 'network' && hasNotAssets && hasNoCurveData;
+  }, [errorType, hasNoCurveData, hasNotAssets]);
+
   if (!currentAccount?.address) {
     return null;
+  }
+  if (netWorkErrorNotAssets) {
+    return (
+      <NetWorkError
+        onRefresh={refreshNetWorkStatus}
+        style={styles.netWorkError}
+      />
+    );
   }
   return (
     <Tabs.Container
@@ -730,5 +745,10 @@ const getStyles = createGetStyles2024(ctx => ({
   globalWarning: {
     marginHorizontal: 16,
     marginBottom: 13,
+  },
+  netWorkError: {
+    height: '100%',
+    marginTop: -50,
+    backgroundColor: ctx.colors2024['neutral-bg-0'],
   },
 }));
