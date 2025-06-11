@@ -34,6 +34,7 @@ interface SlippageProps {
   setIsCustomSlippage: (boolean: boolean) => void;
   type: 'swap' | 'bridge';
   isWrapToken?: boolean;
+  autoSuggestSlippage?: string;
 }
 
 const SlippageItem = (props: TouchableOpacityProps & { active?: boolean }) => {
@@ -64,6 +65,7 @@ export const BridgeSlippage = (props: SlippageProps) => {
     setIsCustomSlippage,
     type,
     isWrapToken,
+    autoSuggestSlippage,
   } = props;
   const [slippageOpen, setSlippageOpen] = useState(false);
 
@@ -184,7 +186,10 @@ export const BridgeSlippage = (props: SlippageProps) => {
         <Text style={styles.text}>{t('page.swap.slippage-tolerance')}</Text>
         <View style={styles.valueContainer}>
           <Text style={[styles.value, !!tips && styles.warning]}>
-            {displaySlippage}%
+            {type === 'swap' && autoSlippage
+              ? autoSuggestSlippage || displaySlippage
+              : displaySlippage}
+            %
           </Text>
           <Animated.View
             style={{

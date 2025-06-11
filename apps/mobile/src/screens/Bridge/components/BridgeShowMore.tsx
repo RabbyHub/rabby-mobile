@@ -71,6 +71,7 @@ const BridgeShowMore = ({
   recommendValue,
   openFeePopup,
   supportDirectSign,
+  autoSuggestSlippage,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -102,6 +103,7 @@ const BridgeShowMore = ({
   switchPreferMEV?: (b: boolean) => void;
   recommendValue?: number;
   supportDirectSign: boolean;
+  autoSuggestSlippage?: string;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -257,6 +259,7 @@ const BridgeShowMore = ({
         </ListItem>
 
         <BridgeSlippage
+          autoSuggestSlippage={autoSuggestSlippage}
           value={slippage}
           displaySlippage={displaySlippage}
           onChange={onSlippageChange}
