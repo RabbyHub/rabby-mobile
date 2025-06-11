@@ -688,7 +688,7 @@ export const Portfolios = () => {
   }, [checkIsExpireAndUpdate, refreshCurve, triggerUpdate]);
 
   useEffect(() => {
-    if (triggerRefresh && isFocused) {
+    if (triggerRefresh) {
       onRefresh();
       setTriggerRefresh(false);
     }
