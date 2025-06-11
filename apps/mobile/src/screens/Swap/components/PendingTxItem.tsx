@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { sendToken } from '@/core/apis/token';
 import { useMemoizedFn } from 'ahooks';
+import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
@@ -80,6 +81,7 @@ export const PendingTxItem = ({
       params: {
         isForMultipleAddress,
         data: groupData,
+        type: HistoryItemCateType.Swap,
         title:
           type === 'send'
             ? t('page.transactions.itemTitle.Send')

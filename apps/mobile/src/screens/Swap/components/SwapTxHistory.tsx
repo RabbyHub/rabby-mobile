@@ -30,6 +30,7 @@ import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { transactionHistoryService } from '@/core/services';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -288,6 +289,7 @@ export const SwapTxHistory = ({
             params: {
               isForMultipleAddress,
               data: itemData,
+              type: HistoryItemCateType.Swap,
               title: t('page.swap.swapped'),
             },
           });

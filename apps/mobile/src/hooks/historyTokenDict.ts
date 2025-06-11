@@ -39,7 +39,7 @@ export function useHistoryTokenDict() {
   const updateHistoryTimeSingleAddress = (add: string, time?: number) => {
     setUpdateHistoryTime(prev => ({
       ...prev,
-      [add]: time || Date.now(),
+      [add.toLowerCase()]: time || Date.now(),
     }));
   };
 

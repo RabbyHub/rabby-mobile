@@ -33,6 +33,7 @@ import { Send } from './components/Actions/Send';
 import { useTranslation } from 'react-i18next';
 import { UnknownAction } from './components/Actions/UnknownAction';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { HistoryItemCateType } from './components/type';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
@@ -47,6 +48,7 @@ function HistoryLocalDetailScreen(): JSX.Element {
     // canCancel,
     isForMultipleAddress,
     title,
+    type,
     onPressBottomBtn,
   } = route.params || {};
   const [data, setData] = React.useState<TransactionGroup>(_data);
@@ -102,11 +104,12 @@ function HistoryLocalDetailScreen(): JSX.Element {
 
   const needUseSwap = useMemo(() => {
     return Boolean(
-      data.maxGasTx.action?.actionData?.swap ||
+      type === HistoryItemCateType.Swap ||
+        data.maxGasTx.action?.actionData?.swap ||
         data.maxGasTx.action?.actionData?.wrapToken ||
         data.maxGasTx.action?.actionData?.unWrapToken,
     );
-  }, [data]);
+  }, [data, type]);
 
   return (
     <NormalScreenContainer2024

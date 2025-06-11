@@ -135,7 +135,13 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
   }, [accounts, data]);
 
   const receiveToken: ReceiveTokenItem =
-    actionData.minReceive || actionData.receiveToken;
+    actionData.minReceive ||
+    actionData.receiveToken ||
+    data.maxGasTx.explain?.balance_change?.receive_token_list[0];
+
+  const payToken: TokenItem =
+    actionData.payToken ||
+    data.maxGasTx.explain?.balance_change?.send_token_list[0];
 
   if (!chain) {
     return null;
@@ -147,18 +153,18 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
         <View style={[styles.doubleBox]}>
           <TouchableOpacity
             style={[styles.fromTokenBox]}
-            onPress={() => handleGotoDetail(actionData.payToken)}>
+            onPress={() => handleGotoDetail(payToken)}>
             <AssetAvatar
-              logo={actionData.payToken?.logo_url}
+              logo={payToken?.logo_url}
               size={42}
-              chain={actionData.payToken?.chain}
+              chain={payToken?.chain}
               chainSize={16}
             />
             <View style={[styles.rowBox, isFail && styles.isFailBox]}>
               <Text
                 style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-                {'-'} {formatTokenAmount(actionData.payToken.amount)}{' '}
-                {getTokenSymbol(actionData.payToken as TokenItem)}
+                {'-'} {formatTokenAmount(payToken?.amount)}{' '}
+                {getTokenSymbol(payToken as TokenItem)}
               </Text>
               <RcIconRightCC
                 color={colors2024['neutral-foot']}
