@@ -179,10 +179,11 @@ export const useTokens = (
         _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
         setMainnetTokens([...filterDisplayToken(_tokens)]);
-        setLoading(false);
         log('<<==Tokens-end==>>', userAddr);
       } catch (error) {
         setTargetServicesError([ServiceErrorType.Tokens], true);
+      } finally {
+        setLoading(false);
       }
     },
     [setLoading, setMainnetTokens, setTargetServicesError, userAddr],

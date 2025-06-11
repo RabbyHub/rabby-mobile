@@ -185,9 +185,10 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
         const tokenSetting = await preferenceService.getUserTokenSettings();
         setData(tagProfiles(realtimeData, tokenSetting));
         setHasValue(!!protocols.length);
-        setLoading(false);
       } catch (error) {
         setTargetServicesError([ServiceErrorType.Defi], true);
+      } finally {
+        setLoading(false);
       }
     },
     [setData, setHasValue, setLoading, setTargetServicesError, userAddr],
