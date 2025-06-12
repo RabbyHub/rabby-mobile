@@ -305,6 +305,8 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.Receive]: {
     account: Account;
+    tokenSymbol?: string;
+    chainEnum?: CHAINS_ENUM | string;
   };
   [RootNames.Approvals]: {
     account: Account;
