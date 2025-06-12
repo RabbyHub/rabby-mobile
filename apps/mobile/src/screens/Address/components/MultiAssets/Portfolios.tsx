@@ -728,8 +728,6 @@ export const Portfolios = () => {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: 'red',
   },
   list: {
     backgroundColor: ctx.isLight
