@@ -33,6 +33,11 @@ import { Send } from './components/Actions/Send';
 import { useTranslation } from 'react-i18next';
 import { UnknownAction } from './components/Actions/UnknownAction';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { Text } from 'react-native';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { findAccountByPriority } from '@/utils/account';
 
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
@@ -108,6 +113,28 @@ function HistoryLocalDetailScreen(): JSX.Element {
     );
   }, [data]);
 
+  const { accounts } = useMyAccounts({
+    disableAutoFetch: true,
+  });
+
+  const txAccount = useMemo(() => {
+    const keyringType = data.keyringType;
+    let account: KeyringAccountWithAlias | undefined;
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        isSameAddress(acc.address, data.address) &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    if (keyringType) {
+      account = canUseAccountList.find(acc => acc.type === data.keyringType);
+    }
+    if (!account) {
+      account = findAccountByPriority(canUseAccountList);
+    }
+    return account;
+  }, [accounts, data.address, data.keyringType]);
+
   return (
     <NormalScreenContainer2024
       type={!isLight ? 'bg1' : 'bg2'}
@@ -120,41 +147,72 @@ function HistoryLocalDetailScreen(): JSX.Element {
           needUseSwap || data.maxGasTx.action?.actionData?.send ? 0 : 16,
       }}>
       {data.maxGasTx.action?.actionData?.approveToken ? (
-        <ApproveToken data={data} isSingleAddress={!isForMultipleAddress} />
+        <ApproveToken
+          data={data}
+          isSingleAddress={!isForMultipleAddress}
+          account={txAccount}
+        />
       ) : data.maxGasTx.action?.actionData?.approveNFT ? (
-        <ApproveNFT data={data} isSingleAddress={!isForMultipleAddress} />
+        <ApproveNFT
+          data={data}
+          isSingleAddress={!isForMultipleAddress}
+          account={txAccount}
+        />
       ) : data.maxGasTx.action?.actionData?.approveNFTCollection ? (
         <ApproveNFTCollection
           data={data}
           isSingleAddress={!isForMultipleAddress}
+          account={txAccount}
         />
       ) : data.maxGasTx.action?.actionData?.revokeNFT ? (
-        <RevokeNFT data={data} isSingleAddress={!isForMultipleAddress} />
+        <RevokeNFT
+          data={data}
+          isSingleAddress={!isForMultipleAddress}
+          account={txAccount}
+        />
       ) : data.maxGasTx.action?.actionData?.revokeNFTCollection ? (
         <RevokeNFTCollection
           data={data}
           isSingleAddress={!isForMultipleAddress}
+          account={txAccount}
         />
       ) : data.maxGasTx.action?.actionData?.revokeToken ? (
-        <RevokeToken data={data} isSingleAddress={!isForMultipleAddress} />
+        <RevokeToken
+          data={data}
+          isSingleAddress={!isForMultipleAddress}
+          account={txAccount}
+        />
       ) : data.maxGasTx.action?.actionData?.cancelTx ? (
-        <CancelTx data={data} isSingleAddress={!isForMultipleAddress} />
+        <CancelTx
+          data={data}
+          isSingleAddress={!isForMultipleAddress}
+          account={txAccount}
+        />
       ) : data.maxGasTx.action?.actionData?.deployContract ? (
-        <DeployContact data={data} isSingleAddress={!isForMultipleAddress} />
+        <DeployContact
+          data={data}
+          isSingleAddress={!isForMultipleAddress}
+          account={txAccount}
+        />
       ) : needUseSwap ? (
         <Swap
           data={data}
           isSingleAddress={!isForMultipleAddress}
-          // account={txAccount}
+          account={txAccount}
         />
       ) : data.maxGasTx.action?.actionData?.send ? (
         <Send
           data={data}
           isSingleAddress={!isForMultipleAddress}
           onPressBottomBtn={onPressBottomBtn}
+          account={txAccount}
         />
       ) : (
-        <UnknownAction data={data} isSingleAddress={!isForMultipleAddress} />
+        <UnknownAction
+          data={data}
+          isSingleAddress={!isForMultipleAddress}
+          account={txAccount}
+        />
       )}
     </NormalScreenContainer2024>
   );

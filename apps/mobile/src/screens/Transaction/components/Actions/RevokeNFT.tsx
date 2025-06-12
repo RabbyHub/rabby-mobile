@@ -30,13 +30,19 @@ import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { HistoryItemCateType } from '../type';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
-export const RevokeNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const RevokeNFT: React.FC<Props> = ({
+  data,
+  isSingleAddress,
+  account,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -79,6 +85,7 @@ export const RevokeNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
     naviPush(RootNames.NftDetail, {
       token: actionData.nft,
       isSingleAddress,
+      account,
     });
   });
 

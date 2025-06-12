@@ -34,13 +34,19 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { formatAmount } from '@/utils/number';
 import { HistoryItemCateType } from '../type';
 import { findAccountByPriority } from '@/utils/account';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
-export const ApproveNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const ApproveNFT: React.FC<Props> = ({
+  data,
+  isSingleAddress,
+  account,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -100,6 +106,7 @@ export const ApproveNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
     naviPush(RootNames.NftDetail, {
       token: actionData.nft,
       isSingleAddress,
+      account,
     });
   });
 

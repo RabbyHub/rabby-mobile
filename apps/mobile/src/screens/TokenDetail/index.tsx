@@ -569,7 +569,6 @@ export const TokenDetailScreen = () => {
           tokenUsdValue={tokenWithAmount?.price}
           finalAccount={finalAccount}
           accounts={accounts}
-          switchAccount={switchAccount}
           amountList={tokenFromAddress}
           token={token}
         />
