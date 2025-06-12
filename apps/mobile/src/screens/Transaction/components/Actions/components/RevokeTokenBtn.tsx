@@ -42,6 +42,7 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
       token.id,
       spender,
       account.address,
+      account,
     );
 
     const amount = new BigNumber(res)
