@@ -45,7 +45,7 @@
     "@onekeyfe/hd-transport-react-native/@onekeyfe/react-native-ble-plx": "npm:react-native-ble-plx@3.1.2"
   },
   "dependencies": {
-    "@debank/common": "0.3.58",
+    "@debank/common": "0.3.60",
     "@debank/festats": "1.0.4",
     "@eth-optimism/contracts-ts": "^0.17.0",
     "@ethereumjs/common": "4.2.0",
