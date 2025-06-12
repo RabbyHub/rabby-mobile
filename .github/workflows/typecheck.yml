@@ -1,0 +1,49 @@
+name: Type Check
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+  schedule:
+    - cron: '30 0 * * 0'
+
+defaults:
+  run:
+    shell: bash -ieol pipefail {0}
+
+jobs:
+  type_check:
+    name: Build
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+    # runs-on:
+    #   - ubuntu-latest
+    runs-on:
+      - self-hosted
+      - macOS
+      - mobile
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v4
+
+      - name: '[Linux] Setup Nodejs and Yarn'
+        if: runner.os == 'Linux'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Run Type Check
+        run: |
+          cd apps/mobile;
+          yarn install --frozen-lockfile;
+          time yarn typecheck;
+
+

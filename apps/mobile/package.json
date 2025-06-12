@@ -34,10 +34,6 @@
     "test": "jest",
     "postversion": "react-native-version --never-amend"
   },
-  "lint-staged": {
-    "*.{,js,jsx,ts,tsx}": "eslint --fix --quiet",
-    "*": "prettier --write --ignore-unknown"
-  },
   "resolutions": {
     "eth-rpc-errors": "^4.0.3",
     "json-rpc-engine/eth-rpc-errors": "^4.0.3",

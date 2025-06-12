@@ -1,5 +1,5 @@
 #!/bin/bash -l
 . "$(dirname -- "$0")/_/husky.sh"
 
-yarn typecheck
+[ "$RUN_TYPE_CHECK" == "true" ] && yarn workspace rabby-mobile lint-staged
 yarn lint-staged
