@@ -5,7 +5,7 @@ import {
 } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
@@ -84,14 +84,14 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
 
   return result;
 };
-
+export const loadingMultiCurveAtom = atom(true);
 export const useMultiCurve = (
   addresses: string[],
   disableAutoFetch?: boolean,
   totalBalance?: number,
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
   const { setTargetServicesError } = useGlobalStatus();
 
   const fetch = useCallback(
@@ -204,7 +204,7 @@ export const useMultiCurve = (
         setLoading(false);
       }
     },
-    [setMultiTimeStamp, setTargetServicesError],
+    [setLoading, setMultiTimeStamp, setTargetServicesError],
   );
 
   const refresh = useCallback(

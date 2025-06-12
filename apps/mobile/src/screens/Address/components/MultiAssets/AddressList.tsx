@@ -28,14 +28,12 @@ import { useBalanceUpdate } from './hooks/balance';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { useTriggerUpdate } from './hooks/triggerUpdate';
 
 const SPACING_HEIGHT = 8;
 export const AddressList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const {
     top10Addresses,
@@ -266,17 +264,14 @@ export const AddressList = () => {
   );
 
   const onRefresh = useCallback(async () => {
-    setIsRefreshing(true);
     try {
       await Promise.all([
         triggerUpdate(true),
         refreshCurve(true),
         fetchAccounts(),
       ]);
-      setIsRefreshing(false);
     } catch (error) {
       console.error('Refresh failed:', error);
-      setIsRefreshing(false);
     }
   }, [fetchAccounts, refreshCurve, triggerUpdate]);
 
@@ -293,7 +288,7 @@ export const AddressList = () => {
         <RefreshControl
           style={styles.bgContainer}
           onRefresh={onRefresh}
-          refreshing={isRefreshing}
+          refreshing={false}
         />
       }
     />

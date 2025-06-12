@@ -15,8 +15,9 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
 import { refreshingAtom } from './hooks/project';
-import { useAtom } from 'jotai';
+import { useAtomValue } from 'jotai';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
+import { loadingCurveAtom } from '@/hooks/useCurve';
 
 export default function HomeHeaderArea({
   account: currentAccount,
@@ -24,7 +25,8 @@ export default function HomeHeaderArea({
   account: Account;
 }) {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const [refreshing] = useAtom(refreshingAtom);
+  const refreshing = useAtomValue(refreshingAtom);
+  const isLoadingCurve = useAtomValue(loadingCurveAtom);
 
   const name = useMemo(
     () => currentAccount?.aliasName || currentAccount?.brandName,
@@ -78,7 +80,7 @@ export default function HomeHeaderArea({
               style={styles.titleText}>
               {name}
             </Text>
-            {refreshing ? (
+            {refreshing || isLoadingCurve ? (
               <LoadingCircle />
             ) : (
               <RcIconCopy style={styles.copy} />

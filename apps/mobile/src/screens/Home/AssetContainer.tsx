@@ -470,7 +470,7 @@ export const AssetContainer: React.FC<Props> = ({
   const handleRefresh = useCallback(
     async (ignoreLoading?: boolean) => {
       onRefresh?.();
-      await refreshCurve(ignoreLoading);
+      refreshCurve(ignoreLoading);
       refreshPositions(true);
     },
     [onRefresh, refreshCurve, refreshPositions],
