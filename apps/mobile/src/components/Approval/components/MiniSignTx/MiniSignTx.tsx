@@ -1139,6 +1139,7 @@ export const MiniSignTx = ({
             nativeTokenPrice: item.preExecResult.native_token.price || 0,
             tx: item.tx,
             gasLimit: item.gasLimit,
+            account,
           }),
         ),
       );
@@ -1160,7 +1161,7 @@ export const MiniSignTx = ({
       );
       return totalCost;
     },
-    [chainId, txsResult],
+    [account, chainId, txsResult],
   );
 
   return (
@@ -1202,6 +1203,7 @@ export const MiniSignTx = ({
             gasCalcMethod={gasCalcMethod}
             directSubmit={directSubmit}
             checkGasLevelIsNotEnough={checkGasLevelIsNotEnough}
+            account={currentAccount}
           />
         }
         isSwap={isSwap}
