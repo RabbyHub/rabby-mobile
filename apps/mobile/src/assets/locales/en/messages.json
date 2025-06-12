@@ -950,6 +950,12 @@
         "search": "Search Token"
       }
     },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "Copy Trading from Smart Money",
+        "description": "Discover tokens based on recent activity from smart money wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
+      }
+    },
     "dashboard": {
       "home": {
         "missingDataTooltip": "Balance may not be updated due to current network issues with {{text}}.",

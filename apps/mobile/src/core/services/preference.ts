@@ -126,6 +126,7 @@ export interface PreferenceStore {
   sendLogTime?: number;
   lastSelectedGasTopUpChain?: Record<string, CHAINS_ENUM>;
   sendEnableTime?: number;
+  hasOpenCopyTrading?: boolean;
   customizedToken?: Token[];
   blockedToken?: Token[];
   // manage token
@@ -243,6 +244,7 @@ export class PreferenceService {
           tokenManageSettingMap: {},
           safeSelfHostConfirm: {},
           addressAvatarMap: {},
+          hasOpenCopyTrading: false,
         },
       },
       {
@@ -257,6 +259,14 @@ export class PreferenceService {
       this.store.safeSelfHostConfirm = {};
     }
   }
+
+  setHasOpenCopyTrading = (value: boolean) => {
+    this.store.hasOpenCopyTrading = value;
+  };
+
+  getHasOpenCopyTrading = () => {
+    return this.store.hasOpenCopyTrading;
+  };
 
   addAddressAvatar = (address: string, avatar: string) => {
     const key = address.toLowerCase();
