@@ -13,18 +13,16 @@ import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useSQLiteInfo } from '@/core/databases/hooks';
 import { Button } from '@/components2024/Button';
-import { syncRemoteTokens } from '@/databases/sync/assets';
-import { useCurrentAccount } from '@/hooks/account';
 import { useAssetsBasicInfo } from '@/databases/hooks/assets';
 import { batchQueryTokensWithLocalCache } from '../Home/utils/token';
+import { preferenceService } from '@/core/services';
 
 function DevDataSQLite() {
   const { styles, colors2024, colors } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
-
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = preferenceService.getFallbackAccount();
   const { sqliteInfo } = useSQLiteInfo({ enableAutoFetch: true });
   const { assetsInfo, fetchAssetsInfo } = useAssetsBasicInfo({
     enableAutoFetch: true,

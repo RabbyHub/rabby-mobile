@@ -1,8 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useQueryProjects } from './hooks';
 import useSortToken from './hooks/useSortTokens';

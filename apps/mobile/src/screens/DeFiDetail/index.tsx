@@ -20,11 +20,7 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { preferenceService } from '@/core/services';
-import {
-  KeyringAccountWithAlias,
-  useCurrentAccount,
-  useMyAccounts,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -171,10 +167,9 @@ export const DeFiDetailScreen = () => {
   };
 
   // todo check this
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const finalAccount = useMemo(
-    () => routeAccount || currentAccount,
-    [routeAccount, currentAccount],
+    () => routeAccount || preferenceService.getFallbackAccount(),
+    [routeAccount],
   );
 
   const { data: currentPortfolio, updateData: singleUpdateData } =

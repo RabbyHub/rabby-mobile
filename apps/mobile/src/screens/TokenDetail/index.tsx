@@ -5,7 +5,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { Tip } from '@/components/Tip';
-import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import {
@@ -242,11 +242,8 @@ export const TokenDetailScreen = () => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
-  // todo check this
-  const { currentAccount, switchAccount } = useCurrentAccount({
-    disableAutoFetch: true,
-  });
-  const finalAccount = account || currentAccount;
+
+  const finalAccount = account || preferenceService.getFallbackAccount();
 
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
@@ -375,12 +372,12 @@ export const TokenDetailScreen = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        key={currentAccount?.address}
+        key={finalAccount?.address}
         token={token}
         refreshTags={refreshTag}
       />
     );
-  }, [currentAccount?.address, token, refreshTag]);
+  }, [finalAccount?.address, token, refreshTag]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();

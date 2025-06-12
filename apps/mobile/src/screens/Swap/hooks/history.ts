@@ -1,5 +1,4 @@
 import { openapi } from '@/core/request';
-import { useCurrentAccount } from '@/hooks/account';
 import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';

@@ -30,7 +30,7 @@ export async function addWatchAddress(address: string) {
 export const addWatchAddressOnly = addWatchAddress;
 
 export function getCurrentAccount() {
-  return preferenceService.getCurrentAccount();
+  return preferenceService.getFallbackAccount();
 }
 
 async function resetCurrentAccount() {

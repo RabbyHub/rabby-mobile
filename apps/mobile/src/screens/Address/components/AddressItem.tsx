@@ -1,5 +1,5 @@
 import { RootNames } from '@/constant/layout';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -52,7 +52,6 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     isLoss,
     disableMenu,
   } = props;
-  const { switchAccount } = useCurrentAccount();
   const { styles } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
 
@@ -64,7 +63,6 @@ export const AddressItemEntry = (props: AddressItemProps) => {
       enableVibrateFallback: true,
       ignoreAndroidSystemSettings: false,
     });
-    switchAccount(account);
     onSelect?.();
     navigate(RootNames.SingleAddressStack, {
       screen: RootNames.SingleAddressHome,
@@ -72,7 +70,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
         account,
       },
     });
-  }, [account, onSelect, switchAccount]);
+  }, [account, onSelect]);
 
   const isCurrentAccount = React.useMemo(() => {
     return (

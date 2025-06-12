@@ -72,7 +72,7 @@ export const scrollL1FeeEstimate = async (
   txParams: any,
   _account?: Account,
 ) => {
-  const account = _account || (await preferenceService.getCurrentAccount());
+  const account = _account || preferenceService.getFallbackAccount();
   const iface = new ethers.utils.Interface([
     {
       type: 'constructor',
@@ -117,7 +117,7 @@ export const opStackL1FeeEstimate = async (
   chain: CHAINS_ENUM,
   _account?: Account,
 ) => {
-  const account = _account || (await preferenceService.getCurrentAccount());
+  const account = _account || preferenceService.getFallbackAccount();
   const address = addresses.GasPriceOracle[420];
   const abi = abis.GasPriceOracle;
   const serializedTransaction = buildUnserializedTransaction({

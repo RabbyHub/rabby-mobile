@@ -27,7 +27,7 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { CurrentDappPopup } from './CurrentDappPopup';
-import { useCurrentAccount } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 
 export function BrowserHeader({
   dapp,
@@ -67,13 +67,17 @@ export function BrowserHeader({
 
   const navigation = useRabbyAppNavigation();
 
-  const { currentAccount } = useCurrentAccount({
+  const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
 
   const account = useMemo(() => {
-    return dapp?.currentAccount || currentAccount;
-  }, [currentAccount, dapp?.currentAccount]);
+    return (
+      dapp?.currentAccount ||
+      accounts?.[0] ||
+      preferenceService.getFallbackAccount()
+    );
+  }, [accounts, dapp?.currentAccount]);
 
   const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
   const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);

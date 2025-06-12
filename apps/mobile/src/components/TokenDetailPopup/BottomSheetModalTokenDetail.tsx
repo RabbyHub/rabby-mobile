@@ -17,7 +17,6 @@ import {
   BottomSheetFlatList,
   BottomSheetFlatListMethods,
   BottomSheetProps,
-  BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {
   TokenItem,
@@ -25,8 +24,8 @@ import {
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
-import { AbstractPortfolioToken } from '@/screens/home/types';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+// import { AbstractPortfolioToken } from '@/screens/home/types';
 import { useInfiniteScroll, useMemoizedFn } from 'ahooks';
 import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
 
@@ -71,6 +70,7 @@ import { apiCustomTestnet } from '@/core/apis';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
 
 const PAGE_COUNT = 10;
 
@@ -489,9 +489,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
   ) => {
     const { styles } = useThemeStyles(getStyles);
     const { t } = useTranslation();
-    // todo check this
-    const { currentAccount } = useCurrentAccount();
-    const finalAccount = address || currentAccount;
+    const finalAccount = address;
     const [tokenLoad, setTokenLoad] = React.useState<{
       isLoading: boolean;
       token: TokenItem | null;
@@ -801,8 +799,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
               params: {
                 chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
                 tokenSymbol: token?.symbol,
-                // todo fix this
-                account: currentAccount,
+                account: finalAccount,
               },
             });
             break;
@@ -818,7 +815,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         nextTxRedirectAccount,
         navigation,
         navigateToSendPolyScreen,
-        currentAccount,
+        finalAccount,
       ],
     );
 

@@ -62,17 +62,15 @@ export const TokenArea: React.FC<Props> = ({
     (item: TokenFromAddressItem) => {
       const account = accounts.find(a => a.address === item.address);
       if (account) {
-        switchAccount(account);
         navigate(RootNames.SingleAddressStack, {
           screen: RootNames.SingleAddressHome,
           params: {
-            scrollToToken: token.id, // to do
             account: account,
           },
         });
       }
     },
-    [accounts, switchAccount, token.id],
+    [accounts],
   );
 
   const renderItem = useCallback(

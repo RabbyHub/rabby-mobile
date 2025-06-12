@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { RcIconDisconnectCC } from '@/assets/icons/dapp';
@@ -13,8 +13,9 @@ import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
 import { useTranslation } from 'react-i18next';
-import { dappService, preferenceService } from '@/core/services';
+import { preferenceService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
+import { useMyAccounts } from '@/hooks/account';
 
 interface Props {
   visible?: boolean;
@@ -28,6 +29,15 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
   });
 
   const { t } = useTranslation();
+
+  const { accounts } = useMyAccounts();
+  const account = useMemo(() => {
+    return (
+      dapp?.currentAccount ||
+      accounts?.[0] ||
+      preferenceService.getFallbackAccount()
+    );
+  }, [accounts, dapp?.currentAccount]);
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -76,9 +86,7 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
               </Text>
               <View>
                 <ChainSelector
-                  account={
-                    dapp.currentAccount || preferenceService.getCurrentAccount()
-                  }
+                  account={account}
                   value={dapp.chainId || CHAINS_ENUM.ETH}
                   onChange={v => {
                     apisDapp.updateDappChain({
@@ -95,9 +103,7 @@ export function CurrentDappPopup({ visible, onClose, dapp }: Props) {
               </Text>
               <View style={styles.rowValue}>
                 <AccountSelector
-                  value={
-                    dapp.currentAccount || preferenceService.getCurrentAccount()
-                  }
+                  value={account}
                   onChange={v => {
                     apisDapp.setCurrentAccountForDapp(dapp.origin, v);
                   }}

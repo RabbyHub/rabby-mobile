@@ -11,7 +11,6 @@ import {
   swapService,
   transactionHistoryService,
 } from '@/core/services';
-import { useCurrentAccount } from '@/hooks/account';
 import { SendRequireData } from '@rabby-wallet/rabby-action/dist/types/actionRequireData';
 import { getAliasName } from '@/core/apis/contact';
 import { TransactionGroup } from '@/core/services/transactionHistory';

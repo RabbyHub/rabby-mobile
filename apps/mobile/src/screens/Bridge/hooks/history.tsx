@@ -1,19 +1,12 @@
-import {
-  useInfiniteScroll,
-  useInterval,
-  useMemoizedFn,
-  useRequest,
-} from 'ahooks';
+import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
-import { currentAccountAtom, useCurrentAccount } from '@/hooks/account';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { bridgeService, transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
-import { fetchRefreshLocalData } from '@/screens/Swap/hooks/history';
 import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 

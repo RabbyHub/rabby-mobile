@@ -732,6 +732,7 @@ export const SignTestnetTx = ({
               engineResults={[]}
               nativeTokenBalance={nativeTokenBalance}
               gasPriceMedian={null}
+              account={currentAccount}
             />
           }
           isWatchAddr={currentAccountType === KEYRING_TYPE.WatchAddressKeyring}

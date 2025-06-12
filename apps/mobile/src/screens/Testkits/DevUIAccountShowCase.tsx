@@ -1,16 +1,16 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { useNavigation } from '@react-navigation/native';
-import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { NextInput } from '@/components2024/Form/Input';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
-import { KEYRING_TYPE, KeyringAccount } from '@rabby-wallet/keyring-utils';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { preferenceService } from '@/core/services';
 import { FontNames } from '@/core/utils/fonts';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useNavigation } from '@react-navigation/native';
 
 const TEST_ACCOUNT: Pick<
   KeyringAccountWithAlias,
@@ -29,7 +29,7 @@ function DevUIAccountShowCase(): JSX.Element {
 
   const navigation = useNavigation();
 
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = preferenceService.getFallbackAccount();
 
   return (
     <NormalScreenContainer

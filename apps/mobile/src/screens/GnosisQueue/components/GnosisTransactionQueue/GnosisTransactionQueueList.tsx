@@ -5,7 +5,7 @@ import {
 } from '@/assets/icons/gnosis';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { apisSafe } from '@/core/apis/safe';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useGnosisSafeInfo } from '@/hooks/gnosis/useGnosisSafeInfo';
 import { useThemeColors } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';

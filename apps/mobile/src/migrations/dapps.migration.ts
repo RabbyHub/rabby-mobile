@@ -25,7 +25,7 @@ export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
           }
           const preference = ctx.services[APP_STORE_NAMES.preference];
 
-          const currentAccount = preference.getCurrentAccount();
+          const currentAccount = preference.getFallbackAccount();
           const dapps = Object.values(dappService.getDapps());
           dapps
             .filter(dapp => dapp.isConnected && !dapp.currentAccount)

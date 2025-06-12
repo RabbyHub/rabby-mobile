@@ -412,6 +412,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     tx,
     gasLimit,
     isReady,
+    account: currentAccount,
   });
 
   const checkErrors = useCheckGasAndNonce({
@@ -1699,6 +1700,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                     nativeTokenPrice: txDetail?.native_token.price || 0,
                     tx,
                     gasLimit,
+                    account: currentAccount,
                   });
                 }}
                 recommendGasLimit={recommendGasLimit}
@@ -1716,6 +1718,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 engineResults={engineResults}
                 nativeTokenBalance={nativeTokenBalance}
                 gasPriceMedian={gasPriceMedian}
+                account={currentAccount}
               />
             }
             noCustomRPC={noCustomRPC}
