@@ -266,8 +266,10 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       ): MenuAction[] => {
         const isFold =
           'nft_list' in data && data.nft_list.length
-            ? data.nft_list?.every(i => i._isFold)
-            : data._isFold;
+            ? data.nft_list?.every(
+                i => (i as unknown as AbstractProject)._isFold,
+              )
+            : (data as AbstractProject)._isFold;
         return [
           {
             title: isFold

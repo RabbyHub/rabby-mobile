@@ -38,7 +38,9 @@ export const bottomNavStyles = StyleSheet.create({
   },
 });
 
-function TouchableItem(props: React.ComponentProps<typeof TouchableView>) {
+function TouchableItem(
+  props: Omit<React.ComponentProps<typeof TouchableView>, 'ref'>,
+) {
   return (
     <TouchableView
       pressOpacity={BOTTOM_NAV_CONTROL_PRESS_OPACITY}

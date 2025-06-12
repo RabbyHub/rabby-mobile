@@ -17,7 +17,7 @@ const createGlobalBottomSheetModal = <T extends MODAL_NAMES = MODAL_NAMES>(
   const id = `${params.name}_${uniqueId(`gBm_`)}` as MODAL_ID;
   globalSheetModalEvents.emit(EVENT_NAMES.CREATE, id, params);
 
-  return id;
+  return id as MODAL_ID;
 };
 
 async function removeGlobalBottomSheetModal(

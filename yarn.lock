@@ -7729,7 +7729,7 @@ __metadata:
     "@rabby-wallet/gnosis-sdk": 1.4.3
     "@rabby-wallet/keyring-utils": ^0.1.0
     "@safe-global/protocol-kit": 5.0.3
-    "@safe-global/types-kit": 1.0.2
+    "@safe-global/types-kit": 1.0.4
     "@types/jest": ^27.4.1
     "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
@@ -9745,21 +9745,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@safe-global/types-kit@npm:1.0.2, @safe-global/types-kit@npm:^1.0.0":
-  version: 1.0.2
-  resolution: "@safe-global/types-kit@npm:1.0.2"
-  dependencies:
-    abitype: ^1.0.2
-  checksum: 3bdfd5c30275fff5b6846866d6e5c0f69755d6e22398f634b8efa00281e4776187b01e0ef703b16a5ab83641e79ccc047d8b5cc85e6daacd6db2924b03396055
-  languageName: node
-  linkType: hard
-
-"@safe-global/types-kit@npm:^1.0.2, @safe-global/types-kit@npm:^1.0.4":
+"@safe-global/types-kit@npm:1.0.4":
   version: 1.0.4
   resolution: "@safe-global/types-kit@npm:1.0.4"
   dependencies:
     abitype: ^1.0.2
   checksum: 3dcd9f19962e53ca23dc945a3a7353327088634d07e962b8e0f1ecdf28782ce1c4c4dfce1b54c23c1382ee534e232b73f914500cf58c9baa1d20b10f3701e765
+  languageName: node
+  linkType: hard
+
+"@safe-global/types-kit@patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 1.0.4
+  resolution: "@safe-global/types-kit@patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch::version=1.0.4&hash=2b8070&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    abitype: ^1.0.2
+  checksum: 5c06111c478622532a9c04f15dc0c4e699849f4a9a21893a476158b3331289f60b6e27eb19d39378b281debef3809b3d14975bbbe8920b438329e1e0854624e4
   languageName: node
   linkType: hard
 

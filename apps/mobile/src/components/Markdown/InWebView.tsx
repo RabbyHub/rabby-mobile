@@ -6,6 +6,8 @@ import MarkdownIt from 'markdown-it';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { WEBVIEW_BUILTIN_FONT_CSS } from '@/constant/webviewCss';
+import { ColorOrVariant } from '@/core/theme';
+import { AppColorsVariants } from '@/constant/theme';
 
 const dMarkdownit = MarkdownIt({ typographer: true });
 
@@ -15,10 +17,8 @@ const TestRunFirst = `
   true; // note: this is required, or you'll sometimes get silent failures
 `;
 
-const getMarkdownPageStyle = createGetStyles(colors => {
-  return `
-  ${WEBVIEW_BUILTIN_FONT_CSS}
-
+const getMarkdownPageStyle = (colors: AppColorsVariants) => {
+  return `${WEBVIEW_BUILTIN_FONT_CSS}
   html, body {
     height: '100%';
     width: '100%';
@@ -82,7 +82,7 @@ const getMarkdownPageStyle = createGetStyles(colors => {
   ul li { list-style-type: disc; }
   ol li { list-style-type: decimal; }
 `;
-});
+};
 
 export function MarkdownInWebView({
   markdown,

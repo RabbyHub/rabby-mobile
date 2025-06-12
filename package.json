@@ -74,7 +74,12 @@
     "react-native-bundle-visualizer@3.1.0": "patch:react-native-bundle-visualizer@npm%3A3.1.0#./.yarn/patches/react-native-bundle-visualizer-npm-3.1.0-6744c68ec9.patch",
     "@debank/common@^0.3.54": "patch:@debank/common@npm%3A0.3.60#./.yarn/patches/@debank-common-npm-0.3.60-676123558a.patch",
     "@debank/common@0.3.60": "patch:@debank/common@npm%3A0.3.60#./.yarn/patches/@debank-common-npm-0.3.60-676123558a.patch",
-    "@rabby-wallet/rabby-api@0.9.21": "patch:@rabby-wallet/rabby-api@npm%3A0.9.21#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.9.21-e82550ef8a.patch"
+    "@rabby-wallet/rabby-api@0.9.21": "patch:@rabby-wallet/rabby-api@npm%3A0.9.21#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.9.21-e82550ef8a.patch",
+    "@safe-global/types-kit@1.0.4": "patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch",
+    "@safe-global/types-kit@^1.0.0": "patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch",
+    "@safe-global/types-kit@1.0.2": "patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch",
+    "@safe-global/types-kit@^1.0.2": "patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch",
+    "@safe-global/types-kit@^1.0.4": "patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",

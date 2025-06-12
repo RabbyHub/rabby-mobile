@@ -90,8 +90,8 @@ export const PendingTxItem = ({
   });
 
   // const sendActionData = data.maxGasTx.action?.actionData?.send;
-  const payToken = data?.fromToken;
-  const receiveToken = data?.toToken;
+  const payToken = (data as SwapTxHistoryItem)?.fromToken;
+  const receiveToken = (data as SwapTxHistoryItem)?.toToken;
   // const sendTokenList = data.maxGasTx.explain?.balance_change?.send_token_list;
   // const receiveTokenList =
   //   data.maxGasTx.explain?.balance_change?.receive_token_list;

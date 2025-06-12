@@ -169,6 +169,7 @@ const rabbyPointVerifyAddress = async (params?: {
 
   const signature = await sendRequest<string>(
     {
+      // @ts-expect-error FIXME: it seems error due to biz changes, fix it later
       method: 'personal_sign',
       params: [msg, account.address],
     },

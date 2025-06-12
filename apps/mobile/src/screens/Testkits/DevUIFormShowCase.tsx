@@ -22,7 +22,10 @@ import { RcIconScannerCC } from '@/assets/icons/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 
 function wrapSampleInput<
-  T extends typeof NextInput | typeof NextInput.Password,
+  T extends
+    | typeof NextInput
+    | typeof NextInput.Password
+    | typeof NextInput.TextArea,
 >(
   Input: T,
   options?: {

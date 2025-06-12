@@ -60,14 +60,14 @@ export function resolveNativeModule<T extends keyof NativeModulesStatic>(
 
   const module: NativeModulesStatic[T] = nModule
     ? nModule
-    : new Proxy(
+    : (new Proxy(
         {},
         {
           get() {
             throw new Error(NATIVE_ERROR);
           },
         },
-      );
+      ) as any);
 
   return {
     [name]: module,

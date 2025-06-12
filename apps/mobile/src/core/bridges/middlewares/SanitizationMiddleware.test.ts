@@ -13,6 +13,7 @@ describe('createSanitizationMiddleware', () => {
   it('does nothing if the params are an object', () => {
     const sanitizationMiddleware = createSanitizationMiddleware();
     const req = {
+      origin: 'https://example.com',
       jsonrpc: '2.0' as const,
       id: '1',
       method: 'something_else',
@@ -31,6 +32,7 @@ describe('createSanitizationMiddleware', () => {
   it('does nothing if the first param is not an object', () => {
     const sanitizationMiddleware = createSanitizationMiddleware();
     const req = {
+      origin: 'https://example.com',
       jsonrpc: '2.0' as const,
       id: '1',
       method: 'eth_call',
@@ -45,6 +47,7 @@ describe('createSanitizationMiddleware', () => {
   it('does nothing if the first param is an array', () => {
     const sanitizationMiddleware = createSanitizationMiddleware();
     const req = {
+      origin: 'https://example.com',
       jsonrpc: '2.0' as const,
       id: '1',
       method: 'eth_call',
@@ -59,6 +62,7 @@ describe('createSanitizationMiddleware', () => {
   it('does nothing if the first param is null', () => {
     const sanitizationMiddleware = createSanitizationMiddleware();
     const req = {
+      origin: 'https://example.com',
       jsonrpc: '2.0' as const,
       id: '1',
       method: 'eth_call',
@@ -73,6 +77,7 @@ describe('createSanitizationMiddleware', () => {
   it('removes any properties that are not transaction-like or topic-like', () => {
     const sanitizationMiddleware = createSanitizationMiddleware();
     const testTxLike = {
+      origin: 'https://example.com',
       jsonrpc: '2.0' as const,
       id: '1',
       method: 'eth_call',
@@ -97,6 +102,7 @@ describe('createSanitizationMiddleware', () => {
       it(`leaves '${permittedProperty}' unaltered when already prefixed and lowercased`, () => {
         const sanitizationMiddleware = createSanitizationMiddleware();
         const testTxLike = {
+          origin: 'https://example.com',
           jsonrpc: '2.0' as const,
           id: '1',
           method: 'eth_call',
@@ -121,6 +127,7 @@ describe('createSanitizationMiddleware', () => {
       it(`leaves '${permittedProperty}' unaltered when it has a non-string value`, () => {
         const sanitizationMiddleware = createSanitizationMiddleware();
         const testTxLike = {
+          origin: 'https://example.com',
           jsonrpc: '2.0' as const,
           id: '1',
           method: 'eth_call',
@@ -146,6 +153,7 @@ describe('createSanitizationMiddleware', () => {
         it(`leaves '${permittedProperty}' unaltered when set to ${blockRef}`, () => {
           const sanitizationMiddleware = createSanitizationMiddleware();
           const testTxLike = {
+            origin: 'https://example.com',
             jsonrpc: '2.0' as const,
             id: '1',
             method: 'eth_call',
@@ -169,6 +177,7 @@ describe('createSanitizationMiddleware', () => {
       it(`hex prefixes and lowercases '${permittedProperty}'`, () => {
         const sanitizationMiddleware = createSanitizationMiddleware();
         const testTxLike = {
+          origin: 'https://example.com',
           jsonrpc: '2.0' as const,
           id: '1',
           method: 'eth_call',
@@ -193,6 +202,7 @@ describe('createSanitizationMiddleware', () => {
       it(`leaves '${permittedProperty}' unaltered when each entry is prefixed and lowercased`, () => {
         const sanitizationMiddleware = createSanitizationMiddleware();
         const testTxLike = {
+          origin: 'https://example.com',
           jsonrpc: '2.0' as const,
           id: '1',
           method: 'eth_call',
@@ -217,6 +227,7 @@ describe('createSanitizationMiddleware', () => {
       it(`leaves '${permittedProperty}' unaltered when each entry is a non-string value`, () => {
         const sanitizationMiddleware = createSanitizationMiddleware();
         const testTxLike = {
+          origin: 'https://example.com',
           jsonrpc: '2.0' as const,
           id: '1',
           method: 'eth_call',
@@ -242,6 +253,7 @@ describe('createSanitizationMiddleware', () => {
         it(`leaves '${permittedProperty}' unaltered when each entry is set to ${blockRef}`, () => {
           const sanitizationMiddleware = createSanitizationMiddleware();
           const testTxLike = {
+            origin: 'https://example.com',
             jsonrpc: '2.0' as const,
             id: '1',
             method: 'eth_call',
@@ -269,6 +281,7 @@ describe('createSanitizationMiddleware', () => {
       it(`hex prefixes and lowercases each entry in '${permittedProperty}'`, () => {
         const sanitizationMiddleware = createSanitizationMiddleware();
         const testTxLike = {
+          origin: 'https://example.com',
           jsonrpc: '2.0' as const,
           id: '1',
           method: 'eth_call',
@@ -295,6 +308,7 @@ describe('createSanitizationMiddleware', () => {
       it(`sanitizes an array of mixed entries in '${permittedProperty}'`, () => {
         const sanitizationMiddleware = createSanitizationMiddleware();
         const testTxLike = {
+          origin: 'https://example.com',
           jsonrpc: '2.0' as const,
           id: '1',
           method: 'eth_call',

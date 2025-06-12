@@ -6,7 +6,7 @@ import BigNumber from 'bignumber.js';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { Text } from '@/components';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -141,8 +141,10 @@ export const NFTDetailScreen = () => {
   } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.NftDetail)?.params,
   ) as GetRootScreensParamsList<'NftDetail'>;
-  const chain = getCHAIN_ID_LIST().get(token.chain);
-  const isSvgURL = token?.content?.endsWith('.svg');
+  type NonListType = Exclude<typeof token, TokenItem[]>;
+
+  const chain = getCHAIN_ID_LIST().get((token as NonListType).chain);
+  const isSvgURL = (token as NonListType)?.content?.endsWith('.svg');
   const iconUri = chain?.logo;
   const { nftRefresh, singleNFTRefresh } = useTriggerTagAssets();
 
@@ -154,7 +156,7 @@ export const NFTDetailScreen = () => {
     }
   }, [isSingleAddress, nftRefresh, singleNFTRefresh]);
   const getHeaderRight = useMemoizedFn(() => {
-    return <RightMore nft={token} refreshTags={refreshTag} />;
+    return <RightMore nft={token as DisplayNftItem} refreshTags={refreshTag} />;
   });
 
   const TokenDetailHeaderArea = useMemoizedFn(() => {
@@ -172,8 +174,8 @@ export const NFTDetailScreen = () => {
             <Media
               failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
               type="image_url"
-              src={isSvgURL ? '' : token?.thumbnail_url}
-              thumbnail={isSvgURL ? '' : token?.thumbnail_url}
+              src={isSvgURL ? '' : (token as NFTItem)?.thumbnail_url}
+              thumbnail={isSvgURL ? '' : (token as NFTItem)?.thumbnail_url}
               mediaStyle={styles.imagesAvatar}
               style={styles.imagesAvatar}
               playIconSize={36}
@@ -190,7 +192,10 @@ export const NFTDetailScreen = () => {
         </View>
         <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
           {/* {token?.name} */}
-          {ellipsisOverflowedText(token?.name || t('global.unknownNFT'), 20)}
+          {ellipsisOverflowedText(
+            (token as NFTItem)?.name || t('global.unknownNFT'),
+            20,
+          )}
         </Text>
       </View>
     );
@@ -253,18 +258,20 @@ export const NFTDetailScreen = () => {
   );
 
   const { assetsMap, getCacheTop10Assets } = useAssets();
+
+  type ItemBase = {
+    data: NFTItem;
+    address: string;
+    index: number;
+    type?: KEYRING_TYPE;
+    aliasName?: string;
+  };
   const itemList = useMemo(() => {
-    const resList: {
-      data: NFTItem;
-      address?: string;
-      index: number;
-      type?: KEYRING_TYPE;
-      aliasName?: string;
-    }[] = [];
+    const resList: ItemBase[] = [];
     if (isSingleAddress && finalAccount) {
       console.debug('relateNFTList isSingleAddress');
       resList.push({
-        data: token,
+        data: token as NFTItem,
         index: 0,
         type: finalAccount.type,
         address: finalAccount.address,
@@ -274,20 +281,16 @@ export const NFTDetailScreen = () => {
       return resList;
     }
 
-    const tempList: {
-      data: NFTItem;
-      address: string;
-      index: number;
-    }[] = [];
+    const tempList: ItemBase[] = [];
 
     Object.keys(assetsMap).map((address, index) => {
       const { nfts } = assetsMap[address];
 
       nfts?.map(item => {
         if (
-          item.id === token.id &&
-          item.chain === token.chain &&
-          item.contract_id === token.contract_id
+          item.id === (token as NFTItem).id &&
+          item.chain === (token as NFTItem).chain &&
+          item.contract_id === (token as NFTItem).contract_id
         ) {
           tempList.push({
             data: item,
@@ -320,7 +323,7 @@ export const NFTDetailScreen = () => {
           {
             data: token,
             index: 0,
-          },
+          } as ItemBase,
         ];
   }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
   useEffect(() => {

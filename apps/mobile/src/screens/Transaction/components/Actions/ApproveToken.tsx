@@ -273,7 +273,6 @@ export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
           <AddressItemInDetail
             address={data.maxGasTx.address}
             accounts={unionAccounts}
-            switchAccount={switchAccount}
           />
         </View>
 

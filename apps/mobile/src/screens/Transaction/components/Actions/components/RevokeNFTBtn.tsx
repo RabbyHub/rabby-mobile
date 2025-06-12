@@ -8,7 +8,6 @@ import { Button } from '@/components2024/Button';
 import {
   approveToken,
   getErc721Approved,
-  getNFTAllowance,
   revokeNFTApprove,
 } from '@/core/apis/approvals';
 import { getERC20Allowance } from '@/core/apis/provider';

@@ -67,7 +67,8 @@ export const DataHeaderInfo = ({
     if (data?.[currentIndex?.value]) {
       return {
         ...styles.percent,
-        display: isLoading ? 'none' : 'unset',
+        ...(isLoading && { display: 'none' }),
+        // display: isLoading ? 'none' : 'unset',
         color: data?.[currentIndex?.value]?.isLoss
           ? colors['red-default']
           : colors['green-default'],
@@ -75,7 +76,8 @@ export const DataHeaderInfo = ({
     }
     return {
       ...styles.percent,
-      display: isLoading ? 'none' : 'unset',
+      ...(isLoading && { display: 'none' }),
+      // display: isLoading ? 'none' : 'unset',
       color: currentIsLoss ? colors['red-default'] : colors['green-default'],
     };
   }, [currentIsLoss, data, currentIndex, colors, styles, isLoading]);
@@ -86,6 +88,7 @@ export const DataHeaderInfo = ({
     <>
       <View style={styles.wrapper}>
         <View style={styles.dateWrapper}>
+          {/* @ts-expect-error maybe we need to upgrade AnimateableText or adapt to react-native-reanimated */}
           <AnimateableText style={styles.date} text={title} />
           {showSupportChainList && supportChainList?.length > 0 && (
             <View style={styles.chainTextWrapper}>
@@ -118,8 +121,10 @@ export const DataHeaderInfo = ({
           )}
         </View>
         <View style={styles.balanceChangeWrapper}>
+          {/* @ts-expect-error maybe we need to upgrade AnimateableText or adapt to react-native-reanimated */}
           <AnimateableText style={styles.usdValue} text={usdValue} />
           {!isLoading && (
+            // @ts-expect-error maybe we need to upgrade AnimateableText or adapt to react-native-reanimated
             <AnimateableText style={lossStyleProps} text={percentChange} />
           )}
         </View>

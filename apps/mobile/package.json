@@ -42,6 +42,7 @@
     "eth-rpc-errors": "^4.0.3",
     "json-rpc-engine/eth-rpc-errors": "^4.0.3",
     "readable-stream": "3.6.2",
+    "@safe-global/types-kit": "1.0.4",
     "@ledgerhq/react-native-hw-transport-ble/react-native-ble-plx": "3.1.2",
     "@onekeyfe/hd-transport-react-native/@onekeyfe/react-native-ble-plx": "npm:react-native-ble-plx@3.1.2"
   },

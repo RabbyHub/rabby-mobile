@@ -32,7 +32,7 @@ import Animated, {
 interface CameraViewProps {
   onCodeScanned?: (code: Code[]) => void;
   containerStyle?: StyleProp<ViewStyle>;
-  size: number;
+  size?: number;
   showScanLine?: boolean;
 }
 
@@ -61,7 +61,7 @@ const getStyles = (colors: AppColorsVariants) =>
 export const CameraView = ({
   onCodeScanned,
   containerStyle,
-  size,
+  size = Dimensions.get('window').width - 70,
   showScanLine,
 }: CameraViewProps) => {
   const colors = useThemeColors();

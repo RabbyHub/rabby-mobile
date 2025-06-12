@@ -18,6 +18,7 @@ import type {
   NFTItem,
   SendAction,
   TokenItem,
+  TransferingNFTItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import type {
   AbstractPortfolio,
@@ -53,7 +54,7 @@ export type RootStackParamsList = {
   [RootNames.StackBrowser]: NavigatorScreenParams<BrowserNavigatorParamsList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]: {
-    token: NFTItem | TokenItem | TokenItem[];
+    token: NFTItem | TransferingNFTItem | TokenItem | TokenItem[];
     account?: KeyringAccountWithAlias;
     isSingleAddress?: boolean;
   };

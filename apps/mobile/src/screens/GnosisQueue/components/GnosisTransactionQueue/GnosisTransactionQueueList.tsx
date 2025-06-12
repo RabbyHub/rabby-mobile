@@ -202,7 +202,6 @@ export const GnosisTransactionQueueList = (props: {
           txs.map(async safeTx => {
             const tx: SafeTransactionDataPartial = {
               data: safeTx.data || '0x',
-              // todo fix this
               gasPrice: safeTx.gasPrice ? Number(safeTx.gasPrice) : 0,
               gasToken: safeTx.gasToken,
               refundReceiver: safeTx.refundReceiver,
