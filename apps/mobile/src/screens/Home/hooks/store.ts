@@ -19,7 +19,12 @@ import { tagProfiles } from './usePortfolio';
 import { tagNfts } from './nft';
 import { tokenNounceAtom, deFiNounceAtom, nftNounceAtom } from './refresh';
 
-export type CombineTokensItem = AbstractPortfolioToken & {
+type DisplayedProjectWithoutMethods = Omit<
+  DisplayedProject,
+  'setPortfolios' | 'patchHistory' | 'afterHistoryPatched' | 'patchPrice'
+>;
+
+type OriginalCombineTokensItem = AbstractPortfolioToken & {
   totalAmount: BigNumber;
   totalUsdValue: BigNumber;
   fromAddress: Array<{
@@ -27,35 +32,43 @@ export type CombineTokensItem = AbstractPortfolioToken & {
     amount: number;
   }>;
 };
+export type CombineTokensItem = Omit<
+  OriginalCombineTokensItem,
+  'totalAmount' | 'totalUsdValue'
+> & {
+  totalAmount: number;
+  totalUsdValue: number;
+};
 
-type DisplayedProjectWithoutMethods = Omit<
-  DisplayedProject,
-  'setPortfolios' | 'patchHistory' | 'afterHistoryPatched' | 'patchPrice'
->;
-
-export type CombineDefiItem = DisplayedProjectWithoutMethods & {
+type OriginalCombineDefiItem = DisplayedProjectWithoutMethods & {
   totalUsdValue: BigNumber;
   filterTokenDesc?: string;
   fromAddress: Array<{
     address: string;
   }>;
 };
+export type CombineDefiItem = Omit<OriginalCombineDefiItem, 'totalUsdValue'> & {
+  totalUsdValue: number;
+};
 
-export type CombineNFTItem = NFTItem & {
+type OriginalCombineNFTItem = NFTItem & {
   totalAmount: BigNumber;
   fromAddress: Array<{
     address: string;
   }>;
 };
+export type CombineNFTItem = Omit<OriginalCombineNFTItem, 'totalAmount'> & {
+  totalAmount: number;
+};
 
-export type ICombineItem = {
+type ICombineItem = {
   type: string;
   data?:
     | ActionHeaderItem
-    | CombineTokensItem
-    | CombineDefiItem
+    | OriginalCombineTokensItem
+    | OriginalCombineDefiItem
     | AbstractPortfolioToken
-    | CombineNFTItem;
+    | OriginalCombineNFTItem;
 };
 
 export interface IAssets {
@@ -69,7 +82,7 @@ export const combinedTokens = (assetsMap: {
 }): CombineTokensItem[] => {
   const { unfoldTokens = [] } =
     preferenceService.getUserTokenSettingsSync() || {};
-  const tokenMap: Record<string, CombineTokensItem> = {};
+  const tokenMap: Record<string, OriginalCombineTokensItem> = {};
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()),
   );
@@ -166,7 +179,7 @@ export const combinedTokens = (assetsMap: {
 export const combinedProtocols = (assetsMap: {
   [address: string]: IAssets;
 }): CombineDefiItem[] => {
-  const defiMap: Record<string, CombineDefiItem> = {};
+  const defiMap: Record<string, OriginalCombineDefiItem> = {};
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
   );
@@ -238,7 +251,7 @@ export const combinedProtocols = (assetsMap: {
 export const combinedNFTs = (assetsMap: {
   [address: string]: IAssets;
 }): CombineNFTItem[] => {
-  const nftMap: Record<string, CombineNFTItem> = {};
+  const nftMap: Record<string, OriginalCombineNFTItem> = {};
   const lowerAddresses = new Set(
     Object.keys(assetsMap).map(i => i.toLowerCase()) || [],
   );

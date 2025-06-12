@@ -294,6 +294,7 @@ export type TransactionNavigatorParamList = {
     chainEnum?: CHAINS_ENUM | undefined;
     tokenId?: TokenItem['id'];
     type?: 'Buy' | 'Sell';
+    address?: string;
     swapAgain?: boolean;
     swapTokenId?: TokenItem['id'][];
     isSwapToTokenDetail?: boolean;
