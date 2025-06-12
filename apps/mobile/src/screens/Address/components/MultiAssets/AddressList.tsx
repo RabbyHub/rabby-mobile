@@ -243,6 +243,9 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: SPACING_HEIGHT,
   },
   list: {
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
   },
   bgContainer: {
