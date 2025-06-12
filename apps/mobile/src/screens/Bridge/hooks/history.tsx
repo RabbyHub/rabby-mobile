@@ -1,4 +1,9 @@
-import { useInfiniteScroll, useInterval, useRequest } from 'ahooks';
+import {
+  useInfiniteScroll,
+  useInterval,
+  useMemoizedFn,
+  useRequest,
+} from 'ahooks';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { currentAccountAtom, useCurrentAccount } from '@/hooks/account';
@@ -56,11 +61,17 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
     forScene: 'MakeTransactionAbout',
   });
 
+  const timerRef = useRef<NodeJS.Timeout>();
+  const clearTimer = useMemoizedFn(() => {
+    timerRef.current && clearTimeout(timerRef.current);
+  });
+
   useEffect(() => {
     if (account?.address) {
       setPendingTxData(null);
+      clearTimer();
     }
-  }, [account?.address, setPendingTxData]);
+  }, [account?.address, clearTimer, setPendingTxData]);
 
   const res = useRequest(
     async () => {
@@ -103,8 +114,6 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
     },
   );
 
-  const timerRef = useRef<NodeJS.Timeout>();
-
   // const runFetchLocalPendingTx = useCallback(() => {
   //   if (account?.address) {
   //     const resTx = fetchLocalBridgePendingTx(account.address);
@@ -139,21 +148,18 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
 
   useEffect(() => {
     if ((!loading && value !== undefined) || error) {
+      clearTimer();
       timerRef.current = setTimeout(() => {
         runAsync();
       }, timer);
     }
 
-    return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-    };
-  }, [loading, value, error, timer, runAsync]);
+    return clearTimer;
+  }, [loading, value, error, timer, runAsync, clearTimer]);
 
   useEffect(() => {
-    return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-    };
-  }, []);
+    return clearTimer;
+  }, [clearTimer]);
 
   const clearLocalPendingTxData = () => {
     // setLocalPendingTxData(null);

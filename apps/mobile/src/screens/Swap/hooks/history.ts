@@ -257,6 +257,7 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
 
   useEffect(() => {
     if ((!loading && value !== undefined) || error) {
+      timerRef.current && clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         runAsync();
       }, timer);
@@ -281,6 +282,10 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
     swapService.setOpenSwapHistoryTs(currentAccount?.address!);
     return currentTs;
   }, [setSwapHistoryRedDot, currentAccount?.address]);
+
+  useEffect(() => {
+    timerRef.current && clearTimeout(timerRef.current);
+  }, [currentAccount?.address]);
 
   return {
     runAsync,
