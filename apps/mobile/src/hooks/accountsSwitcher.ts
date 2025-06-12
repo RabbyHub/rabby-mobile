@@ -3,7 +3,6 @@ import { useAccounts, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
 import { useAtom } from 'jotai';
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
-import { apisAccountSwitch } from '@/core/apis';
 import cloneDeep from 'lodash/cloneDeep';
 import { RootNames } from '@/constant/layout';
 import { Platform } from 'react-native';
@@ -183,7 +182,6 @@ export function useSwitchSceneCurrentAccount() {
           }
         } else {
           patches.signingAccount = null;
-          await apisAccountSwitch.inactivateSceneAccount();
           if (!prev[scene]?.signingAccount) {
             return doReturn(prev);
           }
