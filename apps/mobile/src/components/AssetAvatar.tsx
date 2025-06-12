@@ -17,7 +17,7 @@ type AssetAvatarProps = {
   failedPlaceholder?: ReactNode;
   style?: RNViewProps['style'];
   logoStyle?: ViewStyle;
-  innerChainStyle?: FastImageProps['style'];
+  innerChainStyle?: ImageStyle | FastImageProps['style'];
 };
 
 // 没有用 svg 因为在 虚拟列表中，会有问题

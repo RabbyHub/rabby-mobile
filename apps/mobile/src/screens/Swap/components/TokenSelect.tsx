@@ -375,7 +375,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const recentDisplayToTokens = useMemo(() => {
       if (type === 'swapTo' && queryConds.keyword.length < 1) {
-        console.log('[feat] recentToTokens', recentToTokens);
         return recentToTokens.filter(item => {
           return item.chain === chainId && !isExcludedTokens(item);
         });
@@ -428,8 +427,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const unshiftList = useMemo(() => {
       if (recentDisplayToTokens.length) {
-        console.log('[feat] recentDisplayToTokens', recentDisplayToTokens);
-
         const recentObj = {
           header: () => recentTitle,
           data: [
