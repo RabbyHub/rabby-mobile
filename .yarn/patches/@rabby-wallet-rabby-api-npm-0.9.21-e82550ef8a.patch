@@ -1,0 +1,13 @@
+diff --git a/dist/types.d.ts b/dist/types.d.ts
+index 32d5eb946090e0ee445891cbb075e1e1e00fde60..0eef94981d01b6ee07aa79b3696cdbec8825698e 100644
+--- a/dist/types.d.ts
++++ b/dist/types.d.ts
+@@ -1211,6 +1211,8 @@ export interface SupportedChain {
+     eip_1559: boolean;
+     is_disabled: boolean;
+     explorer_host: string;
++    severity?: number;
++    block_interval?: number;
+ }
+ export interface ChainListItem {
+     chain_id: number;

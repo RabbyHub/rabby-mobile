@@ -73,7 +73,8 @@
     "zeego@1.10.0": "patch:zeego@npm%3A1.10.0#./.yarn/patches/zeego-npm-1.10.0-1958a3ea63.patch",
     "react-native-bundle-visualizer@3.1.0": "patch:react-native-bundle-visualizer@npm%3A3.1.0#./.yarn/patches/react-native-bundle-visualizer-npm-3.1.0-6744c68ec9.patch",
     "@debank/common@^0.3.54": "patch:@debank/common@npm%3A0.3.60#./.yarn/patches/@debank-common-npm-0.3.60-676123558a.patch",
-    "@debank/common@0.3.60": "patch:@debank/common@npm%3A0.3.60#./.yarn/patches/@debank-common-npm-0.3.60-676123558a.patch"
+    "@debank/common@0.3.60": "patch:@debank/common@npm%3A0.3.60#./.yarn/patches/@debank-common-npm-0.3.60-676123558a.patch",
+    "@rabby-wallet/rabby-api@0.9.21": "patch:@rabby-wallet/rabby-api@npm%3A0.9.21#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.9.21-e82550ef8a.patch"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
