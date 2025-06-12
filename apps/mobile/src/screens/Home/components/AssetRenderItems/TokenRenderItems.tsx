@@ -227,7 +227,7 @@ export const TokenRow = memo(
   },
 );
 
-interface TokenRowDataType extends AbstractPortfolioToken {
+export interface TokenRowDataType extends AbstractPortfolioToken {
   identity?: TokenidentityDetail;
 }
 

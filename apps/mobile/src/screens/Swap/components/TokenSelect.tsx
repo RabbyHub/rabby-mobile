@@ -18,6 +18,7 @@ import { TokenSelectorSheetModal } from '@/components/Token';
 import {
   isSwapTokenType,
   ITokenCheck,
+  TokenItemForRender,
 } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken } from '@/hooks/chainAndToken/useToken';
@@ -374,6 +375,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const recentDisplayToTokens = useMemo(() => {
       if (type === 'swapTo' && queryConds.keyword.length < 1) {
+        console.log('[feat] recentToTokens', recentToTokens);
         return recentToTokens.filter(item => {
           return item.chain === chainId && !isExcludedTokens(item);
         });
@@ -426,6 +428,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const unshiftList = useMemo(() => {
       if (recentDisplayToTokens.length) {
+        console.log('[feat] recentDisplayToTokens', recentDisplayToTokens);
+
         const recentObj = {
           header: () => recentTitle,
           data: [
@@ -449,7 +453,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
                   </View>
                 );
               },
-            } as any as TokenItem,
+            } as TokenItemForRender,
           ],
         };
 
@@ -494,7 +498,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       }));
     });
 
-    const tokenPressRef = useRef<TouchableOpacity>(null);
+    const tokenPressRef = useRef<typeof TouchableOpacity & View>(null);
     const handleLongPressToken = () => {
       if (!token) {
         return;

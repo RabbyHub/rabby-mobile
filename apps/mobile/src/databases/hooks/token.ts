@@ -2,10 +2,10 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useCallback, useMemo } from 'react';
 import { Account } from '@/core/services/preference';
 import {
-  AccountSwitcherScene,
   isSameAccount,
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
+import { type AccountSwitcherScene } from '@/hooks/sceneAccountInfoAtom';
 
 export type TokenItemMaybeWithOwner = TokenItem & {
   // ownerAddress?: string;

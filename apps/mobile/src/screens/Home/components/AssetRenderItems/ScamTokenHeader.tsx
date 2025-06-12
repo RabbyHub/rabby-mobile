@@ -23,7 +23,7 @@ export const ScamTokenHeader = memo(
     total: number;
     style?: ViewStyle;
     onPress?(): void;
-    logoUrls: string[];
+    logoUrls?: string[];
   }) => {
     const { styles, colors2024 } = useTheme2024({
       getStyle: getStyles,

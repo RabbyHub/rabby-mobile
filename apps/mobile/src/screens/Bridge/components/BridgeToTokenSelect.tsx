@@ -132,7 +132,7 @@ const BridgeToTokenSelect = ({
     }));
   });
 
-  const tokenPressRef = useRef<TouchableOpacity>(null);
+  const tokenPressRef = useRef<typeof TouchableOpacity & View>(null);
   const handleLongPressToken = () => {
     if (!token) {
       return;
