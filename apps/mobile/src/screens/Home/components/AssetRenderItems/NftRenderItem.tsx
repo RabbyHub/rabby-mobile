@@ -24,6 +24,7 @@ import { IS_ANDROID } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { NftItemWithCollection } from '../../hooks/nft';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { DisplayNftItem } from '../../types';
 
 export const NftRow = memo(
   ({
@@ -57,8 +58,8 @@ export const NftRow = memo(
       : (item as NFTItem)?.content?.endsWith('.svg');
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
     const _isManualFold = isCollection
-      ? item.nft_list.every(i => i._isManualFold)
-      : item._isManualFold;
+      ? item.nft_list.every((i: DisplayNftItem) => i._isManualFold)
+      : (item as DisplayNftItem)._isManualFold;
 
     const children = (
       <TouchableOpacity
@@ -143,7 +144,7 @@ export const NftRow = memo(
           </View>
         </View>
         <Text style={styles.amount}>
-          {isCollection ? item.nft_list.length : item.amount}
+          {isCollection ? item.nft_list.length : (item as NFTItem).amount}
         </Text>
       </TouchableOpacity>
     );

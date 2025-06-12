@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "strict": true
+  },
+  "include": [
+    "src/index.d.ts",
+    "node_modules/dayjs/plugin/duration.d.ts",
+    "node_modules/dayjs/plugin/utc.d.ts",
+    "node_modules/dayjs/plugin/isTomorrow.d.ts",
+    "node_modules/dayjs/plugin/isToday.d.ts",
+    "node_modules/dayjs/plugin/relativeTime.d.ts",
+    "node_modules/dayjs/plugin/updateLocale.d.ts"
+  ]
+}

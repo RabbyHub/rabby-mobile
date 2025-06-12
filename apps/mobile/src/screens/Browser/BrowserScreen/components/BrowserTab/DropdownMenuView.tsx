@@ -63,6 +63,7 @@ export const DropdownMenuView: React.FC<Props> = ({
               key={`${action.key}-${idx}`}
               onSelect={action.onSelect}
               disabled={action.disabled || !action.onSelect}
+              // @ts-expect-error FIXME
               textColor={action.textColor}>
               <DropdownMenu.ItemTitle>{action.title}</DropdownMenu.ItemTitle>
               {IS_ANDROID && action.androidIconName ? (

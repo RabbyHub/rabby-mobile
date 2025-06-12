@@ -53,7 +53,7 @@ export type RootStackParamsList = {
   [RootNames.StackBrowser]: NavigatorScreenParams<BrowserNavigatorParamsList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]: {
-    token: NFTItem;
+    token: NFTItem | TokenItem | TokenItem[];
     account?: KeyringAccountWithAlias;
     isSingleAddress?: boolean;
   };
@@ -242,6 +242,7 @@ export type AccountNavigatorParamList = {
 
 export type SingleAddressNavigatorParamList = {
   [RootNames.SingleAddressHome]: {
+    scrollToToken?: string;
     account: Account;
   };
 };
@@ -305,7 +306,9 @@ export type TransactionNavigatorParamList = {
     account: Account;
   };
   [RootNames.Receive]: {
-    account: Account;
+    chainEnum?: CHAINS_ENUM | undefined;
+    tokenSymbol?: AbstractPortfolioToken['symbol'];
+    account: Account | KeyringAccountWithAlias | null;
   };
   [RootNames.Approvals]: {
     account: Account;

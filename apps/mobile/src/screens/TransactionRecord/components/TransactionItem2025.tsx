@@ -2,6 +2,8 @@
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import {
+  ApproveAction,
+  ApproveNFTAction,
   GasLevel,
   ProjectItem,
   SendAction,
@@ -15,6 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
 import {
   ParsedTransactionActionData,
+  ReceiveTokenItem,
   SendRequireData,
   SwapRequireData,
 } from '@rabby-wallet/rabby-action';
@@ -196,7 +199,7 @@ export const TransactionItem = ({
       });
       resToken.push({
         token: receive!,
-        amount: (receive?.amount || receive?.min_amount)!,
+        amount: (receive?.amount || (receive as ReceiveTokenItem)?.min_amount)!,
         type: 'receive',
         token_id: receive?.id!,
       });
@@ -216,7 +219,8 @@ export const TransactionItem = ({
         actionData?.revokeNFT ||
         // data.txs?.[0]?.action?.actionData.revokeNFTCollection ||
         actionData?.revokePermit2;
-      const apToken: TokenItem = apData?.token || apData?.nft;
+      const apToken: TokenItem =
+        (apData as ApproveAction)?.token || (apData as ApproveNFTAction)?.nft;
       resApprove.push({
         token: apToken!,
         amount: apToken?.amount!,

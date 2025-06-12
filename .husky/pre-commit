@@ -1,4 +1,5 @@
 #!/bin/bash -l
 . "$(dirname -- "$0")/_/husky.sh"
 
+yarn workspace rabby-mobile typecheck
 yarn lint-staged

@@ -66,7 +66,7 @@ export const TokenArea: React.FC<Props> = ({
         navigate(RootNames.SingleAddressStack, {
           screen: RootNames.SingleAddressHome,
           params: {
-            scrollToToken: token.id, // to do
+            scrollToToken: token.id,
             account: account,
           },
         });

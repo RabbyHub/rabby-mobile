@@ -26,7 +26,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
-import { AbstractPortfolioToken } from '@/screens/home/types';
+import { type AbstractPortfolioToken } from '@/screens/Home/types';
 import { useInfiniteScroll, useMemoizedFn } from 'ahooks';
 import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
 
@@ -748,10 +748,8 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     const { switchSceneCurrentAccount: _switchSceneCurrentAccount } =
       useSwitchSceneCurrentAccount();
 
-    const switchSceneCurrentAccount = useCallback<
-      typeof _switchSceneCurrentAccount
-    >(
-      async (...args) => {
+    const switchSceneCurrentAccount = useCallback(
+      async (...args: Parameters<typeof _switchSceneCurrentAccount>) => {
         if (!__shouldSwitchSceneAccountBeforeRedirect__) return;
 
         return _switchSceneCurrentAccount(...args);

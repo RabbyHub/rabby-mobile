@@ -62,10 +62,10 @@ class SKCls {
   }
 
   async decryptPassword(encryptedPassword: string) {
-    return this.encryptor.decrypt<RNKeychain.UserCredentials>(
+    return this.encryptor.decrypt(
       privates.get(this).salt,
       encryptedPassword,
-    );
+    ) as Promise<RNKeychain.UserCredentials>;
   }
 }
 

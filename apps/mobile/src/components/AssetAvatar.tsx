@@ -5,7 +5,7 @@ import { useSwitch } from '@/hooks/useSwitch';
 import { Chain } from '@debank/common';
 import { memo, ReactNode, useMemo } from 'react';
 import { Image, ImageStyle, StyleSheet, View, ViewStyle } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage, { FastImageProps } from 'react-native-fast-image';
 import { TestnetChainLogo } from './Chain/TestnetChainLogo';
 
 type AssetAvatarProps = {
@@ -17,7 +17,7 @@ type AssetAvatarProps = {
   failedPlaceholder?: ReactNode;
   style?: RNViewProps['style'];
   logoStyle?: ViewStyle;
-  innerChainStyle?: ViewStyle;
+  innerChainStyle?: FastImageProps['style'];
 };
 
 // 没有用 svg 因为在 虚拟列表中，会有问题
@@ -123,11 +123,14 @@ export const AssetAvatar = memo(
         {chainInfo?.isTestnet ? (
           <TestnetChainLogo
             name={chainInfo.name}
-            style={chainStyle}
+            style={chainStyle as ImageStyle}
             size={chainSize}
           />
         ) : chainInfo?.logo ? (
-          <FastImage source={{ uri: chainInfo.logo }} style={chainStyle} />
+          <FastImage
+            source={{ uri: chainInfo.logo }}
+            style={chainStyle as FastImageProps['style']}
+          />
         ) : null}
       </View>
     );

@@ -138,7 +138,7 @@ export function UseAllAccountsItemInPanel({
       .map(account =>
         getWalletAvator2024(account.brandName, isLight, account.address),
       )
-      .filter(Boolean);
+      .filter(Boolean) as ImageSourcePropType[];
   }, [allAccounts, isLight]);
 
   if (!allAccounts.length) {

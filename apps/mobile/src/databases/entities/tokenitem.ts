@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column, In } from 'typeorm';
+import { Entity, Column, In, Brackets, Not } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
@@ -10,7 +10,6 @@ import {
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
-import { Brackets, Not } from 'typeorm/browser';
 
 @Entity('cache_tokenitem')
 export class TokenItemEntity extends EntityAddressAssetBase {
@@ -129,7 +128,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   static fillEntity(
     e: TokenItemEntity,
     owner_addr: string,
-    input: TokenItem & { value_24h_change?: string },
+    input: TokenItem & { value_24h_change?: string; cex_ids?: string[] },
   ) {
     e.owner_addr = owner_addr;
 

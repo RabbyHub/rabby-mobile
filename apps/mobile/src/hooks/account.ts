@@ -358,7 +358,7 @@ export function useChainBalances() {
 export function useLoadMatteredChainBalances({
   account: currentAccount,
 }: {
-  account: Account;
+  account?: Account;
 }) {
   const {
     matteredChainBalances,

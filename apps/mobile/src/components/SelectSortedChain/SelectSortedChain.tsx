@@ -35,7 +35,7 @@ const useChainSeletorList = ({
 }: {
   supportChains?: Chain['enum'][];
   netTabKey?: NetSwitchTabsKey;
-  account: Account;
+  account?: Account;
 }) => {
   const [search, setSearch] = useState('');
   const {
@@ -115,7 +115,7 @@ export type SelectSortedChainProps = {
   hideTestnetTab?: boolean;
   hideMainnetTab?: boolean;
   onClose?: () => void;
-  account: Account;
+  account?: Account;
 };
 export default function SelectSortedChain({
   value,
