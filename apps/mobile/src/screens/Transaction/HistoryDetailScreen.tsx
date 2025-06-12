@@ -42,8 +42,6 @@ import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { HistoryBottomBtn } from './components/HistoryBottomBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { AssetAvatar } from '@/components';
-import { getERC20Allowance } from '@/core/apis/provider';
-import BigNumber from 'bignumber.js';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -239,8 +237,6 @@ function HistoryDetailScreen(): JSX.Element {
   }, [_data, buyItemData]);
 
   const { t } = useTranslation();
-  const [currentApprove, setCurrentApprove] = useState(0);
-  const [noRemainValue, setNoRemainValue] = useState(false);
   const status = useMemo(
     () => (data?.buyDetails?.status === 'failed' ? 0 : data.tx?.status) ?? 1,
     [data],
@@ -339,41 +335,6 @@ function HistoryDetailScreen(): JSX.Element {
       return projectDict[data.project_id];
     }
   }, [data]);
-
-  const fetchApproveAllowance = useCallback(async () => {
-    const tokenId = data.token_approve?.token_id || '';
-    const tokenUUID = `${data.chain}_token:${tokenId}`;
-    const singeToken = data.tokenDict[tokenId] || data.tokenDict[tokenUUID];
-
-    // todo debug
-    const allowance = await getERC20Allowance(
-      data.chain,
-      singeToken.id,
-      data.token_approve?.spender!,
-      data.account?.address || data.address,
-      data.account!,
-    );
-
-    const amount = new BigNumber(allowance)
-      .div(10 ** singeToken.decimals)
-      .toNumber();
-
-    setNoRemainValue(!amount);
-    setCurrentApprove(amount);
-  }, [
-    data.account,
-    data.address,
-    data.chain,
-    data.tokenDict,
-    data.token_approve?.spender,
-    data.token_approve?.token_id,
-  ]);
-
-  useEffect(() => {
-    if (formatType === HistoryItemCateType.Approve) {
-      fetchApproveAllowance();
-    }
-  }, [fetchApproveAllowance, formatType]);
 
   const onOpenTxId = useCallback(
     (txHash?: string, address?: string) => {
@@ -665,8 +626,6 @@ function HistoryDetailScreen(): JSX.Element {
 
       {!(data.cate_id === 'approve' && data.token_approve) ? (
         <HistoryBottomBtn
-          noRemainValue={noRemainValue}
-          currentApprove={currentApprove}
           approve={data.token_approve}
           receives={data.receives}
           sends={data.sends}
