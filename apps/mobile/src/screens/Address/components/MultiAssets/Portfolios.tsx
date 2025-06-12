@@ -91,7 +91,6 @@ export const Portfolios = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const [isListVisable, setIsListVisable] = useState(false);
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const { t } = useTranslation();
 
   const [foldHideList, setFoldHideList] = useState(true);
@@ -678,12 +677,13 @@ export const Portfolios = () => {
 
   const onRefresh = useCallback(async () => {
     try {
-      await Promise.all([triggerUpdate(true), refreshCurve(true)]);
-      setIsRefreshing(false);
-      checkIsExpireAndUpdate(true, { disableNFT: true });
+      await Promise.all([
+        triggerUpdate(true),
+        refreshCurve(true),
+        checkIsExpireAndUpdate(true, { disableNFT: true }),
+      ]);
     } catch (error) {
       console.error('Refresh failed:', error);
-      setIsRefreshing(false);
     }
   }, [checkIsExpireAndUpdate, refreshCurve, triggerUpdate]);
 
@@ -715,10 +715,9 @@ export const Portfolios = () => {
         <RefreshControl
           style={styles.bgContainer}
           onRefresh={() => {
-            setIsRefreshing(true);
             onRefresh();
           }}
-          refreshing={isRefreshing}
+          refreshing={false}
         />
       }
     />

@@ -5,6 +5,7 @@ import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useGlobalStatus, ServiceErrorType } from './useGlobalStatus';
+import { atom, useAtom } from 'jotai';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
 
@@ -128,7 +129,7 @@ export const getChangeData = (
     isLoss: assetsChange < 0,
   };
 };
-
+export const loadingCurveAtom = atom(true);
 export const useCurve = (
   address: string | undefined,
   nonce: number,
@@ -141,7 +142,7 @@ export const useCurve = (
       usd_value: number;
     }[]
   >([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useAtom(loadingCurveAtom);
   const { setTargetServicesError } = useGlobalStatus();
   const select = useMemo(() => {
     return formChartData(
@@ -186,7 +187,7 @@ export const useCurve = (
         setIsLoading(false);
       }
     },
-    [days, setTargetServicesError],
+    [days, setIsLoading, setTargetServicesError],
   );
 
   const refresh = useCallback(
@@ -199,13 +200,13 @@ export const useCurve = (
       }
       await fetch(address, true);
     },
-    [address, fetch],
+    [address, fetch, setIsLoading],
   );
 
   useEffect(() => {
     setIsLoading(true);
     setData([]);
-  }, [address]);
+  }, [address, setIsLoading]);
 
   useEffect(() => {
     if (!address) {
@@ -213,7 +214,7 @@ export const useCurve = (
     }
     setIsLoading(true);
     fetch(address);
-  }, [address, fetch, nonce]);
+  }, [address, fetch, nonce, setIsLoading]);
 
   return {
     result: isLoading ? undefined : select,

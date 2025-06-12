@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
@@ -30,7 +30,6 @@ export const AddressList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const {
     top10Addresses,
     list: _rawList,
@@ -182,17 +181,14 @@ export const AddressList = () => {
   );
 
   const onRefresh = useCallback(async () => {
-    setIsRefreshing(true);
     try {
       await Promise.all([
         triggerUpdate(true),
         refreshCurve(true),
         fetchAccounts(),
       ]);
-      setIsRefreshing(false);
     } catch (error) {
       console.error('Refresh failed:', error);
-      setIsRefreshing(false);
     }
   }, [fetchAccounts, refreshCurve, triggerUpdate]);
 
@@ -209,7 +205,7 @@ export const AddressList = () => {
         <RefreshControl
           style={styles.bgContainer}
           onRefresh={onRefresh}
-          refreshing={isRefreshing}
+          refreshing={false}
         />
       }
     />

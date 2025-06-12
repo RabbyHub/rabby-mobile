@@ -10,7 +10,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { AddressList } from './AddressList';
 import { Portfolios } from './Portfolios';
 import { MultiChart } from './RenderRow/CurveChart';
-import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { loadingMultiCurveAtom, useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from './hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { Tabs, MaterialTabItem } from 'react-native-collapsible-tab-view';
@@ -21,6 +21,7 @@ import { isTabsSwiping } from './hooks';
 import { useGlobalStatus, PageMainServices } from '@/hooks/useGlobalStatus';
 import { useAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
+import { useAtomValue } from 'jotai';
 
 export const MultiAssets = ({
   onUpdateIsDecrease,
@@ -98,9 +99,10 @@ export const MultiAssets = ({
   );
 
   const { refreshing } = useAssets();
+  const isLoadingMultiCurve = useAtomValue(loadingMultiCurveAtom);
   const renderCirleLoading = useCallback(() => {
-    return refreshing ? <LoadingCircle /> : '';
-  }, [refreshing]);
+    return refreshing || isLoadingMultiCurve ? <LoadingCircle /> : '';
+  }, [isLoadingMultiCurve, refreshing]);
 
   const handleScroll = useCallback(
     (y: number) => {
