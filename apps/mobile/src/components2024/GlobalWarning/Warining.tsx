@@ -1,10 +1,4 @@
-import {
-  View,
-  Text,
-  StyleProp,
-  ViewStyle,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleProp, ViewStyle } from 'react-native';
 import RcServiceCC from '@/assets2024/icons/common/service-cc.svg';
 import RcOfflineCC from '@/assets2024/icons/common/offline-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
@@ -87,14 +81,9 @@ export function GlobalWarning({
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.text}>{description} </Text>
         {!isNetWorkError && !!onRefresh && (
-          <TouchableOpacity
-            hitSlop={20}
-            style={styles.refreshButton}
-            onPress={onRefresh}>
-            <Text style={styles.refreshText}>
-              {t('component.globalWarning.buttonText')}
-            </Text>
-          </TouchableOpacity>
+          <Text onPress={onRefresh} style={styles.refreshText}>
+            {t('component.globalWarning.buttonText')}
+          </Text>
         )}
       </Text>
     </View>

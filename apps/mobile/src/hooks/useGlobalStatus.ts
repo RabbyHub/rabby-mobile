@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useNetInfo } from '@react-native-community/netinfo';
+import { useNetInfo, configure } from '@react-native-community/netinfo';
 import { atom, useAtom } from 'jotai';
+
+configure({
+  reachabilityUrl: 'https://app-api.rabby.io/ping',
+  reachabilityMethod: 'GET',
+  reachabilityTest: async response => response.status === 200,
+  reachabilityLongTimeout: 10 * 1000, // 10s
+  reachabilityShortTimeout: 2 * 1000, // 2s
+  reachabilityRequestTimeout: 15 * 1000, // 15s
+  reachabilityShouldRun: () => true,
+  useNativeReachability: false,
+});
 
 export const enum ServiceErrorType {
   'Curve' = 'Curve',
@@ -33,12 +44,12 @@ export const serviceErrorMapAtom = atom<
 >({});
 
 export const useGlobalStatus = (serviceKeys: ServiceErrorType[] = []) => {
-  const { isConnected } = useNetInfo();
+  const { isInternetReachable } = useNetInfo();
   const [serviceErrorMap, setServiceErrorMap] = useAtom(serviceErrorMapAtom);
 
   const isDisConnnect = useMemo(() => {
-    return isConnected === false;
-  }, [isConnected]);
+    return isInternetReachable === false;
+  }, [isInternetReachable]);
 
   const errorType: ErrorType = useMemo(() => {
     if (isDisConnnect) {
