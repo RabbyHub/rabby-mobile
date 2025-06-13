@@ -152,7 +152,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     return null;
   }
 
-  const source = data.maxGasTx?.$ctx?.ga?.source ?? '';
+  const source = data.originTx?.$ctx?.ga?.source ?? '';
 
   const isLocalSwap = source === 'approvalAndSwap|swap' || source === 'swap';
 
