@@ -153,7 +153,7 @@
     },
     "getStart": {
       "goToHome": "前往首頁",
-      "sync": "掃描以同步 Rabby 擴展錢包",
+      "sync": "掃描 Rabby 插件同步錢包",
       "alreadyHaveAddress": "我已經擁有一個錢包",
       "createNewAddress": "建立新錢包"
     },

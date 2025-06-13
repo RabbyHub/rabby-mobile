@@ -187,7 +187,7 @@
     "getStart": {
       "goToHome": "前往首页",
       "alreadyHaveAddress": "我已经有一个钱包",
-      "sync": "扫描以同步 Rabby 扩展钱包",
+      "sync": "扫描Rabby插件同步钱包",
       "createNewAddress": "创建新钱包"
     },
     "importSeedPhrase": {
