@@ -52,6 +52,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   @Column('boolean')
   is_wallet: TokenItem['is_wallet'] = false;
   // is_scam
+  // duplicate, use is_suspicious instead
   @Column('boolean')
   is_scam: TokenItem['is_scam'] = false;
   // is_infinity

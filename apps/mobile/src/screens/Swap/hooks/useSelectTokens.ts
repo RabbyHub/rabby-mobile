@@ -250,9 +250,9 @@ export const useSelectTokens = ({
             return bScore - aScore; // Higher score comes first
           }
 
-          // If scores are equal, use is_scam as tiebreaker
-          if (a.is_scam !== b.is_scam) {
-            return a.is_scam ? 1 : -1;
+          // If scores are equal, use is_suspicious as tiebreaker
+          if (a.is_suspicious !== b.is_suspicious) {
+            return a.is_suspicious ? 1 : -1;
           }
 
           // If still equal, prioritize id matches over symbol matches
