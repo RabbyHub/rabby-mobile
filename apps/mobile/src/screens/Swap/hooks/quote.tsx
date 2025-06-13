@@ -500,7 +500,7 @@ export const useQuoteMethods = () => {
         return getDexQuote({
           ...params,
           dexId: DEX_ENUM.WRAPTOKEN,
-          account: params,
+          account: params.account,
         });
       }
 
