@@ -943,7 +943,8 @@
         "hardwareWallet": "하드웨어 월렛",
         "syncRabbyExtension": "Rabby Extension 동기화",
         "importAddress": "지갑 가져오기",
-        "createAddress": "지갑 생성"
+        "createAddress": "지갑 생성",
+        "selectAddMethod": "방법 추가 선택"
       },
       "multiAddressHome": {
         "pin": "핀",
@@ -999,7 +1000,8 @@
         "safeTitle": "안전한 지갑 가져오기",
         "importTitle": "지갑 가져오기",
         "watch": "보기 전용 지갑",
-        "watchOnlyTitle": "시청 전용 지갑 가져오기"
+        "watchOnlyTitle": "시청 전용 지갑 가져오기",
+        "ImportCloud": "{{cloud}}에서 가져오기"
       }
     },
     "switchChain": {
@@ -2153,6 +2155,21 @@
     },
     "AccountSelector": {
       "title": "지갑 선택"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "서비스 연결 오류:",
+        "globalDesc": "정보는 오래되었을 수 있지만 귀하의 자산은 안전합니다."
+      },
+      "serviceError": {
+        "title": "네트워크 문제:",
+        "balanceDesc": "잔액을 로드하는 데 실패했습니다.",
+        "globalDesc": "정보가 오래되었을 수 있지만 귀하의 자금은 안전합니다.",
+        "quotesDesc": "견적을 불러오는 데 실패했습니다."
+      },
+      "serviceErrorText": "서비스 오류",
+      "offlineText": "네트워크 오류",
+      "buttonText": "새로 고침"
     }
   },
   "constant": {

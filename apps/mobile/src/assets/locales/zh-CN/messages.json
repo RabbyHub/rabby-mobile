@@ -1061,13 +1061,15 @@
         "importTitle": "导入钱包",
         "safeTitle": "导入 Safe Wallet",
         "watch": "仅观察钱包",
-        "watchOnlyTitle": "导入只读钱包"
+        "watchOnlyTitle": "导入只读钱包",
+        "ImportCloud": "从{{cloud}}导入"
       },
       "addAddress": {
         "hardwareWallet": "硬件钱包",
         "syncRabbyExtension": "同步 Rabby 扩展程序",
         "importAddress": "导入钱包",
-        "createAddress": "创建钱包"
+        "createAddress": "创建钱包",
+        "selectAddMethod": "选择添加方法"
       }
     },
     "signText": {
@@ -2162,6 +2164,21 @@
     },
     "AccountSelector": {
       "title": "选择钱包"
+    },
+    "globalWarning": {
+      "networkError": {
+        "globalDesc": "信息可能已过时，但您的资金仍然安全。",
+        "title": "服务连接错误："
+      },
+      "serviceError": {
+        "balanceDesc": "余额加载失败。",
+        "quotesDesc": "报价加载失败。",
+        "globalDesc": "信息可能已过时，但您的资金仍然安全。",
+        "title": "网络问题："
+      },
+      "serviceErrorText": "服务错误",
+      "buttonText": "刷新",
+      "offlineText": "网络错误"
     }
   },
   "bluetooth": {

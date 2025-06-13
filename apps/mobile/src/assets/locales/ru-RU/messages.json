@@ -1052,13 +1052,15 @@
         "importTitle": "Импортировать кошелек",
         "watch": "Кошелек только для просмотра",
         "safeTitle": "Импортировать Safe Wallet",
-        "watchOnlyTitle": "Импортировать кошелек только для просмотра"
+        "watchOnlyTitle": "Импортировать кошелек только для просмотра",
+        "ImportCloud": "Импортировать из {{cloud}}"
       },
       "addAddress": {
         "hardwareWallet": "Аппаратный кошелек",
         "syncRabbyExtension": "Синхронизировать Rabby Extension",
         "createAddress": "Создать кошелек",
-        "importAddress": "Импортировать кошелек"
+        "importAddress": "Импортировать кошелек",
+        "selectAddMethod": "Выберите метод добавления"
       }
     },
     "newAddress": {
@@ -2153,6 +2155,21 @@
     },
     "AccountSelector": {
       "title": "Выбрать кошелек"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "Ошибка соединения с сервисом:",
+        "globalDesc": "Информация может быть устаревшей, но ваши средства остаются в безопасности."
+      },
+      "serviceError": {
+        "title": "Проблема с сетью:",
+        "quotesDesc": "цитата не удалось загрузить.",
+        "balanceDesc": "Баланс не удалось загрузить.",
+        "globalDesc": "Информация может быть устаревшей, но ваши средства остаются в безопасности."
+      },
+      "offlineText": "Сетевая ошибка",
+      "buttonText": "Обновить",
+      "serviceErrorText": "Ошибка сервиса"
     }
   },
   "constant": {

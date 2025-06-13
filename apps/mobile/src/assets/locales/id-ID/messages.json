@@ -1032,7 +1032,8 @@
         "hardwareWallet": "Dompet Donasi Hardware",
         "syncRabbyExtension": "Sinkronkan Ekstensi Rabby",
         "importAddress": "Impor Dompet",
-        "createAddress": "Buat Dompet"
+        "createAddress": "Buat Dompet",
+        "selectAddMethod": "Pilih Tambah Metode"
       },
       "multiAddressHome": {
         "totalBalance": "Total Balance",
@@ -1063,7 +1064,8 @@
         "safeTitle": "Impor Dompet Aman",
         "watch": "Dompet Hanya Lihat",
         "importTitle": "Impor Dompet",
-        "watchOnlyTitle": "Impor Dompet Hanya-Pengawasan"
+        "watchOnlyTitle": "Impor Dompet Hanya-Pengawasan",
+        "ImportCloud": "Impor dari {{cloud}}"
       }
     },
     "newAddress": {
@@ -2093,6 +2095,21 @@
     },
     "AccountSelector": {
       "title": "Pilih Dompet"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "Kesalahan koneksi layanan:",
+        "globalDesc": "Info mungkin sudah usang tetapi dana Anda tetap aman."
+      },
+      "serviceError": {
+        "quotesDesc": "kutipan gagal dimuat.",
+        "balanceDesc": "saldo gagal dimuat.",
+        "title": "Masalah jaringan:",
+        "globalDesc": "Info mungkin sudah ketinggalan zaman tetapi dana Anda tetap aman."
+      },
+      "offlineText": "Kesalahan Jaringan",
+      "serviceErrorText": "Kesalahan Layanan",
+      "buttonText": "Segarkan"
     }
   },
   "native": {

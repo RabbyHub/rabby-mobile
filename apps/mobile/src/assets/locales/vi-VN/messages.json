@@ -1001,7 +1001,8 @@
         "hardwareWallet": "Ví phần cứng",
         "syncRabbyExtension": "Đồng bộ tiện ích mở rộng Rabby",
         "createAddress": "Tạo Ví",
-        "importAddress": "Nhập Ví"
+        "importAddress": "Nhập Ví",
+        "selectAddMethod": "Chọn Thêm Phương Thức"
       },
       "importAddress": {
         "safe": "An toàn",
@@ -1017,7 +1018,8 @@
         "watch": "Ví chỉ xem",
         "safeTitle": "Nhập Wallet An toàn",
         "importTitle": "Nhập ví",
-        "watchOnlyTitle": "Nhập ví Chỉ Xem"
+        "watchOnlyTitle": "Nhập ví Chỉ Xem",
+        "ImportCloud": "Nhập từ {{cloud}}"
       },
       "createNewAddress": {
         "inOrder": "theo thứ tự chính xác.",
@@ -2153,6 +2155,21 @@
     },
     "AccountSelector": {
       "title": "Chọn Ví"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "Lỗi kết nối dịch vụ:",
+        "globalDesc": "Thông tin có thể đã lỗi thời nhưng tài sản của bạn vẫn an toàn."
+      },
+      "serviceError": {
+        "title": "Vấn đề mạng:",
+        "balanceDesc": "không thể tải số dư.",
+        "globalDesc": "Thông tin có thể đã lỗi thời nhưng tài sản của bạn vẫn an toàn.",
+        "quotesDesc": "Không tải được báo giá."
+      },
+      "buttonText": "Làm mới",
+      "offlineText": "Lỗi mạng",
+      "serviceErrorText": "Lỗi dịch vụ"
     }
   },
   "constant": {

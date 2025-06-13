@@ -1032,7 +1032,8 @@
         "syncRabbyExtension": "Rabby Uzantısını Senkronize Et",
         "hardwareWallet": "Donanım Cüzdanı",
         "importAddress": "Cüzdanı İçe Aktar",
-        "createAddress": "Cüzdan Oluştur"
+        "createAddress": "Cüzdan Oluştur",
+        "selectAddMethod": "Yöntem Ekle'yi Seçin"
       },
       "multiAddressHome": {
         "services": "Hizmetler",
@@ -1063,7 +1064,8 @@
         "importTitle": "Cüzdanı İçe Aktar",
         "watch": "Sadece İzleme Cüzdanı",
         "watchOnlyTitle": "İzleme Yalnızca Cüzdanı İçe Aktar",
-        "safeTitle": "Güvenli Cüzdanı İçe Aktar"
+        "safeTitle": "Güvenli Cüzdanı İçe Aktar",
+        "ImportCloud": "{{cloud}}'den İçe Aktar"
       }
     },
     "newAddress": {
@@ -2093,6 +2095,21 @@
     },
     "AccountSelector": {
       "title": "Cüzdan Seçin"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "Hizmet bağlantı hatası:",
+        "globalDesc": "Bilgiler güncel olmayabilir ama varlıklarınız güvende kalır."
+      },
+      "serviceError": {
+        "quotesDesc": "alıntı yüklenemedi.",
+        "balanceDesc": "bakiye yüklenemedi.",
+        "globalDesc": "Bilgi belki eski olabilir ama fonlarınız güvende kalır.",
+        "title": "Ağ sorunu:"
+      },
+      "offlineText": "Ağ Hatası",
+      "buttonText": "Yenileştir",
+      "serviceErrorText": "Hizmet Hatası"
     }
   },
   "native": {

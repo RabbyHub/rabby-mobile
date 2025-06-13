@@ -196,6 +196,21 @@
     },
     "AccountSelector": {
       "title": "Seleccionar billetera"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "Error de conexión del servicio:",
+        "globalDesc": "La información puede estar desactualizada, pero tus fondos siguen siendo seguros."
+      },
+      "serviceError": {
+        "title": "Problema de red:",
+        "balanceDesc": "no se pudo cargar el balance.",
+        "quotesDesc": "No se pudo cargar la cita.",
+        "globalDesc": "La información puede estar desactualizada, pero tus fondos siguen siendo seguros."
+      },
+      "serviceErrorText": "Error de servicio",
+      "buttonText": "Actualizar",
+      "offlineText": "Error de red"
     }
   },
   "page": {
@@ -1075,7 +1090,8 @@
         "hardwareWallet": "Cartera de Hardware",
         "syncRabbyExtension": "Sincronizar la extensión Rabby",
         "createAddress": "Crear Wallet",
-        "importAddress": "Importar Billetera"
+        "importAddress": "Importar Billetera",
+        "selectAddMethod": "Seleccionar Método de Adición"
       },
       "createNewAddress": {
         "Continue": "Continuar",
@@ -1116,7 +1132,8 @@
         "safeTitle": "Importar Wallet Segura",
         "importTitle": "Importar Wallet",
         "watchOnlyTitle": "Importar billetera solo de visualización",
-        "watch": "Cartera Solo de Observación"
+        "watch": "Cartera Solo de Observación",
+        "ImportCloud": "Importar desde {{cloud}}"
       },
       "multiAddressHome": {
         "services": "Servicios",

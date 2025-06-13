@@ -1143,7 +1143,8 @@
         "hardwareWallet": "硬體錢包",
         "syncRabbyExtension": "同步 Rabby 擴展程序",
         "createAddress": "創建錢包",
-        "importAddress": "匯入錢包"
+        "importAddress": "匯入錢包",
+        "selectAddMethod": "選擇添加方法"
       },
       "importAddress": {
         "safe": "安全",
@@ -1159,7 +1160,8 @@
         "watchOnlyTitle": "導入只讀錢包",
         "importTitle": "導入錢包",
         "safeTitle": "導入 Safe Wallet",
-        "watch": "觀察型錢包"
+        "watch": "觀察型錢包",
+        "ImportCloud": "從 {{cloud}} 匯入"
       }
     },
     "ethSign": {
@@ -2210,6 +2212,21 @@
     },
     "AccountSelector": {
       "title": "選擇錢包"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "服務連接錯誤：",
+        "globalDesc": "信息可能已过时，但您的资金依然安全。"
+      },
+      "serviceError": {
+        "balanceDesc": "餘額加載失敗。",
+        "title": "網路問題：",
+        "quotesDesc": "報價加載失敗。",
+        "globalDesc": "資訊可能過時，但您的資金仍然安全。"
+      },
+      "buttonText": "刷新",
+      "offlineText": "網絡錯誤",
+      "serviceErrorText": "服務錯誤"
     }
   },
   "common": {

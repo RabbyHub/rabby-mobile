@@ -905,7 +905,8 @@
         "hardwareWallet": "ハードウェアウォレット",
         "syncRabbyExtension": "Rabby Extension を同期",
         "createAddress": "ウォレットを作成",
-        "importAddress": "ウォレットをインポートする"
+        "importAddress": "ウォレットをインポートする",
+        "selectAddMethod": "メソッドを追加を選択してください"
       },
       "createNewAddress": {
         "WriteDownSeedPhrase": "シードフレーズを書き留める",
@@ -946,7 +947,8 @@
         "watch": "ウォッチオンリーウォレット",
         "watchOnlyTitle": "ウォッチオンリーウォレットのインポート",
         "safeTitle": "安全なウォレットをインポート",
-        "importTitle": "ウォレットをインポート"
+        "importTitle": "ウォレットをインポート",
+        "ImportCloud": "{{cloud}} からインポート"
       }
     },
     "switchChain": {
@@ -2210,6 +2212,21 @@
     },
     "AccountSelector": {
       "title": "ウォレットを選択してください"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "サービス接続エラー:",
+        "globalDesc": "情報は古くなっているかもしれませんが、あなたの資金は安全です。"
+      },
+      "serviceError": {
+        "title": "ネットワークの問題：",
+        "quotesDesc": "引用の読み込みに失敗しました。",
+        "balanceDesc": "残高の読み込みに失敗しました。",
+        "globalDesc": "情報は古い可能性がありますが、あなたの資金は安全です。"
+      },
+      "buttonText": "リフレッシュ",
+      "offlineText": "ネットワークエラー",
+      "serviceErrorText": "サービスエラー"
     }
   },
   "common": {

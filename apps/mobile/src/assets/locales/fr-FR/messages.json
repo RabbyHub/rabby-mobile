@@ -967,7 +967,8 @@
         "hardwareWallet": "Portefeuille matériel",
         "syncRabbyExtension": "Synchroniser l'extension Rabby",
         "importAddress": "Importer le portefeuille",
-        "createAddress": "Créer un portefeuille"
+        "createAddress": "Créer un portefeuille",
+        "selectAddMethod": "Sélectionner Ajouter une méthode"
       },
       "createNewAddress": {
         "verificationFailed": "Échec de la vérification",
@@ -1008,7 +1009,8 @@
         "watch": "Portefeuille en mode lecture seule",
         "safeTitle": "Importer le portefeuille Safe",
         "watchOnlyTitle": "Importer un portefeuille en lecture seule",
-        "importTitle": "Importer le portefeuille"
+        "importTitle": "Importer le portefeuille",
+        "ImportCloud": "Importer depuis {{cloud}}"
       }
     },
     "signText": {
@@ -2138,6 +2140,21 @@
     },
     "AccountSelector": {
       "title": "Sélectionner le portefeuille"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "Erreur de connexion au service :",
+        "globalDesc": "Les informations peuvent être obsolètes, mais vos fonds restent en sécurité."
+      },
+      "serviceError": {
+        "title": "Problème de réseau :",
+        "quotesDesc": "La citation n'a pas pu être chargée.",
+        "globalDesc": "Les informations peuvent être obsolètes, mais vos fonds restent en sécurité.",
+        "balanceDesc": "le solde n'a pas pu être chargé."
+      },
+      "serviceErrorText": "Erreur de service",
+      "offlineText": "Erreur de réseau",
+      "buttonText": "Rafraîchir"
     }
   },
   "global": {

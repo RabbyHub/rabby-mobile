@@ -240,6 +240,21 @@
     },
     "AccountSelector": {
       "title": "Wallet auswählen"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "Fehler bei der Serviceverbindung:",
+        "globalDesc": "Die Informationen könnten veraltet sein, aber Ihre Mittel bleiben sicher."
+      },
+      "serviceError": {
+        "balanceDesc": "Das Gleichgewicht konnte nicht geladen werden.",
+        "globalDesc": "Die Informationen könnten veraltet sein, aber Ihre Gelder bleiben sicher.",
+        "title": "Netzwerkproblem:",
+        "quotesDesc": "Zitat konnte nicht geladen werden."
+      },
+      "buttonText": "Aktualisieren",
+      "serviceErrorText": "Dienstfehler",
+      "offlineText": "Netzwerkfehler"
     }
   },
   "page": {
@@ -1122,7 +1137,8 @@
         "hardwareWallet": "Hardware Wallet",
         "syncRabbyExtension": "Rabby-Erweiterung synchronisieren",
         "importAddress": "Wallet importieren",
-        "createAddress": "Wallet erstellen"
+        "createAddress": "Wallet erstellen",
+        "selectAddMethod": "Methode hinzufügen auswählen"
       },
       "createNewAddress": {
         "Continue": "Fortfahren",
@@ -1163,7 +1179,8 @@
         "watch": "Watch-Only Wallet",
         "importTitle": "Wallet importieren",
         "watchOnlyTitle": "Importiere Watch-Only Wallet",
-        "safeTitle": "Import Safe Wallet"
+        "safeTitle": "Import Safe Wallet",
+        "ImportCloud": "Importieren von {{cloud}}"
       }
     },
     "switchChain": {

@@ -181,6 +181,21 @@
     },
     "AccountSelector": {
       "title": "เลือกกระเป๋าเงิน"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "ข้อผิดพลาดในการเชื่อมต่อบริการ:",
+        "globalDesc": "ข้อมูลอาจจะล้าสมัย แต่เงินของคุณยังคงปลอดภัย。"
+      },
+      "serviceError": {
+        "title": "ปัญหาเครือข่าย:",
+        "quotesDesc": "ไม่สามารถโหลดคำพูดได้。",
+        "balanceDesc": "ไม่สามารถโหลดยอดคงเหลือได้。",
+        "globalDesc": "ข้อมูลอาจจะล้าสมัย แต่ทรัพย์สินของคุณยังคงปลอดภัยอยู่"
+      },
+      "buttonText": "รีเฟรช",
+      "serviceErrorText": "ข้อผิดพลาดของบริการ",
+      "offlineText": "ข้อผิดพลาดของเครือข่าย"
     }
   },
   "page": {
@@ -1099,7 +1114,8 @@
         "hardwareWallet": "ฮาร์ดแวร์วอลเล็ต",
         "syncRabbyExtension": "ซิงค์ Rabby Extension",
         "createAddress": "สร้างกระเป๋าเงิน",
-        "importAddress": "นำเข้าสูตรคลัง"
+        "importAddress": "นำเข้าสูตรคลัง",
+        "selectAddMethod": "เลือกวิธีการเพิ่ม"
       },
       "multiAddressHome": {
         "services": "บริการ",
@@ -1130,7 +1146,8 @@
         "safeTitle": "นำเข้ากระเป๋า Safe Wallet",
         "importTitle": "นำเข้ากระเป๋าเงิน",
         "watch": "กระเป๋าเงินเฉพาะดู",
-        "watchOnlyTitle": "นำเข้าสินทรัพย์ที่ตรวจสอบได้เท่านั้น"
+        "watchOnlyTitle": "นำเข้าสินทรัพย์ที่ตรวจสอบได้เท่านั้น",
+        "ImportCloud": "นำเข้าจาก {{cloud}}"
       },
       "createNewAddress": {
         "Continue": "ดำเนินการต่อ",
