@@ -547,6 +547,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     paddingHorizontal: 16,
     borderRadius: 0,
     resizeMode: 'cover',
+    backgroundColor: 'transparent',
   },
   titleView: {
     paddingTop: 16,
