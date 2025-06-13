@@ -490,9 +490,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     const { styles } = useThemeStyles(getStyles);
     const { t } = useTranslation();
     const finalAccount = address;
-    console.log({
-      finalAccount,
-    });
+
     const [tokenLoad, setTokenLoad] = React.useState<{
       isLoading: boolean;
       token: TokenItem | null;

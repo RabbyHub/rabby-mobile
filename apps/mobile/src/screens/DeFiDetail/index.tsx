@@ -166,7 +166,6 @@ export const DeFiDetailScreen = () => {
     isSingleAddress?: boolean;
   };
 
-  // todo check this
   const finalAccount = useMemo(
     () => routeAccount || preferenceService.getFallbackAccount(),
     [routeAccount],
