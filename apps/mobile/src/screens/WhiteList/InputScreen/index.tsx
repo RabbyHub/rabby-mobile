@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
@@ -51,6 +57,7 @@ import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 import { ellipsisAddress } from '@/utils/address';
 import { useAccounts } from '@/hooks/account';
 import { useMemoizedFn } from 'ahooks';
+import { debounce } from 'lodash';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -171,7 +178,7 @@ const WhitelistInputScreen = () => {
             toast.success(t('page.whitelist.addSuccessful'));
             nav.canGoBack() && nav.goBack();
             setTimeout(() => {
-              removeGlobalBottomSheetModal2024(id);
+              removeGlobalBottomSheetModal2024(confrimModalIRef.current);
             }, 0);
           },
         });
@@ -181,6 +188,11 @@ const WhitelistInputScreen = () => {
       setLoading(false);
     }
   });
+
+  const debouncedHandleDone = useMemo(
+    () => debounce(handleDone, 300),
+    [handleDone],
+  );
 
   const handleSubmit = useCallback((text: string) => {
     setError(undefined);
@@ -278,7 +290,7 @@ const WhitelistInputScreen = () => {
         as="View"
         buttonProps={{
           title: t('global.Confirm'),
-          onPress: handleDone,
+          onPress: debouncedHandleDone,
           loading: loading,
           disabled: !input || !!error,
         }}
