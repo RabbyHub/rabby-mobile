@@ -1,4 +1,10 @@
-import { View, Text, StyleProp, ViewStyle } from 'react-native';
+import {
+  View,
+  Text,
+  StyleProp,
+  ViewStyle,
+  TouchableOpacity,
+} from 'react-native';
 import RcServiceCC from '@/assets2024/icons/common/service-cc.svg';
 import RcOfflineCC from '@/assets2024/icons/common/offline-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
@@ -82,17 +88,20 @@ export function GlobalWarning({
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.text}>{description}</Text>
         {onRefresh && (
-          <Text
+          <TouchableOpacity
+            hitSlop={20}
+            style={styles.refreshButton}
             onPress={() => {
               if (isNetWorkError) {
                 refresh();
               } else {
                 onRefresh();
               }
-            }}
-            style={styles.refreshText}>
-            {t('component.globalWarning.buttonText')}
-          </Text>
+            }}>
+            <Text style={styles.refreshText}>
+              {t('component.globalWarning.buttonText')}
+            </Text>
+          </TouchableOpacity>
         )}
       </Text>
     </View>
@@ -115,6 +124,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     width: '100%',
     flexWrap: 'wrap',
+    alignItems: 'center',
   },
   title: {
     color: colors2024['neutral-title-1'],
@@ -131,5 +141,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
+  },
+  refreshButton: {
+    height: 13,
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
   },
 }));
