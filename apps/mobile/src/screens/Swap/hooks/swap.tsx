@@ -6,7 +6,11 @@ import { findChain, findChainByEnum } from '@/utils/chain';
 import i18n from '@/utils/i18n';
 import abiCoder, { AbiCoder } from 'web3-eth-abi';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { preferenceService, swapService } from '@/core/services';
+import {
+  preferenceService,
+  swapService,
+  transactionHistoryService,
+} from '@/core/services';
 import { sendRequest } from '@/core/apis/provider';
 import { navigationRef } from '@/utils/navigation';
 import { StackActions } from '@react-navigation/native';
@@ -14,6 +18,7 @@ import { RootNames } from '@/constant/layout';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Account } from '@/core/services/preference';
+import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
@@ -42,12 +47,16 @@ export const approveToken = async ({
   isBuild?: boolean;
   account: Account;
 }) => {
-  if (!account) throw new Error(i18n.t('background.error.noCurrentAccount'));
+  if (!account) {
+    throw new Error(i18n.t('background.error.noCurrentAccount'));
+  }
 
   const chainId = findChain({
     serverId: chainServerId,
   })?.id;
-  if (!chainId) throw new Error(i18n.t('background.error.invalidChainId'));
+  if (!chainId) {
+    throw new Error(i18n.t('background.error.invalidChainId'));
+  }
   let tx: any = {
     from: account.address,
     to: id,
@@ -133,6 +142,7 @@ export const dexSwap = async (
     account: Account;
   },
   $ctx?: any,
+  addSwapTxHistoryObj?: Omit<SwapTxHistoryItem, 'hash'>,
 ) => {
   if (!account) {
     throw new Error(i18n.t('background.error.noCurrentAccount'));
@@ -222,14 +232,22 @@ export const dexSwap = async (
       session: INTERNAL_REQUEST_SESSION,
       account,
     })
-      .then(() => {
-        console.log('after swap');
+      .then(res => {
+        const hash = res as string;
+        console.log('after swap  hash: ', hash);
         preferenceService.setReportActionTs(
           REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN,
           {
             chain: chainObj.serverId as string,
           },
         );
+        if (addSwapTxHistoryObj) {
+          const swapTxHistoryObj = {
+            ...addSwapTxHistoryObj,
+            hash,
+          };
+          transactionHistoryService.addSwapTxHistory(swapTxHistoryObj);
+        }
         navigationRef.dispatch(
           StackActions.replace(RootNames.StackRoot, {
             screen: RootNames.Home,
