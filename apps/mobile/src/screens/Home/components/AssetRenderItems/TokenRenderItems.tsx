@@ -310,7 +310,7 @@ export const ExternalTokenRow = memo(
         return <RiskTokenTips isDanger={true} />;
       }
 
-      if (data.is_scam) {
+      if (data.is_suspicious) {
         return <RiskTokenTips isDanger={false} />;
       }
 
@@ -335,7 +335,7 @@ export const ExternalTokenRow = memo(
       }
 
       return null;
-    }, [data.identity, styles, t, data.is_verified, data.is_scam]);
+    }, [data.identity, styles, t, data.is_verified, data.is_suspicious]);
 
     return (
       <Container

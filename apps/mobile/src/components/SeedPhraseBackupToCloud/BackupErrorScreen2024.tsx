@@ -41,6 +41,7 @@ export const BackupErrorScreen: React.FC<Props> = ({
       <BackupIcon
         status="error"
         isGray
+        isDown={true}
         description={
           errorMessage || t('page.newAddress.seedPhrase.backupFailedTitle')
         }

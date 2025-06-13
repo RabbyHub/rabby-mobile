@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import { AssetAvatar } from '@/components';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { RootNames } from '@/constant/layout';
@@ -30,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { sendToken } from '@/core/apis/token';
 import { useMemoizedFn } from 'ahooks';
+import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 export const PendingTxItem = ({
   data,
   clearLocalPendingTxData,
@@ -81,6 +81,7 @@ export const PendingTxItem = ({
       params: {
         isForMultipleAddress,
         data: groupData,
+        type: HistoryItemCateType.Swap,
         title:
           type === 'send'
             ? t('page.transactions.itemTitle.Send')
@@ -90,8 +91,8 @@ export const PendingTxItem = ({
   });
 
   // const sendActionData = data.maxGasTx.action?.actionData?.send;
-  const payToken = (data as SwapTxHistoryItem)?.fromToken;
-  const receiveToken = (data as SwapTxHistoryItem)?.toToken;
+  // const payToken = data?.fromToken;
+  // const receiveToken = data?.toToken;
   // const sendTokenList = data.maxGasTx.explain?.balance_change?.send_token_list;
   // const receiveTokenList =
   //   data.maxGasTx.explain?.balance_change?.receive_token_list;
@@ -134,29 +135,27 @@ export const PendingTxItem = ({
               ) : (
                 <>
                   <AssetAvatar
-                    logo={payToken?.logo_url}
-                    chain={payToken?.chain}
-                    chainSize={14}
-                    size={25}
-                    innerChainStyle={styles.innerChainStyle}
-                  />
-                  <Text
-                    style={{
-                      ...styles.titleText,
-                      marginRight: 10,
-                      marginLeft: 4,
-                    }}>
-                    {` ${getTokenSymbol(payToken)} →`}
-                  </Text>
-                  <AssetAvatar
-                    logo={receiveToken?.logo_url}
-                    chain={receiveToken?.chain}
+                    logo={(data as SwapTxHistoryItem)?.fromToken?.logo_url}
+                    chain={(data as SwapTxHistoryItem)?.fromToken?.chain}
                     chainSize={14}
                     size={25}
                     innerChainStyle={styles.innerChainStyle}
                   />
                   <Text style={styles.titleText}>
-                    {getTokenSymbol(receiveToken)}
+                    {` ${getTokenSymbol(
+                      (data as SwapTxHistoryItem)?.fromToken,
+                    )}`}
+                  </Text>
+                  <Text style={styles.titleText}>{'→'}</Text>
+                  <AssetAvatar
+                    logo={(data as SwapTxHistoryItem)?.toToken?.logo_url}
+                    chain={(data as SwapTxHistoryItem)?.toToken?.chain}
+                    chainSize={14}
+                    size={25}
+                    innerChainStyle={styles.innerChainStyle}
+                  />
+                  <Text style={styles.titleText}>
+                    {getTokenSymbol((data as SwapTxHistoryItem)?.toToken)}
                   </Text>
                 </>
               )}

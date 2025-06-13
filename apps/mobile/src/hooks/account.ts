@@ -33,6 +33,7 @@ import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
 import { unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
+import { useHistoryTokenDict } from './historyTokenDict';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -295,6 +296,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 
 export function useRemoveAccount() {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const { updateHistoryTimeSingleAddress } = useHistoryTokenDict();
   return useCallback(
     async (account: KeyringAccount) => {
       await removeAddress(account);
@@ -304,9 +306,10 @@ export function useRemoveAccount() {
           .length === 1
       ) {
         await deleteDBResourceForAddress(account.address);
+        updateHistoryTimeSingleAddress(account.address, 0);
       }
     },
-    [accounts, fetchAccounts],
+    [accounts, fetchAccounts, updateHistoryTimeSingleAddress],
   );
 }
 

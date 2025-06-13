@@ -55,6 +55,7 @@ const getStyles = createGetStyles(colors => ({
   },
 }));
 
+/** @deprecated */
 export const RestoreFromCloud = () => {
   const [backups, setBackups] = React.useState<BackupData[]>();
   const [loading, setLoading] = React.useState(true);

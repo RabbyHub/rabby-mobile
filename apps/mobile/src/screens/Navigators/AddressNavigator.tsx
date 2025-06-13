@@ -397,7 +397,7 @@ export function AddressNavigator() {
           headerTitle: t('screens.addressStackTitle.ImportMnemonic'),
           title: t('screens.addressStackTitle.ImportMnemonic'),
           headerTitleStyle: styles.headerTitleText,
-          headerRight: CloudBackupButton2024,
+          // headerRight: CloudBackupButton2024,
         }}
       />
       <AddressStack.Screen

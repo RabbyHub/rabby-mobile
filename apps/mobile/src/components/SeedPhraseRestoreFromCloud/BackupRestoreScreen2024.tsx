@@ -24,7 +24,12 @@ export const BackupRestoreScreen: React.FC<Props> = () => {
 
   return (
     <View style={styles.root}>
-      <BackupIcon status="downloading" isGray description={description} />
+      <BackupIcon
+        status="downloading"
+        isGray
+        description={description}
+        isDown={true}
+      />
     </View>
   );
 };

@@ -29,6 +29,7 @@ interface Props {
   isGray?: boolean;
   description?: string;
   descriptionStyle?: StyleProp<TextStyle>;
+  isDown?: boolean;
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -84,19 +85,21 @@ export const BackupIcon: React.FC<Props> = ({
   isGray,
   description,
   descriptionStyle,
+  isDown,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const CloudImageSrc = React.useMemo(() => {
     if (IS_IOS) {
-      return isGray
-        ? require('@/assets/icons/address/icloud-gray-new.png')
-        : require('@/assets/icons/address/icloud.png');
+      const grayImage = isDown
+        ? require('@/assets/icons/address/icloud-gray-new-down.png')
+        : require('@/assets/icons/address/icloud-gray-new.png');
+      return isGray ? grayImage : require('@/assets/icons/address/icloud.png');
     }
     return isGray
       ? require('@/assets/icons/address/gdrive-gray.png')
       : require('@/assets/icons/address/gdrive.png');
-  }, [isGray]);
+  }, [isGray, isDown]);
   const StatusIcon = React.useMemo(() => {
     switch (status) {
       case 'success':
