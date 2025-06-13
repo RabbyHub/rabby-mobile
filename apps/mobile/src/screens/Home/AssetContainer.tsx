@@ -41,7 +41,6 @@ import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { Account } from '@/core/services/preference';
 import { PageMainServices, useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
-import { refresh as refreshNetWorkStatus } from '@react-native-community/netinfo';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -612,11 +611,7 @@ export const AssetContainer: React.FC<Props> = ({
       <NetWorkError
         errorType={errorType}
         onRefresh={() => {
-          if (errorType === 'network') {
-            refreshNetWorkStatus();
-          } else {
-            handleRefresh(true);
-          }
+          handleRefresh(true);
         }}
         style={styles.netWorkError}
       />

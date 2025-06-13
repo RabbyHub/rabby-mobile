@@ -29,17 +29,19 @@ export function NetWorkError({
           ? t('component.globalWarning.offlineText')
           : t('component.globalWarning.serviceErrorText')}
       </Text>
-      <Button
-        onPress={onRefresh}
-        buttonStyle={styles.btn}
-        titleStyle={styles.btnText}
-        title={t('component.globalWarning.buttonText')}
-      />
+      {errorType === 'service' && (
+        <Button
+          onPress={onRefresh}
+          buttonStyle={styles.btn}
+          titleStyle={styles.btnText}
+          title={t('component.globalWarning.buttonText')}
+        />
+      )}
     </View>
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     justifyContent: 'center',
     alignItems: 'center',

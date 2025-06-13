@@ -11,7 +11,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { refresh } from '@react-native-community/netinfo';
 import { ErrorType } from '@/hooks/useGlobalStatus';
 
 export enum GlobalWarningType {
@@ -87,17 +86,11 @@ export function GlobalWarning({
       <Text style={styles.content}>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.text}>{description}</Text>
-        {onRefresh && (
+        {!isNetWorkError && !!onRefresh && (
           <TouchableOpacity
             hitSlop={20}
             style={styles.refreshButton}
-            onPress={() => {
-              if (isNetWorkError) {
-                refresh();
-              } else {
-                onRefresh();
-              }
-            }}>
+            onPress={onRefresh}>
             <Text style={styles.refreshText}>
               {t('component.globalWarning.buttonText')}
             </Text>
