@@ -560,6 +560,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             ).toString(16)}`,
             gas: item.gas || item.gasLimit || '0x0',
           })),
+        delegate_call: isGnosisAccount ? !!params?.data?.[0]?.operation : false,
       })
       .then(async res => {
         let estimateGas = 0;

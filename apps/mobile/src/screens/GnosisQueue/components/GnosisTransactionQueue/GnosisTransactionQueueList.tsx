@@ -202,16 +202,15 @@ export const GnosisTransactionQueueList = (props: {
           txs.map(async safeTx => {
             const tx: SafeTransactionDataPartial = {
               data: safeTx.data || '0x',
-              // todo fix this
-              gasPrice: safeTx.gasPrice ? Number(safeTx.gasPrice) : 0,
+              gasPrice: safeTx.gasPrice || '0',
               gasToken: safeTx.gasToken,
               refundReceiver: safeTx.refundReceiver,
               to: safeTx.to,
               value: numberToHex(safeTx.value),
-              safeTxGas: safeTx.safeTxGas,
+              safeTxGas: safeTx.safeTxGas.toString(),
               nonce: +safeTx.nonce,
               operation: safeTx.operation,
-              baseGas: safeTx.baseGas,
+              baseGas: safeTx.baseGas.toString(),
             };
             return apisSafe.validateGnosisTransaction(
               {
@@ -234,15 +233,15 @@ export const GnosisTransactionQueueList = (props: {
             }
             const tx: SafeTransactionDataPartial = {
               data: safeTx.data || '0x',
-              gasPrice: safeTx.gasPrice ? Number(safeTx.gasPrice) : 0,
+              gasPrice: safeTx.gasPrice || '0',
               gasToken: safeTx.gasToken,
               refundReceiver: safeTx.refundReceiver,
               to: safeTx.to,
               value: numberToHex(safeTx.value),
-              safeTxGas: safeTx.safeTxGas,
+              safeTxGas: safeTx.safeTxGas.toString(),
               nonce: +safeTx.nonce,
               operation: safeTx.operation,
-              baseGas: safeTx.baseGas,
+              baseGas: safeTx.baseGas.toString(),
             };
 
             return safeTx.confirmations.every(confirm =>
