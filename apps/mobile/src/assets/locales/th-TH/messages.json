@@ -16,7 +16,15 @@
       "ImportHardwareAddress": "เชื่อมต่อกระเป๋าเงินฮาร์ดแวร์",
       "BackupSeedPhrase": "สำรอง Seed Phrase",
       "CreateChooseBackup": "3. เลือกวิธีการสำรองข้อมูล",
-      "CreateSelectMethod": "1. เลือกวิธีการสร้าง"
+      "CreateSelectMethod": "1. เลือกวิธีการสร้าง",
+      "AddressDetail": "รายละเอียดกระเป๋าเงิน",
+      "ImportMoreAddress": "นำเข้ากระเป๋าเงินเพิ่มเติม",
+      "WatchAddressList": "กระเป๋าเงินดูเฉย ๆ",
+      "ImportNewAddress": "เพิ่มกระเป๋าเงิน",
+      "ImportWatchAddress2024": "เพิ่มกระเป๋าเงินแบบดูเฉพาะ",
+      "CreateNewAddress": "1. ยืนยันกระเป๋าเงินของคุณ",
+      "ConfrimAddress": "ยืนยันกระเป๋าเงินของคุณ",
+      "CreateSelectOnCurrentSeed": "2. เพิ่มกระเป๋าเงิน"
     }
   },
   "component": {
@@ -66,7 +74,9 @@
       }
     },
     "accountSwitcher": {
-      "all": "ทั้งหมด"
+      "all": "ทั้งหมด",
+      "screenHeaderSubTitle_other": "{{count}} กระเป๋าเงิน",
+      "screenHeaderSubTitle_one": "1 กระเป๋าเงิน"
     },
     "ReserveGasPopup": {
       "fast": "รวดเร็ว",
@@ -127,7 +137,10 @@
         "login": "เข้าสู่ระบบ GasAccount"
       },
       "gasExceed": "ยอดคงเหลือใน GasAccount ไม่เกิน $1000",
-      "loginConfirmModal": {},
+      "loginConfirmModal": {
+        "title": "เลือกกระเป๋าเงินเพื่อเข้าสู่ระบบ",
+        "desc": "เมื่อเข้าสู่ระบบแล้ว คุณสามารถฝากได้เฉพาะที่อยู่นี้เท่านั้น"
+      },
       "depositPopup": {
         "title": "ฝากเงิน",
         "amount": "จำนวน",
@@ -172,7 +185,10 @@
   },
   "page": {
     "getStart": {
-      "goToHome": "ไปที่หน้าแรก"
+      "goToHome": "ไปที่หน้าแรก",
+      "alreadyHaveAddress": "ฉันมีกระเป๋าเงินแล้ว",
+      "sync": "สแกนเพื่อซิงค์กระเป๋าสตางค์ Rabby Extension",
+      "createNewAddress": "สร้างกระเป๋าเงินใหม่"
     },
     "transactions": {
       "explain": {
@@ -226,7 +242,8 @@
         "Collection": "คอลเลกชัน",
         "WillReceive": "จะได้รับ: ≈ {{token}}",
         "totalApprovedAmount": "จำนวนเงินที่อนุมัติในปัจจุบัน",
-        "AddToWhitelist": "เพิ่มลงในรายการขาว"
+        "AddToWhitelist": "เพิ่มลงในรายการขาว",
+        "RecipientAddress": "กระเป๋าเงินผู้รับ"
       },
       "empty": {
         "desc": "ไม่พบธุรกรรมบน<1>supported chains</1>",
@@ -377,7 +394,10 @@
     },
     "importSuccess": {
       "addressCount": "{{count}} Addresses",
-      "success": "{{type}} สำเร็จ!"
+      "success": "{{type}} สำเร็จ!",
+      "addressCount_other": "{{count}} กระเป๋าเงิน",
+      "addressCount_one": "{{count}} กระเป๋าเงิน",
+      "importMore": "นำเข้ากระเป๋าเงินเพิ่มเติม"
     },
     "sendTokenComponents": {
       "GasReserved": "สำรอง <1>0</1> {{ tokenName }} สำหรับค่าใช้จ่าย gas"
@@ -649,7 +669,8 @@
         "minReceive": "มูลค่ารับขั้นต่ำ",
         "simulationNotSupport": "การจำลองธุรกรรมไม่รองรับบนเชนนี้",
         "simulationFailed": "การจำลองธุรกรรมล้มเหลว",
-        "receiveToken": "รับ"
+        "receiveToken": "รับ",
+        "notPaymentAddress": "ไม่ใช่กระเป๋าชำระเงิน"
       },
       "gasLimitLessThanExpect": "ก๊าซลิมิตต่ำ มีโอกาส 1% ที่ธุรกรรมอาจล้มเหลว",
       "coboSafeModificationDelegatedAddress": {
@@ -797,7 +818,8 @@
         "customRpcUnavailableTip": "ไม่รองรับ Custom RPCs สำหรับ Free Gas",
         "GetFreeGasToSign": "รับ Gas ฟรี",
         "walletConnectUnavailableTip": "ไม่รองรับกระเป๋าเงินมือถือที่เชื่อมต่อผ่าน WalletConnect สำหรับ Free Gas",
-        "notEnough": "ยอดคงเหลือ Gas ไม่เพียงพอ"
+        "notEnough": "ยอดคงเหลือ Gas ไม่เพียงพอ",
+        "watchUnavailableTip": "Wallet ที่ดูได้อย่างเดียวไม่รองรับ Free Gas"
       },
       "qrcode": {
         "sigCompleted": "ธุรกรรมถูกสร้างขึ้นแล้ว",
@@ -1007,7 +1029,9 @@
       "watch-address": "Watch Address",
       "private-key": "คีย์ส่วนตัว",
       "quickAddressTitle_one": "{{count}} ที่อยู่",
-      "quickAddressTitle_other": "{{count}} ที่อยู่"
+      "quickAddressTitle_other": "{{count}} ที่อยู่",
+      "add-address": "เพิ่มกระเป๋าเงิน",
+      "delete-checklist-1": "ฉันเข้าใจว่าหากฉันลบกระเป๋านี้ จริง ๆ แล้ว กุญแจส่วนตัวและประโยค Seed ที่เกี่ยวข้องจะถูกลบ และ Rabby จะไม่สามารถกู้คืนได้。"
     },
     "swap": {
       "title": "Swap",
@@ -1073,7 +1097,9 @@
     "nextComponent": {
       "addAddress": {
         "hardwareWallet": "ฮาร์ดแวร์วอลเล็ต",
-        "syncRabbyExtension": "ซิงค์ Rabby Extension"
+        "syncRabbyExtension": "ซิงค์ Rabby Extension",
+        "createAddress": "สร้างกระเป๋าเงิน",
+        "importAddress": "นำเข้าสูตรคลัง"
       },
       "multiAddressHome": {
         "services": "บริการ",
@@ -1085,7 +1111,10 @@
         "fundYourWallet": "เติมเงินใน Wallet ของคุณ",
         "buyWithFiatDesc": "การซื้อสกุลเงินดิจิทัลที่ง่าย",
         "foundGuideTitle": "ระดมทุนอย่างรวดเร็ว",
-        "foundGuideDesc": "เพิ่มโทเค็นลงในกระเป๋าเงินของคุณเพื่อเริ่มต้น。"
+        "foundGuideDesc": "เพิ่มโทเค็นลงในกระเป๋าเงินของคุณเพื่อเริ่มต้น。",
+        "importAddressDesc": "เพิ่มกระเป๋าเงินที่มีอยู่พร้อมกับเงินทุน",
+        "importAddress": "นำเข้ากระเป๋าเงิน",
+        "receiveCryptoDesc": "โอนโทเค็นจากกระเป๋าเงินอื่น"
       },
       "importAddress": {
         "privateKey": "นำเข้าคีย์ส่วนตัว",
@@ -1097,7 +1126,11 @@
           "entry": "นำเข้าไปยัง Rabby ปลอดภัยหรือไม่",
           "title": "ปลอดภัยหรือไม่ที่จะนำเข้าไปยัง Rabby?",
           "description": "ข้อมูลของคุณจะถูกเข้ารหัสอย่างปลอดภัยและเก็บไว้ในอุปกรณ์ของคุณ Rabby ไม่สามารถเข้าถึงข้อมูลส่วนตัวของคุณ และจะไม่มีการแชร์ให้กับบุคคลที่สาม"
-        }
+        },
+        "safeTitle": "นำเข้ากระเป๋า Safe Wallet",
+        "importTitle": "นำเข้ากระเป๋าเงิน",
+        "watch": "กระเป๋าเงินเฉพาะดู",
+        "watchOnlyTitle": "นำเข้าสินทรัพย์ที่ตรวจสอบได้เท่านั้น"
       },
       "createNewAddress": {
         "Continue": "ดำเนินการต่อ",
@@ -1120,7 +1153,9 @@
         "passwordMin": "ต้องมีอย่างน้อย 8 ตัวอักษร",
         "UnderstandsecurityPrecautions": "ฉันเข้าใจมาตรการรักษาความปลอดภัยเหล่านี้แล้ว",
         "selectWords": "เลือกคำ",
-        "riskTips": "ก่อนที่คุณจะเริ่มต้น โปรดอ่านและจำเคล็ดลับความปลอดภัยเหล่านี้ไว้ในใจ:"
+        "riskTips": "ก่อนที่คุณจะเริ่มต้น โปรดอ่านและจำเคล็ดลับความปลอดภัยเหล่านี้ไว้ในใจ:",
+        "createNewDesc": "สร้างวลีเมล็ดพันธุ์ใหม่สำหรับกระเป๋าใหม่",
+        "createOnCurrentDesc": "สร้างกระเป๋าเงินด้วยวลีเมล็ดพันธุ์ที่นำเข้าแล้ว"
       }
     },
     "switchChain": {
@@ -1162,23 +1197,36 @@
       "manage-seed-phrase": "จัดการ Seed Phrase",
       "assets": "สินทรัพย์",
       "backup-private-key": "สำรอง Private Key",
-      "safeAddressListScreen": {},
+      "safeAddressListScreen": {
+        "addSafeAddress": "เพิ่มกระเป๋าเงิน Safe"
+      },
       "backup-seed-phrase": "สำรอง Seed Phrase",
       "source": "แหล่งที่มา",
       "qr-code": "QR Code",
       "address-note": "ที่อยู่หมายเหตุ",
       "hd-path": "HD Path",
-      "watchAddressListScreen": {},
+      "watchAddressListScreen": {
+        "addWatchAddress": "เพิ่มกระเป๋าเงินแบบดูเฉพาะ"
+      },
       "addressListScreen": {
         "unpin": "เลิกตรึง",
         "pin": "PIN",
         "detail": "รายละเอียด",
         "delete": "ลบ",
-        "edit": "แก้ไข"
+        "edit": "แก้ไข",
+        "title_zero": "0 กระเป๋า",
+        "importSafeAddress": "นำเข้ากระเป๋า Safe",
+        "title_one": "{{count}} กระเป๋าเงิน",
+        "title_other": "{{count}} กระเป๋าเงิน",
+        "importWatchAddress": "นำเข้ากระเป๋าเงินแบบดูเฉพาะ",
+        "addAddress": "เพิ่มกระเป๋าเงิน"
       },
       "add-to-whitelist": "เพิ่มใน Whitelist",
       "pin-in-list": "ปักหมุดในรายการ",
-      "delete-desc-needpassword": "ก่อนที่คุณจะลบ โปรดคำนึงถึงประเด็นต่อไปนี้เพื่อทำความเข้าใจวิธีปกป้องสินทรัพย์ของคุณ"
+      "delete-desc-needpassword": "ก่อนที่คุณจะลบ โปรดคำนึงถึงประเด็นต่อไปนี้เพื่อทำความเข้าใจวิธีปกป้องสินทรัพย์ของคุณ",
+      "delete-address": "ลบกระเป๋าเงิน",
+      "manage-addresses-under-this-seed-phrase": "เพิ่มกระเป๋าเงินจากวลีเมล็ดนี้",
+      "delete-desc": "คุณแน่ใจหรือว่าต้องการลบกระเป๋านี้?"
     },
     "importSafe": {
       "title": "เพิ่มที่อยู่ Safe",
@@ -1260,7 +1308,8 @@
         "title3": "ความปลอดภัย",
         "description2": "หากคุณสูญเสีย seed phrase คุณจะไม่สามารถกู้คืนกระเป๋าเงินของคุณได้",
         "description3": "อย่าแชร์ seed phrase ของคุณกับใครก็ตามที่มีสิทธิ์เข้าถึง สามารถควบคุมเงินทุนของคุณได้",
-        "description4": "วลีเมล็ดพันธุ์ของคุณถูกจัดเก็บไว้ในอุปกรณ์ของคุณเองและเข้ารหัสด้วยรหัสผ่านของคุณ มีเพียงคุณเท่านั้นที่สามารถเข้าถึงได้ Rabby ไม่สามารถดึงหรือเข้าถึงวลีเมล็ดพันธุ์ของคุณได้"
+        "description4": "วลีเมล็ดพันธุ์ของคุณถูกจัดเก็บไว้ในอุปกรณ์ของคุณเองและเข้ารหัสด้วยรหัสผ่านของคุณ มีเพียงคุณเท่านั้นที่สามารถเข้าถึงได้ Rabby ไม่สามารถดึงหรือเข้าถึงวลีเมล็ดพันธุ์ของคุณได้",
+        "description1": "คำว่า seed phrase หมายถึงชุดคำที่ใช้ในการเข้าถึงและควบคุมกระเป๋าเงินของคุณ คุณสามารถใช้มันเพื่อกู้คืนกระเป๋าเงินของคุณบนอุปกรณ์ใดก็ได้"
       },
       "ledger": {
         "imported": "นำเข้าแล้ว",
@@ -1303,7 +1352,8 @@
         "isItSafeToImportItInRabby": {
           "answer": "ใช่ จะถูกเก็บไว้ในโทรศัพท์ของคุณและสามารถเข้าถึงได้เฉพาะคุณเท่านั้น",
           "question": "นำเข้าใน Rabby ปลอดภัยหรือไม่?"
-        }
+        },
+        "repeatImportTips": "กระเป๋าเงินนี้ได้ถูกนำเข้าแล้ว"
       },
       "keystone": {
         "scan": {
@@ -1399,8 +1449,16 @@
           }
         },
         "ledger": {
-          "hdPathTypeNoChain": {},
-          "hdPathType": {}
+          "hdPathTypeNoChain": {
+            "ledgerLive": "Ledger Live: เลย์เอาต์ HD ทางการของ Ledger ใน 3 กระเป๋าแรก ไม่มีการใช้กระเป๋าในเครือข่าย.",
+            "legacy": "Legacy: HD path ที่ใช้โดย MEW / Mycrypto ใน 3 กระเป๋าแรกไม่มีการใช้กระเป๋าบน-chain",
+            "bip44": "มาตรฐาน BIP44: เส้นทาง HD ที่กำหนดโดยโปรโตคอล BIP44 ใน 3 กระเป๋าแรก จะไม่มีการใช้กระเป๋าบนเครือข่าย"
+          },
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: เส้นทาง HD อย่างเป็นทางการของ Ledger ใน 3 กระเป๋าแรก มีการใช้งานกระเป๋าเงินแบบ on-chain",
+            "legacy": "Legacy: HD path ที่ใช้โดย MEW / Mycrypto ใน 3 กระเป๋าแรก มีการใช้กระเป๋าเหล่านี้บนเชน",
+            "bip44": "มาตรฐาน BIP44: HDpath ที่กำหนดโดยโปรโตคอล BIP44 ใน 3 กระเป๋าแรก จะมีกระเป๋าที่ใช้บน-chain"
+          }
         },
         "keystone": {
           "hdPathTypeNoChain": {
@@ -1419,8 +1477,12 @@
             "title": "เปลี่ยนไปใช้อุปกรณ์ {{0}} ใหม่",
             "content": "ไม่รองรับการนำเข้าอุปกรณ์ {{0}} หลายเครื่อง หากคุณเปลี่ยนไปใช้อุปกรณ์ {{0}} ใหม่ รายการที่อยู่ของอุปกรณ์ปัจจุบันจะถูกลบก่อนเริ่มกระบวนการนำเข้า"
           }
-        }
-      }
+        },
+        "customAddressHdPath": "custom wallet HD path",
+        "selectIndexTip": "เลือกหมายเลขประจำตัวของกระเป๋าเงินที่จะเริ่มจาก:",
+        "manageAddressFrom": "จัดการกระเป๋าเงินจาก {{0}} ถึง {{1}}"
+      },
+      "createNewAddress": "สร้างกระเป๋าใหม่"
     },
     "safeQueue": {
       "unknownProtocol": "Unknown protocol",
@@ -1584,7 +1646,8 @@
       }
     },
     "receiveAddressList": {
-      "selectChainTitle": "เลือกเชน"
+      "selectChainTitle": "เลือกเชน",
+      "title": "เลือกกระเป๋าเงินเพื่อรับ"
     },
     "miniSignFooterBar": {
       "signWithLedger": "ลงนาม",
@@ -1609,7 +1672,10 @@
         "receiveHeader": "รับ Crypto",
         "title": "เติมเงินให้กระเป๋าของคุณ",
         "buyBody": "การซื้อคริปโตอย่างง่าย",
-        "desc": "ขอเงินทุนอย่างรวดเร็วตอนนี้"
+        "desc": "ขอเงินทุนอย่างรวดเร็วตอนนี้",
+        "importHeader": "นำเข้ากระเป๋าเงิน",
+        "importBody": "เพิ่มกระเป๋าเงินที่มีอยู่พร้อมเงินทุน",
+        "receiveBody": "โอนโทเค็นจากกระเป๋าเงินอื่น"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1652,11 +1718,15 @@
         "googlePayDesc": "รวมค่าธรรมเนียม Google Pay ${{ amount }} ไม่สามารถถอนเงินได้",
         "applePayDesc": "รวมค่าธรรมเนียม Apple Pay ${{amount}} ไม่มีการถอนไม่ได้",
         "googlePayFeeDesc": "รวมค่าธรรมเนียม Google Pay ไม่มีการถอน",
-        "applePayFeeDesc": "รวมค่าธรรมเนียม Apple Pay ไม่มีการถอนออก"
+        "applePayFeeDesc": "รวมค่าธรรมเนียม Apple Pay ไม่มีการถอนออก",
+        "paymentAddress": "กระเป๋าเงินการชำระเงิน",
+        "inSufficientTip1": "กระเป๋าเงินนี้มีโทเค็นไม่เพียงพอ กรุณาเลือกกระเป๋าเงินใบอื่น"
       },
       "paymentAddressPopup": {
         "balance": "ยอดเงิน",
-        "confirm": "ยืนยัน"
+        "confirm": "ยืนยัน",
+        "title": "เลือกกระเป๋าเงินเพื่อชำระเงิน",
+        "address": "กระเป๋าเงินชำระเงิน"
       },
       "withdrawPopup": {
         "noEnoughGas": "จำนวนเงินน้อยเกินกว่าที่จะครอบคลุมค่า gas",
@@ -1673,7 +1743,10 @@
         "tipsBtn": "เข้าใจแล้ว",
         "destinationChain": "เชนปลายทาง",
         "deductGasFees": "จำนวนเงินที่ได้รับจะหักค่าธรรมเนียม gas",
-        "noEnoughValueBalance": "ยอดเงินใน Vault ไม่เพียงพอ เปลี่ยนเครือข่ายหรือลองใหม่ภายหลัง"
+        "noEnoughValueBalance": "ยอดเงินใน Vault ไม่เพียงพอ เปลี่ยนเครือข่ายหรือลองใหม่ภายหลัง",
+        "selectRecipientAddress": "เลือกกระเป๋าเงินผู้รับ",
+        "noRecipient": "ไม่มีกระเป๋าเงินผู้รับที่ใช้ได้",
+        "recipientAddress": "กระเป๋าเงินผู้รับ"
       },
       "withdrawConfirmModal": {
         "button": "ดูบน DeBank",
@@ -1700,7 +1773,8 @@
       "gasAccountList": {
         "address": "ที่อยู่",
         "balance": "ยอดคงเหลือ",
-        "gasAccountBalance": "ยอดคงเหลือ GasAccount"
+        "gasAccountBalance": "ยอดคงเหลือ GasAccount",
+        "wallet": "กระเป๋าเงิน"
       },
       "loginFailed": "เข้าสู่ระบบล้มเหลว",
       "switchAccount": "สวิตช์ GasAccount",
@@ -1887,7 +1961,10 @@
     "sendPoly": {
       "modals": {
         "recentAddress": "ที่อยู่ที่ส่งล่าสุด",
-        "header": "เพิ่มที่อยู่ไปยัง Whitelist"
+        "header": "เพิ่มที่อยู่ไปยัง Whitelist",
+        "importedAddress": "นำเข้ากระเป๋าเงิน",
+        "addAddress": "กระเป๋าเงินใหม่",
+        "content": "เลือกวิธีที่คุณต้องการเพิ่มกระเป๋าเงิน:"
       },
       "emptyWhitelistBtn": "เพิ่มเลย",
       "enterAddress": "ป้อนที่อยู่",
@@ -1900,7 +1977,10 @@
       "recent": "ล่าสุด",
       "innerEnterAddress": "ป้อนที่อยู่ / ENS",
       "sendTimeHeader": "ส่ง",
-      "sentTimeHeader": "ส่งแล้ว"
+      "sentTimeHeader": "ส่งแล้ว",
+      "sendToSafeAddress": "ส่งไปยัง Safe Wallets",
+      "sendToImportedAddress": "ส่งไปยังกระเป๋าเงินที่ฉันนำเข้า",
+      "sendToWatchAddress": "ส่งไปยังกระเป๋าเงิน Watch-Only"
     },
     "confirmAddress": {
       "risks": {
@@ -1918,7 +1998,8 @@
       "checkbox": "ฉันเข้าใจความเสี่ยงและต้องการดำเนินการต่อ"
     },
     "selectAddress": {
-      "selectSafeAddress": "เลือกจากที่อยู่ Safe"
+      "selectSafeAddress": "เลือกจากที่อยู่ Safe",
+      "selectWatchAddress": "เลือกจากที่อยู่แบบดูเฉยเท่านั้น"
     },
     "whitelist": {
       "confirm": "ยืนยัน",
@@ -1961,7 +2042,9 @@
     "multiAddressAssets": {
       "tabs": {
         "portfolio": "ผลงาน",
-        "address": "ที่อยู่"
+        "address": "ที่อยู่",
+        "wallet_one": "กระเป๋าเงิน",
+        "wallet_other": "กระเป๋าเงิน"
       },
       "scamTokenHeader": "โทเค็นหลอกลวง"
     },
@@ -2069,7 +2152,8 @@
     "unlimited": "ไม่จำกัด",
     "Addresses": "ที่อยู่",
     "24h": "24ชั่วโมง",
-    "Edit": "แก้ไข"
+    "Edit": "แก้ไข",
+    "Wallets": "เลือกกระเป๋าเงิน"
   },
   "background": {
     "transactionWatcher": {

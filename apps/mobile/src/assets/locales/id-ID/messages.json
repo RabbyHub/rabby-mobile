@@ -16,12 +16,23 @@
       "ImportHardwareAddress": "Sambungkan Dompet Perangkat Keras",
       "SetPassword2024": "2. Atur kata sandi",
       "CreateChooseBackup": "3. Pilih metode cadangan",
-      "CreateSelectMethod": "1. Pilih Metode Pembuatan"
+      "CreateSelectMethod": "1. Pilih Metode Pembuatan",
+      "ImportNewAddress": "Tambah Dompet",
+      "ConfrimAddress": "Konfirmasi Dompet Anda",
+      "AddressDetail": "Detail Dompet",
+      "ImportWatchAddress2024": "Tambahkan Dompet Hanya-Pantau",
+      "ImportMoreAddress": "Impor lebih Banyak Dompet",
+      "CreateNewAddress": "1. Konfirmasi Dompet Anda",
+      "CreateSelectOnCurrentSeed": "2. Tambah Dompet",
+      "WatchAddressList": "Dompet Tonton Saja"
     }
   },
   "page": {
     "getStart": {
-      "goToHome": "Pergi ke Beranda"
+      "goToHome": "Pergi ke Beranda",
+      "createNewAddress": "Buat Dompet Baru",
+      "alreadyHaveAddress": "Saya sudah memiliki wallet",
+      "sync": "Pindai untuk Menyinkronkan Dompet Ekstensi Rabby"
     },
     "transactions": {
       "itemTitle": {
@@ -71,7 +82,8 @@
         "From": "Dari",
         "RevokeToken": "Batalkan Token",
         "GasFee": "Biaya Gas",
-        "AddToWhitelist": "Tambahkan ke Daftar Putih"
+        "AddToWhitelist": "Tambahkan ke Daftar Putih",
+        "RecipientAddress": "Dompet penerima"
       },
       "empty": {
         "title": "Tidak ada transaksi",
@@ -141,7 +153,8 @@
         "title": "Tukar Token",
         "simulationFailed": "Simulasi transaksi gagal",
         "unknownAddress": "Alamat tidak dikenal",
-        "receiver": "Penerima"
+        "receiver": "Penerima",
+        "notPaymentAddress": "Bukan Wallet pembayaran"
       },
       "safeTx": {
         "selfHostConfirm": {
@@ -393,7 +406,10 @@
     },
     "importSuccess": {
       "addressCount": "{{count}} Alamat",
-      "success": "{{type}} berhasil!"
+      "success": "{{type}} berhasil!",
+      "addressCount_one": "{{count}} Dompet",
+      "importMore": "Impor lebih Banyak Dompet",
+      "addressCount_other": "{{count}} Dompet"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Masukkan frasa seed Anda, pisahkan setiap kata dengan spasi"
@@ -403,7 +419,8 @@
         "GetFreeGasToSign": "Dapatkan Gas Gratis",
         "customRpcUnavailableTip": "Custom RPC tidak didukung untuk Free Gas",
         "walletConnectUnavailableTip": "Dompet seluler yang terhubung melalui WalletConnect tidak mendukung Free Gas.",
-        "notEnough": "Saldo Gas tidak cukup"
+        "notEnough": "Saldo Gas tidak cukup",
+        "watchUnavailableTip": "Dompet Watch-Only tidak mendukung Free Gas"
       },
       "gasAccount": {
         "login": "Masuk",
@@ -636,7 +653,10 @@
     "sendPoly": {
       "modals": {
         "header": "Tambahkan Alamat ke Daftar Putih",
-        "recentAddress": "Alamat Terkirim Terbaru"
+        "recentAddress": "Alamat Terkirim Terbaru",
+        "importedAddress": "Dompet Diimpor",
+        "addAddress": "Dompet Baru",
+        "content": "Pilih cara Anda ingin menambahkan dompet:"
       },
       "emptyWhitelistBtn": "Tambahkan sekarang",
       "whitelistTitle": "Alamat Daftar Putih Saya",
@@ -649,7 +669,10 @@
       "innerEnterAddress": "Masukkan Alamat / ENS",
       "SendHistory": "Kirim Riwayat",
       "SelectFromHistory": "Pilih Dari Riwayat",
-      "sentTimeHeader": "Terkirim"
+      "sentTimeHeader": "Terkirim",
+      "sendToWatchAddress": "Kirim ke Dompet Hanya Tonton",
+      "sendToSafeAddress": "Kirim ke Dompet Aman",
+      "sendToImportedAddress": "Kirim ke Dompet yang Diimpor Saya"
     },
     "confirmAddress": {
       "risks": {
@@ -667,7 +690,8 @@
       "checkbox": "Saya memahami risiko dan ingin melanjutkan"
     },
     "selectAddress": {
-      "selectSafeAddress": "Pilih dari alamat Safe"
+      "selectSafeAddress": "Pilih dari alamat Safe",
+      "selectWatchAddress": "Pilih dari alamat Hanya-Nonton"
     },
     "whitelist": {
       "copyAddress": "Salin Alamat",
@@ -907,7 +931,9 @@
       "enterThePassphrase": "Masukkan Passphrase",
       "passphraseError": "Passphrase tidak valid",
       "quickAddressTitle_other": "{{count}} Alamat",
-      "quickAddressTitle_one": "{{count}} Alamat"
+      "quickAddressTitle_one": "{{count}} Alamat",
+      "add-address": "Tambah dompet",
+      "delete-checklist-1": "Saya mengerti bahwa jika saya menghapus dompet ini, kunci privat dan frasa benih yang sesuai akan dihapus, dan Rabby TIDAK akan dapat memulihkannya."
     },
     "home": {
       "services": {
@@ -998,11 +1024,15 @@
         "confirmPasswordTips": "Kata sandi cocok",
         "WriteSeedPhrase": "Ini adalah frase benih Anda. Catat di atas kertas dan simpan di tempat yang aman. Anda akan perlu memasukkannya kembali, dalam urutan yang benar, di langkah berikutnya.",
         "riskTips": "Sebelum Anda mulai, harap baca dan ingat tips keamanan ini:",
-        "UnderstandsecurityPrecautions": "Saya memahami langkah-langkah keamanan ini."
+        "UnderstandsecurityPrecautions": "Saya memahami langkah-langkah keamanan ini.",
+        "createOnCurrentDesc": "Buat dompet dengan frasa benih impor yang sudah ada",
+        "createNewDesc": "Hasilkan frasa seed baru untuk dompet baru"
       },
       "addAddress": {
         "hardwareWallet": "Dompet Donasi Hardware",
-        "syncRabbyExtension": "Sinkronkan Ekstensi Rabby"
+        "syncRabbyExtension": "Sinkronkan Ekstensi Rabby",
+        "importAddress": "Impor Dompet",
+        "createAddress": "Buat Dompet"
       },
       "multiAddressHome": {
         "totalBalance": "Total Balance",
@@ -1014,7 +1044,10 @@
         "services": "Layanan",
         "buyWithFiatDesc": "Pembelian kripto sederhana",
         "foundGuideDesc": "Tambahkan token ke dompet Anda untuk memulai.",
-        "foundGuideTitle": "Danai dengan cepat"
+        "foundGuideTitle": "Danai dengan cepat",
+        "importAddress": "Impor Dompet",
+        "receiveCryptoDesc": "Transfer token dari dompet lain",
+        "importAddressDesc": "Tambahkan dompet yang sudah ada dengan dana"
       },
       "importAddress": {
         "tips": {
@@ -1026,7 +1059,11 @@
         "safe": "Aman",
         "seedPhrase": "Impor Frasa Benih",
         "hardWare": "Sambungkan Dompet Perangkat Keras",
-        "privateKey": "Impor Kunci Pribadi"
+        "privateKey": "Impor Kunci Pribadi",
+        "safeTitle": "Impor Dompet Aman",
+        "watch": "Dompet Hanya Lihat",
+        "importTitle": "Impor Dompet",
+        "watchOnlyTitle": "Impor Dompet Hanya-Pengawasan"
       }
     },
     "newAddress": {
@@ -1038,7 +1075,8 @@
         "description2": "Jika Anda kehilangan frasa benih Anda, Anda tidak akan dapat memulihkan dompet Anda.",
         "title3": "Keamanan",
         "description4": "Frase benih Anda disimpan secara lokal di perangkat Anda dan dienkripsi dengan kata sandi Anda. Hanya Anda yang dapat mengaksesnya. Rabby tidak dapat mengambil atau mengakses frase benih Anda.",
-        "description3": "Jangan pernah membagikan frase biji Anda—siapa pun yang memiliki akses ke itu dapat mengontrol dana Anda."
+        "description3": "Jangan pernah membagikan frase biji Anda—siapa pun yang memiliki akses ke itu dapat mengontrol dana Anda.",
+        "description1": "Seed phrase adalah serangkaian kata yang digunakan untuk mengakses dan mengontrol dompet Anda. Anda dapat menggunakannya untuk memulihkan dompet Anda di perangkat apa pun."
       },
       "addContacts": {
         "cameraTitle": "Silakan pindai kode QR dengan kamera Anda"
@@ -1096,7 +1134,8 @@
         "isItSafeToImportItInRabby": {
           "question": "Apakah aman untuk mengimpornya di Rabby?",
           "answer": "Ya, itu akan disimpan secara lokal di ponsel Anda dan hanya dapat diakses oleh Anda."
-        }
+        },
+        "repeatImportTips": "Dompet ini telah diimpor"
       },
       "ledger": {
         "ble": {
@@ -1171,8 +1210,16 @@
       },
       "hd": {
         "ledger": {
-          "hdPathType": {},
-          "hdPathTypeNoChain": {}
+          "hdPathType": {
+            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger. Di 3 dompet pertama, ada dompet yang digunakan di on-chain.",
+            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto. Di 3 dompet pertama, terdapat dompet yang digunakan secara on-chain.",
+            "bip44": "Standar BIP44: HDpath yang ditentukan oleh protokol BIP44. Di 3 dompet pertama, terdapat dompet yang digunakan di on-chain."
+          },
+          "hdPathTypeNoChain": {
+            "legacy": "Legacy: Jalur HD yang digunakan oleh MEW / Mycrypto. Di 3 dompet pertama, tidak ada dompet yang digunakan di on-chain.",
+            "bip44": "Standar BIP44: Jalur HD yang ditentukan oleh protokol BIP44. Di 3 dompet pertama, tidak ada dompet yang digunakan di blockchain.",
+            "ledgerLive": "Ledger Live: Jalur HD resmi Ledger. Di 3 dompet pertama, tidak ada dompet yang digunakan di on-chain."
+          }
         },
         "onekey": {
           "hdPathType": {
@@ -1200,10 +1247,14 @@
             "content": "Tidak didukung untuk mengimpor beberapa perangkat {{0}}. Jika Anda beralih ke perangkat {{0}} yang baru, daftar alamat perangkat saat ini akan dihapus sebelum memulai proses impor."
           }
         },
-        "balance": "Saldo"
+        "balance": "Saldo",
+        "customAddressHdPath": "Jalur HD Dompet Kustom",
+        "manageAddressFrom": "Kelola dompet dari {{0}} ke {{1}}",
+        "selectIndexTip": "Pilih nomor seri dompet untuk memulai:"
       },
       "Quick": "Cepat",
-      "createNewSeedPhrase": "Buat Frasa Benih Baru"
+      "createNewSeedPhrase": "Buat Frasa Benih Baru",
+      "createNewAddress": "Buat Dompet Baru"
     },
     "unlock": {
       "btn": {
@@ -1292,14 +1343,24 @@
       "connectWallet": "Sambungkan Dompet"
     },
     "addressDetail": {
-      "safeAddressListScreen": {},
-      "watchAddressListScreen": {},
+      "safeAddressListScreen": {
+        "addSafeAddress": "Tambah Dompet Aman"
+      },
+      "watchAddressListScreen": {
+        "addWatchAddress": "Tambah Dompet Hanya Nonton"
+      },
       "addressListScreen": {
         "pin": "Pin",
         "delete": "Hapus",
         "edit": "Sunting",
         "detail": "Rincian",
-        "unpin": "Lepaskan Pin"
+        "unpin": "Lepaskan Pin",
+        "importWatchAddress": "Imported Watch-Only Wallet",
+        "title_other": "{{count}} Dompet",
+        "importSafeAddress": "Imported Safe Wallet",
+        "addAddress": "Tambahkan Dompet",
+        "title_one": "{{count}} Dompet",
+        "title_zero": "0 Dompet"
       },
       "pin-in-list": "Pin di Daftar",
       "backup-private-key": "Cadangkan Kunci Pribadi",
@@ -1314,7 +1375,10 @@
       "qr-code": "QR Code",
       "admins": "Admin",
       "manage-seed-phrase": "Kelola Seed Phrase",
-      "assets": "Aset"
+      "assets": "Aset",
+      "delete-address": "Hapus dompet",
+      "manage-addresses-under-this-seed-phrase": "Tambahkan dompet dari frasa benih ini",
+      "delete-desc": "Apakah Anda yakin ingin menghapus dompet ini?"
     },
     "customRpc": {
       "EditRPCModal": {
@@ -1532,11 +1596,15 @@
         "googlePayDesc": "Termasuk biaya Google Pay sebesar ${{ amount }}. Tidak ada penarikan.",
         "applePayDesc": "Termasuk biaya Apple Pay sebesar ${{amount}}. Tidak ada penarikan.",
         "googlePayFeeDesc": "Termasuk biaya Google Pay. Tidak ada penarikan.",
-        "applePayFeeDesc": "Termasuk biaya Apple Pay. Tidak ada penarikan."
+        "applePayFeeDesc": "Termasuk biaya Apple Pay. Tidak ada penarikan.",
+        "paymentAddress": "Wallet Pembayaran",
+        "inSufficientTip1": "Dompet ini tidak memiliki cukup token Silakan pilih dompet lain"
       },
       "paymentAddressPopup": {
         "balance": "Saldo",
-        "confirm": "Konfirmasi"
+        "confirm": "Konfirmasi",
+        "address": "Dompet Pembayaran",
+        "title": "Pilih Dompet Pembayaran"
       },
       "withdrawPopup": {
         "amount": "Jumlah",
@@ -1552,7 +1620,10 @@
         "destinationChain": "Rantai tujuan",
         "deductGasFees": "Jumlah yang diterima akan mengurangi biaya gas",
         "noEnoughValueBalance": "Saldo Vault tidak mencukupi. Ganti rantai atau coba lagi nanti.",
-        "desc": "Anda dapat menarik saldo GasAccount Anda ke Dompet DeBank L2 Anda. Masuk ke Dompet DeBank L2 Anda untuk mentransfer dana ke blockchain yang didukung sesuai kebutuhan."
+        "desc": "Anda dapat menarik saldo GasAccount Anda ke Dompet DeBank L2 Anda. Masuk ke Dompet DeBank L2 Anda untuk mentransfer dana ke blockchain yang didukung sesuai kebutuhan.",
+        "selectRecipientAddress": "Pilih Wallet penerima",
+        "recipientAddress": "Dompet penerima",
+        "noRecipient": "Tidak ada dompet Penerima yang tersedia"
       },
       "withdrawConfirmModal": {
         "title": "Ditransfer ke Dompet DeBank L2 Anda",
@@ -1584,7 +1655,8 @@
       "gasAccountList": {
         "gasAccountBalance": "GasAccount Saldo",
         "address": "Alamat",
-        "balance": "Saldo"
+        "balance": "Saldo",
+        "wallet": "Dompet"
       },
       "deposit": "Setor",
       "logout": "Keluar dari GasAccount saat ini",
@@ -1660,7 +1732,8 @@
       "title": "Persetujuan"
     },
     "receiveAddressList": {
-      "selectChainTitle": "Pilih Rantai"
+      "selectChainTitle": "Pilih Rantai",
+      "title": "Pilih Dompet untuk Menerima"
     },
     "singleHome": {
       "sectionHeader": {
@@ -1676,7 +1749,10 @@
         "buyBody": "Pembelian crypto yang sederhana",
         "title": "Danai Dompet Anda",
         "receiveHeader": "Terima Crypto",
-        "desc": "Danai dengan cepat sekarang"
+        "desc": "Danai dengan cepat sekarang",
+        "importHeader": "Impor Dompet",
+        "receiveBody": "Transfer token dari dompet lain",
+        "importBody": "Tambahkan dompet yang sudah ada dengan dana."
       },
       "nft": {
         "floorPrice": "/Harga Lantai:"
@@ -1809,7 +1885,9 @@
     "multiAddressAssets": {
       "tabs": {
         "address": "Alamat",
-        "portfolio": "Portofolio"
+        "portfolio": "Portofolio",
+        "wallet_one": "Dompet",
+        "wallet_other": "Dompet"
       },
       "scamTokenHeader": "Token penipuan"
     },
@@ -1871,7 +1949,10 @@
         "desc": "Bayar Biaya Gas di Semua Rantai",
         "login": "Masuk GasAccount"
       },
-      "loginConfirmModal": {},
+      "loginConfirmModal": {
+        "title": "Pilih Dompet untuk Masuk",
+        "desc": "Setelah login, Anda hanya dapat menyetor di alamat ini."
+      },
       "depositPopup": {
         "title": "Setoran",
         "token": "Token",
@@ -1898,7 +1979,9 @@
       "depositWithTokenDesc": "Tidak ada biaya tambahan, penarikan instan"
     },
     "accountSwitcher": {
-      "all": "Semua"
+      "all": "Semua",
+      "screenHeaderSubTitle_other": "{{count}} dompet",
+      "screenHeaderSubTitle_one": "1 dompet"
     },
     "AccountSelectDrawer": {
       "btn": {
@@ -2068,7 +2151,8 @@
     "Paste": "Tempel",
     "appDescription": "Dompet yang mengubah permainan untuk Ethereum dan semua rantai EVM",
     "24h": "24j",
-    "Edit": "Sunting"
+    "Edit": "Sunting",
+    "Wallets": "Pilih Dompet"
   },
   "background": {
     "error": {

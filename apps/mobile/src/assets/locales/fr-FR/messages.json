@@ -16,7 +16,15 @@
       "RestoreFromCloud": "Restaurer à partir de {{type}}",
       "CreateChooseBackup": "3. Choisissez une méthode de sauvegarde",
       "AddMnemonic": "Ajouter depuis la phrase mnémonique actuelle",
-      "ImportSuccess": "Ajouté avec succès"
+      "ImportSuccess": "Ajouté avec succès",
+      "ImportNewAddress": "Ajouter un portefeuille",
+      "WatchAddressList": "Portefeuille en lecture seule",
+      "ImportMoreAddress": "Importer plus de Wallets",
+      "AddressDetail": "Détails du portefeuille",
+      "ImportWatchAddress2024": "Ajouter un portefeuille en lecture seule",
+      "CreateNewAddress": "1. Confirmez votre Wallet",
+      "CreateSelectOnCurrentSeed": "2. Ajouter un portefeuille",
+      "ConfrimAddress": "Confirmez votre portefeuille"
     }
   },
   "constant": {
@@ -30,7 +38,10 @@
   },
   "page": {
     "getStart": {
-      "goToHome": "Accéder à l'accueil"
+      "goToHome": "Accéder à l'accueil",
+      "sync": "Scannez pour synchroniser le portefeuille d'extension Rabby",
+      "alreadyHaveAddress": "J'ai déjà un wallet",
+      "createNewAddress": "Créer un nouveau portefeuille"
     },
     "transactions": {
       "explain": {
@@ -84,7 +95,8 @@
         "Collection": "Collection",
         "totalApprovedAmount": "Montant Approuvé Actuel",
         "BuyAgain": "Acheter à nouveau",
-        "AddToWhitelist": "Ajouter à la liste blanche"
+        "AddToWhitelist": "Ajouter à la liste blanche",
+        "RecipientAddress": "Portefeuille du destinataire"
       },
       "empty": {
         "title": "Aucune transaction",
@@ -124,7 +136,10 @@
     },
     "importSuccess": {
       "addressCount": "{{count}} Adresses",
-      "success": "{{type}} réussi !"
+      "success": "{{type}} réussi !",
+      "addressCount_one": "{{count}} Portefeuille",
+      "importMore": "Importer plus de Wallets",
+      "addressCount_other": "{{count}} Portefeuilles"
     },
     "signTx": {
       "crossChain": {
@@ -242,7 +257,8 @@
         "slippageFailToLoad": "Échec du chargement",
         "unknownAddress": "Adresse inconnue",
         "simulationFailed": "Échec de la simulation de transaction",
-        "minReceive": "Réception minimale"
+        "minReceive": "Réception minimale",
+        "notPaymentAddress": "Pas le portefeuille de paiement"
       },
       "sigCantDecode": "Cette signature ne peut pas être décodée par Rabby Wallet.",
       "contractCall": {
@@ -539,7 +555,8 @@
         "GetFreeGasToSign": "Obtenez du Gas gratuit",
         "notEnough": "Le solde de Gas n'est pas suffisant.",
         "customRpcUnavailableTip": "Les RPC personnalisés ne sont pas pris en charge pour Free Gas",
-        "walletConnectUnavailableTip": "Le portefeuille mobile connecté via WalletConnect n'est pas pris en charge pour le Free Gas."
+        "walletConnectUnavailableTip": "Le portefeuille mobile connecté via WalletConnect n'est pas pris en charge pour le Free Gas.",
+        "watchUnavailableTip": "Le portefeuille en mode \"Watch-Only\" n'est pas supporté pour le Free Gas."
       },
       "cancelConnection": "Annuler la connexion",
       "gasAccount": {
@@ -820,7 +837,9 @@
       "watch-address": "Adresse de surveillance",
       "enterThePassphrase": "Entrez la passphrase",
       "quickAddressTitle_one": "{{count}} Adresse",
-      "quickAddressTitle_other": "{{count}} Adresses"
+      "quickAddressTitle_other": "{{count}} Adresses",
+      "add-address": "Ajouter un portefeuille",
+      "delete-checklist-1": "Je comprends que si je supprime ce portefeuille, la clé privée correspondante et la phrase de départ seront supprimées, et Rabby ne pourra PAS les récupérer."
     },
     "home": {
       "services": {
@@ -939,11 +958,16 @@
         "fundYourWallet": "Alimentez votre portefeuille",
         "buyWithFiatDesc": "Achat de crypto simple",
         "foundGuideTitle": "Financer rapidement",
-        "foundGuideDesc": "Ajoutez des tokens à votre keyring pour commencer."
+        "foundGuideDesc": "Ajoutez des tokens à votre keyring pour commencer.",
+        "importAddress": "Importer un portefeuille",
+        "importAddressDesc": "Ajouter un portefeuille existant avec des fonds",
+        "receiveCryptoDesc": "Transférer des tokens d'un autre wallet"
       },
       "addAddress": {
         "hardwareWallet": "Portefeuille matériel",
-        "syncRabbyExtension": "Synchroniser l'extension Rabby"
+        "syncRabbyExtension": "Synchroniser l'extension Rabby",
+        "importAddress": "Importer le portefeuille",
+        "createAddress": "Créer un portefeuille"
       },
       "createNewAddress": {
         "verificationFailed": "Échec de la vérification",
@@ -966,7 +990,9 @@
         "backupSeedPhrase": "Sauvegardez votre phrase de récupération pour restaurer votre portefeuille si l'application est supprimée ou si votre appareil est perdu.",
         "WriteSeedPhrase": "Voici votre phrase de récupération. Notez-la sur papier et conservez-la dans un endroit sûr. Vous devrez la saisir à nouveau, dans le bon ordre, à l'étape suivante.",
         "passwordTopTips": "Ce mot de passe sera utilisé pour déverrouiller votre wallet et chiffrer vos données locales.",
-        "createNewSeedPhrase": "Créer une nouvelle Seed Phrase"
+        "createNewSeedPhrase": "Créer une nouvelle Seed Phrase",
+        "createNewDesc": "Générez une nouvelle phrase de récupération pour les nouveaux wallets",
+        "createOnCurrentDesc": "Créer un portefeuille avec une phrase mnémotechnique importée existante"
       },
       "importAddress": {
         "privateKey": "Importer une clé privée",
@@ -978,7 +1004,11 @@
           "entry": "Est-il sûr d'importer dans Rabby",
           "title": "Est-il sûr d'importer dans Rabby ?",
           "description": "Vos données sont sécurisées par un chiffrement et stockées localement sur votre appareil. Rabby n'a pas accès à vos informations privées et celles-ci ne sont jamais partagées avec des tiers."
-        }
+        },
+        "watch": "Portefeuille en mode lecture seule",
+        "safeTitle": "Importer le portefeuille Safe",
+        "watchOnlyTitle": "Importer un portefeuille en lecture seule",
+        "importTitle": "Importer le portefeuille"
       }
     },
     "signText": {
@@ -1008,9 +1038,13 @@
       "remove-from-whitelist": "Retirer de la liste blanche",
       "admins": "Admins",
       "assets": "Actifs",
-      "watchAddressListScreen": {},
+      "watchAddressListScreen": {
+        "addWatchAddress": "Ajouter des portefeuilles en mode observation"
+      },
       "backup-private-key": "Sauvegarder la clé privée",
-      "safeAddressListScreen": {},
+      "safeAddressListScreen": {
+        "addSafeAddress": "Ajouter des portefeuilles sécurisés"
+      },
       "address-note": "Note d'adresse",
       "qr-code": "Code QR",
       "backup-seed-phrase": "Sauvegarder la Seed Phrase",
@@ -1024,8 +1058,17 @@
         "delete": "Supprimer",
         "pin": "Code PIN",
         "detail": "Détails",
-        "edit": "Modifier"
-      }
+        "edit": "Modifier",
+        "addAddress": "Ajouter un portefeuille",
+        "title_zero": "0 Portefeuille",
+        "importSafeAddress": "Portefeuille Safe Importé",
+        "importWatchAddress": "Portefeuille importé en mode affichage seulement",
+        "title_other": "{{count}} Portefeuilles",
+        "title_one": "{{count}} Portefeuille"
+      },
+      "manage-addresses-under-this-seed-phrase": "Ajouter un portefeuille à partir de cette phrase de récupération",
+      "delete-address": "Supprimer le portefeuille",
+      "delete-desc": "Êtes-vous sûr de vouloir supprimer ce portefeuille ?"
     },
     "connect": {
       "popularLevelHigh": "Haut",
@@ -1148,7 +1191,8 @@
         "description3": "Ne partagez jamais votre phrase de récupération — toute personne y ayant accès peut contrôler vos fonds.",
         "title": "Qu'est-ce qu'une 'Seed phrase'",
         "description4": "Votre phrase de récupération est stockée localement sur votre appareil et est chiffrée avec votre mot de passe. Vous seul pouvez y accéder. Rabby ne peut ni récupérer ni accéder à votre phrase de récupération.",
-        "description2": "Si vous perdez votre phrase de récupération, vous ne pourrez pas restaurer votre portefeuille."
+        "description2": "Si vous perdez votre phrase de récupération, vous ne pourrez pas restaurer votre portefeuille.",
+        "description1": "Une phrase de récupération est une série de mots utilisée pour accéder et contrôler votre portefeuille. Vous pouvez l'utiliser pour récupérer votre portefeuille sur n'importe quel appareil."
       },
       "addContacts": {
         "cameraTitle": "Veuillez scanner le code QR avec votre appareil photo"
@@ -1161,7 +1205,8 @@
         "isItSafeToImportItInRabby": {
           "answer": "Oui, il sera stocké localement sur votre téléphone et accessible uniquement par vous.",
           "question": "Est-il sûr de l'importer dans Rabby ?"
-        }
+        },
+        "repeatImportTips": "Ce portefeuille a été importé"
       },
       "onekey": {
         "connect": {
@@ -1263,9 +1308,20 @@
           }
         },
         "ledger": {
-          "hdPathTypeNoChain": {},
-          "hdPathType": {}
-        }
+          "hdPathTypeNoChain": {
+            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger. Dans les 3 premiers portefeuilles, il n'y a pas de portefeuilles utilisés sur la chaîne.",
+            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto. Dans les 3 premiers portefeuilles, il n'y a pas de portefeuilles utilisés en chaîne.",
+            "bip44": "BIP44 Standard : Chemin HD défini par le protocole BIP44. Dans les 3 premiers portefeuilles, aucun portefeuille n'est utilisé sur la chaîne."
+          },
+          "hdPathType": {
+            "ledgerLive": "Ledger Live : chemin HD officiel de Ledger. Dans les 3 premiers portefeuilles, il y a des portefeuilles utilisés sur la chaîne.",
+            "bip44": "Standard BIP44 : HDpath défini par le protocole BIP44. Dans les 3 premiers portefeuilles, il y a des portefeuilles utilisés sur la chaîne.",
+            "legacy": "Héritage : chemin HD utilisé par MEW / Mycrypto. Dans les 3 premiers portefeuilles, il y a des portefeuilles utilisés sur la chaîne."
+          }
+        },
+        "manageAddressFrom": "Gérer le portefeuille de {{0}} à {{1}}",
+        "customAddressHdPath": "Chemin HD de portefeuille personnalisé",
+        "selectIndexTip": "Sélectionnez le numéro de série des portefeuilles à partir duquel commencer :"
       },
       "seedPhrase": {
         "showSeedPhrase": "Afficher la Phrase de Récupération",
@@ -1311,7 +1367,8 @@
         "chooseBackupMethodDesc": "Les sauvegardes vous permettent de restaurer votre portefeuille si vous supprimez l'application ou perdez votre appareil.",
         "backupRestoreImported": "Importé",
         "googleDriveBackup": "Sauvegarde sur Google Drive"
-      }
+      },
+      "createNewAddress": "Créer un nouveau Wallet"
     },
     "importSafe": {
       "error": {
@@ -1385,7 +1442,8 @@
       "title": "Approbations"
     },
     "receiveAddressList": {
-      "selectChainTitle": "Sélectionner la chaîne"
+      "selectChainTitle": "Sélectionner la chaîne",
+      "title": "Sélectionner un portefeuille pour recevoir"
     },
     "singleHome": {
       "sectionHeader": {
@@ -1401,7 +1459,10 @@
         "receiveHeader": "Recevoir des cryptos",
         "title": "Alimentez votre portefeuille",
         "buyBody": "Achat simple de crypto",
-        "desc": "Financer rapidement maintenant"
+        "desc": "Financer rapidement maintenant",
+        "importBody": "Ajouter un portefeuille existant avec des fonds.",
+        "importHeader": "Importer un portefeuille",
+        "receiveBody": "Transférer des jetons depuis un autre wallet"
       },
       "nft": {
         "floorPrice": "/Prix plancher:"
@@ -1470,11 +1531,15 @@
         "googlePayDesc": "Inclut des frais Google Pay de ${{ amount }}. Aucun retrait",
         "applePayDesc": "Comprend des frais Apple Pay de ${{amount}}. Aucun retrait",
         "applePayFeeDesc": "Inclut des frais pour Apple Pay. Pas de retraits",
-        "googlePayFeeDesc": "Comprend des frais Google Pay. Aucun retrait."
+        "googlePayFeeDesc": "Comprend des frais Google Pay. Aucun retrait.",
+        "paymentAddress": "Portefeuille de paiement",
+        "inSufficientTip1": "Ce portefeuille n'a pas assez de tokens. Veuillez choisir un autre portefeuille."
       },
       "paymentAddressPopup": {
         "confirm": "Confirmer",
-        "balance": "Solde"
+        "balance": "Solde",
+        "address": "Wallet de paiement",
+        "title": "Sélectionner le portefeuille de paiement"
       },
       "withdrawPopup": {
         "amount": "Montant",
@@ -1491,7 +1556,10 @@
         "riskMessageFromChain": "En raison du contrôle des risques, la limite de retrait dépend du montant total déposé à partir de cette chaîne.",
         "destinationChain": "Chaîne de destination",
         "deductGasFees": "Le montant reçu déduira les frais de gas",
-        "noEnoughValueBalance": "Solde de la Vault insuffisant. Changez de chaîne ou réessayez plus tard."
+        "noEnoughValueBalance": "Solde de la Vault insuffisant. Changez de chaîne ou réessayez plus tard.",
+        "noRecipient": "Aucun portefeuille de destinataire disponible",
+        "recipientAddress": "Portefeuille de destinataire",
+        "selectRecipientAddress": "Sélectionnez le portefeuille du destinataire"
       },
       "withdrawConfirmModal": {
         "button": "Voir sur DeBank",
@@ -1518,7 +1586,8 @@
       "gasAccountList": {
         "balance": "Solde",
         "gasAccountBalance": "Solde GasAccount",
-        "address": "Adresse"
+        "address": "Adresse",
+        "wallet": "Portefeuille"
       },
       "depositCanceled": "Dépôt annulé",
       "depositSuccess": "Dépôt réussi",
@@ -1745,7 +1814,10 @@
     "sendPoly": {
       "modals": {
         "recentAddress": "Adresses récentes envoyées",
-        "header": "Ajouter l'adresse à la liste blanche"
+        "header": "Ajouter l'adresse à la liste blanche",
+        "importedAddress": "Portefeuille Importé",
+        "content": "Sélectionnez comment vous souhaitez ajouter un portefeuille :",
+        "addAddress": "Nouveau portefeuille"
       },
       "whitelistTitle": "Mes adresses de liste blanche",
       "enterAddress": "Saisir l'adresse",
@@ -1758,7 +1830,10 @@
       "recent": "Récent",
       "innerEnterAddress": "Entrez l'adresse / ENS",
       "SelectFromHistory": "Sélectionner dans l'historique",
-      "sentTimeHeader": "Envoyé"
+      "sentTimeHeader": "Envoyé",
+      "sendToWatchAddress": "Envoyer vers des portefeuilles en lecture seule",
+      "sendToSafeAddress": "Envoyer vers des portefeuilles sécurisés",
+      "sendToImportedAddress": "Envoyez vers mes portefeuilles importés"
     },
     "confirmAddress": {
       "risks": {
@@ -1776,7 +1851,8 @@
       "checkbox": "Je comprends les risques et je souhaite continuer"
     },
     "selectAddress": {
-      "selectSafeAddress": "Sélectionner parmi les adresses Safe"
+      "selectSafeAddress": "Sélectionner parmi les adresses Safe",
+      "selectWatchAddress": "Sélectionner parmi les adresses en lecture seule"
     },
     "whitelist": {
       "addToWhitelist": "Ajouter à la liste blanche",
@@ -1819,7 +1895,9 @@
     "multiAddressAssets": {
       "tabs": {
         "portfolio": "Portefeuille",
-        "address": "Adresse"
+        "address": "Adresse",
+        "wallet_other": "Portefeuilles",
+        "wallet_one": "Portefeuille"
       },
       "scamTokenHeader": "Tokens d'escroquerie"
     },
@@ -1928,7 +2006,9 @@
       }
     },
     "accountSwitcher": {
-      "all": "Tous"
+      "all": "Tous",
+      "screenHeaderSubTitle_other": "{{count}} portefeuilles",
+      "screenHeaderSubTitle_one": "1 portefeuille"
     },
     "NFTDetailModal": {
       "FieldLabel": {
@@ -1973,7 +2053,10 @@
         "desc": "Payer les frais de Gas sur toutes les chaînes",
         "title": "Dépôt USDC / USDT"
       },
-      "loginConfirmModal": {},
+      "loginConfirmModal": {
+        "desc": "Une fois connecté, vous ne pouvez le déposer qu'à cette adresse.",
+        "title": "Sélectionner le portefeuille pour se connecter"
+      },
       "depositPopup": {
         "amount": "Montant",
         "token": "Jeton",
@@ -2098,7 +2181,8 @@
     "unlimited": "illimité",
     "Addresses": "Adresses",
     "24h": "24h",
-    "Edit": "Modifier"
+    "Edit": "Modifier",
+    "Wallets": "Sélectionner le portefeuille"
   },
   "background": {
     "transactionWatcher": {

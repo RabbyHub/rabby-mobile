@@ -25,7 +25,15 @@
       "BackupSeedPhrase": "備份助記詞",
       "CreateSelectMethod": "1. 選擇創建方式",
       "VerifySeedPhrase": "驗證助記詞",
-      "ImportSafeAddress2024": "添加 Safe 地址"
+      "ImportSafeAddress2024": "添加 Safe 地址",
+      "AddressDetail": "錢包詳情",
+      "ImportMoreAddress": "導入更多 Wallets",
+      "ImportNewAddress": "新增錢包",
+      "ImportWatchAddress2024": "添加只读钱包",
+      "CreateNewAddress": "1. 確認您的 Wallet",
+      "CreateSelectOnCurrentSeed": "2. 添加錢包",
+      "WatchAddressList": "觀察錢包",
+      "ConfrimAddress": "確認您的錢包"
     }
   },
   "native": {
@@ -84,7 +92,8 @@
     "unlimited": "unlimited",
     "Addresses": "地址",
     "24h": "24小時",
-    "Edit": "編輯"
+    "Edit": "編輯",
+    "Wallets": "選擇錢包"
   },
   "background": {
     "transactionWatcher": {
@@ -137,10 +146,16 @@
   "page": {
     "importSuccess": {
       "addressCount": "{{count}} 個地址",
-      "success": "{{type}} 成功！"
+      "success": "{{type}} 成功！",
+      "addressCount_one": "{{count}} 錢包",
+      "importMore": "導入更多錢包",
+      "addressCount_other": "{{count}} 個錢包"
     },
     "getStart": {
-      "goToHome": "前往首頁"
+      "goToHome": "前往首頁",
+      "sync": "掃描以同步 Rabby 擴展錢包",
+      "alreadyHaveAddress": "我已經擁有一個錢包",
+      "createNewAddress": "建立新錢包"
     },
     "transactions": {
       "explain": {
@@ -194,7 +209,8 @@
         "WillReceive": "將接收：≈ {{token}}",
         "totalApprovedAmount": "當前已批准金額",
         "PurchaseFrom": "購買自",
-        "AddToWhitelist": "加入白名單"
+        "AddToWhitelist": "加入白名單",
+        "RecipientAddress": "收款錢包"
       },
       "empty": {
         "title": "沒有交易",
@@ -551,7 +567,8 @@
         "valueDiff": "價值差異",
         "title": "交換代幣",
         "simulationNotSupport": "該鏈不支持交易模擬",
-        "slippageTolerance": "滑點容忍度"
+        "slippageTolerance": "滑點容忍度",
+        "notPaymentAddress": "不是支付 Wallet"
       },
       "SafeNonceSelector": {
         "option": {
@@ -803,7 +820,9 @@
       "passphraseError": "密碼無效",
       "delete-checklist-2": "我確認已備份私鑰或助記詞，並準備立即刪除。",
       "quickAddressTitle_one": "{{count}} 地址",
-      "quickAddressTitle_other": "{{count}} 個地址"
+      "quickAddressTitle_other": "{{count}} 個地址",
+      "add-address": "添加錢包",
+      "delete-checklist-1": "我了解，如果我删除这个钱包，对应的私钥和种子短语将被删除，而 Rabby 将无法恢复它们。"
     },
     "home": {
       "services": {
@@ -932,7 +951,8 @@
         "GetFreeGasToSign": "獲取免費Gas",
         "notEnough": "Gas 餘額不足",
         "walletConnectUnavailableTip": "通過 WalletConnect 連接的移動錢包不支援 Free Gas",
-        "customRpcUnavailableTip": "Free Gas 不支援自定義 RPC"
+        "customRpcUnavailableTip": "Free Gas 不支援自定義 RPC",
+        "watchUnavailableTip": "僅查看錢包不支援免費 Gas"
       },
       "detectedMultipleRequestsFromThisDapp": "檢測到該 Dapp 的多個請求",
       "ledgerSign": "簽名",
@@ -1089,7 +1109,10 @@
         "buyWithFiat": "法幣購買",
         "buyWithFiatDesc": "簡單的加密貨幣購買",
         "foundGuideTitle": "快速充值",
-        "foundGuideDesc": "將代幣添加到您的錢包以開始使用。"
+        "foundGuideDesc": "將代幣添加到您的錢包以開始使用。",
+        "importAddressDesc": "添加一个已有资金的钱包",
+        "importAddress": "匯入錢包",
+        "receiveCryptoDesc": "從另一個錢包轉移代幣"
       },
       "createNewAddress": {
         "BackupSeedPhrase": "手動備份助記詞",
@@ -1112,11 +1135,15 @@
         "passwordMin": "至少需要 8 個字符",
         "passwordTopTips": "此密碼將用於解鎖您的錢包並加密您的本地數據。",
         "backupSeedPhrase": "備份你的助記詞，以便在應用被刪除或設備丟失時恢復你的錢包。",
-        "WriteSeedPhrase": "這是你的助記詞。請將其寫在紙上並妥善保管。在下一步中，你將需要按正確的順序重新輸入。"
+        "WriteSeedPhrase": "這是你的助記詞。請將其寫在紙上並妥善保管。在下一步中，你將需要按正確的順序重新輸入。",
+        "createNewDesc": "生成新的种子短语以供新的钱包使用",
+        "createOnCurrentDesc": "使用現有的導入種子短語創建錢包"
       },
       "addAddress": {
         "hardwareWallet": "硬體錢包",
-        "syncRabbyExtension": "同步 Rabby 擴展程序"
+        "syncRabbyExtension": "同步 Rabby 擴展程序",
+        "createAddress": "創建錢包",
+        "importAddress": "匯入錢包"
       },
       "importAddress": {
         "safe": "安全",
@@ -1128,7 +1155,11 @@
           "title": "匯入到 Rabby 安全嗎？",
           "gotIt": "我知道了。",
           "description": "您的數據已被安全加密並存儲在您的設備本地。Rabby 無法訪問您的私人信息，這些信息也不會與第三方共享。"
-        }
+        },
+        "watchOnlyTitle": "導入只讀錢包",
+        "importTitle": "導入錢包",
+        "safeTitle": "導入 Safe Wallet",
+        "watch": "觀察型錢包"
       }
     },
     "ethSign": {
@@ -1256,7 +1287,8 @@
         "whatIsAPrivateKey": {
           "question": "什麼是私鑰？",
           "answer": "用于控制您的資產的一串字母和數字。"
-        }
+        },
+        "repeatImportTips": "這個錢包已被導入"
       },
       "ledger": {
         "ble": {
@@ -1299,7 +1331,8 @@
         "title": "什麼是「種子短語」",
         "description3": "切勿分享您的 seed phrase—任何有權訪問它的人都可以控制您的資金。",
         "description2": "如果你丟失了你的助記詞，你將無法恢復你的錢包。",
-        "description4": "您的助記詞存儲在您的設備上，並通過您的密碼加密。只有您可以訪問它。Rabby 無法檢索或訪問您的助記詞。"
+        "description4": "您的助記詞存儲在您的設備上，並通過您的密碼加密。只有您可以訪問它。Rabby 無法檢索或訪問您的助記詞。",
+        "description1": "一組種子短語是用來訪問和控制您的錢包的一系列單詞。您可以使用它在任何設備上恢復您的錢包。"
       },
       "onekey": {
         "ble": {
@@ -1397,16 +1430,28 @@
           }
         },
         "ledger": {
-          "hdPathType": {},
-          "hdPathTypeNoChain": {}
+          "hdPathType": {
+            "ledgerLive": "Ledger Live：Ledger 官方 HD 路徑。在前三個錢包中，有在鏈上使用的錢包。",
+            "legacy": "舊版：MEW / Mycrypto 使用的 HD 路徑。在前三個錢包中，有在鏈上使用的錢包。",
+            "bip44": "BIP44 標準：由 BIP44 協議定義的 HDpath。在前 3 個錢包中，有在鏈上使用的錢包。"
+          },
+          "hdPathTypeNoChain": {
+            "bip44": "BIP44 標準：由 BIP44 協議定義的 HD 路徑。在前三個錢包中，沒有在鏈上使用的錢包。",
+            "ledgerLive": "Ledger Live：Ledger 官方 HD 路径。在前 3 個錢包中，沒有在鏈上使用的錢包。",
+            "legacy": "遺留：MEW / Mycrypto 使用的 HD 路徑。在前三個錢包中，沒有在鏈上使用的錢包。"
+          }
         },
         "qrCode": {
           "switch": {
             "title": "切換到新的{{0}}設備",
             "content": "不支持導入多個{{0}}設備。如果你切換到一個新的{{0}}設備，當前設備的地址列表將在開始導入過程之前被移除。"
           }
-        }
-      }
+        },
+        "customAddressHdPath": "自定義錢包 HD 路徑",
+        "selectIndexTip": "選擇要開始的錢包序號：",
+        "manageAddressFrom": "從 {{0}} 管理錢包到 {{1}}"
+      },
+      "createNewAddress": "建立新的 Wallet"
     },
     "importSafe": {
       "title": "添加 Safe 地址",
@@ -1437,7 +1482,10 @@
         "buyHeader": "使用法幣購買",
         "title": "為您的錢包充值",
         "buyBody": "簡單的加密貨幣購買",
-        "desc": "立即快速充值"
+        "desc": "立即快速充值",
+        "importBody": "添加一个已有资金的钱包。",
+        "importHeader": "匯入錢包",
+        "receiveBody": "從其他錢包轉移代幣"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1571,11 +1619,15 @@
         "applePayDesc": "包含 ${{amount}} Apple Pay 費用。不提供提款。",
         "googlePayDesc": "包含 ${{ amount }} Google Pay 手續費。不可提款。",
         "applePayFeeDesc": "包含Apple Pay手續費。不支持提現。",
-        "googlePayFeeDesc": "包含Google Pay手續費。不支持提款。"
+        "googlePayFeeDesc": "包含Google Pay手續費。不支持提款。",
+        "paymentAddress": "付款錢包",
+        "inSufficientTip1": "這個錢包的代幣不足，請選擇另一個錢包。"
       },
       "paymentAddressPopup": {
         "balance": "Balance",
-        "confirm": "確認"
+        "confirm": "確認",
+        "title": "選擇付款錢包",
+        "address": "支付錢包"
       },
       "withdrawPopup": {
         "noEnoughValuetBalance": "Vault Balance 不足。切換鏈或者稍後再試。",
@@ -1592,7 +1644,10 @@
         "destinationChain": "目標鏈",
         "deductGasFees": "收到的金額將扣除 gas 費用",
         "tipsBtn": "我知道了",
-        "noEnoughValueBalance": "Vault Balance 不足。請切換鏈或者稍後再試。"
+        "noEnoughValueBalance": "Vault Balance 不足。請切換鏈或者稍後再試。",
+        "selectRecipientAddress": "選擇收件人 Wallet",
+        "recipientAddress": "收款錢包",
+        "noRecipient": "沒有可用的收款錢包"
       },
       "withdrawConfirmModal": {
         "title": "已轉移到你的 DeBank L2 Wallet",
@@ -1616,7 +1671,8 @@
       "gasAccountList": {
         "balance": "餘額",
         "address": "地址",
-        "gasAccountBalance": "GasAccount 餘額"
+        "gasAccountBalance": "GasAccount 餘額",
+        "wallet": "錢包"
       },
       "switchAccount": "切換 GasAccount",
       "depositSuccess": "存款成功",
@@ -1626,7 +1682,8 @@
       "withdrawDisabledIAP": "提款功能已停用，因為您的餘額包含無法提款的法幣資金。請聯繫客服以提取您的代幣餘額。"
     },
     "receiveAddressList": {
-      "selectChainTitle": "選擇鏈條"
+      "selectChainTitle": "選擇鏈條",
+      "title": "選擇錢包以接收"
     },
     "tokenDetail": {
       "relateDefi": "相關 DeFi",
@@ -1741,20 +1798,33 @@
       "address-note": "地址備註",
       "address": "地址",
       "manage-seed-phrase": "管理助記詞",
-      "safeAddressListScreen": {},
+      "safeAddressListScreen": {
+        "addSafeAddress": "新增安全錢包"
+      },
       "backup-private-key": "備份 Private Key",
       "addressListScreen": {
         "edit": "編輯",
         "pin": "Pin",
         "detail": "細節",
         "delete": "刪除",
-        "unpin": "取消固定"
+        "unpin": "取消固定",
+        "addAddress": "新增錢包",
+        "title_other": "{{count}} 錢包",
+        "importWatchAddress": "導入的只讀錢包",
+        "importSafeAddress": "導入的 Safe Wallet",
+        "title_zero": "0 錢包",
+        "title_one": "{{count}} 錢包"
       },
-      "watchAddressListScreen": {},
+      "watchAddressListScreen": {
+        "addWatchAddress": "添加只读錢包"
+      },
       "hd-path": "HD Path",
       "add-to-whitelist": "添加到白名單",
       "source": "來源",
-      "remove-from-whitelist": "從白名單中移除"
+      "remove-from-whitelist": "從白名單中移除",
+      "manage-addresses-under-this-seed-phrase": "從這個 seed phrase 添加錢包",
+      "delete-address": "刪除錢包",
+      "delete-desc": "您確定要刪除這個錢包嗎？"
     },
     "setting": {
       "followUs": "關注我們",
@@ -1851,7 +1921,10 @@
     "sendPoly": {
       "modals": {
         "recentAddress": "最近發送地址",
-        "header": "將地址添加到白名單中"
+        "header": "將地址添加到白名單中",
+        "addAddress": "新錢包",
+        "importedAddress": "導入錢包",
+        "content": "選擇您希望如何添加錢包："
       },
       "enterAddress": "輸入地址",
       "emptyWhitelistBtn": "立即添加",
@@ -1864,7 +1937,10 @@
       "SendHistory": "發送歷史",
       "SelectFromHistory": "從歷史中選擇",
       "recent": "最近",
-      "sentTimeHeader": "已發送"
+      "sentTimeHeader": "已發送",
+      "sendToSafeAddress": "發送至 Safe Wallets",
+      "sendToImportedAddress": "發送到我的匯入錢包",
+      "sendToWatchAddress": "發送至只讀錢包"
     },
     "confirmAddress": {
       "risks": {
@@ -1882,7 +1958,8 @@
       "checkbox": "我了解風險並想繼續"
     },
     "selectAddress": {
-      "selectSafeAddress": "從 Safe 地址中選擇"
+      "selectSafeAddress": "從 Safe 地址中選擇",
+      "selectWatchAddress": "從只觀察地址中選擇"
     },
     "whitelist": {
       "removeWhitelist": "從白名單中移除",
@@ -1925,7 +2002,9 @@
     "multiAddressAssets": {
       "tabs": {
         "address": "地址",
-        "portfolio": "投資組合"
+        "portfolio": "投資組合",
+        "wallet_other": "錢包",
+        "wallet_one": "錢包"
       },
       "scamTokenHeader": "詐騙代幣"
     },
@@ -1998,7 +2077,9 @@
       }
     },
     "accountSwitcher": {
-      "all": "所有"
+      "all": "所有",
+      "screenHeaderSubTitle_other": "{{count}} 個錢包",
+      "screenHeaderSubTitle_one": "1 錢包"
     },
     "NFTNumberInput": {
       "erc1155Tips": "你的餘額是 {{amount}}",
@@ -2070,7 +2151,10 @@
       "history": {
         "noHistory": "暫無歷史記錄"
       },
-      "loginConfirmModal": {},
+      "loginConfirmModal": {
+        "title": "選擇錢包以登入",
+        "desc": "一旦登錄，您只能在此地址進行充值"
+      },
       "depositPopup": {
         "amount": "金額",
         "token": "Token",
