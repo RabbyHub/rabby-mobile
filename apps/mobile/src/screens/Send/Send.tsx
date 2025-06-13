@@ -49,7 +49,6 @@ import { sleep } from '@/utils/async';
 import BigNumber from 'bignumber.js';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
   PropsForAccountSwitchScreen,
@@ -529,7 +528,7 @@ function SendScreen({
                   disableItemCheck={disableItemCheck}
                   style={styles.balance}
                 />
-                <ShowMoreOnSend />
+                <ShowMoreOnSend chainServeId={chainItem?.serverId || ''} />
               </View>
               {Boolean(localPendingTxData && !canSubmit) && (
                 <PendingTxItem

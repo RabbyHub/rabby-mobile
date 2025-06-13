@@ -314,9 +314,12 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   );
 
   const { value: gasList } = useAsync(() => {
-    return apiProvider.gasMarketV2({
-      chainId: chainInfo.serverId,
-    });
+    return apiProvider.gasMarketV2(
+      {
+        chainId: chainInfo.serverId,
+      },
+      account,
+    );
   }, [chainInfo?.serverId]);
 
   const normalGasPrice = useMemo(
@@ -419,6 +422,10 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     [],
   );
 
+  const [autoSuggestSlippage, setAutoSuggestSlippage] = useState(
+    getSwapAutoSlippageValue(isStableCoin),
+  );
+
   const fetchIdRef = useRef(0);
   const { getAllQuotes, validSlippage } = useQuoteMethods();
   const [finishedQuotes, setFinishedQuotes] = useState(0);
@@ -448,11 +455,41 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         setQuotesList(e =>
           e.map(q => ({ ...q, loading: true, isBest: false })),
         );
+
+        let realSlippage = slippage;
+        if (autoSlippage) {
+          try {
+            const suggestSlippage = await openapi.suggestSlippage({
+              chain_id: findChainByEnum(chain)!.serverId,
+              slippage: Number(slippage || '0.1') / 100 + '',
+              from_token_id: payToken.id,
+              to_token_id: receiveToken.id,
+              from_token_amount: payAmount,
+            });
+
+            console.debug('suggest_slippage', {
+              suggestSlippage,
+              current: slippage || '0.1',
+            });
+
+            realSlippage = suggestSlippage.suggest_slippage
+              ? new BigNumber(suggestSlippage.suggest_slippage)
+                  .times(100)
+                  .toFixed()
+              : slippage || '0.1';
+            if (currentFetchId === fetchIdRef.current) {
+              setAutoSuggestSlippage(realSlippage);
+            }
+          } catch (error) {
+            console.log('suggest_slippage error', error);
+          }
+        }
+
         return getAllQuotes({
           userAddress,
           payToken,
           receiveToken,
-          slippage: slippage || '0.1',
+          slippage: realSlippage || '0.1',
           chain,
           payAmount,
           fee: feeRate,
@@ -463,6 +500,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
             }
           },
           inSufficient,
+          account,
         });
       }
     },
@@ -517,6 +555,9 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     payAmount,
     runGetAllQuotes,
     setActiveProvider,
+    // auto slippage
+    slippage,
+    autoSlippage,
   ]);
 
   const canUpdateActiveProvider = useMemo(() => {
@@ -870,6 +911,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     clearExpiredTimer,
 
     finishedQuotes,
+    autoSuggestSlippage,
   };
 };
 

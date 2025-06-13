@@ -24,8 +24,8 @@ import { Button } from '@/components';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { useDapps } from '@/hooks/useDapps';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { useCurrentAccount } from '@/hooks/account';
 import { createGetStyles } from '@/utils/styles';
+import { preferenceService } from '@/core/services';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -123,7 +123,7 @@ function ProviderControllerTester(): JSX.Element {
 
   const { addDapp } = useDapps();
   const [account, setAccount] = React.useState<string>();
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = preferenceService.getFallbackAccount();
   const [connectStatus, setConnectStatus] = React.useState<string>();
   const { styles } = useThemeStyles(getStyles);
 

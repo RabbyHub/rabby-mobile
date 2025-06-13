@@ -48,9 +48,8 @@ import { toast } from '@/components2024/Toast';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { AccountSelector } from '@/components2024/AccountSelector';
 import { Account } from '@/core/services/preference';
-import { CustomSkeleton } from '@/components2024/CustomSkeleton';
-import LinearGradient from 'react-native-linear-gradient';
 import { ConnectSkeleton } from './ConnectSkeleton';
+import { useMyAccounts } from '@/hooks/account';
 
 const RuleDesc = [
   {
@@ -123,9 +122,10 @@ export const Connect = ({
  */
 // forScene = '@ActiveDappWebViewModal'
 ConnectProps) => {
+  const { accounts } = useMyAccounts();
   const [selectedAccount, setSelectedAccount] = useState<
     Account | undefined | null
-  >(preferenceService.getCurrentAccount());
+  >(accounts?.[0] || preferenceService.getFallbackAccount());
   const { colors, styles, colors2024 } = useTheme2024({ getStyle });
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
@@ -350,7 +350,9 @@ ConnectProps) => {
   const init = async () => {
     const site = await dappService.getDapp(origin);
     const _selectedAccount =
-      site?.currentAccount || preferenceService.getCurrentAccount();
+      site?.currentAccount ||
+      accounts?.[0] ||
+      preferenceService.getFallbackAccount();
     setSelectedAccount(_selectedAccount);
     let level: 'very_low' | 'low' | 'medium' | 'high' = 'low';
     let collectList: { name: string; logo_url: string }[] = [];

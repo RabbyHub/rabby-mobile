@@ -1,7 +1,6 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { PillsSwitch } from '@/components2024/PillSwitch';
-import { useCurrentAccount } from '@/hooks/account';
 import { useGnosisQueueTotalPending } from '@/hooks/gnosis/useGnosisQueueTotalPending';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';

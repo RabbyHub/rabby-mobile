@@ -65,6 +65,7 @@ import { apiProvider } from '@/core/apis';
 import { useSetAtom } from 'jotai';
 import { miniApprovalGasAtom } from '@/hooks/useMiniApprovalDirectSign';
 import useDebounce from 'react-use/lib/useDebounce';
+import { Account } from '@/core/services/preference';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -133,6 +134,7 @@ interface GasSelectorProps {
   checkGasLevelIsNotEnough?: (
     gas: GasSelectorResponse,
   ) => Promise<[number, boolean, boolean]>;
+  account: Account;
 }
 
 const useExplainGas = ({
@@ -188,6 +190,7 @@ export const GasSelectorHeader = ({
   tx,
   checkGasLevelIsNotEnough,
   directSubmit,
+  account,
 }: GasSelectorProps) => {
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
@@ -242,11 +245,14 @@ export const GasSelectorHeader = ({
       if (chain?.isTestnet) {
         return null;
       }
-      const list = await apiProvider.gasMarketV2({
-        chain,
-        customGas: custom && custom > 0 ? custom : undefined,
-        tx,
-      });
+      const list = await apiProvider.gasMarketV2(
+        {
+          chain,
+          customGas: custom && custom > 0 ? custom : undefined,
+          tx,
+        },
+        account,
+      );
       return list.find(item => item.level === 'custom')!;
     },
   );

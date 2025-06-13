@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { apiCustomTestnet } from '@/core/apis';
-import { useCurrentAccount } from '@/hooks/account';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { useMemoizedFn } from 'ahooks';
 import { useManageTestnetTokenList } from '../hooks/useManageTestnetToken';
@@ -11,13 +10,16 @@ import {
   AddCustomTokenPopup,
   AddCustomTokenPopupProps,
 } from './AddCustomTokenPopup';
+import { preferenceService } from '@/core/services';
 
+/**
+ * not used
+ */
 export const AddTestnetCustomTokenPopup = (
   props: Pick<AddCustomTokenPopupProps, 'visible' | 'onClose' | 'onAddToken'>,
 ) => {
   const { addCustomToken } = useManageTestnetTokenList();
-  // todo remove this some time
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = preferenceService.getFallbackAccount();
   const searchToken = useMemoizedFn(
     async ({
       address,

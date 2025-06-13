@@ -256,12 +256,14 @@ export const dexSwap = async (
       })
       .catch(error => {
         console.log('swap error', error);
+        throw error;
       });
 
     console.log('after sendRequest');
     // unTriggerTxCounter.decrease();
   } catch (e) {
     // unTriggerTxCounter.reset();
+    throw e;
   }
 };
 

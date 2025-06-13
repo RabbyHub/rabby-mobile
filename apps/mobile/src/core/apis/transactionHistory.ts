@@ -9,6 +9,7 @@ import { groupBy } from 'lodash';
 import { findChain } from '@/utils/chain';
 import { requestETHRpc } from './provider';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { Account } from '../services/preference';
 
 class ApisTransactionHistory {
   removeLocalPendingTx = ({
@@ -72,7 +73,7 @@ class ApisTransactionHistory {
       }));
   };
 
-  getSkipedTxs = async (address: string) => {
+  getSkipedTxs = async (address: string, account?: Account) => {
     const { pendings: pendingList } =
       transactionHistoryService.getList(address);
     const dict = groupBy(pendingList, item => item.chainId);
@@ -94,6 +95,7 @@ class ApisTransactionHistory {
           params: [address, 'latest'],
         },
         chain.serverId,
+        account,
       );
       const localNonce =
         transactionHistoryService.getNonceByChain(address, +chainId) || 0;

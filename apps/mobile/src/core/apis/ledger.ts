@@ -1,3 +1,4 @@
+import { preferenceService } from '@/core/services';
 import { bindLedgerEvents } from '@/utils/ledger';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
@@ -28,6 +29,7 @@ export async function importAddress(index: number) {
   const result = await queue.add(() =>
     keyringService.addNewAccount(keyring as any),
   );
+  preferenceService.initCurrentAccount();
   return result;
 }
 
@@ -145,6 +147,7 @@ export async function importFirstAddress({
       }
     }
   }
+  preferenceService.initCurrentAccount();
 
   return address;
 }

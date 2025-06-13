@@ -252,7 +252,7 @@ export class NotificationService extends Events {
     }
     const data = inputData as RequestApprovalParamBase;
     const currentAccount =
-      data.account || this.preferenceService.getCurrentAccount();
+      data.account || this.preferenceService.getFallbackAccount();
     const reportExplain = (signingTxId?: string) => {
       const signingTx = signingTxId
         ? this.transactionHistoryService.getSigningTx(signingTxId)

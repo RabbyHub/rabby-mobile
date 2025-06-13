@@ -68,8 +68,11 @@ export const requestETHRpc = <T = any>(
 };
 
 // https://docs.scroll.io/en/developers/transaction-fees-on-scroll/#calculating-the-l1-data-fee-with-gas-oracle
-export const scrollL1FeeEstimate = async (txParams: any) => {
-  const account = await preferenceService.getCurrentAccount();
+export const scrollL1FeeEstimate = async (
+  txParams: any,
+  _account?: Account,
+) => {
+  const account = _account || preferenceService.getFallbackAccount();
   const iface = new ethers.utils.Interface([
     {
       type: 'constructor',
@@ -112,8 +115,9 @@ export const scrollL1FeeEstimate = async (txParams: any) => {
 export const opStackL1FeeEstimate = async (
   txParams: any,
   chain: CHAINS_ENUM,
+  _account?: Account,
 ) => {
-  const account = await preferenceService.getCurrentAccount();
+  const account = _account || preferenceService.getFallbackAccount();
   const address = addresses.GasPriceOracle[420];
   const abi = abis.GasPriceOracle;
   const serializedTransaction = buildUnserializedTransaction({
@@ -139,15 +143,17 @@ export const opStackL1FeeEstimate = async (
 export const fetchEstimatedL1Fee = async (
   {
     txParams,
+    account,
   }: Record<string, any> & {
     txParams: any;
+    account: Account;
   },
   chain = CHAINS_ENUM.OP,
 ): Promise<string> => {
   if (OP_STACK_ENUMS.includes(chain)) {
-    return opStackL1FeeEstimate(txParams, chain);
+    return opStackL1FeeEstimate(txParams, chain, account);
   } else if (chain === CHAINS_ENUM.SCRL) {
-    return scrollL1FeeEstimate(txParams);
+    return scrollL1FeeEstimate(txParams, account);
   }
   return Promise.resolve('0x0');
 };
@@ -155,9 +161,11 @@ export const fetchEstimatedL1Fee = async (
 export const getRecommendNonce = async ({
   from,
   chainId,
+  account,
 }: {
   from: string;
   chainId: number;
+  account: Account;
 }) => {
   const chain = findChain({
     id: chainId,
@@ -171,6 +179,7 @@ export const getRecommendNonce = async ({
       params: [from, 'latest'],
     },
     chain.serverId,
+    account,
   );
   const localNonce =
     (await transactionHistoryService.getNonceByChain(from, chainId)) || 0;
@@ -181,9 +190,9 @@ export const getERC20Allowance = async (
   chainServerId,
   erc20Address: string,
   contractAddress: string,
-  address?: string,
+  address: string,
+  account: Account,
 ): Promise<string> => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(t('background.error.noCurrentAccount'));
 
   const chainId = findChain({
@@ -225,6 +234,7 @@ export const getERC20Allowance = async (
       params: [{ to: erc20Address, data }, 'latest'],
     },
     chainServerId,
+    account,
   );
 
   return allowance?.toString();
@@ -313,6 +323,7 @@ type gasMarketV2ParamsV1 = {
 };
 export const gasMarketV2 = async (
   _params: gasMarketV2ParamsV1 | gasMarketV2ParamsV2,
+  account: Account,
 ) => {
   let chainId: string;
   let tx: Tx | undefined;
@@ -323,6 +334,7 @@ export const gasMarketV2 = async (
       params.tx.nonce = await getRecommendNonce({
         from: params.tx.from,
         chainId: params.chain.id,
+        account,
       });
     }
 

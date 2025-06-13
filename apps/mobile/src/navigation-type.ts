@@ -77,7 +77,7 @@ export type RootStackParamsList = {
     fromPortfolio?: boolean;
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
-    account?: KeyringAccountWithAlias;
+    account?: KeyringAccountWithAlias | null;
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
@@ -306,6 +306,8 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.Receive]: {
     account: Account;
+    tokenSymbol?: string;
+    chainEnum?: CHAINS_ENUM | string;
   };
   [RootNames.Approvals]: {
     account: Account;

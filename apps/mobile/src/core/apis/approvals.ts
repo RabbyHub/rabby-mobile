@@ -98,11 +98,13 @@ export async function getNFTApprovedForAll({
   contractAddress,
   address,
   spender,
+  account,
 }: {
   chainServerId: string;
   contractAddress: string;
   spender: string;
   address: string;
+  account: Account;
 }) {
   const abi = [
     {
@@ -143,6 +145,7 @@ export async function getNFTApprovedForAll({
       params: [{ to: contractAddress, data }, 'latest'],
     },
     chainServerId,
+    account,
   );
 
   return decodeAbiParameters(abi[0].outputs, res)[0];
@@ -152,10 +155,12 @@ export async function getErc721Approved({
   chainServerId,
   contractAddress,
   nftTokenId,
+  account,
 }: {
   chainServerId: string;
   contractAddress: string;
   nftTokenId: string;
+  account: Account;
 }) {
   const abi = [
     {
@@ -190,180 +195,11 @@ export async function getErc721Approved({
       params: [{ to: contractAddress, data }, 'latest'],
     },
     chainServerId,
+    account,
   );
 
   return decodeAbiParameters(abi[0].outputs, res)[0];
 }
-
-// export async function getNFTAllowance(
-//   {
-//     chainServerId,
-//     contractId,
-//     spender,
-//     abi,
-//     nftTokenId,
-//     isApprovedForAll,
-
-//   }: {
-//     chainServerId: string;
-//     contractId: string;
-//     spender: string;
-//     abi: 'ERC721' | 'ERC1155' | '';
-//     isApprovedForAll: boolean;
-//     nftTokenId?: string | null;
-//   },
-//   $ctx?: any,
-// ) {
-//   const account = await preferenceService.getCurrentAccount();
-//   if (!account) throw new Error(t('background.error.noCurrentAccount'));
-//   const chainId = findChain({
-//     serverId: chainServerId,
-//   })?.id;
-//   if (!chainId) throw new Error(t('background.error.invalidChainId'));
-
-//   const data = (abiCoder as unknown as AbiCoder).encodeFunctionCall(
-//     {
-//       constant: true,
-//       inputs: [
-//         {
-//           name: '_owner',
-//           type: 'address',
-//         },
-//         {
-//           name: '_spender',
-//           type: 'address',
-//         },
-//       ],
-//       name: 'allowance',
-//       outputs: [
-//         {
-//           name: '',
-//           type: 'uint256',
-//         },
-//       ],
-//       payable: false,
-//       stateMutability: 'view',
-//       type: 'function',
-//     },
-//     [address || account.address, contractAddress],
-//   );
-
-//   const allowance = await requestETHRpc(
-//     {
-//       method: 'eth_call',
-//       params: [{ to: erc20Address, data }, 'latest'],
-//     },
-//     chainServerId,
-//   );
-//   if (abi === 'ERC721') {
-//     if (isApprovedForAll) {
-//       await sendRequest(
-//         {
-//           $ctx,
-//           method: 'eth_sendTransaction',
-//           params: [
-//             {
-//               from: account.address,
-//               to: contractId,
-//               chainId: chainId,
-//               data: abiCoder.encodeFunctionCall(
-//                 {
-//                   inputs: [
-//                     {
-//                       internalType: 'address',
-//                       name: 'operator',
-//                       type: 'address',
-//                     },
-//                     {
-//                       internalType: 'bool',
-//                       name: 'approved',
-//                       type: 'bool',
-//                     },
-//                   ],
-//                   name: 'setApprovalForAll',
-//                   outputs: [],
-//                   stateMutability: 'nonpayable',
-//                   type: 'function',
-//                 },
-//                 [spender, false] as any,
-//               ),
-//             },
-//           ],
-//         },
-//         INTERNAL_REQUEST_SESSION,
-//       );
-//     } else {
-//       await sendRequest(
-//         {
-//           $ctx,
-//           method: 'eth_sendTransaction',
-//           params: [
-//             {
-//               from: account.address,
-//               to: contractId,
-//               chainId: chainId,
-//               data: abiCoder.encodeFunctionCall(
-//                 {
-//                   constant: false,
-//                   inputs: [
-//                     { internalType: 'address', name: 'to', type: 'address' },
-//                     {
-//                       internalType: 'uint256',
-//                       name: 'tokenId',
-//                       type: 'uint256',
-//                     },
-//                   ],
-//                   name: 'approve',
-//                   outputs: [],
-//                   payable: false,
-//                   stateMutability: 'nonpayable',
-//                   type: 'function',
-//                 },
-//                 [
-//                   '0x0000000000000000000000000000000000000000',
-//                   nftTokenId,
-//                 ] as any,
-//               ),
-//             },
-//           ],
-//         },
-//         INTERNAL_REQUEST_SESSION,
-//       );
-//     }
-//   } else if (abi === 'ERC1155') {
-//     await sendRequest(
-//       {
-//         $ctx,
-//         method: 'eth_sendTransaction',
-//         params: [
-//           {
-//             from: account.address,
-//             to: contractId,
-//             data: abiCoder.encodeFunctionCall(
-//               {
-//                 constant: false,
-//                 inputs: [
-//                   { internalType: 'address', name: 'to', type: 'address' },
-//                   { internalType: 'bool', name: 'approved', type: 'bool' },
-//                 ],
-//                 name: 'setApprovalForAll',
-//                 outputs: [],
-//                 payable: false,
-//                 stateMutability: 'nonpayable',
-//                 type: 'function',
-//               },
-//               [spender, false] as any,
-//             ),
-//             chainId,
-//           },
-//         ],
-//       },
-//       INTERNAL_REQUEST_SESSION,
-//     );
-//   } else {
-//     throw new Error(t('background.error.unknownAbi'));
-//   }
-// }
 
 export async function revokeNFTApprove(
   {

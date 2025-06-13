@@ -4,17 +4,12 @@ import { atom, useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Text, View } from 'react-native';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
-import { trigger } from 'react-native-haptic-feedback';
 
 const { isSameAddress } = addressUtils;
 
@@ -46,7 +41,6 @@ export const DuplicateAddressModal: React.FC = () => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { accounts } = useAccounts();
-  const { switchAccount } = useCurrentAccount({ disableAutoFetch: true });
 
   const currentAccount = React.useMemo(() => {
     if (!account) {
@@ -63,7 +57,6 @@ export const DuplicateAddressModal: React.FC = () => {
 
   const handleSwitch = React.useCallback(async () => {
     if (currentAccount) {
-      switchAccount(currentAccount);
       navigate(RootNames.SingleAddressStack, {
         screen: RootNames.SingleAddressHome,
         params: {
@@ -71,7 +64,7 @@ export const DuplicateAddressModal: React.FC = () => {
         },
       });
     }
-  }, [currentAccount, switchAccount]);
+  }, [currentAccount]);
 
   const onCancel = React.useCallback(() => {
     setVisible(false);

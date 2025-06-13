@@ -1,4 +1,3 @@
-import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { timeago } from '@/utils/time';
