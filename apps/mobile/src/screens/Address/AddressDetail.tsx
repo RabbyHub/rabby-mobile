@@ -200,10 +200,10 @@ export const AddressInfo = (props: AddressInfoProps) => {
         : 1;
     const title =
       account.type === KEYRING_TYPE.SimpleKeyring
-        ? 'Delete Address and Private Key'
+        ? 'Delete Wallet and Private Key'
         : account.type === KEYRING_TYPE.HdKeyring && count <= 1
-        ? 'Delete Address and Seed Phrase'
-        : 'Delete Address';
+        ? 'Delete Wallet and Seed Phrase'
+        : 'Delete Wallet';
     const needAuth =
       account.type === KEYRING_TYPE.SimpleKeyring ||
       (account.type === KEYRING_TYPE.HdKeyring && count <= 1);
@@ -610,7 +610,7 @@ export const AddressInfo = (props: AddressInfoProps) => {
                   color: colors['neutral-title-1'],
                   textAlign: 'center',
                 }}>
-                Delete Address{' '}
+                Delete Wallet{' '}
               </Text>
               <Text
                 style={{
@@ -729,7 +729,7 @@ export const AddressInfo = (props: AddressInfoProps) => {
           style={StyleSheet.compose(styles.itemView, styles.noBOrderBottom)}>
           <Text
             style={StyleSheet.flatten([styles.labelText, styles.deleteColor])}>
-            Delete Address{' '}
+            Delete Wallet{' '}
           </Text>
           <View style={styles.valueView}>
             <RcIconRightCC

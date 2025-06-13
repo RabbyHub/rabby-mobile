@@ -135,9 +135,9 @@ export const MultiAssets = ({
       }}
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab
-        label={`${t('page.multiAddressAssets.tabs.address')} ${
-          list.length ? `(${list.length})` : ''
-        }`}
+        label={`${t('page.multiAddressAssets.tabs.wallet', {
+          count: list.length,
+        })} ${list.length ? `(${list.length})` : ''}`}
         name="address">
         <AddressList />
       </Tabs.Tab>

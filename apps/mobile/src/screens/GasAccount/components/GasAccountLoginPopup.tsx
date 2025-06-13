@@ -98,7 +98,7 @@ const GasAccountLoginContent: React.FC<{
           listHeader={
             <View style={styles.listHeader}>
               <Text style={styles.listLabel}>
-                {t('page.gasAccount.gasAccountList.address')}
+                {t('page.gasAccount.gasAccountList.wallet')}
               </Text>
               <Text style={styles.listLabel}>
                 {t('page.gasAccount.gasAccountList.gasAccountBalance')}

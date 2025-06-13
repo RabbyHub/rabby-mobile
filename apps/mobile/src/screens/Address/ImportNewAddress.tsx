@@ -60,11 +60,11 @@ function MainListBlocks() {
         />
       </View>
       <View style={styles.section}>
-        <WalletHeadline>Import Watch-only Address</WalletHeadline>
+        <WalletHeadline>Import Watch-Only Wallet</WalletHeadline>
         <WalletItem
           title="Add Contacts"
           Icon={RcWatchAddress}
-          subTitle="You can also use it as watch-only address"
+          subTitle="You can also use it as watch-only wallet"
           onPress={() => {
             navigation.push(RootNames.StackAddress, {
               screen: RootNames.ImportWatchAddress,

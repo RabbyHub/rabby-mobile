@@ -1,22 +1,22 @@
 {
   "screens": {
     "addressStackTitle": {
-      "WatchAddressList": "Watch-Only Address",
+      "WatchAddressList": "Watch-Only Wallet",
       "SafeAddressList": "Safe Address",
-      "ImportNewAddress": "Add an Address",
+      "ImportNewAddress": "Add a Wallet",
       "ImportHardwareAddress": "Connect Hardware Wallets",
       "ImportSuccess": "Added successfully",
-      "ImportWatchAddress2024": "Add Watch-only Address",
+      "ImportWatchAddress2024": "Add Watch-Only Wallet",
       "ImportMethods": "Select Import Method",
       "ImportSafeAddress2024": "Add Safe Address",
       "CreateSelectMethod": "1. Select Creation Method",
-      "CreateNewAddress": "1. Confirm Your Address",
-      "ConfrimAddress": "Confirm Your Address",
-      "CreateSelectOnCurrentSeed": "2. Add Address",
+      "CreateNewAddress": "1. Confirm Your Wallet",
+      "ConfrimAddress": "Confirm Your Wallet",
+      "CreateSelectOnCurrentSeed": "2. Add Wallet",
       "SetPassword2024": "2. Set password",
       "CreateChooseBackup": "3. Choose a backup method",
-      "AddressDetail": "Address detail",
-      "ImportMoreAddress": "Import more address",
+      "AddressDetail": "Wallet detail",
+      "ImportMoreAddress": "Import more Wallets",
       "ImportPrivateKey": "Import Private Key",
       "ImportMnemonic": "Import Seed Phrase",
       "AddMnemonic": "Add from Current Seed Phrase",
@@ -29,10 +29,10 @@
   },
   "page": {
     "getStart": {
-      "createNewAddress": "Create New Address",
-      "alreadyHaveAddress": "I already have an address",
+      "createNewAddress": "Create New Wallet",
+      "alreadyHaveAddress": "I already have a wallet",
       "goToHome": "Go to Home",
-      "sync": "Scan to Sync Rabby Extension Address"
+      "sync": "Scan to Sync Rabby Extension Wallet"
     },
     "transactions": {
       "title": "Transactions",
@@ -87,7 +87,7 @@
         "ApproveTo": "Approve to",
         "RevokeFrom": "Revoke from",
         "InteractedContract": "Interacted contract",
-        "RecipientAddress": "Recipient address",
+        "RecipientAddress": "Recipient wallet",
         "name": "Name",
         "RevokeToken": "Revoke Token",
         "InteractionResults": "Interaction Results",
@@ -184,7 +184,7 @@
         "slippageFailToLoad": "Fail to load",
         "slippageTolerance": "Slippage tolerance",
         "receiver": "Receiver",
-        "notPaymentAddress": "Not the payment address",
+        "notPaymentAddress": "Not the payment Wallet",
         "unknownAddress": "Unknown address"
       },
       "safeTx": {
@@ -405,9 +405,10 @@
       "maxPriorityFeeDisabledAlert": "Please set Gas Price first"
     },
     "importSuccess": {
-      "addressCount": "{{count}} Addresses",
+      "addressCount_one": "{{count}} Wallet",
+      "addressCount_other": "{{count}} Wallets",
       "success": "{{type}} successfully!",
-      "importMore": "Import more addresses"
+      "importMore": "Import more Wallets"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Enter your seed phrase, separating each word with a space"
@@ -424,7 +425,7 @@
         "GetFreeGasToSign": "Get Free Gas",
         "customRpcUnavailableTip": "Custom RPCs are not supported for Free Gas",
         "walletConnectUnavailableTip": "Mobile wallet connected via WalletConnect is not supported for Free Gas",
-        "watchUnavailableTip": "Watch-only address is not supported for Free Gas"
+        "watchUnavailableTip": "Watch-Only wallet is not supported for Free Gas"
       },
       "gasAccount": {
         "customRPC": "Not supported when using custom RPC",
@@ -652,9 +653,9 @@
       "enterAddress": "Enter Address",
       "innerEnterAddress": "Enter Address / ENS",
       "whitelistTitle": "Whitelist",
-      "sendToImportedAddress": "Send to My Imported Addresses",
-      "sendToWatchAddress": "Send to Watch-only Addresses",
-      "sendToSafeAddress": "Send to Safe Addresses",
+      "sendToImportedAddress": "Send to My Imported Wallets",
+      "sendToWatchAddress": "Send to Watch-Only Wallets",
+      "sendToSafeAddress": "Send to Safe Wallets",
       "emptyWhitelistHeader": "Add Whitelist Address",
       "emptyWhitelistContent": "Add trusted addresses to whitelist for fast transfers—no confirmation needed next time",
       "emptyWhitelistTip": "No whitelisted addresses yet, ",
@@ -665,9 +666,9 @@
       "sendTimeHeader": "Send",
       "modals": {
         "header": "Add Address to Whitelist",
-        "content": "Select how you want to add an address:",
-        "addAddress": "New Address",
-        "importedAddress": "Imported Address",
+        "content": "Select how you want to add a wallet:",
+        "addAddress": "New Wallet",
+        "importedAddress": "Imported Wallet",
         "recentAddress": "Recent Sent Addresses"
       },
       "sentTimeHeader": "Sent"
@@ -688,7 +689,7 @@
       "checkbox": "I understand the risks and want to continue"
     },
     "selectAddress": {
-      "selectWatchAddress": "Select from Watch-only addresses",
+      "selectWatchAddress": "Select from Watch-Only addresses",
       "selectSafeAddress": "Select from Safe addresses"
     },
     "whitelist": {
@@ -919,11 +920,11 @@
       "bridged": "Bridged"
     },
     "manageAddress": {
-      "delete-checklist-1": "I understand that if I delete this address, the corresponding private key and seed phrase will be deleted, and Rabby will NOT be able to recover them.",
+      "delete-checklist-1": "I understand that if I delete this wallet, the corresponding private key and seed phrase will be deleted, and Rabby will NOT be able to recover them.",
       "delete-checklist-2": "I confirm that I have backed up the private key or seed phrase and am ready to delete it now.",
       "confirm": "Confirm",
       "cancel": "Cancel",
-      "add-address": "Add address",
+      "add-address": "Add wallet",
       "private-key": "Private Key",
       "seed-phrase": "Seed Phrase",
       "watch-address": "Watch Address",
@@ -1021,14 +1022,14 @@
         "savedPhrase": "I've Saved the Phrase",
         "Verify": "Verify",
         "createNewSeedPhrase": "Create New Seed Phrase",
-        "createNewDesc": "Generate a new seed phrase for new addresses",
+        "createNewDesc": "Generate a new seed phrase for new wallets",
         "createOnCurrent": "Use Current Seed Phrase",
-        "createOnCurrentDesc": "Create address with an existing imported seed phrase",
+        "createOnCurrentDesc": "Create wallet with an existing imported seed phrase",
         "riskTips": "Before you begin, please read and keep these security tips in mind:"
       },
       "addAddress": {
-        "createAddress": "Create Address",
-        "importAddress": "Import Address",
+        "createAddress": "Create Wallet",
+        "importAddress": "Import Wallet",
         "hardwareWallet": "Hardware Wallet",
         "selectAddMethod": "Select Add Method",
         "syncRabbyExtension": "Sync Rabby Extension"
@@ -1041,22 +1042,22 @@
         "foundGuideTitle": "Fund quickly",
         "foundGuideDesc": "Add tokens to your wallet to get started.",
         "fundYourWallet": "Fund Your Wallet",
-        "importAddress": "Import an Address",
-        "importAddressDesc": "Add an existing address with funds",
+        "importAddress": "Import a Wallet",
+        "importAddressDesc": "Add an existing wallet with funds",
         "receiveCrypto": "Receive Crypto",
-        "receiveCryptoDesc": "Transfer tokens from another address",
+        "receiveCryptoDesc": "Transfer tokens from another wallet",
         "buyWithFiat": "Buy with Fiat",
         "buyWithFiatDesc": "Simple crypto purchase"
       },
       "importAddress": {
-        "importTitle": "Import Address",
+        "importTitle": "Import Wallet",
         "seedPhrase": "Import Seed Phrase",
         "privateKey": "Import Private Key",
         "ImportCloud": "Import from {{cloud}}",
-        "safeTitle": "Import Safe Address",
+        "safeTitle": "Import Safe Wallet",
         "safe": "Safe",
-        "watchOnlyTitle": "Import Watch-only Addres",
-        "watch": "Watch-only Address",
+        "watchOnlyTitle": "Import Watch-Only Wallet",
+        "watch": "Watch-Only Wallet",
         "hardWare": "Connect Hardware Wallets",
         "tips": {
           "title": "Is it safe to import into Rabby?",
@@ -1070,7 +1071,7 @@
       "Quick": "Quick",
       "whatIsSeedPhrase": {
         "title": "What is a 'Seed phrase'",
-        "description1": "A seed phrase is a series of words used to access and control your address. You can use it to recover your address on any device.",
+        "description1": "A seed phrase is a series of words used to access and control your wallet. You can use it to recover your wallet on any device.",
         "title1": "Backup",
         "description2": "If you lose your seed phrase, you won’t be able to restore your wallet.",
         "title2": "Never Share It",
@@ -1082,7 +1083,7 @@
       "addContacts": {
         "cameraTitle": "Please scan the QR code with your camera"
       },
-      "createNewAddress": "Create new Address",
+      "createNewAddress": "Create new Wallet",
       "createNewSeedPhrase": "Create New Seed Phrase",
       "seedPhrase": {
         "whatIsASeedPhrase": {
@@ -1134,7 +1135,7 @@
           "question": "What is a private key?",
           "answer": "A string of letters and numbers used to control your assets."
         },
-        "repeatImportTips": "This address has been imported",
+        "repeatImportTips": "This wallet has been imported",
         "isItSafeToImportItInRabby": {
           "question": "Is it safe to import it in Rabby?",
           "answer": "Yes, it will be stored locally on your phone and only accessible to you."
@@ -1215,14 +1216,14 @@
         "balance": "Balance",
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger official HD path. In the first 3 addresses, there are addresses used on-chain.",
-            "bip44": "BIP44 Standard: HDpath defined by the BIP44 protocol. In the first 3 addresses, there are addresses used on-chain.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto. In the first 3 addresses, there are addresses used on-chain."
+            "ledgerLive": "Ledger Live: Ledger official HD path. In the first 3 wallets, there are wallets used on-chain.",
+            "bip44": "BIP44 Standard: HDpath defined by the BIP44 protocol. In the first 3 wallets, there are wallets used on-chain.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto. In the first 3 wallets, there are wallets used on-chain."
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger official HD path. In the first 3 addresses, there are no addresses used on-chain.",
-            "bip44": "BIP44 Standard: HD path defined by the BIP44 protocol. In the first 3 addresses, there are no addresses used on-chain.",
-            "legacy": "Legacy: HD path used by MEW / Mycrypto. In the first 3 addresses, there are no addresses used on-chain."
+            "ledgerLive": "Ledger Live: Ledger official HD path. In the first 3 wallets, there are no wallets used on-chain.",
+            "bip44": "BIP44 Standard: HD path defined by the BIP44 protocol. In the first 3 wallets, there are no wallets used on-chain.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto. In the first 3 wallets, there are no wallets used on-chain."
           }
         },
         "onekey": {
@@ -1245,9 +1246,9 @@
             "legacy": "Legacy: HD path used by MEW / Mycrypto."
           }
         },
-        "selectIndexTip": "Select the serial number of addresses to start from:",
-        "manageAddressFrom": "Manage address from {{0}} to {{1}}",
-        "customAddressHdPath": "Custom Address HD path",
+        "selectIndexTip": "Select the serial number of wallets to start from:",
+        "manageAddressFrom": "Manage wallet from {{0}} to {{1}}",
+        "customAddressHdPath": "Custom Wallet HD path",
         "qrCode": {
           "switch": {
             "title": "Switch to a new {{0}} device",
@@ -1348,9 +1349,9 @@
       "remove-from-whitelist": "Remove from Whitelist",
       "backup-private-key": "Backup Private Key",
       "backup-seed-phrase": "Backup Seed Phrase",
-      "delete-address": "Delete address",
+      "delete-address": "Delete wallet",
       "delete-desc-needpassword": "Before you delete, keep the following points in mind to understand how to protect your assets.",
-      "delete-desc": "Are you sure you want to delete this address?",
+      "delete-desc": "Are you sure you want to delete this wallet?",
       "admins": "Admins",
       "address": "Address",
       "address-note": "Address Note",
@@ -1359,25 +1360,25 @@
       "source": "Source",
       "hd-path": "HD Path",
       "manage-seed-phrase": "Manage Seed Phrase",
-      "manage-addresses-under-this-seed-phrase": "Add address from this seed phrase",
+      "manage-addresses-under-this-seed-phrase": "Add wallet from this seed phrase",
       "safeAddressListScreen": {
-        "addSafeAddress": "Add Safe Addresses"
+        "addSafeAddress": "Add Safe Wallets"
       },
       "watchAddressListScreen": {
-        "addWatchAddress": "Add Watch-Only Addresses"
+        "addWatchAddress": "Add Watch-Only Wallets"
       },
       "addressListScreen": {
-        "importSafeAddress": "Imported Safe Addresses",
-        "importWatchAddress": "Imported Watch-only Addresses",
+        "importSafeAddress": "Imported Safe Wallet",
+        "importWatchAddress": "Imported Watch-Only Wallet",
         "unpin": "Unpin",
         "pin": "Pin",
         "edit": "Edit",
         "detail": "Details",
         "delete": "Delete",
-        "title_zero": "0 Address",
-        "title_one": "{{count}} Address",
-        "title_other": "{{count}} Addresses",
-        "addAddress": "Add an Address"
+        "title_zero": "0 Wallet",
+        "title_one": "{{count}} Wallet",
+        "title_other": "{{count}} Wallets",
+        "addAddress": "Add a Wallet"
       }
     },
     "customRpc": {
@@ -1597,9 +1598,9 @@
         "invalidAmount": "Must be under 500",
         "amount": "Amount",
         "token": "Token",
-        "paymentAddress": "Payment Address",
+        "paymentAddress": "Payment Wallet",
         "selectToken": "Select Token",
-        "inSufficientTip1": "This address doesn't have enough tokens Please choose a different address",
+        "inSufficientTip1": "This wallet doesn't have enough tokens Please choose a different wallet",
         "followingTokenInSufficient": "The following token balance is insufficient",
         "applePayDesc": "Includes a ${{amount}} Apple Pay fee. No withdrawals",
         "googlePayDesc": "Includes a ${{ amount }} Google Pay fee. No withdrawals",
@@ -1607,8 +1608,8 @@
         "applePayFeeDesc": "Includes an Apple Pay fee. No withdrawals"
       },
       "paymentAddressPopup": {
-        "title": "Select Payment address",
-        "address": "Payment address",
+        "title": "Select Payment Wallet",
+        "address": "Payment Wallet",
         "balance": "Balance",
         "confirm": "Confirm"
       },
@@ -1618,18 +1619,18 @@
         "riskMessageFromChain": "Due to risk control, the withdrawal limit depends on the total amount deposited from this chain.",
         "riskMessageFromAddress": "Due to risk control, the withdrawal limit depends on the total amount this address has deposited",
         "selectDestinationChain": "Select destination chain",
-        "selectRecipientAddress": "Select recipient address",
+        "selectRecipientAddress": "Select recipient Wallet",
         "withdrawalLimit": "Withdrawal limit",
         "title": "Withdraw",
         "desc": "You can withdraw your GasAccount balance to your DeBank L2 Wallet. Log in to your DeBank L2 Wallet to transfer the funds to a supported blockchain as needed.",
         "amount": "Amount",
         "to": "To",
         "selectChain": "Select Chain",
-        "recipientAddress": "Recipient address",
+        "recipientAddress": "Recipient wallet",
         "destinationChain": "Destination chain",
         "deductGasFees": "Received amount will deduct gas fees",
         "tipsBtn": "I Got It",
-        "noRecipient": "No Recipient address available"
+        "noRecipient": "No Recipient wallet available"
       },
       "withdrawConfirmModal": {
         "title": "Transferred to your DeBank L2 Wallet",
@@ -1662,6 +1663,7 @@
       "gasAccountList": {
         "address": "Address",
         "balance": "Balance",
+        "wallet": "Wallet",
         "gasAccountBalance": "GasAccount Balance"
       },
       "depositSuccess": "Deposit successful",
@@ -1735,7 +1737,7 @@
       "title": "Approvals"
     },
     "receiveAddressList": {
-      "title": "Select Receive Address",
+      "title": "Select Wallet to Receive",
       "selectChainTitle": "Select Chain"
     },
     "singleHome": {
@@ -1750,10 +1752,10 @@
       "emptyToken": {
         "title": "You’ve got no assets",
         "desc": "Fund quickly now",
-        "importHeader": "Import an Address",
-        "importBody": "Add an existing address with funds.",
+        "importHeader": "Import a Wallet",
+        "importBody": "Add an existing wallet with funds.",
         "receiveHeader": "Receive Crypto",
-        "receiveBody": "Transfer tokens from another address",
+        "receiveBody": "Transfer tokens from another wallet",
         "buyHeader": "Buy with Fiat",
         "buyBody": "Simple crypto purchase"
       },
@@ -1888,7 +1890,9 @@
     "multiAddressAssets": {
       "tabs": {
         "portfolio": "Portfolio",
-        "address": "Address"
+        "address": "Address",
+        "wallet_one": "Wallet",
+        "wallet_other": "Wallets"
       },
       "scamTokenHeader": "Scam tokens"
     },
@@ -1957,7 +1961,7 @@
         "login": "Log in GasAccount"
       },
       "loginConfirmModal": {
-        "title": "Select An Address to Login",
+        "title": "Select Wallet to Login",
         "desc": "Once login, you can only deposit it at this address"
       },
       "depositPopup": {
@@ -1984,8 +1988,8 @@
     },
     "accountSwitcher": {
       "all": "All",
-      "screenHeaderSubTitle_one": "1 address",
-      "screenHeaderSubTitle_other": "{{count}} addresses"
+      "screenHeaderSubTitle_one": "1 wallet",
+      "screenHeaderSubTitle_other": "{{count}} wallets"
     },
     "AccountSelectDrawer": {
       "btn": {
@@ -2143,6 +2147,7 @@
     },
     "unlimited": "unlimited",
     "Addresses": "Addresses",
+    "Wallets": "Select Wallet",
     "24h": "24h"
   },
   "background": {
