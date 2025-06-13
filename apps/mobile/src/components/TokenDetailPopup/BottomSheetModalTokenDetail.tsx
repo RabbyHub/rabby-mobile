@@ -490,6 +490,9 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     const { styles } = useThemeStyles(getStyles);
     const { t } = useTranslation();
     const finalAccount = address;
+    console.log({
+      finalAccount,
+    });
     const [tokenLoad, setTokenLoad] = React.useState<{
       isLoading: boolean;
       token: TokenItem | null;
@@ -505,12 +508,9 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     }, [token]);
 
     const getTokenAmount = React.useCallback(async () => {
-      if (
-        !finalAccount ||
-        !token ||
-        /* token.amount !== undefined */ token.amount
-      )
+      if (!finalAccount || !token) {
         return;
+      }
 
       setTokenLoad({ isLoading: true, token: null });
       try {
