@@ -93,7 +93,7 @@ export const BackupIcon: React.FC<Props> = ({
     if (IS_IOS) {
       const grayImage = isDown
         ? require('@/assets/icons/address/icloud-gray-new-down.png')
-        : require('@/assets/icons/address/icloud-gray.png');
+        : require('@/assets/icons/address/icloud-gray-new.png');
       return isGray ? grayImage : require('@/assets/icons/address/icloud.png');
     }
     return isGray
