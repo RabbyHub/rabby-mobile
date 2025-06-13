@@ -152,6 +152,10 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     return null;
   }
 
+  const source = data.maxGasTx?.$ctx?.ga?.source ?? '';
+
+  const isLocalSwap = source === 'approvalAndSwap|swap' || source === 'swap';
+
   return (
     <>
       <ScrollView style={{ paddingHorizontal: 16 }}>
@@ -317,7 +321,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
           </View>
         </View>
       </ScrollView>
-      {
+      {isLocalSwap && (
         <View style={[styles.buttonContainer, { paddingBottom: bottom + 27 }]}>
           <View style={{ flex: 1 }}>
             <Button
@@ -348,7 +352,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             />
           </View>
         </View>
-      }
+      )}
     </>
   );
 };

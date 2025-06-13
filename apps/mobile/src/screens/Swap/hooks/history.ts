@@ -137,7 +137,10 @@ export const useReadPendingCount = () => {
 };
 
 export const fetchLocalSwapPendingTx = (address: string) => {
-  return transactionHistoryService.getRecentPendingTxHistory(address, 'swap');
+  return transactionHistoryService.getRecentPendingTxHistory(
+    address,
+    'swap',
+  ) as SwapTxHistoryItem;
 };
 
 export const fetchRefreshLocalData = (
