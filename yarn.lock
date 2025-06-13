@@ -8089,9 +8089,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@patch:@rabby-wallet/rabby-api@npm%3A0.9.21#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.9.21-e82550ef8a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 0.9.21
-  resolution: "@rabby-wallet/rabby-api@patch:@rabby-wallet/rabby-api@npm%3A0.9.21#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.9.21-e82550ef8a.patch::version=0.9.21&hash=4a76ef&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+"@rabby-wallet/rabby-api@patch:@rabby-wallet/rabby-api@npm%3A0.9.23#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.9.23-30b6cb4e68.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 0.9.23
+  resolution: "@rabby-wallet/rabby-api@patch:@rabby-wallet/rabby-api@npm%3A0.9.23#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.9.23-30b6cb4e68.patch::version=0.9.23&hash=6e3744&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -8102,7 +8102,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 54bef127bb0d9d2386b1414edba65b9a8c961da282e2e56afb33a3722efa8596557d6628f77358a192587816361a1f66e95395e4b4da0be12f6cdd80f46ea7e1
+  checksum: 241ff4779445e5f4c0ff72616a12ffcc73fde8eb1a1c156e417985d149b9868def0fd4c89938e13cf12ca6f079e6e550fed70a0505598fd420357e81b947339c
   languageName: node
   linkType: hard
 

@@ -2,7 +2,7 @@ name: Type Check
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, feat/type* ]
   pull_request:
     branches: [ develop ]
   schedule:
@@ -21,12 +21,12 @@ jobs:
       security-events: write
     strategy:
       fail-fast: false
-    # runs-on:
-    #   - ubuntu-latest
     runs-on:
-      - self-hosted
-      - macOS
-      - mobile
+      - ubuntu-latest
+    # runs-on:
+    #   - self-hosted
+    #   - macOS
+    #   - mobile
     env:
       NODE_OPTIONS: '--max_old_space_size=4096'
 
@@ -42,8 +42,9 @@ jobs:
 
       - name: Run Type Check
         run: |
+          # yarn config set npmRegistryServer https://registry.npmmirror.com
           cd apps/mobile;
-          yarn install --frozen-lockfile;
+          yarn install;
           time yarn typecheck;
 
 
