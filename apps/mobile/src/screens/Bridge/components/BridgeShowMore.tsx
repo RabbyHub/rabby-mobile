@@ -270,6 +270,7 @@ const BridgeShowMore = ({
           type={type}
           isWrapToken={isWrapToken}
           recommendValue={recommendValue}
+          loading={quoteLoading}
         />
 
         <DirectSignGasInfo
