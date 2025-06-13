@@ -551,7 +551,7 @@ const getStyles = createGetStyles2024(ctx => ({
   item: {
     height: 60,
     paddingHorizontal: 16,
-    backgroundColor: ctx.colors2024['neutral-card-2'],
+    backgroundColor: ctx.colors2024['neutral-card-1'],
     borderRadius: 4,
     flexDirection: 'row',
     alignItems: 'center',
