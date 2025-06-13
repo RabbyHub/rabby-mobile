@@ -322,13 +322,20 @@ function findInstanceLevel(gasList: GasLevel[]) {
     prev.price >= current.price ? prev : current,
   );
 }
-const fetchGasList = async (chainItem: Chain | null, params: Tx) => {
+const fetchGasList = async (
+  chainItem: Chain | null,
+  params: Tx,
+  account: Account,
+) => {
   const list: GasLevel[] = chainItem?.isTestnet
     ? await customTestnetService.getGasMarket({ chainId: chainItem.id })
-    : await apiProvider.gasMarketV2({
-        chain: chainItem!,
-        tx: params,
-      });
+    : await apiProvider.gasMarketV2(
+        {
+          chain: chainItem!,
+          tx: params,
+        },
+        account,
+      );
 
   return list;
 };
@@ -489,8 +496,9 @@ export function useSendTokenForm({
   }, [t]);
 
   const [{ error: loadGasListError }, loadGasList] = useAsyncFn(
-    async () => fetchGasList(chainItem, getParams(formValues) as Tx),
-    [chainItem, formValues, putScreenState],
+    async () =>
+      fetchGasList(chainItem, getParams(formValues) as Tx, currentAccount),
+    [chainItem, formValues, putScreenState, currentAccount],
   );
 
   const loadGasListAndResolve = useCallback(async () => {
