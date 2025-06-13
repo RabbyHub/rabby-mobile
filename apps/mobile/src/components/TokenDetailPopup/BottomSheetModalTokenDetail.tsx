@@ -790,18 +790,16 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             break;
           }
           case 'Receive': {
-            await switchSceneCurrentAccount(
-              'MakeTransactionAbout',
-              nextTxRedirectAccount || null,
-            );
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Receive,
-              params: {
-                chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-                tokenSymbol: token?.symbol,
-                account: finalAccount,
-              },
-            });
+            if (finalAccount) {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.Receive,
+                params: {
+                  chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                  tokenSymbol: token?.symbol,
+                  account: finalAccount,
+                },
+              });
+            }
             break;
           }
         }
