@@ -23,8 +23,13 @@ import { findChain, findChainByServerID } from '@/utils/chain';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { TokenListItem } from './component/TokenListItem';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTipsDollarDialog } from './component/hooks';
 import { preferenceService } from '@/core/services/shared';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 
 const DEFAULT_COUNT = 10;
 
@@ -276,6 +281,17 @@ export const CopyTradingScreen = () => {
 
   const handleTokenItemPress = useMemoizedFn((item: CopyTradeTokenItem) => {
     console.log('handleTokenItemPress item', item);
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.RECENTLY_BUY_LIST,
+      tradingTokenItem: item,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+      },
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+    });
   });
 
   const { showTipsDollarDialog } = useTipsDollarDialog();
