@@ -39,13 +39,15 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/dist/types';
 import { findAccountByPriority } from '@/utils/account';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
-export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -78,23 +80,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
 
-  const txAccount = useMemo(() => {
-    let account: KeyringAccountWithAlias | undefined;
-    const canUseAccountList = accounts.filter(acc => {
-      return (
-        isSameAddress(acc.address, data.address) &&
-        acc.type !== KEYRING_TYPE.WatchAddressKeyring
-      );
-    });
-    if (data.keyringType) {
-      account = canUseAccountList.find(acc => acc.type === data.keyringType);
-    }
-    if (!account) {
-      account = findAccountByPriority(canUseAccountList);
-    }
-    return account;
-  }, [accounts, data.address, data.keyringType]);
-
   const isFail = useMemo(
     () => data.isFailed || data.isSubmitFailed || data.isWithdrawed,
     [data.isFailed, data.isSubmitFailed, data.isWithdrawed],
@@ -121,9 +106,9 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
   const handleGotoDetail = useMemoizedFn((token: TokenItem) => {
     naviPush(RootNames.TokenDetail, {
       token: ensureAbstractPortfolioToken(token),
-      // account: address,
       needUseCacheToken: true,
       isSingleAddress,
+      account,
     });
   });
 
@@ -321,7 +306,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
                   'MakeTransactionAbout',
                   !isSingleAddress && fromAddrIsImported
                     ? fromAddrIsImported
-                    : txAccount,
+                    : account || null,
                 );
                 navigation.dispatch(
                   StackActions.push(RootNames.StackTransaction, {

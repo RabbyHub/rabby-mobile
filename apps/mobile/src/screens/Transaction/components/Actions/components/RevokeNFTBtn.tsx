@@ -1,30 +1,17 @@
 import { Tip } from '@/components';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import React, { useRef } from 'react';
-import { Text, View } from 'react-native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
-import {
-  approveToken,
-  getErc721Approved,
-  getNFTAllowance,
-  revokeNFTApprove,
-} from '@/core/apis/approvals';
-import { getERC20Allowance } from '@/core/apis/provider';
-import { resetNavigationTo } from '@/hooks/navigation';
-import { getTokenSymbol } from '@/utils/token';
-import { formatTokenAmount } from '@debank/common';
-import { ParsedActionData } from '@rabby-wallet/rabby-action';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import BigNumber from 'bignumber.js';
-import { useTranslation } from 'react-i18next';
-import { A } from 'ts-toolbelt';
-import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
-import { getAddress } from 'viem';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { getErc721Approved, revokeNFTApprove } from '@/core/apis/approvals';
 import { KeyringAccountWithAlias } from '@/hooks/account';
+import { resetNavigationTo } from '@/hooks/navigation';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useMemoizedFn, useRequest } from 'ahooks';
+import React, { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Text, View } from 'react-native';
 
 interface Props {
   nft: NFTItem;
@@ -42,6 +29,7 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
       chainServerId: nft.chain,
       nftTokenId: nft.inner_id,
       contractAddress: nft.contract_id,
+      account,
     });
 
     return isSameAddress(spender, approvedToAddress);

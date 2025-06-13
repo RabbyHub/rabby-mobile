@@ -23,15 +23,20 @@ import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { BalanceChange } from './components/BalanceChange';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
-export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const UnknownAction: React.FC<Props> = ({
+  data,
+  isSingleAddress,
+  account,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  console.log('data', JSON.stringify(data));
 
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
@@ -69,6 +74,7 @@ export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
         data={data.maxGasTx.explain?.balance_change}
         version={data.maxGasTx.explain?.pre_exec_version || 'v0'}
         isSingleAddress={isSingleAddress}
+        account={account}
       />
       <View style={styles.detailContainer}>
         {!data.isPending && data.maxGasTx.completedAt && (

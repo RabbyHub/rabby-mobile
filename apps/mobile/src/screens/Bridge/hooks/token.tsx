@@ -17,10 +17,7 @@ import { tokenAmountBn } from '@/screens/Swap/utils';
 import BigNumber from 'bignumber.js';
 import { useBridgeSlippage } from './slippage';
 import { isNaN } from 'lodash';
-import {
-  useCurrentAccount,
-  useLoadMatteredChainBalances,
-} from '@/hooks/account';
+import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { apiProvider } from '@/core/apis';
@@ -345,9 +342,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   );
 
   const { value: gasList } = useAsync(() => {
-    return apiProvider.gasMarketV2({
-      chainId: chainInfo.serverId,
-    });
+    return apiProvider.gasMarketV2(
+      {
+        chainId: chainInfo.serverId,
+      },
+      currentAccount!,
+    );
   }, [chainInfo?.serverId]);
 
   const [passGasPrice, setUseGasPrice] = useState(false);
@@ -666,6 +666,8 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
                   fromToken.chain,
                   fromToken.id,
                   quote.approve_contract_id,
+                  currentAccount.address,
+                  currentAccount,
                 );
                 tokenApproved = new BigNumber(allowance).gte(
                   new BigNumber(amount).times(10 ** fromToken.decimals),

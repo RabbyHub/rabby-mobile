@@ -9,7 +9,8 @@ const { isSameAddress } = addressUtils;
 class BaseController {
   @Reflect.metadata('PRIVATE', true)
   getCurrentAccount = async () => {
-    let account = preferenceService.getCurrentAccount();
+    let account: Account | null | undefined =
+      preferenceService.getFallbackAccount();
     if (account) {
       const accounts = await this.getAccounts();
       const matchAcct = accounts.find(acct =>
@@ -37,7 +38,7 @@ class BaseController {
 
   @Reflect.metadata('PRIVATE', true)
   syncGetCurrentAccount = () => {
-    return preferenceService.getCurrentAccount() || null;
+    return preferenceService.getFallbackAccount() || null;
   };
 
   @Reflect.metadata('PRIVATE', true)

@@ -13,6 +13,7 @@ import type {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
+import { Account } from '../services/preference';
 
 interface BlockInfo {
   baseFeePerGas: string;
@@ -46,6 +47,7 @@ export async function calcGasLimit({
   nativeTokenBalance,
   explainTx,
   needRatio,
+  account,
 }: {
   chain: Chain;
   tx: Tx;
@@ -54,6 +56,7 @@ export async function calcGasLimit({
   nativeTokenBalance: string;
   explainTx: ExplainTxResponse;
   needRatio: boolean;
+  account: Account;
 }) {
   let block: null | BlockInfo = null;
   try {
@@ -63,6 +66,7 @@ export async function calcGasLimit({
         params: ['latest', false],
       },
       chain.serverId,
+      account,
     );
   } catch (e) {
     // NOTHING
@@ -103,9 +107,11 @@ export async function calcGasLimit({
 export const getNativeTokenBalance = async ({
   address,
   chainId,
+  account,
 }: {
   address: string;
   chainId: number;
+  account: Account;
 }): Promise<string> => {
   const chain = findChain({
     id: chainId,
@@ -119,6 +125,7 @@ export const getNativeTokenBalance = async ({
       params: [address, 'latest'],
     },
     chain.serverId,
+    account,
   );
   return balance;
 };
@@ -130,6 +137,7 @@ export const explainGas = async ({
   nativeTokenPrice,
   tx,
   gasLimit,
+  account,
 }: {
   gasUsed: number | string;
   gasPrice: number | string;
@@ -137,6 +145,7 @@ export const explainGas = async ({
   nativeTokenPrice: number;
   tx: Tx;
   gasLimit: string | undefined;
+  account: Account;
 }) => {
   let gasCostTokenAmount = new BigNumber(gasUsed).times(gasPrice).div(1e18);
   let maxGasCostAmount = new BigNumber(gasLimit || 0).times(gasPrice).div(1e18);
@@ -150,6 +159,7 @@ export const explainGas = async ({
     const res = await apiProvider.fetchEstimatedL1Fee(
       {
         txParams: tx,
+        account,
       },
       chain.enum,
     );

@@ -23,7 +23,7 @@ import {
 } from 'react-native';
 
 import { Card } from '@/components2024/Card';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -49,8 +49,6 @@ import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { stats } from '@/utils/stats';
-import { IS_IOS } from '@/core/native/utils';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -95,10 +93,6 @@ export const ImportSuccessScreen2024 = () => {
       aliasName: string;
     }[]
   >([]);
-
-  const { switchAccount } = useCurrentAccount({
-    disableAutoFetch: true,
-  });
 
   const saveFirstAddressAlias = React.useCallback(() => {
     importAddresses.forEach(item => {
@@ -226,18 +220,18 @@ export const ImportSuccessScreen2024 = () => {
           a.brandName === state?.brandName &&
           addressUtils.isSameAddress(a.address, lastAddress),
       );
-      const currentAccount = preferenceService.getCurrentAccount();
+      const currentAccount = preferenceService.getFallbackAccount();
       if (targetAccount) {
         if (
           !currentAccount ||
           targetAccount.brandName !== currentAccount.brandName ||
           !addressUtils.isSameAddress(currentAccount.address, lastAddress)
         ) {
-          switchAccount(targetAccount);
+          preferenceService.setCurrentAccount(targetAccount);
         }
       }
     }
-  }, [isFocus, state, accounts, switchAccount, importAddresses]);
+  }, [isFocus, state, accounts, importAddresses]);
 
   const handleImportMore = () => {
     if (!state.isFirstImport) {

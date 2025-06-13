@@ -6,9 +6,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 
 import { apiBalance } from '@/core/apis';
-import { useCurrentAccount } from '@/hooks/account';
 import { AbstractPortfolioToken } from '../types';
-import { devLog } from '@/utils/logger';
 import { Account } from '@/core/services/preference';
 
 const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
@@ -105,62 +103,3 @@ function sortTokenByChainBalance<T extends TokenItem | AbstractPortfolioToken>(
 }
 
 export default useSortToken;
-
-export function useSortTokenPure<T extends TokenItem | AbstractPortfolioToken>(
-  list?: T[],
-) {
-  // todo remove this some time
-  const { currentAccount } = useCurrentAccount();
-  // const [, setSpinner] = useState(false);
-  const [balanceCache, setBalanceCache] = useState<TotalBalanceResponse | null>(
-    null,
-  );
-
-  const triggerResort = useCallback(async () => {
-    if (currentAccount) {
-      try {
-        const cache = await apiBalance.getAddressCacheBalance(
-          currentAccount.address,
-        );
-        setBalanceCache(cache);
-      } catch (error) {
-        // setSpinner(prev => !prev);
-        devLog('useSortTokenPure::getAddressCacheBalance error', error);
-      }
-    }
-  }, [currentAccount]);
-
-  const sortedList = useMemo(() => {
-    if (!list || !currentAccount) return list || [];
-    const hasUsdValue: T[] = [];
-    const hasAmount: T[] = [];
-    const others: T[] = [];
-
-    for (let i = 0; i < list.length; i++) {
-      const item = list[i];
-      const usdValue = item.price * item.amount;
-      if (usdValue > 0) {
-        hasUsdValue.push(item);
-      } else if (item.amount > 0) {
-        hasAmount.push(item);
-      } else {
-        others.push(item);
-      }
-    }
-    hasUsdValue.sort((a, b) => {
-      return b.amount * b.price - a.amount * a.price;
-    });
-
-    const sortedOthers = sortTokenByChainBalance(others, balanceCache);
-    return [...hasUsdValue, ...hasAmount, ...sortedOthers];
-  }, [list, currentAccount, balanceCache]);
-
-  useEffect(() => {
-    triggerResort();
-  }, [triggerResort]);
-
-  return {
-    sortedList,
-    triggerResort,
-  };
-}

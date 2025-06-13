@@ -152,6 +152,7 @@ export const HistoryTokenList = ({
         naviPush(RootNames.NftDetail, {
           token: { ...token },
           isSingleAddress: !isForMultipleAddress,
+          account: currentAccount,
         });
       } else {
         // if (address) {
@@ -160,13 +161,13 @@ export const HistoryTokenList = ({
         // openTokenDetailPopup(token as TokenItem);
         naviPush(RootNames.TokenDetail, {
           token: ensureAbstractPortfolioToken(singeToken as TokenItem),
-          // account: address,
           needUseCacheToken: true,
           isSingleAddress: !isForMultipleAddress,
+          account: currentAccount,
         });
       }
     },
-    [isForMultipleAddress, token],
+    [currentAccount, isForMultipleAddress, token],
   );
 
   switch (type) {

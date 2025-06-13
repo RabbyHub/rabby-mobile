@@ -7,10 +7,12 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { formatTxExplainAbiData } from '../utils/transaction';
 import { apiProvider } from '@/core/apis';
 import { openapi as mainnetOpenApi, testOpenapi } from '@/core/request';
+import { Account } from '@/core/services/preference';
 
 export function useCheckAddressType(
-  addr?: string,
-  chain?: Pick<Chain, 'serverId' | 'enum'> | null,
+  addr: string,
+  chain: Pick<Chain, 'serverId' | 'enum'> | null,
+  account: Account,
 ) {
   const [addressType, setAddressType] = useState<AddressType>(
     AddressType.UNKNOWN,
@@ -29,6 +31,7 @@ export function useCheckAddressType(
           params: [addr, 'latest'],
         },
         chain.serverId,
+        account,
       );
 
       if (code === '0x' || code === '0x0') {
@@ -52,19 +55,27 @@ export function useParseContractAddress(
     userAddress?: string | null;
     chain: Chain | null;
     inputDataHex?: string | null;
+    account;
   } | null,
   opts?: {
     isTestnet?: boolean;
   },
 ) {
-  const { contractAddress, userAddress, chain, inputDataHex } = input || {};
+  const { contractAddress, userAddress, chain, inputDataHex, account } =
+    input || {};
 
   const {
     value: explain,
     loading: isLoadingExplain,
     error: loadingExplainError,
   } = useAsync(async () => {
-    if (!userAddress || !contractAddress || !chain?.network || !inputDataHex) {
+    if (
+      !userAddress ||
+      !contractAddress ||
+      !chain?.network ||
+      !inputDataHex ||
+      !account
+    ) {
       return null;
     }
 
@@ -72,6 +83,7 @@ export function useParseContractAddress(
       const nonce = await apiProvider.getRecommendNonce({
         from: userAddress,
         chainId: chain.id,
+        account,
       });
 
       const openapi = opts?.isTestnet ? testOpenapi : mainnetOpenApi;

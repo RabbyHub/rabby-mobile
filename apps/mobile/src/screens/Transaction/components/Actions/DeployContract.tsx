@@ -21,10 +21,12 @@ import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { ellipsisAddress } from '@/utils/address';
 import { formatIntlTimestamp } from '@/utils/time';
 import { formatAmount } from '@/utils/number';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
 export const DeployContact: React.FC<Props> = ({ data, isSingleAddress }) => {

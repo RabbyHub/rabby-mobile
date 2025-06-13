@@ -1,5 +1,3 @@
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { useCurrentAccount } from '@/hooks/account';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
 import { useThemeColors } from '@/hooks/theme';

@@ -1,5 +1,4 @@
 import { openapi } from '@/core/request';
-import { useCurrentAccount } from '@/hooks/account';
 import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
@@ -257,6 +256,7 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
 
   useEffect(() => {
     if ((!loading && value !== undefined) || error) {
+      timerRef.current && clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         runAsync();
       }, timer);
@@ -281,6 +281,10 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
     swapService.setOpenSwapHistoryTs(currentAccount?.address!);
     return currentTs;
   }, [setSwapHistoryRedDot, currentAccount?.address]);
+
+  useEffect(() => {
+    timerRef.current && clearTimeout(timerRef.current);
+  }, [currentAccount?.address]);
 
   return {
     runAsync,

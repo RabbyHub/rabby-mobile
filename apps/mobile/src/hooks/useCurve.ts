@@ -7,6 +7,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
 
+export type CurvePoint = {
+  value: number;
+  netWorth: string;
+  change: string;
+  isLoss: boolean;
+  changePercent: string;
+  timestamp: number;
+  dateString: string;
+  clockTimeString: string;
+};
+
 export const formChartData = (
   data: CurveList,
   realtimeNetWorth = 0,

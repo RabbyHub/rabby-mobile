@@ -40,8 +40,6 @@ interface ItemProps {
   sends: TxDisplayItem['sends'];
   approve: TxDisplayItem['token_approve'];
   data: HistoryDisplayItem;
-  currentApprove: number;
-  noRemainValue: boolean;
   isForMultipleAddress?: boolean;
   buttonContainerStyle?: RNViewProps['style'];
   account: Account;
@@ -49,8 +47,6 @@ interface ItemProps {
 
 export const HistoryBottomBtn = ({
   tokenDict,
-  noRemainValue,
-  currentApprove,
   status,
   type,
   sends,
@@ -143,79 +139,6 @@ export const HistoryBottomBtn = ({
         </View>
       );
     }
-    case HistoryItemCateType.Approve:
-      const singleAmount = currentApprove || approve?.value;
-      const revokeAmountStr =
-        singleAmount && singleAmount < 1e9
-          ? numberWithCommasIsLtOne(singleAmount, 2)
-          : '';
-      const tokenId = approve?.token_id || '';
-      const tokenUUID = `${chain}_token:${tokenId}`;
-      const tokenIsNft = tokenId?.length === 32;
-      const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
-      const name = tokenIsNft
-        ? t('page.nft.title')
-        : getTokenSymbol(singeToken as TokenItem);
-
-      return tokenIsNft ? null : (
-        <View style={btnContainerViewStyle}>
-          <Tip
-            placement="top"
-            content={
-              noRemainValue
-                ? t('page.transactions.detail.NoApproveNeed')
-                : undefined
-            }>
-            <Button
-              // loading={btnLoading}
-              disabled={noRemainValue}
-              buttonStyle={[styles.ghostButton, buttonStyle]}
-              titleStyle={[
-                styles.ghostTitle,
-                noRemainValue && styles.ghostDisableButton,
-              ]}
-              onPress={async () => {
-                if (tokenIsNft) {
-                  // ？to confrim revoke nft approve
-                  await revokeNFTApprove(
-                    {
-                      chainServerId: chain,
-                      nftTokenId: tokenId,
-                      spender: approve?.spender!,
-                      contractId: (data.tx as any)?.id,
-                      abi: 'ERC721',
-                      isApprovedForAll: true,
-                      account: currentAccount,
-                    },
-                    {
-                      ga: { category: 'Security', source: 'tokenApproval' },
-                    },
-                  );
-                } else {
-                  await approveToken({
-                    chainServerId: chain,
-                    id: tokenId,
-                    spender: approve?.spender!,
-                    amount: 0,
-                    $ctx: {
-                      ga: {
-                        category: 'Security',
-                        source: 'tokenApproval',
-                      },
-                    },
-                    account: currentAccount,
-                  });
-                }
-                resetNavigationTo(navigation, 'Home');
-              }}
-              type={'primary'}
-              title={`${t(
-                'page.transactions.detail.Revoke',
-              )} ${revokeAmountStr} ${name}`}
-            />
-          </Tip>
-        </View>
-      );
     case HistoryItemCateType.Recieve:
       return null;
     case HistoryItemCateType.Swap:
