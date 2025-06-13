@@ -146,7 +146,7 @@ function SendHistoryScreen() {
           onCancel: () => {
             removeGlobalBottomSheetModal2024(id);
           },
-          onConfirm() {
+          onConfirm: () => {
             removeGlobalBottomSheetModal2024(id);
             addWhitelist(account.address, {
               onAdded: () => {
