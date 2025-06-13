@@ -50,6 +50,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 import { ellipsisAddress } from '@/utils/address';
 import { useAccounts } from '@/hooks/account';
+import { useMemoizedFn } from 'ahooks';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -104,7 +105,7 @@ const WhitelistInputScreen = () => {
 
   const confrimModalIRef = useRef<any>(null);
 
-  const handleDone = async () => {
+  const handleDone = useMemoizedFn(async () => {
     if (!input) {
       setError(INPUT_ERROR.REQUIRED);
       return;
@@ -175,7 +176,7 @@ const WhitelistInputScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   const handleSubmit = useCallback((text: string) => {
     setError(undefined);
