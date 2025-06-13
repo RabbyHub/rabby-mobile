@@ -954,7 +954,11 @@
       "tipsDollar": {
         "title": "Copy Trading from Smart Money",
         "description": "Discover tokens based on recent activity from smart money wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
-      }
+      },
+      "smartMoneyWallets": "Smart Money Wallets",
+      "recentBuy": "Recent Buy",
+      "historyProfit": "History Profit",
+      "buy": "Buy"
     },
     "dashboard": {
       "home": {
