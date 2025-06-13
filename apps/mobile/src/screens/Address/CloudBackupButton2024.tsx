@@ -17,6 +17,7 @@ const hitSlop = {
   right: 10,
 };
 
+/** @deprecated */
 export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
