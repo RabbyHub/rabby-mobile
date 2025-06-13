@@ -10,8 +10,6 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
-import { useAssets } from '@/screens/Search/useAssets';
-import LoadingCircle from '@/components2024/RotateLoadingCircle';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
@@ -25,8 +23,6 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { removePinedToken, pinToken, userTokenSettings } =
     useUserTokenSettings();
-
-  const { refreshing } = useAssets();
 
   const isPined = useMemo(
     () =>
@@ -88,8 +84,54 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
               }
             />
           </TouchableOpacity>
-          {refreshing && <LoadingCircle />}
         </View>
+        {/* <View style={styles.contract}>
+          <ChainIconImage
+            size={12}
+            chainServerId={token.chain}
+            isShowRPCStatus={true}
+          />
+          {!isContractToken && nativeTokenChainName ? (
+            <>
+              <Text
+                style={[styles.address]}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {nativeTokenChainName}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text
+                style={styles.address}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {needHideAddress
+                  ? ellipsisOverflowedText(tokenAddress, 6)
+                  : ellipsisAddress(tokenAddress)}
+              </Text>
+              <TouchableOpacity onPress={handleCopyAddress}>
+                <RcIconCopyRegularCC
+                  style={styles.icon}
+                  color={colors2024['neutral-foot']}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconJump}
+                onPress={() => {
+                  openTxExternalUrl({
+                    chain: chainItem,
+                    address: tokenAddress,
+                  });
+                }}>
+                <RcIconExternalLinkCC
+                  style={styles.icon}
+                  color={colors2024['neutral-foot']}
+                />
+              </TouchableOpacity>
+            </>
+          )}
+        </View> */}
       </View>
     </View>
   );

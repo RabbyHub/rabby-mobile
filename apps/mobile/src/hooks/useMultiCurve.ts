@@ -5,7 +5,7 @@ import {
 } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
@@ -39,7 +39,7 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
       usd_value: 0,
     }));
 
-  const result = windows.map(window => {
+  const result = windows.map((window, i) => {
     const windowStart = window.timestamp;
     const windowEnd = windowStart + interval;
     let sum = 0;
@@ -83,14 +83,14 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
 
   return result;
 };
-export const loadingMultiCurveAtom = atom(true);
+
 export const useMultiCurve = (
   addresses: string[],
   disableAutoFetch?: boolean,
   totalBalance?: number,
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
-  const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
+  const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(
     async (addres: string[], force = false) => {
@@ -157,36 +157,34 @@ export const useMultiCurve = (
                   loading: true,
                 },
               }));
-              try {
-                const curve = await getNetCurve(addr, CurveDayType.DAY, force);
-                const start = dayjs()
-                  .add(-24, 'hours')
-                  .add(10, 'minutes')
-                  .valueOf();
-                const step = 5 * 60 * 1000;
-                const result = patchCurveData(
-                  curve.map(item => {
+              const curve = await getNetCurve(addr, CurveDayType.DAY, force);
+              const start = dayjs()
+                .add(-24, 'hours')
+                .add(10, 'minutes')
+                .valueOf();
+              const step = 5 * 60 * 1000;
+              const result = patchCurveData(
+                curve.map(item => {
+                  return {
+                    timestamp: item.timestamp * 1000,
+                    price: item.usd_value,
+                  };
+                }),
+                start,
+                step,
+              );
+              setMultiTimeStamp(prev => ({
+                ...prev,
+                [addr]: {
+                  loading: false,
+                  data: result.map(item => {
                     return {
-                      timestamp: item.timestamp * 1000,
-                      price: item.usd_value,
+                      timestamp: dayjs(item.timestamp).unix(),
+                      usd_value: item.price,
                     };
                   }),
-                  start,
-                  step,
-                );
-                setMultiTimeStamp(prev => ({
-                  ...prev,
-                  [addr]: {
-                    loading: false,
-                    data: result.map(item => {
-                      return {
-                        timestamp: dayjs(item.timestamp).unix(),
-                        usd_value: item.price,
-                      };
-                    }),
-                  },
-                }));
-              } catch (error) {}
+                },
+              }));
             });
           } catch (error) {}
         });
@@ -197,7 +195,7 @@ export const useMultiCurve = (
         setLoading(false);
       }
     },
-    [setLoading, setMultiTimeStamp],
+    [setMultiTimeStamp],
   );
 
   const refresh = useCallback(

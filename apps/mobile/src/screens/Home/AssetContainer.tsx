@@ -7,7 +7,6 @@ import useSortToken from './hooks/useSortTokens';
 import { getTotalFoldToken, getAllDefiCount } from './utils/converAssets';
 import { ActionItem, CombineToken } from './types';
 import {
-  ALERT_HEIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_SECTION_HEADER,
   DEFI_ITEM_HEIGHT,
@@ -22,6 +21,8 @@ import {
   AssestAllHeader,
   AsssetKey,
 } from './components/AssetRenderItems/SectionHeaders';
+import { useFocusEffect } from '@react-navigation/native';
+import useMemoizedFn from 'ahooks/lib/useMemoizedFn';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import throttle from 'lodash/throttle';
@@ -39,8 +40,6 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { useCurve } from '@/hooks/useCurve';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { Account } from '@/core/services/preference';
-import { useGlobalStatus } from '@/hooks/useGlobalStatus';
-import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -85,8 +84,6 @@ export const AssetContainer: React.FC<Props> = ({
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
 
-  const { isDisConnnect } = useGlobalStatus();
-
   const {
     tokens: _rawTokens,
     refreshPositions,
@@ -95,6 +92,7 @@ export const AssetContainer: React.FC<Props> = ({
     loadingToken,
     loadingNft,
     loadingPortfolio,
+    refreshing,
     updateTokens,
     updatePortfolio,
     reloadNftList,
@@ -463,17 +461,7 @@ export const AssetContainer: React.FC<Props> = ({
     result: curveData,
     isLoading: isLoadingCurve,
     refresh: refreshCurve,
-    hasNoData: hasNoCurveData,
   } = useCurve(currentAccount?.address, 0, balance);
-
-  const handleRefresh = useCallback(
-    async (ignoreLoading?: boolean) => {
-      onRefresh?.();
-      refreshCurve(ignoreLoading);
-      refreshPositions(true);
-    },
-    [onRefresh, refreshCurve, refreshPositions],
-  );
 
   const renderStickHeader = useCallback(
     (type: string) => {
@@ -547,16 +535,13 @@ export const AssetContainer: React.FC<Props> = ({
             HEADER_TOP_AREA_HEIGHT +
             ASSETS_SECTION_HEADER +
             SPACE_BETWEEN_HEADER_AND_CHART +
-            ASSETS_SECTION_HEADER +
-            (isDisConnnect ? ALERT_HEIGHT : 0),
+            ASSETS_SECTION_HEADER,
         }}>
         <HomeTopArea
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
           curveData={curveData}
           isLoadingCurve={isLoadingCurve}
-          isDisConnnect={isDisConnnect}
-          onRefresh={() => handleRefresh(true)}
         />
         <View style={{ height: SPACE_BETWEEN_HEADER_AND_CHART }} />
         <AssestAllHeader
@@ -577,9 +562,7 @@ export const AssetContainer: React.FC<Props> = ({
     curveData,
     firstRowType,
     handleOnChainClick,
-    handleRefresh,
     handleSwitchTab,
-    isDisConnnect,
     isLoadingCurve,
     onUpdateIsDecrease,
     renderStickHeader,
@@ -590,6 +573,11 @@ export const AssetContainer: React.FC<Props> = ({
     return null;
   }, []);
 
+  const handleRefresh = useCallback(() => {
+    refreshPositions(true);
+    onRefresh?.();
+    refreshCurve();
+  }, [onRefresh, refreshCurve, refreshPositions]);
   const hasNotAssets = useMemo(() => {
     return (
       chainsInfo.chainLength === 0 &&
@@ -599,33 +587,15 @@ export const AssetContainer: React.FC<Props> = ({
     );
   }, [chainsInfo.chainLength, loadingNft, loadingPortfolio, loadingToken]);
 
-  const errorNotAssets = useMemo(() => {
-    return isDisConnnect && hasNotAssets && hasNoCurveData;
-  }, [hasNoCurveData, hasNotAssets, isDisConnnect]);
-
   if (!currentAccount?.address) {
     return null;
-  }
-  if (errorNotAssets) {
-    return (
-      <NetWorkError
-        hasError={isDisConnnect}
-        onRefresh={() => {
-          handleRefresh(true);
-        }}
-        style={styles.netWorkError}
-      />
-    );
   }
   return (
     <Tabs.Container
       containerStyle={styles.container}
       minHeaderHeight={ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER}
       headerHeight={
-        HEADER_TOP_AREA_HEIGHT +
-        ASSETS_SECTION_HEADER +
-        ASSETS_SECTION_HEADER +
-        (isDisConnnect ? ALERT_HEIGHT : 0)
+        HEADER_TOP_AREA_HEIGHT + ASSETS_SECTION_HEADER + ASSETS_SECTION_HEADER
       }
       renderTabBar={renderTabBar}
       tabBarHeight={0}
@@ -647,7 +617,7 @@ export const AssetContainer: React.FC<Props> = ({
           foldDefi={foldDefi}
           setFoldDefi={setFoldDefi}
           setFoldScam={setFoldScam}
-          refreshing={isLoadingCurve}
+          refreshing={refreshing}
           onRefresh={handleRefresh}
           setFirstRowType={setFirstRowType}
           onReachTopStatusChange={onReachTopStatusChange}
@@ -743,14 +713,5 @@ const getStyles = createGetStyles2024(ctx => ({
     shadowColor: 'transparent',
     shadowOpacity: 0,
     elevation: 0,
-  },
-  globalWarning: {
-    marginHorizontal: 16,
-    marginBottom: 13,
-  },
-  netWorkError: {
-    height: '100%',
-    marginTop: -50,
-    backgroundColor: ctx.colors2024['neutral-bg-0'],
   },
 }));
