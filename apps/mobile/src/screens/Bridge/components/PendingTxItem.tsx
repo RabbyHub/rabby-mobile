@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import { AssetAvatar } from '@/components';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { bridgeService } from '@/core/services';
@@ -38,8 +37,8 @@ export const BridgePendingTxItem = ({
     openHistory();
   };
 
-  const payToken = data.from_token;
-  const receiveToken = data.to_token;
+  const payToken = data?.from_token;
+  const receiveToken = data?.to_token;
 
   const titleTextStr = useMemo(() => {
     return `${getTokenSymbol(payToken)}→${getTokenSymbol(receiveToken)}`;
@@ -99,14 +98,10 @@ export const BridgePendingTxItem = ({
                 size={25}
                 innerChainStyle={styles.innerChainStyle}
               />
-              <Text
-                style={{
-                  ...styles.titleText,
-                  marginRight: 10,
-                  marginLeft: 4,
-                }}>
-                {` ${getTokenSymbol(payToken)} →`}
+              <Text style={styles.titleText}>
+                {` ${getTokenSymbol(payToken)}`}
               </Text>
+              <Text style={styles.titleText}>{'→'}</Text>
               <AssetAvatar
                 logo={receiveToken?.logo_url}
                 chain={receiveToken?.chain}

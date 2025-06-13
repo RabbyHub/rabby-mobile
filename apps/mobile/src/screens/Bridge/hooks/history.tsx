@@ -100,7 +100,7 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
       );
     },
     {
-      refreshDeps: [account],
+      refreshDeps: [account?.address],
       onSuccess(v) {
         setCount(v);
       },

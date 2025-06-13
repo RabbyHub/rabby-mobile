@@ -32,7 +32,7 @@ import {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
 } from './screens/Approvals/useApprovalsPage';
-// import type { HistoryItemCateType } from './screens/Transaction/components/HistoryItemIcon';
+import { HistoryItemCateType } from './screens/Transaction/components/type';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -265,6 +265,7 @@ export type TransactionNavigatorParamList = {
     canCancel?: boolean;
     isForMultipleAddress?: boolean;
     title?: string;
+    type?: HistoryItemCateType;
     onPressBottomBtn?: (data: SendAction) => void;
     isInSendHistory?: boolean;
     // sendsToken: (TokenItem | undefined)[];
