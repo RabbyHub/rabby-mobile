@@ -205,6 +205,8 @@ const Swap = ({
     clearExpiredTimer,
     finishedQuotes,
     inSufficientCanGetQuote,
+
+    autoSuggestSlippage,
   } = useTokenPair({
     account: currentAccount!,
   });
@@ -1018,6 +1020,7 @@ const Swap = ({
                 marginHorizontal: -24,
               }}>
               <BridgeShowMore
+                autoSuggestSlippage={autoSuggestSlippage}
                 supportDirectSign={canShowDirectSubmit}
                 openFeePopup={openFeePopup}
                 open={showMoreOpen}
