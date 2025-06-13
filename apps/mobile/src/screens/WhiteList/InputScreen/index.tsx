@@ -125,9 +125,8 @@ const WhitelistInputScreen = () => {
         toast.show(t('page.whitelist.alreadyAdded'));
       } else {
         if (confrimModalIRef.current) {
+          // clear last modal
           removeGlobalBottomSheetModal2024(confrimModalIRef.current);
-          confrimModalIRef.current = null;
-          return;
         }
         confrimModalIRef.current = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.CONFIRM_ADDRESS,
