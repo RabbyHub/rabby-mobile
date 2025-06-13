@@ -2133,6 +2133,7 @@
     "globalWarning": {
       "buttonText": "Refresh",
       "offlineText": "Network Error",
+      "serviceErrorText": "Service Error",
       "networkError": {
         "title": "Service connection error: ",
         "globalDesc": "Info maybe outdated but your funds remain safe."

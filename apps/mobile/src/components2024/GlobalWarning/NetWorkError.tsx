@@ -4,12 +4,18 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { View, Text, StyleProp, ViewStyle, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../Button';
+import { ErrorType } from '@/hooks/useGlobalStatus';
 
 interface NetWorkErrorProps {
+  errorType: ErrorType;
   style?: StyleProp<ViewStyle>;
   onRefresh?: () => void;
 }
-export function NetWorkError({ style, onRefresh }: NetWorkErrorProps) {
+export function NetWorkError({
+  errorType,
+  style,
+  onRefresh,
+}: NetWorkErrorProps) {
   const { styles } = useTheme2024({
     getStyle,
   });
@@ -19,7 +25,9 @@ export function NetWorkError({ style, onRefresh }: NetWorkErrorProps) {
     <View style={[styles.container, style]}>
       <Image style={styles.img} source={OfflinePng} />
       <Text style={styles.title}>
-        {t('component.globalWarning.offlineText')}
+        {errorType === 'network'
+          ? t('component.globalWarning.offlineText')
+          : t('component.globalWarning.serviceErrorText')}
       </Text>
       <Button
         onPress={onRefresh}
