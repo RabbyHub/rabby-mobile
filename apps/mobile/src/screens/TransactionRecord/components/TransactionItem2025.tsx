@@ -383,6 +383,7 @@ export const TransactionItem = ({
       params: {
         isForMultipleAddress,
         data,
+        type: formatType,
         canCancel,
         title: formatTitle,
         onPressBottomBtn: onPressBottomBtn,
@@ -393,6 +394,7 @@ export const TransactionItem = ({
     canCancel,
     data,
     formatTitle,
+    formatType,
     isInSendHistory,
     onPressBottomBtn,
     closeHistoryPopup,

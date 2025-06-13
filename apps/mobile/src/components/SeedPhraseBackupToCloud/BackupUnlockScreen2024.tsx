@@ -112,7 +112,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   return (
     <View style={styles.container}>
       <View style={styles.root}>
-        <BackupIcon status="unlock" isGray />
+        <BackupIcon status="unlock" isGray isDown={true} />
         <Text style={styles.title}>
           {title || t('page.newAddress.seedPhrase.backupUnlockTitle')}
         </Text>

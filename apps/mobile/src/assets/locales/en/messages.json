@@ -1030,6 +1030,7 @@
         "createAddress": "Create Address",
         "importAddress": "Import Address",
         "hardwareWallet": "Hardware Wallet",
+        "selectAddMethod": "Select Add Method",
         "syncRabbyExtension": "Sync Rabby Extension"
       },
       "multiAddressHome": {
@@ -1051,6 +1052,7 @@
         "importTitle": "Import Address",
         "seedPhrase": "Import Seed Phrase",
         "privateKey": "Import Private Key",
+        "ImportCloud": "Import from {{cloud}}",
         "safeTitle": "Import Safe Address",
         "safe": "Safe",
         "watchOnlyTitle": "Import Watch-only Addres",

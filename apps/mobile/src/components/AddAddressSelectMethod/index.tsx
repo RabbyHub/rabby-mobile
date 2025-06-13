@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image } from 'react-native';
+import { View, Image, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import IconHardWare from '@/assets2024/icons/common/IconHardWare.png';
@@ -33,8 +33,12 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
 
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
+      <Text style={styles.title}>
+        {t('page.nextComponent.addAddress.selectAddMethod')}
+      </Text>
       <View style={styles.section}>
         <ListItem
+          disableArrow={true}
           onPress={async () => {
             if (
               await shouldRedirectToSetPasswordBefore2024({
@@ -53,6 +57,7 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
           Icon={<IconCreate style={styles.icon} />}
         />
         <ListItem
+          disableArrow={true}
           onPress={() => {
             navigateTo(RootNames.ImportMethods, {
               isNotNewUserProc: true,
@@ -64,6 +69,7 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
           Icon={<IconImport style={styles.icon} />}
         />
         <ListItem
+          disableArrow={true}
           onPress={() => {
             navigateTo(RootNames.ImportHardwareAddress);
             onDone();
@@ -74,6 +80,7 @@ export const AddAddressSelectMethod: React.FC<Props> = ({
         />
 
         <ListItem
+          disableArrow={true}
           onPress={() => {
             preferenceService.setReportActionTs(
               REPORT_TIMEOUT_ACTION_KEY.CLICK_SCAN_SYNC_EXTENSION,
@@ -97,6 +104,15 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
+  title: {
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
+    color: ctx.colors2024['neutral-title-1'],
+    textAlign: 'center',
+    marginBottom: 0,
+    marginTop: 12,
+  },
   icon: {
     width: 40,
     height: 40,
@@ -114,13 +130,14 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingVertical: 12,
   },
   importItem: {
-    height: 88,
+    // height: 88,
+    borderRadius: 20,
     paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingVertical: 20,
     display: 'flex',
     flexDirection: 'row',
     backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderRadius: 30,
+    // borderRadius: 30,
     borderWidth: 1,
     borderColor: ctx.colors2024['neutral-line'],
     justifyContent: 'space-between',
