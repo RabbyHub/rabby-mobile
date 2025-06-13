@@ -1,16 +1,12 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ALERT_HEIGHT,
-  HEADER_CHART_HEIGHT,
-  SWITCH_HEADER_HEIGHT,
-} from '@/constant/layout';
+import { HEADER_CHART_HEIGHT, SWITCH_HEADER_HEIGHT } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressList } from './AddressList';
 import { Portfolios } from './Portfolios';
 import { MultiChart } from './RenderRow/CurveChart';
-import { loadingMultiCurveAtom, useMultiCurve } from '@/hooks/useMultiCurve';
+import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from './hooks';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { Tabs, MaterialTabItem } from 'react-native-collapsible-tab-view';
@@ -18,10 +14,6 @@ import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterial
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
 import { isTabsSwiping } from './hooks';
-import { useGlobalStatus } from '@/hooks/useGlobalStatus';
-import { useAssets } from '@/screens/Search/useAssets';
-import LoadingCircle from '@/components2024/RotateLoadingCircle';
-import { useAtomValue } from 'jotai';
 
 export const MultiAssets = ({
   onUpdateIsDecrease,
@@ -50,9 +42,6 @@ export const MultiAssets = ({
     false,
     top10Balance,
   );
-
-  const { isDisConnnect } = useGlobalStatus();
-
   useEffect(() => {
     onUpdateIsDecrease(combineData.isLoss);
   }, [combineData.isLoss, onUpdateIsDecrease]);
@@ -98,12 +87,6 @@ export const MultiAssets = ({
     [colors2024, combineData.isLoss],
   );
 
-  const { refreshing } = useAssets();
-  const isLoadingMultiCurve = useAtomValue(loadingMultiCurveAtom);
-  const renderCirleLoading = useCallback(() => {
-    return refreshing || isLoadingMultiCurve ? <LoadingCircle /> : '';
-  }, [isLoadingMultiCurve, refreshing]);
-
   const handleScroll = useCallback(
     (y: number) => {
       // 10 is buffer
@@ -115,18 +98,13 @@ export const MultiAssets = ({
         });
       } else {
         setNavigationOptions({
-          headerTitle: renderCirleLoading,
+          headerTitle: '',
           headerTitleAlign: 'left',
         });
       }
       onReachTopStatusChange?.(!isHideHeader);
     },
-    [
-      getHeaderTitle,
-      onReachTopStatusChange,
-      renderCirleLoading,
-      setNavigationOptions,
-    ],
+    [getHeaderTitle, onReachTopStatusChange, setNavigationOptions],
   );
 
   const renderHeader = useCallback(() => {
@@ -137,17 +115,16 @@ export const MultiAssets = ({
         loading={isLoadingCurve}
         pathColor={pathColor}
         isNoAssets={false}
-        isDisConnnect={isDisConnnect}
         handleScroll={handleScroll}
       />
     );
-  }, [combineData, handleScroll, isDisConnnect, isLoadingCurve, pathColor]);
+  }, [combineData, handleScroll, isLoadingCurve, pathColor]);
 
   return (
     <Tabs.Container
       containerStyle={styles.container}
       minHeaderHeight={0}
-      headerHeight={HEADER_CHART_HEIGHT + (isDisConnnect ? ALERT_HEIGHT : 0)}
+      headerHeight={HEADER_CHART_HEIGHT}
       renderTabBar={renderTabBar}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
       renderHeader={renderHeader}

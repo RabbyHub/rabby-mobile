@@ -220,6 +220,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   avator: {
     width: 40,
     height: 40,
+    borderColor: 'red',
     position: 'relative',
   },
   chainIcon: {

@@ -12,6 +12,7 @@ import { MiniApproval } from './MiniSignTx';
 export const GlobalMiniApproval = () => {
   const [state, setState] = useAtom(miniApprovalAtom);
   const currentAccount = state.account;
+  console.log('currentAccountMini', currentAccount);
   const { clear } = useClearMiniApprovalTask();
   // const [currentRoute, setCurrentRoute] = useState(getLatestNavigationName());
   const submittingToastRef = useRef<ReturnType<

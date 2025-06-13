@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
@@ -56,8 +50,6 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 import { ellipsisAddress } from '@/utils/address';
 import { useAccounts } from '@/hooks/account';
-import { useMemoizedFn } from 'ahooks';
-import { debounce } from 'lodash';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -112,7 +104,7 @@ const WhitelistInputScreen = () => {
 
   const confrimModalIRef = useRef<any>(null);
 
-  const handleDone = useMemoizedFn(async () => {
+  const handleDone = async () => {
     if (!input) {
       setError(INPUT_ERROR.REQUIRED);
       return;
@@ -153,8 +145,7 @@ const WhitelistInputScreen = () => {
               removeGlobalBottomSheetModal2024(confrimModalIRef.current);
             confrimModalIRef.current = null;
           },
-          onConfirm: async () => {
-            Keyboard.dismiss();
+          async onConfirm() {
             confrimModalIRef.current &&
               removeGlobalBottomSheetModal2024(confrimModalIRef.current);
             confrimModalIRef.current = null;
@@ -177,9 +168,6 @@ const WhitelistInputScreen = () => {
             await getWhitelist();
             toast.success(t('page.whitelist.addSuccessful'));
             nav.canGoBack() && nav.goBack();
-            setTimeout(() => {
-              removeGlobalBottomSheetModal2024(confrimModalIRef.current);
-            }, 0);
           },
         });
       }
@@ -187,12 +175,7 @@ const WhitelistInputScreen = () => {
     } finally {
       setLoading(false);
     }
-  });
-
-  const debouncedHandleDone = useMemo(
-    () => debounce(handleDone, 300),
-    [handleDone],
-  );
+  };
 
   const handleSubmit = useCallback((text: string) => {
     setError(undefined);
@@ -290,7 +273,7 @@ const WhitelistInputScreen = () => {
         as="View"
         buttonProps={{
           title: t('global.Confirm'),
-          onPress: debouncedHandleDone,
+          onPress: handleDone,
           loading: loading,
           disabled: !input || !!error,
         }}
