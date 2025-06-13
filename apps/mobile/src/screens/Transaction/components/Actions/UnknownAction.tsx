@@ -31,8 +31,6 @@ interface Props {
 
 export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  console.log('data', JSON.stringify(data));
-
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
   const { chain } = useMemo(() => {

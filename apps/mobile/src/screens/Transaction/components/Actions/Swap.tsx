@@ -134,13 +134,18 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     );
   }, [accounts, data]);
 
-  const receiveToken: ReceiveTokenItem =
-    actionData.minReceive ||
-    actionData.receiveToken ||
-    data.maxGasTx.explain?.balance_change?.receive_token_list[0];
+  const receiveToken: ReceiveTokenItem = useMemo(() => {
+    if (actionData && 'minReceive' in actionData) {
+      return actionData.minReceive as ReceiveTokenItem;
+    }
+    return (
+      actionData?.receiveToken ||
+      data.maxGasTx.explain?.balance_change?.receive_token_list[0]
+    );
+  }, [actionData, data.maxGasTx.explain?.balance_change?.receive_token_list]);
 
   const payToken: TokenItem =
-    actionData.payToken ||
+    actionData?.payToken ||
     data.maxGasTx.explain?.balance_change?.send_token_list[0];
 
   if (!chain) {
