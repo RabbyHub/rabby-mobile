@@ -169,7 +169,9 @@ const WhitelistInputScreen = () => {
             await whitelistService.addWhitelist(address);
             await getWhitelist();
             toast.success(t('page.whitelist.addSuccessful'));
-            nav.canGoBack() && nav.goBack();
+            setTimeout(() => {
+              nav.canGoBack() && nav.goBack();
+            }, 100);
           },
         });
       }
