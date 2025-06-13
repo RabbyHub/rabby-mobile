@@ -50,7 +50,10 @@ export function GlobalWarning({
 
   const preTypeRef = useRef<GlobalWarningType | undefined>(undefined);
   useEffect(() => {
-    if (!type && preTypeRef.current === GlobalWarningType.Network) {
+    if (
+      type !== GlobalWarningType.Network &&
+      preTypeRef.current === GlobalWarningType.Network
+    ) {
       // auto refresh when network fine
       onRefresh?.();
     }
