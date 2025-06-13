@@ -551,6 +551,9 @@ export const useTokenPair = ({ account }: { account: Account }) => {
     payAmount,
     runGetAllQuotes,
     setActiveProvider,
+    // auto slippage
+    slippage,
+    autoSlippage,
   ]);
 
   const canUpdateActiveProvider = useMemo(() => {
