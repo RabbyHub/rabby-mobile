@@ -31,9 +31,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BubbleWithText } from './Slider';
 import { IS_ANDROID } from '@/core/native/utils';
-import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { Account } from '@/core/services/preference';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
+import usePrevious from 'react-use/lib/usePrevious';
 
 interface SwapTokenItemProps {
   type: 'from' | 'to';
@@ -152,6 +152,22 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
     },
     [onChangeSlider, showBubble],
   );
+
+  const prevToken = usePrevious(token);
+
+  if (
+    isFrom &&
+    slider &&
+    Number(value) === 0 &&
+    onChangeSlider &&
+    prevToken?.chain === token?.chain &&
+    prevToken?.id === token?.id &&
+    (token?.amount !== prevToken?.amount ||
+      token?.raw_amount_hex_str !== prevToken?.raw_amount_hex_str)
+  ) {
+    console.debug('sync amount with token', slider);
+    onAfterChangeSlider(slider);
+  }
 
   const Linear = useCallback(() => {
     return (
