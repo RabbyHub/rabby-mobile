@@ -35,8 +35,6 @@ export type ApprovalAssetsItem =
 import { groupBy, sortBy, flatten } from 'lodash';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 
-import { useCurrentAccount } from '@/hooks/account';
-
 import { openapi, testOpenapi } from '@/core/request';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
 import { atom, useAtom, useAtomValue } from 'jotai';

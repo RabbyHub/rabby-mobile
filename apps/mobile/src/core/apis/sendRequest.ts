@@ -27,6 +27,25 @@ export function sendRequest<T = any>(
   });
 }
 
+export function dappSendRequest<T = any>(
+  {
+    data,
+    session,
+  }: {
+    data: ProviderRequest['data'];
+    session: ProviderRequest['session'];
+  },
+  isBuild = false,
+) {
+  if (isBuild) {
+    return Promise.resolve<T>(data as T);
+  }
+  return provider<T>({
+    data,
+    session,
+  });
+}
+
 setGlobalTmpStore({ sendRequest });
 
 export const abiCoder = abiCoderInst as unknown as AbiCoder;

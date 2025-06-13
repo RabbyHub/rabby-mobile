@@ -1,11 +1,10 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import { CurvePoint } from '@/screens/Home/hooks/useCurve';
 import { memo } from 'react';
 import { Dimensions, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formChartData } from '@/hooks/useCurve';
+import { CurvePoint, formChartData } from '@/hooks/useCurve';
 import {
   useAnimatedProps,
   useAnimatedStyle,

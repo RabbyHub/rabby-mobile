@@ -20,7 +20,7 @@ import {
 import { AddressInput } from './components/AddressInput';
 import ImportSuccessSVG from '@/assets/icons/address/import-success.svg';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { RootStackParamsList } from '@/navigation-type';
@@ -114,10 +114,6 @@ export const ImportSuccessScreen = () => {
     }[]
   >([]);
 
-  const { switchAccount } = useCurrentAccount({
-    disableAutoFetch: true,
-  });
-
   const handleDone = React.useCallback(() => {
     importAddresses.forEach(item => {
       contactService.setAlias({
@@ -176,18 +172,18 @@ export const ImportSuccessScreen = () => {
           a.brandName === state.brandName &&
           addressUtils.isSameAddress(a.address, lastAddress),
       );
-      const currentAccount = preferenceService.getCurrentAccount();
+      const currentAccount = preferenceService.getFallbackAccount();
       if (targetAccount) {
         if (
           !currentAccount ||
           targetAccount.brandName !== currentAccount.brandName ||
           !addressUtils.isSameAddress(currentAccount.address, lastAddress)
         ) {
-          switchAccount(targetAccount);
+          preferenceService.setCurrentAccount(targetAccount);
         }
       }
     }
-  }, [isFocus, state, accounts, switchAccount, importAddresses]);
+  }, [isFocus, state, accounts, importAddresses]);
 
   const handleImportMore = React.useCallback(() => {
     if (!state.isFirstImport) {

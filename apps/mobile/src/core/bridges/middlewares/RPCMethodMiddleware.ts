@@ -2,7 +2,7 @@ import { createAsyncMiddleware } from 'json-rpc-engine';
 
 import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
-import { sendRequest } from '@/core/apis/sendRequest';
+import { dappSendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
 import { getActiveDappState, isRpcAllowed } from '../state';
 import { ethErrors } from 'eth-rpc-errors';
@@ -150,7 +150,7 @@ RPCMethodsMiddleParameters) =>
           );
         }
         // res.result = await rpcMethods['@reject']();
-        res.result = await sendRequest({
+        res.result = await dappSendRequest({
           data: {
             method: req.method,
             params: req.params,

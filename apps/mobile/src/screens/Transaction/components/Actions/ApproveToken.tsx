@@ -41,13 +41,19 @@ import { formatIntlTimestamp } from '@/utils/time';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/utils/account';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
-export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const ApproveToken: React.FC<Props> = ({
+  data,
+  isSingleAddress,
+  account,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -129,7 +135,7 @@ export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
   const handleGotoTokenDetail = useMemoizedFn(() => {
     naviPush(RootNames.TokenDetail, {
       token: ensureAbstractPortfolioToken(actionData.token),
-      // account: address,
+      account,
       needUseCacheToken: true,
       isSingleAddress,
     });

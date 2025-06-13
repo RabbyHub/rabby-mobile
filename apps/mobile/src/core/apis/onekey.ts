@@ -1,7 +1,7 @@
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
-import { keyringService } from '../services/shared';
+import { keyringService, preferenceService } from '../services/shared';
 import { bindOneKeyEvents } from '@/utils/onekey';
 import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
 import { DEVICE } from '@onekeyfe/hd-core';
@@ -43,6 +43,7 @@ export async function importAddress(index: number) {
 
   keyring.setAccountToUnlock(index.toString());
   const result = await keyringService.addNewAccount(keyring as any);
+  preferenceService.initCurrentAccount();
   return result;
 }
 

@@ -7,17 +7,11 @@ import {
   Text,
   View,
 } from 'react-native';
-// import { useGnosisSafeInfo } from '@/ui/hooks/useGnosisSafeInfo';
-// import { useAccount } from '@/ui/store-hooks';
 import { findChain } from '@/utils/chain';
 import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import type { SafeTransactionDataPartial } from '@safe-global/types-kit';
-// import { CHAINS_ENUM } from 'consts';
-// import { FlashList } from '@shopify/flash-list';
-// import { isSameAddress, useWallet } from 'ui/utils';
 import { IconLoadFailed, RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { useCurrentAccount } from '@/hooks/account';
 import { useGnosisSafeInfo } from '@/hooks/gnosis/useGnosisSafeInfo';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';

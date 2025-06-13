@@ -7,7 +7,6 @@ import {
   useInputBlurOnEvents,
   useSendTokenInternalContext,
 } from './hooks/useSendToken';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { GasLevelType } from '@/components/ReserveGasPopup';

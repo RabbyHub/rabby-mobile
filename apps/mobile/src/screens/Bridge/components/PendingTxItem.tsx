@@ -1,18 +1,16 @@
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { BridgeHistory, SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components';
-import { useTranslation } from 'react-i18next';
-import { getTokenSymbol } from '@/utils/token';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { bridgeService } from '@/core/services';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useTheme2024 } from '@/hooks/theme';
 import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { findChain } from '@/utils/chain';
-import ArrowSwapSVG from '@/assets2024/icons/common/arrow-swap-cc.svg';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { bridgeService, swapService } from '@/core/services';
-import { useCurrentAccount } from '@/hooks/account';
-import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { createGetStyles2024 } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
+import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Text, TouchableOpacity, View } from 'react-native';
 export const BridgePendingTxItem = ({
   data,
   clearLocalPendingTxData,

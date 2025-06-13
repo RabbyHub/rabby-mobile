@@ -78,7 +78,7 @@ export const usePollSendPendingCount = (params?: {
     onSuccess(v) {
       setCount(v);
     },
-    refreshDeps: [isForMultipleAddress],
+    refreshDeps: [isForMultipleAddress, currentAccount?.address],
   });
 
   const { runAsync } = res;

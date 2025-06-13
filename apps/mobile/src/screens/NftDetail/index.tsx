@@ -22,11 +22,7 @@ import { navigate } from '@/utils/navigation';
 import { useMemoizedFn } from 'ahooks';
 import FastImage from 'react-native-fast-image';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import {
-  useCurrentAccount,
-  useMyAccounts,
-  KeyringAccountWithAlias,
-} from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
@@ -225,7 +221,7 @@ export const NFTDetailScreen = () => {
   );
 
   // todo check this
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = preferenceService.getFallbackAccount();
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });

@@ -1,27 +1,21 @@
 import { Tip } from '@/components';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import React, { useRef } from 'react';
-import { Text, View, ViewStyle } from 'react-native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { Button } from '@/components2024/Button';
 import { approveToken } from '@/core/apis/approvals';
 import { getERC20Allowance } from '@/core/apis/provider';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { resetNavigationTo } from '@/hooks/navigation';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { ParsedActionData } from '@rabby-wallet/rabby-action';
+import { formatAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  formatAmount,
-  formatTokenAmount,
-} from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { KeyringAccountWithAlias } from '@/hooks/account';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { StyleProp } from 'react-native';
-import { Skeleton } from '@rneui/themed';
+import { StyleProp, Text, View, ViewStyle } from 'react-native';
 
 interface Props {
   account: KeyringAccountWithAlias;
@@ -34,7 +28,6 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
 
   const { data: allowance, loading } = useRequest(async () => {
     const res = await getERC20Allowance(
@@ -42,6 +35,7 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
       token.id,
       spender,
       account.address,
+      account,
     );
 
     const amount = new BigNumber(res)

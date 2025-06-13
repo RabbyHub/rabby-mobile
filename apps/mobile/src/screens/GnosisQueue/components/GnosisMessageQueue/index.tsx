@@ -1,4 +1,3 @@
-import { useCurrentAccount } from '@/hooks/account';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 import { useThemeColors } from '@/hooks/theme';
 import { findChain, findChainByEnum } from '@/utils/chain';

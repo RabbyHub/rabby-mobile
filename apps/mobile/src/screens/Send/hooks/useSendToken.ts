@@ -325,13 +325,20 @@ function findInstanceLevel(gasList: GasLevel[]) {
     prev.price >= current.price ? prev : current,
   );
 }
-const fetchGasList = async (chainItem: Chain | null, params: Tx) => {
+const fetchGasList = async (
+  chainItem: Chain | null,
+  params: Tx,
+  account: Account,
+) => {
   const list: GasLevel[] = chainItem?.isTestnet
     ? await customTestnetService.getGasMarket({ chainId: chainItem.id })
-    : await apiProvider.gasMarketV2({
-        chain: chainItem!,
-        tx: params,
-      });
+    : await apiProvider.gasMarketV2(
+        {
+          chain: chainItem!,
+          tx: params,
+        },
+        account,
+      );
 
   return list;
 };
@@ -386,7 +393,11 @@ export function useSendTokenForm({
     ...DF_SEND_TOKEN_FORM,
   });
 
-  const { addressType } = useCheckAddressType(formValues.to, chainItem);
+  const { addressType } = useCheckAddressType(
+    formValues.to,
+    chainItem,
+    account,
+  );
 
   const { isShowMessageDataForToken, isShowMessageDataForContract } =
     useMemo(() => {
@@ -488,8 +499,9 @@ export function useSendTokenForm({
   }, [t]);
 
   const [{ error: loadGasListError }, loadGasList] = useAsyncFn(
-    async () => fetchGasList(chainItem, getParams(formValues) as Tx),
-    [chainItem, formValues, putScreenState],
+    async () =>
+      fetchGasList(chainItem, getParams(formValues) as Tx, currentAccount),
+    [chainItem, formValues, putScreenState, currentAccount],
   );
 
   const loadGasListAndResolve = useCallback(async () => {
@@ -739,6 +751,7 @@ export function useSendTokenForm({
             params: [to, 'latest'],
           },
           chain.serverId,
+          account,
         );
         const notContract = !!code && (code === '0x' || code === '0x0');
         let gasLimit = 0;
@@ -858,6 +871,7 @@ export function useSendTokenForm({
               params: [to, 'latest'],
             },
             chain.serverId,
+            account,
           );
           const notContract = !!code && (code === '0x' || code === '0x0');
           let gasLimit = 0;
@@ -1165,6 +1179,7 @@ export function useSendTokenForm({
             ],
           },
           lastestChainItem.serverId,
+          account,
         );
       } catch (err) {
         console.error(err);
@@ -1176,7 +1191,14 @@ export function useSendTokenForm({
 
       return doReturn(Number(gasUsed));
     },
-    [currentAccount, chainItem, formik, currentToken, putScreenState],
+    [
+      chainItem,
+      currentToken,
+      currentAccount?.address,
+      formik.values.to,
+      putScreenState,
+      account,
+    ],
   );
 
   const loadCurrentToken = useCallback(
@@ -1437,6 +1459,7 @@ export function useSendTokenForm({
                   gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
                   data: '0x',
                 },
+                account,
               },
               chainItem.enum,
             );
@@ -1468,19 +1491,20 @@ export function useSendTokenForm({
     },
     [
       currentAccount,
-      currentToken,
-      estimateGasOnChain,
-      screenState.selectedGasLevel,
-      loadGasListAndResolve,
-      formik,
-      patchFormValues,
-      onGasChange,
-      putScreenState,
-      couldReserveGas,
-      chainItem,
-      screenState.isEstimatingGas,
-      screenState.isGnosisSafe,
       screenState.isLoading,
+      screenState.isEstimatingGas,
+      screenState.selectedGasLevel,
+      screenState.isGnosisSafe,
+      currentToken,
+      formik.values,
+      loadGasListAndResolve,
+      couldReserveGas,
+      patchFormValues,
+      putScreenState,
+      estimateGasOnChain,
+      chainItem,
+      onGasChange,
+      account,
     ],
   );
   const handleGasLevelChanged = useCallback(

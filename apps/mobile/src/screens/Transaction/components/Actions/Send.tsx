@@ -43,17 +43,20 @@ import { Tip } from '@/components/Tip';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
   onPressBottomBtn?: (data: SendAction) => void;
+  account?: Account;
 }
 
 export const Send: React.FC<Props> = ({
   data,
   isSingleAddress,
   onPressBottomBtn,
+  account,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
@@ -114,9 +117,9 @@ export const Send: React.FC<Props> = ({
   const handleGotoTokenDetail = useMemoizedFn(() => {
     naviPush(RootNames.TokenDetail, {
       token: ensureAbstractPortfolioToken(actionData.token),
-      // account: address,
       needUseCacheToken: true,
       isSingleAddress,
+      account,
     });
   });
 

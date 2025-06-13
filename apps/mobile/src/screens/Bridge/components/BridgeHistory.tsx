@@ -17,7 +17,6 @@ import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
-import { useCurrentAccount } from '@/hooks/account';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const ItemSeparator = () => {

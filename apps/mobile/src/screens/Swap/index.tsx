@@ -9,7 +9,6 @@ import {
   swapService,
   transactionHistoryService,
 } from '@/core/services';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';

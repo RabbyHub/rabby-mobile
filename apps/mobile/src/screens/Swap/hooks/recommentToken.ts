@@ -4,7 +4,6 @@ import {
   StablecoinMapAggregatedByChain,
 } from '@/constant/swap';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { useCurrentAccount } from '@/hooks/account';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';

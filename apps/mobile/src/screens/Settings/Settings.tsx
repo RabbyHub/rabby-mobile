@@ -121,7 +121,6 @@ import MockBatchRevokeModal, {
   useDevMockBatchRevokeVisible,
 } from './sheetModals/DevMockBatchRevoke';
 import { preferenceService } from '@/core/services';
-import { useCurrentAccount } from '@/hooks/account';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 
 const LAYOUTS = {
@@ -497,7 +496,7 @@ function DevSettingsBlocks() {
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const currentAccount = preferenceService.getFallbackAccount();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {

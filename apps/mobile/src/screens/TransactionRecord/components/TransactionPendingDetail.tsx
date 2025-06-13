@@ -115,10 +115,13 @@ export const TransactionPendingDetail = ({
       ? await apiCustomTestnet.getCustomTestnetGasMarket({
           chainId: chainItem?.id!,
         })
-      : await apiProvider.gasMarketV2({
-          chain: chainItem!,
-          tx: maxGasTx.rawTx,
-        });
+      : await apiProvider.gasMarketV2(
+          {
+            chain: chainItem!,
+            tx: maxGasTx.rawTx,
+          },
+          account,
+        );
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
     try {
       await sendRequest({
@@ -239,10 +242,13 @@ export const TransactionPendingDetail = ({
       ? await apiCustomTestnet.getCustomTestnetGasMarket({
           chainId: chainItem?.id!,
         })
-      : await apiProvider.gasMarketV2({
-          chain: chainItem!,
-          tx: originTx.rawTx,
-        });
+      : await apiProvider.gasMarketV2(
+          {
+            chain: chainItem!,
+            tx: originTx.rawTx,
+          },
+          account,
+        );
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
 
     try {

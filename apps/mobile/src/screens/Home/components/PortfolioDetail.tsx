@@ -118,7 +118,7 @@ export const TokenList = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenNavigationProps<'DeFiDetail'>['route']>();
-  const { relateTokenId, isSingleAddress } = route.params || {};
+  const { relateTokenId, isSingleAddress, account } = route.params || {};
 
   const [highlightAnim] = useState(new Animated.Value(0));
 
@@ -257,10 +257,11 @@ export const TokenList = ({
           _tokenId: token.id,
         } as any, // to do fix type
         isSingleAddress,
+        account,
         fromPortfolio: true,
       });
     },
-    [isSingleAddress],
+    [account, isSingleAddress],
   );
 
   return list.length ? (
