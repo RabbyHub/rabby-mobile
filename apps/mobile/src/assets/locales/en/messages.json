@@ -694,7 +694,7 @@
     },
     "whitelist": {
       "addToWhitelist": "Add to Whitelist",
-      "removeWhitelist": "Remove from Whitelist",
+      "removeWhitelist": "Remove",
       "copyAddress": "Copy Address",
       "confirm": "Confirm",
       "cancel": "Cancel",
@@ -2089,6 +2089,21 @@
     },
     "AccountSelector": {
       "title": "Select Wallet"
+    },
+    "globalWarning": {
+      "buttonText": "Refresh",
+      "offlineText": "Network Error",
+      "serviceErrorText": "Service Error",
+      "networkError": {
+        "title": "Service connection error: ",
+        "globalDesc": "Info maybe outdated but your funds remain safe."
+      },
+      "serviceError": {
+        "title": "Network issue: ",
+        "globalDesc": "Info maybe outdated but your funds remain safe. ",
+        "quotesDesc": "quote failed to be loaded. ",
+        "balanceDesc": "balance failed to be loaded. "
+      }
     }
   },
   "native": {
