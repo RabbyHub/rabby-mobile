@@ -85,7 +85,7 @@ export function GlobalWarning({
       )}
       <Text style={styles.content}>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.text}>{description}</Text>
+        <Text style={styles.text}>{description} </Text>
         {!isNetWorkError && !!onRefresh && (
           <TouchableOpacity
             hitSlop={20}
