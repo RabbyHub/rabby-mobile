@@ -3,7 +3,7 @@ import { SendShowMore } from '@/screens/Bridge/components/BridgeShowMore';
 import { useSendTokenInternalContext } from '../hooks/useSendToken';
 import { View } from 'react-native';
 
-export const ShowMoreOnSend = () => {
+export const ShowMoreOnSend = ({ chainServeId }: { chainServeId: string }) => {
   const [open, setOpen] = useState(false);
 
   const {
@@ -23,6 +23,7 @@ export const ShowMoreOnSend = () => {
         setOpen={setOpen}
         supportDirectSign={canDirectSign}
         loading={false}
+        chainServeId={chainServeId}
       />
     </View>
   ) : null;

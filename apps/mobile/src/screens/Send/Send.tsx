@@ -529,7 +529,7 @@ function SendScreen({
                   disableItemCheck={disableItemCheck}
                   style={styles.balance}
                 />
-                <ShowMoreOnSend />
+                <ShowMoreOnSend chainServeId={chainItem?.serverId || ''} />
               </View>
               {Boolean(localPendingTxData && !canSubmit) && (
                 <PendingTxItem
