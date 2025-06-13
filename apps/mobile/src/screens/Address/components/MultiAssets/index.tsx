@@ -18,7 +18,7 @@ import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterial
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
 import { isTabsSwiping } from './hooks';
-import { useGlobalStatus, PageMainServices } from '@/hooks/useGlobalStatus';
+import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useAtomValue } from 'jotai';
@@ -51,7 +51,7 @@ export const MultiAssets = ({
     top10Balance,
   );
 
-  const { errorType } = useGlobalStatus(PageMainServices.MultiAssets);
+  const { isDisConnnect } = useGlobalStatus();
 
   useEffect(() => {
     onUpdateIsDecrease(combineData.isLoss);
@@ -137,17 +137,17 @@ export const MultiAssets = ({
         loading={isLoadingCurve}
         pathColor={pathColor}
         isNoAssets={false}
-        errorType={errorType}
+        isDisConnnect={isDisConnnect}
         handleScroll={handleScroll}
       />
     );
-  }, [combineData, errorType, handleScroll, isLoadingCurve, pathColor]);
+  }, [combineData, handleScroll, isDisConnnect, isLoadingCurve, pathColor]);
 
   return (
     <Tabs.Container
       containerStyle={styles.container}
       minHeaderHeight={0}
-      headerHeight={HEADER_CHART_HEIGHT + (errorType ? ALERT_HEIGHT : 0)}
+      headerHeight={HEADER_CHART_HEIGHT + (isDisConnnect ? ALERT_HEIGHT : 0)}
       renderTabBar={renderTabBar}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
       renderHeader={renderHeader}

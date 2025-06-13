@@ -82,17 +82,18 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { HomePendingBadge } from './components/HomePending';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
-import { useGlobalStatus, PageMainServices } from '@/hooks/useGlobalStatus';
+import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 
 const HeaderHeight = 24;
 
 export function MultiAddressHomeHeader(prop): JSX.Element {
-  const { loading, data, loadingNewCurve, errorType, onRefresh } = prop;
+  const { loading, data, loadingNewCurve, onRefresh } = prop;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
+  const { isDisConnnect } = useGlobalStatus();
 
   const { accountsLength } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
@@ -158,12 +159,8 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
       </View>
 
       <GlobalWarning
-        errorType={errorType}
-        description={
-          errorType === 'network'
-            ? t('component.globalWarning.networkError.globalDesc')
-            : t('component.globalWarning.serviceError.globalDesc')
-        }
+        hasError={isDisConnnect}
+        description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
         onRefresh={() => {
           onRefresh?.();
@@ -389,7 +386,6 @@ function MultiAddressHome(): JSX.Element {
     loading,
     isLoadingNew: loadingNewCurve,
   } = useMultiCurve(top10Addresses, true, top10Balance);
-  const { errorType } = useGlobalStatus(PageMainServices.MultiHome);
   useCexSupportList();
   useFetchCexInfo();
 
@@ -709,7 +705,6 @@ function MultiAddressHome(): JSX.Element {
             data={combineData}
             loading={loading}
             loadingNewCurve={loadingNewCurve}
-            errorType={errorType}
             onRefresh={onRefresh}
           />
           <OfflineChainNotify showEmptyHolder={!displayFundWallet} />

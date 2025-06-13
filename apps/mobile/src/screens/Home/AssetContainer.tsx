@@ -39,7 +39,7 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { useCurve } from '@/hooks/useCurve';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { Account } from '@/core/services/preference';
-import { PageMainServices, useGlobalStatus } from '@/hooks/useGlobalStatus';
+import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
 
 export const icons = {
@@ -85,7 +85,7 @@ export const AssetContainer: React.FC<Props> = ({
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
 
-  const { errorType } = useGlobalStatus(PageMainServices.SingleHome);
+  const { isDisConnnect } = useGlobalStatus();
 
   const {
     tokens: _rawTokens,
@@ -548,14 +548,14 @@ export const AssetContainer: React.FC<Props> = ({
             ASSETS_SECTION_HEADER +
             SPACE_BETWEEN_HEADER_AND_CHART +
             ASSETS_SECTION_HEADER +
-            (errorType ? ALERT_HEIGHT : 0),
+            (isDisConnnect ? ALERT_HEIGHT : 0),
         }}>
         <HomeTopArea
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
           curveData={curveData}
           isLoadingCurve={isLoadingCurve}
-          errorType={errorType}
+          isDisConnnect={isDisConnnect}
           onRefresh={() => handleRefresh(true)}
         />
         <View style={{ height: SPACE_BETWEEN_HEADER_AND_CHART }} />
@@ -575,11 +575,11 @@ export const AssetContainer: React.FC<Props> = ({
     currentAccount,
     currentSection,
     curveData,
-    errorType,
     firstRowType,
     handleOnChainClick,
     handleRefresh,
     handleSwitchTab,
+    isDisConnnect,
     isLoadingCurve,
     onUpdateIsDecrease,
     renderStickHeader,
@@ -600,8 +600,8 @@ export const AssetContainer: React.FC<Props> = ({
   }, [chainsInfo.chainLength, loadingNft, loadingPortfolio, loadingToken]);
 
   const errorNotAssets = useMemo(() => {
-    return errorType && hasNotAssets && hasNoCurveData;
-  }, [errorType, hasNoCurveData, hasNotAssets]);
+    return isDisConnnect && hasNotAssets && hasNoCurveData;
+  }, [hasNoCurveData, hasNotAssets, isDisConnnect]);
 
   if (!currentAccount?.address) {
     return null;
@@ -609,7 +609,7 @@ export const AssetContainer: React.FC<Props> = ({
   if (errorNotAssets) {
     return (
       <NetWorkError
-        errorType={errorType}
+        hasError={isDisConnnect}
         onRefresh={() => {
           handleRefresh(true);
         }}
@@ -625,7 +625,7 @@ export const AssetContainer: React.FC<Props> = ({
         HEADER_TOP_AREA_HEIGHT +
         ASSETS_SECTION_HEADER +
         ASSETS_SECTION_HEADER +
-        (errorType ? ALERT_HEIGHT : 0)
+        (isDisConnnect ? ALERT_HEIGHT : 0)
       }
       renderTabBar={renderTabBar}
       tabBarHeight={0}

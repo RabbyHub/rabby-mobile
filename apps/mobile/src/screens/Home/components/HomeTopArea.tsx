@@ -48,7 +48,6 @@ import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useGnosisQueueTotalPending } from '@/hooks/gnosis/useGnosisQueueTotalPending';
 import { HomeTopChart } from './HomeTopChart';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
-import { ErrorType } from '@/hooks/useGlobalStatus';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -109,14 +108,14 @@ export const HomeTopArea = ({
   onUpdateIsDecrease,
   curveData,
   isLoadingCurve,
-  errorType,
+  isDisConnnect,
   onRefresh,
 }: {
   currentAccount?: KeyringAccountWithAlias | null;
   onUpdateIsDecrease?: (status: boolean) => void;
   curveData?: ReturnType<typeof formChartData>;
   isLoadingCurve: boolean;
-  errorType: ErrorType;
+  isDisConnnect: boolean;
   onRefresh: () => void;
 }) => {
   const { t } = useTranslation();
@@ -339,7 +338,9 @@ export const HomeTopArea = ({
       <View
         style={[
           styles.container,
-          { height: HEADER_TOP_AREA_HEIGHT + (errorType ? ALERT_HEIGHT : 0) },
+          {
+            height: HEADER_TOP_AREA_HEIGHT + (isDisConnnect ? ALERT_HEIGHT : 0),
+          },
         ]}>
         <ImageBackground
           source={topBg}
@@ -355,12 +356,8 @@ export const HomeTopArea = ({
         />
 
         <GlobalWarning
-          errorType={errorType}
-          description={
-            errorType === 'network'
-              ? t('component.globalWarning.networkError.globalDesc')
-              : t('component.globalWarning.serviceError.globalDesc')
-          }
+          hasError={isDisConnnect}
+          description={t('component.globalWarning.networkError.globalDesc')}
           style={styles.globalWarning}
           onRefresh={onRefresh}
         />

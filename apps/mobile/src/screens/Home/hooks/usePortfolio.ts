@@ -11,7 +11,6 @@ import { singleDeFiNounceAtom } from './refresh';
 import { useAtom, atom } from 'jotai';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { ServiceErrorType, useGlobalStatus } from '@/hooks/useGlobalStatus';
 export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
@@ -91,7 +90,7 @@ export const tagProfiles = (
       return (b.netWorth || 0) - (a.netWorth || 0);
     });
 };
-export const log = (...args: any) => {
+export const log = () => {
   // console.log(...args);
 };
 
@@ -119,7 +118,6 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
   const [isLoading, setLoading] = useSafeState(true);
   const [hasValue, setHasValue] = useSafeState(false);
   const [singleDeFiNounce, setSingleDeFiNounce] = useAtom(singleDeFiNounceAtom);
-  const { setTargetServicesError } = useGlobalStatus();
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -171,7 +169,6 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       try {
         let projectDict: Record<string, DisplayedProject> | null = {};
         const protocols = await syncProtocols(userAddr, force);
-        force && setTargetServicesError([ServiceErrorType.Defi], false);
         protocols.forEach(project => {
           if (projectDict) {
             projectDict = produce(projectDict, draft => {
@@ -186,12 +183,11 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
         setData(tagProfiles(realtimeData, tokenSetting));
         setHasValue(!!protocols.length);
       } catch (error) {
-        setTargetServicesError([ServiceErrorType.Defi], true);
       } finally {
         setLoading(false);
       }
     },
-    [setData, setHasValue, setLoading, setTargetServicesError, userAddr],
+    [setData, setHasValue, setLoading, userAddr],
   );
 
   const refreshTagPortfolio = useCallback(async () => {
