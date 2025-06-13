@@ -350,15 +350,16 @@ export class TransactionHistoryService {
   }
 
   completeRecentTxHistory(
-    hash: string,
+    txs: TransactionHistoryItem[],
     chainId: number,
     status: SwapTxHistoryItem['status'],
   ) {
     const arr = [this.store.swapTxHistory, this.store.sendTxHistory];
+    const hashArr = txs.map(item => item.hash);
     arr.forEach(async history => {
       const index = history.findIndex(
         (item: SwapTxHistoryItem | SendTxHistoryItem) =>
-          item.hash === hash && item.chainId === chainId,
+          item.chainId === chainId && hashArr.includes(item.hash),
       );
       if (index !== -1) {
         history[index].status = status;
@@ -892,7 +893,7 @@ export class TransactionHistoryService {
         gasUsed: completed.gas_used,
       });
       this.completeRecentTxHistory(
-        completedTx.hash!,
+        txs,
         chainId,
         completed.status === 1 ? 'success' : 'failed',
       );
