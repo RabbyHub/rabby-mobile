@@ -13,12 +13,10 @@ import {
   sortWalletTokens,
   tagTokenList,
 } from '../utils/token';
-import { log } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
 import { syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { singleTokenNounceAtom } from './refresh';
-import { useGlobalStatus, ServiceErrorType } from '@/hooks/useGlobalStatus';
 
 const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -62,7 +60,6 @@ export const useTokens = (
   const [mainnetTokens, setMainnetTokens] = useSafeState<
     AbstractPortfolioToken[]
   >([]);
-  const { setTargetServicesError } = useGlobalStatus();
 
   const [singleTokenNounce, setSingleTokenNounce] = useAtom(
     singleTokenNounceAtom,
@@ -116,7 +113,6 @@ export const useTokens = (
         const currentAbort = new AbortController();
         abortProcess.current = currentAbort;
 
-        log('======Start-Tokens======', userAddr);
         let _data = produce(walletProject, draft => {
           draft.netWorth = 0;
           draft._netWorth = '$0';
@@ -162,7 +158,6 @@ export const useTokens = (
         }
 
         const tokenRes = await syncTokens(userAddr, force);
-        force && setTargetServicesError([ServiceErrorType.Tokens], false);
 
         const tokensDict: Record<string, TokenItem[]> = {};
         tokenRes.forEach(token => {
@@ -179,14 +174,12 @@ export const useTokens = (
         _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
         setMainnetTokens([...filterDisplayToken(_tokens)]);
-        log('<<==Tokens-end==>>', userAddr);
       } catch (error) {
-        setTargetServicesError([ServiceErrorType.Tokens], true);
       } finally {
         setLoading(false);
       }
     },
-    [setLoading, setMainnetTokens, setTargetServicesError, userAddr],
+    [setLoading, setMainnetTokens, userAddr],
   );
 
   const refreshTagToken = useCallback(async () => {

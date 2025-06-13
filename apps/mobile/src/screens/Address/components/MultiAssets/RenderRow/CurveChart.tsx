@@ -21,7 +21,6 @@ import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useTranslation } from 'react-i18next';
 import { useTriggerUpdate } from '../hooks/triggerUpdate';
-import { ErrorType } from '@/hooks/useGlobalStatus';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -32,14 +31,14 @@ function Chart({
   isNoAssets,
   pathColor,
   handleScroll,
-  errorType,
+  isDisConnnect,
 }: {
   isOffline: boolean;
   data: ReturnType<typeof formChartData>;
   loading: boolean;
   isNoAssets: boolean;
   pathColor: string;
-  errorType: ErrorType;
+  isDisConnnect: boolean;
   handleScroll: (y: number) => void;
 }) {
   const { styles, colors, isLight } = useTheme2024({ getStyle });
@@ -81,7 +80,7 @@ function Chart({
     <View
       style={[
         styles.container,
-        { height: HEADER_CHART_HEIGHT + (errorType ? ALERT_HEIGHT : 0) },
+        { height: HEADER_CHART_HEIGHT + (isDisConnnect ? ALERT_HEIGHT : 0) },
       ]}>
       <ImageBackground
         source={topBg}
@@ -97,12 +96,8 @@ function Chart({
       />
 
       <GlobalWarning
-        errorType={errorType}
-        description={
-          errorType === 'network'
-            ? t('component.globalWarning.networkError.globalDesc')
-            : t('component.globalWarning.serviceError.globalDesc')
-        }
+        hasError={isDisConnnect}
+        description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
         onRefresh={() => {
           setTriggerUpdate(true);

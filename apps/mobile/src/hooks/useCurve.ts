@@ -4,7 +4,6 @@ import { CurveDayType } from '@/utils/curveDayType';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useGlobalStatus, ServiceErrorType } from './useGlobalStatus';
 import { atom, useAtom } from 'jotai';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
@@ -143,7 +142,6 @@ export const useCurve = (
     }[]
   >([]);
   const [isLoading, setIsLoading] = useAtom(loadingCurveAtom);
-  const { setTargetServicesError } = useGlobalStatus();
   const select = useMemo(() => {
     return formChartData(
       data,
@@ -157,7 +155,6 @@ export const useCurve = (
     async (addr: string, force = false) => {
       try {
         const curve = await getNetCurve(addr, days, force);
-        force && setTargetServicesError([ServiceErrorType.Curve], false);
         const start =
           days === CurveDayType.DAY
             ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
@@ -182,12 +179,11 @@ export const useCurve = (
           }),
         );
       } catch (error) {
-        setTargetServicesError([ServiceErrorType.Curve], true);
       } finally {
         setIsLoading(false);
       }
     },
-    [days, setIsLoading, setTargetServicesError],
+    [days, setIsLoading],
   );
 
   const refresh = useCallback(

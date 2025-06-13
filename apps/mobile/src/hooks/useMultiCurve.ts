@@ -10,7 +10,6 @@ import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
 import { CurveDayType } from '@/utils/curveDayType';
-import { useGlobalStatus, ServiceErrorType } from './useGlobalStatus';
 
 const queue = new PQueue({ intervalCap: 10, concurrency: 10, interval: 1000 });
 
@@ -92,7 +91,6 @@ export const useMultiCurve = (
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
-  const { setTargetServicesError } = useGlobalStatus();
 
   const fetch = useCallback(
     async (addres: string[], force = false) => {
@@ -148,9 +146,6 @@ export const useMultiCurve = (
             }));
           });
         queue.clear();
-        if (nextCheckAddress.size) {
-          setTargetServicesError([ServiceErrorType.Curve], false);
-        }
         Array.from(nextCheckAddress).forEach(_addr => {
           try {
             const addr = _addr.toLocaleLowerCase();
@@ -191,9 +186,7 @@ export const useMultiCurve = (
                     }),
                   },
                 }));
-              } catch (error) {
-                setTargetServicesError([ServiceErrorType.Curve], true);
-              }
+              } catch (error) {}
             });
           } catch (error) {}
         });
@@ -204,7 +197,7 @@ export const useMultiCurve = (
         setLoading(false);
       }
     },
-    [setLoading, setMultiTimeStamp, setTargetServicesError],
+    [setLoading, setMultiTimeStamp],
   );
 
   const refresh = useCallback(

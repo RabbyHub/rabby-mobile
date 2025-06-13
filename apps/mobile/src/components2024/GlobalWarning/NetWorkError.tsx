@@ -3,40 +3,39 @@ import OfflinePng from '@/assets2024/images/offline.png';
 import { createGetStyles2024 } from '@/utils/styles';
 import { View, Text, StyleProp, ViewStyle, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../Button';
-import { ErrorType } from '@/hooks/useGlobalStatus';
+import { useEffect, useRef } from 'react';
 
 interface NetWorkErrorProps {
-  errorType: ErrorType;
+  hasError: boolean;
   style?: StyleProp<ViewStyle>;
   onRefresh?: () => void;
 }
 export function NetWorkError({
-  errorType,
   style,
+  hasError,
   onRefresh,
 }: NetWorkErrorProps) {
   const { styles } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();
+  const preTypeRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!hasError && preTypeRef.current) {
+      // auto refresh when network fine
+      onRefresh?.();
+    }
+    preTypeRef.current = hasError;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasError]);
 
   return (
     <View style={[styles.container, style]}>
       <Image style={styles.img} source={OfflinePng} />
       <Text style={styles.title}>
-        {errorType === 'network'
-          ? t('component.globalWarning.offlineText')
-          : t('component.globalWarning.serviceErrorText')}
+        {t('component.globalWarning.offlineText')}
       </Text>
-      {errorType === 'service' && (
-        <Button
-          onPress={onRefresh}
-          buttonStyle={styles.btn}
-          titleStyle={styles.btnText}
-          title={t('component.globalWarning.buttonText')}
-        />
-      )}
     </View>
   );
 }

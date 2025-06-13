@@ -23,7 +23,6 @@ import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { atom, useAtom } from 'jotai';
 import { useMemoizedFn } from 'ahooks';
-import { useGlobalStatus, ServiceErrorType } from '@/hooks/useGlobalStatus';
 
 export const loadingAtom = atom(true);
 export const isFirstFetchAtom = atom(true);
@@ -44,7 +43,6 @@ export const useAssets = () => {
     updatePortfolios,
     updateTokens,
   } = useAssetsMap();
-  const { setTargetServicesError } = useGlobalStatus();
 
   const loadToken = useMemoizedFn(async (address: string, force?: boolean) => {
     if (!address) {
@@ -96,7 +94,6 @@ export const useAssets = () => {
       });
     } catch (error) {
       console.error('ServiceErrorType.Tokens', error);
-      setTargetServicesError([ServiceErrorType.Tokens], true);
     }
   });
 
@@ -127,7 +124,6 @@ export const useAssets = () => {
       });
     } catch (error) {
       console.error('ServiceErrorType.Defi', error);
-      setTargetServicesError([ServiceErrorType.Defi], true);
     }
   });
 
@@ -145,7 +141,6 @@ export const useAssets = () => {
       });
     } catch (e) {
       console.error('ServiceErrorType.NFT', e);
-      setTargetServicesError([ServiceErrorType.NFT], true);
     }
   });
 
@@ -317,12 +312,6 @@ export const useAssets = () => {
       const { disableToken, disableDefi, disableNFT } = options || {};
       if (!options?.ignoreLoading) {
         setLoading(true);
-      }
-      if (force) {
-        !disableToken &&
-          setTargetServicesError([ServiceErrorType.Tokens], false);
-        !disableDefi && setTargetServicesError([ServiceErrorType.Defi], false);
-        !disableNFT && setTargetServicesError([ServiceErrorType.NFT], false);
       }
       try {
         for (const address of addresses) {
