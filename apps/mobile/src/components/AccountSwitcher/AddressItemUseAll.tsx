@@ -173,7 +173,7 @@ export function UseAllAccountsItemInPanel({
         <View style={styles.centerInfo}>
           <Text style={styles.text}>
             {'All '}
-            {addressCount} {addressCount > 1 ? 'Addresses' : 'Address'}
+            {addressCount} {addressCount > 1 ? 'Wallets' : 'Wallet'}
           </Text>
         </View>
         <View style={styles.rightArea}>
