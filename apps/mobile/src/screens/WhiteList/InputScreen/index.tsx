@@ -146,7 +146,8 @@ const WhitelistInputScreen = () => {
               removeGlobalBottomSheetModal2024(confrimModalIRef.current);
             confrimModalIRef.current = null;
           },
-          async onConfirm() {
+          onConfirm: async () => {
+            Keyboard.dismiss();
             confrimModalIRef.current &&
               removeGlobalBottomSheetModal2024(confrimModalIRef.current);
             confrimModalIRef.current = null;
