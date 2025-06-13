@@ -43,6 +43,7 @@ export const useQueryNft = (addr?: string, visible = true) => {
   const [isLoading, setIsLoading] = useState(true);
   const [list, setList] = useSafeState<DisplayNftItem[]>([]);
   const [singleNFTNounce, setSingleNFTNounce] = useAtom(singleNFTNounceAtom);
+
   const fetchData = useCallback(
     async (force?: boolean) => {
       if (!addr) {
@@ -55,7 +56,7 @@ export const useQueryNft = (addr?: string, visible = true) => {
         const nfts = await syncNFTs(addr, force);
         setList(tagNfts(nfts, tokenSetting));
       } catch (e) {
-        console.error('ServiceErrorType.NFT', e);
+        console.error(e);
       } finally {
         setIsLoading(false);
       }

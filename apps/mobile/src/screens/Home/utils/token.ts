@@ -31,30 +31,18 @@ export const batchQueryTokens = async (
   if (!chainId && !isTestnet) {
     const usedChains = await openapi.usedChainList(user_id);
     const chainIdList = usedChains.map(item => item.id);
-    let errChainCount = 0;
     const res = await Promise.all(
       chainIdList.map(serverId =>
-        pQueue.add(async () => {
-          try {
-            return requestOpenApiWithChainId(
-              ({ openapi }) => openapi.listToken(user_id, serverId, true),
-              {
-                isTestnet,
-              },
-            );
-          } catch (error) {
-            console.log('serverId error', serverId);
-            errChainCount++;
-            return [];
-          }
+        pQueue.add(() => {
+          return requestOpenApiWithChainId(
+            ({ openapi }) => openapi.listToken(user_id, serverId, true),
+            {
+              isTestnet,
+            },
+          );
         }),
       ),
     );
-    // 容许1/10的链查询失败
-    console.log('Service Error', errChainCount, chainIdList.length);
-    if (errChainCount > Math.floor(chainIdList.length / 10)) {
-      throw new Error('Service Error');
-    }
     return flatten(res as TokenItem[][]);
   }
   return requestOpenApiWithChainId(

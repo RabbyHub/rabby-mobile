@@ -4,6 +4,7 @@ import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
+import { trigger } from 'react-native-haptic-feedback';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { useFindChain } from '@/hooks/useFindChain';
 import ChainFilterItem from '@/components/Token/ChainFilterItem';

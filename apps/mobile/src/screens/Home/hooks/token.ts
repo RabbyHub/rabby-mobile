@@ -13,6 +13,7 @@ import {
   sortWalletTokens,
   tagTokenList,
 } from '../utils/token';
+import { log } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
 import { syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
@@ -109,75 +110,74 @@ export const useTokens = (
       if (!userAddr) {
         return;
       }
-      try {
-        const currentAbort = new AbortController();
-        abortProcess.current = currentAbort;
+      const currentAbort = new AbortController();
+      abortProcess.current = currentAbort;
 
-        let _data = produce(walletProject, draft => {
-          draft.netWorth = 0;
-          draft._netWorth = '$0';
-          draft._netWorthChange = '-';
-          draft.netWorthChange = 0;
-          draft._netWorthChangePercent = '';
-          draft._portfolioDict = {};
-          draft._portfolios = [];
-          draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
-        });
+      log('======Start-Tokens======', userAddr);
+      let _data = produce(walletProject, draft => {
+        draft.netWorth = 0;
+        draft._netWorth = '$0';
+        draft._netWorthChange = '-';
+        draft.netWorthChange = 0;
+        draft._netWorthChangePercent = '';
+        draft._portfolioDict = {};
+        draft._portfolios = [];
+        draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
+      });
 
-        let _tokens: AbstractPortfolioToken[] = [];
+      let _tokens: AbstractPortfolioToken[] = [];
 
-        const cachedTokens = force
-          ? []
-          : await TokenItemEntity.batchQueryTokens(userAddr);
-        const tokenSettings =
-          (await preferenceService.getUserTokenSettings()) || {};
-        if (
-          force ||
-          cachedTokens.length ||
-          (await TokenItemEntity.isExpired(userAddr))
-        ) {
-          const snapshot = cachedTokens.length
-            ? cachedTokens
-            : await queryTokensCache(userAddr);
-          if (snapshot?.length) {
-            const chainTokens = snapshot.reduce((m, n) => {
-              m[n.chain] = m[n.chain] || [];
-              m[n.chain].push(n);
+      const cachedTokens = force
+        ? []
+        : await TokenItemEntity.batchQueryTokens(userAddr);
+      const tokenSettings =
+        (await preferenceService.getUserTokenSettings()) || {};
+      if (
+        force ||
+        cachedTokens.length ||
+        (await TokenItemEntity.isExpired(userAddr))
+      ) {
+        const snapshot = cachedTokens.length
+          ? cachedTokens
+          : await queryTokensCache(userAddr);
+        if (snapshot?.length) {
+          const chainTokens = snapshot.reduce((m, n) => {
+            m[n.chain] = m[n.chain] || [];
+            m[n.chain].push(n);
 
-              return m;
-            }, {} as Record<string, TokenItem[]>);
-            _data = produce(_data, draft => {
-              setWalletTokens(draft, chainTokens);
-            });
+            return m;
+          }, {} as Record<string, TokenItem[]>);
+          _data = produce(_data, draft => {
+            setWalletTokens(draft, chainTokens);
+          });
 
-            _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+          _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
 
-            setMainnetTokens(filterDisplayToken(_tokens));
-            setLoading(false);
-          }
+          setMainnetTokens(filterDisplayToken(_tokens));
+          setLoading(false);
         }
-
-        const tokenRes = await syncTokens(userAddr, force);
-
-        const tokensDict: Record<string, TokenItem[]> = {};
-        tokenRes.forEach(token => {
-          if (!tokensDict[token.chain]) {
-            tokensDict[token.chain] = [];
-          }
-          tokensDict[token.chain].push(token);
-        });
-
-        _data = produce(_data, draft => {
-          setWalletTokens(draft, tokensDict);
-        });
-
-        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
-
-        setMainnetTokens([...filterDisplayToken(_tokens)]);
-      } catch (error) {
-      } finally {
-        setLoading(false);
       }
+
+      const tokenRes = await syncTokens(userAddr, force);
+
+      const tokensDict: Record<string, TokenItem[]> = {};
+      tokenRes.forEach(token => {
+        if (!tokensDict[token.chain]) {
+          tokensDict[token.chain] = [];
+        }
+        tokensDict[token.chain].push(token);
+      });
+
+      _data = produce(_data, draft => {
+        setWalletTokens(draft, tokensDict);
+      });
+
+      _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+
+      setMainnetTokens([...filterDisplayToken(_tokens)]);
+
+      setLoading(false);
+      log('<<==Tokens-end==>>', userAddr);
     },
     [setLoading, setMainnetTokens, userAddr],
   );

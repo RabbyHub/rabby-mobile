@@ -1,13 +1,11 @@
-import { useCallback, useLayoutEffect, useMemo } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
 import BigNumber from 'bignumber.js';
-import { atom, useAtom } from 'jotai';
 
-export const refreshingAtom = atom(false);
 export const useQueryProjects = (userAddr: string | undefined) => {
-  const [refreshing, setRefreshing] = useAtom(refreshingAtom);
+  const [refreshing, setRefreshing] = useState(false);
   const {
     tokens,
     updateData: updateTokens,
@@ -28,9 +26,9 @@ export const useQueryProjects = (userAddr: string | undefined) => {
   } = useQueryNft(userAddr, false);
 
   const refreshPositions = useCallback(
-    async (force?: boolean, ignoreLoading?: boolean) => {
+    async (force?: boolean) => {
       try {
-        if (force && !ignoreLoading) {
+        if (force) {
           setRefreshing(true);
         }
         await updateTokens(force);
@@ -41,7 +39,7 @@ export const useQueryProjects = (userAddr: string | undefined) => {
         setRefreshing(false);
       }
     },
-    [updateTokens, updatePortfolio, reloadNftList, setRefreshing],
+    [updatePortfolio, updateTokens, reloadNftList],
   );
 
   const chainsInfo = useMemo(() => {
