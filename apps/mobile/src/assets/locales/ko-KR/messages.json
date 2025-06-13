@@ -3,28 +3,20 @@
     "addressStackTitle": {
       "SetPassword2024": "2. 비밀번호 설정하기",
       "ImportSafeAddress2024": "Safe 주소 추가",
-      "CreateSelectOnCurrentSeed": "2. 주소 추가",
-      "ImportMoreAddress": "주소 더 가져오기",
       "ImportMethods": "가져오기 방법 선택",
       "CreateSelectMethod": "1. 생성 방법 선택",
-      "WatchAddressList": "조회 전용 주소",
       "SafeAddressList": "안전한 주소",
       "ImportHardwareAddress": "하드웨어 월렛 연결",
       "BackupPrivateKey": "개인 키 백업",
       "CreateMnemonicBackup": "백업 시드 구문",
-      "CreateNewAddress": "1. 주소 이름 지정하기",
-      "ImportNewAddress": "주소 추가",
       "BackupSeedPhrase": "백업 시드 구문",
       "ImportPrivateKey": "개인 키 가져오기",
       "CreateChooseBackup": "3. 백업 방법 선택하기",
-      "ImportWatchAddress2024": "감시 전용 주소 추가",
       "VerifySeedPhrase": "시드 구문 확인",
       "RestoreFromCloud": "{{type}}에서 복원",
       "ImportSuccess": "성공적으로 추가되었습니다",
       "AddMnemonic": "현재 시드 프레이즈에서 추가하기",
-      "ImportMnemonic": "시드 구문 가져오기",
-      "AddressDetail": "주소 세부정보",
-      "ConfrimAddress": "주소 확인"
+      "ImportMnemonic": "시드 구문 가져오기"
     }
   },
   "page": {
@@ -67,7 +59,6 @@
         "SwapAgain": "다시 Swap 하기",
         "Chain": "체인",
         "InteractionResults": "상호 작용 결과",
-        "RecipientAddress": "수신자 주소",
         "Unknown": "알 수 없음",
         "ApproveTo": "승인하기",
         "Date": "날짜",
@@ -117,17 +108,13 @@
       "ShowScamTransactions": "사기 거래 표시"
     },
     "getStart": {
-      "goToHome": "홈으로 이동",
-      "createNewAddress": "새 주소 만들기",
-      "alreadyHaveAddress": "저는 이미 주소가 있습니다.",
-      "sync": "Rabby 확장 주소 동기화를 위한 스캔"
+      "goToHome": "홈으로 이동"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "니모닉 구문을 입력하세요."
     },
     "importSuccess": {
       "addressCount": "{{count}} Addresses",
-      "importMore": "더 많은 주소 가져오기",
       "success": "{{type}} 성공했습니다!"
     },
     "sendNFT": {
@@ -158,7 +145,6 @@
       "gasless": {
         "GetFreeGasToSign": "무료 Gas 받기",
         "notEnough": "가스 잔액이 충분하지 않습니다.",
-        "watchUnavailableTip": "Free Gas에는 watch-only address가 지원되지 않습니다.",
         "walletConnectUnavailableTip": "WalletConnect를 통해 연결된 모바일 월렛은 Free Gas를 지원하지 않습니다.",
         "customRpcUnavailableTip": "Free Gas에서는 Custom RPCs를 지원하지 않습니다."
       },
@@ -395,7 +381,6 @@
       "sigCantDecode": "이 서명은 Rabby Wallet에서 디코딩할 수 없습니다.",
       "swap": {
         "receiver": "수신자",
-        "notPaymentAddress": "결제 주소가 아닙니다.",
         "failLoadReceiveToken": "로드 실패",
         "title": "토큰 스왑",
         "unknownAddress": "알 수 없는 주소",
@@ -781,14 +766,12 @@
     },
     "manageAddress": {
       "confirm": "확인",
-      "add-address": "주소 추가",
       "cancel": "취소",
       "watch-address": "주소 보기",
       "private-key": "개인 키",
       "seed-phrase": "시드 구문",
       "enterThePassphrase": "암호 구문 입력",
       "passphraseError": "암호 문구가 잘못되었습니다.",
-      "delete-checklist-1": "이 주소를 삭제하면 해당 개인 키 및 시드 구문이 삭제되며, Rabby는 이를 복구할 수 없다는 것을 이해합니다.",
       "delete-checklist-2": "저는 개인 키 또는 시드 구문을 백업했으며 지금 삭제할 준비가 되었음을 확인합니다.",
       "enterPassphraseTitle": "서명을 위해 암호구문 입력",
       "quickAddressTitle_one": "{{count}} 주소",
@@ -939,8 +922,6 @@
     "nextComponent": {
       "addAddress": {
         "hardwareWallet": "하드웨어 월렛",
-        "createAddress": "주소 생성",
-        "importAddress": "주소 가져오기",
         "syncRabbyExtension": "Rabby Extension 동기화"
       },
       "multiAddressHome": {
@@ -948,12 +929,9 @@
         "totalBalance": "총 잔액",
         "services": "서비스",
         "receiveCrypto": "암호화폐 받기",
-        "importAddress": "주소 가져오기",
         "noAssets": "자산 없음?",
         "buyWithFiat": "법정 화폐로 구매",
         "fundYourWallet": "지갑에 자금 추가하기",
-        "importAddressDesc": "기존 주소를 추가하여 자금을 보유하세요",
-        "receiveCryptoDesc": "다른 주소에서 토큰 전송",
         "buyWithFiatDesc": "간편한 암호화폐 구매",
         "foundGuideTitle": "빠르게 자금을 지원하세요",
         "foundGuideDesc": "지갑에 토큰을 추가하여 시작하세요."
@@ -977,20 +955,14 @@
         "VerifyDownSeedPhrase": "시드 구문 확인",
         "passwordMin": "최소 8자 이상이어야 합니다.",
         "passwordTopTips": "이 비밀번호는 지갑을 잠금 해제하고 로컬 데이터를 암호화하는 데 사용됩니다.",
-        "createNewDesc": "새로운 주소를 위한 새로운 시드 문구 생성하기",
         "WriteDownSeedPhrase": "시드 문구를 적어두세요",
-        "createOnCurrentDesc": "기존의 가져온 시드 구문으로 주소 생성",
         "whatIsSeedPhrase": "Seed Phrase란 무엇인가요?",
         "backupSeedPhrase": "앱이 삭제되거나 기기를 분실한 경우 지갑을 복원할 수 있도록 시드 구문을 백업하세요."
       },
       "importAddress": {
         "seedPhrase": "시드 구문 가져오기",
-        "watch": "조회 전용 주소",
-        "importTitle": "주소 가져오기",
-        "safeTitle": "Safe 주소 가져오기",
         "hardWare": "하드웨어 월렛 연결",
         "privateKey": "개인 키 가져오기",
-        "watchOnlyTitle": "Watch-only 주소 가져오기",
         "tips": {
           "gotIt": "알겠습니다.",
           "entry": "Rabby로 가져오는 것이 안전한가요?",
@@ -1094,33 +1066,20 @@
       "admins": "관리자",
       "assets": "자산",
       "manage-seed-phrase": "시드 구문 관리",
-      "manage-addresses-under-this-seed-phrase": "이 시드 구문에서 주소 추가",
       "qr-code": "QR Code",
       "backup-seed-phrase": "백업 시드 구문",
       "address-note": "주소 노트",
       "source": "출처",
-      "safeAddressListScreen": {
-        "addSafeAddress": "Safe 주소 추가"
-      },
+      "safeAddressListScreen": {},
       "backup-private-key": "프라이빗 키 백업",
       "remove-from-whitelist": "화이트리스트에서 제거",
-      "watchAddressListScreen": {
-        "addWatchAddress": "보기 전용 주소 추가"
-      },
-      "delete-address": "주소 삭제",
-      "delete-desc": "이 주소를 삭제하시겠습니까?",
+      "watchAddressListScreen": {},
       "addressListScreen": {
-        "addAddress": "주소 추가",
-        "title_one": "{{count}} 주소",
-        "importWatchAddress": "가져온 조회 전용 주소",
         "edit": "편집",
-        "title_zero": "0 Address",
-        "importSafeAddress": "가져온 Safe 주소",
         "unpin": "고정 해제",
         "pin": "핀",
         "delete": "삭제",
-        "detail": "세부사항",
-        "title_other": "{{count}} Addresses"
+        "detail": "세부사항"
       },
       "delete-desc-needpassword": "삭제하기 전에, 자산을 보호하는 방법을 이해하기 위해 다음 사항을 유념하십시오."
     },
@@ -1308,13 +1267,11 @@
       },
       "depositPopup": {
         "title": "예금",
-        "paymentAddress": "결제 주소",
         "token": "토큰",
         "selectToken": "토큰 선택",
         "invalidAmount": "500 이하여야 합니다.",
         "zeroInvalidAmount": "금액은 0이 될 수 없습니다.",
         "followingTokenInSufficient": "다음 토큰 잔액이 부족합니다",
-        "inSufficientTip1": "이 주소에 토큰이 충분하지 않습니다. 다른 주소를 선택하세요.",
         "desc": "Rabby의 DeBank L2 계정에 추가 수수료 없이 입금하세요 - 언제든 출금 가능합니다.",
         "amount": "금액",
         "applePayDesc": "${{amount}} Apple Pay 수수료가 포함됩니다. 출금 불가",
@@ -1324,16 +1281,12 @@
       },
       "paymentAddressPopup": {
         "balance": "잔액",
-        "address": "지불 주소",
-        "title": "결제 주소 선택",
         "confirm": "확인"
       },
       "withdrawPopup": {
         "to": "에",
         "title": "출금",
         "selectDestinationChain": "대상 체인 선택",
-        "selectRecipientAddress": "수신인 주소 선택",
-        "recipientAddress": "수취인 주소",
         "destinationChain": "대상 체인",
         "noEnoughGas": "금액이 가스 요금을 충당하기에 너무 낮습니다.",
         "tipsBtn": "알겠습니다.",
@@ -1345,8 +1298,7 @@
         "selectChain": "체인 선택",
         "deductGasFees": "수신된 금액은 gas 수수료를 공제합니다.",
         "withdrawalLimit": "출금 한도",
-        "noEnoughValueBalance": "Vault Balance insufficient. 체인을 전환하거나 나중에 다시 시도하세요.",
-        "noRecipient": "수취인 주소를 사용할 수 없습니다."
+        "noEnoughValueBalance": "Vault Balance insufficient. 체인을 전환하거나 나중에 다시 시도하세요."
       },
       "withdrawConfirmModal": {
         "title": "DeBank L2 Wallet로 전송되었습니다.",
@@ -1396,13 +1348,10 @@
       },
       "emptyToken": {
         "buyHeader": "법정 화폐로 구매하기",
-        "receiveBody": "다른 주소에서 토큰 전송",
         "title": "지갑 자금 조달",
         "receiveHeader": "암호화폐 받기",
         "buyBody": "간단한 암호화폐 구매",
-        "importHeader": "주소 가져오기",
-        "desc": "지금 바로 빠르게 자금을 조달하세요",
-        "importBody": "기존 자금을 보유한 주소 추가."
+        "desc": "지금 바로 빠르게 자금을 조달하세요"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1435,13 +1384,11 @@
       }
     },
     "receiveAddressList": {
-      "selectChainTitle": "체인 선택",
-      "title": "수신 주소 선택"
+      "selectChainTitle": "체인 선택"
     },
     "newAddress": {
       "Quick": "빠른",
       "createNewSeedPhrase": "새로운 시드 구문 생성",
-      "createNewAddress": "새 주소 생성",
       "addContacts": {
         "cameraTitle": "카메라로 QR 코드를 스캔하세요."
       },
@@ -1460,7 +1407,6 @@
           "answer": "자산을 제어하는 데 사용되는 문자와 숫자의 문자열.",
           "question": "개인 키란 무엇인가요?"
         },
-        "repeatImportTips": "이 주소가 가져와졌습니다.",
         "isItSafeToImportItInRabby": {
           "answer": "네, 그것은 귀하의 휴대폰에 로컬로 저장되며 귀하만 접근할 수 있습니다.",
           "question": "Rabby에 가져오는 것이 안전한가요?"
@@ -1474,7 +1420,6 @@
         "title1": "백업",
         "description2": "시드 구문을 분실하면 지갑을 복구할 수 없습니다.",
         "title2": "절대 공유하지 마세요",
-        "description1": "시드 구문은 주소에 접근하고 제어하는 데 사용되는 일련의 단어입니다. 이를 통해 어떤 장치에서도 주소를 복구할 수 있습니다.",
         "description3": "절대로 시드 프레이즈를 공유하지 마십시오. 접근 권한이 있는 사람은 누구든지 귀하의 자금을 통제할 수 있습니다."
       },
       "onekey": {
@@ -1506,10 +1451,7 @@
         }
       },
       "hd": {
-        "selectIndexTip": "시작할 주소의 일련 번호를 선택하세요:",
         "balance": "잔액",
-        "customAddressHdPath": "사용자 지정 주소 HD 경로",
-        "manageAddressFrom": "{{0}}에서 {{1}}까지 주소 관리",
         "onekey": {
           "hdPathType": {
             "bip44": "BIP44: BIP44 프로토콜에 의해 정의된 HDpath."
@@ -1537,16 +1479,8 @@
           }
         },
         "ledger": {
-          "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger 공식 HD 경로. 첫 번째 3개의 주소에는 온체인에서 사용된 주소가 포함되어 있습니다.",
-            "legacy": "레거시: MEW / Mycrypto에서 사용하는 HD 경로입니다. 처음 3개의 주소에는 온체인에서 사용되는 주소가 포함되어 있습니다.",
-            "bip44": "BIP44 표준: BIP44 프로토콜에 의해 정의된 HDpath입니다. 처음 3개의 주소에는 체인에서 사용되는 주소가 있습니다."
-          },
-          "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ledger official HD path. 처음 3개의 주소에는 온체인에서 사용된 주소가 없습니다.",
-            "legacy": "레거시: MEW / Mycrypto에서 사용하는 HD 경로입니다. 처음 3개의 주소에는 체인에서 사용된 주소가 없습니다.",
-            "bip44": "BIP44 표준: BIP44 프로토콜에 의해 정의된 HD 경로입니다. 첫 번째 3개의 주소에는 온체인에서 사용된 주소가 없습니다."
-          }
+          "hdPathType": {},
+          "hdPathTypeNoChain": {}
         }
       },
       "seedPhrase": {
@@ -1801,20 +1735,14 @@
     "sendPoly": {
       "modals": {
         "header": "주소를 허용 목록에 추가",
-        "importedAddress": "가져온 주소",
-        "content": "주소를 추가하는 방법을 선택하세요:",
-        "recentAddress": "최근 발송된 주소",
-        "addAddress": "새 주소"
+        "recentAddress": "최근 발송된 주소"
       },
       "enterAddress": "주소 입력",
-      "sendToWatchAddress": "관찰 전용 주소로 발송",
       "emptyWhitelistBtn": "지금 추가",
       "emptyWhitelistHeader": "화이트리스트 주소 추가",
       "emptyWhitelistTip": "아직 화이트리스트에 등록된 주소가 없습니다.",
       "whitelistTitle": "내 허용 목록 주소",
       "emptyWhitelistContent": "안전한 주소를 화이트리스트에 추가하여 빠른 전송 - 다음번에는 확인이 필요하지 않습니다.",
-      "sendToImportedAddress": "내 가져온 주소로 보내기",
-      "sendToSafeAddress": "안전한 주소로 보내기",
       "recent": "최근",
       "SelectFromHistory": "기록에서 선택하십시오",
       "sendTimeHeader": "전송",
@@ -1838,7 +1766,6 @@
       "checkbox": "저는 위험을 이해하며 계속 진행하고 싶습니다."
     },
     "selectAddress": {
-      "selectWatchAddress": "감시 전용 주소에서 선택",
       "selectSafeAddress": "Safe 주소에서 선택하기"
     },
     "whitelist": {
@@ -1997,8 +1924,6 @@
       "passwordPlaceholder": "비밀번호를 입력하여 확인"
     },
     "accountSwitcher": {
-      "screenHeaderSubTitle_one": "1 address",
-      "screenHeaderSubTitle_other": "{{count}} addresses",
       "all": "모두"
     },
     "TokenSelector": {
@@ -2084,10 +2009,7 @@
         "noHistory": "히스토리 없음"
       },
       "withdraw": "출금",
-      "loginConfirmModal": {
-        "title": "주소를 선택하여 로그인하십시오",
-        "desc": "로그인 후 이 주소로만 입금할 수 있습니다."
-      },
+      "loginConfirmModal": {},
       "gasExceed": "GasAccount 잔액은 $1000을 초과할 수 없습니다.",
       "loginInTip": {
         "login": "GasAccount 로그인",

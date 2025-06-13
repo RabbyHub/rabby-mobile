@@ -2,8 +2,6 @@
   "screens": {
     "addressStackTitle": {
       "SetPassword2024": "2. Establecer contraseña",
-      "ImportWatchAddress2024": "Agregar dirección solo de visualización",
-      "ImportNewAddress": "Añadir una dirección",
       "ImportMnemonic": "Importar Seed Phrase",
       "ImportPrivateKey": "Importar Private Key",
       "ImportHardwareAddress": "Conectar Carteras de Hardware",
@@ -15,16 +13,10 @@
       "CreateSelectMethod": "1. Selecciona Método de Creación",
       "AddMnemonic": "Agregar desde la Frase Semilla Actual",
       "BackupPrivateKey": "Copia de seguridad de la clave privada",
-      "CreateSelectOnCurrentSeed": "2. Añadir Dirección",
       "ImportMethods": "Seleccionar método de importación",
       "BackupSeedPhrase": "Copia de seguridad de la frase semilla",
-      "CreateNewAddress": "1. Nombra Tu Dirección",
       "VerifySeedPhrase": "Verificar frase semilla",
-      "CreateMnemonicBackup": "Copia de seguridad de la frase semilla",
-      "AddressDetail": "Detalle de la dirección",
-      "ImportMoreAddress": "Importar más direcciones",
-      "WatchAddressList": "Dirección Solo Ver",
-      "ConfrimAddress": "Confirma tu dirección"
+      "CreateMnemonicBackup": "Copia de seguridad de la frase semilla"
     }
   },
   "native": {
@@ -101,8 +93,6 @@
       }
     },
     "accountSwitcher": {
-      "screenHeaderSubTitle_other": "{{count}} direcciones",
-      "screenHeaderSubTitle_one": "1 address",
       "all": "Todo"
     },
     "TokenSelector": {
@@ -142,10 +132,7 @@
         "title": "Depósito USDC / USDT",
         "login": "Iniciar sesión en GasAccount"
       },
-      "loginConfirmModal": {
-        "title": "Seleccione una dirección para iniciar sesión",
-        "desc": "Una vez iniciado sesión, solo puedes depositarlo en esta dirección"
-      },
+      "loginConfirmModal": {},
       "withdrawPopup": {
         "title": "Retirar",
         "to": "Para",
@@ -200,10 +187,7 @@
   },
   "page": {
     "getStart": {
-      "alreadyHaveAddress": "Ya tengo una dirección",
-      "createNewAddress": "Crear nueva dirección",
-      "goToHome": "Ir a Home",
-      "sync": "Escanea para sincronizar la dirección de la extensión Rabby"
+      "goToHome": "Ir a Home"
     },
     "transactions": {
       "explain": {
@@ -251,7 +235,6 @@
         "InteractionResults": "Resultados de Interacción",
         "ApproveTo": "Aprobar para",
         "InteractedContract": "Contrato interactuado",
-        "RecipientAddress": "Dirección del destinatario",
         "Name": "Nombre",
         "totalApprovedAmount": "Cantidad Aprobada Actual",
         "BuyAgain": "Comprar de nuevo",
@@ -298,8 +281,7 @@
     },
     "importSuccess": {
       "success": "¡{{type}} con éxito!",
-      "addressCount": "{{count}} Direcciones",
-      "importMore": "Importar más direcciones"
+      "addressCount": "{{count}} Direcciones"
     },
     "signTypedData": {
       "verifyAddress": {
@@ -541,7 +523,6 @@
         "simulationNotSupport": "La simulación de transacciones no está soportada en esta cadena.",
         "slippageFailToLoad": "Error al cargar",
         "slippageTolerance": "Tolerancia de deslizamiento",
-        "notPaymentAddress": "No es la dirección de pago",
         "receiveToken": "Recibir",
         "valueDiff": "Diferencia de valor",
         "unknownAddress": "Dirección desconocida"
@@ -732,7 +713,6 @@
         "GetFreeGasToSign": "Obtén Gas Gratis",
         "notEnough": "El saldo de Gas no es suficiente",
         "walletConnectUnavailableTip": "No se admite la cartera móvil conectada a través de WalletConnect para Free Gas",
-        "watchUnavailableTip": "No se admite la dirección de solo observación para Free Gas",
         "customRpcUnavailableTip": "No se admiten RPC personalizados para Free Gas"
       },
       "ledger": {
@@ -993,7 +973,6 @@
       }
     },
     "manageAddress": {
-      "add-address": "Agregar dirección",
       "enterThePassphrase": "Introduce la frase de contraseña",
       "seed-phrase": "Seed Phrase",
       "enterPassphraseTitle": "Ingrese la frase de contraseña para firmar",
@@ -1001,7 +980,6 @@
       "confirm": "Confirmar",
       "cancel": "Cancelar",
       "passphraseError": "Frase de paso no válida",
-      "delete-checklist-1": "Entiendo que si elimino esta dirección, se eliminarán la clave privada y la frase semilla correspondientes, y Rabby NO podrá recuperarlas.",
       "delete-checklist-2": "Confirmo que he respaldado la clave privada o la frase semilla y estoy listo para eliminarla ahora.",
       "private-key": "Clave Privada",
       "quickAddressTitle_one": "{{count}} Dirección",
@@ -1070,9 +1048,7 @@
     },
     "nextComponent": {
       "addAddress": {
-        "createAddress": "Crear dirección",
         "hardwareWallet": "Cartera de Hardware",
-        "importAddress": "Importar dirección",
         "syncRabbyExtension": "Sincronizar la extensión Rabby"
       },
       "createNewAddress": {
@@ -1086,11 +1062,9 @@
         "Verify": "Verificar",
         "selectWords": "Seleccionar palabras",
         "WriteDownSeedPhrase": "Escribe Tu Frase Semilla",
-        "createOnCurrentDesc": "Crear dirección con una frase semilla importada existente",
         "passwordMin": "Debe tener al menos 8 caracteres",
         "confirmPasswordTips": "Las contraseñas coinciden",
         "whatIsSeedPhrase": "¿Qué es una Seed Phrase?",
-        "createNewDesc": "Generar una nueva frase semilla para nuevas direcciones",
         "BackupSeedPhrase": "Respaldo manual de la frase semilla",
         "savedPhrase": "He guardado la Phrase",
         "passwordTopTips": "Esta contraseña se utilizará para desbloquear tu cartera y cifrar tus datos locales.",
@@ -1101,14 +1075,10 @@
         "WriteSeedPhrase": "Esta es tu frase de recuperación. Escríbela en papel y guárdala en un lugar seguro. Necesitarás volver a ingresarla, en el orden correcto, en el siguiente paso."
       },
       "importAddress": {
-        "importTitle": "Importar dirección",
-        "safeTitle": "Importar dirección Safe",
         "seedPhrase": "Importar Seed Phrase",
         "privateKey": "Importar Clave Privada",
         "safe": "Seguro",
         "hardWare": "Conectar Monederos de Hardware",
-        "watchOnlyTitle": "Importar dirección de solo visualización",
-        "watch": "Dirección solo visualización",
         "tips": {
           "gotIt": "Lo tengo.",
           "title": "¿Es seguro importar a Rabby?",
@@ -1121,13 +1091,10 @@
         "totalBalance": "Saldo total",
         "pin": "PIN",
         "noAssets": "¿Sin activos?",
-        "receiveCryptoDesc": "Transfiere tokens desde otra dirección",
-        "importAddress": "Importar una dirección",
         "receiveCrypto": "Recibir Crypto",
         "buyWithFiat": "Comprar con Fiat",
         "fundYourWallet": "Financiar tu wallet",
         "buyWithFiatDesc": "Compra de criptomonedas sencilla",
-        "importAddressDesc": "Añadir una dirección existente con fondos",
         "foundGuideTitle": "Financia rápidamente",
         "foundGuideDesc": "Añade tokens a tu wallet para comenzar."
       }
@@ -1172,7 +1139,6 @@
       "bridged": "Puenteado"
     },
     "newAddress": {
-      "createNewAddress": "Crear nueva Address",
       "Quick": "Rápido",
       "addContacts": {
         "cameraTitle": "Por favor, escanee el código QR con su cámara."
@@ -1185,8 +1151,7 @@
         "title3": "Seguridad",
         "description3": "Nunca compartas tu frase semilla; cualquiera que tenga acceso a ella puede controlar tus fondos.",
         "description4": "Tu frase semilla se almacena localmente en tu dispositivo y se cifra con tu contraseña. Solo tú puedes acceder a ella. Rabby no puede recuperar ni acceder a tu frase semilla.",
-        "description2": "Si pierdes tu seed phrase, no podrás restaurar tu wallet.",
-        "description1": "Una seed phrase es una serie de palabras utilizadas para acceder y controlar tu dirección. Puedes usarla para recuperar tu dirección en cualquier dispositivo."
+        "description2": "Si pierdes tu seed phrase, no podrás restaurar tu wallet."
       },
       "ledger": {
         "scan": {
@@ -1230,8 +1195,7 @@
         "isItSafeToImportItInRabby": {
           "question": "¿Es seguro importarlo en Rabby?",
           "answer": "Sí, se almacenará localmente en tu teléfono y solo será accesible para ti."
-        },
-        "repeatImportTips": "Esta dirección ha sido importada"
+        }
       },
       "seedPhrase": {
         "isItSafeToImportItInRabby": {
@@ -1289,10 +1253,7 @@
         }
       },
       "hd": {
-        "manageAddressFrom": "Gestionar dirección de {{0}} a {{1}}",
-        "customAddressHdPath": "Ruta HD de dirección personalizada",
         "balance": "Balance",
-        "selectIndexTip": "Seleccione el número de serie de las direcciones desde las que comenzar:",
         "onekey": {
           "hdPathTypeNoChain": {
             "bip44": "BIP44: HDpath definido por el protocolo BIP44."
@@ -1302,16 +1263,8 @@
           }
         },
         "ledger": {
-          "hdPathType": {
-            "legacy": "Legacy: ruta HD utilizada por MEW / Mycrypto. En las primeras 3 direcciones, hay direcciones utilizadas en la cadena.",
-            "ledgerLive": "Ledger Live: Ruta HD oficial de Ledger. En las primeras 3 direcciones, hay direcciones usadas en la cadena.",
-            "bip44": "Estándar BIP44: HDpath definido por el protocolo BIP44. En las primeras 3 direcciones, hay direcciones utilizadas en la cadena."
-          },
-          "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live: Ruta HD oficial de Ledger. En las primeras 3 direcciones, no hay direcciones utilizadas en la cadena.",
-            "legacy": "Legacy: ruta HD utilizada por MEW / Mycrypto. En las primeras 3 direcciones, no hay direcciones usadas en la cadena.",
-            "bip44": "Estándar BIP44: Ruta HD definida por el protocolo BIP44. En las primeras 3 direcciones, no hay direcciones usadas en la cadena."
-          }
+          "hdPathType": {},
+          "hdPathTypeNoChain": {}
         },
         "keystone": {
           "hdPathTypeNoChain": {
@@ -1482,41 +1435,28 @@
     },
     "addressDetail": {
       "qr-code": "Código QR",
-      "safeAddressListScreen": {
-        "addSafeAddress": "Agregar direcciones seguras"
-      },
+      "safeAddressListScreen": {},
       "hd-path": "HD Path",
       "address-note": "Nota de Dirección",
       "admins": "Administradores",
       "assets": "Activos",
-      "watchAddressListScreen": {
-        "addWatchAddress": "Agregar direcciones de solo visualización"
-      },
+      "watchAddressListScreen": {},
       "remove-from-whitelist": "Eliminar de la lista blanca",
-      "delete-address": "Eliminar dirección",
       "address": "Dirección",
       "manage-seed-phrase": "Gestionar la frase semilla",
       "pin-in-list": "Fijar en la lista",
-      "manage-addresses-under-this-seed-phrase": "Agregar dirección desde esta seed phrase",
       "source": "Fuente",
       "delete-desc-needpassword": "Antes de eliminar, tenga en cuenta los siguientes puntos para entender cómo proteger sus activos.",
       "backup-private-key": "Copia de seguridad de la clave privada",
       "add-to-whitelist": "Añadir a la lista blanca",
       "addressListScreen": {
-        "title_one": "{{count}} Direcciones",
         "delete": "Eliminar",
-        "importSafeAddress": "Direcciones de Safe importadas",
-        "title_zero": "0 Address",
         "pin": "Pin",
         "edit": "Editar",
-        "addAddress": "Agregar una dirección",
-        "importWatchAddress": "Direcciones importadas de solo observación",
         "unpin": "Desanclar",
-        "title_other": "{{count}} Direcciones",
         "detail": "Detalles"
       },
-      "backup-seed-phrase": "Copia de seguridad de la frase semilla",
-      "delete-desc": "¿Estás seguro de que deseas eliminar esta dirección?"
+      "backup-seed-phrase": "Copia de seguridad de la frase semilla"
     },
     "connect": {
       "connectBtn": "Conectar",
@@ -1586,8 +1526,7 @@
       "title": "Aprobaciones"
     },
     "receiveAddressList": {
-      "selectChainTitle": "Seleccionar cadena",
-      "title": "Seleccionar dirección de recepción"
+      "selectChainTitle": "Seleccionar cadena"
     },
     "sign": {
       "transactionSpeed": "Velocidad de Transacción"
@@ -1687,12 +1626,9 @@
       "emptyToken": {
         "receiveHeader": "Recibir Crypto",
         "title": "Fondea tu Wallet",
-        "receiveBody": "Transferir tokens desde otra dirección",
         "buyHeader": "Comprar con Fiat",
         "buyBody": "Compra sencilla de cripto",
-        "desc": "Financia rápidamente ahora",
-        "importHeader": "Importar una dirección",
-        "importBody": "Añadir una dirección existente con fondos."
+        "desc": "Financia rápidamente ahora"
       },
       "nft": {
         "floorPrice": "/Precio de suelo:"
@@ -1846,10 +1782,8 @@
         "title": "Depósito",
         "selectToken": "Seleccionar Token",
         "followingTokenInSufficient": "El saldo de los siguientes tokens es insuficiente",
-        "inSufficientTip1": "Esta dirección no tiene suficientes tokens. Por favor, elige una dirección diferente.",
         "zeroInvalidAmount": "El importe no puede ser cero",
         "desc": "Haz un depósito en la cuenta de DeBank L2 de Rabby sin tarifas adicionales: retira en cualquier momento.",
-        "paymentAddress": "Dirección de pago",
         "applePayDesc": "Incluye una tarifa de Apple Pay de ${{amount}}. No hay retiros",
         "googlePayDesc": "Incluye una tarifa de Google Pay de ${{ amount }}. No hay retiros",
         "googlePayFeeDesc": "Incluye una tarifa de Google Pay. Sin retiros",
@@ -1857,8 +1791,6 @@
       },
       "paymentAddressPopup": {
         "confirm": "Confirmar",
-        "address": "Dirección de pago",
-        "title": "Seleccionar dirección de pago",
         "balance": "Balance"
       },
       "withdrawPopup": {
@@ -1867,18 +1799,15 @@
         "selectDestinationChain": "Seleccionar cadena de destino",
         "noEnoughValuetBalance": "Saldo del Vault insuficiente. Cambie de cadena o inténtelo de nuevo más tarde.",
         "withdrawalLimit": "Límite de retirada",
-        "selectRecipientAddress": "Seleccionar dirección del destinatario",
         "riskMessageFromChain": "Debido al control de riesgos, el límite de retiro depende del monto total depositado desde esta cadena.",
         "noEnoughGas": "Cantidad insuficiente para cubrir las tarifas de gas",
         "riskMessageFromAddress": "Debido al control de riesgos, el límite de retirada depende del monto total que esta dirección haya depositado",
         "desc": "Puede retirar el saldo de su GasAccount a su Wallet DeBank L2. Inicie sesión en su Wallet DeBank L2 para transferir los fondos a una blockchain compatible según sea necesario.",
         "to": "A",
         "destinationChain": "Cadena de destino",
-        "recipientAddress": "Dirección del destinatario",
         "tipsBtn": "Lo tengo",
         "selectChain": "Seleccionar cadena",
         "deductGasFees": "La cantidad recibida deducirá las tarifas de gas.",
-        "noRecipient": "No Recipient address available",
         "noEnoughValueBalance": "Saldo de Vault insuficiente. Cambia de cadena o inténtalo de nuevo más tarde."
       },
       "withdrawConfirmModal": {
@@ -1973,17 +1902,11 @@
     "sendPoly": {
       "modals": {
         "header": "Agregar dirección a la lista blanca",
-        "recentAddress": "Direcciones Enviadas Recientemente",
-        "addAddress": "Nueva dirección",
-        "importedAddress": "Dirección Importada",
-        "content": "Selecciona cómo quieres añadir una dirección:"
+        "recentAddress": "Direcciones Enviadas Recientemente"
       },
       "emptyWhitelistHeader": "Agregar dirección de la lista blanca",
       "enterAddress": "Introduzca la dirección",
-      "sendToSafeAddress": "Enviar a direcciones seguras",
-      "sendToWatchAddress": "Enviar a direcciones solo de visualización",
       "emptyWhitelistBtn": "Añadir ahora",
-      "sendToImportedAddress": "Enviar a Mis Direcciones Importadas",
       "emptyWhitelistTip": "Aún no hay direcciones en la lista blanca,",
       "emptyWhitelistContent": "Agrega direcciones de confianza a la lista blanca para transferencias rápidas: no se necesita confirmación la próxima vez",
       "whitelistTitle": "Mis direcciones de lista blanca",
@@ -2010,8 +1933,7 @@
       "checkbox": "Entiendo los riesgos y quiero continuar"
     },
     "selectAddress": {
-      "selectSafeAddress": "Seleccionar desde direcciones seguras",
-      "selectWatchAddress": "Seleccionar desde direcciones de solo observación"
+      "selectSafeAddress": "Seleccionar desde direcciones seguras"
     },
     "whitelist": {
       "addToWhitelist": "Agregar a la lista blanca",

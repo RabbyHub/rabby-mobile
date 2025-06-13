@@ -2,26 +2,18 @@
   "screens": {
     "addressStackTitle": {
       "ImportSuccess": "Başarıyla eklendi",
-      "AddressDetail": "Adres detayı",
       "CreateMnemonicBackup": "Yedek tohum ifadesi",
       "SafeAddressList": "Güvenli Adres",
       "CreateSelectMethod": "1. Oluşturma Yöntemi Seçin",
       "AddMnemonic": "Mevcut Seed Phrase'den Ekle",
-      "CreateNewAddress": "1. Adresinizi Onaylayın",
       "ImportPrivateKey": "Özel Anahtarı İçe Aktar",
       "CreateChooseBackup": "3. Bir yedekleme yöntemi seçin",
-      "ConfrimAddress": "Adresinizi Onaylayın",
-      "ImportMoreAddress": "Daha fazla adres içe aktar",
       "ImportHardwareAddress": "Donanım Cüzdanlarını Bağlayın",
       "ImportMnemonic": "Seed Cümlesini İçe Aktar",
-      "CreateSelectOnCurrentSeed": "2. Adres Ekle",
-      "ImportNewAddress": "Bir Adres Ekle",
       "VerifySeedPhrase": "Seed ifadesini doğrula",
       "BackupPrivateKey": "Yedekleme Özel Anahtar",
-      "WatchAddressList": "Sadece İzleme Adresi",
       "ImportSafeAddress2024": "Güvenli Adres Ekle",
       "SetPassword2024": "2. Şifre belirleyin",
-      "ImportWatchAddress2024": "Sadece İzleme Adresi Ekle",
       "ImportMethods": "İçe Aktarma Yöntemini Seçin",
       "BackupSeedPhrase": "Yedekleme Seed Phrase",
       "RestoreFromCloud": "{{type}}'den geri yükle"
@@ -29,10 +21,7 @@
   },
   "page": {
     "getStart": {
-      "goToHome": "Ana Sayfaya Git",
-      "createNewAddress": "Yeni Adres Oluştur",
-      "alreadyHaveAddress": "Zaten bir adresim var",
-      "sync": "Rabby Uzantı Adresini Senkronize Etmek İçin Tara"
+      "goToHome": "Ana Sayfaya Git"
     },
     "transactions": {
       "itemTitle": {
@@ -67,7 +56,6 @@
         "Date": "Tarih",
         "Collection": "Koleksiyon",
         "totalApprovedAmount": "Mevcut Onaylanan Tutar",
-        "RecipientAddress": "Alıcı adresi",
         "ApproveToken": "Token onayla",
         "GasFee": "Gaz Ücreti",
         "BuyAgain": "Yeniden Satın Al",
@@ -153,7 +141,6 @@
         "title": "Token Takas",
         "slippageFailToLoad": "Yükleme başarısız oldu",
         "receiver": "Alıcı",
-        "notPaymentAddress": "Ödeme adresi değil",
         "unknownAddress": "Bilinmeyen adres"
       },
       "safeTx": {
@@ -406,7 +393,6 @@
     },
     "importSuccess": {
       "addressCount": "{{count}} Adresler",
-      "importMore": "Daha fazla adres içe aktar",
       "success": "{{type}} başarıyla!"
     },
     "importSeedPhrase": {
@@ -415,7 +401,6 @@
     "signFooterBar": {
       "gasless": {
         "GetFreeGasToSign": "Ücretsiz Gas Alın",
-        "watchUnavailableTip": "Sadece izleme adresi Ücretsiz Gas için desteklenmiyor.",
         "walletConnectUnavailableTip": "WalletConnect ile bağlı mobil cüzdan Ücretsiz Gas için desteklenmiyor.",
         "customRpcUnavailableTip": "Ücretsiz Gas için özel RPC'ler desteklenmiyor.",
         "notEnough": "Gaz bakiyesi yeterli değil"
@@ -651,20 +636,14 @@
     "sendPoly": {
       "modals": {
         "recentAddress": "Son Gönderilen Adresler",
-        "header": "Adresi Beyaz Listeye Ekle",
-        "importedAddress": "İçe Aktarılan Adres",
-        "content": "Bir adres eklemek için nasıl bir yol seçmek istersiniz:",
-        "addAddress": "Yeni Adres"
+        "header": "Adresi Beyaz Listeye Ekle"
       },
-      "sendToSafeAddress": "Güvenli Adreslere Gönder",
       "emptyWhitelistBtn": "Şimdi ekle",
       "emptyWhitelistTip": "Henüz beyaz listeye alınmış adres yok,",
-      "sendToWatchAddress": "Gönderim İzleme Sadece Adreslere",
       "whitelistTitle": "Whitelist Adreslerim",
       "enterAddress": "Adres Girin",
       "emptyWhitelistHeader": "Beyaz Liste Adresi Ekle",
       "emptyWhitelistContent": "Güvenilir adresleri hızlı transferler için beyaz listeye ekleyin—bir dahaki sefere onay gerekmez.",
-      "sendToImportedAddress": "İçe Aktardığım Adreslere Gönder",
       "SelectFromHistory": "Geçmişten Seçin",
       "sendTimeHeader": "Gönder",
       "innerEnterAddress": "Adres / ENS Girin",
@@ -688,7 +667,6 @@
       "checkbox": "Riskleri anlıyorum ve devam etmek istiyorum."
     },
     "selectAddress": {
-      "selectWatchAddress": "Gözlem adreslerinden seçin",
       "selectSafeAddress": "Güvenli adreslerden seçim yapın"
     },
     "whitelist": {
@@ -927,9 +905,7 @@
       "enterPassphraseTitle": "Geçerli Parolayı Girin",
       "cancel": "İptal et",
       "enterThePassphrase": "Anahtar Kelimeyi Girin",
-      "delete-checklist-1": "Bu adresi silersem, ilgili özel anahtar ve tohum ifadesinin silineceğini anlıyorum ve Rabby bunları geri yükleyemeyecek.",
       "delete-checklist-2": "Anahtar kelimeyi veya tohum ifadesini yedeklediğimi ve şimdi silmeye hazır olduğumu onaylıyorum.",
-      "add-address": "Adres ekle",
       "quickAddressTitle_other": "{{count}} Adresler",
       "quickAddressTitle_one": "{{count}} Adres"
     },
@@ -1013,7 +989,6 @@
         "savedPhrase": "Açıklamayı Kayıt Ettim",
         "createOnCurrent": "Mevcut Seed Phrase'i Kullan",
         "BackupSeedPhrase": "Manuel Olarak Seed Phrase Yedekle",
-        "createNewDesc": "Yeni adresler için yeni bir seed phrase oluşturun",
         "addressTopTips": "Bunu kullanarak blockchain üzerinde kripto gönderin ve alın.",
         "inOrder": "doğru sırayla.",
         "WriteSeedPhrase": "Bu sizin tohum ifadeniz. Bunu kağıda yazın ve güvenli bir yerde saklayın. Bir sonraki adımda, doğru sırayla tekrar girmeniz gerekecek.",
@@ -1022,27 +997,21 @@
         "WriteDownSeedPhrase": "Seed ifadenizi yazın",
         "selectWords": "Kelime seçin",
         "backupSeedPhrase": "Cüzdanınızı geri yüklemek için seed phrase'inizi yedekleyin, eğer uygulama silinirse veya cihazınız kaybolursa.",
-        "createOnCurrentDesc": "Mevcut içe aktarılmış tohum yazısıyla adres oluşturun",
         "riskTips": "Başlamadan önce, lütfen bu güvenlik ipuçlarını okuyun ve aklınızda bulundurun:",
         "Continue": "Devam et"
       },
       "addAddress": {
-        "importAddress": "Adres İçe Aktar",
         "syncRabbyExtension": "Rabby Uzantısını Senkronize Et",
-        "hardwareWallet": "Donanım Cüzdanı",
-        "createAddress": "Adres Oluştur"
+        "hardwareWallet": "Donanım Cüzdanı"
       },
       "multiAddressHome": {
         "services": "Hizmetler",
         "fundYourWallet": "Cüzdanınızı Fonlayın",
-        "importAddress": "Bir Adres İçeri Aktar",
         "receiveCrypto": "Kripto Al ",
         "pin": "Pin",
         "noAssets": "Varlık yok mu?",
-        "importAddressDesc": "Mevcut fonlara sahip bir adres ekleyin",
         "totalBalance": "Toplam Bakiyeniz",
         "buyWithFiatDesc": "Basit kripto alımı",
-        "receiveCryptoDesc": "Başka bir adrese token transfer et",
         "buyWithFiat": "Fiat ile Satın Al",
         "foundGuideTitle": "Hızlıca Fonla",
         "foundGuideDesc": "Cüzdanınıza başlamanız için token ekleyin."
@@ -1054,14 +1023,10 @@
           "entry": "Rabby'e aktarmak güvenli mi?",
           "description": "Verileriniz güvenli bir şekilde şifrelendi ve cihazınızda yerel olarak depolandı. Rabby, özel bilgilerinize erişemez ve bu bilgiler asla üçüncü şahıslarla paylaşılmaz."
         },
-        "watch": "Sadece İzleme Adresi",
         "safe": "Güvenli",
         "seedPhrase": "Seed Kelimesini İçe Aktar",
         "privateKey": "Özel Anahtarı İçe Aktar",
-        "hardWare": "Donanım Cüzdanlarını Bağlayın",
-        "watchOnlyTitle": "İzleme için Adres İçe Aktar",
-        "safeTitle": "Güvenli Adresi İçe Aktar",
-        "importTitle": "Adres İçe Aktar"
+        "hardWare": "Donanım Cüzdanlarını Bağlayın"
       }
     },
     "newAddress": {
@@ -1073,7 +1038,6 @@
         "description3": "Seed ifrenizi asla paylaşmayın—ona erişimi olan herkes, fonlarınızı kontrol edebilir.",
         "description2": "Eğer kurtarma ifadenizi kaybederseniz, cüzdanınızı geri yükleyemezsiniz.",
         "description4": "Seed ifadeniz cihazınızda yerel olarak saklanır ve şifrenizle şifrelenir. Sadece siz buna erişebilirsiniz. Rabby seed ifadenizi geri alamaz veya erişemez.",
-        "description1": "Bir yedekleme ifadesi, adresinize erişim sağlamak ve onu kontrol etmek için kullanılan bir kelime serisidir. Bunu herhangi bir cihazda adresinizi kurtarmak için kullanabilirsiniz.",
         "GotIt": "Tamamdır."
       },
       "addContacts": {
@@ -1132,8 +1096,7 @@
         "isItSafeToImportItInRabby": {
           "question": "Rabby'de bunu içe aktarmak güvenli mi?",
           "answer": "Evet, telefonunuzda yerel olarak saklanacak ve yalnızca sizin erişiminize açık olacak."
-        },
-        "repeatImportTips": "Bu adres içe aktarıldı"
+        }
       },
       "ledger": {
         "ble": {
@@ -1208,16 +1171,8 @@
       },
       "hd": {
         "ledger": {
-          "hdPathType": {
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu. İlk 3 adreste, zincir üstünde kullanılan adresler bulunmaktadır.",
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu. İlk 3 adreste, zincir üzerinde kullanılan adresler bulunmaktadır.",
-            "bip44": "BIP44 Standard: BIP44 protokolü tarafından tanımlanan HDpath. İlk 3 adreste, zincir üzerinde kullanılan adresler bulunmaktadır."
-          },
-          "hdPathTypeNoChain": {
-            "bip44": "BIP44 Standard: BIP44 protokolü tarafından tanımlanan HD yolu. İlk 3 adreste, on-chain'de kullanılan hiçbir adres yoktur.",
-            "ledgerLive": "Ledger Live: Ledger resmi HD yolu. İlk 3 adreste, zincirde kullanılmayan adresler bulunmaktadır.",
-            "legacy": "Legacy: MEW / Mycrypto tarafından kullanılan HD yolu. İlk 3 adreste, zincir üzerinde kullanılmamış adresler bulunmaktadır."
-          }
+          "hdPathType": {},
+          "hdPathTypeNoChain": {}
         },
         "onekey": {
           "hdPathType": {
@@ -1245,14 +1200,10 @@
             "content": "Birden fazla {{0}} cihazı içe aktarmak desteklenmiyor. Yeni bir {{0}} cihazına geçerseniz, içe aktarma işlemini başlatmadan önce mevcut cihazın adres listesi silinecektir."
           }
         },
-        "balance": "Bakiye",
-        "customAddressHdPath": "Özel Adres HD yolu",
-        "selectIndexTip": "Başlangıç için adreslerin seri numarasını seçin:",
-        "manageAddressFrom": "{{0}} ile {{1}} adreslerini yönetin"
+        "balance": "Bakiye"
       },
       "Quick": "Hızlı",
-      "createNewSeedPhrase": "Yeni Seed Phrase Oluştur",
-      "createNewAddress": "Yeni Adres Oluştur"
+      "createNewSeedPhrase": "Yeni Seed Phrase Oluştur"
     },
     "unlock": {
       "btn": {
@@ -1341,24 +1292,14 @@
       "connectWallet": "Cüzdanı Bağla"
     },
     "addressDetail": {
-      "safeAddressListScreen": {
-        "addSafeAddress": "Güvenli Adresler Ekle"
-      },
-      "watchAddressListScreen": {
-        "addWatchAddress": "Yalnızca İzlenecek Adresler Ekle"
-      },
+      "safeAddressListScreen": {},
+      "watchAddressListScreen": {},
       "addressListScreen": {
-        "title_zero": "0 Adres",
         "detail": "Ayrıntılar",
         "edit": "Düzenle",
         "unpin": "Sabitlenmeyi Kaldır",
-        "addAddress": "Adres Ekle",
         "delete": "Sil",
-        "title_other": "{{count}} Adresler",
-        "title_one": "{{count}} Adres",
-        "importWatchAddress": "İçe Aktarılan Sadece İzleme Adresleri",
-        "pin": "Pin",
-        "importSafeAddress": "İçe Aktarılan Güvenli Adresler"
+        "pin": "Pin"
       },
       "backup-seed-phrase": "Yedek Seed Phrase",
       "add-to-whitelist": "Beyaz Listeye Ekle",
@@ -1373,10 +1314,7 @@
       "hd-path": "HD Yolu",
       "admins": "Yöneticiler",
       "address": "Adres",
-      "manage-seed-phrase": "Seed İfadesini Yönet",
-      "manage-addresses-under-this-seed-phrase": "Bu anahtar kelime ifadesinden adres ekle",
-      "delete-address": "Adresi sil",
-      "delete-desc": "Bu adresi silmek istediğinizden emin misiniz?"
+      "manage-seed-phrase": "Seed İfadesini Yönet"
     },
     "customRpc": {
       "EditRPCModal": {
@@ -1583,7 +1521,6 @@
         "desc": "Çıkış yapmak GasAccount'ı devre dışı bırakır. Bu adresle oturum açarak GasAccount'ınızı geri yükleyebilirsiniz."
       },
       "depositPopup": {
-        "paymentAddress": "Ödeme Adresi",
         "token": "Token",
         "amount": "Miktar",
         "invalidAmount": "500'ün altında olmalıdır",
@@ -1591,7 +1528,6 @@
         "followingTokenInSufficient": "Aşağıdaki token bakiyesi yetersizdir.",
         "zeroInvalidAmount": "Miktar sıfır olamaz",
         "title": "Hesapla geçme",
-        "inSufficientTip1": "Bu adres yeterli token'e sahip değil. Lütfen farklı bir adres seçin.",
         "desc": "Rabby's DeBank L2 Hesabına ekstra ücret olmadan para yatırın—istediğiniz zaman çekin.",
         "googlePayFeeDesc": "Google Pay ücreti içerir. Çekim yok.",
         "googlePayDesc": "${{ amount }} Google Pay ücreti içerir. Para çekme yok.",
@@ -1600,9 +1536,7 @@
       },
       "paymentAddressPopup": {
         "confirm": "Onayla",
-        "title": "Ödeme adresini seçin",
-        "balance": "Bakiye",
-        "address": "Ödeme adresi"
+        "balance": "Bakiye"
       },
       "withdrawPopup": {
         "destinationChain": "Hedef zincir",
@@ -1610,13 +1544,10 @@
         "selectDestinationChain": "Hedef zinciri seçin",
         "selectChain": "Zincir Seçin",
         "noEnoughGas": "Gas ücreti ödemek için miktar çok düşük.",
-        "recipientAddress": "Alıcı adresi",
         "tipsBtn": "Tamamdır",
-        "selectRecipientAddress": "Alıcı adresini seçin",
         "withdrawalLimit": "Çekim limiti",
         "amount": "Miktar",
         "title": "Çekmek",
-        "noRecipient": "Alıcı adresi mevcut değil",
         "riskMessageFromAddress": "Risk kontrolü nedeniyle, çekim limiti bu adresin yatırdığı toplam miktara bağlıdır.",
         "noEnoughValueBalance": "Vault Bakiyesi yetersiz. Zinciri değiştirin veya daha sonra tekrar deneyin.",
         "desc": "GasAccount bakiyenizi DeBank L2 Cüzdanınıza çekebilirsiniz. Gerekli olduğunda, fonları desteklenen bir blockchain'e transfer etmek için DeBank L2 Cüzdanınıza giriş yapın.",
@@ -1729,8 +1660,7 @@
       "title": "Onaylar"
     },
     "receiveAddressList": {
-      "selectChainTitle": "Zincir Seçin",
-      "title": "Alım Adresini Seçin"
+      "selectChainTitle": "Zincir Seçin"
     },
     "singleHome": {
       "sectionHeader": {
@@ -1745,11 +1675,8 @@
         "buyBody": "Basit kripto alımı",
         "buyHeader": "Fiat ile Satın Al",
         "receiveHeader": "Kripto Al ",
-        "receiveBody": "Başka bir adresten token transfer et",
         "title": "Cüzdanınızı Fonlayın",
-        "desc": "Hızla fonlayın şimdi",
-        "importBody": "Mevcut bakiyesi olan bir adres ekleyin.",
-        "importHeader": "Bir Adres İçe Aktar"
+        "desc": "Hızla fonlayın şimdi"
       },
       "nft": {
         "floorPrice": "/Floor Fiyatı:"
@@ -1944,10 +1871,7 @@
         "desc": "Tüm Zincirlerde Gas Ücretlerini Ödeyin",
         "title": "USDC / USDT Yatırın"
       },
-      "loginConfirmModal": {
-        "title": "Giriş Yapmak için Bir Adres Seçin",
-        "desc": "Giriş yaptıktan sonra, yalnızca bu adrese yatırabilirsiniz."
-      },
+      "loginConfirmModal": {},
       "depositPopup": {
         "amount": "Miktar",
         "title": "Yatırmak",
@@ -1974,9 +1898,7 @@
       "depositWithPay": "Satın al ve"
     },
     "accountSwitcher": {
-      "all": "Hepsi",
-      "screenHeaderSubTitle_other": "{{count}} adresler",
-      "screenHeaderSubTitle_one": "1 adres"
+      "all": "Hepsi"
     },
     "AccountSelectDrawer": {
       "btn": {

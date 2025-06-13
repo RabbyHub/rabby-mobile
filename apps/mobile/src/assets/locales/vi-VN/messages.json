@@ -1,30 +1,22 @@
 {
   "screens": {
     "addressStackTitle": {
-      "AddressDetail": "Chi tiết địa chỉ",
       "VerifySeedPhrase": "Xác minh cụm từ gốc",
       "CreateSelectMethod": "1. Chọn Phương pháp Tạo",
       "ImportSuccess": "Thêm thành công",
       "ImportMethods": "Chọn Phương pháp Nhập khẩu",
       "BackupSeedPhrase": "Sao lưu Seed Phrase",
-      "CreateSelectOnCurrentSeed": "2. Thêm địa chỉ",
       "CreateChooseBackup": "3. Chọn phương pháp sao lưu",
       "SafeAddressList": "Địa chỉ Safe",
       "ImportPrivateKey": "Nhập Private Key",
-      "ImportWatchAddress2024": "Thêm địa chỉ chỉ xem",
       "SetPassword2024": "2. Đặt mật khẩu",
       "BackupPrivateKey": "Sao lưu Private Key",
-      "ImportNewAddress": "Thêm một Địa chỉ",
-      "WatchAddressList": "Địa chỉ Chỉ-Xem",
       "AddMnemonic": "Thêm từ Seed Phrase Hiện tại",
-      "ImportMoreAddress": "Nhập thêm địa chỉ",
       "ImportHardwareAddress": "Kết nối ví phần cứng",
       "ImportSafeAddress2024": "Thêm địa chỉ Safe",
       "ImportMnemonic": "Nhập Seed Phrase",
       "RestoreFromCloud": "Khôi phục từ {{type}}",
-      "CreateMnemonicBackup": "Sao lưu cụm từ hạt giống",
-      "CreateNewAddress": "1. Đặt Tên Địa Chỉ Của Bạn",
-      "ConfrimAddress": "Xác nhận Địa chỉ của Bạn"
+      "CreateMnemonicBackup": "Sao lưu cụm từ hạt giống"
     }
   },
   "native": {
@@ -124,7 +116,6 @@
         "Pending": "Đang chờ xử lý",
         "Unknown": "Không xác định",
         "RevokeFrom": "Thu hồi từ",
-        "RecipientAddress": "Địa chỉ người nhận",
         "name": "Tên",
         "Status": "Trạng thái",
         "Failed": "Thất bại",
@@ -175,16 +166,12 @@
       "HideScamTransactions": "Ẩn giao dịch lừa đảo"
     },
     "getStart": {
-      "alreadyHaveAddress": "Tôi đã có một địa chỉ",
-      "goToHome": "Đi đến Trang chủ",
-      "createNewAddress": "Tạo Địa Chỉ Mới",
-      "sync": "Quét để đồng bộ hóa địa chỉ Rabby Extension"
+      "goToHome": "Đi đến Trang chủ"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "Nhập cụm từ khôi phục của bạn"
     },
     "importSuccess": {
-      "importMore": "Nhập thêm địa chỉ",
       "success": "{{type}} thành công!",
       "addressCount": "{{count}} Địa chỉ"
     },
@@ -241,7 +228,6 @@
         "customRpcUnavailableTip": "Custom RPCs are not supported for Free Gas",
         "notEnough": "Số dư Gas không đủ",
         "GetFreeGasToSign": "Nhận Gas miễn phí",
-        "watchUnavailableTip": "Địa chỉ chỉ xem không được hỗ trợ cho Free Gas",
         "walletConnectUnavailableTip": "Ví di động kết nối qua WalletConnect không được hỗ trợ cho Free Gas"
       },
       "submitTx": "Gửi Giao dịch",
@@ -419,7 +405,6 @@
         "simulationFailed": "Mô phỏng giao dịch thất bại",
         "slippageFailToLoad": "Không thể tải",
         "payToken": "Thanh toán",
-        "notPaymentAddress": "Không phải địa chỉ thanh toán",
         "title": "Hoán đổi Token",
         "simulationNotSupport": "Giả lập giao dịch không được hỗ trợ trên chuỗi này",
         "unknownAddress": "Địa chỉ không xác định",
@@ -918,10 +903,8 @@
       "enterPassphraseTitle": "Nhập Passphrase để Ký",
       "private-key": "Khóa riêng",
       "cancel": "Hủy",
-      "add-address": "Thêm địa chỉ",
       "seed-phrase": "Cụm từ khởi tạo",
       "delete-checklist-2": "Tôi xác nhận rằng tôi đã sao lưu khóa riêng hoặc cụm từ khôi phục và sẵn sàng xóa nó ngay bây giờ.",
-      "delete-checklist-1": "Tôi hiểu rằng nếu tôi xóa địa chỉ này, thì khóa cá nhân và cụm từ khôi phục tương ứng sẽ bị xóa, và Rabby sẽ KHÔNG thể khôi phục chúng.",
       "confirm": "Xác nhận",
       "passphraseError": "Cụm mật khẩu không hợp lệ",
       "quickAddressTitle_other": "{{count}} Địa chỉ",
@@ -986,29 +969,20 @@
         "receiveCrypto": "Nhận Crypto",
         "buyWithFiat": "Mua bằng Fiat",
         "buyWithFiatDesc": "Mua crypto đơn giản",
-        "importAddress": "Nhập một Địa chỉ",
         "fundYourWallet": "Nạp tiền vào Ví của bạn",
-        "importAddressDesc": "Thêm một địa chỉ hiện có với quỹ",
-        "receiveCryptoDesc": "Chuyển token từ địa chỉ khác",
         "noAssets": "Không có tài sản?",
         "foundGuideDesc": "Thêm token vào ví của bạn để bắt đầu.",
         "foundGuideTitle": "Nạp nhanh chóng"
       },
       "addAddress": {
         "hardwareWallet": "Ví phần cứng",
-        "createAddress": "Tạo Address",
-        "importAddress": "Nhập Địa chỉ",
         "syncRabbyExtension": "Đồng bộ tiện ích mở rộng Rabby"
       },
       "importAddress": {
         "safe": "An toàn",
-        "importTitle": "Nhập Địa chỉ",
-        "watchOnlyTitle": "Nhập Địa chỉ Chỉ-xem",
-        "watch": "Theo dõi địa chỉ",
         "hardWare": "Kết nối ví phần cứng",
         "privateKey": "Nhập Private Key",
         "seedPhrase": "Nhập Seed Phrase",
-        "safeTitle": "Nhập Safe Address",
         "tips": {
           "entry": "Có an toàn khi nhập vào Rabby không?",
           "gotIt": "Tôi đã hiểu.",
@@ -1026,7 +1000,6 @@
         "BackupSeedPhrase": "Sao lưu thủ công Seed Phrase",
         "savedPhrase": "Tôi đã lưu Cụm từ",
         "Verify": "Xác minh",
-        "createOnCurrentDesc": "Tạo địa chỉ với seed phrase đã nhập sẵn",
         "addressTopTips": "Sử dụng nó để gửi và nhận tiền điện tử trên blockchain",
         "UnderstandsecurityPrecautions": "Tôi hiểu những biện pháp phòng ngừa an ninh này.",
         "confirmPasswordTips": "Mật khẩu khớp",
@@ -1038,7 +1011,6 @@
         "Continue": "Tiếp tục",
         "createOnCurrent": "Sử dụng Cụm từ Khôi phục Hiện tại",
         "createNewSeedPhrase": "Tạo Mới Seed Phrase",
-        "createNewDesc": "Tạo cụm từ khóa mới cho các địa chỉ mới",
         "VerifyDownSeedPhrase": "Xác minh seed phrase"
       }
     },
@@ -1145,11 +1117,9 @@
       "connectWallet": "Kết nối Ví"
     },
     "newAddress": {
-      "createNewAddress": "Tạo địa chỉ mới",
       "Quick": "Nhanh chóng",
       "createNewSeedPhrase": "Tạo Cụm Từ Khóa Mới",
       "privateKey": {
-        "repeatImportTips": "Địa chỉ này đã được nhập",
         "isItSafeToImportItInRabby": {
           "question": "Có an toàn không khi nhập nó vào Rabby?",
           "answer": "Có, nó sẽ được lưu trữ cục bộ trên điện thoại của bạn và chỉ bạn mới có thể truy cập."
@@ -1213,13 +1183,10 @@
         "description2": "Nếu bạn mất cụm từ khôi phục, bạn sẽ không thể khôi phục lại ví của mình.",
         "title3": "An toàn",
         "description3": "Không bao giờ chia sẻ cụm từ khởi tạo của bạn—bất kỳ ai có quyền truy cập vào đó đều có thể kiểm soát tài khoản của bạn.",
-        "description4": "Cụm từ khởi tạo của bạn được lưu trữ cục bộ trên thiết bị của bạn và được mã hóa với mật khẩu của bạn. Chỉ có bạn mới có thể truy cập nó. Rabby không thể truy xuất hoặc truy cập cụm từ khởi tạo của bạn.",
-        "description1": "Cụm từ khởi tạo (seed phrase) là một chuỗi các từ được sử dụng để truy cập và kiểm soát địa chỉ của bạn. Bạn có thể sử dụng nó để khôi phục địa chỉ của mình trên bất kỳ thiết bị nào."
+        "description4": "Cụm từ khởi tạo của bạn được lưu trữ cục bộ trên thiết bị của bạn và được mã hóa với mật khẩu của bạn. Chỉ có bạn mới có thể truy cập nó. Rabby không thể truy xuất hoặc truy cập cụm từ khởi tạo của bạn."
       },
       "hd": {
         "balance": "Số dư",
-        "manageAddressFrom": "Quản lý địa chỉ từ {{0}} đến {{1}}",
-        "selectIndexTip": "Chọn số thứ tự của địa chỉ để bắt đầu từ:",
         "onekey": {
           "hdPathTypeNoChain": {
             "bip44": "BIP44: Đường dẫn HD được xác định bởi giao thức BIP44."
@@ -1228,18 +1195,9 @@
             "bip44": "BIP44: HDpath được định nghĩa bởi giao thức BIP44."
           }
         },
-        "customAddressHdPath": "Đường dẫn HD địa chỉ tùy chỉnh",
         "ledger": {
-          "hdPathTypeNoChain": {
-            "legacy": "Legacy: HD path used by MEW / Mycrypto. Trong 3 địa chỉ đầu tiên, không có địa chỉ nào được sử dụng trên chuỗi.",
-            "ledgerLive": "Ledger Live: Đường dẫn HD chính thức của Ledger. Trong 3 địa chỉ đầu tiên, không có địa chỉ nào được sử dụng trên chuỗi.",
-            "bip44": "Tiêu chuẩn BIP44: Đường dẫn HD được định nghĩa bởi giao thức BIP44. Trong 3 địa chỉ đầu tiên, không có địa chỉ nào được sử dụng trên chuỗi."
-          },
-          "hdPathType": {
-            "legacy": "Legacy: HD path used by MEW / Mycrypto. Trong 3 địa chỉ đầu tiên, có các địa chỉ được sử dụng trên chuỗi.",
-            "ledgerLive": "Ledger Live: Ledger official HD path. Trong 3 địa chỉ đầu tiên, có những địa chỉ được sử dụng trên chuỗi.",
-            "bip44": "BIP44 Standard: HDpath được xác định bởi giao thức BIP44. Trong 3 địa chỉ đầu tiên, có các địa chỉ được sử dụng trên chuỗi."
-          }
+          "hdPathTypeNoChain": {},
+          "hdPathType": {}
         },
         "keystone": {
           "hdPathTypeNoChain": {
@@ -1341,34 +1299,21 @@
       "manage-seed-phrase": "Quản lý Seed Phrase",
       "backup-private-key": "Sao lưu Private Key",
       "hd-path": "HD Path",
-      "delete-address": "Xóa địa chỉ",
       "qr-code": "QR Code",
-      "safeAddressListScreen": {
-        "addSafeAddress": "Thêm Địa chỉ Safe"
-      },
+      "safeAddressListScreen": {},
       "backup-seed-phrase": "Sao lưu Seed Phrase",
       "address": "Địa chỉ",
       "source": "Nguồn",
-      "watchAddressListScreen": {
-        "addWatchAddress": "Thêm địa chỉ chỉ-xem"
-      },
+      "watchAddressListScreen": {},
       "address-note": "Địa chỉ Note",
       "admins": "Quản trị viên",
-      "manage-addresses-under-this-seed-phrase": "Thêm địa chỉ từ seed phrase này",
       "remove-from-whitelist": "Xóa khỏi Whitelist",
-      "delete-desc": "Bạn có chắc chắn muốn xóa địa chỉ này không?",
       "delete-desc-needpassword": "Trước khi bạn xóa, hãy ghi nhớ những điểm sau để hiểu cách bảo vệ tài sản của bạn.",
       "addressListScreen": {
         "detail": "Chi tiết",
-        "title_other": "{{count}} Addresses",
-        "title_zero": "0 Address",
         "delete": "Xóa",
         "edit": "Chỉnh sửa",
-        "addAddress": "Thêm một Địa chỉ",
-        "importWatchAddress": "Đã nhập Địa chỉ chỉ-xem",
         "unpin": "Bỏ ghim",
-        "title_one": "{{count}} Địa chỉ",
-        "importSafeAddress": "Địa chỉ Safe đã nhập",
         "pin": "Pin"
       }
     },
@@ -1402,12 +1347,9 @@
       "emptyToken": {
         "title": "Nạp tiền vào Ví của bạn",
         "receiveHeader": "Nhận Crypto",
-        "receiveBody": "Chuyển token từ địa chỉ khác",
         "buyHeader": "Mua bằng Fiat",
         "buyBody": "Mua crypto đơn giản",
-        "importHeader": "Nhập một Địa chỉ",
-        "desc": "Nạp nhanh ngay bây giờ",
-        "importBody": "Thêm một địa chỉ hiện có có tiền."
+        "desc": "Nạp nhanh ngay bây giờ"
       },
       "nft": {
         "floorPrice": "/Giá sàn:"
@@ -1417,7 +1359,6 @@
       "title": "Phê duyệt"
     },
     "receiveAddressList": {
-      "title": "Chọn Địa chỉ Nhận",
       "selectChainTitle": "Chọn Chain"
     },
     "miniSignFooterBar": {
@@ -1489,10 +1430,8 @@
       },
       "depositPopup": {
         "invalidAmount": "Phải dưới 500",
-        "inSufficientTip1": "Địa chỉ này không có đủ token Vui lòng chọn một địa chỉ khác",
         "selectToken": "Chọn Token",
         "zeroInvalidAmount": "Số tiền không thể bằng 0",
-        "paymentAddress": "Địa chỉ Thanh toán",
         "amount": "Số lượng",
         "token": "Token",
         "followingTokenInSufficient": "Số dư token sau đây không đủ",
@@ -1505,13 +1444,10 @@
       },
       "paymentAddressPopup": {
         "confirm": "Xác nhận",
-        "address": "Địa chỉ thanh toán",
-        "balance": "Số dư",
-        "title": "Chọn địa chỉ Payment"
+        "balance": "Số dư"
       },
       "withdrawPopup": {
         "noEnoughGas": "Số tiền quá thấp để chi trả phí gas",
-        "selectRecipientAddress": "Chọn địa chỉ người nhận",
         "selectDestinationChain": "Chọn chuỗi đích",
         "title": "Rút tiền",
         "withdrawalLimit": "Giới hạn rút tiền",
@@ -1525,8 +1461,6 @@
         "destinationChain": "Chuỗi đích",
         "riskMessageFromChain": "Do kiểm soát rủi ro, hạn mức rút tiền phụ thuộc vào tổng số tiền gửi từ chuỗi này.",
         "selectChain": "Chọn Chain",
-        "recipientAddress": "Địa chỉ người nhận",
-        "noRecipient": "Không có địa chỉ Người nhận nào có sẵn",
         "noEnoughValueBalance": "Số dư Vault không đủ. Chuyển chuỗi hoặc thử lại sau."
       },
       "withdrawConfirmModal": {
@@ -1859,21 +1793,15 @@
     },
     "sendPoly": {
       "modals": {
-        "importedAddress": "Địa chỉ Nhập khẩu",
-        "content": "Chọn cách bạn muốn thêm địa chỉ:",
         "recentAddress": "Địa chỉ Gửi Gần đây",
-        "addAddress": "Địa Chỉ Mới",
         "header": "Thêm địa chỉ vào danh sách trắng"
       },
       "emptyWhitelistBtn": "Thêm ngay bây giờ",
       "enterAddress": "Nhập Địa chỉ",
       "whitelistTitle": "Danh sách địa chỉ trong whitelist của tôi",
-      "sendToImportedAddress": "Gửi đến Địa chỉ Nhập khẩu của Tôi",
       "emptyWhitelistHeader": "Thêm địa chỉ Whitelist",
-      "sendToSafeAddress": "Gửi đến Địa chỉ An toàn",
       "emptyWhitelistContent": "Thêm địa chỉ đáng tin cậy vào danh sách trắng để chuyển tiền nhanh chóng—không cần xác nhận lần tới",
       "emptyWhitelistTip": "Chưa có địa chỉ nào được đưa vào danh sách trắng,",
-      "sendToWatchAddress": "Gửi tới địa chỉ Chỉ xem",
       "sendTimeHeader": "Gửi",
       "innerEnterAddress": "Nhập Địa Chỉ / ENS",
       "recent": "Gần đây",
@@ -1897,7 +1825,6 @@
       "checkbox": "Tôi hiểu những rủi ro và muốn tiếp tục"
     },
     "selectAddress": {
-      "selectWatchAddress": "Chọn từ địa chỉ chỉ xem",
       "selectSafeAddress": "Chọn từ địa chỉ Safe"
     },
     "whitelist": {
@@ -2051,8 +1978,6 @@
       }
     },
     "accountSwitcher": {
-      "screenHeaderSubTitle_other": "{{count}} địa chỉ",
-      "screenHeaderSubTitle_one": "1 address",
       "all": "Tất cả"
     },
     "AuthenticationModal": {
@@ -2106,10 +2031,7 @@
         "amount": "Số lượng",
         "desc": "Gửi tiền vào tài khoản DeBank L2 của Rabby mà không mất phí — rút tiền bất cứ lúc nào."
       },
-      "loginConfirmModal": {
-        "title": "Chọn một địa chỉ để đăng nhập",
-        "desc": "Khi đăng nhập, bạn chỉ có thể gửi nó đến địa chỉ này."
-      },
+      "loginConfirmModal": {},
       "withdrawPopup": {
         "to": "Đến",
         "amount": "Số lượng",

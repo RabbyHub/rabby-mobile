@@ -3,12 +3,9 @@
     "addressStackTitle": {
       "CreateSelectMethod": "1. Выберите метод создания",
       "ImportMethods": "Выберите метод импорта",
-      "ImportMoreAddress": "Импортировать больше адресов",
       "CreateMnemonicBackup": "Резервная копия seed-фразы",
       "ImportMnemonic": "Импортировать Seed Phrase",
       "SafeAddressList": "Безопасный адрес",
-      "ImportNewAddress": "Добавить адрес",
-      "ImportWatchAddress2024": "Добавить адрес только для просмотра",
       "ImportSuccess": "Успешно добавлено",
       "ImportPrivateKey": "Импортировать Private Key",
       "ImportSafeAddress2024": "Добавить адрес Safe",
@@ -16,15 +13,10 @@
       "AddMnemonic": "Добавить из текущей Seed Phrase",
       "ImportHardwareAddress": "Подключение аппаратных кошельков",
       "RestoreFromCloud": "Восстановить из {{type}}",
-      "CreateNewAddress": "1. Назовите ваш адрес",
       "VerifySeedPhrase": "Проверить seed phrase",
       "SetPassword2024": "2. Установить пароль",
       "CreateChooseBackup": "3. Выберите метод резервного копирования",
-      "AddressDetail": "Детали адреса",
-      "WatchAddressList": "Наблюдаемое-Only Адрес",
-      "CreateSelectOnCurrentSeed": "2. Добавить адрес",
-      "BackupSeedPhrase": "Резервная копия Seed Phrase",
-      "ConfrimAddress": "Подтвердите ваш адрес"
+      "BackupSeedPhrase": "Резервная копия Seed Phrase"
     }
   },
   "native": {
@@ -87,10 +79,7 @@
   },
   "page": {
     "getStart": {
-      "createNewAddress": "Создать новый адрес",
-      "goToHome": "Перейти на главную",
-      "alreadyHaveAddress": "У меня уже есть адрес",
-      "sync": "Отсканируйте для синхронизации адреса расширения Rabby"
+      "goToHome": "Перейти на главную"
     },
     "transactions": {
       "explain": {
@@ -129,7 +118,6 @@
         "Status": "Статус",
         "RevokeToken": "Отозвать токен",
         "ApproveTo": "Подтвердить для",
-        "RecipientAddress": "Адрес получателя",
         "From": "От",
         "RevokeFrom": "Отозвать из",
         "InteractedContract": "Взаимодействующий контракт",
@@ -182,8 +170,7 @@
     },
     "importSuccess": {
       "addressCount": "{{count}} Адресов",
-      "success": "{{type}} успешно!",
-      "importMore": "Импортировать больше адресов"
+      "success": "{{type}} успешно!"
     },
     "signTypedData": {
       "permit": {
@@ -249,8 +236,7 @@
         "notEnough": "Gas баланса недостаточно",
         "GetFreeGasToSign": "Получите бесплатный Gas",
         "customRpcUnavailableTip": "Пользовательские RPC не поддерживаются для Free Gas",
-        "walletConnectUnavailableTip": "Поддержка мобильных кошельков, подключенных через WalletConnect, для Free Gas отсутствует.",
-        "watchUnavailableTip": "Для адреса только для просмотра не поддерживается Free Gas."
+        "walletConnectUnavailableTip": "Поддержка мобильных кошельков, подключенных через WalletConnect, для Free Gas отсутствует."
       },
       "blockDappFromSendingRequests": "Блокировать запросы от Dapp в течение 1 минуты",
       "cancelTransaction": "Отменить транзакцию",
@@ -539,7 +525,6 @@
         "simulationFailed": "Симуляция транзакции не удалась",
         "unknownAddress": "Неизвестный адрес",
         "receiver": "Получатель",
-        "notPaymentAddress": "Не адрес для оплаты",
         "failLoadReceiveToken": "Не удалось загрузить",
         "title": "Обменять Token",
         "slippageTolerance": "Допуск проскальзывания",
@@ -857,9 +842,7 @@
       "cancel": "Отмена",
       "seed-phrase": "Seed Phrase",
       "watch-address": "Отслеживаемый адрес",
-      "add-address": "Добавить адрес",
       "passphraseError": "Неверная passphrase",
-      "delete-checklist-1": "Я понимаю, что если я удалю этот адрес, соответствующий приватный ключ и сид-фраза будут удалены, и Rabby НЕ сможет их восстановить.",
       "private-key": "Приватный ключ",
       "delete-checklist-2": "Я подтверждаю, что сделал резервную копию личного ключа или seed phrase и готов его сейчас удалить.",
       "enterPassphraseTitle": "Введите парольную фразу для подписания",
@@ -1001,11 +984,8 @@
         "pin": "Пин-код",
         "receiveCrypto": "Получить Crypto",
         "noAssets": "Нет активов?",
-        "importAddressDesc": "Добавить существующий адрес с средствами",
-        "importAddress": "Импортировать адрес",
         "buyWithFiat": "Купить за фиат",
         "buyWithFiatDesc": "Простая покупка криптовалюты",
-        "receiveCryptoDesc": "Перевод токенов с другого адреса",
         "fundYourWallet": "Пополните ваш кошелек",
         "foundGuideDesc": "Добавьте токены в ваш кошелек, чтобы начать.",
         "foundGuideTitle": "Быстро пополнить"
@@ -1018,7 +998,6 @@
         "inOrder": "в правильном порядке.",
         "Verify": "Проверить",
         "confirmPasswordTips": "Пароли совпадают",
-        "createOnCurrentDesc": "Создать адрес с существующей импортированной seed phrase",
         "selectWords": "Выберите слова",
         "whatIsSeedPhrase": "Что такое Seed Phrase",
         "Confirm": "Подтвердить",
@@ -1026,7 +1005,6 @@
         "UnderstandsecurityPrecautions": "Я понимаю эти меры безопасности.",
         "BackupSeedPhrase": "Ручное резервное копирование Seed Phrase",
         "savedPhrase": "Я сохранил фразу",
-        "createNewDesc": "Создать новую сид-фразу для новых адресов",
         "passwordMin": "Должно быть не менее 8 символов",
         "createOnCurrent": "Использовать текущую Seed Phrase",
         "passwordTopTips": "Этот пароль будет использоваться для разблокировки вашего кошелька и для шифрования ваших локальных данных.",
@@ -1037,11 +1015,7 @@
       },
       "importAddress": {
         "seedPhrase": "Импортировать Seed Phrase",
-        "safeTitle": "Импортировать Safe Address",
         "privateKey": "Импортировать приватный ключ",
-        "importTitle": "Импортировать адрес",
-        "watch": "Только для просмотра адреса",
-        "watchOnlyTitle": "Импортировать адрес только для просмотра",
         "hardWare": "Подключить аппаратные кошельки",
         "safe": "Безопасный",
         "tips": {
@@ -1053,14 +1027,11 @@
       },
       "addAddress": {
         "hardwareWallet": "Аппаратный кошелек",
-        "createAddress": "Создать адрес",
-        "importAddress": "Импортировать адрес",
         "syncRabbyExtension": "Синхронизировать Rabby Extension"
       }
     },
     "newAddress": {
       "Quick": "Быстрый",
-      "createNewAddress": "Создать новый адрес",
       "createNewSeedPhrase": "Создать новую seed-фразу",
       "addContacts": {
         "cameraTitle": "Пожалуйста, отсканируйте QR-код вашей камерой."
@@ -1073,8 +1044,7 @@
         "description2": "Если вы потеряете свою seed phrase, вы не сможете восстановить свой кошелек.",
         "title3": "Безопасность",
         "description3": "Никогда не делитесь вашей seed phrase — любой, кто получит к ней доступ, сможет управлять вашими средствами.",
-        "description4": "Ваша seed phrase хранится локально на вашем устройстве и зашифрована вашим паролем. Только вы можете получить к ней доступ. Rabby не может извлечь или получить доступ к вашей seed phrase.",
-        "description1": "Сид-фраза – это серия слов, используемых для доступа и управления вашим адресом. Вы можете использовать её для восстановления вашего адреса на любом устройстве."
+        "description4": "Ваша seed phrase хранится локально на вашем устройстве и зашифрована вашим паролем. Только вы можете получить к ней доступ. Rabby не может извлечь или получить доступ к вашей seed phrase."
       },
       "keystone": {
         "camera": {
@@ -1087,7 +1057,6 @@
         }
       },
       "privateKey": {
-        "repeatImportTips": "Этот адрес был импортирован.",
         "whatIsAPrivateKey": {
           "question": "Что такое private key?",
           "answer": "Строка из букв и цифр, используемая для управления вашими активами."
@@ -1205,9 +1174,6 @@
       },
       "hd": {
         "balance": "Баланс",
-        "manageAddressFrom": "Управляйте адресом от {{0}} до {{1}}",
-        "customAddressHdPath": "Пользовательский путь HD-адреса",
-        "selectIndexTip": "Выберите серийный номер адресов, с которого начать:",
         "onekey": {
           "hdPathType": {
             "bip44": "BIP44: HDpath, определенный протоколом BIP44."
@@ -1229,16 +1195,8 @@
           }
         },
         "ledger": {
-          "hdPathType": {
-            "ledgerLive": "Ledger Live: Официальный HD путь Ledger. На первых 3 адресах есть адреса, используемые в сети.",
-            "bip44": "Стандарт BIP44: HD-путь, определяемый протоколом BIP44. В первых 3 адресах имеются адреса, используемые в цепочке.",
-            "legacy": "Наследие: HD путь, используемый MEW / Mycrypto. В первых 3 адресах есть адреса, использованные на блокчейне."
-          },
-          "hdPathTypeNoChain": {
-            "legacy": "Legacy: HD путь, используемый MEW / Mycrypto. В первых 3 адресах нет адресов, используемых в блокчейне.",
-            "ledgerLive": "Ledger Live: Официальный HD путь Ledger. На первых 3 адресах отсутствуют адреса, использованные в цепочке.",
-            "bip44": "Стандарт BIP44: HD-путь, определяемый протоколом BIP44. В первых 3 адресах нет используемых на цепочке адресов."
-          }
+          "hdPathType": {},
+          "hdPathTypeNoChain": {}
         },
         "qrCode": {
           "switch": {
@@ -1280,17 +1238,11 @@
       "hd-path": "HD Path",
       "address": "Address",
       "pin-in-list": "Закрепить в списке",
-      "watchAddressListScreen": {
-        "addWatchAddress": "Добавить наблюдаемые адреса"
-      },
+      "watchAddressListScreen": {},
       "add-to-whitelist": "Добавить в белый список",
-      "safeAddressListScreen": {
-        "addSafeAddress": "Добавить безопасные адреса"
-      },
-      "delete-address": "Удалить адрес",
+      "safeAddressListScreen": {},
       "manage-seed-phrase": "Управление Seed Phrase",
       "assets": "Активы",
-      "manage-addresses-under-this-seed-phrase": "Добавить адрес из этой seed phrase",
       "address-note": "Address Note - Адресная заметка",
       "remove-from-whitelist": "Удалить из белого списка",
       "admins": "Админы",
@@ -1300,18 +1252,11 @@
         "detail": "Детали",
         "unpin": "Открепить",
         "delete": "Удалить",
-        "title_one": "{{count}} адрес",
         "pin": "Пин",
-        "edit": "Редактировать",
-        "title_other": "{{count}} адресов",
-        "addAddress": "Добавить адрес",
-        "title_zero": "0 Address",
-        "importSafeAddress": "Импортированные Safe адреса",
-        "importWatchAddress": "Импортированные адреса только для просмотра"
+        "edit": "Редактировать"
       },
       "backup-private-key": "Резервное копирование Private Key",
-      "delete-desc-needpassword": "Прежде чем удалить, обратите внимание на следующие моменты, чтобы понять, как защитить ваши активы.",
-      "delete-desc": "Вы уверены, что хотите удалить этот адрес?"
+      "delete-desc-needpassword": "Прежде чем удалить, обратите внимание на следующие моменты, чтобы понять, как защитить ваши активы."
     },
     "safeQueue": {
       "viewBtn": "Просмотр",
@@ -1531,12 +1476,9 @@
       "emptyToken": {
         "buyHeader": "Купить за Fiat",
         "title": "Пополните ваш кошелек",
-        "receiveBody": "Переведите токены с другого адреса",
         "receiveHeader": "Получить Crypto",
         "buyBody": "Простая покупка криптовалюты",
-        "importBody": "Добавить существующий адрес с средствами.",
-        "desc": "Пополните быстро сейчас",
-        "importHeader": "Импортировать адрес"
+        "desc": "Пополните быстро сейчас"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1552,7 +1494,6 @@
       }
     },
     "receiveAddressList": {
-      "title": "Выберите адрес для получения",
       "selectChainTitle": "Выберите Chain"
     },
     "customTestnet": {
@@ -1670,9 +1611,7 @@
         "noHistory": "За последние 30 дней данных нет"
       },
       "depositPopup": {
-        "paymentAddress": "Адрес для оплаты",
         "amount": "Сумма",
-        "inSufficientTip1": "У этого адреса недостаточно токенов. Пожалуйста, выберите другой адрес.",
         "selectToken": "Выбрать Token",
         "followingTokenInSufficient": "Следующего баланса токена недостаточно",
         "token": "Токен",
@@ -1686,13 +1625,10 @@
         "googlePayFeeDesc": "Включает комиссию Google Pay. Без выводов"
       },
       "paymentAddressPopup": {
-        "address": "Платёжный адрес",
         "confirm": "Подтвердить",
-        "title": "Выберите адрес оплаты",
         "balance": "Баланс"
       },
       "withdrawPopup": {
-        "selectRecipientAddress": "Выберите адрес получателя",
         "withdrawalLimit": "Лимит на снятие средств",
         "selectDestinationChain": "Выберите целевую цепочку",
         "noEnoughGas": "Сумма слишком мала, чтобы покрыть gas fees",
@@ -1702,14 +1638,12 @@
         "noEnoughValuetBalance": "Баланс Vault недостаточен. Переключите цепочку или попробуйте позже.",
         "destinationChain": "Целевая сеть",
         "tipsBtn": "Я понял",
-        "recipientAddress": "Адрес получателя",
         "to": "К",
         "title": "Вывод средств",
         "selectChain": "Выбрать Chain",
         "deductGasFees": "Полученная сумма будет за вычетом комиссии за газ",
         "desc": "Вы можете вывести баланс GasAccount на ваш кошелек DeBank L2. Войдите в ваш кошелек DeBank L2, чтобы перевести средства на поддерживаемую блокчейн-сеть при необходимости.",
-        "noEnoughValueBalance": "Баланс в Vault недостаточен. Переключите сеть или попробуйте позже.",
-        "noRecipient": "Нет доступного адреса получателя"
+        "noEnoughValueBalance": "Баланс в Vault недостаточен. Переключите сеть или попробуйте позже."
       },
       "withdrawConfirmModal": {
         "title": "Переведено на ваш DeBank L2 кошелек",
@@ -1859,21 +1793,15 @@
     },
     "sendPoly": {
       "modals": {
-        "importedAddress": "Импортированный адрес",
-        "addAddress": "Новый адрес",
         "header": "Добавить адрес в белый список",
-        "recentAddress": "Недавние отправленные адреса",
-        "content": "Выберите, как вы хотите добавить адрес:"
+        "recentAddress": "Недавние отправленные адреса"
       },
       "emptyWhitelistBtn": "Добавить сейчас",
-      "sendToImportedAddress": "Отправить на мои импортированные адреса",
       "enterAddress": "Введите адрес",
-      "sendToWatchAddress": "Отправить на адреса только для просмотра",
       "emptyWhitelistHeader": "Добавить адрес в белый список",
       "whitelistTitle": "Мои адреса в белом списке",
       "emptyWhitelistContent": "Добавьте доверенные адреса в белый список для быстрых переводов — в следующий раз подтверждение не потребуется",
       "emptyWhitelistTip": "Еще нет добавленных в белый список адресов,",
-      "sendToSafeAddress": "Отправить на безопасные адреса",
       "innerEnterAddress": "Введите адрес / ENS",
       "SendHistory": "История отправлений",
       "SelectFromHistory": "Выбрать из истории",
@@ -1897,8 +1825,7 @@
       "checkbox": "Я понимаю риски и хочу продолжить"
     },
     "selectAddress": {
-      "selectSafeAddress": "Выберите из адресов Safe",
-      "selectWatchAddress": "Выберите из адресов только для просмотра"
+      "selectSafeAddress": "Выберите из адресов Safe"
     },
     "whitelist": {
       "confirmPassword": "Введите пароль для подтверждения",
@@ -2015,8 +1942,6 @@
       }
     },
     "accountSwitcher": {
-      "screenHeaderSubTitle_one": "1 address",
-      "screenHeaderSubTitle_other": "{{count}} адресов",
       "all": "Все"
     },
     "AuthenticationModal": {
@@ -2102,10 +2027,7 @@
         "login": "Войти в GasAccount",
         "title": "Депозит USDC / USDT"
       },
-      "loginConfirmModal": {
-        "title": "Выберите адрес для входа",
-        "desc": "После входа вы можете делать депозиты только на этот адрес."
-      },
+      "loginConfirmModal": {},
       "withdrawPopup": {
         "title": "Вывести средства",
         "to": "К ",
