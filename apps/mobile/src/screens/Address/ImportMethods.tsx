@@ -179,15 +179,6 @@ function ImportMethods(): JSX.Element {
               // hasArrow={state?.isNotNewUserProc}
               style={styles.importItem}
               onPress={async () => {
-                if (
-                  state?.isNotNewUserProc &&
-                  (await shouldRedirectToSetPasswordBefore2024({
-                    backScreen: RootNames.SelectImportAddress,
-                  }))
-                ) {
-                  return;
-                }
-
                 onPressCloud();
               }}>
               <Image
