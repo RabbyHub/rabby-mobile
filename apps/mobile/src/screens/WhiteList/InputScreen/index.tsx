@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
@@ -102,6 +102,8 @@ const WhitelistInputScreen = () => {
     setHistoryVisible(false);
   }, []);
 
+  const confrimModalIRef = useRef<any>(null);
+
   const handleDone = async () => {
     if (!input) {
       setError(INPUT_ERROR.REQUIRED);
@@ -122,7 +124,12 @@ const WhitelistInputScreen = () => {
       if (inWhitelist) {
         toast.show(t('page.whitelist.alreadyAdded'));
       } else {
-        const id = createGlobalBottomSheetModal2024({
+        if (confrimModalIRef.current) {
+          removeGlobalBottomSheetModal2024(confrimModalIRef.current);
+          confrimModalIRef.current = null;
+          return;
+        }
+        confrimModalIRef.current = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.CONFIRM_ADDRESS,
           account: {
             ...account,
@@ -135,10 +142,14 @@ const WhitelistInputScreen = () => {
             enableDynamicSizing: true,
           },
           onCancel: () => {
-            removeGlobalBottomSheetModal2024(id);
+            confrimModalIRef.current &&
+              removeGlobalBottomSheetModal2024(confrimModalIRef.current);
+            confrimModalIRef.current = null;
           },
           async onConfirm() {
-            removeGlobalBottomSheetModal2024(id);
+            confrimModalIRef.current &&
+              removeGlobalBottomSheetModal2024(confrimModalIRef.current);
+            confrimModalIRef.current = null;
             matomoRequestEvent({
               category: 'Send Usage',
               action: isImported
