@@ -600,17 +600,24 @@ export const AssetContainer: React.FC<Props> = ({
     );
   }, [chainsInfo.chainLength, loadingNft, loadingPortfolio, loadingToken]);
 
-  const netWorkErrorNotAssets = useMemo(() => {
-    return errorType === 'network' && hasNotAssets && hasNoCurveData;
+  const errorNotAssets = useMemo(() => {
+    return errorType && hasNotAssets && hasNoCurveData;
   }, [errorType, hasNoCurveData, hasNotAssets]);
 
   if (!currentAccount?.address) {
     return null;
   }
-  if (netWorkErrorNotAssets) {
+  if (errorNotAssets) {
     return (
       <NetWorkError
-        onRefresh={refreshNetWorkStatus}
+        errorType={errorType}
+        onRefresh={() => {
+          if (errorType === 'network') {
+            refreshNetWorkStatus();
+          } else {
+            handleRefresh(true);
+          }
+        }}
         style={styles.netWorkError}
       />
     );
