@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column, In } from 'typeorm';
+import { Entity, Column, In } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';

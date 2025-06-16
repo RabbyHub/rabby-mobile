@@ -9,13 +9,19 @@ import {
 const Component = (
   Platform.OS === 'android' ? View : OriginBlurView
 ) as typeof OriginBlurView;
-export const BlurView = forwardRef(
-  (
-    props: Omit<BlurViewProps, 'blurType'> & {
-      blurType?: BlurViewProps['blurType'];
-    },
-    ref: LegacyRef<typeof OriginBlurView>,
-  ) => {
+
+type Props = Omit<BlurViewProps, 'blurType'> & {
+  /** @description only valid for android */
+  blurRadius?: number;
+  blurType?: BlurViewProps['blurType'];
+};
+/**
+ * @description A wrapper for the BlurView component that sets the blurType based on the current theme.
+ *
+ * Blur Effect is only supported on IOS.
+ */
+export const BlurView = forwardRef<typeof OriginBlurView, Props>(
+  (props, ref) => {
     const { blurAmount = 80, blurRadius = 30, ...otherProps } = props;
     const theme = useGetBinaryMode();
     return (
@@ -23,7 +29,7 @@ export const BlurView = forwardRef(
         {...otherProps}
         blurAmount={blurAmount}
         blurRadius={blurRadius}
-        ref={ref}
+        ref={ref as any}
         blurType={theme ?? undefined}
       />
     );

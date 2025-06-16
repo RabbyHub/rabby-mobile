@@ -12,6 +12,7 @@ export const ArrowCircleCC = (
   const { color, backgroundColor, width = 26, height = 26, ...rest } = props;
   return (
     <Svg
+      // @ts-expect-error type don't need it
       xmlns="http://www.w3.org/2000/svg"
       width={width}
       height={height}
@@ -39,6 +40,7 @@ export const QrCircleCC = (
   const { color, backgroundColor, ...rest } = props;
   return (
     <Svg
+      // @ts-expect-error type don't need it
       xmlns="http://www.w3.org/2000/svg"
       width={26}
       height={26}

@@ -24,7 +24,11 @@ import { naviPush } from '@/utils/navigation';
 import { getTokenSymbol } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { formatTokenAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
-import { ReceiveTokenItem, SwapRequireData } from '@rabby-wallet/rabby-action';
+import {
+  ParsedTransactionActionData,
+  ReceiveTokenItem,
+  SwapRequireData,
+} from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -119,18 +123,27 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
     );
   }, [accounts, data]);
 
-  const receiveToken: ReceiveTokenItem =
-    actionData.minReceive ||
-    actionData.receiveToken ||
-    data.maxGasTx.explain?.balance_change?.receive_token_list[0];
+  const receiveToken: ReceiveTokenItem = useMemo(() => {
+    if (actionData && 'minReceive' in actionData) {
+      return actionData.minReceive as ReceiveTokenItem;
+    }
+    return (
+      actionData?.receiveToken ||
+      data.maxGasTx.explain?.balance_change?.receive_token_list[0]
+    );
+  }, [actionData, data.maxGasTx.explain?.balance_change?.receive_token_list]);
 
   const payToken: TokenItem =
-    actionData.payToken ||
+    actionData?.payToken ||
     data.maxGasTx.explain?.balance_change?.send_token_list[0];
 
   if (!chain) {
     return null;
   }
+
+  const source = data.originTx?.$ctx?.ga?.source ?? '';
+
+  const isLocalSwap = source === 'approvalAndSwap|swap' || source === 'swap';
 
   return (
     <>
@@ -297,7 +310,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
           </View>
         </View>
       </ScrollView>
-      {
+      {isLocalSwap && (
         <View style={[styles.buttonContainer, { paddingBottom: bottom + 27 }]}>
           <View style={{ flex: 1 }}>
             <Button
@@ -328,7 +341,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
             />
           </View>
         </View>
-      }
+      )}
     </>
   );
 };

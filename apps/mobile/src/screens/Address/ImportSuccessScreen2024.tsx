@@ -140,9 +140,6 @@ export const ImportSuccessScreen2024 = () => {
       {
         delay: 500,
         duration: 3000,
-        containerStyle: {
-          width: 320,
-        },
       },
     );
 

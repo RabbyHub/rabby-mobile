@@ -1663,5 +1663,4 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
 };
 
 const chainByServerId = keyBy(CHAINS_RAW_LIST, 'serverId')
-export const DEFAULT_CHAIN_LIST: Chain[] = Object.values(SupportedChainsByServerId).map(item => supportedChainToChain(item, chainByServerId));
-  
+export const DEFAULT_CHAIN_LIST: Chain[] = Object.values(SupportedChainsByServerId).map(item => supportedChainToChain(item));

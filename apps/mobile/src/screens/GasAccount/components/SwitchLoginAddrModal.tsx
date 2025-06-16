@@ -34,7 +34,7 @@ export const SwitchLoginAddrBeforeDepositModal: React.FC<
             {t('page.gasAccount.switchLoginAddressBeforeDeposit.desc')}
           </Text>
           <View style={styles.accountContainer}>
-            <GasAccountCurrentAddress twoColumn />
+            <GasAccountCurrentAddress />
           </View>
           <Button
             title={t('global.ok')}

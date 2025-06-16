@@ -99,6 +99,7 @@ import { toast } from '@/components2024/Toast';
 import { Account } from '@/core/services/preference';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { last } from 'lodash';
+import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -369,6 +370,18 @@ const Swap = ({
               (activeProvider?.quote.toTokenDecimals || receiveToken.decimals),
           )
           .toNumber();
+        const addSwapTxHistoryObj = {
+          chainId: findChainByEnum(chain)?.id || 0,
+          address: currentAccount?.address!,
+          fromToken: payToken,
+          toToken: receiveToken,
+          slippage: new BigNumber(slippage).div(100).toNumber(),
+          fromAmount: Number(payAmount),
+          toAmount: receive_token_amount,
+          dexId: activeProvider?.name || 'WrapToken',
+          createdAt: Date.now(),
+          status: 'pending' as SwapTxHistoryItem['status'],
+        };
         await dexSwap(
           {
             swapPreferMEVGuarded: !!preferMEVGuarded,
@@ -406,20 +419,8 @@ const Swap = ({
               swapUseSlider,
             },
           },
+          addSwapTxHistoryObj,
         );
-        transactionHistoryService.addSwapTxHistory({
-          hash: activeProvider.quote.tx.data,
-          chainId: findChainByEnum(chain)?.id || 0,
-          address: currentAccount?.address!,
-          fromToken: payToken,
-          toToken: receiveToken,
-          slippage: new BigNumber(slippage).div(100).toNumber(),
-          fromAmount: Number(payAmount),
-          toAmount: receive_token_amount,
-          dexId: activeProvider?.name || 'WrapToken',
-          createdAt: Date.now(),
-          status: 'pending',
-        });
         handleAmountChange('');
         runFetchLocalPendingTx();
         setTimeout(() => {

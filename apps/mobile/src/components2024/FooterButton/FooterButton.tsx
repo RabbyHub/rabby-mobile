@@ -4,10 +4,12 @@ import React from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import { ButtonProps, Button } from '../Button';
 
-export type FootButtonProps = ButtonProps & {
-  width?: number;
-  footerStyle?: StyleProp<ViewStyle>;
-};
+export type FootButtonProps = React.PropsWithChildren<
+  ButtonProps & {
+    width?: number;
+    footerStyle?: StyleProp<ViewStyle>;
+  }
+>;
 
 const getStyles = createGetStyles(colors => ({
   footer: {

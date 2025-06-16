@@ -51,7 +51,7 @@ export const DappSearchCardList = ({
   onChainChange?: (chain?: CHAINS_ENUM) => void;
   loading?: boolean;
   ListEmptyComponent?: FlatListProps<any>['ListEmptyComponent'];
-  account: Account;
+  account?: Account;
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });

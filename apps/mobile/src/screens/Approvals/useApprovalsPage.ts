@@ -173,7 +173,7 @@ function sortContractApproval<T extends ContractApprovalItem>(
 
 export function useApprovalsPageOnTop(options: {
   isTestnet?: boolean;
-  account: Account;
+  account: Account | null;
 }) {
   const { account: currentAccount } = options;
   const [filterType, setFilterType] = useState<keyof typeof FILTER_TYPES>(
@@ -628,7 +628,13 @@ export const ApprovalsPageContext = React.createContext<
       bottomSheetConfirmAreaHeight:
         ApprovalsLayouts.bottomSheetConfirmAreaHeight,
     },
+    cutOffSizes: {
+      bottomAreaHeight: ApprovalsLayouts.bottomAreaHeight,
+      bottomSheetConfirmAreaHeight:
+        ApprovalsLayouts.bottomSheetConfirmAreaHeight,
+    },
   },
+  displaySortedAssetsList: [],
 });
 
 export function useApprovalsPage() {

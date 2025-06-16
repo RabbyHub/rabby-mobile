@@ -31,7 +31,11 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { SearchInput } from '../Form/SearchInput';
-import { getTokenSymbol } from '@/utils/token';
+import {
+  DisplayedTokenWithOwner,
+  getTokenSymbol,
+  TokenItemFromAbstractPortfolioToken,
+} from '@/utils/token';
 import { formatAmount, formatPrice } from '@/utils/number';
 import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
@@ -63,7 +67,7 @@ import {
 } from '@react-navigation/native';
 import { Account } from '@/core/services/preference';
 import { isSameAccount } from '@/hooks/accountsSwitcher';
-import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
+import { type TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 import { AccountInfoInTokenRow } from './AccountWidgets';
 import { isWatchOrSafeAccount } from '@/utils/account';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -72,7 +76,10 @@ import {
   TransactionNavigatorParamList,
 } from '@/navigation-type';
 import { TokenItemContextMenu } from './TokenContextMenu';
-import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
+import {
+  ExternalTokenRow,
+  TokenRowDataType,
+} from '@/screens/Home/components/AssetRenderItems';
 import NetSwitchTabs from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { isScamTokenForSelect } from '@/screens/Home/utils/collection';
@@ -117,6 +124,21 @@ export type TokenSelectType =
   | 'bridgeFrom'
   | 'bridgeTo';
 
+type TokenItemFromAbstractPortfolioTokenWithExtra =
+  TokenItemFromAbstractPortfolioToken & {
+    logoUrls?: string[];
+  };
+export type TokenItemForRender = {
+  _chain: string;
+  recentList: ((
+    | TokenItem
+    | Omit<TokenItemFromAbstractPortfolioToken, 'isPinned' | 'pinIndex'>
+  ) & { group?: string })[];
+  TokenRender: React.ComponentType<{
+    token: TokenItem;
+    ownerAccount: DisplayedTokenWithOwner['ownerAccount'];
+  }>;
+};
 export interface TokenSelectorProps<
   T extends TokenSelectType = TokenSelectType,
 > {
@@ -146,7 +168,10 @@ export interface TokenSelectorProps<
   selectToken?: TokenItem & { tokenId?: string };
   searchPlaceholder?: string;
   disableItemCheck?: ITokenCheck;
-  unshiftList?: { data: TokenItem[]; header?: () => React.ReactNode }[];
+  unshiftList?: {
+    data: TokenItemForRender[];
+    header?: () => React.ReactNode;
+  }[];
   showTestNetSwitch?: boolean;
   selectTab?: 'mainnet' | 'testnet';
   onTabChange?: (tab: 'mainnet' | 'testnet') => void;
@@ -397,7 +422,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
           _chain: x.chain,
           // @ts-expect-error
           trade_volume_level: x?.trade_volume_level,
-          $origin: x,
+          /**
+           * @description in fact, it's impossible to be TokenItemFromAbstractPortfolioToken, it's always TokenItemForRender!
+           * Just left here to keep the type consistent for old code
+           */
+          $origin: x as
+            | TokenItemForRender
+            | TokenItemFromAbstractPortfolioTokenWithExtra,
         };
       });
 
@@ -461,8 +492,19 @@ export const TokenSelectorSheetModal = React.forwardRef<
         if (isLoading) {
           return null;
         }
+        // @TODO Code below is just for compatibility, developer should vary TokenItemForRender
+        // with real TokenItem(including Token, TokenItemFromAbstractPortfolioToken), and remove this cast.
+        //
+        // In fact, TokenItemForRender needn't be mixed with real TokenItem, it's only passed from `unshiftList` and used
+        // ONLY ONCE globally in `apps/mobile/src/screens/Swap/components/TokenSelect.tsx`, it's ALWAYS from `recentDisplayToTokens` in it.
+        //
+        // You can pass TokenItemForRender from another property, such as `extraRenderData` rather than `unshiftList`, as it's NOT something in list.
+        const $originMaybeToken =
+          token.$origin as TokenItemFromAbstractPortfolioTokenWithExtra;
+        const $originMaybeRender = token.$origin as TokenItemForRender;
+
         const { disable: lightDisable } =
-          disableItemCheck?.(token.$origin) || {};
+          disableItemCheck?.($originMaybeToken) || {};
 
         const ownerAccount =
           'ownerAccount' in token.$origin ? token.$origin.ownerAccount : null;
@@ -472,8 +514,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
         const showOwnerAccount = !chainSearchCtx.filterAccountItem;
 
-        if (token.$origin.recentList?.length && token.$origin.TokenRender) {
-          const TokenRender = token.$origin.TokenRender;
+        if (
+          $originMaybeRender.recentList?.length &&
+          $originMaybeRender.TokenRender
+        ) {
+          const TokenRender = $originMaybeRender.TokenRender;
           return (
             <View
               style={{
@@ -484,7 +529,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 marginHorizontal: 12,
                 marginBottom: 16,
               }}>
-              {token.$origin.recentList?.map(tokenItem => (
+              {$originMaybeRender.recentList?.map(tokenItem => (
                 <TouchableOpacity
                   key={tokenItem.id}
                   onPress={() => {
@@ -499,17 +544,17 @@ export const TokenSelectorSheetModal = React.forwardRef<
         }
 
         const isPined =
-          token?.$origin.isPined ||
+          $originMaybeToken.isPined ||
           userTokenSettings.pinedQueue.some(
             pinned =>
-              pinned.chainId === token?.$origin?.chain &&
-              pinned.tokenId === token?.$origin?.id,
+              pinned.chainId === $originMaybeToken?.chain &&
+              pinned.tokenId === $originMaybeToken?.id,
           );
-        const isManualFold = token?.$origin.isManualFold;
+        const isManualFold = $originMaybeToken.isManualFold;
         const isSelected = selectToken && selectToken.tokenId === token.id;
         const token_key = [
           ownerKey,
-          `${token.$origin.id}-${token._symbol}-${token._chain}`,
+          `${$originMaybeToken.id}-${token._symbol}-${token._chain}`,
         ]
           .filter(Boolean)
           .join('-');
@@ -520,7 +565,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           !supportChains.includes(currentChainItem.enum);
 
         const isExcludeBalanceShowTips =
-          token.$origin.isExcludeBalance &&
+          $originMaybeToken.isExcludeBalance &&
           isFromModalType &&
           (token._netWorth || 0) > 0;
 
@@ -532,12 +577,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
               }}
               style={styles.scamHeader}
               total={token.amount}
-              logoUrls={token.$origin.logoUrls}
+              logoUrls={$originMaybeToken.logoUrls}
             />
           );
         }
 
-        if (token.$origin.isFakerFoldRow) {
+        if ($originMaybeToken.isFakerFoldRow) {
           return (
             <View style={StyleSheet.flatten([styles.tokenRowWrap])}>
               <View style={styles.tokenRowTokenWrap}>
@@ -564,7 +609,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               </View>
               <View style={styles.tokenRowUsdValueWrap}>
                 <Text style={styles.tokenRowUsdValue}>
-                  {token.$origin.smallTokenAllUsdValue}
+                  {$originMaybeToken.smallTokenAllUsdValue}
                 </Text>
               </View>
             </View>
@@ -578,7 +623,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           return (
             <View style={{ marginTop: 8, marginHorizontal: 12 }}>
               <TokenItemContextMenu
-                token={token.$origin}
+                token={$originMaybeToken}
                 closeBottomSheet={() => {
                   toggleShowSheetModal('destroy');
                 }}
@@ -593,13 +638,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
                       disabledTips && toast.info(disabledTips);
                       return;
                     }
-                    onConfirm(token.$origin);
+                    onConfirm($originMaybeToken);
                     toggleShowSheetModal('collapse');
                   }}>
                   <ExternalTokenRow
                     decimalPrecision
                     isPined={isPined}
-                    data={token.$origin as unknown as any}
+                    data={token.$origin as TokenRowDataType}
                     logoSize={40}
                     touchable={false}
                   />
@@ -628,7 +673,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     disabledTips && toast.info(disabledTips);
                     return;
                   }
-                  onConfirm(token.$origin);
+                  onConfirm($originMaybeToken);
                   toggleShowSheetModal('collapse');
                 }}
                 style={[
@@ -786,26 +831,31 @@ export const TokenSelectorSheetModal = React.forwardRef<
       if (!tokens?.length) {
         return [];
       }
+
       if (unshiftList?.length) {
         return [
           ...unshiftList.map(e => ({
             ...e,
             data: (e.data ?? []).map(x => {
-              const _netWorth = isBridgeTo ? 0 : x.amount * x.price || 0;
+              const tmpX =
+                x as unknown as TokenItemFromAbstractPortfolioTokenWithExtra;
+              const _netWorth = isBridgeTo ? 0 : tmpX.amount * tmpX.price || 0;
 
               return {
-                id: x.id,
-                amount: x.amount,
-                _logo: x.logo_url,
-                _symbol: getTokenSymbol(x),
-                _amount: formatAmount(x.amount),
-                _price: '$' + formatPrice(x.price),
+                id: tmpX.id,
+                amount: tmpX.amount,
+                _logo: tmpX.logo_url,
+                _symbol: getTokenSymbol(tmpX),
+                _amount: formatAmount(tmpX.amount),
+                _price: '$' + formatPrice(tmpX.price),
                 _netWorth: _netWorth,
                 _netWorthStr: formatNetworth(_netWorth),
-                _chain: x.chain,
+                _chain: tmpX.chain,
                 // @ts-expect-error
-                trade_volume_level: x?.trade_volume_level,
-                $origin: x as TokenItemMaybeWithOwner,
+                trade_volume_level: tmpX?.trade_volume_level,
+                $origin: x as
+                  | TokenItemForRender
+                  | (TokenItemFromAbstractPortfolioToken & { group?: string }),
               };
             }),
           })),
@@ -992,13 +1042,17 @@ export const TokenSelectorSheetModal = React.forwardRef<
             onScrollBeginDrag={() => Keyboard.dismiss()}
             windowSize={5}
             keyExtractor={token => {
-              const ownerKey = !token.$origin.ownerAccount
+              const $originMaybeToken =
+                token.$origin as TokenItemFromAbstractPortfolioToken & {
+                  group?: string;
+                };
+              const ownerKey = !$originMaybeToken.ownerAccount
                 ? ''
-                : `${token.$origin.ownerAccount.type}-${token.$origin.ownerAccount.address}`;
+                : `${$originMaybeToken.ownerAccount.type}-${$originMaybeToken.ownerAccount.address}`;
 
               return [
                 ownerKey,
-                `${token.id}-${token._symbol}-${token._chain}-${token.$origin?.group}`,
+                `${token.id}-${token._symbol}-${token._chain}-${$originMaybeToken?.group}`,
               ]
                 .filter(Boolean)
                 .join('-');

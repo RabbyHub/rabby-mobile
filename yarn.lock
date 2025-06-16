@@ -3361,24 +3361,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@debank/common@npm:0.3.58":
-  version: 0.3.58
-  resolution: "@debank/common@npm:0.3.58"
-  checksum: ea17e4262b6efd6a3febd0596e6eea9d23b72b7c725e9fbff80bd68dfa90dfe8ec91bb84a16d288ffec182a6545514d01f85108d7752104a66234394d5ab9fb7
-  languageName: node
-  linkType: hard
-
-"@debank/common@npm:^0.3.54":
+"@debank/common@npm:0.3.60":
   version: 0.3.60
   resolution: "@debank/common@npm:0.3.60"
   checksum: dcc549676c8b57eec9e80cef75064f5be89e39a9f2df9b53a9e93ccc1c13a5103339b450a3a3a18cfa9d06d8cf01b5ad924e846c748f3b1db9322bfdb035b372
   languageName: node
   linkType: hard
 
-"@debank/common@patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 0.3.58
-  resolution: "@debank/common@patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch::version=0.3.58&hash=b28a09&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  checksum: 8cc0f5695d7fff7d28251a4868c4a39349731f28c76c1c380e115047a68c6ca6ad71ecbd82277aba78606f0250d089c9ab1eba76edc853e6f508fe091d5b267b
+"@debank/common@patch:@debank/common@npm%3A0.3.60#./.yarn/patches/@debank-common-npm-0.3.60-676123558a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 0.3.60
+  resolution: "@debank/common@patch:@debank/common@npm%3A0.3.60#./.yarn/patches/@debank-common-npm-0.3.60-676123558a.patch::version=0.3.60&hash=a1757e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  checksum: 5ca64fe05da7f2dfb3ce6026b3e0b4e44e176192f1ddadfb788d945a51ebe02e7ed294ed2b8c11b9429564770744f489c339349a6e70d5d51898baa5b3b83842
   languageName: node
   linkType: hard
 
@@ -7736,7 +7729,7 @@ __metadata:
     "@rabby-wallet/gnosis-sdk": 1.4.3
     "@rabby-wallet/keyring-utils": ^0.1.0
     "@safe-global/protocol-kit": 5.0.3
-    "@safe-global/types-kit": 1.0.2
+    "@safe-global/types-kit": 1.0.4
     "@types/jest": ^27.4.1
     "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
@@ -8096,9 +8089,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.23":
-  version: 0.9.23
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.23"
+"@rabby-wallet/rabby-api@npm:0.9.23-beta.6":
+  version: 0.9.23-beta.6
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.23-beta.6"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -8109,13 +8102,13 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 749fff4c800b05f52280f13cda5e098d65d6429f11d1081b9acf18712850b1634dfa72486e5c52e27d29a1ea401e736c3b0d136b2892cc59e4eaf3415fae84b2
+  checksum: 14d5b9d2d8ec0d8893c472b5755f3565b6bc104a68ce3502516f51bbfeed1a3db25c34f6f85d901c894336898446af599a08b68c97f033bd1205eef6a8d225cf
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.23-beta.4":
-  version: 0.9.23-beta.4
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.23-beta.4"
+"@rabby-wallet/rabby-api@patch:@rabby-wallet/rabby-api@npm%3A0.9.23#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.9.23-30b6cb4e68.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 0.9.23
+  resolution: "@rabby-wallet/rabby-api@patch:@rabby-wallet/rabby-api@npm%3A0.9.23#./.yarn/patches/@rabby-wallet-rabby-api-npm-0.9.23-30b6cb4e68.patch::version=0.9.23&hash=6e3744&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -8126,7 +8119,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 46d2d5ba9d5ba204bedeb8fd36e4be3471dc85046b9abfeeff5d2b4b928f844acc9e484970e555eb7d550cdb51cd659fca5a5b65d3cf6b31e1b17d3b8a746899
+  checksum: 241ff4779445e5f4c0ff72616a12ffcc73fde8eb1a1c156e417985d149b9868def0fd4c89938e13cf12ca6f079e6e550fed70a0505598fd420357e81b947339c
   languageName: node
   linkType: hard
 
@@ -9769,21 +9762,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@safe-global/types-kit@npm:1.0.2, @safe-global/types-kit@npm:^1.0.0":
-  version: 1.0.2
-  resolution: "@safe-global/types-kit@npm:1.0.2"
-  dependencies:
-    abitype: ^1.0.2
-  checksum: 3bdfd5c30275fff5b6846866d6e5c0f69755d6e22398f634b8efa00281e4776187b01e0ef703b16a5ab83641e79ccc047d8b5cc85e6daacd6db2924b03396055
-  languageName: node
-  linkType: hard
-
-"@safe-global/types-kit@npm:^1.0.2, @safe-global/types-kit@npm:^1.0.4":
+"@safe-global/types-kit@npm:1.0.4":
   version: 1.0.4
   resolution: "@safe-global/types-kit@npm:1.0.4"
   dependencies:
     abitype: ^1.0.2
   checksum: 3dcd9f19962e53ca23dc945a3a7353327088634d07e962b8e0f1ecdf28782ce1c4c4dfce1b54c23c1382ee534e232b73f914500cf58c9baa1d20b10f3701e765
+  languageName: node
+  linkType: hard
+
+"@safe-global/types-kit@patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 1.0.4
+  resolution: "@safe-global/types-kit@patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch::version=1.0.4&hash=2b8070&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    abitype: ^1.0.2
+  checksum: 5c06111c478622532a9c04f15dc0c4e699849f4a9a21893a476158b3331289f60b6e27eb19d39378b281debef3809b3d14975bbbe8920b438329e1e0854624e4
   languageName: node
   linkType: hard
 
@@ -29959,7 +29952,7 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": ^7.25.9
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
-    "@debank/common": 0.3.58
+    "@debank/common": 0.3.60
     "@debank/festats": 1.0.4
     "@eth-optimism/contracts-ts": ^0.17.0
     "@ethereumjs/common": 4.2.0
@@ -29984,7 +29977,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.12
-    "@rabby-wallet/rabby-api": 0.9.23-beta.4
+    "@rabby-wallet/rabby-api": 0.9.23-beta.6
     "@rabby-wallet/rabby-security-engine": 2.0.10
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.56

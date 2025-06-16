@@ -3,12 +3,9 @@
     "addressStackTitle": {
       "CreateSelectMethod": "1. Выберите метод создания",
       "ImportMethods": "Выберите метод импорта",
-      "ImportMoreAddress": "Импортировать больше адресов",
       "CreateMnemonicBackup": "Резервная копия seed-фразы",
       "ImportMnemonic": "Импортировать Seed Phrase",
       "SafeAddressList": "Безопасный адрес",
-      "ImportNewAddress": "Добавить адрес",
-      "ImportWatchAddress2024": "Добавить адрес только для просмотра",
       "ImportSuccess": "Успешно добавлено",
       "ImportPrivateKey": "Импортировать Private Key",
       "ImportSafeAddress2024": "Добавить адрес Safe",
@@ -16,15 +13,18 @@
       "AddMnemonic": "Добавить из текущей Seed Phrase",
       "ImportHardwareAddress": "Подключение аппаратных кошельков",
       "RestoreFromCloud": "Восстановить из {{type}}",
-      "CreateNewAddress": "1. Назовите ваш адрес",
       "VerifySeedPhrase": "Проверить seed phrase",
       "SetPassword2024": "2. Установить пароль",
       "CreateChooseBackup": "3. Выберите метод резервного копирования",
-      "AddressDetail": "Детали адреса",
-      "WatchAddressList": "Наблюдаемое-Only Адрес",
-      "CreateSelectOnCurrentSeed": "2. Добавить адрес",
       "BackupSeedPhrase": "Резервная копия Seed Phrase",
-      "ConfrimAddress": "Подтвердите ваш адрес"
+      "ImportNewAddress": "Добавить кошелек",
+      "CreateNewAddress": "1. Подтвердите ваш кошелек",
+      "ConfrimAddress": "Подтвердите ваш кошелек",
+      "ImportMoreAddress": "Импортировать больше кошельков",
+      "WatchAddressList": "Кошелек только для наблюдения",
+      "CreateSelectOnCurrentSeed": "2. Добавить кошелек",
+      "AddressDetail": "Детали кошелька",
+      "ImportWatchAddress2024": "Добавить кошелек только для просмотра"
     }
   },
   "native": {
@@ -83,14 +83,15 @@
     "unlimited": "неограниченный",
     "Addresses": "Адреса",
     "24h": "24ч",
-    "Edit": "Редактировать"
+    "Edit": "Редактировать",
+    "Wallets": "Выберите Кошелек"
   },
   "page": {
     "getStart": {
-      "createNewAddress": "Создать новый адрес",
       "goToHome": "Перейти на главную",
-      "alreadyHaveAddress": "У меня уже есть адрес",
-      "sync": "Отсканируйте для синхронизации адреса расширения Rabby"
+      "createNewAddress": "Создать новый кошелек",
+      "alreadyHaveAddress": "У меня уже есть кошелек",
+      "sync": "Сканируйте, чтобы синхронизировать кошелек Rabby Extension"
     },
     "transactions": {
       "explain": {
@@ -129,7 +130,6 @@
         "Status": "Статус",
         "RevokeToken": "Отозвать токен",
         "ApproveTo": "Подтвердить для",
-        "RecipientAddress": "Адрес получателя",
         "From": "От",
         "RevokeFrom": "Отозвать из",
         "InteractedContract": "Взаимодействующий контракт",
@@ -145,7 +145,8 @@
         "totalApprovedAmount": "Текущая утвержденная сумма",
         "WillReceive": "Получите: ≈ {{token}}",
         "PurchaseFrom": "Приобретено от",
-        "AddToWhitelist": "Добавить вWhitelist"
+        "AddToWhitelist": "Добавить вWhitelist",
+        "RecipientAddress": "Кошелек получателя"
       },
       "empty": {
         "title": "Нет транзакций",
@@ -183,7 +184,9 @@
     "importSuccess": {
       "addressCount": "{{count}} Адресов",
       "success": "{{type}} успешно!",
-      "importMore": "Импортировать больше адресов"
+      "addressCount_other": "{{count}} Кошельки",
+      "addressCount_one": "{{count}} Кошелек",
+      "importMore": "Импортировать больше кошельков"
     },
     "signTypedData": {
       "permit": {
@@ -250,7 +253,7 @@
         "GetFreeGasToSign": "Получите бесплатный Gas",
         "customRpcUnavailableTip": "Пользовательские RPC не поддерживаются для Free Gas",
         "walletConnectUnavailableTip": "Поддержка мобильных кошельков, подключенных через WalletConnect, для Free Gas отсутствует.",
-        "watchUnavailableTip": "Для адреса только для просмотра не поддерживается Free Gas."
+        "watchUnavailableTip": "Кошелек только для наблюдения не поддерживает Free Gas."
       },
       "blockDappFromSendingRequests": "Блокировать запросы от Dapp в течение 1 минуты",
       "cancelTransaction": "Отменить транзакцию",
@@ -539,13 +542,13 @@
         "simulationFailed": "Симуляция транзакции не удалась",
         "unknownAddress": "Неизвестный адрес",
         "receiver": "Получатель",
-        "notPaymentAddress": "Не адрес для оплаты",
         "failLoadReceiveToken": "Не удалось загрузить",
         "title": "Обменять Token",
         "slippageTolerance": "Допуск проскальзывания",
         "slippageFailToLoad": "Не удалось загрузить",
         "valueDiff": "Различие в стоимости",
-        "simulationNotSupport": "Симуляция транзакции не поддерживается в этой цепочке"
+        "simulationNotSupport": "Симуляция транзакции не поддерживается в этой цепочке",
+        "notPaymentAddress": "Не платежный Wallet"
       },
       "speedUpTooltip": "Эта ускоренная транзакция и исходная транзакция, из которых только одна в конечном итоге будет завершена.",
       "eip1559Desc1": "На сетях, поддерживающих EIP-1559, приоритетная комиссия является чаевыми для майнеров за обработку вашей транзакции. Вы можете сократить свои конечные затраты на газ, понизив приоритетную комиссию, что может потребовать больше времени для обработки транзакции.",
@@ -857,14 +860,14 @@
       "cancel": "Отмена",
       "seed-phrase": "Seed Phrase",
       "watch-address": "Отслеживаемый адрес",
-      "add-address": "Добавить адрес",
       "passphraseError": "Неверная passphrase",
-      "delete-checklist-1": "Я понимаю, что если я удалю этот адрес, соответствующий приватный ключ и сид-фраза будут удалены, и Rabby НЕ сможет их восстановить.",
       "private-key": "Приватный ключ",
       "delete-checklist-2": "Я подтверждаю, что сделал резервную копию личного ключа или seed phrase и готов его сейчас удалить.",
       "enterPassphraseTitle": "Введите парольную фразу для подписания",
       "quickAddressTitle_one": "{{count}} Адрес",
-      "quickAddressTitle_other": "{{count}} Адреса"
+      "quickAddressTitle_other": "{{count}} Адреса",
+      "add-address": "Добавить кошелек",
+      "delete-checklist-1": "Я понимаю, что если я удалю этот кошелек, соответствующий приватный ключ и сид-фразу будут удалены, и Rabby НЕ сможет их восстановить."
     },
     "home": {
       "services": {
@@ -1001,14 +1004,14 @@
         "pin": "Пин-код",
         "receiveCrypto": "Получить Crypto",
         "noAssets": "Нет активов?",
-        "importAddressDesc": "Добавить существующий адрес с средствами",
-        "importAddress": "Импортировать адрес",
         "buyWithFiat": "Купить за фиат",
         "buyWithFiatDesc": "Простая покупка криптовалюты",
-        "receiveCryptoDesc": "Перевод токенов с другого адреса",
         "fundYourWallet": "Пополните ваш кошелек",
         "foundGuideDesc": "Добавьте токены в ваш кошелек, чтобы начать.",
-        "foundGuideTitle": "Быстро пополнить"
+        "foundGuideTitle": "Быстро пополнить",
+        "importAddress": "Импортировать кошелек",
+        "receiveCryptoDesc": "Переведите токены с другого кошелька",
+        "importAddressDesc": "Добавить существующий кошелек с деньгами"
       },
       "createNewAddress": {
         "Continue": "Продолжить",
@@ -1018,7 +1021,6 @@
         "inOrder": "в правильном порядке.",
         "Verify": "Проверить",
         "confirmPasswordTips": "Пароли совпадают",
-        "createOnCurrentDesc": "Создать адрес с существующей импортированной seed phrase",
         "selectWords": "Выберите слова",
         "whatIsSeedPhrase": "Что такое Seed Phrase",
         "Confirm": "Подтвердить",
@@ -1026,22 +1028,19 @@
         "UnderstandsecurityPrecautions": "Я понимаю эти меры безопасности.",
         "BackupSeedPhrase": "Ручное резервное копирование Seed Phrase",
         "savedPhrase": "Я сохранил фразу",
-        "createNewDesc": "Создать новую сид-фразу для новых адресов",
         "passwordMin": "Должно быть не менее 8 символов",
         "createOnCurrent": "Использовать текущую Seed Phrase",
         "passwordTopTips": "Этот пароль будет использоваться для разблокировки вашего кошелька и для шифрования ваших локальных данных.",
         "riskTips": "Прежде чем приступить, пожалуйста, прочтите и запомните следующие советы по безопасности:",
         "VerifyDownSeedPhrase": "Проверить начальную фразу",
         "backupSeedPhrase": "Создайте резервную копию вашей seed фразы для восстановления вашего кошелька, если приложение удалено или ваше устройство утеряно.",
-        "WriteSeedPhrase": "Это ваша seed фраза. Запишите её на бумаге и храните в безопасном месте. Вам нужно будет ввести её заново, в правильном порядке, на следующем шаге."
+        "WriteSeedPhrase": "Это ваша seed фраза. Запишите её на бумаге и храните в безопасном месте. Вам нужно будет ввести её заново, в правильном порядке, на следующем шаге.",
+        "createOnCurrentDesc": "Создать кошелек с уже импортированной сид-фразой",
+        "createNewDesc": "Сгенерируйте новую seed-фразу для новых кошельков"
       },
       "importAddress": {
         "seedPhrase": "Импортировать Seed Phrase",
-        "safeTitle": "Импортировать Safe Address",
         "privateKey": "Импортировать приватный ключ",
-        "importTitle": "Импортировать адрес",
-        "watch": "Только для просмотра адреса",
-        "watchOnlyTitle": "Импортировать адрес только для просмотра",
         "hardWare": "Подключить аппаратные кошельки",
         "safe": "Безопасный",
         "tips": {
@@ -1049,18 +1048,23 @@
           "title": "Безопасно ли импортировать в Rabby?",
           "description": "Ваши данные надежно зашифрованы и хранятся локально на вашем устройстве. Rabby не имеет доступа к вашей личной информации, и она никогда не передается третьим лицам.",
           "entry": "Безопасно ли импортировать в Rabby"
-        }
+        },
+        "importTitle": "Импортировать кошелек",
+        "watch": "Кошелек только для просмотра",
+        "safeTitle": "Импортировать Safe Wallet",
+        "watchOnlyTitle": "Импортировать кошелек только для просмотра",
+        "ImportCloud": "Импортировать из {{cloud}}"
       },
       "addAddress": {
         "hardwareWallet": "Аппаратный кошелек",
-        "createAddress": "Создать адрес",
-        "importAddress": "Импортировать адрес",
-        "syncRabbyExtension": "Синхронизировать Rabby Extension"
+        "syncRabbyExtension": "Синхронизировать Rabby Extension",
+        "createAddress": "Создать кошелек",
+        "importAddress": "Импортировать кошелек",
+        "selectAddMethod": "Выберите метод добавления"
       }
     },
     "newAddress": {
       "Quick": "Быстрый",
-      "createNewAddress": "Создать новый адрес",
       "createNewSeedPhrase": "Создать новую seed-фразу",
       "addContacts": {
         "cameraTitle": "Пожалуйста, отсканируйте QR-код вашей камерой."
@@ -1074,7 +1078,7 @@
         "title3": "Безопасность",
         "description3": "Никогда не делитесь вашей seed phrase — любой, кто получит к ней доступ, сможет управлять вашими средствами.",
         "description4": "Ваша seed phrase хранится локально на вашем устройстве и зашифрована вашим паролем. Только вы можете получить к ней доступ. Rabby не может извлечь или получить доступ к вашей seed phrase.",
-        "description1": "Сид-фраза – это серия слов, используемых для доступа и управления вашим адресом. Вы можете использовать её для восстановления вашего адреса на любом устройстве."
+        "description1": "Сид-фраза — это серия слов, используемых для доступа и управления вашим кошельком. Вы можете использовать её для восстановления вашего кошелька на любом устройстве."
       },
       "keystone": {
         "camera": {
@@ -1087,7 +1091,6 @@
         }
       },
       "privateKey": {
-        "repeatImportTips": "Этот адрес был импортирован.",
         "whatIsAPrivateKey": {
           "question": "Что такое private key?",
           "answer": "Строка из букв и цифр, используемая для управления вашими активами."
@@ -1095,7 +1098,8 @@
         "isItSafeToImportItInRabby": {
           "question": "Безопасно ли импортировать его в Rabby?",
           "answer": "Да, он будет храниться локально на вашем телефоне и будет доступен только вам."
-        }
+        },
+        "repeatImportTips": "Этот кошелек был импортирован"
       },
       "seedPhrase": {
         "showSeedPhrase": "Показать Seed Phrase",
@@ -1205,9 +1209,6 @@
       },
       "hd": {
         "balance": "Баланс",
-        "manageAddressFrom": "Управляйте адресом от {{0}} до {{1}}",
-        "customAddressHdPath": "Пользовательский путь HD-адреса",
-        "selectIndexTip": "Выберите серийный номер адресов, с которого начать:",
         "onekey": {
           "hdPathType": {
             "bip44": "BIP44: HDpath, определенный протоколом BIP44."
@@ -1230,14 +1231,14 @@
         },
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live: Официальный HD путь Ledger. На первых 3 адресах есть адреса, используемые в сети.",
-            "bip44": "Стандарт BIP44: HD-путь, определяемый протоколом BIP44. В первых 3 адресах имеются адреса, используемые в цепочке.",
-            "legacy": "Наследие: HD путь, используемый MEW / Mycrypto. В первых 3 адресах есть адреса, использованные на блокчейне."
+            "bip44": "Стандарт BIP44: HDpath, определенный протоколом BIP44. В первых 3 кошельках есть кошельки, используемые в сети.",
+            "legacy": "Наследие: HD-путь, используемый MEW / Mycrypto. В первых 3 кошельках есть кошельки, используемые в сети.",
+            "ledgerLive": "Ledger Live: Официальный HD-адрес Ledger. В первых 3 кошельках есть кошельки, используемые в сети."
           },
           "hdPathTypeNoChain": {
-            "legacy": "Legacy: HD путь, используемый MEW / Mycrypto. В первых 3 адресах нет адресов, используемых в блокчейне.",
-            "ledgerLive": "Ledger Live: Официальный HD путь Ledger. На первых 3 адресах отсутствуют адреса, использованные в цепочке.",
-            "bip44": "Стандарт BIP44: HD-путь, определяемый протоколом BIP44. В первых 3 адресах нет используемых на цепочке адресов."
+            "bip44": "Стандарт BIP44: HD-путь, определенный протоколом BIP44. В первых трех кошельках нет кошельков, использующихся в сети.",
+            "ledgerLive": "Ledger Live: официальный HD путь Ledger. В первых 3 кошельках не используются кошельки в сети.",
+            "legacy": "Наследие: HD- путь, используемый MEW / Mycrypto. В первых трёх кошельках нет кошельков, используемых в сети."
           }
         },
         "qrCode": {
@@ -1245,8 +1246,12 @@
             "content": "Импорт нескольких устройств {{0}} не поддерживается. Если вы переключитесь на новое устройство {{0}}, список адресов текущего устройства будет удален перед началом процесса импорта.",
             "title": "Переключиться на новое устройство {{0}}"
           }
-        }
-      }
+        },
+        "manageAddressFrom": "Управление кошельком от {{0}} до {{1}}",
+        "selectIndexTip": "Выберите серийный номер кошельков, с которых начинать:",
+        "customAddressHdPath": "Пользовательский путь HD кошелька"
+      },
+      "createNewAddress": "Создать новый Wallet"
     },
     "switchChain": {
       "requestsReceived": "1 запрос получен",
@@ -1281,16 +1286,14 @@
       "address": "Address",
       "pin-in-list": "Закрепить в списке",
       "watchAddressListScreen": {
-        "addWatchAddress": "Добавить наблюдаемые адреса"
+        "addWatchAddress": "Добавить только для просмотра кошельки"
       },
       "add-to-whitelist": "Добавить в белый список",
       "safeAddressListScreen": {
-        "addSafeAddress": "Добавить безопасные адреса"
+        "addSafeAddress": "Добавить безопасные кошельки"
       },
-      "delete-address": "Удалить адрес",
       "manage-seed-phrase": "Управление Seed Phrase",
       "assets": "Активы",
-      "manage-addresses-under-this-seed-phrase": "Добавить адрес из этой seed phrase",
       "address-note": "Address Note - Адресная заметка",
       "remove-from-whitelist": "Удалить из белого списка",
       "admins": "Админы",
@@ -1300,18 +1303,20 @@
         "detail": "Детали",
         "unpin": "Открепить",
         "delete": "Удалить",
-        "title_one": "{{count}} адрес",
         "pin": "Пин",
         "edit": "Редактировать",
-        "title_other": "{{count}} адресов",
-        "addAddress": "Добавить адрес",
-        "title_zero": "0 Address",
-        "importSafeAddress": "Импортированные Safe адреса",
-        "importWatchAddress": "Импортированные адреса только для просмотра"
+        "title_zero": "0 Кошелек",
+        "title_other": "{{count}} Кошельки",
+        "addAddress": "Добавить кошелек",
+        "importSafeAddress": "Импортированный Safe Wallet",
+        "importWatchAddress": "Импортированный кошелек только для просмотра",
+        "title_one": "{{count}} Кошелек"
       },
       "backup-private-key": "Резервное копирование Private Key",
       "delete-desc-needpassword": "Прежде чем удалить, обратите внимание на следующие моменты, чтобы понять, как защитить ваши активы.",
-      "delete-desc": "Вы уверены, что хотите удалить этот адрес?"
+      "manage-addresses-under-this-seed-phrase": "Добавить кошелек из этой сид-фразы",
+      "delete-address": "Удалить кошелек",
+      "delete-desc": "Вы уверены, что хотите удалить этот кошелек?"
     },
     "safeQueue": {
       "viewBtn": "Просмотр",
@@ -1531,12 +1536,12 @@
       "emptyToken": {
         "buyHeader": "Купить за Fiat",
         "title": "Пополните ваш кошелек",
-        "receiveBody": "Переведите токены с другого адреса",
         "receiveHeader": "Получить Crypto",
         "buyBody": "Простая покупка криптовалюты",
-        "importBody": "Добавить существующий адрес с средствами.",
         "desc": "Пополните быстро сейчас",
-        "importHeader": "Импортировать адрес"
+        "importBody": "Добавить существующий кошелек с средствами.",
+        "receiveBody": "Перевести токены из другого кошелька",
+        "importHeader": "Импортировать кошелек"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1552,8 +1557,8 @@
       }
     },
     "receiveAddressList": {
-      "title": "Выберите адрес для получения",
-      "selectChainTitle": "Выберите Chain"
+      "selectChainTitle": "Выберите Chain",
+      "title": "Выберите кошелек для получения"
     },
     "customTestnet": {
       "currency": "Валюта",
@@ -1670,9 +1675,7 @@
         "noHistory": "За последние 30 дней данных нет"
       },
       "depositPopup": {
-        "paymentAddress": "Адрес для оплаты",
         "amount": "Сумма",
-        "inSufficientTip1": "У этого адреса недостаточно токенов. Пожалуйста, выберите другой адрес.",
         "selectToken": "Выбрать Token",
         "followingTokenInSufficient": "Следующего баланса токена недостаточно",
         "token": "Токен",
@@ -1683,16 +1686,17 @@
         "applePayDesc": "Включает комиссию Apple Pay в размере ${{amount}}. Без снятия средств",
         "googlePayDesc": "Включает комиссию Google Pay ${{ amount }}. Вывод средств не предусмотрен.",
         "applePayFeeDesc": "Включает комиссию Apple Pay. Без снятий.",
-        "googlePayFeeDesc": "Включает комиссию Google Pay. Без выводов"
+        "googlePayFeeDesc": "Включает комиссию Google Pay. Без выводов",
+        "paymentAddress": "Платежный кошелек",
+        "inSufficientTip1": "Этот кошелек не имеет достаточно токенов. Пожалуйста, выберите другой кошелек."
       },
       "paymentAddressPopup": {
-        "address": "Платёжный адрес",
         "confirm": "Подтвердить",
-        "title": "Выберите адрес оплаты",
-        "balance": "Баланс"
+        "balance": "Баланс",
+        "title": "Выберите платежный кошелек",
+        "address": "Платежный кошелек"
       },
       "withdrawPopup": {
-        "selectRecipientAddress": "Выберите адрес получателя",
         "withdrawalLimit": "Лимит на снятие средств",
         "selectDestinationChain": "Выберите целевую цепочку",
         "noEnoughGas": "Сумма слишком мала, чтобы покрыть gas fees",
@@ -1702,14 +1706,15 @@
         "noEnoughValuetBalance": "Баланс Vault недостаточен. Переключите цепочку или попробуйте позже.",
         "destinationChain": "Целевая сеть",
         "tipsBtn": "Я понял",
-        "recipientAddress": "Адрес получателя",
         "to": "К",
         "title": "Вывод средств",
         "selectChain": "Выбрать Chain",
         "deductGasFees": "Полученная сумма будет за вычетом комиссии за газ",
         "desc": "Вы можете вывести баланс GasAccount на ваш кошелек DeBank L2. Войдите в ваш кошелек DeBank L2, чтобы перевести средства на поддерживаемую блокчейн-сеть при необходимости.",
         "noEnoughValueBalance": "Баланс в Vault недостаточен. Переключите сеть или попробуйте позже.",
-        "noRecipient": "Нет доступного адреса получателя"
+        "selectRecipientAddress": "Выберите кошелек получателя",
+        "noRecipient": "Нет доступного кошелька получателя",
+        "recipientAddress": "Получатель кошелек"
       },
       "withdrawConfirmModal": {
         "title": "Переведено на ваш DeBank L2 кошелек",
@@ -1736,7 +1741,8 @@
       "gasAccountList": {
         "gasAccountBalance": "Баланс GasAccount",
         "balance": "Баланс",
-        "address": "Адрес"
+        "address": "Адрес",
+        "wallet": "Кошелек"
       },
       "depositSuccess": "Депозит успешный",
       "loginFailed": "Ошибка входа",
@@ -1859,27 +1865,27 @@
     },
     "sendPoly": {
       "modals": {
-        "importedAddress": "Импортированный адрес",
-        "addAddress": "Новый адрес",
         "header": "Добавить адрес в белый список",
         "recentAddress": "Недавние отправленные адреса",
-        "content": "Выберите, как вы хотите добавить адрес:"
+        "content": "Выберите, как вы хотите добавить кошелек:",
+        "addAddress": "Новый кошелек",
+        "importedAddress": "Импортированный кошелек"
       },
       "emptyWhitelistBtn": "Добавить сейчас",
-      "sendToImportedAddress": "Отправить на мои импортированные адреса",
       "enterAddress": "Введите адрес",
-      "sendToWatchAddress": "Отправить на адреса только для просмотра",
       "emptyWhitelistHeader": "Добавить адрес в белый список",
       "whitelistTitle": "Мои адреса в белом списке",
       "emptyWhitelistContent": "Добавьте доверенные адреса в белый список для быстрых переводов — в следующий раз подтверждение не потребуется",
       "emptyWhitelistTip": "Еще нет добавленных в белый список адресов,",
-      "sendToSafeAddress": "Отправить на безопасные адреса",
       "innerEnterAddress": "Введите адрес / ENS",
       "SendHistory": "История отправлений",
       "SelectFromHistory": "Выбрать из истории",
       "recent": "Недавний",
       "sendTimeHeader": "Отправить",
-      "sentTimeHeader": "Отправлено"
+      "sentTimeHeader": "Отправлено",
+      "sendToWatchAddress": "Отправить на только для просмотра кошельки",
+      "sendToSafeAddress": "Отправить на Safe Wallets",
+      "sendToImportedAddress": "Отправить в мои импортированные кошельки"
     },
     "confirmAddress": {
       "risks": {
@@ -1941,7 +1947,9 @@
     "multiAddressAssets": {
       "tabs": {
         "portfolio": "Портфель",
-        "address": "Адрес"
+        "address": "Адрес",
+        "wallet_one": "Кошелек",
+        "wallet_other": "Кошельки"
       },
       "scamTokenHeader": "Мошеннические токены"
     },
@@ -2015,9 +2023,9 @@
       }
     },
     "accountSwitcher": {
-      "screenHeaderSubTitle_one": "1 address",
-      "screenHeaderSubTitle_other": "{{count}} адресов",
-      "all": "Все"
+      "all": "Все",
+      "screenHeaderSubTitle_one": "1 кошелек",
+      "screenHeaderSubTitle_other": "{{count}} кошельков"
     },
     "AuthenticationModal": {
       "passwordPlaceholder": "Введите пароль для подтверждения"
@@ -2103,8 +2111,8 @@
         "title": "Депозит USDC / USDT"
       },
       "loginConfirmModal": {
-        "title": "Выберите адрес для входа",
-        "desc": "После входа вы можете делать депозиты только на этот адрес."
+        "title": "Выберите кошелек для входа",
+        "desc": "После входа в систему вы можете только внести депозит по этому адресу."
       },
       "withdrawPopup": {
         "title": "Вывести средства",
@@ -2147,6 +2155,21 @@
     },
     "AccountSelector": {
       "title": "Выбрать кошелек"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "Ошибка соединения с сервисом:",
+        "globalDesc": "Информация может быть устаревшей, но ваши средства остаются в безопасности."
+      },
+      "serviceError": {
+        "title": "Проблема с сетью:",
+        "quotesDesc": "цитата не удалось загрузить.",
+        "balanceDesc": "Баланс не удалось загрузить.",
+        "globalDesc": "Информация может быть устаревшей, но ваши средства остаются в безопасности."
+      },
+      "offlineText": "Сетевая ошибка",
+      "buttonText": "Обновить",
+      "serviceErrorText": "Ошибка сервиса"
     }
   },
   "constant": {

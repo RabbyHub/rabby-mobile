@@ -22,6 +22,7 @@ export const useEnterPassphraseModal = (type: 'address' | 'publickey') => {
         return passphrase;
       }
 
+      // @ts-expect-error FIXME: fix this error type, maybe we should use `AuthenticationModal.show` instead
       await AuthenticationModal({
         confirmText: t('global.confirm'),
         cancelText: t('global.Cancel'),

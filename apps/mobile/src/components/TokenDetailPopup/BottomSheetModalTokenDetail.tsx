@@ -744,10 +744,8 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     const { switchSceneCurrentAccount: _switchSceneCurrentAccount } =
       useSwitchSceneCurrentAccount();
 
-    const switchSceneCurrentAccount = useCallback<
-      typeof _switchSceneCurrentAccount
-    >(
-      async (...args) => {
+    const switchSceneCurrentAccount = useCallback(
+      async (...args: Parameters<typeof _switchSceneCurrentAccount>) => {
         if (!__shouldSwitchSceneAccountBeforeRedirect__) return;
 
         return _switchSceneCurrentAccount(...args);

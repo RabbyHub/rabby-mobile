@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.packages.json",
   "compilerOptions": {
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

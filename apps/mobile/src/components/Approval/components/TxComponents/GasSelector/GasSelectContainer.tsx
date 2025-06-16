@@ -120,7 +120,7 @@ export const GasSelectContainer = ({
   isSelectCustom?: boolean;
   notSelectCustomGasAndIsNil?: boolean;
   isLoadingGas?: boolean;
-  customGasEstimated: number;
+  customGasEstimated?: number;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);

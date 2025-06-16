@@ -52,6 +52,7 @@ export const ContextMenuView: React.FC<Props> = ({
             key={`${action.key}-${idx}`}
             onSelect={action.onSelect}
             disabled={action.disabled || !action.onSelect}
+            // @ts-expect-error FIXME: we need check here
             textColor={action.textColor}>
             <ContextMenu.ItemTitle>{action.title}</ContextMenu.ItemTitle>
             <ContextMenu.ItemImage

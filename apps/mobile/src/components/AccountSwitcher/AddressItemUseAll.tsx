@@ -138,7 +138,7 @@ export function UseAllAccountsItemInPanel({
       .map(account =>
         getWalletAvator2024(account.brandName, isLight, account.address),
       )
-      .filter(Boolean);
+      .filter(Boolean) as ImageSourcePropType[];
   }, [allAccounts, isLight]);
 
   if (!allAccounts.length) {
@@ -173,7 +173,7 @@ export function UseAllAccountsItemInPanel({
         <View style={styles.centerInfo}>
           <Text style={styles.text}>
             {'All '}
-            {addressCount} {addressCount > 1 ? 'Addresses' : 'Address'}
+            {addressCount} {addressCount > 1 ? 'Wallets' : 'Wallet'}
           </Text>
         </View>
         <View style={styles.rightArea}>

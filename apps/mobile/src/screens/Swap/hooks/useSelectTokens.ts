@@ -17,13 +17,23 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { Account } from '@/core/services/preference';
 import { isAddress } from 'viem';
 
+type LocalDBTokenItem = TokenItem & {
+  _db_id?: TokenItemEntity['_db_id'];
+  owner_addr: TokenItemEntity['owner_addr'];
+};
 export const useTokenAssetsMap = () => {
   const [tokensMap, setTokensMap] = useState<{
-    [address: string]: TokenItem[];
+    [address: string]: LocalDBTokenItem[];
   }>({});
 
   const updateTokens = useCallback(
-    ({ address, newTokens }: { address: string; newTokens: TokenItem[] }) => {
+    ({
+      address,
+      newTokens,
+    }: {
+      address: string;
+      newTokens: LocalDBTokenItem[];
+    }) => {
       const lowerAddress = address.toLowerCase();
       setTokensMap(pre => {
         return {
@@ -197,7 +207,7 @@ export const useSelectTokens = ({
 
   // filter tokens
   const tokens = useMemo(() => {
-    let resTokens: TokenItem[] = [];
+    let resTokens: LocalDBTokenItem[] = [];
     if (!visible) {
       return [];
     }

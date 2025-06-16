@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.21",
+  "version": "0.6.22",
   "private": true,
   "repository": {
     "type": "git",
@@ -18,6 +18,7 @@
     "postinstall": "yarn build:deps && yarn build-inpage",
     "ios": "react-native run-ios",
     "link-assets": "react-native-asset && sh ./scripts/fns.sh cleanup_fonts_assets",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "lint:commit:fix": "eslint ./src --quiet --fix --ext .js,.jsx,.ts,.tsx --max-warnings=-1",
     "lint:fix": "eslint ./src --fix --ext .js,.jsx,.ts,.tsx",
@@ -33,19 +34,16 @@
     "test": "jest",
     "postversion": "react-native-version --never-amend"
   },
-  "lint-staged": {
-    "*.{,js,jsx,ts,tsx}": "eslint --fix --quiet",
-    "*": "prettier --write --ignore-unknown"
-  },
   "resolutions": {
     "eth-rpc-errors": "^4.0.3",
     "json-rpc-engine/eth-rpc-errors": "^4.0.3",
     "readable-stream": "3.6.2",
+    "@safe-global/types-kit": "1.0.4",
     "@ledgerhq/react-native-hw-transport-ble/react-native-ble-plx": "3.1.2",
     "@onekeyfe/hd-transport-react-native/@onekeyfe/react-native-ble-plx": "npm:react-native-ble-plx@3.1.2"
   },
   "dependencies": {
-    "@debank/common": "0.3.58",
+    "@debank/common": "0.3.60",
     "@debank/festats": "1.0.4",
     "@eth-optimism/contracts-ts": "^0.17.0",
     "@ethereumjs/common": "4.2.0",
@@ -69,7 +67,7 @@
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.12",
-    "@rabby-wallet/rabby-api": "0.9.23-beta.4",
+    "@rabby-wallet/rabby-api": "0.9.23-beta.6",
     "@rabby-wallet/rabby-security-engine": "2.0.10",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
     "@rabby-wallet/rabby-swap": "0.0.56",

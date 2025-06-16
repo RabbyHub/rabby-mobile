@@ -1,7 +1,7 @@
 import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { AccountSwitcherScene } from '@/hooks/accountsSwitcher';
+import { type AccountSwitcherScene } from '@/hooks/sceneAccountInfoAtom';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { apisAccount } from '@/core/apis';

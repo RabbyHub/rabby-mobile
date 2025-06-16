@@ -129,14 +129,19 @@ export const useSwapHistory = () => {
 
 export const swapPendingCountAtom = atom(0);
 export const swapPendingTxDataAtom = atom<SwapItem | null>(null);
-export const swapLocalTxDataAtom = atom<SwapTxHistoryItem | null>(null);
+export const swapLocalTxDataAtom = atom<
+  SwapTxHistoryItem | SendTxHistoryItem | null
+>(null);
 export const swapHistoryRedDotAtom = atom(false);
 export const useReadPendingCount = () => {
   return useAtomValue(swapPendingCountAtom);
 };
 
 export const fetchLocalSwapPendingTx = (address: string) => {
-  return transactionHistoryService.getRecentPendingTxHistory(address, 'swap');
+  return transactionHistoryService.getRecentPendingTxHistory(
+    address,
+    'swap',
+  ) as SwapTxHistoryItem;
 };
 
 export const fetchRefreshLocalData = (

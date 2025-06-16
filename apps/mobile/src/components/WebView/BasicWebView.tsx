@@ -96,7 +96,6 @@ const getStyle = () =>
       width: 0,
       opacity: 0,
       overflow: 'hidden',
-      isShown: 'none',
     },
   });
 

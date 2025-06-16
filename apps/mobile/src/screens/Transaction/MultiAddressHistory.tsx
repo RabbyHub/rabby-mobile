@@ -25,6 +25,7 @@ import { Text, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import {
   BuyHistoryItem,
+  TxAllHistoryResult,
   TxHistoryItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -328,13 +329,10 @@ function History({
         token_id,
       });
 
-      const {
-        project_dict,
-        cate_dict,
-        token_dict,
-        token_uuid_dict,
-        history_list: list,
-      } = res;
+      const { project_dict, cate_dict, history_list: list } = res;
+      const token_dict = (res as TxHistoryResult).token_dict;
+      const token_uuid_dict = (res as TxAllHistoryResult).token_uuid_dict;
+
       const displayList = list
         .map(item => ({
           ...item,
