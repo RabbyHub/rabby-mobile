@@ -1149,6 +1149,9 @@
         "receiveCryptoDesc": "Transfiere tokens de otra wallet",
         "importAddressDesc": "Añadir una cartera existente con fondos",
         "importAddress": "Importar una Wallet"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "¿Cómo se califica la billetera de rabby?"
       }
     },
     "bridge": {

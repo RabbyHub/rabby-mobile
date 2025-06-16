@@ -21,7 +21,7 @@ import {
 
 const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
 
-const useOfflineChain = () => {
+export const useOfflineChain = () => {
   const [closedTipsChains, _setClosedTipsChain] = useAtom(closedTipsChainsAtom);
 
   const { value: offlineList } = useAsync(() => {
@@ -64,27 +64,37 @@ const useOfflineChain = () => {
     [closedTipsChains, list],
   );
 
-  return {
-    displayWillClosedChain,
-    setClosedTipsChain,
-  };
-};
-
-export const OfflineChainNotify = ({
-  showEmptyHolder = false,
-}: {
-  showEmptyHolder?: boolean;
-}) => {
-  const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { displayWillClosedChain, setClosedTipsChain } = useOfflineChain();
-  const chainInfo = useMemo(
+  const offlineChainInfo = useMemo(
     () =>
       displayWillClosedChain?.id
         ? findChainByServerID(displayWillClosedChain?.id)
         : null,
     [displayWillClosedChain?.id],
   );
+
+  return {
+    displayWillClosedChain,
+    setClosedTipsChain,
+    offlineChainInfo,
+  };
+};
+
+export const OfflineChainNotify = ({
+  data,
+  showEmptyHolder = false,
+  style,
+}: {
+  showEmptyHolder?: boolean;
+  data: ReturnType<typeof useOfflineChain>;
+} & RNViewProps) => {
+  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const {
+    displayWillClosedChain,
+    setClosedTipsChain,
+    offlineChainInfo: chainInfo,
+  } = data;
+
   const handleClose = useCallback(() => {
     if (displayWillClosedChain?.id) {
       setClosedTipsChain(displayWillClosedChain?.id);
@@ -140,7 +150,8 @@ export const OfflineChainNotify = ({
     styles.title,
   ]);
   if (!displayWillClosedChain || !chainInfo) {
-    return <View style={{ height: showEmptyHolder ? 30 : 0 }} />;
+    // delegate outer to place empty holder
+    return <View style={{ height: 0 }} />;
   }
   return (
     <View style={styles.container}>
@@ -190,6 +201,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['orange-light-1'],
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  containerNone: {
+    display: 'none',
   },
   logo: {
     width: 16,

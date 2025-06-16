@@ -1045,6 +1045,9 @@
         "VerifyDownSeedPhrase": "Xác minh seed phrase",
         "createNewDesc": "Tạo một cụm từ hạt giống mới cho các ví mới",
         "createOnCurrentDesc": "Tạo ví bằng cụm từ gốc đã nhập sẵn."
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Làm thế nào để bạn đánh giá ví Rabby"
       }
     },
     "signText": {

@@ -1065,6 +1065,9 @@
           "gotIt": "I Got It.",
           "entry": "Is it safe to import into Rabby"
         }
+      },
+      "rateModalTriggerOnHome": {
+        "description": "How do you rate Rabby Wallet"
       }
     },
     "newAddress": {

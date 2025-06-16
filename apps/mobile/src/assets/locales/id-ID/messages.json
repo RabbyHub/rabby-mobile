@@ -1066,6 +1066,9 @@
         "importTitle": "Impor Dompet",
         "watchOnlyTitle": "Impor Dompet Hanya-Pengawasan",
         "ImportCloud": "Impor dari {{cloud}}"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Bagaimana Anda menilai dompet Rabby"
       }
     },
     "newAddress": {

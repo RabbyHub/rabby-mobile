@@ -1070,6 +1070,9 @@
         "importAddress": "导入钱包",
         "createAddress": "创建钱包",
         "selectAddMethod": "选择添加方法"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "您如何评价Rabby Wallet"
       }
     },
     "signText": {

@@ -1181,6 +1181,9 @@
         "watchOnlyTitle": "Importiere Watch-Only Wallet",
         "safeTitle": "Import Safe Wallet",
         "ImportCloud": "Importieren von {{cloud}}"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Wie bewertet man Rabby -Brieftasche"
       }
     },
     "switchChain": {

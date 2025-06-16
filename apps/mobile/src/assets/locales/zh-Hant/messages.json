@@ -1162,6 +1162,9 @@
         "safeTitle": "導入 Safe Wallet",
         "watch": "觀察型錢包",
         "ImportCloud": "從 {{cloud}} 匯入"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "您如何評價Rabby Wallet"
       }
     },
     "ethSign": {

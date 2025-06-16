@@ -949,6 +949,9 @@
         "safeTitle": "安全なウォレットをインポート",
         "importTitle": "ウォレットをインポート",
         "ImportCloud": "{{cloud}} からインポート"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "ラビーウォレットをどのように評価しますか"
       }
     },
     "switchChain": {

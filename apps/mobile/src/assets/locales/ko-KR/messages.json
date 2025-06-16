@@ -1002,6 +1002,9 @@
         "watch": "보기 전용 지갑",
         "watchOnlyTitle": "시청 전용 지갑 가져오기",
         "ImportCloud": "{{cloud}}에서 가져오기"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "랍비 지갑을 어떻게 평가합니까?"
       }
     },
     "switchChain": {

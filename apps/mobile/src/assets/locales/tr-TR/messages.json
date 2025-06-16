@@ -1066,6 +1066,9 @@
         "watchOnlyTitle": "İzleme Yalnızca Cüzdanı İçe Aktar",
         "safeTitle": "Güvenli Cüzdanı İçe Aktar",
         "ImportCloud": "{{cloud}}'den İçe Aktar"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Rabby cüzdanını nasıl derecelendirirsin"
       }
     },
     "newAddress": {

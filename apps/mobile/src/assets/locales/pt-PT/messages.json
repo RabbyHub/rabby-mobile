@@ -1232,6 +1232,9 @@
         "importTitle": "Importar Wallet",
         "watchOnlyTitle": "Importar Carteira Somente para Observação",
         "ImportCloud": "Importar do {{cloud}}"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Como você avalia a carteira de rabby"
       }
     },
     "newAddress": {

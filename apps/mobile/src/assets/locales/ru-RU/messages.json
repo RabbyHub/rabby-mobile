@@ -1061,6 +1061,9 @@
         "createAddress": "Создать кошелек",
         "importAddress": "Импортировать кошелек",
         "selectAddMethod": "Выберите метод добавления"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Как вы оцениваете Rabby Wallet"
       }
     },
     "newAddress": {

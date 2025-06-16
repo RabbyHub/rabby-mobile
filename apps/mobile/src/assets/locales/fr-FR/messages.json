@@ -1011,6 +1011,9 @@
         "watchOnlyTitle": "Importer un portefeuille en lecture seule",
         "importTitle": "Importer le portefeuille",
         "ImportCloud": "Importer depuis {{cloud}}"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Comment évaluez-vous Rabby Wallet"
       }
     },
     "signText": {
