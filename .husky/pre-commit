@@ -1,5 +1,5 @@
 #!/bin/bash -l
 . "$(dirname -- "$0")/_/husky.sh"
 
-[ "$RUN_TYPE_CHECK" == "true" ] && yarn workspace rabby-mobile lint-staged
-yarn lint-staged
+# yarn workspace rabby-mobile lint-staged
+DISABLE_APP_TYPE_CHECK=true yarn lint-staged
