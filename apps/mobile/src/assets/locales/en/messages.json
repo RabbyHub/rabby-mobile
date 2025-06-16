@@ -958,6 +958,9 @@
       "smartMoneyWallets": "Smart Money Wallets",
       "recentBuy": "Recent Buy",
       "historyProfit": "History Profit",
+      "noMoreData": "No more data",
+      "updateText": "{{count}} Trends Updated",
+      "refreshTitle": "Loading More Copy Trading From Smart Money",
       "buy": "Buy"
     },
     "dashboard": {

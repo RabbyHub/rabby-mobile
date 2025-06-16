@@ -4,7 +4,7 @@ import { toast } from '@/components2024/Toast';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
@@ -14,6 +14,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
+  Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
@@ -21,7 +23,10 @@ import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { appIsDev } from '@/constant/env';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { TokenListItem } from './component/TokenListItem';
+import {
+  SkeletonTokenListItem,
+  TokenListItem,
+} from './component/TokenListItem';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTipsDollarDialog } from './component/hooks';
@@ -30,6 +35,7 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { Skeleton } from '@rneui/themed';
 
 const DEFAULT_COUNT = 10;
 
@@ -58,7 +64,7 @@ const mockTokenData: CopyTradeTokenItem[] = [
     fdv: 19170000000, // $19.17B in actual number
     buy_amount_24h: 5674000000, // $5.674B in actual number
     buy_usd_value_24h: 5674000000,
-    net_curve_24h: [
+    price_curve_24h: [
       { time_at: Date.now() / 1000 - 86400, price: 0.11 },
       { time_at: Date.now() / 1000 - 72000, price: 0.105 },
       { time_at: Date.now() / 1000 - 43200, price: 0.118 },
@@ -89,7 +95,7 @@ const mockTokenData: CopyTradeTokenItem[] = [
     fdv: 19170000000,
     buy_amount_24h: 5674000000,
     buy_usd_value_24h: 5674000000,
-    net_curve_24h: [
+    price_curve_24h: [
       { time_at: Date.now() / 1000 - 86400, price: 2200 },
       { time_at: Date.now() / 1000 - 72000, price: 2180 },
       { time_at: Date.now() / 1000 - 43200, price: 2280 },
@@ -120,7 +126,7 @@ const mockTokenData: CopyTradeTokenItem[] = [
     fdv: 19170000000,
     buy_amount_24h: 5674000000,
     buy_usd_value_24h: 5674000000,
-    net_curve_24h: [
+    price_curve_24h: [
       { time_at: Date.now() / 1000 - 86400, price: 2200 },
       { time_at: Date.now() / 1000 - 72000, price: 2180 },
       { time_at: Date.now() / 1000 - 43200, price: 2280 },
@@ -151,7 +157,7 @@ const mockTokenData: CopyTradeTokenItem[] = [
     fdv: 19170000000,
     buy_amount_24h: 5674000000,
     buy_usd_value_24h: 5674000000,
-    net_curve_24h: [
+    price_curve_24h: [
       { time_at: Date.now() / 1000 - 86400, price: 0.8 },
       { time_at: Date.now() / 1000 - 72000, price: 0.78 },
       { time_at: Date.now() / 1000 - 43200, price: 0.85 },
@@ -182,7 +188,7 @@ const mockTokenData: CopyTradeTokenItem[] = [
     fdv: 19170000000,
     buy_amount_24h: 5674000000,
     buy_usd_value_24h: 5674000000,
-    net_curve_24h: [
+    price_curve_24h: [
       { time_at: Date.now() / 1000 - 86400, price: 270 },
       { time_at: Date.now() / 1000 - 72000, price: 275 },
       { time_at: Date.now() / 1000 - 43200, price: 260 },
@@ -194,15 +200,50 @@ const mockTokenData: CopyTradeTokenItem[] = [
   },
 ];
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const SkeletonTabList = React.memo(() => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const itemWidth = (SCREEN_WIDTH - 16 * 2) / 4 - 12;
+
+  return (
+    <>
+      <Skeleton
+        width={itemWidth}
+        height={32}
+        style={{ borderRadius: 100, marginRight: 8 }}
+      />
+      <Skeleton
+        width={itemWidth}
+        height={32}
+        style={{ borderRadius: 100, marginRight: 8 }}
+      />
+      <Skeleton
+        width={itemWidth}
+        height={32}
+        style={{ borderRadius: 100, marginRight: 8 }}
+      />
+      <Skeleton
+        width={itemWidth}
+        height={32}
+        style={{ borderRadius: 100, marginRight: 0 }}
+      />
+    </>
+  );
+});
+
 export const CopyTradingScreen = () => {
   const { t } = useTranslation();
-  const [showWithdraw, setShowWithdraw] = useState(false);
   const [chainIdList, setChainIdList] = useState<string[]>([]);
   const [selectedChainId, setSelectedChainId] = useState<string>('');
   const [tokenList, setTokenList] = useState<CopyTradeTokenItem[]>([]);
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { navigation } = useSafeSetNavigationOptions();
-  const [loading, setLoading] = useState(false);
+  const [tabLoading, setTabLoading] = useState(false);
+  const [listLoading, setListLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentUpdateCount, setCurrentUpdateCount] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const chainList = useMemo(() => {
     const list = chainIdList
@@ -213,54 +254,73 @@ export const CopyTradingScreen = () => {
 
   const fetchChainList = useMemoizedFn(async () => {
     try {
-      if (appIsDev) {
-        return ['base', 'eth', 'bsc', 'matic'];
-      }
+      setTabLoading(true);
+      // if (appIsDev) {
+      //   return ['base', 'eth', 'bsc', 'matic'];
+      // }
 
       const chainIdArr = await openapi.getCopyTradingChainList();
       setChainIdList(chainIdArr);
+      console.log('fetchChainList chainIdArr', chainIdArr);
       return chainIdArr;
     } catch (e) {
       console.debug('fetchChainList error', e);
       return [];
+    } finally {
+      setTabLoading(false);
     }
   });
 
   const fetchTokenList = useMemoizedFn(
-    async (chainId: string, startTime: number) => {
+    async (chainId: string, startTime: number, isLoadMore = false) => {
       try {
-        console.log('fetchTokenList token_list chainId:', chainId);
+        if (isLoadMore) {
+          setLoadingMore(true);
+        } else {
+          setListLoading(true);
+        }
+
         const { token_list } = await openapi.getCopyTradingTokenList({
           chain_id: chainId,
           limit: DEFAULT_COUNT,
           start_time: startTime,
         });
+
+        console.log('fetchTokenList token_list', token_list);
+
+        // check if there is more data
+        const hasMoreData = token_list.length >= DEFAULT_COUNT;
+        setHasMore(hasMoreData);
+
         return token_list;
       } catch (e) {
         console.debug('fetchTokenList error', e);
         return [];
+      } finally {
+        if (isLoadMore) {
+          setLoadingMore(false);
+        } else {
+          setListLoading(false);
+        }
       }
     },
   );
 
   const initFetchData = useMemoizedFn(async () => {
-    try {
-      setLoading(true);
-      const chainIdArr = await fetchChainList();
+    setTabLoading(true);
+    setListLoading(true);
+    setHasMore(true);
+    const chainIdArr = await fetchChainList();
 
-      setChainIdList(chainIdArr);
-      setSelectedChainId(chainIdArr[0]);
-      const tokenArr = await fetchTokenList(chainIdArr[0], 0);
-      setTokenList(tokenArr);
-    } catch (error) {
-      console.debug('initFetchData error', error);
-    } finally {
-      setLoading(false);
-    }
+    setChainIdList(chainIdArr);
+    setSelectedChainId(chainIdArr[0]);
+    const tokenArr = await fetchTokenList(chainIdArr[0], 0);
+    setTokenList(tokenArr);
   });
 
   const handleChainItemPress = useMemoizedFn(async (chainId: string) => {
     setSelectedChainId(chainId);
+    setHasMore(true);
     const tokenArr = await fetchTokenList(chainId, 0);
     setTokenList(tokenArr);
   });
@@ -296,6 +356,98 @@ export const CopyTradingScreen = () => {
 
   const { showTipsDollarDialog } = useTipsDollarDialog();
 
+  // fetch more data
+  const handleLoadMore = useMemoizedFn(async () => {
+    if (loadingMore || !hasMore || tokenList.length === 0) {
+      return;
+    }
+
+    // get the last item's time_at as the start_time of the next page
+    const lastItem = tokenList[tokenList.length - 1];
+    const nextStartTime = lastItem.create_at;
+
+    const moreTokens = await fetchTokenList(
+      selectedChainId,
+      nextStartTime,
+      true,
+    );
+
+    if (moreTokens.length > 0) {
+      // deduplication, avoid adding the same token
+      setTokenList(prev => {
+        const existingIds = new Set(prev.map(token => token.id));
+        const newTokens = moreTokens.filter(
+          token => !existingIds.has(token.id),
+        );
+        return [...prev, ...newTokens];
+      });
+    }
+  });
+
+  const checkCountUpdate = useMemoizedFn(
+    (
+      newTokenList: CopyTradeTokenItem[],
+      oldTokenList: CopyTradeTokenItem[],
+    ) => {
+      const oldFirst = oldTokenList[0];
+      const index = newTokenList.findIndex(token => token.id === oldFirst.id);
+      if (index === -1) {
+        setCurrentUpdateCount(10);
+      } else {
+        setCurrentUpdateCount(index);
+      }
+    },
+  );
+
+  // pull down refresh
+  const handleRefresh = useMemoizedFn(async () => {
+    setRefreshing(true);
+    setHasMore(true);
+    try {
+      const tokenArr = await fetchTokenList(selectedChainId, 0);
+      checkCountUpdate(tokenArr, tokenList);
+    } finally {
+      setRefreshing(false);
+    }
+  });
+
+  useEffect(() => {
+    if (currentUpdateCount > 0) {
+      setTimeout(() => {
+        setCurrentUpdateCount(0);
+      }, 3000);
+    }
+  }, [currentUpdateCount]);
+
+  // render list footer
+  const renderListFooter = useMemoizedFn(() => {
+    if (!loadingMore && hasMore) {
+      return null;
+    }
+
+    if (loadingMore) {
+      return (
+        <View style={styles.footerLoading}>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <SkeletonTokenListItem key={index} />
+          ))}
+        </View>
+      );
+    }
+
+    if (!hasMore && tokenList.length > 0) {
+      return (
+        <View style={styles.footerLoading}>
+          <Text style={styles.noMoreText}>
+            {t('page.copyTrading.noMoreData')}
+          </Text>
+        </View>
+      );
+    }
+
+    return null;
+  });
+
   useEffect(() => {
     initFetchData();
   }, [initFetchData]);
@@ -313,44 +465,82 @@ export const CopyTradingScreen = () => {
   return (
     <NormalScreenContainer type="bg0">
       <View style={styles.headerContainer}>
-        <ScrollView
-          style={styles.headerChainList}
-          contentContainerStyle={styles.scrollContentContainer}
-          horizontal={true}
-          showsHorizontalScrollIndicator={false}>
-          {chainList.map(chain => (
-            <TouchableOpacity
-              key={chain?.id}
-              onPress={() => handleChainItemPress(chain?.serverId ?? '')}
-              style={StyleSheet.flatten([
-                styles.chainItem,
-                selectedChainId === chain?.serverId && styles.selectedChainItem,
-              ])}>
-              <ChainIconImage
-                size={18}
-                chainEnum={chain?.enum}
-                isShowRPCStatus={true}
-              />
-              <Text style={styles.chainItemText}>{chain?.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {tabLoading ? (
+          <View style={[styles.scrollContentContainer, styles.headerChainList]}>
+            <SkeletonTabList />
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.headerChainList}
+            contentContainerStyle={styles.scrollContentContainer}
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}>
+            {chainList.map(chain => (
+              <TouchableOpacity
+                key={chain?.id}
+                onPress={() => handleChainItemPress(chain?.serverId ?? '')}
+                style={StyleSheet.flatten([
+                  styles.chainItem,
+                  selectedChainId === chain?.serverId &&
+                    styles.selectedChainItem,
+                ])}>
+                <ChainIconImage
+                  size={18}
+                  chainEnum={chain?.enum}
+                  isShowRPCStatus={true}
+                />
+                <Text style={styles.chainItemText}>{chain?.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
       </View>
+      {currentUpdateCount > 0 && (
+        <View style={styles.updateContainer}>
+          <Text style={styles.updateText}>
+            {t('page.copyTrading.updateText', { count: currentUpdateCount })}
+          </Text>
+        </View>
+      )}
       <View style={styles.container}>
-        <FlatList
-          data={mockTokenData}
-          renderItem={({ item }) => (
-            <TokenListItem
-              showTipsDollarDialog={showTipsDollarDialog}
-              item={item}
-              onBuyPress={handleBuyPress}
-              onPress={handleTokenItemPress}
-            />
-          )}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-        />
+        {listLoading ? (
+          <View style={styles.listContainer}>
+            {Array.from({ length: 10 }).map((_, index) => (
+              <SkeletonTokenListItem key={index} />
+            ))}
+          </View>
+        ) : (
+          <FlatList
+            data={tokenList}
+            renderItem={({ item }) => (
+              <TokenListItem
+                showTipsDollarDialog={showTipsDollarDialog}
+                item={item}
+                onBuyPress={handleBuyPress}
+                onPress={handleTokenItemPress}
+              />
+            )}
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.3}
+            ListFooterComponent={renderListFooter}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+            initialNumToRender={10}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                title={t('page.copyTrading.refreshTitle')}
+                titleColor={colors2024['neutral-secondary']}
+              />
+            }
+          />
+        )}
       </View>
     </NormalScreenContainer>
   );
@@ -361,7 +551,21 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 56,
     overflow: 'hidden',
   },
-
+  updateContainer: {
+    paddingHorizontal: 16,
+    // paddingVertical: 6,
+    backgroundColor: colors2024['brand-light-1'],
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  updateText: {
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
   chainItem: {
     display: 'flex',
     flexDirection: 'row',
@@ -408,5 +612,17 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   listContainer: {
     paddingHorizontal: 16,
     paddingTop: 16,
+  },
+  footerLoading: {
+    paddingVertical: 8,
+  },
+  noMoreText: {
+    textAlign: 'center',
+    color: colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    paddingVertical: 16,
   },
 }));

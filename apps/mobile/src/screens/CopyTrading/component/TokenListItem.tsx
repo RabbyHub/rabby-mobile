@@ -11,8 +11,17 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
+import { Skeleton } from '@rneui/themed';
 
-const TrendChart = ({
+export const formatPercentage = (x: number) => {
+  if (Math.abs(x) < 0.00001) {
+    return '0%';
+  }
+  const percentage = (x * 100).toFixed(2);
+  return `${x >= 0 ? '+' : ''}${percentage}%`;
+};
+
+const TrendChartComponent = ({
   isPositive,
   data,
 }: {
@@ -34,14 +43,14 @@ const TrendChart = ({
   if (!chartData.length || chartData.length < 2) {
     // Fallback to simple line if insufficient data
     return (
-      <View style={{ width: 100, height: 20 }}>
+      <View style={{ width: 100, height: 30 }}>
         <View
           style={{
             width: '100%',
             height: 2,
             backgroundColor: pathColor,
             borderRadius: 1,
-            marginTop: 10,
+            marginTop: 15,
           }}
         />
       </View>
@@ -49,9 +58,9 @@ const TrendChart = ({
   }
 
   return (
-    <View style={{ width: 100, height: 20 }}>
+    <View style={{ width: 100, height: 30, marginTop: -10, marginBottom: 10 }}>
       <LineChart.Provider data={chartData}>
-        <LineChart height={20} width={100} shape={d3Shape.curveCatmullRom}>
+        <LineChart height={50} width={100} shape={d3Shape.curveCatmullRom}>
           <LineChart.Path showInactivePath={false} color={pathColor} width={2}>
             <LineChart.Gradient color={pathColor} />
           </LineChart.Path>
@@ -68,7 +77,44 @@ interface TokenListItemProps {
   showTipsDollarDialog: () => void;
 }
 
-export const TokenListItem = ({
+const TrendChart = React.memo(TrendChartComponent);
+
+export const SkeletonTokenListItem = () => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+
+  return (
+    <View style={styles.tokenItem}>
+      <View style={styles.topSection}>
+        <View style={styles.tokenLeftSection}>
+          <View style={styles.tokenInfoContainer}>
+            <Skeleton circle width={46} height={46} />
+            <View style={styles.tokenInfo}>
+              <Skeleton
+                width={40}
+                height={20}
+                style={{ marginTop: 0, borderRadius: 4 }}
+              />
+              <Skeleton
+                width={80}
+                height={18}
+                style={{ marginTop: 4, borderRadius: 4 }}
+              />
+            </View>
+          </View>
+        </View>
+        <View style={styles.tokenRightSection}>
+          <Skeleton width={100} height={56} style={{ borderRadius: 10 }} />
+        </View>
+      </View>
+      <View style={styles.bottomSection}>
+        <Skeleton width={160} height={36} style={{ borderRadius: 6 }} />
+        <Skeleton width={66} height={34} style={{ borderRadius: 6 }} />
+      </View>
+    </View>
+  );
+};
+
+const TokenListItemComponent = ({
   item,
   onBuyPress,
   onPress,
@@ -76,14 +122,6 @@ export const TokenListItem = ({
 }: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-
-  const formatPercentage = (change: number | null | undefined): string => {
-    if (change === null || change === undefined) {
-      return '+0.0%';
-    }
-    return `${change > 0 ? '+' : ''}${change.toFixed(1)}%`;
-  };
-
   const isPositive = (item.price_24h_change || 0) >= 0;
 
   return (
@@ -102,13 +140,16 @@ export const TokenListItem = ({
         </View>
 
         <View style={styles.tokenRightSection}>
-          <TrendChart isPositive={isPositive} data={item.net_curve_24h || []} />
+          <TrendChart
+            isPositive={isPositive}
+            data={item.price_curve_24h || []}
+          />
           <Text
             style={StyleSheet.flatten([
               styles.changeText,
               !isPositive && styles.changeTextPositive,
             ])}>
-            {formatPercentage(item.price_24h_change)}
+            {formatPercentage(Number(item.price_24h_change) || 0)}
           </Text>
         </View>
       </View>
@@ -139,6 +180,8 @@ export const TokenListItem = ({
     </TouchableOpacity>
   );
 };
+
+export const TokenListItem = React.memo(TokenListItemComponent);
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
