@@ -389,19 +389,14 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             quality: 0.2,
             result: 'data-uri',
           }}>
-          {isEmptyTab && (
+          {(isShowSearch && !searchText) || (!isShowSearch && !url) ? (
             <BrowserBookmarkSection
-              style={
-                (isShowSearch && !searchText) || (!isShowSearch && !url)
-                  ? null
-                  : styles.hidden
-              }
               onPress={dapp => {
                 const urlToGo = dapp.url || dapp.origin;
                 handleGoTo(urlToGo);
               }}
             />
-          )}
+          ) : null}
           <View
             // renderToHardwareTextureAndroid
             style={[

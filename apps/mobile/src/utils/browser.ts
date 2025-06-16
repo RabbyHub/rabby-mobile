@@ -209,3 +209,11 @@ export const getAddressBarTitle = (url: string) => {
   }
   return urlInfo.hostname;
 };
+
+export const isGoogle = (url?: string) => {
+  const urlInfo = urlUtils.safeParseURL(url || '');
+  if (!urlInfo) {
+    return false;
+  }
+  return googleDomainList.includes(urlInfo.hostname);
+};
