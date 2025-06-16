@@ -24,27 +24,29 @@ const tpl = JSON.parse(`
   ]
 }
 `);
+
 module.exports = {
   '*.{,js,jsx}': 'eslint --fix --quiet',
   '*.{,ts,tsx}': [
     'eslint --fix --quiet',
-    stagedFiles => {
-      tpl.include = tpl.include.concat(stagedFiles);
+    !process.env.DISABLE_APP_TYPE_CHECK &&
+      (stagedFiles => {
+        tpl.include = tpl.include.concat(stagedFiles);
 
-      console.log(`Writing ${TSCONFIG_FILE}...`);
+        console.log(`Writing ${TSCONFIG_FILE}...`);
 
-      // Ensure the directory exists
-      if (!fs.existsSync(path.dirname(tsconfigPath)))
-        fs.mkdirSync(path.dirname(tsconfigPath), { recursive: true });
-      // Write the updated tsconfig to the file
-      fs.writeFileSync(tsconfigPath, JSON.stringify(tpl, null, 2));
-      console.log(`${TSCONFIG_FILE} written successfully.`);
+        // Ensure the directory exists
+        if (!fs.existsSync(path.dirname(tsconfigPath)))
+          fs.mkdirSync(path.dirname(tsconfigPath), { recursive: true });
+        // Write the updated tsconfig to the file
+        fs.writeFileSync(tsconfigPath, JSON.stringify(tpl, null, 2));
+        console.log(`${TSCONFIG_FILE} written successfully.`);
 
-      console.log('Running type check...');
+        console.log('Running type check...');
 
-      // Return the command to run
-      return 'tsc --project tsconfig.typecheck.temp.json --noEmit';
-    },
-  ],
+        // Return the command to run
+        return 'tsc --project tsconfig.typecheck.temp.json --noEmit';
+      }),
+  ].filter(Boolean),
   '*': 'prettier --write --ignore-unknown',
 };
