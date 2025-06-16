@@ -134,7 +134,7 @@ export class EthereumProvider extends EventEmitter {
                 type: this.currentAccountType,
                 brandName: this.currentAccountBrand,
               } as Account)
-            : preferenceService.getCurrentAccount()!,
+            : preferenceService.getFallbackAccount()!,
         });
       }
       case 'eth_chainId':

@@ -48,6 +48,7 @@ export const AccountSelectItem = ({
           params: [account.address, 'latest'],
         },
         chain.serverId,
+        account,
       );
       return new BigNumber(balanceInWei).div(1e18).toFixed();
     },

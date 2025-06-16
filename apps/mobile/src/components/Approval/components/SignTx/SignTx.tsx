@@ -412,6 +412,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     tx,
     gasLimit,
     isReady,
+    account: currentAccount,
   });
 
   const checkErrors = useCheckGasAndNonce({
@@ -514,6 +515,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         recommendNonce = await getRecommendNonce({
           tx,
           chainId,
+          account: currentAccount,
         });
         setRecommendNonce(recommendNonce);
       } catch (e) {
@@ -560,6 +562,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
             ).toString(16)}`,
             gas: item.gas || item.gasLimit || '0x0',
           })),
+        delegate_call: isGnosisAccount ? !!params?.data?.[0]?.operation : false,
       })
       .then(async res => {
         let estimateGas = 0;
@@ -582,6 +585,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
               params: ['latest', false],
             },
             chain.serverId,
+            currentAccount,
           );
           setBlockInfo(block);
         } catch (e) {
@@ -1074,11 +1078,14 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     chain: Chain,
     custom?: number,
   ): Promise<GasLevel[]> => {
-    const list = await apiProvider.gasMarketV2({
-      chain,
-      customGas: custom && custom > 0 ? custom : undefined,
-      tx,
-    });
+    const list = await apiProvider.gasMarketV2(
+      {
+        chain,
+        customGas: custom && custom > 0 ? custom : undefined,
+        tx,
+      },
+      currentAccount,
+    );
     setGasList(list);
     return list;
   };
@@ -1281,6 +1288,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         const balance = await getNativeTokenBalance({
           chainId,
           address: currentAccount.address,
+          account: currentAccount,
         });
 
         setNativeTokenBalance(balance);
@@ -1693,6 +1701,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                     nativeTokenPrice: txDetail?.native_token.price || 0,
                     tx,
                     gasLimit,
+                    account: currentAccount,
                   });
                 }}
                 recommendGasLimit={recommendGasLimit}
@@ -1710,6 +1719,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
                 engineResults={engineResults}
                 nativeTokenBalance={nativeTokenBalance}
                 gasPriceMedian={gasPriceMedian}
+                account={currentAccount}
               />
             }
             noCustomRPC={noCustomRPC}

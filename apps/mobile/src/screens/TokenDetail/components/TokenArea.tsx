@@ -23,7 +23,6 @@ interface Props {
   isSingleAddress?: boolean;
   finalAccount?: KeyringAccountWithAlias;
   accounts: KeyringAccountWithAlias[];
-  switchAccount: (account: KeyringAccountWithAlias) => void;
 }
 
 export const TokenArea: React.FC<Props> = ({
@@ -33,7 +32,6 @@ export const TokenArea: React.FC<Props> = ({
   finalAccount,
   accounts,
   tokenUsdValue,
-  switchAccount,
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -62,17 +60,15 @@ export const TokenArea: React.FC<Props> = ({
     (item: TokenFromAddressItem) => {
       const account = accounts.find(a => a.address === item.address);
       if (account) {
-        switchAccount(account);
         navigate(RootNames.SingleAddressStack, {
           screen: RootNames.SingleAddressHome,
           params: {
-            scrollToToken: token.id, // to do
             account: account,
           },
         });
       }
     },
-    [accounts, switchAccount, token.id],
+    [accounts],
   );
 
   const renderItem = useCallback(

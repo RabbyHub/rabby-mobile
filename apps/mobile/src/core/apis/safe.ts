@@ -30,7 +30,7 @@ export const createSafeService = async ({
   address: string;
   networkId: string;
 }) => {
-  const account = await preferenceService.getCurrentAccount();
+  const account = preferenceService.getFallbackAccount();
   const currentProvider = new EthereumProvider();
   if (account) {
     currentProvider.currentAccount = account.address;
@@ -103,6 +103,7 @@ class ApisSafe {
         });
       });
     });
+    preferenceService.initCurrentAccount();
   };
   syncAllGnosisNetworks = async () => {
     const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
@@ -139,7 +140,7 @@ class ApisSafe {
     address: string;
     networkId: string;
   }) => {
-    const account = await preferenceService.getCurrentAccount();
+    const account = preferenceService.getFallbackAccount();
     if (!account) {
       throw new Error(t('background.error.noCurrentAccount'));
     }

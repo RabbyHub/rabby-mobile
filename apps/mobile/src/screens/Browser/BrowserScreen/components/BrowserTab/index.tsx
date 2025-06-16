@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Dimensions,
   Platform,
@@ -45,6 +51,7 @@ import { BrowserProgressBar } from './BrowserProgressBar';
 import { BrowserSearchAutoComplete } from './BrowserSearchAutoComplete';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { emptyTab } from '@/core/services/browserService';
+import { coerceInteger } from '@/utils/number';
 
 type BrowserTabProps = {
   origin: string;
@@ -151,6 +158,39 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           }
         }
       },
+    );
+
+    const changeViewPortForDesktop = useCallback(
+      (contentMode: WebViewProps['contentMode'], delayMs = 0) => {
+        if (contentMode !== 'desktop') return;
+        if (!IS_ANDROID) return;
+
+        const change = () => {
+          const screenWidth = Dimensions.get('screen').width;
+          const pageWidth = Math.max(screenWidth, 1440); // Ensure at least 1440px width
+          const initScale = coerceInteger(screenWidth / pageWidth, 1);
+
+          webviewRef.current?.injectJavaScript(
+            `;(function() {
+            document.querySelector('meta[name=\"viewport\"]')?.remove();
+            var viewport = document.createElement('meta');
+            viewport.name = 'viewport';
+            // var pageWidth = document.documentElement.clientWidth || document.body.clientWidth;
+            // console.log('pageWidth', pageWidth);
+            // viewport.content = 'width=' + pageWidth + ', initial-scale=1.0';
+            viewport.content = 'width=${pageWidth}, initial-scale=${initScale}';
+            document.head.appendChild(viewport);
+          })();`,
+          );
+        };
+
+        if (delayMs > 0) {
+          setTimeout(change, delayMs);
+        } else {
+          change();
+        }
+      },
+      [webviewRef],
     );
 
     const isBookmark = useMemo(() => {
@@ -428,6 +468,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   }}
                   webviewDebuggingEnabled={__DEV__}
                   contentMode={contentMode}
+                  {...(contentMode === 'desktop' && {
+                    scalesPageToFit: true,
+                  })}
                   onLoadStart={e => {
                     webviewProps?.onLoadStart?.(e);
                     onLoadStart(e);
@@ -455,6 +498,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     if (nativeEvent.progress === 1) {
                       setIsLoading(false);
                     }
+                  }}
+                  onLoad={e => {
+                    changeViewPortForDesktop(contentMode, 0);
                   }}
                   onLoadEnd={e => {
                     setIsLoading(false);

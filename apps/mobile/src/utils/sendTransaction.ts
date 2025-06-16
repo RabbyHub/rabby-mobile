@@ -172,15 +172,19 @@ export const sendTransaction = async ({
     (await apiProvider.getRecommendNonce({
       from: tx.from,
       chainId: chain.id,
+      account,
     }));
 
   // get gas
   let normalGas = gasLevel;
   if (!normalGas) {
-    const gasMarket = await apiProvider.gasMarketV2({
-      chain,
-      tx,
-    });
+    const gasMarket = await apiProvider.gasMarketV2(
+      {
+        chain,
+        tx,
+      },
+      account,
+    );
     normalGas = gasMarket.find(item => item.level === 'normal')!;
   }
 
@@ -220,6 +224,7 @@ export const sendTransaction = async ({
   const balance = await getNativeTokenBalance({
     chainId: chain.id,
     address,
+    account,
   });
   let estimateGas = 0;
   if (preExecResult.gas.success) {
@@ -251,6 +256,7 @@ export const sendTransaction = async ({
       nativeTokenBalance: balance,
       explainTx: preExecResult,
       needRatio,
+      account,
     });
     gasLimit = _gasLimit;
     recommendGasLimitRatio = _recommendGasLimitRatio;
@@ -264,6 +270,7 @@ export const sendTransaction = async ({
     nativeTokenPrice: preExecResult.native_token.price,
     tx,
     gasLimit,
+    account,
   });
 
   // check gas errors

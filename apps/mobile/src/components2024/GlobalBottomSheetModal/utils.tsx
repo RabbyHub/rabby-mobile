@@ -32,7 +32,6 @@ import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
 import { SeedPhraseBackupToCloud } from '@/components/SeedPhraseBackupToCloud2024/SeedPhraseBackupToCloud';
 import { AddAddressSelectMethod } from '@/components/AddAddressSelectMethod';
 import { SeedPhraseManualBackup } from '@/components2024/SeedPhraseManualBackup';
-import { SeedPhraseRestoreFromCloud } from '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
 import { BackupNotAvailableScreen } from '@/components/SeedPhraseBackupToCloud/BackupNotAvailableScreen';
 import { Descriptions } from '@/components2024/Descriptions';
 import React from 'react';
@@ -92,7 +91,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: [],
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]: [],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
-  [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: [494],
+  [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: [508],
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: [470],
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: [492],
   [MODAL_NAMES.DESCRIPTION]: [674],
@@ -134,7 +133,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: FundYourWallet,
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: AddWhitelistSelectMethod,
   [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: SeedPhraseManualBackup,
-  [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: SeedPhraseRestoreFromCloud,
+  [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: SeedPhraseRestoreFromCloud2024,
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]:
     SeedPhraseRestoreFromCloud2024,
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: BackupNotAvailableScreen,

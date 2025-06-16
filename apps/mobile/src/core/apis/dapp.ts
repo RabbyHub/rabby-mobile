@@ -59,7 +59,7 @@ export const connect = async ({
     dapp?.currentAccount ||
     myAccounts?.[0] ||
     accounts?.[0] ||
-    preferenceService.getCurrentAccount();
+    preferenceService.getFallbackAccount();
 
   if (dapp) {
     dappService.patchDapps({
@@ -102,7 +102,7 @@ export function setCurrentAccountForDapp(
   currentAccount?: DappInfo['currentAccount'],
 ) {
   if (currentAccount === undefined) {
-    currentAccount = preferenceService.getCurrentAccount();
+    currentAccount = preferenceService.getFallbackAccount();
   }
   dappService.patchDapps({
     [origin]: {

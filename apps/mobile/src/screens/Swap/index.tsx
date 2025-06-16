@@ -9,7 +9,6 @@ import {
   swapService,
   transactionHistoryService,
 } from '@/core/services';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -205,6 +204,8 @@ const Swap = ({
     clearExpiredTimer,
     finishedQuotes,
     inSufficientCanGetQuote,
+
+    autoSuggestSlippage,
   } = useTokenPair({
     account: currentAccount!,
   });
@@ -1018,6 +1019,7 @@ const Swap = ({
                 marginHorizontal: -24,
               }}>
               <BridgeShowMore
+                autoSuggestSlippage={autoSuggestSlippage}
                 supportDirectSign={canShowDirectSubmit}
                 openFeePopup={openFeePopup}
                 open={showMoreOpen}

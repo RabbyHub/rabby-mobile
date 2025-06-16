@@ -2,7 +2,6 @@ import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/Fo
 import { toast } from '@/components2024/Toast';
 import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChainByEnum, findChainByID } from '@/utils/chain';
 import { navigationRef } from '@/utils/navigation';

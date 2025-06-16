@@ -7,6 +7,7 @@ import {
   Pressable,
   Image,
   ScrollView,
+  Keyboard,
 } from 'react-native';
 
 import { createGetStyles2024 } from '@/utils/styles';
@@ -44,6 +45,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
 import { preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { IS_IOS } from '@/core/native/utils';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -65,6 +67,30 @@ function ImportMethods(): JSX.Element {
       }
     | undefined;
   // const state = undefined;
+
+  const onPressCloud = React.useCallback(() => {
+    Keyboard.dismiss();
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.RESTORE_FROM_CLOUD,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: false,
+        enablePanDownToClose: true,
+      },
+      shouldRedirect2SetPassword: shouldRedirectToSetPasswordBefore2024,
+      onDone: () => {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal2024(id);
+        }, 0);
+      },
+    });
+  }, [shouldRedirectToSetPasswordBefore2024]);
+
+  const CloudImageSrc = React.useMemo(() => {
+    if (IS_IOS) {
+      return require('@/assets2024/icons/common/IconIcloud.png');
+    }
+    return require('@/assets2024/icons/common/IconGoogleDrive.png');
+  }, []);
 
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
@@ -90,7 +116,7 @@ function ImportMethods(): JSX.Element {
             )}
             <Card
               style={styles.importItem}
-              hasArrow={state?.isNotNewUserProc}
+              // hasArrow={state?.isNotNewUserProc}
               onPress={async () => {
                 if (
                   // only has address in this set password
@@ -120,7 +146,7 @@ function ImportMethods(): JSX.Element {
               </Text>
             </Card>
             <Card
-              hasArrow={state?.isNotNewUserProc}
+              // hasArrow={state?.isNotNewUserProc}
               style={styles.importItem}
               onPress={async () => {
                 if (
@@ -149,10 +175,31 @@ function ImportMethods(): JSX.Element {
                 {t('page.nextComponent.importAddress.privateKey')}
               </Text>
             </Card>
+            <Card
+              // hasArrow={state?.isNotNewUserProc}
+              style={styles.importItem}
+              onPress={async () => {
+                onPressCloud();
+              }}>
+              <Image
+                style={{
+                  width: 40,
+                  height: 40,
+                }}
+                source={CloudImageSrc}
+              />
+
+              {/* <PrivateKeyIcon style={styles.icon} /> */}
+              <Text style={styles.importType}>
+                {t('page.nextComponent.importAddress.ImportCloud', {
+                  cloud: IS_IOS ? 'iCloud' : 'Google Drive',
+                })}
+              </Text>
+            </Card>
             {state?.isFromEmptyAddress && (
               <>
                 <Card
-                  hasArrow={state?.isNotNewUserProc}
+                  // hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
                   onPress={() => {
                     navigation.dispatch(
@@ -168,7 +215,7 @@ function ImportMethods(): JSX.Element {
                   </Text>
                 </Card>
                 <Card
-                  hasArrow={state?.isNotNewUserProc}
+                  // hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
                   onPress={() => {
                     navigation.dispatch(
@@ -194,7 +241,7 @@ function ImportMethods(): JSX.Element {
                   {t('page.nextComponent.importAddress.safeTitle')}
                 </Text>
                 <Card
-                  hasArrow={state?.isNotNewUserProc}
+                  // hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
                   onPress={() => {
                     navigation.dispatch(
@@ -218,7 +265,7 @@ function ImportMethods(): JSX.Element {
                   {t('page.nextComponent.importAddress.watchOnlyTitle')}
                 </Text>
                 <Card
-                  hasArrow={state?.isNotNewUserProc}
+                  // hasArrow={state?.isNotNewUserProc}
                   style={styles.importItem}
                   onPress={() => {
                     navigation.dispatch(
@@ -243,7 +290,7 @@ function ImportMethods(): JSX.Element {
 
             {!state?.isNotNewUserProc && (
               <Card
-                hasArrow={state?.isNotNewUserProc}
+                // hasArrow={state?.isNotNewUserProc}
                 style={styles.importItem}
                 onPress={() => {
                   navigation.dispatch(
@@ -333,6 +380,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   importItem: {
     display: 'flex',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 20,
     flexDirection: 'row',
     justifyContent: 'flex-start',
     gap: 12,

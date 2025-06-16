@@ -13,6 +13,7 @@ const hitSlop = {
   right: 10,
 };
 
+/** @deprecated */
 export const CloudBackupButton: React.FC<HeaderButtonProps> = ({}) => {
   const onPress = React.useCallback(() => {
     navigate(RootNames.StackAddress, {

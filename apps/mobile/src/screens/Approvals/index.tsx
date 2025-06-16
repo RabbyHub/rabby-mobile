@@ -8,7 +8,6 @@ import {
 } from 'react-native-collapsible-tab-view';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ApprovalsBottomArea } from './components/Layout';

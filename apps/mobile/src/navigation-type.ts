@@ -32,7 +32,7 @@ import {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
 } from './screens/Approvals/useApprovalsPage';
-// import type { HistoryItemCateType } from './screens/Transaction/components/HistoryItemIcon';
+import { HistoryItemCateType } from './screens/Transaction/components/type';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -77,7 +77,7 @@ export type RootStackParamsList = {
     fromPortfolio?: boolean;
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
-    account?: KeyringAccountWithAlias;
+    account?: KeyringAccountWithAlias | null;
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
@@ -266,6 +266,7 @@ export type TransactionNavigatorParamList = {
     canCancel?: boolean;
     isForMultipleAddress?: boolean;
     title?: string;
+    type?: HistoryItemCateType;
     onPressBottomBtn?: (data: SendAction) => void;
     isInSendHistory?: boolean;
     // sendsToken: (TokenItem | undefined)[];
@@ -306,6 +307,8 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.Receive]: {
     account: Account;
+    tokenSymbol?: string;
+    chainEnum?: CHAINS_ENUM | string;
   };
   [RootNames.Approvals]: {
     account: Account;

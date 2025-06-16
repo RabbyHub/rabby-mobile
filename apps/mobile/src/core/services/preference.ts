@@ -406,6 +406,9 @@ export class PreferenceService {
     this.setCurrentAccount(account);
   };
 
+  /**
+   * @deprecated use getFallbackAccount instead
+   */
   getCurrentAccount = (): Account | undefined | null => {
     const account = cloneDeep(this.store.currentAccount);
     if (!account) {
@@ -417,6 +420,26 @@ export class PreferenceService {
     };
   };
 
+  getFallbackAccount = (): Account | null => {
+    const account = cloneDeep(this.store.currentAccount);
+    if (!account) {
+      return null;
+    }
+    return {
+      ...account,
+      address: account.address.toLowerCase(),
+    };
+  };
+
+  initCurrentAccount = async () => {
+    if (!this.store.currentAccount) {
+      return await this.resetCurrentAccount();
+    }
+  };
+
+  /**
+   *  @deprecated
+   */
   toggleAllowNotifyAccountsChanged(allowed: boolean = false) {
     this._allowedToNotifyAccountsChanged = allowed;
   }

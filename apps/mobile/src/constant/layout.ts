@@ -173,6 +173,7 @@ export const RootNames = {
   ImportMoreAddress: 'ImportMoreAddress',
   ImportPrivateKey: 'ImportPrivateKey',
   ImportPrivateKey2024: 'ImportPrivateKey2024',
+  /** @deprecated */
   ImportMnemonic: 'ImportMnemonic',
   ImportMnemonic2024: 'ImportMnemonic2024',
   CreateMnemonic: 'CreateMnemonic',

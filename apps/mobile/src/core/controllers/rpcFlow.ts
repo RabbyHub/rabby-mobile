@@ -153,7 +153,7 @@ const flowContext = flow
             origin,
             chainId: defaultChain || CHAINS_ENUM.ETH,
             currentAccount:
-              defaultAccount || preferenceService.getCurrentAccount(),
+              defaultAccount || preferenceService.getFallbackAccount(),
             session: {
               name,
               icon,
@@ -162,7 +162,7 @@ const flowContext = flow
             },
           });
           ctx.request.account =
-            defaultAccount || preferenceService.getCurrentAccount();
+            defaultAccount || preferenceService.getFallbackAccount();
         } catch (e) {
           connectOrigins.delete(origin);
           throw e;
@@ -428,13 +428,13 @@ export default async (request: ProviderRequest) => {
   if (origin) {
     if (origin === INTERNAL_REQUEST_ORIGIN) {
       account =
-        request.account || preferenceService.getCurrentAccount() || undefined;
+        request.account || preferenceService.getFallbackAccount() || undefined;
     } else {
       const site = dappService.getDapp(origin);
       if (site?.isConnected) {
         account =
           site.currentAccount ||
-          preferenceService.getCurrentAccount() ||
+          preferenceService.getFallbackAccount() ||
           undefined;
       }
     }

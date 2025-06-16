@@ -5,7 +5,7 @@ import {
 } from '@/assets/icons/gnosis';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { apisSafe } from '@/core/apis/safe';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useGnosisSafeInfo } from '@/hooks/gnosis/useGnosisSafeInfo';
 import { useThemeColors } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
@@ -202,16 +202,15 @@ export const GnosisTransactionQueueList = (props: {
           txs.map(async safeTx => {
             const tx: SafeTransactionDataPartial = {
               data: safeTx.data || '0x',
-              // todo fix this
-              gasPrice: safeTx.gasPrice ? Number(safeTx.gasPrice) : 0,
+              gasPrice: safeTx.gasPrice || '0',
               gasToken: safeTx.gasToken,
               refundReceiver: safeTx.refundReceiver,
               to: safeTx.to,
               value: numberToHex(safeTx.value),
-              safeTxGas: safeTx.safeTxGas,
+              safeTxGas: safeTx.safeTxGas.toString(),
               nonce: +safeTx.nonce,
               operation: safeTx.operation,
-              baseGas: safeTx.baseGas,
+              baseGas: safeTx.baseGas.toString(),
             };
             return apisSafe.validateGnosisTransaction(
               {
@@ -234,15 +233,15 @@ export const GnosisTransactionQueueList = (props: {
             }
             const tx: SafeTransactionDataPartial = {
               data: safeTx.data || '0x',
-              gasPrice: safeTx.gasPrice ? Number(safeTx.gasPrice) : 0,
+              gasPrice: safeTx.gasPrice || '0',
               gasToken: safeTx.gasToken,
               refundReceiver: safeTx.refundReceiver,
               to: safeTx.to,
               value: numberToHex(safeTx.value),
-              safeTxGas: safeTx.safeTxGas,
+              safeTxGas: safeTx.safeTxGas.toString(),
               nonce: +safeTx.nonce,
               operation: safeTx.operation,
-              baseGas: safeTx.baseGas,
+              baseGas: safeTx.baseGas.toString(),
             };
 
             return safeTx.confirmations.every(confirm =>

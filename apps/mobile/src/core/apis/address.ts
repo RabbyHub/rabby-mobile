@@ -19,6 +19,7 @@ export async function addWatchAddress(address: string) {
 
   keyring.setAccountToAdd(address);
   const result = await keyringService.addNewAccount(keyring);
+  preferenceService.initCurrentAccount();
 
   return result;
 }
@@ -29,7 +30,7 @@ export async function addWatchAddress(address: string) {
 export const addWatchAddressOnly = addWatchAddress;
 
 export function getCurrentAccount() {
-  return preferenceService.getCurrentAccount();
+  return preferenceService.getFallbackAccount();
 }
 
 async function resetCurrentAccount() {
