@@ -88,6 +88,8 @@ import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { HomePendingBadge } from './components/HomePending';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
+import { useExposureRateGuide } from '@/components/RateModal/hooks';
+import { RateModal } from '@/components/RateModal/RateModal';
 
 const HeaderHeight = 24;
 
@@ -671,20 +673,20 @@ function MultiAddressHome(): JSX.Element {
     });
   }, [appThemeConfig]);
 
+  const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
 
-  const showRateModal = true;
-  const { offlineChainLayout } = useMemo(() => {
+  const { betweenContentLayout } = useMemo(() => {
     return {
-      offlineChainLayout:
+      betweenContentLayout:
         !offlineChainData.displayWillClosedChain ||
         !offlineChainData.offlineChainInfo
-          ? !displayFundWallet && !showRateModal
+          ? !displayFundWallet && !shouldShowRateGuideOnHome
             ? ('empty-placeholder' as const)
             : ('none' as const)
-          : ('show' as const),
+          : ('show-offlinechain' as const),
     };
-  }, [showRateModal, offlineChainData, displayFundWallet]);
+  }, [shouldShowRateGuideOnHome, offlineChainData, displayFundWallet]);
 
   return (
     <NormalScreenContainer2024
@@ -727,8 +729,8 @@ function MultiAddressHome(): JSX.Element {
           <View
             style={[
               styles.contentBetweenHeaderAndContent,
-              offlineChainLayout !== 'none' && { marginTop: 0 },
-              offlineChainLayout === 'empty-placeholder' && { marginTop: 30 },
+              betweenContentLayout !== 'none' && { marginTop: 0 },
+              betweenContentLayout === 'empty-placeholder' && { marginTop: 30 },
             ]}>
             <OfflineChainNotify
               data={offlineChainData}
@@ -737,9 +739,13 @@ function MultiAddressHome(): JSX.Element {
 
             {displayFundWallet && <FoundYourWalletGuide />}
 
-            <View style={{ paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL }}>
-              <RateModalTriggerOnHome />
-            </View>
+            {shouldShowRateGuideOnHome && (
+              <View
+                style={{ paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL }}>
+                <RateModalTriggerOnHome />
+                <RateModal totalBalanceText={combineData.netWorth} />
+              </View>
+            )}
           </View>
 
           <View style={[{ marginTop: 0 }, styles.grid]}>

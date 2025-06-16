@@ -1075,7 +1075,8 @@
         "confirmButtonTitleAndroid": "Google Play'de Değerlendirme",
         "confirmButtonTitleIOS": "App Store'da oran",
         "feedbackTitle": "Geri bildiriminiz var mı? \nDinliyoruz.",
-        "feedbackSubmit": "Göndermek"
+        "feedbackSubmit": "Göndermek",
+        "feedbackSuccess": "Geri bildiriminiz için teşekkürler"
       }
     },
     "newAddress": {

@@ -38,6 +38,8 @@ export const APP_VERSIONS = {
   forCheckUpgrade: __DEV__ ? fromJs : fromNative,
 
   buildNumber,
+
+  forFeedback: `${fromNative} (${buildNumber})`,
 };
 
 const UA_NAME = 'RabbyMobile' as const;

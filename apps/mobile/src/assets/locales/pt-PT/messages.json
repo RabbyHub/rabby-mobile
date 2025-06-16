@@ -1241,7 +1241,8 @@
         "confirmButtonTitleAndroid": "Taxa no Google Play",
         "confirmButtonTitleIOS": "Taxa na App Store",
         "feedbackTitle": "Tem feedback? Estamos ouvindo.",
-        "feedbackSubmit": "Submeter"
+        "feedbackSubmit": "Submeter",
+        "feedbackSuccess": "Obrigado pelo seu feedback"
       }
     },
     "newAddress": {

@@ -1074,7 +1074,8 @@
         "confirmButtonTitleIOS": "Rate on App Store",
         "confirmButtonTitleAndroid": "Rate on Google Play",
         "feedbackTitle": "Have feedback? We’re listening.",
-        "feedbackSubmit": "Submit"
+        "feedbackSubmit": "Submit",
+        "feedbackSuccess": "Thank you for your feedback"
       }
     },
     "newAddress": {

@@ -1158,7 +1158,8 @@
         "confirmButtonTitleAndroid": "Califica en Google Play",
         "confirmButtonTitleIOS": "Califique en App Store",
         "feedbackTitle": "¿Tiene comentarios? \nEstamos escuchando.",
-        "feedbackSubmit": "Entregar"
+        "feedbackSubmit": "Entregar",
+        "feedbackSuccess": "Gracias por sus comentarios"
       }
     },
     "bridge": {

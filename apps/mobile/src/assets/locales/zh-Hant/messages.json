@@ -1171,7 +1171,8 @@
         "confirmButtonTitleAndroid": "在Google Play上評價",
         "confirmButtonTitleIOS": "App Store上的價格",
         "feedbackTitle": "有反饋？我們正在聽。",
-        "feedbackSubmit": "提交"
+        "feedbackSubmit": "提交",
+        "feedbackSuccess": "謝謝你的反饋"
       }
     },
     "ethSign": {

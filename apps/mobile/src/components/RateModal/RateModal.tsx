@@ -2,6 +2,7 @@ import {
   Dimensions,
   Modal,
   Text,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -16,43 +17,29 @@ import StarCC from './icons/star-cc.svg';
 import { IS_ANDROID } from '@/core/native/utils';
 import { NextInput } from '@/components2024/Form/Input';
 import { useMemo } from 'react';
-import { useRateModal } from './hooks';
+import { useExposureRateGuide, useRateModal } from './hooks';
 import { openExternalUrl } from '@/core/utils/linking';
 import { APP_URLS } from '@/constant';
+import { toast } from '@/components2024/Toast';
+import PressableStar from './RateStar';
 
 const LOGO_SIZE = 67;
-const STAR_SIZE = 34;
 
-function PressableStar({
-  isFilled,
-  onPress,
-}: {
-  isFilled?: boolean;
-  onPress?: () => void;
-}) {
-  return (
-    <TouchableWithoutFeedback onPress={onPress}>
-      <StarCC
-        width={STAR_SIZE}
-        height={STAR_SIZE}
-        color={isFilled ? 'rgba(255, 205, 54, 1)' : 'rgba(0, 0, 0, 0.16)'}
-      />
-    </TouchableWithoutFeedback>
-  );
-}
-
-export function RateModal() {
+export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
+  const { disableExposure } = useExposureRateGuide();
   const {
     rateModalShown,
     toggleShowRateModal,
 
     userStar,
     selectStar,
+
     userFeedback,
     onChangeFeedback,
+    submitFeedback,
   } = useRateModal();
 
   const wantFeedback = useMemo(() => {
@@ -62,6 +49,10 @@ export function RateModal() {
   const userFeedbackLenIndicator = useMemo(() => {
     return `${userFeedback.length}/${300}`;
   }, [userFeedback.length]);
+
+  const disableSubmit = useMemo(() => {
+    return !wantFeedback || !userFeedback.length;
+  }, [wantFeedback, userFeedback]);
 
   return (
     <Modal
@@ -79,6 +70,7 @@ export function RateModal() {
               const rate = index + 1;
               return (
                 <PressableStar
+                  style={styles.star}
                   key={`star-${index}`}
                   isFilled={userStar >= rate}
                   onPress={() => {
@@ -106,6 +98,7 @@ export function RateModal() {
                   ]}
                   onPress={() => {
                     openExternalUrl(APP_URLS.RATE_URL);
+                    disableExposure();
                   }}
                   title={
                     IS_ANDROID
@@ -123,7 +116,9 @@ export function RateModal() {
                     styles.rateButtonCancelText,
                   ]}
                   onPress={() => {
-                    toggleShowRateModal(false);
+                    toggleShowRateModal(false, {
+                      disableExposureOnClose: true,
+                    });
                   }}
                   title={t('global.Cancel')}
                 />
@@ -162,12 +157,15 @@ export function RateModal() {
                     styles.feedbackButtonCancelText,
                   ]}
                   onPress={() => {
-                    toggleShowRateModal(false);
+                    toggleShowRateModal(false, {
+                      disableExposureOnClose: true,
+                    });
                   }}
                   title={t('global.Cancel')}
                 />
                 <Button
                   type="primary"
+                  disabled={disableSubmit}
                   containerStyle={styles.feedbackButtonContainer}
                   buttonStyle={[
                     styles.feedbackButton,
@@ -177,7 +175,19 @@ export function RateModal() {
                     styles.feedbackButtonText,
                     styles.feedbackButtonConfirmText,
                   ]}
-                  onPress={() => {}}
+                  onPress={() => {
+                    submitFeedback({ totalBalanceText })
+                      .then(() => {
+                        toast.success(
+                          t('page.nextComponent.rateModal.feedbackSuccess'),
+                        );
+                      })
+                      .finally(() => {
+                        toggleShowRateModal(false, {
+                          disableExposureOnClose: true,
+                        });
+                      });
+                  }}
                   title={t('page.nextComponent.rateModal.feedbackSubmit')}
                 />
               </View>
@@ -225,6 +235,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       marginTop: 8,
       marginBottom: 12,
       gap: 15,
+    },
+    star: {
+      // ...makeDebugBorder(),
     },
 
     bottomContainer: {

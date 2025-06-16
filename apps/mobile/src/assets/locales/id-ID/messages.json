@@ -1075,7 +1075,8 @@
         "confirmButtonTitleAndroid": "Nilai di Google Play",
         "confirmButtonTitleIOS": "Nilai di App Store",
         "feedbackTitle": "Punya umpan balik? \nKami mendengarkan.",
-        "feedbackSubmit": "Kirim"
+        "feedbackSubmit": "Kirim",
+        "feedbackSuccess": "Terima kasih atas tanggapan Anda"
       }
     },
     "newAddress": {

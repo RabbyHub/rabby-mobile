@@ -1079,7 +1079,8 @@
         "confirmButtonTitleAndroid": "在Google Play上评价",
         "confirmButtonTitleIOS": "App Store上的价格",
         "feedbackTitle": "有反馈？\n我们正在听。",
-        "feedbackSubmit": "提交"
+        "feedbackSubmit": "提交",
+        "feedbackSuccess": "谢谢你的反馈"
       }
     },
     "signText": {

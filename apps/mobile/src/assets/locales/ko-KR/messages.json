@@ -1011,7 +1011,8 @@
         "confirmButtonTitleAndroid": "Google Play의 평가",
         "confirmButtonTitleIOS": "App Store의 요금",
         "feedbackTitle": "피드백이 있습니까? \n우리는 듣고 있습니다.",
-        "feedbackSubmit": "제출하다"
+        "feedbackSubmit": "제출하다",
+        "feedbackSuccess": "귀하의 의견에 감사드립니다"
       }
     },
     "switchChain": {

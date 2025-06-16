@@ -1054,7 +1054,8 @@
         "confirmButtonTitleAndroid": "Đánh giá trên Google Play",
         "confirmButtonTitleIOS": "Đánh giá trên cửa hàng ứng dụng",
         "feedbackTitle": "Có phản hồi? \nChúng tôi lắng nghe.",
-        "feedbackSubmit": "Nộp"
+        "feedbackSubmit": "Nộp",
+        "feedbackSuccess": "Cảm ơn bạn đã phản hồi của bạn"
       }
     },
     "signText": {

@@ -1020,7 +1020,8 @@
         "confirmButtonTitleAndroid": "Taux sur Google Play",
         "confirmButtonTitleIOS": "Tarif sur l'App Store",
         "feedbackTitle": "Vous avez des commentaires? \nNous écoutons.",
-        "feedbackSubmit": "Soumettre"
+        "feedbackSubmit": "Soumettre",
+        "feedbackSuccess": "Merci pour vos commentaires"
       }
     },
     "signText": {

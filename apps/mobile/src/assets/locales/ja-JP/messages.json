@@ -958,7 +958,8 @@
         "confirmButtonTitleAndroid": "Google Playのレート",
         "confirmButtonTitleIOS": "App Storeのレート",
         "feedbackTitle": "フィードバックがありますか？\n聞いています。",
-        "feedbackSubmit": "提出する"
+        "feedbackSubmit": "提出する",
+        "feedbackSuccess": "フィードバックありがとうございます"
       }
     },
     "switchChain": {

@@ -1070,7 +1070,8 @@
         "confirmButtonTitleAndroid": "Оценка в Google Play",
         "confirmButtonTitleIOS": "Оценка в App Store",
         "feedbackTitle": "Есть обратная связь? \nМы слушаем.",
-        "feedbackSubmit": "Представлять на рассмотрение"
+        "feedbackSubmit": "Представлять на рассмотрение",
+        "feedbackSuccess": "Спасибо за ваш отзыв"
       }
     },
     "newAddress": {
