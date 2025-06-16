@@ -1069,6 +1069,13 @@
       },
       "rateModalTriggerOnHome": {
         "description": "Bagaimana Anda menilai dompet Rabby"
+      },
+      "rateModal": {
+        "description": "Terima kasih! \nJika Anda suka Rabby, peringkat cepat di App Store akan sangat berarti.",
+        "confirmButtonTitleAndroid": "Nilai di Google Play",
+        "confirmButtonTitleIOS": "Nilai di App Store",
+        "feedbackTitle": "Punya umpan balik? \nKami mendengarkan.",
+        "feedbackSubmit": "Kirim"
       }
     },
     "newAddress": {

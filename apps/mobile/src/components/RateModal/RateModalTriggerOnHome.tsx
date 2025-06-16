@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -7,6 +7,8 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import StarCC from './icons/star-cc.svg';
 import CloseCC from './icons/close-cc.svg';
 import RabbySilhouette from './icons/rabby-silhouette.svg';
+import { RateModal } from './RateModal';
+import { useRateModal } from './hooks';
 
 const STAR_SIZE = 38;
 const TRIGGER_HEIGHT = 88;
@@ -16,30 +18,47 @@ export function RateModalTriggerOnHome({ style }: RNViewProps) {
 
   const { t } = useTranslation();
 
+  const { shouldShowGuideOnHome, toggleShowRateModal } = useRateModal();
+
+  if (!shouldShowGuideOnHome) return null;
+
   return (
-    <View style={StyleSheet.flatten([styles.container, style])}>
-      <View style={styles.silhouetteContainer}>
-        <RabbySilhouette height={TRIGGER_HEIGHT} />
-      </View>
-      <View style={styles.closeContainer}>
-        <CloseCC color={colors2024['neutral-title-1']} width={16} height={16} />
-      </View>
-      <Text style={styles.text}>
-        {t('page.nextComponent.rateModalTriggerOnHome.description')}
-      </Text>
-      <View style={styles.starsContainer}>
-        {Array.from({ length: 5 }, (_, index) => (
-          <StarCC
-            key={`star-${index}`}
-            width={STAR_SIZE}
-            height={STAR_SIZE}
-            style={{ marginHorizontal: 2 }}
-            // black, 0.16
-            color={'rgba(0, 0, 0, 0.16)'}
-          />
-        ))}
-      </View>
-    </View>
+    <>
+      <TouchableWithoutFeedback
+        style={style}
+        onPress={() => {
+          toggleShowRateModal(true);
+        }}>
+        <View
+          style={StyleSheet.flatten([styles.container])}
+          testID="RateModalTriggerOnHome">
+          <View style={styles.silhouetteContainer}>
+            <RabbySilhouette height={TRIGGER_HEIGHT} />
+          </View>
+          <View style={styles.closeContainer}>
+            <CloseCC
+              color={colors2024['neutral-title-1']}
+              width={16}
+              height={16}
+            />
+          </View>
+          <Text style={styles.text}>
+            {t('page.nextComponent.rateModalTriggerOnHome.description')}
+          </Text>
+          <View style={styles.starsContainer}>
+            {Array.from({ length: 5 }, (_, index) => (
+              <StarCC
+                key={`star-${index}`}
+                width={STAR_SIZE}
+                height={STAR_SIZE}
+                color={'rgba(0, 0, 0, 0.16)'}
+              />
+            ))}
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+      <RateModal />
+    </>
   );
 }
 

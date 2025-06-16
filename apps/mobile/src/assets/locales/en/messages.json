@@ -1068,6 +1068,13 @@
       },
       "rateModalTriggerOnHome": {
         "description": "How do you rate Rabby Wallet"
+      },
+      "rateModal": {
+        "description": "Thanks! If you like Rabby, a quick rating on the App Store would mean a lot.",
+        "confirmButtonTitleIOS": "Rate on App Store",
+        "confirmButtonTitleAndroid": "Rate on Google Play",
+        "feedbackTitle": "Have feedback? We’re listening.",
+        "feedbackSubmit": "Submit"
       }
     },
     "newAddress": {

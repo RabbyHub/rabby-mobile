@@ -1184,6 +1184,13 @@
       },
       "rateModalTriggerOnHome": {
         "description": "Wie bewertet man Rabby -Brieftasche"
+      },
+      "rateModal": {
+        "description": "Danke! \nWenn Sie Rabby mögen, würde eine schnelle Bewertung im App Store viel bedeuten.",
+        "confirmButtonTitleAndroid": "Rate bei Google Play",
+        "confirmButtonTitleIOS": "Preis im App Store",
+        "feedbackTitle": "Feedback haben? \nWir hören zu.",
+        "feedbackSubmit": "Einreichen"
       }
     },
     "switchChain": {

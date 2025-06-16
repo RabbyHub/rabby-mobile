@@ -952,6 +952,13 @@
       },
       "rateModalTriggerOnHome": {
         "description": "ラビーウォレットをどのように評価しますか"
+      },
+      "rateModal": {
+        "description": "ありがとう！ \nRabbyが好きなら、App Storeでの迅速な評価は多くのことを意味します。",
+        "confirmButtonTitleAndroid": "Google Playのレート",
+        "confirmButtonTitleIOS": "App Storeのレート",
+        "feedbackTitle": "フィードバックがありますか？\n聞いています。",
+        "feedbackSubmit": "提出する"
       }
     },
     "switchChain": {

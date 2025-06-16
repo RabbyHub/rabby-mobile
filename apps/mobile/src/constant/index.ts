@@ -63,6 +63,12 @@ export const APP_URLS = {
       'https://play.google.com/store/apps/details?id=com.debank.rabbymobile',
     ios: 'https://apps.apple.com/us/app/rabby-wallet-crypto-evm/id6474381673',
   })!,
+
+  RATE_URL:
+    Platform.select({
+      android: 'market://details?id=com.debank.rabbymobile',
+      ios: 'itms-apps://itunes.apple.com/app/id6474381673?mt=8',
+    }) || '',
 };
 
 type AndroidIdSuffx = '' | '.debug' | '.regression';
