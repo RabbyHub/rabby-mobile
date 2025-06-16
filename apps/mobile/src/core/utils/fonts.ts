@@ -127,7 +127,10 @@ const AllSoloWeightFonts = [
   FontNames.sf_pro_rounded_medium,
   FontNames.sf_pro_rounded_heavy,
 ];
-type TextStyleInput = { fontWeight?: string; fontFamily?: string } & (StyleProp<
+type TextStyleInput = {
+  fontWeight?: TextStyle['fontWeight'];
+  fontFamily?: TextStyle['fontFamily'];
+} & (StyleProp<
   Pick<TextStyle, 'fontFamily' | 'fontSize' | 'fontWeight'> & {
     color?: string;
   }

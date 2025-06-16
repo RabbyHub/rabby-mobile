@@ -253,7 +253,7 @@ export function varyAndSortChainItems(deps: {
     .sort((a: { name: string }, b: { name: any }) =>
       a.name.localeCompare(b.name),
     )
-    .sort((a, b) => a.severity - b.severity);
+    .sort((a, b) => (a.severity || 0) - (b.severity || 0));
 
   _all.forEach((item: Chain) => {
     const inPinned = pinned.find(pinnedEnum => pinnedEnum === item.enum);

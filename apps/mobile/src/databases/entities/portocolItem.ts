@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column, In } from 'typeorm';
+import { Entity, Column, In } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';

@@ -32,7 +32,7 @@ import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
 import { HighlightText } from '@/components2024/HighlightText';
 import { getTokenSymbol } from '@/utils/token';
-import { TokenidentityDetail } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatPrice, formatUsdValue } from '@/utils/number';
 import { RiskTokenTips } from '@/screens/TokenDetail';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
@@ -227,8 +227,8 @@ export const TokenRow = memo(
   },
 );
 
-interface TokenRowDataType extends AbstractPortfolioToken {
-  identity?: TokenidentityDetail;
+export interface TokenRowDataType extends AbstractPortfolioToken {
+  identity?: TokenEntityDetail;
 }
 
 const Container = ({

@@ -122,6 +122,7 @@ export function ModalAddToContacts({
       bottomSheetModalProps={{
         keyboardBehavior: 'interactive',
         keyboardBlurBehavior: 'restore',
+        // @ts-expect-error we need to double check if it could be removed
         handleHeight: 0,
         handleComponent: null,
       }}

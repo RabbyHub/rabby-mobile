@@ -24,7 +24,11 @@ import { naviPush } from '@/utils/navigation';
 import { getTokenSymbol } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { formatTokenAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
-import { ReceiveTokenItem, SwapRequireData } from '@rabby-wallet/rabby-action';
+import {
+  ParsedTransactionActionData,
+  ReceiveTokenItem,
+  SwapRequireData,
+} from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';

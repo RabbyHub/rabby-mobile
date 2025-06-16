@@ -14,6 +14,7 @@ import dayjs from 'dayjs';
 import { atom, useAtom } from 'jotai';
 import { sortBy, unionBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -122,7 +123,9 @@ export const useRecentSend = ({
     return markFirstItems(
       unionBy(sortedList, item => {
         if ('projectDict' in item) {
-          return `${item.address.toLowerCase()}-${item.id}`;
+          return `${item.address.toLowerCase()}-${
+            (item as unknown as TxDisplayItem).id
+          }`;
         } else {
           return `${item.address.toLowerCase()}-${item.maxGasTx.hash}`;
         }

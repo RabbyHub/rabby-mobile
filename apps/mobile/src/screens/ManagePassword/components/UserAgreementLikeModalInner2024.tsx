@@ -5,9 +5,10 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { MODAL_ID } from '@/components2024/GlobalBottomSheetModal/types';
 
 export function useShowUserAgreementLikeModal() {
-  const openedModalIdRef = React.useRef<string>('');
+  const openedModalIdRef = React.useRef<MODAL_ID | string>('');
   const viewTermsOfUse = React.useCallback(() => {
     openedModalIdRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.TIP_TERM_OF_USE,
@@ -16,14 +17,16 @@ export function useShowUserAgreementLikeModal() {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
         onDismiss: () => {
-          removeGlobalBottomSheetModal2024(openedModalIdRef.current);
+          removeGlobalBottomSheetModal2024(
+            openedModalIdRef.current as MODAL_ID,
+          );
           openedModalIdRef.current = '';
         },
       },
     });
   }, []);
 
-  const openedModal2IdRef = React.useRef<string>('');
+  const openedModal2IdRef = React.useRef<MODAL_ID | string>('');
   const viewPrivacyPolicy = React.useCallback(() => {
     openedModal2IdRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.TIP_PRIVACY_POLICY,
@@ -32,7 +35,9 @@ export function useShowUserAgreementLikeModal() {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
         onDismiss: () => {
-          removeGlobalBottomSheetModal2024(openedModal2IdRef.current);
+          removeGlobalBottomSheetModal2024(
+            openedModal2IdRef.current as MODAL_ID,
+          );
           openedModal2IdRef.current = '';
         },
       },

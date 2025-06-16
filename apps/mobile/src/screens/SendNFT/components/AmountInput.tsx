@@ -22,7 +22,7 @@ function CalcButton({
   disabled?: boolean;
   isMinus?: boolean;
   // svgProps?: Omit<SvgProps, 'color'>;
-} & React.ComponentProps<typeof TouchableView>) {
+} & Omit<React.ComponentProps<typeof TouchableView>, 'ref'>) {
   const IconCom = isMinus ? RcMinusCC : RcPlusCC;
 
   const colors = useThemeColors();

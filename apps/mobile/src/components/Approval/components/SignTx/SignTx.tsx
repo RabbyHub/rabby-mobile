@@ -303,17 +303,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
     useApprovalSecurityEngine();
 
-  // useSignPermissionCheck({
-  //   origin,
-  //   chainId,
-  //   onDisconnect: () => {
-  //     handleCancel();
-  //   },
-  //   onOk: () => {
-  //     handleCancel();
-  //   },
-  // });
-
   // useTestnetCheck({
   //   chainId,
   //   onOk: () => {

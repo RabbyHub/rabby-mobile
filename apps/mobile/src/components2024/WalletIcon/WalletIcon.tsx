@@ -12,7 +12,7 @@ import { Image } from 'react-native';
 type EValue = `${KEYRING_TYPE}`;
 
 export interface WalletIconProps {
-  type: keyof typeof WALLET_NAME | EValue | string;
+  type?: keyof typeof WALLET_NAME | EValue | string;
   style?: StyleProp<ImageStyle>;
   width?: number;
   height?: number;

@@ -150,11 +150,11 @@ export enum EVENT_NAMES {
 
 export type GlobalSheetModalListeners = {
   [EVENT_NAMES.CREATE]: (id: MODAL_ID, params: CreateParams) => any;
-  [EVENT_NAMES.REMOVE]: (key: MODAL_ID, params?: RemoveParams) => any;
-  [EVENT_NAMES.CLOSED]: (key: MODAL_ID) => any;
-  [EVENT_NAMES.PRESENT]: (key: MODAL_ID) => any;
-  [EVENT_NAMES.PRESENTED]: (key: MODAL_ID) => any;
-  [EVENT_NAMES.DISMISS]: (key: MODAL_ID) => any;
+  [EVENT_NAMES.REMOVE]: (id: MODAL_ID, params?: RemoveParams) => any;
+  [EVENT_NAMES.CLOSED]: (id: MODAL_ID) => any;
+  [EVENT_NAMES.PRESENT]: (id: MODAL_ID) => any;
+  [EVENT_NAMES.PRESENTED]: (id: MODAL_ID) => any;
+  [EVENT_NAMES.DISMISS]: (id: MODAL_ID) => any;
 
-  [EVENT_NAMES.SNAP_TO_INDEX]: (key: string, index: number) => any;
+  [EVENT_NAMES.SNAP_TO_INDEX]: (id: string, index: number) => any;
 };

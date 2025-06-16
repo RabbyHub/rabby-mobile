@@ -13,7 +13,7 @@ export function sendRequest<T = any>(
   }: {
     data: ProviderRequest['data'];
     session: ProviderRequest['session'];
-    account: Account;
+    account?: Account;
   },
   isBuild = false,
 ) {

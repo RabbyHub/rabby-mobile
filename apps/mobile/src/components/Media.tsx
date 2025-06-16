@@ -10,7 +10,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import FastImage, { FastImageProps, ImageStyle } from 'react-native-fast-image';
-import Video from 'react-native-video';
+import Video, { VideoRef } from 'react-native-video';
 import { CustomTouchableOpacity } from './CustomTouchableOpacity';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
@@ -78,7 +78,7 @@ export const Media = ({
     [onPress],
   );
 
-  const ref = useRef<Video>(null);
+  const ref = useRef<VideoRef>(null);
   const { on: loading, turnOff } = useSwitch(true);
   const {
     on: failed,

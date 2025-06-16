@@ -53,6 +53,7 @@ export function DappsScreen(): JSX.Element {
         ...options,
         dappsWebViewFromRoute: RootNames.Dapps,
       });
+      // @ts-expect-error code has been expired due to biz changes, whole file could be removed later
       setBrowserHistory(safeGetOrigin(url));
       Keyboard.dismiss();
     },

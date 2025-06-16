@@ -1,6 +1,10 @@
 import { CloudStorage } from 'react-native-cloud-storage';
 import { IS_ANDROID, IS_IOS } from '../native/utils';
-import { GoogleSignin, User } from '@react-native-google-signin/google-signin';
+import {
+  GoogleSignin,
+  SignInResponse,
+  User,
+} from '@react-native-google-signin/google-signin';
 import { appEncryptor } from '../services/shared';
 import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';
 import { getAddressFromMnemonic } from './mnemonic';
@@ -204,7 +208,7 @@ export const loginIfNeeded = async () => {
   //   throw new Error('Cloud is not available');
   // }
 
-  let userInfo: User | null = null;
+  let userInfo: User | SignInResponse | null = null;
   await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
   try {

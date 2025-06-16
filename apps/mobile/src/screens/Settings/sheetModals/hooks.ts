@@ -18,6 +18,7 @@ export function useSheetModalsOnSettingScreen() {
 }
 
 export const DAPP_METAMASK_TEST_DAPP: DappInfo = {
+  name: 'MetaMask Test Dapp',
   info: {
     chain_ids: ['eth', 'scrl'],
     description: '',
@@ -61,6 +62,8 @@ export function useSheetWebViewTester() {
 
     openUrlAsDapp(
       {
+        dappTabId: DAPP_METAMASK_TEST_DAPP.origin,
+        openTime: Date.now(),
         origin: DAPP_METAMASK_TEST_DAPP.origin,
         $openParams: {
           initialUrl: 'https://metamask.github.io/test-dapp',

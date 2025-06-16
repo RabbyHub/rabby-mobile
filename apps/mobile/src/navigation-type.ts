@@ -18,6 +18,7 @@ import type {
   NFTItem,
   SendAction,
   TokenItem,
+  TransferingNFTItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import type {
   AbstractPortfolio,
@@ -53,7 +54,7 @@ export type RootStackParamsList = {
   [RootNames.StackBrowser]: NavigatorScreenParams<BrowserNavigatorParamsList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]: {
-    token: NFTItem;
+    token: NFTItem | TransferingNFTItem | TokenItem | TokenItem[];
     account?: KeyringAccountWithAlias;
     isSingleAddress?: boolean;
   };
@@ -242,6 +243,7 @@ export type AccountNavigatorParamList = {
 
 export type SingleAddressNavigatorParamList = {
   [RootNames.SingleAddressHome]: {
+    scrollToToken?: string;
     account: Account;
   };
 };
@@ -295,6 +297,7 @@ export type TransactionNavigatorParamList = {
     chainEnum?: CHAINS_ENUM | undefined;
     tokenId?: TokenItem['id'];
     type?: 'Buy' | 'Sell';
+    address?: string;
     swapAgain?: boolean;
     swapTokenId?: TokenItem['id'][];
     isSwapToTokenDetail?: boolean;
@@ -307,7 +310,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.Receive]: {
     account: Account;
     tokenSymbol?: string;
-    chainEnum?: CHAINS_ENUM | string;
+    chainEnum?: CHAINS_ENUM;
   };
   [RootNames.Approvals]: {
     account: Account;

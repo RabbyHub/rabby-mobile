@@ -15,6 +15,7 @@ import { calcPercent } from '@/utils/math';
 import { formatUsdValue, formatAmount } from '@/utils/number';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { Account } from '@/core/services/preference';
+import { type TokenItemMaybeWithOwner } from '@/databases/hooks/token';
 
 export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
 export const geTokenDecimals = async (
@@ -165,9 +166,19 @@ export function getTokenSymbol(token?: {
   );
 }
 
+export type TokenItemFromAbstractPortfolioToken = TokenItemMaybeWithOwner & {
+  cex_ids?: string[];
+  isFakerFoldRow?: boolean;
+  isManualFold?: boolean;
+  smallTokenAllUsdValue?: string;
+  isPined?: boolean;
+  isFold?: boolean;
+  isExcludeBalance?: boolean;
+  pinIndex?: number;
+};
 export const abstractTokenToTokenItem = (
-  token: AbstractPortfolioToken,
-): TokenItem => {
+  token: AbstractPortfolioToken & { cex_ids?: string[] },
+): TokenItemFromAbstractPortfolioToken => {
   return {
     id: token._tokenId,
     chain: token.chain,
@@ -192,7 +203,6 @@ export const abstractTokenToTokenItem = (
     low_credit_score: token?.low_credit_score,
     credit_score: token?.credit_score,
     cex_ids: token?.cex_ids,
-    // @ts-expect-error
     isFakerFoldRow: token?.id === SMALL_TOKEN_ID,
     smallTokenAllUsdValue:
       token?.id === SMALL_TOKEN_ID ? token?._usdValueStr : undefined,
@@ -239,7 +249,7 @@ export class DisplayedToken implements AbstractPortfolioToken {
   _usdValueChangePercent?: string;
   _amountChangeUsdValueStr = '';
 
-  constructor(token: PortfolioItemToken) {
+  constructor(token: PortfolioItemToken & { cex_ids?: string[] }) {
     this._tokenId = token.id;
     this.amount = token.amount || 0;
     this.id = token.id + token.chain;

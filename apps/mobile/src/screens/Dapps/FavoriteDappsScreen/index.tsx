@@ -49,6 +49,7 @@ export function FavoriteDappsScreen(): JSX.Element {
         ...options,
         dappsWebViewFromRoute: RootNames.FavoriteDapps,
       });
+      // @ts-expect-error code has been expired due to biz changes, whole file could be removed later
       setBrowserHistory(safeGetOrigin(url));
     },
   );

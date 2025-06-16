@@ -116,17 +116,6 @@ export const SignTypedData = ({
 
   const isViewGnosisSafe = params?.$ctx?.isViewGnosisSafe;
 
-  // useSignPermissionCheck({
-  //   origin: params.session.origin,
-  //   chainId: currentChainId,
-  //   onOk: () => {
-  //     handleCancel();
-  //   },
-  //   onDisconnect: () => {
-  //     handleCancel();
-  //   },
-  // });
-
   // useTestnetCheck({
   //   chainId: currentChainId,
   //   onOk: () => {

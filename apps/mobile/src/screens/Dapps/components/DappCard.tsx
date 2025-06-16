@@ -27,7 +27,7 @@ import { HighlightText } from '@/components2024/HighlightText';
 export const DappCardListBy = ({
   data,
 }: {
-  data: DappInfo['info']['collected_list'];
+  data: (DappInfo['info'] & object)['collected_list'];
 }) => {
   const { styles } = useTheme2024({ getStyle });
   return data?.length ? (

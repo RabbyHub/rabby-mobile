@@ -277,6 +277,7 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
     signTitleRight: {
       flexDirection: 'row',
       alignItems: 'center',
+      // @ts-expect-error maybe invalid style
       float: 'right',
     },
     tipContent: {

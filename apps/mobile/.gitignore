@@ -99,3 +99,5 @@ scripts/tmp
 # ios/sentry.properties
 
 /ios/bitcode_frameworks.txt
+
+tsconfig.typecheck.temp.json

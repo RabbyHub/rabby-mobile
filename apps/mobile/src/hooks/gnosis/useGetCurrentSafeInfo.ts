@@ -38,6 +38,7 @@ export const useGetCurrentSafeInfo = ({
         }
         if (!networkIds.includes(networkId)) {
           throw new Error(
+            // @ts-expect-error FIXME: fix this error type
             t('page.signTx.safeAddressNotSupportChain', [chain?.name]),
           );
         } else {

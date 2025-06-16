@@ -41,8 +41,10 @@ const getSingleNftTags = (type: string, item: NFTItem) => {
     `price: ${item.usd_price}`,
     `amount: ${item.amount}`,
     `collection_id: ${item.collection_id}`,
-    item?._isFold ? 'fold' : 'unfold',
-    item?._isManualFold ? 'manual_fold' : 'auto_fold',
+    (item as unknown as DisplayedProject)?._isFold ? 'fold' : 'unfold',
+    (item as unknown as DisplayedProject)?._isManualFold
+      ? 'manual_fold'
+      : 'auto_fold',
   ];
 };
 const getCollectionTags = (type: string, item: CollectionList) => {
@@ -55,8 +57,10 @@ const getCollectionTags = (type: string, item: CollectionList) => {
     `nft_list: ${item.nft_list
       ?.map(nft => getSingleNftTags(type, nft))
       .join(',')}`,
-    item?._isFold ? 'fold' : 'unfold',
-    item?._isManualFold ? 'manual_fold' : 'auto_fold',
+    (item as unknown as DisplayedProject)?._isFold ? 'fold' : 'unfold',
+    (item as unknown as DisplayedProject)?._isManualFold
+      ? 'manual_fold'
+      : 'auto_fold',
   ];
 };
 
@@ -83,7 +87,9 @@ export const getItemId = (item: ActionItem) => {
   if (item.type === 'address_entry') {
     return `${item.type}/${item.data.address}/${item.data.type}/${
       item.data.brandName
+      // @ts-expect-error FIXME: it seems error due to biz changes, fix it later
     }/${item.data.aliasName}/${item.data.balance}/${item.data.isLoss || ''}/${
+      // @ts-expect-error FIXME: it seems error due to biz changes, fix it later
       item.data.changPercent || ''
     }`;
   }
