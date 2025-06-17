@@ -20,7 +20,6 @@ import {
 import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { appIsDev } from '@/constant/env';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import {
@@ -94,10 +93,6 @@ export const CopyTradingScreen = () => {
   const fetchChainList = useMemoizedFn(async () => {
     try {
       setTabLoading(true);
-      // if (appIsDev) {
-      //   return ['base', 'eth', 'bsc', 'matic'];
-      // }
-
       const chainIdArr = await openapi.getCopyTradingChainList();
       setChainIdList(chainIdArr);
       console.log('fetchChainList chainIdArr', chainIdArr);

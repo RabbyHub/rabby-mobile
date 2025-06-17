@@ -14,7 +14,6 @@ import { ellipsisAddress } from '@/utils/address';
 import { formatUsdValueKMB } from '../../Home/utils/price';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { openapi } from '@/core/request';
-import { appIsDev } from '@/constant/env';
 import { Skeleton } from '@rneui/themed';
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import RcIconArrowDownCC from '@/assets2024/icons/copyTrading/IconDownPolygon.svg';
@@ -78,10 +77,6 @@ const BuyItemComponent: React.FC<BuyItemProps> = ({ item }) => {
 
   const fetchProfitHistory = async (address: string) => {
     try {
-      // if (appIsDev) {
-      //   await new Promise(resolve => setTimeout(resolve, 1000));
-      //   return mockUserProfitHistory;
-      // }
       const res = await openapi.getCopyTradingPnlList({
         user_addr: address,
       });

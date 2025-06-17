@@ -29,73 +29,12 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import { openapi } from '@/core/request';
 import { CopyTradeRecentBuyItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { appIsDev } from '@/constant/env';
 import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { BuyItem, SkeletonBuyItem } from './BuyItem';
 import { formatPercentage } from './TokenListItem';
 import { formatPrice } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
-
-// Mock data for recent purchases - using CopyTradeRecentBuyItem format
-const mockRecentBuys: CopyTradeRecentBuyItem[] = [
-  {
-    id: '1',
-    user_addr: '0x8853ac213123123beeb85',
-    user_addr_pnl: {
-      id: '1',
-      profit_usd_value: 1234, // $1,234 profit
-    },
-    chain_id: 'eth',
-    token_id: 'eth_0x...',
-    token_amount: 1412.1,
-    action: 'buy',
-    buy_usd_value: 1412100, // $1,412.1K
-    create_at: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
-  },
-  {
-    id: '2',
-    user_addr: '0x8853ac12412124beeb852424242',
-    user_addr_pnl: {
-      id: '2',
-      profit_usd_value: 1234, // $1,234 profit
-    },
-    chain_id: 'eth',
-    token_id: 'eth_0x...',
-    token_amount: 912.1,
-    action: 'buy',
-    buy_usd_value: 912100, // $912.1K
-    create_at: Math.floor(Date.now() / 1000) - 7200, // 2 hours ago
-  },
-  {
-    id: '3',
-    user_addr: '0x8853ac123123beeb8523232323',
-    user_addr_pnl: {
-      id: '3',
-      profit_usd_value: 1234,
-    },
-    chain_id: 'eth',
-    token_id: 'eth_0x...',
-    token_amount: 412.1,
-    action: 'buy',
-    buy_usd_value: 412100, // $412.1K
-    create_at: Math.floor(Date.now() / 1000) - 14400, // 4 hours ago
-  },
-  {
-    id: '4',
-    user_addr: '0x8853ac123123beeb8511111',
-    user_addr_pnl: {
-      id: '3',
-      profit_usd_value: 1234, // $1,234 profit
-    },
-    chain_id: 'eth',
-    token_id: 'eth_0x...',
-    token_amount: 412.1,
-    action: 'buy',
-    buy_usd_value: 412100, // $412.1K
-    create_at: Math.floor(Date.now() / 1000) - 14400, // 4 hours ago
-  },
-];
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -168,13 +107,6 @@ export default function RecentlyBuyListDialog({
 
   const fetchRecentBuyList = useMemoizedFn(async () => {
     try {
-      // if (appIsDev) {
-      //   return {
-      //     recent_buy_list: mockRecentBuys,
-      //     total: mockRecentBuys.length,
-      //   };
-      // }
-
       const res = await openapi.getCopyTradingRecentBuyList({
         chain_id: tradingTokenItem.chain,
         token_id: tradingTokenItem.id,
