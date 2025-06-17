@@ -89,9 +89,9 @@ export function useExposureRateGuide() {
     setRateGuideLastExposure,
   ] = useAtom(rateGuideLastExposureAtom);
 
-  if (__DEV__) {
-    console.debug('[useExposureRateGuide] txCount: %s', txCount);
-  }
+  // if (__DEV__) {
+  //   console.debug('[useExposureRateGuide] txCount: %s', txCount);
+  // }
 
   const shouldShowRateGuideOnHome = useMemo(() => {
     return txCount >= TX_COUNT_LIMIT && Date.now() > lastExposureTimestamp;
@@ -106,8 +106,8 @@ export function useExposureRateGuide() {
   }, [setRateGuideLastExposure]);
 
   return {
-    // shouldShowRateGuideOnHome,
-    shouldShowRateGuideOnHome: true,
+    shouldShowRateGuideOnHome,
+    // shouldShowRateGuideOnHome: __DEV__ ? true : shouldShowRateGuideOnHome,
 
     disableExposureRateGuide,
   };

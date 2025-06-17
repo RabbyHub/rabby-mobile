@@ -1,4 +1,5 @@
 import {
+  Dimensions,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -14,6 +15,7 @@ import CloseCC from './icons/close-cc.svg';
 import RabbySilhouette from './icons/rabby-silhouette.svg';
 import { useExposureRateGuide, useRateModal } from './hooks';
 import PressableStar from './RateStar';
+import { useEffect, useState } from 'react';
 
 const STAR_SIZE = 38;
 const TRIGGER_HEIGHT = 88;
@@ -23,25 +25,37 @@ const SIZES = {
   closeIconOffset: 12,
 };
 
+const TRIGGER_AFTER_DELAY = 500; // ms
 export function RateModalTriggerOnHome({ style }: RNViewProps) {
   const { isLight, styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
 
   const { toggleShowRateModal } = useRateModal();
+  const [userSelectedStar, setUserSelectedStar] = useState(0);
   const { shouldShowRateGuideOnHome, disableExposureRateGuide } =
     useExposureRateGuide();
+
+  useEffect(() => {
+    if (userSelectedStar <= 0) return;
+
+    const timer = setTimeout(() => {
+      toggleShowRateModal(true, {
+        starCountOnOpen: userSelectedStar,
+      });
+      setUserSelectedStar(0);
+    }, TRIGGER_AFTER_DELAY);
+
+    return () => {
+      clearTimeout(timer);
+      setUserSelectedStar(0);
+    };
+  }, [userSelectedStar, toggleShowRateModal]);
 
   if (!shouldShowRateGuideOnHome) return null;
 
   return (
-    <TouchableWithoutFeedback
-      style={style}
-      disabled
-      // onPress={() => {
-      //   toggleShowRateModal(true);
-      // }}
-    >
+    <TouchableWithoutFeedback style={style} disabled>
       <View
         style={StyleSheet.flatten([styles.container])}
         testID="RateModalTriggerOnHome">
@@ -71,12 +85,13 @@ export function RateModalTriggerOnHome({ style }: RNViewProps) {
             <PressableStar
               key={`star-${index}`}
               size={STAR_SIZE}
+              // never allow to select star if user already selected one
+              disabled={!!userSelectedStar}
               isFilled={false}
+              isActive={userSelectedStar >= index + 1}
               onPress={evt => {
                 evt.stopPropagation();
-                toggleShowRateModal(true, {
-                  starCountOnOpen: index + 1,
-                });
+                setUserSelectedStar(index + 1);
               }}
             />
           ))}
@@ -121,7 +136,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       position: 'absolute',
       top: 0,
       right: 0,
-      paddingTop: SIZES.closeIconOffset - 4,
+      paddingTop: SIZES.closeIconOffset - 2,
       paddingRight: SIZES.closeIconOffset,
       paddingLeft: SIZES.closeIconOffset * 0.5,
       paddingBottom: SIZES.closeIconOffset * 0.5,

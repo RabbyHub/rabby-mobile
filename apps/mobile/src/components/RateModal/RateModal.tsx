@@ -340,7 +340,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       borderRadius: 12,
     },
     rateButtonText: {
-      fontSize: 20,
+      fontFamily: 'SF Pro',
+      fontSize: 18,
       fontStyle: 'normal',
       fontWeight: 700,
       lineHeight: 24,
@@ -388,7 +389,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       right: 12,
       backgroundColor: 'transparent',
       color: colors2024['neutral-secondary'],
-      fontSize: 17,
+      fontSize: 15,
       fontStyle: 'normal',
       fontWeight: 400,
       lineHeight: 22,
@@ -414,7 +415,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       borderRadius: 12,
     },
     feedbackButtonText: {
-      fontSize: 20,
+      fontFamily: 'SF Pro',
+      fontSize: 18,
       fontStyle: 'normal',
       fontWeight: 700,
       lineHeight: 24,
