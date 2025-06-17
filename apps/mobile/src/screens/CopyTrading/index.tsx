@@ -15,8 +15,8 @@ import {
   StyleSheet,
   FlatList,
   Dimensions,
-  RefreshControl,
 } from 'react-native';
+import { RefreshControl } from 'react-native-gesture-handler';
 import {
   makeTxPageBackgroundColors,
   RootNames,
@@ -241,18 +241,6 @@ export const CopyTradingScreen = () => {
     },
   );
 
-  // pull down refresh
-  const handleRefresh = useMemoizedFn(async () => {
-    setRefreshing(true);
-    setHasMore(true);
-    try {
-      const tokenArr = await fetchTokenList(selectedChainId, 0);
-      checkCountUpdate(tokenArr, tokenList);
-    } finally {
-      setRefreshing(false);
-    }
-  });
-
   useEffect(() => {
     if (currentUpdateCount > 0) {
       setTimeout(() => {
@@ -305,7 +293,7 @@ export const CopyTradingScreen = () => {
   }, []);
 
   return (
-    <NormalScreenContainer type="bg0" noHeader={true}>
+    <NormalScreenContainer type="bg1" noHeader={true}>
       <View style={styles.headerContainer}>
         {tabLoading ? (
           <View style={[styles.scrollContentContainer, styles.headerChainList]}>
@@ -352,7 +340,7 @@ export const CopyTradingScreen = () => {
         </View>
       )}
       <View style={styles.container}>
-        {listLoading ? (
+        {listLoading && !refreshing ? (
           <View style={styles.listContainer}>
             {Array.from({ length: 10 }).map((_, index) => (
               <SkeletonTokenListItem key={index} />
@@ -375,17 +363,24 @@ export const CopyTradingScreen = () => {
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.3}
             ListFooterComponent={renderListFooter}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
             maxToRenderPerBatch={10}
             windowSize={10}
             initialNumToRender={10}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
-                onRefresh={handleRefresh}
+                onRefresh={async () => {
+                  setRefreshing(true);
+                  setHasMore(true);
+                  const tokenArr = await fetchTokenList(selectedChainId, 0);
+                  checkCountUpdate(tokenArr, tokenList);
+                  setTokenList(tokenArr);
+                  setRefreshing(false);
+                }}
                 title={t('page.copyTrading.refreshTitle')}
                 titleColor={colors2024['neutral-secondary']}
+                tintColor={colors2024['neutral-secondary']}
+                progressBackgroundColor={colors2024['neutral-bg-1']}
               />
             }
           />
@@ -400,6 +395,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 56,
     height: 56,
     overflow: 'hidden',
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   updateContainer: {
     paddingHorizontal: 16,
