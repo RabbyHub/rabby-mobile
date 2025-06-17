@@ -69,7 +69,7 @@ export const APP_URLS = {
   RATE_URL:
     Platform.select({
       android: 'market://details?id=com.debank.rabbymobile',
-      ios: 'itms-apps://itunes.apple.com/app/id6474381673?mt=8',
+      ios: 'itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?type=Purple+Software&id=6474381673',
     }) || '',
 };
 
