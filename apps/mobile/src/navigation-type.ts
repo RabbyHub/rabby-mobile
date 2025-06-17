@@ -303,6 +303,7 @@ export type TransactionNavigatorParamList = {
     swapTokenId?: TokenItem['id'][];
     isSwapToTokenDetail?: boolean;
     isFromSwap?: boolean;
+    payUseBaseToken?: boolean;
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
   [RootNames.GnosisTransactionQueue]: {

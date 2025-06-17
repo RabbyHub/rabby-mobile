@@ -19,91 +19,6 @@ import { Skeleton } from '@rneui/themed';
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import RcIconArrowDownCC from '@/assets2024/icons/copyTrading/IconDownPolygon.svg';
 import { createGetStyles2024 } from '@/utils/styles';
-
-// Mock data for profit history
-const mockUserProfitHistory: CopyTradePnlItem[] = [
-  {
-    id: 'eth_0x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
-    chain: 'eth',
-    name: 'Ethereum',
-    symbol: 'ETH',
-    display_symbol: 'ETH',
-    optimized_symbol: 'ETH',
-    decimals: 18,
-    logo_url:
-      'https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png',
-    price: 2500,
-    amount: 1.5,
-    time_at: Date.now() / 1000,
-    is_core: true,
-    is_verified: true,
-    is_wallet: false,
-    is_scam: false,
-    is_suspicious: false,
-    profit_usd_value: 1200,
-  },
-  {
-    id: 'eth_0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
-    chain: 'eth',
-    name: 'Wrapped BTC',
-    symbol: 'WBTC',
-    display_symbol: 'WBTC',
-    optimized_symbol: 'WBTC',
-    decimals: 8,
-    logo_url:
-      'https://static.debank.com/image/eth_token/logo_url/0x2260fac5e5542a773aa44fbcfedf7c193bc2c599/756de8d45fd7a6ce701e3fd4585a2010.png',
-    price: 42000,
-    amount: 0.1,
-    time_at: Date.now() / 1000,
-    is_core: true,
-    is_verified: true,
-    is_wallet: false,
-    is_scam: false,
-    is_suspicious: false,
-    profit_usd_value: 800,
-  },
-  {
-    id: 'eth_0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
-    chain: 'eth',
-    name: 'Aave',
-    symbol: 'AAVE',
-    display_symbol: 'AAVE',
-    optimized_symbol: 'AAVE',
-    decimals: 18,
-    logo_url:
-      'https://static.debank.com/image/eth_token/logo_url/0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9/61e56f93e583456641682b5c63ecb3f1.png',
-    price: 80,
-    amount: 10,
-    time_at: Date.now() / 1000,
-    is_core: true,
-    is_verified: true,
-    is_wallet: false,
-    is_scam: false,
-    is_suspicious: false,
-    profit_usd_value: 300,
-  },
-  {
-    id: 'eth_0x514910771af9ca656af840dff83e8264ecf986ca',
-    chain: 'eth',
-    name: 'Chainlink',
-    symbol: 'LINK',
-    display_symbol: 'LINK',
-    optimized_symbol: 'LINK',
-    decimals: 18,
-    logo_url:
-      'https://static.debank.com/image/eth_token/logo_url/0x514910771af9ca656af840dff83e8264ecf986ca/69bb6c5c6c38d7e63c4f9dfd4b8c8e6f.png',
-    price: 15,
-    amount: 100,
-    time_at: Date.now() / 1000,
-    is_core: true,
-    is_verified: true,
-    is_wallet: false,
-    is_scam: false,
-    is_suspicious: false,
-    profit_usd_value: 400,
-  },
-];
-
 interface ExpandedAddressData {
   loading: boolean;
   data: CopyTradePnlItem[] | null;
@@ -152,7 +67,7 @@ const BuyItemComponent: React.FC<BuyItemProps> = ({ item }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [profitHistoryData, setProfitHistoryData] =
     useState<ExpandedAddressData>({
-      loading: false,
+      loading: true,
       data: null,
     });
 
@@ -163,10 +78,10 @@ const BuyItemComponent: React.FC<BuyItemProps> = ({ item }) => {
 
   const fetchProfitHistory = async (address: string) => {
     try {
-      if (appIsDev) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return mockUserProfitHistory;
-      }
+      // if (appIsDev) {
+      //   await new Promise(resolve => setTimeout(resolve, 1000));
+      //   return mockUserProfitHistory;
+      // }
       const res = await openapi.getCopyTradingPnlList({
         user_addr: address,
       });

@@ -174,6 +174,7 @@ export const CopyTradingScreen = () => {
         chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
         tokenId: item?.id,
         type: 'Buy',
+        payUseBaseToken: true,
       },
     });
   });
@@ -328,7 +329,14 @@ export const CopyTradingScreen = () => {
                   chainEnum={chain?.enum}
                   isShowRPCStatus={true}
                 />
-                <Text style={styles.chainItemText}>{chain?.name}</Text>
+                <Text
+                  style={StyleSheet.flatten([
+                    styles.chainItemText,
+                    selectedChainId === chain?.serverId &&
+                      styles.selectedChainItemText,
+                  ])}>
+                  {chain?.name}
+                </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -428,6 +436,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '400',
+  },
+  selectedChainItemText: {
+    color: colors2024['brand-default'],
   },
   headerChainList: {
     flexDirection: 'row',

@@ -318,7 +318,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     borderBottomWidth: 10,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderBottomColor: colors2024['brand-light-1'],
+    borderBottomColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-1'],
   },
   changeTextPositive: {
     color: colors2024['red-default'],
