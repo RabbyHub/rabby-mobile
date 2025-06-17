@@ -222,6 +222,10 @@ AccountSwitcherAopProps<{
     ],
   );
 
+  const notMatterAvatarList = useMemo(() => {
+    return notMatterAddresses.slice(0, 3);
+  }, [notMatterAddresses]);
+
   return (
     <LinearGradientContainer
       type="linear"
@@ -280,26 +284,40 @@ AccountSwitcherAopProps<{
                   setRemainAddressesCollapsed(!remainAddressesCollapsed);
                 }}>
                 <View style={styles.moreWalletsButtonIcon}>
-                  {notMatterAddresses.slice(0, 3).map((account, index) => (
-                    <View
-                      key={account.address}
-                      style={[
-                        styles.stackedIcon,
-                        {
-                          zIndex: index + 1,
-                          left: index * 16,
-                          top: -2,
-                        },
-                      ]}>
-                      <WalletIcon
-                        address={account.address}
-                        type={account.type}
-                        width={22}
-                        height={22}
-                        borderRadius={8}
-                      />
-                    </View>
-                  ))}
+                  {notMatterAvatarList.map((account, index) => {
+                    const iconCount = notMatterAvatarList.length;
+                    // calculate the total width of the icon group
+                    const totalIconsWidth =
+                      iconCount === 1 ? 22 : 22 + (iconCount - 1) * 16;
+                    // container width
+                    const containerWidth = 62;
+                    // calculate the start offset, make the icon group centered, but slightly right
+                    const startOffset = Math.max(
+                      0,
+                      containerWidth - totalIconsWidth - 4,
+                    );
+
+                    return (
+                      <View
+                        key={account.address}
+                        style={[
+                          styles.stackedIcon,
+                          {
+                            zIndex: index + 1,
+                            left: startOffset + index * 16,
+                            top: -2,
+                          },
+                        ]}>
+                        <WalletIcon
+                          address={account.address}
+                          type={account.type}
+                          width={22}
+                          height={22}
+                          borderRadius={8}
+                        />
+                      </View>
+                    );
+                  })}
                 </View>
                 <Text style={styles.moreWalletsButtonText}>
                   {t('page.addressDetail.addressListScreen.moreWallets')}

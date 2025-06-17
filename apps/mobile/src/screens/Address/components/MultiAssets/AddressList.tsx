@@ -156,6 +156,10 @@ export const AddressList = () => {
     });
   }, []);
 
+  const notMatterAvatarList = useMemo(() => {
+    return notMatterAccounts.slice(0, 3);
+  }, [notMatterAccounts]);
+
   const renderFooter = useCallback(
     () => (
       <View>
@@ -175,27 +179,40 @@ export const AddressList = () => {
               onPress={handleMoreWalletsPress}>
               <View style={styles.moreWalletsButtonContent}>
                 <View style={styles.moreWalletsButtonIcon}>
-                  {notMatterAccounts.slice(0, 3).map((account, index) => (
-                    <View
-                      key={account.address}
-                      style={[
-                        styles.stackedIcon,
-                        {
-                          zIndex: index + 1,
-                          left: index * 16,
-                          top: -2,
-                        },
-                      ]}>
-                      <WalletIcon
-                        address={account.address}
-                        type={account.type}
-                        style={styles.moreWalletsButtonIconImage}
-                        width={22}
-                        height={22}
-                        borderRadius={8}
-                      />
-                    </View>
-                  ))}
+                  {notMatterAvatarList.map((account, index) => {
+                    const iconCount = notMatterAvatarList.length;
+                    // calculate the total width of the icon group
+                    const totalIconsWidth =
+                      iconCount === 1 ? 22 : 22 + (iconCount - 1) * 16;
+                    // container width
+                    const containerWidth = 62;
+                    // calculate the start offset, make the icon group centered, but slightly right
+                    const startOffset = Math.max(
+                      0,
+                      containerWidth - totalIconsWidth - 4,
+                    );
+
+                    return (
+                      <View
+                        key={account.address}
+                        style={[
+                          styles.stackedIcon,
+                          {
+                            zIndex: index + 1,
+                            left: startOffset + index * 16,
+                            top: -2,
+                          },
+                        ]}>
+                        <WalletIcon
+                          address={account.address}
+                          type={account.type}
+                          width={22}
+                          height={22}
+                          borderRadius={8}
+                        />
+                      </View>
+                    );
+                  })}
                 </View>
                 <Text style={styles.moreWalletsButtonText}>
                   {t('page.addressDetail.addressListScreen.moreWallets')}
@@ -227,6 +244,7 @@ export const AddressList = () => {
     ),
     [
       notMatterAccounts,
+      notMatterAvatarList,
       colors2024,
       gotoAddAddress,
       styles,
@@ -346,6 +364,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   moreWalletsButtonIcon: {
     position: 'relative',
+    // alignItems: 'flex-end',
     width: 62, // 22 + 10 + 10 + 20 (icon width + 2 overlaps + extra space)
     height: 22,
     marginRight: 4,
