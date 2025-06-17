@@ -29,7 +29,8 @@ export function RateModalTriggerOnHome({ style }: RNViewProps) {
   const { t } = useTranslation();
 
   const { toggleShowRateModal } = useRateModal();
-  const { shouldShowRateGuideOnHome, disableExposure } = useExposureRateGuide();
+  const { shouldShowRateGuideOnHome, disableExposureRateGuide } =
+    useExposureRateGuide();
 
   if (!shouldShowRateGuideOnHome) return null;
 
@@ -49,7 +50,7 @@ export function RateModalTriggerOnHome({ style }: RNViewProps) {
           style={styles.closeContainer}
           onPress={evt => {
             evt.stopPropagation();
-            disableExposure();
+            disableExposureRateGuide();
           }}>
           <CloseCC
             color={colors2024['neutral-title-1']}

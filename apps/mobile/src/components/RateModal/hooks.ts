@@ -10,7 +10,7 @@ import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { Platform } from 'react-native';
 
-const TX_COUNT_LIMIT = __DEV__ ? 3 : 5; // Minimum number of transactions before showing the rate guide
+const TX_COUNT_LIMIT = isNonPublicProductionEnv ? 1 : 3; // Minimum number of transactions before showing the rate guide
 const STAR_COUNT = 5;
 
 /**
@@ -19,6 +19,7 @@ const STAR_COUNT = 5;
 const VERSIONED_KEY = 'lastExposure_20250616_1' as const;
 const rateGuideLastExposureAtom = atomByMMKV('@RateGuideLastExposure', {
   txCount: 0,
+  latestTxHashes: [] as string[] | undefined,
   [VERSIONED_KEY]: -1 as number,
 });
 
@@ -27,6 +28,9 @@ export function useMakeMockDataForRateGuideExposure() {
   const mockExposureRateGuide = useCallback(() => {
     setRateGuideLastExposure({
       txCount: TX_COUNT_LIMIT,
+      latestTxHashes: Array.from({ length: TX_COUNT_LIMIT }).map(
+        (_, index) => `0x${index + 1}`,
+      ),
       [VERSIONED_KEY]: Date.now() - 1000 * 60 * 60 * 24, // 1 day ago
     });
   }, [setRateGuideLastExposure]);
@@ -51,10 +55,22 @@ export function useIncreaseTxCountOnAppTop({
       txDetail => {
         console.debug('[useIncreaseTxCountOnAppTop] onTxCompleted', txDetail);
         setRateGuideLastExposure(prev => {
-          const nextCount = prev.txCount + 1;
+          let latestTxHashes = prev.latestTxHashes || [];
+
+          if (txDetail?.hash && !latestTxHashes.includes(txDetail?.hash)) {
+            latestTxHashes.push(txDetail?.hash);
+          }
+          latestTxHashes = latestTxHashes.slice(
+            0,
+            Math.max(10, TX_COUNT_LIMIT),
+          );
+
+          const nextCount = latestTxHashes.length;
+
           return {
             ...prev,
             txCount: nextCount,
+            latestTxHashes,
             ...(nextCount >= TX_COUNT_LIMIT && { [VERSIONED_KEY]: Date.now() }),
           };
         });
@@ -81,18 +97,18 @@ export function useExposureRateGuide() {
     return txCount >= TX_COUNT_LIMIT && Date.now() > lastExposureTimestamp;
   }, [txCount, lastExposureTimestamp]);
 
-  const disableExposure = useCallback(() => {
+  const disableExposureRateGuide = useCallback(() => {
     setRateGuideLastExposure(prev => ({
-      ...prev,
       txCount: 0,
-      lastExposureTimestamp: Infinity,
+      latestTxHashes: [],
+      [VERSIONED_KEY]: Infinity,
     }));
   }, [setRateGuideLastExposure]);
 
   return {
     shouldShowRateGuideOnHome,
 
-    disableExposure,
+    disableExposureRateGuide,
   };
 }
 
@@ -117,7 +133,7 @@ const rateModalAtom = atom(getDefaultValue());
 
 export function useRateModal() {
   const [rateModalState, setRateModalState] = useAtom(rateModalAtom);
-  const { disableExposure } = useExposureRateGuide();
+  const { disableExposureRateGuide } = useExposureRateGuide();
 
   const toggleShowRateModal = useCallback(
     (
@@ -133,7 +149,7 @@ export function useRateModal() {
       };
 
       if (!nextValue && options?.disableExposureOnClose) {
-        disableExposure();
+        disableExposureRateGuide();
       } else if (
         nextValue &&
         options?.starCountOnOpen &&
@@ -143,7 +159,7 @@ export function useRateModal() {
       }
       setRateModalState(nextState);
     },
-    [setRateModalState, rateModalState.visible, disableExposure],
+    [setRateModalState, rateModalState.visible, disableExposureRateGuide],
   );
 
   const selectStar = useCallback(
