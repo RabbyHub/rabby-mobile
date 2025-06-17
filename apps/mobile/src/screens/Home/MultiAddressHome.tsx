@@ -219,7 +219,9 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
             </View>
             <View style={styles.accountBg}>
               <RcIconSmallWallet />
-              <Text style={styles.accountText}>{accountsLength}</Text>
+              <Text style={styles.accountText}>
+                {accountsLength >= 10 ? '10' : accountsLength}
+              </Text>
               <RcIconSmallArrow />
             </View>
           </Card>

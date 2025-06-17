@@ -1,6 +1,14 @@
+/* eslint-disable react-native/no-inline-styles */
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Dimensions, StyleProp, Text, View, ViewStyle } from 'react-native';
+import {
+  Dimensions,
+  StyleProp,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import { default as RcCaretDownCC } from './icons/caret-down-cc.svg';
 import TouchableView from '../Touchable/TouchableView';
@@ -18,7 +26,7 @@ import { UseAllAccountsItemInPanel } from './AddressItemUseAll';
 import { ScreenWithAccountSwitcherLayouts } from '@/constant/layout';
 import { useTranslation } from 'react-i18next';
 import { IS_ANDROID } from '@/core/native/utils';
-
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 const SectionCollapsableNav = function ({
   isCollapsed = false,
   title,
@@ -82,7 +90,7 @@ AccountSwitcherAopProps<{
   }) => void;
   scrollToBottom(): void;
 }>) {
-  const { styles } = useTheme2024({ getStyle: getPanelStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getPanelStyle });
 
   const { toggleSceneVisible } = useAccountSceneVisible(forScene);
 
@@ -96,14 +104,19 @@ AccountSwitcherAopProps<{
 
     myAddresses,
     safeAddresses,
-    shouldSafeAddressesExpanded,
     watchAddresses,
-    shouldWatchAddressesExpanded,
-
     isHideToken,
   } = useSceneAccountInfo({
     forScene,
   });
+
+  const notTop10Addresses = useMemo(() => {
+    return myAddresses.slice(10);
+  }, [myAddresses]);
+
+  const notMatterAddresses = useMemo(() => {
+    return [...notTop10Addresses, ...safeAddresses, ...watchAddresses];
+  }, [notTop10Addresses, safeAddresses, watchAddresses]);
 
   const finalCurrentAccount =
     allowNullCurrentAccount && !sceneCurrentAccount
@@ -113,29 +126,23 @@ AccountSwitcherAopProps<{
   const { switchSceneCurrentAccount, toggleUseAllAccountsOnScene } =
     useSwitchSceneCurrentAccount();
 
-  const [navsCollapsed, setNavsCollapsed] = React.useState({
-    safe: !shouldSafeAddressesExpanded,
-    watch: !shouldWatchAddressesExpanded,
-  });
+  const shouldRemainAddressesCollapsed = useMemo(() => {
+    return (
+      notMatterAddresses.findIndex(account =>
+        isSameAccount(account, finalSceneCurrentAccount),
+      ) > -1 && !isSceneUsingAllAccounts
+    );
+  }, [notMatterAddresses, finalSceneCurrentAccount, isSceneUsingAllAccounts]);
 
-  const changeCollapsed = useCallback(
-    (type: keyof typeof navsCollapsed, nextCollapsed: boolean) => {
-      if (type === 'safe') {
-        setNavsCollapsed(prev => ({ ...prev, safe: nextCollapsed }));
-      } else {
-        setNavsCollapsed(prev => ({ ...prev, watch: nextCollapsed }));
-      }
-      if (!isSceneUsingAllAccounts) scrollToBottom();
-    },
-    [scrollToBottom, isSceneUsingAllAccounts],
-  );
+  const [remainAddressesCollapsed, setRemainAddressesCollapsed] =
+    React.useState(shouldRemainAddressesCollapsed);
 
   useEffect(() => {
-    if (shouldSafeAddressesExpanded) changeCollapsed('safe', false);
-  }, [changeCollapsed, shouldSafeAddressesExpanded]);
-  useEffect(() => {
-    if (shouldWatchAddressesExpanded) changeCollapsed('watch', false);
-  }, [changeCollapsed, shouldWatchAddressesExpanded]);
+    if (shouldRemainAddressesCollapsed) {
+      setRemainAddressesCollapsed(true);
+      scrollToBottom();
+    }
+  }, [scrollToBottom, shouldRemainAddressesCollapsed]);
 
   const switchSceneAction = useCallback(
     async (account: Account | null) => {
@@ -168,6 +175,53 @@ AccountSwitcherAopProps<{
 
   const { t } = useTranslation();
 
+  const renderRemainAddressesByType = useCallback(
+    (
+      accounts: ReturnType<typeof useSceneAccountInfo>['myAddresses'],
+      type: 'notTop10Addresses' | 'gnosisAccounts' | 'watchAccounts',
+      title: string,
+    ) => {
+      if (accounts.length === 0) {
+        return null;
+      }
+
+      return (
+        <>
+          <View style={styles.sectionTitleContainer}>
+            <Text style={styles.sectionTitle}>{title}</Text>
+          </View>
+          <>
+            {accounts.map((account, index) => {
+              const key = `account-${account.address}-${account.brandName}-${index}`;
+              const isCurrent =
+                !isSceneUsingAllAccounts &&
+                isSameAccount(account, finalSceneCurrentAccount);
+              return (
+                <AddressItemInPanel
+                  key={key}
+                  addressItemProps={{ account }}
+                  isCurrent={isCurrent}
+                  isPinned={false}
+                  onPressAddress={handlePressAccount}
+                  style={[
+                    styles.addressItem,
+                    index > 0 && styles.addressItemTopGap,
+                  ]}
+                />
+              );
+            })}
+          </>
+        </>
+      );
+    },
+    [
+      finalSceneCurrentAccount,
+      handlePressAccount,
+      isSceneUsingAllAccounts,
+      styles,
+    ],
+  );
+
   return (
     <LinearGradientContainer
       type="linear"
@@ -195,7 +249,7 @@ AccountSwitcherAopProps<{
                   isSelected={isSceneUsingAllAccounts}
                 />
               )}
-              {myAddresses.map((account, index) => {
+              {myAddresses.slice(0, 10).map((account, index) => {
                 const key = `account-${account.address}-${account.brandName}-${index}`;
                 const isCurrent =
                   !isSceneUsingAllAccounts &&
@@ -218,76 +272,71 @@ AccountSwitcherAopProps<{
               })}
             </View>
           </View>
-          {!!safeAddresses.length && (
+          {!!notMatterAddresses.length && (
             <View style={[styles.section, { marginTop: 30 }]}>
-              <SectionCollapsableNav
-                title={t(
-                  'page.addressDetail.addressListScreen.importSafeAddress',
-                )}
-                isCollapsed={navsCollapsed.safe}
-                onCollapsedChange={nextVal => {
-                  changeCollapsed('safe', nextVal);
-                }}
-              />
-              {!navsCollapsed.safe && (
-                <View style={styles.addressListContainer}>
-                  {safeAddresses.map((account, index) => {
-                    const key = `account-${account.address}-${account.brandName}-${index}`;
-                    const isCurrent =
-                      !isSceneUsingAllAccounts &&
-                      isSameAccount(account, finalSceneCurrentAccount);
-
-                    return (
-                      <AddressItemInPanel
-                        key={key}
-                        addressItemProps={{ account }}
-                        isCurrent={isCurrent}
-                        isPinned={false}
-                        onPressAddress={handlePressAccount}
-                        style={[
-                          styles.addressItem,
-                          index > 0 && styles.addressItemTopGap,
-                        ]}
+              <TouchableOpacity
+                style={styles.moreWalletsButtonContent}
+                onPress={() => {
+                  setRemainAddressesCollapsed(!remainAddressesCollapsed);
+                }}>
+                <View style={styles.moreWalletsButtonIcon}>
+                  {notMatterAddresses.slice(0, 3).map((account, index) => (
+                    <View
+                      key={account.address}
+                      style={[
+                        styles.stackedIcon,
+                        {
+                          zIndex: index + 1,
+                          left: index * 16,
+                          top: -2,
+                        },
+                      ]}>
+                      <WalletIcon
+                        address={account.address}
+                        type={account.type}
+                        width={22}
+                        height={22}
+                        borderRadius={8}
                       />
-                    );
-                  })}
+                    </View>
+                  ))}
                 </View>
-              )}
-            </View>
-          )}
-          {!!watchAddresses.length && (
-            <View style={[styles.section, { marginTop: 30 }]}>
-              <SectionCollapsableNav
-                title={t(
-                  'page.addressDetail.addressListScreen.importWatchAddress',
-                )}
-                isCollapsed={navsCollapsed.watch}
-                onCollapsedChange={nextVal => {
-                  changeCollapsed('watch', nextVal);
-                }}
-              />
-              {!navsCollapsed.watch && (
+                <Text style={styles.moreWalletsButtonText}>
+                  {t('page.addressDetail.addressListScreen.moreWallets')}
+                </Text>
+                <RcCaretDownCC
+                  style={[
+                    { marginLeft: 4 },
+                    remainAddressesCollapsed && {
+                      transform: [{ rotate: '180deg' }],
+                    },
+                  ]}
+                  width={18}
+                  height={18}
+                  color={colors2024['neutral-secondary']}
+                />
+              </TouchableOpacity>
+              {remainAddressesCollapsed && (
                 <View style={styles.addressListContainer}>
-                  {watchAddresses.map((account, index) => {
-                    const key = `account-${account.address}-${account.brandName}-${index}`;
-                    const isCurrent =
-                      !isSceneUsingAllAccounts &&
-                      isSameAccount(account, finalSceneCurrentAccount);
-
-                    return (
-                      <AddressItemInPanel
-                        key={key}
-                        addressItemProps={{ account }}
-                        isCurrent={isCurrent}
-                        isPinned={false}
-                        onPressAddress={handlePressAccount}
-                        style={[
-                          styles.addressItem,
-                          index > 0 && styles.addressItemTopGap,
-                        ]}
-                      />
-                    );
-                  })}
+                  {renderRemainAddressesByType(
+                    notTop10Addresses,
+                    'notTop10Addresses',
+                    t(
+                      'page.addressDetail.notMatterAddressDialog.notTop10Address',
+                    ),
+                  )}
+                  {renderRemainAddressesByType(
+                    safeAddresses,
+                    'gnosisAccounts',
+                    t('page.addressDetail.notMatterAddressDialog.safeWallet'),
+                  )}
+                  {renderRemainAddressesByType(
+                    watchAddresses,
+                    'watchAccounts',
+                    t(
+                      'page.addressDetail.notMatterAddressDialog.watchOnlyWallet',
+                    ),
+                  )}
                 </View>
               )}
             </View>
@@ -305,6 +354,31 @@ export function getAccountsPanelInModalMaxHeight() {
 }
 const getPanelStyle = createGetStyles2024(ctx => {
   return {
+    moreWalletsButtonContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+    },
+    moreWalletsButtonText: {
+      fontSize: 16,
+      fontWeight: '500',
+      lineHeight: 20,
+      fontFamily: 'SF Pro Rounded',
+      color: ctx.colors2024['neutral-secondary'],
+    },
+    moreWalletsButtonIcon: {
+      position: 'relative',
+      width: 62, // 22 + 10 + 10 + 20 (icon width + 2 overlaps + extra space)
+      height: 22,
+      marginRight: 4,
+    },
+    stackedIcon: {
+      position: 'absolute',
+      borderWidth: 2,
+      borderColor: 'rgba(255, 255, 255, 1)',
+      borderRadius: 10,
+    },
     panel: {
       position: 'relative',
       width: '100%',
@@ -345,7 +419,9 @@ const getPanelStyle = createGetStyles2024(ctx => {
     sectionTitleContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
+      justifyContent: 'flex-start',
+      paddingVertical: 12,
+      marginTop: 12,
     },
     sectionTitle: {
       fontFamily: 'SF Pro Rounded',
@@ -356,7 +432,7 @@ const getPanelStyle = createGetStyles2024(ctx => {
     },
     addressListContainer: {
       flexDirection: 'column',
-      marginTop: 12,
+      // marginTop: 12,
       // maxHeight: SIZES.myAddressesAreaVisiableH,
       width: '100%',
     },

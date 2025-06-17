@@ -146,7 +146,7 @@ export function UseAllAccountsItemInPanel({
     return null;
   }
 
-  const addressCount = allAccounts.length;
+  const addressCount = allAccounts.length > 10 ? 10 : allAccounts.length;
 
   return (
     <TouchableOpacity

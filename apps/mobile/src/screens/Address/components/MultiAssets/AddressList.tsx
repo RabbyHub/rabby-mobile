@@ -1,9 +1,11 @@
+/* eslint-disable react-native/no-inline-styles */
 import { useCallback, useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
 import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
+import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
 import { OtherAddressNav } from '../OtherAddressNav';
@@ -24,6 +26,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { useBalanceUpdate } from './hooks/balance';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { RefreshControl } from 'react-native-gesture-handler';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 
 const SPACING_HEIGHT = 8;
 export const AddressList = () => {
@@ -31,8 +34,10 @@ export const AddressList = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
   const [isRefreshing, setIsRefreshing] = useState(false);
+
   const {
     top10Addresses,
+    notMatterAccounts,
     list: _rawList,
     hasWatchAddress,
     hasSafeAddress,
@@ -58,7 +63,7 @@ export const AddressList = () => {
   useBalanceUpdate(triggerUpdate);
 
   const list = useMemo(() => {
-    return _rawList.map(item => {
+    return _rawList.slice(0, 10).map(item => {
       const account = balanceAccounts.find(acc =>
         isSameAddress(acc.address, item.address),
       );
@@ -136,9 +141,75 @@ export const AddressList = () => {
     });
   }, [shouldRedirectToSetPasswordBefore2024, navigation]);
 
+  const handleMoreWalletsPress = useCallback(() => {
+    // TODO: 实现跳转到 More Wallets 详情页面或弹窗
+    console.log('Show more wallets detail');
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG,
+      bottomSheetModalProps: {
+        enablePanDownToClose: true,
+        enableContentPanningGesture: true,
+      },
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+    });
+  }, []);
+
   const renderFooter = useCallback(
     () => (
       <View>
+        {notMatterAccounts.length > 0 && (
+          <View style={styles.moreWalletsContainer}>
+            <View style={styles.moreWalletsHintContainer}>
+              <View style={styles.horizontalLine} />
+              <Text style={styles.moreWalletsHint}>
+                {t(
+                  'page.addressDetail.addressListScreen.notIncludedInTotalBalance',
+                )}
+              </Text>
+              <View style={styles.horizontalLine} />
+            </View>
+            <TouchableOpacity
+              style={styles.moreWalletsButton}
+              onPress={handleMoreWalletsPress}>
+              <View style={styles.moreWalletsButtonContent}>
+                <View style={styles.moreWalletsButtonIcon}>
+                  {notMatterAccounts.slice(0, 3).map((account, index) => (
+                    <View
+                      key={account.address}
+                      style={[
+                        styles.stackedIcon,
+                        {
+                          zIndex: index + 1,
+                          left: index * 16,
+                          top: -2,
+                        },
+                      ]}>
+                      <WalletIcon
+                        address={account.address}
+                        type={account.type}
+                        style={styles.moreWalletsButtonIconImage}
+                        width={22}
+                        height={22}
+                        borderRadius={8}
+                      />
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.moreWalletsButtonText}>
+                  {t('page.addressDetail.addressListScreen.moreWallets')}
+                </Text>
+                <RightArrowSVG
+                  width={12}
+                  height={12}
+                  color={colors2024['neutral-secondary']}
+                  style={styles.arrowIcon}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
         <Card style={styles.footerCard} onPress={gotoAddAddress}>
           <View style={styles.footerMain}>
             <PlusSVG
@@ -151,33 +222,16 @@ export const AddressList = () => {
             </Text>
           </View>
         </Card>
-        {hasSafeAddress && (
-          <OtherAddressNav
-            onPress={onGotoSafeAddress}
-            text={t('page.addressDetail.addressListScreen.importSafeAddress')}
-          />
-        )}
-        {hasWatchAddress && (
-          <OtherAddressNav
-            onPress={onGotoWatchAddress}
-            text={t('page.addressDetail.addressListScreen.importWatchAddress')}
-          />
-        )}
         <View style={styles.footerGap} />
       </View>
     ),
     [
+      notMatterAccounts,
       colors2024,
       gotoAddAddress,
-      hasSafeAddress,
-      hasWatchAddress,
-      onGotoSafeAddress,
-      onGotoWatchAddress,
-      styles.footerCard,
-      styles.footerCardText,
-      styles.footerGap,
-      styles.footerMain,
+      styles,
       t,
+      handleMoreWalletsPress,
     ],
   );
 
@@ -220,7 +274,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   footerCard: {
     backgroundColor: ctx.colors2024['neutral-bg-2'],
-    marginTop: 16,
+    marginTop: 24,
     marginBottom: 22,
     padding: 16,
     borderRadius: 20,
@@ -250,5 +304,67 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
+  },
+  moreWalletsContainer: {
+    marginTop: 24,
+    // paddingHorizontal: 16,
+    gap: 24,
+    // paddingVertical: 10,
+  },
+  moreWalletsHint: {
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-info'],
+    // textAlign: 'center',
+  },
+  moreWalletsButton: {
+    // paddingVertical: 8,
+  },
+  moreWalletsButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  moreWalletsButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    color: ctx.colors2024['neutral-secondary'],
+  },
+  arrowIcon: {
+    transform: [{ rotate: '0deg' }],
+  },
+  moreWalletsHintContainer: {
+    // marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  moreWalletsButtonIcon: {
+    position: 'relative',
+    width: 62, // 22 + 10 + 10 + 20 (icon width + 2 overlaps + extra space)
+    height: 22,
+    marginRight: 4,
+  },
+  stackedIcon: {
+    position: 'absolute',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 1)',
+    borderRadius: 10,
+  },
+  moreWalletsButtonIconImage: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+  },
+  horizontalLine: {
+    // width: 100,
+    flex: 1,
+    height: 1,
+    backgroundColor: ctx.colors2024['neutral-line'],
   },
 }));
