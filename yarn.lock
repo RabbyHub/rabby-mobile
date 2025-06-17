@@ -7706,21 +7706,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/eth-hd-keyring@patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 4.3.1
-  resolution: "@rabby-wallet/eth-hd-keyring@patch:@rabby-wallet/eth-hd-keyring@npm%3A4.3.1#./.yarn/patches/@rabby-wallet-eth-hd-keyring-npm-4.3.1-a1d8bbe289.patch::version=4.3.1&hash=691efc&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  dependencies:
-    "@ethereumjs/util": ^9.0.0
-    "@metamask/eth-sig-util": ^4.0.0
-    "@rabby-wallet/eth-simple-keyring": ^5.0.1
-    "@scure/bip39": ^1.2.1
-    eth-sig-util: ^3.0.1
-    ethereum-cryptography: ^2.1.2
-    slip39: ^0.1.9
-  checksum: b12015b3e5e7925dc56811ae3521d4e4b88438208b1dfe3ee6ecd568576ed9261b11516fea064ec229a4bae949621851b3033346f1c92645f518fb92e5999a84
-  languageName: node
-  linkType: hard
-
 "@rabby-wallet/eth-keyring-gnosis@workspace:^, @rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis"
