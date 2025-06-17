@@ -17,7 +17,11 @@ import {
   Dimensions,
   RefreshControl,
 } from 'react-native';
-import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
+import {
+  makeTxPageBackgroundColors,
+  RootNames,
+  ScreenLayouts,
+} from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -35,6 +39,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { Skeleton } from '@rneui/themed';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 const DEFAULT_COUNT = 10;
 
@@ -75,6 +80,8 @@ export const CopyTradingScreen = () => {
   const [selectedChainId, setSelectedChainId] = useState<string>('');
   const [tokenList, setTokenList] = useState<CopyTradeTokenItem[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { safeTop, headerHeight } = useSafeSizes();
+  console.log('safeTop', safeTop);
   const { navigation } = useSafeSetNavigationOptions();
   const [tabLoading, setTabLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
@@ -298,7 +305,7 @@ export const CopyTradingScreen = () => {
   }, []);
 
   return (
-    <NormalScreenContainer type="bg0">
+    <NormalScreenContainer type="bg0" noHeader={true}>
       <View style={styles.headerContainer}>
         {tabLoading ? (
           <View style={[styles.scrollContentContainer, styles.headerChainList]}>
@@ -390,6 +397,7 @@ export const CopyTradingScreen = () => {
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   headerContainer: {
+    marginTop: 56,
     height: 56,
     overflow: 'hidden',
   },
