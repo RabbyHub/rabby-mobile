@@ -1,9 +1,10 @@
 import {
   Dimensions,
+  Keyboard,
   Modal,
   Text,
+  TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -11,17 +12,19 @@ import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
-import { RcIconLogoBlue } from '@/assets/icons/common';
+import { RcIconLogoBlueAutoSize } from '@/assets/icons/common';
 
-import StarCC from './icons/star-cc.svg';
 import { IS_ANDROID } from '@/core/native/utils';
 import { NextInput } from '@/components2024/Form/Input';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useExposureRateGuide, useRateModal } from './hooks';
 import { openExternalUrl } from '@/core/utils/linking';
 import { APP_URLS } from '@/constant';
 import { toast } from '@/components2024/Toast';
 import PressableStar from './RateStar';
+
+import CloseCC from './icons/close-cc.svg';
+import usePrevious from 'react-use/lib/usePrevious';
 
 const LOGO_SIZE = 67;
 
@@ -42,9 +45,25 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
     submitFeedback,
   } = useRateModal();
 
+  const closeModal = useCallback(() => {
+    toggleShowRateModal(false, {
+      disableExposureOnClose: true,
+    });
+  }, [toggleShowRateModal]);
+
   const wantFeedback = useMemo(() => {
     return userStar <= 3;
   }, [userStar]);
+
+  // const inputRef = useRef<TextInput>(null);
+  // useEffect(() => {
+  //   if (rateModalShown && wantFeedback) {
+  //     inputRef.current?.focus();
+  //     setTimeout(() => inputRef.current?.focus(), 150);
+  //     // show keyboard when modal is shown
+  //     // TODO:
+  //   }
+  // }, [rateModalShown, wantFeedback]);
 
   const userFeedbackLenIndicator = useMemo(() => {
     return `${userFeedback.length}/${300}`;
@@ -59,17 +78,34 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
       visible={rateModalShown}
       transparent
       animationType="fade"
-      style={styles.modal}>
+      style={styles.modalComp}>
       <View style={styles.modalMask}>
-        <View style={styles.modal}>
+        <TouchableOpacity
+          style={styles.modalCloseIconContainer}
+          onPress={() => {
+            closeModal();
+          }}>
+          <CloseCC
+            color={colors2024['neutral-InvertHighlight']}
+            style={styles.modalCloseIcon}
+            width={24}
+            height={24}
+          />
+        </TouchableOpacity>
+        <View
+          style={[
+            styles.modal,
+            wantFeedback ? { paddingBottom: 24 } : { paddingBottom: 13 },
+          ]}>
           <View style={styles.logoWrapper}>
-            <RcIconLogoBlue style={{ width: LOGO_SIZE, height: LOGO_SIZE }} />
+            <RcIconLogoBlueAutoSize width={LOGO_SIZE} height={LOGO_SIZE} />
           </View>
           <View style={styles.starsContainer}>
             {Array.from({ length: 5 }, (_, index) => {
               const rate = index + 1;
               return (
                 <PressableStar
+                  disabled
                   style={styles.star}
                   key={`star-${index}`}
                   isFilled={userStar >= rate}
@@ -81,7 +117,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
             })}
           </View>
           {!wantFeedback ? (
-            <View style={styles.bottomContainer}>
+            <View style={[styles.bottomContainer]}>
               <View style={styles.descThx}>
                 <Text>😄 </Text>
                 <Text style={styles.descThxText}>
@@ -91,6 +127,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
               <View style={styles.rateButtonsContainer}>
                 <Button
                   type="primary"
+                  containerStyle={styles.rateButtonContainer}
                   buttonStyle={[styles.rateButton, styles.rateButtonConfirm]}
                   titleStyle={[
                     styles.rateButtonText,
@@ -110,31 +147,38 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                 />
                 <Button
                   type="ghost"
+                  containerStyle={styles.rateButtonContainer}
                   buttonStyle={[styles.rateButton, styles.rateButtonCancel]}
                   titleStyle={[
                     styles.rateButtonText,
                     styles.rateButtonCancelText,
                   ]}
                   onPress={() => {
-                    toggleShowRateModal(false, {
-                      disableExposureOnClose: true,
-                    });
+                    closeModal();
                   }}
                   title={t('global.Cancel')}
                 />
               </View>
             </View>
           ) : (
-            <View style={styles.bottomContainer}>
-              <View style={styles.feedbackTopContainer}>
+            <View style={[styles.bottomContainer]}>
+              <View style={styles.feedbackInputContainer}>
                 <Text style={styles.feedbackText}>
                   {t('page.nextComponent.rateModal.feedbackTitle')}
                 </Text>
                 <View style={styles.inputContainer}>
                   <NextInput.TextArea
+                    // ref={inputRef}
+                    style={{ borderColor: 'transparent' }}
+                    inputStyle={styles.inputStyle}
                     inputProps={{
+                      autoFocus: true,
+                      blurOnSubmit: true,
+                      keyboardType: 'default',
+                      spellCheck: false,
+                      textAlign: 'left',
                       value: userFeedback,
-                      onChangeText(text) {
+                      onChangeText: text => {
                         onChangeFeedback(text);
                       },
                     }}
@@ -157,9 +201,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                     styles.feedbackButtonCancelText,
                   ]}
                   onPress={() => {
-                    toggleShowRateModal(false, {
-                      disableExposureOnClose: true,
-                    });
+                    closeModal();
                   }}
                   title={t('global.Cancel')}
                 />
@@ -183,9 +225,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                         );
                       })
                       .finally(() => {
-                        toggleShowRateModal(false, {
-                          disableExposureOnClose: true,
-                        });
+                        closeModal();
                       });
                   }}
                   title={t('page.nextComponent.rateModal.feedbackSubmit')}
@@ -203,14 +243,26 @@ const MODAL_H_PADDING = 20;
 
 const getStyles = createGetStyles2024(({ colors2024 }) => {
   return {
-    container: {},
+    modalComp: {},
     modalMask: {
-      backgroundColor: 'rgba(0,0,0,0.4)',
+      position: 'relative',
+      backgroundColor: 'rgba(0, 0, 0, 0.4)',
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: MODAL_H_PADDING,
     },
+    modalCloseIconContainer: {
+      position: 'absolute',
+      top: 8,
+      paddingTop: 24 - 8,
+      left: 8,
+      paddingLeft: 12 - 8,
+      paddingRight: 4,
+      paddingBottom: 4,
+      // ...makeDebugBorder(),
+    },
+    modalCloseIcon: {},
     modal: {
       maxWidth: Dimensions.get('window').width - MODAL_H_PADDING * 2,
       width: '100%',
@@ -222,6 +274,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       position: 'relative',
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    modalWithFeedback: {
+      paddingBottom: 24,
     },
     logoWrapper: {
       width: LOGO_SIZE,
@@ -241,7 +296,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
     },
 
     bottomContainer: {
-      marginBottom: 14,
       width: '100%',
     },
 
@@ -255,7 +309,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
     descThxText: {
       color: colors2024['neutral-black'],
       fontFamily: 'SF Pro',
-      fontSize: 16,
+      fontSize: 14,
       fontStyle: 'normal',
       fontWeight: 700,
       lineHeight: 20,
@@ -271,16 +325,25 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       justifyContent: 'space-between',
       width: '100%',
     },
+    rateButtonContainer: {
+      shadowColor: colors2024['blue-default'],
+      shadowOffset: {
+        width: 0,
+        height: 6,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 24,
+    },
+    rateButton: {
+      width: '100%',
+      height: 56,
+      borderRadius: 12,
+    },
     rateButtonText: {
       fontSize: 20,
       fontStyle: 'normal',
       fontWeight: 700,
       lineHeight: 24,
-    },
-    rateButton: {
-      width: '100%',
-      height: 56,
-      borderRadius: 8,
     },
     rateButtonConfirm: {},
     rateButtonConfirmText: {
@@ -295,14 +358,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       color: '#808187',
     },
 
-    feedbackTopContainer: {
+    feedbackInputContainer: {
       width: '100%',
     },
     feedbackText: {
       marginBottom: 20,
       color: colors2024['neutral-title-1'],
       fontFamily: 'SF Pro',
-      fontSize: 20,
+      fontSize: 18,
       fontStyle: 'normal',
       fontWeight: 700,
       lineHeight: 24,
@@ -314,6 +377,10 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
     },
     inputContainer: {
       position: 'relative',
+    },
+    inputStyle: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
     },
     inputTextLenIndicator: {
       position: 'absolute',
@@ -327,7 +394,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 22,
     },
     feedbackButtonsContainer: {
-      marginTop: 46,
+      marginTop: 20,
+      marginBottom: 0,
       borderTopColor: colors2024['neutral-line'],
       borderTopWidth: 0,
       flexDirection: 'row',
@@ -357,11 +425,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
     },
     feedbackButtonCancel: {
       backgroundColor: 'transparent',
-      borderColor: colors2024['blue-default'],
+      borderColor: colors2024['brand-default'],
       borderWidth: 1,
     },
     feedbackButtonCancelText: {
-      color: colors2024['blue-default'],
+      color: colors2024['brand-default'],
     },
   };
 });

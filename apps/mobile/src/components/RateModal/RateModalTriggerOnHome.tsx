@@ -24,7 +24,7 @@ const SIZES = {
 };
 
 export function RateModalTriggerOnHome({ style }: RNViewProps) {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { isLight, styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
 
@@ -37,14 +37,19 @@ export function RateModalTriggerOnHome({ style }: RNViewProps) {
   return (
     <TouchableWithoutFeedback
       style={style}
-      onPress={() => {
-        toggleShowRateModal(true);
-      }}>
+      disabled
+      // onPress={() => {
+      //   toggleShowRateModal(true);
+      // }}
+    >
       <View
         style={StyleSheet.flatten([styles.container])}
         testID="RateModalTriggerOnHome">
-        <View style={styles.silhouetteContainer}>
-          <RabbySilhouette height={TRIGGER_HEIGHT} />
+        <View style={[styles.silhouetteContainer]}>
+          <RabbySilhouette
+            style={isLight && { opacity: 0.4 }}
+            height={TRIGGER_HEIGHT}
+          />
         </View>
         <TouchableOpacity
           style={styles.closeContainer}

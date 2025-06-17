@@ -106,7 +106,8 @@ export function useExposureRateGuide() {
   }, [setRateGuideLastExposure]);
 
   return {
-    shouldShowRateGuideOnHome,
+    // shouldShowRateGuideOnHome,
+    shouldShowRateGuideOnHome: true,
 
     disableExposureRateGuide,
   };
