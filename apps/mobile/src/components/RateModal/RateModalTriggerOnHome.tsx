@@ -121,7 +121,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       position: 'absolute',
       top: 0,
       right: 0,
-      paddingTop: SIZES.closeIconOffset,
+      paddingTop: SIZES.closeIconOffset - 4,
       paddingRight: SIZES.closeIconOffset,
       paddingLeft: SIZES.closeIconOffset * 0.5,
       paddingBottom: SIZES.closeIconOffset * 0.5,
@@ -136,7 +136,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       justifyContent: 'center',
       marginTop: 12,
-      gap: 4,
+      gap: 18,
       width: '100%',
       maxWidth: STAR_SIZE * 5 + 4 * 4, // 5 stars + 4 gaps
       height: STAR_SIZE,
