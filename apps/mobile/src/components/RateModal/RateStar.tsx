@@ -25,6 +25,11 @@ export type PressableStarType = {
   pause: LottieView['reset'];
 };
 
+const StarJson = AnimationStar as any;
+const MS_PLAY_ONCE =
+  (coerceInteger(StarJson['op'], 60) / coerceInteger(StarJson['fr'], 100)) *
+  1000;
+
 function PressableStar({
   isFilled,
   isActive = false,
@@ -44,15 +49,15 @@ function PressableStar({
     return isFilled ? 'rgba(255, 205, 54, 1)' : 'rgba(0, 0, 0, 0.16)';
   }, [isFilled, isLight]);
 
-  const animationRef = useRef<LottieView>(null);
-  useEffect(() => {
-    if (isActive) {
-      animationRef.current?.play();
-    } else {
-      animationRef.current?.reset();
-      animationRef.current?.pause();
-    }
-  }, [isActive]);
+  // const animationRef = useRef<LottieView>(null);
+  // useEffect(() => {
+  //   if (isActive) {
+  //     animationRef.current?.play();
+  //   } else {
+  //     animationRef.current?.reset();
+  //     animationRef.current?.pause();
+  //   }
+  // }, [isActive]);
 
   return (
     <TouchableOpacity
@@ -71,15 +76,12 @@ function PressableStar({
           pointerEvents="none"
           style={[styles.animationWrapper, { width: size, height: size }]}>
           <LottieView
+            // ref={animationRef}
             source={AnimationStar}
             style={StyleSheet.flatten([styles.animationLottie])}
             loop
+            duration={MS_PLAY_ONCE}
             autoPlay={isActive}
-            {...(__DEV__ &&
-              {
-                // duration: 5000,
-                // loop: true,
-              })}
           />
         </View>
       ) : (
@@ -105,5 +107,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
     },
   };
 });
+
+PressableStar.MS_PLAY_ONCE = MS_PLAY_ONCE;
 
 export default PressableStar;

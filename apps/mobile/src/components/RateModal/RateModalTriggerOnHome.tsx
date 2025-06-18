@@ -26,7 +26,8 @@ const SIZES = {
   closeIconOffset: 12,
 };
 
-const TRIGGER_AFTER_DELAY = 500; // ms
+const TRIGGER_AFTER_DELAY = Math.max(500, PressableStar.MS_PLAY_ONCE);
+
 export function RateModalTriggerOnHome({ style }: RNViewProps) {
   const { isLight, styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
