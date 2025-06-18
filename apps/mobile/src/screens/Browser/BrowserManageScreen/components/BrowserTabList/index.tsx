@@ -2,7 +2,7 @@ import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useMount } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import {
@@ -17,6 +17,7 @@ import { FlatList } from 'react-native-gesture-handler';
 import { BrowserTabCard } from './BrowserTabCard';
 import { Tab } from '@/core/services/browserService';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { useRef } from 'react';
 
 export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles, isLight } = useTheme2024({
@@ -52,6 +53,17 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
       </View>
     );
   });
+
+  const ref = useRef<FlatList>(null);
+  useMount(() => {
+    const index = tabs.findIndex(item => item.id === activeTabId);
+    if (index !== -1) {
+      ref.current?.scrollToIndex({
+        index: Math.floor(index / 2),
+        animated: false,
+      });
+    }
+  });
   return (
     <View style={[styles.container, style]}>
       <FlatList
@@ -62,6 +74,12 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         keyExtractor={item => item.id}
         ItemSeparatorComponent={ItemSeparatorComponent}
         showsVerticalScrollIndicator={false}
+        ref={ref}
+        getItemLayout={(data, index) => ({
+          length: 242,
+          offset: 242 * index,
+          index,
+        })}
       />
       <View
         // eslint-disable-next-line react-native/no-inline-styles
