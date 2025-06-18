@@ -127,6 +127,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       justifyContent: 'center',
       paddingHorizontal: 12,
       paddingVertical: 16,
+      // ...makeDebugBorder(),
     },
     silhouetteContainer: {
       position: 'absolute',
@@ -160,8 +161,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
     },
     text: {
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
-      fontSize: 16,
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 18,
       fontStyle: 'normal',
       fontWeight: 700,
       lineHeight: 20,

@@ -3,7 +3,7 @@ import { offlineChainService, preferenceService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { findChainByServerID } from '@/utils/chain';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { atom, useAtom } from 'jotai';
 import { useTranslation } from 'react-i18next';
 import { Image, Text, View } from 'react-native';
@@ -24,7 +24,16 @@ const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
 export const useOfflineChain = () => {
   const [closedTipsChains, _setClosedTipsChain] = useAtom(closedTipsChainsAtom);
 
-  const { value: offlineList } = useAsync(() => {
+  const { value: offlineList } = useAsync(async () => {
+    // // leave here for mock data
+    // if (__DEV__) {
+    //   return [
+    //     { id: 'eth', offline_at: dayjs().add(6, 'day').unix() }, // Example data
+    //     { id: 'bsc', offline_at: dayjs().add(6, 'day').unix() }, // Example data
+    //     { id: 'polygon', offline_at: dayjs().add(6, 'day').unix() }, // Example data
+    //   ];
+    // }
+
     return openapi.getOfflineChainList();
   }, []);
 
@@ -81,10 +90,7 @@ export const useOfflineChain = () => {
 
 export const OfflineChainNotify = ({
   data,
-  showEmptyHolder = false,
-  style,
 }: {
-  showEmptyHolder?: boolean;
   data: ReturnType<typeof useOfflineChain>;
 } & RNViewProps) => {
   const { t } = useTranslation();
@@ -149,10 +155,10 @@ export const OfflineChainNotify = ({
     styles.closeModalBtnText,
     styles.title,
   ]);
-  if (!displayWillClosedChain || !chainInfo) {
-    // delegate outer to place empty holder
-    return <View style={{ height: 0 }} />;
-  }
+
+  // delegate outer to place empty holder
+  if (!displayWillClosedChain || !chainInfo) return null;
+
   return (
     <View style={styles.container}>
       <Image
@@ -191,9 +197,6 @@ export const OfflineChainNotify = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginTop: 16,
-    marginBottom: 24,
-
     marginHorizontal: 15,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -220,7 +223,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   text: {
     color: colors2024['orange-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontStyle: 'normal',
     fontWeight: '700',

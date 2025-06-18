@@ -676,15 +676,14 @@ function MultiAddressHome(): JSX.Element {
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
 
-  const { betweenContentLayout } = useMemo(() => {
+  const { noBetweenContent } = useMemo(() => {
+    const _noBetweenContent =
+      !displayFundWallet &&
+      !shouldShowRateGuideOnHome &&
+      (!offlineChainData.displayWillClosedChain ||
+        !offlineChainData.offlineChainInfo);
     return {
-      betweenContentLayout:
-        !offlineChainData.displayWillClosedChain ||
-        !offlineChainData.offlineChainInfo
-          ? !displayFundWallet && !shouldShowRateGuideOnHome
-            ? ('empty-placeholder' as const)
-            : ('none' as const)
-          : ('show-offlinechain' as const),
+      noBetweenContent: _noBetweenContent,
     };
   }, [shouldShowRateGuideOnHome, offlineChainData, displayFundWallet]);
 
@@ -728,14 +727,10 @@ function MultiAddressHome(): JSX.Element {
           />
           <View
             style={[
-              styles.contentBetweenHeaderAndContent,
-              betweenContentLayout !== 'none' && { marginTop: 0 },
-              betweenContentLayout === 'empty-placeholder' && { marginTop: 30 },
+              styles.contentBetweenHeaderAndMatrix,
+              noBetweenContent && styles.contentBetweenHeaderAndMatrixEmpty,
             ]}>
-            <OfflineChainNotify
-              data={offlineChainData}
-              showEmptyHolder={!displayFundWallet}
-            />
+            <OfflineChainNotify data={offlineChainData} />
 
             {displayFundWallet && <FoundYourWalletGuide />}
 
@@ -999,10 +994,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
     borderWidth: 1,
   },
-  contentBetweenHeaderAndContent: {
+  contentBetweenHeaderAndMatrix: {
     marginTop: 12,
     marginBottom: 12,
+    gap: 12,
   },
+  contentBetweenHeaderAndMatrixEmpty: {},
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
