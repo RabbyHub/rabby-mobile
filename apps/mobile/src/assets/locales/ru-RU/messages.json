@@ -1066,7 +1066,8 @@
         "description": "Как вы оцениваете Rabby Wallet"
       },
       "rateModal": {
-        "description": "Спасибо! \nЕсли вам нравится Рабби, быстрый рейтинг в App Store будет много значить.",
+        "descriptionIOS": "Если вам нравится Рабби, быстрый рейтинг в App Store будет много значить.",
+        "descriptionAndroid": "Если вам нравится Рабби, быстрый рейтинг в Google Play будет много значить.",
         "confirmButtonTitleAndroid": "Оценка в Google Play",
         "confirmButtonTitleIOS": "Оценка в App Store",
         "feedbackTitle": "Есть обратная связь? \nМы слушаем.",

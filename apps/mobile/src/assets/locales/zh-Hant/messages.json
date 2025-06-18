@@ -1167,7 +1167,8 @@
         "description": "您如何評價Rabby Wallet"
       },
       "rateModal": {
-        "description": "謝謝！如果您喜歡Rabby，那麼在App Store上的快速評級將意味著很多。",
+        "descriptionIOS": "如果您喜歡Rabby，那麼在App Store上的快速評級將意味著很多。",
+        "descriptionAndroid": "如果您喜歡Rabby，那麼在Google Play上的快速評級將意味著很多。",
         "confirmButtonTitleAndroid": "在Google Play上評價",
         "confirmButtonTitleIOS": "App Store上的價格",
         "feedbackTitle": "有反饋？我們正在聽。",

@@ -1154,7 +1154,8 @@
         "description": "¿Cómo se califica la billetera de rabby?"
       },
       "rateModal": {
-        "description": "¡Gracias! \nSi te gusta Rabby, una calificación rápida en la App Store significaría mucho.",
+        "descriptionIOS": "Si te gusta Rabby, una calificación rápida en la App Store significaría mucho.",
+        "descriptionAndroid": "Si te gusta Rabby, una calificación rápida en Google Play significaría mucho.",
         "confirmButtonTitleAndroid": "Califica en Google Play",
         "confirmButtonTitleIOS": "Califique en App Store",
         "feedbackTitle": "¿Tiene comentarios? \nEstamos escuchando.",

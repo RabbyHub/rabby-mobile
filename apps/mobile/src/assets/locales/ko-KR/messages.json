@@ -1007,7 +1007,8 @@
         "description": "랍비 지갑을 어떻게 평가합니까?"
       },
       "rateModal": {
-        "description": "감사해요! \nRabby를 좋아한다면 App Store의 빠른 등급은 많은 의미가 있습니다.",
+        "descriptionIOS": "Rabby를 좋아한다면 App Store의 빠른 등급은 많은 의미가 있습니다.",
+        "descriptionAndroid": "Rabby를 좋아한다면 Google Play의 빠른 등급은 많은 의미가 있습니다.",
         "confirmButtonTitleAndroid": "Google Play의 평가",
         "confirmButtonTitleIOS": "App Store의 요금",
         "feedbackTitle": "피드백이 있습니까? \n우리는 듣고 있습니다.",

@@ -1050,7 +1050,8 @@
         "description": "Làm thế nào để bạn đánh giá ví Rabby"
       },
       "rateModal": {
-        "description": "Cảm ơn! \nNếu bạn thích Rabby, một đánh giá nhanh trên App Store có ý nghĩa rất lớn.",
+        "descriptionIOS": "Nếu bạn thích Rabby, một đánh giá nhanh trên App Store có ý nghĩa rất lớn.",
+        "descriptionAndroid": "Nếu bạn thích Rabby, một đánh giá nhanh trên Google Play sẽ có ý nghĩa rất lớn.",
         "confirmButtonTitleAndroid": "Đánh giá trên Google Play",
         "confirmButtonTitleIOS": "Đánh giá trên cửa hàng ứng dụng",
         "feedbackTitle": "Có phản hồi? \nChúng tôi lắng nghe.",

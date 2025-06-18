@@ -1178,7 +1178,8 @@
         "description": "คุณให้คะแนนกระเป๋าเงิน Rabby ได้อย่างไร"
       },
       "rateModal": {
-        "description": "ขอบคุณ! \nถ้าคุณชอบ Rabby การให้คะแนนอย่างรวดเร็วใน App Store จะมีความหมายมาก",
+        "descriptionIOS": "ถ้าคุณชอบ Rabby การให้คะแนนอย่างรวดเร็วใน App Store จะมีความหมายมาก",
+        "descriptionAndroid": "ถ้าคุณชอบ Rabby การให้คะแนนอย่างรวดเร็วของ Google Play จะมีความหมายมาก",
         "confirmButtonTitleAndroid": "ให้คะแนน Google Play",
         "confirmButtonTitleIOS": "ให้คะแนนใน App Store",
         "feedbackTitle": "มีข้อเสนอแนะ? \nเรากำลังฟัง",

@@ -1071,7 +1071,8 @@
         "description": "Rabby cüzdanını nasıl derecelendirirsin"
       },
       "rateModal": {
-        "description": "Teşekkürler! \nRabby'yi seviyorsanız, uygulama mağazasında hızlı bir derecelendirme çok şey ifade eder.",
+        "descriptionIOS": "Rabby'yi seviyorsanız, uygulama mağazasında hızlı bir derecelendirme çok şey ifade eder.",
+        "descriptionAndroid": "Rabby'yi seviyorsanız, Google Play'de hızlı bir derecelendirme çok şey ifade eder.",
         "confirmButtonTitleAndroid": "Google Play'de Değerlendirme",
         "confirmButtonTitleIOS": "App Store'da oran",
         "feedbackTitle": "Geri bildiriminiz var mı? \nDinliyoruz.",

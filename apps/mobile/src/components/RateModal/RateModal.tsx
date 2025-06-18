@@ -1,6 +1,7 @@
 import {
   Dimensions,
   Keyboard,
+  KeyboardAvoidingView,
   Modal,
   Text,
   TextInput,
@@ -14,7 +15,7 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { Button } from '@/components2024/Button';
 import { RcIconLogoBlueAutoSize } from '@/assets/icons/common';
 
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { NextInput } from '@/components2024/Form/Input';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useExposureRateGuide, useRateModal } from './hooks';
@@ -22,9 +23,6 @@ import { openExternalUrl } from '@/core/utils/linking';
 import { APP_URLS } from '@/constant';
 import { toast } from '@/components2024/Toast';
 import PressableStar from './RateStar';
-
-import CloseCC from './icons/close-cc.svg';
-import usePrevious from 'react-use/lib/usePrevious';
 
 const LOGO_SIZE = 67;
 
@@ -80,160 +78,158 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
       animationType="fade"
       style={styles.modalComp}>
       <View style={styles.modalMask}>
-        <TouchableOpacity
-          style={styles.modalCloseIconContainer}
-          onPress={() => {
-            closeModal();
-          }}>
-          <CloseCC
-            color={colors2024['neutral-InvertHighlight']}
-            style={styles.modalCloseIcon}
-            width={24}
-            height={24}
-          />
-        </TouchableOpacity>
-        <View
-          style={[
-            styles.modal,
-            wantFeedback ? { paddingBottom: 24 } : { paddingBottom: 13 },
-          ]}>
-          <View style={styles.logoWrapper}>
-            <RcIconLogoBlueAutoSize width={LOGO_SIZE} height={LOGO_SIZE} />
-          </View>
-          <View style={styles.starsContainer}>
-            {Array.from({ length: 5 }, (_, index) => {
-              const rate = index + 1;
-              return (
-                <PressableStar
-                  disabled
-                  style={styles.star}
-                  key={`star-${index}`}
-                  isFilled={userStar >= rate}
-                  onPress={() => {
-                    selectStar(rate);
-                  }}
-                />
-              );
-            })}
-          </View>
-          {!wantFeedback ? (
-            <View style={[styles.bottomContainer]}>
-              <View style={styles.descThx}>
-                <Text>😄 </Text>
-                <Text style={styles.descThxText}>
-                  {t('page.nextComponent.rateModal.description')}
-                </Text>
-              </View>
-              <View style={styles.rateButtonsContainer}>
-                <Button
-                  type="primary"
-                  containerStyle={styles.rateButtonContainer}
-                  buttonStyle={[styles.rateButton, styles.rateButtonConfirm]}
-                  titleStyle={[
-                    styles.rateButtonText,
-                    styles.rateButtonConfirmText,
-                  ]}
-                  onPress={() => {
-                    openExternalUrl(APP_URLS.RATE_URL);
-                    disableExposureRateGuide();
-                  }}
-                  title={
-                    IS_ANDROID
-                      ? t(
-                          'page.nextComponent.rateModal.confirmButtonTitleAndroid',
-                        )
-                      : t('page.nextComponent.rateModal.confirmButtonTitleIOS')
-                  }
-                />
-                <Button
-                  type="ghost"
-                  containerStyle={styles.rateButtonContainer}
-                  buttonStyle={[styles.rateButton, styles.rateButtonCancel]}
-                  titleStyle={[
-                    styles.rateButtonText,
-                    styles.rateButtonCancelText,
-                  ]}
-                  onPress={() => {
-                    closeModal();
-                  }}
-                  title={t('global.Cancel')}
-                />
-              </View>
+        <KeyboardAvoidingView behavior={IS_IOS ? 'padding' : 'height'}>
+          <View
+            style={[
+              styles.modal,
+              wantFeedback ? { paddingBottom: 24 } : { paddingBottom: 13 },
+            ]}>
+            <View style={styles.logoWrapper}>
+              <RcIconLogoBlueAutoSize width={LOGO_SIZE} height={LOGO_SIZE} />
             </View>
-          ) : (
-            <View style={[styles.bottomContainer]}>
-              <View style={styles.feedbackInputContainer}>
-                <Text style={styles.feedbackText}>
-                  {t('page.nextComponent.rateModal.feedbackTitle')}
-                </Text>
-                <View style={styles.inputContainer}>
-                  <NextInput.TextArea
-                    // ref={inputRef}
-                    style={{ borderColor: 'transparent' }}
-                    inputStyle={styles.inputStyle}
-                    inputProps={{
-                      autoFocus: true,
-                      blurOnSubmit: true,
-                      keyboardType: 'default',
-                      spellCheck: false,
-                      textAlign: 'left',
-                      value: userFeedback,
-                      onChangeText: text => {
-                        onChangeFeedback(text);
-                      },
+            <View style={styles.starsContainer}>
+              {Array.from({ length: 5 }, (_, index) => {
+                const rate = index + 1;
+                return (
+                  <PressableStar
+                    disabled
+                    style={styles.star}
+                    key={`star-${index}`}
+                    isFilled={userStar >= rate}
+                    onPress={() => {
+                      selectStar(rate);
                     }}
                   />
-                  <Text style={styles.inputTextLenIndicator}>
-                    {userFeedbackLenIndicator}
+                );
+              })}
+            </View>
+            {!wantFeedback ? (
+              <View style={[styles.bottomContainer]}>
+                <View style={styles.descThx}>
+                  <Text style={styles.descThxText}>
+                    <Text style={[styles.descThxText, styles.descThxTextEmoji]}>
+                      😄{' '}
+                    </Text>
+                    {IS_ANDROID
+                      ? t('page.nextComponent.rateModal.descriptionAndroid')
+                      : t('page.nextComponent.rateModal.descriptionIOS')}
                   </Text>
                 </View>
+                <View style={styles.rateButtonsContainer}>
+                  <Button
+                    type="primary"
+                    containerStyle={styles.rateButtonContainer}
+                    buttonStyle={[styles.rateButton, styles.rateButtonConfirm]}
+                    titleStyle={[
+                      styles.rateButtonText,
+                      styles.rateButtonConfirmText,
+                    ]}
+                    onPress={() => {
+                      openExternalUrl(APP_URLS.RATE_URL);
+                      disableExposureRateGuide();
+                    }}
+                    title={
+                      IS_ANDROID
+                        ? t(
+                            'page.nextComponent.rateModal.confirmButtonTitleAndroid',
+                          )
+                        : t(
+                            'page.nextComponent.rateModal.confirmButtonTitleIOS',
+                          )
+                    }
+                  />
+                  <Button
+                    type="ghost"
+                    containerStyle={styles.rateButtonContainer}
+                    buttonStyle={[styles.rateButton, styles.rateButtonCancel]}
+                    titleStyle={[
+                      styles.rateButtonText,
+                      styles.rateButtonCancelText,
+                    ]}
+                    onPress={() => {
+                      closeModal();
+                    }}
+                    title={t('global.Cancel')}
+                  />
+                </View>
               </View>
-              <View style={styles.feedbackButtonsContainer}>
-                <Button
-                  type="ghost"
-                  containerStyle={styles.feedbackButtonContainer}
-                  buttonStyle={[
-                    styles.feedbackButton,
-                    styles.feedbackButtonCancel,
-                  ]}
-                  titleStyle={[
-                    styles.feedbackButtonText,
-                    styles.feedbackButtonCancelText,
-                  ]}
-                  onPress={() => {
-                    closeModal();
-                  }}
-                  title={t('global.Cancel')}
-                />
-                <Button
-                  type="primary"
-                  disabled={disableSubmit}
-                  containerStyle={styles.feedbackButtonContainer}
-                  buttonStyle={[
-                    styles.feedbackButton,
-                    styles.feedbackButtonConfirm,
-                  ]}
-                  titleStyle={[
-                    styles.feedbackButtonText,
-                    styles.feedbackButtonConfirmText,
-                  ]}
-                  onPress={() => {
-                    submitFeedback({ totalBalanceText })
-                      .then(() => {
-                        toast.success(
-                          t('page.nextComponent.rateModal.feedbackSuccess'),
-                        );
-                      })
-                      .finally(() => {
-                        closeModal();
-                      });
-                  }}
-                  title={t('page.nextComponent.rateModal.feedbackSubmit')}
-                />
+            ) : (
+              <View style={[styles.bottomContainer]}>
+                <View style={styles.feedbackTextWrapper}>
+                  <Text style={styles.feedbackText}>
+                    {t('page.nextComponent.rateModal.feedbackTitle')}
+                  </Text>
+                </View>
+                <View style={styles.feedbackInputContainer}>
+                  <View style={styles.inputContainer}>
+                    <NextInput.TextArea
+                      // ref={inputRef}
+                      style={{ borderColor: 'transparent' }}
+                      inputStyle={styles.inputStyle}
+                      inputProps={{
+                        autoFocus: true,
+                        blurOnSubmit: true,
+                        keyboardType: 'default',
+                        spellCheck: false,
+                        textAlign: 'left',
+                        value: userFeedback,
+                        onChangeText: text => {
+                          onChangeFeedback(text);
+                        },
+                      }}
+                    />
+                    <Text style={styles.inputTextLenIndicator}>
+                      {userFeedbackLenIndicator}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.feedbackButtonsContainer}>
+                  <Button
+                    type="ghost"
+                    containerStyle={styles.feedbackButtonContainer}
+                    buttonStyle={[
+                      styles.feedbackButton,
+                      styles.feedbackButtonCancel,
+                    ]}
+                    titleStyle={[
+                      styles.feedbackButtonText,
+                      styles.feedbackButtonCancelText,
+                    ]}
+                    onPress={() => {
+                      closeModal();
+                    }}
+                    title={t('global.Cancel')}
+                  />
+                  <Button
+                    type="primary"
+                    disabled={disableSubmit}
+                    containerStyle={styles.feedbackButtonContainer}
+                    buttonStyle={[
+                      styles.feedbackButton,
+                      styles.feedbackButtonConfirm,
+                    ]}
+                    titleStyle={[
+                      styles.feedbackButtonText,
+                      styles.feedbackButtonConfirmText,
+                    ]}
+                    onPress={() => {
+                      submitFeedback({ totalBalanceText })
+                        .then(() => {
+                          toast.success(
+                            t('page.nextComponent.rateModal.feedbackSuccess'),
+                          );
+                        })
+                        .finally(() => {
+                          closeModal();
+                        });
+                    }}
+                    title={t('page.nextComponent.rateModal.feedbackSubmit')}
+                  />
+                </View>
               </View>
-            </View>
-          )}
-        </View>
+            )}
+          </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -241,28 +237,17 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
 
 const MODAL_H_PADDING = 20;
 
-const getStyles = createGetStyles2024(({ colors2024 }) => {
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     modalComp: {},
     modalMask: {
       position: 'relative',
-      backgroundColor: 'rgba(0, 0, 0, 0.4)',
+      backgroundColor: isLight ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.85)',
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: MODAL_H_PADDING,
     },
-    modalCloseIconContainer: {
-      position: 'absolute',
-      top: 8,
-      paddingTop: 24 - 8,
-      left: 8,
-      paddingLeft: 12 - 8,
-      paddingRight: 4,
-      paddingBottom: 4,
-      // ...makeDebugBorder(),
-    },
-    modalCloseIcon: {},
     modal: {
       maxWidth: Dimensions.get('window').width - MODAL_H_PADDING * 2,
       width: '100%',
@@ -297,25 +282,32 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
 
     bottomContainer: {
       width: '100%',
+      minWidth: '100%',
+      // ...makeDebugBorder('red'),
     },
 
     descThx: {
-      flexDirection: 'row',
+      // flexDirection: 'row',
       maxWidth: '100%',
       overflow: 'hidden',
       marginBottom: 21,
+      justifyContent: 'center',
       // ...makeDebugBorder(),
     },
     descThxText: {
-      color: colors2024['neutral-black'],
-      fontFamily: 'SF Pro',
-      fontSize: 14,
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 17,
       fontStyle: 'normal',
       fontWeight: 700,
       lineHeight: 20,
       justifyContent: 'center',
+      textAlign: 'center',
       flexWrap: 'wrap',
       flexShrink: 1,
+    },
+    descThxTextEmoji: {
+      lineHeight: 24,
     },
     rateButtonsContainer: {
       borderTopColor: colors2024['neutral-line'],
@@ -324,6 +316,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       gap: 13,
       justifyContent: 'space-between',
       width: '100%',
+      minWidth: '100%',
+      // ...makeDebugBorder(),
     },
     rateButtonContainer: {
       shadowColor: colors2024['blue-default'],
@@ -340,7 +334,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       borderRadius: 12,
     },
     rateButtonText: {
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       fontStyle: 'normal',
       fontWeight: 700,
@@ -361,11 +355,19 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
 
     feedbackInputContainer: {
       width: '100%',
+      // ...makeDebugBorder('red'),
+    },
+    feedbackTextWrapper: {
+      width: '100%',
+      minWidth: '100%', // ensure it takes full width under KeyboardAvoidingView
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 20,
+      // ...makeDebugBorder(),
     },
     feedbackText: {
-      marginBottom: 20,
       color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       fontStyle: 'normal',
       fontWeight: 700,
@@ -373,8 +375,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       justifyContent: 'center',
       textAlign: 'center',
       flexWrap: 'nowrap',
-      width: '100%',
-      // ...makeDebugBorder(),
     },
     inputContainer: {
       position: 'relative',
@@ -415,7 +415,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => {
       borderRadius: 12,
     },
     feedbackButtonText: {
-      fontFamily: 'SF Pro',
+      fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       fontStyle: 'normal',
       fontWeight: 700,

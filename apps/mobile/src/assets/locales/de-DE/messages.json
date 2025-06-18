@@ -1186,7 +1186,8 @@
         "description": "Wie bewertet man Rabby -Brieftasche"
       },
       "rateModal": {
-        "description": "Danke! \nWenn Sie Rabby mögen, würde eine schnelle Bewertung im App Store viel bedeuten.",
+        "descriptionIOS": "Wenn Sie Rabby mögen, würde eine schnelle Bewertung im App Store viel bedeuten.",
+        "descriptionAndroid": "Wenn Sie Rabby mögen, würde eine schnelle Bewertung im Google Play viel bedeuten.",
         "confirmButtonTitleAndroid": "Rate bei Google Play",
         "confirmButtonTitleIOS": "Preis im App Store",
         "feedbackTitle": "Feedback haben? \nWir hören zu.",

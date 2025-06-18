@@ -12,7 +12,8 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 
 import CloseCC from './icons/close-cc.svg';
-import RabbySilhouette from './icons/rabby-silhouette.svg';
+import RabbySilhouetteLight from './icons/rabby-silhouette-light.svg';
+import RabbySilhouetteDark from './icons/rabby-silhouette-dark.svg';
 import { useExposureRateGuide, useRateModal } from './hooks';
 import PressableStar from './RateStar';
 import { useEffect, useState } from 'react';
@@ -60,10 +61,11 @@ export function RateModalTriggerOnHome({ style }: RNViewProps) {
         style={StyleSheet.flatten([styles.container])}
         testID="RateModalTriggerOnHome">
         <View style={[styles.silhouetteContainer]}>
-          <RabbySilhouette
-            style={isLight && { opacity: 0.4 }}
-            height={TRIGGER_HEIGHT}
-          />
+          {!isLight ? (
+            <RabbySilhouetteDark height={TRIGGER_HEIGHT} />
+          ) : (
+            <RabbySilhouetteLight height={TRIGGER_HEIGHT} />
+          )}
         </View>
         <TouchableOpacity
           style={styles.closeContainer}

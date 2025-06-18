@@ -954,7 +954,8 @@
         "description": "ラビーウォレットをどのように評価しますか"
       },
       "rateModal": {
-        "description": "ありがとう！ \nRabbyが好きなら、App Storeでの迅速な評価は多くのことを意味します。",
+        "descriptionIOS": "Rabbyが好きなら、App Storeでの迅速な評価は多くのことを意味します。",
+        "descriptionAndroid": "Rabbyが好きなら、Google Playでの迅速な評価は大きな意味があります。",
         "confirmButtonTitleAndroid": "Google Playのレート",
         "confirmButtonTitleIOS": "App Storeのレート",
         "feedbackTitle": "フィードバックがありますか？\n聞いています。",

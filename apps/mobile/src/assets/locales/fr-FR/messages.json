@@ -1016,7 +1016,8 @@
         "description": "Comment évaluez-vous Rabby Wallet"
       },
       "rateModal": {
-        "description": "Merci! \nSi vous aimez Rabby, une note rapide sur l'App Store signifierait beaucoup.",
+        "descriptionIOS": "Si vous aimez Rabby, une note rapide sur l'App Store signifierait beaucoup.",
+        "descriptionAndroid": "Si vous aimez Rabby, une note rapide sur Google Play signifie beaucoup.",
         "confirmButtonTitleAndroid": "Taux sur Google Play",
         "confirmButtonTitleIOS": "Tarif sur l'App Store",
         "feedbackTitle": "Vous avez des commentaires? \nNous écoutons.",
