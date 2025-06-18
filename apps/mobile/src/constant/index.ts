@@ -68,7 +68,9 @@ export const APP_URLS = {
 
   RATE_URL:
     Platform.select({
-      android: 'market://details?id=com.debank.rabbymobile',
+      // android: 'market://details?id=com.debank.rabbymobile',
+      android:
+        'https://play.google.com/store/apps/details?id=com.debank.rabbymobile',
       ios: 'itms-apps://itunes.apple.com/WebObjects/MZStore.woa/wa/viewContentsUserReviews?type=Purple+Software&id=6474381673',
     }) || '',
 };

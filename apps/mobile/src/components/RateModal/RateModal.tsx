@@ -18,7 +18,11 @@ import { RcIconLogoBlueAutoSize } from '@/assets/icons/common';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { NextInput } from '@/components2024/Form/Input';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useExposureRateGuide, useRateModal } from './hooks';
+import {
+  FEEDBACK_LEN_LIMIT,
+  useExposureRateGuide,
+  useRateModal,
+} from './hooks';
 import { openExternalUrl } from '@/core/utils/linking';
 import { APP_URLS } from '@/constant';
 import { toast } from '@/components2024/Toast';
@@ -41,6 +45,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
     userFeedback,
     onChangeFeedback,
     submitFeedback,
+    feedbackOverLimit,
   } = useRateModal();
 
   const closeModal = useCallback(() => {
@@ -62,10 +67,6 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
   //     // TODO:
   //   }
   // }, [rateModalShown, wantFeedback]);
-
-  const userFeedbackLenIndicator = useMemo(() => {
-    return `${userFeedback.length}/${300}`;
-  }, [userFeedback.length]);
 
   const disableSubmit = useMemo(() => {
     return !wantFeedback || !userFeedback.length;
@@ -179,7 +180,13 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                       }}
                     />
                     <Text style={styles.inputTextLenIndicator}>
-                      {userFeedbackLenIndicator}
+                      <Text
+                        style={[
+                          feedbackOverLimit && styles.inputTextOverLimit,
+                        ]}>
+                        {userFeedback.length}
+                      </Text>
+                      {`/${FEEDBACK_LEN_LIMIT - 1}`}
                     </Text>
                   </View>
                 </View>
@@ -393,6 +400,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => {
       fontStyle: 'normal',
       fontWeight: 400,
       lineHeight: 22,
+    },
+    inputTextOverLimit: {
+      color: colors2024['red-default'],
     },
     feedbackButtonsContainer: {
       marginTop: 20,

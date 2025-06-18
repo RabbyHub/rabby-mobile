@@ -17,11 +17,21 @@ const STAR_COUNT = 5;
  * @description if you want reactivate the rate guide, you can set this to a timestamp to the new exposure time.
  */
 const VERSIONED_KEY = 'lastExposure_20250616_1' as const;
-const rateGuideLastExposureAtom = atomByMMKV('@RateGuideLastExposure', {
+const getRateGuideLastExposure = () => ({
   txCount: 0,
   latestTxHashes: [] as string[] | undefined,
-  [VERSIONED_KEY]: -1 as number,
+  [VERSIONED_KEY]: -1 as number, // Default to -1 to indicate no exposure
 });
+const rateGuideLastExposureAtom = atomByMMKV(
+  '@RateGuideLastExposure',
+  getRateGuideLastExposure(),
+);
+
+function hasUserRated(
+  rateGuideLastExposure: ReturnType<typeof getRateGuideLastExposure>,
+) {
+  return rateGuideLastExposure[VERSIONED_KEY] === Infinity;
+}
 
 export function useMakeMockDataForRateGuideExposure() {
   const [, setRateGuideLastExposure] = useAtom(rateGuideLastExposureAtom);
@@ -56,6 +66,7 @@ export function useIncreaseTxCountOnAppTop({
         console.debug('[useIncreaseTxCountOnAppTop] onTxCompleted', txDetail);
         setRateGuideLastExposure(prev => {
           let latestTxHashes = prev.latestTxHashes || [];
+          console.debug('[useIncreaseTxCountOnAppTop] prev', prev);
 
           if (txDetail?.hash && !latestTxHashes.includes(txDetail?.hash)) {
             latestTxHashes.push(txDetail?.hash);
@@ -71,7 +82,8 @@ export function useIncreaseTxCountOnAppTop({
             ...prev,
             txCount: nextCount,
             latestTxHashes,
-            ...(nextCount >= TX_COUNT_LIMIT && { [VERSIONED_KEY]: Date.now() }),
+            ...(nextCount >= TX_COUNT_LIMIT &&
+              !hasUserRated(prev) && { [VERSIONED_KEY]: Date.now() }),
           };
         });
       };
@@ -84,6 +96,7 @@ export function useIncreaseTxCountOnAppTop({
 }
 
 export function useExposureRateGuide() {
+  const [, setRateModalState] = useAtom(rateModalAtom);
   const [
     { txCount, [VERSIONED_KEY]: lastExposureTimestamp },
     setRateGuideLastExposure,
@@ -103,7 +116,8 @@ export function useExposureRateGuide() {
       latestTxHashes: [],
       [VERSIONED_KEY]: Infinity,
     }));
-  }, [setRateGuideLastExposure]);
+    setRateModalState(getDefaultValue());
+  }, [setRateGuideLastExposure, setRateModalState]);
 
   return {
     shouldShowRateGuideOnHome,
@@ -123,7 +137,7 @@ function makeStarText(count: number, total = 5) {
     .join('');
 }
 
-const FEEDBACK_LEN_LIMIT = 300;
+export const FEEDBACK_LEN_LIMIT = 301;
 const getDefaultValue = () => ({
   visible: false,
   userStar: STAR_COUNT,
@@ -239,6 +253,8 @@ export function useRateModal() {
     selectStar,
 
     userFeedback: rateModalState.userFeedback,
+    feedbackOverLimit:
+      rateModalState.userFeedback.length > FEEDBACK_LEN_LIMIT - 1,
     onChangeFeedback,
     submitFeedback,
   };
