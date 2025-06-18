@@ -13,35 +13,68 @@ import { Platform } from 'react-native';
 const TX_COUNT_LIMIT = isNonPublicProductionEnv ? 1 : 3; // Minimum number of transactions before showing the rate guide
 const STAR_COUNT = 5;
 
+const VERSIONED_KEY = 'lastExposure_20250618_1' as const;
+const enum RATE_GUIDE_STATE {
+  INIT = -1,
+}
 /**
- * @description if you want reactivate the rate guide, you can set this to a timestamp to the new exposure time.
+ * @description if you want re-activate the rate guide, you can set this to a timestamp to the new exposure time.
  */
-const VERSIONED_KEY = 'lastExposure_20250616_1' as const;
-const getRateGuideLastExposure = () => ({
+type RateGuideLastExposure = {
+  txCount: number;
+  latestTxHashes?: string[]; // Array of latest transaction hashes
+  [VERSIONED_KEY]?:
+    | {
+        time: number; // Timestamp of the last exposure
+        userViewedRate?: boolean; // Whether the user has rated the guide
+      }
+    | undefined;
+};
+const getDefaultRateGuideLastExposure = (
+  lastExposureTimestamp: Partial<
+    RateGuideLastExposure[typeof VERSIONED_KEY]
+  > = {
+    time: RATE_GUIDE_STATE.INIT,
+    userViewedRate: false,
+  },
+): RateGuideLastExposure => ({
   txCount: 0,
-  latestTxHashes: [] as string[] | undefined,
-  [VERSIONED_KEY]: -1 as number, // Default to -1 to indicate no exposure
+  latestTxHashes: [],
+  [VERSIONED_KEY]: {
+    time: RATE_GUIDE_STATE.INIT,
+    userViewedRate: false,
+    ...lastExposureTimestamp,
+  },
 });
+function userCouldRated(
+  lastExposureTimestamp: ReturnType<
+    typeof getDefaultRateGuideLastExposure
+  >[typeof VERSIONED_KEY],
+) {
+  return (
+    !lastExposureTimestamp?.userViewedRate &&
+    lastExposureTimestamp?.time &&
+    lastExposureTimestamp?.time !== RATE_GUIDE_STATE.INIT &&
+    lastExposureTimestamp?.time < Date.now()
+  );
+}
 const rateGuideLastExposureAtom = atomByMMKV(
   '@RateGuideLastExposure',
-  getRateGuideLastExposure(),
+  getDefaultRateGuideLastExposure(),
 );
-
-function hasUserRated(
-  rateGuideLastExposure: ReturnType<typeof getRateGuideLastExposure>,
-) {
-  return rateGuideLastExposure[VERSIONED_KEY] === Infinity;
-}
 
 export function useMakeMockDataForRateGuideExposure() {
   const [, setRateGuideLastExposure] = useAtom(rateGuideLastExposureAtom);
   const mockExposureRateGuide = useCallback(() => {
     setRateGuideLastExposure({
+      ...getDefaultRateGuideLastExposure({
+        time: Date.now() - 1000 * 60 * 60 * 24,
+        userViewedRate: false,
+      }),
       txCount: TX_COUNT_LIMIT,
       latestTxHashes: Array.from({ length: TX_COUNT_LIMIT }).map(
         (_, index) => `0x${index + 1}`,
       ),
-      [VERSIONED_KEY]: Date.now() - 1000 * 60 * 60 * 24, // 1 day ago
     });
   }, [setRateGuideLastExposure]);
 
@@ -82,8 +115,9 @@ export function useIncreaseTxCountOnAppTop({
             ...prev,
             txCount: nextCount,
             latestTxHashes,
-            ...(nextCount >= TX_COUNT_LIMIT &&
-              !hasUserRated(prev) && { [VERSIONED_KEY]: Date.now() }),
+            ...(nextCount >= TX_COUNT_LIMIT && {
+              [VERSIONED_KEY]: { ...prev[VERSIONED_KEY], time: Date.now() },
+            }),
           };
         });
       };
@@ -107,14 +141,15 @@ export function useExposureRateGuide() {
   // }
 
   const shouldShowRateGuideOnHome = useMemo(() => {
-    return txCount >= TX_COUNT_LIMIT && Date.now() > lastExposureTimestamp;
+    return txCount >= TX_COUNT_LIMIT && userCouldRated(lastExposureTimestamp);
   }, [txCount, lastExposureTimestamp]);
 
   const disableExposureRateGuide = useCallback(() => {
     setRateGuideLastExposure(prev => ({
-      txCount: 0,
-      latestTxHashes: [],
-      [VERSIONED_KEY]: Infinity,
+      ...getDefaultRateGuideLastExposure({
+        time: prev[VERSIONED_KEY]?.time,
+        userViewedRate: true,
+      }),
     }));
     setRateModalState(getDefaultValue());
   }, [setRateGuideLastExposure, setRateModalState]);
