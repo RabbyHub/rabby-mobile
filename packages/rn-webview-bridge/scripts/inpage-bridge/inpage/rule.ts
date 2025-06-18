@@ -1,5 +1,5 @@
 import { WALLET_ICON, WALLET_NAME } from './constant';
-import { debounce, domReadyCall } from './util';
+import { domReadyCall } from './util';
 
 type Rule = {
   matches: string[];
@@ -58,8 +58,15 @@ const rules: Rule[] = [
       }
       const $img = document.createElement('img');
       $img.src = WALLET_ICON;
-      $img.setAttribute('style', 'width: 1.5em; height: 1.5em;');
-      $parent.replaceChild($img, $parent.querySelector('svg')!);
+      $img.style.width = '24px';
+      $img.style.height = '24px';
+      $img.style.borderRadius = '24px';
+      setTimeout(() => {
+        const $svg = $parent.querySelector('svg');
+        if ($svg) {
+          $parent.replaceChild($img, $svg);
+        }
+      }, 500);
     },
   },
 ];
@@ -90,19 +97,15 @@ export const startCheckRules = () => {
       injectStyle(`${selectors.join(', ')} { display: none !important; }`);
     }
     if (runners.length) {
-      const run = debounce(
-        () => {
-          runners.forEach(execute => {
-            try {
-              execute();
-            } catch (e) {
-              console.error(e);
-            }
-          });
-        },
-        500,
-        true,
-      );
+      const run = () => {
+        runners.forEach(execute => {
+          try {
+            execute();
+          } catch (e) {
+            console.error(e);
+          }
+        });
+      };
       run();
       const observer = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
