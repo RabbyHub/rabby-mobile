@@ -27,7 +27,7 @@ const hackRainbowkit = () => {
 
 const rules: Rule[] = [
   {
-    matches: ['https://rainbowkit.com'],
+    matches: ['https://rainbowkit.com', 'https://app.spark.fi'],
     runner: hackRainbowkit,
   },
   {
@@ -38,62 +38,56 @@ const rules: Rule[] = [
   },
 ];
 
-const checkRules = (_rules: Rule[]) => {
-  _rules.forEach(item => {
-    if (!item.matches.includes(origin.toLowerCase())) {
-      return;
-    }
-    if (item.selectors) {
-      const $els = document.querySelectorAll(item.selectors.join(', '));
-      $els.forEach($el => {
-        if ($el.hasAttribute('data-rabby-hidden')) {
-          return;
-        }
-        $el.setAttribute('data-rabby-hidden', 'true');
-      });
-    }
-    if (item.runner) {
-      item.runner();
-    }
-  });
-};
-
-const injectStyle = () => {
+const injectStyle = (styleContent: string) => {
   const style = document.createElement('style');
-  style.textContent = `
-    [data-rabby-hidden] {
-      display: none !important;
-    }
-  `;
-  // 添加到head中
+  style.textContent = styleContent;
   document.head.appendChild(style);
 };
 
 export const startCheckRules = () => {
   domReadyCall(() => {
     const { origin } = window.location;
-    const ruleList = rules.filter(item =>
-      item.matches.includes(origin.toLowerCase()),
-    );
-    if (!ruleList?.length) {
-      return;
+    const selectors: string[] = [];
+    const runners: (() => void)[] = [];
+    rules.forEach(item => {
+      if (!item.matches.includes(origin.toLowerCase())) {
+        return;
+      }
+      if (item.selectors?.length) {
+        selectors.push(...item.selectors);
+      }
+      if (item.runner) {
+        runners.push(item.runner);
+      }
+    });
+    if (selectors?.length) {
+      injectStyle(`${selectors.join(', ')} { display: none !important; }`);
     }
-    injectStyle();
-    const observer = new MutationObserver(function (mutations) {
-      mutations.forEach(function (mutation) {
-        mutation.addedNodes.forEach(function (node) {
-          if (node.nodeType === 1) {
-            checkRules(ruleList);
+    if (runners.length) {
+      const run = () => {
+        runners.forEach(execute => {
+          try {
+            execute();
+          } catch (e) {
+            console.error(e);
           }
         });
+      };
+      run();
+      const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          mutation.addedNodes.forEach(function (node) {
+            if (node.nodeType === 1) {
+              run();
+            }
+          });
+        });
       });
-    });
 
-    observer.observe(document, {
-      childList: true,
-      subtree: true,
-    });
-
-    checkRules(rules);
+      observer.observe(document, {
+        childList: true,
+        subtree: true,
+      });
+    }
   });
 };
