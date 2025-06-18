@@ -56,13 +56,15 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
 
   const ref = useRef<FlatList>(null);
   useMount(() => {
-    const index = tabs.findIndex(item => item.id === activeTabId);
-    if (index !== -1) {
-      ref.current?.scrollToIndex({
-        index: Math.floor(index / 2),
-        animated: false,
-      });
-    }
+    setTimeout(() => {
+      const index = tabs.findIndex(item => item.id === activeTabId);
+      if (index !== -1) {
+        ref.current?.scrollToIndex({
+          index: Math.floor(index / 2),
+          animated: false,
+        });
+      }
+    }, 50);
   });
   return (
     <View style={[styles.container, style]}>
