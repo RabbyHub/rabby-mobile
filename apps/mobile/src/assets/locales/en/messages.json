@@ -1368,7 +1368,7 @@
         "addWatchAddress": "Add Watch-Only Wallets"
       },
       "notMatterAddressDialog": {
-        "title": "Not Included in Total Balance",
+        "title": "The following wallets are not Included in Total Balance",
         "notTop10Address": "Wallets ranked below the top 10",
         "safeWallet": "Safe Wallet",
         "watchOnlyWallet": "Watch-Only Wallet",
@@ -1378,7 +1378,7 @@
       },
       "addressListScreen": {
         "moreWallets": "More Wallets",
-        "notIncludedInTotalBalance": "The following wallets are not included in total balance",
+        "notIncludedInTotalBalance": "Not included in Total Balance",
         "importSafeAddress": "Imported Safe Wallet",
         "importWatchAddress": "Imported Watch-Only Wallet",
         "unpin": "Unpin",

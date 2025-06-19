@@ -185,17 +185,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   listHeader: {
     marginBottom: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   titleContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    maxWidth: 280,
     // gap: 12,
     // paddingHorizontal: 16,
   },
   listTitle: {
     fontSize: 20,
     fontWeight: '800',
+    textAlign: 'center',
     lineHeight: 24,
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
