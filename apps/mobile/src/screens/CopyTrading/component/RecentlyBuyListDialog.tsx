@@ -35,6 +35,7 @@ import { BuyItem, SkeletonBuyItem } from './BuyItem';
 import { formatPercentage } from './TokenListItem';
 import { formatPrice } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
+import { toast } from '@/components2024/Toast';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -47,32 +48,29 @@ const TrendChart = ({
 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
 
-  // Transform data for chart
-  const chartData = data.map(point => ({
-    timestamp: point.time_at * 1000, // Convert to milliseconds
-    value: point.price,
-  }));
+  const chartData = useMemo(() => {
+    if (!data.length || data.length < 2) {
+      return [
+        {
+          timestamp: 0,
+          value: 0,
+        },
+        {
+          timestamp: 1,
+          value: 0,
+        },
+      ];
+    }
+
+    return data.map(point => ({
+      timestamp: point.time_at * 1000, // Convert to milliseconds
+      value: point.price,
+    }));
+  }, [data]);
 
   const pathColor = isPositive
     ? colors2024['green-default']
     : colors2024['red-default'];
-
-  if (!chartData.length || chartData.length < 2) {
-    // Fallback to simple line if insufficient data
-    return (
-      <View style={{ width: ScreenWidth - 40, height: 100 }}>
-        <View
-          style={{
-            width: '100%',
-            height: 2,
-            backgroundColor: pathColor,
-            borderRadius: 1,
-            marginTop: 50,
-          }}
-        />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.trendChart}>
@@ -114,7 +112,11 @@ export default function RecentlyBuyListDialog({
       });
       return res;
     } catch (e) {
-      console.debug('fetchRecentBuyList error', e);
+      toast.error(e instanceof Error ? e.message : String(e));
+      return {
+        recent_buy_list: [],
+        total: 0,
+      };
     }
   });
 
@@ -159,9 +161,11 @@ export default function RecentlyBuyListDialog({
             <IconDollar width={20} height={20} />
             {loading ? null : (
               <Text style={styles.priceChangeLabel}>
-                {`${recentBuyList?.total || 0} ${t(
-                  'page.copyTrading.smartMoneyWallets',
-                )}`}
+                {`${recentBuyList?.total || 0} ${
+                  recentBuyList?.total === 1
+                    ? t('page.copyTrading.smartMoneyWallet')
+                    : t('page.copyTrading.smartMoneyWallets')
+                }`}
               </Text>
             )}
           </View>
@@ -334,7 +338,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   price: {
     fontSize: 40,
     lineHeight: 45,
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },

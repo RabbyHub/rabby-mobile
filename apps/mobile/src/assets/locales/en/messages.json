@@ -957,6 +957,7 @@
         "description": "Discover tokens based on recent activity from smart money wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
       },
       "smartMoneyWallets": "Smart Money Wallets",
+      "smartMoneyWallet": "Smart Money Wallet",
       "recentBuy": "Recent Buy",
       "historyProfit": "History Profit",
       "noMoreData": "No more data",

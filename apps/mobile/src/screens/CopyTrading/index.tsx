@@ -105,7 +105,7 @@ export const CopyTradingScreen = () => {
       console.log('fetchChainList chainIdArr', chainIdArr);
       return chainIdArr;
     } catch (e) {
-      console.debug('fetchChainList error', e);
+      toast.error(e instanceof Error ? e.message : String(e));
       return [];
     } finally {
       setTabLoading(false);
@@ -127,15 +127,14 @@ export const CopyTradingScreen = () => {
           start_time: startTime,
         });
 
-        console.log('fetchTokenList token_list', token_list);
-
         // check if there is more data
         const hasMoreData = token_list.length >= DEFAULT_COUNT;
         setHasMore(hasMoreData);
 
         return token_list;
       } catch (e) {
-        console.debug('fetchTokenList error', e);
+        toast.error(e instanceof Error ? e.message : String(e));
+        isLoadMore && setHasMore(false);
         return [];
       } finally {
         if (isLoadMore) {
@@ -392,7 +391,7 @@ export const CopyTradingScreen = () => {
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   headerContainer: {
-    marginTop: 56,
+    marginTop: 46,
     height: 56,
     overflow: 'hidden',
     backgroundColor: colors2024['neutral-bg-1'],
@@ -460,7 +459,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   listContainer: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 12,
   },
   footerLoading: {
     paddingVertical: 8,

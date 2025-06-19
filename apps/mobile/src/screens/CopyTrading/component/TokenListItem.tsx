@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
@@ -30,38 +30,35 @@ const TrendChartComponent = ({
 }) => {
   const { colors2024 } = useTheme2024({ getStyle: getStyles });
 
-  // Transform data for chart
-  const chartData = data.map(point => ({
-    timestamp: point.time_at * 1000, // Convert to milliseconds
-    value: point.price,
-  }));
+  const chartData = useMemo(() => {
+    if (!data.length || data.length < 2) {
+      return [
+        {
+          timestamp: 0,
+          value: 0,
+        },
+        {
+          timestamp: 1,
+          value: 0,
+        },
+      ];
+    }
+
+    return data.map(point => ({
+      timestamp: point.time_at * 1000, // Convert to milliseconds
+      value: point.price,
+    }));
+  }, [data]);
 
   const pathColor = isPositive
     ? colors2024['green-default']
     : colors2024['red-default'];
 
-  if (!chartData.length || chartData.length < 2) {
-    // Fallback to simple line if insufficient data
-    return (
-      <View style={{ width: 100, height: 30 }}>
-        <View
-          style={{
-            width: '100%',
-            height: 2,
-            backgroundColor: pathColor,
-            borderRadius: 1,
-            marginTop: 15,
-          }}
-        />
-      </View>
-    );
-  }
-
   return (
     <View style={{ width: 100, height: 30, marginTop: -10, marginBottom: 10 }}>
       <LineChart.Provider data={chartData}>
         <LineChart height={50} width={100} shape={d3Shape.curveCatmullRom}>
-          <LineChart.Path showInactivePath={false} color={pathColor} width={2}>
+          <LineChart.Path showInactivePath={false} color={pathColor} width={1}>
             <LineChart.Gradient color={pathColor} />
           </LineChart.Path>
         </LineChart>
@@ -193,8 +190,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-bg-2'],
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
   },
   tokenLeftSection: {
     flexDirection: 'column',
@@ -276,7 +271,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   buyButton: {
-    backgroundColor: colors2024['blue-default'],
+    backgroundColor: colors2024['brand-default'],
     borderRadius: 6,
     width: 66,
     height: 34,

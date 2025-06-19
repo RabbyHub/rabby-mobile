@@ -18,6 +18,7 @@ import { Skeleton } from '@rneui/themed';
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import RcIconArrowDownCC from '@/assets2024/icons/copyTrading/IconDownPolygon.svg';
 import { createGetStyles2024 } from '@/utils/styles';
+import { toast } from '@/components2024/Toast';
 interface ExpandedAddressData {
   loading: boolean;
   data: CopyTradePnlItem[] | null;
@@ -82,7 +83,7 @@ const BuyItemComponent: React.FC<BuyItemProps> = ({ item }) => {
       });
       return res?.pnl_list || [];
     } catch (error) {
-      console.error('fetchProfitHistory error:', error);
+      toast.error(error instanceof Error ? error.message : String(error));
       return [];
     }
   };
