@@ -148,8 +148,6 @@ const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      height: 26,
-      marginBottom: 12,
     },
     sectionTitle: {
       color: colors2024['neutral-title-1'],

@@ -157,8 +157,8 @@ export default function TransactionNavigator() {
         name={RootNames.SendNFT}
         component={SendNFTScreen}
         options={mergeScreenOptions({
-          title: 'Send NFT',
-          ...headerPresets.withBg2,
+          title: 'Send',
+          ...headerPresets.withBgCard1_2024,
         })}
       />
       <TransactionStack.Screen
