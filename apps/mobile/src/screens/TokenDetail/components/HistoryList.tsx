@@ -37,11 +37,13 @@ export const HistoryList = ({
   finalAccount,
   accounts,
   token,
+  top10Addresses,
 }: {
   accounts: KeyringAccountWithAlias[];
   finalAccount: KeyringAccountWithAlias | null;
   isForMultipleAddress: boolean;
   token: AbstractPortfolioToken;
+  top10Addresses: string[];
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [data, setData] = React.useState<HistoryDisplayItem[]>([]);
@@ -75,7 +77,7 @@ export const HistoryList = ({
 
   const fetchHistoryItem = useCallback(async () => {
     const addresses = isForMultipleAddress
-      ? accounts.map(a => a.address.toLowerCase())
+      ? top10Addresses.map(a => a.toLowerCase())
       : [finalAccount?.address.toLowerCase()!];
     const [historyList, buyList] = await Promise.all([
       HistoryItemEntity.getTokenHistoryItemSortedByTime(
@@ -108,7 +110,7 @@ export const HistoryList = ({
     token._tokenId,
     token.chain,
     isForMultipleAddress,
-    accounts,
+    top10Addresses,
     projectDict,
     tokenDict,
   ]);

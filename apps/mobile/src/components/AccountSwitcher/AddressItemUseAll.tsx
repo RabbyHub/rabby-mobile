@@ -135,6 +135,7 @@ export function UseAllAccountsItemInPanel({
   const imageSourceList = useMemo(() => {
     return allAccounts
       .slice(0, 3)
+      .reverse()
       .map(account =>
         getWalletAvator2024(account.brandName, isLight, account.address),
       )

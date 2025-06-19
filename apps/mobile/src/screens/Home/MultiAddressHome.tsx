@@ -248,6 +248,7 @@ function MultiAddressHome(): JSX.Element {
     fail: number;
   }>();
   const { top10Addresses } = useAccountInfo();
+  console.log('top10Addresses 0', top10Addresses[0]);
 
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
@@ -395,7 +396,7 @@ function MultiAddressHome(): JSX.Element {
   }, [sortedAccounts]);
 
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
-  const { syncTop10History } = useSyncHistoryDB(unionAccounts);
+  const { syncTop10History } = useSyncHistoryDB(top10Addresses);
   const { tokenDict } = useHistoryTokenDict();
 
   const displayFundWallet = useMemo(

@@ -142,7 +142,6 @@ export const AddressList = () => {
   }, [shouldRedirectToSetPasswordBefore2024, navigation]);
 
   const handleMoreWalletsPress = useCallback(() => {
-    // TODO: 实现跳转到 More Wallets 详情页面或弹窗
     console.log('Show more wallets detail');
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG,

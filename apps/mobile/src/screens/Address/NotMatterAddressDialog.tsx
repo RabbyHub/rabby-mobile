@@ -18,6 +18,7 @@ import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { TouchableOpacity } from 'react-native';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { IS_IOS } from '@/core/native/utils';
 
 export const NotMatterAddressDialog: React.FC<{
   onDone: () => void;
@@ -35,6 +36,9 @@ export const NotMatterAddressDialog: React.FC<{
   }, [fetchAccounts]);
 
   const handleScrollBeginDrag = React.useCallback(() => {
+    if (IS_IOS) {
+      return;
+    }
     setIsScrolling(true);
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
@@ -42,7 +46,9 @@ export const NotMatterAddressDialog: React.FC<{
   }, []);
 
   const handleScrollEndDrag = React.useCallback(() => {
-    // 延迟重置滑动状态，防止快速滑动时状态切换太快
+    if (IS_IOS) {
+      return;
+    }
     scrollTimeoutRef.current = setTimeout(() => {
       setIsScrolling(false);
     }, 100);
@@ -63,7 +69,6 @@ export const NotMatterAddressDialog: React.FC<{
       type: 'notTop10Addresses' | 'gnosisAccounts' | 'watchAccounts';
     }> = [];
 
-    // 添加排名靠后的钱包 (ranked below top 10)
     if (notTop10Addresses.length > 0) {
       result.push({
         title: t('page.addressDetail.notMatterAddressDialog.notTop10Address'),
@@ -72,7 +77,6 @@ export const NotMatterAddressDialog: React.FC<{
       });
     }
 
-    // 添加Safe钱包
     if (gnosisAccounts.length > 0) {
       result.push({
         title: t('page.addressDetail.notMatterAddressDialog.safeWallet'),
@@ -81,7 +85,6 @@ export const NotMatterAddressDialog: React.FC<{
       });
     }
 
-    // 添加Watch-only钱包
     if (watchAccounts.length > 0) {
       result.push({
         title: t('page.addressDetail.notMatterAddressDialog.watchOnlyWallet'),
@@ -105,7 +108,7 @@ export const NotMatterAddressDialog: React.FC<{
               bottomSheetModalProps: {
                 enableContentPanningGesture: true,
                 enablePanDownToClose: true,
-                snapPoints: [278],
+                snapPoints: [300],
               },
               sections: [
                 {
