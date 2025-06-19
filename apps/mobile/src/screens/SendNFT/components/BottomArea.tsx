@@ -16,6 +16,12 @@ import { ModalConfirmAllowTransfer } from '@/components/Address/SheetModalConfir
 import { ModalAddToContacts } from '@/components/Address/SheetModalAddToContacts';
 import { apiBalance } from '@/core/apis';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import AuthButton from '@/components2024/AuthButton';
+import {
+  directSigningAtom,
+  useCanProcessDirectSubmit,
+} from '@/hooks/useMiniApprovalDirectSign';
+import { useAtom } from 'jotai';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -32,6 +38,7 @@ export default function BottomArea() {
     computed: {
       whitelistEnabled,
       canSubmit,
+      canDirectSign: canShowDirectSign,
       toAddressInWhitelist,
       toAddressInContactBook,
     },
@@ -108,6 +115,10 @@ export default function BottomArea() {
 
   const { safeOffBottom } = useSafeSizes();
 
+  const [isDirectSigning] = useAtom(directSigningAtom);
+
+  const canDirectSign = useCanProcessDirectSubmit();
+
   return (
     <View
       style={[
@@ -149,15 +160,27 @@ export default function BottomArea() {
           </View>
         </TouchableView>
       )}
-      <Button
-        disabled={!canSubmit}
-        containerStyle={styles.buttonContainer}
-        titleStyle={styles.buttonText}
-        type="primary"
-        title={'Send'}
-        loading={isSubmitLoading}
-        onPress={handleSubmit}
-      />
+
+      {canShowDirectSign ? (
+        <AuthButton
+          authTitle={t('page.whitelist.confirmPassword')}
+          title={t('global.confirm')}
+          onFinished={handleSubmit}
+          disabled={!canSubmit || !canDirectSign || isDirectSigning}
+          type={'primary'}
+          syncUnlockTime
+        />
+      ) : (
+        <Button
+          disabled={!canSubmit}
+          containerStyle={styles.buttonContainer}
+          titleStyle={styles.buttonText}
+          type="primary"
+          title={'Send'}
+          loading={isSubmitLoading}
+          onPress={handleSubmit}
+        />
+      )}
 
       <ModalConfirmAllowTransfer
         toAddr={formValues.to}

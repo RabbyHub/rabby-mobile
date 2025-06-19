@@ -1,19 +1,20 @@
-import { useMemo, useRef } from 'react';
+import React, { useRef } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
-
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { useThemeStyles, useTheme2024 } from '@/hooks/theme';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import {
-  useInputBlurOnEvents,
-  useSendNFTInternalContext,
-} from './hooks/useSendNFT';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { Chain } from '@/constant/chains';
+import {
+  useSendNFTInternalContext,
+  useInputBlurOnEvents,
+} from './hooks/useSendNFT';
+import { NFTAmountInput } from './components/AmountInput';
 import { Media } from '@/components/Media';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { AddressViewer } from '@/components/AddressViewer';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
-import { NFTAmountInput } from './components/AmountInput';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -35,18 +36,21 @@ export function SendNFTSection({
   return <View style={[styles.sectionPanel, style]}>{children}</View>;
 }
 
-export function NFTAmountSection({
+export function NFTSection({
   style,
   nftItem,
   collectionName,
+  chainItem,
 }: RNViewProps & {
   nftItem: NFTItem;
   collectionName?: string;
+  chainItem?: Chain;
 }) {
-  const { styles } = useThemeStyles(getBalanceStyles);
+  const { styles } = useTheme2024({ getStyle: getNFTSectionStyles });
   const { t } = useTranslation();
 
   const {
+    screenState,
     formValues,
     callbacks: { handleFieldChange },
   } = useSendNFTInternalContext();
@@ -55,85 +59,120 @@ export function NFTAmountSection({
   useInputBlurOnEvents(amountInputRef);
 
   return (
-    <SendNFTSection style={style}>
-      <View style={styles.infoSection}>
-        <View style={styles.nftMedia}>
-          <Media
-            failedPlaceholder={
-              <IconDefaultNFT width={'100%'} height={BASIC_INFO_H} />
-            }
-            type={nftItem.content_type}
-            src={nftItem.content}
-            style={styles.images}
-            mediaStyle={styles.images}
-            playable={true}
-            poster={nftItem.content}
-          />
-        </View>
+    <View style={[styles.nftSection, style]}>
+      <View style={styles.titleSection}>
+        <Text style={styles.sectionTitle}>{t('page.sendNFT.NFT')}</Text>
+      </View>
 
-        {/* right area */}
-        <View style={styles.nftDetailBlock}>
-          <Text style={styles.nftDetailTitle}>{nftItem.name || '-'}</Text>
+      <View style={styles.nftContainer}>
+        <Text style={styles.nftDetailTitle}>{nftItem.name || '-'}</Text>
+        <View style={styles.infoSection}>
+          <View style={styles.nftMedia}>
+            <Media
+              failedPlaceholder={
+                <IconDefaultNFT width={'100%'} height={BASIC_INFO_H} />
+              }
+              type={nftItem.content_type}
+              src={nftItem.content}
+              style={styles.images}
+              mediaStyle={styles.images}
+              playable={true}
+              poster={nftItem.content}
+            />
+          </View>
 
-          <View style={styles.nftDetailKvs}>
-            <View style={[styles.nftDetailLine, { marginTop: 8 }]}>
-              <Text style={styles.nftDetaiLabel}>Collection</Text>
-              <Text style={[styles.nftDetailText, styles.nftDetailValue]}>
-                {collectionName || '-'}
-              </Text>
-            </View>
-            <View style={[styles.nftDetailLine, { marginTop: 8 }]}>
-              <Text style={styles.nftDetaiLabel}>Contract</Text>
-              <View style={[styles.nftDetailValue, styles.nftDetailCopy]}>
-                <AddressViewer
-                  address={nftItem.contract_id}
-                  showArrow={false}
-                  addressStyle={[styles.nftDetailText]}
-                />
-                <CopyAddressIcon address={nftItem.contract_id} />
+          {/* right area */}
+          <View style={styles.nftDetailBlock}>
+            <View style={styles.nftDetailKvs}>
+              <View style={[styles.nftDetailLine]}>
+                <Text style={styles.nftDetaiLabel}>
+                  {t('page.sendNFT.Collection')}
+                </Text>
+                <Text style={[styles.nftDetailText, styles.nftDetailValue]}>
+                  {collectionName || '-'}
+                </Text>
+              </View>
+              <View style={[styles.nftDetailLine]}>
+                <Text style={styles.nftDetaiLabel}>
+                  {t('page.sendNFT.Chain')}
+                </Text>
+                <View style={styles.chainInfo}>
+                  <ChainIconImage size={16} chainEnum={chainItem?.enum} />
+                  <Text style={[styles.nftDetailValue, styles.chainName]}>
+                    {chainItem?.name}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.nftDetailLine]}>
+                <Text style={styles.nftDetaiLabel}>
+                  {t('page.sendNFT.Contract')}
+                </Text>
+                <View style={[styles.nftDetailValue, styles.nftDetailCopy]}>
+                  <AddressViewer
+                    address={nftItem.contract_id}
+                    showArrow={false}
+                    addressStyle={[styles.nftDetailText]}
+                  />
+                  <CopyAddressIcon address={nftItem.contract_id} />
+                </View>
               </View>
             </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.amountArea}>
-        <Text style={styles.amountLabel}>Send amount</Text>
-        <NFTAmountInput
-          nftItem={nftItem}
-          style={styles.nftAmountInput}
-          value={formValues.amount}
-          onChange={val => {
-            handleFieldChange('amount', val + '');
-          }}
-        />
+        <View style={styles.amountArea}>
+          <Text style={styles.amountLabel}>{t('page.sendNFT.SendAmount')}</Text>
+          <NFTAmountInput
+            nftItem={nftItem}
+            style={styles.nftAmountInput}
+            value={formValues.amount}
+            onChange={val => {
+              handleFieldChange('amount', val + '');
+            }}
+          />
+        </View>
       </View>
-    </SendNFTSection>
+    </View>
   );
 }
 
-const BASIC_INFO_H = 72;
-const getBalanceStyles = createGetStyles(colors => {
+const BASIC_INFO_H = 80;
+const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {
   return {
-    balanceText: {
-      color: colors['neutral-body'],
-      fontSize: 13,
-      fontWeight: 'normal',
+    nftSection: {
+      width: '100%',
+      marginBottom: 16,
+      gap: 12,
     },
-
+    titleSection: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      height: 26,
+      marginBottom: 12,
+    },
+    sectionTitle: {
+      color: colors2024['neutral-title-1'],
+      fontSize: 17,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+    },
+    nftContainer: {
+      borderRadius: 16,
+      paddingHorizontal: 22,
+      paddingVertical: 16,
+      backgroundColor: colors2024['neutral-bg-1'],
+      borderColor: colors2024['neutral-line'],
+      borderWidth: 1,
+      width: '100%',
+    },
     infoSection: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      fontSize: 13,
-      marginTop: 0,
+      fontSize: 14,
+      marginTop: 10,
     },
-    maxButtonWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-    },
-
     nftMedia: {
       flexDirection: 'row',
     },
@@ -144,67 +183,78 @@ const getBalanceStyles = createGetStyles(colors => {
       borderRadius: 6,
       resizeMode: 'cover',
     },
-
     nftDetailBlock: {
       flexShrink: 1,
       height: BASIC_INFO_H,
       width: '100%',
       marginLeft: 12,
       position: 'relative',
-
       justifyContent: 'space-between',
     },
-
     nftDetailTitle: {
-      color: colors['neutral-title1'],
-      fontSize: 15,
-      fontWeight: '500',
+      color: colors2024['neutral-title-1'],
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
     },
-
-    nftDetailKvs: {},
-
+    nftDetailKvs: {
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+    },
     nftDetailLine: {
+      paddingVertical: 4,
       flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      alignItems: 'center',
     },
     nftDetaiLabel: {
       textAlign: 'left',
-      color: colors['neutral-foot'],
-      fontSize: 12,
-      fontWeight: '400',
+      color: colors2024['neutral-secondary'],
+      fontSize: 14,
+      fontWeight: '500',
       width: 70,
-      // ...makeDebugBorder('red')
     },
-    nftDetailValue: {
-      // ...makeDebugBorder('yellow')
+    chainInfo: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    nftDetailValue: {},
+    chainName: {
+      marginLeft: 6,
     },
     nftDetailText: {
-      color: colors['neutral-body'],
-      fontSize: 12,
-      fontWeight: '400',
+      color: colors2024['neutral-body'],
+      fontSize: 14,
+      fontWeight: '700',
     },
     nftDetailCopy: {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
+      fontSize: 14,
+      color: colors2024['neutral-foot'],
     },
     amountArea: {
       marginTop: 12,
       paddingTop: 12,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors['neutral-line'],
+      borderTopColor: colors2024['neutral-line'],
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
     },
     amountLabel: {
-      color: colors['neutral-body'],
+      color: colors2024['neutral-secondary'],
       fontSize: 14,
-      fontWeight: '400',
+      fontWeight: '500',
     },
     nftAmountInput: {
-      borderColor: colors['neutral-line'],
+      borderColor: colors2024['neutral-line'],
+      backgroundColor: colors2024['neutral-line'],
+      color: colors2024['neutral-title-1'],
       borderWidth: StyleSheet.hairlineWidth,
       borderRadius: 4,
     },

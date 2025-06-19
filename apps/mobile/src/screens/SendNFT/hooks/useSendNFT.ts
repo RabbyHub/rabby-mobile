@@ -35,6 +35,10 @@ import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { StackActions } from '@react-navigation/native';
+import {
+  isAccountSupportDirectSign,
+  isAccountSupportMiniApproval,
+} from '@/utils/account';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -60,6 +64,9 @@ export type SendScreenState = {
   isSubmitLoading: boolean;
   temporaryGrant: boolean;
 
+  balanceError: string | null;
+  balanceWarn: string | null;
+
   addressToAddAsContacts: string | null;
   addressToEditAlias: string | null;
 };
@@ -79,6 +86,9 @@ const DFLT_SEND_STATE: SendScreenState = {
   isLoading: false,
   isSubmitLoading: false,
   temporaryGrant: false,
+
+  balanceError: null,
+  balanceWarn: null,
 
   addressToAddAsContacts: null,
   addressToEditAlias: null,
@@ -229,8 +239,11 @@ export function useSendNFTForm({
     initialValues: formValues,
     validationSchema,
     onSubmit: values => {
-      values.amount = formatSpeicalAmount(values.amount);
-      handleSubmit(values);
+      const formattedValues = {
+        ...values,
+        amount: formatSpeicalAmount(values.amount),
+      };
+      handleSubmit(formattedValues);
     },
   });
 
@@ -279,6 +292,15 @@ export function useSendNFTForm({
         resultAmount = screenState.cacheAmount;
       }
 
+      // Validate amount for NFT
+      if (new BigNumber(resultAmount || 0).lte(0)) {
+        putScreenState({
+          balanceError: t('page.sendToken.balanceError.insufficientBalance'),
+        });
+      } else {
+        putScreenState({ balanceError: null });
+      }
+
       const nextFormValues = {
         ...currentValues,
         to: currentValues.to,
@@ -307,6 +329,7 @@ export function useSendNFTForm({
       screenState.contactInfo,
       formik,
       putScreenState,
+      t,
     ],
   );
 
@@ -335,11 +358,17 @@ export function useSendNFTForm({
 
       canSubmit:
         isValidAddress(formValues.to) &&
+        !screenState.balanceError &&
         new BigNumber(formValues.amount).gt(0) &&
         !screenState.isLoading &&
         (!whitelistEnabled ||
           screenState.temporaryGrant ||
           toAddressInWhitelist),
+
+      canDirectSign:
+        isAccountSupportMiniApproval(currentAccount?.type || '') &&
+        isAccountSupportDirectSign(currentAccount?.type) &&
+        !chainItem?.isTestnet,
     };
   }, [
     whitelist,
@@ -348,6 +377,8 @@ export function useSendNFTForm({
     formValues.to,
     screenState,
     formValues.amount,
+    currentAccount?.type,
+    chainItem?.isTestnet,
   ]);
 
   const resetFormValues = useCallback(() => {
@@ -389,12 +420,13 @@ type InternalContext = {
     currentNFT: NFTItem | null;
     whitelistEnabled: boolean;
     canSubmit: boolean;
+    canDirectSign: boolean;
     toAddressInWhitelist: boolean;
     toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
   };
 
-  formik: ReturnType<typeof useSendNFTFormikContext>;
+  formik: ReturnType<typeof useFormik<FormSendNFT>>;
   events: EventEmitter;
   fns: {
     putScreenState: (patch: Partial<SendScreenState>) => void;
@@ -415,6 +447,7 @@ const SendNFTInternalContext = React.createContext<InternalContext>({
     currentNFT: null,
     whitelistEnabled: false,
     canSubmit: false,
+    canDirectSign: false,
     toAddressInWhitelist: false,
     toAddressIsValid: false,
     toAddressInContactBook: false,

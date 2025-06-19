@@ -34,6 +34,7 @@ import {
   AssetApprovalSpender,
 } from './screens/Approvals/useApprovalsPage';
 import { HistoryItemCateType } from './screens/Transaction/components/type';
+import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -290,8 +291,11 @@ export type TransactionNavigatorParamList = {
   [RootNames.SendNFT]: {
     nftItem: NFTItem;
     collectionName?: string;
-    address?: string;
-    account: Account;
+    fromAddress?: string;
+    fromAccount?: Account;
+    toAddress?: string;
+    addressBrandName?: string;
+    addrDesc?: AddrDescResponse['desc'];
   };
   [RootNames.Swap]?: {
     chainEnum?: CHAINS_ENUM | undefined;
