@@ -90,6 +90,22 @@ export interface TransactionSigningItem {
   isSubmitted?: boolean;
 }
 
+export interface BridgeTxHistoryItem {
+  address: string;
+  fromChainId: number;
+  toChainId: number;
+  fromToken: TokenItem;
+  toToken: TokenItem;
+  slippage: number;
+  fromAmount: number;
+  toAmount: number;
+  dexId: string;
+  status: 'pending' | 'fromSuccess' | 'allSuccess' | 'failed';
+  hash: string;
+  createdAt: number;
+  completedAt?: number;
+}
+
 export interface SwapTxHistoryItem {
   address: string;
   chainId: number;
@@ -122,6 +138,7 @@ interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
   swapTxHistory: SwapTxHistoryItem[];
   sendTxHistory: SendTxHistoryItem[];
+  bridgeTxHistory: BridgeTxHistoryItem[];
   successList: string[];
   failList: string[];
   sendSuccessList: string[];
@@ -154,6 +171,7 @@ export class TransactionHistoryService {
         template: {
           transactions: [],
           swapTxHistory: [],
+          bridgeTxHistory: [],
           successList: [],
           failList: [],
           sendSuccessList: [],
@@ -193,6 +211,10 @@ export class TransactionHistoryService {
 
     if (!Array.isArray(this.store.sendFailList)) {
       this.store.sendFailList = [];
+    }
+
+    if (!Array.isArray(this.store.bridgeTxHistory)) {
+      this.store.bridgeTxHistory = [];
     }
 
     if (typeof this.store.isNeedFetchTxHistory !== 'object') {
@@ -312,7 +334,7 @@ export class TransactionHistoryService {
     this.store.swapTxHistory.push(tx);
     this.store.swapTxHistory = this.store.swapTxHistory
       .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 100);
+      .slice(0, 200);
   }
 
   addSendTxHistory(tx: SendTxHistoryItem) {
@@ -322,7 +344,14 @@ export class TransactionHistoryService {
       .slice(0, 500); // need use to show send history list
   }
 
-  getRecentPendingTxHistory(address: string, type: 'swap' | 'send') {
+  addBridgeTxHistory(tx: BridgeTxHistoryItem) {
+    this.store.bridgeTxHistory.push(tx);
+    this.store.bridgeTxHistory = this.store.bridgeTxHistory
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 200);
+  }
+
+  getRecentPendingTxHistory(address: string, type: 'swap' | 'send' | 'bridge') {
     const recentItem = this.store[`${type}TxHistory`]
       .filter(item => {
         return isSameAddress(address, item.address);
@@ -354,34 +383,43 @@ export class TransactionHistoryService {
     chainId: number,
     status: SwapTxHistoryItem['status'],
   ) {
-    const arr = [this.store.swapTxHistory, this.store.sendTxHistory];
+    const arr = [
+      this.store.swapTxHistory,
+      this.store.sendTxHistory,
+      this.store.bridgeTxHistory,
+    ];
     const hashArr = txs.map(item => item.hash);
     arr.forEach(async history => {
       const index = history.findIndex(
-        (item: SwapTxHistoryItem | SendTxHistoryItem) =>
-          item.chainId === chainId && hashArr.includes(item.hash),
+        (item: SwapTxHistoryItem | SendTxHistoryItem | BridgeTxHistoryItem) =>
+          ('fromChainId' in item ? item.fromChainId : item.chainId) ===
+            chainId && hashArr.includes(item.hash),
       );
       if (index !== -1) {
-        history[index].status = status;
+        if ('fromChainId' in history[index]) {
+          // bridge tx
+          history[index].status =
+            status === 'success' ? 'fromSuccess' : 'failed';
+        } else {
+          history[index].status = status;
+        }
         history[index].completedAt = Date.now();
       }
     });
   }
-  // if (index !== -1) {
-  //   this.store.swapTxHistory[index].status = status;
-  //   this.store.swapTxHistory[index].completedAt = Date.now();
-  // const completeItem = this.store.swapTxHistory[index];
-  // // clear before pending by nonce lower than complete item
-  // this.store.swapTxHistory = this.store.swapTxHistory.filter(item => {
-  //   return !(
-  //     isSameAddress(completeItem.address, item.address) &&
-  //     item.chainId === completeItem.chainId &&
-  //     item.createdAt < completeItem.createdAt &&
-  //     item.status === 'pending'
-  //   );
-  // });
-  // }
-  // }
+
+  completeBridgeTxHistory(
+    from_tx_id: string,
+    chainId: number,
+    status: BridgeTxHistoryItem['status'],
+  ) {
+    this.store.bridgeTxHistory.forEach(item => {
+      if (item.fromChainId === chainId && item.hash === from_tx_id) {
+        item.status = status;
+        item.completedAt = Date.now();
+      }
+    });
+  }
 
   getIsNeedFetchTxHistory(address: string) {
     const res = this.store.isNeedFetchTxHistory[address];
