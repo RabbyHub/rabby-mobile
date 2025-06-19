@@ -1,25 +1,59 @@
-import { useMemo } from 'react';
-import { useNetInfo, configure } from '@react-native-community/netinfo';
+import { atom, useAtomValue } from 'jotai';
 
-configure({
-  reachabilityUrl: 'https://app-api.rabby.io/ping',
-  reachabilityMethod: 'GET',
-  reachabilityTest: async response => response.status === 200,
-  reachabilityLongTimeout: 10 * 1000, // 10s
-  reachabilityShortTimeout: 2 * 1000, // 2s
-  reachabilityRequestTimeout: 15 * 1000, // 15s
-  reachabilityShouldRun: () => true,
-  useNativeReachability: false,
-});
+const PING_URL = 'https://app-api.rabby.io/ping';
+
+async function checkNetwork(): Promise<boolean> {
+  try {
+    console.log('CUSTOM_LOGGER:=>: checkNetwork', 'start');
+    const resp = await fetch(PING_URL, { method: 'GET' });
+    console.log(
+      'CUSTOM_LOGGER:=>: checkNetwork',
+      'end',
+      Date.now(),
+      resp.status,
+    );
+    return resp.status === 200;
+  } catch (e) {
+    console.log('CUSTOM_LOGGER:=>: checkNetwork', 'error', e);
+    return false;
+  }
+}
+
+const networkStatusAtom = atom(false); // false: 有网, true: 断网
+
+let timer: NodeJS.Timeout | null = null;
+let started = false;
+
+function startNetworkPolling(set: (v: boolean) => void) {
+  if (started) {
+    return;
+  }
+  started = true;
+  let lastStatus = false;
+  const poll = async () => {
+    const isDisconnected = !(await checkNetwork());
+    if (isDisconnected !== lastStatus) {
+      set(isDisconnected);
+      lastStatus = isDisconnected;
+    }
+    const nextInterval = isDisconnected ? 2000 : 10000;
+    timer = setTimeout(poll, nextInterval);
+  };
+  poll();
+}
+
+networkStatusAtom.onMount = set => {
+  startNetworkPolling(set);
+  return () => {
+    if (timer) {
+      clearTimeout(timer);
+    }
+    started = false;
+  };
+};
 
 export const useGlobalStatus = () => {
-  const { isInternetReachable } = useNetInfo();
-
-  const isDisConnnect = useMemo(() => {
-    return isInternetReachable === false;
-  }, [isInternetReachable]);
-
-  return {
-    isDisConnnect,
-  };
+  const isDisConnnect = useAtomValue(networkStatusAtom);
+  console.log('CUSTOM_LOGGER:=>: isDisconnected', isDisConnnect);
+  return { isDisConnnect };
 };
