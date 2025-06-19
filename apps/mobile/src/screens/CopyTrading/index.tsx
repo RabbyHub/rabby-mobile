@@ -40,8 +40,11 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { Skeleton } from '@rneui/themed';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { Tip } from '@/components';
 
 const DEFAULT_COUNT = 10;
+
+const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SkeletonTabList = React.memo(() => {
@@ -90,11 +93,19 @@ export const CopyTradingScreen = () => {
   const [hasMore, setHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const chainList = useMemo(() => {
+  const { chainList, comingChainList } = useMemo(() => {
     const list = chainIdList
       .map(chainId => findChainByServerID(chainId))
       .filter(item => Boolean(item?.enum));
-    return list;
+    const comingList = DEFAULT_COMING_CHAIN_ID.filter(
+      id => !chainIdList.includes(id),
+    ).slice(0, 4 - list.length);
+    return {
+      chainList: list,
+      comingChainList: comingList
+        .map(chainId => findChainByServerID(chainId))
+        .filter(item => Boolean(item?.enum)),
+    };
   }, [chainIdList]);
 
   const fetchChainList = useMemoizedFn(async () => {
@@ -159,6 +170,9 @@ export const CopyTradingScreen = () => {
   });
 
   const handleChainItemPress = useMemoizedFn(async (chainId: string) => {
+    if (chainId === selectedChainId) {
+      return;
+    }
     setSelectedChainId(chainId);
     setHasMore(true);
     const tokenArr = await fetchTokenList(chainId, 0);
@@ -328,6 +342,25 @@ export const CopyTradingScreen = () => {
                 </Text>
               </TouchableOpacity>
             ))}
+            {comingChainList.map(chain => (
+              <Tip content={t('page.copyTrading.comingSoon')} key={chain?.id}>
+                <View
+                  key={chain?.id}
+                  style={StyleSheet.flatten([
+                    styles.chainItem,
+                    styles.chainItemDisabled,
+                  ])}>
+                  <ChainIconImage
+                    size={18}
+                    chainEnum={chain?.enum}
+                    isShowRPCStatus={true}
+                  />
+                  <Text style={StyleSheet.flatten([styles.chainItemText])}>
+                    {chain?.name}
+                  </Text>
+                </View>
+              </Tip>
+            ))}
           </ScrollView>
         )}
       </View>
@@ -410,6 +443,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
+  },
+  chainItemDisabled: {
+    opacity: 0.3,
   },
   chainItem: {
     display: 'flex',

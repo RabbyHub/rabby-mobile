@@ -952,6 +952,7 @@
       }
     },
     "copyTrading": {
+      "comingSoon": "Coming soon...",
       "tipsDollar": {
         "title": "Copy Trading from Smart Money",
         "description": "Discover tokens based on recent activity from smart money wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
