@@ -497,7 +497,7 @@ export const TokenDetailScreen = () => {
 
   const { t } = useTranslation();
 
-  if (!finalAccount) {
+  if (isSingleAddress && !finalAccount) {
     return null;
   }
 
