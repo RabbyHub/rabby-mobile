@@ -266,7 +266,10 @@ export function useRateModal() {
        **/
 
       try {
-        await openapi.uninstalledFeedback({ text: feedbackContent });
+        await openapi.submitFeedback({
+          text: feedbackContent,
+          usage: 'rating',
+        });
       } catch (error) {
         Sentry.captureException(error, {
           extra: {
