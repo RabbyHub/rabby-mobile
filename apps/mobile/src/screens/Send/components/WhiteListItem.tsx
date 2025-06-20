@@ -93,25 +93,6 @@ export const WhiteListItem = ({
           toastCopyAddressSuccess(account.address);
         },
       },
-      ...(inWhiteList
-        ? [
-            {
-              title: t('page.whitelist.removeWhitelist'),
-              icon: isDarkTheme
-                ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_whitelist_remove_dark.png')
-                : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_whitelist_remove.png'),
-              androidIconName: 'ic_rabby_menu_remove_whitelist',
-              key: 'remove',
-              action() {
-                trigger('impactLight', {
-                  enableVibrateFallback: true,
-                  ignoreAndroidSystemSettings: false,
-                });
-                removeWhitelist(account.address);
-              },
-            },
-          ]
-        : []),
       {
         title: t('page.addressDetail.addressListScreen.edit'),
         icon: isDarkTheme
@@ -123,6 +104,26 @@ export const WhiteListItem = ({
           editAliasName.show(account);
         },
       },
+      ...(inWhiteList
+        ? [
+            {
+              title: t('page.whitelist.removeWhitelist'),
+              icon: isDarkTheme
+                ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_remove_whitelist_dark.png')
+                : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_remove_whitelist.png'),
+              androidIconName: 'ic_rabby_menu_remove_whitelist',
+              key: 'remove',
+              destructive: true,
+              action() {
+                trigger('impactLight', {
+                  enableVibrateFallback: true,
+                  ignoreAndroidSystemSettings: false,
+                });
+                removeWhitelist(account.address);
+              },
+            },
+          ]
+        : []),
     ] as MenuAction[];
   }, [account, editAliasName, inWhiteList, isDarkTheme, removeWhitelist, t]);
 
