@@ -158,8 +158,10 @@ export function TokenPriceChart(props: Props) {
       };
     }
     return {
-      isUp: true,
-      percent: '',
+      isUp: token.price_24h_change ? Number(token.price_24h_change) > 0 : true,
+      percent: token?.price_24h_change
+        ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
+        : '',
     };
   }, [activeKey, data?.list, token?.price_24h_change]);
 
