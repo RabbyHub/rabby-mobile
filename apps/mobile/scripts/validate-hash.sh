@@ -110,7 +110,7 @@ rm -f "$APP_PATH/RabbyMobile.s"
 
 # 计算总哈希
 OVERALL_HASH=$(find "$APP_PATH" -type f ! -name ".DS_Store" -print0 |
-  sort -z |
+  LC_COLLATE=C sort -z |
   xargs -0 shasum -a 256 |
   tee -a "$BUILD_REPORT_FILE" |
   shasum -a 256 |
