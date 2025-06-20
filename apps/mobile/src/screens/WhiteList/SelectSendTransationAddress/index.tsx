@@ -4,7 +4,6 @@ import { HistoryItemEntity } from '@/databases/entities/historyItem';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy, orderBy, debounce } from 'lodash';
 import { HistoryList } from '@/screens/Transaction/components/HistoryGroupList';
-import { useMyAccounts } from '@/hooks/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
@@ -27,29 +26,22 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { StackActions } from '@react-navigation/native';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 
 function SendHistoryScreen() {
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const sortedAccounts = useSortAddressList(accounts);
-  const unionAccounts = useMemo(() => {
-    return unionBy(sortedAccounts, account => account.address.toLowerCase());
-  }, [sortedAccounts]);
+  const { top10Addresses, list: accountList } = useAccountInfo();
   const [firstFetchDone, setFirstFetchDone] = useState(false);
   const [currentNoDbData, setCurrentNoDbData] = useState(false);
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
 
-  const { syncTop10History } = useSyncHistoryDB(unionAccounts);
+  const { syncTop10History } = useSyncHistoryDB(top10Addresses);
   const { tokenDict, historyLoading } = useHistoryTokenDict();
   const { styles } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
 
   const batchFetchDataV2 = async () => {
     // fetch data from local database
-    const addresses = unionAccounts.map(account =>
-      account.address.toLowerCase(),
-    );
+    const addresses = top10Addresses.map(a => a.toLowerCase());
     const fetchHistoryFromDbData = async (isFirst?: boolean) => {
       const historyList =
         await HistoryItemEntity.getAllSendItemsTriggeredByImportedAddr(
@@ -117,9 +109,7 @@ function SendHistoryScreen() {
   }, [dbData]);
 
   const ensureCurrentIsLoading = useMemo(() => {
-    const addresses = unionAccounts.map(account =>
-      account.address.toLowerCase(),
-    );
+    const addresses = top10Addresses.map(a => a.toLowerCase());
     const isLoading = addresses.every(address => {
       return historyLoading[address];
     });
@@ -160,7 +150,7 @@ function SendHistoryScreen() {
             removeGlobalBottomSheetModal2024(id);
             addWhitelist(account.address, {
               onAdded: () => {
-                const isImported = accounts.some(i =>
+                const isImported = accountList.some(i =>
                   isSameAddress(i.address, account.address),
                 );
                 matomoRequestEvent({

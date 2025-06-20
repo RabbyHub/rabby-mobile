@@ -120,6 +120,10 @@ export const MultiAssets = ({
     );
   }, [combineData, handleScroll, isLoadingCurve, pathColor]);
 
+  const listLength = useMemo(() => {
+    return list.length > 10 ? 10 : list.length;
+  }, [list]);
+
   return (
     <Tabs.Container
       containerStyle={styles.container}
@@ -136,8 +140,8 @@ export const MultiAssets = ({
       headerContainerStyle={styles.tabBarWrap}>
       <Tabs.Tab
         label={`${t('page.multiAddressAssets.tabs.wallet', {
-          count: list.length,
-        })} ${list.length ? `(${list.length})` : ''}`}
+          count: listLength,
+        })} ${listLength ? `(${listLength})` : ''}`}
         name="address">
         <AddressList />
       </Tabs.Tab>

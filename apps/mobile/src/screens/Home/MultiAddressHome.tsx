@@ -231,7 +231,9 @@ function MultiAddressHomeHeader(
             </View>
             <View style={styles.accountBg}>
               <RcIconSmallWallet />
-              <Text style={styles.accountText}>{accountsLength}</Text>
+              <Text style={styles.accountText}>
+                {accountsLength >= 10 ? '10' : accountsLength}
+              </Text>
               <RcIconSmallArrow />
             </View>
           </Card>
@@ -405,7 +407,7 @@ function MultiAddressHome(): JSX.Element {
   }, [sortedAccounts]);
 
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
-  const { syncTop10History } = useSyncHistoryDB(unionAccounts);
+  const { syncTop10History } = useSyncHistoryDB(top10Addresses);
   const { tokenDict } = useHistoryTokenDict();
 
   const displayFundWallet = useMemo(
