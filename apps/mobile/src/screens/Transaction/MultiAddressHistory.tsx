@@ -357,15 +357,14 @@ function History({
     }
 
     const list: TransactionGroup[] = [];
-    const accountListArr = isSceneUsingAllAccounts
-      ? accountList
-      : [finalSceneCurrentAccount];
-    for (let i = 0; i < accountListArr.length; i++) {
-      const account = accountListArr[i];
-      if (!account) {
+    const addressList = isSceneUsingAllAccounts
+      ? top10Addresses
+      : [finalSceneCurrentAccount?.address.toLowerCase()];
+    for (let i = 0; i < addressList.length; i++) {
+      const addr = addressList[i];
+      if (!addr) {
         continue;
       }
-      const addr = account.address.toLowerCase();
       const localTxs = await fetchLocalTx(addr);
       list.push(...localTxs);
     }
