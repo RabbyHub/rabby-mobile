@@ -253,7 +253,7 @@ const getStyle = createGetStyles2024(ctx => ({
     paddingVertical: 1,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
-    lineHeight: 24,
+    // lineHeight: 24,
   },
   iconContainer: {
     marginHorizontal: 8,

@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
-import { useCallback, useMemo, useState } from 'react';
 import { Text, View, TouchableOpacity } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
@@ -34,7 +34,6 @@ export const AddressList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const {
     top10Addresses,
@@ -264,6 +263,18 @@ export const AddressList = () => {
     ],
   );
 
+  const onRefresh = useCallback(async () => {
+    try {
+      await Promise.all([
+        triggerUpdate(true),
+        refreshCurve(true),
+        fetchAccounts(),
+      ]);
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    }
+  }, [fetchAccounts, refreshCurve, triggerUpdate]);
+
   return (
     <Tabs.FlatList
       data={addressListData}
@@ -276,21 +287,8 @@ export const AddressList = () => {
       refreshControl={
         <RefreshControl
           style={styles.bgContainer}
-          onRefresh={async () => {
-            setIsRefreshing(true);
-            try {
-              await Promise.all([
-                triggerUpdate(true),
-                refreshCurve(true),
-                fetchAccounts(),
-              ]);
-              setIsRefreshing(false);
-            } catch (error) {
-              console.error('Refresh failed:', error);
-              setIsRefreshing(false);
-            }
-          }}
-          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          refreshing={false}
         />
       }
     />

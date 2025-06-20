@@ -21,8 +21,6 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
-import RcPending from '@/assets2024/icons/home/pending.svg';
-import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
 import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -70,7 +68,6 @@ import {
   useOfflineChain,
 } from './components/OfflineChainNotify';
 import { colord } from 'colord';
-import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useFetchCexInfo } from '@/hooks/useAddrDesc';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
@@ -93,6 +90,8 @@ import { useTipsDollarDialog } from '../CopyTrading/component/hooks';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
 import { useExposureRateGuide } from '@/components/RateModal/hooks';
 import { RateModal } from '@/components/RateModal/RateModal';
+import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
+import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 
 const HeaderHeight = 24;
 
@@ -101,14 +100,16 @@ function MultiAddressHomeHeader(
     data: ReturnType<typeof useMultiCurve>['combineData'];
     loading: boolean;
     loadingNewCurve: boolean;
+    onRefresh?: () => void;
   } & RNViewProps,
 ): JSX.Element {
-  const { loading, data, loadingNewCurve, style } = prop;
+  const { loading, data, loadingNewCurve, style, onRefresh } = prop;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
+  const { isDisConnnect } = useGlobalStatus();
 
   const { accountsLength } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
@@ -172,6 +173,16 @@ function MultiAddressHomeHeader(
           {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
         </TouchableWithoutFeedback>
       </View>
+
+      <GlobalWarning
+        hasError={isDisConnnect}
+        description={t('component.globalWarning.networkError.globalDesc')}
+        style={styles.globalWarning}
+        onRefresh={() => {
+          onRefresh?.();
+        }}
+      />
+
       <View style={styles.curveBox}>
         <BlurShadowView isLight={isLight}>
           <Card
@@ -253,7 +264,7 @@ const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
-  const { styles, colors2024, isLight, appThemeMode } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
   const appThemeConfig = useAppThemeConfig();
@@ -272,10 +283,6 @@ function MultiAddressHome(): JSX.Element {
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
 
   const spinValue = useRef(new Animated.Value(0)).current;
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
   const {
     alertInfo,
     forceUpdate,
@@ -381,7 +388,6 @@ function MultiAddressHome(): JSX.Element {
     balanceAccounts,
     balanceCacheAccounts,
     triggerUpdate,
-    balanceLoading,
     getTotalBalance,
   } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
@@ -571,17 +577,21 @@ function MultiAddressHome(): JSX.Element {
   );
 
   const onRefresh = useCallback(() => {
-    triggerUpdate(true); // force update balance from server api
-    forceUpdate();
-    syncTop10Assets(true);
-    syncTop10History(true);
-    refreshCurve(true);
+    Promise.all([
+      triggerUpdate(true), // force update balance from server api
+      refreshCurve(true),
+    ]).finally(() => {
+      // update at background
+      forceUpdate();
+      syncTop10Assets(true);
+      syncTop10History(true);
+    });
   }, [
     triggerUpdate,
+    refreshCurve,
     forceUpdate,
     syncTop10Assets,
     syncTop10History,
-    refreshCurve,
   ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
@@ -764,9 +774,7 @@ function MultiAddressHome(): JSX.Element {
         start: { x: 0.5, y: 0 },
         end: { x: 0.5, y: 0.26 },
       }}
-      overwriteStyle={{
-        paddingTop: 64,
-      }}>
+      overwriteStyle={styles.screenContainer}>
       <View style={styles.paddingContainer}>
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -784,6 +792,7 @@ function MultiAddressHome(): JSX.Element {
             data={combineData}
             loading={loading}
             loadingNewCurve={loadingNewCurve}
+            onRefresh={onRefresh}
           />
           <View
             style={[
@@ -835,6 +844,9 @@ function MultiAddressHome(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  screenContainer: {
+    paddingTop: 64,
+  },
   paddingContainer: {
     paddingHorizontal: 0,
     flex: 1,
@@ -1047,6 +1059,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 12,
   },
   contentBetweenHeaderAndMatrixEmpty: {},
+  menuContainer: {
+    marginTop: 0,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1300,6 +1315,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     marginLeft: 4,
+  },
+  globalWarning: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: -16,
   },
 }));
 
