@@ -17,6 +17,7 @@ import RabbySilhouetteDark from './icons/rabby-silhouette-dark.svg';
 import { useExposureRateGuide, useRateModal } from './hooks';
 import PressableStar from './RateStar';
 import { useEffect, useState } from 'react';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const STAR_SIZE = 38;
 const TRIGGER_HEIGHT = 88;
@@ -27,6 +28,23 @@ const SIZES = {
 };
 
 const TRIGGER_AFTER_DELAY = Math.max(500, PressableStar.MS_PLAY_ONCE);
+
+function starToText(number: number) {
+  switch (number) {
+    case 1:
+      return 'One';
+    case 2:
+      return 'Two';
+    case 3:
+      return 'Three';
+    case 4:
+      return 'Four';
+    case 5:
+      return 'Five';
+    default:
+      return 'Unknown';
+  }
+}
 
 export function RateModalTriggerOnHome({ style }: RNViewProps) {
   const { isLight, styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -45,6 +63,10 @@ export function RateModalTriggerOnHome({ style }: RNViewProps) {
       toggleShowRateModal(true, {
         starCountOnOpen: userSelectedStar,
       });
+      matomoRequestEvent({
+        category: 'Rate Rabby',
+        action: `Rate_Star_${starToText(userSelectedStar)}`,
+      });
       setUserSelectedStar(0);
     }, TRIGGER_AFTER_DELAY);
 
@@ -53,6 +75,15 @@ export function RateModalTriggerOnHome({ style }: RNViewProps) {
       setUserSelectedStar(0);
     };
   }, [userSelectedStar, toggleShowRateModal]);
+
+  useEffect(() => {
+    if (!shouldShowRateGuideOnHome) return;
+
+    matomoRequestEvent({
+      category: 'Rate Rabby',
+      action: 'Rate_Show',
+    });
+  }, [shouldShowRateGuideOnHome]);
 
   if (!shouldShowRateGuideOnHome) return null;
 

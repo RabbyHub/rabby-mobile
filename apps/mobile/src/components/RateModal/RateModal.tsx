@@ -46,6 +46,8 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
     onChangeFeedback,
     submitFeedback,
     feedbackOverLimit,
+
+    openAppRateUrl,
   } = useRateModal();
 
   const closeModal = useCallback(() => {
@@ -126,7 +128,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                       styles.rateButtonConfirmText,
                     ]}
                     onPress={() => {
-                      openExternalUrl(APP_URLS.RATE_URL);
+                      openAppRateUrl();
                       disableExposureRateGuide();
                     }}
                     title={

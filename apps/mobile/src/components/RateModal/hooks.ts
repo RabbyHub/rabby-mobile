@@ -6,9 +6,11 @@ import { coerceInteger } from '@/utils/number';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
-import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
+import { APP_URLS, APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { Platform } from 'react-native';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { openExternalUrl } from '@/core/utils/linking';
 
 const TX_COUNT_LIMIT = isNonPublicProductionEnv ? 1 : 3; // Minimum number of transactions before showing the rate guide
 const STAR_COUNT = 5;
@@ -270,6 +272,11 @@ export function useRateModal() {
           text: feedbackContent,
           usage: 'rating',
         });
+        matomoRequestEvent({
+          category: 'Rate Rabby',
+          action: 'Rate_SubmitAdvice',
+          label: [rateModalState.userStar].join('|'),
+        });
       } catch (error) {
         Sentry.captureException(error, {
           extra: {
@@ -283,6 +290,15 @@ export function useRateModal() {
     [rateModalState],
   );
 
+  const openAppRateUrl = useCallback(() => {
+    matomoRequestEvent({
+      category: 'Rate Rabby',
+      action: 'Rate_JumpAppStore',
+      label: [rateModalState.userStar].join('|'),
+    });
+    openExternalUrl(APP_URLS.RATE_URL);
+  }, [rateModalState.userStar]);
+
   return {
     rateModalShown: rateModalState.visible,
 
@@ -295,5 +311,7 @@ export function useRateModal() {
       rateModalState.userFeedback.length > FEEDBACK_LEN_LIMIT - 1,
     onChangeFeedback,
     submitFeedback,
+
+    openAppRateUrl,
   };
 }
