@@ -1065,6 +1065,18 @@
           "gotIt": "I Got It.",
           "entry": "Is it safe to import into Rabby"
         }
+      },
+      "rateModalTriggerOnHome": {
+        "description": "How do you rate Rabby Wallet"
+      },
+      "rateModal": {
+        "descriptionIOS": "If you like Rabby, a quick rating on the App Store would mean a lot.",
+        "descriptionAndroid": "If you like Rabby, a quick rating on the Google Play would mean a lot.",
+        "confirmButtonTitleIOS": "Rate on App Store",
+        "confirmButtonTitleAndroid": "Rate on Google Play",
+        "feedbackTitle": "Have feedback? We’re listening.",
+        "feedbackSubmit": "Submit",
+        "feedbackSuccess": "Thank you for your feedback"
       }
     },
     "newAddress": {

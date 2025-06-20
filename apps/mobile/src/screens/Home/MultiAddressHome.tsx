@@ -63,7 +63,10 @@ import { useUpgradeInfo } from '@/hooks/version';
 
 import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
 import { FoundYourWalletGuide } from './FundYourWallet';
-import { OfflineChainNotify } from './components/OfflineChainNotify';
+import {
+  OfflineChainNotify,
+  useOfflineChain,
+} from './components/OfflineChainNotify';
 import { colord } from 'colord';
 import { BlurView } from '@/components';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
@@ -84,11 +87,20 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { HomePendingBadge } from './components/HomePending';
+import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
+import { useExposureRateGuide } from '@/components/RateModal/hooks';
+import { RateModal } from '@/components/RateModal/RateModal';
 
 const HeaderHeight = 24;
 
-export function MultiAddressHomeHeader(prop): JSX.Element {
-  const { loading, data, loadingNewCurve } = prop;
+function MultiAddressHomeHeader(
+  prop: {
+    data: ReturnType<typeof useMultiCurve>['combineData'];
+    loading: boolean;
+    loadingNewCurve: boolean;
+  } & RNViewProps,
+): JSX.Element {
+  const { loading, data, loadingNewCurve, style } = prop;
   const { navigation } = useSafeSetNavigationOptions();
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
@@ -127,7 +139,7 @@ export function MultiAddressHomeHeader(prop): JSX.Element {
   }, [loading, spinValue]);
 
   return (
-    <View>
+    <View style={style}>
       <View style={styles.headerBox}>
         <View style={styles.leftBox}>
           <Text style={styles.balanceTextBox}>
@@ -661,6 +673,20 @@ function MultiAddressHome(): JSX.Element {
     });
   }, [appThemeConfig]);
 
+  const { shouldShowRateGuideOnHome } = useExposureRateGuide();
+  const offlineChainData = useOfflineChain();
+
+  const { noBetweenContent } = useMemo(() => {
+    const _noBetweenContent =
+      !displayFundWallet &&
+      !shouldShowRateGuideOnHome &&
+      (!offlineChainData.displayWillClosedChain ||
+        !offlineChainData.offlineChainInfo);
+    return {
+      noBetweenContent: _noBetweenContent,
+    };
+  }, [shouldShowRateGuideOnHome, offlineChainData, displayFundWallet]);
+
   return (
     <NormalScreenContainer2024
       type="linear"
@@ -699,8 +725,24 @@ function MultiAddressHome(): JSX.Element {
             loading={loading}
             loadingNewCurve={loadingNewCurve}
           />
-          <OfflineChainNotify showEmptyHolder={!displayFundWallet} />
-          {displayFundWallet && <FoundYourWalletGuide />}
+          <View
+            style={[
+              styles.contentBetweenHeaderAndMatrix,
+              noBetweenContent && styles.contentBetweenHeaderAndMatrixEmpty,
+            ]}>
+            <OfflineChainNotify data={offlineChainData} />
+
+            {displayFundWallet && <FoundYourWalletGuide />}
+
+            {shouldShowRateGuideOnHome && (
+              <View
+                style={{ paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL }}>
+                <RateModalTriggerOnHome />
+                <RateModal totalBalanceText={combineData.netWorth} />
+              </View>
+            )}
+          </View>
+
           <View style={[{ marginTop: 0 }, styles.grid]}>
             {MENU_ARR.map((el, index) => {
               return (
@@ -952,6 +994,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
     borderWidth: 1,
   },
+  contentBetweenHeaderAndMatrix: {
+    marginTop: 12,
+    marginBottom: 12,
+    gap: 12,
+  },
+  contentBetweenHeaderAndMatrixEmpty: {},
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
