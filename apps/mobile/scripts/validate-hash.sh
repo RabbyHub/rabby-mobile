@@ -31,7 +31,7 @@ if [ -f "$OVERRIDE_ENV_FILE" ]; then
   # 一个更健壮的方法是逐行读取和解析
   while IFS='=' read -r key value || [ -n "$key" ]; do
     # 移除可能的注释 (从第一个'#'开始)
-    key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1') # awk '{$1=$1};1' 用于去除首尾空格
+    key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1')                                       # awk '{$1=$1};1' 用于去除首尾空格
     value_cleaned=$(echo "$value" | sed 's/#.*//' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//') # 去除首尾空格
 
     # 移除可能存在于值两边的引号 (单引号或双引号)
@@ -77,7 +77,7 @@ cd ./ios && bundle exec pod deintegrate && RCT_NEW_ARCH_ENABLED=0 bundle exec po
 
 if [ $? -ne 0 ]; then
   echo "❌: 安装 pods 依赖失败"
-  exit 1;
+  exit 1
 fi
 
 cd ..
@@ -92,7 +92,7 @@ node ./scripts/validate-module-ids.js "$PROJECT_PATH/jsModuleId.log"
 
 if [ $? -ne 0 ]; then
   echo "❌: Metro 解析 module 时的 createModuleIdFactory 存在 id 碰撞，此验证脚本不再可靠"
-  exit 1;
+  exit 1
 fi
 
 # Assets.car 特殊处理，它里面有个 Timestamp，还没法指定，只能先解析成 json，再把 timestamp 移除，对比 json 的 hash
@@ -110,7 +110,7 @@ rm -f "$APP_PATH/RabbyMobile.s"
 
 # 计算总哈希
 OVERALL_HASH=$(find "$APP_PATH" -type f ! -name ".DS_Store" -print0 |
-  sort -z |
+  LC_COLLATE=C sort -z |
   xargs -0 shasum -a 256 |
   tee -a "$BUILD_REPORT_FILE" |
   shasum -a 256 |
@@ -180,4 +180,9 @@ fi
 EOF
 } >>"$BUILD_REPORT_FILE"
 
-echo "✅ App SHA256 Hash: $OVERALL_HASH"
+echo
+
+git_hash=git log --format="%H" -n 1
+
+echo "GIT Hash: $git_hash"
+echo "App SHA256 Hash: $OVERALL_HASH"
