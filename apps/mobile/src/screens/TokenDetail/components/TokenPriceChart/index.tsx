@@ -37,7 +37,7 @@ const winInfo = Dimensions.get('window');
 interface Props {
   originToken: AbstractPortfolioToken | CombineTokensItem;
   token: AbstractPortfolioToken | CombineTokensItem;
-  finalAccount?: KeyringAccountWithAlias;
+  finalAccount?: KeyringAccountWithAlias | null;
   amountList: TokenFromAddressItem[];
   isSingleAddress?: boolean;
   relateDefiList?: RelatedDeFiType[];
