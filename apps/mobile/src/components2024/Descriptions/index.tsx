@@ -15,6 +15,7 @@ export const Descriptions: React.FC<{
   }>;
   content?: React.ReactNode;
   nextButtonProps?: ButtonProps;
+  logoDom?: React.ReactNode;
 }> = ({
   title,
   sections,
@@ -22,11 +23,13 @@ export const Descriptions: React.FC<{
   titleStyle,
   sectionStyle,
   content,
+  logoDom,
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <AutoLockView as="BottomSheetView" style={styles.container}>
+      {!!logoDom && logoDom}
       {!!title && <Text style={[styles.title, titleStyle]}>{title}</Text>}
       <View style={styles.sectionContainer}>
         {sections.map((section, idx) => (

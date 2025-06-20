@@ -20,6 +20,7 @@ import {
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
+import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
 import RcPending from '@/assets2024/icons/home/pending.svg';
 import RcIconOrangeArrow from '@/assets2024/icons/home/IconOrangeArrow.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
@@ -62,6 +63,7 @@ import { debounce, unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
 import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
+import RcIconCopyTrading from '@/assets2024/icons/home/IconCopyTrading.svg';
 import { FoundYourWalletGuide } from './FundYourWallet';
 import {
   OfflineChainNotify,
@@ -87,6 +89,7 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useCexSupportList } from '@/hooks/useCexSupportList';
 import { HomePendingBadge } from './components/HomePending';
+import { useTipsDollarDialog } from '../CopyTrading/component/hooks';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
 import { useExposureRateGuide } from '@/components/RateModal/hooks';
 import { RateModal } from '@/components/RateModal/RateModal';
@@ -303,9 +306,9 @@ function MultiAddressHome(): JSX.Element {
           icon: RcIconBridge,
         },
         {
-          key: MultiHomeFeatTitle.Buy,
-          title: t('page.buy.title'),
-          icon: RcIconBuy,
+          key: MultiHomeFeatTitle.CopyTrading,
+          title: t('page.home.services.copyTrading'),
+          icon: RcIconCopyTrading,
         },
         {
           key: MultiHomeFeatTitle.History,
@@ -405,6 +408,7 @@ function MultiAddressHome(): JSX.Element {
   const unionAccounts = useMemo(() => {
     return unionBy(sortedAccounts, account => account.address.toLowerCase());
   }, [sortedAccounts]);
+  const [hasOpenCopyTrading, setHasOpenCopyTrading] = useState(true);
 
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
@@ -520,6 +524,13 @@ function MultiAddressHome(): JSX.Element {
       getSuccessAndFailList();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [getSuccessAndFailList, pendingTxCount]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const value = preferenceService.getHasOpenCopyTrading();
+      setHasOpenCopyTrading(value ?? true);
+    }, [setHasOpenCopyTrading]),
   );
 
   const thorttleGetSuccessAndFailList = useMemo(
@@ -654,6 +665,12 @@ function MultiAddressHome(): JSX.Element {
             params: {},
           });
           break;
+        case MultiHomeFeatTitle.CopyTrading:
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.CopyTrading,
+            params: {},
+          });
+          break;
         default:
           break;
       }
@@ -663,6 +680,47 @@ function MultiAddressHome(): JSX.Element {
       navigateToSendPolyScreen,
       navigation,
       toggleUseAllAccountsOnScene,
+    ],
+  );
+
+  const { showTipsDollarDialog } = useTipsDollarDialog();
+  const generateCustomBadgeIcon = useCallback(
+    (el: {
+      key: MultiHomeFeatTitle;
+      title: string;
+      icon: React.FC<import('react-native-svg').SvgProps>;
+      badge?: number;
+      isSuccess?: boolean;
+    }) => {
+      if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
+        return (
+          <TouchableOpacity onPress={showTipsDollarDialog}>
+            <IconDollar width={24} height={24} />
+          </TouchableOpacity>
+        );
+      }
+
+      if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
+        return <HomePendingBadge number={pendingTxCount} />;
+      }
+
+      return (
+        <>
+          {!!el.badge && el.badge > 0 ? (
+            <BadgeText
+              count={el.badge}
+              isSuccess={el.isSuccess}
+              style={[styles.badgeStyle]}
+            />
+          ) : null}
+        </>
+      );
+    },
+    [
+      showTipsDollarDialog,
+      pendingTxCount,
+      styles.badgeStyle,
+      hasOpenCopyTrading,
     ],
   );
 
@@ -763,20 +821,7 @@ function MultiAddressHome(): JSX.Element {
                   }}>
                   <View style={styles.iconWrapper}>
                     <el.icon width={28} height={28} />
-                    {el.key === MultiHomeFeatTitle.History &&
-                    pendingTxCount > 0 ? (
-                      <HomePendingBadge number={pendingTxCount} />
-                    ) : (
-                      <>
-                        {!!el.badge && el.badge > 0 && (
-                          <BadgeText
-                            count={el.badge}
-                            isSuccess={el.isSuccess}
-                            style={[styles.badgeStyle]}
-                          />
-                        )}
-                      </>
-                    )}
+                    {generateCustomBadgeIcon(el)}
                   </View>
                   <Text style={styles.gridText}>{el.title}</Text>
                 </TouchableOpacity>

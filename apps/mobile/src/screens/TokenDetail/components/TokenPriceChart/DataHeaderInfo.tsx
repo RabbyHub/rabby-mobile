@@ -61,10 +61,10 @@ export const DataHeaderInfo = ({
       ? `${data?.[currentIndex?.value]?.isLoss ? '-' : '+'}${
           data?.[currentIndex.value].changePercent
         }(${data?.[currentIndex.value].change})`
-      : currentPercentChange
+      : currentPercentChange && !isLoading
       ? `${currentIsLoss ? '-' : '+'}${currentPercentChange}`
       : '';
-  }, [data, currentIsLoss, currentPercentChange, currentIndex]);
+  }, [data, currentIsLoss, currentPercentChange, currentIndex, isLoading]);
 
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
