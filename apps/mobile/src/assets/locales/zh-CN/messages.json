@@ -747,7 +747,7 @@
         "dapps": "Dapps",
         "approvals": "授权",
         "search": "搜索 Token",
-        "copyTrading": "复制交易"
+        "copyTrading": "跟单交易"
       }
     },
     "manageAddress": {
@@ -2036,7 +2036,7 @@
     },
     "copyTrading": {
       "tipsDollar": {
-        "title": "来自 Smart Money 的 Copy Trading",
+        "title": "来自 Smart Money 的跟单交易",
         "description": "发现基于 Smart Money 钱包最近活动的代币。点击代币查看来自这些钱包的详细交易金额和历史利润。"
       },
       "buy": "购买",
@@ -2046,7 +2046,7 @@
       "recentBuy": "最近购买",
       "comingSoon": "即将推出...",
       "smartMoneyWallets": "Smart Money 钱包",
-      "refreshTitle": "加载更多来自 Smart Money 的 Copy Trading",
+      "refreshTitle": "加载更多来自 Smart Money 的跟单交易",
       "smartMoneyWallet": "Smart Money Wallet"
     }
   },
