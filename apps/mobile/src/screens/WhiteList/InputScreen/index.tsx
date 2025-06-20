@@ -177,9 +177,6 @@ const WhitelistInputScreen = () => {
             await getWhitelist();
             toast.success(t('page.whitelist.addSuccessful'));
             nav.canGoBack() && nav.goBack();
-            setTimeout(() => {
-              removeGlobalBottomSheetModal2024(confrimModalIRef.current);
-            }, 0);
           },
         });
       }
