@@ -1,12 +1,13 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useMemo } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text, View, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValueKMB } from '../../Home/utils/price';
 import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
+import DollarIcon from '@/assets2024/icons/home/IconDollar.png';
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTranslation } from 'react-i18next';
@@ -130,7 +131,7 @@ const TokenListItemComponent = ({
             <View style={styles.tokenInfo}>
               <Text style={styles.tokenName}>{getTokenSymbol(item)}</Text>
               <Text style={styles.fdvText}>
-                FDV {formatUsdValueKMB(item.fdv || 0)}
+                {`FDV ${item.fdv ? formatUsdValueKMB(item.fdv || 0) : '-'}`}
               </Text>
             </View>
           </View>
@@ -157,7 +158,11 @@ const TokenListItemComponent = ({
             <View style={styles.triangle} />
           </View>
           <TouchableOpacity onPress={showTipsDollarDialog}>
-            <IconDollar width={20} height={20} style={styles.dollarIcon} />
+            <Image
+              source={require('@/assets2024/icons/home/IconDollar.png')}
+              style={styles.dollarIcon}
+            />
+            {/* <IconDollar width={20} height={20} style={styles.dollarIcon} /> */}
           </TouchableOpacity>
           <Text style={styles.buyText}>
             Buy{'  '}
@@ -183,6 +188,7 @@ export const TokenListItem = React.memo(TokenListItemComponent);
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
     paddingVertical: 14,
+    paddingTop: 12,
     paddingHorizontal: 12,
     gap: 16,
     marginBottom: 8,
@@ -233,8 +239,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 8,
   },
   dollarIcon: {
-    width: 14,
-    height: 14,
+    width: 20,
+    height: 20,
     marginRight: 4,
   },
   dollarSymbol: {

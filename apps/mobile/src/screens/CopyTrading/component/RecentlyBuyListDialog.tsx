@@ -199,6 +199,7 @@ export default function RecentlyBuyListDialog({
         chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
         tokenId: item?.id,
         type: 'Buy',
+        payUseBaseToken: true,
       },
     });
   });

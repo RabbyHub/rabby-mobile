@@ -84,7 +84,6 @@ export const CopyTradingScreen = () => {
   const [tokenList, setTokenList] = useState<CopyTradeTokenItem[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { safeTop, headerHeight } = useSafeSizes();
-  console.log('safeTop', safeTop);
   const { navigation } = useSafeSetNavigationOptions();
   const [tabLoading, setTabLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
