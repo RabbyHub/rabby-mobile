@@ -452,8 +452,8 @@ AccountSwitcherAopProps<{
   ]);
 
   const myAddressesList = useMemo(() => {
-    return isSceneUsingAllAccounts ? myAddresses.slice(0, 10) : myAddresses;
-  }, [myAddresses, isSceneUsingAllAccounts]);
+    return isSceneSupportAllAccounts ? myAddresses.slice(0, 10) : myAddresses;
+  }, [myAddresses, isSceneSupportAllAccounts]);
 
   return (
     <LinearGradientContainer
