@@ -1395,7 +1395,19 @@
       "watchAddressListScreen": {
         "addWatchAddress": "Add Watch-Only Wallets"
       },
+      "notMatterAddressDialog": {
+        "title": "The following wallets are not Included in Total Balance",
+        "notTop10Address": "Wallets ranked below the top 10",
+        "safeWallet": "Safe Wallet",
+        "watchOnlyWallet": "Watch-Only Wallet",
+        "helpTitle": "Wallets ranked below the top 10",
+        "helpDescription1": "To ensure timely and accurate data updates, only your top 10 wallets are included in Total Balance and Portfolio.",
+        "helpDescription2": "You can long-press to pin wallets and adjust which ones are included."
+      },
       "addressListScreen": {
+        "moreWallets": "More Wallets",
+        "notIncludedInTotalBalance": "Not included in Total Balance",
+        "notIncludedInTransactions": "Not included in Transactions",
         "importSafeAddress": "Imported Safe Wallet",
         "importWatchAddress": "Imported Watch-Only Wallet",
         "unpin": "Unpin",

@@ -49,6 +49,7 @@ import SelectCex from '@/screens/Send/components/SelectCex';
 import { BatchRevokeErrorReason } from '@/screens/BatchRevoke/BatchRevokeErrorReason';
 import { FundYourWallet } from '@/screens/Home/FundYourWallet';
 import RecentlyBuyListDialog from '@/screens/CopyTrading/component/RecentlyBuyListDialog';
+import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -92,6 +93,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]: [],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: [508],
+  [MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: [470],
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: [492],
   [MODAL_NAMES.DESCRIPTION]: [674],
@@ -130,6 +132,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: OneKeyPinOrPassphrase,
   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: SeedPhraseBackupToCloud,
   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: AddAddressSelectMethod,
+  [MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG]: NotMatterAddressDialog,
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: FundYourWallet,
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: AddWhitelistSelectMethod,
   [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: SeedPhraseManualBackup,

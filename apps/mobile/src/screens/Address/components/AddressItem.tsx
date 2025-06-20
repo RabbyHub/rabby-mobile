@@ -40,8 +40,11 @@ interface AddressItemProps {
   isLoss?: boolean;
   lastSelectedAccount?: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
+  isScrolling?: boolean;
   disableMenu?: boolean;
   onSelect?: () => void;
+  useLongPressing?: boolean;
+  handleGoDetail?: () => void;
 }
 export const AddressItemEntry = (props: AddressItemProps) => {
   const {
@@ -51,6 +54,9 @@ export const AddressItemEntry = (props: AddressItemProps) => {
     changePercent,
     isLoss,
     disableMenu,
+    isScrolling,
+    useLongPressing,
+    handleGoDetail,
   } = props;
   const { styles } = useTheme2024({ getStyle });
   const [isPressing, setIsPressing] = React.useState(false);
@@ -64,13 +70,14 @@ export const AddressItemEntry = (props: AddressItemProps) => {
       ignoreAndroidSystemSettings: false,
     });
     onSelect?.();
+    handleGoDetail?.();
     navigate(RootNames.SingleAddressStack, {
       screen: RootNames.SingleAddressHome,
       params: {
         account,
       },
     });
-  }, [account, onSelect]);
+  }, [account, onSelect, handleGoDetail]);
 
   const isCurrentAccount = React.useMemo(() => {
     return (
@@ -85,12 +92,13 @@ export const AddressItemEntry = (props: AddressItemProps) => {
       style={[styles.shadow, isPressing && styles.rootPressing]}>
       <TouchableOpacity
         activeOpacity={1}
-        onPressIn={() => setIsPressing(true)}
+        onPressIn={() => !useLongPressing && setIsPressing(true)}
         onPressOut={() => setIsPressing(false)}
         style={StyleSheet.flatten([styles.root, props.style])}
         delayLongPress={200} // long press delay
         onPress={onDetail}
         onLongPress={() => {
+          useLongPressing && setIsPressing(true);
           trigger('impactLight', {
             enableVibrateFallback: true,
             ignoreAndroidSystemSettings: false,
@@ -105,7 +113,7 @@ export const AddressItemEntry = (props: AddressItemProps) => {
       </TouchableOpacity>
     </AddressItemShadowView>
   );
-  if (disableMenu) {
+  if (disableMenu || isScrolling) {
     return children;
   }
   return (
