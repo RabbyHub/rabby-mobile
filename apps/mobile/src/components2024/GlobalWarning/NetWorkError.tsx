@@ -1,5 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import OfflinePng from '@/assets2024/images/offline.png';
+import OfflineDarkPng from '@/assets2024/images/offline-dark.png';
 import { createGetStyles2024 } from '@/utils/styles';
 import { View, Text, StyleProp, ViewStyle, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +16,7 @@ export function NetWorkError({
   hasError,
   onRefresh,
 }: NetWorkErrorProps) {
-  const { styles } = useTheme2024({
+  const { styles, isLight } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();
@@ -32,7 +33,10 @@ export function NetWorkError({
 
   return (
     <View style={[styles.container, style]}>
-      <Image style={styles.img} source={OfflinePng} />
+      <Image
+        style={styles.img}
+        source={isLight ? OfflinePng : OfflineDarkPng}
+      />
       <Text style={styles.title}>
         {t('component.globalWarning.offlineText')}
       </Text>
