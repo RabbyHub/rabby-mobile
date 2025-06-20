@@ -23,19 +23,16 @@ import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { PropsForAccountSwitchScreen } from '@/hooks/accountsSwitcher';
 import { BuyToIcon } from './components/ToIcon';
 import { toast } from '@/components2024/Toast';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { RootNames } from '@/constant/layout';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 
 const floatBottom_height = 112;
 
 export const BuyScreen = ({
-  isForMultipleAdderss,
+  isForMultipleAddress,
 }: {
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
 }) => {
-  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
-
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -72,7 +69,7 @@ export const BuyScreen = ({
     noQuote,
 
     refreshQuotes,
-  } = useBuy(isForMultipleAdderss);
+  } = useBuy(isForMultipleAddress);
   const isQuoteLoading = loading;
 
   const symbol = React.useMemo(() => getTokenSymbol(toToken), [toToken]);
@@ -91,7 +88,7 @@ export const BuyScreen = ({
           service_provider: activeProvider,
           currency_code: currency,
           redirect_url: `https://rabby.io/mobile-redirect/${
-            isForMultipleAdderss ? RootNames.MultiBuy : RootNames.Buy
+            isForMultipleAddress ? RootNames.MultiBuy : RootNames.Buy
           }`,
         });
         await InAppBrowser.isAvailable();
@@ -124,14 +121,14 @@ export const BuyScreen = ({
     region,
     amount,
     toToken,
-    isForMultipleAdderss,
+    isForMultipleAddress,
     refreshQuotes,
     currency,
   ]);
 
   return (
     <NormalScreenContainer type="bg1">
-      {isForMultipleAdderss && (
+      {isForMultipleAddress && (
         <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}
       <KeyboardAwareScrollView
@@ -214,7 +211,7 @@ const ForMultipleAddress = (
     keyof PropsForAccountSwitchScreen
   >,
 ) => {
-  return <BuyScreen {...props} isForMultipleAdderss />;
+  return <BuyScreen {...props} isForMultipleAddress />;
 };
 
 BuyScreen.ForMultipleAddress = ForMultipleAddress;

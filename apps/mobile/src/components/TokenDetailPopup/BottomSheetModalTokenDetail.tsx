@@ -17,7 +17,6 @@ import {
   BottomSheetFlatList,
   BottomSheetFlatListMethods,
   BottomSheetProps,
-  BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {
   TokenItem,
@@ -25,8 +24,8 @@ import {
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
-import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
-import { AbstractPortfolioToken } from '@/screens/home/types';
+import { KeyringAccountWithAlias } from '@/hooks/account';
+// import { AbstractPortfolioToken } from '@/screens/home/types';
 import { useInfiniteScroll, useMemoizedFn } from 'ahooks';
 import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
 
@@ -71,6 +70,7 @@ import { apiCustomTestnet } from '@/core/apis';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
 
 const PAGE_COUNT = 10;
 
@@ -469,7 +469,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       data?: RedirectToType;
     }) => void;
     hideOperationButtons?: boolean;
-    address?: KeyringAccountWithAlias;
+    address?: KeyringAccountWithAlias | null;
     nextTxRedirectAccount?: Account | null;
   }
 >(
@@ -487,10 +487,10 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     },
     ref,
   ) => {
-    const { styles, colors } = useThemeStyles(getStyles);
+    const { styles } = useThemeStyles(getStyles);
     const { t } = useTranslation();
-    const { currentAccount } = useCurrentAccount();
-    const finalAccount = address || currentAccount;
+    const finalAccount = address;
+
     const [tokenLoad, setTokenLoad] = React.useState<{
       isLoading: boolean;
       token: TokenItem | null;
@@ -506,12 +506,9 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     }, [token]);
 
     const getTokenAmount = React.useCallback(async () => {
-      if (
-        !finalAccount ||
-        !token ||
-        /* token.amount !== undefined */ token.amount
-      )
+      if (!finalAccount || !token) {
         return;
+      }
 
       setTokenLoad({ isLoading: true, token: null });
       try {
@@ -747,10 +744,8 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     const { switchSceneCurrentAccount: _switchSceneCurrentAccount } =
       useSwitchSceneCurrentAccount();
 
-    const switchSceneCurrentAccount = useCallback<
-      typeof _switchSceneCurrentAccount
-    >(
-      async (...args) => {
+    const switchSceneCurrentAccount = useCallback(
+      async (...args: Parameters<typeof _switchSceneCurrentAccount>) => {
         if (!__shouldSwitchSceneAccountBeforeRedirect__) return;
 
         return _switchSceneCurrentAccount(...args);
@@ -791,17 +786,16 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             break;
           }
           case 'Receive': {
-            await switchSceneCurrentAccount(
-              'MakeTransactionAbout',
-              nextTxRedirectAccount || null,
-            );
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Receive,
-              params: {
-                chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-                tokenSymbol: token?.symbol,
-              },
-            });
+            if (finalAccount) {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.Receive,
+                params: {
+                  chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                  tokenSymbol: token?.symbol,
+                  account: finalAccount,
+                },
+              });
+            }
             break;
           }
         }
@@ -815,6 +809,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         nextTxRedirectAccount,
         navigation,
         navigateToSendPolyScreen,
+        finalAccount,
       ],
     );
 

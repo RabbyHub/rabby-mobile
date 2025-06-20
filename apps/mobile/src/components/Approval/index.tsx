@@ -1,5 +1,9 @@
 import { useApproval } from '@/hooks/useApproval';
-import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
+import {
+  eventBus,
+  EVENT_ACTIVE_WINDOW,
+  EventBusListeners,
+} from '@/utils/events';
 import { IExtractFromPromise } from '@/utils/type';
 import React from 'react';
 import { Text, View } from 'react-native';
@@ -43,8 +47,8 @@ export const Approval = () => {
   >;
   const [approval, setApproval] = React.useState<IApproval | null>(null);
 
-  const init = React.useCallback(
-    async (winId?: string) => {
+  const init = React.useCallback<EventBusListeners['EVENT_ACTIVE_WINDOW']>(
+    async winId => {
       setApproval(null);
       const _approval = await getApproval();
       if (!_approval) {
@@ -75,8 +79,9 @@ export const Approval = () => {
     return <View />;
   }
 
+  console.log({ approval });
   const { data } = approval;
-  const { approvalComponent, params, origin } = data;
+  const { approvalComponent, params, origin, account } = data;
 
   const fromTabId =
     params.$mobileCtx?.fromTabId ||
@@ -104,5 +109,11 @@ export const Approval = () => {
   const CurrentApprovalComponent =
     ApprovalComponent[approvalComponent] ?? ApprovalComponent.Unknown;
 
-  return <CurrentApprovalComponent params={params} origin={origin} />;
+  return (
+    <CurrentApprovalComponent
+      params={params}
+      origin={origin}
+      account={account}
+    />
+  );
 };

@@ -21,11 +21,7 @@ import ViewMore from '@/components/Approval/components/Actions/components/ViewMo
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
@@ -45,13 +41,19 @@ import { formatIntlTimestamp } from '@/utils/time';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { findAccountByPriority } from '@/utils/account';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
-export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const ApproveToken: React.FC<Props> = ({
+  data,
+  isSingleAddress,
+  account,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -120,8 +122,6 @@ export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
     return account;
   }, [accounts, data.address, data.keyringType]);
 
-  const { switchAccount } = useCurrentAccount();
-
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
 
@@ -135,7 +135,7 @@ export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
   const handleGotoTokenDetail = useMemoizedFn(() => {
     naviPush(RootNames.TokenDetail, {
       token: ensureAbstractPortfolioToken(actionData.token),
-      // account: address,
+      account,
       needUseCacheToken: true,
       isSingleAddress,
     });
@@ -279,7 +279,6 @@ export const ApproveToken: React.FC<Props> = ({ data, isSingleAddress }) => {
           <AddressItemInDetail
             address={data.maxGasTx.address}
             accounts={unionAccounts}
-            switchAccount={switchAccount}
           />
         </View>
 

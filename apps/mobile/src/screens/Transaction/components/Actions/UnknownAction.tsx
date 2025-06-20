@@ -1,57 +1,42 @@
 /* eslint-disable react-native/no-inline-styles */
-import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
-import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
+import { RcIconExternalLinkCC } from '@/assets/icons/common';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
-import {
-  formatAmount,
-  formatTokenAmount,
-  formatUsdValue,
-} from '@/utils/number';
+import { formatAmount } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
-import ViewMore from '@/components/Approval/components/Actions/components/ViewMore';
-import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
-import { RootNames } from '@/constant/layout';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { ellipsisAddress } from '@/utils/address';
-import { naviPush } from '@/utils/navigation';
+import { formatIntlTimestamp } from '@/utils/time';
 import { openTxExternalUrl } from '@/utils/transaction';
-import {
-  ApproveTokenRequireData,
-  SendRequireData,
-} from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
-import BigNumber from 'bignumber.js';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
-import { Button } from '@/components2024/Button';
-import { StackActions } from '@react-navigation/native';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { CHAINS_ENUM } from '@/constant/chains';
 import { BalanceChange } from './components/BalanceChange';
-import { formatIntlTimestamp } from '@/utils/time';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
-export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const UnknownAction: React.FC<Props> = ({
+  data,
+  isSingleAddress,
+  account,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  console.log('data', JSON.stringify(data));
 
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
@@ -73,8 +58,6 @@ export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
 
-  const { switchAccount } = useCurrentAccount();
-
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
 
@@ -91,6 +74,7 @@ export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
         data={data.maxGasTx.explain?.balance_change}
         version={data.maxGasTx.explain?.pre_exec_version || 'v0'}
         isSingleAddress={isSingleAddress}
+        account={account}
       />
       <View style={styles.detailContainer}>
         {!data.isPending && data.maxGasTx.completedAt && (
@@ -140,7 +124,6 @@ export const UnknownAction: React.FC<Props> = ({ data, isSingleAddress }) => {
           <AddressItemInDetail
             address={data.maxGasTx.address}
             accounts={unionAccounts}
-            switchAccount={switchAccount}
           />
         </View>
 

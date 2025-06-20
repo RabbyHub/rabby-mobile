@@ -35,7 +35,7 @@ export function useDapps() {
     const dataList = Array.isArray(data) ? data : [data];
     dataList.forEach(item => {
       // now we must ensure all dappOrigin has https:// prefix
-      item.origin = stringUtils.ensurePrefix(item.info.id, 'https://');
+      item.origin = stringUtils.ensurePrefix(item.info?.id, 'https://');
     });
     const res = dappService.addDapp(data);
     return res;

@@ -25,6 +25,7 @@ import {
   TextInput,
   TextInputSubmitEditingEventData,
   View,
+  ViewProps,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Spin } from '../TransactionRecord/components/Spin';
@@ -199,7 +200,7 @@ export const GnosisSupportChainList = ({
   style,
 }: {
   data: Chain[];
-  style?: StyleProp<ViewStyle>;
+  style?: ViewProps['style'];
 }) => {
   const { safeOffHeader } = useSafeSizes();
 

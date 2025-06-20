@@ -6,7 +6,6 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken } from '@/hooks/chainAndToken/useToken';
-import { useCurrentAccount } from '@/hooks/account';
 import { getTokenSymbol } from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +20,7 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useLongPressTokenAtom } from '@/screens/Swap/hooks';
 import { trigger } from 'react-native-haptic-feedback';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -53,7 +53,9 @@ const BridgeToTokenSelect = ({
   const bridgeSupportedChains = useBridgeSupportedChains();
   const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const handleCurrentTokenChange = (token: TokenItem) => {
     onChange && onChange('');
@@ -82,7 +84,7 @@ const BridgeToTokenSelect = ({
     }).filter(e => !excludeTokens.includes(e.id));
   }, [tokenList, excludeTokens]);
 
-  const displayTokenList = useSortToken(availableToken);
+  const displayTokenList = useSortToken(availableToken || [], currentAccount);
 
   const isListLoading = tokenListLoading;
 
@@ -129,7 +131,7 @@ const BridgeToTokenSelect = ({
     }));
   });
 
-  const tokenPressRef = useRef<TouchableOpacity>(null);
+  const tokenPressRef = useRef<typeof TouchableOpacity & View>(null);
   const handleLongPressToken = () => {
     if (!token) {
       return;

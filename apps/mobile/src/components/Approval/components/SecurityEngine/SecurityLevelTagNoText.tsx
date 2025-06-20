@@ -31,6 +31,7 @@ const styles = StyleSheet.create({
     right: -6,
     paddingLeft: 6,
     borderRadius: 3,
+    // @ts-expect-error maybe invalid style
     transition: 'all 0.3s',
     maxWidth: 40,
     overflow: 'hidden',

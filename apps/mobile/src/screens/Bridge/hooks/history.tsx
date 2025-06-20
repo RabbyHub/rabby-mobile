@@ -1,15 +1,14 @@
-import { useInfiniteScroll, useInterval, useRequest } from 'ahooks';
+import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
-import { currentAccountAtom, useCurrentAccount } from '@/hooks/account';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { bridgeService, transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
-import { fetchRefreshLocalData } from '@/screens/Swap/hooks/history';
 import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const pendingCountAtom = atom(0);
 const bridgeLocalTxDataAtom = atom<TransactionGroup | null>(null);
@@ -50,15 +49,22 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
   // );
 
   const [, setBridgeHistoryRedDot] = useAtom(bridgeHistoryRedDotAtom);
-  const { currentAccount: account } = useCurrentAccount({
-    disableAutoFetch: true,
+
+  const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
+
+  const timerRef = useRef<NodeJS.Timeout>();
+  const clearTimer = useMemoizedFn(() => {
+    timerRef.current && clearTimeout(timerRef.current);
   });
 
   useEffect(() => {
     if (account?.address) {
       setPendingTxData(null);
+      clearTimer();
     }
-  }, [account?.address, setPendingTxData]);
+  }, [account?.address, clearTimer, setPendingTxData]);
 
   const res = useRequest(
     async () => {
@@ -94,14 +100,12 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
       );
     },
     {
-      refreshDeps: [account],
+      refreshDeps: [account?.address],
       onSuccess(v) {
         setCount(v);
       },
     },
   );
-
-  const timerRef = useRef<NodeJS.Timeout>();
 
   // const runFetchLocalPendingTx = useCallback(() => {
   //   if (account?.address) {
@@ -137,21 +141,18 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
 
   useEffect(() => {
     if ((!loading && value !== undefined) || error) {
+      clearTimer();
       timerRef.current = setTimeout(() => {
         runAsync();
       }, timer);
     }
 
-    return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-    };
-  }, [loading, value, error, timer, runAsync]);
+    return clearTimer;
+  }, [loading, value, error, timer, runAsync, clearTimer]);
 
   useEffect(() => {
-    return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-    };
-  }, []);
+    return clearTimer;
+  }, [clearTimer]);
 
   const clearLocalPendingTxData = () => {
     // setLocalPendingTxData(null);
@@ -191,7 +192,9 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
 };
 
 export const useBridgeHistory = () => {
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const addr = currentAccount?.address || '';
 

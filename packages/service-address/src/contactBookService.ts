@@ -77,13 +77,16 @@ export class ContactBookService {
     return Object.values(this.store.aliases);
   }
 
-  getAliasByAddress(address: string) {
+  getAliasByAddress(address: string): AddressAliasItem | undefined {
     if (!address) {
       return undefined;
     }
     const alias = this.store.aliases[address.toLocaleLowerCase()];
     if (!alias) {
-      return ellipsis(address, 6);
+      return {
+        address: address.toLocaleLowerCase(),
+        alias: ellipsis(address, 6),
+      };
     }
 
     return alias;

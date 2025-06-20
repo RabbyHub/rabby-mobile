@@ -63,7 +63,7 @@ const SendPolyScreen = () => {
   const { isSingleAddress } = useSendRoutes();
 
   const Header = useCallback(
-    () => <SendHeaderRight isForMultipleAdderss={!isSingleAddress} />,
+    () => <SendHeaderRight isForMultipleAddress={!isSingleAddress} />,
     [isSingleAddress],
   );
   const HeaderLeft = useCallback(
@@ -81,28 +81,103 @@ const SendPolyScreen = () => {
     isForMultipleAddress: !isSingleAddress,
   });
 
-  const handleGotoInputAddress = (autoScan: boolean) => {
-    toggleInput();
-    if (autoScan) {
-      navigate(RootNames.Scanner);
-    }
-  };
-  const handleGotoImportedAddress = () => {
+  const handleGotoInputAddress = useCallback(
+    (autoScan: boolean) => {
+      toggleInput();
+      if (autoScan) {
+        navigate(RootNames.Scanner);
+      }
+    },
+    [toggleInput],
+  );
+  const handleGotoImportedAddress = useCallback(() => {
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: RootNames.SelectImportAddress,
         params: {},
       }),
     );
-  };
-  const handleGotoAddWhitelist = () => {
+  }, [navigation]);
+  const handleGotoAddWhitelist = useCallback(() => {
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: RootNames.WhitelistInput,
         params: {},
       }),
     );
-  };
+  }, [navigation]);
+
+  const renderHeader = useCallback(
+    () => (
+      <View>
+        <View style={styles.input}>
+          <Pressable
+            style={styles.placeHolderWrapper}
+            onPress={() => handleGotoInputAddress(false)}>
+            <Text style={styles.placeHolder}>
+              {t('page.sendPoly.enterAddress')}
+            </Text>
+          </Pressable>
+          <Pressable onPress={() => handleGotoInputAddress(true)}>
+            <ScannerCC color={colors2024['neutral-title-1']} />
+          </Pressable>
+        </View>
+        <View>
+          {!!recentHistory.length && (
+            <Text style={styles.recentHeader}>{t('page.sendPoly.recent')}</Text>
+          )}
+          {/* less than 3 history */}
+          <View style={styles.recentList}>
+            {recentHistory?.map(item => {
+              const { account, inWhitelist } = findAccountWithoutBalance(
+                item.toAddress,
+              );
+              return (
+                <RecentSendItem
+                  key={item.time}
+                  account={account}
+                  timeStamp={item.time}
+                  inWhiteList={inWhitelist}
+                />
+              );
+            })}
+          </View>
+        </View>
+        <WhiteListHeader gotoAddWhitelist={handleGotoAddWhitelist} />
+      </View>
+    ),
+    [
+      colors2024,
+      findAccountWithoutBalance,
+      handleGotoAddWhitelist,
+      handleGotoInputAddress,
+      recentHistory,
+      styles.input,
+      styles.placeHolder,
+      styles.placeHolderWrapper,
+      styles.recentHeader,
+      styles.recentList,
+      t,
+    ],
+  );
+
+  const renderEmpty = useCallback(
+    () => <EmptyWhiteListHolder gotoAddWhitelist={handleGotoAddWhitelist} />,
+    [handleGotoAddWhitelist],
+  );
+
+  const renderFooter = useCallback(
+    () => (
+      <View style={styles.footer}>
+        <OtherAddressNav
+          onPress={handleGotoImportedAddress}
+          text={t('page.sendPoly.sendToImportedAddress')}
+        />
+        <View style={styles.footerGap} />
+      </View>
+    ),
+    [handleGotoImportedAddress, styles.footer, styles.footerGap, t],
+  );
   if (isInputAddress) {
     return <SendInputScreen cleanInput={cleanInput} />;
   }
@@ -124,59 +199,9 @@ const SendPolyScreen = () => {
             />
           </View>
         )}
-        // eslint-disable-next-line react/no-unstable-nested-components
-        ListHeaderComponent={() => (
-          <View>
-            <View style={styles.input}>
-              <Pressable
-                style={styles.placeHolderWrapper}
-                onPress={() => handleGotoInputAddress(false)}>
-                <Text style={styles.placeHolder}>
-                  {t('page.sendPoly.enterAddress')}
-                </Text>
-              </Pressable>
-              <Pressable onPress={() => handleGotoInputAddress(true)}>
-                <ScannerCC color={colors2024['neutral-title-1']} />
-              </Pressable>
-            </View>
-            <View>
-              {!!recentHistory.length && (
-                <Text style={styles.recentHeader}>
-                  {t('page.sendPoly.recent')}
-                </Text>
-              )}
-              {/* less than 3 history */}
-              <View style={styles.recentList}>
-                {recentHistory?.map(item => {
-                  const { account, inWhitelist } = findAccountWithoutBalance(
-                    item.toAddress,
-                  );
-                  return (
-                    <RecentSendItem
-                      key={item.time}
-                      account={account}
-                      timeStamp={item.time}
-                      inWhiteList={inWhitelist}
-                    />
-                  );
-                })}
-              </View>
-            </View>
-            <WhiteListHeader gotoAddWhitelist={handleGotoAddWhitelist} />
-          </View>
-        )}
-        ListEmptyComponent={() => (
-          <EmptyWhiteListHolder gotoAddWhitelist={handleGotoAddWhitelist} />
-        )}
-        ListFooterComponent={
-          <View style={styles.footer}>
-            <OtherAddressNav
-              onPress={handleGotoImportedAddress}
-              text={t('page.sendPoly.sendToImportedAddress')}
-            />
-            <View style={styles.footerGap} />
-          </View>
-        }
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
       />
     </NormalScreenContainer2024>
   );

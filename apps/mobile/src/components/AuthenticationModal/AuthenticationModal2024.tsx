@@ -5,7 +5,7 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { IS_IOS } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
-import { usePasswordStatus } from '@/hooks/useLock';
+import { useLoadLockInfo, usePasswordStatus } from '@/hooks/useLock';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import type { ValidationBehaviorProps } from '@/core/apis/lock';
 
@@ -195,6 +195,8 @@ export const AuthenticationModal2024 = ({
     footerButtonGroupMb: 35,
   });
 
+  useLoadLockInfo({ autoFetch: true });
+
   const { isUseCustomPwd } = usePasswordStatus();
   const bioComputed = useBiometricsComputed();
 
@@ -222,10 +224,18 @@ export const AuthenticationModal2024 = ({
     stage: BioAuthStage.idle,
     restCount: 0,
   });
-  const [currentAuthType, setCurrentAuthType] = React.useState<
-    AuthState['authType']
-  >(coerceAuthType(availableAuthTypes[0], availableAuthTypes));
 
+  const defaultAuthType = useMemo(
+    () => coerceAuthType(availableAuthTypes[0], availableAuthTypes),
+    [availableAuthTypes],
+  );
+
+  const [currentAuthType, setCurrentAuthType] =
+    React.useState<AuthState['authType']>(defaultAuthType);
+
+  if (currentAuthType === 'none' && currentAuthType !== defaultAuthType) {
+    setCurrentAuthType(defaultAuthType);
+  }
   const handleSubmitForm = React.useCallback(async () => {
     if (hasCheckFailed) return;
 

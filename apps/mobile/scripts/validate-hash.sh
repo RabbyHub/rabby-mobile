@@ -73,7 +73,7 @@ yarn install --frozen-lockfile
 
 bundle install
 
-cd ./ios && bundle exec pod deintegrate && RCT_NEW_ARCH_ENABLED=0 bundle exec pod install --deployment --repo-update
+cd ./ios && bundle exec pod deintegrate && RCT_NEW_ARCH_ENABLED=0 bundle exec pod install --deployment --repo-update --allow-root
 
 if [ $? -ne 0 ]; then
   echo "❌: 安装 pods 依赖失败"

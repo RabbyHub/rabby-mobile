@@ -19,6 +19,7 @@ import { Divide } from '../Actions/components/Divide';
 import { getActionsStyle } from '../Actions';
 import { ParsedTextActionData } from '@rabby-wallet/rabby-action';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { Account } from '@/core/services/preference';
 
 export const getMessageStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -72,6 +73,7 @@ const Actions = ({
   message,
   origin,
   originLogo,
+  account,
 }: {
   data: ParsedTextActionData | null;
   engineResults: Result[];
@@ -79,6 +81,7 @@ const Actions = ({
   message: string;
   origin: string;
   originLogo?: string;
+  account: Account;
 }) => {
   const actionName = useMemo(() => {
     return getActionTypeText(data);
@@ -130,6 +133,7 @@ const Actions = ({
                   isLight
                   content={
                     <NoActionAlert
+                      account={account}
                       data={{
                         origin,
                         text: message,

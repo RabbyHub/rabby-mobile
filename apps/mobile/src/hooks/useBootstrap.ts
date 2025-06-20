@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { atom, useAtom } from 'jotai';
-import { keyringService } from '@/core/services';
+import { customTestnetService, keyringService } from '@/core/services';
 import { initApis } from '@/core/apis/init';
 import { initServices } from '@/core/services/init';
 import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
@@ -18,6 +18,14 @@ import { useLoadLockInfo } from '@/hooks/useLock';
 import { useBiometrics } from './biometrics';
 import { syncMainChainList } from '@/constant/chains';
 import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
+
+const syncCustomTestChainList = () => {
+  try {
+    customTestnetService.syncChainList();
+  } catch (e) {
+    console.error(e);
+  }
+};
 
 const bootstrapAtom = atom({
   couldRender: false,
@@ -61,6 +69,7 @@ export function useInitializeAppOnTop() {
     try {
       await initServices();
       await initApis();
+      syncCustomTestChainList();
       await Promise.race([syncMainChainList(), sleep(5000)]);
     } catch (error) {
       console.error('useInitializeAppOnTop::', error);

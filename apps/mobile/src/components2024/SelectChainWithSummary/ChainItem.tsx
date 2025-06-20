@@ -31,7 +31,7 @@ export default function ChainItem({
   onPress?(value: CHAINS_ENUM): void;
   disabled?: boolean;
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
-  tokens: TokenItem[];
+  tokens?: TokenItem[];
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const isDark = useGetBinaryMode() === 'dark';

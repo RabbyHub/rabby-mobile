@@ -8,7 +8,7 @@ const useCommonStyle = () => {
     return StyleSheet.create({
       primaryText: {
         fontSize: 14,
-        fontWeight: '500',
+        fontWeight: '700',
         lineHeight: 18,
         color: colors['neutral-title-1'],
       },

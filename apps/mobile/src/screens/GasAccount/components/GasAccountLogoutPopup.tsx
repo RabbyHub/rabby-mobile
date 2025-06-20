@@ -3,7 +3,6 @@ import { View, Text, ViewProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useGasAccountMethods } from '../hooks';
@@ -21,14 +20,15 @@ export const GasAccountCurrentAddress = ({
   style?: ViewProps['style'];
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { currentAccount } = useCurrentAccount();
   const { account } = useGasAccountSign();
+
+  if (!account) {
+    return null;
+  }
 
   return (
     <View style={[styles.currentAddressContainer, style]}>
-      <AddressItem
-        account={(account as any) || currentAccount}
-        fetchAccount={false}>
+      <AddressItem account={account as any} fetchAccount={false}>
         {({ WalletIcon, WalletName, WalletBalance }) => (
           <View
             style={{

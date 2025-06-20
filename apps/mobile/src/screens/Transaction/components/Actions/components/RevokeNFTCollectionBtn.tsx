@@ -7,8 +7,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { ParsedActionData } from '@rabby-wallet/rabby-action';
-import { NFTCollection, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { NFTCollection } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,11 +35,11 @@ export const RevokeNFTCollectionBtn = ({
       contractAddress: collection.id,
       spender: spender,
       address: account.address,
+      account,
     });
   });
 
   const handleRevoke = useMemoizedFn(async () => {
-    await switchSceneSigningAccount('MultiHistory', account);
     try {
       await revokeNFTApprove({
         chainServerId: collection.chain || (collection as any).chain_id,
@@ -48,11 +47,10 @@ export const RevokeNFTCollectionBtn = ({
         contractId: collection.id,
         abi: 'ERC721',
         isApprovedForAll: true,
+        account,
       });
     } catch (error) {
       console.error(error);
-    } finally {
-      await switchSceneSigningAccount('MultiHistory', null);
     }
 
     resetNavigationTo(navigation, 'Home');

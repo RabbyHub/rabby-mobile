@@ -22,12 +22,13 @@ import { approveToken, revokeNFTApprove } from '@/core/apis/approvals';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { fetchHistoryTokenUUId } from './utils';
-import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from './type';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useRequest } from 'ahooks';
 import { transactionHistoryService } from '@/core/services';
+import { Account } from '@/core/services/preference';
 
 interface ItemProps {
   status: number;
@@ -39,16 +40,13 @@ interface ItemProps {
   sends: TxDisplayItem['sends'];
   approve: TxDisplayItem['token_approve'];
   data: HistoryDisplayItem;
-  currentApprove: number;
-  noRemainValue: boolean;
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
   buttonContainerStyle?: RNViewProps['style'];
+  account: Account;
 }
 
 export const HistoryBottomBtn = ({
   tokenDict,
-  noRemainValue,
-  currentApprove,
   status,
   type,
   sends,
@@ -56,13 +54,13 @@ export const HistoryBottomBtn = ({
   approve,
   chain,
   receives,
-  isForMultipleAdderss = true,
+  isForMultipleAddress = true,
   buttonContainerStyle,
+  account: currentAccount,
 }: ItemProps) => {
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
   const { styles } = useTheme2024({ getStyle });
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { accounts } = useMyAccounts();
 
@@ -128,9 +126,9 @@ export const HistoryBottomBtn = ({
               });
               await switchSceneCurrentAccount(
                 'MakeTransactionAbout',
-                isForMultipleAdderss ? fromAddrIsImported : currentAccount,
+                isForMultipleAddress ? fromAddrIsImported : currentAccount,
               );
-              navigateToSendPolyScreen(!isForMultipleAdderss, {
+              navigateToSendPolyScreen(!isForMultipleAddress, {
                 chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
                 tokenId: sends[0]?.token_id,
                 toAddress: sends[0]?.to_addr,
@@ -141,71 +139,6 @@ export const HistoryBottomBtn = ({
         </View>
       );
     }
-    case HistoryItemCateType.Approve:
-      const singleAmount = currentApprove || approve?.value;
-      const revokeAmountStr =
-        singleAmount && singleAmount < 1e9
-          ? numberWithCommasIsLtOne(singleAmount, 2)
-          : '';
-      const tokenId = approve?.token_id || '';
-      const tokenUUID = `${chain}_token:${tokenId}`;
-      const tokenIsNft = tokenId?.length === 32;
-      const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
-      const name = tokenIsNft
-        ? t('page.nft.title')
-        : getTokenSymbol(singeToken as TokenItem);
-
-      return tokenIsNft ? null : (
-        <View style={btnContainerViewStyle}>
-          <Tip
-            placement="top"
-            content={
-              noRemainValue
-                ? t('page.transactions.detail.NoApproveNeed')
-                : undefined
-            }>
-            <Button
-              // loading={btnLoading}
-              disabled={noRemainValue}
-              buttonStyle={[styles.ghostButton, buttonStyle]}
-              titleStyle={[
-                styles.ghostTitle,
-                noRemainValue && styles.ghostDisableButton,
-              ]}
-              onPress={async () => {
-                if (tokenIsNft) {
-                  // ？to confrim revoke nft approve
-                  await revokeNFTApprove(
-                    {
-                      chainServerId: chain,
-                      nftTokenId: tokenId,
-                      spender: approve?.spender!,
-                      contractId: (data.tx as any)?.id,
-                      abi: 'ERC721',
-                      isApprovedForAll: true,
-                    },
-                    {
-                      ga: { category: 'Security', source: 'tokenApproval' },
-                    },
-                  );
-                } else {
-                  await approveToken(chain, tokenId, approve?.spender!, 0, {
-                    ga: {
-                      category: 'Security',
-                      source: 'tokenApproval',
-                    },
-                  });
-                }
-                resetNavigationTo(navigation, 'Home');
-              }}
-              type={'primary'}
-              title={`${t(
-                'page.transactions.detail.Revoke',
-              )} ${revokeAmountStr} ${name}`}
-            />
-          </Tip>
-        </View>
-      );
     case HistoryItemCateType.Recieve:
       return null;
     case HistoryItemCateType.Swap:
@@ -221,15 +154,15 @@ export const HistoryBottomBtn = ({
             buttonStyle={buttonStyle}
             onPress={async () => {
               const chainItem = !chain ? null : findChainByServerID(chain);
-              // if (!isForMultipleAdderss) {
+              // if (!isForMultipleAddress) {
               await switchSceneCurrentAccount(
                 'MakeTransactionAbout',
-                isForMultipleAdderss ? fromAddrIsImported : currentAccount,
+                isForMultipleAddress ? fromAddrIsImported : currentAccount,
               );
               // }
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
-                  screen: isForMultipleAdderss
+                  screen: isForMultipleAddress
                     ? RootNames.MultiSwap
                     : RootNames.Swap,
                   params: {
@@ -254,16 +187,16 @@ export const HistoryBottomBtn = ({
           <Button
             buttonStyle={buttonStyle}
             onPress={() => {
-              if (!isForMultipleAdderss) {
+              if (!isForMultipleAddress) {
                 switchSceneCurrentAccount(
                   'MakeTransactionAbout',
                   currentAccount,
                 );
               }
-              console.log('isForMultipleAdderss', isForMultipleAdderss);
+              console.log('isForMultipleAddress', isForMultipleAddress);
               navigation.dispatch(
                 StackActions.push(RootNames.StackTransaction, {
-                  screen: isForMultipleAdderss
+                  screen: isForMultipleAddress
                     ? RootNames.MultiBuy
                     : RootNames.Buy,
                   params: {

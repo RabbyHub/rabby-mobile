@@ -17,7 +17,6 @@ import {
   useSetRefreshId,
   useSetSettingVisible,
 } from '../hooks';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTranslation } from 'react-i18next';
 import { TwpStepApproveModal } from '@/screens/Swap/components/TwoStepApproveModal';
 import BigNumber from 'bignumber.js';
@@ -50,7 +49,10 @@ import {
   SwapBridgeDappPopup,
 } from '@/components/ExternalSwapBridgeDappPopup';
 import { Tip } from '@/components';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import {
+  useSceneAccountInfo,
+  useSwitchSceneCurrentAccount,
+} from '@/hooks/accountsSwitcher';
 import {
   isAccountSupportDirectSign,
   isAccountSupportMiniApproval,
@@ -186,7 +188,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   },
 }));
 
-export const BridgeContent = ({ isForMultipleAdderss = false }) => {
+export const BridgeContent = ({ isForMultipleAddress = false }) => {
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const { styles } = useTheme2024({ getStyle });
@@ -203,7 +205,9 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     clearBridgeHistoryRedDot,
   } = usePollBridgePendingNumber();
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const quoteVisible = useQuoteVisible();
 
@@ -278,7 +282,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     inSufficientCanGetQuote,
     slider,
     onChangeSlider,
-  } = useBridge(isForMultipleAdderss);
+  } = useBridge(isForMultipleAddress);
 
   const chains = useMemo(
     () => [toChain, fromChain].filter(e => !!e) as CHAINS_ENUM[],
@@ -291,9 +295,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     loading: externalDappsLoading,
     openTab: _openTab,
   } = useExternalSwapBridgeDapps(chains, 'bridge');
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const openTab = useMemoizedFn((url: string) => {
-    switchSceneCurrentAccount('@ActiveDappWebViewModal', currentAccount);
     _openTab(url);
   });
   const [externalDappOpen, setExternalDappOpen] = useState(false);
@@ -377,6 +379,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
               slippage: new BigNumber(slippage).div(100).toNumber(),
             },
+            account: currentAccount,
           },
           {
             ga: {
@@ -474,6 +477,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
               rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
               slippage: new BigNumber(slippageState).div(100).toNumber(),
             },
+            account: currentAccount,
           },
           {
             ga: {
@@ -491,6 +495,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
                 source: 'bridge',
               },
               directSubmit: canShowDirectSubmit,
+              account: currentAccount!,
             });
           }
 
@@ -557,6 +562,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
           source: 'bridge',
         },
         directSubmit: true,
+        account: currentAccount!,
       });
     }
   }, [
@@ -564,6 +570,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
     canShowDirectSubmit,
     prepareMiniTransactions,
     isFocused,
+    currentAccount,
   ]);
 
   const { loading: isSubmitting, runAsync: handleBridge } = useRequest(
@@ -586,6 +593,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
                   // trigger: rbiSource,
                 },
                 directSubmit: canShowDirectSubmit,
+                account: currentAccount!,
               });
             }
           }
@@ -612,6 +620,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
                 // trigger: rbiSource,
               },
               directSubmit: false,
+              account: currentAccount!,
             });
           }
 
@@ -733,7 +742,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
 
   return (
     <NormalScreenContainer overwriteStyle={styles.screen}>
-      {isForMultipleAdderss && (
+      {isForMultipleAddress && (
         <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}
       <KeyboardAwareScrollView
@@ -762,7 +771,7 @@ export const BridgeContent = ({ isForMultipleAdderss = false }) => {
                   setFromToken(token);
                 };
 
-                if (!isForMultipleAdderss) {
+                if (!isForMultipleAddress) {
                   normalSetChainToken();
                 } else {
                   const { accountSwitchTo } = switchAccountOnSelectedToken({

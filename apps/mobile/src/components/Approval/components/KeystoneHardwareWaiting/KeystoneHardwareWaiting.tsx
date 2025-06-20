@@ -15,7 +15,6 @@ import {
   HARDWARE_KEYRING_TYPES,
   KEYRING_CATEGORY_MAP,
 } from '@rabby-wallet/keyring-utils';
-import { useCurrentAccount } from '@/hooks/account';
 import { apiKeystone } from '@/core/apis';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import Player from './Player';
@@ -97,8 +96,10 @@ const getStyles = (colors: AppColorsVariants) =>
 
 export const KeystoneHardwareWaiting = ({
   params,
+  account: $account,
 }: {
   params: ApprovalParams;
+  account: Account;
 }) => {
   const { closePopup } = useCommonPopupView();
   const [status, setStatus] = useState<QR_HARDWARE_STATUS>(
@@ -117,8 +118,7 @@ export const KeystoneHardwareWaiting = ({
     stay: boolean;
     approvalId: string;
   }>();
-  const { currentAccount: _account } = useCurrentAccount();
-  const account = params.isGnosis ? params.account! : _account;
+  const account = params.isGnosis ? params.account! : $account;
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 

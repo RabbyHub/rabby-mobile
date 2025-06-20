@@ -35,8 +35,6 @@ export type ApprovalAssetsItem =
 import { groupBy, sortBy, flatten } from 'lodash';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 
-import { useCurrentAccount } from '@/hooks/account';
-
 import { openapi, testOpenapi } from '@/core/request';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
 import { atom, useAtom, useAtomValue } from 'jotai';
@@ -54,6 +52,7 @@ import {
 } from './utils';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { ApprovalsLayouts } from './layout';
+import { Account } from '@/core/services/preference';
 
 export const FILTER_TYPES = {
   contract: 'contract',
@@ -172,9 +171,11 @@ function sortContractApproval<T extends ContractApprovalItem>(
   ];
 }
 
-export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
-  const { currentAccount } = useCurrentAccount();
-
+export function useApprovalsPageOnTop(options: {
+  isTestnet?: boolean;
+  account: Account | null;
+}) {
+  const { account: currentAccount } = options;
   const [filterType, setFilterType] = useState<keyof typeof FILTER_TYPES>(
     __DEV__ ? 'contract' : 'contract',
   );
@@ -627,7 +628,13 @@ export const ApprovalsPageContext = React.createContext<
       bottomSheetConfirmAreaHeight:
         ApprovalsLayouts.bottomSheetConfirmAreaHeight,
     },
+    cutOffSizes: {
+      bottomAreaHeight: ApprovalsLayouts.bottomAreaHeight,
+      bottomSheetConfirmAreaHeight:
+        ApprovalsLayouts.bottomSheetConfirmAreaHeight,
+    },
   },
+  displaySortedAssetsList: [],
 });
 
 export function useApprovalsPage() {

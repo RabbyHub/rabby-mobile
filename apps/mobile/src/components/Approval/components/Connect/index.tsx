@@ -1,5 +1,3 @@
-import { Button } from '@/components/Button';
-import { toast } from '@/components/Toast';
 import { SIGN_PERMISSION_TYPES } from '@/constant/permission';
 import { SecurityEngineLevel } from '@/constant/security';
 import { apiSecurityEngine } from '@/core/apis';
@@ -10,7 +8,7 @@ import {
   preferenceService,
 } from '@/core/services';
 import { useSecurityEngine } from '@/hooks/securityEngine';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import i18n from '@/utils/i18n';
@@ -33,9 +31,8 @@ import { SignTestnetPermission } from './SignTestnetPermission';
 import UserListDrawer from './UserListDrawer';
 import ArrowDownSVG from '@/assets/icons/approval/arrow-down-blue.svg';
 import { StyleSheet } from 'react-native';
-import { AppColorsVariants } from '@/constant/theme';
+import { AppColors2024Variants, AppColorsVariants } from '@/constant/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { ChainSelector } from '@/components/ChainSelector';
 import { Spin } from '@/components/Spin';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { findChain } from '@/utils/chain';
@@ -44,110 +41,15 @@ import {
   useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { AccountSwitcherAopProps } from '@/components/AccountSwitcher/hooks';
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    connectWrapper: {
-      height: '100%',
-      flexDirection: 'column',
-      backgroundColor: colors['neutral-bg-1'],
-      display: 'flex',
-    },
-    approvalConnect: {
-      padding: 26,
-    },
-    approvalTitle: {
-      fontWeight: '500',
-      fontSize: 17,
-      lineHeight: 20,
-      color: colors['neutral-title-1'],
-    },
-    chainSelector: {},
-    chainIconComp: {
-      width: 16,
-      height: 16,
-    },
-    hover: {
-      backgroundColor: colors['blue-light-1'],
-    },
-    connectCard: {
-      backgroundColor: colors['neutral-card-2'],
-      borderRadius: 8,
-      padding: 26,
-      alignItems: 'center',
-      position: 'relative',
-    },
-    connectOrigin: {
-      marginTop: 12,
-      marginBottom: 6,
-      fontWeight: '500',
-      fontSize: 22,
-      lineHeight: 26,
-      textAlign: 'center',
-      color: colors['neutral-title-1'],
-    },
-    ruleList: {
-      flex: 1,
-      paddingHorizontal: 20,
-    },
-    footer: {
-      display: 'flex',
-      flexDirection: 'column',
-      padding: 20,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors['neutral-card-2'],
-      backgroundColor: colors['neutral-card-1'],
-      marginBottom: 15,
-    },
-    securityTip: {
-      width: '100%',
-      fontWeight: '500',
-      fontSize: 13,
-      lineHeight: 15,
-      padding: 6,
-      display: 'flex',
-      alignItems: 'center',
-      borderRadius: 4,
-      position: 'relative',
-      flexDirection: 'row',
-      marginTop: 12,
-    },
-    securityTipIcon: {
-      marginRight: 6,
-    },
-    button: {
-      width: '100%',
-      height: 52,
-    },
-    connectButton: {
-      backgroundColor: colors['blue-default'],
-    },
-    connectButtonText: {
-      color: colors['neutral-title-2'],
-      fontSize: 16,
-    },
-    lastButton: {
-      marginTop: 20,
-    },
-    cancelButtonTextView: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 2,
-    },
-    cancelButtonText: {
-      fontSize: 16,
-      color: colors['blue-default'],
-    },
-    titleWrapper: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 20,
-    },
-    dappIcon: { width: 40, height: 40, borderRadius: 4 },
-  });
+import { ChainSelector } from '@/components2024/ChainSelector';
+import { createGetStyles2024 } from '@/utils/styles';
+import { Button } from '@/components2024/Button';
+import { toast } from '@/components2024/Toast';
+import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
+import { AccountSelector } from '@/components2024/AccountSelector';
+import { Account } from '@/core/services/preference';
+import { ConnectSkeleton } from './ConnectSkeleton';
+import { useMyAccounts } from '@/hooks/account';
 
 const RuleDesc = [
   {
@@ -187,7 +89,7 @@ const RuleDesc = [
   },
 ];
 
-const SecurityLevelTipColor = {
+const createSecurityLevelTipColor = (colors: AppColors2024Variants) => ({
   [Level.FORBIDDEN]: {
     bg: '#EFCFCF',
     text: '#AF160E',
@@ -199,11 +101,12 @@ const SecurityLevelTipColor = {
     icon: SecurityEngineLevel[Level.DANGER].icon,
   },
   [Level.WARNING]: {
-    bg: '#FFEFD2',
-    text: '#FFB020',
-    icon: SecurityEngineLevel[Level.WARNING].icon,
+    bg: colors['orange-light-1'],
+    text: colors['orange-default'],
+    // icon: SecurityEngineLevel[Level.WARNING].icon,
+    icon: RcIconWarningCircleCC,
   },
-};
+});
 
 type ConnectProps = AccountSwitcherAopProps<{
   params: any;
@@ -219,13 +122,11 @@ export const Connect = ({
  */
 // forScene = '@ActiveDappWebViewModal'
 ConnectProps) => {
-  // const { currentAccount } = useCurrentAccount();
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { finalSceneCurrentAccount: account } = useSceneAccountInfo({
-    forScene: '@ActiveDappWebViewModal',
-  });
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { accounts } = useMyAccounts();
+  const [selectedAccount, setSelectedAccount] = useState<
+    Account | undefined | null
+  >(accounts?.[0] || preferenceService.getFallbackAccount());
+  const { colors, styles, colors2024 } = useTheme2024({ getStyle });
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
   const [defaultChain, setDefaultChain] = useState(CHAINS_ENUM.ETH);
@@ -251,6 +152,10 @@ ConnectProps) => {
   const [dappIcon, setDappIcon] = useState<string>(icon);
   const [signPermission, setSignPermission] = useState<SIGN_PERMISSION_TYPES>();
   const commonStyle = useCommonStyle();
+  const SecurityLevelTipColor = useMemo(
+    () => createSecurityLevelTipColor(colors2024),
+    [colors2024],
+  );
 
   const userListResult = useMemo(() => {
     const originBlacklist = engineResults.find(result => result.id === '1006');
@@ -444,6 +349,11 @@ ConnectProps) => {
 
   const init = async () => {
     const site = await dappService.getDapp(origin);
+    const _selectedAccount =
+      site?.currentAccount ||
+      accounts?.[0] ||
+      preferenceService.getFallbackAccount();
+    setSelectedAccount(_selectedAccount);
     let level: 'very_low' | 'low' | 'medium' | 'high' = 'low';
     let collectList: { name: string; logo_url: string }[] = [];
     let defaultChain = CHAINS_ENUM.ETH;
@@ -477,7 +387,7 @@ ConnectProps) => {
     queue.add(async () => {
       try {
         const recommendChains = await openapi.getRecommendChains(
-          account!.address,
+          _selectedAccount!.address,
           origin,
         );
         let targetChain: Chain | undefined;
@@ -545,17 +455,9 @@ ConnectProps) => {
   const handleAllow = useCallback(async () => {
     resolveApproval({
       defaultChain,
-      signPermission,
-    }).then(() => {
-      switchSceneCurrentAccount('@ActiveDappWebViewModal', account);
+      defaultAccount: selectedAccount,
     });
-  }, [
-    defaultChain,
-    resolveApproval,
-    signPermission,
-    switchSceneCurrentAccount,
-    account,
-  ]);
+  }, [defaultChain, resolveApproval, selectedAccount]);
 
   const handleRuleDrawerClose = (update: boolean) => {
     if (update) {
@@ -610,30 +512,33 @@ ConnectProps) => {
     : {};
   const LevelTipColorIcon = LevelTipColor.icon;
 
+  if (isLoading) {
+    return <ConnectSkeleton />;
+  }
+
   return (
-    <Spin spinning={isLoading}>
-      <View style={styles.connectWrapper}>
-        <BottomSheetScrollView style={{ flex: 1 }}>
-          <View style={styles.approvalConnect}>
-            <View style={styles.titleWrapper}>
-              <Text style={styles.approvalTitle}>
-                {t('page.connect.title')}
-              </Text>
-              <ChainSelector
-                style={styles.chainSelector}
-                value={defaultChain}
-                onChange={handleChainChange}
-                connection
-              />
-            </View>
-            <View style={styles.connectCard}>
-              <DappIcon
-                origin={origin}
-                source={dappIcon ? { uri: dappIcon } : undefined}
-                style={styles.dappIcon}
-              />
-              <Text style={styles.connectOrigin}>{origin}</Text>
-            </View>
+    <View style={styles.connectWrapper}>
+      <BottomSheetScrollView style={{ flex: 1 }}>
+        <View style={styles.approvalConnect}>
+          <View style={styles.titleWrapper}>
+            <Text style={styles.approvalTitle}>{t('page.connect.title')}</Text>
+            <ChainSelector
+              account={selectedAccount}
+              style={styles.chainSelector}
+              value={defaultChain}
+              onChange={handleChainChange}
+            />
+          </View>
+        </View>
+
+        <View style={styles.connectContent}>
+          <View style={styles.connectCard}>
+            <DappIcon
+              origin={origin}
+              source={dappIcon ? { uri: dappIcon } : undefined}
+              style={styles.dappIcon}
+            />
+            <Text style={styles.connectOrigin}>{origin}</Text>
           </View>
 
           <View style={styles.ruleList}>
@@ -679,98 +584,251 @@ ConnectProps) => {
               }
             })}
           </View>
-        </BottomSheetScrollView>
-        <View>
-          <SignTestnetPermission
-            value={signPermission}
-            onChange={v => setSignPermission(v)}
+        </View>
+      </BottomSheetScrollView>
+
+      {connectBtnStatus.text && (
+        <View
+          style={[
+            styles.securityTip,
+            {
+              backgroundColor: LevelTipColor.bg,
+            },
+          ]}>
+          <LevelTipColorIcon
+            style={[
+              styles.securityTipIcon,
+              {
+                color: LevelTipColor.text,
+              },
+            ]}
           />
-          <View style={styles.footer}>
-            <Button
-              buttonStyle={[styles.button, styles.connectButton]}
-              titleStyle={styles.connectButtonText}
-              type="primary"
-              onPress={() => handleAllow()}
-              disabled={isLoading || connectBtnStatus.disabled}
-              disabledTitleStyle={{
-                color: colors['neutral-title-2'],
+          <Text
+            style={[
+              styles.securityTipText,
+              {
+                color: LevelTipColor.text,
+              },
+            ]}>
+            {connectBtnStatus.text}
+          </Text>
+          <Text
+            style={[
+              styles.securityTipBtn,
+              // {
+              //   color: LevelTipColor.text,
+              // },
+            ]}
+            onPress={onIgnoreAllRules}>
+            {t('page.connect.ignoreAll')}
+          </Text>
+        </View>
+      )}
+      <View style={styles.footerContainer}>
+        <View style={styles.connectWalletRow}>
+          <Text style={styles.connectWalletText}>
+            {t('page.connect.connectWallet')}
+          </Text>
+          <View style={styles.connectWalletValue}>
+            <AccountSelector
+              value={selectedAccount}
+              onChange={account => {
+                setSelectedAccount(account);
               }}
-              className={clsx({
-                'mb-0': !connectBtnStatus.text,
-              })}
-              title={t('page.connect.connectBtn')}
-            />
-            {connectBtnStatus.text && (
-              <View
-                style={[
-                  styles.securityTip,
-                  {
-                    backgroundColor: LevelTipColor.bg,
-                  },
-                ]}>
-                <LevelTipColorIcon
-                  style={[
-                    styles.securityTipIcon,
-                    {
-                      color: LevelTipColor.bg,
-                    },
-                  ]}
-                />
-                <Text
-                  className="flex-1"
-                  style={{
-                    color: LevelTipColor.text,
-                  }}>
-                  {connectBtnStatus.text}
-                </Text>
-                <Text
-                  className="underline text-13 font-medium cursor-pointer"
-                  style={{
-                    color: LevelTipColor.text,
-                  }}
-                  onPress={onIgnoreAllRules}>
-                  {t('page.connect.ignoreAll')}
-                </Text>
-              </View>
-            )}
-            <Button
-              type="primary"
-              ghost
-              buttonStyle={[styles.button, styles.lastButton]}
-              onPress={
-                displayBlockedRequestApproval ? activeCancelPopup : handleCancel
-              }
-              title={
-                <View style={styles.cancelButtonTextView}>
-                  <Text style={styles.cancelButtonText}>
-                    {connectBtnStatus.cancelBtnText}
-                  </Text>
-                  {displayBlockedRequestApproval && (
-                    <ArrowDownSVG className="w-16" />
-                  )}
-                </View>
-              }
             />
           </View>
         </View>
-        <RuleDrawer
-          selectRule={selectRule}
-          visible={ruleDrawerVisible}
-          onIgnore={handleIgnoreRule}
-          onUndo={handleUndoIgnore}
-          onRuleEnableStatusChange={handleRuleEnableStatusChange}
-          onClose={handleRuleDrawerClose}
-        />
-        <UserListDrawer
-          origin={origin}
-          logo={icon}
-          onWhitelist={isInWhitelist}
-          onBlacklist={isInBlacklist}
-          visible={listDrawerVisible}
-          onChange={handleUserListChange}
-          onClose={() => setListDrawerVisible(false)}
-        />
+        <View style={styles.footer}>
+          <Button
+            type="ghost"
+            containerStyle={[styles.button]}
+            onPress={
+              displayBlockedRequestApproval ? activeCancelPopup : handleCancel
+            }
+            title={
+              <View style={styles.cancelButtonTextView}>
+                <Text style={styles.cancelButtonText}>
+                  {connectBtnStatus.cancelBtnText}
+                </Text>
+                {displayBlockedRequestApproval && (
+                  <ArrowDownSVG className="w-16" />
+                )}
+              </View>
+            }
+          />
+          <Button
+            containerStyle={[styles.button]}
+            type="primary"
+            onPress={() => handleAllow()}
+            disabled={isLoading || connectBtnStatus.disabled}
+            disabledTitleStyle={{
+              color: colors['neutral-title-2'],
+            }}
+            title={t('page.connect.connectBtn')}
+          />
+        </View>
       </View>
-    </Spin>
+      <RuleDrawer
+        selectRule={selectRule}
+        visible={ruleDrawerVisible}
+        onIgnore={handleIgnoreRule}
+        onUndo={handleUndoIgnore}
+        onRuleEnableStatusChange={handleRuleEnableStatusChange}
+        onClose={handleRuleDrawerClose}
+      />
+      <UserListDrawer
+        origin={origin}
+        logo={icon}
+        onWhitelist={isInWhitelist}
+        onBlacklist={isInBlacklist}
+        visible={listDrawerVisible}
+        onChange={handleUserListChange}
+        onClose={() => setListDrawerVisible(false)}
+      />
+    </View>
   );
 };
+
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  connectWrapper: {
+    height: '100%',
+    flexDirection: 'column',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+    display: 'flex',
+  },
+  approvalConnect: {
+    marginHorizontal: 16,
+    paddingLeft: 8,
+    marginBottom: 16,
+    marginTop: 12,
+  },
+  approvalTitle: {
+    fontWeight: '900',
+    fontSize: 17,
+    lineHeight: 22,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  chainSelector: {},
+  chainIconComp: {
+    width: 16,
+    height: 16,
+  },
+  hover: {
+    backgroundColor: colors2024['blue-light-1'],
+  },
+  connectContent: {
+    borderRadius: 16,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    marginHorizontal: 16,
+  },
+  connectCard: {
+    padding: 23,
+    alignItems: 'center',
+    position: 'relative',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderStyle: 'solid',
+    borderColor: colors2024['neutral-line'],
+  },
+  connectOrigin: {
+    marginTop: 8,
+    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    textAlign: 'center',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  ruleList: {
+    flex: 1,
+  },
+  footerContainer: {
+    paddingTop: 16,
+    paddingBottom: 56,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  footer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+  },
+  connectWalletRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 14,
+    paddingHorizontal: 24,
+  },
+  connectWalletValue: {
+    flexShrink: 1,
+  },
+  connectWalletText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+  },
+  securityTip: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: 6,
+    position: 'relative',
+    flexDirection: 'row',
+    marginTop: 12,
+    marginBottom: 12,
+    marginHorizontal: 16,
+  },
+  securityTipText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    flex: 1,
+  },
+  securityTipBtn: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['brand-default'],
+  },
+  securityTipIcon: {
+    marginRight: 4,
+  },
+  button: {
+    width: '50%',
+    height: 52,
+    flex: 1,
+  },
+
+  cancelButtonTextView: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  cancelButtonText: {
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '700',
+  },
+  titleWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dappIcon: { width: 44, height: 44, borderRadius: 4 },
+}));

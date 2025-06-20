@@ -1,13 +1,8 @@
 {
   "screens": {
     "addressStackTitle": {
-      "CreateSelectOnCurrentSeed": "2. アドレスを追加",
-      "ImportMoreAddress": "より多くのアドレスをインポート",
       "CreateSelectMethod": "作成方法を選択",
       "ImportHardwareAddress": "ハードウェアウォレットを接続する",
-      "WatchAddressList": "ウォッチオンリーアドレス",
-      "ImportNewAddress": "アドレスを追加",
-      "AddressDetail": "アドレス詳細",
       "AddMnemonic": "現在のSeed Phraseから追加",
       "RestoreFromCloud": "{{type}}から復元",
       "CreateChooseBackup": "3. バックアップ方法を選択",
@@ -15,8 +10,6 @@
       "BackupPrivateKey": "プライベートキーのバックアップ",
       "ImportMethods": "インポート方法を選択",
       "CreateMnemonicBackup": "バックアップ シード フレーズ",
-      "CreateNewAddress": "1. アドレスに名前を付ける",
-      "ImportWatchAddress2024": "ウォッチ専用アドレスを追加",
       "ImportPrivateKey": "秘密鍵をインポート",
       "BackupSeedPhrase": "バックアップ シード フレーズ",
       "VerifySeedPhrase": "シードフレーズを検証する",
@@ -24,7 +17,14 @@
       "SafeAddressList": "セーフアドレス",
       "SetPassword2024": "2. パスワードを設定する",
       "ImportSafeAddress2024": "セーフアドレスを追加",
-      "ConfrimAddress": "アドレスを確認"
+      "AddressDetail": "ウォレットの詳細",
+      "ImportWatchAddress2024": "ウォッチオンリーウォレットを追加",
+      "WatchAddressList": "ウォッチオンリーウォレット",
+      "ImportNewAddress": "ウォレットを追加",
+      "ImportMoreAddress": "ウォレットを追加インポートする",
+      "ConfrimAddress": "ウォレットを確認してください",
+      "CreateNewAddress": "1. ウォレットを確認してください",
+      "CreateSelectOnCurrentSeed": "2. ウォレットを追加"
     }
   },
   "constant": {
@@ -82,9 +82,9 @@
   "page": {
     "getStart": {
       "goToHome": "ホームに移動",
-      "alreadyHaveAddress": "既にアドレスを持っています。",
-      "createNewAddress": "新しいアドレスを作成",
-      "sync": "Rabby Extension Addressを同期するためにスキャンする"
+      "createNewAddress": "新しいウォレットを作成",
+      "sync": "Rabby拡張ウォレットを同期するにはスキャンしてください",
+      "alreadyHaveAddress": "私はすでにウォレットを持っています"
     },
     "transactions": {
       "explain": {
@@ -127,7 +127,6 @@
         "name": "名前",
         "RevokeToken": "トークンの無効化",
         "Unknown": "不明",
-        "RecipientAddress": "受取人アドレス",
         "RevokeFrom": "から取消",
         "InteractedContract": "相互作用したコントラクト",
         "Status": "ステータス",
@@ -139,7 +138,8 @@
         "Collection": "コレクション",
         "WillReceive": "受け取る予定: ≈ {{token}}",
         "PurchaseFrom": "から購入",
-        "AddToWhitelist": "ホワイトリストに追加"
+        "AddToWhitelist": "ホワイトリストに追加",
+        "RecipientAddress": "受取財布"
       },
       "empty": {
         "desc": "<1>サポートされているチェーン</1>で取引が見つかりませんでした。",
@@ -178,9 +178,11 @@
       "enterYourSeedPhrase": "シードフレーズを入力してください"
     },
     "importSuccess": {
-      "importMore": "アドレスをさらにインポートする",
       "addressCount": "{{count}} アドレス",
-      "success": "{{type}}が成功しました！"
+      "success": "{{type}}が成功しました！",
+      "addressCount_other": "{{count}} ウォレット",
+      "addressCount_one": "{{count}} ウォレット",
+      "importMore": "ウォレットを追加でインポート"
     },
     "signTx": {
       "gasLimitNotEnough": "Gas limitは21000未満です。Transactionは送信できません。",
@@ -294,7 +296,6 @@
         "title": "トークン送金"
       },
       "swap": {
-        "notPaymentAddress": "支払いアドレスではありません",
         "slippageTolerance": "スリッページ許容度",
         "payToken": "支払う",
         "simulationFailed": "トランザクションシミュレーションに失敗しました。",
@@ -306,7 +307,8 @@
         "slippageFailToLoad": "読み込みに失敗しました",
         "valueDiff": "価値の違い",
         "simulationNotSupport": "このチェーンではトランザクションシミュレーションがサポートされていません。",
-        "title": "トークンスワップ"
+        "title": "トークンスワップ",
+        "notPaymentAddress": "支払いウォレットではありません"
       },
       "batchRevokePermit2": {
         "title": "バッチリボークPermit2承認"
@@ -490,7 +492,8 @@
         },
         "empty": {
           "title": "まだ署名されたトランザクションはありません。",
-          "desc": "Rabbyを通じて署名されたすべてのトランザクションがここに一覧表示されます。"
+          "desc": "Rabbyを通じて署名されたすべてのトランザクションがここに一覧表示されます。",
+          "titleLastThreeMonths": "90日間取引履歴がありません"
         },
         "status": {
           "pending": "保留中",
@@ -576,8 +579,8 @@
         "notEnough": "Gas残高が不足しています",
         "customRpcUnavailableTip": "カスタムRPCはFree Gasでサポートされていません",
         "GetFreeGasToSign": "無料でGasを手に入れよう",
-        "watchUnavailableTip": "ウォッチ専用アドレスはFree Gasに対応していません。",
-        "walletConnectUnavailableTip": "WalletConnectを介して接続されたモバイルウォレットは、Free Gasには対応していません。"
+        "walletConnectUnavailableTip": "WalletConnectを介して接続されたモバイルウォレットは、Free Gasには対応していません。",
+        "watchUnavailableTip": "Watch-Only ウォレットは Free Gas に対応していません。"
       },
       "cancelCurrentTransaction": "現在のトランザクションをキャンセル",
       "resend": "再試行",
@@ -879,7 +882,8 @@
         "queue": "Queue",
         "send": "送る",
         "websites": "ウェブサイト",
-        "search": "Search Token"
+        "search": "Search Token",
+        "copyTrading": "コピー取引"
       }
     },
     "nextComponent": {
@@ -889,24 +893,24 @@
         "services": "サービス",
         "noAssets": "暗号資産なし？",
         "receiveCrypto": "暗号資産を受け取る",
-        "importAddress": "アドレスをインポート",
         "buyWithFiat": "法定通貨で購入",
         "fundYourWallet": "ウォレットに資金を追加",
         "buyWithFiatDesc": "シンプルな暗号購入",
-        "importAddressDesc": "既存の資金があるアドレスを追加します",
-        "receiveCryptoDesc": "別のアドレスからトークンを転送します",
         "foundGuideTitle": "迅速に資金を充填",
-        "foundGuideDesc": "ウォレットにトークンを追加して開始してください。"
+        "foundGuideDesc": "ウォレットにトークンを追加して開始してください。",
+        "importAddressDesc": "資金がある既存のウォレットを追加する",
+        "receiveCryptoDesc": "別のウォレットからトークンを転送する",
+        "importAddress": "ウォレットをインポートする"
       },
       "addAddress": {
-        "importAddress": "アドレスをインポート",
-        "createAddress": "アドレスを作成",
         "hardwareWallet": "ハードウェアウォレット",
-        "syncRabbyExtension": "Rabby Extension を同期"
+        "syncRabbyExtension": "Rabby Extension を同期",
+        "createAddress": "ウォレットを作成",
+        "importAddress": "ウォレットをインポートする",
+        "selectAddMethod": "メソッドを追加を選択してください"
       },
       "createNewAddress": {
         "WriteDownSeedPhrase": "シードフレーズを書き留める",
-        "createNewDesc": "新しいアドレス用に新しいシードフレーズを生成する",
         "Verify": "検証する",
         "Continue": "続行",
         "selectWords": "単語を選択",
@@ -921,29 +925,43 @@
         "addressTopTips": "それを使用して、ブロックチェーン上で暗号通貨を送受信する",
         "VerifyDownSeedPhrase": "シードフレーズを確認",
         "createNewSeedPhrase": "新しいシードフレーズを作成",
-        "createOnCurrentDesc": "インポートした既存のシードフレーズでアドレスを作成する",
         "backupSeedPhrase": "アプリが削除された場合やデバイスが紛失した場合にウォレットを復元するために、シードフレーズをバックアップしてください。",
         "riskTips": "開始する前に、次のセキュリティのヒントをよく読んで心に留めておいてください。",
         "passwordTopTips": "このパスワードは、ウォレットのロックを解除し、ローカルデータを暗号化するために使用されます。",
         "UnderstandsecurityPrecautions": "これらのセキュリティ対策を理解しています。",
         "passwordMin": "8文字以上である必要があります",
-        "WriteSeedPhrase": "これはあなたのシードフレーズです。紙に書き留めて、安全な場所に保管してください。次のステップで正しい順序で再入力する必要があります。"
+        "WriteSeedPhrase": "これはあなたのシードフレーズです。紙に書き留めて、安全な場所に保管してください。次のステップで正しい順序で再入力する必要があります。",
+        "createNewDesc": "新しいウォレット用の新しいシードフレーズを生成します。",
+        "createOnCurrentDesc": "既存のインポートされたシードフレーズでウォレットを作成する"
       },
       "importAddress": {
-        "safeTitle": "Safeアドレスをインポート",
-        "importTitle": "アドレスをインポート",
         "privateKey": "プライベートキーをインポートする",
         "safe": "安全",
         "hardWare": "ハードウェアウォレットを接続",
-        "watchOnlyTitle": "ウォッチのみのアドレスをインポート",
-        "watch": "ウォッチのみアドレス",
         "tips": {
           "gotIt": "了解しました。",
           "entry": "Rabby にインポートするのは安全ですか",
           "description": "あなたのデータは安全に暗号化され、デバイス上にローカルで保存されます。Rabby はあなたの個人情報にアクセスできず、第三者と共有されることは決してありません。",
           "title": "Rabbyにインポートしても安全ですか？"
         },
-        "seedPhrase": "シードフレーズをインポート"
+        "seedPhrase": "シードフレーズをインポート",
+        "watch": "ウォッチオンリーウォレット",
+        "watchOnlyTitle": "ウォッチオンリーウォレットのインポート",
+        "safeTitle": "安全なウォレットをインポート",
+        "importTitle": "ウォレットをインポート",
+        "ImportCloud": "{{cloud}} からインポート"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Rabby Walletはどのように評価しますか"
+      },
+      "rateModal": {
+        "feedbackSubmit": "送信",
+        "feedbackSuccess": "フィードバックありがとうございます。",
+        "confirmButtonTitleIOS": "アプリストアでの評価",
+        "confirmButtonTitleAndroid": "Google Playで評価する",
+        "feedbackTitle": "フィードバックはありますか？私たちは聞いています。",
+        "descriptionIOS": "Rabbyが気に入っていただけたら、App Storeでの迅速な評価がとても大切です。",
+        "descriptionAndroid": "Rabbyが気に入っていただけたのなら、Google Playでの簡単な評価はとてもありがたいです。"
       }
     },
     "switchChain": {
@@ -1077,7 +1095,6 @@
     },
     "manageAddress": {
       "confirm": "確認",
-      "add-address": "アドレスを追加",
       "watch-address": "ウォッチアドレス",
       "passphraseError": "パスフレーズが無効です",
       "private-key": "プライベートキー",
@@ -1085,10 +1102,11 @@
       "enterThePassphrase": "パスフレーズを入力してください",
       "enterPassphraseTitle": "パスフレーズを入力して署名",
       "delete-checklist-2": "私はプライベートキーまたはシードフレーズをバックアップしたことを確認し、今すぐ削除する準備ができています。",
-      "delete-checklist-1": "このアドレスを削除すると、対応するプライベートキーとシードフレーズが削除され、Rabbyがそれらを復元できないことを理解しています。",
       "seed-phrase": "シードフレーズ",
       "quickAddressTitle_other": "{{count}} アドレス",
-      "quickAddressTitle_one": "{{count}} アドレス"
+      "quickAddressTitle_one": "{{count}} アドレス",
+      "add-address": "ウォレットを追加",
+      "delete-checklist-1": "このウォレットを削除すると、対応するプライベートキーとシードフレーズが削除され、Rabbyがそれらを復元することはできないことを理解しています。"
     },
     "signText": {
       "title": "テキストに署名",
@@ -1134,11 +1152,11 @@
         "title": "署名権限"
       },
       "flagByMM": "MetaMask によってフラグされています",
-      "manageWhiteBlackList": "ホワイトリスト/ブラックリストを管理する"
+      "manageWhiteBlackList": "ホワイトリスト/ブラックリストを管理する",
+      "connectWallet": "ウォレットを接続する"
     },
     "newAddress": {
       "Quick": "クイック",
-      "createNewAddress": "新しいAddressを作成",
       "addContacts": {
         "cameraTitle": "カメラでQRコードをスキャンしてください"
       },
@@ -1151,8 +1169,8 @@
         "title2": "絶対に共有しないでください",
         "description2": "シードフレーズを失くした場合、ウォレットを復元することはできません。",
         "description3": "シードフレーズを共有しないでください。アクセスできる人は誰でもあなたの資金を制御できます。",
-        "description1": "シードフレーズは、アドレスにアクセスして制御するための一連の単語です。任意のデバイスでアドレスを復元するために使用できます。",
-        "description4": "シードフレーズはデバイスにローカルで保存され、パスワードで暗号化されています。シードフレーズにアクセスできるのはあなただけです。Rabby はあなたのシードフレーズを取得またはアクセスすることはできません。"
+        "description4": "シードフレーズはデバイスにローカルで保存され、パスワードで暗号化されています。シードフレーズにアクセスできるのはあなただけです。Rabby はあなたのシードフレーズを取得またはアクセスすることはできません。",
+        "description1": "シードフレーズは、ウォレットにアクセスし制御するために使用される一連の単語です。これを使用して、任意のデバイスでウォレットを復元できます。"
       },
       "seedPhrase": {
         "isItSafeToImportItInRabby": {
@@ -1200,7 +1218,6 @@
         "backupUnlockDesc": "バックアップを復元するためにパスワードを安全に保管してください。Rabby Wallet はそれを保存せず、復元することはできません。"
       },
       "privateKey": {
-        "repeatImportTips": "このアドレスはインポートされました",
         "whatIsAPrivateKey": {
           "question": "プライベートキーとは何ですか？",
           "answer": "数字や文字の一連の組み合わせは、あなたの資産を管理するために使用されます。"
@@ -1208,7 +1225,8 @@
         "isItSafeToImportItInRabby": {
           "answer": "はい、それはあなたの電話にローカルに保存され、あなただけがアクセスできます。",
           "question": "それをRabbyにインポートしても安全ですか？"
-        }
+        },
+        "repeatImportTips": "このウォレットはインポートされました"
       },
       "onekey": {
         "notFound": {
@@ -1282,9 +1300,6 @@
         }
       },
       "hd": {
-        "customAddressHdPath": "カスタムアドレスHDパス",
-        "selectIndexTip": "アドレスのシリアル番号を選択して開始します:",
-        "manageAddressFrom": "{{0}} から {{1}} までのアドレスを管理する",
         "balance": "残高",
         "onekey": {
           "hdPathTypeNoChain": {
@@ -1314,17 +1329,21 @@
         },
         "ledger": {
           "hdPathType": {
-            "bip44": "BIP44 Standard: BIP44プロトコルによって定義されたHDパス。最初の3つのアドレスには、オンチェーンで使用されるアドレスがあります。",
-            "ledgerLive": "Ledger Live: Ledger公式HDパス。最初の3つのアドレスには、オンチェーンで使用されるアドレスがあります。",
-            "legacy": "レガシー: MEW / Mycrypto によって使用されたHDパス。最初の3つのアドレスには、オンチェーンで使用されたアドレスがあります。"
+            "bip44": "BIP44標準：BIP44プロトコルによって定義されたHDpath。最初の3つのウォレットには、オンチェーンで使用されるウォレットがあります。",
+            "ledgerLive": "Ledger Live: Ledger公式HDパス。最初の3つのウォレットには、オンチェーンで使用されるウォレットがあります。",
+            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。最初の3つのウォレットでは、オンチェーンで使用されるウォレットがあります。"
           },
           "hdPathTypeNoChain": {
-            "legacy": "レガシー：MEW / Mycrypto で使用される HD パスです。最初の3つのアドレスには、オンチェーンで使用されるアドレスはありません。",
-            "bip44": "BIP44 Standard: BIP44プロトコルによって定義されたHDパス。最初の3つのアドレスには、オンチェーンで使用されているアドレスはありません。",
-            "ledgerLive": "Ledger Live: Ledger公式HDパス。最初の3つのアドレスには、オンチェーンで使用されたアドレスはありません。"
+            "ledgerLive": "Ledger Live: Ledger公式HDパス。最初の3つのウォレットでは、オンチェーンで使用されるウォレットはありません。",
+            "legacy": "レガシー: MEW / Mycryptoによって使用されるHDパス。最初の3つのウォレットでは、オンチェーンで使用されるウォレットはありません。",
+            "bip44": "BIP44スタンダード：BIP44プロトコルで定義されたHDパス。最初の3つのウォレットには、オンチェーンで使用されるウォレットはありません。"
           }
-        }
-      }
+        },
+        "customAddressHdPath": "カスタムウォレット HD パス",
+        "selectIndexTip": "ウォレットのシリアル番号を選択して開始してください:",
+        "manageAddressFrom": "{{0}} から {{1}} までのウォレットを管理する"
+      },
+      "createNewAddress": "新しいウォレットを作成"
     },
     "sign": {
       "transactionSpeed": "トランザクションスピード"
@@ -1337,34 +1356,46 @@
       "address": "アドレス",
       "manage-seed-phrase": "シードフレーズを管理",
       "watchAddressListScreen": {
-        "addWatchAddress": "ウォッチオンリーアドレスを追加"
+        "addWatchAddress": "ウォッチオンリーウォレットを追加"
       },
       "hd-path": "HD Path",
       "admins": "管理者",
-      "delete-address": "アドレスを削除",
       "backup-seed-phrase": "バックアップ シード フレーズ",
-      "delete-desc": "このアドレスを削除してもよろしいですか？",
-      "manage-addresses-under-this-seed-phrase": "このシードフレーズからアドレスを追加",
       "delete-desc-needpassword": "削除する前に、資産を保護する方法を理解するために次の点に注意してください。",
       "qr-code": "QR Code",
       "assets": "資産",
       "address-note": "アドレスノート",
       "safeAddressListScreen": {
-        "addSafeAddress": "セーフアドレスを追加"
+        "addSafeAddress": "安全なウォレットを追加する"
       },
       "remove-from-whitelist": "ホワイトリストから削除する",
       "addressListScreen": {
         "edit": "編集",
-        "title_one": "{{count}} アドレス",
-        "addAddress": "アドレスを追加",
-        "title_zero": "0 Address",
         "detail": "詳細情報",
         "delete": "削除",
-        "importSafeAddress": "インポートされたSafeアドレス",
         "unpin": "固定解除",
         "pin": "ピン",
-        "importWatchAddress": "インポートされたウォッチ専用アドレス",
-        "title_other": "{{count}} アドレス"
+        "title_one": "{{count}} ウォレット",
+        "title_other": "{{count}} ウォレット",
+        "importWatchAddress": "インポートされたウォッチオンリーウォレット",
+        "addAddress": "ウォレットを追加する",
+        "title_zero": "0 ウォレット",
+        "importSafeAddress": "インポートされた Safe Wallet",
+        "moreWallets": "もっとウォレット",
+        "notIncludedInTransactions": "取引に含まれていません",
+        "notIncludedInTotalBalance": "合計残高に含まれていません"
+      },
+      "delete-address": "ウォレットを削除",
+      "delete-desc": "このウォレットを削除してもよろしいですか？",
+      "manage-addresses-under-this-seed-phrase": "このシードフレーズからウォレットを追加する",
+      "notMatterAddressDialog": {
+        "watchOnlyWallet": "監視専用ウォレット",
+        "safeWallet": "セーフウォレット",
+        "helpTitle": "トップ10未満のウォレット",
+        "title": "以下のウォレットは総残高に含まれていません。",
+        "notTop10Address": "トップ10にランクインしていないウォレット",
+        "helpDescription2": "ウォレットをピン留めするには、長押しして、含めたいウォレットを調整してください。",
+        "helpDescription1": "適時かつ正確なデータ更新を確保するために、Total BalanceとPortfolioにはあなたの上位10個のwalletsのみが含まれています。"
       }
     },
     "gasAccount": {
@@ -1395,8 +1426,6 @@
       "depositPopup": {
         "token": "トークン",
         "selectToken": "トークンを選択",
-        "inSufficientTip1": "このアドレスには十分なトークンがありません 別のアドレスを選択してください",
-        "paymentAddress": "支払いアドレス",
         "amount": "量",
         "followingTokenInSufficient": "以下のトークン残高が不十分です",
         "invalidAmount": "500 未満でなければなりません",
@@ -1406,17 +1435,18 @@
         "applePayDesc": "${{amount}} Apple Pay手数料が含まれています。出金不可",
         "googlePayDesc": "${{ amount }} の Google Pay 手数料が含まれています。引き出しはできません。",
         "applePayFeeDesc": "Apple Pay 手数料が含まれています。出金不可",
-        "googlePayFeeDesc": "Google Pay手数料が含まれています。出金不可"
+        "googlePayFeeDesc": "Google Pay手数料が含まれています。出金不可",
+        "paymentAddress": "ペイメントウォレット",
+        "inSufficientTip1": "このウォレットには十分なトークンがありません。他のウォレットを選んでください。"
       },
       "paymentAddressPopup": {
-        "title": "支払いアドレスを選択",
         "balance": "バランス",
         "confirm": "確認",
-        "address": "支払いアドレス"
+        "address": "支払いウォレット",
+        "title": "支払いウォレットを選択してください"
       },
       "withdrawPopup": {
         "tipsBtn": "理解しました",
-        "recipientAddress": "受取人アドレス",
         "to": "に",
         "amount": "量",
         "destinationChain": "送金先链",
@@ -1424,7 +1454,6 @@
         "title": "引き出し",
         "withdrawalLimit": "引き出し制限",
         "riskMessageFromChain": "リスク管理のため、引き出し制限はこのチェーンから預け入れた総金額に依存します。",
-        "selectRecipientAddress": "受取人のアドレスを選択",
         "selectDestinationChain": "送信先のチェーンを選択",
         "deductGasFees": "受け取った金額からガス料金が差し引かれます",
         "noEnoughValuetBalance": "Vault Balance が不足しています。チェーンを切り替えるか、後でもう一度お試しください。",
@@ -1432,7 +1461,9 @@
         "desc": "GasAccountの残高をDeBank L2 Walletに引き出すことができます。必要に応じて、資金をサポートされているブロックチェーンに転送するために、DeBank L2 Walletにログインしてください。",
         "noEnoughGas": "金額がガス料金をカバーするには少なすぎます。",
         "noEnoughValueBalance": "Vault Balanceが不足しています。チェーンを切り替えるか、後でもう一度試してください。",
-        "noRecipient": "受取人アドレスが利用できません"
+        "recipientAddress": "受取人ウォレット",
+        "noRecipient": "利用可能な受取人ウォレットがありません",
+        "selectRecipientAddress": "受取人ウォレットを選択してください"
       },
       "withdrawConfirmModal": {
         "button": "DeBankで表示",
@@ -1459,7 +1490,8 @@
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 残高",
         "balance": "残高",
-        "address": "アドレス"
+        "address": "アドレス",
+        "wallet": "ウォレット"
       },
       "switchAccount": "GasAccount を変更",
       "depositSuccess": "入金が成功しました",
@@ -1501,12 +1533,12 @@
       "emptyToken": {
         "receiveHeader": "暗号資産を受け取る",
         "buyHeader": "法定通貨で購入",
-        "receiveBody": "別のアドレスからトークンを転送します",
         "title": "ウォレットに資金を入れる",
         "buyBody": "簡単な暗号通貨購入",
-        "importHeader": "アドレスをインポート",
-        "importBody": "資金のある既存のアドレスを追加します。",
-        "desc": "今すぐ迅速に資金を追加してください。"
+        "desc": "今すぐ迅速に資金を追加してください。",
+        "receiveBody": "別のウォレットからトークンを転送する",
+        "importHeader": "ウォレットをインポートする",
+        "importBody": "資金がある既存のウォレットを追加します。"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1514,7 +1546,7 @@
     },
     "receiveAddressList": {
       "selectChainTitle": "チェーンを選択",
-      "title": "受取アドレスを選択"
+      "title": "ウォレットを選択して受け取る"
     },
     "backupPrivateKey": {
       "clickToShow": "クリックしてプライベートキーを表示",
@@ -1791,7 +1823,8 @@
       "currentLanguage": "現在の言語",
       "clearPendingToast": "ローカルの保留中のトランザクションが削除されました",
       "clearPendingResetDesc": "ローカルの nonce データと署名記録もリセットします。",
-      "clearPendingWarning": "削除されたトランザクションは、置き換えられない限り、オンチェーンでまだ確認される可能性があります。"
+      "clearPendingWarning": "削除されたトランザクションは、置き換えられない限り、オンチェーンでまだ確認される可能性があります。",
+      "clearBrowserData": "ブラウザデータをクリア"
     },
     "settingModal": {
       "themeMode": {
@@ -1806,6 +1839,11 @@
         "clearAppCacheDesc": "これにより、一時的なキャッシュファイルが削除されますが、個人データや設定には影響しません。プロセスを完了するにはアプリを再起動する必要があります。続行しますか？",
         "iOSToastTitle": "キャッシュのクリアに成功しました",
         "iOSToastDesc": "有効にするには、アプリを再起動する必要があります。"
+      },
+      "clearBrowserData": {
+        "button": "クリア",
+        "title": "ブラウザデータをクリア",
+        "desc": "これにより、すべてのブラウザタブが閉じられ、すべての閲覧履歴が削除されます。"
       }
     },
     "buy": {
@@ -1845,27 +1883,27 @@
     },
     "sendPoly": {
       "modals": {
-        "importedAddress": "インポートされたアドレス",
-        "addAddress": "新しいアドレス",
         "recentAddress": "最近の送信したアドレス",
         "header": "アドレスをホワイトリストに追加",
-        "content": "アドレスの追加方法を選択してください。"
+        "addAddress": "新しいウォレット",
+        "importedAddress": "インポートされたウォレット",
+        "content": "ウォレットを追加する方法を選択してください："
       },
       "enterAddress": "アドレスを入力",
       "emptyWhitelistBtn": "今すぐ追加",
       "emptyWhitelistHeader": "ホワイトリストアドレスを追加",
-      "sendToSafeAddress": "安全なアドレスに送信",
-      "sendToWatchAddress": "ウォッチオンリーアドレスに送信",
       "emptyWhitelistContent": "信頼できるアドレスをホワイトリストに追加して高速転送を実現 - 次回からは確認が不要です",
       "emptyWhitelistTip": "まだホワイトリストに登録されたアドレスはありません。",
       "whitelistTitle": "私のホワイトリストアドレス",
-      "sendToImportedAddress": "インポートしたアドレスに送信",
       "innerEnterAddress": "アドレス / ENSを入力してください",
       "recent": "最近",
       "sendTimeHeader": "送信",
       "SelectFromHistory": "履歴から選択",
       "SendHistory": "送信履歴",
-      "sentTimeHeader": "送信しました"
+      "sentTimeHeader": "送信しました",
+      "sendToImportedAddress": "インポートしたウォレットに送信",
+      "sendToWatchAddress": "Watch-Onlyウォレットに送信",
+      "sendToSafeAddress": "Safe Walletsに送信"
     },
     "confirmAddress": {
       "risks": {
@@ -1884,7 +1922,7 @@
     },
     "selectAddress": {
       "selectSafeAddress": "Safeアドレスから選択",
-      "selectWatchAddress": "ウォッチ専用アドレスから選択"
+      "selectWatchAddress": "Watch-Only アドレスから選択してください"
     },
     "whitelist": {
       "addToWhitelist": "ホワイトリストに追加",
@@ -1927,7 +1965,9 @@
     "multiAddressAssets": {
       "tabs": {
         "portfolio": "ポートフォリオ",
-        "address": "アドレス"
+        "address": "アドレス",
+        "wallet_other": "ウォレット",
+        "wallet_one": "ウォレット"
       },
       "scamTokenHeader": "詐欺トークン"
     },
@@ -1940,6 +1980,12 @@
       "BrowserHeader": {
         "searchAndroid": "Dappを検索",
         "searchIos": "ウェブサイトを検索"
+      },
+      "CurrentPopup": {
+        "disconnect": "切断接続",
+        "title": "現在のDapp",
+        "connectChain": "チェーンを接続する",
+        "connectWallet": "ウォレットを接続"
       }
     },
     "browserManage": {
@@ -1966,6 +2012,26 @@
     "defiDetail": {
       "viewSiteInApp": "Dappで表示",
       "viewSiteInWebsite": "ウェブサイトで表示"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "チェーンを選択"
+      }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "Smart MoneyからのCopy Trading",
+        "description": "スマートマネーウォレットの最近のアクティビティに基づいてトークンを発見します。トークンをタップすると、それらのウォレットからの詳細な取引額と歴史的な利益を見ることができます。"
+      },
+      "historyProfit": "履歴利益",
+      "comingSoon": "もうすぐ登場...",
+      "noMoreData": "データはもうありません",
+      "smartMoneyWallet": "スマートマネーウォレット",
+      "recentBuy": "最近の購入",
+      "buy": "購入",
+      "refreshTitle": "スマートマネーからのコピー取引をさらに読み込んでいます",
+      "updateText": "{{count}} トレンドが更新されました",
+      "smartMoneyWallets": "スマートマネーウォレット"
     }
   },
   "global": {
@@ -2009,7 +2075,8 @@
     "unlimited": "無制限",
     "Addresses": "アドレス",
     "24h": "24時間",
-    "Edit": "編集"
+    "Edit": "編集",
+    "Wallets": "ウォレットを選択"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -2043,9 +2110,9 @@
       }
     },
     "accountSwitcher": {
-      "screenHeaderSubTitle_one": "1 address",
-      "screenHeaderSubTitle_other": "{{count}} アドレス",
-      "all": "すべて"
+      "all": "すべて",
+      "screenHeaderSubTitle_one": "1 ウォレット",
+      "screenHeaderSubTitle_other": "{{count}} ウォレット"
     },
     "AccountSelectDrawer": {
       "btn": {
@@ -2125,8 +2192,8 @@
       "withdraw": "出金",
       "deposit": "入金",
       "loginConfirmModal": {
-        "title": "アドレスを選択してログイン",
-        "desc": "ログインすると、このアドレスにのみデポジットできます。"
+        "title": "ウォレットを選択してログイン",
+        "desc": "ログインすると、このアドレスにのみ入金できます。"
       },
       "withdrawPopup": {
         "amount": "量",
@@ -2182,6 +2249,24 @@
     },
     "selectCexModal": {
       "title": "交換元を選択してください"
+    },
+    "AccountSelector": {
+      "title": "ウォレットを選択してください"
+    },
+    "globalWarning": {
+      "networkError": {
+        "title": "サービス接続エラー:",
+        "globalDesc": "情報は古くなっているかもしれませんが、あなたの資金は安全です。"
+      },
+      "serviceError": {
+        "title": "ネットワークの問題：",
+        "quotesDesc": "引用の読み込みに失敗しました。",
+        "balanceDesc": "残高の読み込みに失敗しました。",
+        "globalDesc": "情報は古い可能性がありますが、あなたの資金は安全です。"
+      },
+      "buttonText": "リフレッシュ",
+      "offlineText": "ネットワークエラー",
+      "serviceErrorText": "サービスエラー"
     }
   },
   "common": {

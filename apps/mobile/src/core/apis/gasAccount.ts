@@ -8,6 +8,7 @@ import { sendToken } from './token';
 import { openapi } from '../request';
 import * as Sentry from '@sentry/react-native';
 import { t } from 'i18next';
+import { Account } from '../services/preference';
 
 export const topUpGasAccount = async ({
   to,
@@ -15,14 +16,15 @@ export const topUpGasAccount = async ({
   tokenId,
   rawAmount,
   amount,
+  account,
 }: {
   to: string;
   chainServerId: string;
   tokenId: string;
   rawAmount: string;
   amount: number;
+  account: Account;
 }) => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(t('background.error.noCurrentAccount'));
   }
@@ -38,6 +40,7 @@ export const topUpGasAccount = async ({
     chainServerId,
     tokenId,
     rawAmount,
+    account,
   });
   await afterTopUpGasAccount({
     to,
@@ -46,6 +49,7 @@ export const topUpGasAccount = async ({
     rawAmount,
     amount,
     tx,
+    account,
   });
 };
 
@@ -56,6 +60,7 @@ export const afterTopUpGasAccount = async ({
   rawAmount,
   amount,
   tx,
+  account,
 }: {
   to: string;
   chainServerId: string;
@@ -63,9 +68,9 @@ export const afterTopUpGasAccount = async ({
   rawAmount: string;
   amount: number;
   tx?: string;
+  account: Account;
 }) => {
   const chain = findChainByServerID(chainServerId);
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(t('background.error.noCurrentAccount'));
   }
@@ -113,14 +118,15 @@ export const buildTopUpGasAccount = async ({
   tokenId,
   rawAmount,
   amount,
+  account,
 }: {
   to: string;
   chainServerId: string;
   tokenId: string;
   rawAmount: string;
   amount: number;
+  account: Account;
 }) => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(t('background.error.noCurrentAccount'));
   }
@@ -137,6 +143,7 @@ export const buildTopUpGasAccount = async ({
     tokenId,
     rawAmount,
     isBuild: true,
+    account,
   });
 
   return res?.params?.[0];

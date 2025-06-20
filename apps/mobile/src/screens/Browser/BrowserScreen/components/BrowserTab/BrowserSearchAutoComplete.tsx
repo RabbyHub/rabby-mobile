@@ -53,6 +53,7 @@ export function BrowserSearchAutoComplete({
           return (
             <TouchableOpacity
               key={item.id}
+              hitSlop={24}
               onPress={() => {
                 onSelect?.(item.name);
               }}>

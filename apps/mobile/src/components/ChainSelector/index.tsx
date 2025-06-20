@@ -49,6 +49,7 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 8,
       paddingVertical: 8,
       borderRadius: 6,
+      height: 32,
     },
     chainText: {
       fontSize: 13,

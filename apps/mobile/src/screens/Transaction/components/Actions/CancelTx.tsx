@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
+import { RcIconExternalLinkCC } from '@/assets/icons/common';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
@@ -10,25 +10,31 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
 import { toast } from '@/components2024/Toast';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
+import { ellipsisAddress } from '@/utils/address';
+import { formatAmount } from '@/utils/number';
+import { formatIntlTimestamp } from '@/utils/time';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { CancelTxRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
-import { ellipsisAddress } from '@/utils/address';
-import { formatIntlTimestamp } from '@/utils/time';
-import { formatAmount } from '@/utils/number';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
-export const CancelTx: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const CancelTx: React.FC<Props> = ({
+  data,
+  isSingleAddress,
+  account,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -56,8 +62,6 @@ export const CancelTx: React.FC<Props> = ({ data, isSingleAddress }) => {
   const unionAccounts = useMemo(() => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
-
-  const { switchAccount } = useCurrentAccount();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -119,7 +123,6 @@ export const CancelTx: React.FC<Props> = ({ data, isSingleAddress }) => {
           <AddressItemInDetail
             address={data.maxGasTx.address}
             accounts={unionAccounts}
-            switchAccount={switchAccount}
           />
         </View>
 

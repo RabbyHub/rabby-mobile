@@ -24,8 +24,8 @@ import { Button } from '@/components';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { useDapps } from '@/hooks/useDapps';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { useCurrentAccount } from '@/hooks/account';
 import { createGetStyles } from '@/utils/styles';
+import { preferenceService } from '@/core/services';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -107,6 +107,7 @@ const TEST_DAPP_INFO = {
   name: 'Rabby Tester',
   tags: [],
   user_range: 'User >10k',
+  chain_ids: [CHAINS_ENUM.ETH],
 };
 
 const TEST_SESSION = {
@@ -123,17 +124,18 @@ function ProviderControllerTester(): JSX.Element {
 
   const { addDapp } = useDapps();
   const [account, setAccount] = React.useState<string>();
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = preferenceService.getFallbackAccount();
   const [connectStatus, setConnectStatus] = React.useState<string>();
   const { styles } = useThemeStyles(getStyles);
 
   const handleConnect = React.useCallback(() => {
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_requestAccounts',
       },
-      TEST_SESSION,
-    )
+      session: TEST_SESSION,
+      account: currentAccount!,
+    })
       .then(res => {
         console.log(res);
         setAccount(res[0]);
@@ -141,11 +143,11 @@ function ProviderControllerTester(): JSX.Element {
       .catch(e => {
         console.error(e);
       });
-  }, []);
+  }, [currentAccount]);
 
   const handlSignTransaction = React.useCallback(() => {
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_sendTransaction',
         params: [
           {
@@ -156,19 +158,20 @@ function ProviderControllerTester(): JSX.Element {
           },
         ],
       },
-      TEST_SESSION,
-    )
+      session: TEST_SESSION,
+      account: currentAccount!,
+    })
       .then(res => {
         console.log(res);
       })
       .catch(e => {
         console.error(e);
       });
-  }, [account]);
+  }, [account, currentAccount]);
 
   const handlePersonalSign = React.useCallback(() => {
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'personal_sign',
         params: [
           '0x4578616d706c652060706572736f6e616c5f7369676e60206d657373616765',
@@ -176,19 +179,20 @@ function ProviderControllerTester(): JSX.Element {
           'Example password',
         ],
       },
-      TEST_SESSION,
-    )
+      session: TEST_SESSION,
+      account: currentAccount!,
+    })
       .then(res => {
         console.log(res);
       })
       .catch(e => {
         console.error(e);
       });
-  }, [account]);
+  }, [account, currentAccount]);
 
   const handleTypedDataSign = React.useCallback(() => {
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_signTypedData',
         params: [
           [
@@ -206,38 +210,40 @@ function ProviderControllerTester(): JSX.Element {
           account,
         ],
       },
-      TEST_SESSION,
-    )
+      session: TEST_SESSION,
+      account: currentAccount!,
+    })
       .then(res => {
         console.log(res);
       })
       .catch(e => {
         console.error(e);
       });
-  }, [account]);
+  }, [account, currentAccount]);
 
   const handleSellNFT = React.useCallback(() => {
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_signTypedData_v4',
         params: [
           account,
           '{"types":{"EIP712Domain":[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint256"},{"name":"verifyingContract","type":"address"}],"OrderComponents":[{"name":"offerer","type":"address"},{"name":"zone","type":"address"},{"name":"offer","type":"OfferItem[]"},{"name":"consideration","type":"ConsiderationItem[]"},{"name":"orderType","type":"uint8"},{"name":"startTime","type":"uint256"},{"name":"endTime","type":"uint256"},{"name":"zoneHash","type":"bytes32"},{"name":"salt","type":"uint256"},{"name":"conduitKey","type":"bytes32"},{"name":"counter","type":"uint256"}],"OfferItem":[{"name":"itemType","type":"uint8"},{"name":"token","type":"address"},{"name":"identifierOrCriteria","type":"uint256"},{"name":"startAmount","type":"uint256"},{"name":"endAmount","type":"uint256"}],"ConsiderationItem":[{"name":"itemType","type":"uint8"},{"name":"token","type":"address"},{"name":"identifierOrCriteria","type":"uint256"},{"name":"startAmount","type":"uint256"},{"name":"endAmount","type":"uint256"},{"name":"recipient","type":"address"}]},"primaryType":"OrderComponents","domain":{"name":"Seaport","version":"1.5","chainId":"1","verifyingContract":"0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC"},"message":{"offerer":"0x5853eD4f26A3fceA565b3FBC698bb19cdF6DEB85","offer":[{"itemType":"2","token":"0xF75FD01D2262b07D92dcA7f19bD6A3457060d7db","identifierOrCriteria":"3626","startAmount":"1","endAmount":"1"}],"consideration":[{"itemType":"1","token":"0xfe1ef2b469846d1832b25095ff51b004f090e0c6","identifierOrCriteria":"0","startAmount":"900000000000000000","endAmount":"900000000000000000","recipient":"0x5853ed4f26a3fcea565b3fbc698bb19cdf6deb85"},{"itemType":"1","token":"0xfe1ef2b469846d1832b25095ff51b004f090e0c6","identifierOrCriteria":"0","startAmount":"25000000000000000","endAmount":"25000000000000000","recipient":"0x0000a26b00c1F0DF003000390027140000fAa719"},{"itemType":"1","token":"0xfe1ef2b469846d1832b25095ff51b004f090e0c6","identifierOrCriteria":"0","startAmount":"75000000000000000","endAmount":"75000000000000000","recipient":"0xaa5a6eec8F785F8C4fEeb28057f1f4F37EC33C44"}],"startTime":"1686477774","endTime":"1689069774","orderType":"0","zone":"0x5853ed4f26a3fcea565b3fbc698bb19cdf6deb85","zoneHash":"0x0000000000000000000000000000000000000000000000000000000000000000","salt":"24446860302761739304752683030156737591518664810215442929806870165851630445366","conduitKey":"0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000","totalOriginalConsiderationItems":"3","counter":"0"}}',
         ],
       },
-      TEST_SESSION,
-    )
+      session: TEST_SESSION,
+      account: currentAccount!,
+    })
       .then(res => {
         console.log(res);
       })
       .catch(e => {
         console.error(e);
       });
-  }, [account]);
+  }, [account, currentAccount]);
 
   const handleSendEth = React.useCallback(() => {
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_sendTransaction',
         params: [
           {
@@ -250,15 +256,16 @@ function ProviderControllerTester(): JSX.Element {
           },
         ],
       },
-      TEST_SESSION,
-    )
+      session: TEST_SESSION,
+      account: currentAccount!,
+    })
       .then(res => {
         console.log(res);
       })
       .catch(e => {
         console.error(e);
       });
-  }, [account]);
+  }, [account, currentAccount]);
 
   const handleSwap = React.useCallback(() => {
     const tx = {
@@ -272,13 +279,14 @@ function ProviderControllerTester(): JSX.Element {
       maxPriorityFeePerGas: '0x4e3b29200',
       nonce: '0xc2',
     };
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_sendTransaction',
         params: [tx],
       },
-      TEST_SESSION,
-    )
+      session: TEST_SESSION,
+      account: currentAccount!,
+    })
       .then(res => {
         console.log(res);
       })
@@ -299,13 +307,14 @@ function ProviderControllerTester(): JSX.Element {
       maxPriorityFeePerGas: '0x773594000',
       nonce: '0xc2',
     };
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_sendTransaction',
         params: [tx],
       },
-      TEST_SESSION,
-    )
+      session: TEST_SESSION,
+      account: currentAccount!,
+    })
       .then(res => {
         console.log(res);
       })
@@ -325,13 +334,14 @@ function ProviderControllerTester(): JSX.Element {
       maxPriorityFeePerGas: '0x89d5f3200',
       nonce: '0xc2',
     };
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_sendTransaction',
         params: [tx],
       },
-      TEST_SESSION,
-    );
+      session: TEST_SESSION,
+      account: currentAccount!,
+    });
   };
 
   const handleCrossToken = () => {
@@ -346,13 +356,14 @@ function ProviderControllerTester(): JSX.Element {
       maxPriorityFeePerGas: '0x861c46800',
       nonce: '0xc2',
     };
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_sendTransaction',
         params: [tx],
       },
-      TEST_SESSION,
-    );
+      session: TEST_SESSION,
+      account: currentAccount!,
+    });
   };
 
   const handleCrossSwapToken = () => {
@@ -367,13 +378,14 @@ function ProviderControllerTester(): JSX.Element {
       maxPriorityFeePerGas: '0x773594000',
       nonce: '0x65',
     };
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_sendTransaction',
         params: [tx],
       },
-      TEST_SESSION,
-    );
+      session: TEST_SESSION,
+      account: currentAccount!,
+    });
   };
 
   const handleContractCall = () => {
@@ -387,13 +399,14 @@ function ProviderControllerTester(): JSX.Element {
       maxPriorityFeePerGas: '0x89d5f3200',
       nonce: '0xc2',
     };
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_sendTransaction',
         params: [tx],
       },
-      TEST_SESSION,
-    );
+      session: TEST_SESSION,
+      account: currentAccount!,
+    });
   };
 
   const handleSendNFT = () => {
@@ -407,13 +420,14 @@ function ProviderControllerTester(): JSX.Element {
       maxPriorityFeePerGas: '0x737be7600',
       nonce: '0x74',
     };
-    sendRequest(
-      {
+    sendRequest({
+      data: {
         method: 'eth_sendTransaction',
         params: [tx],
       },
-      TEST_SESSION,
-    );
+      session: TEST_SESSION,
+      account: currentAccount!,
+    });
   };
 
   React.useEffect(() => {
@@ -421,6 +435,7 @@ function ProviderControllerTester(): JSX.Element {
       info: TEST_DAPP_INFO,
       chainId: CHAINS_ENUM.ETH,
       origin: TEST_DAPP_INFO.id,
+      name: TEST_DAPP_INFO.name,
     });
   }, [addDapp]);
 

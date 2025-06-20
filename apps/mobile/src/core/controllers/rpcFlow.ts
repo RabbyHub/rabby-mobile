@@ -4,7 +4,12 @@ import { ethErrors } from 'eth-rpc-errors';
 //   notificationService,
 //   permissionService,
 // } from 'background/service';
-import { dappService, keyringService, notificationService } from '../services';
+import {
+  dappService,
+  keyringService,
+  notificationService,
+  preferenceService,
+} from '../services';
 import PromiseFlow from '@/utils/promiseFlow';
 import providerController from './provider';
 // import eventBus from '@/eventBus';
@@ -20,6 +25,9 @@ import { waitSignComponentAmounted } from '../utils/signEvent';
 import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
+import { reject } from 'lodash';
+import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
+import { Account } from '../services/preference';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -131,10 +139,11 @@ const flowContext = flow
         ctx.request.requestedApproval = true;
         connectOrigins.add(origin);
         try {
-          const { defaultChain, signPermission } =
+          const { defaultChain, defaultAccount } =
             await notificationService.requestApproval(
               {
                 params: { origin, name, icon, $mobileCtx },
+                account: ctx.request.account,
                 approvalComponent: 'Connect',
               },
               { height: 800 },
@@ -143,6 +152,8 @@ const flowContext = flow
           await apisDapp.connect({
             origin,
             chainId: defaultChain || CHAINS_ENUM.ETH,
+            currentAccount:
+              defaultAccount || preferenceService.getFallbackAccount(),
             session: {
               name,
               icon,
@@ -150,6 +161,8 @@ const flowContext = flow
               $mobileCtx,
             },
           });
+          ctx.request.account =
+            defaultAccount || preferenceService.getFallbackAccount();
         } catch (e) {
           connectOrigins.delete(origin);
           throw e;
@@ -228,6 +241,7 @@ const flowContext = flow
             data: ctx.request.data.params,
             session: { origin, name, icon, $mobileCtx },
           },
+          account: ctx.request.account,
           origin,
         },
         { height: windowHeight },
@@ -301,13 +315,18 @@ const flowContext = flow
               } else if (__DEV__) {
                 console.error(e);
               }
+              reject(e);
             }),
         );
       });
 
     notificationService.setCurrentRequestDeferFn(requestDeferFn);
     const requestDefer = requestDeferFn();
-    async function requestApprovalLoop({ uiRequestComponent, ...rest }) {
+    async function requestApprovalLoop({
+      uiRequestComponent,
+      $account,
+      ...rest
+    }) {
       ctx.request.requestedApproval = true;
 
       try {
@@ -317,6 +336,7 @@ const flowContext = flow
             ...rest,
             $mobileCtx: rest.$mobileCtx || $mobileCtx,
           },
+          account: $account,
           origin,
           approvalType,
           isUnshift: true,
@@ -402,7 +422,29 @@ function reportStatsData() {
 }
 
 export default async (request: ProviderRequest) => {
-  const ctx: any = { request: { ...request, requestedApproval: false } };
+  const origin = request.session?.origin || request.origin;
+  let account: Account | undefined = undefined;
+
+  if (origin) {
+    if (origin === INTERNAL_REQUEST_ORIGIN) {
+      account =
+        request.account || preferenceService.getFallbackAccount() || undefined;
+    } else {
+      const site = dappService.getDapp(origin);
+      if (site?.isConnected) {
+        account =
+          site.currentAccount ||
+          preferenceService.getFallbackAccount() ||
+          undefined;
+      }
+    }
+  }
+
+  console.log(account);
+
+  const ctx: any = {
+    request: { ...request, account, requestedApproval: false },
+  };
   notificationService.setStatsData();
   return flowContext(ctx).finally(() => {
     reportStatsData();

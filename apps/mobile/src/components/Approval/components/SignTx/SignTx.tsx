@@ -122,6 +122,7 @@ interface SignTxProps<TData extends any[] = any[]> {
     $ctx?: any;
   };
   origin?: string;
+  account: Account;
 }
 
 interface BlockInfo {
@@ -148,8 +149,13 @@ interface BlockInfo {
   uncles: string[];
 }
 
-const SignMainnetTx = ({ params, origin }: SignTxProps) => {
-  const { isGnosis, account } = params;
+const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
+  const { isGnosis } = params;
+  const currentAccount = params.isGnosis ? params.account! : $account;
+  console.log({
+    currentAccount,
+  });
+  const site = dappService.getDapp(origin || '');
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
   const [canProcess, setCanProcess] = useState(true);
@@ -267,9 +273,8 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     },
   ]);
 
-  const [currentAccountType, setCurrentAccountType] = useState<
-    undefined | string
-  >();
+  const currentAccountType = currentAccount?.type;
+
   const [gasLessLoading, setGasLessLoading] = useState(false);
   const [isFirstGasLessLoading, setIsFirstGasLessLoading] = useState(true);
   const [canUseGasLess, setCanUseGasLess] = useState(false);
@@ -297,23 +302,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   const [footerShowShadow, setFooterShowShadow] = useState(false);
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
     useApprovalSecurityEngine();
-
-  const _currentAccount = useMemo(() => {
-    return isGnosis && account
-      ? account
-      : preferenceService.getCurrentAccount()!;
-  }, [account, isGnosis]);
-
-  // useSignPermissionCheck({
-  //   origin,
-  //   chainId,
-  //   onDisconnect: () => {
-  //     handleCancel();
-  //   },
-  //   onOk: () => {
-  //     handleCancel();
-  //   },
-  // });
 
   // useTestnetCheck({
   //   chainId,
@@ -413,6 +401,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     tx,
     gasLimit,
     isReady,
+    account: currentAccount,
   });
 
   const checkErrors = useCheckGasAndNonce({
@@ -484,7 +473,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     txs,
     noCustomRPC,
     isSupportedAddr,
-    currentAccount: _currentAccount,
+    currentAccount,
   });
 
   useEffect(() => {
@@ -515,6 +504,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         recommendNonce = await getRecommendNonce({
           tx,
           chainId,
+          account: currentAccount,
         });
         setRecommendNonce(recommendNonce);
       } catch (e) {
@@ -561,6 +551,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             ).toString(16)}`,
             gas: item.gas || item.gasLimit || '0x0',
           })),
+        delegate_call: isGnosisAccount ? !!params?.data?.[0]?.operation : false,
       })
       .then(async res => {
         let estimateGas = 0;
@@ -583,6 +574,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
               params: ['latest', false],
             },
             chain.serverId,
+            currentAccount,
           );
           setBlockInfo(block);
         } catch (e) {
@@ -703,10 +695,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   };
 
   const explain = async () => {
-    const currentAccount =
-      isGnosis && account
-        ? account
-        : (await preferenceService.getCurrentAccount())!;
     try {
       setIsReady(false);
       await explainTx(currentAccount.address);
@@ -789,6 +777,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         data: [account.address, JSON.stringify(typedData)],
         isGnosis: true,
         account: account,
+        $account: account,
         extra: {
           popupProps: {
             maskStyle: {
@@ -839,11 +828,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     if (activeApprovalPopup()) {
       return;
     }
-
-    const currentAccount =
-      isGnosis && account
-        ? account
-        : (await preferenceService.getCurrentAccount())!;
 
     if (currentAccount?.type === KEYRING_TYPE.HdKeyring) {
       await invokeEnterPassphrase(currentAccount.address);
@@ -937,6 +921,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         extra: {
           brandName: currentAccount.brandName,
         },
+        $account: currentAccount,
         $ctx: params.$ctx,
         signingTxId: approval.signingTxId,
         pushType: pushInfo.type,
@@ -1082,11 +1067,14 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     chain: Chain,
     custom?: number,
   ): Promise<GasLevel[]> => {
-    const list = await apiProvider.gasMarketV2({
-      chain,
-      customGas: custom && custom > 0 ? custom : undefined,
-      tx,
-    });
+    const list = await apiProvider.gasMarketV2(
+      {
+        chain,
+        customGas: custom && custom > 0 ? custom : undefined,
+        tx,
+      },
+      currentAccount,
+    );
     setGasList(list);
     return list;
   };
@@ -1099,11 +1087,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
 
   const checkCanProcess = async () => {
     const session = params.session;
-    const currentAccount =
-      isGnosis && account
-        ? account
-        : (await preferenceService.getCurrentAccount())!;
-    const site = await dappService.getDapp(session.origin);
 
     if (currentAccount.type === KEYRING_TYPE.WatchAddressKeyring) {
       setCanProcess(false);
@@ -1162,10 +1145,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   };
 
   const getSafeInfo = async () => {
-    const currentAccount =
-      isGnosis && account
-        ? account
-        : (await preferenceService.getCurrentAccount())!;
     const networkId = '' + chainId;
     let safeInfo: BasicSafeInfo | null = null;
     try {
@@ -1285,13 +1264,6 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     apiApprovalSecurityEngine.resetCurrentTx();
     checkIsBlockedTransaction();
     try {
-      const currentAccount =
-        isGnosis && account
-          ? account
-          : (await preferenceService.getCurrentAccount())!;
-
-      setCurrentAccountType(currentAccount.type);
-
       const is1559 =
         support1559 &&
         SUPPORT_1559_KEYRING_TYPE.includes(currentAccount.type as any);
@@ -1305,6 +1277,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         const balance = await getNativeTokenBalance({
           chainId,
           address: currentAccount.address,
+          account: currentAccount,
         });
 
         setNativeTokenBalance(balance);
@@ -1568,6 +1541,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
               })}>
               {txDetail && (
                 <TxTypeComponent
+                  account={currentAccount}
                   isReady={isReady}
                   actionData={actionData}
                   actionRequireData={actionRequireData}
@@ -1582,12 +1556,13 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
                   isSpeedUp={isSpeedUp}
                   engineResults={engineResults}
                   origin={origin}
-                  originLogo={params.session.icon}
+                  originLogo={site?.icon}
                 />
               )}
 
               {isGnosisAccount && (
                 <SafeNonceSelector
+                  account={currentAccount}
                   disabled={isViewGnosisSafe}
                   isReady={isReady}
                   chainId={chainId}
@@ -1605,6 +1580,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
               swapPreferMEVGuarded &&
               isReady ? (
                 <BroadcastMode
+                  account={currentAccount}
                   chain={chain.enum}
                   value={pushInfo}
                   isCancel={isCancel}
@@ -1648,9 +1624,10 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             <GnosisAdminFooterBarPopup
               visible={gnosisFooterBarVisible}
               origin={params.session.origin}
-              originLogo={params.session.icon}
+              originLogo={site?.icon}
               chain={chain}
               gnosisAccount={currentGnosisAdmin}
+              account={currentGnosisAdmin}
               onCancel={handleCancel}
               // securityLevel={securityLevel}
               // hasUnProcessSecurityResult={hasUnProcessSecurityResult}
@@ -1713,6 +1690,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
                     nativeTokenPrice: txDetail?.native_token.price || 0,
                     tx,
                     gasLimit,
+                    account: currentAccount,
                   });
                 }}
                 recommendGasLimit={recommendGasLimit}
@@ -1730,6 +1708,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
                 engineResults={engineResults}
                 nativeTokenBalance={nativeTokenBalance}
                 gasPriceMedian={gasPriceMedian}
+                account={currentAccount}
               />
             }
             noCustomRPC={noCustomRPC}
@@ -1769,10 +1748,11 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             enableGasLess={() => setUseGasLess(true)}
             hasShadow={footerShowShadow}
             origin={origin}
-            originLogo={params.session.icon}
+            originLogo={site?.icon}
             hasUnProcessSecurityResult={hasUnProcessSecurityResult}
             securityLevel={securityLevel}
-            gnosisAccount={isGnosis ? account : undefined}
+            gnosisAccount={isGnosis ? params.account : undefined}
+            account={currentAccount}
             chain={chain}
             isTestnet={chain.isTestnet}
             onCancel={handleCancel}

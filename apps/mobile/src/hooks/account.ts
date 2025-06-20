@@ -33,6 +33,7 @@ import { deleteDBResourceForAddress } from '@/databases/sync/assets';
 import { filterMyAccounts } from '@/utils/account';
 import { unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
+import { useHistoryTokenDict } from './historyTokenDict';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -147,86 +148,6 @@ export function useMyAccounts(opts?: { disableAutoFetch?: boolean }) {
   };
 }
 
-const fetchingCurrentAccountAtom = atom(false);
-
-/**
- * @description this hooks GET CURRENT account and re-PICK it from accounts, so you need to
- * ensure the accounts is fetched/updated before using this hook
- */
-export function useCurrentAccount(options?: {
-  disableAutoFetch?: boolean;
-  isTop?: true;
-}) {
-  const [currentAccount, setCurrentAccount] = useAtom(currentAccountAtom);
-  const [accounts] = useAtom(accountsAtom);
-
-  const doFetchCurrentAccount = useCallback(() => {
-    const account = preferenceService.getCurrentAccount();
-    const index = accounts.findIndex(
-      e =>
-        addressUtils.isSameAddress(e.address, account?.address || '') &&
-        e.brandName === account?.brandName,
-    );
-
-    setCurrentAccount(
-      index >= 0
-        ? (accounts[index] as any)
-        : accounts.length >= 0
-        ? (accounts[0] as any)
-        : null,
-    );
-  }, [accounts, setCurrentAccount]);
-
-  const { fetchAction: fetchCurrentAccount } = useAtomicRequest({
-    isRequestingAtom: fetchingCurrentAccountAtom,
-    doRequest: doFetchCurrentAccount,
-  });
-
-  const fetchCurrentAccountAsync = useCallback(async () => {
-    return fetchCurrentAccount();
-  }, [fetchCurrentAccount]);
-
-  const switchAccount = useCallback(
-    (account: Account) => {
-      preferenceService.setCurrentAccount(account);
-      setCurrentAccount(account);
-    },
-    [setCurrentAccount],
-  );
-
-  const { disableAutoFetch = false, isTop = false } = options || {};
-
-  useEffect(() => {
-    if (!disableAutoFetch) {
-      fetchCurrentAccountAsync();
-    }
-  }, [disableAutoFetch, fetchCurrentAccountAsync]);
-
-  return {
-    switchAccount,
-    fetchCurrentAccount,
-    fetchCurrentAccountAsync,
-    currentAccount,
-  };
-}
-
-/**
- * @description this hooks will listen to the event of current account changed
- */
-export function useCurrentAccountOnAppTop() {
-  const { fetchCurrentAccountAsync } = useCurrentAccount();
-  useEffect(() => {
-    const listener = () => {
-      fetchCurrentAccountAsync();
-    };
-    appServiceEvents.on('currentAccountChanged', listener);
-
-    return () => {
-      appServiceEvents.off('currentAccountChanged', listener);
-    };
-  }, [fetchCurrentAccountAsync]);
-}
-
 export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   const { disableAutoFetch = false } = opts || {};
   const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
@@ -298,6 +219,7 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
 
 export function useRemoveAccount() {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const { updateHistoryTimeSingleAddress } = useHistoryTokenDict();
   return useCallback(
     async (account: KeyringAccount) => {
       await removeAddress(account);
@@ -307,9 +229,10 @@ export function useRemoveAccount() {
           .length === 1
       ) {
         await deleteDBResourceForAddress(account.address);
+        updateHistoryTimeSingleAddress(account.address, 0);
       }
     },
-    [accounts, fetchAccounts],
+    [accounts, fetchAccounts, updateHistoryTimeSingleAddress],
   );
 }
 
@@ -358,7 +281,11 @@ export function useChainBalances() {
   };
 }
 
-export function useLoadMatteredChainBalances() {
+export function useLoadMatteredChainBalances({
+  account: currentAccount,
+}: {
+  account?: Account;
+}) {
   const {
     matteredChainBalances,
     setMattredChainBalances,
@@ -370,7 +297,6 @@ export function useLoadMatteredChainBalances() {
     setTestMattredChainBalances,
   } = useChainBalances();
 
-  const { currentAccount } = useCurrentAccount();
   const currentAccountAddr = currentAccount?.address;
 
   const isShowTestnet = false;
@@ -648,3 +574,16 @@ export function useLoadMatteredChainBalances() {
 //    */
 //   // mnemonicAccounts: DisplayedKeyring[];
 // }
+
+export const useFallbackAccount = () => {
+  const accounts = useMyAccounts({
+    disableAutoFetch: true,
+  });
+  const firstAccount = accounts[0];
+  useEffect(() => {
+    if (!preferenceService.getFallbackAccount()) {
+      preferenceService.setCurrentAccount(firstAccount);
+    }
+  }, [firstAccount]);
+  return firstAccount || preferenceService.getFallbackAccount();
+};

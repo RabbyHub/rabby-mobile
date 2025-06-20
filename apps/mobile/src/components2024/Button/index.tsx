@@ -13,6 +13,7 @@ import {
   ViewStyle,
   TouchableOpacityProps,
   TouchableOpacity,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -32,7 +33,9 @@ export type ButtonProps = Omit<
       loading?: boolean;
       loadingStyle?: StyleProp<ViewStyle>;
       containerStyle?: StyleProp<ViewStyle>;
-      TouchableComponent?: typeof React.Component;
+      TouchableComponent?:
+        | React.FC<React.ComponentProps<typeof TouchableOpacity>>
+        | typeof TouchableNativeFeedback;
       ViewComponent?: typeof React.Component;
       disabled?: boolean;
       disabledTitleStyle?: StyleProp<TextStyle>;
@@ -250,7 +253,7 @@ const getStyle = createGetStyles2024(ctx => ({
     paddingVertical: 1,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
-    lineHeight: 24,
+    // lineHeight: 24,
   },
   iconContainer: {
     marginHorizontal: 8,

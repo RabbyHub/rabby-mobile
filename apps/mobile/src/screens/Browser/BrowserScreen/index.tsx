@@ -14,7 +14,6 @@ import { View } from 'react-native';
 import { BrowserTab } from './components/BrowserTab';
 import { useFocusEffect } from '@react-navigation/native';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 
 export function BrowserScreen() {
   const { styles: stylesScreen } = useTheme2024({
@@ -26,8 +25,6 @@ export function BrowserScreen() {
   const activeDappWebViewControlRef = useRef<any>(null);
 
   const { tabs, activeTabId, closeTab, updateTab, openTab } = useBrowser();
-
-  useLastUsedAccountInScreen();
 
   const activeTabOrigin = useMemo(() => {
     const tab = tabs.find(t => t.id === activeTabId);
@@ -143,9 +140,6 @@ export function BrowserScreen() {
             );
           })}
         </>
-      )}
-      {tabs.length > 0 && (
-        <AccountSwitcherModalInDappWebView activeDappId={activeTabOrigin} />
       )}
     </View>
   );

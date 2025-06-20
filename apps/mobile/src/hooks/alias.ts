@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAccounts } from './account';
 import { apiContact } from '@/core/apis';
 
-export const useAlias = (address: string) => {
+export const useAlias = (address?: string) => {
   const [name, setName] = useState<string>('');
 
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
@@ -17,6 +17,9 @@ export const useAlias = (address: string) => {
 
   const updateAlias = useCallback(
     (alias: string) => {
+      if (!address) {
+        return;
+      }
       setName(alias);
       contactService.updateAlias({ address, name: alias });
       fetchAccounts();

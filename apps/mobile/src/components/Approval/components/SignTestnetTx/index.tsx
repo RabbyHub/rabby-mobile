@@ -1,6 +1,10 @@
 import { DEFAULT_GAS_LIMIT_RATIO, MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { apiCustomTestnet } from '@/core/apis';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import {
+  dappService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { Account, ChainGas } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
@@ -189,13 +193,20 @@ interface SignTxProps<TData extends any[] = any[]> {
     account?: Account;
     $ctx?: any;
   };
+  account: Account;
   origin?: string;
 }
 
-export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
-  const { isGnosis, account } = params;
+export const SignTestnetTx = ({
+  params,
+  origin,
+  account: $account,
+}: SignTxProps) => {
+  const { isGnosis } = params;
+  const currentAccount = params.isGnosis ? params.account! : $account;
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const site = dappService.getDapp(origin || '');
 
   const {
     data = '0x',
@@ -272,7 +283,6 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
 
   const { data: recommendNonce, runAsync: runGetNonce } = useRequest(
     async () => {
-      const currentAccount = (await preferenceService.getCurrentAccount())!;
       return apiCustomTestnet.getCustomTestnetNonce({
         address: currentAccount.address,
         chainId: chainId,
@@ -286,7 +296,6 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
   const { data: gasUsed, runAsync: runGetGasUsed } = useRequest(
     async () => {
       try {
-        const currentAccount = (await preferenceService.getCurrentAccount())!;
         const res = await apiCustomTestnet.estimateCustomTestnetGas({
           address: currentAccount.address,
           chainId: chainId,
@@ -343,7 +352,6 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
     );
 
   const init = async () => {
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
     setIsLedger(currentAccount?.type === KEYRING_CLASS.HARDWARE.LEDGER);
     // setIsHardware(
     //   !!Object.values(HARDWARE_KEYRING_TYPES).find(
@@ -444,10 +452,6 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
 
   const checkCanProcess = async () => {
     const session = params.session;
-    const currentAccount =
-      isGnosis && account
-        ? account
-        : (await preferenceService.getCurrentAccount())!;
 
     if (currentAccount.type === KEYRING_TYPE.WatchAddressKeyring) {
       setCanProcess(false);
@@ -531,8 +535,6 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
       return;
     }
 
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
-
     if (currentAccount?.type === KEYRING_TYPE.HdKeyring) {
       await invokeEnterPassphrase(currentAccount.address);
     }
@@ -575,6 +577,7 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
         nonce: realNonce || tx.nonce,
         gas: gasLimit,
         uiRequestComponent: WaitingSignComponent[currentAccount.type],
+        $account: currentAccount,
         type: currentAccount.type,
         address: currentAccount.address,
         // traceId: txDetail?.trace_id,
@@ -649,6 +652,7 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
             rowGap: 12,
           })}>
           <TestnetActions
+            account={currentAccount}
             isReady={isReady}
             chain={chain}
             raw={{
@@ -658,7 +662,7 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
             }}
             isSpeedUp={isSpeedUp}
             origin={origin}
-            originLogo={params.session.icon}
+            originLogo={site?.icon}
           />
 
           {isReady && (
@@ -728,12 +732,13 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
               engineResults={[]}
               nativeTokenBalance={nativeTokenBalance}
               gasPriceMedian={null}
+              account={currentAccount}
             />
           }
           isWatchAddr={currentAccountType === KEYRING_TYPE.WatchAddressKeyring}
           origin={origin}
-          originLogo={params.session.icon}
-          gnosisAccount={isGnosis ? account : undefined}
+          originLogo={site?.icon}
+          gnosisAccount={isGnosis ? params.account : undefined}
           chain={chain}
           isTestnet={chain.isTestnet}
           onCancel={handleCancel}
@@ -756,6 +761,7 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
             !canProcess ||
             !!checkErrors.find(item => item.level === 'forbidden')
           }
+          account={currentAccount}
         />
       )}
     </BottomSheetView>

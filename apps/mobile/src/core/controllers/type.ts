@@ -1,3 +1,5 @@
+import { Account } from '../services/preference';
+
 export type MobileContext = {
   fromTabId?: string;
 };
@@ -19,6 +21,7 @@ export type ProviderRequest<TMethod extends string = string> = {
     } & Record<string, any>;
   };
   session: MobileSession;
+  account?: Account;
   origin?: string;
   requestedApproval?: boolean;
 };

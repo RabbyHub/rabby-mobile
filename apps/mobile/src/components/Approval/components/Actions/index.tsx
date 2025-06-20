@@ -25,6 +25,7 @@ import useCommonStyle from '../../hooks/useCommonStyle';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getActionTypeText } from './utils';
 import { TransactionActionList } from './components/TransactionActionList';
+import { Account } from '@/core/services/preference';
 
 export const getActionsStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -103,6 +104,7 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
     signTitleRight: {
       flexDirection: 'row',
       alignItems: 'center',
+      // @ts-expect-error maybe invalid style
       float: 'right',
     },
     tipContent: {
@@ -157,6 +159,7 @@ const Actions = ({
   isSpeedUp,
   origin,
   originLogo,
+  account,
 }: {
   data: ParsedActionData;
   requireData: ActionRequireData;
@@ -168,6 +171,7 @@ const Actions = ({
   isSpeedUp: boolean;
   origin?: string;
   originLogo?: string;
+  account: Account;
 }) => {
   const actionName = useMemo(() => {
     return getActionTypeText(data);
@@ -230,6 +234,7 @@ const Actions = ({
             <BalanceChange
               version={txDetail.pre_exec_version}
               data={txDetail.balance_change}
+              account={account}
             />
           </>
         )}
@@ -264,6 +269,7 @@ const Actions = ({
                 isLight
                 content={
                   <NoActionAlert
+                    account={account}
                     data={{
                       chainId: chain.serverId,
                       contractAddress:

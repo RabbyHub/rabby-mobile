@@ -23,6 +23,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
+import { Account } from '@/core/services/preference';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
@@ -30,16 +31,20 @@ const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
 const useChainSeletorList = ({
   supportChains,
   netTabKey,
+  account,
 }: {
   supportChains?: Chain['enum'][];
   netTabKey?: NetSwitchTabsKey;
+  account?: Account;
 }) => {
   const [search, setSearch] = useState('');
   const {
     testnetMatteredChainBalances,
     matteredChainBalances,
     fetchMatteredChainBalance,
-  } = useLoadMatteredChainBalances();
+  } = useLoadMatteredChainBalances({
+    account,
+  });
   useEffect(() => {
     fetchMatteredChainBalance();
   }, [fetchMatteredChainBalance]);
@@ -110,6 +115,7 @@ export type SelectSortedChainProps = {
   hideTestnetTab?: boolean;
   hideMainnetTab?: boolean;
   onClose?: () => void;
+  account?: Account;
 };
 export default function SelectSortedChain({
   value,
@@ -119,6 +125,7 @@ export default function SelectSortedChain({
   hideTestnetTab = false,
   hideMainnetTab = false,
   onClose,
+  account,
 }: RNViewProps & SelectSortedChainProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -131,6 +138,7 @@ export default function SelectSortedChain({
       // set undefined to allow all main chains
       supportChains: supportChains,
       netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
+      account,
     });
 
   return (

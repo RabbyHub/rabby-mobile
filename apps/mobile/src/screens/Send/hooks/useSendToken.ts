@@ -6,7 +6,11 @@ import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
 import { EventEmitter } from 'events';
 
-import { customTestnetService, preferenceService } from '@/core/services';
+import {
+  customTestnetService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { GasLevel, TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
@@ -19,11 +23,10 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
-import { ChainGas } from '@/core/services/preference';
+import { Account, ChainGas } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
-import { useCurrentAccount } from '@/hooks/account';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
 import { formatTxInputDataOnERC20 } from '@/utils/transaction';
 import {
@@ -60,8 +63,12 @@ import {
   isAbortedDirectSubmitError,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useRecentSendPendingTx } from './useRecentSend';
+import { last } from 'lodash';
 
-function makeDefaultToken(): TokenItem & { tokenId?: string } {
+function makeDefaultToken(): TokenItem & {
+  tokenId?: string;
+  cex_ids?: string[];
+} {
   return {
     id: 'eth',
     chain: 'eth',
@@ -311,63 +318,30 @@ export function makeSendTokenValidationSchema(options: {
 }
 
 function findInstanceLevel(gasList: GasLevel[]) {
+  if (gasList.length === 0) {
+    return null;
+  }
   return gasList.reduce((prev, current) =>
     prev.price >= current.price ? prev : current,
   );
 }
-const fetchGasList = async (chainItem: Chain | null, params: Tx) => {
+const fetchGasList = async (
+  chainItem: Chain | null,
+  params: Tx,
+  account: Account,
+) => {
   const list: GasLevel[] = chainItem?.isTestnet
     ? await customTestnetService.getGasMarket({ chainId: chainItem.id })
-    : await apiProvider.gasMarketV2({
-        chain: chainItem!,
-        tx: params,
-      });
+    : await apiProvider.gasMarketV2(
+        {
+          chain: chainItem!,
+          tx: params,
+        },
+        account,
+      );
 
   return list;
 };
-function calcGasCost({
-  chainEnum,
-  gasPriceMap,
-}: {
-  chainEnum: CHAINS_ENUM;
-  gasPriceMap: Record<string, { list: GasLevel[]; expireAt: number }>;
-}) {
-  const targetChain = findChainByEnum(chainEnum)!;
-  const gasList = gasPriceMap[targetChain.enum]?.list;
-
-  if (!gasList) {
-    return new BigNumber(0);
-  }
-
-  const lastTimeGas: ChainGas | null =
-    preferenceService.getLastTimeGasSelection(targetChain.id);
-
-  let gasLevel: GasLevel;
-  if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
-    // use cached gasPrice if exist
-    gasLevel = {
-      level: 'custom',
-      price: lastTimeGas.gasPrice,
-      front_tx_count: 0,
-      estimated_seconds: 0,
-      base_fee: 0,
-      priority_price: null,
-    };
-  } else if (
-    lastTimeGas?.lastTimeSelect &&
-    lastTimeGas?.lastTimeSelect === 'gasLevel'
-  ) {
-    const target = gasList.find(item => item.level === lastTimeGas?.gasLevel)!;
-    gasLevel = target;
-  } else {
-    // no cache, use the fast level in gasMarket
-    gasLevel = gasList.find(item => item.level === 'fast')!;
-  }
-  const costTokenAmount = new BigNumber(gasLevel.price)
-    .times(DEFAULT_GAS_USED)
-    .div(1e18);
-  return costTokenAmount;
-}
 
 const DEFAULT_GAS_USED = 21000;
 
@@ -388,15 +362,21 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
 /**
  * @description only called once at top level
  */
-export function useSendTokenForm(
-  toAddress?: string,
-  isForMultipleAdderss = false,
-  disableItemCheck?: ITokenCheck,
-) {
+export function useSendTokenForm({
+  toAddress,
+  isForMultipleAddress = false,
+  disableItemCheck,
+  currentAccount,
+}: {
+  toAddress?: string;
+  isForMultipleAddress: boolean;
+  disableItemCheck?: ITokenCheck;
+  currentAccount: Account;
+}) {
   const { t } = useTranslation();
 
   const sendTokenEventsRef = useRef(new EventEmitter());
-  const { currentAccount } = useCurrentAccount();
+  const account = currentAccount;
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
 
@@ -413,7 +393,11 @@ export function useSendTokenForm(
     ...DF_SEND_TOKEN_FORM,
   });
 
-  const { addressType } = useCheckAddressType(formValues.to, chainItem);
+  const { addressType } = useCheckAddressType(
+    formValues.to,
+    chainItem,
+    account,
+  );
 
   const { isShowMessageDataForToken, isShowMessageDataForContract } =
     useMemo(() => {
@@ -515,8 +499,9 @@ export function useSendTokenForm(
   }, [t]);
 
   const [{ error: loadGasListError }, loadGasList] = useAsyncFn(
-    async () => fetchGasList(chainItem, getParams(formValues) as Tx),
-    [chainItem, formValues, putScreenState],
+    async () =>
+      fetchGasList(chainItem, getParams(formValues) as Tx, currentAccount),
+    [chainItem, formValues, putScreenState, currentAccount],
   );
 
   const loadGasListAndResolve = useCallback(async () => {
@@ -563,10 +548,10 @@ export function useSendTokenForm(
   const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
 
   const { runAsync: runFetchPendingCount } = usePollSendPendingCount({
-    isForMultipleAddress: isForMultipleAdderss,
+    isForMultipleAddress: isForMultipleAddress,
   });
   const { runFetchLocalPendingTx } =
-    useRecentSendPendingTx(isForMultipleAdderss);
+    useRecentSendPendingTx(isForMultipleAddress);
 
   /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
   const formik = useFormik({
@@ -766,6 +751,7 @@ export function useSendTokenForm(
             params: [to, 'latest'],
           },
           chain.serverId,
+          account,
         );
         const notContract = !!code && (code === '0x' || code === '0x0');
         let gasLimit = 0;
@@ -810,18 +796,21 @@ export function useSendTokenForm(
     ) {
       const res = await apiProvider.sendRequest(
         {
-          method: 'eth_sendTransaction',
-          params: [params],
-          $ctx: {
-            ga: {
-              category: 'Send',
-              source: 'sendToken',
-              toAddress,
-              trigger: 'sendToken',
+          data: {
+            method: 'eth_sendTransaction',
+            params: [params],
+            $ctx: {
+              ga: {
+                category: 'Send',
+                source: 'sendToken',
+                toAddress,
+                trigger: 'sendToken',
+              },
             },
           },
+          session: INTERNAL_REQUEST_SESSION,
+          account,
         },
-        INTERNAL_REQUEST_SESSION,
         true,
       );
       const tx = res.params?.[0];
@@ -837,6 +826,7 @@ export function useSendTokenForm(
               trigger: 'sendToken',
             },
             directSubmit: true,
+            account,
           });
         }
       }
@@ -881,6 +871,7 @@ export function useSendTokenForm(
               params: [to, 'latest'],
             },
             chain.serverId,
+            account,
           );
           const notContract = !!code && (code === '0x' || code === '0x0');
           let gasLimit = 0;
@@ -945,8 +936,20 @@ export function useSendTokenForm(
             try {
               await prepareRef.current;
 
-              await sendPrepareMiniTransactions({
+              const res = await sendPrepareMiniTransactions({
                 directSubmit: true,
+              });
+
+              transactionHistoryService.addSendTxHistory({
+                token: currentToken,
+                amount: Number(amount),
+                to,
+                from: currentAccount?.address!,
+                chainId: chain.id,
+                hash: last(res)?.txHash!,
+                address: currentAccount?.address!,
+                status: 'pending',
+                createdAt: Date.now(),
               });
 
               runFetchPendingCount();
@@ -974,19 +977,22 @@ export function useSendTokenForm(
           }
           const res = await apiProvider.sendRequest(
             {
-              method: 'eth_sendTransaction',
-              params: [params],
-              $ctx: {
-                ga: {
-                  category: 'Send',
-                  source: 'sendToken',
-                  toAddress,
-                  // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-                  trigger: 'sendToken',
+              data: {
+                method: 'eth_sendTransaction',
+                params: [params],
+                $ctx: {
+                  ga: {
+                    category: 'Send',
+                    source: 'sendToken',
+                    toAddress,
+                    // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                    trigger: 'sendToken',
+                  },
                 },
               },
+              session: INTERNAL_REQUEST_SESSION,
+              account,
             },
-            INTERNAL_REQUEST_SESSION,
             true,
           );
           const tx = res.params?.[0];
@@ -1000,8 +1006,21 @@ export function useSendTokenForm(
                 // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
                 trigger: 'sendToken',
               },
+              account,
             })
-              .then(() => {
+              .then(resp => {
+                transactionHistoryService.addSendTxHistory({
+                  token: currentToken,
+                  amount: Number(amount),
+                  to,
+                  from: currentAccount?.address!,
+                  chainId: chain.id,
+                  hash: last(resp)?.txHash!,
+                  address: currentAccount?.address!,
+                  status: 'pending',
+                  createdAt: Date.now(),
+                });
+
                 runFetchPendingCount();
                 runFetchLocalPendingTx();
                 handleFieldChange('amount', '');
@@ -1027,8 +1046,8 @@ export function useSendTokenForm(
           }
         } else {
           await apiProvider
-            .sendRequest(
-              {
+            .sendRequest({
+              data: {
                 method: 'eth_sendTransaction',
                 params: [params],
                 $ctx: {
@@ -1041,9 +1060,24 @@ export function useSendTokenForm(
                   },
                 },
               },
-              INTERNAL_REQUEST_SESSION,
-            )
-            .then(() => {
+              session: INTERNAL_REQUEST_SESSION,
+              account,
+            })
+            .then(resp => {
+              const hash = resp as string;
+              console.debug('hash', hash);
+              transactionHistoryService.addSendTxHistory({
+                token: currentToken,
+                amount: Number(amount),
+                to,
+                from: currentAccount?.address!,
+                chainId: chain.id,
+                hash,
+                address: currentAccount?.address!,
+                status: 'pending',
+                createdAt: Date.now(),
+              });
+
               runFetchPendingCount();
               runFetchLocalPendingTx();
               handleFieldChange('amount', '');
@@ -1067,20 +1101,21 @@ export function useSendTokenForm(
       putScreenState,
       currentToken,
       getParams,
+      currentAccount,
       isNativeToken,
       isShowMessageDataForToken,
       screenState.showGasReserved,
       screenState.estimatedGas,
       screenState.selectedGasLevel?.price,
-      currentAccount,
       toAddress,
+      account,
       isDirectSigning,
-      sendPrepareMiniTransactions,
       setDirectSigning,
+      prepareDirectSubmitMiniTx,
+      sendPrepareMiniTransactions,
       runFetchPendingCount,
       runFetchLocalPendingTx,
       handleFieldChange,
-      prepareDirectSubmitMiniTx,
       sendMiniTransactions,
     ],
   );
@@ -1144,6 +1179,7 @@ export function useSendTokenForm(
             ],
           },
           lastestChainItem.serverId,
+          account,
         );
       } catch (err) {
         console.error(err);
@@ -1155,7 +1191,14 @@ export function useSendTokenForm(
 
       return doReturn(Number(gasUsed));
     },
-    [currentAccount, chainItem, formik, currentToken, putScreenState],
+    [
+      chainItem,
+      currentToken,
+      currentAccount?.address,
+      formik.values.to,
+      putScreenState,
+      account,
+    ],
   );
 
   const loadCurrentToken = useCallback(
@@ -1222,7 +1265,6 @@ export function useSendTokenForm(
       if (screenState.showGasReserved) {
         putScreenState({ showGasReserved: false });
       }
-      const account = preferenceService.getCurrentAccount();
       if (!account) {
         console.error('[handleCurrentTokenChange] no account');
       }
@@ -1259,6 +1301,7 @@ export function useSendTokenForm(
     },
     [
       screenState.showGasReserved,
+      account,
       currentToken.id,
       currentToken.chain,
       putChainToken,
@@ -1273,7 +1316,7 @@ export function useSendTokenForm(
     async (token: TokenItem) => {
       const { reason } = disableItemCheck?.(token) || {};
       const confirmCallback = () => {
-        if (!isForMultipleAdderss) {
+        if (!isForMultipleAddress) {
           handleCurrentTokenChange(token);
         } else {
           const { accountSwitchTo } = switchAccountOnSelectedToken({
@@ -1314,7 +1357,7 @@ export function useSendTokenForm(
       currentAccount,
       disableItemCheck,
       handleCurrentTokenChange,
-      isForMultipleAdderss,
+      isForMultipleAddress,
       multiNavParams,
       switchAccountOnSelectedToken,
       t,
@@ -1416,6 +1459,7 @@ export function useSendTokenForm(
                   gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
                   data: '0x',
                 },
+                account,
               },
               chainItem.enum,
             );
@@ -1447,19 +1491,20 @@ export function useSendTokenForm(
     },
     [
       currentAccount,
-      currentToken,
-      estimateGasOnChain,
-      screenState.selectedGasLevel,
-      loadGasListAndResolve,
-      formik,
-      patchFormValues,
-      onGasChange,
-      putScreenState,
-      couldReserveGas,
-      chainItem,
-      screenState.isEstimatingGas,
-      screenState.isGnosisSafe,
       screenState.isLoading,
+      screenState.isEstimatingGas,
+      screenState.selectedGasLevel,
+      screenState.isGnosisSafe,
+      currentToken,
+      formik.values,
+      loadGasListAndResolve,
+      couldReserveGas,
+      patchFormValues,
+      putScreenState,
+      estimateGasOnChain,
+      chainItem,
+      onGasChange,
+      account,
     ],
   );
   const handleGasLevelChanged = useCallback(
@@ -1492,7 +1537,6 @@ export function useSendTokenForm(
   const handleChainChanged = useCallback(
     async (val: CHAINS_ENUM) => {
       putScreenState(prev => ({ ...prev, clickedMax: false }));
-      const account = preferenceService.getCurrentAccount()!;
       // fallback to eth, but we don't expect this to happen
       const chain = findChainByEnum(val, { fallback: true })!;
       setRouteParams(pre => ({
@@ -1553,6 +1597,7 @@ export function useSendTokenForm(
       patchFormValues,
       handleFormValuesChange,
       loadCurrentToken,
+      account.address,
     ],
   );
 
@@ -1624,6 +1669,7 @@ export function useSendTokenForm(
           trigger: 'sendToken',
         },
         directSubmit: true,
+        account,
       });
     }
   }, [
@@ -1637,6 +1683,7 @@ export function useSendTokenForm(
     screenState.isSubmitLoading,
     chainItem?.isTestnet,
     toAddress,
+    account,
   ]);
 
   useEffect(() => {

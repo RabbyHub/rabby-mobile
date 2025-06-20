@@ -4,10 +4,12 @@ import { RabbyFeePopup } from '@/components/RabbyFeePopup';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { DEX_WITH_WRAP, getChainDefaultToken } from '@/constant/swap';
-import { preferenceService, swapService } from '@/core/services';
-import { useCurrentAccount } from '@/hooks/account';
+import {
+  preferenceService,
+  swapService,
+  transactionHistoryService,
+} from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
@@ -94,6 +96,10 @@ import {
 import { PendingTxItem } from './components/PendingTxItem';
 import { error } from 'console';
 import { toast } from '@/components2024/Toast';
+import { Account } from '@/core/services/preference';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { last } from 'lodash';
+import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -102,11 +108,14 @@ type SwapRouteProps = CompositeScreenProps<
 >;
 
 const Swap = ({
-  isForMultipleAdderss = false,
+  isForMultipleAddress = false,
 }: PropsForAccountSwitchScreen) => {
-  useLastUsedAccountInScreen({ disableAutoEffect: isForMultipleAdderss });
   const { switchAccountOnSelectedToken } =
     useSwitchSceneAccountOnSelectedTokenWithOwner('MakeTransactionAbout');
+
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const { t } = useTranslation();
   const keyboardAwareRef = useRef<KeyboardAwareScrollView>(null);
@@ -125,11 +134,11 @@ const Swap = ({
   const headerRight = useCallback(
     () => (
       <SwapHeader
-        isForMultipleAdderss={isForMultipleAdderss}
+        isForMultipleAddress={isForMultipleAddress}
         clearSwapHistoryRedDot={clearSwapHistoryRedDot}
       />
     ),
-    [isForMultipleAdderss, clearSwapHistoryRedDot],
+    [isForMultipleAddress, clearSwapHistoryRedDot],
   );
   useEffect(() => {
     setNavigationOptions({
@@ -139,8 +148,6 @@ const Swap = ({
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
-
-  const { currentAccount } = useCurrentAccount();
 
   const [visible, setVisible] = useQuoteVisible();
 
@@ -198,7 +205,11 @@ const Swap = ({
     clearExpiredTimer,
     finishedQuotes,
     inSufficientCanGetQuote,
-  } = useTokenPair(currentAccount!.address);
+
+    autoSuggestSlippage,
+  } = useTokenPair({
+    account: currentAccount!,
+  });
 
   const {
     autoSlippage,
@@ -212,9 +223,7 @@ const Swap = ({
     data: externalDapps,
     openTab: _openTab,
   } = useExternalSwapBridgeDapps(chain, 'swap');
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const openTab = useMemoizedFn((url: string) => {
-    switchSceneCurrentAccount('@ActiveDappWebViewModal', currentAccount);
     _openTab(url);
   });
   const [swapDappOpen, setSwapDappOpen] = useState(false);
@@ -250,7 +259,7 @@ const Swap = ({
       s.routes.find(
         r =>
           r.name ===
-          (isForMultipleAdderss ? RootNames.MultiSwap : RootNames.Swap),
+          (isForMultipleAddress ? RootNames.MultiSwap : RootNames.Swap),
       )?.params,
   ) as TransactionNavigatorParamList['Swap'] | undefined;
 
@@ -317,6 +326,7 @@ const Swap = ({
         switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
           payTokenId: navState?.tokenId,
           changeTo: isBuy,
+          payUseBaseToken: navState?.payUseBaseToken,
         });
       }
     }
@@ -353,6 +363,26 @@ const Swap = ({
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
+        const receive_token_amount = new BigNumber(
+          activeProvider?.quote.toTokenAmount,
+        )
+          .div(
+            10 **
+              (activeProvider?.quote.toTokenDecimals || receiveToken.decimals),
+          )
+          .toNumber();
+        const addSwapTxHistoryObj = {
+          chainId: findChainByEnum(chain)?.id || 0,
+          address: currentAccount?.address!,
+          fromToken: payToken,
+          toToken: receiveToken,
+          slippage: new BigNumber(slippage).div(100).toNumber(),
+          fromAmount: Number(payAmount),
+          toAmount: receive_token_amount,
+          dexId: activeProvider?.name || 'WrapToken',
+          createdAt: Date.now(),
+          status: 'pending' as SwapTxHistoryItem['status'],
+        };
         await dexSwap(
           {
             swapPreferMEVGuarded: !!preferMEVGuarded,
@@ -375,19 +405,12 @@ const Swap = ({
                 pay_token_id: payToken.id,
                 pay_token_amount: Number(payAmount),
                 receive_token_id: receiveToken!.id,
-                receive_token_amount: new BigNumber(
-                  activeProvider?.quote.toTokenAmount,
-                )
-                  .div(
-                    10 **
-                      (activeProvider?.quote.toTokenDecimals ||
-                        receiveToken.decimals),
-                  )
-                  .toNumber(),
+                receive_token_amount: receive_token_amount,
                 slippage: new BigNumber(slippage).div(100).toNumber(),
               },
               dex_id: activeProvider?.name || 'WrapToken',
             },
+            account: currentAccount!,
           },
           {
             ga: {
@@ -397,6 +420,7 @@ const Swap = ({
               swapUseSlider,
             },
           },
+          addSwapTxHistoryObj,
         );
         handleAmountChange('');
         runFetchLocalPendingTx();
@@ -447,6 +471,7 @@ const Swap = ({
               },
               dex_id: activeProvider?.name || 'WrapToken',
             },
+            account: currentAccount!,
           },
           {
             ga: {
@@ -485,7 +510,16 @@ const Swap = ({
     [currentAccount?.type, inSufficient, isSupportedChain],
   );
 
-  const { loading: isSubmitting, runAsync: handleSwap } = useRequest(
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setIsSubmitting(false);
+  }, [payAmount, payToken?.id, receiveToken?.id, chain]);
+
+  const {
+    //  loading: isSubmitting,
+    runAsync: handleSwap,
+  } = useRequest(
     async () => {
       if (receiveToken) {
         setRecentSwapToToken(receiveToken);
@@ -494,7 +528,11 @@ const Swap = ({
         clearExpiredTimer();
 
         try {
+          setIsSubmitting(true);
+
           let currentTxs = txs;
+          currentTxs = await runBuildSwapTxs();
+
           if (!currentTxs?.length) {
             currentTxs = await runBuildSwapTxs();
 
@@ -507,6 +545,7 @@ const Swap = ({
                   swapUseSlider,
                 },
                 directSubmit: canShowDirectSubmit,
+                account: currentAccount!,
               });
             }
           }
@@ -516,27 +555,50 @@ const Swap = ({
             throw new Error('no txs');
           }
 
+          let txHash = '';
           if (canShowDirectSubmit) {
             if (isDirectSigning) {
               return;
             } else {
               setDirectSigning(true);
             }
-            await sendPrepareMiniTransactions({
+            const res = await sendPrepareMiniTransactions({
               directSubmit: canShowDirectSubmit,
             });
+            txHash = last(res)?.txHash || '';
           } else {
-            await sendMiniTransactions({
+            const res = await sendMiniTransactions({
               txs: currentTxs,
               ga: {
                 category: 'Swap',
                 source: 'swap',
                 swapUseSlider,
               },
+              account: currentAccount!,
             });
+            txHash = last(res)?.txHash || '';
           }
 
           mutateTxs([]);
+          transactionHistoryService.addSwapTxHistory({
+            hash: txHash,
+            chainId: findChainByEnum(chain)?.id || 0,
+            address: currentAccount?.address!,
+            fromToken: payToken!,
+            toToken: receiveToken!,
+            slippage: new BigNumber(slippage).div(100).toNumber(),
+            fromAmount: Number(payAmount),
+            toAmount: new BigNumber(activeProvider?.quote?.toTokenAmount!)
+              .div(
+                10 **
+                  (activeProvider?.quote?.toTokenDecimals ||
+                    receiveToken!.decimals),
+              )
+              .toNumber(),
+            dexId: activeProvider?.name || 'WrapToken',
+            createdAt: Date.now(),
+            status: 'pending',
+          });
           handleAmountChange('');
           setTimeout(() => {
             runFetchSwapPendingCount();
@@ -550,7 +612,6 @@ const Swap = ({
           );
         } catch (e) {
           setDirectSigning(false);
-          console.debug('handleSwap error', error);
           if ((e as any)?.name === 'SimulateError') {
             gotoSwap();
           } else if (isAbortedDirectSubmitError(e)) {
@@ -559,6 +620,8 @@ const Swap = ({
             mutateTxs([]);
             refresh(e => e + 1);
           }
+        } finally {
+          setIsSubmitting(false);
         }
       } else {
         gotoSwap();
@@ -623,6 +686,7 @@ const Swap = ({
           source: 'swap',
           swapUseSlider,
         },
+        account: currentAccount!,
       });
     }
   }, [
@@ -632,6 +696,7 @@ const Swap = ({
     swapUseSlider,
     isSubmitting,
     canShowDirectSubmit,
+    currentAccount,
   ]);
 
   useEffect(() => {
@@ -651,6 +716,7 @@ const Swap = ({
             swapUseSlider,
           },
           directSubmit: canShowDirectSubmit,
+          account: currentAccount!,
         });
       });
     }
@@ -658,6 +724,7 @@ const Swap = ({
     activeProvider,
     canShowDirectSubmit,
     canUseMiniTx,
+    currentAccount,
     mutateTxs,
     prepareMiniTransactions,
     runBuildSwapTxs,
@@ -675,6 +742,7 @@ const Swap = ({
           swapUseSlider,
         },
         directSubmit: canShowDirectSubmit,
+        account: currentAccount!,
       });
     }
   }, [
@@ -683,6 +751,7 @@ const Swap = ({
     canShowDirectSubmit,
     prepareMiniTransactions,
     swapUseSlider,
+    currentAccount,
   ]);
 
   useEffect(() => {
@@ -818,7 +887,7 @@ const Swap = ({
 
   return (
     <NormalScreenContainer2024 type="bg1">
-      {isForMultipleAdderss && (
+      {isForMultipleAddress && (
         <AccountSwitcherModal forScene="MakeTransactionAbout" inScreen />
       )}
       <KeyboardAwareScrollView
@@ -843,6 +912,7 @@ const Swap = ({
             onChange={switchChain}
             // supportChains={SWAP_SUPPORT_CHAINS}
             hideTestnetTab
+            account={currentAccount!}
           />
           <View style={styles.swapContainer}>
             <View style={styles.flex1}>
@@ -873,7 +943,7 @@ const Swap = ({
                   setPayToken(token);
                 };
 
-                if (!isForMultipleAdderss) {
+                if (!isForMultipleAddress) {
                   normalSetChainToken();
                 } else {
                   const { accountSwitchTo } = switchAccountOnSelectedToken({
@@ -951,6 +1021,7 @@ const Swap = ({
                 marginHorizontal: -24,
               }}>
               <BridgeShowMore
+                autoSuggestSlippage={autoSuggestSlippage}
                 supportDirectSign={canShowDirectSubmit}
                 openFeePopup={openFeePopup}
                 open={showMoreOpen}
@@ -997,7 +1068,7 @@ const Swap = ({
           {Boolean(!isShowMoreVisible && localPendingTxData) && (
             <PendingTxItem
               type="swap"
-              isForMultipleAdderss={isForMultipleAdderss}
+              isForMultipleAddress={isForMultipleAddress}
               data={localPendingTxData!}
               clearLocalPendingTxData={clearLocalPendingTxData}
             />
@@ -1146,7 +1217,7 @@ const ForMultipleAddress = (
         ofScreen: 'MultiSwap',
         sceneScreenRenderId: `${sceneCurrentAccountDepKey}-MultiSwap`,
       }}>
-      <Swap {...props} isForMultipleAdderss />
+      <Swap {...props} isForMultipleAddress />
     </ScreenSceneAccountProvider>
   );
 };

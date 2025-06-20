@@ -5,6 +5,7 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { t } from 'i18next';
 import { AbiCoder } from 'web3-eth-abi';
 import { addHexPrefix, unpadHexString } from 'ethereumjs-util';
+import { Account } from '../services/preference';
 
 export async function transferNFT(
   {
@@ -14,6 +15,7 @@ export async function transferNFT(
     abi,
     tokenId,
     amount,
+    account,
   }: {
     to: string;
     chainServerId: string;
@@ -21,18 +23,18 @@ export async function transferNFT(
     abi: 'ERC721' | 'ERC1155';
     tokenId: string;
     amount?: number;
+    account: Account;
   },
   $ctx?: any,
 ) {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(t('background.error.noCurrentAccount'));
   const chainId = findChain({
     serverId: chainServerId,
   })?.id;
   if (!chainId) throw new Error(t('background.error.invalidChainId'));
   if (abi === 'ERC721') {
-    await sendRequest(
-      {
+    await sendRequest({
+      data: {
         $ctx,
         method: 'eth_sendTransaction',
         params: [
@@ -63,11 +65,12 @@ export async function transferNFT(
           },
         ],
       },
-      INTERNAL_REQUEST_SESSION,
-    );
+      session: INTERNAL_REQUEST_SESSION,
+      account,
+    });
   } else if (abi === 'ERC1155') {
-    await sendRequest(
-      {
+    await sendRequest({
+      data: {
         $ctx,
         method: 'eth_sendTransaction',
         params: [
@@ -114,8 +117,9 @@ export async function transferNFT(
           },
         ],
       },
-      INTERNAL_REQUEST_SESSION,
-    );
+      session: INTERNAL_REQUEST_SESSION,
+      account,
+    });
   } else {
     throw new Error(t('background.error.unknownAbi'));
   }
@@ -128,6 +132,7 @@ export const sendToken = async ({
   rawAmount,
   $ctx,
   isBuild,
+  account,
 }: {
   to: string;
   chainServerId: string;
@@ -135,8 +140,8 @@ export const sendToken = async ({
   rawAmount: string;
   isBuild?: boolean;
   $ctx?: any;
+  account: Account;
 }) => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(t('background.error.noCurrentAccount'));
   }
@@ -183,11 +188,14 @@ export const sendToken = async ({
 
   return await sendRequest(
     {
-      method: 'eth_sendTransaction',
-      params: [params],
-      $ctx,
+      data: {
+        method: 'eth_sendTransaction',
+        params: [params],
+        $ctx,
+      },
+      session: INTERNAL_REQUEST_SESSION,
+      account,
     },
-    INTERNAL_REQUEST_SESSION,
     isBuild,
   );
 };

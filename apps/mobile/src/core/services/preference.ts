@@ -126,6 +126,7 @@ export interface PreferenceStore {
   sendLogTime?: number;
   lastSelectedGasTopUpChain?: Record<string, CHAINS_ENUM>;
   sendEnableTime?: number;
+  hasOpenCopyTrading?: boolean;
   customizedToken?: Token[];
   blockedToken?: Token[];
   // manage token
@@ -243,6 +244,7 @@ export class PreferenceService {
           tokenManageSettingMap: {},
           safeSelfHostConfirm: {},
           addressAvatarMap: {},
+          hasOpenCopyTrading: false,
         },
       },
       {
@@ -257,6 +259,14 @@ export class PreferenceService {
       this.store.safeSelfHostConfirm = {};
     }
   }
+
+  setHasOpenCopyTrading = (value: boolean) => {
+    this.store.hasOpenCopyTrading = value;
+  };
+
+  getHasOpenCopyTrading = () => {
+    return this.store.hasOpenCopyTrading;
+  };
 
   addAddressAvatar = (address: string, avatar: string) => {
     const key = address.toLowerCase();
@@ -396,6 +406,9 @@ export class PreferenceService {
     this.setCurrentAccount(account);
   };
 
+  /**
+   * @deprecated use getFallbackAccount instead
+   */
   getCurrentAccount = (): Account | undefined | null => {
     const account = cloneDeep(this.store.currentAccount);
     if (!account) {
@@ -407,6 +420,26 @@ export class PreferenceService {
     };
   };
 
+  getFallbackAccount = (): Account | null => {
+    const account = cloneDeep(this.store.currentAccount);
+    if (!account) {
+      return null;
+    }
+    return {
+      ...account,
+      address: account.address.toLowerCase(),
+    };
+  };
+
+  initCurrentAccount = async () => {
+    if (!this.store.currentAccount) {
+      return await this.resetCurrentAccount();
+    }
+  };
+
+  /**
+   *  @deprecated
+   */
   toggleAllowNotifyAccountsChanged(allowed: boolean = false) {
     this._allowedToNotifyAccountsChanged = allowed;
   }
@@ -433,7 +466,7 @@ export class PreferenceService {
   ) => {
     this.store.currentAccount = account;
     if (account) {
-      this._notifyAccountsChanged(account, !!options?.needSyncToSession);
+      // this._notifyAccountsChanged(account, !!options?.needSyncToSession);
       appServiceEvents.emit('currentAccountChanged', account);
     }
   };

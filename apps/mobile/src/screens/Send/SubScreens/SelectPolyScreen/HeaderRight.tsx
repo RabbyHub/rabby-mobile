@@ -19,12 +19,12 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 
 interface IProps {
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 export const SendHeaderRight = ({
   style,
-  isForMultipleAdderss = true,
+  isForMultipleAddress = true,
 }: IProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -63,7 +63,7 @@ export const SendHeaderRight = ({
       </View>
 
       <SendHistory
-        isForMultipleAdderss={isForMultipleAdderss}
+        isForMultipleAddress={isForMultipleAddress}
         visible={historyVisible}
         onClose={closeHistory}
       />

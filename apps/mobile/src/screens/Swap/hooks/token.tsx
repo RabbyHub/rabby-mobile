@@ -27,6 +27,7 @@ import { isSwapWrapToken } from '../utils';
 import { RequestRateLimiter } from './rateLimit';
 import { useFocusEffect } from '@react-navigation/native';
 import { eventBus, EVENTS } from '@/utils/events';
+import { Account } from '@/core/services/preference';
 
 export const enableInsufficientQuote = true;
 
@@ -103,7 +104,8 @@ export interface FeeProps {
   symbol?: string;
 }
 
-export const useTokenPair = (userAddress: string) => {
+export const useTokenPair = ({ account }: { account: Account }) => {
+  const userAddress = account.address;
   const refreshId = useAtomValue(refreshIdAtom);
   const setRefreshId = useSetAtom(refreshIdAtom);
 
@@ -220,7 +222,14 @@ export const useTokenPair = (userAddress: string) => {
   const [bestQuoteDex, setBestQuoteDex] = useState<string>('');
 
   const switchChain = useCallback(
-    (c: CHAINS_ENUM, opts?: { payTokenId?: string; changeTo?: boolean }) => {
+    (
+      c: CHAINS_ENUM,
+      opts?: {
+        payTokenId?: string;
+        changeTo?: boolean;
+        payUseBaseToken?: boolean;
+      },
+    ) => {
       handleChain(c);
       if (!opts?.changeTo) {
         setPayToken({
@@ -233,7 +242,13 @@ export const useTokenPair = (userAddress: string) => {
           ...getChainDefaultToken(c),
           ...(opts?.payTokenId ? { id: opts?.payTokenId } : {}),
         });
-        setPayToken(undefined);
+        if (opts?.payUseBaseToken) {
+          setPayToken({
+            ...getChainDefaultToken(c),
+          });
+        } else {
+          setPayToken(undefined);
+        }
       }
       setPayAmount('');
       setSlider(0);
@@ -269,6 +284,7 @@ export const useTokenPair = (userAddress: string) => {
         switchChain(firstEnum);
       }
     },
+    account,
   });
 
   useEffect(() => {
@@ -311,9 +327,12 @@ export const useTokenPair = (userAddress: string) => {
   );
 
   const { value: gasList } = useAsync(() => {
-    return apiProvider.gasMarketV2({
-      chainId: chainInfo.serverId,
-    });
+    return apiProvider.gasMarketV2(
+      {
+        chainId: chainInfo.serverId,
+      },
+      account,
+    );
   }, [chainInfo?.serverId]);
 
   const normalGasPrice = useMemo(
@@ -416,6 +435,10 @@ export const useTokenPair = (userAddress: string) => {
     [],
   );
 
+  const [autoSuggestSlippage, setAutoSuggestSlippage] = useState(
+    getSwapAutoSlippageValue(isStableCoin),
+  );
+
   const fetchIdRef = useRef(0);
   const { getAllQuotes, validSlippage } = useQuoteMethods();
   const [finishedQuotes, setFinishedQuotes] = useState(0);
@@ -445,11 +468,41 @@ export const useTokenPair = (userAddress: string) => {
         setQuotesList(e =>
           e.map(q => ({ ...q, loading: true, isBest: false })),
         );
+
+        let realSlippage = slippage;
+        if (autoSlippage) {
+          try {
+            const suggestSlippage = await openapi.suggestSlippage({
+              chain_id: findChainByEnum(chain)!.serverId,
+              slippage: Number(slippage || '0.1') / 100 + '',
+              from_token_id: payToken.id,
+              to_token_id: receiveToken.id,
+              from_token_amount: payAmount,
+            });
+
+            console.debug('suggest_slippage', {
+              suggestSlippage,
+              current: slippage || '0.1',
+            });
+
+            realSlippage = suggestSlippage.suggest_slippage
+              ? new BigNumber(suggestSlippage.suggest_slippage)
+                  .times(100)
+                  .toFixed()
+              : slippage || '0.1';
+            if (currentFetchId === fetchIdRef.current) {
+              setAutoSuggestSlippage(realSlippage);
+            }
+          } catch (error) {
+            console.log('suggest_slippage error', error);
+          }
+        }
+
         return getAllQuotes({
           userAddress,
           payToken,
           receiveToken,
-          slippage: slippage || '0.1',
+          slippage: realSlippage || '0.1',
           chain,
           payAmount,
           fee: feeRate,
@@ -460,6 +513,7 @@ export const useTokenPair = (userAddress: string) => {
             }
           },
           inSufficient,
+          account,
         });
       }
     },
@@ -514,6 +568,9 @@ export const useTokenPair = (userAddress: string) => {
     payAmount,
     runGetAllQuotes,
     setActiveProvider,
+    // auto slippage
+    slippage,
+    autoSlippage,
   ]);
 
   const canUpdateActiveProvider = useMemo(() => {
@@ -867,6 +924,7 @@ export const useTokenPair = (userAddress: string) => {
     clearExpiredTimer,
 
     finishedQuotes,
+    autoSuggestSlippage,
   };
 };
 

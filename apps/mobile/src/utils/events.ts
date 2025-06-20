@@ -1,10 +1,23 @@
 import { SIGN_HELPER_EVENTS } from '@rabby-wallet/service-keyring';
 import { makeEEClass } from '@/core/apis/event';
 
+import { type Purchase } from 'react-native-iap';
+
+export type EventBusListeners = {
+  [EVENTS.TX_COMPLETED]: (txDetail: { address: string; hash: string }) => void;
+  [EVENTS.PURCHASE_UPDATED]: (detail: {
+    data: Purchase;
+    error?: Error;
+  }) => void;
+  [EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED]: (detail: {
+    request: any;
+  }) => void;
+  [EVENT_ACTIVE_WINDOW]: (id?: string | null) => void;
+};
 type Listeners = {
   [P: string]: (data: any) => void;
 };
-const { EventEmitter: EE } = makeEEClass<Listeners>();
+const { EventEmitter: EE } = makeEEClass<EventBusListeners & Listeners>();
 export const eventBus = new EE();
 
 export const EVENTS = SIGN_HELPER_EVENTS;

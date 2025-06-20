@@ -1,6 +1,5 @@
 import IconOfflineCC from '@/assets/icons/home/offline-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
-import { CurvePoint } from '@/screens/Home/hooks/useCurve';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Skeleton } from '@rneui/themed';
 import { last } from 'lodash';
@@ -14,6 +13,7 @@ import {
 } from 'react-native-reanimated';
 import { LineChart } from 'react-native-wagmi-charts';
 import { LoadingLinear } from './LoadingLinear';
+import { CurvePoint } from '@/hooks/useCurve';
 
 export const DataHeaderInfo = ({
   currentPercentChange,
@@ -61,10 +61,10 @@ export const DataHeaderInfo = ({
       ? `${data?.[currentIndex?.value]?.isLoss ? '-' : '+'}${
           data?.[currentIndex.value].changePercent
         }(${data?.[currentIndex.value].change})`
-      : currentPercentChange
+      : currentPercentChange && !isLoading
       ? `${currentIsLoss ? '-' : '+'}${currentPercentChange}`
       : '';
-  }, [data, currentIsLoss, currentPercentChange, currentIndex]);
+  }, [data, currentIsLoss, currentPercentChange, currentIndex, isLoading]);
 
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {

@@ -1,4 +1,3 @@
-import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { timeago } from '@/utils/time';
@@ -17,6 +16,7 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import { findChain } from '@/utils/chain';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { apisSafe } from '@/core/apis/safe';
+import { Account } from '@/core/services/preference';
 // import { GnosisTransactionExplain } from './GnosisTransactionExplain';
 // import { GnosisTransactionConfirmations } from './GnosisTransactionConfirmations';
 // import { ReplacePopup } from './ReplacePopup';
@@ -33,11 +33,13 @@ export const GnosisMessageQueueItem = ({
   networkId,
   safeInfo,
   reload,
+  account,
 }: {
   data: SafeMessage;
   networkId: string;
   safeInfo: BasicSafeInfo;
   reload?(): void;
+  account: Account;
 }) => {
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
@@ -49,9 +51,6 @@ export const GnosisMessageQueueItem = ({
   const [isShowReplacePopup, setIsShowReplacePopup] = useState(false);
   const chain = findChain({
     networkId,
-  });
-  const { currentAccount } = useCurrentAccount({
-    disableAutoFetch: true,
   });
 
   const now = dayjs().valueOf();
@@ -77,12 +76,12 @@ export const GnosisMessageQueueItem = ({
 
   const { runAsync: handleView, loading } = useRequest(
     async () => {
-      if (!currentAccount) {
+      if (!account) {
         throw new Error('current account is null');
       }
       await apisSafe.buildGnosisMessage({
         safeAddress: data.safe,
-        account: currentAccount,
+        account: account,
         version: safeInfo.version,
         networkId: networkId,
         message: data.message,
@@ -96,8 +95,8 @@ export const GnosisMessageQueueItem = ({
         }),
       ]);
       if (isString(data.message)) {
-        await sendRequest(
-          {
+        await sendRequest({
+          data: {
             method: 'personal_sign',
             params: [stringToHex(data.message), data.safe],
             $ctx: {
@@ -105,11 +104,12 @@ export const GnosisMessageQueueItem = ({
               isViewGnosisSafe: true,
             },
           },
-          INTERNAL_REQUEST_SESSION,
-        );
+          session: INTERNAL_REQUEST_SESSION,
+          account,
+        });
       } else {
-        await sendRequest(
-          {
+        await sendRequest({
+          data: {
             method: 'eth_signTypedData_v4',
             params: [data.safe, JSON.stringify(data.message)],
             $ctx: {
@@ -117,8 +117,9 @@ export const GnosisMessageQueueItem = ({
               isViewGnosisSafe: true,
             },
           },
-          INTERNAL_REQUEST_SESSION,
-        );
+          session: INTERNAL_REQUEST_SESSION,
+          account,
+        });
       }
       reload?.();
     },

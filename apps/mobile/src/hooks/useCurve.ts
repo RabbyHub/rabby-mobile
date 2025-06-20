@@ -4,8 +4,20 @@ import { CurveDayType } from '@/utils/curveDayType';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { atom, useAtom } from 'jotai';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
+
+export type CurvePoint = {
+  value: number;
+  netWorth: string;
+  change: string;
+  isLoss: boolean;
+  changePercent: string;
+  timestamp: number;
+  dateString: string;
+  clockTimeString: string;
+};
 
 export const formChartData = (
   data: CurveList,
@@ -116,7 +128,7 @@ export const getChangeData = (
     isLoss: assetsChange < 0,
   };
 };
-
+export const loadingCurveAtom = atom(true);
 export const useCurve = (
   address: string | undefined,
   nonce: number,
@@ -129,7 +141,7 @@ export const useCurve = (
       usd_value: number;
     }[]
   >([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useAtom(loadingCurveAtom);
   const select = useMemo(() => {
     return formChartData(
       data,
@@ -141,47 +153,56 @@ export const useCurve = (
 
   const fetch = useCallback(
     async (addr: string, force = false) => {
-      const curve = await getNetCurve(addr, days, force);
-      const start =
-        days === CurveDayType.DAY
-          ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
-          : dayjs().add(-7, 'days').add(1, 'hours').valueOf();
-      const step = days === CurveDayType.DAY ? 5 * 60 * 1000 : 60 * 60 * 1000;
-      const result = patchCurveData(
-        curve.map(item => {
-          return {
-            timestamp: item.timestamp * 1000,
-            price: item.usd_value,
-          };
-        }),
-        start,
-        step,
-      );
-      setData(
-        result.map(item => {
-          return {
-            timestamp: dayjs(item.timestamp).unix(),
-            usd_value: item.price,
-          };
-        }),
-      );
-      setIsLoading(false);
+      try {
+        const curve = await getNetCurve(addr, days, force);
+        const start =
+          days === CurveDayType.DAY
+            ? dayjs().add(-24, 'hours').add(10, 'minutes').valueOf()
+            : dayjs().add(-7, 'days').add(1, 'hours').valueOf();
+        const step = days === CurveDayType.DAY ? 5 * 60 * 1000 : 60 * 60 * 1000;
+        const result = patchCurveData(
+          curve.map(item => {
+            return {
+              timestamp: item.timestamp * 1000,
+              price: item.usd_value,
+            };
+          }),
+          start,
+          step,
+        );
+        setData(
+          result.map(item => {
+            return {
+              timestamp: dayjs(item.timestamp).unix(),
+              usd_value: item.price,
+            };
+          }),
+        );
+      } catch (error) {
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [days],
+    [days, setIsLoading],
   );
 
-  const refresh = useCallback(async () => {
-    if (!address) {
-      return;
-    }
-    setIsLoading(true);
-    await fetch(address, true);
-  }, [address, fetch]);
+  const refresh = useCallback(
+    async (ignoreLoading?: boolean) => {
+      if (!address) {
+        return;
+      }
+      if (!ignoreLoading) {
+        setIsLoading(true);
+      }
+      await fetch(address, true);
+    },
+    [address, fetch, setIsLoading],
+  );
 
   useEffect(() => {
     setIsLoading(true);
     setData([]);
-  }, [address]);
+  }, [address, setIsLoading]);
 
   useEffect(() => {
     if (!address) {
@@ -189,11 +210,12 @@ export const useCurve = (
     }
     setIsLoading(true);
     fetch(address);
-  }, [address, fetch, nonce]);
+  }, [address, fetch, nonce, setIsLoading]);
 
   return {
     result: isLoading ? undefined : select,
     isLoading,
     refresh,
+    hasNoData: !data.length && !isLoading,
   };
 };

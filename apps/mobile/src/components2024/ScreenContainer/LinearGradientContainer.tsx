@@ -8,7 +8,14 @@ import LinearGradient, {
 } from 'react-native-linear-gradient';
 
 export type LinearGradientContainerProps = {
-  type?: 'linear' | 'bg1' | 'bg2' | 'classical:bg2' | 'linear-bg2' | 'tx-page';
+  type?:
+    | 'linear'
+    | 'bg0'
+    | 'bg1'
+    | 'bg2'
+    | 'classical:bg2'
+    | 'linear-bg2'
+    | 'tx-page';
   inBottomSheet?: boolean;
 } & Omit<LinearGradientProps, 'colors'>;
 

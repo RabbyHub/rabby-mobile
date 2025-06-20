@@ -30,6 +30,7 @@ import React, { useRef } from 'react';
 import { useSwapSupportedDexList } from './settings';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { apiProvider } from '@/core/apis';
+import { Account } from '@/core/services/preference';
 
 const { isSameAddress } = addressUtils;
 
@@ -124,9 +125,17 @@ export const useQuoteMethods = () => {
       payAmount,
       chain,
       dexId,
+      userAddress,
+      account,
     }: Pick<
       getDexQuoteParams,
-      'payToken' | 'receiveToken' | 'payAmount' | 'chain' | 'dexId'
+      | 'payToken'
+      | 'receiveToken'
+      | 'payAmount'
+      | 'chain'
+      | 'dexId'
+      | 'userAddress'
+      | 'account'
     >) => {
       const chainInfo = findChainByEnum(chain) || CHAINS[chain];
       if (
@@ -140,6 +149,8 @@ export const useQuoteMethods = () => {
         chainInfo.serverId,
         payToken.id,
         getSpender(dexId, chain),
+        userAddress,
+        account,
       );
 
       const tokenApproved = new BigNumber(allowance).gte(
@@ -168,11 +179,15 @@ export const useQuoteMethods = () => {
       payAmount,
       dexId,
       quote,
-    }: getPreExecResultParams) => {
+      account,
+    }: getPreExecResultParams & {
+      account: Account;
+    }) => {
       const chainInfo = findChainByEnum(chain)!;
       const nonce = await getRecommendNonce({
         from: userAddress,
         chainId: chainInfo.id,
+        account,
       });
 
       const getGasUsed = async () => {
@@ -202,21 +217,26 @@ export const useQuoteMethods = () => {
         gasUsed,
       ] = await Promise.all([
         preferenceService.getLastTimeGasSelection(chainInfo.id),
-        apiProvider.gasMarketV2({
-          chain: chainInfo,
-          tx: {
-            ...quote.tx,
-            nonce,
-            chainId: chainInfo.id,
-            gas: '0x0',
+        apiProvider.gasMarketV2(
+          {
+            chain: chainInfo,
+            tx: {
+              ...quote.tx,
+              nonce,
+              chainId: chainInfo.id,
+              gas: '0x0',
+            },
           },
-        }),
+          account,
+        ),
         getTokenApproveStatus({
           payToken,
           receiveToken,
           payAmount,
           chain,
           dexId,
+          userAddress,
+          account,
         }),
         nativeTokenPriceRef.current!,
         getGasUsed(),
@@ -284,18 +304,23 @@ export const useQuoteMethods = () => {
       setQuote,
       onFinishedQuote,
       inSufficient,
+      account,
     }: getDexQuoteParams & {
       setQuote?: (quote: TDexQuoteData) => void;
       onFinishedQuote: () => void;
+      account: Account;
     }): Promise<TDexQuoteData> => {
       const isOpenOcean = dexId === DEX_ENUM.OPENOCEAN;
       const chainInfo = findChainByEnum(chain) || CHAINS[chain];
       try {
         let gasPrice: number;
         if (isOpenOcean) {
-          const gasMarket = await apiProvider.gasMarketV2({
-            chainId: chainInfo.serverId,
-          });
+          const gasMarket = await apiProvider.gasMarketV2(
+            {
+              chainId: chainInfo.serverId,
+            },
+            account,
+          );
           gasPrice = gasMarket?.[1]?.price;
         }
         stats.report('swapRequestQuote', {
@@ -391,6 +416,7 @@ export const useQuoteMethods = () => {
                   quote: data,
                   dexId: dexId as DEX_ENUM,
                   inSufficient,
+                  account,
                 }),
               {
                 retries: 1,
@@ -474,6 +500,7 @@ export const useQuoteMethods = () => {
         return getDexQuote({
           ...params,
           dexId: DEX_ENUM.WRAPTOKEN,
+          account: params.account,
         });
       }
 
@@ -588,6 +615,7 @@ interface getDexQuoteParams {
   chain: CHAINS_ENUM;
   dexId: DEX_ENUM;
   inSufficient: boolean;
+  account: Account;
 }
 
 export type TDexQuoteData = {

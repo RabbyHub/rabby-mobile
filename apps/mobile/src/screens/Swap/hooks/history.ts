@@ -1,5 +1,4 @@
 import { openapi } from '@/core/request';
-import { useCurrentAccount } from '@/hooks/account';
 import { SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
@@ -11,6 +10,11 @@ import { useInterval, useMount, useRequest } from 'ahooks';
 import { swapService, transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
 import { TransactionGroup } from '@/core/services/transactionHistory';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import {
+  SwapTxHistoryItem,
+  SendTxHistoryItem,
+} from '@/core/services/transactionHistory';
 const swapTxHistoryVisibleAtom = atom(false);
 
 export const useSwapTxHistoryVisible = () => {
@@ -35,7 +39,9 @@ const getSwapList = async (addr: string, start = 0, limit = 5) => {
 };
 
 export const useSwapHistory = () => {
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const addr = currentAccount?.address || '';
 
   const refreshSwapTxListCount = useAtomValue(refreshIdAtom);
@@ -123,47 +129,42 @@ export const useSwapHistory = () => {
 
 export const swapPendingCountAtom = atom(0);
 export const swapPendingTxDataAtom = atom<SwapItem | null>(null);
-export const swapLocalTxDataAtom = atom<TransactionGroup | null>(null);
+export const swapLocalTxDataAtom = atom<
+  SwapTxHistoryItem | SendTxHistoryItem | null
+>(null);
 export const swapHistoryRedDotAtom = atom(false);
 export const useReadPendingCount = () => {
   return useAtomValue(swapPendingCountAtom);
 };
 
 export const fetchLocalSwapPendingTx = (address: string) => {
-  const { completeds: _completeds, pendings: _pendings } =
-    transactionHistoryService.getList(address);
-
-  const txs = [..._pendings, ..._completeds].filter(item => {
-    const chain = findChain({ id: item.chainId });
-    return (
-      !chain?.isTestnet &&
-      item.isPending &&
-      !item.maxGasTx.action?.actionData.cancelTx &&
-      (item.$ctx?.ga?.source === 'swap' ||
-        item.$ctx?.ga?.source === 'approvalAndSwap|swap')
-    );
-  });
-
-  return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
+  return transactionHistoryService.getRecentPendingTxHistory(
+    address,
+    'swap',
+  ) as SwapTxHistoryItem;
 };
 
-export const fetchRefreshLocalData = (data: TransactionGroup) => {
-  if (!data.isPending) {
+export const fetchRefreshLocalData = (
+  data: SwapTxHistoryItem | SendTxHistoryItem,
+  type: 'swap' | 'send',
+) => {
+  if (data.status !== 'pending') {
     // has done
     return;
   }
 
   const address = data.address;
   const chainId = data.chainId;
-  const nonce = data.nonce;
-  const groups = transactionHistoryService.getPendingTxsByNonce(
+  const hash = data.hash;
+  const newData = transactionHistoryService.getRecentTxHistory(
     address,
+    hash,
     chainId,
-    nonce,
+    type,
   );
 
-  if (!groups?.[0].isPending) {
-    return groups[0];
+  if (newData?.status !== 'pending') {
+    return newData;
   }
 };
 
@@ -180,7 +181,9 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
   const [localPendingTxData, setLocalPendingTxData] =
     useAtom(swapLocalTxDataAtom);
   const [, setSwapHistoryRedDot] = useAtom(swapHistoryRedDotAtom);
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const res = useRequest(
     async () => {
       const account = currentAccount;
@@ -237,14 +240,17 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
 
   useInterval(() => {
     if (localPendingTxData) {
-      const refreshTx = fetchRefreshLocalData(localPendingTxData);
+      const refreshTx = fetchRefreshLocalData(
+        localPendingTxData,
+        'swap',
+      ) as SwapTxHistoryItem;
       if (refreshTx) {
-        if (refreshTx.maxGasTx.action?.actionData?.cancelTx) {
-          setLocalPendingTxData(null);
-        } else {
-          setLocalPendingTxData(refreshTx);
-          setSwapHistoryRedDot(true);
-        }
+        // if (refreshTx.maxGasTx.action?.actionData?.cancelTx) {
+        //   setLocalPendingTxData(null);
+        // } else {
+        setLocalPendingTxData(refreshTx);
+        setSwapHistoryRedDot(true);
+        // }
       }
     }
   }, 1000);
@@ -255,6 +261,7 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
 
   useEffect(() => {
     if ((!loading && value !== undefined) || error) {
+      timerRef.current && clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         runAsync();
       }, timer);
@@ -279,6 +286,10 @@ export const usePollSwapPendingNumber = (timer = 10000) => {
     swapService.setOpenSwapHistoryTs(currentAccount?.address!);
     return currentTs;
   }, [setSwapHistoryRedDot, currentAccount?.address]);
+
+  useEffect(() => {
+    timerRef.current && clearTimeout(timerRef.current);
+  }, [currentAccount?.address]);
 
   return {
     runAsync,

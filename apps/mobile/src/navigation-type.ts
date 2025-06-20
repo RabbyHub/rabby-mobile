@@ -18,6 +18,7 @@ import type {
   NFTItem,
   SendAction,
   TokenItem,
+  TransferingNFTItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import type {
   AbstractPortfolio,
@@ -32,7 +33,7 @@ import {
   ApprovalSpenderItemToBeRevoked,
   AssetApprovalSpender,
 } from './screens/Approvals/useApprovalsPage';
-// import type { HistoryItemCateType } from './screens/Transaction/components/HistoryItemIcon';
+import { HistoryItemCateType } from './screens/Transaction/components/type';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -53,7 +54,7 @@ export type RootStackParamsList = {
   [RootNames.StackBrowser]: NavigatorScreenParams<BrowserNavigatorParamsList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]: {
-    token: NFTItem;
+    token: NFTItem | TransferingNFTItem | TokenItem | TokenItem[];
     account?: KeyringAccountWithAlias;
     isSingleAddress?: boolean;
   };
@@ -77,7 +78,7 @@ export type RootStackParamsList = {
     fromPortfolio?: boolean;
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
-    account?: KeyringAccountWithAlias;
+    account?: KeyringAccountWithAlias | null;
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
@@ -241,7 +242,10 @@ export type AccountNavigatorParamList = {
 };
 
 export type SingleAddressNavigatorParamList = {
-  [RootNames.SingleAddressHome]?: {};
+  [RootNames.SingleAddressHome]: {
+    scrollToToken?: string;
+    account: Account;
+  };
 };
 
 export type TransactionNavigatorParamList = {
@@ -252,17 +256,19 @@ export type TransactionNavigatorParamList = {
     tokenItem?: AbstractPortfolioToken;
     currentAddress?: string;
   };
+  [RootNames.CopyTrading]?: {};
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
-    isForMultipleAdderss?: boolean;
+    isForMultipleAddress?: boolean;
     title?: string;
   };
   [RootNames.HistoryLocalDetail]: {
     data: TransactionGroup;
     canCancel?: boolean;
-    isForMultipleAdderss?: boolean;
+    isForMultipleAddress?: boolean;
     title?: string;
+    type?: HistoryItemCateType;
     onPressBottomBtn?: (data: SendAction) => void;
     isInSendHistory?: boolean;
     // sendsToken: (TokenItem | undefined)[];
@@ -282,24 +288,35 @@ export type TransactionNavigatorParamList = {
     type: 'watch' | 'safe';
   };
   [RootNames.MultiSend]?: {};
-  [RootNames.SendNFT]?: {
+  [RootNames.SendNFT]: {
     nftItem: NFTItem;
     collectionName?: string;
     address?: string;
+    account: Account;
   };
   [RootNames.Swap]?: {
     chainEnum?: CHAINS_ENUM | undefined;
     tokenId?: TokenItem['id'];
     type?: 'Buy' | 'Sell';
+    address?: string;
     swapAgain?: boolean;
     swapTokenId?: TokenItem['id'][];
     isSwapToTokenDetail?: boolean;
     isFromSwap?: boolean;
+    payUseBaseToken?: boolean;
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
-  [RootNames.GnosisTransactionQueue]?: {};
-  [RootNames.Receive]?: {};
-  [RootNames.Approvals]?: {};
+  [RootNames.GnosisTransactionQueue]: {
+    account: Account;
+  };
+  [RootNames.Receive]: {
+    account: Account;
+    tokenSymbol?: string;
+    chainEnum?: CHAINS_ENUM;
+  };
+  [RootNames.Approvals]: {
+    account: Account;
+  };
   [RootNames.Bridge]?: {};
   [RootNames.MultiBridge]?: {};
   [RootNames.GasAccount]?: {};
@@ -307,9 +324,10 @@ export type TransactionNavigatorParamList = {
     receiveToken?: TokenItem;
   };
   [RootNames.MultiBuy]?: TransactionNavigatorParamList['Buy'] & object;
-  [RootNames.BatchRevoke]?: {
+  [RootNames.BatchRevoke]: {
     revokeList: ApprovalSpenderItemToBeRevoked[];
     dataSource: AssetApprovalSpender[];
+    account: Account;
   };
 };
 

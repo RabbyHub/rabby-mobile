@@ -99,7 +99,8 @@ const BridgeToken = ({
   const name = isFromToken ? t('page.bridge.From') : t('page.bridge.To');
   const chainObj = findChainByEnum(chain);
   const { inputCallbackRef, inputRef } = useAutoFocusInput(
-    !(isFromToken && !isMaxRef?.current),
+    // !(isFromToken && !isMaxRef?.current),
+    true,
   );
 
   useLayoutEffect(() => {
@@ -205,6 +206,7 @@ const BridgeToken = ({
           style={styles.chainSelector}
           chainEnum={chain}
           onChange={onChangeChain}
+          account={account!}
           // excludeChains={excludeChains}
           // supportChains={supportedChains}
         />

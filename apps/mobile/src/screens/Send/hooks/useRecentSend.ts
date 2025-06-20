@@ -1,6 +1,10 @@
 import { transactionHistoryService } from '@/core/services';
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import {
+  TransactionGroup,
+  SendTxHistoryItem,
+} from '@/core/services/transactionHistory';
 import { fetchRefreshLocalData } from '@/screens/Swap/hooks';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { findChain } from '@/utils/chain';
@@ -10,6 +14,7 @@ import dayjs from 'dayjs';
 import { atom, useAtom } from 'jotai';
 import { sortBy, unionBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 
 interface DisplayHistoryItem {
   isDateStart?: boolean;
@@ -75,7 +80,9 @@ export const useRecentSend = ({
     return batchFetchLocalTx();
   });
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const batchFetchLocalTx = async () => {
     const list: TransactionGroup[] = [];
@@ -116,7 +123,9 @@ export const useRecentSend = ({
     return markFirstItems(
       unionBy(sortedList, item => {
         if ('projectDict' in item) {
-          return `${item.address.toLowerCase()}-${item.id}`;
+          return `${item.address.toLowerCase()}-${
+            (item as unknown as TxDisplayItem).id
+          }`;
         } else {
           return `${item.address.toLowerCase()}-${item.maxGasTx.hash}`;
         }
@@ -170,29 +179,32 @@ export const useRecentSend = ({
 };
 
 export const fetchLocalSendPendingTx = (address: string) => {
-  const { completeds: _completeds, pendings: _pendings } =
-    transactionHistoryService.getList(address);
+  // const { completeds: _completeds, pendings: _pendings } =
+  //   transactionHistoryService.getList(address);
 
-  const txs = [..._pendings, ..._completeds].filter(item => {
-    const chain = findChain({ id: item.chainId });
-    return (
-      !chain?.isTestnet &&
-      item.isPending &&
-      !item.maxGasTx.action?.actionData.cancelTx &&
-      item.$ctx?.ga?.source === 'sendToken'
-    );
-  });
+  // const txs = [..._pendings, ..._completeds].filter(item => {
+  //   const chain = findChain({ id: item.chainId });
+  //   return (
+  //     !chain?.isTestnet &&
+  //     item.isPending &&
+  //     !item.maxGasTx.action?.actionData.cancelTx &&
+  //     item.$ctx?.ga?.source === 'sendToken'
+  //   );
+  // });
 
-  return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
+  // return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
+  return transactionHistoryService.getRecentPendingTxHistory(address, 'send');
 };
 
-const localPendingTxDataAtom = atom<TransactionGroup | null>(null);
+const localPendingTxDataAtom = atom<SendTxHistoryItem | null>(null);
 
-export const useRecentSendPendingTx = (isForMultipleAdderss: boolean) => {
+export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
   const [localPendingTxData, setLocalPendingTxData] = useAtom(
     localPendingTxDataAtom,
   );
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const clearLocalPendingTxData = useCallback(() => {
     setLocalPendingTxData(null);
@@ -200,7 +212,9 @@ export const useRecentSendPendingTx = (isForMultipleAdderss: boolean) => {
 
   const runFetchLocalPendingTx = useCallback(() => {
     if (currentAccount?.address) {
-      const resTx = fetchLocalSendPendingTx(currentAccount.address);
+      const resTx = fetchLocalSendPendingTx(
+        currentAccount.address,
+      ) as SendTxHistoryItem;
       setLocalPendingTxData(resTx);
     }
   }, [currentAccount?.address, setLocalPendingTxData]);
@@ -211,7 +225,10 @@ export const useRecentSendPendingTx = (isForMultipleAdderss: boolean) => {
 
   useInterval(() => {
     if (localPendingTxData) {
-      const refreshTx = fetchRefreshLocalData(localPendingTxData);
+      const refreshTx = fetchRefreshLocalData(
+        localPendingTxData,
+        'send',
+      ) as SendTxHistoryItem;
       if (refreshTx) {
         setLocalPendingTxData(refreshTx);
       }

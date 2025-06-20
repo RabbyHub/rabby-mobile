@@ -12,6 +12,7 @@ import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { apisAppWin } from './appWin';
 import type { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { findChain } from '@/utils/chain';
+import { Account } from './preference';
 
 export interface Approval {
   id: string;
@@ -20,6 +21,7 @@ export interface Approval {
   data: {
     params?: any;
     $mobileCtx?: any;
+    account: Account;
     origin?: string;
     approvalComponent: string;
     requestDefer?: Promise<any>;
@@ -66,6 +68,7 @@ type RequestApprovalParamBase = {
   origin: string;
   approvalType: string;
   isUnshift?: boolean;
+  account?: Account | undefined;
 };
 type RequestApprovaParam =
   | ({
@@ -248,7 +251,8 @@ export class NotificationService extends Events {
       }
     }
     const data = inputData as RequestApprovalParamBase;
-    const currentAccount = this.preferenceService.getCurrentAccount();
+    const currentAccount =
+      data.account || this.preferenceService.getFallbackAccount();
     const reportExplain = (signingTxId?: string) => {
       const signingTx = signingTxId
         ? this.transactionHistoryService.getSigningTx(signingTxId)
@@ -287,7 +291,8 @@ export class NotificationService extends Events {
         taskId: uuid as any,
         id: uuid,
         signingTxId,
-        data,
+        // todo fix ts
+        data: data as any,
         winProps,
         resolve(data) {
           if (this.data.approvalComponent === 'SignTx') {

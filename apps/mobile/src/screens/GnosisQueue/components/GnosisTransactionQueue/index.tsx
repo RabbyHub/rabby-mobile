@@ -1,5 +1,3 @@
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { useCurrentAccount } from '@/hooks/account';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
 import { useThemeColors } from '@/hooks/theme';
@@ -16,6 +14,7 @@ import { Text, View } from 'react-native';
 import { GnosisTransactionQueueList } from './GnosisTransactionQueueList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apisSafe } from '@/core/apis/safe';
+import { Account } from '@/core/services/preference';
 
 const getTabs = (
   networks: string[],
@@ -48,12 +47,13 @@ const getTabs = (
   );
 };
 
-export const GnosisTransactionQueue = () => {
+export const GnosisTransactionQueue: React.FC<{
+  account: Account;
+}> = ({ account }) => {
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
   const { t } = useTranslation();
 
-  const { currentAccount: account } = useCurrentAccount();
   const { data: networks } = useGnosisNetworks({ address: account?.address });
   const {
     data: pendingTxs,
@@ -119,6 +119,7 @@ export const GnosisTransactionQueue = () => {
       </View>
       {activeKey && findChainByEnum(activeKey) && (
         <GnosisTransactionQueueList
+          account={account}
           pendingTxs={activeData?.txs}
           usefulChain={activeKey}
           key={activeKey}

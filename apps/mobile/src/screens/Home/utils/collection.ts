@@ -1,14 +1,26 @@
-import { TokenItemMaybeWithOwner } from '@/databases/hooks/token';
-import { AbstractPortfolioToken } from '../types';
+import { type TokenItemMaybeWithOwner } from '@/databases/hooks/token';
+import { type AbstractPortfolioToken } from '../types';
+import { type CombineDefiItem } from '../hooks/store';
+import { type TokenItemFromAbstractPortfolioToken } from '@/utils/token';
 
-export const isScamHidenToken = (token: AbstractPortfolioToken) => {
+export const isScamHidenToken = (
+  token: AbstractPortfolioToken | CombineDefiItem,
+) => {
   const usdValue =
-    typeof token.totalUsdValue === 'number'
-      ? token.totalUsdValue
-      : token._realUsdValue;
-  return !token.is_core && token._isFold && !usdValue;
+    typeof (token as CombineDefiItem).totalUsdValue === 'number'
+      ? (token as CombineDefiItem).totalUsdValue
+      : (token as AbstractPortfolioToken)._realUsdValue;
+  return (
+    !(token as TokenItemFromAbstractPortfolioToken).is_core &&
+    token._isFold &&
+    !usdValue
+  );
 };
 export const isScamTokenForSelect = (token: TokenItemMaybeWithOwner) => {
   const netWorth = token.amount * token.price || 0;
-  return !token.is_core && !netWorth && token.isFold;
+  return (
+    !token.is_core &&
+    !netWorth &&
+    (token as TokenItemFromAbstractPortfolioToken).isFold
+  );
 };

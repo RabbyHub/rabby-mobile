@@ -2,7 +2,7 @@ import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
 import { getChainDefaultToken } from '@/constant/swap';
 import { openapi } from '@/core/request';
-import { useCurrentAccount } from '@/hooks/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import { formatSpeicalAmount } from '@/utils/number';
 import { CHAINS_ENUM } from '@debank/common';
@@ -76,17 +76,19 @@ const useTokenInfo = ({
   return [token, setToken] as const;
 };
 
-export const useBuy = (isForMultipleAdderss?: boolean) => {
+export const useBuy = (isForMultipleAddress?: boolean) => {
   const navState = useNavigationState(
     s =>
       s.routes.find(
         r =>
           r.name ===
-          (isForMultipleAdderss ? RootNames.MultiBuy : RootNames.Buy),
+          (isForMultipleAddress ? RootNames.MultiBuy : RootNames.Buy),
       )?.params,
   ) as TransactionNavigatorParamList['Buy'] | undefined;
 
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const [region, setRegion] = useState(getCountry());
   const [currency, setCurrency] = useState('USD');
   const [toToken, setToToken] = useTokenInfo({

@@ -6,37 +6,57 @@ import { findChain, findChainByEnum } from '@/utils/chain';
 import i18n from '@/utils/i18n';
 import abiCoder, { AbiCoder } from 'web3-eth-abi';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { preferenceService, swapService } from '@/core/services';
+import {
+  preferenceService,
+  swapService,
+  transactionHistoryService,
+} from '@/core/services';
 import { sendRequest } from '@/core/apis/provider';
 import { navigationRef } from '@/utils/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { Account } from '@/core/services/preference';
+import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
-export const approveToken = async (
-  chainServerId: string,
-  id: string,
-  spender: string,
-  amount: number | string,
-  $ctx?: any,
-  gasPrice?: number,
+export const approveToken = async ({
+  chainServerId,
+  id,
+  spender,
+  amount,
+  $ctx,
+  gasPrice,
+  extra,
+  isBuild,
+  account,
+}: {
+  chainServerId: string;
+  id: string;
+  spender: string;
+  amount: number | string;
+  $ctx?: any;
+  gasPrice?: number;
   extra?: {
     isSwap?: boolean;
     swapPreferMEVGuarded?: boolean;
     isBridge?: boolean;
-  },
-  isBuild = false,
-) => {
-  const account = await preferenceService.getCurrentAccount();
-  if (!account) throw new Error(i18n.t('background.error.noCurrentAccount'));
+  };
+  isBuild?: boolean;
+  account: Account;
+}) => {
+  if (!account) {
+    throw new Error(i18n.t('background.error.noCurrentAccount'));
+  }
 
   const chainId = findChain({
     serverId: chainServerId,
   })?.id;
-  if (!chainId) throw new Error(i18n.t('background.error.invalidChainId'));
+  if (!chainId) {
+    throw new Error(i18n.t('background.error.invalidChainId'));
+  }
   let tx: any = {
     from: account.address,
     to: id,
@@ -79,11 +99,14 @@ export const approveToken = async (
   }
   return await sendRequest(
     {
-      $ctx,
-      method: 'eth_sendTransaction',
-      params: [tx],
+      data: {
+        $ctx,
+        method: 'eth_sendTransaction',
+        params: [tx],
+      },
+      session: INTERNAL_REQUEST_SESSION,
+      account,
     },
-    INTERNAL_REQUEST_SESSION,
     isBuild,
   );
 };
@@ -100,6 +123,7 @@ export const dexSwap = async (
     shouldTwoStepApprove,
     postSwapParams,
     swapPreferMEVGuarded,
+    account,
   }: {
     chain: CHAINS_ENUM;
     quote: QuoteResult;
@@ -115,10 +139,11 @@ export const dexSwap = async (
       Parameters<OpenApiService['postSwap']>[0],
       'tx_id' | 'tx'
     >;
+    account: Account;
   },
   $ctx?: any,
+  addSwapTxHistoryObj?: Omit<SwapTxHistoryItem, 'hash'>,
 ) => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(i18n.t('background.error.noCurrentAccount'));
   }
@@ -131,20 +156,21 @@ export const dexSwap = async (
     if (shouldTwoStepApprove) {
       // unTriggerTxCounter.increase(3);
 
-      await approveToken(
-        chainObj.serverId,
-        pay_token_id,
+      await approveToken({
+        chainServerId: chainObj.serverId,
+        id: pay_token_id,
         spender,
-        0,
-        {
+        amount: 0,
+        $ctx: {
           ga: {
             ...$ctx?.ga,
             source: 'approvalAndSwap|tokenApproval',
           },
         },
         gasPrice,
-        { isSwap: true, swapPreferMEVGuarded },
-      );
+        extra: { isSwap: true, swapPreferMEVGuarded },
+        account,
+      });
 
       // unTriggerTxCounter.decrease();
     }
@@ -153,20 +179,21 @@ export const dexSwap = async (
       if (!shouldTwoStepApprove) {
         // unTriggerTxCounter.increase(2);
       }
-      await approveToken(
-        chainObj.serverId,
-        pay_token_id,
+      await approveToken({
+        chainServerId: chainObj.serverId,
+        id: pay_token_id,
         spender,
-        quote.fromTokenAmount,
-        {
+        amount: quote.fromTokenAmount,
+        $ctx: {
           ga: {
             ...$ctx?.ga,
             source: 'approvalAndSwap|tokenApproval',
           },
         },
         gasPrice,
-        { isSwap: true, swapPreferMEVGuarded },
-      );
+        extra: { isSwap: true, swapPreferMEVGuarded },
+        account,
+      });
 
       // unTriggerTxCounter.decrease();
     }
@@ -175,8 +202,8 @@ export const dexSwap = async (
       swapService.addTx(chain, quote.tx.data, postSwapParams);
     }
 
-    await sendRequest(
-      {
+    await sendRequest({
+      data: {
         $ctx:
           needApprove && pay_token_id !== chainObj.nativeTokenAddress
             ? {
@@ -202,16 +229,25 @@ export const dexSwap = async (
           },
         ],
       },
-      INTERNAL_REQUEST_SESSION,
-    )
-      .then(() => {
-        console.log('after swap');
+      session: INTERNAL_REQUEST_SESSION,
+      account,
+    })
+      .then(res => {
+        const hash = res as string;
+        console.log('after swap  hash: ', hash);
         preferenceService.setReportActionTs(
           REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_TO_SIGN,
           {
             chain: chainObj.serverId as string,
           },
         );
+        if (addSwapTxHistoryObj) {
+          const swapTxHistoryObj = {
+            ...addSwapTxHistoryObj,
+            hash,
+          };
+          transactionHistoryService.addSwapTxHistory(swapTxHistoryObj);
+        }
         navigationRef.dispatch(
           StackActions.replace(RootNames.StackRoot, {
             screen: RootNames.Home,
@@ -220,12 +256,14 @@ export const dexSwap = async (
       })
       .catch(error => {
         console.log('swap error', error);
+        throw error;
       });
 
     console.log('after sendRequest');
     // unTriggerTxCounter.decrease();
   } catch (e) {
     // unTriggerTxCounter.reset();
+    throw e;
   }
 };
 
@@ -241,6 +279,7 @@ export const buildDexSwap = async (
     shouldTwoStepApprove,
     postSwapParams,
     swapPreferMEVGuarded,
+    account,
   }: {
     chain: CHAINS_ENUM;
     quote: QuoteResult;
@@ -256,10 +295,10 @@ export const buildDexSwap = async (
       Parameters<OpenApiService['postSwap']>[0],
       'tx_id' | 'tx'
     >;
+    account: Account;
   },
   $ctx?: any,
 ) => {
-  const account = await preferenceService.getCurrentAccount();
   if (!account) {
     throw new Error(i18n.t('background.error.noCurrentAccount'));
   }
@@ -273,21 +312,22 @@ export const buildDexSwap = async (
     if (shouldTwoStepApprove) {
       // unTriggerTxCounter.increase(3);
 
-      const res = await approveToken(
-        chainObj.serverId,
-        pay_token_id,
+      const res = await approveToken({
+        chainServerId: chainObj.serverId,
+        id: pay_token_id,
         spender,
-        0,
-        {
+        amount: 0,
+        $ctx: {
           ga: {
             ...$ctx?.ga,
             source: 'approvalAndSwap|tokenApproval',
           },
         },
         gasPrice,
-        { isSwap: true, swapPreferMEVGuarded },
-        true,
-      );
+        extra: { isSwap: true, swapPreferMEVGuarded },
+        isBuild: true,
+        account,
+      });
 
       txs.push(res.params[0]);
       // unTriggerTxCounter.decrease();
@@ -297,21 +337,22 @@ export const buildDexSwap = async (
       if (!shouldTwoStepApprove) {
         // unTriggerTxCounter.increase(2);
       }
-      const res = await approveToken(
-        chainObj.serverId,
-        pay_token_id,
+      const res = await approveToken({
+        chainServerId: chainObj.serverId,
+        id: pay_token_id,
         spender,
-        quote.fromTokenAmount,
-        {
+        amount: quote.fromTokenAmount,
+        $ctx: {
           ga: {
             ...$ctx?.ga,
             source: 'approvalAndSwap|tokenApproval',
           },
         },
         gasPrice,
-        { isSwap: true, swapPreferMEVGuarded },
-        true,
-      );
+        extra: { isSwap: true, swapPreferMEVGuarded },
+        isBuild: true,
+        account,
+      });
 
       txs.push(res.params[0]);
       // unTriggerTxCounter.decrease();
@@ -323,32 +364,35 @@ export const buildDexSwap = async (
 
     const res = await sendRequest(
       {
-        $ctx:
-          needApprove && pay_token_id !== chainObj.nativeTokenAddress
-            ? {
-                ga: {
-                  ...$ctx?.ga,
-                  source: 'approvalAndSwap|swap',
-                },
-              }
-            : $ctx,
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: quote.tx.from,
-            to: quote.tx.to,
-            data: quote.tx.data || '0x',
-            value: `0x${new BigNumber(quote.tx.value || '0').toString(16)}`,
-            chainId: chainObj.id,
-            gasPrice: gasPrice
-              ? `0x${new BigNumber(gasPrice).toString(16)}`
-              : undefined,
-            isSwap: true,
-            swapPreferMEVGuarded,
-          },
-        ],
+        data: {
+          $ctx:
+            needApprove && pay_token_id !== chainObj.nativeTokenAddress
+              ? {
+                  ga: {
+                    ...$ctx?.ga,
+                    source: 'approvalAndSwap|swap',
+                  },
+                }
+              : $ctx,
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: quote.tx.from,
+              to: quote.tx.to,
+              data: quote.tx.data || '0x',
+              value: `0x${new BigNumber(quote.tx.value || '0').toString(16)}`,
+              chainId: chainObj.id,
+              gasPrice: gasPrice
+                ? `0x${new BigNumber(gasPrice).toString(16)}`
+                : undefined,
+              isSwap: true,
+              swapPreferMEVGuarded,
+            },
+          ],
+        },
+        session: INTERNAL_REQUEST_SESSION,
+        account,
       },
-      INTERNAL_REQUEST_SESSION,
       true,
     );
 

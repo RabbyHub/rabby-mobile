@@ -100,9 +100,8 @@ export const HistoryItem = React.memo(
           />
           <TxChange
             style={styles.txChange}
-            data={data}
-            tokenDict={tokenDict}
-            canClickToken={canClickToken}
+            // todo check this
+            tokenChangeData={[]}
           />
         </View>
       </View>

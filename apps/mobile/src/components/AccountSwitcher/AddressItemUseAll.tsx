@@ -135,10 +135,11 @@ export function UseAllAccountsItemInPanel({
   const imageSourceList = useMemo(() => {
     return allAccounts
       .slice(0, 3)
+      .reverse()
       .map(account =>
         getWalletAvator2024(account.brandName, isLight, account.address),
       )
-      .filter(Boolean);
+      .filter(Boolean) as ImageSourcePropType[];
   }, [allAccounts, isLight]);
 
   if (!allAccounts.length) {
@@ -146,7 +147,7 @@ export function UseAllAccountsItemInPanel({
     return null;
   }
 
-  const addressCount = allAccounts.length;
+  const addressCount = allAccounts.length > 10 ? 10 : allAccounts.length;
 
   return (
     <TouchableOpacity
@@ -173,7 +174,7 @@ export function UseAllAccountsItemInPanel({
         <View style={styles.centerInfo}>
           <Text style={styles.text}>
             {'All '}
-            {addressCount} {addressCount > 1 ? 'Addresses' : 'Address'}
+            {addressCount} {addressCount > 1 ? 'Wallets' : 'Wallet'}
           </Text>
         </View>
         <View style={styles.rightArea}>

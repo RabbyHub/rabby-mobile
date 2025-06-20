@@ -12,6 +12,7 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { navigate } from '@/utils/navigation';
+import { Account } from '@/core/services/preference';
 
 // const popups = {
 //   nftDetailPopupOnHistory: {
@@ -23,7 +24,14 @@ import { navigate } from '@/utils/navigation';
 //   },
 // };
 
-export function useNFTDetailSheetModalOnHistory() {
+/**
+ * @deprecated
+ */
+export function useNFTDetailSheetModalOnHistory({
+  account,
+}: {
+  account: Account;
+}) {
   // const [{
   //   nft: focusingNftToken,
   //   isMyOwn: isFocusingNftMyOwn,
@@ -82,6 +90,7 @@ export function useNFTDetailSheetModalOnHistory() {
                     params: {
                       collectionName,
                       nftItem: nftToken as any,
+                      account,
                     },
                   });
                 }}
@@ -94,7 +103,7 @@ export function useNFTDetailSheetModalOnHistory() {
         collectionName,
       });
     },
-    [],
+    [account],
   );
 
   return {

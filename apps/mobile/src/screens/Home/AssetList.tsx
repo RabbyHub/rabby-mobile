@@ -3,7 +3,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { FlashList } from '@shopify/flash-list';
 
-import { useCurrentAccount } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -53,6 +52,7 @@ import { ScamTokenHeader } from './components/AssetRenderItems/ScamTokenHeader';
 import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
+import { Account } from '@/core/services/preference';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -81,6 +81,7 @@ interface Props {
   setFoldDefi: React.Dispatch<React.SetStateAction<boolean>>;
   setFoldScam: React.Dispatch<React.SetStateAction<boolean>>;
   setFirstRowType: React.Dispatch<React.SetStateAction<string>>;
+  account: Account;
 }
 const FOOTER_HEIGHT = 56;
 const SPACING_HEIGHT = 8;
@@ -103,6 +104,7 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       setFoldScam,
       refreshing,
       setFirstRowType,
+      account: currentAccount,
     },
     ref,
   ) => {
@@ -114,8 +116,6 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       useNavigation<
         NativeStackScreenProps<RootStackParamsList>['navigation']
       >();
-
-    const { currentAccount } = useCurrentAccount();
 
     const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
@@ -265,8 +265,10 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       ): MenuAction[] => {
         const isFold =
           'nft_list' in data && data.nft_list.length
-            ? data.nft_list?.every(i => i._isFold)
-            : data._isFold;
+            ? data.nft_list?.every(
+                i => (i as unknown as AbstractProject)._isFold,
+              )
+            : (data as AbstractProject)._isFold;
         return [
           {
             title: isFold
@@ -350,6 +352,9 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       navigation.dispatch(
         StackActions.push(RootNames.StackTransaction, {
           screen: RootNames.Receive,
+          params: {
+            account: currentAccount,
+          },
         }),
       );
     }, [currentAccount, navigation, switchSceneCurrentAccount]);
@@ -677,7 +682,7 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
               onRefresh={() => {
                 onRefresh?.();
               }}
-              refreshing={refreshing}
+              refreshing={false}
             />
           }
         />

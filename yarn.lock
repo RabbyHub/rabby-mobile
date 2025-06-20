@@ -3361,24 +3361,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@debank/common@npm:0.3.58":
-  version: 0.3.58
-  resolution: "@debank/common@npm:0.3.58"
-  checksum: ea17e4262b6efd6a3febd0596e6eea9d23b72b7c725e9fbff80bd68dfa90dfe8ec91bb84a16d288ffec182a6545514d01f85108d7752104a66234394d5ab9fb7
-  languageName: node
-  linkType: hard
-
-"@debank/common@npm:^0.3.54":
+"@debank/common@npm:0.3.60":
   version: 0.3.60
   resolution: "@debank/common@npm:0.3.60"
   checksum: dcc549676c8b57eec9e80cef75064f5be89e39a9f2df9b53a9e93ccc1c13a5103339b450a3a3a18cfa9d06d8cf01b5ad924e846c748f3b1db9322bfdb035b372
   languageName: node
   linkType: hard
 
-"@debank/common@patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
-  version: 0.3.58
-  resolution: "@debank/common@patch:@debank/common@npm%3A0.3.58#./.yarn/patches/@debank-common-npm-0.3.58-0aa25cb07b.patch::version=0.3.58&hash=b28a09&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
-  checksum: 8cc0f5695d7fff7d28251a4868c4a39349731f28c76c1c380e115047a68c6ca6ad71ecbd82277aba78606f0250d089c9ab1eba76edc853e6f508fe091d5b267b
+"@debank/common@patch:@debank/common@npm%3A0.3.60#./.yarn/patches/@debank-common-npm-0.3.60-676123558a.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 0.3.60
+  resolution: "@debank/common@patch:@debank/common@npm%3A0.3.60#./.yarn/patches/@debank-common-npm-0.3.60-676123558a.patch::version=0.3.60&hash=a1757e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  checksum: 5ca64fe05da7f2dfb3ce6026b3e0b4e44e176192f1ddadfb788d945a51ebe02e7ed294ed2b8c11b9429564770744f489c339349a6e70d5d51898baa5b3b83842
   languageName: node
   linkType: hard
 
@@ -7682,7 +7675,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.9.21
+    "@rabby-wallet/rabby-api": 0.9.23
     "@types/jest": ^27.4.1
     "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
@@ -7736,7 +7729,7 @@ __metadata:
     "@rabby-wallet/gnosis-sdk": 1.4.3
     "@rabby-wallet/keyring-utils": ^0.1.0
     "@safe-global/protocol-kit": 5.0.3
-    "@safe-global/types-kit": 1.0.2
+    "@safe-global/types-kit": 1.0.4
     "@types/jest": ^27.4.1
     "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
@@ -7950,7 +7943,7 @@ __metadata:
     "@metamask/eth-json-rpc-provider": ^2.3.0
     "@metamask/json-rpc-engine": ^7.3.0
     "@metamask/utils": ^8.2.0
-    "@rabby-wallet/rabby-api": 0.9.21
+    "@rabby-wallet/rabby-api": 0.9.25
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^5.62.0
     "@typescript-eslint/parser": ^5.62.0
@@ -8079,9 +8072,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.21":
-  version: 0.9.21
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.21"
+"@rabby-wallet/rabby-api@npm:0.9.23":
+  version: 0.9.23
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.23"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
@@ -8092,7 +8085,24 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 7ed16abc25877a913acbb2a7173f33043d28a851ecaf940de6d9479507abdf483cd8910b0910bd5379cc68d343d10bed53c8533460d94ed2af083a72286ab730
+  checksum: 749fff4c800b05f52280f13cda5e098d65d6429f11d1081b9acf18712850b1634dfa72486e5c52e27d29a1ea401e736c3b0d136b2892cc59e4eaf3415fae84b2
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/rabby-api@npm:0.9.25":
+  version: 0.9.25
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.25"
+  dependencies:
+    "@rabby-wallet/rabby-sign": 0.4.0
+    axios: ^0.27.2
+    axios-rate-limit: ^1.3.0
+    eth-rpc-errors: ^4.0.3
+    lodash: ^4.17.21
+    qss: ^2.0.3
+  peerDependencies:
+    "@debank/common": ^0.3.9
+    "@rabby-wallet/rabby-sign": ">= 0.3"
+  checksum: b8bc6324d2a241a955de3d2a03a1cb8f846c77a484cd7c62000ba42cd0792ec0e3e94c7aafc04fc014fa64bf03e2d73c15094e717bcc1623e18631d1cb84306b
   languageName: node
   linkType: hard
 
@@ -8181,7 +8191,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/universal-providers": "workspace:^"
     "@types/jest": ^27.4.1
-    "@types/node": ^20.14.8
+    "@types/node": ^24.0.2
     "@types/sinon": ^9.0.10
     babel-loader: ^9.1.3
     deepmerge: ^4.2.2
@@ -8192,6 +8202,7 @@ __metadata:
     sinon: ^9.2.4
     stream-browserify: ^3.0.0
     ts-jest: ^27.1.4
+    ts-loader: ^9.5.2
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
     typescript: 5.7.3
@@ -9735,21 +9746,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@safe-global/types-kit@npm:1.0.2, @safe-global/types-kit@npm:^1.0.0":
-  version: 1.0.2
-  resolution: "@safe-global/types-kit@npm:1.0.2"
-  dependencies:
-    abitype: ^1.0.2
-  checksum: 3bdfd5c30275fff5b6846866d6e5c0f69755d6e22398f634b8efa00281e4776187b01e0ef703b16a5ab83641e79ccc047d8b5cc85e6daacd6db2924b03396055
-  languageName: node
-  linkType: hard
-
-"@safe-global/types-kit@npm:^1.0.2, @safe-global/types-kit@npm:^1.0.4":
+"@safe-global/types-kit@npm:1.0.4":
   version: 1.0.4
   resolution: "@safe-global/types-kit@npm:1.0.4"
   dependencies:
     abitype: ^1.0.2
   checksum: 3dcd9f19962e53ca23dc945a3a7353327088634d07e962b8e0f1ecdf28782ce1c4c4dfce1b54c23c1382ee534e232b73f914500cf58c9baa1d20b10f3701e765
+  languageName: node
+  linkType: hard
+
+"@safe-global/types-kit@patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 1.0.4
+  resolution: "@safe-global/types-kit@patch:@safe-global/types-kit@npm%3A1.0.4#./.yarn/patches/@safe-global-types-kit-npm-1.0.4-47a7ac1904.patch::version=1.0.4&hash=2b8070&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  dependencies:
+    abitype: ^1.0.2
+  checksum: 5c06111c478622532a9c04f15dc0c4e699849f4a9a21893a476158b3331289f60b6e27eb19d39378b281debef3809b3d14975bbbe8920b438329e1e0854624e4
   languageName: node
   linkType: hard
 
@@ -11292,6 +11303,15 @@ __metadata:
   dependencies:
     undici-types: ~5.26.4
   checksum: 5e9eda1ac8c6cc6bcd1063903ae195eaede9aad1bdad00408a919409cfbcdd2d6535aa3d50346f0d385528f9e03dafc7d1b3bad25aedb1dcd79a6ad39d06c35d
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^24.0.2":
+  version: 24.0.2
+  resolution: "@types/node@npm:24.0.2"
+  dependencies:
+    undici-types: ~7.8.0
+  checksum: def3683ff6eec2f45b79025c030d75065c51129e693325aecbb878b36264593c8b47e625e3166772b148bf69b82638fbf54c165a8bf11c96cc49e1d7a63fffe5
   languageName: node
   linkType: hard
 
@@ -17916,6 +17936,16 @@ __metadata:
     memory-fs: ^0.5.0
     tapable: ^1.0.0
   checksum: 4d87488584c4d67d356ef4ba04978af4b2d4d18190cb859efac8e8475a34d5d6c069df33faa5a0a22920b0586dbf330f6a08d52bb15a8771a9ce4d70a2da74ba
+  languageName: node
+  linkType: hard
+
+"enhanced-resolve@npm:^5.0.0":
+  version: 5.18.1
+  resolution: "enhanced-resolve@npm:5.18.1"
+  dependencies:
+    graceful-fs: ^4.2.4
+    tapable: ^2.2.0
+  checksum: de5bea7debe3576e78173bcc409c4aee7fcb56580c602d5c47c533b92952e55d7da3d9f53b864846ba62c8bd3efb0f9ecfe5f865e57de2f3e9b6e5cda03b4e7e
   languageName: node
   linkType: hard
 
@@ -26374,7 +26404,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"micromatch@npm:^4.0.8":
+"micromatch@npm:^4.0.0, micromatch@npm:^4.0.8":
   version: 4.0.8
   resolution: "micromatch@npm:4.0.8"
   dependencies:
@@ -29925,7 +29955,7 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": ^7.25.9
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
-    "@debank/common": 0.3.58
+    "@debank/common": 0.3.60
     "@debank/festats": 1.0.4
     "@eth-optimism/contracts-ts": ^0.17.0
     "@ethereumjs/common": 4.2.0
@@ -29950,7 +29980,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.12
-    "@rabby-wallet/rabby-api": 0.9.21
+    "@rabby-wallet/rabby-api": 0.9.25
     "@rabby-wallet/rabby-security-engine": 2.0.10
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.56
@@ -35327,6 +35357,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ts-loader@npm:^9.5.2":
+  version: 9.5.2
+  resolution: "ts-loader@npm:9.5.2"
+  dependencies:
+    chalk: ^4.1.0
+    enhanced-resolve: ^5.0.0
+    micromatch: ^4.0.0
+    semver: ^7.3.4
+    source-map: ^0.7.4
+  peerDependencies:
+    typescript: "*"
+    webpack: ^5.0.0
+  checksum: f4c117042e25434e733c4b70873adaa9a79b14c2b3d8e5db53bbfd42060289f8a3eb97cfff64c83123b735d954f0eaa0f60f093afb0682cd2d1d7fa17f81e223
+  languageName: node
+  linkType: hard
+
 "ts-node@npm:^10.7.0, ts-node@npm:^10.9.1":
   version: 10.9.2
   resolution: "ts-node@npm:10.9.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fts-node%2F-%2Fts-node-10.9.2.tgz"
@@ -35973,6 +36019,13 @@ __metadata:
   version: 5.26.5
   resolution: "undici-types@npm:5.26.5::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fundici-types%2F-%2Fundici-types-5.26.5.tgz"
   checksum: 3192ef6f3fd5df652f2dc1cd782b49d6ff14dc98e5dced492aa8a8c65425227da5da6aafe22523c67f035a272c599bb89cfe803c1db6311e44bed3042fc25487
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~7.8.0":
+  version: 7.8.0
+  resolution: "undici-types@npm:7.8.0"
+  checksum: 59521a5b9b50e72cb838a29466b3557b4eacbc191a83f4df5a2f7b156bc8263072b145dc4bb8ec41da7d56a7e9b178892458da02af769243d57f801a50ac5751
   languageName: node
   linkType: hard
 

@@ -33,6 +33,7 @@ import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { NextSearchBar } from '../SearchBar';
+import { Account } from '@/core/services/preference';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
 const RcIconSearch = makeThemeIconFromCC(RcNextSearchCC, 'neutral-secondary');
@@ -41,10 +42,12 @@ const useChainSeletorList = ({
   supportChains,
   netTabKey,
   needAllAddresses,
+  account,
 }: {
   supportChains?: Chain['enum'][];
   netTabKey?: NetSwitchTabsKey;
   needAllAddresses?: boolean;
+  account: Account;
 }) => {
   const [search, setSearch] = useState('');
   const {
@@ -54,7 +57,9 @@ const useChainSeletorList = ({
 
     matteredChainBalancesAll,
     fetchAllAddressesChainBalance,
-  } = useLoadMatteredChainBalances();
+  } = useLoadMatteredChainBalances({
+    account,
+  });
   useEffect(() => {
     needAllAddresses
       ? fetchAllAddressesChainBalance()
@@ -135,6 +140,7 @@ export type SelectSortedChainProps = {
   excludeChains?: CHAINS_ENUM[];
   needAllAddresses?: boolean;
   onClose?: () => void;
+  account: Account;
 };
 export default function SelectChainWithSummary({
   value,
@@ -147,6 +153,7 @@ export default function SelectChainWithSummary({
   excludeChains,
   titleText,
   needAllAddresses,
+  account,
 }: RNViewProps & SelectSortedChainProps) {
   const { t } = useTranslation();
   const [canSearch, setCanSearch] = useState(false);
@@ -167,6 +174,7 @@ export default function SelectChainWithSummary({
     supportChains: supportChains,
     needAllAddresses,
     netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
+    account,
   });
 
   const [matteredList, unmatteredList] = useMemo(() => {
@@ -279,6 +287,7 @@ export default function SelectChainWithSummary({
             onChange={onChange}
             supportChains={supportChains}
             disabledTips={disabledTips}
+            account={account}
           />
         </View>
       )}

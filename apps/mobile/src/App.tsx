@@ -31,11 +31,11 @@ import { useGlobalAppPreventScreenrecordOnDev } from './hooks/appSettings';
 import { useAppPreventScreenshotOnScreen } from './hooks/navigation';
 import { useAutoGoogleSignIfPreviousSignedOnTop } from './hooks/cloudStorage';
 import { useNoLongerSupports } from './components2024/NoLongerSupports/useNoLongerSupports';
-import { useCurrentAccountOnAppTop } from './hooks/account';
 import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useGasAccountInfo } from './screens/GasAccount/hooks';
+import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -62,10 +62,10 @@ function MainScreen({ rabbitCode }: AppProps) {
   useAppPreventScreenshotOnScreen();
   useAutoGoogleSignIfPreviousSignedOnTop();
   useNoLongerSupports();
-  useCurrentAccountOnAppTop();
   useTriggerI18nChangeOnAppTop();
   useIAPListener();
   useGasAccountInfo();
+  useIncreaseTxCountOnAppTop({ isTop: true });
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();

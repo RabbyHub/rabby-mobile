@@ -14,32 +14,35 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 import ViewMore from '@/components/Approval/components/Actions/components/ViewMore';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { RootNames } from '@/constant/layout';
+import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { ellipsisAddress } from '@/utils/address';
+import { naviPush } from '@/utils/navigation';
+import { formatAmount } from '@/utils/number';
+import { formatIntlTimestamp } from '@/utils/time';
 import { openTxExternalUrl } from '@/utils/transaction';
-import {
-  ApproveNFTRequireData,
-  RevokeNFTRequireData,
-} from '@rabby-wallet/rabby-action';
+import { RevokeNFTRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { HistoryItemCateType } from '../type';
-import { RootNames } from '@/constant/layout';
-import { naviPush } from '@/utils/navigation';
-import { formatIntlTimestamp } from '@/utils/time';
-import { formatAmount } from '@/utils/number';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
-export const RevokeNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const RevokeNFT: React.FC<Props> = ({
+  data,
+  isSingleAddress,
+  account,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -68,8 +71,6 @@ export const RevokeNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
 
-  const { switchAccount } = useCurrentAccount();
-
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
 
@@ -84,6 +85,7 @@ export const RevokeNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
     naviPush(RootNames.NftDetail, {
       token: actionData.nft,
       isSingleAddress,
+      account,
     });
   });
 
@@ -218,7 +220,6 @@ export const RevokeNFT: React.FC<Props> = ({ data, isSingleAddress }) => {
           <AddressItemInDetail
             address={data.maxGasTx.address}
             accounts={unionAccounts}
-            switchAccount={switchAccount}
           />
         </View>
 

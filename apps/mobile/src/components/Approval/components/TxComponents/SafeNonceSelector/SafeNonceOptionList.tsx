@@ -1,6 +1,5 @@
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { apisSafe } from '@/core/apis/safe';
-import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import type { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
@@ -11,12 +10,14 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeNonceOptionListItem } from './SafeNonceOptionListItem';
 import { SafeNoncePendingOptionContent } from './SafeNoncePendingOptionContent';
+import { Account } from '@/core/services/preference';
 
 interface OptionListProps {
   chainId: number;
   value?: number;
   onChange?(value: number): void;
   safeInfo?: BasicSafeInfo | null;
+  account: Account;
 }
 
 export const SafeNonceOptionList = ({
@@ -24,11 +25,8 @@ export const SafeNonceOptionList = ({
   value,
   onChange,
   safeInfo,
+  account,
 }: OptionListProps) => {
-  const { currentAccount: account } = useCurrentAccount({
-    disableAutoFetch: true,
-  });
-
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);

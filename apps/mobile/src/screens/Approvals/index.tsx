@@ -8,7 +8,6 @@ import {
 } from 'react-native-collapsible-tab-view';
 
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { useCurrentAccount } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ApprovalsBottomArea } from './components/Layout';
@@ -28,10 +27,14 @@ import { HeaderRight } from './components/Headers/HeaderRight';
 import { HeaderCenter } from './components/Headers/HeaderCenter';
 import { ellipsisAddress } from '@/utils/address';
 import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterialTabBar';
+import { Account } from '@/core/services/preference';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenNavigationProps } from '@/navigation-type';
 const isAndroid = Platform.OS === 'android';
 
-const ApprovalScreenContainer = () => {
-  const { currentAccount } = useCurrentAccount();
+const ApprovalScreenContainer: React.FC<{
+  account: Account;
+}> = ({ account: currentAccount }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { filterType, setFilterType, searchKw, setSearchKw } =
@@ -165,8 +168,17 @@ const ApprovalScreenContainer = () => {
 
 export default function ApprovalsScreen() {
   const { styles } = useTheme2024({ getStyle });
+  const route =
+    useRoute<
+      GetNestedScreenNavigationProps<
+        'TransactionNavigatorParamList',
+        'Approvals'
+      >['route']
+    >();
 
-  const approvalsPageCtx = useApprovalsPageOnTop({ isTestnet: false });
+  const account = route.params.account;
+
+  const approvalsPageCtx = useApprovalsPageOnTop({ isTestnet: false, account });
 
   const { loadApprovals } = approvalsPageCtx;
 
@@ -178,12 +190,12 @@ export default function ApprovalsScreen() {
     <NormalScreenContainer2024 overwriteStyle={styles.root}>
       <ApprovalsPageContext.Provider value={approvalsPageCtx}>
         <View style={styles.verticalContainer}>
-          <ApprovalScreenContainer />
+          <ApprovalScreenContainer account={account} />
 
-          <BottomSheetApprovalContract />
-          <BottomSheetApprovalAsset />
+          <BottomSheetApprovalContract account={account} />
+          <BottomSheetApprovalAsset account={account} />
 
-          <ApprovalsBottomArea />
+          <ApprovalsBottomArea account={account} />
         </View>
       </ApprovalsPageContext.Provider>
     </NormalScreenContainer2024>

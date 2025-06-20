@@ -1,0 +1,17 @@
+diff --git a/dist/src/types.d.ts b/dist/src/types.d.ts
+index cab706d81c15e220e6a1e6070725165781332839..f0d5ea5b1d4d6c92c2dbb8f1cd4346449e9d8045 100644
+--- a/dist/src/types.d.ts
++++ b/dist/src/types.d.ts
+@@ -30,9 +30,9 @@ export interface SafeTransactionData extends MetaTransactionData {
+     nonce: number;
+ }
+ export interface SafeTransactionDataPartial extends MetaTransactionData {
+-    safeTxGas?: string;
+-    baseGas?: string;
+-    gasPrice?: string;
++    safeTxGas?: string | number;
++    baseGas?: string | number;
++    gasPrice?: string | number;
+     gasToken?: string;
+     refundReceiver?: string;
+     nonce?: number;

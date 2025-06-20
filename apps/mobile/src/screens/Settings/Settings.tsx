@@ -120,6 +120,8 @@ import { OpenApiPopup } from './components/OpenApiPopup';
 import MockBatchRevokeModal, {
   useDevMockBatchRevokeVisible,
 } from './sheetModals/DevMockBatchRevoke';
+import { preferenceService } from '@/core/services';
+import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -185,6 +187,8 @@ function SettingsBlocks() {
   const biometricsComputed = useBiometricsComputed();
 
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
+
+  const { clearBrowserData } = useClearBrowserData();
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -389,6 +393,27 @@ function SettingsBlocks() {
               );
             },
           },
+          {
+            label: t('page.setting.clearBrowserData'),
+            icon: RcClearPending,
+            onPress: () => {
+              Alert.alert(
+                t('page.settingModal.clearBrowserData.title'),
+                t('page.settingModal.clearBrowserData.desc'),
+                [
+                  { text: t('common.dialog.button.cancel'), onPress: () => {} },
+                  {
+                    text: t('page.settingModal.clearBrowserData.button'),
+                    style: 'destructive',
+                    onPress: async () => {
+                      clearBrowserData();
+                      toast.success('Cleared');
+                    },
+                  },
+                ],
+              );
+            },
+          },
         ],
       },
     };
@@ -471,6 +496,7 @@ function DevSettingsBlocks() {
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
+  const currentAccount = preferenceService.getFallbackAccount();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -665,6 +691,7 @@ function DevSettingsBlocks() {
                   screen: RootNames.SendNFT,
                   params: {
                     nftItem: RABBY_GENESIS_NFT_DATA.nftToken,
+                    account: currentAccount!,
                   },
                 });
               },
@@ -673,8 +700,8 @@ function DevSettingsBlocks() {
               label: 'Test EIP-7702',
               icon: RcInfo,
               onPress: () => {
-                sendRequest(
-                  {
+                sendRequest({
+                  data: {
                     method: 'eth_sendTransaction',
                     params: [
                       {
@@ -687,16 +714,17 @@ function DevSettingsBlocks() {
                       },
                     ],
                   },
-                  INTERNAL_REQUEST_SESSION,
-                );
+                  session: INTERNAL_REQUEST_SESSION,
+                  account: currentAccount!,
+                });
               },
             },
             {
               label: 'Test OFAC Blocked Transaction',
               icon: RcInfo,
               onPress: () => {
-                sendRequest(
-                  {
+                sendRequest({
+                  data: {
                     method: 'eth_sendTransaction',
                     params: [
                       {
@@ -708,8 +736,9 @@ function DevSettingsBlocks() {
                       },
                     ],
                   },
-                  INTERNAL_REQUEST_SESSION,
-                );
+                  session: INTERNAL_REQUEST_SESSION,
+                  account: currentAccount!,
+                });
               },
             },
             // {

@@ -1,7 +1,6 @@
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { toast } from '@/components2024/Toast';
 import { useTheme2024 } from '@/hooks/theme';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useEffect, useState } from 'react';
@@ -23,8 +22,6 @@ import {
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
 
 export const GasAccountScreen = () => {
-  useLastUsedAccountInScreen();
-
   const { t } = useTranslation();
   const [depositState, setDepositState] = useState<{
     isOpen?: boolean;

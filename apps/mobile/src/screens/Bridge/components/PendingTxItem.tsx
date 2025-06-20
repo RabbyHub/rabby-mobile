@@ -1,18 +1,16 @@
-/* eslint-disable react-native/no-inline-styles */
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { BridgeHistory, SwapItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components';
-import { useTranslation } from 'react-i18next';
-import { getTokenSymbol } from '@/utils/token';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { bridgeService } from '@/core/services';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useTheme2024 } from '@/hooks/theme';
 import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { findChain } from '@/utils/chain';
-import ArrowSwapSVG from '@/assets2024/icons/common/arrow-swap-cc.svg';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { bridgeService, swapService } from '@/core/services';
-import { useCurrentAccount } from '@/hooks/account';
+import { createGetStyles2024 } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
+import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Text, TouchableOpacity, View } from 'react-native';
 export const BridgePendingTxItem = ({
   data,
   clearLocalPendingTxData,
@@ -26,7 +24,9 @@ export const BridgePendingTxItem = ({
   const { t } = useTranslation();
 
   const isPending = data.status === 'pending';
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const handlePress = () => {
     if (!isPending) {
@@ -37,8 +37,8 @@ export const BridgePendingTxItem = ({
     openHistory();
   };
 
-  const payToken = data.from_token;
-  const receiveToken = data.to_token;
+  const payToken = data?.from_token;
+  const receiveToken = data?.to_token;
 
   const titleTextStr = useMemo(() => {
     return `${getTokenSymbol(payToken)}→${getTokenSymbol(receiveToken)}`;
@@ -98,14 +98,10 @@ export const BridgePendingTxItem = ({
                 size={25}
                 innerChainStyle={styles.innerChainStyle}
               />
-              <Text
-                style={{
-                  ...styles.titleText,
-                  marginRight: 10,
-                  marginLeft: 4,
-                }}>
-                {` ${getTokenSymbol(payToken)} →`}
+              <Text style={styles.titleText}>
+                {` ${getTokenSymbol(payToken)}`}
               </Text>
+              <Text style={styles.titleText}>{'→'}</Text>
               <AssetAvatar
                 logo={receiveToken?.logo_url}
                 chain={receiveToken?.chain}

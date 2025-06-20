@@ -2,10 +2,10 @@
 import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
-import { findChain, getChain } from '@/utils/chain';
+import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { formatAmount } from '@/utils/number';
@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
@@ -24,7 +24,11 @@ import { naviPush } from '@/utils/navigation';
 import { getTokenSymbol } from '@/utils/token';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { formatTokenAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
-import { ReceiveTokenItem, SwapRequireData } from '@rabby-wallet/rabby-action';
+import {
+  ParsedTransactionActionData,
+  ReceiveTokenItem,
+  SwapRequireData,
+} from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -37,30 +41,42 @@ import { ellipsisAddress } from '@/utils/address';
 import { formatIntlTimestamp } from '@/utils/time';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import LinearGradient from 'react-native-linear-gradient';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/dist/types';
+import { findAccountByPriority } from '@/utils/account';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
-export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
+export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const navigation = useRabbyAppNavigation();
   const { actionData, requireData, chain } = useMemo(() => {
-    const maxGasTx = data.maxGasTx;
-    const actionData = (maxGasTx.action!.actionData.swap ||
-      maxGasTx.action!.actionData.wrapToken ||
-      maxGasTx.action!.actionData.unWrapToken)!;
-    const requireData = maxGasTx.action?.requiredData as SwapRequireData;
-
     const chain =
       findChain({
         id: data.chainId,
       }) || undefined;
+
+    if (!data.maxGasTx.action) {
+      return {
+        maxGasTx: data.maxGasTx,
+        actionData: undefined,
+        requireData: undefined,
+        chain: chain,
+      };
+    }
+
+    const maxGasTx = data.maxGasTx;
+    const actionData = (maxGasTx.action!.actionData.swap ||
+      maxGasTx.action!.actionData.wrapToken ||
+      maxGasTx.action!.actionData.unWrapToken)!;
+    const requireData = maxGasTx.action!.requiredData as SwapRequireData;
     return {
       maxGasTx,
       actionData,
@@ -81,8 +97,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     () => data.isFailed || data.isSubmitFailed || data.isWithdrawed,
     [data.isFailed, data.isSubmitFailed, data.isWithdrawed],
   );
-
-  const { switchAccount } = useCurrentAccount();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -105,13 +119,12 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
   const handleGotoDetail = useMemoizedFn((token: TokenItem) => {
     naviPush(RootNames.TokenDetail, {
       token: ensureAbstractPortfolioToken(token),
-      // account: address,
       needUseCacheToken: true,
       isSingleAddress,
+      account,
     });
   });
 
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const fromAddrIsImported = useMemo(() => {
     return accounts.find(account =>
@@ -119,12 +132,31 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
     );
   }, [accounts, data]);
 
-  const receiveToken: ReceiveTokenItem =
-    actionData.minReceive || actionData.receiveToken;
+  const receiveToken: ReceiveTokenItem | TokenItem | undefined = useMemo(() => {
+    if (actionData && 'minReceive' in actionData) {
+      return (
+        (actionData?.minReceive as ReceiveTokenItem) ||
+        actionData?.receiveToken ||
+        data.maxGasTx.explain?.balance_change?.receive_token_list[0]
+      );
+    }
+    return (
+      actionData?.receiveToken ||
+      data.maxGasTx.explain?.balance_change?.receive_token_list[0]
+    );
+  }, [actionData, data.maxGasTx.explain?.balance_change?.receive_token_list]);
+
+  const payToken: TokenItem | undefined =
+    actionData?.payToken ||
+    data.maxGasTx.explain?.balance_change?.send_token_list[0];
 
   if (!chain) {
     return null;
   }
+
+  const source = data.originTx?.$ctx?.ga?.source ?? '';
+
+  const isLocalSwap = source === 'approvalAndSwap|swap' || source === 'swap';
 
   return (
     <>
@@ -132,18 +164,18 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
         <View style={[styles.doubleBox]}>
           <TouchableOpacity
             style={[styles.fromTokenBox]}
-            onPress={() => handleGotoDetail(actionData.payToken)}>
+            onPress={() => handleGotoDetail(payToken!)}>
             <AssetAvatar
-              logo={actionData.payToken?.logo_url}
+              logo={payToken?.logo_url}
               size={42}
-              chain={actionData.payToken?.chain}
+              chain={payToken?.chain}
               chainSize={16}
             />
             <View style={[styles.rowBox, isFail && styles.isFailBox]}>
               <Text
                 style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-                {'-'} {formatTokenAmount(actionData.payToken.amount)}{' '}
-                {getTokenSymbol(actionData.payToken as TokenItem)}
+                {'-'} {formatTokenAmount(payToken?.amount ?? 0)}{' '}
+                {getTokenSymbol(payToken as TokenItem)}
               </Text>
               <RcIconRightCC
                 color={colors2024['neutral-foot']}
@@ -154,7 +186,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.toTokenBox]}
-            onPress={() => handleGotoDetail(receiveToken)}>
+            onPress={() => handleGotoDetail(receiveToken!)}>
             <AssetAvatar
               logo={receiveToken?.logo_url}
               size={42}
@@ -165,7 +197,8 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
               <Text style={[styles.tokenAmountTextList]}>
                 {'+'}{' '}
                 {formatTokenAmount(
-                  receiveToken.amount || receiveToken.min_amount,
+                  (receiveToken as ReceiveTokenItem)?.amount ||
+                    (receiveToken as ReceiveTokenItem)?.min_amount,
                 )}{' '}
                 {getTokenSymbol(receiveToken as TokenItem)}
               </Text>
@@ -228,7 +261,6 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             <AddressItemInDetail
               address={data.maxGasTx.address}
               accounts={unionAccounts}
-              switchAccount={switchAccount}
             />
           </View>
 
@@ -238,7 +270,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             </Text>
             <TouchableOpacity
               style={{ alignItems: 'flex-end' }}
-              onPress={() => handleOpenTxAddress(requireData?.id)}>
+              onPress={() => handleOpenTxAddress(requireData?.id || '')}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -292,7 +324,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
           </View>
         </View>
       </ScrollView>
-      {
+      {isLocalSwap && (
         <View style={[styles.buttonContainer, { paddingBottom: bottom + 27 }]}>
           <View style={{ flex: 1 }}>
             <Button
@@ -301,7 +333,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
                   'MakeTransactionAbout',
                   !isSingleAddress && fromAddrIsImported
                     ? fromAddrIsImported
-                    : currentAccount,
+                    : account || null,
                 );
                 navigation.dispatch(
                   StackActions.push(RootNames.StackTransaction, {
@@ -312,8 +344,8 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
                       swapAgain: true,
                       chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
                       swapTokenId: [
-                        actionData.payToken?.id,
-                        actionData.receiveToken?.id,
+                        actionData?.payToken?.id,
+                        actionData?.receiveToken?.id,
                       ],
                     },
                   }),
@@ -323,7 +355,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress }) => {
             />
           </View>
         </View>
-      }
+      )}
     </>
   );
 };

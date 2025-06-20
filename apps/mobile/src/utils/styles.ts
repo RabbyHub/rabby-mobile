@@ -11,11 +11,8 @@ type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
 
 type CreateStylesOptions = { isLight?: boolean };
 export const createGetStyles =
-  <T extends NamedStyles<T> | NamedStyles<any>>(
-    styles: (
-      colors: AppColorsVariants,
-      ctx?: CreateStylesOptions,
-    ) => T | NamedStyles<T>,
+  <T extends NamedStyles<any>>(
+    styles: (colors: AppColorsVariants, ctx?: CreateStylesOptions) => T,
   ) =>
   (colors: AppColorsVariants, ctx?: CreateStylesOptions) =>
     StyleSheet.create(mutateStyles(styles(colors, ctx)));
@@ -36,9 +33,7 @@ type CreateStyles2024Options = {
   colors2024: AppColors2024Variants;
 };
 export const createGetStyles2024 =
-  <T extends NamedStyles<T> | NamedStyles<any>>(
-    styles: (ctx: CreateStyles2024Options) => T | NamedStyles<T>,
-  ) =>
+  <T extends NamedStyles<any>>(styles: (ctx: CreateStyles2024Options) => T) =>
   (ctx: CreateStyles2024Options) =>
     StyleSheet.create(mutateStyles(styles(ctx)));
 
@@ -114,9 +109,7 @@ export function makeProdBorder(color = 'blue'): ViewStyle {
   };
 }
 
-function mutateStyles<T extends NamedStyles<T> | NamedStyles<any>>(
-  input: T,
-): T {
+function mutateStyles<T extends NamedStyles<any>>(input: T): T {
   try {
     input = JSON.parse(JSON.stringify(input));
     // if (IS_IOS) return input;
@@ -124,19 +117,17 @@ function mutateStyles<T extends NamedStyles<T> | NamedStyles<any>>(
       const debugSymbol = input[key]?.['__DEBUG_FONT_STYLE__'];
       delete input[key]['__DEBUG_FONT_STYLE__'];
 
-      if (!input[key]?.fontFamily) return;
+      const tInput = input[key] as TextStyle;
+      if (!tInput?.fontFamily) return;
 
-      const lcFontFamily = input[key]?.fontFamily?.toLowerCase();
-      const fontWeight = input[key]?.fontWeight;
+      const lcFontFamily = tInput?.fontFamily?.toLowerCase();
+      const fontWeight = tInput?.fontWeight;
 
       let shouldDevLog = false;
       if (lcFontFamily && debugSymbol && __DEV__) {
         shouldDevLog = true;
         // console.debug('mutateStyles', input);
-        console.debug(
-          `[mutateStyles] ${key} fontFamily:`,
-          input[key].fontFamily,
-        );
+        console.debug(`[mutateStyles] ${key} fontFamily:`, tInput.fontFamily);
       }
 
       const fwTypeResult = getFontWeightType(fontWeight);
@@ -145,35 +136,35 @@ function mutateStyles<T extends NamedStyles<T> | NamedStyles<any>>(
       if (lcFontFamily && /sf(.?)pro(.?)rounded/i.test(lcFontFamily)) {
         switch (fwTypeResult.supertype) {
           case FontWeightEnum.heavy: {
-            input[key].fontFamily = FontNames.sf_pro_rounded_heavy;
-            delete input[key].fontWeight;
+            tInput.fontFamily = FontNames.sf_pro_rounded_heavy;
+            delete tInput.fontWeight;
             break;
           }
           case FontWeightEnum.bold: {
-            input[key].fontFamily = FontNames.sf_pro_rounded_bold;
-            delete input[key].fontWeight;
+            tInput.fontFamily = FontNames.sf_pro_rounded_bold;
+            delete tInput.fontWeight;
             break;
           }
           case FontWeightEnum.medium: {
-            input[key].fontFamily = FontNames.sf_pro_rounded_medium;
-            delete input[key].fontWeight;
+            tInput.fontFamily = FontNames.sf_pro_rounded_medium;
+            delete tInput.fontWeight;
             break;
           }
           case FontWeightEnum.normal:
           default: {
-            input[key].fontFamily = FontNames.sf_pro_rounded_regular;
-            delete input[key].fontWeight;
+            tInput.fontFamily = FontNames.sf_pro_rounded_regular;
+            delete tInput.fontWeight;
             break;
           }
         }
       } else if (lcFontFamily && /sf(.?)pro(.?)/i.test(lcFontFamily)) {
-        input[key].fontFamily = FontNames.sf_pro;
+        tInput.fontFamily = FontNames.sf_pro;
       }
 
       if (__DEV__ && shouldDevLog) {
         console.debug(
           `[mutateStyles] fontFamily mutated ${key}::fontFamily:`,
-          input[key].fontFamily,
+          tInput.fontFamily,
         );
       }
     });

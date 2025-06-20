@@ -75,10 +75,17 @@ interface SignTypedDataProps {
   $ctx?: any;
 }
 
-export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
+export const SignTypedData = ({
+  params,
+  account: $account,
+}: {
+  params: SignTypedDataProps;
+  account: Account;
+}) => {
+  const currentAccount = params.isGnosis ? params.account! : $account;
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
-  const { data, session, method, isGnosis, isSend, account } = params;
+  const { data, session, method, isGnosis, isSend } = params;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isWatch, setIsWatch] = useState(false);
@@ -91,12 +98,12 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     useApprovalSecurityEngine();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
+  const site = dappService.getDapp(params.session.origin);
 
   const [currentChainId, setCurrentChainId] = useState<number | undefined>(
     undefined,
   );
-
-  const [isGnosisAccount, setIsGnosisAccount] = useState(false);
+  const isGnosisAccount = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [gnosisFooterBarVisible, setGnosisFooterBarVisible] = useState(false);
   const [currentGnosisAdmin, setCurrentGnosisAdmin] = useState<Account | null>(
@@ -107,22 +114,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     preparedSignature: '',
   });
 
-  const currentAccount = useMemo(() => {
-    return isGnosis ? params.account : preferenceService.getCurrentAccount();
-  }, [isGnosis, params.account]);
-
   const isViewGnosisSafe = params?.$ctx?.isViewGnosisSafe;
-
-  // useSignPermissionCheck({
-  //   origin: params.session.origin,
-  //   chainId: currentChainId,
-  //   onOk: () => {
-  //     handleCancel();
-  //   },
-  //   onDisconnect: () => {
-  //     handleCancel();
-  //   },
-  // });
 
   // useTestnetCheck({
   //   chainId: currentChainId,
@@ -257,14 +249,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     loading,
     error,
   } = useAsync(async () => {
-    const currentAccount = isGnosis
-      ? account
-      : await preferenceService.getCurrentAccount();
-
-    const _isGnosisAccount =
-      currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
-    setIsGnosisAccount(_isGnosisAccount);
-    if (_isGnosisAccount) {
+    if (isGnosisAccount) {
       if (!isViewGnosisSafe) {
         apisSafe.clearGnosisMessage();
       }
@@ -288,9 +273,6 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
   }
 
   const checkWachMode = async () => {
-    const currentAccount = isGnosis
-      ? account
-      : await preferenceService.getCurrentAccount();
     if (
       currentAccount &&
       currentAccount.type === KEYRING_TYPE.WatchAddressKeyring
@@ -346,9 +328,6 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       | 'completeSignText',
     extra?: Record<string, any>,
   ) => {
-    const currentAccount = isGnosis
-      ? account
-      : await preferenceService.getCurrentAccount();
     if (currentAccount) {
       matomoRequestEvent({
         category: 'SignText',
@@ -380,9 +359,6 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     if (activeApprovalPopup()) {
       return;
     }
-    const currentAccount = isGnosis
-      ? account
-      : await preferenceService.getCurrentAccount();
 
     if (currentAccount?.type === KEYRING_TYPE.HdKeyring) {
       await invokeEnterPassphrase(currentAccount.address);
@@ -412,6 +388,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
 
         resolveApproval({
           uiRequestComponent: WaitingSignComponent[params.account.type],
+          $account: currentAccount,
           type: params.account.type,
           address: params.account.address,
           data: params.data,
@@ -456,6 +433,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     if (currentAccount?.type && WaitingSignComponent[currentAccount?.type]) {
       resolveApproval({
         uiRequestComponent: WaitingSignComponent[currentAccount?.type],
+        $account: currentAccount,
         type: currentAccount.type,
         address: currentAccount.address,
         extra: {
@@ -473,10 +451,6 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
   const init = async () => {};
 
   const getRequireData = async (data: ParsedTypedDataActionData) => {
-    const currentAccount = isGnosis
-      ? account
-      : await preferenceService.getCurrentAccount();
-
     if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);
       if (site) {
@@ -724,6 +698,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         )}
         {!isLoading && (
           <Actions
+            account={currentAccount}
             data={parsedActionData}
             requireData={actionRequireData}
             chain={chain}
@@ -731,7 +706,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
             raw={isSignTypedDataV1 ? data[0] : signTypedData || data[1]}
             message={parsedMessage}
             origin={params.session.origin}
-            originLogo={params.session.icon}
+            originLogo={site?.icon}
           />
         )}
         {chain?.isTestnet ? (
@@ -761,9 +736,10 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         <GnosisAdminFooterBarPopup
           visible={gnosisFooterBarVisible}
           origin={params.session.origin}
-          originLogo={params.session.icon}
+          originLogo={site?.icon}
           // chain={chain}
           gnosisAccount={currentGnosisAdmin}
+          account={currentGnosisAdmin}
           onCancel={() => {
             setGnosisFooterBarVisible(false);
             handleCancel();
@@ -790,9 +766,10 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       <FooterBar
         hasShadow={footerShowShadow}
         origin={params.session.origin}
-        originLogo={params.session.icon}
+        originLogo={site?.icon}
         chain={chain}
-        gnosisAccount={isGnosis ? account : undefined}
+        gnosisAccount={isGnosis ? params.account : undefined}
+        account={currentAccount}
         onCancel={handleCancel}
         securityLevel={securityLevel}
         hasUnProcessSecurityResult={hasUnProcessSecurityResult}

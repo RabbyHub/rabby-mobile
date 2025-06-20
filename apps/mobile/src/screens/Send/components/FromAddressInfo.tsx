@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
 import { Text, View } from 'react-native';
 
-import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
+import { useWalletBrandLogo } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { formatAddressToShow } from '@/utils/address';
 import { createGetStyles } from '@/utils/styles';
 import { splitNumberByStep } from '@/utils/number';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { IS_ANDROID } from '@/core/native/utils';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 const getStyles = createGetStyles(colors => {
   return {
@@ -65,7 +66,9 @@ export default function FromAddressInfo({
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
   const { balance } = useCurrentBalance(currentAccount?.address);
   const { RcWalletIcon } = useWalletBrandLogo(currentAccount?.brandName);
 

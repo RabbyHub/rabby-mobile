@@ -50,7 +50,7 @@ export const Text = React.forwardRef(
       if (
         Platform.OS === 'android' &&
         fontWeight &&
-        RobotoLackWeights.includes(fontWeight)
+        RobotoLackWeights.includes(fontWeight as string)
       ) {
         return (Number(fontWeight) - 100).toString();
       }

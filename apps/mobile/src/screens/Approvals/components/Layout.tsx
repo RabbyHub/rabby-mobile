@@ -20,6 +20,7 @@ import RcIconEmptyToken from '@/assets2024/singleHome/empty-token.svg';
 import RcIconEmptyTokenDark from '@/assets2024/singleHome/empty-token-dark.svg';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useBatchRevoke } from '@/screens/BatchRevoke/useBatchRevoke';
+import { Account } from '@/core/services/preference';
 
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
@@ -77,7 +78,7 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
   );
 }
 
-export function ApprovalsBottomArea() {
+export function ApprovalsBottomArea({ account }: { account: Account }) {
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle });
@@ -117,7 +118,9 @@ export function ApprovalsBottomArea() {
 
   const { safeOffBottom } = useSafeSizes();
 
-  const batchRevoke = useBatchRevoke();
+  const batchRevoke = useBatchRevoke({
+    account,
+  });
 
   const handleRevoke = React.useCallback(() => {
     batchRevoke(currentRevokeList, displaySortedAssetsList);

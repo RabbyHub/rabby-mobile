@@ -44,6 +44,7 @@ import { getCexInfo } from '@/hooks/useCexSupportList';
 import { isNonPublicProductionEnv, isSelfhostRegPkg } from '@/constant/env';
 import { getDefaultStore } from 'jotai';
 import { mockBatchRevokeAtom } from '@/hooks/appSettings';
+import { Account } from '@/core/services/preference';
 
 // fail code
 export enum FailedCode {
@@ -128,6 +129,7 @@ export const sendTransaction = async ({
   sig,
   extra,
   ignoreSimulationFailed,
+  account,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -153,6 +155,7 @@ export const sendTransaction = async ({
   pushType?: TxPushType;
   ga?: Record<string, any>;
   sig?: string;
+  account: Account;
 }) => {
   const MOCK_BATCH_REVOKE = getDefaultStore().get(mockBatchRevokeAtom);
   console.log('MOCK_BATCH_REVOKE', MOCK_BATCH_REVOKE);
@@ -162,22 +165,26 @@ export const sendTransaction = async ({
     serverId: chainServerId,
   })!;
   const support1559 = chain.eip['1559'];
-  const { address, ...currentAccount } =
-    (await preferenceService.getCurrentAccount())!;
+  const { address, ...currentAccount } = account;
+
   const recommendNonce =
     tx.nonce ||
     (await apiProvider.getRecommendNonce({
       from: tx.from,
       chainId: chain.id,
+      account,
     }));
 
   // get gas
   let normalGas = gasLevel;
   if (!normalGas) {
-    const gasMarket = await apiProvider.gasMarketV2({
-      chain,
-      tx,
-    });
+    const gasMarket = await apiProvider.gasMarketV2(
+      {
+        chain,
+        tx,
+      },
+      account,
+    );
     normalGas = gasMarket.find(item => item.level === 'normal')!;
   }
 
@@ -217,6 +224,7 @@ export const sendTransaction = async ({
   const balance = await getNativeTokenBalance({
     chainId: chain.id,
     address,
+    account,
   });
   let estimateGas = 0;
   if (preExecResult.gas.success) {
@@ -248,6 +256,7 @@ export const sendTransaction = async ({
       nativeTokenBalance: balance,
       explainTx: preExecResult,
       needRatio,
+      account,
     });
     gasLimit = _gasLimit;
     recommendGasLimitRatio = _recommendGasLimitRatio;
@@ -261,6 +270,7 @@ export const sendTransaction = async ({
     nativeTokenPrice: preExecResult.native_token.price,
     tx,
     gasLimit,
+    account,
   });
 
   // check gas errors
@@ -529,6 +539,7 @@ export const sendTransaction = async ({
       },
       pushed: false,
       result: undefined,
+      account,
     });
     await handleSendAfter();
   } catch (e) {

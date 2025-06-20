@@ -2,7 +2,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { Account } from '@/core/services/preference';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -26,7 +26,6 @@ const GasAccountLoginContent: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { login, logout } = useGasAccountMethods();
-  const { currentAccount } = useCurrentAccount();
   const { value: gasAccountInfo } = useGasAccountInfo();
   const { accounts } = useAccounts({
     disableAutoFetch: true,
@@ -51,7 +50,7 @@ const GasAccountLoginContent: React.FC<{
   );
   const [selectedAccount, setSelectAccount] = useState(currentLoginAccount);
 
-  const confirmAddress = useMemoizedFn(async (account: Account | null) => {
+  const confirmAddress = useMemoizedFn(async (account: Account) => {
     setSelectAccount(account);
     if (loading) {
       return;
@@ -78,43 +77,39 @@ const GasAccountLoginContent: React.FC<{
     setSelectAccount(currentLoginAccount);
   }, [currentLoginAccount]);
 
-  if (currentAccount) {
-    return (
-      <LinearGradient
-        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
-        locations={[0.0745, 0.2242]}
-        start={{ x: 0, y: 0 }}
-        style={{ width: '100%', height: '100%', paddingBottom: 44 }}
-        end={{ x: 0, y: 1 }}>
-        <View style={styles.loginConfirmContainer}>
-          <View style={styles.handleView}>
-            <Text style={styles.confirmTitle}>
-              {t('component.gasAccount.loginConfirmModal.title')}
-            </Text>
-          </View>
-
-          <SelectGasAccountList
-            isGasAccount
-            style={styles.list}
-            value={selectedAccount || undefined}
-            listHeader={
-              <View style={styles.listHeader}>
-                <Text style={styles.listLabel}>
-                  {t('page.gasAccount.gasAccountList.address')}
-                </Text>
-                <Text style={styles.listLabel}>
-                  {t('page.gasAccount.gasAccountList.gasAccountBalance')}
-                </Text>
-              </View>
-            }
-            onChange={confirmAddress}
-          />
+  return (
+    <LinearGradient
+      colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]}
+      locations={[0.0745, 0.2242]}
+      start={{ x: 0, y: 0 }}
+      style={{ width: '100%', height: '100%', paddingBottom: 44 }}
+      end={{ x: 0, y: 1 }}>
+      <View style={styles.loginConfirmContainer}>
+        <View style={styles.handleView}>
+          <Text style={styles.confirmTitle}>
+            {t('component.gasAccount.loginConfirmModal.title')}
+          </Text>
         </View>
-      </LinearGradient>
-    );
-  }
 
-  return null;
+        <SelectGasAccountList
+          isGasAccount
+          style={styles.list}
+          value={selectedAccount || undefined}
+          listHeader={
+            <View style={styles.listHeader}>
+              <Text style={styles.listLabel}>
+                {t('page.gasAccount.gasAccountList.wallet')}
+              </Text>
+              <Text style={styles.listLabel}>
+                {t('page.gasAccount.gasAccountList.gasAccountBalance')}
+              </Text>
+            </View>
+          }
+          onChange={confirmAddress}
+        />
+      </View>
+    </LinearGradient>
+  );
 };
 
 export const GasAccountLoginPopup: React.FC<{

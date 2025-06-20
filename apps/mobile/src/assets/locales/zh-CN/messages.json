@@ -4,27 +4,27 @@
       "BackupPrivateKey": "备份私钥",
       "ImportHardwareAddress": "连接硬件钱包",
       "ImportSuccess": "添加成功",
-      "CreateSelectOnCurrentSeed": "2. 添加地址",
       "ImportPrivateKey": "导入私钥",
       "ImportMethods": "选择导入方式",
-      "ImportMoreAddress": "导入更多地址",
       "CreateMnemonicBackup": "备份助记词",
-      "ImportWatchAddress2024": "添加观察地址",
-      "AddressDetail": "地址详情",
       "BackupSeedPhrase": "备份助记词",
       "VerifySeedPhrase": "验证助记词",
-      "WatchAddressList": "仅观察地址",
       "CreateChooseBackup": "3. 选择备份方法",
       "ImportMnemonic": "导入助记词",
       "AddMnemonic": "从当前 Seed Phrase 添加",
-      "ImportNewAddress": "添加地址",
       "SetPassword2024": "2. 设置密码",
       "CreateSelectMethod": "1. 选择创建方式",
       "RestoreFromCloud": "从 {{type}} 恢复",
-      "CreateNewAddress": "1. 给你的地址命名",
       "ImportSafeAddress2024": "添加 Safe 地址",
       "SafeAddressList": "安全地址",
-      "ConfrimAddress": "确认您的地址"
+      "ImportWatchAddress2024": "添加仅查看钱包",
+      "CreateNewAddress": "1. 确认您的钱包",
+      "ImportNewAddress": "添加钱包",
+      "ImportMoreAddress": "导入更多 Wallets",
+      "WatchAddressList": "仅观察钱包",
+      "AddressDetail": "钱包详情",
+      "CreateSelectOnCurrentSeed": "2. 添加钱包",
+      "ConfrimAddress": "确认您的钱包"
     }
   },
   "native": {
@@ -83,7 +83,8 @@
     "unlimited": "unlimited",
     "Addresses": "Addresses",
     "24h": "24小时",
-    "Edit": "编辑"
+    "Edit": "编辑",
+    "Wallets": "选择钱包"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -139,7 +140,6 @@
         "SpeedUp": "加速",
         "InteractionResults": "交互结果",
         "ApproveTo": "批准给",
-        "RecipientAddress": "Recipient address",
         "InteractedContract": "已交互合约",
         "To": "至",
         "PurchaseFrom": "购买自",
@@ -148,7 +148,8 @@
         "BuyAgain": "再次购买",
         "totalApprovedAmount": "当前批准金额",
         "Collection": "收藏",
-        "AddToWhitelist": "添加至白名单"
+        "AddToWhitelist": "添加至白名单",
+        "RecipientAddress": "接收方钱包"
       },
       "empty": {
         "title": "暂无交易",
@@ -184,18 +185,20 @@
       "ShowScamTransactions": "显示骗局交易"
     },
     "getStart": {
-      "alreadyHaveAddress": "我已经有一个地址",
       "goToHome": "前往首页",
-      "createNewAddress": "创建新地址",
-      "sync": "扫描以同步 Rabby 扩展地址"
+      "alreadyHaveAddress": "我已经有一个钱包",
+      "sync": "扫描Rabby插件同步钱包",
+      "createNewAddress": "创建新钱包"
     },
     "importSeedPhrase": {
       "enterYourSeedPhrase": "输入您的助记词"
     },
     "importSuccess": {
-      "importMore": "导入更多地址",
       "addressCount": "{{count}} 个地址",
-      "success": "{{type}} 成功！"
+      "success": "{{type}} 成功！",
+      "importMore": "导入更多 Wallets",
+      "addressCount_other": "{{count}} 个钱包",
+      "addressCount_one": "{{count}} 钱包"
     },
     "signTx": {
       "safeAdminSigned": "已签名",
@@ -343,10 +346,10 @@
         "receiveToken": "接收",
         "simulationFailed": "交易模拟失败",
         "valueDiff": "价值差异",
-        "notPaymentAddress": "不是支付地址",
         "payToken": "支付",
         "title": "交换代币",
-        "slippageTolerance": "滑点容忍度"
+        "slippageTolerance": "滑点容忍度",
+        "notPaymentAddress": "不是用于支付的钱包"
       },
       "markRemoved": "马克已移除",
       "myNativeTokenBalance": "我的 Gas 余额：",
@@ -488,7 +491,8 @@
         },
         "empty": {
           "title": "没有已签名的交易",
-          "desc": "所有通过 Rabby 签名的交易将列在这里。"
+          "desc": "所有通过 Rabby 签名的交易将列在这里。",
+          "titleLastThreeMonths": "90天内没有交易记录"
         },
         "tips": {
           "canNotCancel": "无法加速或取消：不是第一个待处理的交易。",
@@ -685,10 +689,10 @@
       },
       "gasless": {
         "notEnough": "Gas 余额不足",
-        "watchUnavailableTip": "不支持 Watch-only 地址使用 Free Gas",
         "customRpcUnavailableTip": "Free Gas 不支持自定义 RPC",
         "walletConnectUnavailableTip": "通过 WalletConnect 连接的移动钱包不支持 Free Gas",
-        "GetFreeGasToSign": "获取免费Gas"
+        "GetFreeGasToSign": "获取免费Gas",
+        "watchUnavailableTip": "仅观察钱包不支持免费 gas"
       },
       "confirmWithPassword": "确认",
       "detectedMultipleRequestsFromThisDapp": "检测到该 Dapp 的多个请求",
@@ -742,7 +746,8 @@
         "gasAccount": "GasAccount",
         "dapps": "Dapps",
         "approvals": "授权",
-        "search": "搜索 Token"
+        "search": "搜索 Token",
+        "copyTrading": "跟单交易"
       }
     },
     "manageAddress": {
@@ -750,15 +755,15 @@
       "confirm": "确认",
       "enterThePassphrase": "输入密码短语",
       "private-key": "私钥",
-      "add-address": "添加地址",
       "cancel": "取消",
       "seed-phrase": "助记词",
       "enterPassphraseTitle": "输入密码短语以进行签名",
       "delete-checklist-2": "我确认已备份私钥或助记词，并准备立即删除。",
-      "delete-checklist-1": "我知道如果我删除这个地址，相应的私钥和助记词将被删除，Rabby 将无法恢复它们。",
       "passphraseError": "密码无效",
       "quickAddressTitle_one": "{{count}} 地址",
-      "quickAddressTitle_other": "{{count}} 个地址"
+      "quickAddressTitle_other": "{{count}} 个地址",
+      "add-address": "添加钱包",
+      "delete-checklist-1": "我明白，如果我删除这个钱包，对应的私钥和助记词将被删除，Rabby 将无法恢复它们。"
     },
     "bridge": {
       "Select": "选择",
@@ -1009,14 +1014,14 @@
         "pin": "Pin",
         "fundYourWallet": "为您的钱包充值",
         "buyWithFiat": "法币购买",
-        "importAddressDesc": "添加一个已有且有资金的地址",
-        "importAddress": "导入地址",
         "receiveCrypto": "接收加密货币",
         "noAssets": "没有资产？",
         "buyWithFiatDesc": "简单的加密货币购买",
-        "receiveCryptoDesc": "从其他地址转移代币",
         "foundGuideTitle": "快速充值",
-        "foundGuideDesc": "将代币添加到您的钱包以开始使用。"
+        "foundGuideDesc": "将代币添加到您的钱包以开始使用。",
+        "importAddress": "导入钱包",
+        "receiveCryptoDesc": "从其他钱包转移代币",
+        "importAddressDesc": "添加一个已有资金的钱包"
       },
       "createNewAddress": {
         "verificationFailed": "验证失败",
@@ -1035,35 +1040,49 @@
         "confirmPasswordTips": "密码匹配",
         "savedPhrase": "我已保存助记词",
         "Verify": "验证",
-        "createNewDesc": "生成新的种子词用于新地址",
-        "createOnCurrentDesc": "使用已有导入的助记词创建地址",
         "passwordTopTips": "此密码将用于解锁您的钱包并加密您的本地数据。",
         "UnderstandsecurityPrecautions": "我了解这些安全预防措施。",
         "backupSeedPhrase": "备份你的助记词，以便在应用被删除或设备丢失时恢复你的钱包。",
         "WriteSeedPhrase": "这是你的助记词。请将其写在纸上并妥善保管。在下一步中，你将需要按正确的顺序重新输入。",
-        "passwordMin": "至少需要 8 个字符"
+        "passwordMin": "至少需要 8 个字符",
+        "createOnCurrentDesc": "使用现有导入的种子短语创建钱包",
+        "createNewDesc": "为新钱包生成一个新的种子短语"
       },
       "importAddress": {
         "privateKey": "导入私人密钥",
         "seedPhrase": "导入助记词",
-        "importTitle": "导入地址",
-        "safeTitle": "导入 Safe 地址",
-        "watch": "观察地址",
         "hardWare": "连接硬件钱包",
         "safe": "安全",
-        "watchOnlyTitle": "导入观察地址",
         "tips": {
           "gotIt": "我知道了。",
           "title": "导入到 Rabby 安全吗？",
           "entry": "导入到 Rabby 是否安全",
           "description": "您的数据已被安全加密并存储在您的设备本地。Rabby 无法访问您的私人信息，这些信息也不会与第三方共享。"
-        }
+        },
+        "importTitle": "导入钱包",
+        "safeTitle": "导入 Safe Wallet",
+        "watch": "仅观察钱包",
+        "watchOnlyTitle": "导入只读钱包",
+        "ImportCloud": "从{{cloud}}导入"
       },
       "addAddress": {
-        "importAddress": "导入地址",
-        "createAddress": "创建地址",
         "hardwareWallet": "硬件钱包",
-        "syncRabbyExtension": "同步 Rabby 扩展程序"
+        "syncRabbyExtension": "同步 Rabby 扩展程序",
+        "importAddress": "导入钱包",
+        "createAddress": "创建钱包",
+        "selectAddMethod": "选择添加方法"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "你如何评价 Rabby Wallet？"
+      },
+      "rateModal": {
+        "confirmButtonTitleAndroid": "在 Google Play 上评分",
+        "feedbackSubmit": "提交",
+        "feedbackSuccess": "感谢您的反馈",
+        "confirmButtonTitleIOS": "在应用商店评分",
+        "descriptionAndroid": "如果你喜欢 Rabby，在 Google Play 上快速评分会非常重要。",
+        "descriptionIOS": "如果您喜欢 Rabby，在应用商店的快速评价对我们来说意义重大。",
+        "feedbackTitle": "有反馈吗？我们在倾听。"
       }
     },
     "signText": {
@@ -1125,7 +1144,6 @@
         "cameraTitle": "请使用相机扫描二维码"
       },
       "createNewSeedPhrase": "创建新的种子短语",
-      "createNewAddress": "创建新地址",
       "ledger": {
         "scan": {
           "title": "搜索设备",
@@ -1160,7 +1178,6 @@
         }
       },
       "privateKey": {
-        "repeatImportTips": "此地址已被导入",
         "isItSafeToImportItInRabby": {
           "question": "在 Rabby 中导入安全吗？",
           "answer": "是的，它会在您的手机本地存储，只有您可以访问。"
@@ -1168,7 +1185,8 @@
         "whatIsAPrivateKey": {
           "question": "什么是私钥？",
           "answer": "用于控制您的资产的一串字母和数字。"
-        }
+        },
+        "repeatImportTips": "此钱包已被导入"
       },
       "keystone": {
         "scan": {
@@ -1184,12 +1202,12 @@
         "GotIt": "知道了。",
         "title1": "备份",
         "title3": "安全性",
-        "description1": "助记词是一系列用于访问和控制您的地址的单词。 您可以使用它在任何设备上恢复您的地址。",
         "description4": "您的助记词存储在您的设备上，并通过您的密码加密。只有您可以访问它。Rabby 无法检索或访问您的助记词。",
         "description3": "切勿分享您的 seed phrase—任何有权访问它的人都可以控制您的资金。",
         "title": "什么是“种子短语”",
         "title2": "切勿分享",
-        "description2": "如果你丢失了你的助记词，你将无法恢复你的钱包。"
+        "description2": "如果你丢失了你的助记词，你将无法恢复你的钱包。",
+        "description1": "种子短语是一系列用于访问和控制您钱包的单词。您可以使用它在任何设备上恢复您的钱包。"
       },
       "onekey": {
         "ble": {
@@ -1266,9 +1284,6 @@
       },
       "hd": {
         "balance": "余额",
-        "customAddressHdPath": "自定义地址 HD 路径",
-        "selectIndexTip": "选择地址开始的序列号：",
-        "manageAddressFrom": "管理地址从 {{0}} 到 {{1}}",
         "onekey": {
           "hdPathTypeNoChain": {
             "bip44": "BIP44：由 BIP44 协议定义的 HDpath。"
@@ -1279,14 +1294,14 @@
         },
         "ledger": {
           "hdPathType": {
-            "ledgerLive": "Ledger Live：Ledger官方HD路径。在前3个地址中，有在链上使用的地址。",
-            "legacy": "Legacy：MEW / Mycrypto 使用的 HD 路径。在前三个地址中，有在链上使用的地址。",
-            "bip44": "BIP44 标准：由 BIP44 协议定义的 HDpath。在前三个地址中，有链上使用的地址。"
+            "ledgerLive": "Ledger Live：Ledger 官方 HD 路径。在前三个钱包中，有在链上使用的钱包。",
+            "bip44": "BIP44标准：HDpath由BIP44协议定义。在前三个钱包中，有钱包用于链上。",
+            "legacy": "遗产：由 MEW / Mycrypto 使用的 HD 路径。在前三个钱包中，有在链上使用的钱包。"
           },
           "hdPathTypeNoChain": {
-            "ledgerLive": "Ledger Live：Ledger 官方 HD 路径。在前三个地址中，没有地址在链上使用。",
-            "legacy": "Legacy：MEW / Mycrypto 使用的 HD 路径。在前三个地址中，没有在链上使用的地址。",
-            "bip44": "BIP44 标准：由 BIP44 协议定义的 HD 路径。在前三个地址中，没有在链上使用的地址。"
+            "legacy": "遗产：MEW / Mycrypto 使用的 HD 路径。在前三个钱包中，没有在链上使用的钱包。",
+            "ledgerLive": "Ledger Live: Ledger 官方 HD 路径。在前 3 个钱包中，没有在链上使用的钱包。",
+            "bip44": "BIP44 标准：由 BIP44 协议定义的 HD 路径。在前 3 个钱包中，没有在链上使用的钱包。"
           }
         },
         "keystone": {
@@ -1306,8 +1321,12 @@
             "title": "切换到新的{{0}}设备",
             "content": "不支持导入多个{{0}}设备。如果你切换到一个新的{{0}}设备，当前设备的地址列表将在开始导入过程之前被移除。"
           }
-        }
-      }
+        },
+        "manageAddressFrom": "从{{0}}管理钱包到{{1}}",
+        "customAddressHdPath": "自定义钱包 HD 路径",
+        "selectIndexTip": "选择要开始的钱包序列号："
+      },
+      "createNewAddress": "创建新钱包"
     },
     "backupPrivateKey": {
       "clickToShowQr": "点击显示私钥二维码",
@@ -1345,7 +1364,8 @@
       "popularLevelMedium": "Medium",
       "listedBy": "Listed by",
       "flagByScamSniffer": "被 ScamSniffer 标记",
-      "popularLevelHigh": "高"
+      "popularLevelHigh": "高",
+      "connectWallet": "连接钱包"
     },
     "addToken": {
       "noTokenFound": "未找到 token",
@@ -1419,33 +1439,45 @@
       "qr-code": "二维码",
       "hd-path": "HD Path",
       "safeAddressListScreen": {
-        "addSafeAddress": "添加 Safe 地址"
+        "addSafeAddress": "添加安全钱包"
       },
       "source": "来源",
-      "manage-addresses-under-this-seed-phrase": "从此助记词添加地址",
       "delete-desc-needpassword": "在删除之前，请牢记以下几点以了解如何保护您的资产。",
       "add-to-whitelist": "添加到白名单",
       "addressListScreen": {
         "edit": "编辑",
         "detail": "细节",
         "unpin": "取消固定",
-        "title_one": "{{count}} 地址",
-        "addAddress": "添加地址",
-        "title_other": "{{count}} 个地址",
-        "importWatchAddress": "导入的观察地址",
         "pin": "Pin",
-        "title_zero": "0 地址",
         "delete": "删除",
-        "importSafeAddress": "导入的 Safe 地址"
+        "title_other": "{{count}} 个钱包",
+        "title_one": "{{count}} 钱包",
+        "addAddress": "添加钱包",
+        "title_zero": "0 钱包",
+        "importWatchAddress": "导入的观察型钱包",
+        "importSafeAddress": "导入的 Safe Wallet",
+        "moreWallets": "更多钱包",
+        "notIncludedInTotalBalance": "不包括在总余额中",
+        "notIncludedInTransactions": "不包含在 Transactions 中"
       },
       "pin-in-list": "置顶在列表中",
       "manage-seed-phrase": "管理助记词",
       "backup-seed-phrase": "备份助记词",
-      "delete-desc": "您确定要删除这个地址吗？",
       "watchAddressListScreen": {
-        "addWatchAddress": "添加观察地址"
+        "addWatchAddress": "添加只读钱包"
       },
-      "delete-address": "删除地址"
+      "delete-desc": "您确定要删除这个钱包吗？",
+      "delete-address": "删除钱包",
+      "manage-addresses-under-this-seed-phrase": "使用此种子短语添加钱包",
+      "notMatterAddressDialog": {
+        "notTop10Address": "排名在前10名之外的钱包",
+        "title": "以下钱包不包括在总余额中",
+        "safeWallet": "安全钱包",
+        "helpDescription1": "为了确保数据更新的及时性和准确性，仅包括您的前 10 个钱包在总余额和投资组合中。",
+        "helpTitle": "排名在前10之外的钱包",
+        "watchOnlyWallet": "观察钱包",
+        "helpDescription2": "您可以长按以固定钱包并调整包含哪些钱包。"
+      }
     },
     "rabbyPoints": {
       "claimItem": {
@@ -1509,13 +1541,13 @@
       },
       "emptyToken": {
         "title": "为您的钱包注资",
-        "receiveBody": "将代币从另一个地址转移",
         "buyHeader": "使用法币购买",
         "buyBody": "简单的加密货币购买",
         "receiveHeader": "接收 Crypto",
         "desc": "立即快速充值",
-        "importBody": "添加一个已有的带资金的地址。",
-        "importHeader": "导入地址"
+        "receiveBody": "从另一个钱包转移代币",
+        "importHeader": "导入钱包",
+        "importBody": "添加一个已有资金的钱包。"
       },
       "nft": {
         "floorPrice": "/Floor Price:"
@@ -1601,20 +1633,20 @@
         "invalidAmount": "必须在 500 以下",
         "amount": "金额",
         "token": "Token",
-        "paymentAddress": "支付地址",
         "selectToken": "选择 Token",
-        "inSufficientTip1": "该地址的代币不足，请选择一个不同的地址。",
         "followingTokenInSufficient": "以下代币余额不足",
         "applePayDesc": "包含 ${{amount}} Apple Pay 手续费。不可提现",
         "googlePayDesc": "包含 ${{ amount }} 的 Google Pay 手续费。不可提现",
         "applePayFeeDesc": "包含 Apple Pay 手续费。无法提现",
-        "googlePayFeeDesc": "包括 Google Pay 费用。不允许提款"
+        "googlePayFeeDesc": "包括 Google Pay 费用。不允许提款",
+        "inSufficientTip1": "这个钱包没有足够的 tokens，请选择其他钱包。",
+        "paymentAddress": "支付钱包"
       },
       "paymentAddressPopup": {
-        "title": "选择 Payment 地址",
-        "address": "支付地址",
         "balance": "Balance",
-        "confirm": "确认"
+        "confirm": "确认",
+        "address": "支付钱包",
+        "title": "选择支付钱包"
       },
       "withdrawPopup": {
         "noEnoughValuetBalance": "Vault Balance不足。请切换链或稍后重试。",
@@ -1622,19 +1654,19 @@
         "riskMessageFromChain": "由于风险控制，提现限额取决于从该链存入的总金额。",
         "riskMessageFromAddress": "由于风险控制，提款限制取决于该地址的存款总额。",
         "selectDestinationChain": "选择目标链",
-        "selectRecipientAddress": "选择接收地址",
         "withdrawalLimit": "提取限额",
         "title": "提取",
         "desc": "您可以将GasAccount余额提现到您的DeBank L2 Wallet。登录DeBank L2 Wallet，根据需要将资金转移到支持的区块链上。",
         "amount": "金额",
         "to": "对于",
         "selectChain": "选择链",
-        "recipientAddress": "Recipient address（收件人地址）",
         "destinationChain": "目标链",
         "deductGasFees": "接收金额将扣除 gas 费用",
         "tipsBtn": "我知道了",
         "noEnoughValueBalance": "Vault Balance insufficient. 切换链或稍后重试。",
-        "noRecipient": "未提供收件人地址"
+        "recipientAddress": "接收钱包",
+        "noRecipient": "没有可用的收件人钱包",
+        "selectRecipientAddress": "选择收款钱包"
       },
       "withdrawConfirmModal": {
         "title": "已转入您的 DeBank L2 钱包",
@@ -1658,7 +1690,8 @@
       "gasAccountList": {
         "gasAccountBalance": "GasAccount 余额",
         "address": "地址",
-        "balance": "余额"
+        "balance": "余额",
+        "wallet": "钱包"
       },
       "loginFailed": "登录失败",
       "depositSuccess": "存款成功",
@@ -1694,8 +1727,8 @@
       }
     },
     "receiveAddressList": {
-      "title": "选择接收地址",
-      "selectChainTitle": "选择链条"
+      "selectChainTitle": "选择链条",
+      "title": "选择钱包接收"
     },
     "tokenDetail": {
       "relateDefi": "相关 DeFi",
@@ -1806,7 +1839,8 @@
       "currentLanguage": "当前语言",
       "clearPendingWarning": "被移除的交易可能仍会在链上确认，除非它被替换。",
       "clearPendingResetDesc": "还重置了我的本地 nonce 数据和签名记录。",
-      "clearPendingToast": "本地待处理交易已被移除"
+      "clearPendingToast": "本地待处理交易已被移除",
+      "clearBrowserData": "清除浏览器数据"
     },
     "settingModal": {
       "themeMode": {
@@ -1821,6 +1855,11 @@
         "clearAppCacheDesc": "这将删除临时缓存文件，而不会影响您的个人数据或设置。应用程序需要重新启动以完成此过程。您希望继续吗？",
         "iOSToastTitle": "清除缓存成功",
         "iOSToastDesc": "您需要重新启动应用程序才能生效。"
+      },
+      "clearBrowserData": {
+        "button": "清除",
+        "title": "清除浏览器数据",
+        "desc": "这将关闭所有浏览器标签页并删除所有浏览历史。"
       }
     },
     "buy": {
@@ -1861,18 +1900,15 @@
     "sendPoly": {
       "modals": {
         "recentAddress": "最近发送地址",
-        "addAddress": "新地址",
-        "content": "选择您想要添加地址的方式：",
         "header": "将地址添加到白名单中",
-        "importedAddress": "导入的地址"
+        "importedAddress": "导入的钱包",
+        "content": "选择您要添加钱包的方式：",
+        "addAddress": "新钱包"
       },
       "emptyWhitelistBtn": "立即添加",
       "enterAddress": "输入地址",
-      "sendToSafeAddress": "发送至安全地址",
       "emptyWhitelistHeader": "添加白名单地址",
       "emptyWhitelistTip": "尚无白名单地址，",
-      "sendToImportedAddress": "发送到我的导入地址",
-      "sendToWatchAddress": "发送到仅观察地址",
       "whitelistTitle": "我的白名单地址列表",
       "emptyWhitelistContent": "将受信任的地址添加到白名单以实现快速转账——下次无需确认",
       "sendTimeHeader": "发送",
@@ -1880,7 +1916,10 @@
       "recent": "最近",
       "SelectFromHistory": "从历史中选择",
       "SendHistory": "发送历史",
-      "sentTimeHeader": "发送"
+      "sentTimeHeader": "发送",
+      "sendToWatchAddress": "发送到只读钱包",
+      "sendToSafeAddress": "发送到安全钱包",
+      "sendToImportedAddress": "发送到我的导入钱包"
     },
     "confirmAddress": {
       "risks": {
@@ -1899,7 +1938,7 @@
     },
     "selectAddress": {
       "selectSafeAddress": "从 Safe 地址中选择",
-      "selectWatchAddress": "从仅观察地址中选择"
+      "selectWatchAddress": "从仅可查看地址中选择"
     },
     "whitelist": {
       "cancel": "取消",
@@ -1942,7 +1981,9 @@
     "multiAddressAssets": {
       "tabs": {
         "portfolio": "投资组合",
-        "address": "地址"
+        "address": "地址",
+        "wallet_one": "钱包",
+        "wallet_other": "钱包"
       },
       "scamTokenHeader": "诈骗代币"
     },
@@ -1955,6 +1996,12 @@
       "BrowserHeader": {
         "searchIos": "搜索网站",
         "searchAndroid": "搜索 Dapp"
+      },
+      "CurrentPopup": {
+        "disconnect": "断开连接",
+        "title": "当前 Dapp",
+        "connectWallet": "连接钱包",
+        "connectChain": "连接链"
       }
     },
     "browserManage": {
@@ -1981,6 +2028,26 @@
     "defiDetail": {
       "viewSiteInApp": "在 Dapp 中查看",
       "viewSiteInWebsite": "在网站中查看"
+    },
+    "component": {
+      "ChainSelector": {
+        "title": "选择链"
+      }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "来自 Smart Money 的跟单交易",
+        "description": "发现基于 Smart Money 钱包最近活动的代币。点击代币查看来自这些钱包的详细交易金额和历史利润。"
+      },
+      "buy": "购买",
+      "updateText": "{{count}} 个趋势已更新",
+      "noMoreData": "没有更多数据",
+      "historyProfit": "历史收益",
+      "recentBuy": "最近购买",
+      "comingSoon": "即将推出...",
+      "smartMoneyWallets": "Smart Money 钱包",
+      "refreshTitle": "加载更多来自 Smart Money 的跟单交易",
+      "smartMoneyWallet": "Smart Money Wallet"
     }
   },
   "component": {
@@ -2004,9 +2071,9 @@
       }
     },
     "accountSwitcher": {
-      "screenHeaderSubTitle_other": "{{count}} 个地址",
-      "screenHeaderSubTitle_one": "1 个地址",
-      "all": "全部"
+      "all": "全部",
+      "screenHeaderSubTitle_one": "1 个钱包",
+      "screenHeaderSubTitle_other": "{{count}} 个钱包"
     },
     "signPermissionCheckModal": {
       "reconnect": "重新连接 Dapp",
@@ -2092,8 +2159,8 @@
         "title": "存款 USDC / USDT"
       },
       "loginConfirmModal": {
-        "title": "选择一个地址登录",
-        "desc": "登录后，你只能在此地址进行存款。"
+        "title": "选择钱包登录",
+        "desc": "登录后，您只能在此地址进行存款。"
       },
       "depositPopup": {
         "token": "Token",
@@ -2134,6 +2201,24 @@
     },
     "selectCexModal": {
       "title": "选择交易所来源"
+    },
+    "AccountSelector": {
+      "title": "选择钱包"
+    },
+    "globalWarning": {
+      "networkError": {
+        "globalDesc": "信息可能已过时，但您的资金仍然安全。",
+        "title": "服务连接错误："
+      },
+      "serviceError": {
+        "balanceDesc": "余额加载失败。",
+        "quotesDesc": "报价加载失败。",
+        "globalDesc": "信息可能已过时，但您的资金仍然安全。",
+        "title": "网络问题："
+      },
+      "serviceErrorText": "服务错误",
+      "buttonText": "刷新",
+      "offlineText": "网络错误"
     }
   },
   "bluetooth": {

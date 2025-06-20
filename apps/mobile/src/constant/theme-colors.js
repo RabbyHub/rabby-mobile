@@ -128,6 +128,7 @@ const themeColorsNext2024 = {
     'neutral-title-1': 'rgba(25, 41, 69, 1)',
     /** @deprecated just for compability, use classcial's, not next's */
     'neutral-title-2': 'rgba(255, 255, 255, 1)',
+    'neutral-card-1': 'rgba(255, 255, 255, 1)',
     /** @deprecated just for compability, use classcial's, not next's */
     'neutral-card-2': 'rgba(242, 244, 247, 1)',
     'neutral-body': 'rgba(62, 73, 94, 1)',
@@ -180,6 +181,7 @@ const themeColorsNext2024 = {
     'neutral-title-1': 'rgba(247, 250, 252, 1)',
     /** @deprecated just for compability, use classcial's, not next's */
     'neutral-title-2': 'rgba(255, 255, 255, 1)',
+    'neutral-card-1': 'rgba(255, 255, 255, 0.06)',
     /** @deprecated just for compability, use classcial's, not next's */
     'neutral-card-2': 'rgba(242, 244, 247, 1)',
     'neutral-body': 'rgba(211, 216, 224, 1)',

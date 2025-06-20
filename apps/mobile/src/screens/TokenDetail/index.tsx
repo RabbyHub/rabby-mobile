@@ -5,7 +5,7 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { Tip } from '@/components/Tip';
-import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import {
@@ -58,6 +58,7 @@ import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
+import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -239,13 +240,10 @@ export const TokenDetailScreen = () => {
     return _token;
   }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const { currentAccount, switchAccount } = useCurrentAccount({
-    disableAutoFetch: true,
-  });
-  const finalAccount = account || currentAccount;
+  const { top10Addresses, list: accounts } = useAccountInfo();
+
+  const finalAccount =
+    account || accounts[0] || preferenceService.getFallbackAccount();
 
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
@@ -374,12 +372,12 @@ export const TokenDetailScreen = () => {
   const getHeaderTitle = useCallback(() => {
     return (
       <TokenDetailHeaderArea
-        key={currentAccount?.address}
+        key={finalAccount?.address}
         token={token}
         refreshTags={refreshTag}
       />
     );
-  }, [currentAccount?.address, token, refreshTag]);
+  }, [finalAccount?.address, token, refreshTag]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
@@ -499,7 +497,7 @@ export const TokenDetailScreen = () => {
 
   const { t } = useTranslation();
 
-  if (!finalAccount) {
+  if (isSingleAddress && !finalAccount) {
     return null;
   }
 
@@ -548,7 +546,7 @@ export const TokenDetailScreen = () => {
         />
         <View style={styles.riskContainer}>
           {token.is_verified === false && <RiskTokenTips isDanger={true} />}
-          {token.is_verified !== false && token.is_scam && (
+          {token.is_verified !== false && token.is_suspicious && (
             <RiskTokenTips isDanger={false} />
           )}
         </View>
@@ -571,7 +569,6 @@ export const TokenDetailScreen = () => {
           tokenUsdValue={tokenWithAmount?.price}
           finalAccount={finalAccount}
           accounts={accounts}
-          switchAccount={switchAccount}
           amountList={tokenFromAddress}
           token={token}
         />
@@ -589,8 +586,9 @@ export const TokenDetailScreen = () => {
         <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
         <HistoryList
           accounts={accounts}
+          top10Addresses={top10Addresses}
           finalAccount={finalAccount}
-          isForMultipleAdderss={!isSingleAddress}
+          isForMultipleAddress={!isSingleAddress}
           token={token}
         />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />

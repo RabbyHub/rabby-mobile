@@ -36,7 +36,8 @@ export const ASSETS_SEPARATOR_HEIGHT = 8;
 export const ASSETS_LIST_HEADER = 22;
 export const DEFI_SEPARATOR_HEIGHT = 12;
 export const HEADER_TOP_AREA_HEIGHT = 250;
-export const HEADER_CHART_HEIGHT = 189;
+export const HEADER_CHART_HEIGHT = 205;
+export const ALERT_HEIGHT = 65;
 export const SWITCH_HEADER_HEIGHT = 58;
 export const SWITCH_HEADER_GAP = 16;
 export const ADDRESS_ENTRY_HEIGHT = 78;
@@ -143,7 +144,7 @@ export const RootNames = {
   GasAccount: 'GasAccount',
   Buy: 'Buy',
   MultiBuy: 'MultiBuy',
-
+  CopyTrading: 'CopyTrading',
   AccountTransaction: 'AccountTransaction',
   /* @deprecated */
   MyBundle: 'MyBundle',
@@ -173,6 +174,7 @@ export const RootNames = {
   ImportMoreAddress: 'ImportMoreAddress',
   ImportPrivateKey: 'ImportPrivateKey',
   ImportPrivateKey2024: 'ImportPrivateKey2024',
+  /** @deprecated */
   ImportMnemonic: 'ImportMnemonic',
   ImportMnemonic2024: 'ImportMnemonic2024',
   CreateMnemonic: 'CreateMnemonic',

@@ -40,6 +40,8 @@ import BigNumber from 'bignumber.js';
 // import { RcIconInfoCC } from '@/assets/icons/common';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import { IS_ANDROID } from '@/core/native/utils';
+import { CHAINS_ENUM } from '@debank/common';
+import { findChainByServerID } from '@/utils/chain';
 
 const RABBY_FEE = '0.25%';
 
@@ -71,6 +73,7 @@ const BridgeShowMore = ({
   recommendValue,
   openFeePopup,
   supportDirectSign,
+  autoSuggestSlippage,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -102,6 +105,7 @@ const BridgeShowMore = ({
   switchPreferMEV?: (b: boolean) => void;
   recommendValue?: number;
   supportDirectSign: boolean;
+  autoSuggestSlippage?: string;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -257,6 +261,7 @@ const BridgeShowMore = ({
         </ListItem>
 
         <BridgeSlippage
+          autoSuggestSlippage={autoSuggestSlippage}
           value={slippage}
           displaySlippage={displaySlippage}
           onChange={onSlippageChange}
@@ -267,14 +272,18 @@ const BridgeShowMore = ({
           type={type}
           isWrapToken={isWrapToken}
           recommendValue={recommendValue}
+          loading={quoteLoading}
         />
 
-        <DirectSignGasInfo
-          supportDirectSign={supportDirectSign}
-          loading={!!quoteLoading}
-          openShowMore={setOpen}
-          noQuote={!sourceLogo && !sourceName}
-        />
+        {fromToken ? (
+          <DirectSignGasInfo
+            supportDirectSign={supportDirectSign}
+            loading={!!quoteLoading}
+            openShowMore={setOpen}
+            noQuote={!sourceLogo && !sourceName}
+            chainServeId={fromToken?.chain}
+          />
+        ) : null}
 
         <ListItem
           name={t('page.swap.rabbyFee.title')}
@@ -311,14 +320,16 @@ export const DirectSignGasInfo = ({
   loading,
   openShowMore,
   noQuote,
+  chainServeId,
 }: {
   supportDirectSign: boolean;
   loading: boolean;
   openShowMore: (v: boolean) => void;
   noQuote?: boolean;
+  chainServeId: string;
 }) => {
   const { t } = useTranslation();
-  const { styles, colors2024, colors } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const [gasTipsComponent, setGasTipsComponent] = useAtom(
     gasRelativeComponentAtom,
   );
@@ -331,6 +342,8 @@ export const DirectSignGasInfo = ({
     width: 0,
     height: 0,
   });
+
+  const chainEnum = findChainByServerID(chainServeId)?.enum;
 
   const showGasContent =
     !!miniApprovalGas &&
@@ -356,11 +369,13 @@ export const DirectSignGasInfo = ({
     if (
       showGasContent &&
       miniApprovalGas?.gasCostUsdStr &&
-      new BigNumber(miniApprovalGas?.gasCostUsdStr?.replaceAll('$', '')).gt(1)
+      new BigNumber(miniApprovalGas?.gasCostUsdStr?.replaceAll('$', '')).gt(
+        chainEnum === CHAINS_ENUM.ETH ? 10 : 1,
+      )
     ) {
       openShowMore(true);
     }
-  }, [miniApprovalGas?.gasCostUsdStr, openShowMore, showGasContent]);
+  }, [chainEnum, miniApprovalGas?.gasCostUsdStr, openShowMore, showGasContent]);
 
   const calcGasAccountUsd = useCallback((n: number | string) => {
     const v = Number(n);
@@ -562,11 +577,13 @@ export const SendShowMore = ({
   setOpen,
   supportDirectSign,
   loading,
+  chainServeId,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   supportDirectSign: boolean;
   loading: boolean;
+  chainServeId: string;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -598,6 +615,7 @@ export const SendShowMore = ({
           supportDirectSign={supportDirectSign}
           loading={loading}
           openShowMore={setOpen}
+          chainServeId={chainServeId}
         />
       </View>
     </View>

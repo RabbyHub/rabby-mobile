@@ -24,11 +24,10 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
-import { ChainGas } from '@/core/services/preference';
+import { Account, ChainGas } from '@/core/services/preference';
 import { apiContact, apiToken } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
-import { useCurrentAccount } from '@/hooks/account';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { toast } from '@/components/Toast';
@@ -143,11 +142,16 @@ const DF_SEND_TOKEN_FORM: FormSendNFT = {
   to: '',
   amount: 1,
 };
-export function useSendNFTForm(nftToken?: NFTItem) {
+export function useSendNFTForm({
+  nftToken,
+  account: currentAccount,
+}: {
+  nftToken?: NFTItem;
+  account?: Account;
+}) {
   const { t } = useTranslation();
 
   const sendNFTEventsRef = useRef(new EventEmitter());
-  const { currentAccount } = useCurrentAccount();
 
   const { sendNFTScreenState: screenState, putScreenState } =
     useSendNFTScreenState();
@@ -184,6 +188,9 @@ export function useSendNFTForm(nftToken?: NFTItem) {
             'nft',
           ].join('|'),
         });
+        if (!currentAccount) {
+          return;
+        }
 
         await apiToken.transferNFT(
           {
@@ -193,6 +200,7 @@ export function useSendNFTForm(nftToken?: NFTItem) {
             chainServerId: nftToken.chain,
             contractId: nftToken.contract_id,
             abi: nftToken.is_erc1155 ? 'ERC1155' : 'ERC721',
+            account: currentAccount,
           },
           {
             ga: {

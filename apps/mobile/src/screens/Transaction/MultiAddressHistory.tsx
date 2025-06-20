@@ -25,13 +25,13 @@ import { Text, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import {
   BuyHistoryItem,
+  TxAllHistoryResult,
   TxHistoryItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { HistoryList } from './components/HistoryGroupList';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
-import { useLastUsedAccountInScreen } from '@/hooks/useLastUsedAccountInScreen';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
@@ -62,6 +62,7 @@ import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
 import { HistoryItemCateType } from './components/type';
 import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
+import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
@@ -98,15 +99,12 @@ const waitQueueFinished = (q: PQueue) => {
 
 function History({
   isTestnet = false,
-  isForMultipleAdderss,
+  isForMultipleAddress,
 }: {
   isTestnet?: boolean;
-  isForMultipleAdderss: boolean;
+  isForMultipleAddress: boolean;
 }): JSX.Element {
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const sortedAccounts = useSortAddressList(accounts);
+  const { top10Addresses, list: accountList } = useAccountInfo();
   const route =
     useRoute<
       GetNestedScreenNavigationProps<
@@ -115,9 +113,6 @@ function History({
       >['route']
     >();
   const { tokenItem, isInTokenDetail, currentAddress } = route.params || {};
-  const unionAccounts = useMemo(() => {
-    return unionBy(sortedAccounts, account => account.address.toLowerCase());
-  }, [sortedAccounts]);
   const { t } = useTranslation();
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
@@ -133,7 +128,7 @@ function History({
     finalSceneCurrentAccount,
     sceneCurrentAccountDepKey,
   } = useSceneAccountInfo({
-    forScene: isForMultipleAdderss ? 'MultiHistory' : 'History',
+    forScene: isForMultipleAddress ? 'MultiHistory' : 'History',
   });
   const [firstFetchDone, setFirstFetchDone] = useState(false);
   const [historySuccessList, setHistorySuccessList] = useState<string[]>(
@@ -141,7 +136,7 @@ function History({
   );
 
   const { syncTop10History, syncSingleAddress } =
-    useSyncHistoryDB(unionAccounts);
+    useSyncHistoryDB(top10Addresses);
   const { projectDict, tokenDict, historyLoading, historyEnsureNoData } =
     useHistoryTokenDict();
 
@@ -151,7 +146,7 @@ function History({
     // fetch data from local database
 
     const addresses = isSceneUsingAllAccounts
-      ? unionAccounts.map(account => account.address.toLowerCase())
+      ? top10Addresses.map(i => i.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     const fetchHistoryFromDbData = async (isFirst?: boolean) => {
       const [historyList, buyList] = await Promise.all([
@@ -230,11 +225,11 @@ function History({
       }
       return { list: res };
     } else {
-      const accountList = isSceneUsingAllAccounts
-        ? unionAccounts
+      const accountListArr = isSceneUsingAllAccounts
+        ? accountList.slice(0, 10)
         : [finalSceneCurrentAccount];
       const addresses = isSceneUsingAllAccounts
-        ? unionAccounts.map(account => account.address.toLowerCase())
+        ? top10Addresses.map(a => a.toLowerCase())
         : [finalSceneCurrentAccount?.address.toLowerCase()!];
 
       // just for single token history
@@ -245,9 +240,9 @@ function History({
         interval: 2000,
         intervalCap: 10,
       });
-      for (let i = 0; i < accountList.length; i++) {
+      for (let i = 0; i < accountListArr.length; i++) {
         queue.add(async () => {
-          const account = accountList[i];
+          const account = accountListArr[i];
           if (!account) {
             return;
           }
@@ -329,13 +324,10 @@ function History({
         token_id,
       });
 
-      const {
-        project_dict,
-        cate_dict,
-        token_dict,
-        token_uuid_dict,
-        history_list: list,
-      } = res;
+      const { project_dict, cate_dict, history_list: list } = res;
+      const token_dict = (res as TxHistoryResult).token_dict;
+      const token_uuid_dict = (res as TxAllHistoryResult).token_uuid_dict;
+
       const displayList = list
         .map(item => ({
           ...item,
@@ -365,15 +357,14 @@ function History({
     }
 
     const list: TransactionGroup[] = [];
-    const accountList = isSceneUsingAllAccounts
-      ? unionAccounts
-      : [finalSceneCurrentAccount];
-    for (let i = 0; i < accountList.length; i++) {
-      const account = accountList[i];
-      if (!account) {
+    const addressList = isSceneUsingAllAccounts
+      ? top10Addresses
+      : [finalSceneCurrentAccount?.address.toLowerCase()];
+    for (let i = 0; i < addressList.length; i++) {
+      const addr = addressList[i];
+      if (!addr) {
         continue;
       }
-      const addr = account.address.toLowerCase();
       const localTxs = await fetchLocalTx(addr);
       list.push(...localTxs);
     }
@@ -519,7 +510,7 @@ function History({
     const list = transactionHistoryService.getSucceedList();
     setHistorySuccessList(list);
     transactionHistoryService.clearSuccessAndFailList(
-      isForMultipleAdderss ? undefined : currentAddress,
+      isForMultipleAddress ? undefined : currentAddress,
     );
   });
 
@@ -572,7 +563,7 @@ function History({
   const getHeaderTitle = useCallback(() => {
     return (
       <ScreenHeaderAccountSwitcher
-        forScene={isForMultipleAdderss ? 'MultiHistory' : 'History'}
+        forScene={isForMultipleAddress ? 'MultiHistory' : 'History'}
         titleText={
           <View style={styles.headerTitle}>
             <AssetAvatar
@@ -585,10 +576,10 @@ function History({
             <Text style={styles.titleText}>Transactions</Text>
           </View>
         }
-        disableSwitch={!isForMultipleAdderss}
+        disableSwitch={!isForMultipleAddress}
       />
     );
-  }, [tokenItem, isForMultipleAdderss, styles.titleText, styles.headerTitle]);
+  }, [tokenItem, isForMultipleAddress, styles.titleText, styles.headerTitle]);
 
   React.useEffect(() => {
     if (isInTokenDetail && tokenItem) {
@@ -610,7 +601,7 @@ function History({
     }
 
     const addresses = isSceneUsingAllAccounts
-      ? unionAccounts.map(account => account.address.toLowerCase())
+      ? top10Addresses.map(a => a.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase()!];
     const isLoading = addresses.some(address => {
       return historyLoading[address];
@@ -645,10 +636,11 @@ function History({
           list={[...(groups || []), ...(displayList || [])]}
           localTxList={groups}
           loading={isNeedFetchFromApi ? loading : fetchFromDbLoading}
+          isNeedFetchFromApi={isNeedFetchFromApi}
           firstFetchDone={firstFetchDone}
           loadingMore={loadingMore}
           refreshLoading={isNeedFetchFromApi && loading}
-          isForMultipleAdderss={isForMultipleAdderss}
+          isForMultipleAddress={isForMultipleAddress}
           loadMore={loadMore}
           onRefresh={refresh}
         />
@@ -657,7 +649,7 @@ function History({
   );
 }
 
-const HistoryScreen = ({ isForMultipleAdderss = true }) => {
+const HistoryScreen = ({ isForMultipleAddress = true }) => {
   const {
     sheetModalRef: tokenDetailModalRef,
     cleanFocusingToken,
@@ -665,13 +657,12 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
     tokenDetailAddress,
     setTokenDetailAddress,
   } = useGeneralTokenDetailSheetModal();
-  useLastUsedAccountInScreen();
 
   const { styles } = useTheme2024({ getStyle });
 
   return (
     <NormalScreenContainer2024 type="bg1" overwriteStyle={styles.container}>
-      {isForMultipleAdderss && (
+      {isForMultipleAddress && (
         <AccountSwitcherModal
           forScene="MultiHistory"
           inScreen
@@ -679,7 +670,7 @@ const HistoryScreen = ({ isForMultipleAdderss = true }) => {
         />
       )}
       <ScreenSpecificStatusBar screenName={RootNames.History} />
-      <History isTestnet={false} isForMultipleAdderss={isForMultipleAdderss} />
+      <History isTestnet={false} isForMultipleAddress={isForMultipleAddress} />
       <BottomSheetModalTokenDetail
         __shouldSwitchSceneAccountBeforeRedirect__
         ref={tokenDetailModalRef}
@@ -803,7 +794,7 @@ const ForSingleAddress = () => {
   //   forScene: 'MakeTransactionAbout',
   // });
 
-  return <HistoryScreen isForMultipleAdderss={false} />;
+  return <HistoryScreen isForMultipleAddress={false} />;
 };
 
 HistoryScreen.ForSingleAddress = ForSingleAddress;

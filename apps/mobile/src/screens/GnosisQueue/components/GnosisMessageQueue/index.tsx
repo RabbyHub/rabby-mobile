@@ -1,4 +1,3 @@
-import { useCurrentAccount } from '@/hooks/account';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
 import { useThemeColors } from '@/hooks/theme';
 import { findChain, findChainByEnum } from '@/utils/chain';
@@ -14,6 +13,7 @@ import { apisSafe } from '@/core/apis/safe';
 import { useGnosisPendingMessages } from '@/hooks/gnosis/useGnosisPendingMessages';
 import type { SafeMessage } from '@rabby-wallet/gnosis-sdk';
 import { GnosisMessageQueueList } from './GnosisMessageQueueList';
+import { Account } from '@/core/services/preference';
 
 const getTabs = (
   networks: string[],
@@ -46,12 +46,13 @@ const getTabs = (
   );
 };
 
-export const GnosisMessageQueue = () => {
+export const GnosisMessageQueue: React.FC<{
+  account: Account;
+}> = ({ account }) => {
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
   const { t } = useTranslation();
 
-  const { currentAccount: account } = useCurrentAccount();
   const { data: networks } = useGnosisNetworks({ address: account?.address });
   const {
     data: messages,
@@ -116,6 +117,7 @@ export const GnosisMessageQueue = () => {
       </View>
       {activeKey && findChainByEnum(activeKey) && (
         <GnosisMessageQueueList
+          account={account}
           pendingTxs={activeData?.messages}
           usefulChain={activeKey}
           key={activeKey}

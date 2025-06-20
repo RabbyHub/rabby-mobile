@@ -18,6 +18,7 @@ import { TokenSelectorSheetModal } from '@/components/Token';
 import {
   isSwapTokenType,
   ITokenCheck,
+  TokenItemForRender,
 } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken } from '@/hooks/chainAndToken/useToken';
@@ -200,7 +201,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         tokenSelectorVisible,
       ]);
 
-    const allRemoteTokens = useSortToken(tokens);
+    const allRemoteTokens = useSortToken(tokens, accountInScreen);
 
     const searchedLocalTokensWithOwner = useMemo(
       () =>
@@ -449,7 +450,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
                   </View>
                 );
               },
-            } as any as TokenItem,
+            } as TokenItemForRender,
           ],
         };
 
@@ -494,7 +495,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       }));
     });
 
-    const tokenPressRef = useRef<TouchableOpacity>(null);
+    const tokenPressRef = useRef<typeof TouchableOpacity & View>(null);
     const handleLongPressToken = () => {
       if (!token) {
         return;

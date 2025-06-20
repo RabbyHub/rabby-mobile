@@ -11,7 +11,7 @@ export default function TouchableText({
   onPress?: React.ComponentProps<typeof TouchableView>['onPress'];
   touchableProps?: Omit<
     React.ComponentProps<typeof TouchableView>,
-    'children' | 'onPress'
+    'children' | 'onPress' | 'ref'
   >;
   children?: string;
 } & TextProps) {

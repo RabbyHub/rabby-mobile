@@ -1,9 +1,8 @@
 import type { Account, IPinAddress } from '@/core/services/preference';
-import { useAccounts, useCurrentAccount, usePinAddresses } from './account';
+import { useAccounts, usePinAddresses } from './account';
 import React, { useCallback, useMemo } from 'react';
 import { useAtom } from 'jotai';
 import { KEYRING_CLASS, KeyringAccount } from '@rabby-wallet/keyring-utils';
-import { apisAccountSwitch } from '@/core/apis';
 import cloneDeep from 'lodash/cloneDeep';
 import { RootNames } from '@/constant/layout';
 import { Platform } from 'react-native';
@@ -17,7 +16,7 @@ import {
 } from './sceneAccountInfoAtom';
 
 export type PropsForAccountSwitchScreen<T extends void | object = void> = {
-  isForMultipleAdderss?: boolean;
+  isForMultipleAddress?: boolean;
 } & (T extends void ? {} : T);
 
 export function normalizeSceneKeyringAccount(
@@ -62,9 +61,6 @@ export function useResetSceneAccountInfo() {
 
 export function usePreFetchBeforeEnterScene() {
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
-  const { fetchCurrentAccountAsync } = useCurrentAccount({
-    disableAutoFetch: true,
-  });
 
   const { getPinAddressesAsync } = usePinAddresses({
     disableAutoFetch: true,
@@ -73,18 +69,14 @@ export function usePreFetchBeforeEnterScene() {
   const preFetchData = useCallback(async () => {
     setTimeout(
       () => {
-        Promise.allSettled([
-          fetchAccounts(),
-          fetchCurrentAccountAsync(),
-          getPinAddressesAsync(),
-        ]);
+        Promise.allSettled([fetchAccounts(), getPinAddressesAsync()]);
       },
       // FIXME: this is a workaround for the bottom sheet animation issue
       // in iOS, Spring animation maybe 600ms; in Android, Timing animation maybe 250ms
       // we maybe not need to fetch data, need to check
       Platform.OS === 'ios' ? 600 : 250,
     );
-  }, [fetchAccounts, fetchCurrentAccountAsync, getPinAddressesAsync]);
+  }, [fetchAccounts, getPinAddressesAsync]);
 
   return {
     preFetchData,
@@ -109,8 +101,6 @@ export function useSwitchSceneCurrentAccount() {
       const prev = sceneAccountInfo;
       const { maybeReEntrant } = options || {};
 
-      const needSyncToSession = scene === '@ActiveDappWebViewModal';
-
       try {
         const patches: Partial<(typeof prev)[AccountSwitcherScene]> = {};
         const finalResult = {
@@ -120,23 +110,6 @@ export function useSwitchSceneCurrentAccount() {
 
         const doReturn = async <T extends typeof prev>(val: T) => {
           setSceneAccountInfo(val);
-
-          try {
-            if (finalResult.nextEnableAccount) {
-              await apisAccountSwitch.enableSceneAccount(
-                finalResult.nextEnableAccount,
-                { activeLastUsedAccountOptions: { needSyncToSession } },
-              );
-            } else if (finalResult.nextEnableAccount === null) {
-              await apisAccountSwitch.inactivateSceneAccount();
-            }
-          } catch (error) {
-            if (__DEV__) {
-              console.error('switchSceneCurrentAccount doReturn error', error);
-            }
-          } finally {
-            return val;
-          }
         };
 
         if (!maybeReEntrant && prev[scene]?.useAllAccounts) {
@@ -145,7 +118,6 @@ export function useSwitchSceneCurrentAccount() {
 
         if (account) {
           finalResult.nextEnableAccount = account;
-          // await apisAccountSwitch.enableSceneAccount(account);
 
           // avoid duplicate set same account
           if (isSameAccount(account, prev[scene]?.currentAccount)) {
@@ -156,7 +128,6 @@ export function useSwitchSceneCurrentAccount() {
         } else {
           patches.currentAccount = null;
           finalResult.nextEnableAccount = null;
-          // await apisAccountSwitch.inactivateSceneAccount();
           if (!prev[scene]?.currentAccount) {
             return doReturn(prev);
           }
@@ -200,7 +171,6 @@ export function useSwitchSceneCurrentAccount() {
         };
 
         if (account) {
-          const result = await apisAccountSwitch.enableSceneAccount(account);
           // // leave here for debug
           // if (__DEV__) console.warn('result', result);
 
@@ -212,7 +182,6 @@ export function useSwitchSceneCurrentAccount() {
           }
         } else {
           patches.signingAccount = null;
-          await apisAccountSwitch.inactivateSceneAccount();
           if (!prev[scene]?.signingAccount) {
             return doReturn(prev);
           }
@@ -269,7 +238,7 @@ export function isSameAccount(
   if (!saccount) return false;
 
   return (
-    saccount?.address === account.address &&
+    saccount?.address?.toLowerCase() === account.address.toLowerCase() &&
     saccount?.brandName === account.brandName &&
     saccount?.type === account.type
   );

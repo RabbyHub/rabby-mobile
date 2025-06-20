@@ -22,7 +22,7 @@ import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { preferenceService } from '@/core/services';
 import {
   KeyringAccountWithAlias,
-  useCurrentAccount,
+  useFallbackAccount,
   useMyAccounts,
 } from '@/hooks/account';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
@@ -170,14 +170,15 @@ export const DeFiDetailScreen = () => {
     isSingleAddress?: boolean;
   };
 
-  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const fallbackAccount = useFallbackAccount();
+
   const finalAccount = useMemo(
-    () => routeAccount || currentAccount,
-    [routeAccount, currentAccount],
+    () => routeAccount || fallbackAccount,
+    [fallbackAccount, routeAccount],
   );
 
   const { data: currentPortfolio, updateData: singleUpdateData } =
-    usePortfolios(finalAccount.address, false);
+    usePortfolios(finalAccount?.address, false);
 
   const data = useMemo(
     // 优先使用内存defi列表中的实时数据，兜底用页面参数数据

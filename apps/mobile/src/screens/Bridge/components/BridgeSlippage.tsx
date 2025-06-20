@@ -14,6 +14,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Input } from '@rneui/base';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
 import { formatSpeicalAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
+import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 
 export const BRIDGE_SLIPPAGE = ['0.5', '1'];
 
@@ -34,6 +35,8 @@ interface SlippageProps {
   setIsCustomSlippage: (boolean: boolean) => void;
   type: 'swap' | 'bridge';
   isWrapToken?: boolean;
+  autoSuggestSlippage?: string;
+  loading?: boolean;
 }
 
 const SlippageItem = (props: TouchableOpacityProps & { active?: boolean }) => {
@@ -64,6 +67,8 @@ export const BridgeSlippage = (props: SlippageProps) => {
     setIsCustomSlippage,
     type,
     isWrapToken,
+    autoSuggestSlippage,
+    loading,
   } = props;
   const [slippageOpen, setSlippageOpen] = useState(false);
 
@@ -183,9 +188,22 @@ export const BridgeSlippage = (props: SlippageProps) => {
         onPress={() => setSlippageOpen(open => !open)}>
         <Text style={styles.text}>{t('page.swap.slippage-tolerance')}</Text>
         <View style={styles.valueContainer}>
-          <Text style={[styles.value, !!tips && styles.warning]}>
-            {displaySlippage}%
-          </Text>
+          {type === 'swap' && autoSlippage && loading ? (
+            <CustomSkeleton
+              style={{
+                width: 131,
+                height: 24,
+                borderRadius: 100,
+              }}
+            />
+          ) : (
+            <Text style={[styles.value, !!tips && styles.warning]}>
+              {type === 'swap' && autoSlippage
+                ? autoSuggestSlippage || displaySlippage
+                : displaySlippage}
+              %
+            </Text>
+          )}
           <Animated.View
             style={{
               transform: [{ rotate: slippageOpen ? '180deg' : '0deg' }],

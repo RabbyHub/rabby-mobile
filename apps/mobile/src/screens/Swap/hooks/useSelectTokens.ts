@@ -17,13 +17,23 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { Account } from '@/core/services/preference';
 import { isAddress } from 'viem';
 
+type LocalDBTokenItem = TokenItem & {
+  _db_id?: TokenItemEntity['_db_id'];
+  owner_addr: TokenItemEntity['owner_addr'];
+};
 export const useTokenAssetsMap = () => {
   const [tokensMap, setTokensMap] = useState<{
-    [address: string]: TokenItem[];
+    [address: string]: LocalDBTokenItem[];
   }>({});
 
   const updateTokens = useCallback(
-    ({ address, newTokens }: { address: string; newTokens: TokenItem[] }) => {
+    ({
+      address,
+      newTokens,
+    }: {
+      address: string;
+      newTokens: LocalDBTokenItem[];
+    }) => {
       const lowerAddress = address.toLowerCase();
       setTokensMap(pre => {
         return {
@@ -197,7 +207,7 @@ export const useSelectTokens = ({
 
   // filter tokens
   const tokens = useMemo(() => {
-    let resTokens: TokenItem[] = [];
+    let resTokens: LocalDBTokenItem[] = [];
     if (!visible) {
       return [];
     }
@@ -250,9 +260,9 @@ export const useSelectTokens = ({
             return bScore - aScore; // Higher score comes first
           }
 
-          // If scores are equal, use is_scam as tiebreaker
-          if (a.is_scam !== b.is_scam) {
-            return a.is_scam ? 1 : -1;
+          // If scores are equal, use is_suspicious as tiebreaker
+          if (a.is_suspicious !== b.is_suspicious) {
+            return a.is_suspicious ? 1 : -1;
           }
 
           // If still equal, prioritize id matches over symbol matches

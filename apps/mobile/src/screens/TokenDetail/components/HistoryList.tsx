@@ -33,15 +33,17 @@ import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 
 export const HistoryList = ({
-  isForMultipleAdderss,
+  isForMultipleAddress,
   finalAccount,
   accounts,
   token,
+  top10Addresses,
 }: {
   accounts: KeyringAccountWithAlias[];
   finalAccount: KeyringAccountWithAlias | null;
-  isForMultipleAdderss: boolean;
+  isForMultipleAddress: boolean;
   token: AbstractPortfolioToken;
+  top10Addresses: string[];
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [data, setData] = React.useState<HistoryDisplayItem[]>([]);
@@ -55,13 +57,13 @@ export const HistoryList = ({
     await switchSceneCurrentAccount('History', finalAccount);
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
-        screen: isForMultipleAdderss
+        screen: isForMultipleAddress
           ? RootNames.MultiAddressHistory
           : RootNames.History,
         params: {
           isInTokenDetail: true,
           tokenItem: token,
-          isMultiAddress: isForMultipleAdderss,
+          isMultiAddress: isForMultipleAddress,
         },
       }),
     );
@@ -69,13 +71,13 @@ export const HistoryList = ({
     navigation,
     switchSceneCurrentAccount,
     finalAccount,
-    isForMultipleAdderss,
+    isForMultipleAddress,
     token,
   ]);
 
   const fetchHistoryItem = useCallback(async () => {
-    const addresses = isForMultipleAdderss
-      ? accounts.map(a => a.address.toLowerCase())
+    const addresses = isForMultipleAddress
+      ? top10Addresses.map(a => a.toLowerCase())
       : [finalAccount?.address.toLowerCase()!];
     const [historyList, buyList] = await Promise.all([
       HistoryItemEntity.getTokenHistoryItemSortedByTime(
@@ -107,8 +109,8 @@ export const HistoryList = ({
     finalAccount?.address,
     token._tokenId,
     token.chain,
-    isForMultipleAdderss,
-    accounts,
+    isForMultipleAddress,
+    top10Addresses,
     projectDict,
     tokenDict,
   ]);
@@ -124,7 +126,7 @@ export const HistoryList = ({
       <HistoryItem
         key={`${item.address}-${item.id}`}
         data={item}
-        isForMultipleAdderss={isForMultipleAdderss}
+        isForMultipleAddress={isForMultipleAddress}
         projectDict={item.projectDict}
         cateDict={item.cateDict}
         tokenDict={item.tokenDict || {}}

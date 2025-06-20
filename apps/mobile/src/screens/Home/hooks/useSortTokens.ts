@@ -6,14 +6,14 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 
 import { apiBalance } from '@/core/apis';
-import { useCurrentAccount } from '@/hooks/account';
 import { AbstractPortfolioToken } from '../types';
-import { devLog } from '@/utils/logger';
+import { Account } from '@/core/services/preference';
 
 const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
-  list?: T[],
+  list: T[],
+  account?: Account | null,
 ) => {
-  const { currentAccount } = useCurrentAccount();
+  const currentAccount = account;
   const [result, setResult] = useState<T[]>([]);
 
   const sortByChainBalance = async (list: T[]) => {
@@ -57,13 +57,22 @@ const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
     hasUsdValue.sort((a, b) => {
       const aWorth = a.amount * a.price || 0;
       const bWorth = b.amount * b.price || 0;
-      if (a._isExcludeBalance && b._isExcludeBalance) {
+      if (
+        (a as AbstractPortfolioToken)._isExcludeBalance &&
+        (b as AbstractPortfolioToken)._isExcludeBalance
+      ) {
         return (b.credit_score || 0) - (a.credit_score || 0) || bWorth - aWorth;
       }
-      if (a._isExcludeBalance && !b._isExcludeBalance) {
+      if (
+        (a as AbstractPortfolioToken)._isExcludeBalance &&
+        !(b as AbstractPortfolioToken)._isExcludeBalance
+      ) {
         return bWorth === 0 ? -1 : 1;
       }
-      if (b._isExcludeBalance && !a._isExcludeBalance) {
+      if (
+        (b as AbstractPortfolioToken)._isExcludeBalance &&
+        !(a as AbstractPortfolioToken)._isExcludeBalance
+      ) {
         return aWorth === 0 ? 1 : -1;
       }
       return bWorth - aWorth;
@@ -103,61 +112,3 @@ function sortTokenByChainBalance<T extends TokenItem | AbstractPortfolioToken>(
 }
 
 export default useSortToken;
-
-export function useSortTokenPure<T extends TokenItem | AbstractPortfolioToken>(
-  list?: T[],
-) {
-  const { currentAccount } = useCurrentAccount();
-  // const [, setSpinner] = useState(false);
-  const [balanceCache, setBalanceCache] = useState<TotalBalanceResponse | null>(
-    null,
-  );
-
-  const triggerResort = useCallback(async () => {
-    if (currentAccount) {
-      try {
-        const cache = await apiBalance.getAddressCacheBalance(
-          currentAccount.address,
-        );
-        setBalanceCache(cache);
-      } catch (error) {
-        // setSpinner(prev => !prev);
-        devLog('useSortTokenPure::getAddressCacheBalance error', error);
-      }
-    }
-  }, [currentAccount]);
-
-  const sortedList = useMemo(() => {
-    if (!list || !currentAccount) return list || [];
-    const hasUsdValue: T[] = [];
-    const hasAmount: T[] = [];
-    const others: T[] = [];
-
-    for (let i = 0; i < list.length; i++) {
-      const item = list[i];
-      const usdValue = item.price * item.amount;
-      if (usdValue > 0) {
-        hasUsdValue.push(item);
-      } else if (item.amount > 0) {
-        hasAmount.push(item);
-      } else {
-        others.push(item);
-      }
-    }
-    hasUsdValue.sort((a, b) => {
-      return b.amount * b.price - a.amount * a.price;
-    });
-
-    const sortedOthers = sortTokenByChainBalance(others, balanceCache);
-    return [...hasUsdValue, ...hasAmount, ...sortedOthers];
-  }, [list, currentAccount, balanceCache]);
-
-  useEffect(() => {
-    triggerResort();
-  }, [triggerResort]);
-
-  return {
-    sortedList,
-    triggerResort,
-  };
-}

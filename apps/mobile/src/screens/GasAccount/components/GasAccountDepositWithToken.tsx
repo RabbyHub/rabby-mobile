@@ -432,7 +432,11 @@ const SelectAccountPopup = ({
 
 const CUSTOM_AMOUNT = 0;
 
-export const GasAccountDepositWithToken = ({ onClose }) => {
+export const GasAccountDepositWithToken = ({
+  onClose,
+}: {
+  onClose?(): void;
+}) => {
   const { t } = useTranslation();
   const [selectedAmount, setAmount] = useState(amountList[0]);
   const [tokenListVisible, setTokenListVisible] = useState(false);
@@ -446,7 +450,6 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
   const { account } = useGasAccountSign();
   const [loading, setLoading] = useState(false);
 
-  const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
   const { refresh: refreshHistoryList } = useGasAccountHistoryRefresh();
 
   const depositAmount = useMemo(() => {
@@ -460,10 +463,6 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
     if (token && depositAccount && !loading) {
       setLoading(true);
       const chainEnum = findChainByServerID(token.chain)!;
-      await switchSceneSigningAccount(
-        'GasAccount',
-        depositAccount as KeyringAccountWithAlias,
-      );
       try {
         await topUpGasAccount({
           to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
@@ -473,11 +472,11 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
           rawAmount: new BigNumber(depositAmount)
             .times(10 ** token.decimals)
             .toFixed(0),
+          account: depositAccount,
         });
-        onClose();
+        onClose?.();
         refreshHistoryList();
       } catch (error) {}
-      await switchSceneSigningAccount('GasAccount', null);
       setLoading(false);
     }
   };
@@ -489,10 +488,6 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
       if (token && depositAccount && !loading) {
         setLoading(true);
         const chainEnum = findChainByServerID(token.chain)!;
-        await switchSceneSigningAccount(
-          'GasAccount',
-          depositAccount as KeyringAccountWithAlias,
-        );
         try {
           const tx = await buildTopUpGasAccount({
             to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
@@ -502,10 +497,12 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
             rawAmount: new BigNumber(depositAmount)
               .times(10 ** token.decimals)
               .toFixed(0),
+            account: depositAccount,
           });
           if (tx) {
             const res = await sendMiniTransactions({
               txs: [tx],
+              account: depositAccount,
             });
             const hash = res?.[0]?.txHash;
 
@@ -518,12 +515,17 @@ export const GasAccountDepositWithToken = ({ onClose }) => {
                 .times(10 ** token.decimals)
                 .toFixed(0),
               tx: hash,
+              account: depositAccount,
             });
           }
-          onClose();
+          onClose?.();
           refreshHistoryList();
-        } catch (error) {}
-        await switchSceneSigningAccount('GasAccount', null);
+        } catch (error) {
+          console.error(error);
+          if ((error as any)?.name === 'SimulateError') {
+            topUp();
+          }
+        }
         setLoading(false);
       }
     } else {

@@ -2,21 +2,21 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import {
-  KeyringAccountWithAlias,
-  useAccounts,
-  useCurrentAccount,
-} from '@/hooks/account';
+import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { openapi } from '@/core/request';
 import { ApprovalStatus } from '@rabby-wallet/rabby-api/dist/types';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import PQueue from 'p-queue';
 import { useMemoizedFn } from 'ahooks';
+import { Account } from '@/core/services/preference';
 
 const approvalStatusAtom = atom<ApprovalStatus[]>([]);
 
-export function useApprovalAlert() {
-  const { currentAccount } = useCurrentAccount();
+export function useApprovalAlert({
+  account: currentAccount,
+}: {
+  account: Account | null | undefined;
+}) {
   const [approvalState, setApprovalState] = useAtom(approvalStatusAtom);
 
   const [, loadApprovalStatus] = useAsyncFn(async () => {

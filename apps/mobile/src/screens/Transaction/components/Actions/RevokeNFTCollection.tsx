@@ -1,14 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
 import { RcIconExternalLinkCC, RcIconRightCC } from '@/assets/icons/common';
-import RcIconSingleArrow from '@/assets2024/icons/history/IconSingleArrow.svg';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  ApproveNFTCollectionAction,
-  TokenItem,
-} from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
@@ -17,27 +13,26 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 import ViewMore from '@/components/Approval/components/Actions/components/ViewMore';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { toast } from '@/components2024/Toast';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
 import { ellipsisAddress } from '@/utils/address';
+import { formatAmount } from '@/utils/number';
+import { formatIntlTimestamp } from '@/utils/time';
 import { openTxExternalUrl } from '@/utils/transaction';
-import {
-  ApproveNFTRequireData,
-  RevokeNFTRequireData,
-} from '@rabby-wallet/rabby-action';
+import { RevokeNFTRequireData } from '@rabby-wallet/rabby-action';
 import { useMemoizedFn } from 'ahooks';
 import { unionBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { AddressItemInDetail, TxStatusItem } from '../../HistoryDetailScreen';
 import { HistoryItemIcon } from '../HistoryItemIcon';
 import { HistoryItemCateType } from '../type';
-import { formatIntlTimestamp } from '@/utils/time';
-import { formatAmount } from '@/utils/number';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
+  account?: Account;
 }
 
 export const RevokeNFTCollection: React.FC<Props> = ({
@@ -71,8 +66,6 @@ export const RevokeNFTCollection: React.FC<Props> = ({
   const unionAccounts = useMemo(() => {
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
-
-  const { switchAccount } = useCurrentAccount();
 
   const handleOpenTxId = useMemoizedFn(() => {
     const tx = data.maxGasTx.hash;
@@ -227,7 +220,6 @@ export const RevokeNFTCollection: React.FC<Props> = ({
           <AddressItemInDetail
             address={data.maxGasTx.address}
             accounts={unionAccounts}
-            switchAccount={switchAccount}
           />
         </View>
 

@@ -34,6 +34,7 @@ const createModuleIdFactory = () => {
     const _path = pathStr.replace(projPathReg, 'root/');
 
     for (let i = 0; i < _path.length; i++) {
+      // eslint-disable-next-line no-undef
       const charCode = BigInt(_path.charCodeAt(i));
       hash = (hash * BASE + charCode) % MOD;
     }
@@ -155,6 +156,13 @@ if (process.env.APP_ENV === 'hashing') {
       switches: false, // 禁用 switches 优化
     },
   };
+
+  config.transformer.getTransformOptions = async () => ({
+    transform: {
+      experimentalImportSupport: false,
+      inlineRequires: false,
+    },
+  });
 }
 
 module.exports = wrapWithReanimatedMetroConfig(

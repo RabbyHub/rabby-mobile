@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
@@ -50,6 +56,8 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import useAutoFocusInput from '@/hooks/useAutoFocusInput';
 import { ellipsisAddress } from '@/utils/address';
 import { useAccounts } from '@/hooks/account';
+import { useMemoizedFn } from 'ahooks';
+import { debounce } from 'lodash';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -102,7 +110,9 @@ const WhitelistInputScreen = () => {
     setHistoryVisible(false);
   }, []);
 
-  const handleDone = async () => {
+  const confrimModalIRef = useRef<any>(null);
+
+  const handleDone = useMemoizedFn(async () => {
     if (!input) {
       setError(INPUT_ERROR.REQUIRED);
       return;
@@ -122,7 +132,11 @@ const WhitelistInputScreen = () => {
       if (inWhitelist) {
         toast.show(t('page.whitelist.alreadyAdded'));
       } else {
-        const id = createGlobalBottomSheetModal2024({
+        if (confrimModalIRef.current) {
+          // clear last modal
+          removeGlobalBottomSheetModal2024(confrimModalIRef.current);
+        }
+        confrimModalIRef.current = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.CONFIRM_ADDRESS,
           account: {
             ...account,
@@ -135,10 +149,15 @@ const WhitelistInputScreen = () => {
             enableDynamicSizing: true,
           },
           onCancel: () => {
-            removeGlobalBottomSheetModal2024(id);
+            confrimModalIRef.current &&
+              removeGlobalBottomSheetModal2024(confrimModalIRef.current);
+            confrimModalIRef.current = null;
           },
-          async onConfirm() {
-            removeGlobalBottomSheetModal2024(id);
+          onConfirm: async () => {
+            Keyboard.dismiss();
+            confrimModalIRef.current &&
+              removeGlobalBottomSheetModal2024(confrimModalIRef.current);
+            confrimModalIRef.current = null;
             matomoRequestEvent({
               category: 'Send Usage',
               action: isImported
@@ -165,7 +184,12 @@ const WhitelistInputScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
+
+  const debouncedHandleDone = useMemo(
+    () => debounce(handleDone, 300),
+    [handleDone],
+  );
 
   const handleSubmit = useCallback((text: string) => {
     setError(undefined);
@@ -263,7 +287,7 @@ const WhitelistInputScreen = () => {
         as="View"
         buttonProps={{
           title: t('global.Confirm'),
-          onPress: handleDone,
+          onPress: debouncedHandleDone,
           loading: loading,
           disabled: !input || !!error,
         }}
@@ -423,7 +447,7 @@ const WhitelistInputScreen = () => {
       <SendHistory
         visible={historyVisible}
         onClose={closeHistory}
-        isForMultipleAdderss={!isSingleAddress}
+        isForMultipleAddress={!isSingleAddress}
         title={t('page.sendPoly.SelectFromHistory')}
         onPressBottomBtn={data => {
           if (data?.to && isValidHexAddress(data?.to as Hex)) {

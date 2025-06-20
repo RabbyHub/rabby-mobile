@@ -65,11 +65,11 @@ export const TxChange = ({
   const { styles } = useTheme2024({ getStyle });
 
   const filterReceives = useMemo(() => {
-    return tokenChangeData.filter(item => item.type === 'receive');
+    return (tokenChangeData || []).filter(item => item.type === 'receive');
   }, [tokenChangeData]);
 
   const filterSends = useMemo(() => {
-    return tokenChangeData.filter(item => item.type === 'send');
+    return (tokenChangeData || []).filter(item => item.type === 'send');
   }, [tokenChangeData]);
 
   const calcUsdValue = useCallback((item: TokenChangeDataItem) => {

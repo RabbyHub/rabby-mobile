@@ -14,7 +14,7 @@ import { Spin } from './Spin';
 import { CANCEL_TX_TYPE, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { useMemoizedFn, useMount } from 'ahooks';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
-import { toast } from '@/components2024/Toast';
+// import { toast } from '@/components2024/Toast';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
 import { transactionHistoryService } from '@/core/services/shared';
@@ -29,6 +29,7 @@ import { intToHex } from '@/utils/number';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { CancelTxPopup } from './CancelTxPopup';
 import { Button } from '@/components2024/Button';
+import { toast } from '@/components/Toast';
 
 export const TransactionPendingDetail = ({
   data,
@@ -114,14 +115,17 @@ export const TransactionPendingDetail = ({
       ? await apiCustomTestnet.getCustomTestnetGasMarket({
           chainId: chainItem?.id!,
         })
-      : await apiProvider.gasMarketV2({
-          chain: chainItem!,
-          tx: maxGasTx.rawTx,
-        });
+      : await apiProvider.gasMarketV2(
+          {
+            chain: chainItem!,
+            tx: maxGasTx.rawTx,
+          },
+          account,
+        );
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
     try {
-      await sendRequest(
-        {
+      await sendRequest({
+        data: {
           method: 'eth_sendTransaction',
           params: [
             {
@@ -136,8 +140,9 @@ export const TransactionPendingDetail = ({
             },
           ],
         },
-        INTERNAL_REQUEST_SESSION,
-      );
+        session: INTERNAL_REQUEST_SESSION,
+        account,
+      });
     } catch (error) {
       console.error(error);
     } finally {
@@ -183,6 +188,10 @@ export const TransactionPendingDetail = ({
   });
 
   const handleTxCancelPress = useMemoizedFn(() => {
+    if (!canCancel) {
+      toast.info(t('page.activities.signedTx.tips.canNotCancel'));
+      return;
+    }
     setIsShowCancelTxPopup(true);
   });
   const handleTxCancel = useMemoizedFn((mode: CANCEL_TX_TYPE) => {
@@ -200,7 +209,7 @@ export const TransactionPendingDetail = ({
 
   const handleTxSpeedUp = useMemoizedFn(async () => {
     if (!canCancel) {
-      // toast.info(t('page.activities.signedTx.tips.canNotCancel'));
+      toast.info(t('page.activities.signedTx.tips.canNotCancel'));
       return;
     }
     console.log('handleTxSpeedUp111');
@@ -233,15 +242,18 @@ export const TransactionPendingDetail = ({
       ? await apiCustomTestnet.getCustomTestnetGasMarket({
           chainId: chainItem?.id!,
         })
-      : await apiProvider.gasMarketV2({
-          chain: chainItem!,
-          tx: originTx.rawTx,
-        });
+      : await apiProvider.gasMarketV2(
+          {
+            chain: chainItem!,
+            tx: originTx.rawTx,
+          },
+          account,
+        );
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
 
     try {
-      await sendRequest(
-        {
+      await sendRequest({
+        data: {
           method: 'eth_sendTransaction',
           params: [
             {
@@ -259,8 +271,9 @@ export const TransactionPendingDetail = ({
             },
           ],
         },
-        INTERNAL_REQUEST_SESSION,
-      );
+        session: INTERNAL_REQUEST_SESSION,
+        account,
+      });
     } catch (error) {
       console.error(error);
     } finally {
@@ -326,7 +339,7 @@ export const TransactionPendingDetail = ({
                 titleStyle={[styles.ghostTitle]}
                 buttonStyle={[styles.ghostButton]}
                 onPress={handleTxCancelPress}
-                disabled={!canCancel}
+                // disabled={!canCancel}
                 title={t('page.transactions.detail.Cancel')}
               />
             </View>

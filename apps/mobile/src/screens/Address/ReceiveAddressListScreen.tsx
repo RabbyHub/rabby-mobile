@@ -18,12 +18,13 @@ type CurrentAddressProps = NativeStackScreenProps<
 export function ReceiveAddressListScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const handleSelect = async account => {
-    await switchSceneCurrentAccount('Receive', account);
     navigation.dispatch(
       StackActions.push(RootNames.StackTransaction, {
         screen: RootNames.Receive,
+        params: {
+          account: account,
+        },
       }),
     );
   };

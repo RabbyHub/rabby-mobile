@@ -13,6 +13,7 @@ import { getDefaultStore } from 'jotai';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { sortAccountList } from '@/utils/sortAccountList';
 import { sceneAccountInfoAtom } from '@/hooks/sceneAccountInfoAtom';
+import { findChain } from '@/utils/chain';
 
 export const removeDapp = (origin: string) => {
   disconnect(origin);
@@ -58,18 +59,7 @@ export const connect = async ({
     dapp?.currentAccount ||
     myAccounts?.[0] ||
     accounts?.[0] ||
-    preferenceService.getCurrentAccount();
-  const store = getDefaultStore();
-  const originValue = store.get(sceneAccountInfoAtom);
-  store.set(sceneAccountInfoAtom, {
-    ...originValue,
-    '@ActiveDappWebViewModal': {
-      ...originValue['@ActiveDappWebViewModal'],
-      signingAccount:
-        originValue['@ActiveDappWebViewModal']?.signingAccount || null,
-      currentAccount: account || null,
-    },
-  });
+    preferenceService.getFallbackAccount();
 
   if (dapp) {
     dappService.patchDapps({
@@ -112,13 +102,21 @@ export function setCurrentAccountForDapp(
   currentAccount?: DappInfo['currentAccount'],
 ) {
   if (currentAccount === undefined) {
-    currentAccount = preferenceService.getCurrentAccount();
+    currentAccount = preferenceService.getFallbackAccount();
   }
   dappService.patchDapps({
     [origin]: {
       currentAccount,
     },
   });
+  const dapp = dappService.getDapp(origin);
+  if (dapp?.isConnected) {
+    sessionService.broadcastEvent(
+      BroadcastEvent.accountsChanged,
+      !dapp.currentAccount ? [] : [dapp.currentAccount?.address.toLowerCase()],
+      dapp.origin,
+    );
+  }
 
   return currentAccount || null;
 }
@@ -146,7 +144,8 @@ export const createDappBySession = ({
   const id = origin.replace(/^https?:\/\//, '');
   return {
     origin,
-    chainId: CHAINS_ENUM.ETH,
+    chainId: undefined as any,
+    name: '',
     info: {
       id,
       name: name || '',
@@ -208,6 +207,23 @@ export const syncBasicDappsInfo = async () => {
         }
         return accu;
       }, {} as Record<DappInfo['origin'], Partial<DappInfo>>),
+    );
+  }
+};
+
+export const updateDappChain = (dapp: DappInfo) => {
+  dappService.updateDapp(dapp);
+  const chain = findChain({
+    enum: dapp.chainId,
+  });
+  if (dapp.isConnected && chain) {
+    sessionService.broadcastEvent(
+      BroadcastEvent.chainChanged,
+      {
+        chainId: chain.hex,
+        networkVersion: chain.network,
+      },
+      dapp.origin,
     );
   }
 };

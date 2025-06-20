@@ -152,10 +152,10 @@ const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#f5f6fa',
+      backgroundColor: colors['neutral-card-2'],
     },
     proceed: {
-      backgroundColor: '#f5f6fa',
+      backgroundColor: colors['neutral-card-2'],
     },
   });
 

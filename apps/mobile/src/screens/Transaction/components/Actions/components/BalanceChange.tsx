@@ -28,6 +28,7 @@ import { naviPush } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Account } from '@/core/services/preference';
 
 const NFTBalanceChange = ({
   data,
@@ -151,10 +152,12 @@ export const BalanceChange = ({
   data,
   version,
   isSingleAddress,
+  account,
 }: {
   data?: IBalanceChange;
   version: 'v0' | 'v1' | 'v2';
   isSingleAddress?: boolean;
+  account?: Account;
 }) => {
   const { t } = useTranslation();
   const isSuccess = data?.success;
@@ -192,9 +195,9 @@ export const BalanceChange = ({
   const handleGotoDetail = useMemoizedFn((token: TokenItem) => {
     naviPush(RootNames.TokenDetail, {
       token: ensureAbstractPortfolioToken(token),
-      // account: address,
       needUseCacheToken: true,
       isSingleAddress,
+      account,
     });
   });
 

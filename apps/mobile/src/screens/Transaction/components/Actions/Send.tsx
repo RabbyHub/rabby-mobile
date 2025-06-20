@@ -19,7 +19,7 @@ import { TransactionGroup } from '@/core/services/transactionHistory';
 
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TransactionPendingDetail } from '@/screens/TransactionRecord/components/TransactionPendingDetail';
@@ -42,19 +42,21 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { Tip } from '@/components/Tip';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Account } from '@/core/services/preference';
 
 interface Props {
   data: TransactionGroup;
   isSingleAddress?: boolean;
   onPressBottomBtn?: (data: SendAction) => void;
+  account?: Account;
 }
 
 export const Send: React.FC<Props> = ({
   data,
   isSingleAddress,
   onPressBottomBtn,
+  account,
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
@@ -96,7 +98,6 @@ export const Send: React.FC<Props> = ({
     return unionBy(list, account => account.address.toLowerCase());
   }, [list]);
 
-  const { switchAccount } = useCurrentAccount();
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const { navigateToSendPolyScreen, navigateToSendScreen } = useSendRoutes();
@@ -116,9 +117,9 @@ export const Send: React.FC<Props> = ({
   const handleGotoTokenDetail = useMemoizedFn(() => {
     naviPush(RootNames.TokenDetail, {
       token: ensureAbstractPortfolioToken(actionData.token),
-      // account: address,
       needUseCacheToken: true,
       isSingleAddress,
+      account,
     });
   });
 
@@ -203,7 +204,6 @@ export const Send: React.FC<Props> = ({
             <AddressItemInDetail
               address={data.maxGasTx.address}
               accounts={unionAccounts}
-              switchAccount={switchAccount}
             />
           </View>
 
@@ -214,7 +214,6 @@ export const Send: React.FC<Props> = ({
             <AddressItemInDetail
               address={actionData.to}
               accounts={unionAccounts}
-              switchAccount={switchAccount}
             />
           </View>
 

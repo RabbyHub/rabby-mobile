@@ -96,6 +96,7 @@ export const toast = {
   show,
   info,
   success,
+  error: info,
   positions: Toast.positions,
 };
 

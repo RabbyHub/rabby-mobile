@@ -11,7 +11,7 @@ import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import DescItem from '../DescItem';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { ReceiverData } from '../../utils';
+import { type ReceiverData } from '@rabby-wallet/rabby-action';
 
 export interface Props {
   data: ReceiverData;

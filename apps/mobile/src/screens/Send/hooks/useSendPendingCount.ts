@@ -1,6 +1,7 @@
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
 import { transactionHistoryService } from '@/core/services';
-import { useCurrentAccount, useMyAccounts } from '@/hooks/account';
+import { useMyAccounts } from '@/hooks/account';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
@@ -40,7 +41,9 @@ export const usePollSendPendingCount = (params?: {
     return unionBy(accounts, account => account.address.toLowerCase());
   }, [accounts]);
 
-  const { currentAccount } = useCurrentAccount();
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const fetchPendingCount = async () => {
     let total = 0;
@@ -75,7 +78,7 @@ export const usePollSendPendingCount = (params?: {
     onSuccess(v) {
       setCount(v);
     },
-    refreshDeps: [isForMultipleAddress],
+    refreshDeps: [isForMultipleAddress, currentAccount?.address],
   });
 
   const { runAsync } = res;
