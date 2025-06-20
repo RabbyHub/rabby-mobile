@@ -1,0 +1,73 @@
+{
+  "name": "@rabby-wallet/eth-keyring-trezor",
+  "version": "0.1.0",
+  "description": "A Ethereum key management library designed for handling Trezor Addresses",
+  "keywords": [
+    "RabbyHub",
+    "Ethereum"
+  ],
+  "homepage": "https://github.com/RabbyHub/rabby-mono/tree/main/packages/eth-keyring-trezor#readme",
+  "bugs": {
+    "url": "https://github.com/RabbyHub/rabby-mono/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RabbyHub/rabby-mono.git"
+  },
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build:docs": "typedoc",
+    "changelog:validate": "../../scripts/validate-changelog.sh @rabby-wallet/eth-keyring-trezor",
+    "cov:report": "open ./coverage/index.html",
+    "publish:preview": "yarn npm publish --tag preview",
+    "test": "jest --reporters=jest-silent-reporter",
+    "test:clean": "jest --clearCache",
+    "test:verbose": "jest --verbose",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "@ethereumjs/tx": "5.1.0",
+    "@ethereumjs/util": "^9.0.1",
+    "@metamask/eth-sig-util": "^8.2.0",
+    "@rabby-wallet/base-utils": "workspace:^",
+    "@rabby-wallet/keyring-utils": "workspace:^",
+    "@trezor/connect-plugin-ethereum": "9.1.2-beta.1",
+    "eth-sig-util": "^3.0.1",
+    "ethereumjs-util": "^7.1.5",
+    "events": "^3.3.0",
+    "hdkey": "^2.1.0"
+  },
+  "devDependencies": {
+    "@metamask/auto-changelog": "^3.4.3",
+    "@onekeyfe/hd-core": "^1.0.0-alpha.2",
+    "@types/bytebuffer": "^5.0.48",
+    "@types/events": "^3.0.0",
+    "@types/hdkey": "^2.0.3",
+    "@types/jest": "^27.4.1",
+    "@types/node": "^20.14.8",
+    "@types/sinon": "^9.0.10",
+    "@types/w3c-web-usb": "^1.0.10",
+    "deepmerge": "^4.2.2",
+    "jest": "^27.5.1",
+    "sinon": "^9.2.4",
+    "ts-jest": "^27.1.4",
+    "typedoc": "^0.24.8",
+    "typedoc-plugin-missing-exports": "^2.0.0",
+    "typescript": "5.7.3"
+  },
+  "peerDependencies": {
+    "@trezor/connect-plugin-ethereum": "9.1.2-beta.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

@@ -741,6 +741,28 @@ function DevSettingsBlocks() {
                 });
               },
             },
+            {
+              label: 'Test trezor',
+              icon: RcInfo,
+              onPress: () => {
+                // sendRequest({
+                //   data: {
+                //     method: 'eth_sendTransaction',
+                //     params: [
+                //       {
+                //         from: '0x5853eD4f26A3fceA565b3FBC698bb19cdF6DEB85',
+                //         to: '0xe7aa314c77f4233c18c6cc84384a9247c0cf367b',
+                //         value: '0x0',
+                //         data: '0x',
+                //         chainId: 1,
+                //       },
+                //     ],
+                //   },
+                //   session: INTERNAL_REQUEST_SESSION,
+                //   account: currentAccount!,
+                // });
+              },
+            },
             // {
             //   label: 'Test Biometrics',
             //   icon: isFaceID ? RcIconFaceId : RcIconFingerprint,

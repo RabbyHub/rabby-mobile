@@ -6,6 +6,7 @@ import {
   apiLedger,
   apiMnemonic,
   apiOneKey,
+  apiTrezor,
 } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
@@ -148,6 +149,8 @@ export const ImportMoreAddressScreen = () => {
         return apiOneKey;
       case KEYRING_TYPE.KeystoneKeyring:
         return apiKeystone;
+      case KEYRING_TYPE.TrezorKeyring:
+        return apiTrezor;
       default:
         return null;
     }

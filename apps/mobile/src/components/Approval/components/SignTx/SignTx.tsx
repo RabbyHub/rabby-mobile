@@ -825,9 +825,12 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   const handleAllow = async () => {
     if (!selectedGas) return;
 
+    console.debug('activeApprovalPopup()', activeApprovalPopup());
     if (activeApprovalPopup()) {
       return;
     }
+
+    console.debug('currentAccount?.type', currentAccount?.type);
 
     if (currentAccount?.type === KEYRING_TYPE.HdKeyring) {
       await invokeEnterPassphrase(currentAccount.address);
@@ -873,8 +876,13 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     } else {
       (transaction as Tx).gasPrice = tx.gasPrice;
     }
+
+    console.debug('await getApproval before');
+
     const approval = (await getApproval())!;
     // gaEvent('allow');
+
+    console.debug('await getApproval after');
 
     approval.signingTxId &&
       (await transactionHistoryService.updateSigningTx(approval.signingTxId, {
@@ -892,6 +900,8 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         },
       }));
 
+    console.debug('await updateSigningTx after');
+
     if (isSend) {
       const sendActionRequireData = actionRequireData as SendRequireData;
       const toAddress = params?.$ctx?.ga?.toAddress;
@@ -907,6 +917,12 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
           });
         });
     }
+
+    console.debug(
+      'await resolveApproval before',
+      currentAccount?.type,
+      !!WaitingSignComponent[currentAccount.type],
+    );
 
     if (currentAccount?.type && WaitingSignComponent[currentAccount.type]) {
       resolveApproval({

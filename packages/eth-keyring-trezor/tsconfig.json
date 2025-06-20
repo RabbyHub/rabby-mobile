@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.packages.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "skipLibCheck": true
+  },
+  "references": [
+    {
+      "path": "../keyring-utils/tsconfig.json"
+    },
+    {
+      "path": "../base-utils/tsconfig.json"
+    }
+  ],
+  "include": ["../../types", "./src"]
+}

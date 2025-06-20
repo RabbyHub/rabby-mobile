@@ -36,6 +36,8 @@ import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useGasAccountInfo } from './screens/GasAccount/hooks';
 
+import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
+
 const rneuiTheme = createTheme({
   lightColors: {
     grey4: ThemeColors.light['neutral-card-2'],
@@ -64,6 +66,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useTriggerI18nChangeOnAppTop();
   useIAPListener();
   useGasAccountInfo();
+  useTrezorConnectOnUrl();
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
