@@ -36,15 +36,12 @@ export default function SendNFT() {
   const nftItem = navParams?.nftItem;
   const chainItem = findChain({ serverId: nftItem?.chain });
   const collectionName = navParams?.collectionName;
-  const fromAddress = navParams?.fromAddress;
   const fromAccount = navParams?.fromAccount;
 
   const toAddress = navParams?.toAddress || '';
   const addressBrandName = navParams?.addressBrandName;
   const addrDesc = navParams?.addrDesc;
-  const account =
-    fromAccount ||
-    (fromAddress ? ({ address: fromAddress } as any) : undefined);
+  const account = fromAccount || undefined;
 
   const {
     sendNFTScreenState: screenState,

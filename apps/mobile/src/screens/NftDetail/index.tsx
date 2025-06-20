@@ -244,7 +244,6 @@ export const NFTDetailScreen = () => {
       navigateToSendPolyScreen(!!isSingleAddress, {
         collectionName: iToken.contract_name || iToken?.collection?.name || '',
         nftItem: iToken,
-        fromAddress: address,
         fromAccount,
       });
     },

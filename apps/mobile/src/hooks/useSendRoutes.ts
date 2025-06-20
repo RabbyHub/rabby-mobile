@@ -1,7 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
 import { atom, useAtom } from 'jotai';
-import { RootStackParamsList } from '@/navigation-type';
+import {
+  RootStackParamsList,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { NavigatorScreenParams } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useCallback } from 'react';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
@@ -13,7 +17,6 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
-
 export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
 export const isSingleAddressAtom = atom<boolean>(false);
 export const useSendRoutes = () => {
@@ -46,9 +49,9 @@ export const useSendRoutes = () => {
       const targetScreen = getTargetScreen(mergedParams, isForSingleAddress);
 
       navigation.push(RootNames.StackTransaction, {
-        screen: targetScreen as any,
+        screen: targetScreen,
         params: mergedParams,
-      });
+      } as NavigatorScreenParams<TransactionNavigatorParamList>);
     },
     [navigation, getTargetScreen],
   );
