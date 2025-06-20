@@ -244,6 +244,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       if (!urlToGo || !/^https?:\/\//.test(urlToGo)) {
         return;
       }
+      webviewRef.current?.stopLoading();
       if (isEmptyTab) {
         setIsShowSearch(false);
         await sleep(200);
@@ -251,9 +252,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         onOpenTab?.(urlToGo);
       } else {
         webviewRef?.current?.injectJavaScript(
-          `(function(){window.location.href = '${urlUtils.sanitizeUrlInput(
-            urlToGo,
-          )}' })()`,
+          `window.location.href = '${urlUtils.sanitizeUrlInput(urlToGo)}'; 
+          true; // Required for iOS
+        `,
         );
       }
       setIsLoading(true);
@@ -301,14 +302,15 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleReload = useMemoizedFn(() => {
-      // todo some times not work
-      if (Platform.OS === 'android') {
-        webviewRef.current?.injectJavaScript(`(function(){
-          window.location.reload();
-        })()`);
-      } else {
-        webviewRef.current?.reload();
-      }
+      handleGoTo(webviewState.url);
+      // // todo some times not work
+      // if (Platform.OS === 'android') {
+      //   webviewRef.current?.injectJavaScript(`(function(){
+      //     window.location.reload();
+      //   })()`);
+      // } else {
+      //   webviewRef.current?.reload();
+      // }
     });
 
     const handleViewTabs = useMemoizedFn(async () => {
