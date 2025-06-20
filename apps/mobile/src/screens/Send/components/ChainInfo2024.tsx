@@ -91,6 +91,7 @@ export function ChainInfo2024({
   }, []);
 
   const createChainModal = React.useCallback(() => {
+    removeChainModal();
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY,
       account,

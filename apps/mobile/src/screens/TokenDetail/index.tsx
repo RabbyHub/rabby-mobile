@@ -243,7 +243,8 @@ export const TokenDetailScreen = () => {
     disableAutoFetch: true,
   });
 
-  const finalAccount = account || preferenceService.getFallbackAccount();
+  const finalAccount =
+    account || accounts[0] || preferenceService.getFallbackAccount();
 
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
@@ -497,7 +498,7 @@ export const TokenDetailScreen = () => {
 
   const { t } = useTranslation();
 
-  if (!finalAccount) {
+  if (isSingleAddress && !finalAccount) {
     return null;
   }
 

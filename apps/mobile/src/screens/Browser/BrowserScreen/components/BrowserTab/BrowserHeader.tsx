@@ -16,18 +16,15 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { IS_IOS } from '@/core/native/utils';
 import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
-import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useMyAccounts } from '@/hooks/account';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
-import { useDapps } from '@/hooks/useDapps';
-import { getAddressBarTitle } from '@/utils/browser';
+import { getAddressBarTitle, isGoogle } from '@/utils/browser';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { CurrentDappPopup } from './CurrentDappPopup';
-import { useMyAccounts } from '@/hooks/account';
 
 export function BrowserHeader({
   dapp,
@@ -51,19 +48,6 @@ export function BrowserHeader({
   });
 
   const { t } = useTranslation();
-  const { tabs, activeTabId } = useBrowser();
-
-  const { isDappConnected } = useDapps();
-
-  const activeDappOrigin = useMemo(() => {
-    const tab = tabs.find(tab => tab.id === activeTabId);
-    if (tab) {
-      const url = tab.url;
-      const origin = safeGetOrigin(url);
-      return origin;
-    }
-    return null;
-  }, [tabs, activeTabId]);
 
   const navigation = useRabbyAppNavigation();
 
@@ -95,7 +79,6 @@ export function BrowserHeader({
     });
   }, [dapp?.chainId, dapp?.isConnected]);
 
-  // const urlInfo = useMemo(() => urlUtils.canoicalizeDappUrl(url || ''), [url]);
   const inputRef = useRef<any>(null);
   const renderText = useMemo(() => {
     return getAddressBarTitle(url || '');
@@ -193,7 +176,7 @@ export function BrowserHeader({
         <View style={styles.addressBar}>
           <TouchableWithoutFeedback
             onPress={() => {
-              onSearchTextChange?.(url || '');
+              onSearchTextChange?.(isGoogle(url) ? renderText : url || '');
               onFocusChange?.(true);
             }}>
             {url ? (
