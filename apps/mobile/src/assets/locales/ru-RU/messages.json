@@ -882,7 +882,8 @@
         "bridge": "Мост",
         "websites": "Веб-сайты",
         "send": "Отправить",
-        "search": "Поиск токена"
+        "search": "Поиск токена",
+        "copyTrading": "Копирование торговли"
       }
     },
     "dashboard": {
@@ -1061,6 +1062,18 @@
         "createAddress": "Создать кошелек",
         "importAddress": "Импортировать кошелек",
         "selectAddMethod": "Выберите метод добавления"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Как вы оцениваете Rabby Wallet?"
+      },
+      "rateModal": {
+        "feedbackSuccess": "Спасибо за ваш отзыв",
+        "feedbackSubmit": "Отправить",
+        "confirmButtonTitleAndroid": "Оцените в Google Play",
+        "confirmButtonTitleIOS": "Оцените в App Store",
+        "descriptionIOS": "Если вам нравится Rabby, быстрая оценка в App Store будет очень значима.",
+        "feedbackTitle": "Есть вопросы? Мы вас слушаем.",
+        "descriptionAndroid": "Если вам нравится Rabby, быстрая оценка в Google Play будет очень важна."
       }
     },
     "newAddress": {
@@ -1310,13 +1323,25 @@
         "addAddress": "Добавить кошелек",
         "importSafeAddress": "Импортированный Safe Wallet",
         "importWatchAddress": "Импортированный кошелек только для просмотра",
-        "title_one": "{{count}} Кошелек"
+        "title_one": "{{count}} Кошелек",
+        "notIncludedInTransactions": "Не включено в Транзакции",
+        "notIncludedInTotalBalance": "Не включено в Общий Баланс",
+        "moreWallets": "Больше Кошельков"
       },
       "backup-private-key": "Резервное копирование Private Key",
       "delete-desc-needpassword": "Прежде чем удалить, обратите внимание на следующие моменты, чтобы понять, как защитить ваши активы.",
       "manage-addresses-under-this-seed-phrase": "Добавить кошелек из этой сид-фразы",
       "delete-address": "Удалить кошелек",
-      "delete-desc": "Вы уверены, что хотите удалить этот кошелек?"
+      "delete-desc": "Вы уверены, что хотите удалить этот кошелек?",
+      "notMatterAddressDialog": {
+        "helpTitle": "Кошельки, ранжированные ниже топ-10",
+        "safeWallet": "Безопасный кошелек",
+        "title": "Следующие кошельки не включены в Общий баланс",
+        "notTop10Address": "Кошельки, ранжированные ниже топ-10",
+        "watchOnlyWallet": "Кошелек только для просмотра",
+        "helpDescription1": "Чтобы обеспечить своевременное и точное обновление данных, в Общем балансе и Портфолио включены только ваши 10 лучших кошельков.",
+        "helpDescription2": "Вы можете долго нажимать, чтобы закрепить кошельки и настроить, какие из них будут включены."
+      }
     },
     "safeQueue": {
       "viewBtn": "Просмотр",
@@ -1999,6 +2024,21 @@
       "ChainSelector": {
         "title": "Выберите цепочку"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "Копирование торговли от Smart Money",
+        "description": "Откройте токены на основе недавней активности кошельков Smart Money. Нажмите на токен, чтобы увидеть детальные объемы торговли и историческую прибыль от этих кошельков."
+      },
+      "comingSoon": "Скоро...",
+      "historyProfit": "История прибыли",
+      "buy": "Купить",
+      "recentBuy": "Последняя покупка",
+      "updateText": "{{count}} Тренды Обновлены",
+      "smartMoneyWallets": "Кошельки Smart Money",
+      "smartMoneyWallet": "Кошелек Smart Money",
+      "noMoreData": "Больше нет данных",
+      "refreshTitle": "Загрузка дополнительных Copy Trading от Smart Money"
     }
   },
   "component": {

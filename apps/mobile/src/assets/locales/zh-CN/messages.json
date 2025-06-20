@@ -746,7 +746,8 @@
         "gasAccount": "GasAccount",
         "dapps": "Dapps",
         "approvals": "授权",
-        "search": "搜索 Token"
+        "search": "搜索 Token",
+        "copyTrading": "复制交易"
       }
     },
     "manageAddress": {
@@ -1070,6 +1071,18 @@
         "importAddress": "导入钱包",
         "createAddress": "创建钱包",
         "selectAddMethod": "选择添加方法"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "你如何评价 Rabby Wallet？"
+      },
+      "rateModal": {
+        "confirmButtonTitleAndroid": "在 Google Play 上评分",
+        "feedbackSubmit": "提交",
+        "feedbackSuccess": "感谢您的反馈",
+        "confirmButtonTitleIOS": "在应用商店评分",
+        "descriptionAndroid": "如果你喜欢 Rabby，在 Google Play 上快速评分会非常重要。",
+        "descriptionIOS": "如果您喜欢 Rabby，在应用商店的快速评价对我们来说意义重大。",
+        "feedbackTitle": "有反馈吗？我们在倾听。"
       }
     },
     "signText": {
@@ -1442,7 +1455,10 @@
         "addAddress": "添加钱包",
         "title_zero": "0 钱包",
         "importWatchAddress": "导入的观察型钱包",
-        "importSafeAddress": "导入的 Safe Wallet"
+        "importSafeAddress": "导入的 Safe Wallet",
+        "moreWallets": "更多钱包",
+        "notIncludedInTotalBalance": "不包括在总余额中",
+        "notIncludedInTransactions": "不包含在 Transactions 中"
       },
       "pin-in-list": "置顶在列表中",
       "manage-seed-phrase": "管理助记词",
@@ -1452,7 +1468,16 @@
       },
       "delete-desc": "您确定要删除这个钱包吗？",
       "delete-address": "删除钱包",
-      "manage-addresses-under-this-seed-phrase": "使用此种子短语添加钱包"
+      "manage-addresses-under-this-seed-phrase": "使用此种子短语添加钱包",
+      "notMatterAddressDialog": {
+        "notTop10Address": "排名在前10名之外的钱包",
+        "title": "以下钱包不包括在总余额中",
+        "safeWallet": "安全钱包",
+        "helpDescription1": "为了确保数据更新的及时性和准确性，仅包括您的前 10 个钱包在总余额和投资组合中。",
+        "helpTitle": "排名在前10之外的钱包",
+        "watchOnlyWallet": "观察钱包",
+        "helpDescription2": "您可以长按以固定钱包并调整包含哪些钱包。"
+      }
     },
     "rabbyPoints": {
       "claimItem": {
@@ -2008,6 +2033,21 @@
       "ChainSelector": {
         "title": "选择链"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "来自 Smart Money 的 Copy Trading",
+        "description": "发现基于 Smart Money 钱包最近活动的代币。点击代币查看来自这些钱包的详细交易金额和历史利润。"
+      },
+      "buy": "购买",
+      "updateText": "{{count}} 个趋势已更新",
+      "noMoreData": "没有更多数据",
+      "historyProfit": "历史收益",
+      "recentBuy": "最近购买",
+      "comingSoon": "即将推出...",
+      "smartMoneyWallets": "Smart Money 钱包",
+      "refreshTitle": "加载更多来自 Smart Money 的 Copy Trading",
+      "smartMoneyWallet": "Smart Money Wallet"
     }
   },
   "component": {

@@ -908,7 +908,8 @@
         "bridge": "Bridge",
         "gasAccount": "GasAccount",
         "websites": "Websites",
-        "search": "Pesquisar Token"
+        "search": "Pesquisar Token",
+        "copyTrading": "Copy Trading"
       }
     },
     "manageAddress": {
@@ -1232,6 +1233,18 @@
         "importTitle": "Importar Wallet",
         "watchOnlyTitle": "Importar Carteira Somente para Observação",
         "ImportCloud": "Importar do {{cloud}}"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Como você avalia a Rabby Wallet?"
+      },
+      "rateModal": {
+        "feedbackSubmit": "Submeter",
+        "confirmButtonTitleAndroid": "Classifique na Google Play",
+        "confirmButtonTitleIOS": "Avaliação na App Store",
+        "descriptionAndroid": "Se você gosta do Rabby, uma rápida avaliação na Google Play significaria muito.",
+        "feedbackSuccess": "Obrigado pelo seu feedback",
+        "feedbackTitle": "Tem feedback? Estamos a ouvir.",
+        "descriptionIOS": "Se você gosta do Rabby, uma rápida avaliação na App Store significaria muito."
       }
     },
     "newAddress": {
@@ -1592,12 +1605,24 @@
         "title_one": "{{count}} Carteira",
         "importWatchAddress": "Carteira Importada Apenas para Observação",
         "title_other": "{{count}} Carteiras",
-        "title_zero": "0 Carteira"
+        "title_zero": "0 Carteira",
+        "moreWallets": "Mais Carteiras",
+        "notIncludedInTransactions": "Não incluído nas Transações",
+        "notIncludedInTotalBalance": "Não incluído no Saldo Total"
       },
       "admins": "Admins",
       "delete-address": "Apagar carteira",
       "delete-desc": "Tem certeza de que deseja eliminar esta wallet?",
-      "manage-addresses-under-this-seed-phrase": "Adicionar carteira a partir desta frase-semente"
+      "manage-addresses-under-this-seed-phrase": "Adicionar carteira a partir desta frase-semente",
+      "notMatterAddressDialog": {
+        "safeWallet": "Carteira Segura",
+        "title": "Os seguintes wallets não estão incluídos no Saldo Total",
+        "watchOnlyWallet": "Carteira Apenas para Monitorização",
+        "helpTitle": "Carteiras classificadas abaixo das top 10",
+        "notTop10Address": "Wallets classificados abaixo dos 10 melhores",
+        "helpDescription2": "Você pode pressionar longamente para fixar carteiras e ajustar quais estão incluídas.",
+        "helpDescription1": "Para garantir atualizações de dados em tempo hábil e precisas, apenas as suas 10 carteiras principais estão incluídas no Total Balance e no Portfolio."
+      }
     },
     "backupSeedPhrase": {
       "qrCodePopupTitle": "Código QR",
@@ -2170,6 +2195,21 @@
       "ChainSelector": {
         "title": "Selecionar Cadeia"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "Copy Trading do Smart Money",
+        "description": "Descubra tokens com base na atividade recente de carteiras de Smart Money. Toque em um token para ver os montantes de negociação detalhados e os lucros históricos dessas carteiras."
+      },
+      "buy": "Comprar",
+      "smartMoneyWallet": "Smart Money Wallet",
+      "smartMoneyWallets": "Smart Money Wallets",
+      "noMoreData": "Sem mais dados",
+      "recentBuy": "Compra Recentemente",
+      "refreshTitle": "A Carregar Mais Copy Trading Do Smart Money",
+      "comingSoon": "Em breve...",
+      "historyProfit": "Histórico de Lucros",
+      "updateText": "{{count}} Tendências Atualizadas"
     }
   },
   "constant": {
