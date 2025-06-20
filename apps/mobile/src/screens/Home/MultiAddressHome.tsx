@@ -248,7 +248,6 @@ function MultiAddressHome(): JSX.Element {
     fail: number;
   }>();
   const { top10Addresses } = useAccountInfo();
-  console.log('top10Addresses 0', top10Addresses[0]);
 
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();

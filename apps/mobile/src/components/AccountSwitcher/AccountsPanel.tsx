@@ -261,6 +261,15 @@ AccountSwitcherAopProps<{
   const TransactionMoreWallets = useMemo(() => {
     return notMatterAddresses.length ? (
       <View style={[styles.section, { marginTop: 30 }]}>
+        <View style={styles.moreWalletsHintContainer}>
+          <View style={styles.horizontalLine} />
+          <Text style={styles.moreWalletsHint}>
+            {t(
+              'page.addressDetail.addressListScreen.notIncludedInTransactions',
+            )}
+          </Text>
+          <View style={styles.horizontalLine} />
+        </View>
         <TouchableOpacity
           style={styles.moreWalletsButtonContent}
           onPress={() => {
@@ -530,6 +539,30 @@ const getPanelStyle = createGetStyles2024(ctx => {
       width: 62, // 22 + 10 + 10 + 20 (icon width + 2 overlaps + extra space)
       height: 22,
       marginRight: 4,
+    },
+    moreWalletsContainer: {
+      marginTop: 24,
+      gap: 24,
+    },
+    moreWalletsHint: {
+      fontSize: 14,
+      fontWeight: '500',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
+      color: ctx.colors2024['neutral-info'],
+      // textAlign: 'center',
+    },
+    moreWalletsHintContainer: {
+      // marginBottom: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginBottom: 30,
+    },
+    horizontalLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: ctx.colors2024['neutral-line'],
     },
     stackedIcon: {
       position: 'absolute',

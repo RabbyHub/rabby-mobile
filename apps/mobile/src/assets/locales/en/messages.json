@@ -1379,6 +1379,7 @@
       "addressListScreen": {
         "moreWallets": "More Wallets",
         "notIncludedInTotalBalance": "Not included in Total Balance",
+        "notIncludedInTransactions": "Not included in Transactions",
         "importSafeAddress": "Imported Safe Wallet",
         "importWatchAddress": "Imported Watch-Only Wallet",
         "unpin": "Unpin",
