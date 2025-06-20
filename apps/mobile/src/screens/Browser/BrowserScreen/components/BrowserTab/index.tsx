@@ -107,7 +107,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const isEmptyTab = !url;
-    const [isShowSearch, setIsShowSearch] = useState(isActive && isEmptyTab);
+    const [isShowSearch, setIsShowSearch] = useState(
+      false,
+      // isActive && isEmptyTab
+    );
     const [searchText, setSearchText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -342,16 +345,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
     }, [isActive, isEmptyTab, onUpdateTab, urlRef]);
 
-    useFocusEffect(
-      React.useCallback(() => {
-        if (isEmptyTab && isActive) {
-          setTimeout(() => {
-            setIsShowSearch(true);
-          }, 100);
-        }
-        return () => {};
-      }, [isActive, isEmptyTab]),
-    );
+    // useFocusEffect(
+    //   React.useCallback(() => {
+    //     if (isEmptyTab && isActive) {
+    //       setTimeout(() => {
+    //         setIsShowSearch(true);
+    //       }, 100);
+    //     }
+    //     return () => {};
+    //   }, [isActive, isEmptyTab]),
+    // );
 
     const [refreshKey, setRefreshKey] = useState(0);
 
