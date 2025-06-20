@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
@@ -100,7 +99,6 @@ export default function RecentlyBuyListDialog({
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
-  const isDark = useGetBinaryMode() === 'dark';
   const isPositive = (tradingTokenItem.price_24h_change || 0) >= 0;
 
   const fetchRecentBuyList = useMemoizedFn(async () => {

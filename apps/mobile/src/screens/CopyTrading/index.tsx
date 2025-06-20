@@ -39,7 +39,6 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { Skeleton } from '@rneui/themed';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { Tip } from '@/components';
 
 const DEFAULT_COUNT = 10;
@@ -83,7 +82,6 @@ export const CopyTradingScreen = () => {
   const [selectedChainId, setSelectedChainId] = useState<string>('');
   const [tokenList, setTokenList] = useState<CopyTradeTokenItem[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { safeTop, headerHeight } = useSafeSizes();
   const { navigation } = useSafeSetNavigationOptions();
   const [tabLoading, setTabLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);

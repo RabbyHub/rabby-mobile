@@ -6,8 +6,6 @@ import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { formatUsdValueKMB } from '../../Home/utils/price';
-import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
-import DollarIcon from '@/assets2024/icons/home/IconDollar.png';
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTranslation } from 'react-i18next';

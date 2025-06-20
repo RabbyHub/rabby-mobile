@@ -180,7 +180,7 @@ const BuyItemComponent: React.FC<BuyItemProps> = ({ item }) => {
                 <RcIconArrowDownCC
                   width={10}
                   height={8}
-                  color={colors2024['neutral-title-1']}
+                  color={colors2024['green-default']}
                   style={[
                     styles.arrowIcon,
                     isExpanded && styles.arrowIconRotated,
