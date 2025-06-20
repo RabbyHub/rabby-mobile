@@ -1011,18 +1011,6 @@
         "watchOnlyTitle": "Importer un portefeuille en lecture seule",
         "importTitle": "Importer le portefeuille",
         "ImportCloud": "Importer depuis {{cloud}}"
-      },
-      "rateModalTriggerOnHome": {
-        "description": "Comment évaluez-vous Rabby Wallet"
-      },
-      "rateModal": {
-        "descriptionIOS": "Si vous aimez Rabby, une note rapide sur l'App Store signifierait beaucoup.",
-        "descriptionAndroid": "Si vous aimez Rabby, une note rapide sur Google Play signifie beaucoup.",
-        "confirmButtonTitleAndroid": "Taux sur Google Play",
-        "confirmButtonTitleIOS": "Tarif sur l'App Store",
-        "feedbackTitle": "Vous avez des commentaires? \nNous écoutons.",
-        "feedbackSubmit": "Soumettre",
-        "feedbackSuccess": "Merci pour vos commentaires"
       }
     },
     "signText": {

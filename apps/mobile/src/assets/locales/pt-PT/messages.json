@@ -1232,18 +1232,6 @@
         "importTitle": "Importar Wallet",
         "watchOnlyTitle": "Importar Carteira Somente para Observação",
         "ImportCloud": "Importar do {{cloud}}"
-      },
-      "rateModalTriggerOnHome": {
-        "description": "Como você avalia a carteira de rabby"
-      },
-      "rateModal": {
-        "descriptionIOS": "Se você gosta de Rabby, uma classificação rápida na App Store significaria muito.",
-        "descriptionAndroid": "Se você gosta de Rabby, uma classificação rápida no Google Play significaria muito.",
-        "confirmButtonTitleAndroid": "Taxa no Google Play",
-        "confirmButtonTitleIOS": "Taxa na App Store",
-        "feedbackTitle": "Tem feedback? Estamos ouvindo.",
-        "feedbackSubmit": "Submeter",
-        "feedbackSuccess": "Obrigado pelo seu feedback"
       }
     },
     "newAddress": {

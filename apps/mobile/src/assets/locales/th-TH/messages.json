@@ -1173,18 +1173,6 @@
         "riskTips": "ก่อนที่คุณจะเริ่มต้น โปรดอ่านและจำเคล็ดลับความปลอดภัยเหล่านี้ไว้ในใจ:",
         "createNewDesc": "สร้างวลีเมล็ดพันธุ์ใหม่สำหรับกระเป๋าใหม่",
         "createOnCurrentDesc": "สร้างกระเป๋าเงินด้วยวลีเมล็ดพันธุ์ที่นำเข้าแล้ว"
-      },
-      "rateModalTriggerOnHome": {
-        "description": "คุณให้คะแนนกระเป๋าเงิน Rabby ได้อย่างไร"
-      },
-      "rateModal": {
-        "descriptionIOS": "ถ้าคุณชอบ Rabby การให้คะแนนอย่างรวดเร็วใน App Store จะมีความหมายมาก",
-        "descriptionAndroid": "ถ้าคุณชอบ Rabby การให้คะแนนอย่างรวดเร็วของ Google Play จะมีความหมายมาก",
-        "confirmButtonTitleAndroid": "ให้คะแนน Google Play",
-        "confirmButtonTitleIOS": "ให้คะแนนใน App Store",
-        "feedbackTitle": "มีข้อเสนอแนะ? \nเรากำลังฟัง",
-        "feedbackSubmit": "ส่ง",
-        "feedbackSuccess": "ขอบคุณสำหรับความคิดเห็นของคุณ"
       }
     },
     "switchChain": {

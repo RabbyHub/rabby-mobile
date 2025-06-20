@@ -1045,18 +1045,6 @@
         "VerifyDownSeedPhrase": "Xác minh seed phrase",
         "createNewDesc": "Tạo một cụm từ hạt giống mới cho các ví mới",
         "createOnCurrentDesc": "Tạo ví bằng cụm từ gốc đã nhập sẵn."
-      },
-      "rateModalTriggerOnHome": {
-        "description": "Làm thế nào để bạn đánh giá ví Rabby"
-      },
-      "rateModal": {
-        "descriptionIOS": "Nếu bạn thích Rabby, một đánh giá nhanh trên App Store có ý nghĩa rất lớn.",
-        "descriptionAndroid": "Nếu bạn thích Rabby, một đánh giá nhanh trên Google Play sẽ có ý nghĩa rất lớn.",
-        "confirmButtonTitleAndroid": "Đánh giá trên Google Play",
-        "confirmButtonTitleIOS": "Đánh giá trên cửa hàng ứng dụng",
-        "feedbackTitle": "Có phản hồi? \nChúng tôi lắng nghe.",
-        "feedbackSubmit": "Nộp",
-        "feedbackSuccess": "Cảm ơn bạn đã phản hồi của bạn"
       }
     },
     "signText": {

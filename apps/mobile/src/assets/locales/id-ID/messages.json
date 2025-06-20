@@ -1066,18 +1066,6 @@
         "importTitle": "Impor Dompet",
         "watchOnlyTitle": "Impor Dompet Hanya-Pengawasan",
         "ImportCloud": "Impor dari {{cloud}}"
-      },
-      "rateModalTriggerOnHome": {
-        "description": "Bagaimana Anda menilai dompet Rabby"
-      },
-      "rateModal": {
-        "descriptionIOS": "Jika Anda suka Rabby, peringkat cepat di App Store akan sangat berarti.",
-        "descriptionAndroid": "Jika Anda suka Rabby, peringkat cepat di Google Play akan sangat berarti.",
-        "confirmButtonTitleAndroid": "Nilai di Google Play",
-        "confirmButtonTitleIOS": "Nilai di App Store",
-        "feedbackTitle": "Punya umpan balik? \nKami mendengarkan.",
-        "feedbackSubmit": "Kirim",
-        "feedbackSuccess": "Terima kasih atas tanggapan Anda"
       }
     },
     "newAddress": {

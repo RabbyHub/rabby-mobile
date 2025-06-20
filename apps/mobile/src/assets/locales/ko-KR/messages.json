@@ -1002,18 +1002,6 @@
         "watch": "보기 전용 지갑",
         "watchOnlyTitle": "시청 전용 지갑 가져오기",
         "ImportCloud": "{{cloud}}에서 가져오기"
-      },
-      "rateModalTriggerOnHome": {
-        "description": "랍비 지갑을 어떻게 평가합니까?"
-      },
-      "rateModal": {
-        "descriptionIOS": "Rabby를 좋아한다면 App Store의 빠른 등급은 많은 의미가 있습니다.",
-        "descriptionAndroid": "Rabby를 좋아한다면 Google Play의 빠른 등급은 많은 의미가 있습니다.",
-        "confirmButtonTitleAndroid": "Google Play의 평가",
-        "confirmButtonTitleIOS": "App Store의 요금",
-        "feedbackTitle": "피드백이 있습니까? \n우리는 듣고 있습니다.",
-        "feedbackSubmit": "제출하다",
-        "feedbackSuccess": "귀하의 의견에 감사드립니다"
       }
     },
     "switchChain": {

@@ -1181,18 +1181,6 @@
         "watchOnlyTitle": "Importiere Watch-Only Wallet",
         "safeTitle": "Import Safe Wallet",
         "ImportCloud": "Importieren von {{cloud}}"
-      },
-      "rateModalTriggerOnHome": {
-        "description": "Wie bewertet man Rabby -Brieftasche"
-      },
-      "rateModal": {
-        "descriptionIOS": "Wenn Sie Rabby mögen, würde eine schnelle Bewertung im App Store viel bedeuten.",
-        "descriptionAndroid": "Wenn Sie Rabby mögen, würde eine schnelle Bewertung im Google Play viel bedeuten.",
-        "confirmButtonTitleAndroid": "Rate bei Google Play",
-        "confirmButtonTitleIOS": "Preis im App Store",
-        "feedbackTitle": "Feedback haben? \nWir hören zu.",
-        "feedbackSubmit": "Einreichen",
-        "feedbackSuccess": "Vielen Dank für Ihr Feedback"
       }
     },
     "switchChain": {

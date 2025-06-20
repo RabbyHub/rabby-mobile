@@ -1070,18 +1070,6 @@
         "importAddress": "导入钱包",
         "createAddress": "创建钱包",
         "selectAddMethod": "选择添加方法"
-      },
-      "rateModalTriggerOnHome": {
-        "description": "您如何评价Rabby Wallet"
-      },
-      "rateModal": {
-        "descriptionIOS": "如果您喜欢Rabby，那么在App Store上的快速评级将意味着很多。",
-        "descriptionAndroid": "如果您喜欢Rabby，那么在Google Play上的快速评级将意味着很多。",
-        "confirmButtonTitleAndroid": "在Google Play上评价",
-        "confirmButtonTitleIOS": "App Store上的价格",
-        "feedbackTitle": "有反馈？\n我们正在听。",
-        "feedbackSubmit": "提交",
-        "feedbackSuccess": "谢谢你的反馈"
       }
     },
     "signText": {

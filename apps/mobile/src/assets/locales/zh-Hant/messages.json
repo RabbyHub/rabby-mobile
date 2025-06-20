@@ -1162,18 +1162,6 @@
         "safeTitle": "導入 Safe Wallet",
         "watch": "觀察型錢包",
         "ImportCloud": "從 {{cloud}} 匯入"
-      },
-      "rateModalTriggerOnHome": {
-        "description": "您如何評價Rabby Wallet"
-      },
-      "rateModal": {
-        "descriptionIOS": "如果您喜歡Rabby，那麼在App Store上的快速評級將意味著很多。",
-        "descriptionAndroid": "如果您喜歡Rabby，那麼在Google Play上的快速評級將意味著很多。",
-        "confirmButtonTitleAndroid": "在Google Play上評價",
-        "confirmButtonTitleIOS": "App Store上的價格",
-        "feedbackTitle": "有反饋？我們正在聽。",
-        "feedbackSubmit": "提交",
-        "feedbackSuccess": "謝謝你的反饋"
       }
     },
     "ethSign": {
