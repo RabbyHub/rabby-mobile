@@ -177,7 +177,18 @@ export const AddressList = () => {
               style={styles.moreWalletsButton}
               onPress={handleMoreWalletsPress}>
               <View style={styles.moreWalletsButtonContent}>
-                <View style={styles.moreWalletsButtonIcon}>
+                <View
+                  style={[
+                    styles.moreWalletsButtonIcon,
+                    {
+                      marginLeft:
+                        notMatterAvatarList.length === 2
+                          ? -20
+                          : notMatterAvatarList.length === 1
+                          ? -38
+                          : 0,
+                    },
+                  ]}>
                   {notMatterAvatarList.map((account, index) => {
                     const iconCount = notMatterAvatarList.length;
                     // calculate the total width of the icon group
