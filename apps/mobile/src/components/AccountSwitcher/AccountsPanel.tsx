@@ -105,6 +105,8 @@ AccountSwitcherAopProps<{
     myAddresses,
     safeAddresses,
     watchAddresses,
+    shouldSafeAddressesExpanded,
+    shouldWatchAddressesExpanded,
     isHideToken,
   } = useSceneAccountInfo({
     forScene,
@@ -125,6 +127,36 @@ AccountSwitcherAopProps<{
 
   const { switchSceneCurrentAccount, toggleUseAllAccountsOnScene } =
     useSwitchSceneCurrentAccount();
+
+  const [navsCollapsed, setNavsCollapsed] = React.useState({
+    safe: !shouldSafeAddressesExpanded,
+    watch: !shouldWatchAddressesExpanded,
+  });
+
+  const changeCollapsed = useCallback(
+    (type: keyof typeof navsCollapsed, nextCollapsed: boolean) => {
+      if (type === 'safe') {
+        setNavsCollapsed(prev => ({ ...prev, safe: nextCollapsed }));
+      } else {
+        setNavsCollapsed(prev => ({ ...prev, watch: nextCollapsed }));
+      }
+      if (!isSceneUsingAllAccounts) {
+        scrollToBottom();
+      }
+    },
+    [scrollToBottom, isSceneUsingAllAccounts],
+  );
+
+  useEffect(() => {
+    if (shouldSafeAddressesExpanded) {
+      changeCollapsed('safe', false);
+    }
+  }, [changeCollapsed, shouldSafeAddressesExpanded]);
+  useEffect(() => {
+    if (shouldWatchAddressesExpanded) {
+      changeCollapsed('watch', false);
+    }
+  }, [changeCollapsed, shouldWatchAddressesExpanded]);
 
   const shouldRemainAddressesCollapsed = useMemo(() => {
     return (
@@ -187,7 +219,7 @@ AccountSwitcherAopProps<{
 
       return (
         <>
-          <View style={styles.sectionTitleContainer}>
+          <View style={styles.sectionTitleContainerNew}>
             <Text style={styles.sectionTitle}>{title}</Text>
           </View>
           <>
@@ -226,6 +258,194 @@ AccountSwitcherAopProps<{
     return notMatterAddresses.slice(0, 3);
   }, [notMatterAddresses]);
 
+  const TransactionMoreWallets = useMemo(() => {
+    return notMatterAddresses.length ? (
+      <View style={[styles.section, { marginTop: 30 }]}>
+        <TouchableOpacity
+          style={styles.moreWalletsButtonContent}
+          onPress={() => {
+            setRemainAddressesCollapsed(!remainAddressesCollapsed);
+          }}>
+          <View style={styles.moreWalletsButtonIcon}>
+            {notMatterAvatarList.map((account, index) => {
+              const iconCount = notMatterAvatarList.length;
+              // calculate the total width of the icon group
+              const totalIconsWidth =
+                iconCount === 1 ? 22 : 22 + (iconCount - 1) * 16;
+              // container width
+              const containerWidth = 62;
+              // calculate the start offset, make the icon group centered, but slightly right
+              const startOffset = Math.max(
+                0,
+                containerWidth - totalIconsWidth - 4,
+              );
+
+              return (
+                <View
+                  key={account.address}
+                  style={[
+                    styles.stackedIcon,
+                    {
+                      zIndex: index + 1,
+                      left: startOffset + index * 16,
+                      top: -2,
+                    },
+                  ]}>
+                  <WalletIcon
+                    address={account.address}
+                    type={account.type}
+                    width={22}
+                    height={22}
+                    borderRadius={8}
+                  />
+                </View>
+              );
+            })}
+          </View>
+          <Text style={styles.moreWalletsButtonText}>
+            {t('page.addressDetail.addressListScreen.moreWallets')}
+          </Text>
+          <RcCaretDownCC
+            style={[
+              { marginLeft: 4 },
+              remainAddressesCollapsed && {
+                transform: [{ rotate: '180deg' }],
+              },
+            ]}
+            width={18}
+            height={18}
+            color={colors2024['neutral-secondary']}
+          />
+        </TouchableOpacity>
+        {remainAddressesCollapsed && (
+          <View style={styles.addressListContainerNew}>
+            {renderRemainAddressesByType(
+              notTop10Addresses,
+              'notTop10Addresses',
+              t('page.addressDetail.notMatterAddressDialog.notTop10Address'),
+            )}
+            {renderRemainAddressesByType(
+              safeAddresses,
+              'gnosisAccounts',
+              t('page.addressDetail.notMatterAddressDialog.safeWallet'),
+            )}
+            {renderRemainAddressesByType(
+              watchAddresses,
+              'watchAccounts',
+              t('page.addressDetail.notMatterAddressDialog.watchOnlyWallet'),
+            )}
+          </View>
+        )}
+      </View>
+    ) : null;
+  }, [
+    notTop10Addresses,
+    safeAddresses,
+    watchAddresses,
+    colors2024,
+    styles,
+    t,
+    notMatterAddresses,
+    remainAddressesCollapsed,
+    notMatterAvatarList,
+    renderRemainAddressesByType,
+  ]);
+
+  const OtherWatchAndSafeWallets = useMemo(() => {
+    return (
+      <>
+        {!!safeAddresses.length && (
+          <View style={[styles.section, { marginTop: 30 }]}>
+            <SectionCollapsableNav
+              title={t(
+                'page.addressDetail.addressListScreen.importSafeAddress',
+              )}
+              isCollapsed={navsCollapsed.safe}
+              onCollapsedChange={nextVal => {
+                changeCollapsed('safe', nextVal);
+              }}
+            />
+            {!navsCollapsed.safe && (
+              <View style={styles.addressListContainer}>
+                {safeAddresses.map((account, index) => {
+                  const key = `account-${account.address}-${account.brandName}-${index}`;
+                  const isCurrent =
+                    !isSceneUsingAllAccounts &&
+                    isSameAccount(account, finalSceneCurrentAccount);
+
+                  return (
+                    <AddressItemInPanel
+                      key={key}
+                      addressItemProps={{ account }}
+                      isCurrent={isCurrent}
+                      isPinned={false}
+                      onPressAddress={handlePressAccount}
+                      style={[
+                        styles.addressItem,
+                        index > 0 && styles.addressItemTopGap,
+                      ]}
+                    />
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
+        {!!watchAddresses.length && (
+          <View style={[styles.section, { marginTop: 30 }]}>
+            <SectionCollapsableNav
+              title={t(
+                'page.addressDetail.addressListScreen.importWatchAddress',
+              )}
+              isCollapsed={navsCollapsed.watch}
+              onCollapsedChange={nextVal => {
+                changeCollapsed('watch', nextVal);
+              }}
+            />
+            {!navsCollapsed.watch && (
+              <View style={styles.addressListContainer}>
+                {watchAddresses.map((account, index) => {
+                  const key = `account-${account.address}-${account.brandName}-${index}`;
+                  const isCurrent =
+                    !isSceneUsingAllAccounts &&
+                    isSameAccount(account, finalSceneCurrentAccount);
+
+                  return (
+                    <AddressItemInPanel
+                      key={key}
+                      addressItemProps={{ account }}
+                      isCurrent={isCurrent}
+                      isPinned={false}
+                      onPressAddress={handlePressAccount}
+                      style={[
+                        styles.addressItem,
+                        index > 0 && styles.addressItemTopGap,
+                      ]}
+                    />
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
+      </>
+    );
+  }, [
+    styles,
+    t,
+    safeAddresses,
+    watchAddresses,
+    finalSceneCurrentAccount,
+    handlePressAccount,
+    isSceneUsingAllAccounts,
+    navsCollapsed,
+    changeCollapsed,
+  ]);
+
+  const myAddressesList = useMemo(() => {
+    return isSceneUsingAllAccounts ? myAddresses.slice(0, 10) : myAddresses;
+  }, [myAddresses, isSceneUsingAllAccounts]);
+
   return (
     <LinearGradientContainer
       type="linear"
@@ -253,7 +473,7 @@ AccountSwitcherAopProps<{
                   isSelected={isSceneUsingAllAccounts}
                 />
               )}
-              {myAddresses.slice(0, 10).map((account, index) => {
+              {myAddressesList.map((account, index) => {
                 const key = `account-${account.address}-${account.brandName}-${index}`;
                 const isCurrent =
                   !isSceneUsingAllAccounts &&
@@ -276,89 +496,9 @@ AccountSwitcherAopProps<{
               })}
             </View>
           </View>
-          {!!notMatterAddresses.length && (
-            <View style={[styles.section, { marginTop: 30 }]}>
-              <TouchableOpacity
-                style={styles.moreWalletsButtonContent}
-                onPress={() => {
-                  setRemainAddressesCollapsed(!remainAddressesCollapsed);
-                }}>
-                <View style={styles.moreWalletsButtonIcon}>
-                  {notMatterAvatarList.map((account, index) => {
-                    const iconCount = notMatterAvatarList.length;
-                    // calculate the total width of the icon group
-                    const totalIconsWidth =
-                      iconCount === 1 ? 22 : 22 + (iconCount - 1) * 16;
-                    // container width
-                    const containerWidth = 62;
-                    // calculate the start offset, make the icon group centered, but slightly right
-                    const startOffset = Math.max(
-                      0,
-                      containerWidth - totalIconsWidth - 4,
-                    );
-
-                    return (
-                      <View
-                        key={account.address}
-                        style={[
-                          styles.stackedIcon,
-                          {
-                            zIndex: index + 1,
-                            left: startOffset + index * 16,
-                            top: -2,
-                          },
-                        ]}>
-                        <WalletIcon
-                          address={account.address}
-                          type={account.type}
-                          width={22}
-                          height={22}
-                          borderRadius={8}
-                        />
-                      </View>
-                    );
-                  })}
-                </View>
-                <Text style={styles.moreWalletsButtonText}>
-                  {t('page.addressDetail.addressListScreen.moreWallets')}
-                </Text>
-                <RcCaretDownCC
-                  style={[
-                    { marginLeft: 4 },
-                    remainAddressesCollapsed && {
-                      transform: [{ rotate: '180deg' }],
-                    },
-                  ]}
-                  width={18}
-                  height={18}
-                  color={colors2024['neutral-secondary']}
-                />
-              </TouchableOpacity>
-              {remainAddressesCollapsed && (
-                <View style={styles.addressListContainer}>
-                  {renderRemainAddressesByType(
-                    notTop10Addresses,
-                    'notTop10Addresses',
-                    t(
-                      'page.addressDetail.notMatterAddressDialog.notTop10Address',
-                    ),
-                  )}
-                  {renderRemainAddressesByType(
-                    safeAddresses,
-                    'gnosisAccounts',
-                    t('page.addressDetail.notMatterAddressDialog.safeWallet'),
-                  )}
-                  {renderRemainAddressesByType(
-                    watchAddresses,
-                    'watchAccounts',
-                    t(
-                      'page.addressDetail.notMatterAddressDialog.watchOnlyWallet',
-                    ),
-                  )}
-                </View>
-              )}
-            </View>
-          )}
+          {isSceneSupportAllAccounts
+            ? TransactionMoreWallets
+            : OtherWatchAndSafeWallets}
         </View>
       </View>
     </LinearGradientContainer>
@@ -434,12 +574,17 @@ const getPanelStyle = createGetStyles2024(ctx => {
       width: '100%',
       // ...makeDebugBorder('red'),
     },
-    sectionTitleContainer: {
+    sectionTitleContainerNew: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
       paddingVertical: 12,
       marginTop: 12,
+    },
+    sectionTitleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     sectionTitle: {
       fontFamily: 'SF Pro Rounded',
@@ -450,7 +595,12 @@ const getPanelStyle = createGetStyles2024(ctx => {
     },
     addressListContainer: {
       flexDirection: 'column',
-      // marginTop: 12,
+      marginTop: 12,
+      // maxHeight: SIZES.myAddressesAreaVisiableH,
+      width: '100%',
+    },
+    addressListContainerNew: {
+      flexDirection: 'column',
       // maxHeight: SIZES.myAddressesAreaVisiableH,
       width: '100%',
     },
