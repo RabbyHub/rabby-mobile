@@ -13,6 +13,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { CurrentAddressProps } from '../AddressListScreenContainer';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { AppRootName, RootNames } from '@/constant/layout';
+import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -239,7 +240,7 @@ export const AddressList = () => {
         )}
         <Card style={styles.footerCard} onPress={gotoAddAddress}>
           <View style={styles.footerMain}>
-            <PlusSVG
+            <WalletSVG
               width={20}
               height={20}
               color={colors2024['neutral-secondary']}
@@ -340,9 +341,9 @@ const getStyles = createGetStyles2024(ctx => ({
     // paddingVertical: 10,
   },
   moreWalletsHint: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
-    lineHeight: 16,
+    lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
     color: ctx.colors2024['neutral-info'],
     // textAlign: 'center',
