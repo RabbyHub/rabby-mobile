@@ -135,7 +135,7 @@ export default function SendNFT() {
           handleFieldChange,
         },
       }}>
-      <NormalScreenContainer style={styles.container}>
+      <NormalScreenContainer overwriteStyle={styles.container}>
         <AccountSwitcherModal forScene="SendNFT" inScreen />
         <View style={styles.sendNFTScreen}>
           <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
