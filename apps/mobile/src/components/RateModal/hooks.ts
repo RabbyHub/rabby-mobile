@@ -242,8 +242,7 @@ export function useRateModal() {
       const feedbackText = rateModalState.userFeedback.trim();
 
       const feedbackContent = [
-        needFeedbackText && `Comment: ${feedbackText}`,
-        '  ',
+        ...(!needFeedbackText ? [] : [`Comment: ${feedbackText}`, '  ']),
         `Rate: ${makeStarText(rateModalState.userStar, 5)} (${
           rateModalState.userStar
         }) `,
