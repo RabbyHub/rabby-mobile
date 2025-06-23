@@ -36,7 +36,9 @@ export default class TrezorBridge implements TrezorBridgeInterface {
         },
         // for local development purposes. for production, leave it undefined to use the default value.
         // connectSrc: 'https://connect.trezor.io/9/', //isEmulator ? 'trezorsuitelite://connect' : undefined,
-        connectSrc: appIsDev ? 'trezorsuitelite://connect' : undefined,
+        connectSrc: appIsDev
+          ? 'trezorsuitelite://connect'
+          : 'https://connect.trezor.io/9/',
 
         deeplinkOpen: url => {
           // eslint-disable-next-line no-console
