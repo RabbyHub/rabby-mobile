@@ -4,7 +4,6 @@ import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
 import React, { useCallback } from 'react';
 import { useApprovalPopup } from './useApprovalPopup';
 import { useDeviceConnect } from './useDeviceConnect';
-import { toast } from '@/components2024/Toast';
 
 export const useApproval = () => {
   const getApproval: () => Promise<Approval | null> = useCallback(async () => {
@@ -20,22 +19,16 @@ export const useApproval = () => {
     forceReject = false,
     approvalId?: string,
   ) => {
-    console.log('deviceConnect before', deviceConnect(data));
     // handle connect
     if (!deviceConnect(data)) {
       return;
     }
-
-    console.log('in resolveApproval getApproval before');
 
     const approval = await getApproval();
 
     if (approval) {
       notificationService.resolveApproval(data, forceReject, approvalId);
     }
-
-    console.log('in resolveApproval getApproval after');
-
     if (stay) {
       return;
     }
@@ -43,13 +36,9 @@ export const useApproval = () => {
     let currentNotificationId = notificationService.notifyWindowId;
 
     setTimeout(() => {
-      console.log('showPopup', !!data && !!enablePopup(data.type));
-
       if (data && enablePopup(data.type)) {
         return showPopup();
       }
-
-      console.log('closePopup');
 
       closePopup();
       eventBus.emit(EVENT_ACTIVE_WINDOW, currentNotificationId);
@@ -58,7 +47,7 @@ export const useApproval = () => {
 
   const rejectApproval = async (err?, stay = false, isInternal = false) => {
     let currentNotificationId = notificationService.notifyWindowId;
-    toast.info('reject');
+
     closePopup();
     const approval = await getApproval();
     if (approval?.data?.params?.data?.[0]?.isCoboSafe) {

@@ -10,32 +10,6 @@ export async function initTrezorKeyring() {
   });
 }
 
-export const useGlobalInitOneKey = () => {
-  // const [, setDevices] = useAtom(oneKeyDevices);
-  // React.useEffect(() => {
-  //   HardwareBleSdk.on(DEVICE.CONNECT, payload => {
-  //     setDevices(prev => {
-  //       if (prev.find(d => d.connectId === payload?.device?.connectId)) {
-  //         return prev;
-  //       }
-  //       return [...prev, payload?.device];
-  //     });
-  //   });
-  //   HardwareBleSdk.on(DEVICE.DISCONNECT, payload => {
-  //     cleanUp();
-  //     setDevices(prev =>
-  //       prev.filter(d => d.connectId !== payload?.device?.connectId),
-  //     );
-  //   });
-  // }, [setDevices]);
-};
-
-// export async function initOneKeyKeyring() {
-//   return getKeyring<OneKeyKeyring>(KEYRING_TYPE.TrezorKeyring, keyring => {
-//     bindOneKeyEvents(keyring);
-//   });
-// }
-
 export async function importAddress(index: number) {
   const keyring = await getKeyring<TrezorKeyring>(KEYRING_TYPE.TrezorKeyring);
 
