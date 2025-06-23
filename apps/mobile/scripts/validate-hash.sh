@@ -3,9 +3,10 @@
 # 保存原始目录并设置退出时自动恢复
 ORIGINAL_DIR=$(pwd)
 git_head=$(git rev-parse HEAD)
+git_head_7=$(git rev-parse --short=7 HEAD)
 repo_root=$(git rev-parse --show-toplevel)
 
-WORK_DIR="/tmp/validate-rabby-mobile"
+WORK_DIR="/tmp/validate-rabby-mobile-$git_head_7"
 
 if [ "$repo_root" == "$WORK_DIR" ]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
@@ -15,8 +16,8 @@ else
     rm -rf $WORK_DIR;
   fi
   echo "Will clone repo to $WORK_DIR"
-  git clone $repo_root $WORK_DIR && cd $WORK_DIR && git checkout $git_head;
-  SCRIPT_DIR="/tmp/validate-rabby-mobile/apps/mobile/scripts"
+  git clone $repo_root $WORK_DIR && cd $WORK_DIR && git checkout $git_head_7;
+  SCRIPT_DIR="$WORK_DIR/apps/mobile/scripts"
 fi
 
 cd $WORK_DIR/apps/mobile || {
@@ -24,7 +25,7 @@ cd $WORK_DIR/apps/mobile || {
   exit 1
 }
 
-echo "ℹ️ Running validation script at git commit: $git_head"
+echo "ℹ️ Running validation script at git commit: $git_head_7"
 
 EXPORT_DIR="${1:-$(pwd)}" # 优先使用第一个参数，否则设置为当前目录的 backups 子目录
 
@@ -71,8 +72,10 @@ else
 fi
 
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
-EXPORT_DIR="${EXPORT_DIR}/build_${TIMESTAMP}"
+EXPORT_DIRNAME="build_${TIMESTAMP}"
+EXPORT_DIR="${EXPORT_DIR}/${EXPORT_DIRNAME}"
 BUILD_REPORT_FILE="${EXPORT_DIR}/build_hashes.txt"
+PACKED_ZIP="$WORK_DIR/apps/mobile/$EXPORT_DIRNAME.zip"
 
 APP_PATH="./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app"
 
@@ -120,9 +123,8 @@ fi
 # Assets.car 特殊处理，它里面有个 Timestamp，还没法指定，只能先解析成 json，再把 timestamp 移除，对比 json 的 hash
 if [ -f "$APP_PATH/Assets.car" ]; then
   xcrun assetutil --info "$APP_PATH/Assets.car" >"$APP_PATH/Assets.car.json" || exit 1
-  # process Timestamp
+  # Timestamp, DumpToolVersion
   sed -i '' 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' "$APP_PATH/Assets.car.json";
-  # process DumpToolVersion
   sed -i '' 's/"DumpToolVersion" : [0-9]*\.[0-9]*/"DumpToolVersion" : 0/' "$APP_PATH/Assets.car.json";
   sed -i '' 's/"DumpToolVersion" : [0-9]*/"DumpToolVersion" : 0/' "$APP_PATH/Assets.car.json";
 
@@ -138,7 +140,14 @@ rm -f "$APP_PATH/RabbyMobile.s"
 
 # Trim machine-related data from the assembly file
 chmod +x $SCRIPT_DIR/modify_plist_value.sh
-find $APP_PATH -name Info.plist -exec $SCRIPT_DIR/modify_plist_value.sh {} BuildMachineOSBuild xxxxxx \;
+fields_remove=(
+  "BuildMachineOSBuild"
+  # "DTPlatformBuild" "DTPlatformVersion" "DTSDKBuild" "DTSDKName" "DTXcode" "DTXcodeBuild"
+)
+# 遍历并修改 Info.plist 中的字段
+for field in "${fields_remove[@]}"; do
+  find "$APP_PATH" -name Info.plist -exec $SCRIPT_DIR/modify_plist_value.sh {} "$field" null \;
+done
 
 # 计算总哈希
 OVERALL_HASH=$(find "$APP_PATH" -type f ! -name ".DS_Store" -print0 |
@@ -191,13 +200,15 @@ if [ -n "$EXPORT_DIR" ]; then
   echo "   - Bundle: $BUNDLE_DEST"
 fi
 
+xcode_version=$(xcodebuild -version | head -n1 | sed 's/Xcode //');
+
 {
   cat <<EOF
 
 {
   "platform": "ios",
   "build_time": "$(date '+%Y-%m-%d %H:%M:%S %Z')",
-  "xcode_version": "$(xcodebuild -version | head -n1 | sed 's/Xcode //')",
+  "xcode_version": "$xcode_version",
   "cocoapods_version": "$(bundle exec pod --version)",
   "clang_version": "$(clang --version | head -n1)",
   "swift_version": "$(swift --version | head -n1)",
@@ -214,6 +225,11 @@ EOF
 
 echo
 echo
-echo "macOS Version: $(sw_vers -productVersion)($(sw_vers -buildVersion))"
-echo "GIT Commit Hash: $(git rev-parse HEAD)"
+echo "MacOS Version: $(sw_vers -productVersion)($(sw_vers -buildVersion))"
+echo "Xcode Version: $xcode_version"
+echo "Git Commit Hash: $git_head"
 echo "App SHA256 Hash: $OVERALL_HASH"
+
+# zip $EXPORT_DIR, and put it under $WORK_DIR/apps/mobile;
+zip -r -q "$PACKED_ZIP" "$EXPORT_DIR" && echo "✅ Exported zip to $PACKED_ZIP"
+open $WORK_DIR/apps/mobile;
