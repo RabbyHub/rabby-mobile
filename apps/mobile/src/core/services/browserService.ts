@@ -305,14 +305,6 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
     };
   };
 
-  getDefaultUserAgent = () => {
-    return this.userAgent;
-  };
-
-  setDefaultUserAgent = (ua: string) => {
-    this.userAgent = ua;
-  };
-
   updateBrowserTabs = (payload: Partial<BrowserStore['browserTabs']>) => {
     this.store.browserTabs = {
       ...this.store.browserTabs,

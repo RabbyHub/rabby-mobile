@@ -31,9 +31,7 @@ const tabCheckin = ({
   //   console.error(e);
   // }
   console.debug('[tabCheckin]', origin, name, icon, userAgent);
-  if (Platform.OS === 'android' && userAgent !== ANDROID_DESKTOP_MODE_UA) {
-    browserService.setDefaultUserAgent(userAgent);
-  }
+
   const dapp = dappService.getDapp(origin);
   if (!dapp) {
     dappService.addDapp(

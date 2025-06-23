@@ -27,7 +27,7 @@ import {
 } from '@/components/WebView/hooks';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '@/components/WebView/utils';
 import { APP_UA_PARIALS } from '@/constant';
-import { ANDROID_DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
+import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
 import { parsePossibleURL } from '@/constant/dappView';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
@@ -161,12 +161,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     );
 
     const userAgent = useMemo(() => {
-      if (Platform.OS === 'android') {
-        return contentMode === 'desktop'
-          ? ANDROID_DESKTOP_MODE_UA
-          : USER_AGENT.ANDROID;
+      if (contentMode === 'desktop') {
+        return `${DESKTOP_MODE_UA} ${APP_UA_PARIALS.UA_FULL_NAME}}`;
       }
-      return USER_AGENT.IOS;
+      return `${
+        Platform.OS === 'android' ? USER_AGENT.ANDROID : USER_AGENT.IOS
+      } ${APP_UA_PARIALS.UA_FULL_NAME}`;
     }, [contentMode]);
 
     const changeViewPortForDesktop = useCallback(
@@ -492,7 +492,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   }}
                   testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
                   userAgent={userAgent}
-                  applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
+                  // applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
                   javaScriptEnabled
                   // androidLayerType='software'
                   injectedJavaScriptBeforeContentLoaded={fullScript}
