@@ -147,7 +147,6 @@ export default function SendNFT() {
               address={toAddress}
               brandName={addressBrandName}
               addrDesc={addrDesc}
-              style={{ marginTop: 16 }}
             />
 
             {/* nft amount info */}

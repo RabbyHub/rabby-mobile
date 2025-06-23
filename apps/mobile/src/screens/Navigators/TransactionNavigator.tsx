@@ -158,7 +158,12 @@ export default function TransactionNavigator() {
         component={SendNFTScreen}
         options={mergeScreenOptions({
           title: 'Send',
-          ...headerPresets.withBgCard1_2024,
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
         })}
       />
       <TransactionStack.Screen

@@ -125,42 +125,6 @@ export default function BottomArea() {
         styles.bottomDockArea,
         isAndroid && { paddingBottom: 20 + safeOffBottom },
       ]}>
-      {shouldShowWhitelistAlert && (
-        <TouchableView
-          disabled={canSendNow}
-          onPress={handleClickAllowTransferTo}>
-          <View style={styles.whitelistAlertContentContainer}>
-            {whitelistAlertContent.prevIconColor && (
-              <ThemeIcon
-                src={
-                  whitelistAlertContent.success
-                    ? RcIconCheckedCC
-                    : RcIconUnCheckCC
-                }
-                color={whitelistAlertContent.prevIconColor}
-              />
-            )}
-            <Text
-              style={[
-                styles.whitelistAlertContentText,
-                !whitelistAlertContent.success && styles.errorText,
-              ]}>
-              {whitelistAlertContent.inlineIconColor && (
-                <ThemeIcon
-                  src={
-                    whitelistAlertContent.success
-                      ? RcIconCheckedCC
-                      : RcIconUnCheckCC
-                  }
-                  color={whitelistAlertContent.inlineIconColor}
-                />
-              )}{' '}
-              {whitelistAlertContent.content}
-            </Text>
-          </View>
-        </TouchableView>
-      )}
-
       {canShowDirectSign ? (
         <AuthButton
           authTitle={t('page.whitelist.confirmPassword')}
@@ -219,11 +183,9 @@ const getStyles = createGetStyles(colors => {
     bottomDockArea: {
       bottom: 0,
       width: '100%',
-      padding: 20,
+      padding: 24,
+      paddingBottom: 56,
       backgroundColor: colors['neutral-bg1'],
-      borderTopWidth: 0.5,
-      borderTopStyle: 'solid',
-      borderTopColor: colors['neutral-line'],
       position: 'absolute',
     },
 

@@ -15,6 +15,7 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { AddressViewer } from '@/components/AddressViewer';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { AddressItemShadowView } from '../Address/components/AddressItemShadowView';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -63,75 +64,78 @@ export function NFTSection({
       <View style={styles.titleSection}>
         <Text style={styles.sectionTitle}>{t('page.sendNFT.NFT')}</Text>
       </View>
+      <AddressItemShadowView>
+        <View style={styles.nftContainer}>
+          <Text style={styles.nftDetailTitle}>{nftItem.name || '-'}</Text>
+          <View style={styles.infoSection}>
+            <View style={styles.nftMedia}>
+              <Media
+                failedPlaceholder={
+                  <IconDefaultNFT width={'100%'} height={BASIC_INFO_H} />
+                }
+                type={nftItem.content_type}
+                src={nftItem.content}
+                style={styles.images}
+                mediaStyle={styles.images}
+                playable={true}
+                poster={nftItem.content}
+              />
+            </View>
 
-      <View style={styles.nftContainer}>
-        <Text style={styles.nftDetailTitle}>{nftItem.name || '-'}</Text>
-        <View style={styles.infoSection}>
-          <View style={styles.nftMedia}>
-            <Media
-              failedPlaceholder={
-                <IconDefaultNFT width={'100%'} height={BASIC_INFO_H} />
-              }
-              type={nftItem.content_type}
-              src={nftItem.content}
-              style={styles.images}
-              mediaStyle={styles.images}
-              playable={true}
-              poster={nftItem.content}
-            />
-          </View>
-
-          {/* right area */}
-          <View style={styles.nftDetailBlock}>
-            <View style={styles.nftDetailKvs}>
-              <View style={[styles.nftDetailLine]}>
-                <Text style={styles.nftDetaiLabel}>
-                  {t('page.sendNFT.Collection')}
-                </Text>
-                <Text style={[styles.nftDetailText, styles.nftDetailValue]}>
-                  {collectionName || '-'}
-                </Text>
-              </View>
-              <View style={[styles.nftDetailLine]}>
-                <Text style={styles.nftDetaiLabel}>
-                  {t('page.sendNFT.Chain')}
-                </Text>
-                <View style={styles.chainInfo}>
-                  <ChainIconImage size={16} chainEnum={chainItem?.enum} />
-                  <Text style={[styles.nftDetailValue, styles.chainName]}>
-                    {chainItem?.name}
+            {/* right area */}
+            <View style={styles.nftDetailBlock}>
+              <View style={styles.nftDetailKvs}>
+                <View style={[styles.nftDetailLine]}>
+                  <Text style={styles.nftDetaiLabel}>
+                    {t('page.sendNFT.Collection')}
+                  </Text>
+                  <Text style={[styles.nftDetailText, styles.nftDetailValue]}>
+                    {collectionName || '-'}
                   </Text>
                 </View>
-              </View>
-              <View style={[styles.nftDetailLine]}>
-                <Text style={styles.nftDetaiLabel}>
-                  {t('page.sendNFT.Contract')}
-                </Text>
-                <View style={[styles.nftDetailValue, styles.nftDetailCopy]}>
-                  <AddressViewer
-                    address={nftItem.contract_id}
-                    showArrow={false}
-                    addressStyle={[styles.nftDetailText]}
-                  />
-                  <CopyAddressIcon address={nftItem.contract_id} />
+                <View style={[styles.nftDetailLine]}>
+                  <Text style={styles.nftDetaiLabel}>
+                    {t('page.sendNFT.Chain')}
+                  </Text>
+                  <View style={styles.chainInfo}>
+                    <ChainIconImage size={16} chainEnum={chainItem?.enum} />
+                    <Text style={[styles.nftDetailValue, styles.chainName]}>
+                      {chainItem?.name}
+                    </Text>
+                  </View>
+                </View>
+                <View style={[styles.nftDetailLine]}>
+                  <Text style={styles.nftDetaiLabel}>
+                    {t('page.sendNFT.Contract')}
+                  </Text>
+                  <View style={[styles.nftDetailValue, styles.nftDetailCopy]}>
+                    <AddressViewer
+                      address={nftItem.contract_id}
+                      showArrow={false}
+                      addressStyle={[styles.nftDetailText]}
+                    />
+                    <CopyAddressIcon address={nftItem.contract_id} />
+                  </View>
                 </View>
               </View>
             </View>
           </View>
-        </View>
 
-        <View style={styles.amountArea}>
-          <Text style={styles.amountLabel}>{t('page.sendNFT.SendAmount')}</Text>
-          <NFTAmountInput
-            nftItem={nftItem}
-            style={styles.nftAmountInput}
-            value={formValues.amount}
-            onChange={val => {
-              handleFieldChange('amount', val + '');
-            }}
-          />
+          <View style={styles.amountArea}>
+            <Text style={styles.amountLabel}>
+              {t('page.sendNFT.SendAmount')}
+            </Text>
+            <NFTAmountInput
+              nftItem={nftItem}
+              style={styles.nftAmountInput}
+              value={formValues.amount}
+              onChange={val => {
+                handleFieldChange('amount', val + '');
+              }}
+            />
+          </View>
         </View>
-      </View>
+      </AddressItemShadowView>
     </View>
   );
 }
@@ -141,7 +145,7 @@ const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {
   return {
     nftSection: {
       width: '100%',
-      marginBottom: 16,
+      marginBottom: 24,
       gap: 12,
     },
     titleSection: {
@@ -156,12 +160,8 @@ const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
     },
     nftContainer: {
-      borderRadius: 16,
       paddingHorizontal: 22,
       paddingVertical: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
-      borderColor: colors2024['neutral-line'],
-      borderWidth: 1,
       width: '100%',
     },
     infoSection: {
@@ -222,11 +222,18 @@ const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {
     nftDetailValue: {},
     chainName: {
       marginLeft: 6,
+      fontSize: 12,
+      color: colors2024['neutral-body'],
+      lineHeight: 18,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     nftDetailText: {
       color: colors2024['neutral-body'],
-      fontSize: 14,
+      fontSize: 12,
+      lineHeight: 18,
       fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
     },
     nftDetailCopy: {
       display: 'flex',
@@ -250,8 +257,8 @@ const getNFTSectionStyles = createGetStyles2024(({ colors2024 }) => {
       fontWeight: '500',
     },
     nftAmountInput: {
-      borderColor: colors2024['neutral-line'],
-      backgroundColor: colors2024['neutral-line'],
+      borderColor: colors2024['neutral-bg-2'],
+      backgroundColor: colors2024['neutral-bg-2'],
       color: colors2024['neutral-title-1'],
       borderWidth: StyleSheet.hairlineWidth,
       borderRadius: 4,

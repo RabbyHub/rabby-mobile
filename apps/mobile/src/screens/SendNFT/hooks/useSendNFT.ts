@@ -360,10 +360,7 @@ export function useSendNFTForm({
         isValidAddress(formValues.to) &&
         !screenState.balanceError &&
         new BigNumber(formValues.amount).gt(0) &&
-        !screenState.isLoading &&
-        (!whitelistEnabled ||
-          screenState.temporaryGrant ||
-          toAddressInWhitelist),
+        !screenState.isLoading,
 
       canDirectSign:
         isAccountSupportMiniApproval(currentAccount?.type || '') &&
@@ -372,7 +369,6 @@ export function useSendNFTForm({
     };
   }, [
     whitelist,
-    whitelistEnabled,
     isAddrOnContactBook,
     formValues.to,
     screenState,
