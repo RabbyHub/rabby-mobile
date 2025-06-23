@@ -1,14 +1,36 @@
 #!/bin/bash
 
-EXPORT_DIR="${1:-$(pwd)}" # 优先使用第一个参数，否则设置为当前目录的 backups 子目录
-
 # 保存原始目录并设置退出时自动恢复
 ORIGINAL_DIR=$(pwd)
+git_head=$(git rev-parse HEAD)
+repo_root=$(git rev-parse --show-toplevel)
+
+WORK_DIR="/tmp/validate-rabby-mobile"
+
+if [ "$repo_root" == "$WORK_DIR" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+else
+  if [ -d "$WORK_DIR" ]; then
+    echo "ℹ️: Removing existing work directory $WORK_DIR ..."
+    rm -rf $WORK_DIR;
+  fi
+  echo "Will clone repo to $WORK_DIR"
+  git clone $repo_root $WORK_DIR && cd $WORK_DIR && git checkout $git_head;
+  SCRIPT_DIR="/tmp/validate-rabby-mobile/apps/mobile/scripts"
+fi
+
+cd $WORK_DIR/apps/mobile || {
+  echo "❌: Cannot switch to $WORK_DIR/apps/mobile"
+  exit 1
+}
+
+echo "ℹ️ Running validation script at git commit: $git_head"
+
+EXPORT_DIR="${1:-$(pwd)}" # 优先使用第一个参数，否则设置为当前目录的 backups 子目录
+
 # 设置退出时必定执行切回原目录（无论成功/失败）
 trap 'cd "$ORIGINAL_DIR"' EXIT
 
-# 获取脚本所在绝对路径
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 PROJECT_PATH=$(dirname -- "${SCRIPT_DIR}")
 cd "${SCRIPT_DIR}/.."
 
