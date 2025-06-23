@@ -270,11 +270,10 @@ export function useRateModal() {
 
       try {
         setRateModalState(prev => ({ ...prev, isSubmitting: true }));
-        needFeedbackText &&
-          (await openapi.submitFeedback({
-            text: feedbackContent,
-            usage: 'rating',
-          }));
+        await openapi.submitFeedback({
+          text: feedbackContent,
+          usage: 'rating',
+        });
         matomoRequestEvent({
           category: 'Rate Rabby',
           action: 'Rate_SubmitAdvice',
