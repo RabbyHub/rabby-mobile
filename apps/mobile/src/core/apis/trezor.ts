@@ -56,6 +56,12 @@ export async function unlockDevice() {
   await keyring.unlock();
 }
 
+export async function getAccounts() {
+  const keyring = await getKeyring<TrezorKeyring>(KEYRING_TYPE.TrezorKeyring);
+
+  return keyring.getAccounts();
+}
+
 export async function importFirstAddress({
   retryCount = 1,
 }: {

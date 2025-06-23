@@ -48,6 +48,7 @@ import ConfirmAddress from '@/screens/Send/components/ConfirmAddress';
 import SelectCex from '@/screens/Send/components/SelectCex';
 import { BatchRevokeErrorReason } from '@/screens/BatchRevoke/BatchRevokeErrorReason';
 import { FundYourWallet } from '@/screens/Home/FundYourWallet';
+import { SettingTrezor } from '@/components/HDSetting/SettingTrezor';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -73,6 +74,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SETTING_KEYSTONE]: ['65%'],
   [MODAL_NAMES.CONNECT_ONEKEY]: ['95%'],
   [MODAL_NAMES.SETTING_ONEKEY]: ['55%'],
+  [MODAL_NAMES.SETTING_TREZOR]: ['85%'],
   [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: ['80%'],
   [MODAL_NAMES.TIP_PRIVACY_POLICY]: ['80%'],
@@ -121,6 +123,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SETTING_KEYSTONE]: SettingKeystone,
   [MODAL_NAMES.CONNECT_ONEKEY]: ConnectOneKey,
   [MODAL_NAMES.SETTING_ONEKEY]: SettingOneKey,
+  [MODAL_NAMES.SETTING_TREZOR]: SettingTrezor,
   [MODAL_NAMES.SETTING_HDKEYRING]: SettingHDKeyring,
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: OneKeyInputPin,
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: OneKeyInputPassphrase,

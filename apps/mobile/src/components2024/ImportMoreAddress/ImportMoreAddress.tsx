@@ -18,6 +18,7 @@ import {
   apiLedger,
   apiMnemonic,
   apiOneKey,
+  apiTrezor,
 } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
 import { replaceToFirst } from '@/utils/navigation';
@@ -65,6 +66,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         return apiOneKey;
       case KEYRING_TYPE.KeystoneKeyring:
         return apiKeystone;
+      case KEYRING_TYPE.TrezorKeyring:
+        return apiTrezor;
       default:
         return null;
     }
@@ -75,6 +78,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         return KEYRING_TYPE.LedgerKeyring;
       case KEYRING_TYPE.OneKeyKeyring:
         return KEYRING_TYPE.OneKeyKeyring;
+      case KEYRING_TYPE.TrezorKeyring:
+        return KEYRING_TYPE.TrezorKeyring;
       case KEYRING_TYPE.HdKeyring:
         return KEYRING_TYPE.HdKeyring;
       default:
@@ -87,6 +92,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         return KEYRING_CLASS.HARDWARE.LEDGER;
       case KEYRING_TYPE.OneKeyKeyring:
         return KEYRING_CLASS.HARDWARE.ONEKEY;
+      case KEYRING_TYPE.TrezorKeyring:
+        return KEYRING_CLASS.HARDWARE.TREZOR;
       case KEYRING_TYPE.HdKeyring:
         return KEYRING_CLASS.MNEMONIC;
       default:
@@ -369,6 +376,8 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         return MODAL_NAMES.SETTING_ONEKEY;
       case KEYRING_TYPE.KeystoneKeyring:
         return MODAL_NAMES.SETTING_KEYSTONE;
+      case KEYRING_TYPE.TrezorKeyring:
+        return MODAL_NAMES.SETTING_TREZOR;
       default:
         return null;
     }

@@ -48,6 +48,7 @@ export enum APPROVAL_MODAL_NAMES {
   'LedgerHardwareWaiting' = 'LedgerHardwareWaiting',
   'KeystoneHardwareWaiting' = 'KeystoneHardwareWaiting',
   'OneKeyHardwareWaiting' = 'OneKeyHardwareWaiting',
+  'TrezorHardwareWaiting' = 'TrezorHardwareWaiting',
   'PrivatekeyWaiting' = 'PrivatekeyWaiting',
   'ETHSign' = 'ETHSign',
   'Unknown' = 'Unknown',

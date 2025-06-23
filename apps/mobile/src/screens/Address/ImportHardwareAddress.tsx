@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
-import { Linking, View } from 'react-native';
+import React, { useCallback } from 'react';
+import { View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Card } from '@/components2024/Card';
@@ -18,23 +18,17 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { apiKeystone, apiTrezor } from '@/core/apis';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { trigger } from 'react-native-haptic-feedback';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { keyringService, preferenceService } from '@/core/services';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { useFocusEffect } from '@react-navigation/native';
-import TrezorConnect, {
-  BLOCKCHAIN_EVENT,
-  DEVICE_EVENT,
-  TRANSPORT_EVENT,
-} from '@trezor/connect-mobile';
-import { toast } from '@/components2024/Toast';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useAtom } from 'jotai';
 import { settingAtom } from '@/components/HDSetting/MainContainer';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -151,9 +145,16 @@ export function ImportHardwareAddressScreen(): JSX.Element {
   const { showImportMorePopup } = useShowImportMoreAddressPopup();
 
   const importFirstAddress = React.useCallback(async () => {
+    const trezorImportedAddress = await apiTrezor.getAccounts();
+
     const address = await apiTrezor.importFirstAddress({});
 
-    if (address) {
+    const isImportedAddress =
+      address && trezorImportedAddress.length
+        ? trezorImportedAddress?.some(e => isSameAddress(e, address))
+        : false;
+
+    if (address && !isImportedAddress) {
       navigate(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
@@ -163,59 +164,26 @@ export function ImportHardwareAddressScreen(): JSX.Element {
           isFirstImport: true,
         },
       });
-      // onDone?.();
     } else {
       setSetting({
         startNumber: 1,
         hdPath: LedgerHDPathType.BIP44,
       });
-      // navigate(RootNames.StackAddress, {
-      //   screen: RootNames.ImportMoreAddress,
-      //   params: {
-      //     type: KEYRING_TYPE.OneKeyKeyring,
-      //   },
-      // });
+
       showImportMorePopup({
         type: KEYRING_TYPE.TrezorKeyring,
         brand: KEYRING_CLASS.HARDWARE.TREZOR,
       });
-      // onDone?.();
     }
   }, [setSetting, showImportMorePopup]);
 
   const handleTrezor = React.useCallback(async () => {
-    // const result = await TrezorConnect.ethereumGetAddress({
-    //   bundle: Array.from({ length: 50 }).map((_, idx) => ({
-    //     path: `m/44'/60'/${idx}'/0/0`,
-    //     showOnTrezor: false,
-    //   })),
-    // });
-
-    console.log('test 123');
-
     try {
       importFirstAddress();
     } catch (error) {
       console.log('error', error);
     }
   }, [importFirstAddress]);
-
-  // useEffect(() => {
-  //   TrezorConnect.on(DEVICE_EVENT, event => {
-  //     toast.info(`TrezorConnect event: ${JSON.stringify(event)}`);
-  //     console.debug('TrezorConnect event', event);
-  //   });
-
-  //   TrezorConnect.on(BLOCKCHAIN_EVENT, event => {
-  //     toast.info(`TrezorConnect BLOCKCHAIN_EVENT: ${JSON.stringify(event)}`);
-  //     console.debug('TrezorConnect BLOCKCHAIN_EVENT', event);
-  //   });
-
-  //   TrezorConnect.on(TRANSPORT_EVENT, event => {
-  //     toast.info(`TrezorConnect TRANSPORT_EVENT: ${JSON.stringify(event)}`);
-  //     console.debug('TrezorConnect TRANSPORT_EVENT', event);
-  //   });
-  // }, []);
 
   return (
     <NormalScreenContainer2024>
