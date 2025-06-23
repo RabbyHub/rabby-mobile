@@ -43,7 +43,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
     userFeedback,
     onChangeFeedback,
     isSubmitting,
-    submitFeedback,
+    pushRateDetails,
     feedbackOverLimit,
 
     openAppRateUrl,
@@ -120,6 +120,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                 <View style={styles.rateButtonsContainer}>
                   <Button
                     type="primary"
+                    loading={isSubmitting}
                     containerStyle={styles.rateButtonContainer}
                     buttonStyle={[styles.rateButton, styles.rateButtonConfirm]}
                     titleStyle={[
@@ -128,7 +129,9 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                     ]}
                     onPress={() => {
                       openAppRateUrl();
-                      disableExposureRateGuide();
+                      pushRateDetails({ totalBalanceText }).finally(() => {
+                        closeModal();
+                      });
                     }}
                     title={
                       IS_ANDROID
@@ -222,7 +225,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                       styles.feedbackButtonConfirmText,
                     ]}
                     onPress={() => {
-                      submitFeedback({ totalBalanceText })
+                      pushRateDetails({ totalBalanceText })
                         .then(() => {
                           toast.success(
                             t('page.nextComponent.rateModal.feedbackSuccess'),

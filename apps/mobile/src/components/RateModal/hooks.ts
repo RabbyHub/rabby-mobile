@@ -235,14 +235,14 @@ export function useRateModal() {
     [setRateModalState],
   );
 
-  const submitFeedback = useCallback(
+  const pushRateDetails = useCallback(
     async (params: { totalBalanceText: string }) => {
-      if (rateModalState.userStar > 3) return;
+      const needFeedbackText = rateModalState.userStar <= 3;
 
       const feedbackText = rateModalState.userFeedback.trim();
 
       const feedbackContent = [
-        `Comment: ${feedbackText}`,
+        needFeedbackText && `Comment: ${feedbackText}`,
         '  ',
         `Rate: ${makeStarText(rateModalState.userStar, 5)} (${
           rateModalState.userStar
@@ -270,10 +270,11 @@ export function useRateModal() {
 
       try {
         setRateModalState(prev => ({ ...prev, isSubmitting: true }));
-        await openapi.submitFeedback({
-          text: feedbackContent,
-          usage: 'rating',
-        });
+        needFeedbackText &&
+          (await openapi.submitFeedback({
+            text: feedbackContent,
+            usage: 'rating',
+          }));
         matomoRequestEvent({
           category: 'Rate Rabby',
           action: 'Rate_SubmitAdvice',
@@ -315,7 +316,7 @@ export function useRateModal() {
       rateModalState.userFeedback.length > FEEDBACK_LEN_LIMIT - 1,
     onChangeFeedback,
     isSubmitting: rateModalState.isSubmitting,
-    submitFeedback,
+    pushRateDetails,
 
     openAppRateUrl,
   };
