@@ -130,6 +130,10 @@ node ./scripts/normalize_objc_msgsend_ldr.js "$APP_PATH/RabbyMobile.s" "$PROJECT
 rm -f "$APP_PATH/RabbyMobile"
 rm -f "$APP_PATH/RabbyMobile.s"
 
+# Trim machine-related data from the assembly file
+chmod +x $SCRIPT_DIR/modify_plist_value.sh
+find $APP_PATH -name Info.plist -exec $SCRIPT_DIR/modify_plist_value.sh {} BuildMachineOSBuild xxxxxx \;
+
 # 计算总哈希
 OVERALL_HASH=$(find "$APP_PATH" -type f ! -name ".DS_Store" -print0 |
   LC_COLLATE=C sort -z |
