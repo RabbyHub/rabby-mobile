@@ -182,7 +182,7 @@ EOF
 
 echo
 
-git_hash=git log --format="%H" -n 1
+git_hash=`git log --format="%H" -n 1`
 
 echo "GIT Hash: $git_hash"
 echo "App SHA256 Hash: $OVERALL_HASH"
