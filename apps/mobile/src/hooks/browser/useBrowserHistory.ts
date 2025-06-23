@@ -8,6 +8,7 @@ import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 import { dappsAtom } from '../useDapps';
 import { useBrowserBookmark } from './useBrowserBookmark';
+import { safeParseURL } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export const browserHistoryAtom = atom<EntityState<BrowserHistoryItem, string>>(
   {
@@ -67,7 +68,14 @@ export function useBrowserHistory() {
         }
         const origin = urlUtils.canoicalizeDappUrl(item.url).httpOrigin;
         const dapp = dapps[origin];
-        const isFavorite = !!bookmarkStore.entities[key];
+        const urlInfo = safeParseURL(item.url);
+        const isFavorite =
+          urlInfo && [urlInfo.origin, urlInfo.origin + '/'].includes(item.url)
+            ? !!(
+                bookmarkStore.entities[urlInfo.origin] ||
+                bookmarkStore.entities[urlInfo.origin + '/']
+              )
+            : !!bookmarkStore.entities[key];
         return {
           ...dapp,
           ...item,

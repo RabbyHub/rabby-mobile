@@ -1,6 +1,6 @@
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
-import { entries, sortBy } from 'lodash';
+import { entries, sortBy, uniq } from 'lodash';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import * as Sentry from '@sentry/react-native';
 import {
@@ -10,6 +10,7 @@ import {
   EntityTools,
 } from '../utils/createEntryAdapter';
 import { DappInfo } from './dappService';
+import { safeParseURL } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export interface BrowserHistoryItem {
   url: string;
@@ -198,11 +199,26 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         entities: {},
       };
 
-      this.store.browserBookmarks.ids.forEach(key => {
-        const item = this.store.browserBookmarks.entities[key];
+      const ids = uniq(
+        this.store.browserBookmarks.ids.map(url => {
+          const urlInfo = safeParseURL(url);
+          return urlInfo && urlInfo.origin === url ? url + '/' : url;
+        }),
+      );
+
+      ids.forEach(key => {
+        const urlInfo = safeParseURL(key);
+        const item =
+          urlInfo && urlInfo.origin + '/' === key
+            ? this.store.browserBookmarks.entities[key] ||
+              this.store.browserBookmarks.entities[urlInfo.origin]
+            : this.store.browserBookmarks.entities[key];
         if (item && /^https?:\/\//.test(item.url)) {
           res.ids.push(key);
-          res.entities[key] = item;
+          res.entities[key] = {
+            ...item,
+            url: key,
+          };
         }
       });
       this.store.browserBookmarks = res;
@@ -214,6 +230,8 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         entities: {},
       };
     }
+
+    console.log(this.store.browserBookmarks);
 
     try {
       const res: EntityState<BrowserHistoryItem, string> = {
