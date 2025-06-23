@@ -184,5 +184,6 @@ echo
 
 git_hash=`git log --format="%H" -n 1`
 
+echo "macOS Version: $(sw_vers -productVersion)"
 echo "GIT Hash: $git_hash"
 echo "App SHA256 Hash: $OVERALL_HASH"
