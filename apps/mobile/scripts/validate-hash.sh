@@ -181,9 +181,7 @@ EOF
 } >>"$BUILD_REPORT_FILE"
 
 echo
-
-git_hash=`git log --format="%H" -n 1`
-
-echo "macOS Version: $(sw_vers -productVersion)"
-echo "GIT Hash: $git_hash"
+echo
+echo "macOS Version: $(sw_vers -productVersion)($(sw_vers -buildVersion))"
+echo "GIT Commit Hash: $(git rev-parse HEAD)"
 echo "App SHA256 Hash: $OVERALL_HASH"
