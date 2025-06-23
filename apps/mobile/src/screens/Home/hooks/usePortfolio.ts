@@ -90,7 +90,7 @@ export const tagProfiles = (
       return (b.netWorth || 0) - (a.netWorth || 0);
     });
 };
-export const log = (...args: any) => {
+export const log = () => {
   // console.log(...args);
 };
 
@@ -166,23 +166,26 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
           setHasValue(!!cachePortocols.length);
         }
       }
-
-      let projectDict: Record<string, DisplayedProject> | null = {};
-      const protocols = await syncProtocols(userAddr, force);
-      protocols.forEach(project => {
-        if (projectDict) {
-          projectDict = produce(projectDict, draft => {
-            project && portfolio2Display(project, draft);
-          });
-        }
-      });
-      const realtimeData = Object.values(projectDict)?.sort(
-        (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
-      );
-      const tokenSetting = await preferenceService.getUserTokenSettings();
-      setData(tagProfiles(realtimeData, tokenSetting));
-      setHasValue(!!protocols.length);
-      setLoading(false);
+      try {
+        let projectDict: Record<string, DisplayedProject> | null = {};
+        const protocols = await syncProtocols(userAddr, force);
+        protocols.forEach(project => {
+          if (projectDict) {
+            projectDict = produce(projectDict, draft => {
+              project && portfolio2Display(project, draft);
+            });
+          }
+        });
+        const realtimeData = Object.values(projectDict)?.sort(
+          (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
+        );
+        const tokenSetting = await preferenceService.getUserTokenSettings();
+        setData(tagProfiles(realtimeData, tokenSetting));
+        setHasValue(!!protocols.length);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
     },
     [setData, setHasValue, setLoading, userAddr],
   );

@@ -58,6 +58,7 @@ import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
+import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -239,11 +240,10 @@ export const TokenDetailScreen = () => {
     return _token;
   }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
+  const { top10Addresses, list: accounts } = useAccountInfo();
 
-  const finalAccount = account || preferenceService.getFallbackAccount();
+  const finalAccount =
+    account || accounts[0] || preferenceService.getFallbackAccount();
 
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
@@ -497,7 +497,7 @@ export const TokenDetailScreen = () => {
 
   const { t } = useTranslation();
 
-  if (!finalAccount) {
+  if (isSingleAddress && !finalAccount) {
     return null;
   }
 
@@ -586,6 +586,7 @@ export const TokenDetailScreen = () => {
         <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
         <HistoryList
           accounts={accounts}
+          top10Addresses={top10Addresses}
           finalAccount={finalAccount}
           isForMultipleAddress={!isSingleAddress}
           token={token}

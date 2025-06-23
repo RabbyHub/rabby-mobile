@@ -7,7 +7,7 @@ import {
 import LedgerEth, { ledgerService } from '@ledgerhq/hw-app-eth';
 import type Transport from '@ledgerhq/hw-transport';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { eventBus } from '@rabby-wallet/keyring-utils';
+import { eventBus as keyringEventBus } from '@rabby-wallet/keyring-utils';
 import * as sigUtil from 'eth-sig-util';
 import * as ethUtil from 'ethereumjs-util';
 
@@ -71,7 +71,7 @@ class LedgerKeyring {
 
   usedHDPathTypeList: Record<string, HDPathType> = {};
 
-  events = eventBus;
+  events = keyringEventBus;
 
   deviceId?: string;
 

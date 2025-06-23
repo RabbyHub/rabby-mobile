@@ -281,8 +281,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 12,
     marginLeft: 15,
     marginRight: 16,
-    marginTop: 14,
-    marginBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

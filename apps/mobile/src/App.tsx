@@ -35,6 +35,7 @@ import { useTriggerI18nChangeOnAppTop } from './hooks/lang';
 import { ScreenSceneAccountProvider } from './hooks/accountsSwitcher';
 import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useGasAccountInfo } from './screens/GasAccount/hooks';
+import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
 
@@ -67,6 +68,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useIAPListener();
   useGasAccountInfo();
   useTrezorConnectOnUrl();
+  useIncreaseTxCountOnAppTop({ isTop: true });
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();

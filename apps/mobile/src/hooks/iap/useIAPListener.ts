@@ -41,11 +41,11 @@ export const useIAPListener = () => {
           );
 
           eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase });
-        } catch (e) {
+        } catch (e: any) {
           eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase, error: e });
         }
         finishTransaction({ purchase, isConsumable: true });
-      } catch (e) {
+      } catch (e: any) {
         eventBus.emit(EVENTS.PURCHASE_UPDATED, { data: purchase, error: e });
         console.error(e);
       }

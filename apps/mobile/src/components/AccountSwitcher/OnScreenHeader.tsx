@@ -65,6 +65,10 @@ export function ScreenHeaderAccountSwitcher({
     }
   });
 
+  const len = useMemo(() => {
+    return myAddresses.length > 10 ? 10 : myAddresses.length;
+  }, [myAddresses]);
+
   const IconCom = isLight ? RcCaretDownCircleCC : RcCaretDownCircleDarkCC;
 
   return (
@@ -100,7 +104,7 @@ export function ScreenHeaderAccountSwitcher({
           <Text style={styles.address}>
             {t('component.accountSwitcher.all')}{' '}
             {t('component.accountSwitcher.screenHeaderSubTitle', {
-              count: myAddresses.length,
+              count: len,
             })}
           </Text>
         )}

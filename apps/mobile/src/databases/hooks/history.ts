@@ -60,9 +60,7 @@ export function useHistoryBasicInfo({ enableAutoFetch = false }) {
   return { assetsInfo, fetchAssetsInfo };
 }
 
-export const useSyncHistoryDB = (
-  sortedAccounts: KeyringAccountWithAlias[] = [],
-) => {
+export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
   const {
     setProjectDict,
@@ -410,8 +408,7 @@ export const useSyncHistoryDB = (
 
   const syncTop10History = useMemoizedFn(
     async (force?: boolean, resetEntity?: boolean) => {
-      const top10Account = sortedAccounts.slice(0, 10);
-      if (top10Account.length === 0) {
+      if (top10Addresses.length === 0) {
         console.debug('🔍syncTop10History CUSTOM_LOGGER:=>: No account');
         return;
       }
@@ -432,8 +429,8 @@ export const useSyncHistoryDB = (
           interval: 2000,
           intervalCap: 5,
         });
-        for (const account of top10Account) {
-          const address = account.address.toLowerCase();
+        for (const item of top10Addresses) {
+          const address = item.toLowerCase();
           const isForceFetchFromApi = force || (await isNeedSyncData(address));
           if (isForceFetchFromApi) {
             const latestUpdateTime = updateHistoryTime[address] || 0;
@@ -452,7 +449,7 @@ export const useSyncHistoryDB = (
                 ]);
               } catch (error) {
                 console.error(
-                  `syncTop10History Error fetching data for ${account.address.slice(
+                  `syncTop10History Error fetching data for ${address.slice(
                     -4,
                   )}:`,
                   error,

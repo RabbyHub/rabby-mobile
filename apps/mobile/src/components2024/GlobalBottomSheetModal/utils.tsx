@@ -49,6 +49,8 @@ import SelectCex from '@/screens/Send/components/SelectCex';
 import { BatchRevokeErrorReason } from '@/screens/BatchRevoke/BatchRevokeErrorReason';
 import { FundYourWallet } from '@/screens/Home/FundYourWallet';
 import { SettingTrezor } from '@/components/HDSetting/SettingTrezor';
+import RecentlyBuyListDialog from '@/screens/CopyTrading/component/RecentlyBuyListDialog';
+import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -61,6 +63,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
   [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: ['80%'],
   [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: ['80%'],
+  [MODAL_NAMES.RECENTLY_BUY_LIST]: ['80%'],
   [MODAL_NAMES.CANCEL_CONNECT]: [244],
   [MODAL_NAMES.SELECT_CHAIN]: ['80%'],
   [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
@@ -92,6 +95,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024]: [],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: [508],
+  [MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: [470],
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: [492],
   [MODAL_NAMES.DESCRIPTION]: [674],
@@ -105,6 +109,7 @@ export const SNAP_POINTS: SnapPoints = {
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.APPROVAL]: Approval,
+  [MODAL_NAMES.RECENTLY_BUY_LIST]: RecentlyBuyListDialog,
   [MODAL_NAMES.CANCEL_APPROVAL]: CancelApproval,
   [MODAL_NAMES.SWITCH_ADDRESS]: SwitchAddress,
   [MODAL_NAMES.SWITCH_CHAIN]: SwitchChain,
@@ -130,6 +135,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: OneKeyPinOrPassphrase,
   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: SeedPhraseBackupToCloud,
   [MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD]: AddAddressSelectMethod,
+  [MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG]: NotMatterAddressDialog,
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: FundYourWallet,
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: AddWhitelistSelectMethod,
   [MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP]: SeedPhraseManualBackup,

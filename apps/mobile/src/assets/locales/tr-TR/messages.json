@@ -948,7 +948,8 @@
         "search": "Token Ara",
         "dapps": "Dapps",
         "queue": "Kuyruk",
-        "websites": "Web Siteleri"
+        "websites": "Web Siteleri",
+        "copyTrading": "Copy Trading"
       }
     },
     "dashboard": {
@@ -1066,6 +1067,18 @@
         "watchOnlyTitle": "İzleme Yalnızca Cüzdanı İçe Aktar",
         "safeTitle": "Güvenli Cüzdanı İçe Aktar",
         "ImportCloud": "{{cloud}}'den İçe Aktar"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Rabby Wallet'ı nasıl değerlendiriyorsunuz?"
+      },
+      "rateModal": {
+        "feedbackSubmit": "Gönder",
+        "feedbackSuccess": "Geri bildiriminiz için teşekkür ederiz",
+        "confirmButtonTitleAndroid": "Google Play'de Puan Ver",
+        "confirmButtonTitleIOS": "Uygulama Mağazasında Puan Ver",
+        "descriptionAndroid": "Eğer Rabby'yi beğendiyseniz, Google Play'de vereceğiniz hızlı bir puan çok şey ifade eder.",
+        "feedbackTitle": "Geri bildiriminiz mi var? Dinliyoruz.",
+        "descriptionIOS": "Eğer Rabby'i beğeniyorsanız, App Store'da vereceğiniz hızlı bir puan çok şey ifade eder."
       }
     },
     "newAddress": {
@@ -1362,7 +1375,10 @@
         "title_one": "{{count}} Cüzdan",
         "title_zero": "0 Cüzdan",
         "title_other": "{{count}} Cüzdanlar",
-        "importWatchAddress": "İçe Aktarılan Sadece İzleme Cüzdanı"
+        "importWatchAddress": "İçe Aktarılan Sadece İzleme Cüzdanı",
+        "notIncludedInTransactions": "İşlemlere dahil değil",
+        "moreWallets": "Daha Fazla Cüzdan",
+        "notIncludedInTotalBalance": "Toplam Bakiyeye Dahil Değil"
       },
       "backup-seed-phrase": "Yedek Seed Phrase",
       "add-to-whitelist": "Beyaz Listeye Ekle",
@@ -1380,7 +1396,16 @@
       "manage-seed-phrase": "Seed İfadesini Yönet",
       "manage-addresses-under-this-seed-phrase": "Bu seed ifadesi ile cüzdan ekle",
       "delete-address": "Cüzdanı silin",
-      "delete-desc": "Bu cüzdanı silmek istediğinizden emin misiniz?"
+      "delete-desc": "Bu cüzdanı silmek istediğinizden emin misiniz?",
+      "notMatterAddressDialog": {
+        "helpTitle": "En iyi 10'un altında sıralanan cüzdanlar",
+        "safeWallet": "Güvenli Cüzdan",
+        "notTop10Address": "En fazla 10'un altında sıralanan cüzdanlar.",
+        "watchOnlyWallet": "Sadece İzleme Cüzdanı",
+        "title": "Aşağıdaki cüzdanlar Toplam Bakiye'ye dahil edilmemiştir.",
+        "helpDescription2": "Cüzdanları sabitlemek ve hangilerinin dahil edileceğini ayarlamak için uzun basabilirsiniz.",
+        "helpDescription1": "Zamanında ve doğru veri güncellemelerini sağlamak için, yalnızca en iyi 10 cüzdanınız Toplam Bakiyeye ve Portföye dahil edilmiştir."
+      }
     },
     "customRpc": {
       "EditRPCModal": {
@@ -1939,6 +1964,21 @@
       "ChainSelector": {
         "title": "Zincir Seçin"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "Smart Money'den Copy Trading",
+        "description": "Akıllı para cüzdanlarından son etkinliklere dayalı token'ları keşfedin. Detaylı ticaret miktarlarını ve o cüzdanlardan elde edilen tarihsel karları görmek için bir token'a dokunun."
+      },
+      "buy": "Satın Al",
+      "smartMoneyWallet": "Akıllı Para Cüzdanı",
+      "comingSoon": "Yakında...",
+      "historyProfit": "Geçmiş Kar",
+      "updateText": "{{count}} Trendler Güncellendi",
+      "refreshTitle": "Daha Fazla Copy Trading Yükleniyor Smart Money'den",
+      "smartMoneyWallets": "Akıllı Para Cüzdanları",
+      "recentBuy": "Son Satın Alım",
+      "noMoreData": "Artık veri yok"
     }
   },
   "component": {

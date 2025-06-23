@@ -31,10 +31,11 @@ import SendInputScreen from '../Send/SubScreens/SendInput';
 import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
 import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
 import SendHistoryScreen from '../WhiteList/SelectSendTransationAddress';
+import { CopyTradingScreen } from '../CopyTrading';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import WhitelistInputScreen from '../WhiteList/InputScreen';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
-
+import { useTranslation } from 'react-i18next';
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
@@ -42,6 +43,7 @@ export default function TransactionNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
   // console.log('============== TransactionNavigator Render =========');
 
+  const { t } = useTranslation();
   const { colors, colors2024, isLight } = useTheme2024();
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
 
@@ -394,6 +396,22 @@ export default function TransactionNavigator() {
           },
           headerStyle: {
             backgroundColor: 'transparent',
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.CopyTrading}
+        component={CopyTradingScreen}
+        options={mergeScreenOptions({
+          title: t('page.home.services.copyTrading'),
+          ...headerPresets.withBgCard1_2024,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
           },
         })}
       />
