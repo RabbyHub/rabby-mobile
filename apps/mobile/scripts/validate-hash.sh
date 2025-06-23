@@ -120,7 +120,13 @@ fi
 # Assets.car 特殊处理，它里面有个 Timestamp，还没法指定，只能先解析成 json，再把 timestamp 移除，对比 json 的 hash
 if [ -f "$APP_PATH/Assets.car" ]; then
   xcrun assetutil --info "$APP_PATH/Assets.car" >"$APP_PATH/Assets.car.json" || exit 1
-  sed -i '' 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' "$APP_PATH/Assets.car.json" && rm -f "$APP_PATH/Assets.car"
+  # process Timestamp
+  sed -i '' 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' "$APP_PATH/Assets.car.json";
+  # process DumpToolVersion
+  sed -i '' 's/"DumpToolVersion" : [0-9]*\.[0-9]*/"DumpToolVersion" : 0/' "$APP_PATH/Assets.car.json";
+  sed -i '' 's/"DumpToolVersion" : [0-9]*/"DumpToolVersion" : 0/' "$APP_PATH/Assets.car.json";
+
+  rm -f "$APP_PATH/Assets.car"
 fi
 
 # 处理源码，先将其代码段剥离
