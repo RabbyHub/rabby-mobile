@@ -180,6 +180,7 @@ const getDefaultValue = () => ({
   userStar: STAR_COUNT,
 
   userFeedback: '',
+  isSubmitting: false,
 });
 const rateModalAtom = atom(getDefaultValue());
 
@@ -268,6 +269,7 @@ export function useRateModal() {
        **/
 
       try {
+        setRateModalState(prev => ({ ...prev, isSubmitting: true }));
         await openapi.submitFeedback({
           text: feedbackContent,
           usage: 'rating',
@@ -285,9 +287,11 @@ export function useRateModal() {
           },
         });
         console.error('Failed to submit feedback:', error);
+      } finally {
+        setRateModalState(prev => ({ ...prev, isSubmitting: false }));
       }
     },
-    [rateModalState],
+    [rateModalState, setRateModalState],
   );
 
   const openAppRateUrl = useCallback(() => {
@@ -310,6 +314,7 @@ export function useRateModal() {
     feedbackOverLimit:
       rateModalState.userFeedback.length > FEEDBACK_LEN_LIMIT - 1,
     onChangeFeedback,
+    isSubmitting: rateModalState.isSubmitting,
     submitFeedback,
 
     openAppRateUrl,

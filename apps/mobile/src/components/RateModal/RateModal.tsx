@@ -23,8 +23,6 @@ import {
   useExposureRateGuide,
   useRateModal,
 } from './hooks';
-import { openExternalUrl } from '@/core/utils/linking';
-import { APP_URLS } from '@/constant';
 import { toast } from '@/components2024/Toast';
 import PressableStar from './RateStar';
 
@@ -44,6 +42,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
 
     userFeedback,
     onChangeFeedback,
+    isSubmitting,
     submitFeedback,
     feedbackOverLimit,
 
@@ -211,6 +210,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                   />
                   <Button
                     type="primary"
+                    loading={isSubmitting}
                     disabled={disableSubmit}
                     containerStyle={styles.feedbackButtonContainer}
                     buttonStyle={[
