@@ -40,7 +40,7 @@ export async function importFirstAddress({
   retryCount = 1,
 }: {
   retryCount?: number;
-}): Promise<string | false> {
+}): Promise<string[]> {
   let address;
 
   const task = async () => {
@@ -51,7 +51,7 @@ export async function importFirstAddress({
       if (!e.message?.includes('import is invalid')) {
         throw e;
       }
-      return false;
+      return [];
     }
   };
 

@@ -29,6 +29,7 @@ import { settingAtom } from '@/components/HDSetting/MainContainer';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { useShowImportMoreAddressPopup } from '@/hooks/useShowImportMoreAddressPopup';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { toast } from '@/components2024/Toast';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
@@ -145,13 +146,17 @@ export function ImportHardwareAddressScreen(): JSX.Element {
   const { showImportMorePopup } = useShowImportMoreAddressPopup();
 
   const importFirstAddress = React.useCallback(async () => {
-    const trezorImportedAddress = await apiTrezor.getAccounts();
+    let trezorImportedAddress = [] as string[];
+    try {
+      trezorImportedAddress = await apiTrezor.getAccounts();
+    } catch (error) {}
 
+    await apiTrezor.cleanUp();
     const address = await apiTrezor.importFirstAddress({});
 
     const isImportedAddress =
-      address && trezorImportedAddress.length
-        ? trezorImportedAddress?.some(e => isSameAddress(e, address))
+      address?.[0] && trezorImportedAddress.length
+        ? trezorImportedAddress?.some(e => isSameAddress(e, address?.[0] || ''))
         : false;
 
     if (address && !isImportedAddress) {
@@ -179,8 +184,10 @@ export function ImportHardwareAddressScreen(): JSX.Element {
 
   const handleTrezor = React.useCallback(async () => {
     try {
-      importFirstAddress();
+      await importFirstAddress();
     } catch (error) {
+      toast.error(`error ${(error as any)?.message || String(error)}`);
+
       console.log('error', error);
     }
   }, [importFirstAddress]);
