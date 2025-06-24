@@ -23,6 +23,13 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { formatUsdValueKMB } from '../../Home/utils/price';
 import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
+import {
+  runOnJS,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useDerivedValue,
+} from 'react-native-reanimated';
+import AnimateableText from 'react-native-animateable-text';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { openapi } from '@/core/request';
@@ -37,6 +44,84 @@ import { Skeleton } from '@rneui/themed';
 import { toast } from '@/components2024/Toast';
 
 const ScreenWidth = Dimensions.get('screen').width;
+interface IHeaderProps {
+  currentPrice: number;
+  currentChange: number;
+  isPositive: boolean;
+  data: { timestamp: number; value: number }[];
+}
+
+const PriceHeader = ({
+  currentPrice,
+  currentChange,
+  isPositive,
+  data,
+}: IHeaderProps) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { currentIndex } = LineChart.useChart();
+
+  const priceText = useDerivedValue(() => {
+    const isActiveIndexData = data?.[currentIndex.value]?.value !== undefined;
+    const formatPriceValue = isActiveIndexData
+      ? data?.[currentIndex.value]?.value
+      : currentPrice;
+    return `$${formatPrice(formatPriceValue)}`;
+  }, [data, currentIndex, currentPrice]);
+  const percentChange = useDerivedValue(() => {
+    if (data?.[currentIndex.value] && data?.[0]) {
+      const currentValue = data[currentIndex.value].value;
+      const firstValue = data[0].value;
+      const change = ((currentValue - firstValue) / firstValue) * 100;
+      return `${formatPercentage(change)}`;
+    }
+    return formatPercentage(currentChange);
+  }, [data, currentIndex, currentChange]);
+
+  const changeStyleProps = useAnimatedStyle(() => {
+    if (data?.[currentIndex.value] && data?.[0]) {
+      const currentValue = data[currentIndex.value].value;
+      const firstValue = data[0].value;
+      const change = currentValue - firstValue;
+      return {
+        ...styles.priceChange,
+        color:
+          change >= 0 ? colors2024['green-default'] : colors2024['red-default'],
+      };
+    }
+    return {
+      ...styles.priceChange,
+      color: isPositive
+        ? colors2024['green-default']
+        : colors2024['red-default'],
+    };
+  }, [isPositive, data, currentIndex, colors2024, styles]);
+
+  const priceAnimatedProps = useAnimatedProps(() => {
+    return {
+      text: priceText.value,
+    };
+  });
+
+  const changeAnimatedProps = useAnimatedProps(() => {
+    return {
+      text: percentChange.value,
+    };
+  });
+
+  return (
+    <View style={styles.priceSection}>
+      <AnimateableText
+        style={styles.price}
+        animatedProps={priceAnimatedProps}
+      />
+      <AnimateableText
+        style={changeStyleProps}
+        animatedProps={changeAnimatedProps}
+      />
+      <Text style={styles.priceChangeLabel}>24h</Text>
+    </View>
+  );
+};
 
 const TrendChart = ({
   data,
@@ -47,42 +132,42 @@ const TrendChart = ({
 }) => {
   const { colors2024, styles } = useTheme2024({ getStyle });
 
-  const chartData = useMemo(() => {
-    if (!data.length || data.length < 2) {
-      return [
-        {
-          timestamp: 0,
-          value: 0,
-        },
-        {
-          timestamp: 1,
-          value: 0,
-        },
-      ];
-    }
-
-    return data.map(point => ({
-      timestamp: point.time_at * 1000, // Convert to milliseconds
-      value: point.price,
-    }));
-  }, [data]);
-
   const pathColor = isPositive
     ? colors2024['green-default']
     : colors2024['red-default'];
 
   return (
     <View style={styles.trendChart}>
-      <LineChart.Provider data={chartData}>
-        <LineChart
-          height={100}
-          width={ScreenWidth - 40}
-          shape={d3Shape.curveCatmullRom}>
-          <LineChart.Path showInactivePath={false} color={pathColor} width={2}>
-            <LineChart.Gradient color={pathColor} />
-          </LineChart.Path>
-        </LineChart>
-      </LineChart.Provider>
+      <LineChart
+        height={100}
+        width={ScreenWidth - 40}
+        shape={d3Shape.curveCatmullRom}>
+        <LineChart.Path showInactivePath={false} color={pathColor} width={2}>
+          <LineChart.Gradient color={pathColor} />
+        </LineChart.Path>
+        <LineChart.CursorLine color={colors2024['neutral-line']} />
+        <LineChart.CursorCrosshair color={pathColor} outerSize={12} size={8}>
+          <LineChart.Tooltip cursorGutter={114} yGutter={-8}>
+            <LineChart.DatetimeText
+              style={styles.dateTime}
+              format={({ value }) => {
+                'worklet';
+                // due to the nature of reanimated worklets, you cannot define functions that run on the React Native JS thread.
+                if (value === -1) {
+                  return '';
+                }
+                // if use dayjs in worklet it does not work
+                const date = new Date(value);
+                const MM = String(date.getMonth() + 1).padStart(2, '0');
+                const DD = String(date.getDate()).padStart(2, '0');
+                const HH = String(date.getHours()).padStart(2, '0');
+                const mm = String(date.getMinutes()).padStart(2, '0');
+                return `${MM} ${DD}, ${HH}:${mm}`;
+              }}
+            />
+          </LineChart.Tooltip>
+        </LineChart.CursorCrosshair>
+      </LineChart>
     </View>
   );
 };
@@ -98,7 +183,6 @@ export default function RecentlyBuyListDialog({
 }: RNViewProps & DialogProps) {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-
   const isPositive = (tradingTokenItem.price_24h_change || 0) >= 0;
 
   const fetchRecentBuyList = useMemoizedFn(async () => {
@@ -123,35 +207,46 @@ export default function RecentlyBuyListDialog({
     return res;
   });
 
+  const chartData = useMemo(() => {
+    const priceData = tradingTokenItem.price_curve_24h || [];
+    if (!priceData.length || priceData.length < 2) {
+      return [
+        {
+          timestamp: 0,
+          value: 0,
+        },
+        {
+          timestamp: 1,
+          value: 0,
+        },
+      ];
+    }
+
+    return priceData.map(point => ({
+      timestamp: point.time_at * 1000,
+      value: point.price,
+    }));
+  }, [tradingTokenItem.price_curve_24h]);
+  console.log;
+
   const ListHeaderComponent = React.useMemo(
     () => (
       <View style={styles.listHeader}>
-        {/* Price section */}
-        <View style={styles.priceSection}>
-          <Text style={styles.price}>
-            {`$${formatPrice(Number(tradingTokenItem.price) || 0)}`}
-          </Text>
-          <Text
-            style={[
-              styles.priceChange,
-              {
-                color: isPositive
-                  ? colors2024['green-default']
-                  : colors2024['red-default'],
-              },
-            ]}>
-            {formatPercentage(Number(tradingTokenItem.price_24h_change) || 0)}
-          </Text>
-          <Text style={styles.priceChangeLabel}>24h</Text>
-        </View>
+        {/* Price section with chart interaction */}
+        <LineChart.Provider data={chartData}>
+          <PriceHeader
+            currentPrice={Number(tradingTokenItem.price) || 0}
+            currentChange={Number(tradingTokenItem.price_24h_change) || 0}
+            isPositive={isPositive}
+            data={chartData}
+          />
 
-        {/* Chart */}
-        {
+          {/* Chart */}
           <TrendChart
             data={tradingTokenItem.price_curve_24h || []}
             isPositive={isPositive}
           />
-        }
+        </LineChart.Provider>
 
         {/* Smart Money Wallets section header */}
         <View style={styles.sectionHeader}>
@@ -174,13 +269,13 @@ export default function RecentlyBuyListDialog({
       </View>
     ),
     [
+      chartData,
       styles,
       loading,
       tradingTokenItem.price,
       tradingTokenItem.price_24h_change,
       tradingTokenItem.price_curve_24h,
       isPositive,
-      colors2024,
       t,
       recentBuyList?.total,
     ],
@@ -332,7 +427,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 4,
     alignItems: 'center',
     flexDirection: 'row',
-    // justifyContent: 'space-between',
   },
   price: {
     fontSize: 40,
@@ -362,6 +456,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 8,
     marginTop: 12,
     marginBottom: 12,
+  },
+  dateTime: {
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    paddingTop: 0,
   },
   sectionTitle: {
     fontSize: 16,
