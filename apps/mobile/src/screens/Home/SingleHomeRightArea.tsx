@@ -1,6 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript/src/types';
 import React, { useCallback, useRef, useState } from 'react';
 import { RcIconMore } from '@/assets/icons/home';
 import { useAddressDetailModal } from '../Address/useAddressDetailModal';

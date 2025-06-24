@@ -7,12 +7,14 @@ export enum MultiHomeFeatTitle {
   Approvals = 'Approvals',
   GasAccount = 'GasAccount',
   Dapps = 'Dapps',
-  /** @deprecated */
-  TEST_DAPP = 'TEST_DAPP',
   Ecosystem = 'Ecosystem',
   Points = 'Rabby Points',
   Buy = 'Buy',
   Search = 'Search',
+  CopyTrading = 'Copy Trading',
+
+  /** @deprecated */
+  TEST_DAPP = 'TEST_DAPP',
 }
 
 export enum AccountPannelSectionTitle {

@@ -948,7 +948,8 @@
         "more": "Lebih banyak",
         "queue": "排队",
         "websites": "Situs Web",
-        "approvals": "Persetujuan"
+        "approvals": "Persetujuan",
+        "copyTrading": "Copy Trading"
       }
     },
     "dashboard": {
@@ -1066,6 +1067,18 @@
         "importTitle": "Impor Dompet",
         "watchOnlyTitle": "Impor Dompet Hanya-Pengawasan",
         "ImportCloud": "Impor dari {{cloud}}"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Bagaimana Anda menilai Rabby Wallet"
+      },
+      "rateModal": {
+        "feedbackSubmit": "Kirim",
+        "feedbackSuccess": "Terima kasih atas masukan Anda",
+        "confirmButtonTitleAndroid": "Tingkat di Google Play",
+        "confirmButtonTitleIOS": "Rating di App Store",
+        "feedbackTitle": "Ada umpan balik? Kami mendengarkan.",
+        "descriptionIOS": "Jika Anda menyukai Rabby, memberikan rating cepat di App Store akan sangat berarti.",
+        "descriptionAndroid": "Jika Anda suka Rabby, penilaian cepat di Google Play akan sangat berarti."
       }
     },
     "newAddress": {
@@ -1362,7 +1375,10 @@
         "importSafeAddress": "Imported Safe Wallet",
         "addAddress": "Tambahkan Dompet",
         "title_one": "{{count}} Dompet",
-        "title_zero": "0 Dompet"
+        "title_zero": "0 Dompet",
+        "notIncludedInTotalBalance": "Tidak termasuk dalam Total Balance",
+        "notIncludedInTransactions": "Tidak termasuk dalam Transaksi",
+        "moreWallets": "Lebih Banyak Dompet"
       },
       "pin-in-list": "Pin di Daftar",
       "backup-private-key": "Cadangkan Kunci Pribadi",
@@ -1380,7 +1396,16 @@
       "assets": "Aset",
       "delete-address": "Hapus dompet",
       "manage-addresses-under-this-seed-phrase": "Tambahkan dompet dari frasa benih ini",
-      "delete-desc": "Apakah Anda yakin ingin menghapus dompet ini?"
+      "delete-desc": "Apakah Anda yakin ingin menghapus dompet ini?",
+      "notMatterAddressDialog": {
+        "safeWallet": "Dompet Aman",
+        "watchOnlyWallet": "Dompet Hanya Melihat",
+        "title": "Dompet berikut tidak termasuk dalam Total Saldo",
+        "helpDescription2": "Anda dapat menekan lama untuk menyematkan dompet dan menyesuaikan dompet mana yang disertakan.",
+        "helpDescription1": "Untuk memastikan pembaruan data yang tepat waktu dan akurat, hanya 10 dompet terbaik Anda yang termasuk dalam Total Balance dan Portfolio.",
+        "helpTitle": "Dompet yang排在前10名之后",
+        "notTop10Address": "Dompet yang terdaftar di bawah 10 besar"
+      }
     },
     "customRpc": {
       "EditRPCModal": {
@@ -1939,6 +1964,21 @@
       "ChainSelector": {
         "title": "Pilih Rantai"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "Copy Trading dari Smart Money",
+        "description": "Temukan token berdasarkan aktivitas terbaru dari smart money wallets. Ketuk token untuk melihat jumlah perdagangan terperinci dan keuntungan historis dari wallet tersebut."
+      },
+      "updateText": "{{count}} Tren Terbaru",
+      "buy": "Beli",
+      "recentBuy": "Pembelian Terbaru",
+      "comingSoon": "Segera hadir...",
+      "noMoreData": "Tidak ada data lagi",
+      "historyProfit": "Riwayat Keuntungan",
+      "smartMoneyWallets": "Smart Money Wallets",
+      "refreshTitle": "Memuat Lebih Banyak Copy Trading Dari Smart Money",
+      "smartMoneyWallet": "Smart Money Wallet"
     }
   },
   "component": {

@@ -58,16 +58,25 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
   const { bottom } = useSafeAreaInsets();
   const navigation = useRabbyAppNavigation();
   const { actionData, requireData, chain } = useMemo(() => {
-    const maxGasTx = data.maxGasTx;
-    const actionData = (maxGasTx.action!.actionData.swap ||
-      maxGasTx.action!.actionData.wrapToken ||
-      maxGasTx.action!.actionData.unWrapToken)!;
-    const requireData = maxGasTx.action?.requiredData as SwapRequireData;
-
     const chain =
       findChain({
         id: data.chainId,
       }) || undefined;
+
+    if (!data.maxGasTx.action) {
+      return {
+        maxGasTx: data.maxGasTx,
+        actionData: undefined,
+        requireData: undefined,
+        chain: chain,
+      };
+    }
+
+    const maxGasTx = data.maxGasTx;
+    const actionData = (maxGasTx.action!.actionData.swap ||
+      maxGasTx.action!.actionData.wrapToken ||
+      maxGasTx.action!.actionData.unWrapToken)!;
+    const requireData = maxGasTx.action!.requiredData as SwapRequireData;
     return {
       maxGasTx,
       actionData,
@@ -123,9 +132,13 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
     );
   }, [accounts, data]);
 
-  const receiveToken: ReceiveTokenItem = useMemo(() => {
+  const receiveToken: ReceiveTokenItem | TokenItem | undefined = useMemo(() => {
     if (actionData && 'minReceive' in actionData) {
-      return actionData.minReceive as ReceiveTokenItem;
+      return (
+        (actionData?.minReceive as ReceiveTokenItem) ||
+        actionData?.receiveToken ||
+        data.maxGasTx.explain?.balance_change?.receive_token_list[0]
+      );
     }
     return (
       actionData?.receiveToken ||
@@ -133,7 +146,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
     );
   }, [actionData, data.maxGasTx.explain?.balance_change?.receive_token_list]);
 
-  const payToken: TokenItem =
+  const payToken: TokenItem | undefined =
     actionData?.payToken ||
     data.maxGasTx.explain?.balance_change?.send_token_list[0];
 
@@ -151,7 +164,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
         <View style={[styles.doubleBox]}>
           <TouchableOpacity
             style={[styles.fromTokenBox]}
-            onPress={() => handleGotoDetail(payToken)}>
+            onPress={() => handleGotoDetail(payToken!)}>
             <AssetAvatar
               logo={payToken?.logo_url}
               size={42}
@@ -161,7 +174,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
             <View style={[styles.rowBox, isFail && styles.isFailBox]}>
               <Text
                 style={[styles.tokenAmountTextList, styles.isSendTextColor]}>
-                {'-'} {formatTokenAmount(payToken?.amount)}{' '}
+                {'-'} {formatTokenAmount(payToken?.amount ?? 0)}{' '}
                 {getTokenSymbol(payToken as TokenItem)}
               </Text>
               <RcIconRightCC
@@ -173,7 +186,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.toTokenBox]}
-            onPress={() => handleGotoDetail(receiveToken)}>
+            onPress={() => handleGotoDetail(receiveToken!)}>
             <AssetAvatar
               logo={receiveToken?.logo_url}
               size={42}
@@ -184,7 +197,8 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
               <Text style={[styles.tokenAmountTextList]}>
                 {'+'}{' '}
                 {formatTokenAmount(
-                  receiveToken.amount || receiveToken.min_amount,
+                  (receiveToken as ReceiveTokenItem)?.amount ||
+                    (receiveToken as ReceiveTokenItem)?.min_amount,
                 )}{' '}
                 {getTokenSymbol(receiveToken as TokenItem)}
               </Text>
@@ -256,7 +270,7 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
             </Text>
             <TouchableOpacity
               style={{ alignItems: 'flex-end' }}
-              onPress={() => handleOpenTxAddress(requireData?.id)}>
+              onPress={() => handleOpenTxAddress(requireData?.id || '')}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -330,8 +344,8 @@ export const Swap: React.FC<Props> = ({ data, isSingleAddress, account }) => {
                       swapAgain: true,
                       chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
                       swapTokenId: [
-                        actionData.payToken?.id,
-                        actionData.receiveToken?.id,
+                        actionData?.payToken?.id,
+                        actionData?.receiveToken?.id,
                       ],
                     },
                   }),

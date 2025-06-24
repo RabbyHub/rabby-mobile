@@ -739,7 +739,8 @@
         "history": "히스토리",
         "dapps": "Dapps",
         "approvals": "승인",
-        "search": "토큰 검색"
+        "search": "토큰 검색",
+        "copyTrading": "복사 거래"
       }
     },
     "bridge": {
@@ -1002,6 +1003,18 @@
         "watch": "보기 전용 지갑",
         "watchOnlyTitle": "시청 전용 지갑 가져오기",
         "ImportCloud": "{{cloud}}에서 가져오기"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Rabby Wallet을 어떻게 평가하시나요?"
+      },
+      "rateModal": {
+        "confirmButtonTitleAndroid": "Google Play에서 평가하기",
+        "confirmButtonTitleIOS": "앱 스토어 평가",
+        "feedbackSubmit": "제출",
+        "feedbackSuccess": "피드백 주셔서 감사합니다.",
+        "feedbackTitle": "피드백이 있나요? 우리는 듣고 있습니다.",
+        "descriptionAndroid": "Rabby가 마음에 드시면 구글 플레이에서 빠른 평가를 남기는 것이 많은 도움이 됩니다.",
+        "descriptionIOS": "Rabby가 마음에 드신다면, App Store에서 간단한 평가를 남겨주시면 큰 도움이 됩니다."
       }
     },
     "switchChain": {
@@ -1121,12 +1134,24 @@
         "importSafeAddress": "가져온 Safe Wallet",
         "title_other": "{{count}} 지갑",
         "importWatchAddress": "가져온 조회 전용 지갑",
-        "addAddress": "지갑 추가"
+        "addAddress": "지갑 추가",
+        "moreWallets": "더 많은 Wallets",
+        "notIncludedInTransactions": "거래에 포함되지 않음",
+        "notIncludedInTotalBalance": "총 잔액에 포함되지 않음"
       },
       "delete-desc-needpassword": "삭제하기 전에, 자산을 보호하는 방법을 이해하기 위해 다음 사항을 유념하십시오.",
       "delete-address": "지갑 삭제",
       "manage-addresses-under-this-seed-phrase": "이 시드 문구로 지갑 추가",
-      "delete-desc": "이 지갑을 정말로 삭제하시겠습니까?"
+      "delete-desc": "이 지갑을 정말로 삭제하시겠습니까?",
+      "notMatterAddressDialog": {
+        "watchOnlyWallet": "보기 전용 월렛",
+        "safeWallet": "안전한 지갑",
+        "notTop10Address": "상위 10위 이하의 지갑",
+        "helpTitle": "상위 10개에 해당하지 않는 지갑",
+        "helpDescription2": "지갑을 고정하려면 길게 누르고 포함할 지갑을 조정할 수 있습니다.",
+        "helpDescription1": "적시 및 정확한 데이터 업데이트를 보장하기 위해, Total Balance 및 Portfolio에는 오직 상위 10개의 지갑만 포함됩니다.",
+        "title": "다음 지갑은 총 잔액에 포함되지 않습니다."
+      }
     },
     "customRpc": {
       "opened": "Opened: 열림",
@@ -1940,6 +1965,21 @@
       "ChainSelector": {
         "title": "체인 선택"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "스마트 머니의 카피 트레이딩",
+        "description": "스마트 머니 지갑의 최근 활동을 바탕으로 토큰을 발견하세요. 토큰을 탭하여 해당 지갑의 상세 거래 금액 및 역사적 이익을 확인하십시오."
+      },
+      "comingSoon": "곧 출시됩니다...",
+      "historyProfit": "히스토리 수익",
+      "updateText": "{{count}} 트렌드 업데이트됨",
+      "noMoreData": "더 이상 데이터가 없습니다.",
+      "smartMoneyWallets": "스마트 머니 월렛",
+      "smartMoneyWallet": "스마트 머니 지갑",
+      "buy": "구매하다",
+      "refreshTitle": "스마트 머니에서 복사 거래를 더 로드하는 중",
+      "recentBuy": "최근 구매"
     }
   },
   "global": {

@@ -20,7 +20,11 @@ import { resetNavigationTo } from '@/hooks/navigation';
 import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { preferenceService } from '@/core/services';
-import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useFallbackAccount,
+  useMyAccounts,
+} from '@/hooks/account';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -166,13 +170,15 @@ export const DeFiDetailScreen = () => {
     isSingleAddress?: boolean;
   };
 
+  const fallbackAccount = useFallbackAccount();
+
   const finalAccount = useMemo(
-    () => routeAccount || preferenceService.getFallbackAccount(),
-    [routeAccount],
+    () => routeAccount || fallbackAccount,
+    [fallbackAccount, routeAccount],
   );
 
   const { data: currentPortfolio, updateData: singleUpdateData } =
-    usePortfolios(finalAccount.address, false);
+    usePortfolios(finalAccount?.address, false);
 
   const data = useMemo(
     // 优先使用内存defi列表中的实时数据，兜底用页面参数数据

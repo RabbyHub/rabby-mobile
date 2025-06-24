@@ -16,10 +16,11 @@ type FirstParameter<T extends (...args: any) => any> = Parameters<T>[0];
 export const getCexWithLocalCache = async (
   address: FirstParameter<typeof openapi.addrDesc>,
   force?: boolean,
+  forceCache?: boolean,
 ): Promise<Cex | undefined> => {
   const isExpired = await CexEntity.isExpired(address);
   let res;
-  if (force || isExpired) {
+  if (!forceCache && (force || isExpired)) {
     const addressDesc = await openapi.addrDesc(address);
     const cexInfo = addressDesc?.desc?.cex;
     runOnJS(syncCexInfo)(address, cexInfo);

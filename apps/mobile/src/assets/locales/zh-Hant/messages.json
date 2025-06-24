@@ -837,7 +837,8 @@
         "swap": "交換",
         "history": "歷史",
         "gasAccount": "GasAccount",
-        "search": "搜尋 Token"
+        "search": "搜尋 Token",
+        "copyTrading": "複製交易"
       }
     },
     "dashboard": {
@@ -1162,6 +1163,18 @@
         "safeTitle": "導入 Safe Wallet",
         "watch": "觀察型錢包",
         "ImportCloud": "從 {{cloud}} 匯入"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "您如何評價 Rabby Wallet？"
+      },
+      "rateModal": {
+        "feedbackSubmit": "提交",
+        "feedbackSuccess": "感謝您的反饋",
+        "confirmButtonTitleIOS": "在 App Store 上评价",
+        "feedbackTitle": "有反饋嗎？我們在聆聽。",
+        "descriptionIOS": "如果你喜歡 Rabby，在 App Store 上快速評分將對我們非常重要。",
+        "descriptionAndroid": "如果你喜歡 Rabby，在 Google Play 上的快速評分將非常重要。",
+        "confirmButtonTitleAndroid": "在 Google Play 上评分"
       }
     },
     "ethSign": {
@@ -1815,7 +1828,10 @@
         "importWatchAddress": "導入的只讀錢包",
         "importSafeAddress": "導入的 Safe Wallet",
         "title_zero": "0 錢包",
-        "title_one": "{{count}} 錢包"
+        "title_one": "{{count}} 錢包",
+        "moreWallets": "更多钱包",
+        "notIncludedInTransactions": "未包含在交易中",
+        "notIncludedInTotalBalance": "未包含在總餘額中"
       },
       "watchAddressListScreen": {
         "addWatchAddress": "添加只读錢包"
@@ -1826,7 +1842,16 @@
       "remove-from-whitelist": "從白名單中移除",
       "manage-addresses-under-this-seed-phrase": "從這個 seed phrase 添加錢包",
       "delete-address": "刪除錢包",
-      "delete-desc": "您確定要刪除這個錢包嗎？"
+      "delete-desc": "您確定要刪除這個錢包嗎？",
+      "notMatterAddressDialog": {
+        "title": "以下錢包不包括在總餘額中",
+        "watchOnlyWallet": "只觀察錢包",
+        "helpTitle": "排名在前10名以外的钱包",
+        "safeWallet": "安全錢包",
+        "notTop10Address": "排名在前10之外的钱包",
+        "helpDescription2": "您可以長按來固定錢包並調整包含的錢包。",
+        "helpDescription1": "為了確保及時準確的數據更新，只有您的前10個錢包會包含在總餘額和投資組合中。"
+      }
     },
     "setting": {
       "followUs": "關注我們",
@@ -2056,6 +2081,21 @@
       "ChainSelector": {
         "title": "選擇鏈"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "從 Smart Money 複製交易",
+        "description": "探索基於智慧資金錢包近期活動的代幣。點擊一個代幣以查看來自這些錢包的詳細交易金額和歷史利潤。"
+      },
+      "buy": "購買",
+      "smartMoneyWallet": "Smart Money Wallet",
+      "comingSoon": "敬請期待...",
+      "historyProfit": "歷史利潤",
+      "updateText": "{{count}} 趨勢已更新",
+      "noMoreData": "沒有更多資料",
+      "smartMoneyWallets": "Smart Money 錢包",
+      "recentBuy": "最近購買",
+      "refreshTitle": "載入更多來自 Smart Money 的 Copy Trading"
     }
   },
   "component": {

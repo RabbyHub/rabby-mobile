@@ -26,27 +26,47 @@ export const useAccountInfo = () => {
   const hasSafeAddress = React.useMemo(() => {
     return accounts.some(account => account.type === KEYRING_CLASS.GNOSIS);
   }, [accounts]);
-  const { addresses: top10Addresses, totalBalance: top10Balance } =
-    useMemo(() => {
-      const top10Account = list.slice(0, 10);
+  const {
+    addresses: top10Addresses,
+    totalBalance: top10Balance,
+    notTop10Addresses,
+  } = useMemo(() => {
+    const top10Account = list.slice(0, 10);
 
-      const addresses = [
-        ...new Set(list.slice(0, 10).map(i => i.address.toLocaleLowerCase())),
-      ];
-      let totalBalance = 0;
-      addresses.forEach(address => {
-        const account = top10Account.find(acc =>
-          isSameAddress(acc.address, address),
-        );
-        totalBalance += account?.balance || 0;
-      });
-      return {
-        addresses,
-        totalBalance,
-      };
-    }, [list]);
+    const addresses = [
+      ...new Set(list.slice(0, 10).map(i => i.address.toLocaleLowerCase())),
+    ];
+    let totalBalance = 0;
+    addresses.forEach(address => {
+      const account = top10Account.find(acc =>
+        isSameAddress(acc.address, address),
+      );
+      totalBalance += account?.balance || 0;
+    });
+    return {
+      addresses,
+      totalBalance,
+      notTop10Addresses: list.slice(10),
+    };
+  }, [list]);
+
+  const gnosisAccounts = useMemo(() => {
+    return accounts.filter(account => account.type === KEYRING_CLASS.GNOSIS);
+  }, [accounts]);
+  const watchAccounts = useMemo(() => {
+    return accounts.filter(account => account.type === KEYRING_CLASS.WATCH);
+  }, [accounts]);
+
+  const notMatterAccounts = useMemo(() => {
+    return [...notTop10Addresses, ...gnosisAccounts, ...watchAccounts];
+  }, [notTop10Addresses, gnosisAccounts, watchAccounts]);
+
   return {
     top10Addresses,
+    notMatterAccounts,
+    gnosisAccounts,
+    watchAccounts,
+    notTop10Addresses,
     top10Balance,
     list,
     hasWatchAddress,

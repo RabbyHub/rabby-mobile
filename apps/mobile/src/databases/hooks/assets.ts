@@ -93,7 +93,6 @@ export const syncProtocols = async (
     snapshotData.map(i => i.id),
     5,
   );
-
   const protocols: ComplexProtocol[] = [];
   await Promise.all(
     chunkIds.map(async ids => {

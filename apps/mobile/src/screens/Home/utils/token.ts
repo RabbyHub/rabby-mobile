@@ -33,13 +33,18 @@ export const batchQueryTokens = async (
     const chainIdList = usedChains.map(item => item.id);
     const res = await Promise.all(
       chainIdList.map(serverId =>
-        pQueue.add(() => {
-          return requestOpenApiWithChainId(
-            ({ openapi }) => openapi.listToken(user_id, serverId, true),
-            {
-              isTestnet,
-            },
-          );
+        pQueue.add(async () => {
+          try {
+            return requestOpenApiWithChainId(
+              ({ openapi }) => openapi.listToken(user_id, serverId, true),
+              {
+                isTestnet,
+              },
+            );
+          } catch (error) {
+            console.log('serverId error', serverId);
+            return [];
+          }
         }),
       ),
     );

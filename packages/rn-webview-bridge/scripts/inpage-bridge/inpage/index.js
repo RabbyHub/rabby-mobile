@@ -7,7 +7,9 @@ import * as pump from 'pump';
 import { v4 as uuid } from 'uuid';
 import MobilePortStream from './MobilePortStream';
 import ReactNativePostMessageStream from './ReactNativePostMessageStream';
+import { domReadyCall } from './util';
 import { hackGoogle } from './google';
+import { startCheckRules } from './rule';
 
 const PORT_INPAGE = 'rabby-inpage';
 const PORT_CONTENT_SCRIPT = 'rabby-contentscript';
@@ -32,18 +34,6 @@ const rabbyProvider = initializeProvider({
     rdns: process.env.RABBY_BUILD_APP_ID,
   },
 });
-
-const domReadyCall = callback => {
-  if (document.readyState === 'loading') {
-    const domContentLoadedHandler = () => {
-      callback();
-      document.removeEventListener('DOMContentLoaded', domContentLoadedHandler);
-    };
-    document.addEventListener('DOMContentLoaded', domContentLoadedHandler);
-  } else {
-    callback();
-  }
-};
 
 function getAppleTouchIcon() {
   const icons = Array.from(
@@ -202,3 +192,4 @@ function notifyProviderOfStreamFailure() {
 }
 
 hackGoogle();
+startCheckRules();
