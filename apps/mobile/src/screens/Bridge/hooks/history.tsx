@@ -88,7 +88,6 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
         limit: 10,
       });
 
-      console.log('getBridgeHistoryList data');
       const openModalTs = bridgeService.getOpenBridgeHistoryTs(account.address);
       const ts = data?.history_list
         ?.filter(item => item?.status !== 'pending')
