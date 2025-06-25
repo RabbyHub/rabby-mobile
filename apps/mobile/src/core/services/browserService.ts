@@ -231,8 +231,6 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
       };
     }
 
-    console.log(this.store.browserBookmarks);
-
     try {
       const res: EntityState<BrowserHistoryItem, string> = {
         ids: [],
