@@ -42,13 +42,21 @@ import { formatPercentage } from './TokenListItem';
 import { formatPrice } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
 import { toast } from '@/components2024/Toast';
+import dayjs from 'dayjs';
 
 const ScreenWidth = Dimensions.get('screen').width;
 interface IHeaderProps {
-  currentPrice: number;
-  currentChange: number;
+  currentPrice: string;
+  currentChange: string;
   isPositive: boolean;
-  data: { timestamp: number; value: number }[];
+  data: {
+    timestamp: number;
+    value: number;
+    formattedPrice: string;
+    formattedPercentage: string;
+    clockTimeString?: string;
+    isLoss?: boolean;
+  }[];
 }
 
 const PriceHeader = ({
@@ -61,40 +69,27 @@ const PriceHeader = ({
   const { currentIndex } = LineChart.useChart();
 
   const priceText = useDerivedValue(() => {
-    const isActiveIndexData = data?.[currentIndex.value]?.value !== undefined;
-    const formatPriceValue = isActiveIndexData
-      ? data?.[currentIndex.value]?.value
-      : currentPrice;
-    return `$${formatPrice(formatPriceValue)}`;
-  }, [data, currentIndex, currentPrice]);
+    return data?.[currentIndex.value]?.formattedPrice || currentPrice;
+  }, [data, currentIndex.value, currentPrice]);
+
   const percentChange = useDerivedValue(() => {
-    if (data?.[currentIndex.value] && data?.[0]) {
-      const currentValue = data[currentIndex.value].value;
-      const firstValue = data[0].value;
-      const change = ((currentValue - firstValue) / firstValue) * 100;
-      return `${formatPercentage(change)}`;
-    }
-    return formatPercentage(currentChange);
-  }, [data, currentIndex, currentChange]);
+    return data?.[currentIndex.value]?.formattedPercentage || currentChange;
+  }, [data, currentIndex.value, currentChange]);
 
   const changeStyleProps = useAnimatedStyle(() => {
-    if (data?.[currentIndex.value] && data?.[0]) {
-      const currentValue = data[currentIndex.value].value;
-      const firstValue = data[0].value;
-      const change = currentValue - firstValue;
+    if (data?.[currentIndex.value]) {
       return {
-        ...styles.priceChange,
-        color:
-          change >= 0 ? colors2024['green-default'] : colors2024['red-default'],
+        color: data?.[currentIndex?.value]?.isLoss
+          ? colors2024['red-default']
+          : colors2024['green-default'],
       };
     }
     return {
-      ...styles.priceChange,
       color: isPositive
         ? colors2024['green-default']
         : colors2024['red-default'],
     };
-  }, [isPositive, data, currentIndex, colors2024, styles]);
+  }, [data, currentIndex.value, isPositive, colors2024]);
 
   const priceAnimatedProps = useAnimatedProps(() => {
     return {
@@ -108,6 +103,16 @@ const PriceHeader = ({
     };
   });
 
+  const dateTime = useDerivedValue(() => {
+    return data?.[currentIndex?.value]?.clockTimeString || '24h';
+  }, [data, currentIndex]);
+
+  const dateTimeAnimatedProps = useAnimatedProps(() => {
+    return {
+      text: dateTime.value,
+    };
+  });
+
   return (
     <View style={styles.priceSection}>
       <AnimateableText
@@ -118,7 +123,10 @@ const PriceHeader = ({
         style={changeStyleProps}
         animatedProps={changeAnimatedProps}
       />
-      <Text style={styles.priceChangeLabel}>24h</Text>
+      <AnimateableText
+        style={styles.priceChangeLabel}
+        animatedProps={dateTimeAnimatedProps}
+      />
     </View>
   );
 };
@@ -146,27 +154,7 @@ const TrendChart = ({
           <LineChart.Gradient color={pathColor} />
         </LineChart.Path>
         <LineChart.CursorLine color={colors2024['neutral-line']} />
-        <LineChart.CursorCrosshair color={pathColor} outerSize={12} size={8}>
-          <LineChart.Tooltip cursorGutter={114} yGutter={-8}>
-            <LineChart.DatetimeText
-              style={styles.dateTime}
-              format={({ value }) => {
-                'worklet';
-                // due to the nature of reanimated worklets, you cannot define functions that run on the React Native JS thread.
-                if (value === -1) {
-                  return '';
-                }
-                // if use dayjs in worklet it does not work
-                const date = new Date(value);
-                const MM = String(date.getMonth() + 1).padStart(2, '0');
-                const DD = String(date.getDate()).padStart(2, '0');
-                const HH = String(date.getHours()).padStart(2, '0');
-                const mm = String(date.getMinutes()).padStart(2, '0');
-                return `${MM} ${DD}, ${HH}:${mm}`;
-              }}
-            />
-          </LineChart.Tooltip>
-        </LineChart.CursorCrosshair>
+        <LineChart.CursorCrosshair color={pathColor} outerSize={12} size={8} />
       </LineChart>
     </View>
   );
@@ -214,20 +202,39 @@ export default function RecentlyBuyListDialog({
         {
           timestamp: 0,
           value: 0,
+          formattedPrice: '$0',
+          formattedPercentage: '+0.00%',
         },
         {
           timestamp: 1,
           value: 0,
+          formattedPrice: '$0',
+          formattedPercentage: '+0.00%',
         },
       ];
     }
 
-    return priceData.map(point => ({
-      timestamp: point.time_at * 1000,
-      value: point.price,
-    }));
+    const firstPrice = priceData[0]?.price || 0;
+
+    return priceData.map(point => {
+      const price = point.price;
+      const change = price - firstPrice;
+      const changePercent = firstPrice !== 0 ? change / firstPrice : 0;
+      const isLoss = changePercent < 0;
+      const date = new Date(point.time_at * 1000);
+      const HH = String(date.getHours()).padStart(2, '0');
+      const mm = String(date.getMinutes()).padStart(2, '0');
+
+      return {
+        timestamp: point.time_at * 1000,
+        value: price,
+        formattedPrice: `$${formatPrice(price, 6)}`,
+        formattedPercentage: `${formatPercentage(changePercent)}`,
+        isLoss,
+        clockTimeString: `${HH}:${mm}`,
+      };
+    });
   }, [tradingTokenItem.price_curve_24h]);
-  console.log;
 
   const ListHeaderComponent = React.useMemo(
     () => (
@@ -235,8 +242,13 @@ export default function RecentlyBuyListDialog({
         {/* Price section with chart interaction */}
         <LineChart.Provider data={chartData}>
           <PriceHeader
-            currentPrice={Number(tradingTokenItem.price) || 0}
-            currentChange={Number(tradingTokenItem.price_24h_change) || 0}
+            currentPrice={`$${formatPrice(
+              Number(tradingTokenItem.price) || 0,
+              6,
+            )}`}
+            currentChange={formatPercentage(
+              Number(tradingTokenItem.price_24h_change) || 0,
+            )}
             isPositive={isPositive}
             data={chartData}
           />
