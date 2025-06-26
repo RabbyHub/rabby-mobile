@@ -806,7 +806,9 @@ function MultiAddressHome(): JSX.Element {
             {shouldShowRateGuideOnHome && (
               <View
                 style={{ paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL }}>
-                <RateModalTriggerOnHome />
+                <RateModalTriggerOnHome
+                  totalBalanceText={combineData.netWorth}
+                />
                 <RateModal totalBalanceText={combineData.netWorth} />
               </View>
             )}

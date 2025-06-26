@@ -32,7 +32,6 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
-  const { disableExposureRateGuide } = useExposureRateGuide();
   const {
     rateModalShown,
     toggleShowRateModal,
@@ -129,9 +128,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                     ]}
                     onPress={() => {
                       openAppRateUrl();
-                      pushRateDetails({ totalBalanceText }).finally(() => {
-                        closeModal();
-                      });
+                      closeModal();
                     }}
                     title={
                       IS_ANDROID
