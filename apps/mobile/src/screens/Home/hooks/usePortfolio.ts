@@ -11,6 +11,8 @@ import { singleDeFiNounceAtom } from './refresh';
 import { useAtom, atom } from 'jotai';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { debounce } from 'lodash';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
@@ -190,6 +192,31 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     [setData, setHasValue, setLoading, userAddr],
   );
 
+  const batchLocalData = useCallback(async () => {
+    if (!userAddr) {
+      return;
+    }
+    const cachePortocols = await PortocolItemEntity.batchQueryPortocols(
+      userAddr,
+    );
+    if (cachePortocols.length) {
+      let cacheProjectDict: Record<string, DisplayedProject> | null = {};
+      cachePortocols.forEach(project => {
+        if (cacheProjectDict) {
+          cacheProjectDict = produce(cacheProjectDict, draft => {
+            project && portfolio2Display(project, draft);
+          });
+        }
+      });
+      const realtimeData = Object.values(cacheProjectDict)?.sort(
+        (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
+      );
+      const tokenSetting = await preferenceService.getUserTokenSettings();
+      setData(tagProfiles(realtimeData, tokenSetting));
+      setHasValue(!!cachePortocols.length);
+    }
+  }, [setData, setHasValue, userAddr]);
+
   const refreshTagPortfolio = useCallback(async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
@@ -199,6 +226,38 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       data: tagProfiles(pre.data || [], tokenSettings),
     }));
   }, [_setData]);
+
+  const throttleUpdatePortfolio = useMemo(
+    () => debounce(batchLocalData, 2000),
+    [batchLocalData],
+  );
+
+  useAppOrmSyncEvents({
+    taskFor: ['protocols'],
+    onRemoteDataUpserted: useCallback(
+      ctx => {
+        if (
+          !userAddr ||
+          !isSameAddress(ctx.owner_addr, userAddr) ||
+          !ctx.success ||
+          isLoading
+        ) {
+          return;
+        }
+        const currentUpdateCount =
+          ctx.syncDetails.batchSize * ctx.syncDetails.round +
+          ctx.syncDetails.count;
+
+        if (
+          currentUpdateCount >= ctx.syncDetails.total ||
+          currentUpdateCount > (data?.length || 0)
+        ) {
+          throttleUpdatePortfolio();
+        }
+      },
+      [userAddr, isLoading, data?.length, throttleUpdatePortfolio],
+    ),
+  });
 
   useEffect(() => {
     if (singleDeFiNounce > 0) {

@@ -17,12 +17,15 @@ import { useSortAddressList } from '../Address/useSortAddressList';
 import { tagNfts } from '../Home/hooks/nft';
 import { syncNFTs, syncProtocols, syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import _ from 'lodash';
+import _, { debounce } from 'lodash';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { atom, useAtom } from 'jotai';
 import { useMemoizedFn } from 'ahooks';
+import { useCallback, useMemo } from 'react';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 export const loadingAtom = atom(true);
 export const isFirstFetchAtom = atom(true);
@@ -31,6 +34,7 @@ export const useAssets = () => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
+  const { userTokenSettings } = useUserTokenSettings();
   const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useAtom(isFirstFetchAtom);
   const {
@@ -361,6 +365,65 @@ export const useAssets = () => {
       ]);
     },
   );
+
+  const throttleReloadTokenList = useMemo(
+    () => debounce(batchLoadCacheTokens, 2000),
+    [batchLoadCacheTokens],
+  );
+  const throttleReloadDefiList = useMemo(
+    () => debounce(batchLoadCacheDefi, 2000),
+    [batchLoadCacheDefi],
+  );
+  const throttleReloadNftList = useMemo(
+    () => debounce(batchLoadCacheNFT, 2000),
+    [batchLoadCacheNFT],
+  );
+
+  useAppOrmSyncEvents({
+    taskFor: ['token', 'protocols', 'nfts'],
+    onRemoteDataUpserted: useCallback(
+      ctx => {
+        if (!ctx.success || isLoading) {
+          return;
+        }
+        const { taskFor } = ctx;
+        const currentUpdateCount =
+          ctx.syncDetails.batchSize * ctx.syncDetails.round +
+          ctx.syncDetails.count;
+
+        if (taskFor === 'token') {
+          if (
+            currentUpdateCount >
+            (assetsMap[ctx.owner_addr]?.tokens?.length || 0)
+          ) {
+            throttleReloadTokenList([ctx.owner_addr], userTokenSettings);
+          }
+        } else if (taskFor === 'protocols') {
+          if (
+            currentUpdateCount >
+            (assetsMap[ctx.owner_addr]?.portfolios?.length || 0)
+          ) {
+            throttleReloadDefiList([ctx.owner_addr], userTokenSettings);
+          }
+        } else if (taskFor === 'nfts') {
+          if (
+            currentUpdateCount > (assetsMap[ctx.owner_addr]?.nfts?.length || 0)
+          ) {
+            throttleReloadNftList([ctx.owner_addr], userTokenSettings);
+          }
+        }
+      },
+      [
+        assetsMap,
+        isLoading,
+        throttleReloadDefiList,
+        throttleReloadNftList,
+        throttleReloadTokenList,
+        userTokenSettings,
+      ],
+    ),
+  });
+
   return {
     tokens,
     portfolios,
