@@ -498,7 +498,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingHorizontal: 24,
   },
   action: {
-    gap: 8,
+    gap: 4,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -531,11 +531,11 @@ const getStyles = createGetStyles2024(ctx => ({
     shadowRadius: 11.6,
   },
   actionText: {
-    color: ctx.colors2024['neutral-secondary'],
+    color: ctx.colors2024['neutral-foot'],
     textAlign: 'center',
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 20,
-    fontWeight: '500',
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
   },
 

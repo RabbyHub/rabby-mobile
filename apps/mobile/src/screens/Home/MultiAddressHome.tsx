@@ -991,7 +991,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   gridText: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '700',
+    fontWeight: '500',
     fontSize: 16,
     lineHeight: 20,
     textAlign: 'left',
@@ -1091,7 +1091,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'flex-start',
     justifyContent: 'center',
     height: 96,
-    gap: 14,
+    gap: 8,
     position: 'relative',
   },
   pendingContainer: {
@@ -1296,7 +1296,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   netWorth: {
-    fontSize: 36,
+    fontSize: 42,
     lineHeight: 42,
     fontWeight: '900',
     color: colors2024['neutral-title-1'],

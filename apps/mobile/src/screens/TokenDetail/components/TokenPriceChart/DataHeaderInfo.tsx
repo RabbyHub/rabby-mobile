@@ -155,7 +155,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   usdValue: {
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
-    fontSize: 36,
+    fontSize: 42,
     lineHeight: 42,
     fontWeight: '900',
   },
