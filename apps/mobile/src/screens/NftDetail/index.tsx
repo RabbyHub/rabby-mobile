@@ -323,10 +323,15 @@ export const NFTDetailScreen = () => {
         ];
   }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
   useEffect(() => {
-    getCacheTop10Assets({
-      disableToken: true,
-      disableDefi: true,
-    });
+    const id = setTimeout(() => {
+      getCacheTop10Assets({
+        disableToken: true,
+        disableDefi: true,
+      });
+    }, 200);
+    return () => {
+      clearTimeout(id);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

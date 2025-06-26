@@ -303,9 +303,14 @@ export const TokenDetailScreen = () => {
     [token, isSingleAddress, finalAccount],
   );
   useEffect(() => {
-    getCacheTop10Assets({
-      disableNFT: true,
-    });
+    const id = setTimeout(() => {
+      getCacheTop10Assets({
+        disableNFT: true,
+      });
+    }, 200);
+    return () => {
+      clearTimeout(id);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -354,9 +354,6 @@ export const useAssets = () => {
         ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
       ];
       removeUnNeedAssets(addresses);
-      if (Object.keys(assetsMap).length) {
-        return;
-      }
       const tokenSetting = await preferenceService.getUserTokenSettings();
       !disableToken && (await batchLoadCacheTokens(addresses, tokenSetting));
       Promise.all([
