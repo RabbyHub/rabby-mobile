@@ -366,15 +366,15 @@ export const useAssets = () => {
     },
   );
 
-  const throttleReloadTokenList = useMemo(
+  const debounceReloadTokenList = useMemo(
     () => debounce(batchLoadCacheTokens, 2000),
     [batchLoadCacheTokens],
   );
-  const throttleReloadDefiList = useMemo(
+  const debounceReloadDefiList = useMemo(
     () => debounce(batchLoadCacheDefi, 2000),
     [batchLoadCacheDefi],
   );
-  const throttleReloadNftList = useMemo(
+  const debounceReloadNftList = useMemo(
     () => debounce(batchLoadCacheNFT, 2000),
     [batchLoadCacheNFT],
   );
@@ -396,29 +396,29 @@ export const useAssets = () => {
             currentUpdateCount >
             (assetsMap[ctx.owner_addr]?.tokens?.length || 0)
           ) {
-            throttleReloadTokenList([ctx.owner_addr], userTokenSettings);
+            debounceReloadTokenList([ctx.owner_addr], userTokenSettings);
           }
         } else if (taskFor === 'protocols') {
           if (
             currentUpdateCount >
             (assetsMap[ctx.owner_addr]?.portfolios?.length || 0)
           ) {
-            throttleReloadDefiList([ctx.owner_addr], userTokenSettings);
+            debounceReloadDefiList([ctx.owner_addr], userTokenSettings);
           }
         } else if (taskFor === 'nfts') {
           if (
             currentUpdateCount > (assetsMap[ctx.owner_addr]?.nfts?.length || 0)
           ) {
-            throttleReloadNftList([ctx.owner_addr], userTokenSettings);
+            debounceReloadNftList([ctx.owner_addr], userTokenSettings);
           }
         }
       },
       [
         assetsMap,
         isLoading,
-        throttleReloadDefiList,
-        throttleReloadNftList,
-        throttleReloadTokenList,
+        debounceReloadDefiList,
+        debounceReloadNftList,
+        debounceReloadTokenList,
         userTokenSettings,
       ],
     ),

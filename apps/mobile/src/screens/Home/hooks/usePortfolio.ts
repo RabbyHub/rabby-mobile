@@ -227,7 +227,7 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     }));
   }, [_setData]);
 
-  const throttleUpdatePortfolio = useMemo(
+  const debounceUpdatePortfolio = useMemo(
     () => debounce(batchLocalData, 2000),
     [batchLocalData],
   );
@@ -252,10 +252,10 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
           currentUpdateCount >= ctx.syncDetails.total ||
           currentUpdateCount > (data?.length || 0)
         ) {
-          throttleUpdatePortfolio();
+          debounceUpdatePortfolio();
         }
       },
-      [userAddr, isLoading, data?.length, throttleUpdatePortfolio],
+      [userAddr, isLoading, data?.length, debounceUpdatePortfolio],
     ),
   });
 

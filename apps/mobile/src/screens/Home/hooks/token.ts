@@ -223,7 +223,7 @@ export const useTokens = (
     }
   }, [setMainnetTokens, userAddr]);
 
-  const throttleUpdateTokens = useMemo(
+  const debounceUpdateTokens = useMemo(
     () => debounce(batchLocalData, 2000),
     [batchLocalData],
   );
@@ -248,10 +248,10 @@ export const useTokens = (
           currentUpdateCount >= ctx.syncDetails.total ||
           currentUpdateCount > (mainnetTokens?.length || 0)
         ) {
-          throttleUpdateTokens();
+          debounceUpdateTokens();
         }
       },
-      [userAddr, isLoading, mainnetTokens?.length, throttleUpdateTokens],
+      [userAddr, isLoading, mainnetTokens?.length, debounceUpdateTokens],
     ),
   });
 

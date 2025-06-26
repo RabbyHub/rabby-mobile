@@ -85,7 +85,7 @@ export const useQueryNft = (addr?: string, visible = true) => {
     setList(pre => tagNfts(pre || [], tokenSettings));
   }, [setList]);
 
-  const throttleReloadNftList = useMemo(
+  const debounceReloadNftList = useMemo(
     () => debounce(batchLocalData, 2000),
     [batchLocalData],
   );
@@ -110,10 +110,10 @@ export const useQueryNft = (addr?: string, visible = true) => {
           currentUpdateCount >= ctx.syncDetails.total ||
           currentUpdateCount > (list?.length || 0)
         ) {
-          throttleReloadNftList();
+          debounceReloadNftList();
         }
       },
-      [addr, isLoading, list?.length, throttleReloadNftList],
+      [addr, isLoading, list?.length, debounceReloadNftList],
     ),
   });
 
