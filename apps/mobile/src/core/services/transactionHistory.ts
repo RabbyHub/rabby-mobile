@@ -789,8 +789,7 @@ export class TransactionHistoryService {
         }
         loadTxSaveFromLocalStore(newTx); // send type tx save local db
         this.setNeedFetchTxHistory(address.toLowerCase());
-        // no effect in current time
-        // txDonePatchTokenAmountInDb(newTx);
+        txDonePatchTokenAmountInDb(newTx);
       }
     });
 
