@@ -228,7 +228,12 @@ export const TokenDetailScreen = () => {
 
   const { safeOffHeader } = useSafeSizes();
   const [isUp, setIsUp] = useState(true);
-  const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
+  const {
+    tokens: cacheAssets,
+    assetsMap,
+    getCacheTop10Assets,
+    checkIsExpireAndUpdate,
+  } = useAssets();
 
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
     if (fromPortfolio || needUseCacheToken) {
@@ -249,6 +254,15 @@ export const TokenDetailScreen = () => {
     isSingleAddress ? undefined : (token as CombineTokensItem).fromAddress,
     isSingleAddress,
   );
+
+  useEffect(() => {
+    checkIsExpireAndUpdate(false, {
+      disableNFT: true,
+      realTimeAddresses: top10Addresses,
+      ignoreLoading: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const finalAccount =
     account || accounts[0] || preferenceService.getFallbackAccount();
