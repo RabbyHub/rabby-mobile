@@ -420,7 +420,7 @@ export const TokenDetailScreen = () => {
     } else {
       const { fromAddress } = token as CombineTokensItem;
 
-      const fromAddressList = tokenListIsReady
+      const fromAddressList = !tokenListIsReady
         ? fromAddress
         : Object.keys(tokensByAddress).map(address => ({
             address,

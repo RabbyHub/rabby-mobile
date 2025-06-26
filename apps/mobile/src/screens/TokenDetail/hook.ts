@@ -55,7 +55,10 @@ export const useTokenDetail = (
           const fromAddressItem = fromAddress?.find(item =>
             isSameAddress(item.address, address),
           );
-          if (fromAddressItem && fromAddressItem.amount !== token.amount) {
+          if (
+            fromAddressItem &&
+            (fromAddressItem.amount || 0) !== (token.amount || 0)
+          ) {
             // only patch when amount is different
             patchSingleToken(address, token);
           }

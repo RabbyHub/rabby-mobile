@@ -368,6 +368,7 @@ export async function patchSingleToken(address: string, token: TokenItem) {
     taskFor: 'token',
     batchSize: 100,
     concurrency: 1,
+    noNeedAbort: true,
   })
     .then(({ taskSignal, taskKey }) => {
       if (taskSignal.aborted) {

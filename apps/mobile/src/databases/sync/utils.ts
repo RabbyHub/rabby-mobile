@@ -6,7 +6,7 @@ export const updateExpiredTime = async (_address: string, offest?: number) => {
   const address = _address.toLowerCase();
   try {
     await Promise.all([
-      // TokenItemEntity.willExpired(address, offest),
+      TokenItemEntity.willExpired(address, offest),
       NFTItemEntity.willExpired(address, offest),
       PortocolItemEntity.willExpired(address, offest),
     ]);
