@@ -59,6 +59,7 @@ import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
+import { useTokenDetail } from './hook';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -241,6 +242,13 @@ export const TokenDetailScreen = () => {
   }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
   const { top10Addresses, list: accounts } = useAccountInfo();
+  const { tokensByAddress, isReady: tokenListIsReady } = useTokenDetail(
+    token.chain,
+    token._tokenId,
+    top10Addresses.map(item => item.toLowerCase()),
+    isSingleAddress ? undefined : (token as CombineTokensItem).fromAddress,
+    isSingleAddress,
+  );
 
   const finalAccount =
     account || accounts[0] || preferenceService.getFallbackAccount();
@@ -322,6 +330,7 @@ export const TokenDetailScreen = () => {
         token.chain,
         token._tokenId,
       );
+      console.log('res', res);
       return ensureAbstractPortfolioToken({
         ...abstractTokenToTokenItem(token),
         usd_value: res?.usd_value,
@@ -408,28 +417,44 @@ export const TokenDetailScreen = () => {
           finalAccount!.aliasName || ellipsisAddress(finalAccount!.address),
       });
       return res;
-    }
+    } else {
+      const { fromAddress } = token as CombineTokensItem;
 
-    const { fromAddress } = token as CombineTokensItem;
-    accounts.map(item => {
-      const idx = fromAddress?.findIndex(i =>
-        isSameAddress(i.address, item.address),
+      const fromAddressList = tokenListIsReady
+        ? fromAddress
+        : Object.keys(tokensByAddress).map(address => ({
+            address,
+            amount: tokensByAddress[address].amount,
+          }));
+      // const fromAddressList = fromAddress;
+
+      accounts.map(item => {
+        const idx = fromAddressList?.findIndex(i =>
+          isSameAddress(i.address, item.address),
+        );
+        if (idx > -1) {
+          res.push({
+            address: item.address,
+            amountStr: formatTokenAmount(fromAddressList[idx].amount),
+            amount: fromAddressList[idx].amount,
+            aliasName: item.aliasName || ellipsisAddress(item.address),
+            type: item.type,
+          });
+        }
+      });
+
+      return res.sort((a, b) =>
+        new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
       );
-      if (idx > -1) {
-        res.push({
-          address: item.address,
-          amountStr: formatTokenAmount(fromAddress[idx].amount),
-          amount: fromAddress[idx].amount,
-          aliasName: item.aliasName || ellipsisAddress(item.address),
-          type: item.type,
-        });
-      }
-    });
-
-    return res.sort((a, b) =>
-      new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
-    );
-  }, [token, accounts, isSingleAddress, finalAccount]);
+    }
+  }, [
+    token,
+    accounts,
+    isSingleAddress,
+    finalAccount,
+    tokenListIsReady,
+    tokensByAddress,
+  ]);
 
   const tokenChain = useMemo(() => {
     return getChain(token?.chain);

@@ -357,6 +357,30 @@ export const deleteDBResourceForAddress = async (_address: string) => {
   }
 };
 
+export async function patchSingleToken(address: string, token: TokenItem) {
+  const tokenItem = new TokenItemEntity();
+  TokenItemEntity.fillEntity(tokenItem, address, token);
+  await TokenItemEntity.deleteForAddressAndToken(address, token.id);
+
+  await prepareAppDataSource();
+  await batchSaveWithPQueueAndTransaction(TokenItemEntity, [tokenItem], {
+    owner_addr: address,
+    taskFor: 'token',
+    batchSize: 100,
+    concurrency: 1,
+  })
+    .then(({ taskSignal, taskKey }) => {
+      if (taskSignal.aborted) {
+        console.warn(`[${taskKey}] patchSingleToken upsertion was aborted.`);
+      } else {
+        console.debug(`[${taskKey}] patchSingleToken upsert tasks created`);
+      }
+    })
+    .catch(error => {
+      console.error('Batch upsert patchSingleToken failed:', error);
+    });
+}
+
 export async function syncBalance(
   address: string,
   isCore: boolean,

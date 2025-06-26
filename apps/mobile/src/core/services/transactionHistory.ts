@@ -28,7 +28,10 @@ import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 // import { updateExpiredTime } from '@/databases/sync/assets'
 import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
-import { loadTxSaveFromLocalStore } from '@/screens/Transaction/components/utils';
+import {
+  loadTxSaveFromLocalStore,
+  txDonePatchTokenAmountInDb,
+} from '@/screens/Transaction/components/utils';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { updateExpiredTime } from '@/databases/sync/utils';
 
@@ -786,6 +789,7 @@ export class TransactionHistoryService {
         }
         loadTxSaveFromLocalStore(newTx); // send type tx save local db
         this.setNeedFetchTxHistory(address.toLowerCase());
+        txDonePatchTokenAmountInDb(newTx);
       }
     });
 

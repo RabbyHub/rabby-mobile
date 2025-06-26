@@ -190,6 +190,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
     return (await this.getRepository().findBy({ owner_addr }))
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+      .filter(i => i.amount)
       .map(i => ({
         ...i,
         cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
@@ -205,6 +206,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       })
     )
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+      .filter(i => i.amount)
       .map(i => ({
         ...i,
         cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
@@ -289,6 +291,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     const tokens = await queryBuilder.getMany();
     return tokens
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+      .filter(i => i.amount)
       .map(i => ({
         ...i,
         cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
@@ -378,6 +381,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     const tokens = await queryBuilder.getMany();
     return tokens
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+      .filter(i => i.amount)
       .map(i => ({
         ...i,
         cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
@@ -470,5 +474,11 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     await prepareAppDataSource();
 
     return this.getRepository().delete({ owner_addr });
+  }
+
+  static async deleteForAddressAndToken(owner_addr: string, tokenId: string) {
+    await prepareAppDataSource();
+
+    return this.getRepository().delete({ owner_addr, id: tokenId });
   }
 }
