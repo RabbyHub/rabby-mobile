@@ -3,11 +3,12 @@ import { useTheme2024 } from '@/hooks/theme';
 import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { MiniApprovalPopupContainer } from '../Popup/MiniApprovalPopupContainer';
+import { getTxFailedResult } from '@/utils/errorTips';
 
 interface Props {
   onCancel?: () => void;
@@ -60,8 +61,19 @@ export const MiniPrivatekeyWaiting = ({
   });
   const { t } = useTranslation();
 
+  const [content, retryType] = useMemo(
+    () => getTxFailedResult(error.content || ''),
+    [error.content],
+  );
+
+  const canRetry = !!retryType;
+
   const handleRetry = async () => {
     toast.success(t('page.signFooterBar.ledger.resent'));
+    if (canRetry) {
+      // TODO: handle nonce/gas
+      console.debug('TODO: handle retry nonce/gas');
+    }
     onRetry?.();
   };
 
@@ -74,7 +86,7 @@ export const MiniPrivatekeyWaiting = ({
             color: colors[contentColor],
           },
         ])}>
-        {error?.content}
+        {content}
       </Text>
     </View>
   ));
@@ -91,6 +103,7 @@ export const MiniPrivatekeyWaiting = ({
         onDone={onDone}
         onCancel={onCancel}
         hasMoreDescription={!!error.description}
+        canRetry={canRetry}
       />
     </View>
   );

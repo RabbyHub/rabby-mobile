@@ -474,7 +474,8 @@
       "cancelCurrentConnection": "Cancel current connection",
       "startSigning": "Start Signing",
       "ledgerConfirm": "Confirm",
-      "oneKeyConfirm": "Confirm"
+      "oneKeyConfirm": "Confirm",
+      "got": "I Got it"
     },
     "signTypedData": {
       "safeCantSignText": "This is a Safe address, and it cannot be used to sign text.",

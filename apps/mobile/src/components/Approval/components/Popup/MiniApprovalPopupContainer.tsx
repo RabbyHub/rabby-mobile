@@ -114,6 +114,7 @@ export interface Props {
   showAnimation?: boolean;
   BrandIcon?: React.FC<SvgProps>;
   style?: StyleProp<ViewStyle>;
+  canRetry?: boolean;
 }
 
 export const MiniApprovalPopupContainer: React.FC<Props> = ({
@@ -130,6 +131,7 @@ export const MiniApprovalPopupContainer: React.FC<Props> = ({
   showAnimation,
   BrandIcon,
   style,
+  canRetry = false,
 }) => {
   const [iconColor, setIconColor] = React.useState('');
   const [contentColor, setContentColor] = React.useState('');
@@ -260,6 +262,7 @@ export const MiniApprovalPopupContainer: React.FC<Props> = ({
             BrandIcon={BrandIcon}
             onCancel={onCancel}
             onResend={onRetry}
+            canResend={canRetry}
           />
         )}
         {status === 'RESOLVED' && <FooterDoneButton onDone={onDone} hide />}

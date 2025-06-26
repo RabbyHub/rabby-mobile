@@ -11,6 +11,7 @@ export interface Props {
   onResend: () => void;
   onCancel: () => void;
   BrandIcon?: React.FC<SvgProps>;
+  canResend?: boolean;
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) =>
@@ -32,11 +33,23 @@ export const MiniFooterResendCancelGroup: React.FC<Props> = ({
   onResend,
   onCancel,
   BrandIcon,
+  canResend = true,
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({
     getStyle,
   });
+
+  if (!canResend) {
+    <View style={styles.wrapper}>
+      <Button
+        icon={undefined}
+        type="primary"
+        onPress={onCancel}
+        title={t('page.signFooterBar.got')}
+      />
+    </View>;
+  }
 
   return (
     <View style={styles.wrapper}>
