@@ -957,6 +957,11 @@
         "title": "Copy Trading from Smart Money",
         "description": "Discover tokens based on recent activity from smart money wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
       },
+      "filterRule": {
+        "24HChange": "24H Change",
+        "smartMoney": "Smart Money amount",
+        "tokenCreate": "Token Crete time"
+      },
       "smartMoneyWallets": "Smart Money Wallets",
       "smartMoneyWallet": "Smart Money Wallet",
       "recentBuy": "Recent Buy",

@@ -4,7 +4,13 @@ import { toast } from '@/components2024/Toast';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
 import {
@@ -15,6 +21,8 @@ import {
   StyleSheet,
   FlatList,
   Dimensions,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import {
@@ -34,6 +42,8 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTipsDollarDialog } from './component/hooks';
 import { preferenceService } from '@/core/services/shared';
+import RcIconArrowDownCC from '@/assets2024/icons/copyTrading/IconDownPolygon.svg';
+import RcIconSelectedCC from '@/assets2024/icons/copyTrading/IconSelected.svg';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -44,6 +54,12 @@ import { Tip } from '@/components';
 const DEFAULT_COUNT = 10;
 
 const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
+
+enum FilterRuleEnum {
+  '24hPrice' = '24hPrice',
+  'smart money' = 'smart money',
+  'token create' = 'token create',
+}
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SkeletonTabList = React.memo(() => {
@@ -82,6 +98,9 @@ export const CopyTradingScreen = () => {
   const [selectedChainId, setSelectedChainId] = useState<string>('');
   const [tokenList, setTokenList] = useState<CopyTradeTokenItem[]>([]);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const [filterRule, setFilterRule] = useState<FilterRuleEnum>(
+    FilterRuleEnum['24hPrice'],
+  );
   const { navigation } = useSafeSetNavigationOptions();
   const [tabLoading, setTabLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
@@ -89,6 +108,32 @@ export const CopyTradingScreen = () => {
   const [currentUpdateCount, setCurrentUpdateCount] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
+
+  const filterTabList = useMemo(() => {
+    return [
+      {
+        key: FilterRuleEnum['24hPrice'],
+        title: t('page.copyTrading.filterRule.24HChange'),
+        rule: '24H Change',
+      },
+      {
+        key: FilterRuleEnum['smart money'],
+        title: t('page.copyTrading.filterRule.smartMoney'),
+        rule: 'Amount',
+      },
+      {
+        key: FilterRuleEnum['token create'],
+        title: t('page.copyTrading.filterRule.tokenCreate'),
+        rule: 'Time',
+      },
+    ];
+  }, [t]);
+
+  const selectedFilterRule = useMemo(() => {
+    return filterTabList.find(item => item.key === filterRule);
+  }, [filterRule, filterTabList]);
 
   const { chainList, comingChainList } = useMemo(() => {
     const list = chainIdList
@@ -153,6 +198,28 @@ export const CopyTradingScreen = () => {
       }
     },
   );
+
+  const handleOpenMenu = useMemoizedFn(() => {
+    setIsMenuVisible(true);
+  });
+
+  const handleCloseMenu = useMemoizedFn(() => {
+    setIsMenuVisible(false);
+  });
+
+  const handleSelectMenuItem = useMemoizedFn((selectedRule: FilterRuleEnum) => {
+    if (filterRule !== selectedRule) {
+      setFilterRule(selectedRule);
+      // 切换筛选规则时重新获取数据
+      if (selectedChainId) {
+        setHasMore(true);
+        fetchTokenList(selectedChainId, 0).then(tokenArr => {
+          setTokenList(tokenArr);
+        });
+      }
+    }
+    handleCloseMenu();
+  });
 
   const initFetchData = useMemoizedFn(async () => {
     setTabLoading(true);
@@ -305,6 +372,21 @@ export const CopyTradingScreen = () => {
   return (
     <NormalScreenContainer type="bg1" noHeader={true}>
       <View style={styles.headerContainer}>
+        <View style={styles.filterContainer}>
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={handleOpenMenu}>
+            <Text style={styles.filterText}>{selectedFilterRule?.rule}</Text>
+            <RcIconArrowDownCC
+              width={8}
+              color={colors2024['brand-default']}
+              style={[
+                styles.arrowIcon,
+                isMenuVisible && styles.arrowIconRotated,
+              ]}
+            />
+          </TouchableOpacity>
+        </View>
         {tabLoading ? (
           <View style={[styles.scrollContentContainer, styles.headerChainList]}>
             <SkeletonTabList />
@@ -415,13 +497,50 @@ export const CopyTradingScreen = () => {
           />
         )}
       </View>
+
+      <Modal
+        visible={isMenuVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCloseMenu}>
+        <TouchableWithoutFeedback onPress={handleCloseMenu}>
+          <View style={styles.menuOverlay}>
+            <View style={styles.menuContainer}>
+              {filterTabList.map(item => (
+                <TouchableOpacity
+                  key={item.key}
+                  style={[
+                    styles.menuItem,
+                    filterRule === item.key && styles.menuItemSelected,
+                  ]}
+                  onPress={() => handleSelectMenuItem(item.key)}>
+                  <Text
+                    style={[
+                      styles.menuItemText,
+                      filterRule === item.key && styles.menuItemTextSelected,
+                    ]}>
+                    {item.title}
+                  </Text>
+                  {filterRule === item.key && (
+                    <RcIconSelectedCC
+                      width={12}
+                      color={colors2024['brand-default']}
+                    />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </NormalScreenContainer>
   );
 };
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   headerContainer: {
-    marginTop: 46,
+    position: 'relative',
+    marginTop: 44,
     height: 56,
     overflow: 'hidden',
     backgroundColor: colors2024['neutral-bg-1'],
@@ -505,5 +624,91 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
     paddingVertical: 16,
+  },
+  filterContainer: {
+    position: 'absolute',
+    zIndex: 1,
+    right: 0,
+    top: 10,
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  filterText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['brand-default'],
+  },
+  arrowIcon: {
+    transform: [{ rotate: '0deg' }],
+  },
+  arrowIconRotated: {
+    transform: [{ rotate: '180deg' }],
+  },
+  menuOverlay: {
+    flex: 1,
+  },
+  menuContainer: {
+    position: 'absolute',
+    top: 105, // headerContainer height 56 + marginTop 44 + 5 = 105
+    right: 16,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 12,
+    paddingVertical: 8,
+    minWidth: 120,
+    shadowColor: colors2024['neutral-bg-1'],
+    padding: 12,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 0.5,
+    borderColor: colors2024['neutral-line'],
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    width: 200,
+  },
+  menuItemSelected: {
+    backgroundColor: colors2024['brand-light-1'],
+    borderColor: colors2024['brand-default'],
+    borderWidth: 0.5,
+    borderRadius: 6,
+  },
+  menuItemText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
+    flex: 1,
+  },
+  menuItemTextSelected: {
+    color: colors2024['brand-default'],
+    fontWeight: '500',
+  },
+  menuItemCheck: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors2024['brand-default'],
+    marginLeft: 8,
   },
 }));

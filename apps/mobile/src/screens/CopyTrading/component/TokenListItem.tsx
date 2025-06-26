@@ -188,7 +188,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 14,
     paddingTop: 12,
     paddingHorizontal: 12,
-    gap: 16,
+    gap: 4,
     marginBottom: 8,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
@@ -306,7 +306,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   triangleContainer: {
     position: 'absolute',
     left: 16,
-    top: -10,
+    top: -6,
     zIndex: 1,
   },
   triangle: {
@@ -314,7 +314,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 0,
     borderLeftWidth: 6,
     borderRightWidth: 6,
-    borderBottomWidth: 10,
+    borderBottomWidth: 8,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderBottomColor: isLight
