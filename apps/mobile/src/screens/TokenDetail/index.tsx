@@ -344,7 +344,6 @@ export const TokenDetailScreen = () => {
         token.chain,
         token._tokenId,
       );
-      console.log('res', res);
       return ensureAbstractPortfolioToken({
         ...abstractTokenToTokenItem(token),
         usd_value: res?.usd_value,
