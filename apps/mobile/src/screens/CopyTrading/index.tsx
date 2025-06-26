@@ -57,8 +57,8 @@ const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
 
 enum FilterRuleEnum {
   '24hPrice' = '24hPrice',
-  'smart money' = 'smart money',
-  'token create' = 'token create',
+  'smartMoney' = 'smart money',
+  'tokenCreate' = 'token create',
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
