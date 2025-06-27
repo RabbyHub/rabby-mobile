@@ -115,7 +115,7 @@ export const formatNumber = (
 };
 
 export const formatPrice = (price: string | number, len = 4) => {
-  if ((price as number) >= 1000) {
+  if ((price as number) >= 1000 && (price as number) <= 1000000) {
     return formatNumber(price, 0);
   }
   if ((price as number) >= 0.1) {
