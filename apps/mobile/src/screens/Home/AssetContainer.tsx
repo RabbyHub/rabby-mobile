@@ -455,10 +455,13 @@ export const AssetContainer: React.FC<Props> = ({
     return 'token';
   }, [firstRowType]);
 
-  const { balance } = useCurrentBalance(currentAccount?.address, {
-    update: true,
-    noNeedBalance: false,
-  });
+  const { balance, balanceLoading } = useCurrentBalance(
+    currentAccount?.address,
+    {
+      update: true,
+      noNeedBalance: false,
+    },
+  );
   const {
     result: curveData,
     isLoading: isLoadingCurve,
@@ -554,7 +557,7 @@ export const AssetContainer: React.FC<Props> = ({
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
           curveData={curveData}
-          isLoadingCurve={isLoadingCurve}
+          isLoadingCurve={isLoadingCurve || (balanceLoading && !balance)}
           isDisConnnect={isDisConnnect}
           onRefresh={() => handleRefresh(true)}
         />
@@ -571,6 +574,8 @@ export const AssetContainer: React.FC<Props> = ({
       </View>
     );
   }, [
+    balance,
+    balanceLoading,
     chainsInfo.chainLength,
     currentAccount,
     currentSection,

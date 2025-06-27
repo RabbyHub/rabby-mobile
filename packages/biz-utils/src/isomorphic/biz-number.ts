@@ -109,7 +109,7 @@ export const formatNumber = (
     if (n.gte(1e9)) {
       return `${n.div(1e9).toFormat(decimal, format)}B`;
     }
-    return n.decimalPlaces(0).toFormat(format);
+    return `${n.div(1e6).toFormat(decimal, format)}M`;
   }
   return n.toFormat(decimal, format);
 };
@@ -131,13 +131,13 @@ export const intToHex = (n: number) => {
   return `0x${n.toString(16)}`;
 };
 
-export const formatUsdValue = (value: string | number) => {
+export const formatUsdValue = (value: string | number, decimal?: number) => {
   const bnValue = new BigNumber(value);
   if (bnValue.lt(0)) {
-    return `-$${formatNumber(Math.abs(Number(value)))}`;
+    return `-$${formatNumber(Math.abs(Number(value)), decimal)}`;
   }
   if (bnValue.gte(0.01) || bnValue.eq(0)) {
-    return `$${formatNumber(value)}`;
+    return `$${formatNumber(value, decimal)}`;
   }
   return '<$0.01';
 };

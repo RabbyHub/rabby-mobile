@@ -19,6 +19,19 @@ export type CurvePoint = {
   clockTimeString: string;
 };
 
+export const formatSmallUsdValue = (value: number) => {
+  if (!value) {
+    return '$0';
+  }
+  if (value < 0.01) {
+    return '<$0.01';
+  }
+  if (value <= 10) {
+    return `$${splitNumberByStep(value.toFixed(2))}`;
+  }
+  return formatUsdValue(value, value > 1000000 ? 2 : 0);
+};
+
 export const formChartData = (
   data: CurveList,
   realtimeNetWorth = 0,
@@ -48,7 +61,7 @@ export const formChartData = (
 
         return {
           value: x.usd_value || 0,
-          netWorth: x.usd_value ? `${formatUsdValue(x.usd_value)}` : '$0',
+          netWorth: formatSmallUsdValue(x.usd_value),
           change: `${formatUsdValue(Math.abs(change))}`,
           isLoss: change < 0,
           changePercent:
@@ -67,7 +80,7 @@ export const formChartData = (
 
     list.push({
       value: realtimeNetWorth || 0,
-      netWorth: realtimeNetWorth ? `${formatUsdValue(realtimeNetWorth)}` : '$0',
+      netWorth: formatSmallUsdValue(realtimeNetWorth),
       change: `${formatUsdValue(Math.abs(realtimeChange))}`,
       isLoss: realtimeChange < 0,
       changePercent:
@@ -88,15 +101,7 @@ export const formChartData = (
 
   return {
     list,
-    netWorthWithDot:
-      endNetWorth === 0 ? '$0' : `${formatUsdValue(endNetWorth)}`,
-    netWorth:
-      endNetWorth === 0
-        ? '$0'
-        : '$' +
-          splitNumberByStep(
-            endNetWorth > 10 ? Math.floor(endNetWorth) : endNetWorth.toFixed(2),
-          ),
+    netWorth: formatSmallUsdValue(endNetWorth),
     change: `${formatUsdValue(Math.abs(assetsChange))}`,
     changePercent:
       startData.usd_value !== 0
