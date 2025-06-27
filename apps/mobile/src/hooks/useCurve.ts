@@ -29,7 +29,7 @@ export const formatSmallUsdValue = (value: number) => {
   if (value <= 10) {
     return `$${splitNumberByStep(value.toFixed(2))}`;
   }
-  return formatUsdValue(value, value > 1000000 ? 2 : 0);
+  return formatUsdValue(value, value > 1000000 ? 2 : 0, true);
 };
 
 export const formChartData = (

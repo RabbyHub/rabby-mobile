@@ -91,6 +91,7 @@ export const formatNumber = (
   num: string | number,
   decimal = 2,
   opt = {} as BigNumber.Format,
+  formatMillion = false,
 ) => {
   const n = new BigNumber(num);
   const format = {
@@ -109,13 +110,24 @@ export const formatNumber = (
     if (n.gte(1e9)) {
       return `${n.div(1e9).toFormat(decimal, format)}B`;
     }
-    return `${n.div(1e6).toFormat(decimal, format)}M`;
+    if (formatMillion) {
+      return `${n.div(1e6).toFormat(decimal, format)}M`;
+    }
+    return n.decimalPlaces(0).toFormat(format);
   }
   return n.toFormat(decimal, format);
 };
 
-export const formatPrice = (price: string | number, len = 4) => {
-  if ((price as number) >= 1000 && (price as number) <= 1000000) {
+export const formatPrice = (
+  price: string | number,
+  len = 4,
+  formatThousand = false,
+) => {
+  if (
+    formatThousand &&
+    (price as number) >= 1000 &&
+    (price as number) <= 1000000
+  ) {
     return formatNumber(price, 0);
   }
   if ((price as number) >= 0.1) {
@@ -134,13 +146,22 @@ export const intToHex = (n: number) => {
   return `0x${n.toString(16)}`;
 };
 
-export const formatUsdValue = (value: string | number, decimal?: number) => {
+export const formatUsdValue = (
+  value: string | number,
+  decimal?: number,
+  formatMillion?: boolean,
+) => {
   const bnValue = new BigNumber(value);
   if (bnValue.lt(0)) {
-    return `-$${formatNumber(Math.abs(Number(value)), decimal)}`;
+    return `-$${formatNumber(
+      Math.abs(Number(value)),
+      decimal,
+      {},
+      formatMillion,
+    )}`;
   }
   if (bnValue.gte(0.01) || bnValue.eq(0)) {
-    return `$${formatNumber(value, decimal)}`;
+    return `$${formatNumber(value, decimal, {}, formatMillion)}`;
   }
   return '<$0.01';
 };
