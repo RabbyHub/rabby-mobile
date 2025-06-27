@@ -140,7 +140,7 @@ export default function SendNFT() {
         <View style={styles.sendNFTScreen}>
           <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
             {/* From */}
-            <FromAddressControl2024 disableSwitch={true} />
+            <FromAddressControl2024 disableSwitch={true} forScene="SendNFT" />
 
             {/* To */}
             <ToAddressControl2024
