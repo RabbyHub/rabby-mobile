@@ -34,7 +34,6 @@ export const useAssets = () => {
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
-  const { userTokenSettings } = useUserTokenSettings();
   const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useAtom(isFirstFetchAtom);
   const {
@@ -353,6 +352,9 @@ export const useAssets = () => {
       const addresses = options?.realTimeAddresses || [
         ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
       ];
+      if (Object.keys(assetsMap).length) {
+        return;
+      }
       removeUnNeedAssets(addresses);
       const tokenSetting = await preferenceService.getUserTokenSettings();
       !disableToken && (await batchLoadCacheTokens(addresses, tokenSetting));
@@ -362,6 +364,32 @@ export const useAssets = () => {
       ]);
     },
   );
+
+  return {
+    tokens,
+    portfolios,
+    nftList,
+    assetsMap,
+    isLoading,
+    hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
+    getCacheTop10Assets,
+    checkIsExpireAndUpdate,
+    batchLoadCacheTokens,
+    batchLoadCacheDefi,
+    batchLoadCacheNFT,
+    refreshing: !!isLoading && !isFirstFetch,
+  };
+};
+
+export const useInitDetectDBAssets = () => {
+  const {
+    assetsMap,
+    isLoading,
+    batchLoadCacheTokens,
+    batchLoadCacheDefi,
+    batchLoadCacheNFT,
+  } = useAssets();
+  const { userTokenSettings } = useUserTokenSettings();
 
   const debounceReloadTokenList = useMemo(
     () => debounce(batchLoadCacheTokens, 2000),
@@ -420,16 +448,4 @@ export const useAssets = () => {
       ],
     ),
   });
-
-  return {
-    tokens,
-    portfolios,
-    nftList,
-    assetsMap,
-    isLoading,
-    hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
-    getCacheTop10Assets,
-    checkIsExpireAndUpdate,
-    refreshing: !!isLoading && !isFirstFetch,
-  };
 };

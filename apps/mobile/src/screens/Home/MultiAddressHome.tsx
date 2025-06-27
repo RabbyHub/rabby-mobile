@@ -92,6 +92,7 @@ import { useExposureRateGuide } from '@/components/RateModal/hooks';
 import { RateModal } from '@/components/RateModal/RateModal';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
+import { useInitDetectDBAssets } from '../Search/useAssets';
 
 const HeaderHeight = 24;
 
@@ -406,6 +407,7 @@ function MultiAddressHome(): JSX.Element {
   } = useMultiCurve(top10Addresses, true, top10Balance);
   useCexSupportList();
   useFetchCexInfo();
+  useInitDetectDBAssets();
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
