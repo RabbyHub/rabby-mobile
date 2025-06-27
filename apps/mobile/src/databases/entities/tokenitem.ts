@@ -197,6 +197,33 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       }));
   }
 
+  static async batchMultiAddressTokensByIdAndChain(
+    addresses: string[],
+    chain: string,
+    token_id: string,
+  ) {
+    await prepareAppDataSource();
+
+    const time = Date.now();
+    console.log('batchMultAddressTokensByIdAndChain', time);
+    const res = (
+      await this.getRepository().findBy({
+        owner_addr: In(addresses),
+        chain,
+        id: token_id,
+      })
+    )
+      .filter(i => i.amount)
+      .map(i => ({
+        ...i,
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+      }));
+
+    console.log('batchMultAddressTokensByIdAndChain', Date.now() - time);
+
+    return res;
+  }
+
   static async batchMultAddressTokens(addresses: string[]) {
     await prepareAppDataSource();
 

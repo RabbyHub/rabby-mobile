@@ -60,6 +60,7 @@ import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { useTokenDetail } from './hook';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -255,14 +256,22 @@ export const TokenDetailScreen = () => {
   //   isSingleAddress,
   // );
 
-  useEffect(() => {
-    checkIsExpireAndUpdate(false, {
-      disableNFT: true,
-      realTimeAddresses: top10Addresses,
-      ignoreLoading: true,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { data: tokenEntityList } = useRequest(
+    async () => {
+      if (!token || !token._tokenId || !top10Addresses.length) {
+        return [];
+      }
+
+      return await TokenItemEntity.batchMultiAddressTokensByIdAndChain(
+        top10Addresses.map(item => item.toLowerCase()),
+        token.chain,
+        token._tokenId,
+      );
+    },
+    {
+      refreshDeps: [token.chain, token._tokenId, top10Addresses],
+    },
+  );
 
   const finalAccount =
     account || accounts[0] || preferenceService.getFallbackAccount();
@@ -327,6 +336,7 @@ export const TokenDetailScreen = () => {
   useEffect(() => {
     getCacheTop10Assets({
       disableNFT: true,
+      disableToken: true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -439,7 +449,11 @@ export const TokenDetailScreen = () => {
       //       address,
       //       amount: tokensByAddress[address].amount,
       //     }));
-      const fromAddressList = fromAddress;
+      const fromAddressList =
+        tokenEntityList?.map(item => ({
+          address: item.owner_addr,
+          amount: item.amount,
+        })) || fromAddress;
 
       accounts.map(item => {
         const idx = fromAddressList?.findIndex(i =>
@@ -460,7 +474,7 @@ export const TokenDetailScreen = () => {
         new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
       );
     }
-  }, [token, accounts, isSingleAddress, finalAccount]);
+  }, [token, accounts, isSingleAddress, finalAccount, tokenEntityList]);
 
   const tokenChain = useMemo(() => {
     return getChain(token?.chain);
