@@ -11,7 +11,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { nanoid } from 'nanoid';
 import { Object as ObjectType } from 'ts-toolbelt';
-import { findMaxGasTx } from '../utils/tx';
+import { findMaxGasTx, getRpcTxReceipt } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { sortBy, minBy, maxBy, uniqBy, flatten } from 'lodash';
 import { openapi, testOpenapi } from '../request';
@@ -857,17 +857,12 @@ export class TransactionHistoryService {
               hash: tx.hash!,
             });
           } else {
-            return openapi.getTx(
-              chain.serverId,
-              tx.hash!,
-              Number(tx.rawTx.gasPrice || tx.rawTx.maxFeePerGas || 0),
-            );
+            // Use standard RPC to get transaction receipt
+            return getRpcTxReceipt(chain.serverId, tx.hash!);
           }
         }),
       );
-      const completed = results.find(
-        result => result.code === 0 && result.status !== 0,
-      );
+      const completed = results.find(result => result.code === 0);
       if (!completed) {
         if (
           duration !== false &&
