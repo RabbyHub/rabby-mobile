@@ -900,6 +900,7 @@ export class TransactionHistoryService {
       eventBus.emit(EVENTS.RELOAD_TX, {
         addressList: [address],
       });
+      return completed.gas_used;
     } catch (e) {
       if (
         duration !== false &&
