@@ -1,17 +1,27 @@
-import { useInfiniteScroll, useMemoizedFn, useRequest } from 'ahooks';
+import {
+  useInfiniteScroll,
+  useInterval,
+  useMemoizedFn,
+  useRequest,
+} from 'ahooks';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { openapi } from '@/core/request';
 import useAsync from 'react-use/lib/useAsync';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { TransactionGroup } from '@/core/services/transactionHistory';
+import {
+  BridgeTxHistoryItem,
+  SwapTxHistoryItem,
+  TransactionGroup,
+} from '@/core/services/transactionHistory';
 import { bridgeService, transactionHistoryService } from '@/core/services';
 import { findChain } from '@/utils/chain';
 import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { fetchRefreshLocalData } from '@/screens/Swap/hooks/history';
 
 const pendingCountAtom = atom(0);
-const bridgeLocalTxDataAtom = atom<TransactionGroup | null>(null);
+const bridgeLocalTxDataAtom = atom<BridgeTxHistoryItem | null>(null);
 const bridgeTxDataPendingAtom = atom<BridgeHistory | null>(null);
 export const bridgeHistoryRedDotAtom = atom(false);
 
@@ -24,29 +34,18 @@ export const useReadBridgeHistoryRedDot = () => {
 };
 
 export const fetchLocalBridgePendingTx = (address: string) => {
-  const { completeds: _completeds, pendings: _pendings } =
-    transactionHistoryService.getList(address);
-
-  const txs = [..._pendings, ..._completeds].filter(item => {
-    const chain = findChain({ id: item.chainId });
-    return (
-      !chain?.isTestnet &&
-      item.isPending &&
-      !item.maxGasTx.action?.actionData.cancelTx &&
-      (item.$ctx?.ga?.source === 'bridge' ||
-        item.$ctx?.ga?.source === 'approvalAndBridge|bridge')
-    );
-  });
-
-  return txs.sort((a, b) => b.createdAt - a.createdAt)[0];
+  return transactionHistoryService.getRecentPendingTxHistory(
+    address,
+    'bridge',
+  ) as BridgeTxHistoryItem;
 };
 
 export const usePollBridgePendingNumber = (timer = 10000) => {
   const [, setCount] = useAtom(pendingCountAtom);
   const [pendingTxData, setPendingTxData] = useAtom(bridgeTxDataPendingAtom);
-  // const [localPendingTxData, setLocalPendingTxData] = useAtom(
-  //   bridgeLocalTxDataAtom,
-  // );
+  const [localPendingTxData, setLocalPendingTxData] = useAtom(
+    bridgeLocalTxDataAtom,
+  );
 
   const [, setBridgeHistoryRedDot] = useAtom(bridgeHistoryRedDotAtom);
 
@@ -65,6 +64,17 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
       clearTimer();
     }
   }, [account?.address, clearTimer, setPendingTxData]);
+
+  const runFetchLocalPendingTx = useCallback(() => {
+    if (account?.address) {
+      const resTx = fetchLocalBridgePendingTx(account.address);
+      setLocalPendingTxData(resTx);
+    }
+  }, [account?.address, setLocalPendingTxData]);
+
+  useEffect(() => {
+    runFetchLocalPendingTx();
+  }, [runFetchLocalPendingTx]);
 
   const res = useRequest(
     async () => {
@@ -107,34 +117,38 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
     },
   );
 
-  // const runFetchLocalPendingTx = useCallback(() => {
-  //   if (account?.address) {
-  //     const resTx = fetchLocalBridgePendingTx(account.address);
-  //     setLocalPendingTxData(resTx);
-  //   }
-  // }, [account?.address, setLocalPendingTxData]);
-
-  // useEffect(() => {
-  //   runFetchLocalPendingTx();
-  // }, [runFetchLocalPendingTx]);
-
   const updatePendingTxData = useCallback(
     (historyList: BridgeHistory[]) => {
-      const recentlyData = historyList.sort(
-        (a, b) => b.create_at - a.create_at,
-      )[0];
-      const isPending = recentlyData?.status === 'pending';
-      if (isPending) {
-        setPendingTxData(recentlyData);
-      } else {
-        // update pending tx data to completed data
-        if (pendingTxData?.detail_url === recentlyData?.detail_url) {
-          setPendingTxData(recentlyData);
+      const recentlyTxHash = localPendingTxData?.hash;
+      if (recentlyTxHash) {
+        const findTx = historyList.find(
+          item => item.from_tx?.tx_id === recentlyTxHash,
+        );
+        if (!findTx) {
+          // no find tx, default set this tx failed
+          transactionHistoryService.completeBridgeTxHistory(
+            recentlyTxHash,
+            localPendingTxData.fromChainId,
+            'failed',
+          );
+          return;
+        }
+        if (findTx && findTx.status === 'completed' && localPendingTxData) {
+          setLocalPendingTxData({
+            ...localPendingTxData,
+            status: 'allSuccess',
+            completedAt: Date.now(),
+          });
+          transactionHistoryService.completeBridgeTxHistory(
+            recentlyTxHash,
+            localPendingTxData.fromChainId,
+            'allSuccess',
+          );
           setBridgeHistoryRedDot(true);
         }
       }
     },
-    [setPendingTxData, pendingTxData, setBridgeHistoryRedDot],
+    [setLocalPendingTxData, setBridgeHistoryRedDot, localPendingTxData],
   );
 
   const { loading, error, data: value, runAsync } = res;
@@ -182,10 +196,10 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
 
   return {
     runAsync,
-    // localPendingTxData,
-    pendingTxData,
+    localPendingTxData,
+    // pendingTxData,
     clearLocalPendingTxData,
-    // runFetchLocalPendingTx,
+    runFetchLocalPendingTx,
     setBridgeHistoryRedDot,
     clearBridgeHistoryRedDot,
   };
