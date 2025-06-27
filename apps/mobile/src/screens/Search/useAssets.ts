@@ -352,10 +352,10 @@ export const useAssets = () => {
       const addresses = options?.realTimeAddresses || [
         ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
       ];
+      removeUnNeedAssets(addresses);
       if (Object.keys(assetsMap).length) {
         return;
       }
-      removeUnNeedAssets(addresses);
       const tokenSetting = await preferenceService.getUserTokenSettings();
       !disableToken && (await batchLoadCacheTokens(addresses, tokenSetting));
       Promise.all([
