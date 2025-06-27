@@ -21,15 +21,13 @@ import {
   StyleSheet,
   FlatList,
   Dimensions,
-  Modal,
-  TouchableWithoutFeedback,
+  Animated,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Image,
 } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
-import {
-  makeTxPageBackgroundColors,
-  RootNames,
-  ScreenLayouts,
-} from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -42,24 +40,23 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTipsDollarDialog } from './component/hooks';
 import { preferenceService } from '@/core/services/shared';
-import RcIconArrowDownCC from '@/assets2024/icons/copyTrading/IconDownPolygon.svg';
-import RcIconSelectedCC from '@/assets2024/icons/copyTrading/IconSelected.svg';
+import {
+  FilterDropdownMenu,
+  FilterRuleEnum,
+  FilterTabItem,
+} from './component/FilterDropdownMenu';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { Skeleton } from '@rneui/themed';
 import { Tip } from '@/components';
-
+import RcIconSelectedCC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
+import LinearGradient from 'react-native-linear-gradient';
+import { BlurView } from '@react-native-community/blur';
 const DEFAULT_COUNT = 10;
 
 const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
-
-enum FilterRuleEnum {
-  '24hPrice' = '24hPrice',
-  'smartMoney' = 'smart money',
-  'tokenCreate' = 'token create',
-}
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SkeletonTabList = React.memo(() => {
@@ -97,7 +94,7 @@ export const CopyTradingScreen = () => {
   const [chainIdList, setChainIdList] = useState<string[]>([]);
   const [selectedChainId, setSelectedChainId] = useState<string>('');
   const [tokenList, setTokenList] = useState<CopyTradeTokenItem[]>([]);
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [filterRule, setFilterRule] = useState<FilterRuleEnum>(
     FilterRuleEnum['24hPrice'],
   );
@@ -111,7 +108,11 @@ export const CopyTradingScreen = () => {
 
   const [isMenuVisible, setIsMenuVisible] = useState(false);
 
-  const filterTabList = useMemo(() => {
+  // Floating bar animation
+  const floatingBarOpacity = useRef(new Animated.Value(1)).current;
+  const lastScrollY = useRef(0);
+
+  const filterTabList: FilterTabItem[] = useMemo(() => {
     return [
       {
         key: FilterRuleEnum['24hPrice'],
@@ -119,21 +120,17 @@ export const CopyTradingScreen = () => {
         rule: '24H Change',
       },
       {
-        key: FilterRuleEnum['smart money'],
+        key: FilterRuleEnum.smartMoney,
         title: t('page.copyTrading.filterRule.smartMoney'),
         rule: 'Amount',
       },
       {
-        key: FilterRuleEnum['token create'],
+        key: FilterRuleEnum.tokenCreate,
         title: t('page.copyTrading.filterRule.tokenCreate'),
         rule: 'Time',
       },
     ];
   }, [t]);
-
-  const selectedFilterRule = useMemo(() => {
-    return filterTabList.find(item => item.key === filterRule);
-  }, [filterRule, filterTabList]);
 
   const { chainList, comingChainList } = useMemo(() => {
     const list = chainIdList
@@ -210,7 +207,7 @@ export const CopyTradingScreen = () => {
   const handleSelectMenuItem = useMemoizedFn((selectedRule: FilterRuleEnum) => {
     if (filterRule !== selectedRule) {
       setFilterRule(selectedRule);
-      // 切换筛选规则时重新获取数据
+      // switch filter rule and refetch data
       if (selectedChainId) {
         setHasMore(true);
         fetchTokenList(selectedChainId, 0).then(tokenArr => {
@@ -274,6 +271,33 @@ export const CopyTradingScreen = () => {
   });
 
   const { showTipsDollarDialog } = useTipsDollarDialog();
+
+  // Handle scroll for floating bar animation
+  const handleScroll = useMemoizedFn(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const currentScrollY = event.nativeEvent.contentOffset.y;
+      const deltaY = currentScrollY - lastScrollY.current;
+
+      // Show/hide floating bar based on scroll direction
+      if (deltaY > 5) {
+        // Scrolling down - hide the bar
+        Animated.timing(floatingBarOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      } else if (deltaY < -5) {
+        // Scrolling up - show the bar
+        Animated.timing(floatingBarOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      }
+
+      lastScrollY.current = currentScrollY;
+    },
+  );
 
   // fetch more data
   const handleLoadMore = useMemoizedFn(async () => {
@@ -372,21 +396,14 @@ export const CopyTradingScreen = () => {
   return (
     <NormalScreenContainer type="bg1" noHeader={true}>
       <View style={styles.headerContainer}>
-        <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={handleOpenMenu}>
-            <Text style={styles.filterText}>{selectedFilterRule?.rule}</Text>
-            <RcIconArrowDownCC
-              width={8}
-              color={colors2024['brand-default']}
-              style={[
-                styles.arrowIcon,
-                isMenuVisible && styles.arrowIconRotated,
-              ]}
-            />
-          </TouchableOpacity>
-        </View>
+        <FilterDropdownMenu
+          isVisible={isMenuVisible}
+          selectedRule={filterRule}
+          filterTabList={filterTabList}
+          onOpen={handleOpenMenu}
+          onClose={handleCloseMenu}
+          onSelectItem={handleSelectMenuItem}
+        />
         {tabLoading ? (
           <View style={[styles.scrollContentContainer, styles.headerChainList]}>
             <SkeletonTabList />
@@ -473,6 +490,8 @@ export const CopyTradingScreen = () => {
             contentContainerStyle={styles.listContainer}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.3}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             ListFooterComponent={renderListFooter}
             maxToRenderPerBatch={10}
             windowSize={10}
@@ -498,41 +517,51 @@ export const CopyTradingScreen = () => {
         )}
       </View>
 
-      <Modal
-        visible={isMenuVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={handleCloseMenu}>
-        <TouchableWithoutFeedback onPress={handleCloseMenu}>
-          <View style={styles.menuOverlay}>
-            <View style={styles.menuContainer}>
-              {filterTabList.map(item => (
-                <TouchableOpacity
-                  key={item.key}
-                  style={[
-                    styles.menuItem,
-                    filterRule === item.key && styles.menuItemSelected,
-                  ]}
-                  onPress={() => handleSelectMenuItem(item.key)}>
-                  <Text
-                    style={[
-                      styles.menuItemText,
-                      filterRule === item.key && styles.menuItemTextSelected,
-                    ]}>
-                    {item.title}
+      {/* 底部悬浮条 */}
+      <Animated.View style={{ opacity: floatingBarOpacity }}>
+        <View style={styles.floatingBar}>
+          <LinearGradient
+            colors={
+              isLight
+                ? ['rgba(246, 247, 247, 0.00)', '#F6F7F7']
+                : ['rgba(19, 20, 22, 0.00)', '#131416']
+            }
+            locations={[0, 1]}
+            angle={180}
+            style={styles.gradientOverlay}>
+            <TouchableOpacity style={styles.floatingBarButtonWrapper}>
+              <LinearGradient
+                colors={
+                  isLight
+                    ? ['rgba(255, 255, 255, 0.80)', 'rgba(255, 255, 255, 0.40)']
+                    : ['rgba(35, 36, 40, 0.80)', 'rgba(35, 36, 40, 0.40)']
+                }
+                locations={[0.009, 0.9864]}
+                angle={81}
+                style={styles.floatingBarButton}>
+                <View style={styles.floatingBarContent}>
+                  <Text style={styles.floatingBarText}>
+                    {t('page.copyTrading.myCopyTrading')} :{' '}
                   </Text>
-                  {filterRule === item.key && (
-                    <RcIconSelectedCC
-                      width={12}
-                      color={colors2024['brand-default']}
-                    />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+                  <Text style={styles.floatingBarBalanceText}>$10100</Text>
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.floatingBarBalanceText,
+                      styles.floatingBarProfitText,
+                    ])}>
+                    (+$534.23)
+                  </Text>
+                </View>
+                <RcIconSelectedCC
+                  width={16}
+                  height={16}
+                  color={colors2024['neutral-foot']}
+                />
+              </LinearGradient>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+      </Animated.View>
     </NormalScreenContainer>
   );
 };
@@ -625,90 +654,85 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     paddingVertical: 16,
   },
-  filterContainer: {
+  floatingBar: {
     position: 'absolute',
-    zIndex: 1,
+    bottom: 0,
+    left: 0,
     right: 0,
-    top: 10,
-    paddingHorizontal: 4,
-    paddingVertical: 6,
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  filterText: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['brand-default'],
-  },
-  arrowIcon: {
-    transform: [{ rotate: '0deg' }],
-  },
-  arrowIconRotated: {
-    transform: [{ rotate: '180deg' }],
-  },
-  menuOverlay: {
-    flex: 1,
-  },
-  menuContainer: {
-    position: 'absolute',
-    top: 105, // headerContainer height 56 + marginTop 44 + 5 = 105
-    right: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 12,
-    paddingVertical: 8,
-    minWidth: 120,
-    shadowColor: colors2024['neutral-bg-1'],
-    padding: 12,
+    height: 123,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: -27,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
-    borderWidth: 0.5,
-    borderColor: colors2024['neutral-line'],
+    shadowOpacity: 0.06,
+    shadowRadius: 27.5,
+    elevation: 27,
   },
-  menuItem: {
+  floatingBarButtonWrapper: {
+    marginTop: 12,
+    overflow: 'hidden',
+    borderRadius: 12,
+  },
+  floatingBarButton: {
+    borderColor: colors2024['neutral-bg-1'],
+    borderRadius: 12,
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    width: 200,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  menuItemSelected: {
+  floatingBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  floatingBarIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: colors2024['brand-light-1'],
-    borderColor: colors2024['brand-default'],
-    borderWidth: 0.5,
-    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  menuItemText: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-title-1'],
-    flex: 1,
-  },
-  menuItemTextSelected: {
-    color: colors2024['brand-default'],
+  floatingBarIconText: {
+    fontSize: 18,
     fontWeight: '500',
   },
-  menuItemCheck: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors2024['brand-default'],
-    marginLeft: 8,
+  floatingBarText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  floatingBarBalanceText: {
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+  },
+  floatingBarProfitText: {
+    color: colors2024['green-default'],
+  },
+  floatingBarLossText: {
+    color: colors2024['red-default'],
+  },
+  floatingBarArrow: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontWeight: '400',
+  },
+  blurContainer: {
+    flex: 1,
+  },
+  gradientOverlay: {
+    flex: 1,
   },
 }));

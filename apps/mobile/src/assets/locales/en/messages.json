@@ -969,6 +969,7 @@
       "noMoreData": "No more data",
       "updateText": "{{count}} Trends Updated",
       "refreshTitle": "Loading More Copy Trading From Smart Money",
+      "myCopyTrading": "My Copy Trading",
       "buy": "Buy"
     },
     "dashboard": {
