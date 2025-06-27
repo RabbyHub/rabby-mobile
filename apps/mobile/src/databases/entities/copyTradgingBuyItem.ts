@@ -7,12 +7,12 @@ import { TokenItemEntity } from './tokenitem';
 
 @Entity('copy_trading_buyitem')
 export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
-  // amount
-  @Column('real')
-  amount: number = 0;
   // chain
   @Column('text', { default: '' })
   chain: TokenItem['chain'] = 'eth';
+  // amount
+  @Column('real')
+  amount: number = 0;
   // id
   @Column('text', { default: '' })
   id: TokenItem['id'] = '';
@@ -20,11 +20,29 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
   @Column('real')
   price: TokenItem['price'] = 0;
 
+  // from_token_id
+  @Column('text', { default: '' })
+  from_token_id: TokenItem['id'] = '';
+
+  // from_token_amount
+  @Column('real')
+  from_token_amount: number = 0;
+
+  // from_token_price
+  @Column('real')
+  from_token_price: number = 0;
+
+  // create_time
   @Column('integer')
-  recently_buy_time: number = 0;
+  create_time: number = 0;
 
   makeDbId(): string {
-    return (this._db_id = `${[this.owner_addr, this.id, this.chain]
+    return (this._db_id = `${[
+      this.owner_addr,
+      this.id,
+      this.chain,
+      this.create_time,
+    ]
       .filter(Boolean)
       .join('-')}`);
   }
@@ -37,7 +55,9 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
       chain: string;
       id: string;
       price: number;
-      recently_buy_time?: number;
+      from_token_id: string;
+      from_token_amount: number;
+      from_token_price: number;
     },
   ) {
     e.owner_addr = owner_addr;
@@ -46,8 +66,11 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     e.chain = input.chain ?? '';
     e.id = input.id ?? '';
     e.price = input.price ?? 0;
-    e.recently_buy_time =
-      input.recently_buy_time ?? Math.floor(Date.now() / 1000);
+
+    e.from_token_id = input.from_token_id ?? '';
+    e.from_token_amount = input.from_token_amount ?? 0;
+    e.from_token_price = input.from_token_price ?? 0;
+    e.create_time = Math.floor(Date.now() / 1000);
 
     e.makeDbId();
   }
@@ -83,96 +106,27 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     return this.getRepository().find();
   }
 
-  /**
-   * Insert or update CopyTradingBuyItem record
-   * If same record exists (owner_addr + id + chain), accumulate amount and calculate weighted average price
-   * If not exists, insert new record
-   * @param owner_addr wallet address
-   * @param tokenData token data
-   */
-  static async insertOrUpdateBuyItem(
+  static async insertBuyItem(
     owner_addr: string,
     tokenData: {
       id: string;
       chain: string;
       amount: number;
       price: number;
+      from_token_id: string;
+      from_token_amount: number;
+      from_token_price: number;
     },
   ) {
     await prepareAppDataSource();
 
     const repo = this.getRepository();
-    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const newRecord = new CopyTradingBuyItemEntity();
+    this.fillEntity(newRecord, owner_addr, tokenData);
 
-    // 1. Check if same record exists
-    const existingRecord = await repo.findOne({
-      where: {
-        owner_addr,
-        id: tokenData.id,
-        chain: tokenData.chain,
-      },
-    });
+    await repo.save(newRecord);
 
-    if (existingRecord) {
-      // 2. Record exists: accumulate amount and calculate weighted average price
-      const oldAmount = existingRecord.amount;
-      const oldPrice = existingRecord.price;
-      const newAmount = tokenData.amount;
-      const newPrice = tokenData.price;
-
-      // Calculate total amount
-      const totalAmount = oldAmount + newAmount;
-
-      // Calculate weighted average price: (old_amount * old_price + new_amount * new_price) / total_amount
-      const weightedAveragePrice =
-        (oldAmount * oldPrice + newAmount * newPrice) / totalAmount;
-
-      // Update record
-      await repo.update(
-        {
-          owner_addr,
-          id: tokenData.id,
-          chain: tokenData.chain,
-        },
-        {
-          amount: totalAmount,
-          price: weightedAveragePrice,
-          recently_buy_time: currentTimestamp,
-        },
-      );
-
-      console.log(
-        `Update record: ${tokenData.id}, old amount: ${oldAmount}, new: ${newAmount}, total: ${totalAmount}, weighted price: ${weightedAveragePrice}`,
-      );
-
-      return {
-        action: 'updated' as const,
-        record: {
-          ...existingRecord,
-          amount: totalAmount,
-          price: weightedAveragePrice,
-          recently_buy_time: currentTimestamp,
-        },
-      };
-    } else {
-      // 3. Record not exists: insert new record
-      const newRecord = new CopyTradingBuyItemEntity();
-      this.fillEntity(newRecord, owner_addr, {
-        ...tokenData,
-        recently_buy_time: currentTimestamp,
-      });
-
-      const savedRecord = await repo.save(newRecord);
-
-      console.log(
-        `Insert new record: ${tokenData.id}, amount: ${tokenData.amount}, price: ${tokenData.price}`,
-      );
-
-      return {
-        action: 'inserted' as const,
-        record: savedRecord,
-      };
-    }
+    return true;
   }
 
   static async deleteExpiredBuyItem() {
@@ -189,7 +143,7 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
         AND ct.chain = token.chain 
         AND ct.owner_addr = token.owner_addr
       WHERE (token.id IS NULL OR token.amount = 0)
-        AND ct.recently_buy_time < ${oneHourAgo}
+        AND ct.create_time < ${oneHourAgo}
     `);
 
     // Delete invalid records
@@ -228,19 +182,21 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
 
     const repo = this.getRepository();
 
-    // Use join query to get valid records at once
+    // Use aggregated join query to calculate weighted average price for same token
+    // buy_price = (from_token_amount * from_token_price) / amount
     const queryStartTime = Date.now();
     const validRecords = await repo.query(`
       SELECT 
         token.*,
-        ct.amount as buy_amount,
-        ct.price as buy_price
+        SUM(ct.amount) as buy_amount,
+        SUM(ct.from_token_amount * ct.from_token_price) / SUM(ct.amount) as buy_price
       FROM copy_trading_tokenitem ct
       INNER JOIN cache_tokenitem token
         ON ct.id = token.id 
         AND ct.chain = token.chain 
         AND ct.owner_addr = token.owner_addr
       WHERE token.amount > 0
+      GROUP BY ct.id, ct.chain, ct.owner_addr
     `);
     const queryEndTime = Date.now();
 
