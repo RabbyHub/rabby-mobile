@@ -80,7 +80,8 @@ export const PendingTxItem = ({
       params: {
         isForMultipleAddress,
         data: groupData,
-        type: HistoryItemCateType.Swap,
+        type:
+          type === 'send' ? HistoryItemCateType.Send : HistoryItemCateType.Swap,
         title:
           type === 'send'
             ? t('page.transactions.itemTitle.Send')

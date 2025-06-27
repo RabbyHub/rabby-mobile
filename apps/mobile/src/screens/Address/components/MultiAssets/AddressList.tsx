@@ -384,7 +384,7 @@ const getStyles = createGetStyles2024(ctx => ({
   stackedIcon: {
     position: 'absolute',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 1)',
+    borderColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 10,
   },
   moreWalletsButtonIconImage: {
