@@ -19,7 +19,7 @@ export const BlurShadowView = ({
     return children;
   }
   return (
-    <View style={styles.container}>
+    <View style={isLight ? styles.lightContainer : styles.container}>
       <BlurView
         style={styles.blur}
         blurAmount={blurAmount}
@@ -33,6 +33,19 @@ export const BlurShadowView = ({
 
 const styles = StyleSheet.create({
   container: {
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0, 0, 0, 0.12)',
+        shadowOffset: {
+          width: 0,
+          height: 15,
+        },
+        shadowOpacity: 1,
+        shadowRadius: 27.5,
+      },
+    }),
+  },
+  lightContainer: {
     ...Platform.select({
       ios: {
         shadowColor: 'rgba(55, 56, 63)',
