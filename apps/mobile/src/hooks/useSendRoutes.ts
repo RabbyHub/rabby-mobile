@@ -1,7 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
 import { atom, useAtom } from 'jotai';
-import { RootStackParamsList } from '@/navigation-type';
+import {
+  RootStackParamsList,
+  TransactionNavigatorParamList,
+} from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { NavigatorScreenParams } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { useCallback } from 'react';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
@@ -13,7 +17,6 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
-
 export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
 export const isSingleAddressAtom = atom<boolean>(false);
 export const useSendRoutes = () => {
@@ -21,15 +24,46 @@ export const useSendRoutes = () => {
   const { findAccountWithoutBalance } = useWhiteListAddress(true);
   const [params, setParams] = useAtom(sendScreenParamsAtom);
   const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
+
+  // check if has nft params
+  const hasNftParams = useCallback((mergedParams: { [key: string]: any }) => {
+    return !!mergedParams.nftItem;
+  }, []);
+
+  // get target screen by params and mode
+  const getTargetScreen = useCallback(
+    (mergedParams: { [key: string]: any }, isForSingleAddress: boolean) => {
+      const hasNft = hasNftParams(mergedParams);
+      if (hasNft) {
+        return RootNames.SendNFT;
+      } else {
+        return isForSingleAddress ? RootNames.Send : RootNames.MultiSend;
+      }
+    },
+    [hasNftParams],
+  );
+
+  // navigate to send screen
+  const navigateToTargetScreen = useCallback(
+    (mergedParams: { [key: string]: any }, isForSingleAddress: boolean) => {
+      const targetScreen = getTargetScreen(mergedParams, isForSingleAddress);
+
+      navigation.push(RootNames.StackTransaction, {
+        screen: targetScreen,
+        params: mergedParams,
+      } as NavigatorScreenParams<TransactionNavigatorParamList>);
+    },
+    [navigation, getTargetScreen],
+  );
+
   const navigateToSendScreen = useCallback(
     (p?: { [key: string]: any }) => {
-      navigation.push(RootNames.StackTransaction, {
-        screen: isSingleAddress ? RootNames.Send : RootNames.MultiSend,
-        params: { ...params, ...p },
-      });
+      const mergedParams = { ...params, ...p };
+      navigateToTargetScreen(mergedParams, isSingleAddress);
     },
-    [navigation, params, isSingleAddress],
+    [params, isSingleAddress, navigateToTargetScreen],
   );
+
   const navigateToSendPolyScreen = useCallback(
     async (isForSingleAddress: boolean, p?: { [key: string]: any }) => {
       matomoRequestEvent({
@@ -42,10 +76,8 @@ export const useSendRoutes = () => {
         const { inWhitelist, account, isMyImported } =
           findAccountWithoutBalance(p.toAddress, undefined);
         if (inWhitelist || isMyImported) {
-          navigation.push(RootNames.StackTransaction, {
-            screen: isForSingleAddress ? RootNames.Send : RootNames.MultiSend,
-            params: { ...params, ...p },
-          });
+          const mergedParams = { ...params, ...p };
+          navigateToTargetScreen(mergedParams, isForSingleAddress);
         } else {
           const id = createGlobalBottomSheetModal2024({
             name: MODAL_NAMES.CONFIRM_ADDRESS,
@@ -80,6 +112,7 @@ export const useSendRoutes = () => {
       params,
       setIsSingleAddress,
       setParams,
+      navigateToTargetScreen,
     ],
   );
 

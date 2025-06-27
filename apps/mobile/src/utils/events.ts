@@ -4,7 +4,11 @@ import { makeEEClass } from '@/core/apis/event';
 import { type Purchase } from 'react-native-iap';
 
 export type EventBusListeners = {
-  [EVENTS.TX_COMPLETED]: (txDetail: { address: string; hash: string }) => void;
+  [EVENTS.TX_COMPLETED]: (txDetail: {
+    address: string;
+    hash: string;
+    gasUsed?: number;
+  }) => void;
   [EVENTS.PURCHASE_UPDATED]: (detail: {
     data: Purchase;
     error?: Error;

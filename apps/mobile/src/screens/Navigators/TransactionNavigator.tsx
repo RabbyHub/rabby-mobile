@@ -159,8 +159,13 @@ export default function TransactionNavigator() {
         name={RootNames.SendNFT}
         component={SendNFTScreen}
         options={mergeScreenOptions({
-          title: 'Send NFT',
-          ...headerPresets.withBg2,
+          title: 'Send',
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            fontSize: 20,
+          },
         })}
       />
       <TransactionStack.Screen
