@@ -133,7 +133,12 @@
       "addressCount_one": "{{count}} 지갑"
     },
     "sendNFT": {
-      "sendButton": "보내기"
+      "sendButton": "보내기",
+      "NFT": "NFT",
+      "Collection": "컬렉션",
+      "SendAmount": "금액 전송",
+      "Contract": "계약",
+      "Chain": "체인"
     },
     "signFooterBar": {
       "confirm": "확인",

@@ -435,7 +435,12 @@
       }
     },
     "sendNFT": {
-      "sendButton": "Enviar"
+      "sendButton": "Enviar",
+      "Contract": "Contrato",
+      "Collection": "Coleção",
+      "SendAmount": "Enviar valor",
+      "Chain": "Cadeia",
+      "NFT": "NFT"
     },
     "signTx": {
       "revokePermit2": {

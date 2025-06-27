@@ -718,7 +718,12 @@
       "GasReserved": "Dipesan <1>0</1> {{ tokenName }} untuk biaya gas"
     },
     "sendNFT": {
-      "sendButton": "Kirim"
+      "sendButton": "Kirim",
+      "NFT": "NFT",
+      "Collection": "Koleksi",
+      "SendAmount": "Kirim jumlah",
+      "Contract": "Kontrak",
+      "Chain": "Rantai"
     },
     "approvals": {
       "list": {

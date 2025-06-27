@@ -548,7 +548,12 @@
       }
     },
     "sendNFT": {
-      "sendButton": "发送"
+      "sendButton": "发送",
+      "Collection": "集合",
+      "NFT": "NFT",
+      "Chain": "链",
+      "Contract": "合约",
+      "SendAmount": "发送金额"
     },
     "sendTokenComponents": {
       "GasReserved": "预留 <1>0</1> {{ tokenName }} 用于 gas 费用"

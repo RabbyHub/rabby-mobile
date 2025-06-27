@@ -304,7 +304,12 @@
       "copyAddress": "คัดลอกที่อยู่"
     },
     "sendNFT": {
-      "sendButton": "ส่ง"
+      "sendButton": "ส่ง",
+      "NFT": "NFT",
+      "Chain": "เชน",
+      "Collection": "การรวบรวม",
+      "SendAmount": "ส่งจำนวน",
+      "Contract": "สัญญา"
     },
     "signTypedData": {
       "verifyAddress": {

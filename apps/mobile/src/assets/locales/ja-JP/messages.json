@@ -467,7 +467,12 @@
       }
     },
     "sendNFT": {
-      "sendButton": "送る"
+      "sendButton": "送る",
+      "Chain": "チェーン",
+      "NFT": "NFT",
+      "Contract": "契約",
+      "SendAmount": "送信額",
+      "Collection": "コレクション"
     },
     "sendTokenComponents": {
       "GasReserved": "ガスコストのために <1>0</1> {{ tokenName }} を予約しました。"
