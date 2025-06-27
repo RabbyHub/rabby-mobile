@@ -190,7 +190,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
     return (await this.getRepository().findBy({ owner_addr }))
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount)
+      .filter(i => i.amount > 0)
       .map(i => ({
         ...i,
         cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
@@ -213,7 +213,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         id: token_id,
       })
     )
-      .filter(i => i.amount)
+      .filter(i => i.amount > 0)
       .map(i => ({
         ...i,
         cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
@@ -233,7 +233,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       })
     )
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount)
+      .filter(i => i.amount > 0)
       .map(i => ({
         ...i,
         cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
@@ -318,7 +318,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     const tokens = await queryBuilder.getMany();
     return tokens
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount)
+      .filter(i => i.amount > 0)
       .map(i => ({
         ...i,
         cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
@@ -408,7 +408,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     const tokens = await queryBuilder.getMany();
     return tokens
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount)
+      .filter(i => i.amount > 0)
       .map(i => ({
         ...i,
         cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
