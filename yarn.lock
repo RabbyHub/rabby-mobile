@@ -8193,6 +8193,7 @@ __metadata:
     "@types/jest": ^27.4.1
     "@types/node": ^24.0.2
     "@types/sinon": ^9.0.10
+    "@types/uuid": ^10.0.0
     babel-loader: ^9.1.3
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
@@ -11671,6 +11672,13 @@ __metadata:
   version: 2.0.10
   resolution: "@types/unist@npm:2.0.10::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Funist%2F-%2Funist-2.0.10.tgz"
   checksum: e2924e18dedf45f68a5c6ccd6015cd62f1643b1b43baac1854efa21ae9e70505db94290434a23da1137d9e31eb58e54ca175982005698ac37300a1c889f6c4aa
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "@types/uuid@npm:10.0.0"
+  checksum: e3958f8b0fe551c86c14431f5940c3470127293280830684154b91dc7eb3514aeb79fe3216968833cf79d4d1c67f580f054b5be2cd562bebf4f728913e73e944
   languageName: node
   linkType: hard
 
