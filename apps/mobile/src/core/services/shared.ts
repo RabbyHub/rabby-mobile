@@ -45,18 +45,26 @@ migrateAppStorage(appStorage);
 
 const keyringState = normalizeKeyringState().keyringData;
 
-try {
-  const data = appStorage.getItem(APP_STORE_NAMES.preference);
-  if (!data && keyringState) {
+function try_catch_issue_on_preference({
+  pos,
+}: {
+  pos: 'before_preference' | 'after_preference';
+}) {
+  try {
+    const preferenceData = appStorage.getItem(APP_STORE_NAMES.preference);
+    if (!preferenceData && keyringState) {
+      const msg = `[${pos}] keyringState is not empty but preference is empty}`;
+      if (__DEV__) console.error(msg);
+      Sentry.captureException(new Error(msg));
+    }
+  } catch (error) {
     Sentry.captureException(
-      new Error('keyringState is not empty but preference is empty'),
+      new Error('Failed to get preference from appStorage: ' + error),
     );
   }
-} catch (error) {
-  Sentry.captureException(
-    new Error('Failed to get preference from appStorage: ' + error),
-  );
 }
+
+try_catch_issue_on_preference({ pos: 'before_preference' });
 
 // TODO: add other keyring classes
 const keyringClasses = [
@@ -113,6 +121,8 @@ export const preferenceService = new PreferenceService({
   keyringService,
   sessionService,
 });
+
+try_catch_issue_on_preference({ pos: 'after_preference' });
 
 export const whitelistService = new WhitelistService({
   storageAdapter: appStorage,

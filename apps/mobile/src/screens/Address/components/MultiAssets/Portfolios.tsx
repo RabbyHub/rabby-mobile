@@ -60,6 +60,7 @@ import { isTabsSwiping } from './hooks';
 import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyToken';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
+import { useTriggerUpdate } from './hooks/triggerUpdate';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
@@ -69,12 +70,15 @@ export const Portfolios = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { top10Addresses } = useAccountInfo();
   const focusedTab = useFocusedTab();
-  const isFocused = focusedTab === 'portfolios';
+  const isFocused = useMemo(() => focusedTab === 'portfolios', [focusedTab]);
 
   const { triggerUpdate, getTotalBalance } = useAccountsBalance({
     cacheTime: 10 * 60 * 1000,
     accountsNoUnique: true,
   });
+
+  const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
+    useTriggerUpdate();
 
   const {
     tokens,
@@ -87,7 +91,6 @@ export const Portfolios = () => {
   const { navigation } = useSafeSetNavigationOptions();
   const [isListVisable, setIsListVisable] = useState(false);
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const { t } = useTranslation();
 
   const [foldHideList, setFoldHideList] = useState(true);
@@ -672,6 +675,25 @@ export const Portfolios = () => {
     return <View style={{ height: FOOTER_HEIGHT }} />;
   }, []);
 
+  const onRefresh = useCallback(async () => {
+    try {
+      await Promise.all([
+        triggerUpdate(true),
+        refreshCurve(true),
+        checkIsExpireAndUpdate(true, { disableNFT: true }),
+      ]);
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    }
+  }, [checkIsExpireAndUpdate, refreshCurve, triggerUpdate]);
+
+  useEffect(() => {
+    if (triggerRefresh) {
+      onRefresh();
+      setTriggerRefresh(false);
+    }
+  }, [isFocused, onRefresh, setTriggerRefresh, triggerRefresh]);
+
   return (
     <Tabs.FlashList
       data={hasNotAssets ? [{ type: 'empty-token' }] : portfolioListData}
@@ -692,21 +714,10 @@ export const Portfolios = () => {
       refreshControl={
         <RefreshControl
           style={styles.bgContainer}
-          onRefresh={async () => {
-            setIsRefreshing(true);
-            try {
-              await Promise.all([
-                triggerUpdate(true),
-                refreshCurve(true),
-                checkIsExpireAndUpdate(true, { disableNFT: true }),
-              ]);
-              setIsRefreshing(false);
-            } catch (error) {
-              console.error('Refresh failed:', error);
-              setIsRefreshing(false);
-            }
+          onRefresh={() => {
+            onRefresh();
           }}
-          refreshing={isRefreshing}
+          refreshing={false}
         />
       }
     />
@@ -716,8 +727,6 @@ export const Portfolios = () => {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: 'red',
   },
   list: {
     backgroundColor: ctx.isLight

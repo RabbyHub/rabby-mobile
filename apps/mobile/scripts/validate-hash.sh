@@ -1,14 +1,37 @@
 #!/bin/bash
 
-EXPORT_DIR="${1:-$(pwd)}" # 优先使用第一个参数，否则设置为当前目录的 backups 子目录
-
 # 保存原始目录并设置退出时自动恢复
 ORIGINAL_DIR=$(pwd)
+git_head=$(git rev-parse HEAD)
+git_head_7=$(git rev-parse --short=7 HEAD)
+repo_root=$(git rev-parse --show-toplevel)
+
+WORK_DIR="/tmp/validate-rabby-mobile-$git_head_7"
+
+if [ "$repo_root" == "$WORK_DIR" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+else
+  if [ -d "$WORK_DIR" ]; then
+    echo "ℹ️: Removing existing work directory $WORK_DIR ..."
+    rm -rf $WORK_DIR;
+  fi
+  echo "Will clone repo to $WORK_DIR"
+  git clone $repo_root $WORK_DIR && cd $WORK_DIR && git checkout $git_head_7;
+  SCRIPT_DIR="$WORK_DIR/apps/mobile/scripts"
+fi
+
+cd $WORK_DIR/apps/mobile || {
+  echo "❌: Cannot switch to $WORK_DIR/apps/mobile"
+  exit 1
+}
+
+echo "ℹ️ Running validation script at git commit: $git_head_7"
+
+EXPORT_DIR="${1:-$(pwd)}" # 优先使用第一个参数，否则设置为当前目录的 backups 子目录
+
 # 设置退出时必定执行切回原目录（无论成功/失败）
 trap 'cd "$ORIGINAL_DIR"' EXIT
 
-# 获取脚本所在绝对路径
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 PROJECT_PATH=$(dirname -- "${SCRIPT_DIR}")
 cd "${SCRIPT_DIR}/.."
 
@@ -31,7 +54,7 @@ if [ -f "$OVERRIDE_ENV_FILE" ]; then
   # 一个更健壮的方法是逐行读取和解析
   while IFS='=' read -r key value || [ -n "$key" ]; do
     # 移除可能的注释 (从第一个'#'开始)
-    key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1') # awk '{$1=$1};1' 用于去除首尾空格
+    key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1')                                       # awk '{$1=$1};1' 用于去除首尾空格
     value_cleaned=$(echo "$value" | sed 's/#.*//' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//') # 去除首尾空格
 
     # 移除可能存在于值两边的引号 (单引号或双引号)
@@ -49,8 +72,10 @@ else
 fi
 
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
-EXPORT_DIR="${EXPORT_DIR}/build_${TIMESTAMP}"
+EXPORT_DIRNAME="build_${TIMESTAMP}"
+EXPORT_DIR="${EXPORT_DIR}/${EXPORT_DIRNAME}"
 BUILD_REPORT_FILE="${EXPORT_DIR}/build_hashes.txt"
+PACKED_ZIP="$WORK_DIR/apps/mobile/$EXPORT_DIRNAME.zip"
 
 APP_PATH="./ios/Package/RabbyMobile.xcarchive/Products/Applications/RabbyMobile.app"
 
@@ -77,7 +102,7 @@ cd ./ios && bundle exec pod deintegrate && RCT_NEW_ARCH_ENABLED=0 bundle exec po
 
 if [ $? -ne 0 ]; then
   echo "❌: 安装 pods 依赖失败"
-  exit 1;
+  exit 1
 fi
 
 cd ..
@@ -92,13 +117,18 @@ node ./scripts/validate-module-ids.js "$PROJECT_PATH/jsModuleId.log"
 
 if [ $? -ne 0 ]; then
   echo "❌: Metro 解析 module 时的 createModuleIdFactory 存在 id 碰撞，此验证脚本不再可靠"
-  exit 1;
+  exit 1
 fi
 
 # Assets.car 特殊处理，它里面有个 Timestamp，还没法指定，只能先解析成 json，再把 timestamp 移除，对比 json 的 hash
 if [ -f "$APP_PATH/Assets.car" ]; then
   xcrun assetutil --info "$APP_PATH/Assets.car" >"$APP_PATH/Assets.car.json" || exit 1
-  sed -i '' 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' "$APP_PATH/Assets.car.json" && rm -f "$APP_PATH/Assets.car"
+  # Timestamp, DumpToolVersion
+  sed -i '' 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' "$APP_PATH/Assets.car.json";
+  sed -i '' 's/"DumpToolVersion" : [0-9]*\.[0-9]*/"DumpToolVersion" : 0/' "$APP_PATH/Assets.car.json";
+  sed -i '' 's/"DumpToolVersion" : [0-9]*/"DumpToolVersion" : 0/' "$APP_PATH/Assets.car.json";
+
+  rm -f "$APP_PATH/Assets.car"
 fi
 
 # 处理源码，先将其代码段剥离
@@ -108,9 +138,20 @@ node ./scripts/normalize_objc_msgsend_ldr.js "$APP_PATH/RabbyMobile.s" "$PROJECT
 rm -f "$APP_PATH/RabbyMobile"
 rm -f "$APP_PATH/RabbyMobile.s"
 
+# Trim machine-related data from the assembly file
+chmod +x $SCRIPT_DIR/modify_plist_value.sh
+fields_remove=(
+  "BuildMachineOSBuild"
+  # "DTPlatformBuild" "DTPlatformVersion" "DTSDKBuild" "DTSDKName" "DTXcode" "DTXcodeBuild"
+)
+# 遍历并修改 Info.plist 中的字段
+for field in "${fields_remove[@]}"; do
+  find "$APP_PATH" -name Info.plist -exec $SCRIPT_DIR/modify_plist_value.sh {} "$field" null \;
+done
+
 # 计算总哈希
 OVERALL_HASH=$(find "$APP_PATH" -type f ! -name ".DS_Store" -print0 |
-  sort -z |
+  LC_COLLATE=C sort -z |
   xargs -0 shasum -a 256 |
   tee -a "$BUILD_REPORT_FILE" |
   shasum -a 256 |
@@ -159,13 +200,15 @@ if [ -n "$EXPORT_DIR" ]; then
   echo "   - Bundle: $BUNDLE_DEST"
 fi
 
+xcode_version=$(xcodebuild -version | head -n1 | sed 's/Xcode //');
+
 {
   cat <<EOF
 
 {
   "platform": "ios",
   "build_time": "$(date '+%Y-%m-%d %H:%M:%S %Z')",
-  "xcode_version": "$(xcodebuild -version | head -n1 | sed 's/Xcode //')",
+  "xcode_version": "$xcode_version",
   "cocoapods_version": "$(bundle exec pod --version)",
   "clang_version": "$(clang --version | head -n1)",
   "swift_version": "$(swift --version | head -n1)",
@@ -180,4 +223,13 @@ fi
 EOF
 } >>"$BUILD_REPORT_FILE"
 
-echo "✅ App SHA256 Hash: $OVERALL_HASH"
+echo
+echo
+echo "MacOS Version: $(sw_vers -productVersion)($(sw_vers -buildVersion))"
+echo "Xcode Version: $xcode_version"
+echo "Git Commit Hash: $git_head"
+echo "App SHA256 Hash: $OVERALL_HASH"
+
+# zip $EXPORT_DIR, and put it under $WORK_DIR/apps/mobile;
+zip -r -q "$PACKED_ZIP" "$EXPORT_DIR" && echo "✅ Exported zip to $PACKED_ZIP"
+open $WORK_DIR/apps/mobile;

@@ -866,7 +866,8 @@
         "websites": "Websites",
         "gasAccount": "GasAccount",
         "queue": "คิว",
-        "search": "ค้นหา Token"
+        "search": "ค้นหา Token",
+        "copyTrading": "การคัดลอกการซื้อขาย"
       }
     },
     "gasTopUp": {
@@ -1173,6 +1174,18 @@
         "riskTips": "ก่อนที่คุณจะเริ่มต้น โปรดอ่านและจำเคล็ดลับความปลอดภัยเหล่านี้ไว้ในใจ:",
         "createNewDesc": "สร้างวลีเมล็ดพันธุ์ใหม่สำหรับกระเป๋าใหม่",
         "createOnCurrentDesc": "สร้างกระเป๋าเงินด้วยวลีเมล็ดพันธุ์ที่นำเข้าแล้ว"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "คุณให้คะแนน Rabby Wallet เท่าไหร่"
+      },
+      "rateModal": {
+        "feedbackSubmit": "ส่ง",
+        "confirmButtonTitleIOS": "เรทบน App Store",
+        "confirmButtonTitleAndroid": "ให้คะแนนบน Google Play",
+        "descriptionAndroid": "ถ้าคุณชอบ Rabby การให้คะแนนอย่างเร็วบน Google Play จะมีความหมายมาก",
+        "feedbackSuccess": "ขอขอบคุณสำหรับข้อเสนอแนะของคุณ",
+        "descriptionIOS": "หากคุณชอบ Rabby การให้คะแนนอย่างรวดเร็วใน App Store จะมีความหมายมาก",
+        "feedbackTitle": "มีข้อเสนอแนะไหม? เรากำลังฟังอยู่。"
       }
     },
     "switchChain": {
@@ -1236,14 +1249,26 @@
         "title_one": "{{count}} กระเป๋าเงิน",
         "title_other": "{{count}} กระเป๋าเงิน",
         "importWatchAddress": "นำเข้ากระเป๋าเงินแบบดูเฉพาะ",
-        "addAddress": "เพิ่มกระเป๋าเงิน"
+        "addAddress": "เพิ่มกระเป๋าเงิน",
+        "moreWallets": "更多 Wallets",
+        "notIncludedInTotalBalance": "ไม่รวมในยอดรวม",
+        "notIncludedInTransactions": "ไม่รวมในธุรกรรม"
       },
       "add-to-whitelist": "เพิ่มใน Whitelist",
       "pin-in-list": "ปักหมุดในรายการ",
       "delete-desc-needpassword": "ก่อนที่คุณจะลบ โปรดคำนึงถึงประเด็นต่อไปนี้เพื่อทำความเข้าใจวิธีปกป้องสินทรัพย์ของคุณ",
       "delete-address": "ลบกระเป๋าเงิน",
       "manage-addresses-under-this-seed-phrase": "เพิ่มกระเป๋าเงินจากวลีเมล็ดนี้",
-      "delete-desc": "คุณแน่ใจหรือว่าต้องการลบกระเป๋านี้?"
+      "delete-desc": "คุณแน่ใจหรือว่าต้องการลบกระเป๋านี้?",
+      "notMatterAddressDialog": {
+        "watchOnlyWallet": "กระเป๋าเงินดูเท่านั้น",
+        "safeWallet": "กระเป๋าเงินที่ปลอดภัย",
+        "notTop10Address": "กระเป๋าที่จัดอันดับต่ำกว่า 10 อันดับแรก",
+        "title": "กระเป๋าเงินต่อไปนี้ไม่รวมอยู่ในยอดรวม",
+        "helpDescription2": "คุณสามารถกดค้างเพื่อยึดกระเป๋าและปรับว่าอันไหนบ้างที่รวมอยู่",
+        "helpDescription1": "เพื่อให้แน่ใจว่าการอัปเดตข้อมูลเป็นไปอย่างรวดเร็วและแม่นยำ กระเป๋าเงิน 10 อันดับแรกของคุณเท่านั้นที่จะรวมอยู่ใน Total Balance และ Portfolio。",
+        "helpTitle": "wallets ที่จัดอันดับต่ำกว่า 10 อันดับแรก"
+      }
     },
     "importSafe": {
       "title": "เพิ่มที่อยู่ Safe",
@@ -2111,6 +2136,21 @@
       "ChainSelector": {
         "title": "เลือก Chain"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "การคัดลอกการซื้อขายจาก Smart Money",
+        "description": "ค้นหาโทเค็นที่อิงจากกิจกรรมล่าสุดจาก smart money wallets แตะที่โทเค็นเพื่อดูจำนวนการซื้อขายโดยละเอียดและผลกำไรในอดีตจาก wallets เหล่านั้น"
+      },
+      "buy": "ซื้อ",
+      "noMoreData": "ไม่มีข้อมูลเพิ่มเติม",
+      "comingSoon": "เร็วๆ นี้...",
+      "refreshTitle": "กำลังโหลด Copy Trading เพิ่มเติมจาก Smart Money",
+      "recentBuy": "การซื้อที่เพิ่งเกิดขึ้น",
+      "updateText": "{{count}} แนวโน้มที่อัปเดตแล้ว",
+      "historyProfit": "ประวัติผลกำไร",
+      "smartMoneyWallets": "กระเป๋า Smart Money",
+      "smartMoneyWallet": "Smart Money Wallet"
     }
   },
   "native": {

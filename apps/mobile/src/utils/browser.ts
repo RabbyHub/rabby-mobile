@@ -1,3 +1,4 @@
+import { APP_STORE_URL_PREFIXES } from '@/constant/browser';
 import { urlUtils } from '@rabby-wallet/base-utils';
 
 const googleDomainList = [
@@ -209,3 +210,15 @@ export const getAddressBarTitle = (url: string) => {
   }
   return urlInfo.hostname;
 };
+
+export const isGoogle = (url?: string) => {
+  const urlInfo = urlUtils.safeParseURL(url || '');
+  if (!urlInfo) {
+    return false;
+  }
+  return googleDomainList.includes(urlInfo.hostname);
+};
+
+export function isValidAppStoreUrl(url: string): boolean {
+  return APP_STORE_URL_PREFIXES.some(prefix => url.startsWith(prefix));
+}

@@ -88,7 +88,7 @@ export const useSendRoutes = () => {
             onCancel: () => {
               removeGlobalBottomSheetModal2024(id);
             },
-            onConfirm(acc, addressDesc) {
+            onConfirm: (acc, addressDesc) => {
               removeGlobalBottomSheetModal2024(id);
               navigateToSendScreen({
                 ...p,

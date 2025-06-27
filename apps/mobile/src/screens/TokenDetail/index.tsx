@@ -58,6 +58,9 @@ import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
+import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
+import { useTokenDetail } from './hook';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -226,7 +229,12 @@ export const TokenDetailScreen = () => {
 
   const { safeOffHeader } = useSafeSizes();
   const [isUp, setIsUp] = useState(true);
-  const { tokens: cacheAssets, assetsMap, getCacheTop10Assets } = useAssets();
+  const {
+    tokens: cacheAssets,
+    assetsMap,
+    getCacheTop10Assets,
+    checkIsExpireAndUpdate,
+  } = useAssets();
 
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
     if (fromPortfolio || needUseCacheToken) {
@@ -239,11 +247,34 @@ export const TokenDetailScreen = () => {
     return _token;
   }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
+  const { top10Addresses, list: accounts } = useAccountInfo();
+  // const { tokensByAddress, isReady: tokenListIsReady } = useTokenDetail(
+  //   token.chain,
+  //   token._tokenId,
+  //   top10Addresses.map(item => item.toLowerCase()),
+  //   isSingleAddress ? undefined : (token as CombineTokensItem).fromAddress,
+  //   isSingleAddress,
+  // );
 
-  const finalAccount = account || preferenceService.getFallbackAccount();
+  const { data: tokenEntityList } = useRequest(
+    async () => {
+      if (!token || !token._tokenId || !top10Addresses.length) {
+        return [];
+      }
+
+      return await TokenItemEntity.batchMultiAddressTokensByIdAndChain(
+        top10Addresses.map(item => item.toLowerCase()),
+        token.chain,
+        token._tokenId,
+      );
+    },
+    {
+      refreshDeps: [token.chain, token._tokenId, top10Addresses],
+    },
+  );
+
+  const finalAccount =
+    account || accounts[0] || preferenceService.getFallbackAccount();
 
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
@@ -305,6 +336,7 @@ export const TokenDetailScreen = () => {
   useEffect(() => {
     getCacheTop10Assets({
       disableNFT: true,
+      disableToken: true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -408,28 +440,41 @@ export const TokenDetailScreen = () => {
           finalAccount!.aliasName || ellipsisAddress(finalAccount!.address),
       });
       return res;
-    }
+    } else {
+      const { fromAddress } = token as CombineTokensItem;
 
-    const { fromAddress } = token as CombineTokensItem;
-    accounts.map(item => {
-      const idx = fromAddress?.findIndex(i =>
-        isSameAddress(i.address, item.address),
+      // const fromAddressList = !tokenListIsReady
+      //   ? fromAddress
+      //   : Object.keys(tokensByAddress).map(address => ({
+      //       address,
+      //       amount: tokensByAddress[address].amount,
+      //     }));
+      const fromAddressList =
+        tokenEntityList?.map(item => ({
+          address: item.owner_addr,
+          amount: item.amount,
+        })) || fromAddress;
+
+      accounts.map(item => {
+        const idx = fromAddressList?.findIndex(i =>
+          isSameAddress(i.address, item.address),
+        );
+        if (idx > -1) {
+          res.push({
+            address: item.address,
+            amountStr: formatTokenAmount(fromAddressList[idx].amount),
+            amount: fromAddressList[idx].amount,
+            aliasName: item.aliasName || ellipsisAddress(item.address),
+            type: item.type,
+          });
+        }
+      });
+
+      return res.sort((a, b) =>
+        new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
       );
-      if (idx > -1) {
-        res.push({
-          address: item.address,
-          amountStr: formatTokenAmount(fromAddress[idx].amount),
-          amount: fromAddress[idx].amount,
-          aliasName: item.aliasName || ellipsisAddress(item.address),
-          type: item.type,
-        });
-      }
-    });
-
-    return res.sort((a, b) =>
-      new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
-    );
-  }, [token, accounts, isSingleAddress, finalAccount]);
+    }
+  }, [token, accounts, isSingleAddress, finalAccount, tokenEntityList]);
 
   const tokenChain = useMemo(() => {
     return getChain(token?.chain);
@@ -497,7 +542,7 @@ export const TokenDetailScreen = () => {
 
   const { t } = useTranslation();
 
-  if (!finalAccount) {
+  if (isSingleAddress && !finalAccount) {
     return null;
   }
 
@@ -586,6 +631,7 @@ export const TokenDetailScreen = () => {
         <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
         <HistoryList
           accounts={accounts}
+          top10Addresses={top10Addresses}
           finalAccount={finalAccount}
           isForMultipleAddress={!isSingleAddress}
           token={token}

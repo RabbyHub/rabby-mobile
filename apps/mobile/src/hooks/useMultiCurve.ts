@@ -5,7 +5,7 @@ import {
 } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
@@ -39,7 +39,7 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
       usd_value: 0,
     }));
 
-  const result = windows.map((window, i) => {
+  const result = windows.map(window => {
     const windowStart = window.timestamp;
     const windowEnd = windowStart + interval;
     let sum = 0;
@@ -83,14 +83,14 @@ const combineMulitCurve = (timeStamps: ITIME_STEP_ITEM[][]) => {
 
   return result;
 };
-
+export const loadingMultiCurveAtom = atom(true);
 export const useMultiCurve = (
   addresses: string[],
   disableAutoFetch?: boolean,
   totalBalance?: number,
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
 
   const fetch = useCallback(
     async (addres: string[], force = false) => {
@@ -147,16 +147,16 @@ export const useMultiCurve = (
           });
         queue.clear();
         Array.from(nextCheckAddress).forEach(_addr => {
-          try {
-            const addr = _addr.toLocaleLowerCase();
-            queue.add(async () => {
-              setMultiTimeStamp(prev => ({
-                ...prev,
-                [addr]: {
-                  ...prev[addr],
-                  loading: true,
-                },
-              }));
+          const addr = _addr.toLocaleLowerCase();
+          queue.add(async () => {
+            setMultiTimeStamp(prev => ({
+              ...prev,
+              [addr]: {
+                ...prev[addr],
+                loading: true,
+              },
+            }));
+            try {
               const curve = await getNetCurve(addr, CurveDayType.DAY, force);
               const start = dayjs()
                 .add(-24, 'hours')
@@ -185,8 +185,8 @@ export const useMultiCurve = (
                   }),
                 },
               }));
-            });
-          } catch (error) {}
+            } catch (error) {}
+          });
         });
         await waitQueueFinished(queue);
         setLoading(false);
@@ -195,7 +195,7 @@ export const useMultiCurve = (
         setLoading(false);
       }
     },
-    [setMultiTimeStamp],
+    [setLoading, setMultiTimeStamp],
   );
 
   const refresh = useCallback(

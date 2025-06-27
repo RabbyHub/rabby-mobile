@@ -682,7 +682,7 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
               onRefresh={() => {
                 onRefresh?.();
               }}
-              refreshing={refreshing}
+              refreshing={false}
             />
           }
         />

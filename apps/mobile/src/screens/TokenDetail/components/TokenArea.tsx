@@ -180,8 +180,8 @@ const getStyles = createGetStyles2024(ctx => ({
   noBalanceText: {
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '400',
     textAlign: 'center',
   },

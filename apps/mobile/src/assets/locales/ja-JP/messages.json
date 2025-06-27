@@ -882,7 +882,8 @@
         "queue": "Queue",
         "send": "送る",
         "websites": "ウェブサイト",
-        "search": "Search Token"
+        "search": "Search Token",
+        "copyTrading": "コピー取引"
       }
     },
     "nextComponent": {
@@ -949,6 +950,18 @@
         "safeTitle": "安全なウォレットをインポート",
         "importTitle": "ウォレットをインポート",
         "ImportCloud": "{{cloud}} からインポート"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Rabby Walletはどのように評価しますか"
+      },
+      "rateModal": {
+        "feedbackSubmit": "送信",
+        "feedbackSuccess": "フィードバックありがとうございます。",
+        "confirmButtonTitleIOS": "アプリストアでの評価",
+        "confirmButtonTitleAndroid": "Google Playで評価する",
+        "feedbackTitle": "フィードバックはありますか？私たちは聞いています。",
+        "descriptionIOS": "Rabbyが気に入っていただけたら、App Storeでの迅速な評価がとても大切です。",
+        "descriptionAndroid": "Rabbyが気に入っていただけたのなら、Google Playでの簡単な評価はとてもありがたいです。"
       }
     },
     "switchChain": {
@@ -1367,11 +1380,23 @@
         "importWatchAddress": "インポートされたウォッチオンリーウォレット",
         "addAddress": "ウォレットを追加する",
         "title_zero": "0 ウォレット",
-        "importSafeAddress": "インポートされた Safe Wallet"
+        "importSafeAddress": "インポートされた Safe Wallet",
+        "moreWallets": "もっとウォレット",
+        "notIncludedInTransactions": "取引に含まれていません",
+        "notIncludedInTotalBalance": "合計残高に含まれていません"
       },
       "delete-address": "ウォレットを削除",
       "delete-desc": "このウォレットを削除してもよろしいですか？",
-      "manage-addresses-under-this-seed-phrase": "このシードフレーズからウォレットを追加する"
+      "manage-addresses-under-this-seed-phrase": "このシードフレーズからウォレットを追加する",
+      "notMatterAddressDialog": {
+        "watchOnlyWallet": "監視専用ウォレット",
+        "safeWallet": "セーフウォレット",
+        "helpTitle": "トップ10未満のウォレット",
+        "title": "以下のウォレットは総残高に含まれていません。",
+        "notTop10Address": "トップ10にランクインしていないウォレット",
+        "helpDescription2": "ウォレットをピン留めするには、長押しして、含めたいウォレットを調整してください。",
+        "helpDescription1": "適時かつ正確なデータ更新を確保するために、Total BalanceとPortfolioにはあなたの上位10個のwalletsのみが含まれています。"
+      }
     },
     "gasAccount": {
       "deposit": "入金",
@@ -1992,6 +2017,21 @@
       "ChainSelector": {
         "title": "チェーンを選択"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "Smart MoneyからのCopy Trading",
+        "description": "スマートマネーウォレットの最近のアクティビティに基づいてトークンを発見します。トークンをタップすると、それらのウォレットからの詳細な取引額と歴史的な利益を見ることができます。"
+      },
+      "historyProfit": "履歴利益",
+      "comingSoon": "もうすぐ登場...",
+      "noMoreData": "データはもうありません",
+      "smartMoneyWallet": "スマートマネーウォレット",
+      "recentBuy": "最近の購入",
+      "buy": "購入",
+      "refreshTitle": "スマートマネーからのコピー取引をさらに読み込んでいます",
+      "updateText": "{{count}} トレンドが更新されました",
+      "smartMoneyWallets": "スマートマネーウォレット"
     }
   },
   "global": {
