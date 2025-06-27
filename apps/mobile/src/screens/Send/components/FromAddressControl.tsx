@@ -4,11 +4,15 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { AccountSwitcher } from '@/components/AccountSwitcher/InScreenSwitch';
+import { AccountSwitcherScene } from '@/components/AccountSwitcher/hooks';
 
 export default function FromAddressControl2024({
   style,
   disableSwitch,
-}: React.PropsWithChildren<RNViewProps & { disableSwitch?: boolean }>) {
+  forScene = 'MakeTransactionAbout',
+}: React.PropsWithChildren<
+  RNViewProps & { disableSwitch?: boolean; forScene?: AccountSwitcherScene }
+>) {
   const { styles } = useTheme2024({ getStyle });
 
   const { t } = useTranslation();
@@ -18,10 +22,7 @@ export default function FromAddressControl2024({
       <View style={styles.titleContainer}>
         <Text style={styles.sectionTitle}>{t('page.sendToken.From')}</Text>
       </View>
-      <AccountSwitcher
-        forScene="MakeTransactionAbout"
-        disableSwitch={disableSwitch}
-      />
+      <AccountSwitcher forScene={forScene} disableSwitch={disableSwitch} />
     </View>
   );
 }

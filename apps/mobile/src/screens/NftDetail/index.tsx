@@ -232,6 +232,8 @@ export const NFTDetailScreen = () => {
     [routeAccount, currentAccount],
   );
 
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
   const handleSend = useCallback(
     async (iToken: NFTItem, address: string, accountType: KEYRING_TYPE) => {
       const fromAccount =
@@ -241,13 +243,19 @@ export const NFTDetailScreen = () => {
       if (!fromAccount) {
         return;
       }
+      await switchSceneCurrentAccount('SendNFT', fromAccount);
       navigateToSendPolyScreen(!!isSingleAddress, {
         collectionName: iToken.contract_name || iToken?.collection?.name || '',
         nftItem: iToken,
         fromAccount,
       });
     },
-    [accounts, navigateToSendPolyScreen, isSingleAddress],
+    [
+      accounts,
+      navigateToSendPolyScreen,
+      isSingleAddress,
+      switchSceneCurrentAccount,
+    ],
   );
 
   const { assetsMap, getCacheTop10Assets } = useAssets();
