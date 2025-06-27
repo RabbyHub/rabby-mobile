@@ -186,72 +186,83 @@ function MultiAddressHomeHeader(
 
       <View style={styles.curveBox}>
         <BlurShadowView isLight={isLight}>
-          <Card
-            style={[styles.curveCard, styles.shadowView]}
-            onPress={() => {
-              navigation.dispatch(
-                StackActions.push(RootNames.StackAddress, {
-                  screen: RootNames.AddressAssetsOverview,
-                  params: {},
-                }),
-              );
-              matomoRequestEvent({
-                category: 'Click_Header',
-                action: 'Click_Address',
-              });
+          <LinearGradient
+            colors={
+              isLight
+                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 1)']
+                : ['rgba(37,38,40,1)', 'rgba(28,27,27,1)']
+            }
+            style={{
+              padding: 1,
+              borderRadius: 21,
             }}>
-            <LinearGradient
-              colors={
-                isLight
-                  ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
-                  : ['rgba(0, 0, 0, 1)', 'rgba(0, 0, 0, 0)']
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.curveContainer}>
-              {loadingNewCurve ? (
-                <Skeleton
-                  width={181}
-                  height={44}
-                  style={styles.skeleton}
-                  LinearGradientComponent={LoadingLinear}
-                />
-              ) : (
-                <Text style={styles.netWorth}>{data.netWorth}</Text>
-              )}
-              {loadingNewCurve ? (
-                <Skeleton
-                  width={100}
-                  height={22}
-                  style={styles.skeleton}
-                  LinearGradientComponent={LoadingLinear}
-                />
-              ) : (
-                <View style={styles.changeSection}>
-                  <Text
-                    style={[
-                      styles.changePercent,
-                      {
-                        color: data.isLoss
-                          ? colors2024['red-default']
-                          : colors2024['green-default'],
-                      },
-                    ]}>
-                    {percentChange}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <View style={styles.accountBg}>
-              <RcIconSmallWallet />
-              <Text style={styles.accountText}>
-                {accountsLength >= 10 ? '10' : accountsLength}
-              </Text>
-              <RcIconSmallArrow />
-            </View>
-          </Card>
+            <Card
+              style={[styles.curveCard, styles.shadowView]}
+              onPress={() => {
+                navigation.dispatch(
+                  StackActions.push(RootNames.StackAddress, {
+                    screen: RootNames.AddressAssetsOverview,
+                    params: {},
+                  }),
+                );
+                matomoRequestEvent({
+                  category: 'Click_Header',
+                  action: 'Click_Address',
+                });
+              }}>
+              <LinearGradient
+                colors={
+                  isLight
+                    ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
+                    : ['rgba(0, 0, 0, 0.6)', 'rgba(25, 26, 27, 0.3)']
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.curveContainer}>
+                {loadingNewCurve ? (
+                  <Skeleton
+                    width={181}
+                    height={44}
+                    style={styles.skeleton}
+                    LinearGradientComponent={LoadingLinear}
+                  />
+                ) : (
+                  <Text style={styles.netWorth}>{data.netWorth}</Text>
+                )}
+                {loadingNewCurve ? (
+                  <Skeleton
+                    width={100}
+                    height={22}
+                    style={styles.skeleton}
+                    LinearGradientComponent={LoadingLinear}
+                  />
+                ) : (
+                  <View style={styles.changeSection}>
+                    <Text
+                      style={[
+                        styles.changePercent,
+                        {
+                          color: data.isLoss
+                            ? colors2024['red-default']
+                            : colors2024['green-default'],
+                        },
+                      ]}>
+                      {percentChange}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.accountBg}>
+                <RcIconSmallWallet />
+                <Text style={styles.accountText}>
+                  {accountsLength >= 10 ? '10' : accountsLength}
+                </Text>
+                <RcIconSmallArrow />
+              </View>
+            </Card>
+          </LinearGradient>
         </BlurShadowView>
       </View>
     </View>
@@ -995,7 +1006,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   gridText: {
     color: colors2024['neutral-title-1'],
-    fontWeight: '700',
+    fontWeight: '500',
     fontSize: 16,
     lineHeight: 20,
     textAlign: 'left',
@@ -1095,7 +1106,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'flex-start',
     justifyContent: 'center',
     height: 96,
-    gap: 14,
+    gap: 8,
     position: 'relative',
   },
   pendingContainer: {
@@ -1257,6 +1268,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 28,
     paddingHorizontal: 20,
     height: 128,
+    borderWidth: 0,
     borderColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-line'],
@@ -1300,7 +1312,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   netWorth: {
-    fontSize: 36,
+    fontSize: 42,
     lineHeight: 42,
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
