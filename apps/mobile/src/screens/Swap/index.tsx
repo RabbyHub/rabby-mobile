@@ -326,7 +326,7 @@ const Swap = ({
         switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
           payTokenId: navState?.tokenId,
           changeTo: isBuy,
-          payUseBaseToken: navState?.payUseBaseToken,
+          payUseBaseToken: navState?.isFromCopyTrading,
         });
       }
     }
@@ -479,6 +479,7 @@ const Swap = ({
               source: 'swap',
               trigger: 'home',
               swapUseSlider,
+              isFromCopyTrading: navState?.isFromCopyTrading,
             },
           },
         );
