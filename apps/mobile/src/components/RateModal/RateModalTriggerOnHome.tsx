@@ -128,9 +128,6 @@ export function RateModalTriggerOnHome({
               onPress={evt => {
                 evt.stopPropagation();
                 setUserSelectedStar(index + 1);
-                if (index + 1 >= 4) {
-                  pushRateDetails({ totalBalanceText, userStar: index + 1 });
-                }
               }}
             />
           ))}
