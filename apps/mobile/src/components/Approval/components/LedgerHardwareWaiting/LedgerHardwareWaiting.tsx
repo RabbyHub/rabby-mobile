@@ -8,7 +8,7 @@ import {
 import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { APPROVAL_STATUS_MAP, eventBus, EVENTS } from '@/utils/events';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ApprovalPopupContainer,
@@ -29,6 +29,14 @@ import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { findChain } from '@/utils/chain';
+import {
+  getTxFailedResult,
+  retryTxReset,
+  RetryUpdateType,
+  setRetryTxRecommendNonce,
+  setRetryTxType,
+} from '@/utils/errorTxRetry';
+import useAsync from 'react-use/lib/useAsync';
 
 interface ApprovalParams {
   address: string;
@@ -36,6 +44,8 @@ interface ApprovalParams {
   isGnosis?: boolean;
   data?: string[];
   account?: Account;
+  from?: string;
+  nonce?: string;
   $ctx?: any;
   extra?: Record<string, any>;
   safeMessage?: {
@@ -114,17 +124,38 @@ export const LedgerHardwareWaiting = ({
     rejectApproval('user cancel');
   };
 
+  const [isRetrying, setIsRetrying] = React.useState(false);
+
   const handleRetry = async (showToast = true) => {
+    if (isRetrying) {
+      return;
+    }
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
+    setIsRetrying(true);
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    notificationService.callCurrentRequestDeferFn();
+    retryTxReset();
+    if (params.nonce && params.chainId && params.from && params.account) {
+      setRetryTxType(retryUpdateType);
+      if (retryUpdateType === 'nonce') {
+        try {
+          await setRetryTxRecommendNonce({
+            from: params.from,
+            chainId: params.chainId,
+            account: params.account,
+            nonce: params.nonce,
+          });
+        } catch (error) {}
+      }
+    }
+    notificationService.callCurrentRequestDeferFn(true);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
     emitSignComponentAmounted();
+    setIsRetrying(false);
   };
 
   const init = async () => {
@@ -300,24 +331,48 @@ export const LedgerHardwareWaiting = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectStatus, errorMessage]);
 
-  const currentDescription = React.useMemo(() => {
-    if (description?.includes('0x650f')) {
-      return t('page.newAddress.ledger.error.lockedOrNoEthApp');
+  const { value: recommendNonce } = useAsync(async () => {
+    if (params.nonce && params.chainId && params.from && params.account) {
+      return setRetryTxRecommendNonce({
+        from: params.from,
+        chainId: params.chainId,
+        account: params.account,
+        nonce: params.nonce,
+      });
     }
-    if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
-      return t('page.signFooterBar.ledger.unlockAlert');
-    } else if (
-      description?.includes('0x6e00') ||
-      description?.includes('0x6b00')
-    ) {
-      return t('page.signFooterBar.ledger.updateFirmwareAlert');
-    } else if (description?.includes('0x6985')) {
-      return t('page.signFooterBar.ledger.txRejectedByLedger');
-    }
+    return '0x0';
+  }, [params.nonce && params.chainId && params.from && params.account]);
 
-    return description;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [description]);
+  const [currentDescription, retryUpdateType]: [string, RetryUpdateType] =
+    React.useMemo(() => {
+      if (description?.includes('0x650f')) {
+        return [t('page.newAddress.ledger.error.lockedOrNoEthApp'), 'origin'];
+      }
+      if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
+        return [t('page.signFooterBar.ledger.unlockAlert'), 'origin'];
+      } else if (
+        description?.includes('0x6e00') ||
+        description?.includes('0x6b00')
+      ) {
+        return [t('page.signFooterBar.ledger.updateFirmwareAlert'), 'origin'];
+      } else if (description?.includes('0x6985')) {
+        return [t('page.signFooterBar.ledger.txRejectedByLedger'), 'origin'];
+      }
+
+      if (params.nonce && params.chainId && params.from && params.account) {
+        return [
+          APPROVAL_STATUS_MAP.REJECTED,
+          APPROVAL_STATUS_MAP.FAILED,
+        ].includes(connectStatus)
+          ? getTxFailedResult(description || '', {
+              nonce: recommendNonce,
+            })
+          : [description, 'origin'];
+      }
+
+      return [description, 'origin'];
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [description, recommendNonce]);
 
   const renderContent = React.useCallback(
     ({ contentColor }) => (
@@ -336,14 +391,21 @@ export const LedgerHardwareWaiting = ({
     [colors, content, styles.content, styles.contentWrapper],
   );
 
+  const showBranIconTitle =
+    retryUpdateType &&
+    retryUpdateType !== 'gasPrice' &&
+    retryUpdateType !== 'nonce';
+
   return (
     <View>
-      <View style={styles.titleWrapper}>
-        <LedgerSVG width={20} height={20} style={styles.brandIcon} />
-        <Text style={styles.title}>
-          {t('page.signFooterBar.qrcode.signWith', { brand: 'Ledger' })}
-        </Text>
-      </View>
+      {showBranIconTitle && (
+        <View style={styles.titleWrapper}>
+          <LedgerSVG width={20} height={20} style={styles.brandIcon} />
+          <Text style={styles.title}>
+            {t('page.signFooterBar.qrcode.signWith', { brand: 'Ledger' })}
+          </Text>
+        </View>
+      )}
 
       <ApprovalPopupContainer
         showAnimation
@@ -357,6 +419,8 @@ export const LedgerHardwareWaiting = ({
         hasMoreDescription={
           statusProp === 'REJECTED' || statusProp === 'FAILED'
         }
+        BrandIcon={LedgerSVG}
+        retryUpdateType={retryUpdateType}
       />
     </View>
   );

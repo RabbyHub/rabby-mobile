@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { FooterResend } from './FooterResend';
 import { FooterButton } from './FooterButton';
 import { FooterResendCancelGroup } from './FooterResendCancelGroup';
-import TxFailedSVG from '@/assets/icons/approval/tx-failed.svg';
 import TxSucceedSVG from '@/assets/icons/approval/tx-succeed.svg';
 import ConnectWiredSVG from '@/assets/icons/approval/connect-wired.svg';
 import ConnectBleSVG from '@/assets/icons/approval/connect-ble.svg';
@@ -25,55 +24,63 @@ import {
   ViewStyle,
 } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useApprovalPopup } from '@/hooks/useApprovalPopup';
 import useDebounce from 'react-use/lib/useDebounce';
+import { RetryUpdateType } from '@/utils/errorTxRetry';
+import TxFailedSVG from '@/assets2024/icons/common/tip.svg';
+import { createGetStyles2024 } from '@/utils/styles';
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    wrapper: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-    },
-    mainContainer: {
-      position: 'relative',
-    },
-    mainImage: {
-      width: 140,
-      height: 140,
-    },
-    brandIcon: {
-      width: 20,
-      height: 20,
-      position: 'absolute',
-      left: 34.6,
-      top: 71,
-      zIndex: 1,
-    },
-    titleWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    hdTitleWrapper: {
-      marginTop: 25,
-    },
-    infoIcon: {
-      width: 20,
-      height: 20,
-      marginRight: 6,
-    },
-    descriptionText: {
-      fontSize: 14,
-      lineHeight: 16,
-      fontWeight: '400',
-    },
-    footer: {},
-    description: { marginTop: 12, marginBottom: 10, height: 46 },
-    noDescription: {
-      height: 20,
-    },
-  });
+const getStyles = createGetStyles2024(() => ({
+  wrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  mainContainer: {
+    position: 'relative',
+  },
+  mainImage: {
+    width: 140,
+    height: 140,
+  },
+  brandIcon: {
+    width: 20,
+    height: 20,
+    position: 'absolute',
+    left: 34.6,
+    top: 71,
+    zIndex: 1,
+  },
+  titleWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  hdTitleWrapper: {
+    marginTop: 28,
+  },
+  infoIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 6,
+  },
+  descriptionText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 20,
+    paddingHorizontal: 20,
+  },
+  footer: {},
+  description: {
+    paddingTop: 8,
+    paddingBottom: 32,
+  },
+  noDescription: {
+    height: 20,
+  },
+}));
 
 export interface Props {
   hdType:
@@ -104,6 +111,7 @@ export interface Props {
   showAnimation?: boolean;
   BrandIcon?: React.FC<SvgProps>;
   style?: StyleProp<ViewStyle>;
+  retryUpdateType?: RetryUpdateType;
 }
 
 export const ApprovalPopupContainer: React.FC<Props> = ({
@@ -120,12 +128,12 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   showAnimation,
   BrandIcon,
   style,
+  retryUpdateType = 'origin',
 }) => {
   const [iconColor, setIconColor] = React.useState('');
   const [contentColor, setContentColor] = React.useState('');
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { colors2024, styles } = useTheme2024({ getStyle: getStyles });
 
   const SendSVG = React.useMemo(() => {
     switch (hdType) {
@@ -152,18 +160,19 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   React.useEffect(() => {
     switch (status) {
       case 'SENDING':
-        setIconColor('bg-blue-light');
+        setIconColor('blue-light-1');
         setContentColor('neutral-title-1');
         break;
       case 'WAITING':
       case 'SUBMITTING':
-        setIconColor('bg-blue-light');
+        setIconColor('blue-light-1');
         setContentColor('neutral-title-1');
         break;
       case 'FAILED':
       case 'REJECTED':
-        setIconColor('bg-red-forbidden');
-        setContentColor('red-default');
+        setIconColor('orange-default');
+        setContentColor('neutral-title-1');
+
         break;
       case 'RESOLVED':
         setIconColor('bg-green');
@@ -235,7 +244,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
           style={[
             styles.descriptionText,
             {
-              color: colors[contentColor],
+              color: colors2024['neutral-secondary'],
             },
           ]}>
           {description}
@@ -246,11 +255,21 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         {status === 'SENDING' && <FooterResend onResend={onRetry} />}
         {status === 'WAITING' && <FooterResend onResend={onRetry} />}
         {status === 'FAILED' && (
-          <FooterResendCancelGroup onCancel={onCancel} onResend={onRetry} />
+          <FooterResendCancelGroup
+            retryUpdateType={retryUpdateType}
+            BrandIcon={BrandIcon}
+            onCancel={onCancel}
+            onResend={onRetry}
+          />
         )}
         {status === 'RESOLVED' && <FooterDoneButton onDone={onDone} hide />}
         {status === 'REJECTED' && (
-          <FooterResendCancelGroup onCancel={onCancel} onResend={onRetry} />
+          <FooterResendCancelGroup
+            retryUpdateType={retryUpdateType}
+            BrandIcon={BrandIcon}
+            onCancel={onCancel}
+            onResend={onRetry}
+          />
         )}
         {status === 'SUBMITTING' && (
           <FooterButton

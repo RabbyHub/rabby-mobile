@@ -1,8 +1,6 @@
-import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components/Toast';
 import {
   notificationService,
-  preferenceService,
   transactionHistoryService,
 } from '@/core/services/shared';
 import { Account } from '@/core/services/preference';
@@ -16,8 +14,7 @@ import {
 } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, Text, View } from 'react-native';
-import { AppColorsVariants } from '@/constant/theme';
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import { stats } from '@/utils/stats';
 import {
   KEYRING_CATEGORY_MAP,
@@ -29,6 +26,15 @@ import { getWalletIcon } from '@/utils/walletInfo';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { useFindChain } from '@/hooks/useFindChain';
+import {
+  getTxFailedResult,
+  retryTxReset,
+  RetryUpdateType,
+  setRetryTxRecommendNonce,
+  setRetryTxType,
+} from '@/utils/errorTxRetry';
+import { createGetStyles2024 } from '@/utils/styles';
+import useAsync from 'react-use/lib/useAsync';
 
 interface ApprovalParams {
   address: string;
@@ -39,6 +45,8 @@ interface ApprovalParams {
   $ctx?: any;
   extra?: Record<string, any>;
   type: string;
+  from?: string;
+  nonce?: string;
   safeMessage?: {
     safeMessageHash: string;
     safeAddress: string;
@@ -47,34 +55,34 @@ interface ApprovalParams {
   };
 }
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    brandIcon: {
-      width: 20,
-      height: 20,
-      marginRight: 6,
-    },
-    titleWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 12,
-      justifyContent: 'center',
-      marginTop: 15,
-    },
-    title: {
-      fontSize: 16,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-    },
-    content: {
-      fontSize: 20,
-      fontWeight: '500',
-      lineHeight: 24,
-    },
-    contentWrapper: {
-      flexDirection: 'row',
-    },
-  });
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  brandIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 6,
+  },
+  titleWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    justifyContent: 'center',
+    marginTop: 15,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+  },
+  content: {
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    fontFamily: 'SF Pro Rounded',
+  },
+  contentWrapper: {
+    flexDirection: 'row',
+  },
+}));
 
 export const PrivatekeyWaiting = ({
   params,
@@ -84,7 +92,7 @@ export const PrivatekeyWaiting = ({
   account: Account;
 }) => {
   const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { setTitle, setVisible, closePopup, setHeight } = useCommonPopupView();
   const [getApproval, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
@@ -108,8 +116,23 @@ export const PrivatekeyWaiting = ({
   const [description, setDescription] = React.useState('');
 
   const handleRetry = async () => {
+    if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
+      return;
+    }
     setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
-    notificationService.callCurrentRequestDeferFn();
+    retryTxReset();
+    if (params.nonce && params.chainId && params.from && $account) {
+      setRetryTxType(retryUpdateType);
+      if (retryUpdateType === 'nonce') {
+        await setRetryTxRecommendNonce({
+          from: params.from,
+          chainId: params.chainId,
+          account: $account,
+          nonce: params.nonce,
+        });
+      }
+    }
+    notificationService.callCurrentRequestDeferFn(true);
     toast.success(t('page.signFooterBar.ledger.resent'));
     emitSignComponentAmounted();
   };
@@ -139,7 +162,7 @@ export const PrivatekeyWaiting = ({
   }, [type, isLight]);
 
   const init = async () => {
-    const account = params.isGnosis ? params.account! : $account;
+    const account = params.isGnosis ? $account! : $account;
 
     const approval = (await getApproval())!;
 
@@ -199,7 +222,7 @@ export const PrivatekeyWaiting = ({
             if (safeMessage) {
               await apisSafe.handleGnosisMessage({
                 signature: data.data,
-                signerAddress: params.account!.address!,
+                signerAddress: $account!.address!,
               });
             } else {
               const sigs = await apisSafe.getGnosisTransactionSignatures();
@@ -305,17 +328,55 @@ export const PrivatekeyWaiting = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectStatus, errorMessage]);
 
+  const { value: recommendNonce } = useAsync(async () => {
+    if (params.nonce && params.chainId && params.from && $account) {
+      return setRetryTxRecommendNonce({
+        from: params.from,
+        chainId: params.chainId,
+        account: $account,
+        nonce: params.nonce,
+      });
+    }
+    return '0x0';
+  }, [params.nonce && params.chainId && params.from && $account]);
+
+  const [currentDescription, retryUpdateType]: [string, RetryUpdateType] =
+    React.useMemo(() => {
+      return connectStatus === APPROVAL_STATUS_MAP.FAILED &&
+        params.nonce &&
+        params.chainId &&
+        params.from &&
+        $account
+        ? getTxFailedResult(description, { nonce: recommendNonce })
+        : [description, 'origin'];
+    }, [
+      connectStatus,
+      description,
+      $account,
+      params.chainId,
+      params.from,
+      params.nonce,
+      recommendNonce,
+    ]);
+
+  const showBranIconTitle =
+    retryUpdateType &&
+    retryUpdateType !== 'gasPrice' &&
+    retryUpdateType !== 'nonce';
+
   return (
     <View>
-      <View style={styles.titleWrapper}>
-        {Icon && <Icon width={20} height={20} style={styles.brandIcon} />}
+      {showBranIconTitle && (
+        <View style={styles.titleWrapper}>
+          {Icon && <Icon width={20} height={20} style={styles.brandIcon} />}
 
-        <Text style={styles.title}>
-          {t('page.signFooterBar.qrcode.signWith', {
-            brand: brandContent?.name,
-          })}
-        </Text>
-      </View>
+          <Text style={styles.title}>
+            {t('page.signFooterBar.qrcode.signWith', {
+              brand: brandContent?.name,
+            })}
+          </Text>
+        </View>
+      )}
 
       <ApprovalPopupContainer
         showAnimation
@@ -323,10 +384,11 @@ export const PrivatekeyWaiting = ({
         status={statusProp}
         onRetry={handleRetry}
         content={renderContent}
-        description={description}
+        description={currentDescription}
         onDone={() => setIsClickDone(true)}
         onCancel={handleCancel}
-        hasMoreDescription={!!description}
+        hasMoreDescription={!!currentDescription}
+        retryUpdateType={retryUpdateType}
       />
     </View>
   );

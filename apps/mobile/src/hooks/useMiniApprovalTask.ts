@@ -3,13 +3,18 @@ import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import _, { uniqueId } from 'lodash';
-import React, { ReactNode, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useResetMiniApprovalDirectSignState } from './useMiniApprovalDirectSign';
 import {
-  useResetMiniApprovalDirectSignState,
-  useSetDirectSubmitInnerError,
-} from './useMiniApprovalDirectSign';
-import { sleep } from '@/utils/async';
+  getRetryTxRecommendNonce,
+  getRetryTxType,
+  retryTxReset,
+  setRetryTxRecommendNonce,
+} from '@/utils/errorTxRetry';
+import { hexToNumber, isHex } from 'viem';
+import BigNumber from 'bignumber.js';
+import { intToHex } from '@/utils/number';
 
 type TxStatus = 'sended' | 'signed' | 'idle' | 'failed';
 
@@ -63,17 +68,56 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
   });
 
   const { runAsync: start } = useRequest(
-    async () => {
+    async (isRetry = false) => {
       const currentId = globalCurrentTaskId;
       const resultList: Awaited<ReturnType<typeof sendTransaction>>[] = [];
+
+      if (!isRetry) {
+        retryTxReset();
+      }
+
       try {
         setStatus('active');
         for (let index = 0; index < list.length; index++) {
           const item = list[index];
-          const tx = item.tx;
+          let tx = item.tx;
           const options = item.options;
+
+          let retryNonceIndex = 0;
+
           if (item.status === 'signed') {
             continue;
+          }
+
+          if (isRetry) {
+            const retryType = getRetryTxType();
+            switch (retryType) {
+              case 'nonce':
+                const recommendNonce = getRetryTxRecommendNonce();
+                tx.nonce = isHex(recommendNonce)
+                  ? intToHex(hexToNumber(recommendNonce) + retryNonceIndex)
+                  : item.tx.nonce + 1;
+                retryNonceIndex++;
+                break;
+
+              case 'gasPrice':
+                if (tx.gasPrice) {
+                  tx.gasPrice = `0x${new BigNumber(tx.gasPrice?.slice(2))
+                    .times(1.3)
+                    .toString(16)}`;
+                }
+                if (tx.maxFeePerGas) {
+                  tx.maxFeePerGas = `0x${new BigNumber(
+                    tx.maxFeePerGas?.slice(2),
+                  )
+                    .times(1.3)
+                    .toString(16)}`;
+                }
+                break;
+
+              default:
+                break;
+            }
           }
 
           try {
@@ -128,6 +172,15 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
 
             const _status =
               e.name === FailedCode.UserRejected ? 'REJECTED' : 'FAILED';
+
+            retryTxReset();
+            await setRetryTxRecommendNonce({
+              from: tx.from,
+              chainId: tx.chainId,
+              account: options.account,
+              nonce: tx.nonce,
+            });
+
             setError({
               status: _status,
               content:
@@ -142,6 +195,8 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
             throw e;
           }
         }
+
+        retryTxReset();
         if (currentId !== globalCurrentTaskId) {
           return;
         }
@@ -159,7 +214,7 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
 
   const handleRetry = useMemoizedFn(async () => {
     setError(null);
-    return await start();
+    return await start(true);
   });
 
   const stop = useMemoizedFn(() => {

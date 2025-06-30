@@ -28,6 +28,10 @@ import { underline2Camelcase } from '../utils/common';
 import { reject } from 'lodash';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { Account } from '../services/preference';
+import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
+import { hexToNumber, isHex } from 'viem';
+import { intToHex } from '@/utils/number';
+import BigNumber from 'bignumber.js';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -270,7 +274,7 @@ const flowContext = flow
     const {
       session: { origin, $mobileCtx },
     } = request;
-    const requestDeferFn = async () =>
+    const requestDeferFn = async (isRetry = false) =>
       new Promise(async resolve => {
         let waitSignComponentPromise = Promise.resolve();
         if (isSignApproval(approvalType) && uiRequestComponent) {
@@ -279,11 +283,44 @@ const flowContext = flow
 
         if (approvalRes?.isGnosis) return resolve(undefined);
 
-        return waitSignComponentPromise.then(() =>
-          Promise.resolve(
+        return waitSignComponentPromise.then(() => {
+          let _approvalRes = { ...approvalRes };
+          if (isRetry && mapMethod === 'ethSendTransaction') {
+            const retryType = getRetryTxType();
+            switch (retryType) {
+              case 'nonce':
+                const recommendNonce = getRetryTxRecommendNonce();
+                console.log('current nonce', _approvalRes.nonce);
+                console.log('recommendNonce nonce', recommendNonce);
+                _approvalRes.nonce = intToHex(
+                  hexToNumber(recommendNonce as '0x${string}'),
+                );
+                break;
+              case 'gasPrice':
+                if (_approvalRes.gasPrice) {
+                  _approvalRes.gasPrice = `0x${new BigNumber(
+                    _approvalRes.gasPrice?.slice(2),
+                  )
+                    .times(1.3)
+                    .toString(16)}`;
+                }
+                if (_approvalRes.maxFeePerGas) {
+                  _approvalRes.maxFeePerGas = `0x${new BigNumber(
+                    _approvalRes.maxFeePerGas?.slice(2),
+                  )
+                    .times(1.3)
+                    .toString(16)}`;
+                }
+                break;
+              default:
+                break;
+            }
+          }
+
+          return Promise.resolve(
             providerController[mapMethod]({
               ...request,
-              approvalRes,
+              approvalRes: _approvalRes,
             }),
           )
             .then(result => {
@@ -316,8 +353,8 @@ const flowContext = flow
                 console.error(e);
               }
               reject(e);
-            }),
-        );
+            });
+        });
       });
 
     notificationService.setCurrentRequestDeferFn(requestDeferFn);

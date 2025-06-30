@@ -29,12 +29,22 @@ import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { findChain } from '@/utils/chain';
+import {
+  getTxFailedResult,
+  retryTxReset,
+  RetryUpdateType,
+  setRetryTxRecommendNonce,
+  setRetryTxType,
+} from '@/utils/errorTxRetry';
+import useAsync from 'react-use/lib/useAsync';
 
 interface ApprovalParams {
   address: string;
   chainId?: number;
   isGnosis?: boolean;
   data?: string[];
+  from?: string;
+  nonce?: string;
   account?: Account;
   $ctx?: any;
   extra?: Record<string, any>;
@@ -113,14 +123,36 @@ export const OneKeyHardwareWaiting = ({
   const handleCancel = () => {
     rejectApproval('user cancel');
   };
+  const [isRetrying, setIsRetrying] = React.useState(false);
 
   const handleRetry = async (showToast = true) => {
+    if (isRetrying) {
+      return;
+    }
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
+    setIsRetrying(true);
+
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    notificationService.callCurrentRequestDeferFn();
+
+    retryTxReset();
+    if (params.nonce && params.chainId && params.from && params.account) {
+      setRetryTxType(retryUpdateType);
+      if (retryUpdateType === 'nonce') {
+        try {
+          await setRetryTxRecommendNonce({
+            from: params.from,
+            chainId: params.chainId,
+            account: params.account,
+            nonce: params.nonce,
+          });
+        } catch (error) {}
+      }
+    }
+
+    notificationService.callCurrentRequestDeferFn(true);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
@@ -296,10 +328,38 @@ export const OneKeyHardwareWaiting = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectStatus, errorMessage]);
 
-  const currentDescription = React.useMemo(() => {
-    return description;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [description]);
+  const { value: recommendNonce } = useAsync(async () => {
+    if (params.nonce && params.chainId && params.from && params.account) {
+      return setRetryTxRecommendNonce({
+        from: params.from,
+        chainId: params.chainId,
+        account: params.account,
+        nonce: params.nonce,
+      });
+    }
+    return '0x0';
+  }, [params.nonce && params.chainId && params.from && params.account]);
+
+  const [currentDescription, retryUpdateType]: [string, RetryUpdateType] =
+    React.useMemo(() => {
+      return params.nonce &&
+        params.chainId &&
+        params.from &&
+        params.account &&
+        [APPROVAL_STATUS_MAP.REJECTED, APPROVAL_STATUS_MAP.FAILED].includes(
+          connectStatus,
+        )
+        ? getTxFailedResult(description || '', { nonce: recommendNonce })
+        : [description, 'origin'];
+    }, [
+      connectStatus,
+      description,
+      params.account,
+      params.chainId,
+      params.from,
+      params.nonce,
+      recommendNonce,
+    ]);
 
   const renderContent = React.useCallback(
     ({ contentColor }) => (
@@ -318,14 +378,21 @@ export const OneKeyHardwareWaiting = ({
     [colors, content, styles.content, styles.contentWrapper],
   );
 
+  const showBranIconTitle =
+    retryUpdateType &&
+    retryUpdateType !== 'gasPrice' &&
+    retryUpdateType !== 'nonce';
+
   return (
     <View>
-      <View style={styles.titleWrapper}>
-        <OneKeySVG width={20} height={20} style={styles.brandIcon} />
-        <Text style={styles.title}>
-          {t('page.signFooterBar.qrcode.signWith', { brand: 'OneKey' })}
-        </Text>
-      </View>
+      {showBranIconTitle && (
+        <View style={styles.titleWrapper}>
+          <OneKeySVG width={20} height={20} style={styles.brandIcon} />
+          <Text style={styles.title}>
+            {t('page.signFooterBar.qrcode.signWith', { brand: 'OneKey' })}
+          </Text>
+        </View>
+      )}
 
       <ApprovalPopupContainer
         showAnimation
@@ -339,6 +406,8 @@ export const OneKeyHardwareWaiting = ({
         hasMoreDescription={
           statusProp === 'REJECTED' || statusProp === 'FAILED'
         }
+        BrandIcon={OneKeySVG}
+        retryUpdateType={retryUpdateType}
       />
     </View>
   );
