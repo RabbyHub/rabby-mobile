@@ -1,0 +1,71 @@
+diff --git a/index.js b/index.js
+index f79318c817c35ea977ac4e51dbfb06ce25055832..19091d6daca023ba51676590876ee082bf6467f2 100644
+--- a/index.js
++++ b/index.js
+@@ -74,8 +74,16 @@ function getCoder(wordlist) {
+  * ])
+  */
+ function mnemonicToEntropy(mnemonic, wordlist) {
+-    const { words } = normalize(mnemonic);
+-    const entropy = getCoder(wordlist).decode(words);
++    let entropy;
++    if (typeof mnemonic === 'string') {
++        const { words } = normalize(mnemonic);
++        entropy = getCoder(wordlist).decode(words);
++    } else {
++        // expected intanceOf Uint8Array when used with eth-hd-keyring
++        entropy = getCoder(wordlist).decode(
++            Array.from(new Uint16Array(mnemonic.buffer)).map((i) => wordlist[i])
++        );
++    }
+     assertEntropy(entropy);
+     return entropy;
+ }
+@@ -96,7 +104,9 @@ exports.mnemonicToEntropy = mnemonicToEntropy;
+ function entropyToMnemonic(entropy, wordlist) {
+     assertEntropy(entropy);
+     const words = getCoder(wordlist).encode(entropy);
+-    return words.join(isJapanese(wordlist) ? '\u3000' : ' ');
++    const indices = words.map((word) => wordlist.indexOf(word));
++    const uInt8ArrayOfMnemonic = new Uint8Array(new Uint16Array(indices).buffer);
++    return uInt8ArrayOfMnemonic;
+ }
+ exports.entropyToMnemonic = entropyToMnemonic;
+ /**
+@@ -124,7 +134,8 @@ const salt = (passphrase) => nfkd(`mnemonic${passphrase}`);
+  * // new Uint8Array([...64 bytes])
+  */
+ function mnemonicToSeed(mnemonic, passphrase = '') {
+-    return (0, pbkdf2_1.pbkdf2Async)(sha512_1.sha512, normalize(mnemonic).nfkd, salt(passphrase), { c: 2048, dkLen: 64 });
++    const encodedMnemonicUint8Array = encodeMnemonicForSeedDerivation(mnemonic, wordlist);
++    return (0, pbkdf2_1.pbkdf2Async)(sha512_1.sha512, encodedMnemonicUint8Array, salt(passphrase), { c: 2048, dkLen: 64 });
+ }
+ exports.mnemonicToSeed = mnemonicToSeed;
+ /**
+@@ -138,6 +149,24 @@ exports.mnemonicToSeed = mnemonicToSeed;
+  * // new Uint8Array([...64 bytes])
+  */
+ function mnemonicToSeedSync(mnemonic, passphrase = '') {
+-    return (0, pbkdf2_1.pbkdf2)(sha512_1.sha512, normalize(mnemonic).nfkd, salt(passphrase), { c: 2048, dkLen: 64 });
++    const encodedMnemonicUint8Array = encodeMnemonicForSeedDerivation(mnemonic, wordlist);
++    return (0, pbkdf2_1.pbkdf2)(sha512_1.sha512, encodedMnemonicUint8Array, salt(passphrase), { c: 2048, dkLen: 64 });
+ }
+ exports.mnemonicToSeedSync = mnemonicToSeedSync;
++
++/**
++ * Helper function to encode mnemonic passed either as a string or `Uint8Array` for deriving a seed/key with pbkdf2.
++ */
++function encodeMnemonicForSeedDerivation(mnemonic, wordlist) {
++  let encodedMnemonicUint8Array;
++  if (typeof mnemonic === 'string') {
++    encodedMnemonicUint8Array = new TextEncoder().encode(normalize(mnemonic).nfkd);
++  } else {
++    encodedMnemonicUint8Array = new TextEncoder().encode(
++      Array.from(new Uint16Array(mnemonic.buffer))
++        .map((i) => wordlist[i])
++        .join(' ')
++    );
++  }
++  return encodedMnemonicUint8Array;
++}
+\ No newline at end of file

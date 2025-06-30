@@ -7248,7 +7248,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/hashes@npm:1.3.3, @noble/hashes@npm:~1.3.0":
+"@noble/hashes@npm:1.3.3":
   version: 1.3.3
   resolution: "@noble/hashes@npm:1.3.3"
   checksum: 8a6496d1c0c64797339bc694ad06cdfaa0f9e56cd0c3f68ae3666cfb153a791a55deb0af9c653c7ed2db64d537aa3e3054629740d2f2338bb1dcb7ab60cd205b
@@ -7273,13 +7273,6 @@ __metadata:
   version: 1.3.3
   resolution: "@noble/hashes@npm:1.3.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40noble%2Fhashes%2F-%2Fhashes-1.3.3.tgz"
   checksum: 8a6496d1c0c64797339bc694ad06cdfaa0f9e56cd0c3f68ae3666cfb153a791a55deb0af9c653c7ed2db64d537aa3e3054629740d2f2338bb1dcb7ab60cd205b
-  languageName: node
-  linkType: hard
-
-"@noble/hashes@npm:~1.6.0":
-  version: 1.6.1
-  resolution: "@noble/hashes@npm:1.6.1"
-  checksum: 57c62f65ee217c0293b4321b547792aa6d79812bfe70a7d62dc83e0f936cc677b14ed981b4e88cf8fdad37cd6d3a0cbd3bd0908b0728adc9daf066e678be8901
   languageName: node
   linkType: hard
 
@@ -9771,14 +9764,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scure/base@npm:~1.2.1":
-  version: 1.2.1
-  resolution: "@scure/base@npm:1.2.1"
-  checksum: 061e04e4f6ed7bada6cdad4c799e6a82f30dda3f4008895bdb2e556f333f9b41f44dc067d25c064357ed6c012ea9c8be1e7927caf8a083af865b8de27b52370c
-  languageName: node
-  linkType: hard
-
-"@scure/base@npm:~1.2.2, @scure/base@npm:~1.2.4":
+"@scure/base@npm:~1.2.2":
   version: 1.2.4
   resolution: "@scure/base@npm:1.2.4"
   checksum: db554eb550a1bd17684af9282e1ad751050a13d4add0e83ad61cc496680d7d1c1c1120ca780e72935a293bb59721c20a006a53a5eec6f6b5bdcd702cf27c8cae
@@ -9840,26 +9826,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scure/bip39@npm:1.2.1":
-  version: 1.2.1
-  resolution: "@scure/bip39@npm:1.2.1"
-  dependencies:
-    "@noble/hashes": ~1.3.0
-    "@scure/base": ~1.1.0
-  checksum: c5bd6f1328fdbeae2dcdd891825b1610225310e5e62a4942714db51066866e4f7bef242c7b06a1b9dcc8043a4a13412cf5c5df76d3b10aa9e36b82e9b6e3eeaa
-  languageName: node
-  linkType: hard
-
-"@scure/bip39@npm:1.2.2":
-  version: 1.2.2
-  resolution: "@scure/bip39@npm:1.2.2"
-  dependencies:
-    "@noble/hashes": ~1.3.2
-    "@scure/base": ~1.1.4
-  checksum: cb99505e6d2deef8e55e81df8c563ce8dbfdf1595596dc912bceadcf366c91b05a98130e928ecb090df74efdb20150b64acc4be55bc42768cab4d39a2833d234
-  languageName: node
-  linkType: hard
-
 "@scure/bip39@npm:1.3.0":
   version: 1.3.0
   resolution: "@scure/bip39@npm:1.3.0"
@@ -9870,23 +9836,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scure/bip39@npm:1.5.4, @scure/bip39@npm:^1.4.0":
-  version: 1.5.4
-  resolution: "@scure/bip39@npm:1.5.4"
+"@scure/bip39@patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
+  version: 1.3.0
+  resolution: "@scure/bip39@patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch::version=1.3.0&hash=a21ef4&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
-    "@noble/hashes": ~1.7.1
-    "@scure/base": ~1.2.4
-  checksum: 744f302559ad05ee6ea4928572ac8f0b5443e8068fd53234c9c2e158814e910a043c54f0688d05546decadd2ff66e0d0c76355d10e103a28cb8f44efe140857a
-  languageName: node
-  linkType: hard
-
-"@scure/bip39@npm:^1.2.1":
-  version: 1.5.0
-  resolution: "@scure/bip39@npm:1.5.0"
-  dependencies:
-    "@noble/hashes": ~1.6.0
-    "@scure/base": ~1.2.1
-  checksum: 03d1888f5d0d514eebc5c3adc1e071d225963d434fcf789abea5ef2c8b4b99f3ad9ebee8a597c0c13d5415e6b2b380f55f61560c1643cd871961ab91cbcf5122
+    "@noble/hashes": ~1.4.0
+    "@scure/base": ~1.1.6
+  checksum: 21edb229526459723d7d3866371265fce2fcd4b36f24cfe0d6bd0877505d7460ef547c755385f120089be5e92d2a6b56339ad3ebe73fa39da25d8946b9f11b6b
   languageName: node
   linkType: hard
 
