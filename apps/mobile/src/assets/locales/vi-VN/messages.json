@@ -642,7 +642,12 @@
       }
     },
     "sendNFT": {
-      "sendButton": "Gửi"
+      "sendButton": "Gửi",
+      "Chain": "Chuỗi",
+      "SendAmount": "Gửi số tiền",
+      "Contract": "Hợp đồng",
+      "Collection": "Bộ sưu tập",
+      "NFT": "NFT"
     },
     "receive": {
       "title": "Nhận {{token}} trên {{chain}}",
@@ -1045,6 +1050,18 @@
         "VerifyDownSeedPhrase": "Xác minh seed phrase",
         "createNewDesc": "Tạo một cụm từ hạt giống mới cho các ví mới",
         "createOnCurrentDesc": "Tạo ví bằng cụm từ gốc đã nhập sẵn."
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Bạn đánh giá thế nào về Rabby Wallet?"
+      },
+      "rateModal": {
+        "feedbackSubmit": "Gửi",
+        "confirmButtonTitleIOS": "Đánh giá trên App Store",
+        "confirmButtonTitleAndroid": "Đánh giá trên Google Play",
+        "feedbackSuccess": "Cảm ơn bạn đã phản hồi.",
+        "descriptionAndroid": "Nếu bạn thích Rabby, việc đánh giá nhanh trên Google Play sẽ có ý nghĩa rất lớn.",
+        "feedbackTitle": "Bạn có phản hồi? Chúng tôi đang lắng nghe.",
+        "descriptionIOS": "Nếu bạn thích Rabby, một đánh giá nhanh trên App Store sẽ có ý nghĩa lớn."
       }
     },
     "signText": {
@@ -1104,7 +1121,8 @@
         "history": "Lịch sử",
         "receive": "Nhận",
         "websites": "Websites",
-        "search": "Tìm kiếm Token"
+        "search": "Tìm kiếm Token",
+        "copyTrading": "Copy Trading"
       }
     },
     "securityEngine": {
@@ -1371,11 +1389,23 @@
         "title_zero": "0 Ví",
         "importSafeAddress": "Ví wallet an toàn đã nhập",
         "title_one": "{{count}} Ví",
-        "addAddress": "Thêm Ví"
+        "addAddress": "Thêm Ví",
+        "notIncludedInTransactions": "Không bao gồm trong Giao dịch",
+        "moreWallets": "Nhiều Ví hơn",
+        "notIncludedInTotalBalance": "Không bao gồm trong Tổng Số Cân Bằng"
       },
       "manage-addresses-under-this-seed-phrase": "Thêm ví từ cụm từ hạt giống này",
       "delete-address": "Xóa ví",
-      "delete-desc": "Bạn có chắc chắn muốn xóa ví này không?"
+      "delete-desc": "Bạn có chắc chắn muốn xóa ví này không?",
+      "notMatterAddressDialog": {
+        "helpTitle": "Ví không được xếp hạng trong top 10",
+        "notTop10Address": "Ví được xếp hạng dưới top 10",
+        "safeWallet": "Ví an toàn",
+        "title": "Các ví sau đây không được bao gồm trong Tổng số Số dư",
+        "helpDescription2": "Bạn có thể nhấn giữ để ghim ví và điều chỉnh các ví nào được bao gồm.",
+        "watchOnlyWallet": "Ví chỉ theo dõi",
+        "helpDescription1": "Để đảm bảo cập nhật dữ liệu kịp thời và chính xác, chỉ có 10 ví hàng đầu của bạn được bao gồm trong Tổng Số Dư và Danh Mục Đầu Tư."
+      }
     },
     "customRpc": {
       "closed": "Đã đóng",
@@ -1999,6 +2029,21 @@
       "ChainSelector": {
         "title": "Chọn Chuỗi"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "Sao chép giao dịch từ Smart Money",
+        "description": "Khám phá token dựa trên hoạt động gần đây từ các ví Smart Money. Nhấn vào một token để xem chi tiết số tiền giao dịch và lợi nhuận lịch sử từ các ví đó."
+      },
+      "buy": "Mua",
+      "smartMoneyWallets": "Ví tiền Smart Money",
+      "refreshTitle": "Đang tải thêm Copy Trading từ Smart Money",
+      "comingSoon": "Sắp ra mắt...",
+      "noMoreData": "Không còn dữ liệu",
+      "smartMoneyWallet": "Ví tiền Smart Money",
+      "recentBuy": "Mua gần đây",
+      "historyProfit": "Lịch sử lợi nhuận",
+      "updateText": "{{count}} Xu Hướng Đã Cập Nhật"
     }
   },
   "component": {

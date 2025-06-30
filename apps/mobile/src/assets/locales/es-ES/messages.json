@@ -716,7 +716,12 @@
       "GasReserved": "Reservado <1>0</1> {{ tokenName }} para el coste de gas"
     },
     "sendNFT": {
-      "sendButton": "Enviar"
+      "sendButton": "Enviar",
+      "Collection": "Colección",
+      "NFT": "NFT",
+      "SendAmount": "Enviar cantidad",
+      "Chain": "Cadena",
+      "Contract": "Contrato"
     },
     "signFooterBar": {
       "oneKeySign": "Firmar",
@@ -955,7 +960,8 @@
         "history": "Historial",
         "gasAccount": "GasAccount",
         "queue": "Cola",
-        "search": "Buscar Token"
+        "search": "Buscar Token",
+        "copyTrading": "Copy Trading"
       }
     },
     "dashboard": {
@@ -1149,6 +1155,18 @@
         "receiveCryptoDesc": "Transfiere tokens de otra wallet",
         "importAddressDesc": "Añadir una cartera existente con fondos",
         "importAddress": "Importar una Wallet"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "¿Cómo calificas a Rabby Wallet?"
+      },
+      "rateModal": {
+        "feedbackSubmit": "Enviar",
+        "feedbackTitle": "¿Tienes comentarios? Estamos escuchando.",
+        "feedbackSuccess": "Gracias por tus comentarios",
+        "descriptionAndroid": "Si te gusta Rabby, una rápida calificación en Google Play significaría mucho.",
+        "confirmButtonTitleIOS": "Califica en la App Store",
+        "confirmButtonTitleAndroid": "Califica en Google Play",
+        "descriptionIOS": "Si te gusta Rabby, una rápida valoración en la App Store significaría mucho."
       }
     },
     "bridge": {
@@ -1530,12 +1548,24 @@
         "importSafeAddress": "Billetera Segura Importada",
         "title_one": "{{count}} Billetera",
         "title_other": "{{count}} Carteras",
-        "importWatchAddress": "Cartera importada solo para ver"
+        "importWatchAddress": "Cartera importada solo para ver",
+        "notIncludedInTotalBalance": "No incluido en el saldo total",
+        "notIncludedInTransactions": "No incluido en Transacciones",
+        "moreWallets": "Más Wallets"
       },
       "backup-seed-phrase": "Copia de seguridad de la frase semilla",
       "manage-addresses-under-this-seed-phrase": "Añadir wallet desde esta seed phrase",
       "delete-address": "Eliminar wallet",
-      "delete-desc": "¿Estás seguro de que quieres eliminar esta wallet?"
+      "delete-desc": "¿Estás seguro de que quieres eliminar esta wallet?",
+      "notMatterAddressDialog": {
+        "safeWallet": "Billetera Segura",
+        "helpTitle": "Billeteras clasificadas por debajo de las 10 mejores",
+        "title": "Los siguientes wallets no están incluidos en el saldo total.",
+        "watchOnlyWallet": "Wallet de Solo Visualización",
+        "helpDescription2": "Puedes mantener pulsado para fijar billeteras y ajustar cuáles están incluidas.",
+        "notTop10Address": "Bolsas clasificadas por debajo de las 10 mejores",
+        "helpDescription1": "Para garantizar actualizaciones de datos oportunas y precisas, solo se incluyen tus 10 principales wallets en el Total Balance y en el Portfolio."
+      }
     },
     "connect": {
       "connectBtn": "Conectar",
@@ -2126,6 +2156,21 @@
       "ChainSelector": {
         "title": "Seleccionar cadena"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "Copy Trading de Smart Money",
+        "description": "Descubre tokens basados en la actividad reciente de carteras de Smart Money. Toca un token para ver los montos de las transacciones y los beneficios históricos de esas carteras."
+      },
+      "updateText": "{{count}} Tendencias Actualizadas",
+      "historyProfit": "Historia de Beneficios",
+      "smartMoneyWallets": "Bolsas de Smart Money",
+      "buy": "Comprar",
+      "noMoreData": "No hay más datos",
+      "smartMoneyWallet": "Smart Money Wallet",
+      "recentBuy": "Compra reciente",
+      "refreshTitle": "Cargando más Copy Trading de Smart Money",
+      "comingSoon": "Próximamente..."
     }
   },
   "global": {

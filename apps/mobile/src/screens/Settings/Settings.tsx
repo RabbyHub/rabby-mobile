@@ -691,7 +691,7 @@ function DevSettingsBlocks() {
                   screen: RootNames.SendNFT,
                   params: {
                     nftItem: RABBY_GENESIS_NFT_DATA.nftToken,
-                    account: currentAccount!,
+                    fromAccount: currentAccount!,
                   },
                 });
               },

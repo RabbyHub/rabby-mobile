@@ -717,7 +717,12 @@
       }
     },
     "sendNFT": {
-      "sendButton": "Senden"
+      "sendButton": "Senden",
+      "Collection": "Sammlung",
+      "NFT": "NFT",
+      "Chain": "Kette",
+      "SendAmount": "Betrag senden",
+      "Contract": "Vertrag"
     },
     "sendTokenComponents": {
       "GasReserved": "Reserviert <1>0</1> {{ tokenName }} für Gaskosten"
@@ -999,7 +1004,8 @@
         "swap": "Tauschen",
         "gasAccount": "GasAccount",
         "queue": "Warteschlange",
-        "search": "Token suchen"
+        "search": "Token suchen",
+        "copyTrading": "Copy Trading"
       }
     },
     "manageAddress": {
@@ -1181,6 +1187,18 @@
         "watchOnlyTitle": "Importiere Watch-Only Wallet",
         "safeTitle": "Import Safe Wallet",
         "ImportCloud": "Importieren von {{cloud}}"
+      },
+      "rateModalTriggerOnHome": {
+        "description": "Wie bewertest du Rabby Wallet?"
+      },
+      "rateModal": {
+        "feedbackSubmit": "Einreichen",
+        "confirmButtonTitleIOS": "Bewertung im App Store",
+        "confirmButtonTitleAndroid": "Bewertung auf Google Play",
+        "feedbackSuccess": "Vielen Dank für Ihr Feedback.",
+        "feedbackTitle": "Haben Sie Feedback? Wir hören zu.",
+        "descriptionAndroid": "Wenn dir Rabby gefällt, würde eine kurze Bewertung im Google Play viel bedeuten.",
+        "descriptionIOS": "Wenn dir Rabby gefällt, würde eine kurze Bewertung im App Store sehr viel bedeuten."
       }
     },
     "switchChain": {
@@ -1499,7 +1517,10 @@
         "importSafeAddress": "Importierte Safe Wallet",
         "addAddress": "Eine Wallet hinzufügen",
         "title_one": "{{count}} Wallet",
-        "title_other": "{{count}} Wallets"
+        "title_other": "{{count}} Wallets",
+        "notIncludedInTotalBalance": "Nicht im Gesamtsaldo enthalten",
+        "moreWallets": "Mehr Wallets",
+        "notIncludedInTransactions": "Nicht in Transaktionen enthalten"
       },
       "admins": "Administratoren",
       "assets": "Vermögenswerte",
@@ -1510,7 +1531,16 @@
       "delete-desc-needpassword": "Bevor Sie löschen, beachten Sie die folgenden Punkte, um zu verstehen, wie Sie Ihre Vermögenswerte schützen.",
       "delete-address": "Wallet löschen",
       "delete-desc": "Sind Sie sicher, dass Sie diese Wallet löschen möchten?",
-      "manage-addresses-under-this-seed-phrase": "Wallet mit diesem Seed Phrase hinzufügen"
+      "manage-addresses-under-this-seed-phrase": "Wallet mit diesem Seed Phrase hinzufügen",
+      "notMatterAddressDialog": {
+        "helpTitle": "Wallets rangiert unter den Top 10",
+        "title": "Die folgenden Wallets sind nicht im Gesamtguthaben enthalten.",
+        "notTop10Address": "Wallets, die unter den Top 10 eingestuft sind",
+        "helpDescription2": "Sie können lange drücken, um Wallets anzupinnen und anzupassen, welche enthalten sind.",
+        "watchOnlyWallet": "Watch-Only Wallet",
+        "safeWallet": "Sichere Wallet",
+        "helpDescription1": "Um rechtzeitige und genaue Datenaktualisierungen zu gewährleisten, sind nur Ihre Top 10 Wallets in Total Balance und Portfolio enthalten."
+      }
     },
     "addToken": {
       "hasAdded": "Dieser Token wurde hinzugefügt.",
@@ -2170,6 +2200,21 @@
       "ChainSelector": {
         "title": "Kette auswählen"
       }
+    },
+    "copyTrading": {
+      "tipsDollar": {
+        "title": "Copy Trading von Smart Money",
+        "description": "Entdecken Sie Token basierend auf den neuesten Aktivitäten von Smart Money Wallets. Tippen Sie auf einen Token, um detaillierte Handelsmengen und historische Gewinne dieser Wallets zu sehen."
+      },
+      "historyProfit": "Verlauf Gewinn",
+      "buy": "Kaufen",
+      "smartMoneyWallet": "Smart Money Wallet",
+      "smartMoneyWallets": "Smart Money Wallets",
+      "recentBuy": "Kürzlicher Kauf",
+      "updateText": "{{count}} Trends Aktualisiert",
+      "noMoreData": "Keine weiteren Daten",
+      "refreshTitle": "Lade mehr Copy Trading von Smart Money",
+      "comingSoon": "Bald verfügbar..."
     }
   },
   "constant": {

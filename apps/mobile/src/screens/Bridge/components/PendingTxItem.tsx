@@ -7,7 +7,7 @@ import { TxStatusItem } from '@/screens/Transaction/HistoryDetailScreen';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { BridgeHistory } from '@rabby-wallet/rabby-api/dist/types';
+import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -16,14 +16,14 @@ export const BridgePendingTxItem = ({
   clearLocalPendingTxData,
   openHistory,
 }: {
-  data: BridgeHistory;
+  data: BridgeTxHistoryItem;
   clearLocalPendingTxData: () => void;
   openHistory: () => void;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const isPending = data.status === 'pending';
+  const isPending = data.status === 'pending' || data.status === 'fromSuccess';
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -37,8 +37,8 @@ export const BridgePendingTxItem = ({
     openHistory();
   };
 
-  const payToken = data?.from_token;
-  const receiveToken = data?.to_token;
+  const payToken = data?.fromToken;
+  const receiveToken = data?.toToken;
 
   const titleTextStr = useMemo(() => {
     return `${getTokenSymbol(payToken)}→${getTokenSymbol(receiveToken)}`;

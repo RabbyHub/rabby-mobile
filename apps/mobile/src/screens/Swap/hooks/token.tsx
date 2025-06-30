@@ -222,7 +222,14 @@ export const useTokenPair = ({ account }: { account: Account }) => {
   const [bestQuoteDex, setBestQuoteDex] = useState<string>('');
 
   const switchChain = useCallback(
-    (c: CHAINS_ENUM, opts?: { payTokenId?: string; changeTo?: boolean }) => {
+    (
+      c: CHAINS_ENUM,
+      opts?: {
+        payTokenId?: string;
+        changeTo?: boolean;
+        payUseBaseToken?: boolean;
+      },
+    ) => {
       handleChain(c);
       if (!opts?.changeTo) {
         setPayToken({
@@ -235,7 +242,13 @@ export const useTokenPair = ({ account }: { account: Account }) => {
           ...getChainDefaultToken(c),
           ...(opts?.payTokenId ? { id: opts?.payTokenId } : {}),
         });
-        setPayToken(undefined);
+        if (opts?.payUseBaseToken) {
+          setPayToken({
+            ...getChainDefaultToken(c),
+          });
+        } else {
+          setPayToken(undefined);
+        }
       }
       setPayAmount('');
       setSlider(0);

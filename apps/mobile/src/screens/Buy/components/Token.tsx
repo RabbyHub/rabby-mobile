@@ -44,7 +44,10 @@ export const BuyToken = ({
   const isFiat = type === 'from';
   const isReceive = type === 'to';
 
-  const { inputCallbackRef } = useAutoFocusInput(!isFiat);
+  const { inputCallbackRef } = useAutoFocusInput(
+    // !isFiat
+    true,
+  );
 
   const displayValue = useMemo(() => {
     if (isReceive && value) {

@@ -1,11 +1,11 @@
 import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
-import { memo, useMemo } from 'react';
+import { formChartData, CurvePoint } from '@/hooks/useCurve';
+import { memo, useEffect, useMemo } from 'react';
 import { Dimensions, ImageBackground, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formChartData, CurvePoint } from '@/hooks/useCurve';
-import { HEADER_CHART_HEIGHT } from '@/constant/layout';
+import { ALERT_HEIGHT, HEADER_CHART_HEIGHT } from '@/constant/layout';
 import {
   runOnJS,
   useAnimatedProps,
@@ -18,6 +18,9 @@ import { CurveLoader } from '@/screens/TokenDetail/components/TokenPriceChart/Cu
 import { Skeleton } from '@rneui/base';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
+import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
+import { useTranslation } from 'react-i18next';
+import { useTriggerUpdate } from '../hooks/triggerUpdate';
 
 const ScreenWidth = Dimensions.get('screen').width;
 
@@ -28,15 +31,20 @@ function Chart({
   isNoAssets,
   pathColor,
   handleScroll,
+  isDisConnnect,
 }: {
   isOffline: boolean;
   data: ReturnType<typeof formChartData>;
   loading: boolean;
   isNoAssets: boolean;
   pathColor: string;
+  isDisConnnect: boolean;
   handleScroll: (y: number) => void;
 }) {
   const { styles, colors, isLight } = useTheme2024({ getStyle });
+  const { setTriggerUpdate } = useTriggerUpdate();
+  const { t } = useTranslation();
+
   const topBg = useMemo(() => {
     if (data.isLoss) {
       if (isLight) {
@@ -54,6 +62,12 @@ function Chart({
   }, [data.isLoss, isLight]);
 
   const scrollY = useCurrentTabScrollY();
+  useEffect(() => {
+    return () => {
+      setTriggerUpdate?.(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useAnimatedReaction(
     () => scrollY.value,
@@ -63,7 +77,11 @@ function Chart({
   );
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { height: HEADER_CHART_HEIGHT + (isDisConnnect ? ALERT_HEIGHT : 0) },
+      ]}>
       <ImageBackground
         source={topBg}
         resizeMode="cover"
@@ -76,10 +94,20 @@ function Chart({
           height: 150,
         }}
       />
+
+      <GlobalWarning
+        hasError={isDisConnnect}
+        description={t('component.globalWarning.networkError.globalDesc')}
+        style={styles.globalWarning}
+        onRefresh={() => {
+          setTriggerUpdate(true);
+        }}
+      />
+
       <View style={styles.chartContainer}>
         <LineChart.Provider data={data.list}>
           <ChartHeader
-            netWorth={data.netWorthWithDot}
+            netWorth={data.netWorth}
             change={data.change}
             changePercent={data.changePercent}
             isLoss={data.isLoss}
@@ -87,26 +115,24 @@ function Chart({
             loading={loading}
           />
           {isOffline || isNoAssets ? null : !loading ? (
-            <>
-              <LineChart
-                height={114}
-                width={ScreenWidth - 32}
-                shape={d3Shape.curveCatmullRom}
-                style={{ position: 'relative' }}>
-                <LineChart.Path
-                  showInactivePath={false}
-                  color={pathColor}
-                  width={2}>
-                  <LineChart.Gradient color={pathColor} />
-                </LineChart.Path>
-                <LineChart.CursorLine color={colors['neutral-line']} />
-                <LineChart.CursorCrosshair
-                  color={pathColor}
-                  outerSize={12}
-                  size={8}
-                />
-              </LineChart>
-            </>
+            <LineChart
+              height={114}
+              width={ScreenWidth - 32}
+              shape={d3Shape.curveCatmullRom}
+              style={styles.relative}>
+              <LineChart.Path
+                showInactivePath={false}
+                color={pathColor}
+                width={2}>
+                <LineChart.Gradient color={pathColor} />
+              </LineChart.Path>
+              <LineChart.CursorLine color={colors['neutral-line']} />
+              <LineChart.CursorCrosshair
+                color={pathColor}
+                outerSize={12}
+                size={8}
+              />
+            </LineChart>
           ) : (
             <CurveLoader style={styles.loading} />
           )}
@@ -249,7 +275,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: ScreenWidth - 32,
   },
   netWorth: {
-    fontSize: 36,
+    fontSize: 42,
     lineHeight: 42,
     textAlign: 'center',
     fontWeight: '900',
@@ -288,6 +314,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     height: HEADER_CHART_HEIGHT,
     width: ScreenWidth,
+    paddingTop: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
@@ -296,9 +323,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   chartContainer: {
     paddingLeft: 16,
   },
+  globalWarning: {
+    marginHorizontal: 16,
+    marginBottom: 13,
+  },
   loading: {
     width: ScreenWidth - 32,
     paddingTop: 20,
     paddingHorizontal: 0,
   },
+  relative: { position: 'relative' },
 }));

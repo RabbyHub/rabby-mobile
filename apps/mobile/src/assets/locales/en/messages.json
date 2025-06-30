@@ -694,7 +694,7 @@
     },
     "whitelist": {
       "addToWhitelist": "Add to Whitelist",
-      "removeWhitelist": "Remove from Whitelist",
+      "removeWhitelist": "Remove",
       "copyAddress": "Copy Address",
       "confirm": "Confirm",
       "cancel": "Cancel",
@@ -717,7 +717,12 @@
       "GasReserved": "Reserved <1>0</1> {{ tokenName }} for gas cost"
     },
     "sendNFT": {
-      "sendButton": "Send"
+      "sendButton": "Send",
+      "NFT": "NFT",
+      "Collection": "Collection",
+      "Chain": "Chain",
+      "Contract": "Contract",
+      "SendAmount": "Send amount"
     },
     "approvals": {
       "list": {
@@ -947,8 +952,24 @@
         "more": "More",
         "queue": "Queue",
         "websites": "Websites",
+        "copyTrading": "Copy Trading",
         "search": "Search Token"
       }
+    },
+    "copyTrading": {
+      "comingSoon": "Coming soon...",
+      "tipsDollar": {
+        "title": "Copy Trading from Smart Money",
+        "description": "Discover tokens based on recent activity from smart money wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
+      },
+      "smartMoneyWallets": "Smart Money Wallets",
+      "smartMoneyWallet": "Smart Money Wallet",
+      "recentBuy": "Recent Buy",
+      "historyProfit": "History Profit",
+      "noMoreData": "No more data",
+      "updateText": "{{count}} Trends Updated",
+      "refreshTitle": "Loading More Copy Trading From Smart Money",
+      "buy": "Buy"
     },
     "dashboard": {
       "home": {
@@ -1065,6 +1086,18 @@
           "gotIt": "I Got It.",
           "entry": "Is it safe to import into Rabby"
         }
+      },
+      "rateModalTriggerOnHome": {
+        "description": "How do you rate Rabby Wallet"
+      },
+      "rateModal": {
+        "descriptionIOS": "If you like Rabby, a quick rating on the App Store would mean a lot.",
+        "descriptionAndroid": "If you like Rabby, a quick rating on the Google Play would mean a lot.",
+        "confirmButtonTitleIOS": "Rate on App Store",
+        "confirmButtonTitleAndroid": "Rate on Google Play",
+        "feedbackTitle": "Have feedback? We’re listening.",
+        "feedbackSubmit": "Submit",
+        "feedbackSuccess": "Thank you for your feedback"
       }
     },
     "newAddress": {
@@ -1367,7 +1400,19 @@
       "watchAddressListScreen": {
         "addWatchAddress": "Add Watch-Only Wallets"
       },
+      "notMatterAddressDialog": {
+        "title": "The following wallets are not Included in Total Balance",
+        "notTop10Address": "Wallets ranked below the top 10",
+        "safeWallet": "Safe Wallet",
+        "watchOnlyWallet": "Watch-Only Wallet",
+        "helpTitle": "Wallets ranked below the top 10",
+        "helpDescription1": "To ensure timely and accurate data updates, only your top 10 wallets are included in Total Balance and Portfolio.",
+        "helpDescription2": "You can long-press to pin wallets and adjust which ones are included."
+      },
       "addressListScreen": {
+        "moreWallets": "More Wallets",
+        "notIncludedInTotalBalance": "Not included in Total Balance",
+        "notIncludedInTransactions": "Not included in Transactions",
         "importSafeAddress": "Imported Safe Wallet",
         "importWatchAddress": "Imported Watch-Only Wallet",
         "unpin": "Unpin",
@@ -2089,6 +2134,21 @@
     },
     "AccountSelector": {
       "title": "Select Wallet"
+    },
+    "globalWarning": {
+      "buttonText": "Refresh",
+      "offlineText": "Network Error",
+      "serviceErrorText": "Service Error",
+      "networkError": {
+        "title": "Service connection error: ",
+        "globalDesc": "Info maybe outdated but your funds remain safe."
+      },
+      "serviceError": {
+        "title": "Network issue: ",
+        "globalDesc": "Info maybe outdated but your funds remain safe. ",
+        "quotesDesc": "quote failed to be loaded. ",
+        "balanceDesc": "balance failed to be loaded. "
+      }
     }
   },
   "native": {

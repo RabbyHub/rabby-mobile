@@ -124,9 +124,10 @@ export class TransactionWatcherService {
 
     const url = chainItem.scanLink.replace(/_s_/, hash);
     const [address] = id.split('_');
+    let gasUsed: number | undefined;
 
     if (txReceipt) {
-      await this.transactionHistoryService.reloadTx({
+      gasUsed = await this.transactionHistoryService.reloadTx({
         address,
         nonce: Number(nonce),
         chainId: chainItem.id,
@@ -151,7 +152,7 @@ export class TransactionWatcherService {
 
     // notification.create(url, title, content, 2);
 
-    eventBus.emit(EVENTS.TX_COMPLETED, { address, hash });
+    eventBus.emit(EVENTS.TX_COMPLETED, { address, hash, gasUsed });
   };
 
   // fetch pending txs status every 5s

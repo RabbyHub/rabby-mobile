@@ -1,6 +1,6 @@
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
-import { keyringService, sessionService } from '../services';
+import { keyringService, preferenceService, sessionService } from '../services';
 import { makeEEClass } from './event';
 import { formatTimeReadable } from '@/utils/time';
 import {
@@ -300,6 +300,7 @@ async function unlockWallet(password: string) {
   }
 
   await keyringService.submitPassword(password);
+  preferenceService.initCurrentAccount();
   sessionService.broadcastEvent(BroadcastEvent.unlock);
 
   return unlockResult;

@@ -11,6 +11,8 @@ import { singleDeFiNounceAtom } from './refresh';
 import { useAtom, atom } from 'jotai';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { debounce } from 'lodash';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 export const tagProfiles = (
   profiles: DisplayedProject[],
   tokenSetting: ITokenSetting,
@@ -90,7 +92,7 @@ export const tagProfiles = (
       return (b.netWorth || 0) - (a.netWorth || 0);
     });
 };
-export const log = (...args: any) => {
+export const log = () => {
   // console.log(...args);
 };
 
@@ -166,26 +168,54 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
           setHasValue(!!cachePortocols.length);
         }
       }
+      try {
+        let projectDict: Record<string, DisplayedProject> | null = {};
+        const protocols = await syncProtocols(userAddr, force);
+        protocols.forEach(project => {
+          if (projectDict) {
+            projectDict = produce(projectDict, draft => {
+              project && portfolio2Display(project, draft);
+            });
+          }
+        });
+        const realtimeData = Object.values(projectDict)?.sort(
+          (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
+        );
+        const tokenSetting = await preferenceService.getUserTokenSettings();
+        setData(tagProfiles(realtimeData, tokenSetting));
+        setHasValue(!!protocols.length);
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setData, setHasValue, setLoading, userAddr],
+  );
 
-      let projectDict: Record<string, DisplayedProject> | null = {};
-      const protocols = await syncProtocols(userAddr, force);
-      protocols.forEach(project => {
-        if (projectDict) {
-          projectDict = produce(projectDict, draft => {
+  const batchLocalData = useCallback(async () => {
+    if (!userAddr) {
+      return;
+    }
+    const cachePortocols = await PortocolItemEntity.batchQueryPortocols(
+      userAddr,
+    );
+    if (cachePortocols.length) {
+      let cacheProjectDict: Record<string, DisplayedProject> | null = {};
+      cachePortocols.forEach(project => {
+        if (cacheProjectDict) {
+          cacheProjectDict = produce(cacheProjectDict, draft => {
             project && portfolio2Display(project, draft);
           });
         }
       });
-      const realtimeData = Object.values(projectDict)?.sort(
+      const realtimeData = Object.values(cacheProjectDict)?.sort(
         (m, n) => (n.netWorth || 0) - (m.netWorth || 0),
       );
       const tokenSetting = await preferenceService.getUserTokenSettings();
       setData(tagProfiles(realtimeData, tokenSetting));
-      setHasValue(!!protocols.length);
-      setLoading(false);
-    },
-    [setData, setHasValue, setLoading, userAddr],
-  );
+      setHasValue(!!cachePortocols.length);
+    }
+  }, [setData, setHasValue, userAddr]);
 
   const refreshTagPortfolio = useCallback(async () => {
     const tokenSettings =
@@ -196,6 +226,38 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       data: tagProfiles(pre.data || [], tokenSettings),
     }));
   }, [_setData]);
+
+  const debounceUpdatePortfolio = useMemo(
+    () => debounce(batchLocalData, 2000),
+    [batchLocalData],
+  );
+
+  useAppOrmSyncEvents({
+    taskFor: ['protocols'],
+    onRemoteDataUpserted: useCallback(
+      ctx => {
+        if (
+          !userAddr ||
+          !isSameAddress(ctx.owner_addr, userAddr) ||
+          !ctx.success ||
+          isLoading
+        ) {
+          return;
+        }
+        const currentUpdateCount =
+          ctx.syncDetails.batchSize * ctx.syncDetails.round +
+          ctx.syncDetails.count;
+
+        if (
+          currentUpdateCount >= ctx.syncDetails.total ||
+          currentUpdateCount > (data?.length || 0)
+        ) {
+          debounceUpdatePortfolio();
+        }
+      },
+      [userAddr, isLoading, data?.length, debounceUpdatePortfolio],
+    ),
+  });
 
   useEffect(() => {
     if (singleDeFiNounce > 0) {

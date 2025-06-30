@@ -574,3 +574,16 @@ export function useLoadMatteredChainBalances({
 //    */
 //   // mnemonicAccounts: DisplayedKeyring[];
 // }
+
+export const useFallbackAccount = () => {
+  const accounts = useMyAccounts({
+    disableAutoFetch: true,
+  });
+  const firstAccount = accounts[0];
+  useEffect(() => {
+    if (!preferenceService.getFallbackAccount()) {
+      preferenceService.setCurrentAccount(firstAccount);
+    }
+  }, [firstAccount]);
+  return firstAccount || preferenceService.getFallbackAccount();
+};

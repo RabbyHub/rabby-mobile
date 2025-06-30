@@ -3,7 +3,7 @@ import { offlineChainService, preferenceService } from '@/core/services';
 import { useTheme2024 } from '@/hooks/theme';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { findChainByServerID } from '@/utils/chain';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { atom, useAtom } from 'jotai';
 import { useTranslation } from 'react-i18next';
 import { Image, Text, View } from 'react-native';
@@ -21,10 +21,19 @@ import {
 
 const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
 
-const useOfflineChain = () => {
+export const useOfflineChain = () => {
   const [closedTipsChains, _setClosedTipsChain] = useAtom(closedTipsChainsAtom);
 
-  const { value: offlineList } = useAsync(() => {
+  const { value: offlineList } = useAsync(async () => {
+    // // leave here for mock data
+    // if (__DEV__) {
+    //   return [
+    //     { id: 'eth', offline_at: dayjs().add(6, 'day').unix() }, // Example data
+    //     { id: 'bsc', offline_at: dayjs().add(6, 'day').unix() }, // Example data
+    //     { id: 'polygon', offline_at: dayjs().add(6, 'day').unix() }, // Example data
+    //   ];
+    // }
+
     return openapi.getOfflineChainList();
   }, []);
 
@@ -64,27 +73,34 @@ const useOfflineChain = () => {
     [closedTipsChains, list],
   );
 
-  return {
-    displayWillClosedChain,
-    setClosedTipsChain,
-  };
-};
-
-export const OfflineChainNotify = ({
-  showEmptyHolder = false,
-}: {
-  showEmptyHolder?: boolean;
-}) => {
-  const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { displayWillClosedChain, setClosedTipsChain } = useOfflineChain();
-  const chainInfo = useMemo(
+  const offlineChainInfo = useMemo(
     () =>
       displayWillClosedChain?.id
         ? findChainByServerID(displayWillClosedChain?.id)
         : null,
     [displayWillClosedChain?.id],
   );
+
+  return {
+    displayWillClosedChain,
+    setClosedTipsChain,
+    offlineChainInfo,
+  };
+};
+
+export const OfflineChainNotify = ({
+  data,
+}: {
+  data: ReturnType<typeof useOfflineChain>;
+} & RNViewProps) => {
+  const { t } = useTranslation();
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const {
+    displayWillClosedChain,
+    setClosedTipsChain,
+    offlineChainInfo: chainInfo,
+  } = data;
+
   const handleClose = useCallback(() => {
     if (displayWillClosedChain?.id) {
       setClosedTipsChain(displayWillClosedChain?.id);
@@ -139,9 +155,10 @@ export const OfflineChainNotify = ({
     styles.closeModalBtnText,
     styles.title,
   ]);
-  if (!displayWillClosedChain || !chainInfo) {
-    return <View style={{ height: showEmptyHolder ? 30 : 0 }} />;
-  }
+
+  // delegate outer to place empty holder
+  if (!displayWillClosedChain || !chainInfo) return null;
+
   return (
     <View style={styles.container}>
       <Image
@@ -180,9 +197,6 @@ export const OfflineChainNotify = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    marginTop: 16,
-    marginBottom: 24,
-
     marginHorizontal: 15,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -190,6 +204,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['orange-light-1'],
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  containerNone: {
+    display: 'none',
   },
   logo: {
     width: 16,
@@ -206,7 +223,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   text: {
     color: colors2024['orange-default'],
-    fontFamily: 'SF Pro',
+    fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     fontStyle: 'normal',
     fontWeight: '700',

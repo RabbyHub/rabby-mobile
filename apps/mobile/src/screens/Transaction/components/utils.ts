@@ -6,6 +6,7 @@ import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import {
   NFTItem,
   TokenItem,
+  TokenItemWithEntity,
   TxHistoryItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
@@ -19,6 +20,8 @@ import {
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
+import { openapi } from '@/core/request';
+import { patchSingleToken } from '@/databases/sync/assets';
 
 export function getHistoryItemType(
   data: HistoryDisplayItem,
@@ -264,4 +267,39 @@ export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
 
 export const isNFTTokenId = (tokenId: string) => {
   return tokenId.length === 32;
+};
+
+export const txDonePatchTokenAmountInDb = async (
+  tx: TransactionHistoryItem,
+) => {
+  try {
+    const sendTokenList = tx.explain?.balance_change?.send_token_list;
+    const receiveTokenList = tx.explain?.balance_change?.receive_token_list;
+    const tokenList = [...(sendTokenList || []), ...(receiveTokenList || [])];
+
+    Promise.allSettled(
+      tokenList.map(async token => {
+        try {
+          const tokenRes = (await openapi.getToken(
+            tx.address,
+            token.chain,
+            token.id,
+          )) as TokenItemWithEntity;
+          const cex_ids = tokenRes.identity?.cex_list?.map(item => item.id);
+          tokenRes.cex_ids = cex_ids || [];
+          if (tokenRes) {
+            // todo: check tokenRes.cex_ids is right
+            patchSingleToken(tx.address, tokenRes);
+          }
+        } catch (error) {
+          console.error(
+            `Failed to patch token ${token.id} for ${tx.address}:`,
+            error,
+          );
+        }
+      }),
+    );
+  } catch (e) {
+    console.log('txDonePatchTokenAmountInDb error', e);
+  }
 };

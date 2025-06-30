@@ -37,7 +37,7 @@ const winInfo = Dimensions.get('window');
 interface Props {
   originToken: AbstractPortfolioToken | CombineTokensItem;
   token: AbstractPortfolioToken | CombineTokensItem;
-  finalAccount?: KeyringAccountWithAlias;
+  finalAccount?: KeyringAccountWithAlias | null;
   amountList: TokenFromAddressItem[];
   isSingleAddress?: boolean;
   relateDefiList?: RelatedDeFiType[];
@@ -158,8 +158,10 @@ export function TokenPriceChart(props: Props) {
       };
     }
     return {
-      isUp: true,
-      percent: '',
+      isUp: token.price_24h_change ? Number(token.price_24h_change) > 0 : true,
+      percent: token?.price_24h_change
+        ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
+        : '',
     };
   }, [activeKey, data?.list, token?.price_24h_change]);
 
@@ -172,7 +174,7 @@ export function TokenPriceChart(props: Props) {
       priceType === 'holding' ? token.price * amountSum : token.price;
     return {
       date: dayjs().format(DATE_FORMATTER),
-      balance: '$' + formatPrice(price || 0, 8),
+      balance: '$' + formatPrice(price || 0, 8, true),
       isLoss: !!data?.isLoss,
       percent: percent,
     };

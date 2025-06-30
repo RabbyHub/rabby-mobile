@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import {
   Dimensions,
+  Linking,
   Platform,
   StyleProp,
   StyleSheet,
@@ -26,7 +27,7 @@ import {
 } from '@/components/WebView/hooks';
 import { checkShouldStartLoadingWithRequestForDappWebView } from '@/components/WebView/utils';
 import { APP_UA_PARIALS } from '@/constant';
-import { ANDROID_DESKTOP_MODE_UA } from '@/constant/browser';
+import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
 import { parsePossibleURL } from '@/constant/dappView';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
@@ -40,7 +41,10 @@ import { useDapps } from '@/hooks/useDapps';
 import { sleep } from '@/utils/async';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
-import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import {
+  canoicalizeDappUrl,
+  safeParseURL,
+} from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import ViewShot from 'react-native-view-shot';
@@ -52,6 +56,7 @@ import { BrowserSearchAutoComplete } from './BrowserSearchAutoComplete';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { emptyTab } from '@/core/services/browserService';
 import { coerceInteger } from '@/utils/number';
+import { isValidAppStoreUrl } from '@/utils/browser';
 
 type BrowserTabProps = {
   origin: string;
@@ -107,7 +112,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const isEmptyTab = !url;
-    const [isShowSearch, setIsShowSearch] = useState(isActive && isEmptyTab);
+    const [isShowSearch, setIsShowSearch] = useState(
+      false,
+      // isActive && isEmptyTab
+    );
     const [searchText, setSearchText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -126,7 +134,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     } = useWebViewControl({ initialTabId: tabId });
     const [contentMode, setContentMode] =
       useState<WebViewProps['contentMode']>('mobile');
-    const [userAgent, setUserAgent] = useState<string>();
 
     const navigation = useRabbyAppNavigation();
     const { dapps, disconnectDapp, setDapp } = useDapps();
@@ -150,15 +157,17 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           initialUrl: webviewState.url,
         });
         setContentMode(mode);
-        if (Platform.OS === 'android') {
-          if (mode === 'desktop') {
-            setUserAgent(ANDROID_DESKTOP_MODE_UA);
-          } else {
-            setUserAgent(browserService.getDefaultUserAgent());
-          }
-        }
       },
     );
+
+    const userAgent = useMemo(() => {
+      if (contentMode === 'desktop') {
+        return `${DESKTOP_MODE_UA} ${APP_UA_PARIALS.UA_FULL_NAME}}`;
+      }
+      return `${
+        Platform.OS === 'android' ? USER_AGENT.ANDROID : USER_AGENT.IOS
+      } ${APP_UA_PARIALS.UA_FULL_NAME}`;
+    }, [contentMode]);
 
     const changeViewPortForDesktop = useCallback(
       (contentMode: WebViewProps['contentMode'], delayMs = 0) => {
@@ -194,8 +203,17 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     );
 
     const isBookmark = useMemo(() => {
+      if (
+        urlInfo &&
+        [urlInfo?.origin, urlInfo?.origin + '/'].includes(webviewState.url)
+      ) {
+        return !!(
+          bookmarkStore.entities[urlInfo?.origin] ||
+          bookmarkStore.entities[urlInfo?.origin + '/']
+        );
+      }
       return !!bookmarkStore.entities[webviewState.url];
-    }, [bookmarkStore.entities, webviewState.url]);
+    }, [bookmarkStore.entities, urlInfo, webviewState.url]);
 
     const handleBookmark = useMemoizedFn(() => {
       if (isBookmark) {
@@ -241,6 +259,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       if (!urlToGo || !/^https?:\/\//.test(urlToGo)) {
         return;
       }
+      webviewRef.current?.stopLoading();
       if (isEmptyTab) {
         setIsShowSearch(false);
         await sleep(200);
@@ -248,9 +267,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         onOpenTab?.(urlToGo);
       } else {
         webviewRef?.current?.injectJavaScript(
-          `(function(){window.location.href = '${urlUtils.sanitizeUrlInput(
-            urlToGo,
-          )}' })()`,
+          `window.location.href = '${urlUtils.sanitizeUrlInput(urlToGo)}'; 
+          true; // Required for iOS
+        `,
         );
       }
       setIsLoading(true);
@@ -298,14 +317,15 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleReload = useMemoizedFn(() => {
-      // todo some times not work
-      if (Platform.OS === 'android') {
-        webviewRef.current?.injectJavaScript(`(function(){
-          window.location.reload();
-        })()`);
-      } else {
-        webviewRef.current?.reload();
-      }
+      handleGoTo(webviewState.url);
+      // // todo some times not work
+      // if (Platform.OS === 'android') {
+      //   webviewRef.current?.injectJavaScript(`(function(){
+      //     window.location.reload();
+      //   })()`);
+      // } else {
+      //   webviewRef.current?.reload();
+      // }
     });
 
     const handleViewTabs = useMemoizedFn(async () => {
@@ -318,6 +338,32 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const handleGoHome = useMemoizedFn(() => {
       switchToTab(emptyTab.id);
     });
+
+    const handleOnOpenWindow = useMemoizedFn(
+      (syntheticEvent: { nativeEvent: { targetUrl: string } }) => {
+        const { nativeEvent } = syntheticEvent;
+        const { targetUrl } = nativeEvent;
+        if (!targetUrl) {
+          return;
+        }
+
+        const isDeeplink = !targetUrl.startsWith('http');
+
+        if (isValidAppStoreUrl(targetUrl) && isDeeplink) {
+          Linking.openURL(targetUrl).catch(error => {
+            console.warn('Failed to open deeplink', { url, error });
+          });
+          return;
+        }
+
+        const currentUrl = webviewState.url;
+        if (currentUrl === targetUrl) {
+          return;
+        }
+
+        onOpenTab?.(targetUrl);
+      },
+    );
 
     // useEffect(() => {
     //   if (isEmptyTab && isActive) {
@@ -342,16 +388,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
     }, [isActive, isEmptyTab, onUpdateTab, urlRef]);
 
-    useFocusEffect(
-      React.useCallback(() => {
-        if (isEmptyTab && isActive) {
-          setTimeout(() => {
-            setIsShowSearch(true);
-          }, 100);
-        }
-        return () => {};
-      }, [isActive, isEmptyTab]),
-    );
+    // useFocusEffect(
+    //   React.useCallback(() => {
+    //     if (isEmptyTab && isActive) {
+    //       setTimeout(() => {
+    //         setIsShowSearch(true);
+    //       }, 100);
+    //     }
+    //     return () => {};
+    //   }, [isActive, isEmptyTab]),
+    // );
 
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -389,19 +435,14 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             quality: 0.2,
             result: 'data-uri',
           }}>
-          {isEmptyTab && (
+          {(isShowSearch && !searchText) || (!isShowSearch && !url) ? (
             <BrowserBookmarkSection
-              style={
-                (isShowSearch && !searchText) || (!isShowSearch && !url)
-                  ? null
-                  : styles.hidden
-              }
               onPress={dapp => {
                 const urlToGo = dapp.url || dapp.origin;
                 handleGoTo(urlToGo);
               }}
             />
-          )}
+          ) : null}
           <View
             // renderToHardwareTextureAndroid
             style={[
@@ -451,7 +492,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   }}
                   testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
                   userAgent={userAgent}
-                  applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
+                  // applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
                   javaScriptEnabled
                   // androidLayerType='software'
                   injectedJavaScriptBeforeContentLoaded={fullScript}
@@ -466,6 +507,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     // });
                     return webviewActions.onNavigationStateChange(event);
                   }}
+                  onOpenWindow={handleOnOpenWindow}
                   webviewDebuggingEnabled={__DEV__}
                   contentMode={contentMode}
                   {...(contentMode === 'desktop' && {

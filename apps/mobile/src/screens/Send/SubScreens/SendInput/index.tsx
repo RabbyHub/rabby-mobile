@@ -113,7 +113,7 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
           onCancel: () => {
             removeGlobalBottomSheetModal2024(id);
           },
-          onConfirm(acc, addressDesc) {
+          onConfirm: (acc, addressDesc) => {
             removeGlobalBottomSheetModal2024(id);
             navigateToSendScreen({
               addressBrandName: acc.brandName,
