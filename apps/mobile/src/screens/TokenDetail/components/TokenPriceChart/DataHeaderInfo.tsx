@@ -99,7 +99,10 @@ export const DataHeaderInfo = ({
             <>
               <View
                 // eslint-disable-next-line react-native/no-inline-styles
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                style={{
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}>
                 <AnimateableText
                   style={styles.usdValue}
                   animatedProps={usdValueAnimatedProps}
@@ -120,6 +123,12 @@ export const DataHeaderInfo = ({
                 width={181}
                 height={42}
                 style={styles.skeleton}
+                LinearGradientComponent={LoadingLinear}
+              />
+              <Skeleton
+                width={100}
+                height={20}
+                style={[styles.skeleton, { borderRadius: 4 }]}
                 LinearGradientComponent={LoadingLinear}
               />
             </>
@@ -145,7 +154,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
     paddingHorizontal: 25,
     gap: 8,
-    height: 50,
+    height: 74,
   },
 
   balanceChangeWrapper: {
@@ -155,7 +164,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   usdValue: {
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
-    fontSize: 36,
+    fontSize: 42,
     lineHeight: 42,
     fontWeight: '900',
   },

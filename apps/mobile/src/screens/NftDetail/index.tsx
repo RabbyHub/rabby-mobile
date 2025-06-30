@@ -38,6 +38,7 @@ import { RcIconMore } from '@/assets/icons/home';
 import { toast } from '@/components2024/Toast';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
 import { GetRootScreensParamsList } from '@/navigation-type';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
 
 const ListItem = (props: {
   title: string;
@@ -130,6 +131,7 @@ export const NFTDetailScreen = () => {
   const { styles, colors } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
+  const { navigateToSendPolyScreen } = useSendRoutes();
   const {
     token,
     isSingleAddress,
@@ -230,27 +232,30 @@ export const NFTDetailScreen = () => {
     [routeAccount, currentAccount],
   );
 
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
   const handleSend = useCallback(
     async (iToken: NFTItem, address: string, accountType: KEYRING_TYPE) => {
-      const toAccount =
+      const fromAccount =
         address && accountType
           ? accounts.find(i => isSameAddress(address, i.address))
           : undefined;
-      if (!toAccount) {
+      if (!fromAccount) {
         return;
       }
-      navigate(RootNames.StackTransaction, {
-        screen: RootNames.SendNFT,
-        params: {
-          collectionName:
-            iToken.contract_name || iToken?.collection?.name || '',
-          nftItem: iToken,
-          address,
-          account: toAccount,
-        },
+      await switchSceneCurrentAccount('SendNFT', fromAccount);
+      navigateToSendPolyScreen(!!isSingleAddress, {
+        collectionName: iToken.contract_name || iToken?.collection?.name || '',
+        nftItem: iToken,
+        fromAccount,
       });
     },
-    [accounts],
+    [
+      accounts,
+      navigateToSendPolyScreen,
+      isSingleAddress,
+      switchSceneCurrentAccount,
+    ],
   );
 
   const { assetsMap, getCacheTop10Assets } = useAssets();
@@ -323,10 +328,15 @@ export const NFTDetailScreen = () => {
         ];
   }, [assetsMap, token, accounts, finalAccount, isSingleAddress]);
   useEffect(() => {
-    getCacheTop10Assets({
-      disableToken: true,
-      disableDefi: true,
-    });
+    const id = setTimeout(() => {
+      getCacheTop10Assets({
+        disableToken: true,
+        disableDefi: true,
+      });
+    }, 200);
+    return () => {
+      clearTimeout(id);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -7,6 +7,7 @@ import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 import { dappsAtom } from '../useDapps';
+import { safeParseURL } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const browserBookmarkAtom = atom<EntityState<BrowserBookmarkItem, string>>({
   ids: [],
@@ -35,7 +36,15 @@ export function useBrowserBookmark() {
   });
 
   const removeBookmark = useMemoizedFn((url: string) => {
-    browserService.bookmark.removeOne(url);
+    const urlInfo = safeParseURL(url);
+    if (urlInfo && [urlInfo?.origin, urlInfo?.origin + '/'].includes(url)) {
+      browserService.bookmark.removeMany([
+        urlInfo?.origin,
+        urlInfo?.origin + '/',
+      ]);
+    } else {
+      browserService.bookmark.removeOne(url);
+    }
     getBookmarkList();
   });
 
@@ -48,7 +57,10 @@ export function useBrowserBookmark() {
   });
 
   const getBookmark = useMemoizedFn(url => {
-    return store.entities[url];
+    const urlInfo = safeParseURL(url);
+    return urlInfo && [urlInfo.origin, urlInfo?.origin + '/'].includes(url)
+      ? store.entities[urlInfo.origin] || store.entities[urlInfo.origin + '/']
+      : store.entities[url];
   });
 
   const bookmarkList: DappInfo[] = useMemo(() => {

@@ -717,7 +717,12 @@
       }
     },
     "sendNFT": {
-      "sendButton": "Senden"
+      "sendButton": "Senden",
+      "Collection": "Sammlung",
+      "NFT": "NFT",
+      "Chain": "Kette",
+      "SendAmount": "Betrag senden",
+      "Contract": "Vertrag"
     },
     "sendTokenComponents": {
       "GasReserved": "Reserviert <1>0</1> {{ tokenName }} für Gaskosten"

@@ -718,7 +718,12 @@
       "GasReserved": "Gas maliyeti için ayrılan <1>0</1> {{ tokenName }}"
     },
     "sendNFT": {
-      "sendButton": "Gönder"
+      "sendButton": "Gönder",
+      "NFT": "NFT",
+      "Contract": "Sözleşme",
+      "Chain": "Zincir",
+      "SendAmount": "Gönderim tutarı",
+      "Collection": "Koleksiyon"
     },
     "approvals": {
       "list": {

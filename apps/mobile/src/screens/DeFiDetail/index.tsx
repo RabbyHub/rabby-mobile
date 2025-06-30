@@ -348,10 +348,15 @@ export const DeFiDetailScreen = () => {
 
   const { bottom } = useSafeAreaInsets();
   useEffect(() => {
-    getCacheTop10Assets({
-      disableNFT: true,
-      disableToken: true,
-    });
+    const id = setTimeout(() => {
+      getCacheTop10Assets({
+        disableNFT: true,
+        disableToken: true,
+      });
+    }, 200);
+    return () => {
+      clearTimeout(id);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

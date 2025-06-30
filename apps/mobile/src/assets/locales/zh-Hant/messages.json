@@ -249,7 +249,12 @@
       "enterYourSeedPhrase": "輸入您的助記詞"
     },
     "sendNFT": {
-      "sendButton": "發送"
+      "sendButton": "發送",
+      "NFT": "NFT",
+      "Collection": "收藏",
+      "Contract": "合約",
+      "SendAmount": "發送金額",
+      "Chain": "鏈接"
     },
     "receive": {
       "title": "接收{{chain}}上的{{token}}",

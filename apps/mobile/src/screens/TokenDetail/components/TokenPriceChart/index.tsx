@@ -174,7 +174,7 @@ export function TokenPriceChart(props: Props) {
       priceType === 'holding' ? token.price * amountSum : token.price;
     return {
       date: dayjs().format(DATE_FORMATTER),
-      balance: '$' + formatPrice(price || 0, 8),
+      balance: '$' + formatPrice(price || 0, 8, true),
       isLoss: !!data?.isLoss,
       percent: percent,
     };

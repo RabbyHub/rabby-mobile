@@ -65,7 +65,9 @@ const {
   storage: appStorage,
   methods: appMethods,
   mmkv: appMMKV,
-} = makeAppStorage();
+} = makeAppStorage({
+  id: MMKV_FILE_NAMES.DEFAULT,
+});
 
 const { storage: keyringStorage } = makeAppStorage({
   id: MMKV_FILE_NAMES.KEYRING,
