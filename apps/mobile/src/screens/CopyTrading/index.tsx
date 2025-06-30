@@ -55,6 +55,11 @@ import RcIconSelectedCC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.s
 import LinearGradient from 'react-native-linear-gradient';
 import { BlurView } from '@react-native-community/blur';
 import { BlurShadowView } from '@/components2024/BluerShadow';
+import {
+  formatUsdValueKMB,
+  formatUsdValueKMBWithSign,
+} from '../Home/utils/price';
+import { useProfit } from './component/useProfit';
 const DEFAULT_COUNT = 10;
 
 const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
@@ -257,13 +262,33 @@ export const CopyTradingScreen = () => {
   });
 
   const handleTokenItemPress = useMemoizedFn((item: CopyTradeTokenItem) => {
-    console.log('handleTokenItemPress item', item);
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.RECENTLY_BUY_LIST,
       tradingTokenItem: item,
       bottomSheetModalProps: {
+        enableContentPanningGesture: false,
+        enablePanDownToClose: true,
+      },
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+    });
+  });
+
+  const handleShowEarningDialog = useMemoizedFn(() => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.COPY_TRADING_EARNINGS,
+      itemData: profitData?.itemData,
+      totalProfit: profitData?.totalProfit,
+      totalHoldValue: profitData?.totalHoldValue,
+      bottomSheetModalProps: {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
       },
       onClose: () => {
         removeGlobalBottomSheetModal2024(modalId);
@@ -394,6 +419,8 @@ export const CopyTradingScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const { profitData, showProfitBar } = useProfit();
+
   return (
     <NormalScreenContainer type="bg1" noHeader={true}>
       <View style={styles.headerContainer}>
@@ -518,60 +545,67 @@ export const CopyTradingScreen = () => {
         )}
       </View>
 
-      {/* 底部悬浮条 */}
-      <Animated.View style={{ opacity: floatingBarOpacity }}>
-        <View style={styles.floatingBar}>
-          <LinearGradient
-            colors={
-              isLight
-                ? ['rgba(246, 247, 247, 0.00)', '#F6F7F7']
-                : ['rgba(19, 20, 22, 0.00)', '#131416']
-            }
-            locations={[0, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            angle={180}
-            style={styles.gradientOverlay}>
-            <TouchableOpacity style={styles.floatingBarButtonWrapper}>
-              <BlurShadowView isLight={isLight} blurAmount={10}>
-                <LinearGradient
-                  colors={
-                    isLight
-                      ? [
-                          'rgba(255, 255, 255, 0.80)',
-                          'rgba(255, 255, 255, 0.40)',
-                        ]
-                      : ['rgba(35, 36, 40, 0.80)', 'rgba(35, 36, 40, 0.40)']
-                  }
-                  // locations={[0.009, 0.9864]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  angle={81}
-                  style={styles.floatingBarButton}>
-                  <View style={styles.floatingBarContent}>
-                    <Text style={styles.floatingBarText}>
-                      {t('page.copyTrading.myCopyTrading')} :{' '}
-                    </Text>
-                    <Text style={styles.floatingBarBalanceText}>$10100</Text>
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.floatingBarBalanceText,
-                        styles.floatingBarProfitText,
-                      ])}>
-                      (+$534.23)
-                    </Text>
-                  </View>
-                  <RcIconSelectedCC
-                    width={16}
-                    height={16}
-                    color={colors2024['neutral-foot']}
-                  />
-                </LinearGradient>
-              </BlurShadowView>
-            </TouchableOpacity>
-          </LinearGradient>
-        </View>
-      </Animated.View>
+      {showProfitBar && (
+        <Animated.View style={{ opacity: floatingBarOpacity }}>
+          <View style={styles.floatingBar}>
+            <LinearGradient
+              colors={
+                isLight
+                  ? ['rgba(246, 247, 247, 0.00)', '#F6F7F7']
+                  : ['rgba(19, 20, 22, 0.00)', '#131416']
+              }
+              locations={[0, 1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              angle={180}
+              style={styles.gradientOverlay}>
+              <TouchableOpacity
+                style={styles.floatingBarButtonWrapper}
+                onPress={handleShowEarningDialog}>
+                <BlurShadowView isLight={isLight} blurAmount={10}>
+                  <LinearGradient
+                    colors={
+                      isLight
+                        ? [
+                            'rgba(255, 255, 255, 0.80)',
+                            'rgba(255, 255, 255, 0.40)',
+                          ]
+                        : ['rgba(35, 36, 40, 0.80)', 'rgba(35, 36, 40, 0.40)']
+                    }
+                    // locations={[0.009, 0.9864]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    angle={81}
+                    style={styles.floatingBarButton}>
+                    <View style={styles.floatingBarContent}>
+                      <Text style={styles.floatingBarText}>
+                        {t('page.copyTrading.myCopyTrading')} :{' '}
+                      </Text>
+                      <Text style={styles.floatingBarBalanceText}>
+                        {formatUsdValueKMB(profitData?.totalHoldValue || 0)}
+                      </Text>
+                      <Text
+                        style={StyleSheet.flatten([
+                          styles.floatingBarBalanceText,
+                          styles.floatingBarProfitText,
+                        ])}>
+                        {`(${formatUsdValueKMBWithSign(
+                          profitData?.totalProfit || 0,
+                        )})`}
+                      </Text>
+                    </View>
+                    <RcIconSelectedCC
+                      width={16}
+                      height={16}
+                      color={colors2024['neutral-foot']}
+                    />
+                  </LinearGradient>
+                </BlurShadowView>
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        </Animated.View>
+      )}
     </NormalScreenContainer>
   );
 };

@@ -974,7 +974,14 @@
       "noMoreData": "No more data",
       "updateText": "{{count}} Trends Updated",
       "refreshTitle": "Loading More Copy Trading From Smart Money",
+      "twitterNews": "News in X",
+      "tokenInfo": "Token Info",
+      "smartWallets": "Smart Wallets",
+      "sameNameTokens": "Same Name Tokens",
+      "myCopyTradingEarnings": "My Copy Trading Earnings",
       "myCopyTrading": "My Copy Trading",
+      "token": "Token",
+      "holdingProfit": "Holding/Profit",
       "buy": "Buy"
     },
     "dashboard": {

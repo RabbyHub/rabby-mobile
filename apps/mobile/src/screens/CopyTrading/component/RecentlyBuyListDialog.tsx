@@ -10,160 +10,38 @@ import {
   TouchableOpacity,
   View,
   StyleSheet,
+  Image,
+  Linking,
 } from 'react-native';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
+import ImgTwitter from '@/assets2024/icons/copyTrading/ImgTwitter.png';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components';
 import { getTokenSymbol } from '@/utils/token';
 import { Button } from '@/components2024/Button';
-import { LineChart } from 'react-native-wagmi-charts';
-import * as d3Shape from 'd3-shape';
-import { formatUsdValueKMB } from '../../Home/utils/price';
-import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
-import {
-  runOnJS,
-  useAnimatedProps,
-  useAnimatedStyle,
-  useDerivedValue,
-} from 'react-native-reanimated';
-import AnimateableText from 'react-native-animateable-text';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { openapi } from '@/core/request';
-import { CopyTradeRecentBuyItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { BuyItem, SkeletonBuyItem } from './BuyItem';
-import { formatPercentage } from './TokenListItem';
-import { formatPrice } from '@/utils/number';
-import { Skeleton } from '@rneui/themed';
-import { toast } from '@/components2024/Toast';
-import dayjs from 'dayjs';
+import { RcIconRightCC, RcIconSelectCC } from '@/assets/icons/common';
 
-const ScreenWidth = Dimensions.get('screen').width;
-interface IHeaderProps {
-  currentPrice: string;
-  currentChange: string;
-  isPositive: boolean;
-  data: {
-    timestamp: number;
-    value: number;
-    formattedPrice: string;
-    formattedPercentage: string;
-    clockTimeString?: string;
-    isLoss?: boolean;
-  }[];
-}
-
-const PriceHeader = ({
-  currentPrice,
-  currentChange,
-  isPositive,
-  data,
-}: IHeaderProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { currentIndex } = LineChart.useChart();
-
-  const priceText = useDerivedValue(() => {
-    return data?.[currentIndex.value]?.formattedPrice || currentPrice;
-  }, [data, currentIndex.value, currentPrice]);
-
-  const percentChange = useDerivedValue(() => {
-    return data?.[currentIndex.value]?.formattedPercentage || currentChange;
-  }, [data, currentIndex.value, currentChange]);
-
-  const changeStyleProps = useAnimatedStyle(() => {
-    if (data?.[currentIndex.value]) {
-      return {
-        color: data?.[currentIndex?.value]?.isLoss
-          ? colors2024['red-default']
-          : colors2024['green-default'],
-      };
-    }
-    return {
-      color: isPositive
-        ? colors2024['green-default']
-        : colors2024['red-default'],
-    };
-  }, [data, currentIndex.value, isPositive, colors2024]);
-
-  const priceAnimatedProps = useAnimatedProps(() => {
-    return {
-      text: priceText.value,
-    };
-  });
-
-  const changeAnimatedProps = useAnimatedProps(() => {
-    return {
-      text: percentChange.value,
-    };
-  });
-
-  const dateTime = useDerivedValue(() => {
-    return data?.[currentIndex?.value]?.clockTimeString || '24h';
-  }, [data, currentIndex]);
-
-  const dateTimeAnimatedProps = useAnimatedProps(() => {
-    return {
-      text: dateTime.value,
-    };
-  });
-
-  return (
-    <View style={styles.priceSection}>
-      <AnimateableText
-        style={styles.price}
-        animatedProps={priceAnimatedProps}
-      />
-      <AnimateableText
-        style={changeStyleProps}
-        animatedProps={changeAnimatedProps}
-      />
-      <AnimateableText
-        style={styles.priceChangeLabel}
-        animatedProps={dateTimeAnimatedProps}
-      />
-    </View>
-  );
-};
-
-const TrendChart = ({
-  data,
-  isPositive,
-}: {
-  data: { time_at: number; price: number }[];
-  isPositive: boolean;
-}) => {
-  const { colors2024, styles } = useTheme2024({ getStyle });
-
-  const pathColor = isPositive
-    ? colors2024['green-default']
-    : colors2024['red-default'];
-
-  return (
-    <View style={styles.trendChart}>
-      <LineChart
-        height={100}
-        width={ScreenWidth - 40}
-        shape={d3Shape.curveCatmullRom}>
-        <LineChart.Path showInactivePath={false} color={pathColor} width={2}>
-          <LineChart.Gradient color={pathColor} />
-        </LineChart.Path>
-        <LineChart.CursorLine color={colors2024['neutral-line']} />
-        <LineChart.CursorCrosshair color={pathColor} outerSize={12} size={8} />
-      </LineChart>
-    </View>
-  );
-};
+import { TokenInfo } from './TokenInfo';
+import { SmartWallets } from './SmartWallets';
+import { SameNameTokens } from './SameNameTokens';
 
 export type DialogProps = {
   tradingTokenItem: CopyTradeTokenItem;
   onClose?: () => void;
 };
+
+enum TabType {
+  tokenInfo = 'tokenInfo',
+  smartWallets = 'smartWallets',
+  sameNameTokens = 'sameNameTokens',
+}
 
 export default function RecentlyBuyListDialog({
   tradingTokenItem,
@@ -171,127 +49,20 @@ export default function RecentlyBuyListDialog({
 }: RNViewProps & DialogProps) {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const isPositive = (tradingTokenItem.price_24h_change || 0) >= 0;
 
-  const fetchRecentBuyList = useMemoizedFn(async () => {
-    try {
-      const res = await openapi.getCopyTradingRecentBuyList({
-        chain_id: tradingTokenItem.chain,
-        token_id: tradingTokenItem.id,
-        limit: 50,
-      });
-      return res;
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
-      return {
-        recent_buy_list: [],
-        total: 0,
-      };
-    }
-  });
+  // Tab state management
+  const [activeTab, setActiveTab] = useState<TabType>(TabType.tokenInfo);
 
-  const { data: recentBuyList, loading } = useRequest(async () => {
-    const res = await fetchRecentBuyList();
-    return res;
-  });
-
-  const chartData = useMemo(() => {
-    const priceData = tradingTokenItem.price_curve_24h || [];
-    if (!priceData.length || priceData.length < 2) {
-      return [
-        {
-          timestamp: 0,
-          value: 0,
-          formattedPrice: '$0',
-          formattedPercentage: '+0.00%',
-        },
-        {
-          timestamp: 1,
-          value: 0,
-          formattedPrice: '$0',
-          formattedPercentage: '+0.00%',
-        },
-      ];
-    }
-
-    const firstPrice = priceData[0]?.price || 0;
-
-    return priceData.map(point => {
-      const price = point.price;
-      const change = price - firstPrice;
-      const changePercent = firstPrice !== 0 ? change / firstPrice : 0;
-      const isLoss = changePercent < 0;
-      const date = new Date(point.time_at * 1000);
-      const HH = String(date.getHours()).padStart(2, '0');
-      const mm = String(date.getMinutes()).padStart(2, '0');
-
-      return {
-        timestamp: point.time_at * 1000,
-        value: price,
-        formattedPrice: `$${formatPrice(price, 6)}`,
-        formattedPercentage: `${formatPercentage(changePercent)}`,
-        isLoss,
-        clockTimeString: `${HH}:${mm}`,
-      };
-    });
-  }, [tradingTokenItem.price_curve_24h]);
-
-  const ListHeaderComponent = React.useMemo(
-    () => (
-      <View style={styles.listHeader}>
-        {/* Price section with chart interaction */}
-        <LineChart.Provider data={chartData}>
-          <PriceHeader
-            currentPrice={`$${formatPrice(
-              Number(tradingTokenItem.price) || 0,
-              6,
-            )}`}
-            currentChange={formatPercentage(
-              Number(tradingTokenItem.price_24h_change) || 0,
-            )}
-            isPositive={isPositive}
-            data={chartData}
-          />
-
-          {/* Chart */}
-          <TrendChart
-            data={tradingTokenItem.price_curve_24h || []}
-            isPositive={isPositive}
-          />
-        </LineChart.Provider>
-
-        {/* Smart Money Wallets section header */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionHeaderLeft}>
-            <IconDollar width={20} height={20} />
-            {loading ? null : (
-              <Text style={styles.priceChangeLabel}>
-                {`${recentBuyList?.total || 0} ${
-                  recentBuyList?.total === 1
-                    ? t('page.copyTrading.smartMoneyWallet')
-                    : t('page.copyTrading.smartMoneyWallets')
-                }`}
-              </Text>
-            )}
-          </View>
-          <Text style={styles.priceChangeLabel}>
-            {t('page.copyTrading.recentBuy')}
-          </Text>
-        </View>
-      </View>
-    ),
-    [
-      chartData,
-      styles,
-      loading,
-      tradingTokenItem.price,
-      tradingTokenItem.price_24h_change,
-      tradingTokenItem.price_curve_24h,
-      isPositive,
-      t,
-      recentBuyList?.total,
-    ],
-  );
+  const tabBarData = React.useMemo(() => {
+    return [
+      { key: TabType.tokenInfo, label: t('page.copyTrading.tokenInfo') },
+      { key: TabType.smartWallets, label: t('page.copyTrading.smartWallets') },
+      {
+        key: TabType.sameNameTokens,
+        label: t('page.copyTrading.sameNameTokens'),
+      },
+    ];
+  }, [t]);
 
   const handleBuyPress = useMemoizedFn((item: CopyTradeTokenItem) => {
     const chain = findChain({
@@ -309,17 +80,10 @@ export default function RecentlyBuyListDialog({
     });
   });
 
-  const renderBuyItem = useMemoizedFn(
-    ({ item }: { item: CopyTradeRecentBuyItem }) => {
-      return <BuyItem item={item} />;
-    },
-  );
-
   // Render skeleton items when loading
   const renderSkeletonList = useMemoizedFn(() => {
     return (
       <View>
-        {ListHeaderComponent}
         {Array.from({ length: 2 }).map((_, index) => (
           <SkeletonBuyItem key={index} />
         ))}
@@ -327,26 +91,58 @@ export default function RecentlyBuyListDialog({
     );
   });
 
+  const handleTwitterPress = useMemoizedFn(async () => {
+    const symbol = getTokenSymbol(tradingTokenItem);
+    const searchQuery = encodeURIComponent(symbol);
+
+    const appUrls = [
+      `twitter://search?query=${searchQuery}`,
+      `x://search?query=${searchQuery}`,
+    ];
+    const webUrl = `https://x.com/search?q=${searchQuery}`;
+
+    try {
+      for (const appUrl of appUrls) {
+        const canOpen = await Linking.canOpenURL(appUrl);
+        if (canOpen) {
+          await Linking.openURL(appUrl);
+          return;
+        }
+      }
+
+      await Linking.openURL(webUrl);
+    } catch (error) {
+      console.error('Failed to open Twitter/X:', error);
+      try {
+        await Linking.openURL(webUrl);
+      } catch (fallbackError) {
+        console.error('Failed to open web URL:', fallbackError);
+      }
+    }
+  });
+
+  const TabContentComponent = useMemo(() => {
+    switch (activeTab) {
+      case TabType.tokenInfo:
+        return <TokenInfo tradingTokenItem={tradingTokenItem} />;
+      case TabType.smartWallets:
+        return <SmartWallets tradingTokenItem={tradingTokenItem} />;
+      case TabType.sameNameTokens:
+        return <SameNameTokens tradingTokenItem={tradingTokenItem} />;
+    }
+  }, [activeTab, tradingTokenItem]);
+
   return (
     <AutoLockView style={styles.container}>
       {/* Header with token info */}
-      <BottomSheetHandlableView>
+      <BottomSheetHandlableView style={styles.headerContainer}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.tokenHeader}
-            onPress={() => {
-              // Close dialog first, then navigate
-              onClose?.();
-              naviPush(RootNames.TokenDetail, {
-                token: ensureAbstractPortfolioToken(tradingTokenItem),
-                needUseCacheToken: true,
-              });
-            }}>
+          <View style={styles.tokenHeader}>
             <AssetAvatar
               logo={tradingTokenItem?.logo_url}
-              size={24}
+              size={36}
               chain={tradingTokenItem?.chain}
-              chainSize={12}
+              chainSize={16}
             />
             <Text
               style={styles.tokenName}
@@ -354,28 +150,46 @@ export default function RecentlyBuyListDialog({
               ellipsizeMode="tail">
               {getTokenSymbol(tradingTokenItem)}
             </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.tokenHeaderTwitter}
+            onPress={handleTwitterPress}>
+            <Image source={ImgTwitter} style={styles.tokenHeaderTwitterIcon} />
+            <Text
+              style={styles.twitterName}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {t('page.copyTrading.twitterNews')}
+            </Text>
             <RcIconRightCC
-              width={14}
-              height={14}
+              width={18}
+              height={18}
               color={colors2024['neutral-title-1']}
             />
           </TouchableOpacity>
         </View>
+
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          {tabBarData.map(tab => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.tabItem]}
+              onPress={() => setActiveTab(tab.key)}>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === tab.key && styles.tabTextActive,
+                ]}>
+                {tab.label}
+              </Text>
+              {activeTab === tab.key && <View style={styles.tabUnderline} />}
+            </TouchableOpacity>
+          ))}
+        </View>
       </BottomSheetHandlableView>
 
-      {loading ? (
-        <View style={styles.scrollContent}>{renderSkeletonList()}</View>
-      ) : (
-        <BottomSheetFlatList
-          style={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          data={recentBuyList?.recent_buy_list || []}
-          keyExtractor={item => item.id}
-          ListHeaderComponent={ListHeaderComponent}
-          renderItem={renderBuyItem}
-          contentContainerStyle={styles.flatListContent}
-        />
-      )}
+      <View style={styles.scrollContent}>{TabContentComponent}</View>
 
       {/* Fixed bottom button */}
       <View style={styles.bottomButton}>
@@ -392,8 +206,13 @@ export default function RecentlyBuyListDialog({
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     height: '100%',
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
     backgroundColor: colors2024['neutral-bg-1'],
+  },
+  headerContainer: {
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors2024['neutral-line'],
   },
   trendChart: {
     width: '100%',
@@ -407,20 +226,43 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   header: {
     height: 38,
-    marginBottom: 15,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   tokenHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
     alignSelf: 'flex-start',
-    backgroundColor: colors2024['neutral-bg-2'],
+
+    padding: 6,
+  },
+  tokenHeaderTwitterIcon: {
+    width: 20,
+    height: 20,
+  },
+  tokenHeaderTwitter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    // alignSelf: 'flex-start',
+    justifyContent: 'center',
+    backgroundColor: colors2024['neutral-bg-5'],
     borderRadius: 100,
     padding: 6,
   },
-  tokenName: {
+  twitterName: {
     fontSize: 16,
     lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  tokenName: {
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
@@ -493,24 +335,49 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   bottomButton: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 20,
     paddingTop: 12,
     height: 115,
     backgroundColor: colors2024['neutral-bg-1'],
-  },
-  buyButton: {
-    height: 48,
-    borderRadius: 12,
-  },
-  buyButtonText: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Rounded',
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    position: 'relative',
+  },
+  tabItem: {
+    // padding: 8,
+    paddingHorizontal: 2,
+    paddingVertical: 6,
+    alignItems: 'center',
+    borderRadius: 4,
+    color: colors2024['neutral-secondary'],
+    position: 'relative',
+  },
+  tabText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  tabTextActive: {
+    fontWeight: '700',
+    color: colors2024['neutral-body'],
+  },
+  tabUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    borderRadius: 4,
+    backgroundColor: colors2024['neutral-body'],
   },
 }));

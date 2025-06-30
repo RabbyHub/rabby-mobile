@@ -31,6 +31,7 @@ import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 import {
   loadTxSaveFromLocalStore,
   txDonePatchTokenAmountInDb,
+  insertCopyTradingBuyItem,
 } from '@/screens/Transaction/components/utils';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { updateExpiredTime } from '@/databases/sync/utils';
@@ -122,6 +123,7 @@ export interface SwapTxHistoryItem {
   hash: string;
   createdAt: number;
   completedAt?: number;
+  isFromCopyTrading?: boolean;
 }
 
 export interface SendTxHistoryItem {
@@ -398,7 +400,7 @@ export class TransactionHistoryService {
           ('fromChainId' in item ? item.fromChainId : item.chainId) ===
             chainId && hashArr.includes(item.hash),
       );
-      if (index !== -1) {
+      if (index > -1) {
         if ('fromChainId' in history[index]) {
           // bridge tx
           history[index].status =
@@ -407,6 +409,12 @@ export class TransactionHistoryService {
           history[index].status = status;
         }
         history[index].completedAt = Date.now();
+        if (
+          'isFromCopyTrading' in history[index] &&
+          history[index].isFromCopyTrading
+        ) {
+          insertCopyTradingBuyItem(history[index]);
+        }
       }
     });
   }

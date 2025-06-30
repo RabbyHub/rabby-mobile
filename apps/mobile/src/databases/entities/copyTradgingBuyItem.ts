@@ -4,9 +4,16 @@ import { Entity, Column } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { prepareAppDataSource } from '../imports';
 import { TokenItemEntity } from './tokenitem';
+import { correctBadRealOnSql, DECIMALS_INT_RATIO } from './_helpers';
+
+const TABLE_NAME = 'rabby_copy_trading_buyitem';
+const TABLE_NAME_TOKENITEM = 'rabby_cache_tokenitem';
 
 @Entity('copy_trading_buyitem')
 export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
+  // hash
+  @Column('text', { default: '' })
+  hash: string = '';
   // chain
   @Column('text', { default: '' })
   chain: TokenItem['chain'] = 'eth';
@@ -58,6 +65,7 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
       from_token_id: string;
       from_token_amount: number;
       from_token_price: number;
+      hash: string;
     },
   ) {
     e.owner_addr = owner_addr;
@@ -70,6 +78,7 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     e.from_token_id = input.from_token_id ?? '';
     e.from_token_amount = input.from_token_amount ?? 0;
     e.from_token_price = input.from_token_price ?? 0;
+    e.hash = input.hash ?? '';
     e.create_time = Math.floor(Date.now() / 1000);
 
     e.makeDbId();
@@ -81,7 +90,7 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     const repo = this.getRepository();
 
     const result = await repo
-      .createQueryBuilder('copy_trading_buyitem')
+      .createQueryBuilder()
       .select('COUNT(DISTINCT (`owner_addr`))', 'uniqueChainAddressCount')
       .getRawOne();
 
@@ -116,6 +125,7 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
       from_token_id: string;
       from_token_amount: number;
       from_token_price: number;
+      hash: string;
     },
   ) {
     await prepareAppDataSource();
@@ -125,88 +135,118 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     this.fillEntity(newRecord, owner_addr, tokenData);
 
     await repo.save(newRecord);
-
+    console.log('insertCopyTradingBuyItem success', newRecord);
     return true;
   }
 
   static async deleteExpiredBuyItem() {
-    const repo = this.getRepository();
+    try {
+      await prepareAppDataSource();
+      const repo = this.getRepository();
 
-    // Get all invalid records (need to delete)
-    // Only delete invalid records older than 1 hour (3600 seconds)
-    const oneHourAgo = Math.floor(Date.now() / 1000) - 3600;
-    const invalidRecords = await repo.query(`
-      SELECT ct._db_id
-      FROM copy_trading_buyitem ct
-      LEFT JOIN cache_tokenitem token 
-        ON ct.id = token.id 
-        AND ct.chain = token.chain 
-        AND ct.owner_addr = token.owner_addr
-      WHERE (token.id IS NULL OR token.amount = 0)
-        AND ct.create_time < ${oneHourAgo}
-    `);
+      // Get all invalid records (need to delete)
+      // Only delete invalid records older than 1 hour (3600 seconds)
+      const oneHourAgo = Math.floor(Date.now() / 1000) - 3600;
+      const invalidRecords = await repo.query(`
+        SELECT ct._db_id
+        FROM ${TABLE_NAME} ct
+        LEFT JOIN ${TABLE_NAME_TOKENITEM} token 
+          ON ct.id = token.id 
+          AND ct.chain = token.chain 
+          AND ct.owner_addr = token.owner_addr
+        WHERE (token.id IS NULL OR token.amount = 0)
+          AND ct.create_time < ${oneHourAgo}
+      `);
 
-    // Delete invalid records
-    if (invalidRecords.length > 0) {
-      const invalidIds = invalidRecords.map(
-        (record: CopyTradingBuyItemEntity) => record._db_id,
-      );
-      try {
-        await repo
-          .createQueryBuilder()
-          .delete()
-          .from(CopyTradingBuyItemEntity)
-          .where('_db_id IN (:...invalidIds)', { invalidIds })
-          .execute();
-
-        console.log(
-          `Successfully deleted ${invalidIds.length} invalid CopyTradingBuyItem records`,
+      // Delete invalid records
+      if (invalidRecords.length > 0) {
+        const invalidIds = invalidRecords.map(
+          (record: CopyTradingBuyItemEntity) => record._db_id,
         );
-      } catch (error) {
-        console.error(
-          'Error deleting invalid CopyTradingBuyItem records:',
-          error,
-        );
+        try {
+          await repo
+            .createQueryBuilder()
+            .delete()
+            .from(CopyTradingBuyItemEntity)
+            .where('_db_id IN (:...invalidIds)', { invalidIds })
+            .execute();
+
+          console.log(
+            `Successfully deleted ${invalidIds.length} invalid CopyTradingBuyItem records`,
+          );
+        } catch (error) {
+          console.error(
+            'Error deleting invalid CopyTradingBuyItem records:',
+            error,
+          );
+        }
       }
+    } catch (e) {
+      console.error('Error deleting expired CopyTradingBuyItem:', e);
     }
   }
 
   /**
-   * Optimized version: use native SQL for join query with better performance
+   * Optimized version: use CTE to first aggregate CopyTradingBuyItem, then join with TokenItem
    * @returns raw SQL query results containing TokenItem fields plus buy_amount and buy_price
    */
   static async queryCopyTradingItems(): Promise<
     (TokenItemEntity & { buy_amount: number; buy_price: number })[]
   > {
-    await prepareAppDataSource();
+    try {
+      await prepareAppDataSource();
 
-    const repo = this.getRepository();
+      const repo = this.getRepository();
 
-    // Use aggregated join query to calculate weighted average price for same token
-    // buy_price = (from_token_amount * from_token_price) / amount
-    const queryStartTime = Date.now();
-    const validRecords = await repo.query(`
-      SELECT 
-        token.*,
-        SUM(ct.amount) as buy_amount,
-        SUM(ct.from_token_amount * ct.from_token_price) / SUM(ct.amount) as buy_price
-      FROM copy_trading_tokenitem ct
-      INNER JOIN cache_tokenitem token
-        ON ct.id = token.id 
-        AND ct.chain = token.chain 
-        AND ct.owner_addr = token.owner_addr
-      WHERE token.amount > 0
-      GROUP BY ct.id, ct.chain, ct.owner_addr
-    `);
-    const queryEndTime = Date.now();
+      // Use CTE to first aggregate CopyTradingBuyItem, then join with TokenItem
+      // This ensures token.amount is the actual current holding
+      const queryStartTime = Date.now();
+      const validRecords = await repo.query(`
+        WITH aggregated_buys AS (
+          SELECT 
+            id, 
+            chain, 
+            owner_addr,
+            SUM(amount) as buy_amount,
+            SUM(from_token_amount * from_token_price) / SUM(amount) as buy_price
+          FROM ${TABLE_NAME}
+          GROUP BY id, chain, owner_addr
+        )
+        SELECT 
+          tokenitem.*,
+          ab.buy_amount,
+          ab.buy_price
+        FROM aggregated_buys ab
+        INNER JOIN ${TABLE_NAME_TOKENITEM} tokenitem
+          ON ab.id = tokenitem.id 
+          AND ab.chain = tokenitem.chain 
+          AND ab.owner_addr = tokenitem.owner_addr
+        WHERE tokenitem.amount > 0
+      `);
+      const queryEndTime = Date.now();
 
-    console.log(
-      `Database query time: ${
-        queryEndTime - queryStartTime
-      }ms, Records found: ${validRecords.length}`,
-    );
+      // Fix amount and price values using the same logic as badRealTransformer
+      const correctedRecords = validRecords.map(
+        (
+          record: TokenItemEntity & { buy_amount: number; buy_price: number },
+        ) => ({
+          ...record,
+          amount: record.amount / DECIMALS_INT_RATIO, // Correct the stored value
+          price: record.price / DECIMALS_INT_RATIO, // Correct the stored value
+        }),
+      );
 
-    return validRecords;
+      console.log(
+        `Database query time: ${
+          queryEndTime - queryStartTime
+        }ms, Records found: ${correctedRecords.length}`,
+      );
+
+      return correctedRecords;
+    } catch (error) {
+      console.error('Error querying CopyTradingBuyItem:', error);
+      return [];
+    }
   }
 }
 
@@ -231,5 +271,5 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
  * //     buy_price: 2.0,        // purchase price in copy_trading_buyitem
  * //     // ... other fields
  * //   }
- * // ]
+ * //
  */

@@ -382,6 +382,7 @@ const Swap = ({
           dexId: activeProvider?.name || 'WrapToken',
           createdAt: Date.now(),
           status: 'pending' as SwapTxHistoryItem['status'],
+          isFromCopyTrading: navState?.isFromCopyTrading,
         };
         await dexSwap(
           {
@@ -479,7 +480,6 @@ const Swap = ({
               source: 'swap',
               trigger: 'home',
               swapUseSlider,
-              isFromCopyTrading: navState?.isFromCopyTrading,
             },
           },
         );
@@ -599,6 +599,7 @@ const Swap = ({
             dexId: activeProvider?.name || 'WrapToken',
             createdAt: Date.now(),
             status: 'pending',
+            isFromCopyTrading: navState?.isFromCopyTrading,
           });
           handleAmountChange('');
           setTimeout(() => {

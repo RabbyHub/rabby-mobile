@@ -50,6 +50,7 @@ import { BatchRevokeErrorReason } from '@/screens/BatchRevoke/BatchRevokeErrorRe
 import { FundYourWallet } from '@/screens/Home/FundYourWallet';
 import RecentlyBuyListDialog from '@/screens/CopyTrading/component/RecentlyBuyListDialog';
 import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
+import EarningDialog from '@/screens/CopyTrading/component/EarningDialog';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -62,7 +63,8 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
   [MODAL_NAMES.SELECT_CHAIN_WITH_SUMMARY]: ['80%'],
   [MODAL_NAMES.SELECT_CHAIN_WITH_DISTRIBUTE]: ['80%'],
-  [MODAL_NAMES.RECENTLY_BUY_LIST]: ['80%'],
+  [MODAL_NAMES.RECENTLY_BUY_LIST]: [MODAL_MAX_HEIGHT],
+  [MODAL_NAMES.COPY_TRADING_EARNINGS]: [MODAL_MAX_HEIGHT],
   [MODAL_NAMES.CANCEL_CONNECT]: [244],
   [MODAL_NAMES.SELECT_CHAIN]: ['80%'],
   [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
@@ -108,6 +110,7 @@ export const SNAP_POINTS: SnapPoints = {
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.APPROVAL]: Approval,
   [MODAL_NAMES.RECENTLY_BUY_LIST]: RecentlyBuyListDialog,
+  [MODAL_NAMES.COPY_TRADING_EARNINGS]: EarningDialog,
   [MODAL_NAMES.CANCEL_APPROVAL]: CancelApproval,
   [MODAL_NAMES.SWITCH_ADDRESS]: SwitchAddress,
   [MODAL_NAMES.SWITCH_CHAIN]: SwitchChain,
