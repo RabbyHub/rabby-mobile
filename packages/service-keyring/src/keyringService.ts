@@ -20,7 +20,7 @@ import type { ContactBookService } from '@rabby-wallet/service-address';
 import * as ethUtil from 'ethereumjs-util';
 import log from 'loglevel';
 import bip39 from '@scure/bip39'
-import import_english from '@scure/bip39/wordlists/english';
+import * as import_english from '@scure/bip39/wordlists/english';
 
 import type { KeyringClassType, KeyringInstance } from './types';
 import { keyringSdks } from './types';
