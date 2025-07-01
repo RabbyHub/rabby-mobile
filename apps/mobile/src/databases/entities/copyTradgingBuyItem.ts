@@ -158,26 +158,53 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
           AND ct.create_time < ${oneHourAgo}
       `);
 
-      // Delete invalid records
+      // improve multi check delete logic
       if (invalidRecords.length > 0) {
-        const invalidIds = invalidRecords.map(
-          (record: CopyTradingBuyItemEntity) => record._db_id,
-        );
-        try {
-          // await repo
-          //   .createQueryBuilder()
-          //   .delete()
-          //   .from(CopyTradingBuyItemEntity)
-          //   .where('_db_id IN (:...invalidIds)', { invalidIds })
-          //   .execute();
+        const invalidIds = invalidRecords.map(record => record._db_id);
 
-          console.warn(
-            `will deleted ${invalidIds.length} invalid CopyTradingBuyItem records`,
+        // second check, wait 60 seconds
+        await new Promise(resolve => setTimeout(resolve, 60 * 1000));
+
+        // second check
+        const secondCheckInvalidRecords = await repo.query(
+          `
+          SELECT ct._db_id
+          FROM ${TABLE_NAME} ct
+          LEFT JOIN ${TABLE_NAME_TOKENITEM} token 
+            ON ct.id = token.id 
+            AND ct.chain = token.chain 
+            AND ct.owner_addr = token.owner_addr
+          WHERE ct._db_id IN (${invalidIds.map(() => '?').join(',')})
+            AND (token.id IS NULL OR token.amount = 0)
+        `,
+          invalidIds,
+        );
+
+        // only delete records that are confirmed invalid after two checks
+        if (secondCheckInvalidRecords.length > 0) {
+          const confirmedInvalidIds = secondCheckInvalidRecords.map(
+            record => record._db_id,
           );
-        } catch (error) {
-          console.error(
-            'Error deleting invalid CopyTradingBuyItem records:',
-            error,
+
+          console.log(
+            `Copy Trading cleanup: Found ${invalidIds.length} initially invalid records, confirmed ${confirmedInvalidIds.length} for deletion`,
+          );
+
+          await repo
+            .createQueryBuilder()
+            .delete()
+            .from(CopyTradingBuyItemEntity)
+            .where('_db_id IN (:...confirmedInvalidIds)', {
+              confirmedInvalidIds,
+            })
+            .execute();
+
+          console.log(
+            `Copy Trading cleanup: Successfully deleted ${confirmedInvalidIds.length} invalid records`,
+          );
+        } else {
+          console.log(
+            'Copy Trading cleanup: No records confirmed for deletion after second check',
           );
         }
       }

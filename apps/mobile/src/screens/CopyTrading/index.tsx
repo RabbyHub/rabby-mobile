@@ -620,7 +620,9 @@ export const CopyTradingScreen = () => {
                       <Text
                         style={StyleSheet.flatten([
                           styles.floatingBarBalanceText,
-                          styles.floatingBarProfitText,
+                          profitData?.totalProfit && profitData?.totalProfit > 0
+                            ? styles.floatingBarProfitText
+                            : styles.floatingBarLossText,
                         ])}>
                         {`(${formatUsdValueKMBWithSign(
                           profitData?.totalProfit || 0,
