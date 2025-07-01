@@ -35,13 +35,15 @@ export const TokenInfo: React.FC<TokenInfoProps> = ({ tradingTokenItem }) => {
 
   const fetchDetailInfo = useMemoizedFn(async () => {
     try {
-      if (
-        'buy_address_count' in tradingTokenItem &&
-        tradingTokenItem.buy_address_count > 0
-      ) {
-        // if copy trading token item, no need to fetch detail info
-        return;
-      }
+      // magic method
+      // just all fetch to refersh page so no toggle no scroll in bottom sheet
+      // if (
+      //   'buy_address_count' in tradingTokenItem &&
+      //   tradingTokenItem.buy_address_count > 0
+      // ) {
+      //   // if copy trading token item, no need to fetch detail info
+      //   return;
+      // }
       setIsLoading(true);
       const info = await openapi.getCopyTradingDetail({
         token_id: tradingTokenItem.id,
