@@ -308,7 +308,7 @@ export const CopyTradingScreen = () => {
           ? TabType.smartWallets
           : TabType.tokenInfo,
         bottomSheetModalProps: {
-          enableContentPanningGesture: false,
+          enableContentPanningGesture: true,
           enablePanDownToClose: true,
           handleStyle: {
             backgroundColor: isLight

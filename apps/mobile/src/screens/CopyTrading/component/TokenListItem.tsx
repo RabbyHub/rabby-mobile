@@ -177,21 +177,28 @@ const TokenListItemComponent = ({
               <View key={index}>
                 <Image
                   source={require('@/assets2024/icons/home/IconDollar.png')}
-                  style={styles.dollarIcon}
+                  style={StyleSheet.flatten([
+                    styles.dollarIcon,
+                    { marginLeft: index === 0 ? 0 : -10 },
+                  ])}
                 />
               </View>
             ))}
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.buyTextContainer}
-            onPress={handlePressSmartWallets}>
-            <Text style={styles.buyText}>
-              {t('page.copyTrading.smartWalletsBuying', {
-                len:
-                  item.buy_address_count > 10 ? '10+' : item.buy_address_count,
-              })}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.buyTextWrapper}>
+            <TouchableOpacity
+              style={styles.buyTextContainer}
+              onPress={handlePressSmartWallets}>
+              <Text style={styles.buyText}>
+                {t('page.copyTrading.smartWalletsBuying', {
+                  len:
+                    item.buy_address_count > 10
+                      ? '10+'
+                      : item.buy_address_count,
+                })}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <TouchableOpacity
           style={styles.buyButton}
@@ -253,7 +260,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   dollarIcon: {
     width: 20,
     height: 20,
-    marginRight: -10,
   },
   dollarSymbol: {
     fontSize: 8,
@@ -341,12 +347,21 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   dollarIconsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 8,
+    overflow: 'hidden',
+    flexShrink: 1,
   },
   buyTextContainer: {
     borderBottomWidth: 1,
     borderBottomColor: colors2024['neutral-secondary'],
     borderStyle: 'dashed',
     paddingBottom: 1,
+    flex: 1,
+    flexShrink: 0,
+    alignSelf: 'flex-start',
+    // maxWidth: 160,
+  },
+  buyTextWrapper: {
+    flexShrink: 0,
   },
 }));

@@ -143,10 +143,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           i => i.time_at > ninetyDaysAgo,
         );
 
-        console.debug(
-          'synHistoryInRealTimeApi length:',
-          res.history_list.length,
-        );
         const tokenUUDict: Record<string, TokenItem> = {};
         Object.keys(res.token_dict).map(id => {
           const chain = res.token_dict[id].chain;
@@ -248,7 +244,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
         i => pendingIdList.includes(i.id) || i.create_at > latestTime,
       );
 
-      console.debug('getBuyHistory sync data length:', res.histories.length);
       if (res.histories.length) {
         console.log('syncRemoteBuyHistory', address, res.histories);
         runOnJS(syncRemoteBuyHistory)(
@@ -256,7 +251,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           res.histories as unknown as BuyHistoryList['histories'],
         );
         if (isAddUpdate && lastItemTime > latestTime) {
-          console.debug('getBuyHistory sync data need to loop:', address);
           syncBuyHistory(address, _start + res.histories.length - 1);
         }
         return res.histories;

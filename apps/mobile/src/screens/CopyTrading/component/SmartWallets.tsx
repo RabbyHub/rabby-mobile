@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useState, useCallback, useEffect } from 'react';
-import { Text, View, FlatList, TouchableOpacity, Image } from 'react-native';
+import { Text, View, TouchableOpacity, Image } from 'react-native';
 import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -10,7 +10,6 @@ import {
   CopyTradeRecentBuyItemV2,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { AssetAvatar } from '@/components';
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import { useMemoizedFn } from 'ahooks';
 import { openapi } from '@/core/request';
@@ -24,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { Skeleton } from '@rneui/themed';
 import { toast } from '@/components2024/Toast';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 interface SmartWalletsProps {
   tradingTokenItem: TokenItem;
@@ -346,7 +346,7 @@ export const SmartWallets: React.FC<SmartWalletsProps> = ({
           </Text>
         </View>
       </View>
-      <FlatList
+      <BottomSheetFlatList
         data={buyList}
         keyExtractor={item => `${item.user_addr}_${item.last_buy_at}`}
         renderItem={renderWalletItem}
