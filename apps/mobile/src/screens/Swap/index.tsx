@@ -196,7 +196,7 @@ const Swap = ({
 
     showMoreVisible,
 
-    lowCreditToken,
+    lowCreditToken: _lowCreditToken,
     lowCreditVisible,
     setLowCreditToken,
     setLowCreditVisible,
@@ -360,6 +360,14 @@ const Swap = ({
 
   const { safeOffBottom } = useSafeSizes();
 
+  const currentIsCopyTrading = useMemo(() => {
+    return (
+      navState?.isFromCopyTrading &&
+      receiveToken?.id === navState?.tokenId &&
+      chain === navState.chainEnum
+    );
+  }, [navState, receiveToken?.id, chain]);
+
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
@@ -382,7 +390,7 @@ const Swap = ({
           dexId: activeProvider?.name || 'WrapToken',
           createdAt: Date.now(),
           status: 'pending' as SwapTxHistoryItem['status'],
-          isFromCopyTrading: navState?.isFromCopyTrading,
+          isFromCopyTrading: currentIsCopyTrading,
         };
         await dexSwap(
           {
@@ -599,7 +607,7 @@ const Swap = ({
             dexId: activeProvider?.name || 'WrapToken',
             createdAt: Date.now(),
             status: 'pending',
-            isFromCopyTrading: navState?.isFromCopyTrading,
+            isFromCopyTrading: currentIsCopyTrading,
           });
           handleAmountChange('');
           setTimeout(() => {
@@ -832,6 +840,20 @@ const Swap = ({
   );
 
   const noQuote = useDebounceValue(noQuoteOrigin, 10);
+
+  const lowCreditToken = useMemo(() => {
+    if (!navState) {
+      return _lowCreditToken;
+    }
+    const isCopyTrading =
+      navState?.isFromCopyTrading &&
+      _lowCreditToken?.id === navState?.tokenId &&
+      _lowCreditToken?.chain === findChainByEnum(navState.chainEnum)?.serverId;
+    if (isCopyTrading) {
+      return undefined;
+    }
+    return _lowCreditToken;
+  }, [_lowCreditToken, navState]);
 
   useEffect(() => {
     if (noQuote) {

@@ -17,7 +17,11 @@ import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import ImgTwitter from '@/assets2024/icons/copyTrading/ImgTwitter.png';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  CopyTradeTokenItem,
+  CopyTradeTokenItemV2,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components';
 import { getTokenSymbol } from '@/utils/token';
 import { Button } from '@/components2024/Button';
@@ -25,7 +29,6 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { BuyItem, SkeletonBuyItem } from './BuyItem';
 import { RcIconRightCC, RcIconSelectCC } from '@/assets/icons/common';
 
 import { TokenInfo } from './TokenInfo';
@@ -33,25 +36,27 @@ import { SmartWallets } from './SmartWallets';
 import { SameNameTokens } from './SameNameTokens';
 
 export type DialogProps = {
-  tradingTokenItem: CopyTradeTokenItem;
+  tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
+  showTabType?: TabType;
   onClose?: () => void;
 };
 
-enum TabType {
+export enum TabType {
   tokenInfo = 'tokenInfo',
   smartWallets = 'smartWallets',
   sameNameTokens = 'sameNameTokens',
 }
 
-export default function RecentlyBuyListDialog({
+export default function CopyTradingTokenDetail({
   tradingTokenItem,
+  showTabType = TabType.tokenInfo,
   onClose,
 }: RNViewProps & DialogProps) {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
 
   // Tab state management
-  const [activeTab, setActiveTab] = useState<TabType>(TabType.tokenInfo);
+  const [activeTab, setActiveTab] = useState<TabType>(showTabType);
 
   const tabBarData = React.useMemo(() => {
     return [
@@ -64,32 +69,23 @@ export default function RecentlyBuyListDialog({
     ];
   }, [t]);
 
-  const handleBuyPress = useMemoizedFn((item: CopyTradeTokenItem) => {
-    const chain = findChain({
-      serverId: item.chain,
-    });
-    onClose?.();
-    naviPush(RootNames.StackTransaction, {
-      screen: RootNames.MultiSwap,
-      params: {
-        chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-        tokenId: item?.id,
-        type: 'Buy',
-        isFromCopyTrading: true,
-      },
-    });
-  });
-
-  // Render skeleton items when loading
-  const renderSkeletonList = useMemoizedFn(() => {
-    return (
-      <View>
-        {Array.from({ length: 2 }).map((_, index) => (
-          <SkeletonBuyItem key={index} />
-        ))}
-      </View>
-    );
-  });
+  const handleBuyPress = useMemoizedFn(
+    (item: CopyTradeTokenItemV2 | TokenItem) => {
+      const chain = findChain({
+        serverId: item.chain,
+      });
+      onClose?.();
+      naviPush(RootNames.StackTransaction, {
+        screen: RootNames.MultiSwap,
+        params: {
+          chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+          tokenId: item?.id,
+          type: 'Buy',
+          isFromCopyTrading: true,
+        },
+      });
+    },
+  );
 
   const handleTwitterPress = useMemoizedFn(async () => {
     const symbol = getTokenSymbol(tradingTokenItem);
@@ -207,7 +203,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     height: '100%',
     // paddingHorizontal: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   headerContainer: {
     paddingHorizontal: 16,
@@ -236,8 +234,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     alignItems: 'center',
     gap: 8,
     alignSelf: 'flex-start',
-
-    padding: 6,
+    flex: 1,
   },
   tokenHeaderTwitterIcon: {
     width: 20,
@@ -338,7 +335,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 20,
     paddingTop: 12,
     height: 115,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   sectionHeaderLeft: {
     flexDirection: 'row',

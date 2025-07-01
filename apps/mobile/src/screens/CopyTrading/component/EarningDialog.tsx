@@ -19,10 +19,18 @@ import {
 } from '../../Home/utils/price';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { formatPrice } from '@/utils/number';
+import { formatPrice, formatUsdValue } from '@/utils/number';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import BigNumber from 'bignumber.js';
 import { formatPercentage } from './TokenListItem';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { TabType } from './CopyTradingTokenDetail';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useMemoizedFn } from 'ahooks';
 
 export type DialogProps = {
   itemData: (TokenItemEntity & { buy_amount: number; buy_price: number })[];
@@ -33,7 +41,7 @@ export type DialogProps = {
 
 const TokenEarningItem: React.FC<{
   item: TokenItemEntity & { buy_amount: number; buy_price: number };
-  handlePress: (chain: string, id: string) => void;
+  handlePress: (token: TokenItemEntity) => void;
 }> = ({ item, handlePress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const holdingValue = new BigNumber(item.amount).multipliedBy(item.price);
@@ -48,7 +56,7 @@ const TokenEarningItem: React.FC<{
   return (
     <TouchableOpacity
       style={styles.tokenItem}
-      onPress={() => handlePress(item.chain, item.id)}>
+      onPress={() => handlePress(item)}>
       <View style={styles.tokenLeft}>
         <AssetAvatar
           logo={item.logo_url}
@@ -66,7 +74,7 @@ const TokenEarningItem: React.FC<{
 
       <View style={styles.tokenRight}>
         <Text style={styles.holdingValue}>
-          {formatUsdValueKMB(holdingValue.toNumber())}
+          {formatUsdValue(holdingValue.toNumber(), 2, true)}
         </Text>
         <Text
           style={[
@@ -78,7 +86,7 @@ const TokenEarningItem: React.FC<{
             },
           ]}>
           {formatPercentage(profitPercentage.toNumber())}
-          {`(${formatUsdValueKMBWithSign(profit.toNumber())})`}
+          {`(${formatUsdValue(profit.toNumber(), 2, true)})`}
         </Text>
       </View>
     </TouchableOpacity>
@@ -94,6 +102,26 @@ export default function EarningDialog({
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const isPositive = (totalProfit || 0) >= 0;
+
+  const handleTokenPress = useMemoizedFn((token: TokenItemEntity) => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL,
+      tradingTokenItem: token,
+      showTabType: TabType.tokenInfo,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: false,
+        enablePanDownToClose: true,
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      },
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+    });
+  });
 
   const ListHeaderComponent = React.useMemo(
     () => (
@@ -128,7 +156,7 @@ export default function EarningDialog({
                       : colors2024['red-default'],
                   },
                 ]}>
-                {`(${formatUsdValueKMBWithSign(Math.abs(totalProfit))})`}
+                {`(${formatUsdValueKMBWithSign(totalProfit)})`}
               </Text>
             </View>
           </View>
@@ -156,12 +184,7 @@ export default function EarningDialog({
         keyExtractor={item => `${item.chain}_${item.id}`}
         ListHeaderComponent={ListHeaderComponent}
         renderItem={({ item }) => (
-          <TokenEarningItem
-            item={item}
-            handlePress={() => {
-              console.log('handlePress', item.chain, item.id);
-            }}
-          />
+          <TokenEarningItem item={item} handlePress={handleTokenPress} />
         )}
         contentContainerStyle={styles.flatListContent}
       />

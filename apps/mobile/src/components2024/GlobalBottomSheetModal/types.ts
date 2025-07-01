@@ -9,7 +9,7 @@ import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddr
 import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
 
 export enum MODAL_NAMES {
-  'RECENTLY_BUY_LIST' = 'RECENTLY_BUY_LIST',
+  'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
   'COPY_TRADING_EARNINGS' = 'COPY_TRADING_EARNINGS',
   'NOT_MATTER_ADDRESS_DIALOG' = 'NOT_MATTER_ADDRESS_DIALOG',
   'APPROVAL' = 'APPROVAL',

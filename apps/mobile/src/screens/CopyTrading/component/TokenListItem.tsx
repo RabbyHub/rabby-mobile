@@ -1,7 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useMemo } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  CopyTradeTokenItem,
+  CopyTradeTokenItemV2,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -11,6 +14,9 @@ import * as d3Shape from 'd3-shape';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
 import { Skeleton } from '@rneui/themed';
+import { useMemoizedFn } from 'ahooks';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { TokenMetaInfo } from './TokenMetaInfo';
 
 export const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -54,9 +60,9 @@ const TrendChartComponent = ({
     : colors2024['red-default'];
 
   return (
-    <View style={{ width: 100, height: 30, marginTop: -10, marginBottom: 10 }}>
+    <View style={{ width: 90, height: 30, marginTop: -10, marginBottom: 10 }}>
       <LineChart.Provider data={chartData}>
-        <LineChart height={50} width={100} shape={d3Shape.curveCatmullRom}>
+        <LineChart height={50} width={90} shape={d3Shape.curveCatmullRom}>
           <LineChart.Path showInactivePath={false} color={pathColor} width={1}>
             <LineChart.Gradient color={pathColor} />
           </LineChart.Path>
@@ -67,9 +73,9 @@ const TrendChartComponent = ({
 };
 
 interface TokenListItemProps {
-  item: CopyTradeTokenItem;
-  onBuyPress: (item: CopyTradeTokenItem) => void;
-  onPress: (item: CopyTradeTokenItem) => void;
+  item: CopyTradeTokenItemV2;
+  onBuyPress: (item: CopyTradeTokenItemV2) => void;
+  onPress: (item: CopyTradeTokenItemV2, isShowSmartWallets?: boolean) => void;
   showTipsDollarDialog: () => void;
 }
 
@@ -120,6 +126,10 @@ const TokenListItemComponent = ({
   const { t } = useTranslation();
   const isPositive = (item.price_24h_change || 0) >= 0;
 
+  const handlePressSmartWallets = useMemoizedFn(() => {
+    onPress(item, true);
+  });
+
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
       <View style={styles.topSection}>
@@ -127,10 +137,13 @@ const TokenListItemComponent = ({
           <View style={styles.tokenInfoContainer}>
             <AssetAvatar logo={item.logo_url} size={46} />
             <View style={styles.tokenInfo}>
-              <Text style={styles.tokenName}>{getTokenSymbol(item)}</Text>
-              <Text style={styles.fdvText}>
-                {`FDV ${item.fdv ? formatUsdValueKMB(item.fdv || 0) : '-'}`}
+              <Text style={styles.tokenName}>
+                {ellipsisOverflowedText(getTokenSymbol(item), 12)}
               </Text>
+              <TokenMetaInfo
+                tokenCreateAt={item.token_create_at}
+                fdv={item.fdv || undefined}
+              />
             </View>
           </View>
         </View>
@@ -155,21 +168,30 @@ const TokenListItemComponent = ({
           <View style={styles.triangleContainer}>
             <View style={styles.triangle} />
           </View>
-          <TouchableOpacity onPress={showTipsDollarDialog}>
-            <Image
-              source={require('@/assets2024/icons/home/IconDollar.png')}
-              style={styles.dollarIcon}
-            />
-            {/* <IconDollar width={20} height={20} style={styles.dollarIcon} /> */}
+          <TouchableOpacity
+            style={styles.dollarIconsContainer}
+            onPress={showTipsDollarDialog}>
+            {Array.from({
+              length: Math.min(item.buy_address_count || 0, 10),
+            }).map((_, index) => (
+              <View key={index}>
+                <Image
+                  source={require('@/assets2024/icons/home/IconDollar.png')}
+                  style={styles.dollarIcon}
+                />
+              </View>
+            ))}
           </TouchableOpacity>
-          <Text style={styles.buyText}>
-            Buy{'  '}
-            <Text style={styles.buyTextBold}>
-              {formatUsdValueKMB(item.buy_usd_value_24h || 0)}
+          <TouchableOpacity
+            style={styles.buyTextContainer}
+            onPress={handlePressSmartWallets}>
+            <Text style={styles.buyText}>
+              {t('page.copyTrading.smartWalletsBuying', {
+                len:
+                  item.buy_address_count > 10 ? '10+' : item.buy_address_count,
+              })}
             </Text>
-            {'  '}
-            in 24h
-          </Text>
+          </TouchableOpacity>
         </View>
         <TouchableOpacity
           style={styles.buyButton}
@@ -205,8 +227,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tokenInfo: {
     flex: 1,
+    gap: 4,
     justifyContent: 'center',
-    marginLeft: 12,
+    marginLeft: 8,
   },
   tokenName: {
     fontSize: 16,
@@ -215,31 +238,22 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
   },
-  fdvText: {
-    marginTop: 4,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-  },
   buyInfoContainer: {
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    overflow: 'hidden',
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    paddingLeft: 12,
+    padding: 8,
     borderRadius: 8,
   },
   dollarIcon: {
     width: 20,
     height: 20,
-    marginRight: 4,
+    marginRight: -10,
   },
   dollarSymbol: {
     fontSize: 8,
@@ -247,10 +261,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: 'white',
   },
   buyText: {
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: '500',
   },
   buyTextBold: {
@@ -277,7 +291,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   buyButton: {
     backgroundColor: colors2024['brand-default'],
     borderRadius: 6,
-    width: 66,
+    width: 56,
     height: 34,
     alignItems: 'center',
     justifyContent: 'center',
@@ -298,7 +312,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   bottomSection: {
     width: '100%',
     height: 34,
-    gap: 28,
+    gap: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -323,5 +337,16 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   changeTextPositive: {
     color: colors2024['red-default'],
+  },
+  dollarIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  buyTextContainer: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors2024['neutral-secondary'],
+    borderStyle: 'dashed',
+    paddingBottom: 1,
   },
 }));

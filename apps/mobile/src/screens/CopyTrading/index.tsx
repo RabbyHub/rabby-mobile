@@ -29,7 +29,10 @@ import {
 import { RefreshControl } from 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
-import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  CopyTradeTokenItem,
+  CopyTradeTokenItemV2,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, findChainByServerID } from '@/utils/chain';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import {
@@ -60,6 +63,7 @@ import {
   formatUsdValueKMBWithSign,
 } from '../Home/utils/price';
 import { useProfit } from './component/useProfit';
+import { TabType } from './component/CopyTradingTokenDetail';
 const DEFAULT_COUNT = 10;
 
 const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
@@ -99,7 +103,7 @@ export const CopyTradingScreen = () => {
   const { t } = useTranslation();
   const [chainIdList, setChainIdList] = useState<string[]>([]);
   const [selectedChainId, setSelectedChainId] = useState<string>('');
-  const [tokenList, setTokenList] = useState<CopyTradeTokenItem[]>([]);
+  const [tokenList, setTokenList] = useState<CopyTradeTokenItemV2[]>([]);
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const [filterRule, setFilterRule] = useState<FilterRuleEnum>(
     FilterRuleEnum['24hPrice'],
@@ -110,6 +114,7 @@ export const CopyTradingScreen = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentUpdateCount, setCurrentUpdateCount] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [listCursor, setListCursor] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
 
   const [isMenuVisible, setIsMenuVisible] = useState(false);
@@ -123,16 +128,19 @@ export const CopyTradingScreen = () => {
       {
         key: FilterRuleEnum['24hPrice'],
         title: t('page.copyTrading.filterRule.24HChange'),
+        orderKey: 'price_change',
         rule: '24H Change',
       },
       {
         key: FilterRuleEnum.smartMoney,
         title: t('page.copyTrading.filterRule.smartMoney'),
+        orderKey: 'buy_address_count',
         rule: 'Amount',
       },
       {
         key: FilterRuleEnum.tokenCreate,
         title: t('page.copyTrading.filterRule.tokenCreate'),
+        orderKey: 'token_create_at',
         rule: 'Time',
       },
     ];
@@ -158,7 +166,6 @@ export const CopyTradingScreen = () => {
       setTabLoading(true);
       const chainIdArr = await openapi.getCopyTradingChainList();
       setChainIdList(chainIdArr);
-      console.log('fetchChainList chainIdArr', chainIdArr);
       return chainIdArr;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
@@ -169,7 +176,12 @@ export const CopyTradingScreen = () => {
   });
 
   const fetchTokenList = useMemoizedFn(
-    async (chainId: string, startTime: number, isLoadMore = false) => {
+    async (
+      chainId: string,
+      orderBy: FilterTabItem['orderKey'],
+      cursor: string,
+      isLoadMore = false,
+    ) => {
       try {
         if (isLoadMore) {
           setLoadingMore(true);
@@ -177,15 +189,28 @@ export const CopyTradingScreen = () => {
           setListLoading(true);
         }
 
-        const { token_list } = await openapi.getCopyTradingTokenList({
-          chain_id: chainId,
-          limit: DEFAULT_COUNT,
-          start_time: startTime,
-        });
+        const { token_list, pagination } =
+          await openapi.getCopyTradingTokenListV2({
+            chain_id: chainId,
+            limit: DEFAULT_COUNT,
+            cursor,
+            order_by: orderBy,
+            order: 'desc',
+          });
+        setHasMore(pagination.has_next);
+        setListCursor(pagination.next_cursor);
 
-        // check if there is more data
-        const hasMoreData = token_list.length >= DEFAULT_COUNT;
-        setHasMore(hasMoreData);
+        if (isLoadMore) {
+          setTokenList(prev => {
+            const existingIds = new Set(prev.map(token => token.id));
+            const newTokens = token_list.filter(
+              token => !existingIds.has(token.id),
+            );
+            return [...prev, ...newTokens];
+          });
+        } else {
+          setTokenList(token_list);
+        }
 
         return token_list;
       } catch (e) {
@@ -210,15 +235,27 @@ export const CopyTradingScreen = () => {
     setIsMenuVisible(false);
   });
 
+  const orderKey = useMemo(() => {
+    const selectedRuleItem = filterTabList.find(
+      item => item.key === filterRule,
+    );
+    return selectedRuleItem?.orderKey ?? 'price_change';
+  }, [filterRule, filterTabList]);
+
   const handleSelectMenuItem = useMemoizedFn((selectedRule: FilterRuleEnum) => {
     if (filterRule !== selectedRule) {
       setFilterRule(selectedRule);
       // switch filter rule and refetch data
       if (selectedChainId) {
         setHasMore(true);
-        fetchTokenList(selectedChainId, 0).then(tokenArr => {
-          setTokenList(tokenArr);
-        });
+        const selectedRuleItem = filterTabList.find(
+          item => item.key === selectedRule,
+        );
+        fetchTokenList(
+          selectedChainId,
+          selectedRuleItem?.orderKey ?? 'price_change',
+          '',
+        );
       }
     }
     handleCloseMenu();
@@ -228,12 +265,12 @@ export const CopyTradingScreen = () => {
     setTabLoading(true);
     setListLoading(true);
     setHasMore(true);
+    setListCursor('');
     const chainIdArr = await fetchChainList();
 
     setChainIdList(chainIdArr);
     setSelectedChainId(chainIdArr[0]);
-    const tokenArr = await fetchTokenList(chainIdArr[0], 0);
-    setTokenList(tokenArr);
+    await fetchTokenList(chainIdArr[0], 'price_change', '');
   });
 
   const handleChainItemPress = useMemoizedFn(async (chainId: string) => {
@@ -242,7 +279,8 @@ export const CopyTradingScreen = () => {
     }
     setSelectedChainId(chainId);
     setHasMore(true);
-    const tokenArr = await fetchTokenList(chainId, 0);
+    setListCursor('');
+    const tokenArr = await fetchTokenList(chainId, 'price_change', '');
     setTokenList(tokenArr);
   });
 
@@ -261,19 +299,29 @@ export const CopyTradingScreen = () => {
     });
   });
 
-  const handleTokenItemPress = useMemoizedFn((item: CopyTradeTokenItem) => {
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.RECENTLY_BUY_LIST,
-      tradingTokenItem: item,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: false,
-        enablePanDownToClose: true,
-      },
-      onClose: () => {
-        removeGlobalBottomSheetModal2024(modalId);
-      },
-    });
-  });
+  const handleTokenItemPress = useMemoizedFn(
+    (item: CopyTradeTokenItemV2, isShowSmartWallets = false) => {
+      const modalId = createGlobalBottomSheetModal2024({
+        name: MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL,
+        tradingTokenItem: item,
+        showTabType: isShowSmartWallets
+          ? TabType.smartWallets
+          : TabType.tokenInfo,
+        bottomSheetModalProps: {
+          enableContentPanningGesture: false,
+          enablePanDownToClose: true,
+          handleStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+          },
+        },
+        onClose: () => {
+          removeGlobalBottomSheetModal2024(modalId);
+        },
+      });
+    },
+  );
 
   const handleShowEarningDialog = useMemoizedFn(() => {
     const modalId = createGlobalBottomSheetModal2024({
@@ -331,26 +379,7 @@ export const CopyTradingScreen = () => {
       return;
     }
 
-    // get the last item's time_at as the start_time of the next page
-    const lastItem = tokenList[tokenList.length - 1];
-    const nextStartTime = lastItem.create_at;
-
-    const moreTokens = await fetchTokenList(
-      selectedChainId,
-      nextStartTime,
-      true,
-    );
-
-    if (moreTokens.length > 0) {
-      // deduplication, avoid adding the same token
-      setTokenList(prev => {
-        const existingIds = new Set(prev.map(token => token.id));
-        const newTokens = moreTokens.filter(
-          token => !existingIds.has(token.id),
-        );
-        return [...prev, ...newTokens];
-      });
-    }
+    await fetchTokenList(selectedChainId, orderKey, listCursor, true);
   });
 
   const checkCountUpdate = useMemoizedFn(
@@ -530,9 +559,13 @@ export const CopyTradingScreen = () => {
                 onRefresh={async () => {
                   setRefreshing(true);
                   setHasMore(true);
-                  const tokenArr = await fetchTokenList(selectedChainId, 0);
+                  setListCursor('');
+                  const tokenArr = await fetchTokenList(
+                    selectedChainId,
+                    orderKey,
+                    '',
+                  );
                   checkCountUpdate(tokenArr, tokenList);
-                  setTokenList(tokenArr);
                   setRefreshing(false);
                 }}
                 title={t('page.copyTrading.refreshTitle')}

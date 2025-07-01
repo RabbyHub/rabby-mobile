@@ -34,7 +34,8 @@ export const useProfit = () => {
         0,
       ),
     });
-    CopyTradingBuyItemEntity.deleteExpiredBuyItem();
+    // todo fix may be delete all when no load token item assets
+    // CopyTradingBuyItemEntity.deleteExpiredBuyItem();
     setLoading(false);
   });
 

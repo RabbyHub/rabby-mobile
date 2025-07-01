@@ -11,7 +11,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import RcIconArrowDownCC from '@/assets2024/icons/copyTrading/IconDownPolygon.svg';
 import RcIconSelectedCC from '@/assets2024/icons/copyTrading/IconSelected.svg';
-
 export enum FilterRuleEnum {
   '24hPrice' = '24hPrice',
   'smartMoney' = 'smart money',
@@ -22,6 +21,7 @@ export interface FilterTabItem {
   key: FilterRuleEnum;
   title: string;
   rule: string;
+  orderKey: 'price_change' | 'buy_address_count' | 'token_create_at';
 }
 
 interface FilterDropdownMenuProps {
@@ -56,7 +56,7 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
       {/* Filter Button */}
       <View style={styles.filterContainer}>
         <TouchableOpacity style={styles.filterButton} onPress={onOpen}>
-          <Text style={styles.filterText}>{selectedFilterRule?.rule}</Text>
+          <Text style={styles.filterText}>{selectedFilterRule?.title}</Text>
           <RcIconArrowDownCC
             width={8}
             color={colors2024['brand-default']}

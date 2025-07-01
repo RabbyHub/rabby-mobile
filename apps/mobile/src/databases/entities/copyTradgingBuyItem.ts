@@ -164,15 +164,15 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
           (record: CopyTradingBuyItemEntity) => record._db_id,
         );
         try {
-          await repo
-            .createQueryBuilder()
-            .delete()
-            .from(CopyTradingBuyItemEntity)
-            .where('_db_id IN (:...invalidIds)', { invalidIds })
-            .execute();
+          // await repo
+          //   .createQueryBuilder()
+          //   .delete()
+          //   .from(CopyTradingBuyItemEntity)
+          //   .where('_db_id IN (:...invalidIds)', { invalidIds })
+          //   .execute();
 
-          console.log(
-            `Successfully deleted ${invalidIds.length} invalid CopyTradingBuyItem records`,
+          console.warn(
+            `will deleted ${invalidIds.length} invalid CopyTradingBuyItem records`,
           );
         } catch (error) {
           console.error(

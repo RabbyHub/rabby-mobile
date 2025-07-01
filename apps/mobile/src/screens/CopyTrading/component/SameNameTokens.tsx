@@ -1,140 +1,245 @@
-import React from 'react';
-import { Text, View, FlatList, TouchableOpacity } from 'react-native';
+/* eslint-disable react-native/no-inline-styles */
+import React, { useState, useEffect } from 'react';
+import { Text, View, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
+import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
+import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import { createGetStyles2024 } from '@/utils/styles';
-import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  CopyTradeSameToken,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components';
+import { formatUsdValueKMB } from '@/screens/Home/utils/price';
+import { openapi } from '@/core/request';
+import { useMemoizedFn } from 'ahooks';
+import { useTranslation } from 'react-i18next';
+import { Skeleton } from '@rneui/themed';
 import { formatPrice } from '@/utils/number';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { TabType } from './CopyTradingTokenDetail';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { toast } from '@/components2024/Toast';
 
 interface SameNameTokensProps {
-  tradingTokenItem: CopyTradeTokenItem;
+  tradingTokenItem: TokenItem;
+  onTokenPress?: (token: any) => void;
 }
 
-// 模拟同名token数据
-const mockSameTokens = [
-  {
-    id: '1',
-    symbol: 'DOGE',
-    name: 'Dogecoin',
-    chain: 'eth',
-    price: 0.21,
-    change24h: 4.4,
-    logo_url: '',
-    isOriginal: true,
-  },
-  {
-    id: '2',
-    symbol: 'DOGE',
-    name: 'Doge Token',
-    chain: 'bsc',
-    price: 0.18,
-    change24h: -2.1,
-    logo_url: '',
-    isOriginal: false,
-  },
-  {
-    id: '3',
-    symbol: 'DOGE',
-    name: 'Doge Inu',
-    chain: 'polygon',
-    price: 0.0034,
-    change24h: 12.7,
-    logo_url: '',
-    isOriginal: false,
-  },
-];
+export const SkeletonSameNameToken = () => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+
+  return (
+    <View style={styles.tokenItem}>
+      <View style={styles.tokenLeft}>
+        <Skeleton circle width={46} height={46} />
+        <View style={styles.tokenInfo}>
+          <View style={styles.tokenNameRow}>
+            <Skeleton width={60} height={20} style={{ borderRadius: 4 }} />
+          </View>
+          <Skeleton
+            width={40}
+            height={16}
+            style={{ borderRadius: 4, marginTop: 4 }}
+          />
+        </View>
+      </View>
+      <View style={styles.tokenRight}>
+        <Skeleton width={80} height={20} style={{ borderRadius: 4 }} />
+      </View>
+    </View>
+  );
+};
 
 export const SameNameTokens: React.FC<SameNameTokensProps> = ({
   tradingTokenItem,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { colors2024, isLight, styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
+  const [sameNameTokens, setSameNameTokens] = useState<CopyTradeSameToken[]>(
+    [],
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const renderTokenItem = ({ item }: { item: (typeof mockSameTokens)[0] }) => (
-    <TouchableOpacity style={styles.tokenItem}>
+  const fetchSameNameTokens = useMemoizedFn(async () => {
+    if (!tradingTokenItem?.chain || !tradingTokenItem?.id) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const data = await openapi.getCopyTradingSameName({
+        chain_id: tradingTokenItem.chain,
+        token_id: tradingTokenItem.id,
+      });
+
+      setSameNameTokens(data);
+    } catch (e) {
+      console.error('Failed to fetch same name tokens:', e);
+      setSameNameTokens([]);
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setIsLoading(false);
+    }
+  });
+
+  useEffect(() => {
+    fetchSameNameTokens();
+  }, [fetchSameNameTokens]);
+
+  const handleTokenPress = useMemoizedFn((token: CopyTradeSameToken) => {
+    const modalId = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL,
+      tradingTokenItem: token,
+      showTabType: TabType.tokenInfo,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: false,
+        enablePanDownToClose: true,
+        handleStyle: {
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
+        },
+      },
+      onClose: () => {
+        removeGlobalBottomSheetModal2024(modalId);
+      },
+    });
+  });
+
+  const renderTokenItem = ({ item }: { item: CopyTradeSameToken }) => (
+    <TouchableOpacity
+      style={StyleSheet.flatten([
+        styles.tokenItem,
+        item.id === tradingTokenItem.id && styles.currentTokenItem,
+      ])}
+      onPress={() => handleTokenPress(item)}>
       <View style={styles.tokenLeft}>
         <AssetAvatar
           logo={item.logo_url}
-          size={32}
+          size={46}
           chain={item.chain}
-          chainSize={12}
+          chainSize={16}
         />
         <View style={styles.tokenInfo}>
           <View style={styles.tokenNameRow}>
             <Text style={styles.tokenSymbol}>{item.symbol}</Text>
-            {item.isOriginal && (
-              <View style={styles.originalBadge}>
-                <Text style={styles.originalText}>Original</Text>
+            {item.id === tradingTokenItem.id && (
+              <View style={styles.currentTokenBadge}>
+                <Text style={styles.currentTokenText}>
+                  {t('page.copyTrading.currentToken')}
+                </Text>
               </View>
             )}
           </View>
-          <Text style={styles.tokenName}>{item.name}</Text>
+          <Text style={styles.tokenPrice}>${formatPrice(item.price || 0)}</Text>
         </View>
       </View>
 
       <View style={styles.tokenRight}>
-        <Text style={styles.tokenPrice}>${formatPrice(item.price)}</Text>
-        <Text
-          style={[
-            styles.tokenChange,
-            {
-              color:
-                item.change24h >= 0
-                  ? colors2024['green-default']
-                  : colors2024['red-default'],
-            },
-          ]}>
-          {item.change24h >= 0 ? '+' : ''}
-          {item.change24h.toFixed(1)}%
+        <Text style={styles.liquidityText}>
+          {formatUsdValueKMB(item.liquidity || 0)}
         </Text>
       </View>
     </TouchableOpacity>
   );
 
+  const renderEmptyComponent = () => (
+    <View style={styles.emptyContainer}>
+      <Image
+        source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+        style={styles.image}
+      />
+      <Text style={styles.emptyText}>
+        {t('page.copyTrading.noOtherTokensWithSameName')}
+      </Text>
+    </View>
+  );
+
+  const renderLoadingComponent = () => (
+    <View style={styles.listContainer}>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <SkeletonSameNameToken key={index} />
+      ))}
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Same Name Tokens</Text>
-      <Text style={styles.subtitle}>
-        Other tokens with the same symbol "{tradingTokenItem.symbol}"
-      </Text>
-      <FlatList
-        data={mockSameTokens}
-        keyExtractor={item => `${item.chain}-${item.id}`}
-        renderItem={renderTokenItem}
-        showsVerticalScrollIndicator={false}
-      />
+      <View style={styles.header}>
+        <Text style={styles.title}>{t('page.copyTrading.token')}</Text>
+        <Text style={styles.liquidityTitle}>
+          {t('page.copyTrading.Liquidity')}
+        </Text>
+      </View>
+
+      {isLoading ? (
+        renderLoadingComponent()
+      ) : (
+        <BottomSheetFlatList
+          data={sameNameTokens}
+          keyExtractor={item => `${item.chain}-${item.id}`}
+          renderItem={renderTokenItem}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyComponent}
+          contentContainerStyle={styles.listContainer}
+        />
+      )}
     </View>
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
+    borderRadius: 16,
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    paddingTop: 16,
   },
-  title: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 4,
     marginBottom: 8,
   },
-  subtitle: {
+  image: {
+    width: 163,
+    height: 126,
+    marginBottom: 16,
+  },
+  title: {
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '400',
+    fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    marginBottom: 16,
+  },
+  liquidityTitle: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  listContainer: {
+    // paddingHorizontal: 16,
   },
   tokenItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors2024['neutral-line'],
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    borderRadius: 16,
+    marginBottom: 8,
   },
   tokenLeft: {
     flexDirection: 'row',
@@ -144,6 +249,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   tokenInfo: {
     flex: 1,
+    gap: 4,
   },
   tokenNameRow: {
     flexDirection: 'row',
@@ -153,46 +259,55 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   tokenSymbol: {
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
-  originalBadge: {
+  currentTokenBadge: {
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
   },
-  originalText: {
+  currentTokenText: {
     fontSize: 10,
     lineHeight: 12,
     fontWeight: '600',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
   },
-  tokenName: {
+  tokenPrice: {
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '400',
+    fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    marginTop: 2,
   },
   tokenRight: {
     alignItems: 'flex-end',
   },
-  tokenPrice: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '600',
+  liquidityText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
-  tokenChange: {
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
     fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    marginTop: 2,
+    textAlign: 'center',
+  },
+  currentTokenItem: {
+    backgroundColor: colors2024['brand-light-1'],
+    borderColor: colors2024['brand-disable'],
+    borderWidth: 1,
   },
 }));
