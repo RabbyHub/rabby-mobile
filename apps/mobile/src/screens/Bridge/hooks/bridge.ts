@@ -1,9 +1,14 @@
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { sendRequest } from '@/core/apis/provider';
-import { bridgeService, preferenceService } from '@/core/services';
+import {
+  bridgeService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { BridgeRecord } from '@/core/services/bridge';
 import { Account } from '@/core/services/preference';
+import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 import { approveToken } from '@/screens/Swap/hooks/swap';
 import { findChain } from '@/utils/chain';
 import i18n from '@/utils/i18n';
@@ -40,6 +45,7 @@ export const bridgeToken = async (
     account: Account;
   },
   $ctx?: any,
+  addBridgeTxHistoryObj?: Omit<BridgeTxHistoryItem, 'hash'>,
 ) => {
   if (!account) {
     throw new Error(i18n.t('background.error.noCurrentAccount'));
@@ -118,7 +124,14 @@ export const bridgeToken = async (
       },
       session: INTERNAL_REQUEST_SESSION,
       account,
-    }).then(() => {
+    }).then(res => {
+      const hash = res as string;
+      if (addBridgeTxHistoryObj) {
+        transactionHistoryService.addBridgeTxHistory({
+          ...addBridgeTxHistoryObj,
+          hash,
+        });
+      }
       navigationRef.dispatch(
         StackActions.replace(RootNames.StackRoot, {
           screen: RootNames.Home,

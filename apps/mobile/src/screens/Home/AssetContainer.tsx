@@ -22,9 +22,6 @@ import {
   AssestAllHeader,
   AsssetKey,
 } from './components/AssetRenderItems/SectionHeaders';
-import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import throttle from 'lodash/throttle';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -95,9 +92,6 @@ export const AssetContainer: React.FC<Props> = ({
     loadingToken,
     loadingNft,
     loadingPortfolio,
-    updateTokens,
-    updatePortfolio,
-    reloadNftList,
     chainsInfo,
   } = useQueryProjects(currentAccount?.address);
 
@@ -121,53 +115,6 @@ export const AssetContainer: React.FC<Props> = ({
     };
   }, [_rawNftList, _rawPortfolios, _rawTokens, selectChainItem?.chain]);
   const sortTokens = useSortToken(tokens || [], currentAccount);
-
-  const throttleUpdateTokens = useCallback(
-    () => throttle(updateTokens, 4000),
-    [updateTokens],
-  );
-  const throttleUpdatePortfolio = useCallback(
-    () => throttle(updatePortfolio, 4000),
-    [updatePortfolio],
-  );
-  const throttleReloadNftList = useCallback(
-    () => throttle(reloadNftList, 4000),
-    [reloadNftList],
-  );
-
-  useAppOrmSyncEvents({
-    taskFor: ['token', 'nfts', 'protocols'],
-    onRemoteDataUpserted: useCallback(
-      ctx => {
-        if (
-          !currentAccount?.address ||
-          !isSameAddress(ctx.owner_addr, currentAccount?.address) ||
-          !ctx.success
-        ) {
-          return;
-        }
-        switch (ctx.taskFor) {
-          case 'token':
-            throttleUpdateTokens();
-            break;
-          case 'nfts':
-            throttleReloadNftList();
-            break;
-          case 'protocols':
-            throttleUpdatePortfolio();
-            break;
-          default:
-            break;
-        }
-      },
-      [
-        currentAccount?.address,
-        throttleReloadNftList,
-        throttleUpdatePortfolio,
-        throttleUpdateTokens,
-      ],
-    ),
-  });
 
   const foldNftList: ActionItem[] = useMemo(
     () =>
@@ -455,10 +402,13 @@ export const AssetContainer: React.FC<Props> = ({
     return 'token';
   }, [firstRowType]);
 
-  const { balance } = useCurrentBalance(currentAccount?.address, {
-    update: true,
-    noNeedBalance: false,
-  });
+  const { balance, balanceLoading } = useCurrentBalance(
+    currentAccount?.address,
+    {
+      update: true,
+      noNeedBalance: false,
+    },
+  );
   const {
     result: curveData,
     isLoading: isLoadingCurve,
@@ -554,7 +504,7 @@ export const AssetContainer: React.FC<Props> = ({
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
           curveData={curveData}
-          isLoadingCurve={isLoadingCurve}
+          isLoadingCurve={isLoadingCurve || (balanceLoading && !balance)}
           isDisConnnect={isDisConnnect}
           onRefresh={() => handleRefresh(true)}
         />
@@ -571,6 +521,8 @@ export const AssetContainer: React.FC<Props> = ({
       </View>
     );
   }, [
+    balance,
+    balanceLoading,
     chainsInfo.chainLength,
     currentAccount,
     currentSection,

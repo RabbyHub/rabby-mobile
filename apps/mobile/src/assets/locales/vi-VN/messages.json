@@ -642,7 +642,12 @@
       }
     },
     "sendNFT": {
-      "sendButton": "Gửi"
+      "sendButton": "Gửi",
+      "Chain": "Chuỗi",
+      "SendAmount": "Gửi số tiền",
+      "Contract": "Hợp đồng",
+      "Collection": "Bộ sưu tập",
+      "NFT": "NFT"
     },
     "receive": {
       "title": "Nhận {{token}} trên {{chain}}",

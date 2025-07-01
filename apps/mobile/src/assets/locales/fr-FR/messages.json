@@ -599,7 +599,12 @@
       "ledgerConfirm": "Confirmer"
     },
     "sendNFT": {
-      "sendButton": "Envoyer"
+      "sendButton": "Envoyer",
+      "Chain": "Chaîne",
+      "Collection": "Collection",
+      "SendAmount": "Envoyer le montant",
+      "NFT": "NFT",
+      "Contract": "Contrat"
     },
     "sendTokenComponents": {
       "GasReserved": "Réservé <1>0</1> {{ tokenName }} pour les frais de gaz"

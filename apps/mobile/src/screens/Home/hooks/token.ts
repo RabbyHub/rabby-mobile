@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { AbstractPortfolioToken } from '../types';
 import { useSafeState } from '@/hooks/useSafeState';
 import { findChain } from '@/utils/chain';
@@ -17,6 +17,8 @@ import { produce } from '@/core/utils/produce';
 import { syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { singleTokenNounceAtom } from './refresh';
+import { debounce } from 'lodash';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 
 const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -151,7 +153,6 @@ export const useTokens = (
             });
 
             _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
-
             setMainnetTokens(filterDisplayToken(_tokens));
             setLoading(false);
           }
@@ -181,6 +182,78 @@ export const useTokens = (
     },
     [setLoading, setMainnetTokens, userAddr],
   );
+
+  const batchLocalData = useCallback(async () => {
+    if (!userAddr) {
+      return;
+    }
+    try {
+      const currentAbort = new AbortController();
+      abortProcess.current = currentAbort;
+      let _data = produce(walletProject, draft => {
+        draft.netWorth = 0;
+        draft._netWorth = '$0';
+        draft._netWorthChange = '-';
+        draft.netWorthChange = 0;
+        draft._netWorthChangePercent = '';
+        draft._portfolioDict = {};
+        draft._portfolios = [];
+        draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
+      });
+      let _tokens: AbstractPortfolioToken[] = [];
+
+      const cachedTokens = await TokenItemEntity.batchQueryTokens(userAddr);
+      const tokenSettings =
+        (await preferenceService.getUserTokenSettings()) || {};
+      if (cachedTokens.length) {
+        const chainTokens = cachedTokens.reduce((m, n) => {
+          m[n.chain] = m[n.chain] || [];
+          m[n.chain].push(n);
+          return m;
+        }, {} as Record<string, TokenItem[]>);
+        _data = produce(_data, draft => {
+          setWalletTokens(draft, chainTokens);
+        });
+        _tokens = tagTokenList(sortWalletTokens(_data), tokenSettings);
+
+        setMainnetTokens(filterDisplayToken(_tokens));
+      }
+    } catch (error) {
+      console.error('token batchLocalData error', error);
+    }
+  }, [setMainnetTokens, userAddr]);
+
+  const debounceUpdateTokens = useMemo(
+    () => debounce(batchLocalData, 2000),
+    [batchLocalData],
+  );
+
+  useAppOrmSyncEvents({
+    taskFor: ['token'],
+    onRemoteDataUpserted: useCallback(
+      ctx => {
+        if (
+          !userAddr ||
+          !isSameAddress(ctx.owner_addr, userAddr) ||
+          !ctx.success ||
+          isLoading
+        ) {
+          return;
+        }
+        const currentUpdateCount =
+          ctx.syncDetails.batchSize * ctx.syncDetails.round +
+          ctx.syncDetails.count;
+
+        if (
+          currentUpdateCount >= ctx.syncDetails.total ||
+          currentUpdateCount > (mainnetTokens?.length || 0)
+        ) {
+          debounceUpdateTokens();
+        }
+      },
+      [userAddr, isLoading, mainnetTokens?.length, debounceUpdateTokens],
+    ),
+  });
 
   const refreshTagToken = useCallback(async () => {
     const tokenSettings =

@@ -117,11 +117,18 @@ export default function MixedFlatChainList({
   }, [matteredList, unmatteredList]);
 
   useEffect(() => {
-    needAllAddresses &&
-      getCacheTop10Assets({
-        disableNFT: true,
-        disableDefi: true,
-      });
+    let id;
+    if (needAllAddresses) {
+      id = setTimeout(() => {
+        getCacheTop10Assets({
+          disableNFT: true,
+          disableDefi: true,
+        });
+      }, 200);
+    }
+    return () => {
+      id && clearTimeout(id);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [needAllAddresses]);
 

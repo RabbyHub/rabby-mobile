@@ -90,7 +90,7 @@ export function useNFTDetailSheetModalOnHistory({
                     params: {
                       collectionName,
                       nftItem: nftToken as any,
-                      account,
+                      fromAccount: account,
                     },
                   });
                 }}

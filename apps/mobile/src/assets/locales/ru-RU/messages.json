@@ -639,7 +639,12 @@
       }
     },
     "sendNFT": {
-      "sendButton": "Отправить"
+      "sendButton": "Отправить",
+      "Chain": "Цепь",
+      "SendAmount": "Отправить сумму",
+      "Contract": "Контракт",
+      "Collection": "Сборка",
+      "NFT": "NFT"
     },
     "sendTokenComponents": {
       "GasReserved": "Зарезервировано <1>0</1> {{ tokenName }} для оплаты комиссий за газ"

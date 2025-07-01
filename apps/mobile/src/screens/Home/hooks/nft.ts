@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DisplayNftItem } from '../types';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
@@ -8,6 +8,9 @@ import { syncNFTs } from '@/databases/hooks/assets';
 import { singleNFTNounceAtom } from './refresh';
 import { useAtom } from 'jotai';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
+import { debounce } from 'lodash';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 
 export const tagNfts = (
   nfts: NFTItem[],
@@ -63,11 +66,56 @@ export const useQueryNft = (addr?: string, visible = true) => {
     [addr, setList],
   );
 
+  const batchLocalData = useCallback(async () => {
+    if (!addr) {
+      return;
+    }
+    try {
+      const cacheNfts = await NFTItemEntity.batchQueryNFTs(addr);
+      const tokenSetting = await preferenceService.getUserTokenSettings();
+      setList(tagNfts(cacheNfts, tokenSetting));
+    } catch (e) {
+      console.error('nft batchLocalData error', e);
+    }
+  }, [addr, setList]);
+
   const refreshTagNft = useCallback(async () => {
     const tokenSettings =
       (await preferenceService.getUserTokenSettings()) || {};
     setList(pre => tagNfts(pre || [], tokenSettings));
   }, [setList]);
+
+  const debounceReloadNftList = useMemo(
+    () => debounce(batchLocalData, 2000),
+    [batchLocalData],
+  );
+
+  useAppOrmSyncEvents({
+    taskFor: ['nfts'],
+    onRemoteDataUpserted: useCallback(
+      ctx => {
+        if (
+          !addr ||
+          !isSameAddress(ctx.owner_addr, addr) ||
+          !ctx.success ||
+          isLoading
+        ) {
+          return;
+        }
+        const currentUpdateCount =
+          ctx.syncDetails.batchSize * ctx.syncDetails.round +
+          ctx.syncDetails.count;
+
+        if (
+          currentUpdateCount >= ctx.syncDetails.total ||
+          currentUpdateCount > (list?.length || 0)
+        ) {
+          debounceReloadNftList();
+        }
+      },
+      [addr, isLoading, list?.length, debounceReloadNftList],
+    ),
+  });
 
   useEffect(() => {
     if (singleNFTNounce > 0) {

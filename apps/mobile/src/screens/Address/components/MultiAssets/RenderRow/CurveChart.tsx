@@ -107,7 +107,7 @@ function Chart({
       <View style={styles.chartContainer}>
         <LineChart.Provider data={data.list}>
           <ChartHeader
-            netWorth={data.netWorthWithDot}
+            netWorth={data.netWorth}
             change={data.change}
             changePercent={data.changePercent}
             isLoss={data.isLoss}
@@ -275,7 +275,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: ScreenWidth - 32,
   },
   netWorth: {
-    fontSize: 36,
+    fontSize: 42,
     lineHeight: 42,
     textAlign: 'center',
     fontWeight: '900',

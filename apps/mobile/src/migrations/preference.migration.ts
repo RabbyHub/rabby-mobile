@@ -11,7 +11,7 @@ export const preferenceStoreMigration = makeStoreMigration({
       ? false
       : ctx => ctx.semverModule.gte(ctx.appVersion, '0.5.4'),
     migrator: ctx => {
-      const preferenceData = ctx.appStorage.getItem('preference');
+      const preferenceData = ctx.appStorage.getItem(APP_STORE_NAMES.preference);
       console.debug(`${ctx.loggerPrefix} preferenceData`, preferenceData);
     },
   },

@@ -1,5 +1,6 @@
 import { WALLET_ICON, WALLET_NAME } from './constant';
-import { domReadyCall } from './util';
+import { setupMetamaskMode } from './metamaskMode';
+import { compareVersions, domReadyCall } from './util';
 
 type Rule = {
   matches: string[];
@@ -24,6 +25,17 @@ const hackRainbowkit = () => {
     $textEl.innerHTML = WALLET_NAME;
   }
   $metamaskBtn?.setAttribute('rabby-injected', 'true');
+};
+
+const hackRainbowkitMetamaskMode = () => {
+  try {
+    const rainbowkitVersion = window.localStorage.getItem('rk-version');
+    if (rainbowkitVersion && compareVersions(rainbowkitVersion, '0.2.8') >= 0) {
+      setupMetamaskMode();
+    }
+  } catch (e) {
+    console.error(e);
+  }
 };
 
 const rules: Rule[] = [
@@ -122,5 +134,7 @@ export const startCheckRules = () => {
         subtree: true,
       });
     }
+
+    hackRainbowkitMetamaskMode();
   });
 };
