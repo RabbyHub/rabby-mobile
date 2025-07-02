@@ -5,6 +5,7 @@ import {
   View,
   TouchableOpacity,
   Text,
+  StyleSheet,
 } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -42,6 +43,11 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
   onSelectItem,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const filterButtonRef = React.useRef<View>(null);
+  const [menuPosition, setMenuPosition] = React.useState({
+    top: 105,
+    right: 16,
+  });
 
   const selectedFilterRule = filterTabList.find(
     item => item.key === selectedRule,
@@ -51,10 +57,34 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
     onSelectItem(rule);
   });
 
+  const measureButtonAndUpdateMenuPosition = React.useCallback(() => {
+    if (filterButtonRef.current) {
+      filterButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
+        const menuTop = pageY + 16;
+
+        setMenuPosition({
+          top: menuTop,
+          right: 16,
+        });
+      });
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (isVisible) {
+      setTimeout(() => {
+        measureButtonAndUpdateMenuPosition();
+      }, 50);
+    }
+  }, [isVisible, measureButtonAndUpdateMenuPosition]);
+
   return (
     <>
       {/* Filter Button */}
-      <View style={styles.filterContainer}>
+      <View
+        ref={filterButtonRef}
+        style={styles.filterContainer}
+        onLayout={measureButtonAndUpdateMenuPosition}>
         <TouchableOpacity style={styles.filterButton} onPress={onOpen}>
           <Text style={styles.filterText}>{selectedFilterRule?.title}</Text>
           <RcIconArrowDownCC
@@ -73,7 +103,14 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
         onRequestClose={onClose}>
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={styles.menuOverlay}>
-            <View style={styles.menuContainer}>
+            <View
+              style={StyleSheet.flatten([
+                styles.menuContainer,
+                {
+                  top: menuPosition.top,
+                  right: menuPosition.right,
+                },
+              ])}>
               {filterTabList.map(item => (
                 <TouchableOpacity
                   key={item.key}
@@ -141,8 +178,6 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   menuContainer: {
     position: 'absolute',
-    top: 105, // headerContainer height 56 + marginTop 44 + 5 = 105
-    right: 16,
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 12,
     paddingVertical: 8,
