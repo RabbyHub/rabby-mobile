@@ -44,7 +44,9 @@ const TokenEarningItem: React.FC<{
   handlePress: (token: TokenItemEntity) => void;
 }> = ({ item, handlePress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const holdingValue = new BigNumber(item.amount).multipliedBy(item.price);
+  const holdingValue = new BigNumber(
+    Math.min(item.amount, item.buy_amount),
+  ).multipliedBy(item.price);
   const costValue = new BigNumber(item.buy_amount).multipliedBy(item.buy_price);
   const profit = holdingValue.minus(costValue);
   const profitPercentage = costValue.isGreaterThan(0)
