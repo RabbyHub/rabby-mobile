@@ -965,7 +965,7 @@
       "filterRule": {
         "24HChange": "24H Change",
         "smartMoney": "Smart Money amount",
-        "tokenCreate": "Token Crete time"
+        "tokenCreate": "Token Create time"
       },
       "bought": "Bought",
       "earned": "Earned",
