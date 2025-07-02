@@ -273,8 +273,6 @@ export const TokenDetailScreen = () => {
     },
   );
 
-  console.log('tokenEntityList', tokenEntityList);
-
   const finalAccount =
     account || accounts[0] || preferenceService.getFallbackAccount();
 
