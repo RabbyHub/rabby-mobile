@@ -3,6 +3,9 @@ import { Account } from '@/core/services/preference';
 import { t } from 'i18next';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from './number';
+import { useEffect } from 'react';
+import { isSelfhostRegPkg } from '@/constant/env';
+import { toast } from '@/components/Toast';
 
 export type RetryUpdateType = 'nonce' | 'gasPrice' | 'origin' | false;
 
@@ -195,4 +198,51 @@ export const getTxFailedResult = (
   }
 
   return defaultHint;
+};
+
+export const useDebugToastErrorTxRetryInfo = ({
+  description,
+  isFailedTx,
+  tx,
+  account,
+}: {
+  description: string;
+  isFailedTx: boolean;
+  tx: {
+    chainId?: number;
+    from?: string;
+    nonce?: string;
+    gasPrice?: string;
+    maxFeePerGas?: string;
+  };
+  account?: Account;
+}) => {
+  useEffect(() => {
+    if (
+      isSelfhostRegPkg &&
+      description &&
+      isFailedTx &&
+      tx.chainId &&
+      tx.from &&
+      tx.nonce
+    ) {
+      toast.info(
+        `
+                origin error: ${description}
+                nonce: ${tx.nonce}
+                gasPrice: ${tx.gasPrice || tx.maxFeePerGas}
+                `,
+        { duration: 3000 },
+      );
+    }
+  }, [
+    account,
+    description,
+    isFailedTx,
+    tx.chainId,
+    tx.from,
+    tx.gasPrice,
+    tx.maxFeePerGas,
+    tx.nonce,
+  ]);
 };

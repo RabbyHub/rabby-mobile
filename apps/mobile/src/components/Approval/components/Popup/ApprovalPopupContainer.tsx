@@ -28,7 +28,7 @@ import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useApprovalPopup } from '@/hooks/useApprovalPopup';
 import useDebounce from 'react-use/lib/useDebounce';
 import { RetryUpdateType } from '@/utils/errorTxRetry';
-import TxFailedSVG from '@/assets2024/icons/common/tip.svg';
+import TxFailedSVG from '@/assets2024/icons/common/failed-retry.svg';
 import { createGetStyles2024 } from '@/utils/styles';
 
 const getStyles = createGetStyles2024(() => ({
@@ -64,6 +64,11 @@ const getStyles = createGetStyles2024(() => ({
     height: 20,
     marginRight: 6,
   },
+  failedInfoIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
+  },
   descriptionText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
@@ -74,8 +79,8 @@ const getStyles = createGetStyles2024(() => ({
   },
   footer: {},
   description: {
-    paddingTop: 8,
-    paddingBottom: 32,
+    paddingTop: 10,
+    paddingBottom: 30,
   },
   noDescription: {
     height: 20,
@@ -212,12 +217,13 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
     [snapToIndexPopup, hdType, status, description],
   );
   const isHD = hdType === 'ledger';
+  const isFailedOrRejected = status === 'FAILED' || status === 'REJECTED';
   return (
     <View style={StyleSheet.flatten([styles.wrapper, style])}>
       {SendSVG ? (
         <View style={styles.mainContainer}>
           {BrandIcon && (
-            <View style={styles.brandIcon}>
+            <View style={[styles.brandIcon]}>
               <BrandIcon width={'100%'} height={'100%'} />
             </View>
           )}
@@ -229,7 +235,14 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
           styles.titleWrapper,
           styles.hdTitleWrapper,
         ])}>
-        {InfoSVG ? <InfoSVG style={styles.infoIcon} /> : null}
+        {InfoSVG ? (
+          <InfoSVG
+            style={StyleSheet.flatten([
+              styles.infoIcon,
+              isFailedOrRejected && styles.failedInfoIcon,
+            ])}
+          />
+        ) : null}
         <View>{content({ contentColor })}</View>
         {(status === 'SENDING' || status === 'WAITING') && showAnimation ? (
           <Dots color={contentColor} />

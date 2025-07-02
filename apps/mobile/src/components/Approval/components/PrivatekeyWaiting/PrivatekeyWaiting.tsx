@@ -32,6 +32,7 @@ import {
   RetryUpdateType,
   setRetryTxRecommendNonce,
   setRetryTxType,
+  useDebugToastErrorTxRetryInfo,
 } from '@/utils/errorTxRetry';
 import { createGetStyles2024 } from '@/utils/styles';
 import useAsync from 'react-use/lib/useAsync';
@@ -47,6 +48,8 @@ interface ApprovalParams {
   type: string;
   from?: string;
   nonce?: string;
+  gasPrice?: string;
+  maxFeePerGas?: string;
   safeMessage?: {
     safeMessageHash: string;
     safeAddress: string;
@@ -363,6 +366,15 @@ export const PrivatekeyWaiting = ({
     retryUpdateType &&
     retryUpdateType !== 'gasPrice' &&
     retryUpdateType !== 'nonce';
+
+  useDebugToastErrorTxRetryInfo({
+    description: description,
+    isFailedTx:
+      connectStatus === APPROVAL_STATUS_MAP.FAILED ||
+      connectStatus === APPROVAL_STATUS_MAP.REJECTED,
+    tx: params,
+    account: $account,
+  });
 
   return (
     <View>

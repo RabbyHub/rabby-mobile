@@ -35,6 +35,7 @@ import {
   RetryUpdateType,
   setRetryTxRecommendNonce,
   setRetryTxType,
+  useDebugToastErrorTxRetryInfo,
 } from '@/utils/errorTxRetry';
 import useAsync from 'react-use/lib/useAsync';
 
@@ -46,6 +47,8 @@ interface ApprovalParams {
   account?: Account;
   from?: string;
   nonce?: string;
+  gasPrice?: string;
+  maxFeePerGas?: string;
   $ctx?: any;
   extra?: Record<string, any>;
   safeMessage?: {
@@ -137,14 +140,14 @@ export const LedgerHardwareWaiting = ({
     setIsRetrying(true);
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
     retryTxReset();
-    if (params.nonce && params.chainId && params.from && params.account) {
+    if (params.nonce && params.chainId && params.from && $account) {
       setRetryTxType(retryUpdateType);
       if (retryUpdateType === 'nonce') {
         try {
           await setRetryTxRecommendNonce({
             from: params.from,
             chainId: params.chainId,
-            account: params.account,
+            account: $account,
             nonce: params.nonce,
           });
         } catch (error) {}
@@ -395,6 +398,15 @@ export const LedgerHardwareWaiting = ({
     retryUpdateType &&
     retryUpdateType !== 'gasPrice' &&
     retryUpdateType !== 'nonce';
+
+  useDebugToastErrorTxRetryInfo({
+    description: description,
+    isFailedTx:
+      connectStatus === APPROVAL_STATUS_MAP.FAILED ||
+      connectStatus === APPROVAL_STATUS_MAP.REJECTED,
+    tx: params,
+    account: $account,
+  });
 
   return (
     <View>

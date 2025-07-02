@@ -30,7 +30,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { MiniFooterResendCancelGroup } from './MiniFooterResendCancelGroup';
 import { RetryUpdateType } from '@/utils/errorTxRetry';
 
-import TxFailedSVG from '@/assets2024/icons/common/tip.svg';
+import TxFailedSVG from '@/assets2024/icons/common/failed-retry.svg';
 
 const getStyle = createGetStyles2024(({ colors }) =>
   StyleSheet.create({
@@ -63,19 +63,20 @@ const getStyle = createGetStyles2024(({ colors }) =>
       // marginTop: 25,
     },
     infoIcon: {
-      width: 20,
-      height: 20,
-      marginRight: 6,
+      width: 24,
+      height: 24,
+      marginRight: 8,
     },
     descriptionText: {
       fontSize: 16,
       lineHeight: 16,
       fontWeight: '400',
       fontFamily: 'SF Pro Rounded',
+      textAlign: 'center',
     },
     footer: {},
     description: {
-      marginTop: 8,
+      marginTop: 10,
       marginBottom: 30,
       paddingHorizontal: 20,
     },

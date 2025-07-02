@@ -35,6 +35,7 @@ import {
   RetryUpdateType,
   setRetryTxRecommendNonce,
   setRetryTxType,
+  useDebugToastErrorTxRetryInfo,
 } from '@/utils/errorTxRetry';
 import useAsync from 'react-use/lib/useAsync';
 
@@ -138,14 +139,14 @@ export const OneKeyHardwareWaiting = ({
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
 
     retryTxReset();
-    if (params.nonce && params.chainId && params.from && params.account) {
+    if (params.nonce && params.chainId && params.from && $account) {
       setRetryTxType(retryUpdateType);
       if (retryUpdateType === 'nonce') {
         try {
           await setRetryTxRecommendNonce({
             from: params.from,
             chainId: params.chainId,
-            account: params.account,
+            account: $account,
             nonce: params.nonce,
           });
         } catch (error) {}
@@ -157,6 +158,7 @@ export const OneKeyHardwareWaiting = ({
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
     emitSignComponentAmounted();
+    setIsRetrying(false);
   };
 
   const init = async () => {
@@ -382,6 +384,15 @@ export const OneKeyHardwareWaiting = ({
     retryUpdateType &&
     retryUpdateType !== 'gasPrice' &&
     retryUpdateType !== 'nonce';
+
+  useDebugToastErrorTxRetryInfo({
+    description: description,
+    isFailedTx:
+      connectStatus === APPROVAL_STATUS_MAP.FAILED ||
+      connectStatus === APPROVAL_STATUS_MAP.REJECTED,
+    tx: params,
+    account: $account,
+  });
 
   return (
     <View>
