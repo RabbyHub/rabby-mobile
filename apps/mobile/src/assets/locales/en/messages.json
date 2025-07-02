@@ -404,6 +404,7 @@
       "addressSource": "Address Source",
       "maxPriorityFeeDisabledAlert": "Please set Gas Price first",
       "errorRetry": {
+        "defaultTips": "Something is wrong. Please retry later.",
         "insufficient": "Your gas balance isn’t enough to cover the network gas fee. Add funds for gas and try again.",
         "gasPriceTooLow": "Gas price too low. We’ll adjust it by 30% to help your transaction confirm. Click “Retry” to confirm and try again.",
         "nonceTooLow": "Nonce too low. We’ll update it to {{nonce}}. Click “Retry” to confirm and try again.",

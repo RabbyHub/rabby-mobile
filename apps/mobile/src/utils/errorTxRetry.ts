@@ -92,7 +92,9 @@ type HintRule = {
 };
 
 const defaultHint: HintRule['result'] = [
-  'Something is wrong. Please retry later.',
+  // 'Something is wrong. Please retry later.',
+  t('page.signTx.errorRetry.defaultTips'),
+
   false,
 ];
 const hintRules: HintRule[] = [
