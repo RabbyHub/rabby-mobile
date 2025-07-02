@@ -664,6 +664,7 @@ const Swap = ({
       Number(payAmount) > 0 &&
       inSufficientCanGetQuote &&
       !!payToken &&
+      activeProvider?.quote &&
       !!receiveToken
     );
   }, [
@@ -672,6 +673,7 @@ const Swap = ({
     showMoreVisible,
     payToken,
     receiveToken,
+    activeProvider?.quote,
   ]);
 
   const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
