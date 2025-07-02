@@ -18,6 +18,7 @@ import { useMemoizedFn } from 'ahooks';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { TokenMetaInfo } from './TokenMetaInfo';
 import { DashedUnderlineText } from '@/components2024/DashedUnderlineText';
+import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 
 export const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -90,28 +91,51 @@ export const SkeletonTokenListItem = () => {
       <View style={styles.topSection}>
         <View style={styles.tokenLeftSection}>
           <View style={styles.tokenInfoContainer}>
-            <Skeleton circle width={46} height={46} />
+            <Skeleton
+              circle
+              width={46}
+              height={46}
+              style={styles.skeleton}
+              LinearGradientComponent={LoadingLinear}
+            />
             <View style={styles.tokenInfo}>
               <Skeleton
                 width={40}
                 height={20}
-                style={{ marginTop: 0, borderRadius: 4 }}
+                style={{ marginTop: 0, borderRadius: 4, ...styles.skeleton }}
+                LinearGradientComponent={LoadingLinear}
               />
               <Skeleton
                 width={80}
                 height={18}
-                style={{ marginTop: 4, borderRadius: 4 }}
+                style={{ marginTop: 4, borderRadius: 4, ...styles.skeleton }}
+                LinearGradientComponent={LoadingLinear}
               />
             </View>
           </View>
         </View>
         <View style={styles.tokenRightSection}>
-          <Skeleton width={100} height={56} style={{ borderRadius: 10 }} />
+          <Skeleton
+            width={100}
+            height={56}
+            style={{ borderRadius: 10, ...styles.skeleton }}
+            LinearGradientComponent={LoadingLinear}
+          />
         </View>
       </View>
       <View style={styles.bottomSection}>
-        <Skeleton width={160} height={36} style={{ borderRadius: 6 }} />
-        <Skeleton width={66} height={34} style={{ borderRadius: 6 }} />
+        <Skeleton
+          // width={160}
+          height={36}
+          style={{ borderRadius: 6, ...styles.skeleton, flex: 1 }}
+          LinearGradientComponent={LoadingLinear}
+        />
+        <Skeleton
+          width={66}
+          height={34}
+          style={{ borderRadius: 6, ...styles.skeleton }}
+          LinearGradientComponent={LoadingLinear}
+        />
       </View>
     </View>
   );
@@ -198,7 +222,7 @@ const TokenListItemComponent = ({
                       : item.buy_address_count,
                 })}
                 textStyle={styles.buyText}
-                dashColor={colors2024['neutral-secondary']}
+                dashColor={colors2024['neutral-info']}
                 dashArray="2,2"
                 strokeWidth={1}
                 dashMarginTop={1}
@@ -221,9 +245,9 @@ export const TokenListItem = React.memo(TokenListItemComponent);
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
     paddingVertical: 14,
-    paddingTop: 12,
+    paddingTop: 8,
     paddingHorizontal: 12,
-    gap: 4,
+    gap: 8,
     marginBottom: 8,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
@@ -352,7 +376,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   dollarIconsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 4,
     overflow: 'hidden',
     flexShrink: 1,
   },
@@ -364,5 +388,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   buyTextWrapper: {
     flexShrink: 0,
+  },
+  skeleton: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
 }));

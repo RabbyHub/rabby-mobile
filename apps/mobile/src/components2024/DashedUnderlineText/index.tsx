@@ -58,7 +58,7 @@ export const DashedUnderlineText: React.FC<DashedUnderlineTextProps> = ({
             x2="100%"
             y2={strokeWidth / 2}
             stroke={lineColor}
-            strokeWidth={strokeWidth}
+            strokeWidth={1}
             strokeDasharray={dashArray}
             strokeLinecap="round"
           />

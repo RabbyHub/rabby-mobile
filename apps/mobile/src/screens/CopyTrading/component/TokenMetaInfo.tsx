@@ -70,8 +70,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   timeContainer: {
     backgroundColor: colors2024['blue-light-4'],
     borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
   },
   timeText: {
     color: colors2024['blue-default'],
@@ -83,8 +83,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   fdvContainer: {
     backgroundColor: colors2024['green-light-4'],
     borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
   },
   fdvText: {
     color: colors2024['green-default'],

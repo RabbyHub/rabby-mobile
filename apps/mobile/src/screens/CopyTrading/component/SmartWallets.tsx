@@ -24,6 +24,7 @@ import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress'
 import { Skeleton } from '@rneui/themed';
 import { toast } from '@/components2024/Toast';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 
 interface SmartWalletsProps {
   tradingTokenItem: CopyTradeTokenItemV2;
@@ -38,23 +39,40 @@ export const SkeletonStatsCard = () => {
     <View style={styles.statsCard}>
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <Skeleton circle width={16} height={16} />
+          <Skeleton
+            circle
+            width={20}
+            height={20}
+            style={styles.skeleton}
+            LinearGradientComponent={LoadingLinear}
+          />
           <Skeleton
             width={80}
             height={16}
-            style={{ borderRadius: 4, marginLeft: 4 }}
+            style={{ borderRadius: 4, marginLeft: 4, ...styles.skeleton }}
+            LinearGradientComponent={LoadingLinear}
           />
         </View>
         <View style={styles.divider} />
 
         <View style={styles.statItem}>
-          <Skeleton width={70} height={16} style={{ borderRadius: 4 }} />
+          <Skeleton
+            width={70}
+            height={16}
+            style={{ borderRadius: 4, ...styles.skeleton }}
+            LinearGradientComponent={LoadingLinear}
+          />
         </View>
 
         <View style={styles.divider} />
 
         <View style={styles.statItem}>
-          <Skeleton width={60} height={16} style={{ borderRadius: 4 }} />
+          <Skeleton
+            width={60}
+            height={16}
+            style={{ borderRadius: 4, ...styles.skeleton }}
+            LinearGradientComponent={LoadingLinear}
+          />
         </View>
       </View>
     </View>
@@ -68,19 +86,35 @@ export const SkeletonWalletItem = () => {
     <View style={styles.walletItem}>
       <View style={styles.walletLeft}>
         <View style={styles.walletInfo}>
-          <Skeleton width={60} height={16} style={{ borderRadius: 4 }} />
+          <Skeleton
+            width={60}
+            height={16}
+            style={{ borderRadius: 4, ...styles.skeleton }}
+            LinearGradientComponent={LoadingLinear}
+          />
           <View style={styles.walletAddressContainer}>
-            <Skeleton width={120} height={20} style={{ borderRadius: 4 }} />
+            <Skeleton
+              width={120}
+              height={20}
+              style={{ borderRadius: 4, ...styles.skeleton }}
+              LinearGradientComponent={LoadingLinear}
+            />
           </View>
         </View>
       </View>
 
       <View style={styles.walletRight}>
-        <Skeleton width={80} height={18} style={{ borderRadius: 4 }} />
+        <Skeleton
+          width={80}
+          height={18}
+          style={{ borderRadius: 4, ...styles.skeleton }}
+          LinearGradientComponent={LoadingLinear}
+        />
         <Skeleton
           width={70}
           height={18}
-          style={{ borderRadius: 4, marginTop: 4 }}
+          style={{ borderRadius: 4, marginTop: 4, ...styles.skeleton }}
+          LinearGradientComponent={LoadingLinear}
         />
       </View>
     </View>
@@ -96,8 +130,18 @@ export const SkeletonSmartWallets = () => {
         <SkeletonStatsCard />
 
         <View style={styles.listHeaderContainer}>
-          <Skeleton width={100} height={18} style={{ borderRadius: 4 }} />
-          <Skeleton width={80} height={18} style={{ borderRadius: 4 }} />
+          <Skeleton
+            width={100}
+            height={18}
+            style={{ borderRadius: 4, ...styles.skeleton }}
+            LinearGradientComponent={LoadingLinear}
+          />
+          <Skeleton
+            width={80}
+            height={18}
+            style={{ borderRadius: 4, ...styles.skeleton }}
+            LinearGradientComponent={LoadingLinear}
+          />
         </View>
       </View>
 
@@ -398,8 +442,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 4,
   },
   dollarIcon: {
-    width: 16,
-    height: 16,
+    width: 20,
+    height: 20,
     marginRight: -2,
   },
   statValue: {
@@ -536,5 +580,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     height: '80%',
     backgroundColor: colors2024['neutral-info'],
     marginHorizontal: 4,
+  },
+  skeleton: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
 }));

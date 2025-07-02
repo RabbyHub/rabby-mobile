@@ -24,6 +24,7 @@ import {
 import { TabType } from './CopyTradingTokenDetail';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { toast } from '@/components2024/Toast';
+import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 
 interface SameNameTokensProps {
   tradingTokenItem: TokenItem;
@@ -35,20 +36,37 @@ export const SkeletonSameNameToken = () => {
   return (
     <View style={styles.tokenItem}>
       <View style={styles.tokenLeft}>
-        <Skeleton circle width={46} height={46} />
+        <Skeleton
+          circle
+          width={46}
+          height={46}
+          style={styles.skeleton}
+          LinearGradientComponent={LoadingLinear}
+        />
         <View style={styles.tokenInfo}>
           <View style={styles.tokenNameRow}>
-            <Skeleton width={60} height={20} style={{ borderRadius: 4 }} />
+            <Skeleton
+              width={60}
+              height={20}
+              style={{ borderRadius: 4, ...styles.skeleton }}
+              LinearGradientComponent={LoadingLinear}
+            />
           </View>
           <Skeleton
             width={40}
             height={16}
-            style={{ borderRadius: 4, marginTop: 4 }}
+            style={{ borderRadius: 4, marginTop: 4, ...styles.skeleton }}
+            LinearGradientComponent={LoadingLinear}
           />
         </View>
       </View>
       <View style={styles.tokenRight}>
-        <Skeleton width={80} height={20} style={{ borderRadius: 4 }} />
+        <Skeleton
+          width={80}
+          height={20}
+          style={{ borderRadius: 4, ...styles.skeleton }}
+          LinearGradientComponent={LoadingLinear}
+        />
       </View>
     </View>
   );
@@ -196,7 +214,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
     borderRadius: 16,
-    paddingVertical: 16,
+    // paddingVertical: 16,
+    paddingTop: 16,
     paddingHorizontal: 16,
   },
   header: {
@@ -269,9 +288,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 1,
   },
   currentTokenText: {
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: '600',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -308,5 +327,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['brand-light-1'],
     borderColor: colors2024['brand-disable'],
     borderWidth: 1,
+  },
+  skeleton: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
 }));

@@ -25,6 +25,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   Image,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
@@ -64,6 +65,7 @@ import {
 } from '../Home/utils/price';
 import { useProfit } from './component/useProfit';
 import { TabType } from './component/CopyTradingTokenDetail';
+import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 const DEFAULT_COUNT = 10;
 
 const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
@@ -73,28 +75,23 @@ const SkeletonTabList = React.memo(() => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const itemWidth = (SCREEN_WIDTH - 16 * 2) / 4 - 12;
 
+  const TabSkeleton = useMemoizedFn(() => {
+    return (
+      <Skeleton
+        LinearGradientComponent={LoadingLinear}
+        width={itemWidth}
+        height={32}
+        style={{ borderRadius: 100, marginRight: 8, ...styles.skeleton }}
+      />
+    );
+  });
+
   return (
     <>
-      <Skeleton
-        width={itemWidth}
-        height={32}
-        style={{ borderRadius: 100, marginRight: 8 }}
-      />
-      <Skeleton
-        width={itemWidth}
-        height={32}
-        style={{ borderRadius: 100, marginRight: 8 }}
-      />
-      <Skeleton
-        width={itemWidth}
-        height={32}
-        style={{ borderRadius: 100, marginRight: 8 }}
-      />
-      <Skeleton
-        width={itemWidth}
-        height={32}
-        style={{ borderRadius: 100, marginRight: 0 }}
-      />
+      <TabSkeleton />
+      <TabSkeleton />
+      <TabSkeleton />
+      <TabSkeleton />
     </>
   );
 });
@@ -586,65 +583,56 @@ export const CopyTradingScreen = () => {
 
       {showProfitBar && (
         <Animated.View style={{ opacity: floatingBarOpacity }}>
-          <View style={styles.floatingBar}>
-            <LinearGradient
-              colors={
-                isLight
-                  ? ['rgba(246, 247, 247, 0.00)', '#F6F7F7']
-                  : ['rgba(19, 20, 22, 0.00)', '#131416']
-              }
-              locations={[0, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              angle={180}
-              style={styles.gradientOverlay}>
-              <TouchableOpacity
-                style={styles.floatingBarButtonWrapper}
-                onPress={handleShowEarningDialog}>
-                <BlurShadowView isLight={isLight} blurAmount={10}>
-                  <LinearGradient
-                    colors={
-                      isLight
-                        ? [
-                            'rgba(255, 255, 255, 0.80)',
-                            'rgba(255, 255, 255, 0.40)',
-                          ]
-                        : ['rgba(35, 36, 40, 0.80)', 'rgba(35, 36, 40, 0.40)']
-                    }
-                    // locations={[0.009, 0.9864]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    angle={81}
-                    style={styles.floatingBarButton}>
-                    <View style={styles.floatingBarContent}>
-                      <Text style={styles.floatingBarText}>
-                        {t('page.copyTrading.myCopyTrading')} :{' '}
-                      </Text>
-                      <Text style={styles.floatingBarBalanceText}>
-                        {formatUsdValueKMB(profitData?.totalHoldValue || 0)}
-                      </Text>
-                      <Text
-                        style={StyleSheet.flatten([
-                          styles.floatingBarBalanceText,
-                          profitData?.totalProfit && profitData?.totalProfit > 0
-                            ? styles.floatingBarProfitText
-                            : styles.floatingBarLossText,
-                        ])}>
-                        {`(${formatUsdValueKMBWithSign(
-                          profitData?.totalProfit || 0,
-                        )})`}
-                      </Text>
-                    </View>
-                    <RcIconSelectedCC
-                      width={16}
-                      height={16}
-                      color={colors2024['neutral-foot']}
-                    />
-                  </LinearGradient>
-                </BlurShadowView>
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
+          <LinearGradient
+            colors={
+              isLight
+                ? ['rgba(246, 247, 247, 0.00)', colors2024['neutral-bg-0']]
+                : ['rgba(19, 20, 22, 0.00)', colors2024['neutral-bg-1']]
+            }
+            locations={[0, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.floatingBar}>
+            <TouchableOpacity onPress={handleShowEarningDialog}>
+              <BlurShadowView isLight={isLight} blurAmount={10}>
+                <LinearGradient
+                  colors={
+                    isLight
+                      ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 1)']
+                      : ['rgba(35, 36, 40, 1)', 'rgba(35, 36, 40, 1)']
+                  }
+                  locations={[0.009, 0.9864]}
+                  start={{ x: 0, y: 1 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.floatingBarButton}>
+                  <View style={styles.floatingBarContent}>
+                    <Text style={styles.floatingBarText}>
+                      {t('page.copyTrading.myCopyTrading')} :{' '}
+                    </Text>
+                    <Text style={styles.floatingBarBalanceText}>
+                      {formatUsdValueKMB(profitData?.totalHoldValue || 0)}
+                    </Text>
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.floatingBarBalanceText,
+                        profitData?.totalProfit && profitData?.totalProfit > 0
+                          ? styles.floatingBarProfitText
+                          : styles.floatingBarLossText,
+                      ])}>
+                      {`(${formatUsdValueKMBWithSign(
+                        profitData?.totalProfit || 0,
+                      )})`}
+                    </Text>
+                  </View>
+                  <RcIconSelectedCC
+                    width={16}
+                    height={16}
+                    color={colors2024['neutral-foot']}
+                  />
+                </LinearGradient>
+              </BlurShadowView>
+            </TouchableOpacity>
+          </LinearGradient>
         </Animated.View>
       )}
     </NormalScreenContainer>
@@ -688,6 +676,11 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     borderWidth: 1,
     borderColor: 'transparent',
   },
+  skeleton: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
   selectedChainItem: {
     backgroundColor: colors2024['brand-light-1'],
     borderRadius: 100,
@@ -718,13 +711,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   container: {
     flex: 1,
-    paddingBottom: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
   },
   listContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 12,
   },
   footerLoading: {
@@ -744,9 +736,13 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 123,
+    // height: 123,
     paddingHorizontal: 16,
-    shadowColor: '#000',
+    paddingTop: 23,
+    paddingBottom: 48,
+    shadowColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     shadowOffset: {
       width: 0,
       height: -27,
@@ -756,17 +752,15 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     elevation: 27,
   },
   floatingBarButtonWrapper: {
-    marginTop: 12,
-    overflow: 'hidden',
-    borderRadius: 12,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+    // overflow: 'hidden',
+    // backgroundColor: isLight
+    //   ? colors2024['neutral-bg-1']
+    //   : colors2024['neutral-bg-2'],
   },
   floatingBarButton: {
     borderColor: isLight
       ? colors2024['neutral-bg-1']
-      : colors2024['neutral-bg-2'],
+      : colors2024['neutral-line'],
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
