@@ -1,6 +1,6 @@
 import { sortBy } from 'lodash';
 import type { TransactionHistoryItem } from '../services/transactionHistory';
-import { openapi } from '../request';
+import { customRPCService } from '../services';
 
 const getGasPrice = (tx: TransactionHistoryItem) => {
   return Number(tx.rawTx.gasPrice || tx.rawTx.maxFeePerGas || 0);
@@ -17,8 +17,9 @@ export const findMaxGasTx = (txs: TransactionHistoryItem[]) => {
 };
 
 export const getRpcTxReceipt = (chainServerId: string, hash: string) => {
-  return openapi
-    .ethRpc(chainServerId, {
+  return customRPCService
+    .defaultEthRPC({
+      chainServerId,
       method: 'eth_getTransactionReceipt',
       params: [hash],
     })

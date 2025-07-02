@@ -7,6 +7,9 @@ import createPersistStore, {
 import axios from 'axios';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { DefaultRPCRes } from '@rabby-wallet/rabby-api/dist/types';
+import { openapi } from '../request';
+import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
+import dayjs from 'dayjs';
 
 type RPCDefaultItem = DefaultRPCRes['rpcs'][number];
 
@@ -18,6 +21,7 @@ export interface RPCItem {
 export type RPCServiceStore = {
   customRPC: Record<string, RPCItem>;
   defaultRPC?: Record<string, RPCDefaultItem>;
+  defaultRPCLastUpdateAt?: number;
 };
 
 export const BE_SUPPORTED_METHODS: string[] = [
@@ -67,6 +71,7 @@ class CustomRPCService {
   store: RPCServiceStore = {
     customRPC: {},
     defaultRPC: {},
+    defaultRPCLastUpdateAt: 0,
   };
   rpcStatus: Record<
     string,
@@ -86,6 +91,7 @@ class CustomRPCService {
         template: {
           customRPC: {},
           defaultRPC: {},
+          defaultRPCLastUpdateAt: 0,
         },
       },
       {
@@ -108,28 +114,75 @@ class CustomRPCService {
         this.store.customRPC = { ...this.store.customRPC };
       }
     }
+
+    this.syncDefaultRPC();
   };
 
-  syncDefaultRPC = async () => {
+  getDefaultRPCLastUpdateAt = () => {
+    return this.store.defaultRPCLastUpdateAt;
+  };
+
+  setDefaultRPCLastUpdateAt = (timestamp: number) => {
+    this.store.defaultRPCLastUpdateAt = timestamp;
+  };
+
+  syncDefaultRPC = async (ignoreLastUpdateAt = true) => {
     try {
-      // const data = (await openapiService.getDefaultRPCs())?.rpcs;
-
-      // TODO: remove  after test
-      const data = await fetchDefaultRpc();
-      if (data.length) {
-        const defaultRPC: Record<string, RPCDefaultItem> = data?.reduce(
-          (acc, item) => {
-            acc[item.chainId] = item;
-
-            return acc;
-          },
-          {} as Record<string, RPCDefaultItem>,
+      if (
+        ignoreLastUpdateAt ||
+        dayjs(this.getDefaultRPCLastUpdateAt()).isBefore(
+          dayjs().subtract(1, 'hour'),
+        )
+      ) {
+        console.log(
+          `${
+            ignoreLastUpdateAt ? 'force ' : ''
+          }Updating default RPCs...,last update at:`,
+          dayjs(this.getDefaultRPCLastUpdateAt()).format('YYYY-MM-DD HH:mm:ss'),
         );
-        this.store.defaultRPC = defaultRPC;
+
+        // const data = (await openapiService.getDefaultRPCs())?.rpcs;
+        // TODO: remove  after test
+        const data = await fetchDefaultRpc();
+        if (data.length) {
+          console.log('Default RPCs updated successfully.');
+          this.setDefaultRPCLastUpdateAt(Date.now());
+          const defaultRPC: Record<string, RPCDefaultItem> = data?.reduce(
+            (acc, item) => {
+              acc[item.chainId] = item;
+
+              return acc;
+            },
+            {} as Record<string, RPCDefaultItem>,
+          );
+          this.store.defaultRPC = defaultRPC;
+        }
       }
     } catch (error) {
       console.error('Failed to fetch default RPC:', error);
     }
+  };
+
+  defaultEthRPC = ({
+    chainServerId,
+    origin = INTERNAL_REQUEST_ORIGIN,
+    method,
+    params,
+  }: {
+    chainServerId: string;
+    origin?: string;
+    method: string;
+    params: any;
+  }) => {
+    const isBESupported = this.supportedRpcMethodByBE(method);
+    if (isBESupported) {
+      return openapi.ethRpc(chainServerId, {
+        origin: encodeURIComponent(origin),
+        method,
+        params,
+      });
+    }
+    return this.requestDefaultRPC(chainServerId, method, params);
   };
 
   getDefaultRPCByChainServerId = (chainServerId: string) => {

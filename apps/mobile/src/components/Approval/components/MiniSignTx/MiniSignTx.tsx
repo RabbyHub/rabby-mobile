@@ -5,7 +5,7 @@ import { Chain } from '@/constant/chains';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { apisSafe } from '@/core/apis/safe';
 import { openapi } from '@/core/request';
-import { preferenceService } from '@/core/services';
+import { customRPCService, preferenceService } from '@/core/services';
 import { Account, ChainGas } from '@/core/services/preference';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -718,6 +718,11 @@ export const MiniSignTx = ({
   const init = async () => {
     if (!chainId) {
       return;
+    }
+    try {
+      await customRPCService.syncDefaultRPC();
+    } catch (e) {
+      console.error(' miniSignTx sync default rpc error', e);
     }
     try {
       const is1559 =

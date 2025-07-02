@@ -8,6 +8,7 @@ import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
 import {
+  customRPCService,
   notificationService,
   preferenceService,
   transactionHistoryService,
@@ -94,20 +95,18 @@ export const scrollL1FeeEstimate = async (
   const calldata = iface.encodeFunctionData('getL1Fee', [
     bytesToHex(serializedTransaction),
   ]);
-  const res = await openapi.ethRpc(
-    findChain({ enum: CHAINS_ENUM.SCRL })!.serverId,
-    {
-      method: 'eth_call',
-      params: [
-        {
-          from: account?.address,
-          to: '0x5300000000000000000000000000000000000002',
-          data: calldata,
-        },
-        'latest',
-      ],
-    },
-  );
+  const res = await customRPCService.defaultEthRPC({
+    chainServerId: findChain({ enum: CHAINS_ENUM.SCRL })!.serverId,
+    method: 'eth_call',
+    params: [
+      {
+        from: account?.address,
+        to: '0x5300000000000000000000000000000000000002',
+        data: calldata,
+      },
+      'latest',
+    ],
+  });
   return res;
 };
 
@@ -127,7 +126,8 @@ export const opStackL1FeeEstimate = async (
   const calldata = iface.encodeFunctionData('getL1Fee', [
     bytesToHex(serializedTransaction),
   ]);
-  const res = await openapi.ethRpc(findChain({ enum: chain })!.serverId, {
+  const res = await customRPCService.defaultEthRPC({
+    chainServerId: findChain({ enum: chain })!.serverId,
     method: 'eth_call',
     params: [
       {

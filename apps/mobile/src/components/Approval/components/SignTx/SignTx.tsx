@@ -54,6 +54,7 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import {
+  customRPCService,
   dappService,
   keyringService,
   preferenceService,
@@ -1261,6 +1262,11 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
   };
 
   const init = async () => {
+    try {
+      await customRPCService.syncDefaultRPC();
+    } catch (e) {
+      console.error('signTx sync default rpc error', e);
+    }
     apiApprovalSecurityEngine.resetCurrentTx();
     checkIsBlockedTransaction();
     try {
