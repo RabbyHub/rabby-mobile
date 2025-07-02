@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
-
+import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
+import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import AutoLockView from '@/components/AutoLockView';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -10,6 +11,7 @@ import {
   TouchableOpacity,
   View,
   StyleSheet,
+  Image,
 } from 'react-native';
 import { AssetAvatar } from '@/components';
 import { getTokenSymbol } from '@/utils/token';
@@ -31,29 +33,30 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { TabType } from './CopyTradingTokenDetail';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
+import { QueryCopyTradingBuyItemResult } from '@/databases/entities/copyTradingBuyItem';
 
 export type DialogProps = {
-  itemData: (TokenItemEntity & { buy_amount: number; buy_price: number })[];
+  itemData: QueryCopyTradingBuyItemResult[];
   totalProfit: number;
   totalHoldValue: number;
   onClose?: () => void;
 };
 
 const TokenEarningItem: React.FC<{
-  item: TokenItemEntity & { buy_amount: number; buy_price: number };
+  item: TokenItemEntity & {
+    buy_amount: number;
+    buy_price: number;
+    holdingUsdValue: number;
+  };
   handlePress: (token: TokenItemEntity) => void;
 }> = ({ item, handlePress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const holdingValue = new BigNumber(
-    Math.min(item.amount, item.buy_amount),
-  ).multipliedBy(item.price);
-  const costValue = new BigNumber(item.buy_amount).multipliedBy(item.buy_price);
-  const profit = holdingValue.minus(costValue);
-  const profitPercentage = costValue.isGreaterThan(0)
-    ? profit.dividedBy(costValue)
-    : new BigNumber(0);
+  const holdingValue = item.holdingUsdValue;
+  const costValue = item.buy_amount * item.buy_price;
+  const profit = holdingValue - costValue;
+  const profitPercentage = costValue > 0 ? profit / costValue : 0;
 
-  const isPositive = profit.isGreaterThanOrEqualTo(0);
+  const isPositive = profit >= 0;
 
   return (
     <TouchableOpacity
@@ -76,7 +79,7 @@ const TokenEarningItem: React.FC<{
 
       <View style={styles.tokenRight}>
         <Text style={styles.holdingValue}>
-          {formatUsdValue(holdingValue.toNumber(), 2, true)}
+          {formatUsdValue(holdingValue, 4, true)}
         </Text>
         <Text
           style={[
@@ -87,8 +90,8 @@ const TokenEarningItem: React.FC<{
                 : colors2024['red-default'],
             },
           ]}>
-          {formatPercentage(profitPercentage.toNumber())}
-          {`(${formatUsdValue(profit.toNumber(), 2, true)})`}
+          {formatPercentage(profitPercentage)}
+          {`(${formatUsdValue(profit, 4, true)})`}
         </Text>
       </View>
     </TouchableOpacity>
@@ -177,6 +180,18 @@ export default function EarningDialog({
     [totalProfit, totalHoldValue, isPositive, styles, colors2024, t],
   );
 
+  const renderEmptyComponent = () => {
+    return (
+      <View style={styles.emptyContainer}>
+        <Image
+          source={isLight ? IconEmptyDefi : IconEmptyDefiDark}
+          style={styles.image}
+        />
+        <Text style={styles.emptyText}>No data available</Text>
+      </View>
+    );
+  };
+
   return (
     <AutoLockView style={styles.container}>
       <BottomSheetFlatList
@@ -189,6 +204,7 @@ export default function EarningDialog({
           <TokenEarningItem item={item} handlePress={handleTokenPress} />
         )}
         contentContainerStyle={styles.flatListContent}
+        ListEmptyComponent={renderEmptyComponent}
       />
     </AutoLockView>
   );
@@ -212,7 +228,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatListContent: {
     paddingBottom: 20,
   },
-
+  emptyContainer: {
+    flex: 1,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  image: {
+    width: 163,
+    height: 126,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+  },
   dialogTitle: {
     fontSize: 20,
     lineHeight: 24,

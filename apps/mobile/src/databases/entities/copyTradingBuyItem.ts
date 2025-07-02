@@ -9,6 +9,12 @@ import { DECIMALS_INT_RATIO } from './_helpers';
 const TABLE_NAME = 'rabby_copy_trading_buyitem';
 const TABLE_NAME_TOKENITEM = 'rabby_cache_tokenitem';
 
+export type QueryCopyTradingBuyItemResult = TokenItemEntity & {
+  buy_amount: number;
+  buy_price: number;
+  holdingUsdValue: number;
+};
+
 @Entity('copy_trading_buyitem')
 export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
   // hash
@@ -217,8 +223,9 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
    * Optimized version: use CTE to first aggregate CopyTradingBuyItem, then join with TokenItem
    * @returns raw SQL query results containing TokenItem fields plus buy_amount and buy_price
    */
+
   static async queryCopyTradingItems(): Promise<
-    (TokenItemEntity & { buy_amount: number; buy_price: number })[]
+    QueryCopyTradingBuyItemResult[]
   > {
     try {
       await prepareAppDataSource();
@@ -253,15 +260,16 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
       const queryEndTime = Date.now();
 
       // Fix amount and price values using the same logic as badRealTransformer
-      const correctedRecords = validRecords.map(
-        (
-          record: TokenItemEntity & { buy_amount: number; buy_price: number },
-        ) => ({
+      const correctedRecords = validRecords
+        .map(record => ({
           ...record,
           amount: record.amount / DECIMALS_INT_RATIO, // Correct the stored value
           price: record.price / DECIMALS_INT_RATIO, // Correct the stored value
-        }),
-      );
+          holdingUsdValue:
+            Math.min(record.amount / DECIMALS_INT_RATIO, record.buy_amount) *
+            (record.price / DECIMALS_INT_RATIO),
+        }))
+        .sort((a, b) => b.holdingUsdValue - a.holdingUsdValue);
 
       console.log(
         `Database query time: ${
