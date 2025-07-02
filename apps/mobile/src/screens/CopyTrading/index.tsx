@@ -197,6 +197,12 @@ export const CopyTradingScreen = () => {
             order_by: orderBy,
             order: 'desc',
           });
+
+        // todo fix type when next api package add price_change
+        token_list.map(item => {
+          item.price_24h_change =
+            (item as any).price_change || item.price_24h_change || 0;
+        });
         setHasMore(pagination.has_next);
         setListCursor(pagination.next_cursor);
 

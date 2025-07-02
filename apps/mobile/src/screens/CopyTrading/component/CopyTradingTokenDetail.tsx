@@ -140,7 +140,9 @@ export default function CopyTradingTokenDetail({
         token_id: tradingTokenItem.id,
         chain_id: tradingTokenItem.chain,
       });
-      console.log('info', info);
+      // todo fix type when next api package
+      info.price_24h_change =
+        (info as any).price_change || info.price_24h_change || 0;
       setDetailInfo(info);
     } catch (e) {
       console.log('fetchDetailInfo error', e);
