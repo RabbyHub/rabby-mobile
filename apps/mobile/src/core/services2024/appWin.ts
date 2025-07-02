@@ -59,12 +59,22 @@ const presentGlobalBottomSheetModal = (key: MODAL_ID) => {
   globalSheetModalEvents.emit(EVENT_NAMES.PRESENT, key);
 };
 
+let removeAllFn: ((params?: RemoveParams) => void) | null = null;
+
 const removeAllGlobalBottomSheetModals = (
   params?: RemoveParams & {
     waitMaxtime?: number;
   },
 ) => {
-  globalSheetModalEvents.emit(EVENT_NAMES.REMOVE_ALL, params);
+  if (!removeAllFn) {
+    removeAllFn =
+      require('@/components2024/GlobalBottomSheetModal/GlobalBottomSheetModal').removeAllGlobalBottomSheetModals;
+  }
+
+  if (removeAllFn) {
+    const { waitMaxtime, ...removeParams } = params || {};
+    removeAllFn(removeParams);
+  }
 };
 
 export const apisAppWin2024 = {

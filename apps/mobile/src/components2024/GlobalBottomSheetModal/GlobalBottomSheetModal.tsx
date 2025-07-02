@@ -30,9 +30,33 @@ type ModalData = {
   ref: React.RefObject<AppBottomSheetModal>;
 };
 
+let globalRemoveAllModals: ((params?: RemoveParams) => void) | null = null;
+
 export const GlobalBottomSheetModal2024 = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
   const [modals, setModals] = React.useState<ModalData[]>([]);
+
+  const removeAllModals = React.useCallback((params?: RemoveParams) => {
+    // Close all current modals
+    Object.values(modalRefs.current).forEach(modalRef => {
+      modalRef.current?.close(
+        Object.keys(params || {}).length ? { ...params } : undefined,
+      );
+    });
+
+    // Clear all modal refs
+    modalRefs.current = {};
+
+    // Clear all modals from state
+    setModals([]);
+  }, []);
+
+  React.useEffect(() => {
+    globalRemoveAllModals = removeAllModals;
+    return () => {
+      globalRemoveAllModals = null;
+    };
+  }, [removeAllModals]);
 
   React.useEffect(() => {
     modalRefs.current = modals.reduce((acc, modal) => {
@@ -118,23 +142,6 @@ export const GlobalBottomSheetModal2024 = () => {
     globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
   }, []);
 
-  const handleRemoveAll = React.useCallback((params?: RemoveParams) => {
-    // Close all current modals
-    Object.values(modalRefs.current).forEach(modalRef => {
-      modalRef.current?.close(
-        Object.keys(params || {}).length ? { ...params } : undefined,
-      );
-    });
-
-    // Clear all modal refs
-    modalRefs.current = {};
-
-    // Clear all modals from state
-    setModals([]);
-
-    // Note: Individual CLOSED and DISMISS events will be handled by onDismiss callbacks
-  }, []);
-
   const handleDismiss = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.DISMISS]
   >(
@@ -162,24 +169,16 @@ export const GlobalBottomSheetModal2024 = () => {
   React.useEffect(() => {
     globalSheetModalEvents.on(EVENT_NAMES.CREATE, handleCreate);
     globalSheetModalEvents.on(EVENT_NAMES.REMOVE, handleRemove);
-    globalSheetModalEvents.on(EVENT_NAMES.REMOVE_ALL, handleRemoveAll);
     globalSheetModalEvents.on(EVENT_NAMES.PRESENT, handlePresent);
     globalSheetModalEvents.on(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
 
     return () => {
       globalSheetModalEvents.off(EVENT_NAMES.CREATE, handleCreate);
       globalSheetModalEvents.off(EVENT_NAMES.REMOVE, handleRemove);
-      globalSheetModalEvents.off(EVENT_NAMES.REMOVE_ALL, handleRemoveAll);
       globalSheetModalEvents.off(EVENT_NAMES.PRESENT, handlePresent);
       globalSheetModalEvents.off(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
     };
-  }, [
-    handleCreate,
-    handlePresent,
-    handleRemove,
-    handleRemoveAll,
-    handleSnapToIndex,
-  ]);
+  }, [handleCreate, handlePresent, handleRemove, handleSnapToIndex]);
 
   const height = useSafeAreaInsets();
 
@@ -249,4 +248,10 @@ export const GlobalBottomSheetModal2024 = () => {
       })}
     </View>
   );
+};
+
+export const removeAllGlobalBottomSheetModals = (params?: RemoveParams) => {
+  if (globalRemoveAllModals) {
+    globalRemoveAllModals(params);
+  }
 };

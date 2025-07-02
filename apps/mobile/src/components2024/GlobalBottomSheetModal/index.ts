@@ -16,10 +16,10 @@ class IdSet<T = any> extends Set<T> {
   }
 }
 const allIds = new IdSet<MODAL_ID>();
-globalSheetModalEvents.on(EVENT_NAMES.CREATE, id => {
+globalSheetModalEvents.on(EVENT_NAMES.CREATE, (id: MODAL_ID) => {
   allIds.add(id);
 });
-globalSheetModalEvents.on(EVENT_NAMES.REMOVE, id => {
+globalSheetModalEvents.on(EVENT_NAMES.REMOVE, (id: MODAL_ID) => {
   allIds.delete(id);
 });
 keyringService.on('lock', () => {

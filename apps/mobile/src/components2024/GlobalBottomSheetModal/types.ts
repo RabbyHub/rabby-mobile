@@ -144,7 +144,6 @@ export type RemoveParams = Partial<
 export enum EVENT_NAMES {
   CREATE = 'CREATE',
   REMOVE = 'REMOVE',
-  REMOVE_ALL = 'REMOVE_ALL',
   DISMISS = 'DISMISS',
   CLOSED = 'CLOSED',
   PRESENT = 'PRESENT',
@@ -155,11 +154,9 @@ export enum EVENT_NAMES {
 export type GlobalSheetModalListeners = {
   [EVENT_NAMES.CREATE]: (id: MODAL_ID, params: CreateParams) => any;
   [EVENT_NAMES.REMOVE]: (id: MODAL_ID, params?: RemoveParams) => any;
-  [EVENT_NAMES.REMOVE_ALL]: (params?: RemoveParams) => any;
   [EVENT_NAMES.CLOSED]: (id: MODAL_ID) => any;
   [EVENT_NAMES.PRESENT]: (id: MODAL_ID) => any;
   [EVENT_NAMES.PRESENTED]: (id: MODAL_ID) => any;
   [EVENT_NAMES.DISMISS]: (id: MODAL_ID) => any;
-
   [EVENT_NAMES.SNAP_TO_INDEX]: (id: string, index: number) => any;
 };
