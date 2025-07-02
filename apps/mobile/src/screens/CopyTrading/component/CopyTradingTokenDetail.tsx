@@ -96,7 +96,7 @@ export default function CopyTradingTokenDetail({
 
   const handleTwitterPress = useMemoizedFn(async () => {
     const symbol = getTokenSymbol(tradingTokenItem);
-    const searchQuery = encodeURIComponent(symbol);
+    const searchQuery = encodeURIComponent(`$${symbol}`);
 
     const appUrls = [
       `twitter://search?query=${searchQuery}`,
