@@ -964,8 +964,8 @@
       },
       "filterRule": {
         "24HChange": "24H Change",
-        "smartMoney": "Smart Money amount",
-        "tokenCreate": "Token Create time"
+        "smartMoney": "Trading Smart Wallets",
+        "tokenCreate": "Recently Created"
       },
       "bought": "Bought",
       "earned": "Earned",
