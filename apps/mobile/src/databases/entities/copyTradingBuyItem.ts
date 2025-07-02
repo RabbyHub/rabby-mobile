@@ -4,7 +4,7 @@ import { Entity, Column } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { prepareAppDataSource } from '../imports';
 import { TokenItemEntity } from './tokenitem';
-import { correctBadRealOnSql, DECIMALS_INT_RATIO } from './_helpers';
+import { DECIMALS_INT_RATIO } from './_helpers';
 
 const TABLE_NAME = 'rabby_copy_trading_buyitem';
 const TABLE_NAME_TOKENITEM = 'rabby_cache_tokenitem';
