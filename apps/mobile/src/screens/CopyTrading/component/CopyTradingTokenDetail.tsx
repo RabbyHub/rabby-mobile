@@ -34,6 +34,9 @@ import { RcIconRightCC, RcIconSelectCC } from '@/assets/icons/common';
 import { TokenInfo } from './TokenInfo';
 import { SmartWallets } from './SmartWallets';
 import { SameNameTokens } from './SameNameTokens';
+import { toast } from '@/components/Toast';
+import { openapi } from '@/core/request';
+import { removeAllGlobalBottomSheetModals2024 } from '@/components2024/GlobalBottomSheetModal';
 
 export type DialogProps = {
   tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
@@ -57,6 +60,10 @@ export default function CopyTradingTokenDetail({
 
   // Tab state management
   const [activeTab, setActiveTab] = useState<TabType>(showTabType);
+  const [isLoading, setIsLoading] = useState(false);
+  const [detailInfo, setDetailInfo] = useState<
+    CopyTradeTokenItemV2 | TokenItem
+  >(tradingTokenItem);
 
   const tabBarData = React.useMemo(() => {
     return [
@@ -74,7 +81,7 @@ export default function CopyTradingTokenDetail({
       const chain = findChain({
         serverId: item.chain,
       });
-      onClose?.();
+      removeAllGlobalBottomSheetModals2024();
       naviPush(RootNames.StackTransaction, {
         screen: RootNames.MultiSwap,
         params: {
@@ -117,16 +124,48 @@ export default function CopyTradingTokenDetail({
     }
   });
 
+  const fetchDetailInfo = useMemoizedFn(async () => {
+    try {
+      // magic method
+      // just all fetch to refersh page so no toggle no scroll in bottom sheet
+      // if (
+      //   'buy_address_count' in tradingTokenItem &&
+      //   tradingTokenItem.buy_address_count > 0
+      // ) {
+      //   // if copy trading token item, no need to fetch detail info
+      //   return;
+      // }
+      setIsLoading(true);
+      const info = await openapi.getCopyTradingDetail({
+        token_id: tradingTokenItem.id,
+        chain_id: tradingTokenItem.chain,
+      });
+      console.log('info', info);
+      setDetailInfo(info);
+    } catch (e) {
+      console.log('fetchDetailInfo error', e);
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setIsLoading(false);
+    }
+  });
+
+  useEffect(() => {
+    fetchDetailInfo();
+  }, [fetchDetailInfo]);
+
   const TabContentComponent = useMemo(() => {
     switch (activeTab) {
       case TabType.tokenInfo:
-        return <TokenInfo tradingTokenItem={tradingTokenItem} />;
+        return <TokenInfo tradingTokenItem={detailInfo} />;
       case TabType.smartWallets:
-        return <SmartWallets tradingTokenItem={tradingTokenItem} />;
+        return (
+          <SmartWallets tradingTokenItem={detailInfo as CopyTradeTokenItemV2} />
+        );
       case TabType.sameNameTokens:
-        return <SameNameTokens tradingTokenItem={tradingTokenItem} />;
+        return <SameNameTokens tradingTokenItem={detailInfo} />;
     }
-  }, [activeTab, tradingTokenItem]);
+  }, [activeTab, detailInfo]);
 
   return (
     <AutoLockView style={styles.container}>

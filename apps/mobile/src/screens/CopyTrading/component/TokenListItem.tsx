@@ -17,6 +17,7 @@ import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { TokenMetaInfo } from './TokenMetaInfo';
+import { DashedUnderlineText } from '@/components2024/DashedUnderlineText';
 
 export const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -122,7 +123,7 @@ const TokenListItemComponent = ({
   onPress,
   showTipsDollarDialog,
 }: TokenListItemProps) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const isPositive = (item.price_24h_change || 0) >= 0;
 
@@ -189,14 +190,19 @@ const TokenListItemComponent = ({
             <TouchableOpacity
               style={styles.buyTextContainer}
               onPress={handlePressSmartWallets}>
-              <Text style={styles.buyText}>
-                {t('page.copyTrading.smartWalletsBuying', {
+              <DashedUnderlineText
+                text={t('page.copyTrading.smartWalletsBuying', {
                   len:
                     item.buy_address_count > 10
                       ? '10+'
                       : item.buy_address_count,
                 })}
-              </Text>
+                textStyle={styles.buyText}
+                dashColor={colors2024['neutral-secondary']}
+                dashArray="2,2"
+                strokeWidth={1}
+                dashMarginTop={1}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -352,10 +358,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexShrink: 1,
   },
   buyTextContainer: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors2024['neutral-secondary'],
-    borderStyle: 'dashed',
-    paddingBottom: 1,
     flex: 1,
     flexShrink: 0,
     alignSelf: 'flex-start',

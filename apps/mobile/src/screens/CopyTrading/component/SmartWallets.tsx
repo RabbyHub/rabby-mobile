@@ -8,7 +8,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   CopyTradeRecentBuyItemV2,
-  TokenItem,
+  CopyTradeTokenItemV2,
 } from '@rabby-wallet/rabby-api/dist/types';
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 import { useMemoizedFn } from 'ahooks';
@@ -26,10 +26,10 @@ import { toast } from '@/components2024/Toast';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 interface SmartWalletsProps {
-  tradingTokenItem: TokenItem;
+  tradingTokenItem: CopyTradeTokenItemV2;
 }
 
-const LIMIT = 10;
+const LIMIT = 20;
 
 export const SkeletonStatsCard = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -149,7 +149,8 @@ export const SmartWallets: React.FC<SmartWalletsProps> = ({
 
   useEffect(() => {
     loadInitialData();
-  }, [tradingTokenItem, loadInitialData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadMoreData = useMemoizedFn(async () => {
     if (!hasMore || isLoadingMore || !cursor) {
@@ -186,7 +187,6 @@ export const SmartWallets: React.FC<SmartWalletsProps> = ({
     toastCopyAddressSuccess(address);
   });
 
-  // 计算统计数据
   const statsData = React.useMemo(() => {
     const totalBought = buyList.reduce(
       (sum, item) => sum + item.buy_usd_value,
@@ -196,13 +196,12 @@ export const SmartWallets: React.FC<SmartWalletsProps> = ({
       (sum, item) => sum + item.pnl_usd_value,
       0,
     );
-
     return {
-      walletCount: buyList.length,
-      totalBought,
-      totalEarned,
+      walletCount: tradingTokenItem.buy_address_count || buyList.length,
+      totalBought: tradingTokenItem.buy_usd_value || totalBought,
+      totalEarned: tradingTokenItem.pnl_usd_value || totalEarned,
     };
-  }, [buyList]);
+  }, [tradingTokenItem, buyList]);
 
   const renderWalletItem = useMemoizedFn(
     ({ item }: { item: CopyTradeRecentBuyItemV2 }) => (

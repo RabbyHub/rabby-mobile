@@ -21,47 +21,12 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import dayjs from 'dayjs';
 import { TokenMetaInfo } from './TokenMetaInfo';
-import { toast } from '@/components2024/Toast';
 interface TokenInfoProps {
   tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
 }
 
 export const TokenInfo: React.FC<TokenInfoProps> = ({ tradingTokenItem }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const [detailInfo, setDetailInfo] = useState<
-    CopyTradeTokenItemV2 | TokenItem
-  >(tradingTokenItem);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const fetchDetailInfo = useMemoizedFn(async () => {
-    try {
-      // magic method
-      // just all fetch to refersh page so no toggle no scroll in bottom sheet
-      // if (
-      //   'buy_address_count' in tradingTokenItem &&
-      //   tradingTokenItem.buy_address_count > 0
-      // ) {
-      //   // if copy trading token item, no need to fetch detail info
-      //   return;
-      // }
-      setIsLoading(true);
-      const info = await openapi.getCopyTradingDetail({
-        token_id: tradingTokenItem.id,
-        chain_id: tradingTokenItem.chain,
-      });
-      console.log('info', info);
-      setDetailInfo(info);
-    } catch (e) {
-      console.log('fetchDetailInfo error', e);
-      toast.error(e instanceof Error ? e.message : String(e));
-    } finally {
-      setIsLoading(false);
-    }
-  });
-
-  useEffect(() => {
-    fetchDetailInfo();
-  }, [fetchDetailInfo]);
 
   const isContractToken = React.useMemo(() => {
     return /^0x.{40}/.test(tradingTokenItem.id);
@@ -75,35 +40,35 @@ export const TokenInfo: React.FC<TokenInfoProps> = ({ tradingTokenItem }) => {
 
   const createdTime = React.useMemo(() => {
     const time =
-      (detailInfo as CopyTradeTokenItemV2).token_create_at ||
-      detailInfo.time_at;
+      (tradingTokenItem as CopyTradeTokenItemV2).token_create_at ||
+      tradingTokenItem.time_at;
     if (time) {
       return dayjs(time * 1000).format('YYYY/MM/DD HH:mm');
     } else {
       return '';
     }
-  }, [detailInfo]);
+  }, [tradingTokenItem]);
 
-  const liquidity = (detailInfo as CopyTradeTokenItemV2).liquidity;
+  const liquidity = (tradingTokenItem as CopyTradeTokenItemV2).liquidity;
 
-  const fdvValue = (detailInfo as CopyTradeTokenItemV2).fdv;
+  const fdvValue = (tradingTokenItem as CopyTradeTokenItemV2).fdv;
 
   const TokenMetaExtraInfo = React.useMemo(() => {
-    if ('token_create_at' in detailInfo) {
+    if ('token_create_at' in tradingTokenItem) {
       return (
         <TokenMetaInfo
           tokenCreateAt={
-            (detailInfo as CopyTradeTokenItemV2).token_create_at ||
-            detailInfo.time_at
+            (tradingTokenItem as CopyTradeTokenItemV2).token_create_at ||
+            tradingTokenItem.time_at
           }
-          fdv={(detailInfo as CopyTradeTokenItemV2).fdv || undefined}
+          fdv={(tradingTokenItem as CopyTradeTokenItemV2).fdv || undefined}
           containerStyle={styles.tokenMetaInfo}
         />
       );
     } else {
       return null;
     }
-  }, [detailInfo, styles]);
+  }, [tradingTokenItem, styles]);
 
   return (
     <BottomSheetScrollView style={styles.container}>

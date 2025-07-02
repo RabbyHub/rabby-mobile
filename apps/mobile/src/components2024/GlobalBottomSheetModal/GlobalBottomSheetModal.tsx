@@ -10,6 +10,7 @@ import {
   GlobalSheetModalListeners,
   MODAL_ID,
   MODAL_NAMES,
+  RemoveParams,
 } from './types';
 import { MODAL_VIEWS, SNAP_POINTS } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
@@ -117,6 +118,23 @@ export const GlobalBottomSheetModal2024 = () => {
     globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
   }, []);
 
+  const handleRemoveAll = React.useCallback((params?: RemoveParams) => {
+    // Close all current modals
+    Object.values(modalRefs.current).forEach(modalRef => {
+      modalRef.current?.close(
+        Object.keys(params || {}).length ? { ...params } : undefined,
+      );
+    });
+
+    // Clear all modal refs
+    modalRefs.current = {};
+
+    // Clear all modals from state
+    setModals([]);
+
+    // Note: Individual CLOSED and DISMISS events will be handled by onDismiss callbacks
+  }, []);
+
   const handleDismiss = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.DISMISS]
   >(
@@ -144,16 +162,24 @@ export const GlobalBottomSheetModal2024 = () => {
   React.useEffect(() => {
     globalSheetModalEvents.on(EVENT_NAMES.CREATE, handleCreate);
     globalSheetModalEvents.on(EVENT_NAMES.REMOVE, handleRemove);
+    globalSheetModalEvents.on(EVENT_NAMES.REMOVE_ALL, handleRemoveAll);
     globalSheetModalEvents.on(EVENT_NAMES.PRESENT, handlePresent);
     globalSheetModalEvents.on(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
 
     return () => {
       globalSheetModalEvents.off(EVENT_NAMES.CREATE, handleCreate);
       globalSheetModalEvents.off(EVENT_NAMES.REMOVE, handleRemove);
+      globalSheetModalEvents.off(EVENT_NAMES.REMOVE_ALL, handleRemoveAll);
       globalSheetModalEvents.off(EVENT_NAMES.PRESENT, handlePresent);
       globalSheetModalEvents.off(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
     };
-  }, [handleCreate, handlePresent, handleRemove, handleSnapToIndex]);
+  }, [
+    handleCreate,
+    handlePresent,
+    handleRemove,
+    handleRemoveAll,
+    handleSnapToIndex,
+  ]);
 
   const height = useSafeAreaInsets();
 

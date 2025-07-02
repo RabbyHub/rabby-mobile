@@ -42,6 +42,8 @@ export const globalBottomSheetModalAddListener2024 =
   apisAppWin2024.globalBottomSheetModalAddListener;
 export const presentGlobalBottomSheetModal2024 =
   apisAppWin2024.presentGlobalBottomSheetModal;
+export const removeAllGlobalBottomSheetModals2024 =
+  apisAppWin2024.removeAllGlobalBottomSheetModals;
 
 export const snapToIndexGlobalBottomSheetModal = (
   key: string,

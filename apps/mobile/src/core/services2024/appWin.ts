@@ -59,9 +59,18 @@ const presentGlobalBottomSheetModal = (key: MODAL_ID) => {
   globalSheetModalEvents.emit(EVENT_NAMES.PRESENT, key);
 };
 
+const removeAllGlobalBottomSheetModals = (
+  params?: RemoveParams & {
+    waitMaxtime?: number;
+  },
+) => {
+  globalSheetModalEvents.emit(EVENT_NAMES.REMOVE_ALL, params);
+};
+
 export const apisAppWin2024 = {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
+  removeAllGlobalBottomSheetModals,
   globalBottomSheetModalAddListener,
   presentGlobalBottomSheetModal,
 };

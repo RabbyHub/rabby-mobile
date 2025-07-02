@@ -27,7 +27,6 @@ import { toast } from '@/components2024/Toast';
 
 interface SameNameTokensProps {
   tradingTokenItem: TokenItem;
-  onTokenPress?: (token: any) => void;
 }
 
 export const SkeletonSameNameToken = () => {
