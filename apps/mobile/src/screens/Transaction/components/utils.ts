@@ -25,7 +25,7 @@ import {
 } from '@/constant/gas-account';
 import { openapi } from '@/core/request';
 import { patchSingleToken } from '@/databases/sync/assets';
-import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradgingBuyItem';
+import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradingBuyItem';
 
 export function getHistoryItemType(
   data: HistoryDisplayItem,

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradgingBuyItem';
+import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradingBuyItem';
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 
