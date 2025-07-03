@@ -350,6 +350,11 @@ export const CopyTradingScreen = () => {
       const currentScrollY = event.nativeEvent.contentOffset.y;
       const deltaY = currentScrollY - lastScrollY.current;
 
+      // Don't hide floating bar during refresh or when scrollY is negative (pull to refresh)
+      if (refreshing || currentScrollY < 0) {
+        return;
+      }
+
       // Show/hide floating bar based on scroll direction
       if (deltaY > 5) {
         // Scrolling down - hide the bar
@@ -568,11 +573,6 @@ export const CopyTradingScreen = () => {
                   );
                   checkCountUpdate(tokenArr, tokenList);
                   setRefreshing(false);
-                  Animated.timing(floatingBarOpacity, {
-                    toValue: 1,
-                    duration: 200,
-                    useNativeDriver: true,
-                  }).start();
                 }}
                 title={t('page.copyTrading.refreshTitle')}
                 titleColor={colors2024['neutral-secondary']}
