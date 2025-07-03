@@ -855,7 +855,7 @@ class ProviderController extends BaseController {
 
               try {
                 const [fePushedHash, url] =
-                  await customRPCService.requestDefaultRPCWithFallback(
+                  await customRPCService.defaultRPCSubmitTxWithFallback(
                     chainServerId,
                     'eth_sendRawTransaction',
                     [rawTx],
