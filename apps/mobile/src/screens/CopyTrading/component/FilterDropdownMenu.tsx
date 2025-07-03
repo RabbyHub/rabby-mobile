@@ -14,6 +14,7 @@ import RcIconArrowDownCC from '@/assets2024/icons/copyTrading/IconDownPolygon.sv
 import RcIconSelectedCC from '@/assets2024/icons/copyTrading/IconSelected.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenLayouts } from '@/constant/layout';
+import { IS_IOS } from '@/core/native/utils';
 export enum FilterRuleEnum {
   '24hPrice' = '24hPrice',
   'smartMoney' = 'smart money',
@@ -56,6 +57,8 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
 
   const { top, bottom } = useSafeAreaInsets();
 
+  const iosAddTop = IS_IOS ? 16 : 0;
+
   return (
     <>
       {/* Filter Button */}
@@ -82,7 +85,7 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
               style={StyleSheet.flatten([
                 styles.menuContainer,
                 {
-                  top: ScreenLayouts.headerAreaHeight + top + 20, // 56 + 44 + 5
+                  top: ScreenLayouts.headerAreaHeight + top + 20 + iosAddTop,
                   right: 16,
                 },
               ])}>
