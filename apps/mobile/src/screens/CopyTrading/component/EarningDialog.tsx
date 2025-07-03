@@ -21,7 +21,7 @@ import {
 } from '../../Home/utils/price';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { formatPrice, formatUsdValue } from '@/utils/number';
+import { formatNumber, formatPrice, formatUsdValue } from '@/utils/number';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import BigNumber from 'bignumber.js';
 import { formatPercentage } from './TokenListItem';
@@ -107,6 +107,14 @@ export default function EarningDialog({
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const isPositive = (totalProfit || 0) >= 0;
+  const [totalValue, setTotalValue] = useState(0);
+  useEffect(() => {
+    // magic set state to refresh page to avoid scroll bug
+    const value = itemData.reduce((acc, item) => {
+      return acc + item.holdingUsdValue;
+    }, 0);
+    setTotalValue(value);
+  }, [itemData]);
 
   const handleTokenPress = useMemoizedFn((token: TokenItemEntity) => {
     const modalId = createGlobalBottomSheetModal2024({
@@ -194,12 +202,12 @@ export default function EarningDialog({
 
   return (
     <AutoLockView style={styles.container}>
+      {ListHeaderComponent}
       <BottomSheetFlatList
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         data={itemData}
         keyExtractor={item => `${item.chain}_${item.id}`}
-        ListHeaderComponent={ListHeaderComponent}
         renderItem={({ item }) => (
           <TokenEarningItem item={item} handlePress={handleTokenPress} />
         )}
