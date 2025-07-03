@@ -149,7 +149,7 @@ const TokenListItemComponent = ({
 }: TokenListItemProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const isPositive = (item.price_24h_change || 0) >= 0;
+  const isPositive = (item.price_change || item.price_24h_change || 0) >= 0;
 
   const handlePressSmartWallets = useMemoizedFn(() => {
     onPress(item, true);
@@ -183,7 +183,9 @@ const TokenListItemComponent = ({
               styles.changeText,
               !isPositive && styles.changeTextPositive,
             ])}>
-            {formatPercentage(Number(item.price_24h_change) || 0)}
+            {formatPercentage(
+              Number(item.price_change) || Number(item.price_24h_change) || 0,
+            )}
           </Text>
         </View>
       </View>

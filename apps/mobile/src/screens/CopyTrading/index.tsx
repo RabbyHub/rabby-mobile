@@ -195,11 +195,6 @@ export const CopyTradingScreen = () => {
             order: 'desc',
           });
 
-        // todo fix type when next api package add price_change
-        token_list.map(item => {
-          item.price_24h_change =
-            (item as any).price_change || item.price_24h_change || 0;
-        });
         setHasMore(pagination.has_next);
         setListCursor(pagination.next_cursor);
 
@@ -583,18 +578,18 @@ export const CopyTradingScreen = () => {
 
       {showProfitBar && (
         <Animated.View style={{ opacity: floatingBarOpacity }}>
-          <LinearGradient
-            colors={
-              isLight
-                ? ['rgba(246, 247, 247, 0.00)', colors2024['neutral-bg-0']]
-                : ['rgba(19, 20, 22, 0.00)', colors2024['neutral-bg-1']]
-            }
-            locations={[0, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={styles.floatingBar}>
-            <TouchableOpacity onPress={handleShowEarningDialog}>
-              <BlurShadowView isLight={isLight} blurAmount={10}>
+          <BlurShadowView isLight={isLight} blurAmount={10} borderRadius={12}>
+            <LinearGradient
+              colors={
+                isLight
+                  ? ['rgba(246, 247, 247, 0.00)', colors2024['neutral-bg-0']]
+                  : ['rgba(19, 20, 22, 0.00)', colors2024['neutral-bg-1']]
+              }
+              locations={[0, 1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={styles.floatingBar}>
+              <TouchableOpacity onPress={handleShowEarningDialog}>
                 <LinearGradient
                   colors={
                     isLight
@@ -630,9 +625,9 @@ export const CopyTradingScreen = () => {
                     color={colors2024['neutral-foot']}
                   />
                 </LinearGradient>
-              </BlurShadowView>
-            </TouchableOpacity>
-          </LinearGradient>
+              </TouchableOpacity>
+            </LinearGradient>
+          </BlurShadowView>
         </Animated.View>
       )}
     </NormalScreenContainer>

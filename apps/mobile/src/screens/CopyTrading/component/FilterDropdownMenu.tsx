@@ -12,6 +12,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import RcIconArrowDownCC from '@/assets2024/icons/copyTrading/IconDownPolygon.svg';
 import RcIconSelectedCC from '@/assets2024/icons/copyTrading/IconSelected.svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenLayouts } from '@/constant/layout';
 export enum FilterRuleEnum {
   '24hPrice' = '24hPrice',
   'smartMoney' = 'smart money',
@@ -43,11 +45,6 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
   onSelectItem,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const filterButtonRef = React.useRef<View>(null);
-  const [menuPosition, setMenuPosition] = React.useState({
-    top: 105,
-    right: 16,
-  });
 
   const selectedFilterRule = filterTabList.find(
     item => item.key === selectedRule,
@@ -57,34 +54,12 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
     onSelectItem(rule);
   });
 
-  const measureButtonAndUpdateMenuPosition = React.useCallback(() => {
-    if (filterButtonRef.current) {
-      filterButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
-        const menuTop = pageY + 16;
-
-        setMenuPosition({
-          top: menuTop,
-          right: 16,
-        });
-      });
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (isVisible) {
-      setTimeout(() => {
-        measureButtonAndUpdateMenuPosition();
-      }, 50);
-    }
-  }, [isVisible, measureButtonAndUpdateMenuPosition]);
+  const { top, bottom } = useSafeAreaInsets();
 
   return (
     <>
       {/* Filter Button */}
-      <View
-        ref={filterButtonRef}
-        style={styles.filterContainer}
-        onLayout={measureButtonAndUpdateMenuPosition}>
+      <View style={styles.filterContainer}>
         <TouchableOpacity style={styles.filterButton} onPress={onOpen}>
           <Text style={styles.filterText}>{selectedFilterRule?.title}</Text>
           <RcIconArrowDownCC
@@ -107,8 +82,8 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
               style={StyleSheet.flatten([
                 styles.menuContainer,
                 {
-                  top: menuPosition.top,
-                  right: menuPosition.right,
+                  top: ScreenLayouts.headerAreaHeight + top + 20, // 56 + 44 + 5
+                  right: 16,
                 },
               ])}>
               {filterTabList.map(item => (
