@@ -344,7 +344,7 @@ export const LedgerHardwareWaiting = ({
       });
     }
     return '0x0';
-  }, [params.nonce && params.chainId && params.from && params.account]);
+  }, [params.nonce, params.chainId, params.from, !!params.account]);
 
   const [currentDescription, retryUpdateType]: [string, RetryUpdateType] =
     React.useMemo(() => {

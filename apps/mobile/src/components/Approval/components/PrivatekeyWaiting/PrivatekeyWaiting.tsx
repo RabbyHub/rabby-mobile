@@ -118,19 +118,21 @@ export const PrivatekeyWaiting = ({
   const [content, setContent] = React.useState('');
   const [description, setDescription] = React.useState('');
 
+  const account = params.isGnosis ? params.account! : $account;
+
   const handleRetry = async () => {
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
     retryTxReset();
-    if (params.nonce && params.chainId && params.from && $account) {
+    if (params.nonce && params.chainId && params.from && account) {
       setRetryTxType(retryUpdateType);
       if (retryUpdateType === 'nonce') {
         await setRetryTxRecommendNonce({
           from: params.from,
           chainId: params.chainId,
-          account: $account,
+          account,
           nonce: params.nonce,
         });
       }
@@ -332,7 +334,7 @@ export const PrivatekeyWaiting = ({
   }, [connectStatus, errorMessage]);
 
   const { value: recommendNonce } = useAsync(async () => {
-    if (params.nonce && params.chainId && params.from && $account) {
+    if (params.nonce && params.chainId && params.from && account) {
       return setRetryTxRecommendNonce({
         from: params.from,
         chainId: params.chainId,
@@ -341,7 +343,7 @@ export const PrivatekeyWaiting = ({
       });
     }
     return '0x0';
-  }, [params.nonce && params.chainId && params.from && $account]);
+  }, [params.nonce, params.chainId, params.from, !!account]);
 
   const [currentDescription, retryUpdateType]: [string, RetryUpdateType] =
     React.useMemo(() => {
@@ -349,13 +351,13 @@ export const PrivatekeyWaiting = ({
         params.nonce &&
         params.chainId &&
         params.from &&
-        $account
+        account
         ? getTxFailedResult(description, { nonce: recommendNonce })
         : [description, 'origin'];
     }, [
       connectStatus,
       description,
-      $account,
+      account,
       params.chainId,
       params.from,
       params.nonce,

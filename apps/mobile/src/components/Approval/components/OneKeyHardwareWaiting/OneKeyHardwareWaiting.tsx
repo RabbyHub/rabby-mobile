@@ -121,6 +121,8 @@ export const OneKeyHardwareWaiting = ({
   const mountedRef = React.useRef(false);
   const showDueToStatusChangeRef = React.useRef(false);
 
+  const account = params.isGnosis ? params.account! : $account;
+
   const handleCancel = () => {
     rejectApproval('user cancel');
   };
@@ -139,14 +141,14 @@ export const OneKeyHardwareWaiting = ({
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
 
     retryTxReset();
-    if (params.nonce && params.chainId && params.from && $account) {
+    if (params.nonce && params.chainId && params.from && account) {
       setRetryTxType(retryUpdateType);
       if (retryUpdateType === 'nonce') {
         try {
           await setRetryTxRecommendNonce({
             from: params.from,
             chainId: params.chainId,
-            account: $account,
+            account: account,
             nonce: params.nonce,
           });
         } catch (error) {}
@@ -331,23 +333,23 @@ export const OneKeyHardwareWaiting = ({
   }, [connectStatus, errorMessage]);
 
   const { value: recommendNonce } = useAsync(async () => {
-    if (params.nonce && params.chainId && params.from && params.account) {
+    if (params.nonce && params.chainId && params.from && account) {
       return setRetryTxRecommendNonce({
         from: params.from,
         chainId: params.chainId,
-        account: params.account,
+        account: account,
         nonce: params.nonce,
       });
     }
     return '0x0';
-  }, [params.nonce && params.chainId && params.from && params.account]);
+  }, [params.nonce, params.chainId, params.from, account]);
 
   const [currentDescription, retryUpdateType]: [string, RetryUpdateType] =
     React.useMemo(() => {
       return params.nonce &&
         params.chainId &&
         params.from &&
-        params.account &&
+        account &&
         [APPROVAL_STATUS_MAP.REJECTED, APPROVAL_STATUS_MAP.FAILED].includes(
           connectStatus,
         )
@@ -356,11 +358,11 @@ export const OneKeyHardwareWaiting = ({
     }, [
       connectStatus,
       description,
-      params.account,
       params.chainId,
       params.from,
       params.nonce,
       recommendNonce,
+      account,
     ]);
 
   const renderContent = React.useCallback(
