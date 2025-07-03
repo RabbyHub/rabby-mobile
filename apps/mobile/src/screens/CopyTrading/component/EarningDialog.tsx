@@ -79,7 +79,10 @@ const TokenEarningItem: React.FC<{
 
       <View style={styles.tokenRight}>
         <Text style={styles.holdingValue}>
-          {formatUsdValue(holdingValue, 4, true)}
+          buyPrice: {formatPrice(item.buy_price, 4, true)}
+        </Text>
+        <Text style={styles.holdingValue}>
+          {formatUsdValue(item.amount, 4, true)}
         </Text>
         <Text
           style={[
@@ -92,6 +95,9 @@ const TokenEarningItem: React.FC<{
           ]}>
           {formatPercentage(profitPercentage)}
           {`(${formatUsdValue(profit, 4, true)})`}
+        </Text>
+        <Text style={styles.holdingValue}>
+          amount: {formatNumber(Math.min(item.buy_amount, item.amount), 4)}
         </Text>
       </View>
     </TouchableOpacity>
