@@ -385,6 +385,9 @@ export const CopyTradingScreen = () => {
       newTokenList: CopyTradeTokenItem[],
       oldTokenList: CopyTradeTokenItem[],
     ) => {
+      if (newTokenList.length === 0 || oldTokenList.length === 0) {
+        return;
+      }
       const oldFirst = oldTokenList[0];
       const index = newTokenList.findIndex(token => token.id === oldFirst.id);
       if (index === -1) {
@@ -565,6 +568,11 @@ export const CopyTradingScreen = () => {
                   );
                   checkCountUpdate(tokenArr, tokenList);
                   setRefreshing(false);
+                  Animated.timing(floatingBarOpacity, {
+                    toValue: 1,
+                    duration: 200,
+                    useNativeDriver: true,
+                  }).start();
                 }}
                 title={t('page.copyTrading.refreshTitle')}
                 titleColor={colors2024['neutral-secondary']}
