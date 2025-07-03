@@ -94,7 +94,10 @@ export const SameNameTokens: React.FC<SameNameTokensProps> = ({
         token_id: tradingTokenItem.id,
       });
 
-      setSameNameTokens(data);
+      if (data.length > 1) {
+        // filter one so it is empty when only self is same name token
+        setSameNameTokens(data);
+      }
     } catch (e) {
       console.error('Failed to fetch same name tokens:', e);
       setSameNameTokens([]);
