@@ -77,6 +77,7 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
       <Modal
         visible={isVisible}
         transparent={true}
+        statusBarTranslucent={true}
         animationType="fade"
         onRequestClose={onClose}>
         <TouchableWithoutFeedback onPress={onClose}>
@@ -85,7 +86,7 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
               style={StyleSheet.flatten([
                 styles.menuContainer,
                 {
-                  top: ScreenLayouts.headerAreaHeight + top + 20 + iosAddTop,
+                  top: ScreenLayouts.headerAreaHeight + top + 50,
                   right: 16,
                 },
               ])}>
