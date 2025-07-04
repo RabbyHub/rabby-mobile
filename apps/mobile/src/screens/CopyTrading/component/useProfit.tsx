@@ -7,26 +7,76 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
+import { groupBy } from 'lodash';
+import { atom, useAtom } from 'jotai';
+const copyTradingProfitDataAtom = atom<{
+  itemData: QueryCopyTradingBuyItemResult[];
+  totalProfit: number;
+  totalHoldValue: number;
+} | null>(null);
+
+export const useCopyTradingProfitData = () => {
+  return useAtom(copyTradingProfitDataAtom);
+};
 
 export const useProfit = () => {
-  const [loading, setLoading] = useState(false);
-  const [profitData, setProfitData] = useState<{
-    itemData: QueryCopyTradingBuyItemResult[];
-    totalProfit: number;
-    totalHoldValue: number;
-  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [profitData, setProfitData] = useAtom(copyTradingProfitDataAtom);
 
   const showProfitBar = useMemo(() => {
     return !loading;
   }, [loading]);
 
+  const groupByChainAndTokenId = useMemoizedFn(
+    (itemData: QueryCopyTradingBuyItemResult[]) => {
+      // group by chain and tokenId
+      const groupedData = groupBy(itemData, item => `${item.chain}_${item.id}`);
+
+      const aggregatedData = Object.values(groupedData).map(group => {
+        const firstItem = group[0];
+
+        // calc realAmount
+        const totalRealAmount = group.reduce(
+          (sum, item) => sum + item.realAmount,
+          0,
+        );
+
+        // calc buy_price weighted average (by realAmount)
+        const totalCost = group.reduce(
+          (sum, item) => sum + item.realAmount * item.buy_price,
+          0,
+        );
+        const avgBuyPrice =
+          totalRealAmount > 0 ? totalCost / totalRealAmount : 0;
+
+        // calc holdingUsdValue
+        const newHoldingUsdValue = totalRealAmount * firstItem.price;
+
+        // create new object, keep original entity structure
+        const aggregatedItem = Object.assign(
+          Object.create(Object.getPrototypeOf(firstItem)),
+          {
+            ...firstItem,
+            realAmount: totalRealAmount,
+            buy_price: avgBuyPrice,
+            holdingUsdValue: newHoldingUsdValue,
+          },
+        ) as QueryCopyTradingBuyItemResult;
+
+        return aggregatedItem;
+      });
+
+      return aggregatedData;
+    },
+  );
+
   const updateProfitData = useMemoizedFn(
     (itemData: QueryCopyTradingBuyItemResult[]) => {
       setProfitData({
-        itemData,
+        itemData: itemData,
         totalProfit: itemData.reduce(
           (acc, item) =>
-            acc + item.holdingUsdValue - item.buy_amount * item.buy_price,
+            acc + item.holdingUsdValue - item.realAmount * item.buy_price,
           0,
         ),
         totalHoldValue: itemData.reduce(
@@ -34,6 +84,30 @@ export const useProfit = () => {
           0,
         ),
       });
+    },
+  );
+
+  const updateSingleTokenPrice = useMemoizedFn(
+    async (tokenId: string, chain: string, price: number) => {
+      if (!profitData) {
+        return;
+      }
+      let needUpdate = false;
+      const newItemData = profitData.itemData.map(item => {
+        if (item.id === tokenId && item.chain === chain) {
+          needUpdate = true;
+          return {
+            ...item,
+            price,
+            holdingUsdValue: item.realAmount * price,
+          } as QueryCopyTradingBuyItemResult;
+        }
+        return item;
+      });
+
+      if (needUpdate) {
+        updateProfitData(newItemData);
+      }
     },
   );
 
@@ -75,10 +149,8 @@ export const useProfit = () => {
       results.forEach((result, index) => {
         if (result.status === 'fulfilled' && result.value.price) {
           newItemData[index].price = result.value.price;
-          newItemData[index].amount = result.value.amount;
           newItemData[index].holdingUsdValue =
-            Math.min(result.value.amount, itemData[index].buy_amount) *
-            result.value.price;
+            newItemData[index].realAmount * result.value.price;
         } else {
           if (result.status === 'rejected') {
             console.error(
@@ -98,8 +170,9 @@ export const useProfit = () => {
   const fetchProfitData = useMemoizedFn(async () => {
     setLoading(true);
     const res = await CopyTradingBuyItemEntity.queryCopyTradingItems();
-    updateProfitData(res);
-    getRealTimeApiToUpdatePrice(res);
+    const aggregatedData = groupByChainAndTokenId(res);
+    updateProfitData(aggregatedData);
+    // getRealTimeApiToUpdatePrice(res);
     CopyTradingBuyItemEntity.deleteExpiredBuyItem();
     setLoading(false);
   });
@@ -114,5 +187,6 @@ export const useProfit = () => {
     getProfit: fetchProfitData,
     profitData,
     showProfitBar,
+    updateSingleTokenPrice,
   };
 };

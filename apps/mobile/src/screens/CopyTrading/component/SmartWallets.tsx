@@ -25,6 +25,7 @@ import { Skeleton } from '@rneui/themed';
 import { toast } from '@/components2024/Toast';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 interface SmartWalletsProps {
   tradingTokenItem: CopyTradeTokenItemV2;
@@ -338,7 +339,7 @@ export const SmartWallets: React.FC<SmartWalletsProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerContainer}>
+      <BottomSheetHandlableView style={styles.headerContainer}>
         <View style={styles.statsCard}>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
@@ -388,7 +389,7 @@ export const SmartWallets: React.FC<SmartWalletsProps> = ({
             {t('page.copyTrading.buyEarn')}
           </Text>
         </View>
-      </View>
+      </BottomSheetHandlableView>
       <BottomSheetFlatList
         data={buyList}
         keyExtractor={item => `${item.user_addr}_${item.last_buy_at}`}

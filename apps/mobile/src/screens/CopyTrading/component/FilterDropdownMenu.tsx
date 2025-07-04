@@ -123,10 +123,10 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   filterContainer: {
-    position: 'absolute',
-    zIndex: 1,
-    right: 0,
-    top: 10,
+    // position: 'absolute',
+    // zIndex: 1,
+    // right: 0,
+    // top: 10,
     paddingRight: 12,
     paddingVertical: 6,
     backgroundColor: colors2024['neutral-bg-1'],

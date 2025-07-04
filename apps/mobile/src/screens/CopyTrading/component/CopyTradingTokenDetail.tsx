@@ -41,6 +41,11 @@ import { removeAllGlobalBottomSheetModals2024 } from '@/components2024/GlobalBot
 export type DialogProps = {
   tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
   showTabType?: TabType;
+  updateSingleTokenPrice: (
+    tokenId: string,
+    chain: string,
+    price: number,
+  ) => void;
   onClose?: () => void;
 };
 
@@ -53,6 +58,7 @@ export enum TabType {
 export default function CopyTradingTokenDetail({
   tradingTokenItem,
   showTabType = TabType.tokenInfo,
+  updateSingleTokenPrice,
   onClose,
 }: RNViewProps & DialogProps) {
   const { t } = useTranslation();
@@ -126,21 +132,18 @@ export default function CopyTradingTokenDetail({
 
   const fetchDetailInfo = useMemoizedFn(async () => {
     try {
-      // magic method
-      // just all fetch to refersh page so no toggle no scroll in bottom sheet
-      // if (
-      //   'buy_address_count' in tradingTokenItem &&
-      //   tradingTokenItem.buy_address_count > 0
-      // ) {
-      //   // if copy trading token item, no need to fetch detail info
-      //   return;
-      // }
       setIsLoading(true);
       const info = await openapi.getCopyTradingDetail({
         token_id: tradingTokenItem.id,
         chain_id: tradingTokenItem.chain,
       });
       info.price_24h_change = info.price_change || info.price_24h_change || 0;
+      setDetailInfo(info);
+      updateSingleTokenPrice(
+        tradingTokenItem.id,
+        tradingTokenItem.chain,
+        info.price,
+      );
       setDetailInfo(info);
     } catch (e) {
       console.log('fetchDetailInfo error', e);
@@ -163,9 +166,14 @@ export default function CopyTradingTokenDetail({
           <SmartWallets tradingTokenItem={detailInfo as CopyTradeTokenItemV2} />
         );
       case TabType.sameNameTokens:
-        return <SameNameTokens tradingTokenItem={detailInfo} />;
+        return (
+          <SameNameTokens
+            tradingTokenItem={detailInfo}
+            updateSingleTokenPrice={updateSingleTokenPrice}
+          />
+        );
     }
-  }, [activeTab, detailInfo]);
+  }, [activeTab, detailInfo, updateSingleTokenPrice]);
 
   return (
     <AutoLockView style={styles.container}>
