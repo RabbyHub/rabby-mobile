@@ -104,14 +104,12 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
 
               case 'gasPrice':
                 if (tx.gasPrice) {
-                  tx.gasPrice = `0x${new BigNumber(tx.gasPrice?.slice(2))
+                  tx.gasPrice = `0x${new BigNumber(tx.gasPrice, 16)
                     .times(1.3)
                     .toString(16)}`;
                 }
                 if (tx.maxFeePerGas) {
-                  tx.maxFeePerGas = `0x${new BigNumber(
-                    tx.maxFeePerGas?.slice(2),
-                  )
+                  tx.maxFeePerGas = `0x${new BigNumber(tx.maxFeePerGas, 16)
                     .times(1.3)
                     .toString(16)}`;
                 }

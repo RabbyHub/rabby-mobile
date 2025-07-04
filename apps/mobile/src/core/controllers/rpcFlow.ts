@@ -298,15 +298,19 @@ const flowContext = flow
                 break;
               case 'gasPrice':
                 if (_approvalRes.gasPrice) {
-                  _approvalRes.gasPrice = `0x${new BigNumber(
-                    _approvalRes.gasPrice?.slice(2),
-                  )
-                    .times(1.3)
-                    .toString(16)}`;
+                  if (_approvalRes.gasPrice) {
+                    _approvalRes.gasPrice = `0x${new BigNumber(
+                      _approvalRes.gasPrice,
+                      16,
+                    )
+                      .times(1.3)
+                      .toString(16)}`;
+                  }
                 }
                 if (_approvalRes.maxFeePerGas) {
                   _approvalRes.maxFeePerGas = `0x${new BigNumber(
-                    _approvalRes.maxFeePerGas?.slice(2),
+                    _approvalRes.maxFeePerGas,
+                    16,
                   )
                     .times(1.3)
                     .toString(16)}`;
