@@ -611,7 +611,7 @@ export class TransactionHistoryService {
       item => -item.createdAt,
     );
     const maxCompletedNonceByChain = completeds.reduce((res, item) => {
-      res[item.chainId] = Math.max(res[item.chainId] || 0, item.nonce);
+      res[item.chainId] = Math.max(res[item.chainId] ?? -1, item.nonce);
       return res;
     }, {} as Record<string, number>);
 
@@ -620,7 +620,7 @@ export class TransactionHistoryService {
         groups.filter(
           item =>
             item.isPending &&
-            item.nonce > (maxCompletedNonceByChain[item.chainId] || 0),
+            item.nonce > (maxCompletedNonceByChain[item.chainId] ?? -1),
         ),
         item => {
           return -item.createdAt;
