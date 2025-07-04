@@ -274,92 +274,103 @@ const flowContext = flow
     const {
       session: { origin, $mobileCtx },
     } = request;
-    const requestDeferFn = async (isRetry = false) =>
-      new Promise(async resolve => {
-        let waitSignComponentPromise = Promise.resolve();
-        if (isSignApproval(approvalType) && uiRequestComponent) {
-          waitSignComponentPromise = waitSignComponentAmounted();
-        }
 
-        if (approvalRes?.isGnosis) return resolve(undefined);
+    const createRequestDeferFn =
+      (originApprovalRes: typeof approvalRes) =>
+      async (isRetry = false) =>
+        new Promise(async resolve => {
+          let waitSignComponentPromise = Promise.resolve();
+          if (isSignApproval(approvalType) && uiRequestComponent) {
+            waitSignComponentPromise = waitSignComponentAmounted();
+          }
 
-        return waitSignComponentPromise.then(() => {
-          let _approvalRes = { ...approvalRes };
-          if (isRetry && mapMethod === 'ethSendTransaction') {
-            const retryType = getRetryTxType();
-            switch (retryType) {
-              case 'nonce':
-                const recommendNonce = getRetryTxRecommendNonce();
-                console.log('current nonce', _approvalRes.nonce);
-                console.log('recommendNonce nonce', recommendNonce);
-                _approvalRes.nonce = intToHex(
-                  hexToNumber(recommendNonce as '0x${string}'),
-                );
-                break;
-              case 'gasPrice':
-                if (_approvalRes.gasPrice) {
+          if (originApprovalRes?.isGnosis) return resolve(undefined);
+
+          return waitSignComponentPromise.then(() => {
+            let _approvalRes = originApprovalRes;
+
+            if (isRetry && mapMethod === 'ethSendTransaction') {
+              _approvalRes = { ...originApprovalRes };
+              const retryType = getRetryTxType();
+              switch (retryType) {
+                case 'nonce':
+                  const recommendNonce = getRetryTxRecommendNonce();
+                  console.log('current nonce', _approvalRes.nonce);
+                  console.log('recommendNonce nonce', recommendNonce);
+                  _approvalRes.nonce = intToHex(
+                    hexToNumber(recommendNonce as '0x${string}'),
+                  );
+                  break;
+                case 'gasPrice':
                   if (_approvalRes.gasPrice) {
-                    _approvalRes.gasPrice = `0x${new BigNumber(
-                      _approvalRes.gasPrice,
+                    if (_approvalRes.gasPrice) {
+                      _approvalRes.gasPrice = `0x${new BigNumber(
+                        _approvalRes.gasPrice,
+                        16,
+                      )
+                        .times(1.3)
+                        .toString(16)}`;
+                    }
+                  }
+                  if (_approvalRes.maxFeePerGas) {
+                    _approvalRes.maxFeePerGas = `0x${new BigNumber(
+                      _approvalRes.maxFeePerGas,
                       16,
                     )
                       .times(1.3)
                       .toString(16)}`;
                   }
-                }
-                if (_approvalRes.maxFeePerGas) {
-                  _approvalRes.maxFeePerGas = `0x${new BigNumber(
-                    _approvalRes.maxFeePerGas,
-                    16,
-                  )
-                    .times(1.3)
-                    .toString(16)}`;
-                }
-                break;
-              default:
-                break;
+                  break;
+                default:
+                  break;
+              }
+              if (retryType) {
+                notificationService.setCurrentRequestDeferFn(
+                  createRequestDeferFn(_approvalRes),
+                );
+              }
             }
-          }
 
-          return Promise.resolve(
-            providerController[mapMethod]({
-              ...request,
-              approvalRes: _approvalRes,
-            }),
-          )
-            .then(result => {
-              if (isSignApproval(approvalType)) {
-                eventBus.emit(EVENTS.SIGN_FINISHED, {
-                  success: true,
-                  data: result,
-                });
-              }
-              return result;
-            })
-            .then(resolve)
-            .catch((e: any) => {
-              const payload = {
-                method: EVENTS.SIGN_FINISHED,
-                params: {
-                  success: false,
-                  errorMsg: e?.message || JSON.stringify(e),
-                },
-              };
-              if (e.method) {
-                payload.method = e.method;
-                payload.params = e.message;
-              }
+            return Promise.resolve(
+              providerController[mapMethod]({
+                ...request,
+                approvalRes: _approvalRes,
+              }),
+            )
+              .then(result => {
+                if (isSignApproval(approvalType)) {
+                  eventBus.emit(EVENTS.SIGN_FINISHED, {
+                    success: true,
+                    data: result,
+                  });
+                }
+                return result;
+              })
+              .then(resolve)
+              .catch((e: any) => {
+                const payload = {
+                  method: EVENTS.SIGN_FINISHED,
+                  params: {
+                    success: false,
+                    errorMsg: e?.message || JSON.stringify(e),
+                  },
+                };
+                if (e.method) {
+                  payload.method = e.method;
+                  payload.params = e.message;
+                }
 
-              Sentry.captureException(e);
-              if (isSignApproval(approvalType)) {
-                eventBus.emit(payload.method, payload.params);
-              } else if (__DEV__) {
-                console.error(e);
-              }
-              reject(e);
-            });
+                Sentry.captureException(e);
+                if (isSignApproval(approvalType)) {
+                  eventBus.emit(payload.method, payload.params);
+                } else if (__DEV__) {
+                  console.error(e);
+                }
+                reject(e);
+              });
+          });
         });
-      });
+    const requestDeferFn = createRequestDeferFn(approvalRes);
 
     notificationService.setCurrentRequestDeferFn(requestDeferFn);
     const requestDefer = requestDeferFn();

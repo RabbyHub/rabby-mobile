@@ -232,7 +232,8 @@ export const useDebugToastErrorTxRetryInfo = ({
         `
                 origin error: ${description}
                 nonce: ${tx.nonce}
-                gasPrice: ${tx.gasPrice || tx.maxFeePerGas}
+                gasPrice: ${tx.gasPrice}
+                maxFeePerGas: ${tx.maxFeePerGas}
                 `,
         { duration: 3000 },
       );

@@ -219,7 +219,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   const isHD = hdType === 'ledger';
   const isFailedOrRejected = status === 'FAILED' || status === 'REJECTED';
 
-  const showSendSvg = retryUpdateType !== 'origin';
+  const showSendSvg = retryUpdateType === 'origin';
 
   return (
     <View style={StyleSheet.flatten([styles.wrapper, style])}>
