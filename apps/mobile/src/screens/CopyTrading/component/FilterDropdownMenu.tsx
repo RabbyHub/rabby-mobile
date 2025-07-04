@@ -129,7 +129,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     // top: 10,
     paddingRight: 12,
     paddingVertical: 6,
-    backgroundColor: colors2024['neutral-bg-1'],
+    // backgroundColor: colors2024['neutral-bg-1'],
   },
   filterButton: {
     flexDirection: 'row',
