@@ -53,7 +53,7 @@ export const useProfit = () => {
   });
 
   const debounceFetchProfitDataByEvent = useMemo(
-    () => debounce(fetchProfitDataByEvent, 2000),
+    () => debounce(fetchProfitDataByEvent, 1000),
     [fetchProfitDataByEvent],
   );
 
