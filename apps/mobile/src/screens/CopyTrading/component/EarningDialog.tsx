@@ -75,7 +75,7 @@ const TokenEarningItem: React.FC<{
           <Text style={styles.tokenName} numberOfLines={1}>
             {getTokenSymbol(item)}
           </Text>
-          <Text style={styles.tokenPrice}>${formatPrice(item.price, 6)}</Text>
+          <Text style={styles.tokenPrice}>${formatPrice(item.price)}</Text>
         </View>
       </View>
 
