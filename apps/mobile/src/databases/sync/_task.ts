@@ -46,6 +46,7 @@ export async function batchSaveWithPQueueAndTransaction<
     noNeedAbort?: boolean;
     printLog?: boolean;
     // signal?: AbortSignal;
+    waitTaskDoneReturn?: boolean;
   },
   setHistoryLoading?: any,
 ) {
@@ -58,6 +59,7 @@ export async function batchSaveWithPQueueAndTransaction<
     printLog = false,
     noNeedAbort = false,
     // signal = syncAbortControllers[taskFor],
+    waitTaskDoneReturn = false,
   } = options;
 
   const taskKey = makeTaskKey(taskFor, owner_addr);
@@ -226,8 +228,13 @@ export async function batchSaveWithPQueueAndTransaction<
       console.debug(`${loggerPrefix}All batches have been processed.`);
   }
 
+  if (waitTaskDoneReturn) {
+    await thisTickUpsertQueue.onIdle();
+  }
+
   return {
     taskKey,
     taskSignal: currentSignal,
+    queueCompleted: waitTaskDoneReturn,
   };
 }

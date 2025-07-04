@@ -28,6 +28,31 @@ import { transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
 
+const cleanupStaleTokens = async (address: string, syncTimestamp: number) => {
+  try {
+    const repo = TokenItemEntity.getRepository();
+    const deleteResult = await repo
+      .createQueryBuilder()
+      .delete()
+      .from(TokenItemEntity)
+      .where('owner_addr = :address', { address })
+      .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
+      .execute();
+
+    console.debug(
+      `🧹 Cleaned ${deleteResult.affected || 0} stale tokens for ${address}`,
+    );
+
+    return {
+      deletedCount: deleteResult.affected || 0,
+      success: true,
+    };
+  } catch (error) {
+    console.error(`❌ Failed to cleanup stale tokens for ${address}:`, error);
+    throw error;
+  }
+};
+
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   const data = [..._tokens];
   if (data.length === 0) {
@@ -37,28 +62,33 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
     b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
 
+  const syncTimestamp = Date.now();
+
   const tokenItems = tokens.map(raw => {
     const tokenItem = new TokenItemEntity();
     TokenItemEntity.fillEntity(tokenItem, address, raw);
+    tokenItem._local_updated_at = syncTimestamp;
 
     return tokenItem;
   });
 
   await prepareAppDataSource();
 
-  await TokenItemEntity.deleteForAddress(address);
+  // await TokenItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
     owner_addr: address,
     taskFor: 'token',
     batchSize: 300,
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
+    waitTaskDoneReturn: true,
   })
-    .then(({ taskSignal, taskKey }) => {
-      if (taskSignal.aborted) {
-        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+    .then(({ taskSignal, taskKey, queueCompleted }) => {
+      if (queueCompleted) {
+        console.debug(`[${taskKey}] batch upsert tasks completed`);
+        cleanupStaleTokens(address, syncTimestamp);
       } else {
-        console.debug(`[${taskKey}] batch upsert tasks created`);
+        console.warn(`[${taskKey}] batch upsert tasks aborted.`);
       }
     })
     .catch(error => {
