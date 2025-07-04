@@ -277,16 +277,17 @@ export function useRateModal() {
 
       try {
         setRateModalState(prev => ({ ...prev, isSubmitting: true }));
-        await openapi.submitFeedback({
-          text: feedbackContent,
-          usage: 'rating',
-        });
-        needFeedbackText &&
+        if (needFeedbackText) {
+          await openapi.submitFeedback({
+            text: feedbackContent,
+            usage: 'rating',
+          });
           matomoRequestEvent({
             category: 'Rate Rabby',
             action: 'Rate_SubmitAdvice',
             label: [userStar].join('|'),
           });
+        }
       } catch (error) {
         Sentry.captureException(error, {
           extra: {
