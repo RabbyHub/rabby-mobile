@@ -95,6 +95,7 @@ export const getInitDescWithCexLocalCache = (
       is_spam: false,
       is_scam: false,
       name: '',
+      id: '', // fix type check init default undefined
     };
   } catch (error) {
     // may 429 error

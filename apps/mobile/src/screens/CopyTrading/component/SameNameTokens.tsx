@@ -9,6 +9,7 @@ import {
   CopyTradeSameToken,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { AssetAvatar } from '@/components';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { openapi } from '@/core/request';
@@ -28,6 +29,11 @@ import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/
 
 interface SameNameTokensProps {
   tradingTokenItem: TokenItem;
+  updateSingleTokenPrice: (
+    tokenId: string,
+    chain: string,
+    price: number,
+  ) => void;
 }
 
 export const SkeletonSameNameToken = () => {
@@ -74,6 +80,7 @@ export const SkeletonSameNameToken = () => {
 
 export const SameNameTokens: React.FC<SameNameTokensProps> = ({
   tradingTokenItem,
+  updateSingleTokenPrice,
 }) => {
   const { colors2024, isLight, styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -94,7 +101,10 @@ export const SameNameTokens: React.FC<SameNameTokensProps> = ({
         token_id: tradingTokenItem.id,
       });
 
-      setSameNameTokens(data);
+      if (data.length > 1) {
+        // filter one so it is empty when only self is same name token
+        setSameNameTokens(data);
+      }
     } catch (e) {
       console.error('Failed to fetch same name tokens:', e);
       setSameNameTokens([]);
@@ -109,10 +119,14 @@ export const SameNameTokens: React.FC<SameNameTokensProps> = ({
   }, [fetchSameNameTokens]);
 
   const handleTokenPress = useMemoizedFn((token: CopyTradeSameToken) => {
+    if (token.id === tradingTokenItem.id) {
+      return;
+    }
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL,
       tradingTokenItem: token,
       showTabType: TabType.tokenInfo,
+      updateSingleTokenPrice,
       bottomSheetModalProps: {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,
@@ -178,34 +192,44 @@ export const SameNameTokens: React.FC<SameNameTokensProps> = ({
   );
 
   const renderLoadingComponent = () => (
-    <View style={styles.listContainer}>
-      {Array.from({ length: 6 }).map((_, index) => (
-        <SkeletonSameNameToken key={index} />
-      ))}
-    </View>
-  );
-
-  return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <BottomSheetHandlableView style={styles.header}>
         <Text style={styles.title}>{t('page.copyTrading.token')}</Text>
         <Text style={styles.liquidityTitle}>
           {t('page.copyTrading.Liquidity')}
         </Text>
+      </BottomSheetHandlableView>
+      <View style={styles.listContainer}>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <SkeletonSameNameToken key={index} />
+        ))}
       </View>
+    </View>
+  );
 
-      {isLoading ? (
-        renderLoadingComponent()
-      ) : (
-        <BottomSheetFlatList
-          data={sameNameTokens}
-          keyExtractor={item => `${item.chain}-${item.id}`}
-          renderItem={renderTokenItem}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmptyComponent}
-          contentContainerStyle={styles.listContainer}
-        />
+  if (isLoading) {
+    return renderLoadingComponent();
+  }
+
+  return (
+    <View style={styles.container}>
+      {sameNameTokens.length > 0 && (
+        <BottomSheetHandlableView style={styles.header}>
+          <Text style={styles.title}>{t('page.copyTrading.token')}</Text>
+          <Text style={styles.liquidityTitle}>
+            {t('page.copyTrading.Liquidity')}
+          </Text>
+        </BottomSheetHandlableView>
       )}
+
+      <BottomSheetFlatList
+        data={sameNameTokens}
+        keyExtractor={item => `${item.chain}-${item.id}`}
+        renderItem={renderTokenItem}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={renderEmptyComponent}
+        contentContainerStyle={styles.listContainer}
+      />
     </View>
   );
 };

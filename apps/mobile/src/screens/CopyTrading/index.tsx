@@ -305,8 +305,9 @@ export const CopyTradingScreen = () => {
         showTabType: isShowSmartWallets
           ? TabType.smartWallets
           : TabType.tokenInfo,
+        updateSingleTokenPrice,
         bottomSheetModalProps: {
-          enableContentPanningGesture: true,
+          enableContentPanningGesture: false,
           enablePanDownToClose: true,
           handleStyle: {
             backgroundColor: isLight
@@ -327,8 +328,9 @@ export const CopyTradingScreen = () => {
       itemData: profitData?.itemData,
       totalProfit: profitData?.totalProfit,
       totalHoldValue: profitData?.totalHoldValue,
+      updateSingleTokenPrice,
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
+        enableContentPanningGesture: false,
         enablePanDownToClose: true,
         handleStyle: {
           backgroundColor: isLight
@@ -349,6 +351,11 @@ export const CopyTradingScreen = () => {
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const currentScrollY = event.nativeEvent.contentOffset.y;
       const deltaY = currentScrollY - lastScrollY.current;
+
+      // Don't hide floating bar during refresh or when scrollY is negative (pull to refresh)
+      if (refreshing || currentScrollY < 0) {
+        return;
+      }
 
       // Show/hide floating bar based on scroll direction
       if (deltaY > 5) {
@@ -385,6 +392,9 @@ export const CopyTradingScreen = () => {
       newTokenList: CopyTradeTokenItem[],
       oldTokenList: CopyTradeTokenItem[],
     ) => {
+      if (newTokenList.length === 0 || oldTokenList.length === 0) {
+        return;
+      }
       const oldFirst = oldTokenList[0];
       const index = newTokenList.findIndex(token => token.id === oldFirst.id);
       if (index === -1) {
@@ -446,73 +456,75 @@ export const CopyTradingScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { profitData, showProfitBar } = useProfit();
+  const { profitData, showProfitBar, updateSingleTokenPrice } = useProfit();
 
   return (
     <NormalScreenContainer type="bg1" noHeader={true}>
       <View style={styles.headerContainer}>
-        <FilterDropdownMenu
-          isVisible={isMenuVisible}
-          selectedRule={filterRule}
-          filterTabList={filterTabList}
-          onOpen={handleOpenMenu}
-          onClose={handleCloseMenu}
-          onSelectItem={handleSelectMenuItem}
-        />
         {tabLoading ? (
           <View style={[styles.scrollContentContainer, styles.headerChainList]}>
             <SkeletonTabList />
           </View>
         ) : (
-          <ScrollView
-            style={styles.headerChainList}
-            contentContainerStyle={styles.scrollContentContainer}
-            horizontal={true}
-            showsHorizontalScrollIndicator={false}>
-            {chainList.map(chain => (
-              <TouchableOpacity
-                key={chain?.id}
-                onPress={() => handleChainItemPress(chain?.serverId ?? '')}
-                style={StyleSheet.flatten([
-                  styles.chainItem,
-                  selectedChainId === chain?.serverId &&
-                    styles.selectedChainItem,
-                ])}>
-                <ChainIconImage
-                  size={18}
-                  chainEnum={chain?.enum}
-                  isShowRPCStatus={true}
-                />
-                <Text
-                  style={StyleSheet.flatten([
-                    styles.chainItemText,
-                    selectedChainId === chain?.serverId &&
-                      styles.selectedChainItemText,
-                  ])}>
-                  {chain?.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-            {comingChainList.map(chain => (
-              <Tip content={t('page.copyTrading.comingSoon')} key={chain?.id}>
-                <View
+          <View style={styles.headerChainListContainer}>
+            <ScrollView
+              style={styles.headerChainList}
+              contentContainerStyle={styles.scrollContentContainer}
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}>
+              {chainList.map(chain => (
+                <TouchableOpacity
                   key={chain?.id}
+                  onPress={() => handleChainItemPress(chain?.serverId ?? '')}
                   style={StyleSheet.flatten([
                     styles.chainItem,
-                    styles.chainItemDisabled,
+                    selectedChainId === chain?.serverId &&
+                      styles.selectedChainItem,
                   ])}>
                   <ChainIconImage
                     size={18}
                     chainEnum={chain?.enum}
                     isShowRPCStatus={true}
                   />
-                  <Text style={StyleSheet.flatten([styles.chainItemText])}>
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.chainItemText,
+                      selectedChainId === chain?.serverId &&
+                        styles.selectedChainItemText,
+                    ])}>
                     {chain?.name}
                   </Text>
-                </View>
-              </Tip>
-            ))}
-          </ScrollView>
+                </TouchableOpacity>
+              ))}
+              {comingChainList.map(chain => (
+                <Tip content={t('page.copyTrading.comingSoon')} key={chain?.id}>
+                  <View
+                    key={chain?.id}
+                    style={StyleSheet.flatten([
+                      styles.chainItem,
+                      styles.chainItemDisabled,
+                    ])}>
+                    <ChainIconImage
+                      size={18}
+                      chainEnum={chain?.enum}
+                      isShowRPCStatus={true}
+                    />
+                    <Text style={StyleSheet.flatten([styles.chainItemText])}>
+                      {chain?.name}
+                    </Text>
+                  </View>
+                </Tip>
+              ))}
+            </ScrollView>
+            <FilterDropdownMenu
+              isVisible={isMenuVisible}
+              selectedRule={filterRule}
+              filterTabList={filterTabList}
+              onOpen={handleOpenMenu}
+              onClose={handleCloseMenu}
+              onSelectItem={handleSelectMenuItem}
+            />
+          </View>
         )}
       </View>
       {currentUpdateCount > 0 && (
@@ -565,6 +577,13 @@ export const CopyTradingScreen = () => {
                   );
                   checkCountUpdate(tokenArr, tokenList);
                   setRefreshing(false);
+                  setTimeout(() => {
+                    Animated.timing(floatingBarOpacity, {
+                      toValue: 1,
+                      duration: 200,
+                      useNativeDriver: true,
+                    }).start();
+                  }, 500);
                 }}
                 title={t('page.copyTrading.refreshTitle')}
                 titleColor={colors2024['neutral-secondary']}
@@ -610,17 +629,20 @@ export const CopyTradingScreen = () => {
                     <Text style={styles.floatingBarBalanceText}>
                       {formatUsdValueKMB(profitData?.totalHoldValue || 0)}
                     </Text>
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.floatingBarBalanceText,
-                        profitData?.totalProfit && profitData?.totalProfit > 0
-                          ? styles.floatingBarProfitText
-                          : styles.floatingBarLossText,
-                      ])}>
-                      {`(${formatUsdValueKMBWithSign(
-                        profitData?.totalProfit || 0,
-                      )})`}
-                    </Text>
+                    {profitData?.totalProfit !== 0 && (
+                      <Text
+                        style={StyleSheet.flatten([
+                          styles.floatingBarBalanceText,
+                          profitData?.totalProfit &&
+                          profitData?.totalProfit >= 0
+                            ? styles.floatingBarProfitText
+                            : styles.floatingBarLossText,
+                        ])}>
+                        {`(${formatUsdValueKMBWithSign(
+                          profitData?.totalProfit || 0,
+                        )})`}
+                      </Text>
+                    )}
                   </View>
                   <RcIconSelectedCC
                     width={16}
@@ -701,9 +723,15 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 12,
     backgroundColor: colors2024['neutral-bg-1'],
   },
+  headerChainListContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    alignItems: 'center',
+  },
   scrollContentContainer: {
     paddingHorizontal: 16,
     gap: 8,
+    paddingRight: 8,
     // paddingLeft: 16,
     // paddingRight: 16,
   },

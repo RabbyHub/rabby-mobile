@@ -12,7 +12,8 @@ const TABLE_NAME_TOKENITEM = 'rabby_cache_tokenitem';
 export type QueryCopyTradingBuyItemResult = TokenItemEntity & {
   buy_amount: number;
   buy_price: number;
-  holdingUsdValue: number;
+  realAmount: number; // min(amount, buy_amount)
+  holdingUsdValue: number; // min(amount, buy_amount) * price
 };
 
 @Entity('copy_trading_buyitem')
@@ -265,6 +266,10 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
           ...record,
           amount: record.amount / DECIMALS_INT_RATIO, // Correct the stored value
           price: record.price / DECIMALS_INT_RATIO, // Correct the stored value
+          realAmount: Math.min(
+            record.amount / DECIMALS_INT_RATIO,
+            record.buy_amount,
+          ),
           holdingUsdValue:
             Math.min(record.amount / DECIMALS_INT_RATIO, record.buy_amount) *
             (record.price / DECIMALS_INT_RATIO),

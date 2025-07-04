@@ -34,25 +34,27 @@ import { TabType } from './CopyTradingTokenDetail';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
 import { QueryCopyTradingBuyItemResult } from '@/databases/entities/copyTradingBuyItem';
+import { useCopyTradingProfitData } from './useProfit';
 
 export type DialogProps = {
   itemData: QueryCopyTradingBuyItemResult[];
   totalProfit: number;
   totalHoldValue: number;
+  updateSingleTokenPrice: (
+    tokenId: string,
+    chain: string,
+    price: number,
+  ) => void;
   onClose?: () => void;
 };
 
 const TokenEarningItem: React.FC<{
-  item: TokenItemEntity & {
-    buy_amount: number;
-    buy_price: number;
-    holdingUsdValue: number;
-  };
+  item: QueryCopyTradingBuyItemResult;
   handlePress: (token: TokenItemEntity) => void;
 }> = ({ item, handlePress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const holdingValue = item.holdingUsdValue;
-  const costValue = item.buy_amount * item.buy_price;
+  const costValue = item.realAmount * item.buy_price;
   const profit = holdingValue - costValue;
   const profitPercentage = costValue > 0 ? profit / costValue : 0;
 
@@ -82,7 +84,7 @@ const TokenEarningItem: React.FC<{
           buyPrice: {formatPrice(item.buy_price, 4, true)}
         </Text>
         <Text style={styles.holdingValue}>
-          {formatUsdValue(item.amount, 4, true)}
+          {formatUsdValue(holdingValue, 4, true)}
         </Text>
         <Text
           style={[
@@ -105,28 +107,33 @@ const TokenEarningItem: React.FC<{
 };
 
 export default function EarningDialog({
-  itemData,
-  totalProfit,
-  totalHoldValue,
   onClose,
+  updateSingleTokenPrice,
 }: RNViewProps & DialogProps) {
+  const [profitData] = useCopyTradingProfitData();
+  const { itemData, totalProfit, totalHoldValue } = useMemo(
+    () => profitData || { itemData: [], totalProfit: 0, totalHoldValue: 0 },
+    [profitData],
+  );
+
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const isPositive = (totalProfit || 0) >= 0;
-  const [totalValue, setTotalValue] = useState(0);
-  useEffect(() => {
-    // magic set state to refresh page to avoid scroll bug
-    const value = itemData.reduce((acc, item) => {
-      return acc + item.holdingUsdValue;
-    }, 0);
-    setTotalValue(value);
-  }, [itemData]);
+  // const [totalValue, setTotalValue] = useState(0);
+  // useEffect(() => {
+  //   // magic set state to refresh page to avoid scroll bug
+  //   const value = itemData.reduce((acc, item) => {
+  //     return acc + item.holdingUsdValue;
+  //   }, 0);
+  //   setTotalValue(value);
+  // }, [itemData]);
 
   const handleTokenPress = useMemoizedFn((token: TokenItemEntity) => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL,
       tradingTokenItem: token,
       showTabType: TabType.tokenInfo,
+      updateSingleTokenPrice,
       bottomSheetModalProps: {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,
@@ -166,17 +173,19 @@ export default function EarningDialog({
               <Text style={styles.totalValue}>
                 {formatUsdValueKMB(totalHoldValue)}
               </Text>
-              <Text
-                style={[
-                  styles.totalProfit,
-                  {
-                    color: isPositive
-                      ? colors2024['green-default']
-                      : colors2024['red-default'],
-                  },
-                ]}>
-                {`(${formatUsdValueKMBWithSign(totalProfit)})`}
-              </Text>
+              {totalProfit !== 0 && (
+                <Text
+                  style={[
+                    styles.totalProfit,
+                    {
+                      color: isPositive
+                        ? colors2024['green-default']
+                        : colors2024['red-default'],
+                    },
+                  ]}>
+                  {`(${formatUsdValueKMBWithSign(totalProfit)})`}
+                </Text>
+              )}
             </View>
           </View>
 

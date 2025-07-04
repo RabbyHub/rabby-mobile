@@ -1,6 +1,13 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useMemo } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  LayoutChangeEvent,
+} from 'react-native';
 import {
   CopyTradeTokenItem,
   CopyTradeTokenItemV2,
@@ -151,8 +158,32 @@ const TokenListItemComponent = ({
   const { t } = useTranslation();
   const isPositive = (item.price_change || item.price_24h_change || 0) >= 0;
 
+  const [maxDisplayCount, setMaxDisplayCount] = useState(10);
+
   const handlePressSmartWallets = useMemoizedFn(() => {
     onPress(item, true);
+  });
+
+  const calculateMaxIcons = useMemoizedFn((containerWidth: number) => {
+    // icon width 20px, overlap 10px
+    // formula: first icon 20px + (n-1) * 10px <= containerWidth
+    // so: 20 + (n-1) * 10 <= containerWidth
+    // so: n <= (containerWidth - 10) / 10
+    const ICON_WIDTH = 20;
+    const OVERLAP = 10;
+
+    if (containerWidth <= ICON_WIDTH) {
+      return 1;
+    }
+
+    const maxCount = Math.floor((containerWidth - OVERLAP) / OVERLAP);
+    return Math.max(1, Math.min(maxCount, 10)); // min 1, max 10
+  });
+
+  const handleContainerLayout = useMemoizedFn((event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout;
+    const newMaxCount = calculateMaxIcons(width);
+    setMaxDisplayCount(newMaxCount);
   });
 
   return (
@@ -197,9 +228,10 @@ const TokenListItemComponent = ({
           </View>
           <TouchableOpacity
             style={styles.dollarIconsContainer}
+            onLayout={handleContainerLayout}
             onPress={showTipsDollarDialog}>
             {Array.from({
-              length: Math.min(item.buy_address_count || 0, 10),
+              length: Math.min(item.buy_address_count || 0, maxDisplayCount),
             }).map((_, index) => (
               <View key={index}>
                 <Image
