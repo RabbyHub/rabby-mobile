@@ -1983,7 +1983,36 @@
       "refreshTitle": "Daha Fazla Copy Trading Yükleniyor Smart Money'den",
       "smartMoneyWallets": "Akıllı Para Cüzdanları",
       "recentBuy": "Son Satın Alım",
-      "noMoreData": "Artık veri yok"
+      "noMoreData": "Artık veri yok",
+      "filterRule": {
+        "24HChange": "24H Değişim",
+        "tokenCreate": "Yeni Oluşturuldu",
+        "smartMoney": "Akıllı Cüzdan Ticareti"
+      },
+      "token": "Jeton",
+      "Liquidity": "Likidite",
+      "holdingProfit": "Tutma/Kâr",
+      "tokenInfo": "Token Bilgisi",
+      "tokenName": "Token Adı",
+      "twitterNews": "X'teki Haberler",
+      "bought": "Satın alındı",
+      "contractAddress": "Sözleşme Adresi",
+      "myCopyTrading": "Kopyalamam",
+      "chain": "Zincir",
+      "earned": "Kazanıldı",
+      "info": "Bilgi",
+      "loss": "Kayıp",
+      "timeLabelAgo": "{{time}} önce oluşturuldu",
+      "currentToken": "Mevcut Token",
+      "noOtherTokensWithSameName": "Aynı isimde başka token bulunamadı.",
+      "createdTime": "Oluşturulma Zamanı",
+      "timeSmartWallet": "Zaman / Akıllı Cüzdan",
+      "buyEarn": "24H Satın Al / Kazan",
+      "myCopyTradingEarnings": "Kopya Ticaret Kazançlarım",
+      "smartWalletsBuying": "{{len}} Akıllı Cüzdan Satın Alma",
+      "sameNameTokens": "Aynı İsimli Token'lar",
+      "earn": "Kazan",
+      "smartWallets": "Akıllı Cüzdanlar"
     }
   },
   "component": {

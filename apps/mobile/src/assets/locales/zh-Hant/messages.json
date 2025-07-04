@@ -2100,7 +2100,36 @@
       "noMoreData": "沒有更多資料",
       "smartMoneyWallets": "Smart Money 錢包",
       "recentBuy": "最近購買",
-      "refreshTitle": "載入更多來自 Smart Money 的 Copy Trading"
+      "refreshTitle": "載入更多來自 Smart Money 的 Copy Trading",
+      "filterRule": {
+        "tokenCreate": "最近創建的",
+        "24HChange": "24H 變化",
+        "smartMoney": "交易智能钱包"
+      },
+      "sameNameTokens": "相同名稱代幣",
+      "contractAddress": "合約地址",
+      "bought": "購買",
+      "currentToken": "當前代幣",
+      "chain": "鏈接",
+      "earn": "賺取",
+      "holdingProfit": "持有/利潤",
+      "smartWalletsBuying": "{{len}} 智能錢包購買",
+      "token": "代幣",
+      "Liquidity": "流动性",
+      "myCopyTradingEarnings": "我的 Copy Trading 收益",
+      "createdTime": "創建時間",
+      "tokenName": "代幣名稱",
+      "loss": "損失",
+      "noOtherTokensWithSameName": "未找到其他具有相同名稱的代幣。",
+      "info": "資訊",
+      "twitterNews": "X中的新聞",
+      "timeLabelAgo": "創建於 {{time}} 前",
+      "timeSmartWallet": "時間 / 智能錢包",
+      "earned": "賺取",
+      "buyEarn": "24H 購買 / 賺取",
+      "tokenInfo": "代幣信息",
+      "smartWallets": "智能錢包",
+      "myCopyTrading": "我的拷贝交易"
     }
   },
   "component": {
