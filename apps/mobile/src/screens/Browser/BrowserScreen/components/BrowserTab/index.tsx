@@ -573,7 +573,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     console.warn('IOS Content process terminated', nativeEvent);
 
                     if (isActive) {
-                      handleReload();
+                      // handleReload();
+                      setRefreshKey(key => key + 1);
                     } else {
                       onUpdateTab?.({
                         initialUrl: nativeEvent.url,
