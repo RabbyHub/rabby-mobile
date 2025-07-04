@@ -261,20 +261,18 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
       const queryEndTime = Date.now();
 
       // Fix amount and price values using the same logic as badRealTransformer
-      const correctedRecords = validRecords
-        .map(record => ({
-          ...record,
-          amount: record.amount / DECIMALS_INT_RATIO, // Correct the stored value
-          price: record.price / DECIMALS_INT_RATIO, // Correct the stored value
-          realAmount: Math.min(
-            record.amount / DECIMALS_INT_RATIO,
-            record.buy_amount,
-          ),
-          holdingUsdValue:
-            Math.min(record.amount / DECIMALS_INT_RATIO, record.buy_amount) *
-            (record.price / DECIMALS_INT_RATIO),
-        }))
-        .sort((a, b) => b.holdingUsdValue - a.holdingUsdValue);
+      const correctedRecords = validRecords.map(record => ({
+        ...record,
+        amount: record.amount / DECIMALS_INT_RATIO, // Correct the stored value
+        price: record.price / DECIMALS_INT_RATIO, // Correct the stored value
+        realAmount: Math.min(
+          record.amount / DECIMALS_INT_RATIO,
+          record.buy_amount,
+        ),
+        holdingUsdValue:
+          Math.min(record.amount / DECIMALS_INT_RATIO, record.buy_amount) *
+          (record.price / DECIMALS_INT_RATIO),
+      }));
 
       console.log(
         `Database query time: ${

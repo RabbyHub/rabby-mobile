@@ -132,6 +132,9 @@ export const useProfit = () => {
 
   const getRealTimeApiToUpdatePrice = useMemoizedFn(
     async (itemData: QueryCopyTradingBuyItemResult[]) => {
+      if (itemData.length === 0) {
+        return;
+      }
       const top10Item = itemData.slice(0, 10);
       const time = Date.now();
       const results = await Promise.allSettled(
@@ -171,8 +174,10 @@ export const useProfit = () => {
     setLoading(true);
     const res = await CopyTradingBuyItemEntity.queryCopyTradingItems();
     const aggregatedData = groupByChainAndTokenId(res);
-    updateProfitData(aggregatedData);
-    // getRealTimeApiToUpdatePrice(res);
+    updateProfitData(
+      aggregatedData.sort((a, b) => b.holdingUsdValue - a.holdingUsdValue),
+    );
+    getRealTimeApiToUpdatePrice(res);
     CopyTradingBuyItemEntity.deleteExpiredBuyItem();
     setLoading(false);
   });
