@@ -221,7 +221,7 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
 
   useEffect(() => {
     runFetchLocalPendingTx();
-  }, [runFetchLocalPendingTx, clearLocalPendingTxData]);
+  }, [runFetchLocalPendingTx]);
 
   useInterval(() => {
     if (localPendingTxData) {
