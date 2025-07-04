@@ -336,6 +336,8 @@ const BridgeToken = ({
                     }
                   />
                   <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
                     style={[
                       styles.balanceText,
                       inSufficient && styles.insufficientInput,
@@ -497,6 +499,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   balanceText: {
     fontSize: 13,
     color: '#6A7587',
+    maxWidth: 220,
   },
   loadingOpacity: {
     opacity: 0.5,
