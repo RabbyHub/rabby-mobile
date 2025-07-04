@@ -196,9 +196,12 @@ export const fetchLocalSendPendingTx = (address: string) => {
   return transactionHistoryService.getRecentPendingTxHistory(address, 'send');
 };
 
+const localPendingTxDataAtom = atom<SendTxHistoryItem | null>(null);
+
 export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
-  const [localPendingTxData, setLocalPendingTxData] =
-    useState<SendTxHistoryItem | null>(null);
+  const [localPendingTxData, setLocalPendingTxData] = useAtom(
+    localPendingTxDataAtom,
+  );
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -218,7 +221,7 @@ export const useRecentSendPendingTx = (isForMultipleAddress: boolean) => {
 
   useEffect(() => {
     runFetchLocalPendingTx();
-  }, [runFetchLocalPendingTx]);
+  }, [runFetchLocalPendingTx, clearLocalPendingTxData]);
 
   useInterval(() => {
     if (localPendingTxData) {
