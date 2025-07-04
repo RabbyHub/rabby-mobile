@@ -1,6 +1,6 @@
 import { WALLET_ICON, WALLET_NAME } from './constant';
 import { setupMetamaskMode } from './metamaskMode';
-import { compareVersions, domReadyCall } from './util';
+import { domReadyCall } from './util';
 
 type Rule = {
   matches: string[];
@@ -8,11 +8,14 @@ type Rule = {
   runner?(): void;
 };
 
-const hackRainbowkit = () => {
+const setupRainbowKitBtn = () => {
+  const $rabbyBtn = document.querySelector(
+    '[data-testid="rk-wallet-option-rabby"]',
+  );
   const $metamaskBtn = document.querySelector(
     '[data-testid="rk-wallet-option-metaMask"]:not([rabby-injected])',
   );
-  if (!$metamaskBtn) {
+  if ($rabbyBtn || !$metamaskBtn) {
     return;
   }
   const $imgEl = $metamaskBtn?.querySelector('img');
@@ -27,26 +30,31 @@ const hackRainbowkit = () => {
   $metamaskBtn?.setAttribute('rabby-injected', 'true');
 };
 
-const hackRainbowkitMetamaskMode = () => {
-  try {
-    const rainbowkitVersion = window.localStorage.getItem('rk-version');
-    if (rainbowkitVersion && compareVersions(rainbowkitVersion, '0.2.8') >= 0) {
-      setupMetamaskMode();
-    }
-  } catch (e) {
-    console.error(e);
+const hackRainbowkit = () => {
+  const hasRainbowkit = Boolean(window.localStorage.getItem('rk-version'));
+  if (!hasRainbowkit) {
+    return;
   }
+  setupMetamaskMode();
+  setupRainbowKitBtn();
+
+  const observer = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      mutation.addedNodes.forEach(function (node) {
+        if (node.nodeType === 1) {
+          setupRainbowKitBtn();
+        }
+      });
+    });
+  });
+
+  observer.observe(document, {
+    childList: true,
+    subtree: true,
+  });
 };
 
 const rules: Rule[] = [
-  {
-    matches: [
-      'https://rainbowkit.com',
-      'https://app.spark.fi',
-      'https://swap.defillama.com',
-    ],
-    runner: hackRainbowkit,
-  },
   {
     matches: ['https://app.uniswap.org'],
     hiddenSelectors: [
@@ -135,6 +143,6 @@ export const startCheckRules = () => {
       });
     }
 
-    hackRainbowkitMetamaskMode();
+    hackRainbowkit();
   });
 };
