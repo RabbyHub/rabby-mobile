@@ -148,6 +148,9 @@ export const GNOSIS_SUPPORT_CHAINS = [
   CHAINS_ENUM.BLAST,
   'SONIC',
   'BERA',
+  'INK',
+  'HEMI',
+  'KATANA',
 ];
 
 export const SELF_HOST_SAFE_NETWORKS = [

@@ -7726,7 +7726,7 @@ __metadata:
   resolution: "@rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis"
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
-    "@rabby-wallet/gnosis-sdk": 1.4.3
+    "@rabby-wallet/gnosis-sdk": 1.4.4
     "@rabby-wallet/keyring-utils": ^0.1.0
     "@safe-global/protocol-kit": 5.0.3
     "@safe-global/types-kit": 1.0.4
@@ -7887,9 +7887,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/gnosis-sdk@npm:1.4.3":
-  version: 1.4.3
-  resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.3"
+"@rabby-wallet/gnosis-sdk@npm:1.4.4":
+  version: 1.4.4
+  resolution: "@rabby-wallet/gnosis-sdk@npm:1.4.4"
   dependencies:
     "@ethersproject/bignumber": 5.5.0
     "@ethersproject/bytes": 5.5.0
@@ -7898,13 +7898,13 @@ __metadata:
     "@ethersproject/solidity": 5.5.0
     "@safe-global/api-kit": 2.5.8
     "@safe-global/protocol-kit": 5.2.1
-    "@safe-global/safe-deployments": 1.37.28
+    "@safe-global/safe-deployments": 1.37.36
     "@safe-global/types-kit": 1.0.2
     axios: 0.24.0
     ethereumjs-util: 7.1.3
     ethers: 5.5.1
     semver: 7.5.4
-  checksum: 0ba8a7790cb604e3ab581a9b0d6f7ce33e988fde4a43f892b63f76531209ff550881ca4ad76178245b694106c765442cbccbc952323316301b37f51d6f655927
+  checksum: 9b056a68b6e096d28d4725a8599002bbb4c66b984b2b401dd0dda8c8d0d82a78de1f22e0cc2c54c07f55d04ec4ab44d6ee838b3de312e3d862f9152ff45a6767
   languageName: node
   linkType: hard
 
@@ -9715,7 +9715,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@safe-global/safe-deployments@npm:1.37.28, @safe-global/safe-deployments@npm:^1.37.12":
+"@safe-global/safe-deployments@npm:1.37.36":
+  version: 1.37.36
+  resolution: "@safe-global/safe-deployments@npm:1.37.36"
+  dependencies:
+    semver: ^7.6.2
+  checksum: 0279b8b0d52a47b084b544ebbcc3c6bebb1a0eeaa264e322d535f9b62142d5756547987f6bc38fb26a55859d3ddc69d9eb62cb348514071021594e4fe7cb96de
+  languageName: node
+  linkType: hard
+
+"@safe-global/safe-deployments@npm:^1.37.12":
   version: 1.37.28
   resolution: "@safe-global/safe-deployments@npm:1.37.28"
   dependencies:
