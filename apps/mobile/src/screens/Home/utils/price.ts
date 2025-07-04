@@ -48,9 +48,6 @@ export const formatUsdValueKMB = (value: string | number): string => {
     return '-';
   }
 
-  if (bnValue.lt(0.01) && !bnValue.eq(0)) {
-    return '-';
-  }
   const numValue = bnValue.toNumber();
   let formattedValue: string;
 
@@ -65,4 +62,14 @@ export const formatUsdValueKMB = (value: string | number): string => {
   }
 
   return `$${formattedValue}`;
+};
+
+export const formatUsdValueKMBWithSign = (value: string | number): string => {
+  const bnValue = new BigNumber(value);
+
+  if (bnValue.lt(0)) {
+    return `-${formatUsdValueKMB(Math.abs(bnValue.toNumber()))}`;
+  }
+
+  return `+${formatUsdValueKMB(bnValue.toNumber())}`;
 };

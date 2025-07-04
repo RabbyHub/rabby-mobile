@@ -16,10 +16,10 @@ class IdSet<T = any> extends Set<T> {
   }
 }
 const allIds = new IdSet<MODAL_ID>();
-globalSheetModalEvents.on(EVENT_NAMES.CREATE, id => {
+globalSheetModalEvents.on(EVENT_NAMES.CREATE, (id: MODAL_ID) => {
   allIds.add(id);
 });
-globalSheetModalEvents.on(EVENT_NAMES.REMOVE, id => {
+globalSheetModalEvents.on(EVENT_NAMES.REMOVE, (id: MODAL_ID) => {
   allIds.delete(id);
 });
 keyringService.on('lock', () => {
@@ -42,6 +42,8 @@ export const globalBottomSheetModalAddListener2024 =
   apisAppWin2024.globalBottomSheetModalAddListener;
 export const presentGlobalBottomSheetModal2024 =
   apisAppWin2024.presentGlobalBottomSheetModal;
+export const removeAllGlobalBottomSheetModals2024 =
+  apisAppWin2024.removeAllGlobalBottomSheetModals;
 
 export const snapToIndexGlobalBottomSheetModal = (
   key: string,
