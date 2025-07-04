@@ -7,8 +7,9 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '@/core/request';
-import { groupBy } from 'lodash';
+import { debounce, groupBy } from 'lodash';
 import { atom, useAtom } from 'jotai';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 const copyTradingProfitDataAtom = atom<{
   itemData: QueryCopyTradingBuyItemResult[];
   totalProfit: number;
@@ -21,12 +22,56 @@ export const useCopyTradingProfitData = () => {
 
 export const useProfit = () => {
   const [loading, setLoading] = useState(true);
+  const [priceByToken, setPriceByToken] = useState<Record<string, number>>({});
   const [profitData, setProfitData] = useAtom(copyTradingProfitDataAtom);
 
   const showProfitBar = useMemo(() => {
     return !loading;
   }, [loading]);
 
+  const fetchProfitDataByEvent = useMemoizedFn(async () => {
+    if (loading) {
+      return;
+    }
+
+    const res = await CopyTradingBuyItemEntity.queryCopyTradingItems();
+    const aggregatedData = groupByChainAndTokenId(res);
+    const updatedData = aggregatedData.map(item => {
+      const cachedPrice = priceByToken[`${item.chain}_${item.id}`];
+      if (cachedPrice) {
+        return {
+          ...item,
+          price: cachedPrice,
+          holdingUsdValue: item.realAmount * cachedPrice,
+        } as QueryCopyTradingBuyItemResult;
+      }
+      return item;
+    });
+    updateProfitData(
+      updatedData.sort((a, b) => b.holdingUsdValue - a.holdingUsdValue),
+    );
+  });
+
+  const debounceFetchProfitDataByEvent = useMemo(
+    () => debounce(fetchProfitDataByEvent, 2000),
+    [fetchProfitDataByEvent],
+  );
+
+  useAppOrmSyncEvents({
+    taskFor: ['token'],
+    onRemoteDataUpserted: useCallback(
+      ctx => {
+        if (!ctx.success) {
+          return;
+        }
+        const { taskFor } = ctx;
+        if (taskFor === 'token') {
+          debounceFetchProfitDataByEvent();
+        }
+      },
+      [debounceFetchProfitDataByEvent],
+    ),
+  });
   const groupByChainAndTokenId = useMemoizedFn(
     (itemData: QueryCopyTradingBuyItemResult[]) => {
       // group by chain and tokenId
@@ -148,12 +193,15 @@ export const useProfit = () => {
         }),
       );
 
+      let newPriceByToken: Record<string, number> = {};
       let newItemData: QueryCopyTradingBuyItemResult[] = [...itemData];
       results.forEach((result, index) => {
         if (result.status === 'fulfilled' && result.value.price) {
           newItemData[index].price = result.value.price;
           newItemData[index].holdingUsdValue =
             newItemData[index].realAmount * result.value.price;
+          newPriceByToken[`${itemData[index].chain}_${itemData[index].id}`] =
+            result.value.price;
         } else {
           if (result.status === 'rejected') {
             console.error(
@@ -166,6 +214,7 @@ export const useProfit = () => {
       updateProfitData(
         newItemData.sort((a, b) => b.holdingUsdValue - a.holdingUsdValue),
       );
+      setPriceByToken(newPriceByToken);
       console.log(`getRealTimeApiToUpdatePrice time: ${Date.now() - time}ms`);
     },
   );
@@ -177,7 +226,7 @@ export const useProfit = () => {
     updateProfitData(
       aggregatedData.sort((a, b) => b.holdingUsdValue - a.holdingUsdValue),
     );
-    getRealTimeApiToUpdatePrice(res);
+    getRealTimeApiToUpdatePrice(aggregatedData);
     CopyTradingBuyItemEntity.deleteExpiredBuyItem();
     setLoading(false);
   });
