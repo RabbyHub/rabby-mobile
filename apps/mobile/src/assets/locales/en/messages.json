@@ -1836,7 +1836,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Price:"
-      }
+      },
+      "appChain": "Dapp Account"
     },
     "search": {
       "sectionHeader": {
