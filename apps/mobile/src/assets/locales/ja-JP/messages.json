@@ -2036,7 +2036,36 @@
       "buy": "購入",
       "refreshTitle": "スマートマネーからのコピー取引をさらに読み込んでいます",
       "updateText": "{{count}} トレンドが更新されました",
-      "smartMoneyWallets": "スマートマネーウォレット"
+      "smartMoneyWallets": "スマートマネーウォレット",
+      "filterRule": {
+        "smartMoney": "トレーディング Smart Wallets",
+        "24HChange": "24Hの変化",
+        "tokenCreate": "最近作成された"
+      },
+      "earn": "稼ぐ",
+      "info": "情報",
+      "chain": "チェーン",
+      "currentToken": "現在のトークン",
+      "createdTime": "作成日時",
+      "contractAddress": "契約アドレス",
+      "myCopyTrading": "私のコピー取引",
+      "tokenName": "トークン名",
+      "loss": "損失",
+      "Liquidity": "流動性",
+      "tokenInfo": "トークン情報",
+      "bought": "購入しました",
+      "smartWallets": "スマートウォレット",
+      "myCopyTradingEarnings": "私のコピー取引の収益",
+      "token": "トークン",
+      "holdingProfit": "保有 / 利益",
+      "buyEarn": "24時間 購入 / 獲得",
+      "smartWalletsBuying": "{{len}} スマートウォレットの購入",
+      "timeSmartWallet": "時間 / スマートウォレット",
+      "sameNameTokens": "同名トークン",
+      "timeLabelAgo": "{{time}}前に作成されました",
+      "noOtherTokensWithSameName": "同じ名前のトークンは見つかりませんでした。",
+      "earned": "獲得した",
+      "twitterNews": "Xに関するニュース"
     }
   },
   "global": {

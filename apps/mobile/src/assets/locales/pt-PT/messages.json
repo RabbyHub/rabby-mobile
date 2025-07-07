@@ -2214,7 +2214,36 @@
       "refreshTitle": "A Carregar Mais Copy Trading Do Smart Money",
       "comingSoon": "Em breve...",
       "historyProfit": "Histórico de Lucros",
-      "updateText": "{{count}} Tendências Atualizadas"
+      "updateText": "{{count}} Tendências Atualizadas",
+      "filterRule": {
+        "tokenCreate": "Recentemente Criado",
+        "24HChange": "Mudança em 24 horas",
+        "smartMoney": "Trading Smart Wallets"
+      },
+      "tokenName": "Nome do Token",
+      "earn": "Ganhar",
+      "loss": "Perda",
+      "currentToken": "Token Atual",
+      "myCopyTrading": "A Minha Negociação Copiada",
+      "myCopyTradingEarnings": "Meus Ganhos de Copy Trading",
+      "createdTime": "Hora de Criação",
+      "info": "Informação",
+      "contractAddress": "Endereço do Contrato",
+      "chain": "Cadeia",
+      "smartWalletsBuying": "{{len}} Carteiras Inteligentes a Comprar",
+      "tokenInfo": "Informação do Token",
+      "Liquidity": "Liquidez",
+      "token": "Token",
+      "bought": "Comprado",
+      "sameNameTokens": "Tokens com o Mesmo Nome",
+      "timeSmartWallet": "Tempo / Smart Wallet",
+      "timeLabelAgo": "Criado há {{time}}",
+      "buyEarn": "24H Comprar / Ganhar",
+      "earned": "Ganho",
+      "noOtherTokensWithSameName": "Nenhum outro token com o mesmo nome foi encontrado.",
+      "holdingProfit": "Holding/Profit",
+      "smartWallets": "Carteiras Inteligentes",
+      "twitterNews": "Notícias em X"
     }
   },
   "constant": {

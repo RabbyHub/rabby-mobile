@@ -21,7 +21,6 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { fetchRefreshLocalData } from '@/screens/Swap/hooks/history';
 
 const pendingCountAtom = atom(0);
-const bridgeLocalTxDataAtom = atom<BridgeTxHistoryItem | null>(null);
 const bridgeTxDataPendingAtom = atom<BridgeHistory | null>(null);
 export const bridgeHistoryRedDotAtom = atom(false);
 
@@ -43,9 +42,8 @@ export const fetchLocalBridgePendingTx = (address: string) => {
 export const usePollBridgePendingNumber = (timer = 10000) => {
   const [, setCount] = useAtom(pendingCountAtom);
   const [pendingTxData, setPendingTxData] = useAtom(bridgeTxDataPendingAtom);
-  const [localPendingTxData, setLocalPendingTxData] = useAtom(
-    bridgeLocalTxDataAtom,
-  );
+  const [localPendingTxData, setLocalPendingTxData] =
+    useState<BridgeTxHistoryItem | null>(null);
 
   const [, setBridgeHistoryRedDot] = useAtom(bridgeHistoryRedDotAtom);
 

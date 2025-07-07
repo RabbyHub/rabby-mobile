@@ -242,11 +242,20 @@ export function useRateModal() {
 
       const feedbackText = rateModalState.userFeedback.trim();
 
+      const starText = `${makeStarText(userStar, 5)} (${userStar})`;
+      const balanceText = params.totalBalanceText;
+      const versionText = APP_VERSIONS.forFeedback;
+
       const feedbackContent = [
-        ...(!needFeedbackText ? [] : [`Comment: ${feedbackText}`, '  ']),
-        `Rate: ${makeStarText(userStar, 5)} (${userStar}) `,
-        `Total Balance: ${params.totalBalanceText}`,
-        `App Version: ${APP_VERSIONS.forFeedback}`,
+        ...(!needFeedbackText
+          ? [`${starText} (${balanceText}; ${versionText}) `]
+          : [
+              `Comment: ${feedbackText}`,
+              `Rate: ${starText}`,
+              `Total Balance: ${balanceText}`,
+              `App Version: ${versionText}`,
+              '  ',
+            ]),
       ]
         .concat(
           isNonPublicProductionEnv
@@ -268,15 +277,17 @@ export function useRateModal() {
 
       try {
         setRateModalState(prev => ({ ...prev, isSubmitting: true }));
-        await openapi.submitFeedback({
-          text: feedbackContent,
-          usage: 'rating',
-        });
-        matomoRequestEvent({
-          category: 'Rate Rabby',
-          action: 'Rate_SubmitAdvice',
-          label: [userStar].join('|'),
-        });
+        if (needFeedbackText) {
+          await openapi.submitFeedback({
+            text: feedbackContent,
+            usage: 'rating',
+          });
+          matomoRequestEvent({
+            category: 'Rate Rabby',
+            action: 'Rate_SubmitAdvice',
+            label: [userStar].join('|'),
+          });
+        }
       } catch (error) {
         Sentry.captureException(error, {
           extra: {

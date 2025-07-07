@@ -2155,7 +2155,36 @@
       "updateText": "{{count}} แนวโน้มที่อัปเดตแล้ว",
       "historyProfit": "ประวัติผลกำไร",
       "smartMoneyWallets": "กระเป๋า Smart Money",
-      "smartMoneyWallet": "Smart Money Wallet"
+      "smartMoneyWallet": "Smart Money Wallet",
+      "filterRule": {
+        "tokenCreate": "สร้างขึ้นเมื่อเร็วๆ นี้",
+        "smartMoney": "การซื้อขาย Smart Wallets",
+        "24HChange": "การเปลี่ยนแปลง 24 ชั่วโมง"
+      },
+      "bought": "ซื้อ",
+      "Liquidity": "สภาพคล่อง",
+      "contractAddress": "ที่อยู่สัญญา",
+      "tokenName": "ชื่อโทเค็น",
+      "createdTime": "เวลาที่สร้าง",
+      "tokenInfo": "ข้อมูลโทเค็น",
+      "token": "โทเค็น",
+      "buyEarn": "24H ซื้อ / ทำกำไร",
+      "myCopyTrading": "การซื้อขายสำเนาของฉัน",
+      "loss": "การสูญเสีย",
+      "earn": "หารายได้",
+      "earned": "ได้รับ",
+      "myCopyTradingEarnings": "รายได้จากการซื้อขายสำเนาของฉัน",
+      "twitterNews": "ข่าวใน X",
+      "timeSmartWallet": "เวลา / Smart Wallet",
+      "currentToken": "โทเค็นปัจจุบัน",
+      "sameNameTokens": "โทเค็นชื่อเดียวกัน",
+      "noOtherTokensWithSameName": "ไม่พบโทเค็นอื่นที่มีชื่อเดียวกัน",
+      "smartWalletsBuying": "{{len}} กระเป๋าเงินอัจฉริยะ สำหรับการซื้อ",
+      "holdingProfit": "การถือครอง/กำไร",
+      "chain": "Chain",
+      "timeLabelAgo": "สร้างเมื่อ {{time}} ที่แล้ว",
+      "info": "ข้อมูล",
+      "smartWallets": "กระเป๋าเงินอัจฉริยะ"
     }
   },
   "native": {

@@ -128,7 +128,9 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                     ]}
                     onPress={() => {
                       openAppRateUrl();
-                      closeModal();
+                      pushRateDetails({ totalBalanceText }).finally(() => {
+                        closeModal();
+                      });
                     }}
                     title={
                       IS_ANDROID

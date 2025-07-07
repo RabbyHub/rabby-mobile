@@ -2052,7 +2052,36 @@
       "comingSoon": "即将推出...",
       "smartMoneyWallets": "Smart Money 钱包",
       "refreshTitle": "加载更多来自 Smart Money 的跟单交易",
-      "smartMoneyWallet": "Smart Money Wallet"
+      "smartMoneyWallet": "Smart Money Wallet",
+      "filterRule": {
+        "tokenCreate": "最近创建的",
+        "smartMoney": "Smart Money 交易数",
+        "24HChange": "24小时变化"
+      },
+      "chain": "链",
+      "info": "信息",
+      "sameNameTokens": "同名代币",
+      "earned": "已赚取",
+      "tokenName": "代币名称",
+      "Liquidity": "流动性",
+      "smartWalletsBuying": "{{len}} Smart Money 购买",
+      "timeLabelAgo": "创建于 {{time}} 前",
+      "earn": "赚取",
+      "contractAddress": "合约地址",
+      "noOtherTokensWithSameName": "没有找到其他名称相同的代币",
+      "holdingProfit": "持有/利润",
+      "buyEarn": "24小时购买 / 赚取",
+      "loss": "损失",
+      "tokenInfo": "代币信息",
+      "bought": "购买",
+      "token": "令牌",
+      "twitterNews": "X 中的新闻",
+      "createdTime": "创建时间",
+      "timeSmartWallet": "时间 / Smart Money",
+      "myCopyTradingEarnings": "我的跟单交易收益",
+      "myCopyTrading": "我的跟单交易",
+      "smartWallets": "Smart Money 钱包",
+      "currentToken": "当前代币"
     }
   },
   "component": {

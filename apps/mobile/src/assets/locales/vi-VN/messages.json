@@ -2043,7 +2043,36 @@
       "smartMoneyWallet": "Ví tiền Smart Money",
       "recentBuy": "Mua gần đây",
       "historyProfit": "Lịch sử lợi nhuận",
-      "updateText": "{{count}} Xu Hướng Đã Cập Nhật"
+      "updateText": "{{count}} Xu Hướng Đã Cập Nhật",
+      "filterRule": {
+        "smartMoney": "Giao dịch Smart Wallets",
+        "tokenCreate": "Gần đây được tạo",
+        "24HChange": "24H Thay đổi"
+      },
+      "myCopyTrading": "My Copy Trading",
+      "info": "Thông tin",
+      "earned": "Kiếm được",
+      "holdingProfit": "Nắm giữ/Lợi nhuận",
+      "earn": "Kiếm tiền",
+      "currentToken": "Token hiện tại",
+      "timeSmartWallet": "Thời gian / Ví thông minh",
+      "token": "Token",
+      "twitterNews": "Tin tức trong X",
+      "smartWallets": "Ví thông minh",
+      "Liquidity": "Tính thanh khoản",
+      "tokenInfo": "Thông tin Token",
+      "loss": "Mất mát",
+      "chain": "Chuỗi",
+      "buyEarn": "24H Mua / Kiếm",
+      "createdTime": "Thời gian tạo",
+      "contractAddress": "Địa chỉ hợp đồng",
+      "noOtherTokensWithSameName": "Không tìm thấy mã thông báo nào khác có cùng tên.",
+      "tokenName": "Tên Token",
+      "myCopyTradingEarnings": "Thu nhập từ sao chép giao dịch của tôi",
+      "timeLabelAgo": "Tạo {{time}} trước",
+      "sameNameTokens": "Token Tên Giống Nhau",
+      "bought": "Đã mua",
+      "smartWalletsBuying": "{{len}} Ví Điện Tử Thông Minh Mua Sắm"
     }
   },
   "component": {

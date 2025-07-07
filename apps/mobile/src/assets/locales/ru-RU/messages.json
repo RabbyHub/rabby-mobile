@@ -2043,7 +2043,36 @@
       "smartMoneyWallets": "Кошельки Smart Money",
       "smartMoneyWallet": "Кошелек Smart Money",
       "noMoreData": "Больше нет данных",
-      "refreshTitle": "Загрузка дополнительных Copy Trading от Smart Money"
+      "refreshTitle": "Загрузка дополнительных Copy Trading от Smart Money",
+      "filterRule": {
+        "tokenCreate": "Недавно создано",
+        "24HChange": "24H Изменение",
+        "smartMoney": "Торговля Smart Wallets"
+      },
+      "token": "Токен",
+      "Liquidity": "Ликвидность",
+      "earned": "Заработано",
+      "smartWallets": "Умные кошельки",
+      "bought": "Куплено",
+      "myCopyTradingEarnings": "Моя прибыль от копирования торговли",
+      "twitterNews": "Новости в X",
+      "createdTime": "Время создания",
+      "holdingProfit": "Держание/Прибыль",
+      "buyEarn": "24H Покупка / Заработок",
+      "earn": "Заработать",
+      "chain": "Цепь",
+      "currentToken": "Текущий токен",
+      "myCopyTrading": "Моя Копия Торговли",
+      "tokenInfo": "Информация о токене",
+      "timeSmartWallet": "Время / Smart Wallet",
+      "contractAddress": "Адрес контракта",
+      "smartWalletsBuying": "{{len}} Умные Кошельки Покупка",
+      "noOtherTokensWithSameName": "Не были найдены другие токены с тем же названием.",
+      "tokenName": "Название токена",
+      "info": "Информация",
+      "timeLabelAgo": "Создано {{time}} назад",
+      "loss": "Потеря",
+      "sameNameTokens": "Токены с одинаковым названием"
     }
   },
   "component": {
