@@ -1805,7 +1805,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "View in Dapp",
-      "viewSiteInWebsite": "View in Website"
+      "viewSiteInWebsite": "View in Website",
+      "appChain": "On {{chain}} Account"
     },
     "approvalsAddressList": {
       "title": "Approvals"
