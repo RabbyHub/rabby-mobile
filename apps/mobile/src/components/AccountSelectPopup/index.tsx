@@ -23,6 +23,7 @@ interface AccountSelectDrawerProps {
   visible: boolean;
   isLoading?: boolean;
   networkId: string;
+  owners?: string[];
 }
 
 export const AccountSelectPopup = ({
@@ -32,6 +33,7 @@ export const AccountSelectPopup = ({
   visible,
   isLoading = false,
   networkId,
+  owners,
 }: AccountSelectDrawerProps) => {
   const [checkedAccount, setCheckedAccount] =
     useState<KeyringAccountWithAlias | null>(null);
@@ -41,9 +43,22 @@ export const AccountSelectPopup = ({
   const accounts = useMemo(() => {
     return sortBy(
       _accounts.filter(item => item.type !== KEYRING_TYPE.GnosisKeyring),
-      account => (account.type === KEYRING_TYPE.WalletConnectKeyring ? 0 : 1),
+      account => {
+        return owners?.find(address => isSameAddress(address, account.address))
+          ? -1
+          : 1;
+      },
+      account => {
+        if (account.type === KEYRING_TYPE.HdKeyring) {
+          return 1;
+        }
+        if (account.type === KEYRING_TYPE.SimpleKeyring) {
+          return 2;
+        }
+        return account.type === KEYRING_TYPE.WatchAddressKeyring ? 10 : 3;
+      },
     );
-  }, [_accounts]);
+  }, [_accounts, owners]);
 
   const { t } = useTranslation();
   const themeColors = useThemeColors();
