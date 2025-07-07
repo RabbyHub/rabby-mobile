@@ -1980,8 +1980,7 @@
         "portfolio": "Danh mục",
         "wallet_other": "Ví dụ",
         "wallet_one": "Ví"
-      },
-      "scamTokenHeader": "Token lừa đảo"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {

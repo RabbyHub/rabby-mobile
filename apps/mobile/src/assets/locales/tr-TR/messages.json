@@ -1920,8 +1920,7 @@
         "portfolio": "Portföy",
         "wallet_one": "Cüzdan",
         "wallet_other": "Cüzdanlar"
-      },
-      "scamTokenHeader": "Dolandırıcılık tokenleri"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {

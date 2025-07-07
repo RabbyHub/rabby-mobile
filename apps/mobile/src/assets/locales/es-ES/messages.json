@@ -2107,8 +2107,7 @@
         "address": "Dirección",
         "wallet_other": "Carteras",
         "wallet_one": "Billetera"
-      },
-      "scamTokenHeader": "Tokens de estafa"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {
