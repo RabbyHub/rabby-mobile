@@ -32,11 +32,8 @@ import createPersistStore, {
 import { updateChainStore } from '@/constant/chains';
 import { appStorage } from '../storage/mmkv';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { matomoRequestEvent } from '@/utils/analytics';
 
-// todo
-const matomoRequestEvent = (args: any) => {
-  return null;
-};
 export interface TestnetChainBase {
   id: number;
   name: string;
