@@ -28,31 +28,6 @@ import { transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
 
-const cleanupStaleTokens = async (address: string, syncTimestamp: number) => {
-  try {
-    const repo = TokenItemEntity.getRepository();
-    const deleteResult = await repo
-      .createQueryBuilder()
-      .delete()
-      .from(TokenItemEntity)
-      .where('owner_addr = :address', { address })
-      .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
-      .execute();
-
-    console.debug(
-      `🧹 Cleaned ${deleteResult.affected || 0} stale tokens for ${address}`,
-    );
-
-    return {
-      deletedCount: deleteResult.affected || 0,
-      success: true,
-    };
-  } catch (error) {
-    console.error(`❌ Failed to cleanup stale tokens for ${address}:`, error);
-    throw error;
-  }
-};
-
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   const data = [..._tokens];
   if (data.length === 0) {
@@ -86,7 +61,7 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
     .then(({ taskSignal, taskKey, queueCompleted }) => {
       if (queueCompleted) {
         console.debug(`[${taskKey}] batch upsert tasks completed`);
-        cleanupStaleTokens(address, syncTimestamp);
+        TokenItemEntity.cleanupStaleTokens(address, syncTimestamp);
       } else {
         console.warn(`[${taskKey}] batch upsert tasks aborted.`);
       }
