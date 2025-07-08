@@ -4,7 +4,10 @@ import { testOpenapi } from '../request';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 import { getTokenSettings } from '@/utils/getTokenSettings';
-import { batchBalanceWithLocalCache } from '@/databases/hooks/balance';
+import {
+  batchBalanceWithLocalCache,
+  EvmTotalBalanceResponse,
+} from '@/databases/hooks/balance';
 
 const getTotalBalanceCached = async (address: string, force?: boolean) => {
   const addresses = await keyringService.getAllAddresses();
@@ -23,6 +26,8 @@ const getTotalBalanceCached = async (address: string, force?: boolean) => {
       ...tokenSetting,
     },
     force,
+    false,
+    true,
   );
   preferenceService.updateAddressBalance(address, data);
   return data;
@@ -35,8 +40,12 @@ const getTestnetTotalBalanceCached = cached(async address => {
     isCore: false,
     ...tokenSetting,
   });
-  preferenceService.updateTestnetAddressBalance(address, testnetData);
-  return testnetData;
+  const formatData: EvmTotalBalanceResponse = {
+    ...testnetData,
+    evm_usd_value: testnetData.total_usd_value,
+  };
+  preferenceService.updateTestnetAddressBalance(address, formatData);
+  return formatData;
 }, 5000);
 
 export const getAddressBalance = async (

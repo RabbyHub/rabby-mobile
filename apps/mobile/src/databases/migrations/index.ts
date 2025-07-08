@@ -4,6 +4,7 @@ import { UpdateHistoryTableRestart1742289471888 } from './20250321';
 import { UpdateTokenItemAddCreditScore1741862198677 } from './20250313';
 import { UpdateTokenItemAddCexIds1743518329613 } from './20250401';
 import { UpdateHistoryTableAddSourceType1744873800025 } from './20250418';
+import { UpdateBalanceAddEvmUsdValue1751964116411 } from './20250708';
 
 export function getMigrations() {
   return [
@@ -13,5 +14,6 @@ export function getMigrations() {
     UpdateTokenItemAddCreditScore1741862198677,
     UpdateTokenItemAddCexIds1743518329613,
     UpdateHistoryTableAddSourceType1744873800025,
+    UpdateBalanceAddEvmUsdValue1751964116411,
   ];
 }
