@@ -100,6 +100,7 @@ import { Account } from '@/core/services/preference';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { last } from 'lodash';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
+import { matomoRequestEvent } from '@/utils/analytics';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -620,6 +621,12 @@ const Swap = ({
               chain: chainServerId,
             },
           );
+          if (currentIsCopyTrading) {
+            matomoRequestEvent({
+              category: 'CopyTrading',
+              action: 'CopyTrading_CreateSwap',
+            });
+          }
         } catch (e) {
           setDirectSigning(false);
           if ((e as any)?.name === 'SimulateError') {

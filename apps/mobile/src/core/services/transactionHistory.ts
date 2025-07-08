@@ -35,6 +35,7 @@ import {
 } from '@/screens/Transaction/components/utils';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { updateExpiredTime } from '@/databases/sync/utils';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -414,6 +415,10 @@ export class TransactionHistoryService {
           history[index].isFromCopyTrading
         ) {
           insertCopyTradingBuyItem(history[index]);
+          matomoRequestEvent({
+            category: 'CopyTrading',
+            action: 'CopyTrading_FinishSwap',
+          });
         }
       }
     });

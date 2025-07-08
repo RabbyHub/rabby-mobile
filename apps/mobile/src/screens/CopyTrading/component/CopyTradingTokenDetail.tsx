@@ -37,6 +37,7 @@ import { SameNameTokens } from './SameNameTokens';
 import { toast } from '@/components/Toast';
 import { openapi } from '@/core/request';
 import { removeAllGlobalBottomSheetModals2024 } from '@/components2024/GlobalBottomSheetModal';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export type DialogProps = {
   tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
@@ -97,13 +98,16 @@ export default function CopyTradingTokenDetail({
           isFromCopyTrading: true,
         },
       });
+      matomoRequestEvent({
+        category: 'CopyTrading',
+        action: 'CopyTrading_ClickTokenAndBuy',
+      });
     },
   );
 
   const handleTwitterPress = useMemoizedFn(async () => {
     const symbol = getTokenSymbol(tradingTokenItem);
     const searchQuery = encodeURIComponent(`$${symbol}`);
-
     const appUrls = [
       `twitter://search?query=${searchQuery}`,
       `x://search?query=${searchQuery}`,
@@ -128,6 +132,10 @@ export default function CopyTradingTokenDetail({
         console.error('Failed to open web URL:', fallbackError);
       }
     }
+    matomoRequestEvent({
+      category: 'CopyTrading',
+      action: 'CopyTrading_LinkToX',
+    });
   });
 
   const fetchDetailInfo = useMemoizedFn(async () => {

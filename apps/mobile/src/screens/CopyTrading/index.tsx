@@ -66,6 +66,7 @@ import {
 import { useProfit } from './component/useProfit';
 import { TabType } from './component/CopyTradingTokenDetail';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { matomoRequestEvent } from '@/utils/analytics';
 const DEFAULT_COUNT = 10;
 
 const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
@@ -295,6 +296,10 @@ export const CopyTradingScreen = () => {
         isFromCopyTrading: true,
       },
     });
+    matomoRequestEvent({
+      category: 'CopyTrading',
+      action: 'CopyTrading_ClickBuy',
+    });
   });
 
   const handleTokenItemPress = useMemoizedFn(
@@ -318,6 +323,10 @@ export const CopyTradingScreen = () => {
         onClose: () => {
           removeGlobalBottomSheetModal2024(modalId);
         },
+      });
+      matomoRequestEvent({
+        category: 'CopyTrading',
+        action: 'CopyTrading_ClickToken',
       });
     },
   );
