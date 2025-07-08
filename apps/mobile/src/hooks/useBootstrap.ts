@@ -70,7 +70,6 @@ export function useInitializeAppOnTop() {
       await initServices();
       await initApis();
       syncCustomTestChainList();
-      await Promise.race([syncMainChainList(), sleep(5000)]);
     } catch (error) {
       console.error('useInitializeAppOnTop::', error);
       apiInitializedRef.current = false;

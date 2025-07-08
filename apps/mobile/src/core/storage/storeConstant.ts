@@ -24,6 +24,7 @@ export const enum APP_STORE_NAMES {
   'offlineChain' = 'offlineChain',
 
   'browser' = 'browser',
+  'syncChain' = 'syncChain',
   'openapi' = 'openapi',
 }
 
@@ -59,6 +60,8 @@ export type STORE_SERVICE_MAP = {
   [APP_STORE_NAMES.offlineChain]: import('@/core/services/offlineChain').OfflineChainService;
 
   [APP_STORE_NAMES.browser]: import('@/core/services/browserService').BrowserService;
+
+  [APP_STORE_NAMES.syncChain]: import('@/core/services/syncChainService').SyncChainService;
 };
 
 export type MIGRATABLE_STORE_SERVICE = keyof STORE_SERVICE_MAP;

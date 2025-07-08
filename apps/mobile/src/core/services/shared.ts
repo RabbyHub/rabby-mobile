@@ -40,6 +40,7 @@ import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
 import { OfflineChainService } from './offlineChain';
 import { BrowserService } from './browserService';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
+import { SyncChainService } from './syncChainService';
 
 migrateAppStorage(appStorage);
 
@@ -210,6 +211,10 @@ export const browserService = new BrowserService({
   storageAdapter: appStorage,
 });
 
+export const syncChainService = new SyncChainService({
+  storageAdapter: appStorage,
+});
+
 migrateServices({
   contactBook: contactService,
   dapps: dappService,
@@ -227,4 +232,5 @@ migrateServices({
   gasAccount: gasAccountService,
   offlineChain: offlineChainService,
   browser: browserService,
+  syncChain: syncChainService,
 });
