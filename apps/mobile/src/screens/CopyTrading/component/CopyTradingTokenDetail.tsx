@@ -52,6 +52,9 @@ import { useProfitData } from './useProfit';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { ellipsisOverflowedText } from '@/utils/text';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export enum TabType {
   tokenInfo = 'tokenInfo',
@@ -98,12 +101,24 @@ export default function CopyTradingTokenDetail() {
     ];
   }, [t]);
 
+  const { list: accounts } = useAccountInfo();
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
   const handleBuyPress = useMemoizedFn(
-    (item: CopyTradeTokenItemV2 | TokenItem, type: 'Buy' | 'Sell') => {
+    async (item: CopyTradeTokenItemV2 | TokenItem, type: 'Buy' | 'Sell') => {
       const chain = findChain({
         serverId: item.chain,
       });
-      removeAllGlobalBottomSheetModals2024();
+
+      if (type === 'Sell' && currentTokenProfitData) {
+        const toAccount = accounts.find(i =>
+          isSameAddress(currentTokenProfitData.owner_addr, i.address),
+        );
+        if (toAccount) {
+          await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
+        }
+      }
+
       naviPush(RootNames.StackTransaction, {
         screen: RootNames.MultiSwap,
         params: {
