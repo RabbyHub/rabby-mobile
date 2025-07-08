@@ -19,6 +19,7 @@ import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
 import { Account } from '@/core/services/preference';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
@@ -247,6 +248,16 @@ export const dexSwap = async (
             hash,
           };
           transactionHistoryService.addSwapTxHistory(swapTxHistoryObj);
+
+          if (swapTxHistoryObj.isFromCopyTrading) {
+            matomoRequestEvent({
+              category: 'CopyTrading',
+              action:
+                swapTxHistoryObj.copyTradingExtra?.type === 'Sell'
+                  ? 'CopyTrading_SellCreateSwap'
+                  : 'CopyTrading_BuyCreateSwap',
+            });
+          }
         }
         navigationRef.dispatch(
           StackActions.replace(RootNames.StackRoot, {

@@ -20,11 +20,63 @@ export const useCopyTradingProfitData = () => {
   return useAtom(copyTradingProfitDataAtom);
 };
 
+export const useProfitData = () => {
+  const [profitData, setProfitData] = useAtom(copyTradingProfitDataAtom);
+
+  const updateProfitData = useMemoizedFn(
+    (itemData: QueryCopyTradingBuyItemResult[]) => {
+      setProfitData({
+        itemData: itemData,
+        totalProfit: itemData.reduce(
+          (acc, item) =>
+            acc + item.holdingUsdValue - item.realAmount * item.buy_price,
+          0,
+        ),
+        totalHoldValue: itemData.reduce(
+          (acc, item) => acc + item.holdingUsdValue,
+          0,
+        ),
+      });
+    },
+  );
+
+  const updateSingleTokenPrice = useMemoizedFn(
+    async (tokenId: string, chain: string, price: number) => {
+      if (!profitData) {
+        return;
+      }
+      let needUpdate = false;
+      const newItemData = profitData.itemData.map(item => {
+        if (item.id === tokenId && item.chain === chain) {
+          needUpdate = true;
+          return {
+            ...item,
+            price,
+            holdingUsdValue: item.realAmount * price,
+          } as QueryCopyTradingBuyItemResult;
+        }
+        return item;
+      });
+
+      if (needUpdate) {
+        updateProfitData(newItemData);
+      }
+    },
+  );
+
+  return {
+    profitData,
+    setProfitData,
+    updateProfitData,
+    updateSingleTokenPrice,
+  };
+};
+
 export const useProfit = () => {
   const [loading, setLoading] = useState(true);
   const [priceByToken, setPriceByToken] = useState<Record<string, number>>({});
-  const [profitData, setProfitData] = useAtom(copyTradingProfitDataAtom);
-
+  const { updateProfitData, updateSingleTokenPrice, profitData } =
+    useProfitData();
   const showProfitBar = useMemo(() => {
     return !loading;
   }, [loading]);
@@ -112,47 +164,6 @@ export const useProfit = () => {
       });
 
       return aggregatedData;
-    },
-  );
-
-  const updateProfitData = useMemoizedFn(
-    (itemData: QueryCopyTradingBuyItemResult[]) => {
-      setProfitData({
-        itemData: itemData,
-        totalProfit: itemData.reduce(
-          (acc, item) =>
-            acc + item.holdingUsdValue - item.realAmount * item.buy_price,
-          0,
-        ),
-        totalHoldValue: itemData.reduce(
-          (acc, item) => acc + item.holdingUsdValue,
-          0,
-        ),
-      });
-    },
-  );
-
-  const updateSingleTokenPrice = useMemoizedFn(
-    async (tokenId: string, chain: string, price: number) => {
-      if (!profitData) {
-        return;
-      }
-      let needUpdate = false;
-      const newItemData = profitData.itemData.map(item => {
-        if (item.id === tokenId && item.chain === chain) {
-          needUpdate = true;
-          return {
-            ...item,
-            price,
-            holdingUsdValue: item.realAmount * price,
-          } as QueryCopyTradingBuyItemResult;
-        }
-        return item;
-      });
-
-      if (needUpdate) {
-        updateProfitData(newItemData);
-      }
     },
   );
 

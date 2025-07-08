@@ -34,17 +34,11 @@ import { TabType } from './CopyTradingTokenDetail';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
 import { QueryCopyTradingBuyItemResult } from '@/databases/entities/copyTradingBuyItem';
-import { useCopyTradingProfitData } from './useProfit';
+import { useCopyTradingProfitData, useProfitData } from './useProfit';
+import { naviPush } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 export type DialogProps = {
-  itemData: QueryCopyTradingBuyItemResult[];
-  totalProfit: number;
-  totalHoldValue: number;
-  updateSingleTokenPrice: (
-    tokenId: string,
-    chain: string,
-    price: number,
-  ) => void;
   onClose?: () => void;
 };
 
@@ -100,10 +94,7 @@ const TokenEarningItem: React.FC<{
   );
 };
 
-export default function EarningDialog({
-  onClose,
-  updateSingleTokenPrice,
-}: RNViewProps & DialogProps) {
+export default function EarningDialog({ onClose }: RNViewProps & DialogProps) {
   const [profitData] = useCopyTradingProfitData();
   const { itemData, totalProfit, totalHoldValue } = useMemo(
     () => profitData || { itemData: [], totalProfit: 0, totalHoldValue: 0 },
@@ -113,34 +104,20 @@ export default function EarningDialog({
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const isPositive = (totalProfit || 0) >= 0;
-  // const [totalValue, setTotalValue] = useState(0);
-  // useEffect(() => {
-  //   // magic set state to refresh page to avoid scroll bug
-  //   const value = itemData.reduce((acc, item) => {
-  //     return acc + item.holdingUsdValue;
-  //   }, 0);
-  //   setTotalValue(value);
-  // }, [itemData]);
 
   const handleTokenPress = useMemoizedFn((token: TokenItemEntity) => {
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL,
-      tradingTokenItem: token,
-      showTabType: TabType.tokenInfo,
-      updateSingleTokenPrice,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: false,
-        enablePanDownToClose: true,
-        handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
-        },
-      },
-      onClose: () => {
-        removeGlobalBottomSheetModal2024(modalId);
+    const newToken = {
+      ...token,
+      cex_ids: [],
+    };
+    naviPush(RootNames.StackTransaction, {
+      screen: RootNames.CopyTradingTokenDetail,
+      params: {
+        tradingTokenItem: newToken,
+        showTabType: TabType.tokenInfo,
       },
     });
+    onClose?.();
   });
 
   const ListHeaderComponent = React.useMemo(

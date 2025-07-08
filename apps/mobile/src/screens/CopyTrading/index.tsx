@@ -298,35 +298,24 @@ export const CopyTradingScreen = () => {
     });
     matomoRequestEvent({
       category: 'CopyTrading',
-      action: 'CopyTrading_ClickBuy',
+      action: 'CopyTrading_ListClickBuy',
     });
   });
 
   const handleTokenItemPress = useMemoizedFn(
     (item: CopyTradeTokenItemV2, isShowSmartWallets = false) => {
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL,
-        tradingTokenItem: item,
-        showTabType: isShowSmartWallets
-          ? TabType.smartWallets
-          : TabType.tokenInfo,
-        updateSingleTokenPrice,
-        bottomSheetModalProps: {
-          enableContentPanningGesture: false,
-          enablePanDownToClose: true,
-          handleStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
-          },
-        },
-        onClose: () => {
-          removeGlobalBottomSheetModal2024(modalId);
+      navigation.push(RootNames.StackTransaction, {
+        screen: RootNames.CopyTradingTokenDetail,
+        params: {
+          tradingTokenItem: item,
+          showTabType: isShowSmartWallets
+            ? TabType.smartWallets
+            : TabType.tokenInfo,
         },
       });
       matomoRequestEvent({
         category: 'CopyTrading',
-        action: 'CopyTrading_ClickToken',
+        action: 'CopyTrading_EnterTokenPage',
       });
     },
   );
@@ -334,10 +323,6 @@ export const CopyTradingScreen = () => {
   const handleShowEarningDialog = useMemoizedFn(() => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.COPY_TRADING_EARNINGS,
-      itemData: profitData?.itemData,
-      totalProfit: profitData?.totalProfit,
-      totalHoldValue: profitData?.totalHoldValue,
-      updateSingleTokenPrice,
       bottomSheetModalProps: {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,
@@ -465,7 +450,7 @@ export const CopyTradingScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { profitData, showProfitBar, updateSingleTokenPrice } = useProfit();
+  const { profitData, showProfitBar } = useProfit();
 
   return (
     <NormalScreenContainer type="bg1" noHeader={true}>

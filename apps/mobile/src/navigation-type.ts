@@ -15,6 +15,7 @@ import type {
 } from '@rabby-wallet/keyring-utils';
 import type { Chain, CHAINS_ENUM } from './constant/chains';
 import type {
+  CopyTradeTokenItemV2,
   NFTItem,
   SendAction,
   TokenItem,
@@ -35,6 +36,7 @@ import {
 } from './screens/Approvals/useApprovalsPage';
 import { HistoryItemCateType } from './screens/Transaction/components/type';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
+import { TabType } from './screens/CopyTrading/component/CopyTradingTokenDetail';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -250,6 +252,10 @@ export type SingleAddressNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
+  [RootNames.CopyTradingTokenDetail]?: {
+    tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
+    showTabType?: TabType;
+  };
   [RootNames.History]?: {};
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;

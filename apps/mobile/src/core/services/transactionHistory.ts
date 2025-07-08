@@ -125,6 +125,9 @@ export interface SwapTxHistoryItem {
   createdAt: number;
   completedAt?: number;
   isFromCopyTrading?: boolean;
+  copyTradingExtra?: {
+    type: 'Buy' | 'Sell';
+  };
 }
 
 export interface SendTxHistoryItem {
@@ -414,10 +417,16 @@ export class TransactionHistoryService {
           'isFromCopyTrading' in history[index] &&
           history[index].isFromCopyTrading
         ) {
-          insertCopyTradingBuyItem(history[index]);
+          const isSell = history[index].copyTradingExtra?.type === 'Sell';
+          if (!isSell) {
+            // only buy insert buy item
+            insertCopyTradingBuyItem(history[index]);
+          }
           matomoRequestEvent({
             category: 'CopyTrading',
-            action: 'CopyTrading_FinishSwap',
+            action: isSell
+              ? 'CopyTrading_SellFinishSwap'
+              : 'CopyTrading_BuyFinishSwap',
           });
         }
       }

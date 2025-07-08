@@ -362,12 +362,20 @@ const Swap = ({
   const { safeOffBottom } = useSafeSizes();
 
   const currentIsCopyTrading = useMemo(() => {
+    if (navState?.type === 'Sell') {
+      return (
+        navState?.isFromCopyTrading &&
+        payToken?.id === navState?.tokenId &&
+        chain === navState.chainEnum
+      );
+    }
+
     return (
       navState?.isFromCopyTrading &&
       receiveToken?.id === navState?.tokenId &&
       chain === navState.chainEnum
     );
-  }, [navState, receiveToken?.id, chain]);
+  }, [navState, receiveToken?.id, chain, payToken?.id]);
 
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
@@ -392,6 +400,9 @@ const Swap = ({
           createdAt: Date.now(),
           status: 'pending' as SwapTxHistoryItem['status'],
           isFromCopyTrading: currentIsCopyTrading,
+          copyTradingExtra: {
+            type: navState?.type || 'Buy',
+          },
         };
         await dexSwap(
           {
@@ -609,6 +620,9 @@ const Swap = ({
             createdAt: Date.now(),
             status: 'pending',
             isFromCopyTrading: currentIsCopyTrading,
+            copyTradingExtra: {
+              type: navState?.type || 'Buy',
+            },
           });
           handleAmountChange('');
           setTimeout(() => {
@@ -624,7 +638,10 @@ const Swap = ({
           if (currentIsCopyTrading) {
             matomoRequestEvent({
               category: 'CopyTrading',
-              action: 'CopyTrading_CreateSwap',
+              action:
+                navState?.type === 'Sell'
+                  ? 'CopyTrading_SellCreateSwap'
+                  : 'CopyTrading_BuyCreateSwap',
             });
           }
         } catch (e) {

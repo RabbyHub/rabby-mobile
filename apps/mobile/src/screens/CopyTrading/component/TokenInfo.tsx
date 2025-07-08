@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
@@ -21,11 +21,19 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import dayjs from 'dayjs';
 import { TokenMetaInfo } from './TokenMetaInfo';
+import { QueryCopyTradingBuyItemResult } from '@/databases/entities/copyTradingBuyItem';
+import { formatUsdValueKMBWithSign } from '@/screens/Home/utils/price';
 interface TokenInfoProps {
   tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
+  currentTokenProfitData?: QueryCopyTradingBuyItemResult;
+  onUpChange: (isUp: boolean) => void;
 }
 
-export const TokenInfo: React.FC<TokenInfoProps> = ({ tradingTokenItem }) => {
+export const TokenInfo: React.FC<TokenInfoProps> = ({
+  tradingTokenItem,
+  onUpChange,
+  currentTokenProfitData,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const isContractToken = React.useMemo(() => {
@@ -70,13 +78,62 @@ export const TokenInfo: React.FC<TokenInfoProps> = ({ tradingTokenItem }) => {
     }
   }, [tradingTokenItem, styles]);
 
+  const EarningsDom = React.useMemo(() => {
+    if (!currentTokenProfitData) {
+      return null;
+    }
+
+    const costValue =
+      currentTokenProfitData?.realAmount * currentTokenProfitData?.buy_price;
+
+    const profit = currentTokenProfitData?.holdingUsdValue - costValue;
+
+    const isPositive = profit >= 0;
+
+    return (
+      <View
+        style={[
+          styles.totalEarningsContainer,
+          {
+            backgroundColor: isPositive
+              ? colors2024['green-light-4']
+              : colors2024['neutral-bg-5'],
+          },
+        ]}>
+        <Text style={styles.totalEarningsLabel}>
+          {`${t('page.copyTrading.myCopyTrading')}: `}
+        </Text>
+        <View style={styles.totalEarningsRow}>
+          <Text style={styles.totalValue}>
+            {formatUsdValueKMB(currentTokenProfitData?.holdingUsdValue)}
+          </Text>
+          {profit !== 0 && (
+            <Text
+              style={[
+                styles.totalProfit,
+                {
+                  color: isPositive
+                    ? colors2024['green-default']
+                    : colors2024['red-default'],
+                },
+              ]}>
+              {`(${formatUsdValueKMBWithSign(profit)})`}
+            </Text>
+          )}
+        </View>
+      </View>
+    );
+  }, [currentTokenProfitData, styles, colors2024, t]);
+
   return (
-    <BottomSheetScrollView style={styles.container}>
+    <ScrollView style={styles.container}>
+      {EarningsDom}
       <TokenPriceChart
         token={ensureAbstractPortfolioToken(tradingTokenItem)}
         originToken={ensureAbstractPortfolioToken(tradingTokenItem)}
         amountList={[]}
         extraMetaInfo={TokenMetaExtraInfo}
+        onUpChange={onUpChange}
       />
       <View style={styles.contentContainer}>
         <View style={styles.header}>
@@ -176,7 +233,7 @@ export const TokenInfo: React.FC<TokenInfoProps> = ({ tradingTokenItem }) => {
           )}
         </View>
       </View>
-    </BottomSheetScrollView>
+    </ScrollView>
   );
 };
 
@@ -222,6 +279,42 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors2024['neutral-line'],
+  },
+  totalEarningsContainer: {
+    backgroundColor: colors2024['green-light'],
+    flexDirection: 'row',
+    alignItems: 'center',
+    // justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  totalEarningsLabel: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  totalEarningsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  totalValue: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  totalProfit: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
   label: {
     fontSize: 14,
