@@ -2214,7 +2214,36 @@
       "updateText": "{{count}} Trends Aktualisiert",
       "noMoreData": "Keine weiteren Daten",
       "refreshTitle": "Lade mehr Copy Trading von Smart Money",
-      "comingSoon": "Bald verfügbar..."
+      "comingSoon": "Bald verfügbar...",
+      "filterRule": {
+        "24HChange": "24H Veränderung",
+        "smartMoney": "Handel mit Smart Wallets",
+        "tokenCreate": "Zuletzt erstellt"
+      },
+      "earn": "Verdienen",
+      "myCopyTrading": "Mein Copy Trading",
+      "bought": "Gekauft",
+      "info": "Info",
+      "buyEarn": "24H Kaufen / Verdienen",
+      "createdTime": "Erstellt am",
+      "holdingProfit": "Halten/Gewinn",
+      "token": "Token",
+      "loss": "Verlust",
+      "Liquidity": "Liquidität",
+      "twitterNews": "Nachrichten in X",
+      "earned": "Verdient",
+      "myCopyTradingEarnings": "Meine Copy Trading Einnahmen",
+      "contractAddress": "Vertragsadresse",
+      "sameNameTokens": "Gleiche Namen Token",
+      "timeSmartWallet": "Zeit / Smart Wallet",
+      "tokenName": "Token-Name",
+      "noOtherTokensWithSameName": "Es wurden keine anderen Token mit dem gleichen Namen gefunden.",
+      "smartWalletsBuying": "{{len}} Smart Wallets Kaufen",
+      "timeLabelAgo": "Vor {{time}} erstellt",
+      "currentToken": "Aktueller Token",
+      "smartWallets": "Intelligente Geldbörsen",
+      "tokenInfo": "Token-Info",
+      "chain": "Kette"
     }
   },
   "constant": {

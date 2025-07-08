@@ -1,14 +1,12 @@
 /* eslint-disable react-native/no-inline-styles */
 import { Text, View, TouchableOpacity } from 'react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
-import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
 import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
-import { OtherAddressNav } from '../OtherAddressNav';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CurrentAddressProps } from '../AddressListScreenContainer';
 import { StackActions, useNavigation } from '@react-navigation/native';
@@ -35,12 +33,12 @@ export const AddressList = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
+  const modalRef =
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
   const {
     top10Addresses,
     notMatterAccounts,
     list: _rawList,
-    hasWatchAddress,
-    hasSafeAddress,
     fetchAccounts,
   } = useAccountInfo();
 
@@ -109,18 +107,6 @@ export const AddressList = () => {
     [styles.itemGap],
   );
 
-  const onGotoWatchAddress = useCallback(() => {
-    navigation.push(RootNames.StackAddress, {
-      screen: RootNames.WatchAddressList,
-    });
-  }, [navigation]);
-
-  const onGotoSafeAddress = useCallback(() => {
-    navigation.push(RootNames.StackAddress, {
-      screen: RootNames.SafeAddressList,
-    });
-  }, [navigation]);
-
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const gotoAddAddress = useCallback(() => {
@@ -142,15 +128,18 @@ export const AddressList = () => {
   }, [shouldRedirectToSetPasswordBefore2024, navigation]);
 
   const handleMoreWalletsPress = useCallback(() => {
-    console.log('Show more wallets detail');
-    const id = createGlobalBottomSheetModal2024({
+    if (modalRef.current) {
+      removeGlobalBottomSheetModal2024(modalRef.current);
+    }
+    modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG,
       bottomSheetModalProps: {
         enablePanDownToClose: true,
         enableContentPanningGesture: true,
       },
       onDone: () => {
-        removeGlobalBottomSheetModal2024(id);
+        removeGlobalBottomSheetModal2024(modalRef.current);
+        modalRef.current = undefined;
       },
     });
   }, []);

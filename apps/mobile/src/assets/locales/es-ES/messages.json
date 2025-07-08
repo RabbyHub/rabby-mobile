@@ -2170,7 +2170,36 @@
       "smartMoneyWallet": "Smart Money Wallet",
       "recentBuy": "Compra reciente",
       "refreshTitle": "Cargando más Copy Trading de Smart Money",
-      "comingSoon": "Próximamente..."
+      "comingSoon": "Próximamente...",
+      "filterRule": {
+        "24HChange": "24H Cambio",
+        "smartMoney": "Carteras Inteligentes de Trading",
+        "tokenCreate": "Recientemente creado"
+      },
+      "currentToken": "Token Actual",
+      "contractAddress": "Dirección del contrato",
+      "token": "Token",
+      "chain": "Cadena",
+      "timeLabelAgo": "Creado hace {{time}}",
+      "myCopyTradingEarnings": "Mis ganancias por Copy Trading",
+      "createdTime": "Hora de creación",
+      "tokenInfo": "Información del Token",
+      "bought": "Comprado",
+      "twitterNews": "Noticias en X",
+      "Liquidity": "Liquidez",
+      "tokenName": "Nombre del Token",
+      "myCopyTrading": "Mi Copy Trading",
+      "noOtherTokensWithSameName": "No se encontraron otros tokens con el mismo nombre.",
+      "timeSmartWallet": "Tiempo / Smart Wallet",
+      "smartWalletsBuying": "{{len}} Cartera Inteligente Comprando",
+      "earned": "Ganado",
+      "holdingProfit": "Tenencia/Beneficio",
+      "loss": "Pérdida",
+      "buyEarn": "24H Comprar / Ganar",
+      "earn": "Ganar",
+      "smartWallets": "Carteras Inteligentes",
+      "info": "Información",
+      "sameNameTokens": "Tokens con el mismo nombre"
     }
   },
   "global": {

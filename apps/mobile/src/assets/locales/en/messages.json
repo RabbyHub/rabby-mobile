@@ -962,6 +962,15 @@
         "title": "Copy Trading from Smart Money",
         "description": "Discover tokens based on recent activity from smart money wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
       },
+      "filterRule": {
+        "24HChange": "24H Change",
+        "smartMoney": "Trading Smart Wallets",
+        "tokenCreate": "Recently Created"
+      },
+      "bought": "Bought",
+      "earned": "Earned",
+      "timeSmartWallet": "Time / Smart Wallet",
+      "buyEarn": "24H Buy / Earn",
       "smartMoneyWallets": "Smart Money Wallets",
       "smartMoneyWallet": "Smart Money Wallet",
       "recentBuy": "Recent Buy",
@@ -969,7 +978,27 @@
       "noMoreData": "No more data",
       "updateText": "{{count}} Trends Updated",
       "refreshTitle": "Loading More Copy Trading From Smart Money",
-      "buy": "Buy"
+      "twitterNews": "News in X",
+      "tokenInfo": "Token Info",
+      "smartWallets": "Smart Wallets",
+      "sameNameTokens": "Same Name Tokens",
+      "myCopyTradingEarnings": "My Copy Trading Earnings",
+      "myCopyTrading": "My Copy Trading",
+      "token": "Token",
+      "timeLabelAgo": "Created {{time}} ago",
+      "smartWalletsBuying": "{{len}} Smart Wallets Buying",
+      "holdingProfit": "Holding/Profit",
+      "info": "Info",
+      "createdTime": "Created Time",
+      "tokenName": "Token Name",
+      "chain": "Chain",
+      "noOtherTokensWithSameName": "No other tokens with the same name were found",
+      "currentToken": "Current Token",
+      "contractAddress": "Contract Address",
+      "Liquidity": "Liquidity",
+      "buy": "Buy",
+      "loss": "Loss",
+      "earn": "Earn"
     },
     "dashboard": {
       "home": {

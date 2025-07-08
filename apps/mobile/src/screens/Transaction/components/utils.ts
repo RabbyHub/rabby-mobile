@@ -11,7 +11,10 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { IManageToken } from '@/core/services/preference';
-import { TransactionHistoryItem } from '@/core/services/transactionHistory';
+import {
+  SwapTxHistoryItem,
+  TransactionHistoryItem,
+} from '@/core/services/transactionHistory';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
 import { appJsonStore } from '@/core/storage/mmkv';
 import { HistoryItemCateType } from './type';
@@ -22,6 +25,7 @@ import {
 } from '@/constant/gas-account';
 import { openapi } from '@/core/request';
 import { patchSingleToken } from '@/databases/sync/assets';
+import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradingBuyItem';
 
 export function getHistoryItemType(
   data: HistoryDisplayItem,
@@ -302,4 +306,17 @@ export const txDonePatchTokenAmountInDb = async (
   } catch (e) {
     console.log('txDonePatchTokenAmountInDb error', e);
   }
+};
+
+export const insertCopyTradingBuyItem = (history: SwapTxHistoryItem) => {
+  CopyTradingBuyItemEntity.insertBuyItem(history.address, {
+    hash: history.hash,
+    id: history.toToken.id,
+    chain: history.toToken.chain,
+    amount: history.toAmount,
+    price: history.toToken.price,
+    from_token_id: history.fromToken.id,
+    from_token_amount: history.fromAmount,
+    from_token_price: history.fromToken.price,
+  });
 };

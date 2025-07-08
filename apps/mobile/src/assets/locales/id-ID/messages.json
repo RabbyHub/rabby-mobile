@@ -1983,7 +1983,36 @@
       "historyProfit": "Riwayat Keuntungan",
       "smartMoneyWallets": "Smart Money Wallets",
       "refreshTitle": "Memuat Lebih Banyak Copy Trading Dari Smart Money",
-      "smartMoneyWallet": "Smart Money Wallet"
+      "smartMoneyWallet": "Smart Money Wallet",
+      "filterRule": {
+        "24HChange": "24H Perubahan",
+        "tokenCreate": "Baru Dibuat",
+        "smartMoney": "Trading Smart Wallets"
+      },
+      "chain": "Rantai",
+      "tokenName": "Nama Token",
+      "bought": "Dibeli",
+      "contractAddress": "Alamat Kontrak",
+      "info": "Info",
+      "earn": "Dapatkan",
+      "holdingProfit": "Holding/Pendapatan",
+      "myCopyTradingEarnings": "Penghasilan Copy Trading Saya",
+      "loss": "Kehilangan",
+      "timeSmartWallet": "Waktu / Dompet Pintar",
+      "buyEarn": "24H Beli / Dapatkan",
+      "sameNameTokens": "Token Nama yang Sama",
+      "smartWalletsBuying": "{{len}} Smart Wallets Membeli",
+      "myCopyTrading": "Salin Perdagangan Saya",
+      "smartWallets": "Dompet Cerdas",
+      "earned": "Diperoleh",
+      "currentToken": "Token Saat Ini",
+      "Liquidity": "Likuiditas",
+      "noOtherTokensWithSameName": "Tidak ada token lain dengan nama yang sama ditemukan",
+      "createdTime": "Waktu Dibuat",
+      "tokenInfo": "Informasi Token",
+      "token": "Token",
+      "twitterNews": "Berita di X",
+      "timeLabelAgo": "Dibuat {{time}} yang lalu"
     }
   },
   "component": {

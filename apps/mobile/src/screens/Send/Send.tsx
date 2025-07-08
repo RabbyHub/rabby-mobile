@@ -109,6 +109,11 @@ function SendScreen({
     forScene: 'MakeTransactionAbout',
   });
 
+  useEffect(() => {
+    clearLocalPendingTxData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const navParams = useNavigationState(
     s =>
       s.routes.find(
