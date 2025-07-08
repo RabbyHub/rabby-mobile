@@ -78,8 +78,9 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     content: {
       fontSize: 20,
-      fontWeight: '500',
+      fontWeight: '900',
       lineHeight: 24,
+      fontFamily: 'SF Pro Rounded',
     },
     contentWrapper: {
       flexDirection: 'row',
