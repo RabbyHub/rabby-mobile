@@ -10,6 +10,7 @@ import { DefaultRPCRes } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import dayjs from 'dayjs';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 type RPCDefaultItem = DefaultRPCRes['rpcs'][number];
 
@@ -161,10 +162,10 @@ class CustomRPCService {
           }Updating default RPCs...,last update at:`,
           dayjs(this.getDefaultRPCLastUpdateAt()).format('YYYY-MM-DD HH:mm:ss'),
         );
-
-        // const data = (await openapiService.getDefaultRPCs())?.rpcs;
         // TODO: remove  after test
-        const data = await fetchDefaultRpc();
+        const data = isNonPublicProductionEnv
+          ? await fetchDefaultRpc()
+          : (await openapi.getDefaultRPCs())?.rpcs;
         if (data.length) {
           console.log('Default RPCs updated successfully.');
           this.setDefaultRPCLastUpdateAt(Date.now());
