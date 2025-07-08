@@ -297,6 +297,7 @@ function Chart({
     <LineChart.Provider data={data}>
       <DataHeaderInfo
         key={activeKey}
+        activeKey={activeKey}
         currentPercentChange={currentInfo.percent}
         currentIsLoss={currentInfo.isLoss}
         currentBalance={currentInfo.balance}
@@ -328,7 +329,7 @@ function Chart({
               color={pathColor}
               outerSize={12}
               size={8}>
-              <LineChart.Tooltip cursorGutter={114} yGutter={-8}>
+              {/* <LineChart.Tooltip cursorGutter={114} yGutter={-8}>
                 <LineChart.DatetimeText
                   style={styles.dateTime}
                   format={({ value }) => {
@@ -350,7 +351,7 @@ function Chart({
                     return `${MM} ${DD}, ${YYYY}`;
                   }}
                 />
-              </LineChart.Tooltip>
+              </LineChart.Tooltip> */}
             </LineChart.CursorCrosshair>
             <Mask xOffset={xOffset} />
           </LineChart>

@@ -15,6 +15,7 @@ export type CurvePoint = {
   timestamp: number;
   dateString: string;
   clockTimeString: string;
+  dateTimeString: string;
 };
 
 export const use24hCurveData = ({
@@ -145,6 +146,7 @@ export const formatTokenDateCurve = (
         timestamp: dayjs(item.timestamp).valueOf(),
         dateString: dayjs(item.timestamp).format('MM DD, YYYY'),
         clockTimeString: dayjs(item.timestamp).format('HH:mm'),
+        dateTimeString: dayjs(item.timestamp).format('MM DD, HH:mm'),
       };
     }) || [];
 
