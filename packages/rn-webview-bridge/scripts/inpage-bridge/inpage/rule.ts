@@ -54,6 +54,16 @@ const hackRainbowkit = () => {
   });
 };
 
+const hackMetamaskMode = async () => {
+  const isMetamaskMode = await (window as any).rabby.request({
+    method: 'rabby_getIsMetamaskMode',
+    params: [],
+  });
+  if (isMetamaskMode) {
+    setupMetamaskMode();
+  }
+};
+
 const rules: Rule[] = [
   {
     matches: ['https://app.uniswap.org'],
@@ -144,5 +154,6 @@ export const startCheckRules = () => {
     }
 
     hackRainbowkit();
+    hackMetamaskMode();
   });
 };

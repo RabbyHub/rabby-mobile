@@ -25,6 +25,8 @@ export const enum APP_STORE_NAMES {
 
   'browser' = 'browser',
   'openapi' = 'openapi',
+
+  'metamaskMode' = 'metamaskMode',
 }
 
 export type STORE_SERVICE_MAP = {
@@ -59,6 +61,8 @@ export type STORE_SERVICE_MAP = {
   [APP_STORE_NAMES.offlineChain]: import('@/core/services/offlineChain').OfflineChainService;
 
   [APP_STORE_NAMES.browser]: import('@/core/services/browserService').BrowserService;
+
+  [APP_STORE_NAMES.metamaskMode]: import('@/core/services/metamaskModeService').MetamaskModeService;
 };
 
 export type MIGRATABLE_STORE_SERVICE = keyof STORE_SERVICE_MAP;
