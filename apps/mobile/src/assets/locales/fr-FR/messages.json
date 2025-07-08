@@ -1993,7 +1993,36 @@
       "smartMoneyWallet": "Smart Money Wallet",
       "historyProfit": "Historique des profits",
       "recentBuy": "Achat récent",
-      "updateText": "{{count}} Tendances Mises à Jour"
+      "updateText": "{{count}} Tendances Mises à Jour",
+      "filterRule": {
+        "tokenCreate": "Récemment créé",
+        "24HChange": "Changement sur 24H",
+        "smartMoney": "Trading Smart Wallets"
+      },
+      "info": "Infos",
+      "currentToken": "Jeton actuel",
+      "earned": "Gagné",
+      "token": "Jeton",
+      "loss": "Perte",
+      "earn": "Gagner",
+      "bought": "Acheté",
+      "tokenName": "Nom du token",
+      "sameNameTokens": "Jetons de même nom",
+      "twitterNews": "Actualités dans X",
+      "holdingProfit": "Holding/Profit",
+      "buyEarn": "24H Acheter / Gagner",
+      "contractAddress": "Adresse du contrat",
+      "createdTime": "Temps de création",
+      "timeLabelAgo": "Créé il y a {{time}}",
+      "smartWallets": "Portefeuilles intelligents",
+      "noOtherTokensWithSameName": "Aucun autre token portant le même nom n'a été trouvé.",
+      "myCopyTrading": "Mon trading copie",
+      "timeSmartWallet": "Temps / Smart Wallet",
+      "chain": "Chaîne",
+      "myCopyTradingEarnings": "Mes gains de Copy Trading",
+      "tokenInfo": "Informations sur le Token",
+      "smartWalletsBuying": "{{len}} Portefeuilles Intelligents à Acheter",
+      "Liquidity": "Liquidité"
     }
   },
   "native": {

@@ -168,7 +168,6 @@ export async function syncRemoteHistory(
     //   console.error('TokenItemEntity.save err', err);
     //   throw err;
     // });
-    console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction');
     await batchSaveWithPQueueAndTransaction(
       HistoryItemEntity,
       historyItems,

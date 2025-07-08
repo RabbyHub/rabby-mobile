@@ -42,6 +42,7 @@ interface Props {
   isSingleAddress?: boolean;
   relateDefiList?: RelatedDeFiType[];
   onUpChange?: (isUp: boolean) => void;
+  extraMetaInfo?: React.ReactNode;
 }
 export function TokenPriceChart(props: Props) {
   const {
@@ -51,6 +52,7 @@ export function TokenPriceChart(props: Props) {
     amountList,
     finalAccount,
     relateDefiList,
+    extraMetaInfo,
     onUpChange,
   } = props;
   const { colors2024, styles } = useTheme2024({ getStyle });
@@ -243,6 +245,7 @@ export function TokenPriceChart(props: Props) {
             isNoAssets={false}
             pathColor={pathColor}
             xOffset={e.key === '24h' ? curve24hXOffset : timeMachineXOffset}
+            extraMetaInfo={extraMetaInfo}
           />
         </View>
       ))}
@@ -270,6 +273,7 @@ function Chart({
   loading,
   pathColor,
   xOffset,
+  extraMetaInfo,
 }: {
   amount: number;
   isOffline: boolean;
@@ -285,6 +289,7 @@ function Chart({
   isNoAssets: boolean;
   pathColor: string;
   xOffset: SharedValue<number>;
+  extraMetaInfo?: React.ReactNode;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -300,6 +305,8 @@ function Chart({
         isLoading={loading}
         isNoAssets={false}
       />
+
+      {loading ? null : extraMetaInfo}
 
       {loading ? (
         <CurveLoader />

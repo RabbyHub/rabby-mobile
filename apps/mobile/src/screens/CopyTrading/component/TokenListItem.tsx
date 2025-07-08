@@ -1,7 +1,17 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useMemo } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { CopyTradeTokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import React, { useMemo, useState } from 'react';
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  LayoutChangeEvent,
+} from 'react-native';
+import {
+  CopyTradeTokenItem,
+  CopyTradeTokenItemV2,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -11,6 +21,11 @@ import * as d3Shape from 'd3-shape';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
 import { Skeleton } from '@rneui/themed';
+import { useMemoizedFn } from 'ahooks';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { TokenMetaInfo } from './TokenMetaInfo';
+import { DashedUnderlineText } from '@/components2024/DashedUnderlineText';
+import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 
 export const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -54,9 +69,9 @@ const TrendChartComponent = ({
     : colors2024['red-default'];
 
   return (
-    <View style={{ width: 100, height: 30, marginTop: -10, marginBottom: 10 }}>
+    <View style={{ width: 90, height: 30, marginTop: -10, marginBottom: 10 }}>
       <LineChart.Provider data={chartData}>
-        <LineChart height={50} width={100} shape={d3Shape.curveCatmullRom}>
+        <LineChart height={50} width={90} shape={d3Shape.curveCatmullRom}>
           <LineChart.Path showInactivePath={false} color={pathColor} width={1}>
             <LineChart.Gradient color={pathColor} />
           </LineChart.Path>
@@ -67,9 +82,9 @@ const TrendChartComponent = ({
 };
 
 interface TokenListItemProps {
-  item: CopyTradeTokenItem;
-  onBuyPress: (item: CopyTradeTokenItem) => void;
-  onPress: (item: CopyTradeTokenItem) => void;
+  item: CopyTradeTokenItemV2;
+  onBuyPress: (item: CopyTradeTokenItemV2) => void;
+  onPress: (item: CopyTradeTokenItemV2, isShowSmartWallets?: boolean) => void;
   showTipsDollarDialog: () => void;
 }
 
@@ -83,28 +98,51 @@ export const SkeletonTokenListItem = () => {
       <View style={styles.topSection}>
         <View style={styles.tokenLeftSection}>
           <View style={styles.tokenInfoContainer}>
-            <Skeleton circle width={46} height={46} />
+            <Skeleton
+              circle
+              width={46}
+              height={46}
+              style={styles.skeleton}
+              LinearGradientComponent={LoadingLinear}
+            />
             <View style={styles.tokenInfo}>
               <Skeleton
                 width={40}
                 height={20}
-                style={{ marginTop: 0, borderRadius: 4 }}
+                style={{ marginTop: 0, borderRadius: 4, ...styles.skeleton }}
+                LinearGradientComponent={LoadingLinear}
               />
               <Skeleton
                 width={80}
                 height={18}
-                style={{ marginTop: 4, borderRadius: 4 }}
+                style={{ marginTop: 4, borderRadius: 4, ...styles.skeleton }}
+                LinearGradientComponent={LoadingLinear}
               />
             </View>
           </View>
         </View>
         <View style={styles.tokenRightSection}>
-          <Skeleton width={100} height={56} style={{ borderRadius: 10 }} />
+          <Skeleton
+            width={100}
+            height={56}
+            style={{ borderRadius: 10, ...styles.skeleton }}
+            LinearGradientComponent={LoadingLinear}
+          />
         </View>
       </View>
       <View style={styles.bottomSection}>
-        <Skeleton width={160} height={36} style={{ borderRadius: 6 }} />
-        <Skeleton width={66} height={34} style={{ borderRadius: 6 }} />
+        <Skeleton
+          // width={160}
+          height={36}
+          style={{ borderRadius: 6, ...styles.skeleton, flex: 1 }}
+          LinearGradientComponent={LoadingLinear}
+        />
+        <Skeleton
+          width={66}
+          height={34}
+          style={{ borderRadius: 6, ...styles.skeleton }}
+          LinearGradientComponent={LoadingLinear}
+        />
       </View>
     </View>
   );
@@ -116,9 +154,37 @@ const TokenListItemComponent = ({
   onPress,
   showTipsDollarDialog,
 }: TokenListItemProps) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const isPositive = (item.price_24h_change || 0) >= 0;
+  const isPositive = (item.price_change || item.price_24h_change || 0) >= 0;
+
+  const [maxDisplayCount, setMaxDisplayCount] = useState(10);
+
+  const handlePressSmartWallets = useMemoizedFn(() => {
+    onPress(item, true);
+  });
+
+  const calculateMaxIcons = useMemoizedFn((containerWidth: number) => {
+    // icon width 20px, overlap 10px
+    // formula: first icon 20px + (n-1) * 10px <= containerWidth
+    // so: 20 + (n-1) * 10 <= containerWidth
+    // so: n <= (containerWidth - 10) / 10
+    const ICON_WIDTH = 20;
+    const OVERLAP = 10;
+
+    if (containerWidth <= ICON_WIDTH) {
+      return 1;
+    }
+
+    const maxCount = Math.floor((containerWidth - OVERLAP) / OVERLAP);
+    return Math.max(1, Math.min(maxCount, 10)); // min 1, max 10
+  });
+
+  const handleContainerLayout = useMemoizedFn((event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout;
+    const newMaxCount = calculateMaxIcons(width);
+    setMaxDisplayCount(newMaxCount);
+  });
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
@@ -127,10 +193,13 @@ const TokenListItemComponent = ({
           <View style={styles.tokenInfoContainer}>
             <AssetAvatar logo={item.logo_url} size={46} />
             <View style={styles.tokenInfo}>
-              <Text style={styles.tokenName}>{getTokenSymbol(item)}</Text>
-              <Text style={styles.fdvText}>
-                {`FDV ${item.fdv ? formatUsdValueKMB(item.fdv || 0) : '-'}`}
+              <Text style={styles.tokenName}>
+                {ellipsisOverflowedText(getTokenSymbol(item), 12)}
               </Text>
+              <TokenMetaInfo
+                tokenCreateAt={item.token_create_at}
+                fdv={item.fdv || undefined}
+              />
             </View>
           </View>
         </View>
@@ -145,7 +214,9 @@ const TokenListItemComponent = ({
               styles.changeText,
               !isPositive && styles.changeTextPositive,
             ])}>
-            {formatPercentage(Number(item.price_24h_change) || 0)}
+            {formatPercentage(
+              Number(item.price_change) || Number(item.price_24h_change) || 0,
+            )}
           </Text>
         </View>
       </View>
@@ -155,21 +226,43 @@ const TokenListItemComponent = ({
           <View style={styles.triangleContainer}>
             <View style={styles.triangle} />
           </View>
-          <TouchableOpacity onPress={showTipsDollarDialog}>
-            <Image
-              source={require('@/assets2024/icons/home/IconDollar.png')}
-              style={styles.dollarIcon}
-            />
-            {/* <IconDollar width={20} height={20} style={styles.dollarIcon} /> */}
+          <TouchableOpacity
+            style={styles.dollarIconsContainer}
+            onLayout={handleContainerLayout}
+            onPress={showTipsDollarDialog}>
+            {Array.from({
+              length: Math.min(item.buy_address_count || 0, maxDisplayCount),
+            }).map((_, index) => (
+              <View key={index}>
+                <Image
+                  source={require('@/assets2024/icons/home/IconDollar.png')}
+                  style={StyleSheet.flatten([
+                    styles.dollarIcon,
+                    { marginLeft: index === 0 ? 0 : -10 },
+                  ])}
+                />
+              </View>
+            ))}
           </TouchableOpacity>
-          <Text style={styles.buyText}>
-            Buy{'  '}
-            <Text style={styles.buyTextBold}>
-              {formatUsdValueKMB(item.buy_usd_value_24h || 0)}
-            </Text>
-            {'  '}
-            in 24h
-          </Text>
+          <View style={styles.buyTextWrapper}>
+            <TouchableOpacity
+              style={styles.buyTextContainer}
+              onPress={handlePressSmartWallets}>
+              <DashedUnderlineText
+                text={t('page.copyTrading.smartWalletsBuying', {
+                  len:
+                    item.buy_address_count > 10
+                      ? '10+'
+                      : item.buy_address_count,
+                })}
+                textStyle={styles.buyText}
+                dashColor={colors2024['neutral-info']}
+                dashArray="2,2"
+                strokeWidth={1}
+                dashMarginTop={1}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
         <TouchableOpacity
           style={styles.buyButton}
@@ -186,9 +279,9 @@ export const TokenListItem = React.memo(TokenListItemComponent);
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   tokenItem: {
     paddingVertical: 14,
-    paddingTop: 12,
+    paddingTop: 8,
     paddingHorizontal: 12,
-    gap: 16,
+    gap: 8,
     marginBottom: 8,
     backgroundColor: isLight
       ? colors2024['neutral-bg-1']
@@ -205,8 +298,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   tokenInfo: {
     flex: 1,
+    gap: 4,
     justifyContent: 'center',
-    marginLeft: 12,
+    marginLeft: 8,
   },
   tokenName: {
     fontSize: 16,
@@ -214,14 +308,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 20,
-  },
-  fdvText: {
-    marginTop: 4,
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
   },
   buyInfoContainer: {
     position: 'relative',
@@ -231,15 +317,12 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-2']
       : colors2024['neutral-bg-1'],
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    paddingLeft: 12,
+    padding: 8,
     borderRadius: 8,
   },
   dollarIcon: {
     width: 20,
     height: 20,
-    marginRight: 4,
   },
   dollarSymbol: {
     fontSize: 8,
@@ -247,10 +330,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: 'white',
   },
   buyText: {
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: '500',
   },
   buyTextBold: {
@@ -277,7 +360,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   buyButton: {
     backgroundColor: colors2024['brand-default'],
     borderRadius: 6,
-    width: 66,
+    width: 56,
     height: 34,
     alignItems: 'center',
     justifyContent: 'center',
@@ -298,7 +381,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   bottomSection: {
     width: '100%',
     height: 34,
-    gap: 28,
+    gap: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -306,7 +389,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   triangleContainer: {
     position: 'absolute',
     left: 16,
-    top: -10,
+    top: -6,
     zIndex: 1,
   },
   triangle: {
@@ -314,7 +397,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     height: 0,
     borderLeftWidth: 6,
     borderRightWidth: 6,
-    borderBottomWidth: 10,
+    borderBottomWidth: 8,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderBottomColor: isLight
@@ -323,5 +406,26 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   changeTextPositive: {
     color: colors2024['red-default'],
+  },
+  dollarIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 4,
+    overflow: 'hidden',
+    flexShrink: 1,
+  },
+  buyTextContainer: {
+    flex: 1,
+    flexShrink: 0,
+    alignSelf: 'flex-start',
+    // maxWidth: 160,
+  },
+  buyTextWrapper: {
+    flexShrink: 0,
+  },
+  skeleton: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
 }));

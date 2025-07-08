@@ -1984,7 +1984,36 @@
       "smartMoneyWallet": "스마트 머니 지갑",
       "buy": "구매하다",
       "refreshTitle": "스마트 머니에서 복사 거래를 더 로드하는 중",
-      "recentBuy": "최근 구매"
+      "recentBuy": "최근 구매",
+      "filterRule": {
+        "tokenCreate": "최근 생성됨",
+        "smartMoney": "스마트 월렛 거래",
+        "24HChange": "24H 변화"
+      },
+      "chain": "체인",
+      "twitterNews": "X의 뉴스",
+      "earned": "획득한",
+      "sameNameTokens": "동일 이름 토큰",
+      "tokenName": "토큰 이름",
+      "tokenInfo": "토큰 정보",
+      "smartWallets": "스마트 지갑",
+      "timeSmartWallet": "시간 / 스마트 지갑",
+      "contractAddress": "계약 주소",
+      "createdTime": "생성 시간",
+      "smartWalletsBuying": "{{len}} 스마트 지갑 구매",
+      "myCopyTradingEarnings": "내 복사 거래 수익",
+      "myCopyTrading": "내 카피 트레이딩",
+      "holdingProfit": "보유/수익",
+      "Liquidity": "유동성",
+      "loss": "손실",
+      "currentToken": "현재 토큰",
+      "earn": "수익을 얻다",
+      "token": "토큰",
+      "bought": "구매함",
+      "info": "정보",
+      "buyEarn": "24H 구매 / 수익",
+      "timeLabelAgo": "{{time}} 전에 생성됨",
+      "noOtherTokensWithSameName": "동일한 이름의 다른 토큰을 찾을 수 없습니다."
     }
   },
   "global": {
