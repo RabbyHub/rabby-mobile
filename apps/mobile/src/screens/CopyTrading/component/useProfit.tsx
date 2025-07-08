@@ -130,7 +130,10 @@ export const useProfit = () => {
       const groupedData = groupBy(itemData, item => `${item.chain}_${item.id}`);
 
       const aggregatedData = Object.values(groupedData).map(group => {
-        const firstItem = group[0];
+        const groupSorted = group.sort((a, b) => {
+          return b.amount - a.amount;
+        });
+        const firstItem = groupSorted[0];
 
         // calc realAmount
         const totalRealAmount = group.reduce(
