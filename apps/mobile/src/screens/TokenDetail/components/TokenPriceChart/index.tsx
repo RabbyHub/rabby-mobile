@@ -313,7 +313,7 @@ function Chart({
         isNoAssets={false}
       />
 
-      {loading ? null : extraMetaInfo}
+      {loading ? null : data?.length ? extraMetaInfo : null}
 
       {loading ? (
         <CurveLoader />
@@ -485,6 +485,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   emptyChart: {
     width: winInfo.width - 40,
     height: 115,
+    // marginTop: 24,
     marginHorizontal: 20,
   },
 }));

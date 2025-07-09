@@ -93,7 +93,6 @@ export const DataHeaderInfo = ({
         : colors2024['green-default'],
     };
   }, [currentIsLoss, data, currentIndex, colors, styles, isLoading]);
-  console.log('activeKey', activeKey);
 
   const dateTime = useDerivedValue(() => {
     return (
