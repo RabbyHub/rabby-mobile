@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { formatPrice } from '@/utils/number';
@@ -5,7 +6,13 @@ import { createGetStyles2024 } from '@/utils/styles';
 import * as d3Shape from 'd3-shape';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  ImageBackground,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Animated, {
   SharedValue,
   useAnimatedStyle,
@@ -27,7 +34,6 @@ import { RelatedDeFiType, TokenFromAddressItem } from '../..';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { useTranslation } from 'react-i18next';
-
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
 const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
@@ -357,7 +363,12 @@ function Chart({
           </LineChart>
         </>
       ) : (
-        <View style={styles.empty} />
+        <ImageBackground
+          source={require('@/assets2024/singleHome/ImgEmptyChart.png')}
+          resizeMode="cover"
+          style={styles.emptyChart}
+        />
+        // <View style={styles.empty} />
       )}
     </LineChart.Provider>
   );
@@ -470,5 +481,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 4,
     // justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  emptyChart: {
+    width: winInfo.width - 40,
+    height: 115,
+    marginHorizontal: 20,
   },
 }));
