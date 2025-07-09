@@ -101,7 +101,7 @@ export const TokenInfo: React.FC<TokenInfoProps> = ({
           },
         ]}>
         <Text style={styles.totalEarningsLabel}>
-          {`${t('page.copyTrading.myCopyTrading')}: `}
+          {`${t('page.copyTrading.myBalanceFromCopyTrading')}: `}
         </Text>
         <View style={styles.totalEarningsRow}>
           <Text style={styles.totalValue}>

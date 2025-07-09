@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { formatPrice } from '@/utils/number';
@@ -78,19 +77,15 @@ export function TokenPriceChart(props: Props) {
       deFiAmount += item.amount;
     });
 
-    if ('totalAmount' in originToken && !isSingleAddress) {
-      return (originToken.totalAmount as unknown as number) + deFiAmount;
+    if (isSingleAddress) {
+      return token.amount + deFiAmount;
     } else {
-      const currentAddress = finalAccount?.address;
-      if ('fromAddress' in originToken && currentAddress) {
-        const tokenAmount = originToken.fromAddress.find(
-          item => item.address === currentAddress,
-        );
-        return (tokenAmount?.amount ?? originToken.amount) + deFiAmount;
-      }
-      return originToken.amount + deFiAmount;
+      const totalTokenAmount = amountList.reduce((acc, item) => {
+        return acc + item.amount;
+      }, 0);
+      return totalTokenAmount + deFiAmount;
     }
-  }, [originToken, isSingleAddress, finalAccount, relateDefiList]);
+  }, [amountList, token, isSingleAddress, relateDefiList]);
 
   const amount = useMemo(
     () => (priceType === 'holding' ? amountSum : 1),

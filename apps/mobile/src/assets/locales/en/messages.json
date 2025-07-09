@@ -984,6 +984,7 @@
       "sameNameTokens": "Same Name Tokens",
       "myCopyTradingEarnings": "My Copy Trading Earnings",
       "myCopyTrading": "My Copy Trading",
+      "myBalanceFromCopyTrading": "My Balance from Copy Trading",
       "token": "Token",
       "timeLabelAgo": "Created {{time}} ago",
       "smartWalletsBuying": "{{len}} Smart Wallets Buying",
