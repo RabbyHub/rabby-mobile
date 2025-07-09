@@ -199,7 +199,8 @@ export const getTxFailedResult = (
     }
   }
 
-  return defaultHint;
+  // return defaultHint;
+  return [origin, false] as [string, RetryUpdateType];
 };
 
 export const useDebugToastErrorTxRetryInfo = ({
