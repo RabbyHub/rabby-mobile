@@ -303,22 +303,18 @@ const flowContext = flow
                   break;
                 case 'gasPrice':
                   if (_approvalRes.gasPrice) {
-                    if (_approvalRes.gasPrice) {
-                      _approvalRes.gasPrice = `0x${new BigNumber(
-                        _approvalRes.gasPrice,
-                        16,
-                      )
+                    _approvalRes.gasPrice = `0x${new BigNumber(
+                      new BigNumber(_approvalRes.gasPrice, 16)
                         .times(1.3)
-                        .toString(16)}`;
-                    }
+                        .toFixed(0),
+                    ).toString(16)}`;
                   }
                   if (_approvalRes.maxFeePerGas) {
                     _approvalRes.maxFeePerGas = `0x${new BigNumber(
-                      _approvalRes.maxFeePerGas,
-                      16,
-                    )
-                      .times(1.3)
-                      .toString(16)}`;
+                      new BigNumber(_approvalRes.maxFeePerGas, 16)
+                        .times(1.3)
+                        .toFixed(0),
+                    ).toString(16)}`;
                   }
                   break;
                 default:
