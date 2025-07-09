@@ -234,7 +234,7 @@ export const useProfit = () => {
   );
 
   const fetchProfitData = useMemoizedFn(async () => {
-    setLoading(true);
+    // setLoading(true);
     const res = await CopyTradingBuyItemEntity.queryCopyTradingItems();
     const aggregatedData = groupByChainAndTokenId(res);
     updateProfitData(
