@@ -269,7 +269,7 @@ export const CopyTradingScreen = () => {
 
     setChainIdList(chainIdArr);
     setSelectedChainId(chainIdArr[0]);
-    await fetchTokenList(chainIdArr[0], 'price_change', '');
+    await fetchTokenList(chainIdArr[0], orderKey, '');
   });
 
   const handleChainItemPress = useMemoizedFn(async (chainId: string) => {
@@ -279,7 +279,7 @@ export const CopyTradingScreen = () => {
     setSelectedChainId(chainId);
     setHasMore(true);
     setListCursor('');
-    const tokenArr = await fetchTokenList(chainId, 'price_change', '');
+    const tokenArr = await fetchTokenList(chainId, orderKey, '');
     setTokenList(tokenArr);
   });
 
