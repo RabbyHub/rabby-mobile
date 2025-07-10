@@ -175,13 +175,17 @@ export function TokenPriceChart(props: Props) {
   const currentInfo = useMemo(() => {
     const price =
       priceType === 'holding' ? token.price * amountSum : token.price;
+    // price_24h_change will loss some zero point
+    const oneDayIsLoss = token.price_24h_change
+      ? Number(token.price_24h_change) < 0
+      : false;
     return {
       date: dayjs().format(DATE_FORMATTER),
       balance: '$' + formatPrice(price || 0, 8, true),
-      isLoss: !!data?.isLoss,
+      isLoss: activeKey === '24h' ? oneDayIsLoss : !!data?.isLoss,
       percent: percent,
     };
-  }, [data?.isLoss, percent, token.price, amountSum, priceType]);
+  }, [data?.isLoss, percent, amountSum, priceType, activeKey, token]);
 
   const curve24hXOffset = useSharedValue(0);
   const timeMachineXOffset = useSharedValue(0);
