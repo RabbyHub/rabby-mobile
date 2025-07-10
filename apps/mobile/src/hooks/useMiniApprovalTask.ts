@@ -13,8 +13,6 @@ import {
   setRetryTxRecommendNonce,
 } from '@/utils/errorTxRetry';
 import BigNumber from 'bignumber.js';
-import { toast } from '@/components2024/Toast';
-import { isSelfhostRegPkg } from '@/constant/env';
 
 type TxStatus = 'sended' | 'signed' | 'idle' | 'failed';
 
@@ -192,18 +190,6 @@ export const useMiniApprovalTask = ({ ga }: { ga?: Record<string, any> }) => {
               account: options.account,
               nonce: tx.nonce,
             });
-
-            if (isSelfhostRegPkg) {
-              toast.info(
-                `
-                origin error: ${msg}
-                nonce: ${tx.nonce}
-                gasPrice: ${tx.gasPrice}
-                maxFeePerGas: ${tx.maxFeePerGas}
-                `,
-                { duration: 3000 },
-              );
-            }
 
             setError({
               status: _status,

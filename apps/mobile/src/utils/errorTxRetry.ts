@@ -220,33 +220,33 @@ export const useDebugToastErrorTxRetryInfo = ({
   };
   account?: Account;
 }) => {
-  useEffect(() => {
-    if (
-      isSelfhostRegPkg &&
-      description &&
-      isFailedTx &&
-      tx.chainId &&
-      tx.from &&
-      tx.nonce
-    ) {
-      toast.info(
-        `
-                origin error: ${description}
-                nonce: ${tx.nonce}
-                gasPrice: ${tx.gasPrice}
-                maxFeePerGas: ${tx.maxFeePerGas}
-                `,
-        { duration: 3000 },
-      );
-    }
-  }, [
-    account,
-    description,
-    isFailedTx,
-    tx.chainId,
-    tx.from,
-    tx.gasPrice,
-    tx.maxFeePerGas,
-    tx.nonce,
-  ]);
+  // useEffect(() => {
+  //   if (
+  //     isSelfhostRegPkg &&
+  //     description &&
+  //     isFailedTx &&
+  //     tx.chainId &&
+  //     tx.from &&
+  //     tx.nonce
+  //   ) {
+  //     toast.info(
+  //       `
+  //               origin error: ${description}
+  //               nonce: ${tx.nonce}
+  //               gasPrice: ${tx.gasPrice}
+  //               maxFeePerGas: ${tx.maxFeePerGas}
+  //               `,
+  //       { duration: 3000 },
+  //     );
+  //   }
+  // }, [
+  //   account,
+  //   description,
+  //   isFailedTx,
+  //   tx.chainId,
+  //   tx.from,
+  //   tx.gasPrice,
+  //   tx.maxFeePerGas,
+  //   tx.nonce,
+  // ]);
 };
