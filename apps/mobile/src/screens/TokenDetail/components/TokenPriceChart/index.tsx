@@ -142,9 +142,12 @@ export function TokenPriceChart(props: Props) {
     if (data?.list?.length) {
       const pre = data?.list?.[0]?.value;
       const now = data?.list?.[data?.list?.length - 1]?.value;
-      const isLoss = now < pre;
+      let isLoss = now < pre;
       let currentPercent = '';
       if (activeKey === '24h') {
+        isLoss = token?.price_24h_change
+          ? Number(token.price_24h_change) < 0
+          : false;
         currentPercent =
           Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%';
       } else {
