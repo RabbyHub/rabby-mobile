@@ -33,6 +33,9 @@ const setupRainbowKitBtn = () => {
 const hackRainbowkit = () => {
   const hasRainbowkit = Boolean(window.localStorage.getItem('rk-version'));
   if (!hasRainbowkit) {
+    setTimeout(() => {
+      hackRainbowkit();
+    }, 100);
     return;
   }
   setupMetamaskMode();
