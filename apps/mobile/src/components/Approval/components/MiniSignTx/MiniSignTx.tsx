@@ -780,7 +780,7 @@ export const MiniSignTx = ({
         ((isSend || isSwap || isBridge) && customGasPrice) ||
         isSpeedUp ||
         isCancel ||
-        lastTimeGas?.lastTimeSelect === 'gasPrice'
+        (lastTimeGas?.lastTimeSelect === 'gasPrice' && !directSubmit)
       ) {
         gas = gasList.find(item => item.level === 'custom')!;
       } else if (
