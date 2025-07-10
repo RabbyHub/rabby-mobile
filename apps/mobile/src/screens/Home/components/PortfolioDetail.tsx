@@ -292,7 +292,7 @@ export const TokenList = ({
             ]}
             key={l.id}>
             <TouchableWithoutFeedback
-              onPress={() => l.isToken && handleOpenTokenDetail(l)}>
+              onPress={() => l.isToken && l.chain && handleOpenTokenDetail(l)}>
               <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
                 <AssetAvatar
                   logo={l._logo}
