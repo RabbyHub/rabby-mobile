@@ -1920,8 +1920,7 @@
         "portfolio": "Portofolio",
         "wallet_one": "Dompet",
         "wallet_other": "Dompet"
-      },
-      "scamTokenHeader": "Token penipuan"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {

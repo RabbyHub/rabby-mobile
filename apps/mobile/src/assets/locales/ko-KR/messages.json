@@ -1921,8 +1921,7 @@
         "portfolio": "포트폴리오",
         "wallet_one": "지갑",
         "wallet_other": "지갑"
-      },
-      "scamTokenHeader": "스캠 토큰"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {

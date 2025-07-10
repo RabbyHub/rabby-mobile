@@ -1980,8 +1980,7 @@
         "address": "Адрес",
         "wallet_one": "Кошелек",
         "wallet_other": "Кошельки"
-      },
-      "scamTokenHeader": "Мошеннические токены"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {

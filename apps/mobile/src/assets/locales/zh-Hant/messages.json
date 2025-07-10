@@ -2037,8 +2037,7 @@
         "portfolio": "投資組合",
         "wallet_other": "錢包",
         "wallet_one": "錢包"
-      },
-      "scamTokenHeader": "詐騙代幣"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {

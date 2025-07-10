@@ -2092,8 +2092,7 @@
         "address": "ที่อยู่",
         "wallet_one": "กระเป๋าเงิน",
         "wallet_other": "กระเป๋าเงิน"
-      },
-      "scamTokenHeader": "โทเค็นหลอกลวง"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {
