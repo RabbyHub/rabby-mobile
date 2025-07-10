@@ -8,7 +8,7 @@ import {
 import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { APPROVAL_STATUS_MAP, eventBus, EVENTS } from '@/utils/events';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ApprovalPopupContainer,
@@ -38,6 +38,7 @@ import {
   useDebugToastErrorTxRetryInfo,
 } from '@/utils/errorTxRetry';
 import useAsync from 'react-use/lib/useAsync';
+import { useUnmount } from 'ahooks';
 
 interface ApprovalParams {
   address: string;
@@ -124,9 +125,18 @@ export const LedgerHardwareWaiting = ({
   const mountedRef = React.useRef(false);
   const showDueToStatusChangeRef = React.useRef(false);
 
+  const cancelRef = useRef(false);
+
   const handleCancel = () => {
+    cancelRef.current = true;
     rejectApproval('user cancel');
   };
+
+  useUnmount(() => {
+    if (!cancelRef.current) {
+      rejectApproval('user cancel');
+    }
+  });
 
   const [isRetrying, setIsRetrying] = React.useState(false);
 

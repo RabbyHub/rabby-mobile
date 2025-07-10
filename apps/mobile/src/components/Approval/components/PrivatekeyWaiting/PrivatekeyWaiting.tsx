@@ -6,7 +6,7 @@ import {
 import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { APPROVAL_STATUS_MAP, eventBus, EVENTS } from '@/utils/events';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ApprovalPopupContainer,
@@ -36,6 +36,7 @@ import {
 } from '@/utils/errorTxRetry';
 import { createGetStyles2024 } from '@/utils/styles';
 import useAsync from 'react-use/lib/useAsync';
+import { useUnmount } from 'ahooks';
 
 interface ApprovalParams {
   address: string;
@@ -142,7 +143,10 @@ export const PrivatekeyWaiting = ({
     emitSignComponentAmounted();
   };
 
+  const cancelRef = useRef(false);
+
   const handleCancel = () => {
+    cancelRef.current = true;
     rejectApproval('user cancel');
   };
 
@@ -376,6 +380,12 @@ export const PrivatekeyWaiting = ({
       connectStatus === APPROVAL_STATUS_MAP.REJECTED,
     tx: params,
     account: $account,
+  });
+
+  useUnmount(() => {
+    if (!cancelRef.current) {
+      rejectApproval('user cancel');
+    }
   });
 
   return (
