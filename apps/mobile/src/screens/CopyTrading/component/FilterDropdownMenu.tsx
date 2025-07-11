@@ -121,7 +121,7 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   filterContainer: {
     // position: 'absolute',
     // zIndex: 1,
@@ -139,7 +139,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 4,
     borderRadius: 6,
     backgroundColor: colors2024['neutral-bg-1'],
-    shadowColor: colors2024['neutral-bg-1'],
+    shadowColor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(0, 0, 0, 0.12)',
     shadowOffset: {
       width: -7,
       height: 0,

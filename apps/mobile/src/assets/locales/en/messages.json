@@ -965,6 +965,7 @@
       "filterRule": {
         "24HChange": "24H Change",
         "smartMoney": "Trading Smart Wallets",
+        "smartWalletCount": "Smart Wallet Count",
         "tokenCreate": "Recently Created"
       },
       "bought": "Bought",
