@@ -172,6 +172,8 @@ export const LedgerHardwareWaiting = ({
     setIsRetrying(false);
   };
 
+  const account = params.isGnosis ? params.account! : $account;
+
   const init = async () => {
     const account = params.isGnosis ? params.account! : $account;
     const approval = (await getApproval())!;
@@ -346,16 +348,16 @@ export const LedgerHardwareWaiting = ({
   }, [connectStatus, errorMessage]);
 
   const { value: recommendNonce } = useAsync(async () => {
-    if (params.nonce && params.chainId && params.from && params.account) {
+    if (params.nonce && params.chainId && params.from && account) {
       return setRetryTxRecommendNonce({
         from: params.from,
         chainId: params.chainId,
-        account: params.account,
+        account: account,
         nonce: params.nonce,
       });
     }
     return '0x0';
-  }, [params.nonce, params.chainId, params.from, !!params.account]);
+  }, [params.nonce, params.chainId, params.from, !!account]);
 
   const [currentDescription, retryUpdateType]: [string, RetryUpdateType] =
     React.useMemo(() => {
@@ -373,7 +375,7 @@ export const LedgerHardwareWaiting = ({
         return [t('page.signFooterBar.ledger.txRejectedByLedger'), 'origin'];
       }
 
-      if (params.nonce && params.chainId && params.from && params.account) {
+      if (params.nonce && params.chainId && params.from && account) {
         return [
           APPROVAL_STATUS_MAP.REJECTED,
           APPROVAL_STATUS_MAP.FAILED,
@@ -388,7 +390,7 @@ export const LedgerHardwareWaiting = ({
     }, [
       connectStatus,
       description,
-      params.account,
+      account,
       params.chainId,
       params.from,
       params.nonce,

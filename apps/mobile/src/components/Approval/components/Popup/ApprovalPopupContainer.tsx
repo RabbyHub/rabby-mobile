@@ -76,6 +76,7 @@ const getStyles = createGetStyles2024(() => ({
     fontWeight: '400',
     lineHeight: 20,
     paddingHorizontal: 20,
+    textAlign: 'center',
   },
   footer: {},
   description: {
