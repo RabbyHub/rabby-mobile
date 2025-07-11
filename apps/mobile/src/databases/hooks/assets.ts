@@ -10,12 +10,14 @@ import { useSafeState } from '@/hooks/useSafeState';
 import { batchQueryNFTsWithLocalCache } from '@/screens/Home/utils/nft';
 import {
   batchLoadProjects,
+  loadAppChainList,
   loadPortfolioSnapshot,
   snapshot2Display,
 } from '@/screens/Home/utils/portfolio';
 import { batchQueryTokensWithLocalCache } from '@/screens/Home/utils/token';
 
 import { TokenItemEntity } from '../entities/tokenitem';
+import { formatAppChain } from '@/screens/Home/utils/appchain';
 
 export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -46,6 +48,23 @@ export function useAssetsBasicInfo({ enableAutoFetch = false }) {
 
   return { assetsInfo, fetchAssetsInfo };
 }
+
+export const loadAppChainComplexProtocols = async (userAddr: string) => {
+  try {
+    const appChainListRes = await loadAppChainList(userAddr);
+    const protocols: ComplexProtocol[] = [];
+    if (appChainListRes?.apps?.length) {
+      appChainListRes.apps.forEach(app => {
+        protocols.push(formatAppChain(app));
+      });
+    }
+    return protocols;
+  } catch (error) {
+    //  just ignore the data
+    console.error('app chain list load failed', error);
+    return [];
+  }
+};
 
 export const syncTokens = async (
   address: string,
@@ -103,6 +122,8 @@ export const syncProtocols = async (
       protocols.push(...projects.filter(i => !!i));
     }),
   );
+  const appChainProtocols = await loadAppChainComplexProtocols(address);
+  protocols.push(...appChainProtocols);
   runOnJS(syncRemotePortocols)(address, [...protocols]);
   return protocols;
 };

@@ -38,6 +38,7 @@ import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { Account } from '@/core/services/preference';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
+import { CurveDayType } from '@/utils/curveDayType';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -402,7 +403,7 @@ export const AssetContainer: React.FC<Props> = ({
     return 'token';
   }, [firstRowType]);
 
-  const { balance, balanceLoading } = useCurrentBalance(
+  const { balance, balanceLoading, evmBalance } = useCurrentBalance(
     currentAccount?.address,
     {
       update: true,
@@ -414,7 +415,13 @@ export const AssetContainer: React.FC<Props> = ({
     isLoading: isLoadingCurve,
     refresh: refreshCurve,
     hasNoData: hasNoCurveData,
-  } = useCurve(currentAccount?.address, 0, balance);
+  } = useCurve(
+    currentAccount?.address,
+    0,
+    evmBalance,
+    CurveDayType.DAY,
+    balance,
+  );
 
   const handleRefresh = useCallback(
     async (ignoreLoading?: boolean) => {
@@ -504,7 +511,7 @@ export const AssetContainer: React.FC<Props> = ({
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
           curveData={curveData}
-          isLoadingCurve={isLoadingCurve || (balanceLoading && !balance)}
+          isLoadingCurve={isLoadingCurve || (balanceLoading && !evmBalance)}
           isDisConnnect={isDisConnnect}
           onRefresh={() => handleRefresh(true)}
         />
@@ -521,7 +528,7 @@ export const AssetContainer: React.FC<Props> = ({
       </View>
     );
   }, [
-    balance,
+    evmBalance,
     balanceLoading,
     chainsInfo.chainLength,
     currentAccount,

@@ -38,6 +38,7 @@ export const formChartData = (
   realtimeNetWorth = 0,
   realtimeTimestamp?: number,
   type = CurveDayType.DAY,
+  staticBalance?: number | null,
 ) => {
   const startData = data[0] || { value: 0, timestamp: 0, usd_value: 0 };
   const step = type === CurveDayType.DAY ? 30 * 60 : 3 * 60 * 60;
@@ -106,7 +107,7 @@ export const formChartData = (
 
   return {
     list,
-    netWorth: formatSmallUsdValue(endNetWorth),
+    netWorth: formatSmallUsdValue(staticBalance || endNetWorth),
     change: `${formatUsdValue(Math.abs(assetsChange))}`,
     changePercent:
       startData.usd_value !== 0
@@ -144,6 +145,7 @@ export const useCurve = (
   nonce: number,
   realtimeNetWorth: number | null,
   days: CurveDayType = CurveDayType.DAY,
+  staticBalance: number | null,
 ) => {
   const [data, setData] = useState<
     {
@@ -158,8 +160,9 @@ export const useCurve = (
       realtimeNetWorth ?? 0,
       new Date().getTime(),
       days,
+      staticBalance,
     );
-  }, [data, realtimeNetWorth, days]);
+  }, [data, realtimeNetWorth, days, staticBalance]);
 
   const fetch = useCallback(
     async (addr: string, force = false) => {

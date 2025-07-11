@@ -39,6 +39,8 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { Button } from '@/components2024/Button';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { usePortfolios } from '../Home/hooks/usePortfolio';
+import { isAppChain } from '../Home/utils/appchain';
+import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -186,6 +188,10 @@ export const DeFiDetailScreen = () => {
     [currentPortfolio, routeData],
   );
 
+  const isFromAppChain = useMemo(() => {
+    return isAppChain(data?.chain || '');
+  }, [data?.chain]);
+
   const { t } = useTranslation();
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { deFiRefresh, singleDeFiRefresh } = useTriggerTagAssets();
@@ -205,7 +211,11 @@ export const DeFiDetailScreen = () => {
           logo={data?.logo || sectionsMultiProject[0]?.project?.logo}
           logoStyle={styles.assetIcon}
           size={40}
-          chain={data?.chain || sectionsMultiProject[0]?.project?.chain}
+          chain={
+            isFromAppChain
+              ? ''
+              : data?.chain || sectionsMultiProject[0]?.project?.chain
+          }
           chainSize={16}
         />
         <Text style={styles.tokenSymbol} numberOfLines={1} ellipsizeMode="tail">
@@ -399,6 +409,21 @@ export const DeFiDetailScreen = () => {
         windowSize={10}
         ListHeaderComponent={
           <>
+            {!!isFromAppChain && (
+              <View style={styles.appChainHeader}>
+                <RcIconInfoCC
+                  style={{ marginLeft: 4 }}
+                  width={16}
+                  height={16}
+                  color={colors2024['neutral-foot']}
+                />
+                <Text style={styles.appChainHeaderText}>
+                  {t('page.defiDetail.appChain', {
+                    chain: data?.name,
+                  })}
+                </Text>
+              </View>
+            )}
             <Text style={styles.projectHeaderBalance}>
               {t('page.nextComponent.multiAddressHome.totalBalance')}
             </Text>
@@ -528,5 +553,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     paddingBottom: 56,
     paddingHorizontal: 16,
+  },
+  appChainHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    backgroundColor: colors2024['neutral-bg-5'],
+    marginHorizontal: 16,
+    borderRadius: 6,
+    marginBottom: 20,
+  },
+  appChainHeaderText: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
   },
 }));

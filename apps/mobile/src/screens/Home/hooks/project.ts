@@ -4,6 +4,7 @@ import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
 import BigNumber from 'bignumber.js';
 import { atom, useAtom } from 'jotai';
+import { isAppChain } from '../utils/appchain';
 
 export const refreshingAtom = atom(false);
 export const useQueryProjects = (userAddr: string | undefined) => {
@@ -71,7 +72,8 @@ export const useQueryProjects = (userAddr: string | undefined) => {
 
     portfolios?.forEach(portfolio => {
       const chainId = portfolio.chain;
-      if (!chainId) {
+      // ignore app chain percent
+      if (!chainId || isAppChain(chainId)) {
         return;
       }
       if (!chainAssets[chainId]) {

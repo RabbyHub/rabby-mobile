@@ -263,7 +263,8 @@ export const Portfolios = () => {
   const { refresh: refreshCurve } = useMultiCurve(
     top10Addresses,
     false,
-    top10Balance,
+    top10Balance.total,
+    top10Balance.totalEvm,
   );
 
   const handleOpenDefiDetail = useCallback(

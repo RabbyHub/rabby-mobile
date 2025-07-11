@@ -4,10 +4,7 @@ import * as Sentry from '@sentry/react-native';
 
 import i18n, { SupportedLang } from '@/utils/i18n';
 import dayjs from 'dayjs';
-import {
-  TokenItem,
-  TotalBalanceResponse,
-} from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS_ENUM } from '@/constant/chains';
 import createPersistStore, {
   StorageAdapaterOptions,
@@ -21,6 +18,7 @@ import { isNonPublicProductionEnv } from '@/constant/env';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
+import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 
 const { isSameAddress } = addressUtils;
 
@@ -109,10 +107,10 @@ export interface PreferenceStore {
     [address: string]: string;
   };
   balanceMap: {
-    [address: string]: TotalBalanceResponse;
+    [address: string]: EvmTotalBalanceResponse;
   };
   testnetBalanceMap: {
-    [address: string]: TotalBalanceResponse;
+    [address: string]: EvmTotalBalanceResponse;
   };
   locale: string;
   lastTimeSendToken: Record<string, TokenItem>;
@@ -517,7 +515,7 @@ export class PreferenceService {
 
   updateTestnetAddressBalance = (
     address: string,
-    data: TotalBalanceResponse,
+    data: EvmTotalBalanceResponse,
   ) => {
     const testnetBalanceMap = this.store.testnetBalanceMap || {};
     this.store.testnetBalanceMap = {
@@ -526,7 +524,7 @@ export class PreferenceService {
     };
   };
 
-  updateAddressBalance = (address: string, data: TotalBalanceResponse) => {
+  updateAddressBalance = (address: string, data: EvmTotalBalanceResponse) => {
     const balanceMap = this.store.balanceMap || {};
     this.store.balanceMap = {
       ...balanceMap,
@@ -552,12 +550,14 @@ export class PreferenceService {
     }
   };
 
-  getAddressBalance = (address: string): TotalBalanceResponse | null => {
+  getAddressBalance = (address: string): EvmTotalBalanceResponse | null => {
     const balanceMap = this.store.balanceMap || {};
     return balanceMap[address.toLowerCase()] || null;
   };
 
-  getTestnetAddressBalance = (address: string): TotalBalanceResponse | null => {
+  getTestnetAddressBalance = (
+    address: string,
+  ): EvmTotalBalanceResponse | null => {
     const balanceMap = this.store.testnetBalanceMap || {};
     return balanceMap[address.toLowerCase()] || null;
   };

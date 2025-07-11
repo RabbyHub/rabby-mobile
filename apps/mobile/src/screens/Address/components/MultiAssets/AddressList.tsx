@@ -55,7 +55,8 @@ export const AddressList = () => {
   const { multiTimeStamp, refresh: refreshCurve } = useMultiCurve(
     top10Addresses,
     false,
-    top10Balance,
+    top10Balance.total,
+    top10Balance.totalEvm,
   );
 
   useBalanceUpdate(triggerUpdate);

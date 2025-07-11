@@ -9,7 +9,6 @@ import {
   NFTItem,
   SwapTradeList,
   TokenItem,
-  TotalBalanceResponse,
   TxAllHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { PortocolItemEntity } from '../entities/portocolItem';
@@ -27,6 +26,7 @@ import { deleteCurveCache } from '@/utils/24balanceCurveCache';
 import { transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
+import { EvmTotalBalanceResponse } from '../hooks/balance';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   const data = [..._tokens];
@@ -387,7 +387,7 @@ export async function patchSingleToken(address: string, token: TokenItem) {
 export async function syncBalance(
   address: string,
   isCore: boolean,
-  balance: TotalBalanceResponse,
+  balance: EvmTotalBalanceResponse,
 ) {
   const balanceItem = new BalanceEntity();
   BalanceEntity.fillEntity(balanceItem, address, isCore, balance);

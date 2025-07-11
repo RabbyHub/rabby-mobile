@@ -66,6 +66,12 @@ export const loadPortfolioSnapshot = (userAddr: string) => {
   });
 };
 
+export const loadAppChainList = (userAddr: string) => {
+  return pQueue.add(() => {
+    return openapi.getAppChainList(userAddr);
+  });
+};
+
 export const getCachedPortfolios = async (
   userAddr: string,
   force?: boolean,

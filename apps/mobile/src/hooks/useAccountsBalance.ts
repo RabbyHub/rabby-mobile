@@ -11,6 +11,7 @@ import { unionBy } from 'lodash';
 export interface balanceAccountType {
   address: string;
   balance: number;
+  evmBalance: number;
   type: KeyringTypeName;
   brandName: string;
   alias?: string;
@@ -85,6 +86,7 @@ export default function useAccountsBalance(opts?: {
             cacheBalancesArr.push({
               address: account,
               balance: cacheData?.total_usd_value || 0,
+              evmBalance: cacheData?.evm_usd_value || 0,
               type,
               brandName,
             });
@@ -113,6 +115,7 @@ export default function useAccountsBalance(opts?: {
                   queueBalanceArr.push({
                     address: account,
                     balance: resData?.total_usd_value || 0,
+                    evmBalance: resData?.evm_usd_value || 0,
                     type,
                     brandName,
                   });
@@ -125,6 +128,7 @@ export default function useAccountsBalance(opts?: {
                   queueBalanceArr.push({
                     address: account,
                     balance: cacheData?.total_usd_value || 0,
+                    evmBalance: cacheData?.evm_usd_value || 0,
                     type,
                     brandName,
                   });
@@ -161,13 +165,15 @@ export default function useAccountsBalance(opts?: {
   const getTotalBalance = useCallback(
     (addres: string[]) => {
       let total = 0;
+      let totalEvm = 0;
       addres.forEach(address => {
         const account = balanceAccounts.find(item =>
           isSameAddress(item.address, address.toLowerCase()),
         );
         total += Number(account?.balance) || 0;
+        totalEvm += Number(account?.evmBalance) || 0;
       });
-      return total;
+      return { total, totalEvm };
     },
     [balanceAccounts],
   );

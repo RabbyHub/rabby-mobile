@@ -292,7 +292,7 @@ export const TokenList = ({
             ]}
             key={l.id}>
             <TouchableWithoutFeedback
-              onPress={() => l.isToken && handleOpenTokenDetail(l)}>
+              onPress={() => l.isToken && l.chain && handleOpenTokenDetail(l)}>
               <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
                 <AssetAvatar
                   logo={l._logo}
@@ -307,7 +307,7 @@ export const TokenList = ({
                   numberOfLines={1}>
                   {l._symbol}
                 </Text>
-                {l.isToken && (
+                {l.isToken && l.chain && (
                   <RcIconRightCC
                     style={styles.arrowStyle}
                     width={14}
@@ -418,6 +418,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+    maxWidth: 160,
     flexShrink: 1,
   },
   portfolioNetWorth: {

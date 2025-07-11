@@ -22,6 +22,7 @@ import {
 import { IS_ANDROID } from '@/core/native/utils';
 import { trigger } from 'react-native-haptic-feedback';
 import { CombineDefiItem } from '../../hooks/store';
+import { isAppChain } from '../../utils/appchain';
 
 const hitSlop = {
   top: 10,
@@ -81,6 +82,11 @@ export const DefiRow = memo(
   }: DefiRowProps) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const [showContextMenu, setShowContextMenu] = React.useState(IS_ANDROID);
+
+    const isFromAppChain = useMemo(() => {
+      return isAppChain(data?.chain || '');
+    }, [data?.chain]);
+
     const topFiveTokens = useMemo(() => getTopFiveTokens(data), [data]);
     const { t } = useTranslation();
 
@@ -131,13 +137,21 @@ export const DefiRow = memo(
               size={logoSize}
               logoStyle={{ borderRadius: 12 }}
             />
-            <View style={styles.topFiveTokens}>
-              {topFiveTokens.map(token => (
-                <View key={token.id}>
-                  <AssetAvatar logo={token.logoUrl} size={14} />
-                </View>
-              ))}
-            </View>
+            {isFromAppChain ? (
+              <View style={styles.appChainHeader}>
+                <Text style={styles.appChainHeaderText}>
+                  {t('page.singleHome.appChain')}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.topFiveTokens}>
+                {topFiveTokens.map(token => (
+                  <View key={token.id}>
+                    <AssetAvatar logo={token.logoUrl} size={14} />
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
           <View
             style={[
@@ -292,5 +306,20 @@ const getStyles = createGetStyles2024(ctx => ({
   topFiveTokens: {
     flexDirection: 'row',
     gap: 2,
+  },
+  appChainHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    height: 24,
+    backgroundColor: ctx.colors2024['brand-light-1'],
+    borderRadius: 4,
+  },
+  appChainHeaderText: {
+    color: ctx.colors2024['brand-default'],
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
 }));
