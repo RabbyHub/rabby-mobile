@@ -402,7 +402,18 @@
       "maxPriorityFeeDisabledAlert": "Lütfen önce Gas Price ayarlayın.",
       "protocol": "Protokol",
       "addressSource": "Adres Kaynağı",
-      "sigCantDecode": "Bu imza Rabby Wallet tarafından çözülemez."
+      "sigCantDecode": "Bu imza Rabby Wallet tarafından çözülemez.",
+      "errorRetry": {
+        "InvalidTx": "Geçersiz işlem.",
+        "gasLimitTooLow": "Gaz limiti çok düşük",
+        "nonceTooHigh": "Nonce çok yüksek. Lütfen nonce'u ayarlayın ve tekrar deneyin.",
+        "gasExceedsBlockGasLimit": "Gaz, blok gaz limitini aşmaktadır. Lütfen ayarlayın ve tekrar deneyin.",
+        "defaultTips": "Bir şeyler yanlış gitti. Lütfen daha sonra tekrar deneyin.",
+        "insufficient": "Gaz bakiyeniz ağ işlem ücretini karşılamak için yeterli değil. Gaz için fon ekleyin ve tekrar deneyin.",
+        "alreadySubmitted": "İşlem zaten gönderildi. Yinelenen işlem tespit edildi.",
+        "gasPriceTooLow": "Gaz fiyatı çok düşük. İşleminizin onaylanmasına yardımcı olmak için %30 oranında ayarlayacağız. Onaylamak ve yeniden denemek için “Tekrar Dene”ye tıklayın.",
+        "nonceTooLow": "Nonce çok düşük. Bunu {{nonce}} olarak güncelleyeceğiz. Onaylamak ve tekrar denemek için “Tekrar Dene” butonuna tıklayın."
+      }
     },
     "importSuccess": {
       "addressCount": "{{count}} Adresler",
@@ -442,7 +453,8 @@
         "qrcodeDesc": "{{brand}} ile imzalamak için tarayın  \nİmzalamadan sonra, imzayı almak için aşağıdaki düğmeye tıklayın",
         "unknownQRCode": "Hata: Bu QR kodunu tanımlayamadık.",
         "submitting": "İmzalandı. İşlem oluşturuluyor.",
-        "misMatchSignId": "Uyumsuz işlem verisi. Lütfen işlem detaylarını kontrol edin."
+        "misMatchSignId": "Uyumsuz işlem verisi. Lütfen işlem detaylarını kontrol edin.",
+        "txFailedRetry": "Başarısız oldu: Lütfen Yeniden Deneyin"
       },
       "ledger": {
         "resent": "Öfkelenmek",
@@ -475,7 +487,8 @@
       "cancelConnection": "Bağlantıyı iptal et",
       "blockDappFromSendingRequests": "Blok Dapp'ın istek göndermesini 1 dakika boyunca engelle.",
       "oneKeyConfirm": "Onayla",
-      "ledgerConfirm": "Onayla"
+      "ledgerConfirm": "Onayla",
+      "got": "Anladım"
     },
     "signTypedData": {
       "permit": {
@@ -1788,7 +1801,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Fiyatı:"
-      }
+      },
+      "appChain": "Dapp Hesabı"
     },
     "search": {
       "sectionHeader": {
@@ -1920,7 +1934,8 @@
         "portfolio": "Portföy",
         "wallet_one": "Cüzdan",
         "wallet_other": "Cüzdanlar"
-      }
+      },
+      "lowValueTokenHeader": "Düşük değerdeki tokenler"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1962,7 +1977,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "Dapp'ta Görüntüle",
-      "viewSiteInWebsite": "Websitesi Görüntüle"
+      "viewSiteInWebsite": "Websitesi Görüntüle",
+      "appChain": "{{chain}} Hesabı üzerinde"
     },
     "component": {
       "ChainSelector": {
@@ -1986,7 +2002,8 @@
       "filterRule": {
         "24HChange": "24H Değişim",
         "tokenCreate": "Yeni Oluşturuldu",
-        "smartMoney": "Akıllı Cüzdan Ticareti"
+        "smartMoney": "Akıllı Cüzdan Ticareti",
+        "smartWalletCount": "Akıllı Cüzdan Sayısı"
       },
       "token": "Jeton",
       "Liquidity": "Likidite",
@@ -2011,7 +2028,8 @@
       "smartWalletsBuying": "{{len}} Akıllı Cüzdan Satın Alma",
       "sameNameTokens": "Aynı İsimli Token'lar",
       "earn": "Kazan",
-      "smartWallets": "Akıllı Cüzdanlar"
+      "smartWallets": "Akıllı Cüzdanlar",
+      "myBalanceFromCopyTrading": "Copy Trading'den Bakiyem"
     }
   },
   "component": {

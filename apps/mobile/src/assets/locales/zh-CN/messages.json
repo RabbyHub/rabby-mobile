@@ -480,6 +480,17 @@
           "button": "OK",
           "title": "切换到 Rabby 的 Safe 服务"
         }
+      },
+      "errorRetry": {
+        "nonceTooHigh": "Nonce太高。请调整nonce后再试。",
+        "gasExceedsBlockGasLimit": "Gas 超过区块 gas 限制。请调整后再试。",
+        "defaultTips": "出现了问题。请稍后再试。",
+        "alreadySubmitted": "交易已提交。检测到重复交易。",
+        "gasLimitTooLow": "Gas limit 过低",
+        "InvalidTx": "无效交易。",
+        "insufficient": "您的 gas 余额不足以支付网络 gas 费用。请为 gas 添加资金后再试。",
+        "gasPriceTooLow": "Gas 价格太低。我们会将其调整 30% 以帮助您的交易确认。点击“重试”以确认并再次尝试。",
+        "nonceTooLow": "Nonce太低。我们将更新为{{nonce}}。点击“重试”确认并再试一次。"
       }
     },
     "activities": {
@@ -722,12 +733,14 @@
         "unknownQRCode": "错误：我们无法识别该二维码",
         "submitting": "已签名。创建交易",
         "qrcodeDesc": "使用您的 {{brand}} 扫描以签名  \n签名后，点击下面的按钮以接收签名",
-        "afterSignDesc": "扫描 Keystone 上的二维码以获取签名"
+        "afterSignDesc": "扫描 Keystone 上的二维码以获取签名",
+        "txFailedRetry": "创建失败：请重试"
       },
       "keystoneSign": "签名",
       "startSigning": "开始签名",
       "oneKeyConfirm": "确认",
-      "ledgerConfirm": "确认"
+      "ledgerConfirm": "确认",
+      "got": "我明白了"
     },
     "gasTopUp": {
       "Token": "Token",
@@ -1556,7 +1569,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Price:"
-      }
+      },
+      "appChain": "Dapp账户"
     },
     "miniSignFooterBar": {
       "signWithLedger": "签名",
@@ -1989,7 +2003,8 @@
         "address": "地址",
         "wallet_one": "钱包",
         "wallet_other": "钱包"
-      }
+      },
+      "lowValueTokenHeader": "低价值代币"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2031,7 +2046,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "在 Dapp 中查看",
-      "viewSiteInWebsite": "在网站中查看"
+      "viewSiteInWebsite": "在网站中查看",
+      "appChain": "在 {{chain}} 账户"
     },
     "component": {
       "ChainSelector": {
@@ -2055,7 +2071,8 @@
       "filterRule": {
         "tokenCreate": "最近创建的",
         "smartMoney": "Smart Money 交易数",
-        "24HChange": "24小时变化"
+        "24HChange": "24小时变化",
+        "smartWalletCount": "Smart Money 数量"
       },
       "chain": "链",
       "info": "信息",
@@ -2080,7 +2097,8 @@
       "myCopyTradingEarnings": "我的跟单交易收益",
       "myCopyTrading": "我的跟单交易",
       "smartWallets": "Smart Money 钱包",
-      "currentToken": "当前代币"
+      "currentToken": "当前代币",
+      "myBalanceFromCopyTrading": "我从 Copy Trading 的余额"
     }
   },
   "component": {

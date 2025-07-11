@@ -182,7 +182,8 @@
         "unknownQRCode": "오류: 해당 QR 코드를 식별할 수 없습니다.",
         "misMatchSignId": "일치하지 않는 거래 데이터입니다. 거래 세부 정보를 확인하십시오.",
         "qrcodeDesc": "스캔하여 {{brand}}로 서명하세요  \n서명한 후 아래 버튼을 클릭하여 서명을 받으세요",
-        "afterSignDesc": "Keystone에서 QR 코드를 스캔하여 signature 받기"
+        "afterSignDesc": "Keystone에서 QR 코드를 스캔하여 signature 받기",
+        "txFailedRetry": "생성 실패: 다시 시도해 주세요"
       },
       "blockDappFromSendingRequests": "Dapp이 1분 동안 요청을 보내지 못하도록 차단합니다.",
       "resend": "재시도",
@@ -201,7 +202,8 @@
       "keystoneSign": "서명",
       "startSigning": "서명 시작",
       "oneKeyConfirm": "확인",
-      "ledgerConfirm": "확인"
+      "ledgerConfirm": "확인",
+      "got": "내가 알았어"
     },
     "gasTopUp": {
       "InsufficientBalanceTips": "잔액 부족",
@@ -603,6 +605,17 @@
           "button": "OK",
           "content": "Safe API를 사용할 수 없습니다. Safe 기능을 유지하려면 Rabby가 배포한 Safe 서비스를 사용하세요. <1></1><2>모든 Safe 서명자는 거래를 승인하기 위해 Rabby Wallet을 사용해야 합니다.<2>"
         }
+      },
+      "errorRetry": {
+        "alreadySubmitted": "거래가 이미 제출되었습니다. 중복 거래가 감지되었습니다.",
+        "gasLimitTooLow": "가스 한도가 너무 낮습니다",
+        "defaultTips": "문제가 발생했습니다. 나중에 다시 시도해 주세요.",
+        "nonceTooHigh": "Nonce가 너무 높습니다. nonce를 조정하고 다시 시도하세요.",
+        "gasExceedsBlockGasLimit": "가스가 블록 가스 한도를 초과합니다. 조정한 후 다시 시도해 주십시오.",
+        "nonceTooLow": "Nonce가 너무 낮습니다. {{nonce}}로 업데이트하겠습니다. \"Retry\"를 클릭하여 확인하고 다시 시도하세요.",
+        "InvalidTx": "잘못된 거래입니다.",
+        "insufficient": "귀하의 가스 잔액이 네트워크 가스 요금을 충당하기에 충분하지 않습니다. 가스를 위한 자금을 추가하고 다시 시도하세요.",
+        "gasPriceTooLow": "가스 가격이 너무 낮습니다. 거래가 확인될 수 있도록 30% 조정하겠습니다. \"다시 시도\"를 클릭하여 확인하고 다시 시도하세요."
       }
     },
     "swap": {
@@ -1441,7 +1454,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Price:"
-      }
+      },
+      "appChain": "Dapp 계정"
     },
     "search": {
       "header": {
@@ -1921,7 +1935,8 @@
         "portfolio": "포트폴리오",
         "wallet_one": "지갑",
         "wallet_other": "지갑"
-      }
+      },
+      "lowValueTokenHeader": "저가 토큰"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1963,7 +1978,8 @@
     },
     "defiDetail": {
       "viewSiteInWebsite": "웹사이트에서 보기",
-      "viewSiteInApp": "Dapp에서 보기"
+      "viewSiteInApp": "Dapp에서 보기",
+      "appChain": "{{chain}} 계좌에서"
     },
     "component": {
       "ChainSelector": {
@@ -1987,7 +2003,8 @@
       "filterRule": {
         "tokenCreate": "최근 생성됨",
         "smartMoney": "스마트 월렛 거래",
-        "24HChange": "24H 변화"
+        "24HChange": "24H 변화",
+        "smartWalletCount": "스마트 지갑 수"
       },
       "chain": "체인",
       "twitterNews": "X의 뉴스",
@@ -2012,7 +2029,8 @@
       "info": "정보",
       "buyEarn": "24H 구매 / 수익",
       "timeLabelAgo": "{{time}} 전에 생성됨",
-      "noOtherTokensWithSameName": "동일한 이름의 다른 토큰을 찾을 수 없습니다."
+      "noOtherTokensWithSameName": "동일한 이름의 다른 토큰을 찾을 수 없습니다.",
+      "myBalanceFromCopyTrading": "내 Copy Trading에서의 잔액"
     }
   },
   "global": {

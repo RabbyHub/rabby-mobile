@@ -464,6 +464,17 @@
           "content": "Safe APIは利用できません。Rabbyによって展開されたSafeサービスに切り替えて、Safeを機能させ続けてください。<1></1><2>すべてのSafe署名者はトランザクションを承認するためにRabby Walletを使用する必要があります。<2>",
           "button": "OK"
         }
+      },
+      "errorRetry": {
+        "InvalidTx": "無効なトランザクション。",
+        "defaultTips": "何か問題が発生しました。後で再試行してください。",
+        "nonceTooHigh": "Nonceが高すぎます。ノンスを調整して再試行してください。",
+        "gasExceedsBlockGasLimit": "ガスがブロックガスリミットを超えています。調整して再試行してください。",
+        "gasLimitTooLow": "ガス制限が低すぎます",
+        "gasPriceTooLow": "ガス価格が低すぎます。取引の確認を助けるために、30％調整します。「再試行」をクリックして確認し、もう一度試してください。",
+        "insufficient": "あなたのガス残高はネットワークのガス料金をカバーするには不十分です。ガスのために資金を追加して、もう一度お試しください。",
+        "nonceTooLow": "Nonceが低すぎます。{{nonce}}に更新します。“Retry”をクリックして確認し、再試行してください。",
+        "alreadySubmitted": "トランザクションはすでに送信されています。重複トランザクションが検出されました。"
       }
     },
     "sendNFT": {
@@ -568,7 +579,8 @@
         "txFailed": "作成に失敗しました",
         "afterSignDesc": "KeystoneのQRコードをスキャンして署名を取得",
         "qrcodeDesc": "{{brand}}でスキャンして署名してください  \n署名が完了したら、下のボタンをクリックして署名を受け取ってください",
-        "failedToGetExplain": "説明の取得に失敗しました。"
+        "failedToGetExplain": "説明の取得に失敗しました。",
+        "txFailedRetry": "作成に失敗しました: もう一度お試しください"
       },
       "gasAccount": {
         "useGasAccount": "GasAccountを使用",
@@ -610,7 +622,8 @@
       "keystoneSign": "サイン",
       "startSigning": "署名を開始",
       "oneKeyConfirm": "確認",
-      "ledgerConfirm": "確認"
+      "ledgerConfirm": "確認",
+      "got": "わかった"
     },
     "gasTopUp": {
       "InsufficientBalanceTips": "残高不足",
@@ -1547,7 +1560,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Price:"
-      }
+      },
+      "appChain": "Dapp アカウント"
     },
     "receiveAddressList": {
       "selectChainTitle": "チェーンを選択",
@@ -1973,7 +1987,8 @@
         "address": "アドレス",
         "wallet_other": "ウォレット",
         "wallet_one": "ウォレット"
-      }
+      },
+      "lowValueTokenHeader": "低価値トークン"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2015,7 +2030,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "Dappで表示",
-      "viewSiteInWebsite": "ウェブサイトで表示"
+      "viewSiteInWebsite": "ウェブサイトで表示",
+      "appChain": "{{chain}} アカウント"
     },
     "component": {
       "ChainSelector": {
@@ -2039,7 +2055,8 @@
       "filterRule": {
         "smartMoney": "トレーディング Smart Wallets",
         "24HChange": "24Hの変化",
-        "tokenCreate": "最近作成された"
+        "tokenCreate": "最近作成された",
+        "smartWalletCount": "スマートウォレット数"
       },
       "earn": "稼ぐ",
       "info": "情報",
@@ -2064,7 +2081,8 @@
       "timeLabelAgo": "{{time}}前に作成されました",
       "noOtherTokensWithSameName": "同じ名前のトークンは見つかりませんでした。",
       "earned": "獲得した",
-      "twitterNews": "Xに関するニュース"
+      "twitterNews": "Xに関するニュース",
+      "myBalanceFromCopyTrading": "私のCopy Tradingからの残高"
     }
   },
   "global": {

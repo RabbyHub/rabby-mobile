@@ -421,6 +421,17 @@
           "title": "Passer au service sécurisé de Rabby",
           "content": "L'API Safe est indisponible. Passez au service Safe déployé par Rabby pour garder votre Safe fonctionnel. <1></1><2>Tous les signataires Safe doivent utiliser Rabby Wallet pour autoriser les transactions.<2>"
         }
+      },
+      "errorRetry": {
+        "InvalidTx": "Transaction invalide.",
+        "nonceTooHigh": "Nonce trop élevé. Veuillez ajuster le nonce et réessayer.",
+        "defaultTips": "Quelque chose ne va pas. Veuillez réessayer plus tard.",
+        "nonceTooLow": "Nonce trop bas. Nous allons le mettre à jour à {{nonce}}. Cliquez sur “Réessayer” pour confirmer et réessayer.",
+        "alreadySubmitted": "Transaction déjà soumise. Transaction dupliquée détectée.",
+        "gasLimitTooLow": "Limite de gaz trop basse",
+        "insufficient": "Votre solde de gaz n'est pas suffisant pour couvrir les frais de gaz du réseau. Ajoutez des fonds pour le gaz et réessayez.",
+        "gasExceedsBlockGasLimit": "Le gaz dépasse la limite de gaz du bloc. Veuillez ajuster et réessayer.",
+        "gasPriceTooLow": "Le prix du gaz est trop bas. Nous allons l'ajuster de 30% pour aider votre transaction à être confirmée. Cliquez sur « Réessayer » pour confirmer et réessayer."
       }
     },
     "activities": {
@@ -591,12 +602,14 @@
         "txFailed": "Échec de la création",
         "misMatchSignId": "Données de transaction incohérentes. Veuillez vérifier les détails de la transaction.",
         "qrcodeDesc": "Scannez avec votre {{brand}} pour signer  \nAprès la signature, cliquez sur le bouton ci-dessous pour recevoir la signature",
-        "signWith": "Signer avec {{brand}}"
+        "signWith": "Signer avec {{brand}}",
+        "txFailedRetry": "Échec de la création : Veuillez réessayer"
       },
       "startSigning": "Commencer à signer",
       "keystoneSign": "Signer",
       "oneKeyConfirm": "Confirmer",
-      "ledgerConfirm": "Confirmer"
+      "ledgerConfirm": "Confirmer",
+      "got": "Je l'ai compris"
     },
     "sendNFT": {
       "sendButton": "Envoyer",
@@ -1498,7 +1511,8 @@
       },
       "nft": {
         "floorPrice": "/Prix plancher:"
-      }
+      },
+      "appChain": "Compte Dapp"
     },
     "search": {
       "sectionHeader": {
@@ -1930,7 +1944,8 @@
         "address": "Adresse",
         "wallet_other": "Portefeuilles",
         "wallet_one": "Portefeuille"
-      }
+      },
+      "lowValueTokenHeader": "Tokens de faible valeur"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1972,7 +1987,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "Voir dans Dapp",
-      "viewSiteInWebsite": "Voir sur le site Web"
+      "viewSiteInWebsite": "Voir sur le site Web",
+      "appChain": "Sur le compte {{chain}}"
     },
     "component": {
       "ChainSelector": {
@@ -1996,7 +2012,8 @@
       "filterRule": {
         "tokenCreate": "Récemment créé",
         "24HChange": "Changement sur 24H",
-        "smartMoney": "Trading Smart Wallets"
+        "smartMoney": "Trading Smart Wallets",
+        "smartWalletCount": "Nombre de Smart Wallet"
       },
       "info": "Infos",
       "currentToken": "Jeton actuel",
@@ -2021,7 +2038,8 @@
       "myCopyTradingEarnings": "Mes gains de Copy Trading",
       "tokenInfo": "Informations sur le Token",
       "smartWalletsBuying": "{{len}} Portefeuilles Intelligents à Acheter",
-      "Liquidity": "Liquidité"
+      "Liquidity": "Liquidité",
+      "myBalanceFromCopyTrading": "Mon solde provenant du Copy Trading"
     }
   },
   "native": {
