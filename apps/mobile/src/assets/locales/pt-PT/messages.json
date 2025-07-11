@@ -2151,8 +2151,7 @@
         "address": "Endereço",
         "wallet_one": "Carteira",
         "wallet_other": "Carteiras"
-      },
-      "scamTokenHeader": "Tokens de golpe"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {

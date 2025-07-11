@@ -71,7 +71,6 @@ export class MetamaskModeService extends StoreServiceBase<
   };
 
   checkIsMetamaskMode(origin: string) {
-    console.log(this.store, origin);
     return !!this.store.data.sites.find(
       item => item === origin.replace(/^https?:\/\//, ''),
     );

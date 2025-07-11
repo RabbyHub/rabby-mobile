@@ -1930,8 +1930,7 @@
         "address": "Adresse",
         "wallet_other": "Portefeuilles",
         "wallet_one": "Portefeuille"
-      },
-      "scamTokenHeader": "Tokens d'escroquerie"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {

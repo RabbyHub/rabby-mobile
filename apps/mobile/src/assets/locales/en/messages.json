@@ -1968,7 +1968,7 @@
         "wallet_one": "Wallet",
         "wallet_other": "Wallets"
       },
-      "scamTokenHeader": "Scam tokens"
+      "lowValueTokenHeader": "Low-value tokens"
     },
     "browser": {
       "BrowserBookmarkSection": {

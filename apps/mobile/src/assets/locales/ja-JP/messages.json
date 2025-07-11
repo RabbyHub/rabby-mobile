@@ -1973,8 +1973,7 @@
         "address": "アドレス",
         "wallet_other": "ウォレット",
         "wallet_one": "ウォレット"
-      },
-      "scamTokenHeader": "詐欺トークン"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {

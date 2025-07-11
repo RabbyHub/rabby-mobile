@@ -41,6 +41,7 @@ import { OfflineChainService } from './offlineChain';
 import { BrowserService } from './browserService';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { MetamaskModeService } from './metamaskModeService';
+import { SyncChainService } from './syncChainService';
 
 migrateAppStorage(appStorage);
 
@@ -215,6 +216,10 @@ export const metamaskModeService = new MetamaskModeService({
   storageAdapter: appStorage,
 });
 
+export const syncChainService = new SyncChainService({
+  storageAdapter: appStorage,
+});
+
 migrateServices({
   contactBook: contactService,
   dapps: dappService,
@@ -233,4 +238,5 @@ migrateServices({
   offlineChain: offlineChainService,
   browser: browserService,
   metamaskMode: metamaskModeService,
+  syncChain: syncChainService,
 });

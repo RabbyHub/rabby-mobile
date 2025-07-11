@@ -6,7 +6,6 @@ import { initServices } from '@/core/services/init';
 import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
 import { EntryScriptVConsole } from '@/core/bridges/builtInScripts/loadVConsole';
 import { JS_LOG_ON_MESSAGE } from '@/core/bridges/builtInScripts/onMessage';
-import { sleep } from '@/utils/async';
 import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { loadSecurityChain, useGlobal } from './global';
@@ -16,7 +15,6 @@ import SplashScreen from 'react-native-splash-screen';
 import { useAccounts } from './account';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { useBiometrics } from './biometrics';
-import { syncMainChainList } from '@/constant/chains';
 import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
 
 const syncCustomTestChainList = () => {
@@ -70,7 +68,6 @@ export function useInitializeAppOnTop() {
       await initServices();
       await initApis();
       syncCustomTestChainList();
-      await Promise.race([syncMainChainList(), sleep(5000)]);
     } catch (error) {
       console.error('useInitializeAppOnTop::', error);
       apiInitializedRef.current = false;

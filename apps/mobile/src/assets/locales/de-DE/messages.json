@@ -2151,8 +2151,7 @@
         "address": "Adresse",
         "wallet_one": "Brieftasche",
         "wallet_other": "Brieftaschen"
-      },
-      "scamTokenHeader": "Scam-Token"
+      }
     },
     "browser": {
       "BrowserBookmarkSection": {
