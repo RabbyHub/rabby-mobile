@@ -385,8 +385,16 @@ export const LedgerHardwareWaiting = ({
       }
 
       return [description, 'origin'];
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [description, recommendNonce]);
+    }, [
+      connectStatus,
+      description,
+      params.account,
+      params.chainId,
+      params.from,
+      params.nonce,
+      recommendNonce,
+      t,
+    ]);
 
   const renderContent = React.useCallback(
     ({ contentColor }) => (
