@@ -35,6 +35,7 @@ import {
 } from '@/screens/Transaction/components/utils';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { updateExpiredTime } from '@/databases/sync/utils';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -124,6 +125,9 @@ export interface SwapTxHistoryItem {
   createdAt: number;
   completedAt?: number;
   isFromCopyTrading?: boolean;
+  copyTradingExtra?: {
+    type: 'Buy' | 'Sell';
+  };
 }
 
 export interface SendTxHistoryItem {
@@ -413,7 +417,17 @@ export class TransactionHistoryService {
           'isFromCopyTrading' in history[index] &&
           history[index].isFromCopyTrading
         ) {
-          insertCopyTradingBuyItem(history[index]);
+          const isSell = history[index].copyTradingExtra?.type === 'Sell';
+          if (!isSell) {
+            // only buy insert buy item
+            insertCopyTradingBuyItem(history[index]);
+          }
+          matomoRequestEvent({
+            category: 'CopyTrading',
+            action: isSell
+              ? 'CopyTrading_SellFinishSwap'
+              : 'CopyTrading_BuyFinishSwap',
+          });
         }
       }
     });

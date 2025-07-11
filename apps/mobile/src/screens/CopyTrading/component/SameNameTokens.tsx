@@ -1,6 +1,13 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useState, useEffect } from 'react';
-import { Text, View, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  FlatList,
+} from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
@@ -26,6 +33,9 @@ import { TabType } from './CopyTradingTokenDetail';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { toast } from '@/components2024/Toast';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { RootNames } from '@/constant/layout';
+import { naviPush } from '@/utils/navigation';
+import { chain } from 'lodash';
 
 interface SameNameTokensProps {
   tradingTokenItem: TokenItem;
@@ -122,22 +132,11 @@ export const SameNameTokens: React.FC<SameNameTokensProps> = ({
     if (token.id === tradingTokenItem.id) {
       return;
     }
-    const modalId = createGlobalBottomSheetModal2024({
-      name: MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL,
-      tradingTokenItem: token,
-      showTabType: TabType.tokenInfo,
-      updateSingleTokenPrice,
-      bottomSheetModalProps: {
-        enableContentPanningGesture: false,
-        enablePanDownToClose: true,
-        handleStyle: {
-          backgroundColor: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
-        },
-      },
-      onClose: () => {
-        removeGlobalBottomSheetModal2024(modalId);
+    naviPush(RootNames.StackTransaction, {
+      screen: RootNames.CopyTradingTokenDetail,
+      params: {
+        tradingTokenItem: token,
+        showTabType: TabType.tokenInfo,
       },
     });
   });
@@ -193,12 +192,12 @@ export const SameNameTokens: React.FC<SameNameTokensProps> = ({
 
   const renderLoadingComponent = () => (
     <View style={styles.container}>
-      <BottomSheetHandlableView style={styles.header}>
+      <View style={styles.header}>
         <Text style={styles.title}>{t('page.copyTrading.token')}</Text>
         <Text style={styles.liquidityTitle}>
           {t('page.copyTrading.Liquidity')}
         </Text>
-      </BottomSheetHandlableView>
+      </View>
       <View style={styles.listContainer}>
         {Array.from({ length: 6 }).map((_, index) => (
           <SkeletonSameNameToken key={index} />
@@ -214,15 +213,15 @@ export const SameNameTokens: React.FC<SameNameTokensProps> = ({
   return (
     <View style={styles.container}>
       {sameNameTokens.length > 0 && (
-        <BottomSheetHandlableView style={styles.header}>
+        <View style={styles.header}>
           <Text style={styles.title}>{t('page.copyTrading.token')}</Text>
           <Text style={styles.liquidityTitle}>
             {t('page.copyTrading.Liquidity')}
           </Text>
-        </BottomSheetHandlableView>
+        </View>
       )}
 
-      <BottomSheetFlatList
+      <FlatList
         data={sameNameTokens}
         keyExtractor={item => `${item.chain}-${item.id}`}
         renderItem={renderTokenItem}

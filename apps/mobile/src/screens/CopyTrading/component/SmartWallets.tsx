@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useState, useCallback, useEffect } from 'react';
-import { Text, View, TouchableOpacity, Image } from 'react-native';
+import { Text, View, TouchableOpacity, Image, FlatList } from 'react-native';
 import IconEmptyDefi from '@/assets2024/singleHome/empty-defi.png';
 import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -339,7 +339,7 @@ export const SmartWallets: React.FC<SmartWalletsProps> = ({
 
   return (
     <View style={styles.container}>
-      <BottomSheetHandlableView style={styles.headerContainer}>
+      <View style={styles.headerContainer}>
         <View style={styles.statsCard}>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
@@ -389,8 +389,8 @@ export const SmartWallets: React.FC<SmartWalletsProps> = ({
             {t('page.copyTrading.buyEarn')}
           </Text>
         </View>
-      </BottomSheetHandlableView>
-      <BottomSheetFlatList
+      </View>
+      <FlatList
         data={buyList}
         keyExtractor={item => `${item.user_addr}_${item.last_buy_at}`}
         renderItem={renderWalletItem}

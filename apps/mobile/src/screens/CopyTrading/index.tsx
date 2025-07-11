@@ -66,6 +66,7 @@ import {
 import { useProfit } from './component/useProfit';
 import { TabType } from './component/CopyTradingTokenDetail';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
+import { matomoRequestEvent } from '@/utils/analytics';
 const DEFAULT_COUNT = 10;
 
 const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
@@ -268,7 +269,7 @@ export const CopyTradingScreen = () => {
 
     setChainIdList(chainIdArr);
     setSelectedChainId(chainIdArr[0]);
-    await fetchTokenList(chainIdArr[0], 'price_change', '');
+    await fetchTokenList(chainIdArr[0], orderKey, '');
   });
 
   const handleChainItemPress = useMemoizedFn(async (chainId: string) => {
@@ -278,7 +279,7 @@ export const CopyTradingScreen = () => {
     setSelectedChainId(chainId);
     setHasMore(true);
     setListCursor('');
-    const tokenArr = await fetchTokenList(chainId, 'price_change', '');
+    const tokenArr = await fetchTokenList(chainId, orderKey, '');
     setTokenList(tokenArr);
   });
 
@@ -295,29 +296,26 @@ export const CopyTradingScreen = () => {
         isFromCopyTrading: true,
       },
     });
+    matomoRequestEvent({
+      category: 'CopyTrading',
+      action: 'CopyTrading_ListClickBuy',
+    });
   });
 
   const handleTokenItemPress = useMemoizedFn(
     (item: CopyTradeTokenItemV2, isShowSmartWallets = false) => {
-      const modalId = createGlobalBottomSheetModal2024({
-        name: MODAL_NAMES.COPY_TRADING_TOKEN_DETAIL,
-        tradingTokenItem: item,
-        showTabType: isShowSmartWallets
-          ? TabType.smartWallets
-          : TabType.tokenInfo,
-        updateSingleTokenPrice,
-        bottomSheetModalProps: {
-          enableContentPanningGesture: false,
-          enablePanDownToClose: true,
-          handleStyle: {
-            backgroundColor: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
-          },
+      navigation.push(RootNames.StackTransaction, {
+        screen: RootNames.CopyTradingTokenDetail,
+        params: {
+          tradingTokenItem: item,
+          showTabType: isShowSmartWallets
+            ? TabType.smartWallets
+            : TabType.tokenInfo,
         },
-        onClose: () => {
-          removeGlobalBottomSheetModal2024(modalId);
-        },
+      });
+      matomoRequestEvent({
+        category: 'CopyTrading',
+        action: 'CopyTrading_EnterTokenPage',
       });
     },
   );
@@ -325,10 +323,6 @@ export const CopyTradingScreen = () => {
   const handleShowEarningDialog = useMemoizedFn(() => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.COPY_TRADING_EARNINGS,
-      itemData: profitData?.itemData,
-      totalProfit: profitData?.totalProfit,
-      totalHoldValue: profitData?.totalHoldValue,
-      updateSingleTokenPrice,
       bottomSheetModalProps: {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,
@@ -456,7 +450,7 @@ export const CopyTradingScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { profitData, showProfitBar, updateSingleTokenPrice } = useProfit();
+  const { profitData, showProfitBar } = useProfit();
 
   return (
     <NormalScreenContainer type="bg1" noHeader={true}>

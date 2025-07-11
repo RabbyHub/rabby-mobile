@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +18,7 @@ import {
   StyleSheet,
   Image,
   Linking,
+  ImageBackground,
 } from 'react-native';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -37,17 +44,17 @@ import { SameNameTokens } from './SameNameTokens';
 import { toast } from '@/components/Toast';
 import { openapi } from '@/core/request';
 import { removeAllGlobalBottomSheetModals2024 } from '@/components2024/GlobalBottomSheetModal';
-
-export type DialogProps = {
-  tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
-  showTabType?: TabType;
-  updateSingleTokenPrice: (
-    tokenId: string,
-    chain: string,
-    price: number,
-  ) => void;
-  onClose?: () => void;
-};
+import { matomoRequestEvent } from '@/utils/analytics';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { TransactionNavigatorParamList } from '@/navigation-type';
+import { useNavigationState } from '@react-navigation/native';
+import { useProfitData } from './useProfit';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export enum TabType {
   tokenInfo = 'tokenInfo',
@@ -55,21 +62,33 @@ export enum TabType {
   sameNameTokens = 'sameNameTokens',
 }
 
-export default function CopyTradingTokenDetail({
-  tradingTokenItem,
-  showTabType = TabType.tokenInfo,
-  updateSingleTokenPrice,
-  onClose,
-}: RNViewProps & DialogProps) {
+export default function CopyTradingTokenDetail() {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { safeOffHeader } = useSafeSizes();
+  const navState = useNavigationState(
+    s =>
+      s.routes.find(r => r.name === RootNames.CopyTradingTokenDetail)?.params,
+  ) as TransactionNavigatorParamList['CopyTradingTokenDetail'];
+
+  const { tradingTokenItem, showTabType } = navState!;
+  const { updateSingleTokenPrice, profitData } = useProfitData();
+
+  const currentTokenProfitData = useMemo(() => {
+    return profitData?.itemData.find(
+      p => p.id === tradingTokenItem.id && p.chain === tradingTokenItem.chain,
+    );
+  }, [profitData, tradingTokenItem]);
 
   // Tab state management
-  const [activeTab, setActiveTab] = useState<TabType>(showTabType);
+  const [activeTab, setActiveTab] = useState<TabType>(
+    showTabType || TabType.tokenInfo,
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [isUp, setIsUp] = useState(true);
   const [detailInfo, setDetailInfo] = useState<
     CopyTradeTokenItemV2 | TokenItem
-  >(tradingTokenItem);
+  >(tradingTokenItem || ({} as CopyTradeTokenItemV2 | TokenItem));
 
   const tabBarData = React.useMemo(() => {
     return [
@@ -82,20 +101,39 @@ export default function CopyTradingTokenDetail({
     ];
   }, [t]);
 
+  const { list: accounts } = useAccountInfo();
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
   const handleBuyPress = useMemoizedFn(
-    (item: CopyTradeTokenItemV2 | TokenItem) => {
+    async (item: CopyTradeTokenItemV2 | TokenItem, type: 'Buy' | 'Sell') => {
       const chain = findChain({
         serverId: item.chain,
       });
-      removeAllGlobalBottomSheetModals2024();
+
+      if (type === 'Sell' && currentTokenProfitData) {
+        const toAccount = accounts.find(i =>
+          isSameAddress(currentTokenProfitData.owner_addr, i.address),
+        );
+        if (toAccount) {
+          await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
+        }
+      }
+
       naviPush(RootNames.StackTransaction, {
         screen: RootNames.MultiSwap,
         params: {
           chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
           tokenId: item?.id,
-          type: 'Buy',
+          type,
           isFromCopyTrading: true,
         },
+      });
+      matomoRequestEvent({
+        category: 'CopyTrading',
+        action:
+          type === 'Sell'
+            ? 'CopyTrading_TokenClickSell'
+            : 'CopyTrading_TokenClickBuy',
       });
     },
   );
@@ -103,7 +141,6 @@ export default function CopyTradingTokenDetail({
   const handleTwitterPress = useMemoizedFn(async () => {
     const symbol = getTokenSymbol(tradingTokenItem);
     const searchQuery = encodeURIComponent(`$${symbol}`);
-
     const appUrls = [
       `twitter://search?query=${searchQuery}`,
       `x://search?query=${searchQuery}`,
@@ -128,6 +165,10 @@ export default function CopyTradingTokenDetail({
         console.error('Failed to open web URL:', fallbackError);
       }
     }
+    matomoRequestEvent({
+      category: 'CopyTrading',
+      action: 'CopyTrading_LinkToX',
+    });
   });
 
   const fetchDetailInfo = useMemoizedFn(async () => {
@@ -157,10 +198,60 @@ export default function CopyTradingTokenDetail({
     fetchDetailInfo();
   }, [fetchDetailInfo]);
 
+  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+
+  const getHeaderTitle = useCallback(() => {
+    return (
+      <View style={styles.tokenHeader}>
+        <AssetAvatar
+          logo={tradingTokenItem?.logo_url}
+          size={36}
+          chain={tradingTokenItem?.chain}
+          chainSize={16}
+        />
+        <Text style={styles.tokenName} numberOfLines={1} ellipsizeMode="tail">
+          {ellipsisOverflowedText(getTokenSymbol(tradingTokenItem), 10)}
+        </Text>
+      </View>
+    );
+  }, [tradingTokenItem, styles]);
+
+  const getHeaderRight = useCallback(() => {
+    return (
+      <TouchableOpacity
+        style={styles.tokenHeaderTwitter}
+        onPress={handleTwitterPress}>
+        <Image source={ImgTwitter} style={styles.tokenHeaderTwitterIcon} />
+        <Text style={styles.twitterName} numberOfLines={1} ellipsizeMode="tail">
+          {t('page.copyTrading.twitterNews')}
+        </Text>
+        <RcIconRightCC
+          width={18}
+          height={18}
+          color={colors2024['neutral-title-1']}
+        />
+      </TouchableOpacity>
+    );
+  }, [styles, handleTwitterPress, t, colors2024]);
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+      headerRight: getHeaderRight,
+      headerTitleAlign: 'left',
+    });
+  }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
+
   const TabContentComponent = useMemo(() => {
     switch (activeTab) {
       case TabType.tokenInfo:
-        return <TokenInfo tradingTokenItem={detailInfo} />;
+        return (
+          <TokenInfo
+            tradingTokenItem={detailInfo}
+            currentTokenProfitData={currentTokenProfitData}
+            onUpChange={b => setIsUp(b)}
+          />
+        );
       case TabType.smartWallets:
         return (
           <SmartWallets tradingTokenItem={detailInfo as CopyTradeTokenItemV2} />
@@ -173,45 +264,11 @@ export default function CopyTradingTokenDetail({
           />
         );
     }
-  }, [activeTab, detailInfo, updateSingleTokenPrice]);
+  }, [activeTab, detailInfo, updateSingleTokenPrice, currentTokenProfitData]);
 
   return (
-    <AutoLockView style={styles.container}>
-      {/* Header with token info */}
-      <BottomSheetHandlableView style={styles.headerContainer}>
-        <View style={styles.header}>
-          <View style={styles.tokenHeader}>
-            <AssetAvatar
-              logo={tradingTokenItem?.logo_url}
-              size={36}
-              chain={tradingTokenItem?.chain}
-              chainSize={16}
-            />
-            <Text
-              style={styles.tokenName}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {getTokenSymbol(tradingTokenItem)}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.tokenHeaderTwitter}
-            onPress={handleTwitterPress}>
-            <Image source={ImgTwitter} style={styles.tokenHeaderTwitterIcon} />
-            <Text
-              style={styles.twitterName}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {t('page.copyTrading.twitterNews')}
-            </Text>
-            <RcIconRightCC
-              width={18}
-              height={18}
-              color={colors2024['neutral-title-1']}
-            />
-          </TouchableOpacity>
-        </View>
-
+    <NormalScreenContainer2024 overwriteStyle={styles.container}>
+      <View style={styles.headerContainer}>
         {/* Tab Navigation */}
         <View style={styles.tabContainer}>
           {tabBarData.map(tab => (
@@ -230,19 +287,32 @@ export default function CopyTradingTokenDetail({
             </TouchableOpacity>
           ))}
         </View>
-      </BottomSheetHandlableView>
+      </View>
 
       <View style={styles.scrollContent}>{TabContentComponent}</View>
 
       {/* Fixed bottom button */}
       <View style={styles.bottomButton}>
+        {Boolean(currentTokenProfitData) &&
+          currentTokenProfitData?.realAmount &&
+          currentTokenProfitData?.realAmount > 0 && (
+            <Button
+              type="ghost"
+              buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
+              title={t('page.tokenDetail.action.Sell')}
+              containerStyle={StyleSheet.flatten([styles.btnContainer])}
+              onPress={() => handleBuyPress(tradingTokenItem, 'Sell')}
+            />
+          )}
         <Button
           type="primary"
+          buttonStyle={styles.btnInnerContainer}
           title={t('page.copyTrading.buy')}
-          onPress={() => handleBuyPress(tradingTokenItem)}
+          containerStyle={StyleSheet.flatten([styles.btnContainer])}
+          onPress={() => handleBuyPress(tradingTokenItem, 'Buy')}
         />
       </View>
-    </AutoLockView>
+    </NormalScreenContainer2024>
   );
 }
 
@@ -253,6 +323,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],
+  },
+  btnContainer: {
+    flex: 1,
+  },
+  btnInnerContainer: {
+    borderRadius: 12,
+  },
+  ghostBtn: {
+    backgroundColor: colors2024['brand-light-1'],
   },
   headerContainer: {
     paddingHorizontal: 16,
@@ -379,9 +458,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   bottomButton: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     height: 115,
+    flexDirection: 'row',
+    gap: 16,
     backgroundColor: isLight
       ? colors2024['neutral-bg-0']
       : colors2024['neutral-bg-1'],

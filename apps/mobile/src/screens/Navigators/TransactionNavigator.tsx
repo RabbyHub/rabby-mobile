@@ -36,6 +36,7 @@ import { GnosisQueueScreen } from '../GnosisQueue';
 import WhitelistInputScreen from '../WhiteList/InputScreen';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
+import CopyTradingTokenDetail from '../CopyTrading/component/CopyTradingTokenDetail';
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
@@ -417,6 +418,20 @@ export default function TransactionNavigator() {
             fontWeight: '900',
             fontFamily: 'SF Pro Rounded',
             color: colors['neutral-title-1'],
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.CopyTradingTokenDetail}
+        component={CopyTradingTokenDetail}
+        options={mergeScreenOptions({
+          headerShown: true,
+          headerTitleAlign: 'left',
+          headerTitle: '',
+          headerStyle: {
+            // backgroundColor: colors['neutral-bg-2'],
+            backgroundColor: 'transparent',
           },
         })}
       />

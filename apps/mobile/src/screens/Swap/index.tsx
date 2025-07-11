@@ -100,6 +100,7 @@ import { Account } from '@/core/services/preference';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { last } from 'lodash';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
+import { matomoRequestEvent } from '@/utils/analytics';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -361,12 +362,20 @@ const Swap = ({
   const { safeOffBottom } = useSafeSizes();
 
   const currentIsCopyTrading = useMemo(() => {
+    if (navState?.type === 'Sell') {
+      return (
+        navState?.isFromCopyTrading &&
+        payToken?.id === navState?.tokenId &&
+        chain === navState.chainEnum
+      );
+    }
+
     return (
       navState?.isFromCopyTrading &&
       receiveToken?.id === navState?.tokenId &&
       chain === navState.chainEnum
     );
-  }, [navState, receiveToken?.id, chain]);
+  }, [navState, receiveToken?.id, chain, payToken?.id]);
 
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
@@ -391,6 +400,9 @@ const Swap = ({
           createdAt: Date.now(),
           status: 'pending' as SwapTxHistoryItem['status'],
           isFromCopyTrading: currentIsCopyTrading,
+          copyTradingExtra: {
+            type: navState?.type || 'Buy',
+          },
         };
         await dexSwap(
           {
@@ -608,6 +620,9 @@ const Swap = ({
             createdAt: Date.now(),
             status: 'pending',
             isFromCopyTrading: currentIsCopyTrading,
+            copyTradingExtra: {
+              type: navState?.type || 'Buy',
+            },
           });
           handleAmountChange('');
           setTimeout(() => {
@@ -620,6 +635,15 @@ const Swap = ({
               chain: chainServerId,
             },
           );
+          if (currentIsCopyTrading) {
+            matomoRequestEvent({
+              category: 'CopyTrading',
+              action:
+                navState?.type === 'Sell'
+                  ? 'CopyTrading_SellCreateSwap'
+                  : 'CopyTrading_BuyCreateSwap',
+            });
+          }
         } catch (e) {
           setDirectSigning(false);
           if ((e as any)?.name === 'SimulateError') {

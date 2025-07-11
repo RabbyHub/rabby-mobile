@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Dimensions, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -23,8 +23,17 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
   refreshTags,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { removePinedToken, pinToken, userTokenSettings } =
-    useUserTokenSettings();
+  const {
+    removePinedToken,
+    pinToken,
+    userTokenSettings,
+    fetchUserTokenSettings,
+  } = useUserTokenSettings();
+
+  useEffect(() => {
+    fetchUserTokenSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { refreshing } = useAssets();
 

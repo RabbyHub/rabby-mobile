@@ -236,7 +236,13 @@ export const useTokenPair = ({ account }: { account: Account }) => {
           ...getChainDefaultToken(c),
           ...(opts?.payTokenId ? { id: opts?.payTokenId } : {}),
         });
-        setReceiveToken(undefined);
+        if (opts?.payUseBaseToken) {
+          setReceiveToken({
+            ...getChainDefaultToken(c),
+          });
+        } else {
+          setReceiveToken(undefined);
+        }
       } else {
         setReceiveToken({
           ...getChainDefaultToken(c),

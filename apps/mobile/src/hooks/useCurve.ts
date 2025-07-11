@@ -17,6 +17,7 @@ export type CurvePoint = {
   timestamp: number;
   dateString: string;
   clockTimeString: string;
+  dateTimeString: string;
 };
 
 export const formatSmallUsdValue = (value: number) => {
@@ -71,6 +72,7 @@ export const formChartData = (
           timestamp: x.timestamp,
           dateString: dayjs.unix(x.timestamp).format('MM DD, HH:mm'),
           clockTimeString: dayjs.unix(x.timestamp).format('HH:mm'),
+          dateTimeString: dayjs.unix(x.timestamp).format('MM DD, HH:mm'),
         };
       }) || [];
 
@@ -92,6 +94,9 @@ export const formChartData = (
       timestamp: Math.floor(realtimeTimestamp / 1000),
       dateString: dayjs.unix(realtimeTimestamp / 1000).format('MM DD, HH:mm'),
       clockTimeString: dayjs.unix(realtimeTimestamp / 1000).format('HH:mm'),
+      dateTimeString: dayjs
+        .unix(realtimeTimestamp / 1000)
+        .format('MM DD, HH:mm'),
     });
   }
 

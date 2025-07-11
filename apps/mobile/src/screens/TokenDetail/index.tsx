@@ -629,11 +629,11 @@ export const TokenDetailScreen = () => {
             handleGoDeFi={handleOpenDefiDetail}
           />
         )}
+        <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
         <IssuerAndListSite
           tokenEntity={tokenEntity}
           entityLoading={entityLoading}
         />
-        <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
         <HistoryList
           accounts={accounts}
           top10Addresses={top10Addresses}
