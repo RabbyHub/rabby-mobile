@@ -131,7 +131,7 @@ export const CopyTradingScreen = () => {
       },
       {
         key: FilterRuleEnum.smartMoney,
-        title: t('page.copyTrading.filterRule.smartMoney'),
+        title: t('page.copyTrading.filterRule.smartWalletCount'),
         orderKey: 'buy_address_count',
         rule: 'Amount',
       },
