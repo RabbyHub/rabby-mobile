@@ -342,7 +342,7 @@ export const KeystoneHardwareWaiting = ({
             (signPayload ? (
               <Player
                 layoutStyle={'compact'}
-                playerSize={165}
+                playerSize={230}
                 type={signPayload.payload.type}
                 cbor={signPayload.payload.cbor}
                 onSign={handleRequestSignature}
