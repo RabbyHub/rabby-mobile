@@ -171,7 +171,7 @@ export const PrivatekeyWaiting = ({
   }, [type, isLight]);
 
   const init = async () => {
-    const account = params.isGnosis ? $account! : $account;
+    const account = params.isGnosis ? params.account! : $account;
 
     const approval = (await getApproval())!;
 
@@ -231,7 +231,7 @@ export const PrivatekeyWaiting = ({
             if (safeMessage) {
               await apisSafe.handleGnosisMessage({
                 signature: data.data,
-                signerAddress: $account!.address!,
+                signerAddress: params.account!.address!,
               });
             } else {
               const sigs = await apisSafe.getGnosisTransactionSignatures();
@@ -342,7 +342,7 @@ export const PrivatekeyWaiting = ({
       return setRetryTxRecommendNonce({
         from: params.from,
         chainId: params.chainId,
-        account: $account,
+        account: account,
         nonce: params.nonce,
       });
     }

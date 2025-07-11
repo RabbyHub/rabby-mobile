@@ -151,14 +151,14 @@ export const LedgerHardwareWaiting = ({
     setIsRetrying(true);
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
     retryTxReset();
-    if (params.nonce && params.chainId && params.from && $account) {
+    if (params.nonce && params.chainId && params.from && account) {
       setRetryTxType(retryUpdateType);
       if (retryUpdateType === 'nonce') {
         try {
           await setRetryTxRecommendNonce({
             from: params.from,
             chainId: params.chainId,
-            account: $account,
+            account: account,
             nonce: params.nonce,
           });
         } catch (error) {}
