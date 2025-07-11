@@ -4,12 +4,13 @@ import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Chain } from '@/constant/chains';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import BalanceChange from '../TxComponents/BalanceChange';
+import { BalanceChangeWrapper } from '../TxComponents/BalanceChangeWrapper';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import {
   ActionRequireData,
   ParsedActionData,
+  ParsedTransactionActionData,
 } from '@rabby-wallet/rabby-action';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconSpeedUp from '@/assets/icons/sign/tx/speedup.svg';
@@ -26,6 +27,7 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getActionTypeText } from './utils';
 import { TransactionActionList } from './components/TransactionActionList';
 import { Account } from '@/core/services/preference';
+import { MultiActionProps } from '../TypedDataActions';
 
 export const getActionsStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -148,6 +150,133 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
     },
   });
 
+const ActionItem = ({
+  isSpeedUp,
+  account,
+  chain,
+  requireData,
+  txDetail,
+  raw,
+  data,
+  engineResults,
+  onChange,
+}: {
+  data: ParsedTransactionActionData;
+  requireData: ActionRequireData;
+  chain: Chain;
+  engineResults: Result[];
+  txDetail: ExplainTxResponse;
+  raw: Record<string, string | number>;
+  onChange(tx: Record<string, any>): void;
+  isSpeedUp: boolean;
+  account: Account;
+}) => {
+  const actionName = useMemo(() => {
+    return getActionTypeText(data);
+  }, [data]);
+  const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = getActionsStyle(colors);
+  const commonStyle = useCommonStyle();
+
+  const handleViewRawClick = () => {
+    ViewRawModal.open({
+      raw,
+      abi: txDetail?.abi_str,
+    });
+  };
+
+  const isUnknown = data?.contractCall;
+  return (
+    <Card>
+      <View
+        style={{
+          ...styles.actionHeader,
+          ...(isUnknown ? styles.isUnknown : {}),
+        }}>
+        <View
+          style={StyleSheet.flatten({
+            flexDirection: 'row',
+            alignItems: 'center',
+          })}>
+          {isSpeedUp && (
+            <Tip placement="bottom" content={t('page.signTx.speedUpTooltip')}>
+              <IconSpeedUp style={styles.speedUpIcon} />
+            </Tip>
+          )}
+          <Text
+            style={StyleSheet.flatten({
+              ...styles.leftText,
+              ...(isUnknown ? styles.isUnknownText : {}),
+            })}>
+            {actionName}
+          </Text>
+          {isUnknown && (
+            <Tip
+              placement="bottom"
+              isLight
+              content={
+                <NoActionAlert
+                  account={account}
+                  data={{
+                    chainId: chain.serverId,
+                    contractAddress:
+                      requireData && 'id' in requireData
+                        ? requireData.id
+                        : txDetail.type_call?.contract,
+                    selector: raw.data.toString(),
+                  }}
+                />
+              }>
+              <IconQuestionMark
+                width={styles.icon.width}
+                height={styles.icon.height}
+                color={styles.icon.color}
+                style={styles.icon}
+              />
+            </Tip>
+          )}
+        </View>
+        <TouchableOpacity
+          style={styles.signTitleRight}
+          onPress={handleViewRawClick}>
+          <Text style={styles.viewRawText}>{t('page.signTx.viewRaw')}</Text>
+          <RcIconArrowRight />
+        </TouchableOpacity>
+      </View>
+      <Divide />
+      <View style={styles.container}>
+        <Col>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.chain')}
+            </Text>
+          </Row>
+          <Row>
+            <View style={styles.chainInfo}>
+              <ChainIconImage
+                chainEnum={chain.enum}
+                size={16}
+                isShowRPCStatus
+                badgeStyle={styles.rpcBadge}
+              />
+              <Text style={commonStyle.primaryText}>{chain.name}</Text>
+            </View>
+          </Row>
+        </Col>
+        <TransactionActionList
+          data={data}
+          requireData={requireData}
+          chain={chain}
+          engineResults={engineResults}
+          raw={raw}
+          onChange={onChange}
+        />
+      </View>
+    </Card>
+  );
+};
+
 const Actions = ({
   data,
   requireData,
@@ -160,6 +289,7 @@ const Actions = ({
   origin,
   originLogo,
   account,
+  multiAction,
 }: {
   data: ParsedActionData;
   requireData: ActionRequireData;
@@ -172,52 +302,13 @@ const Actions = ({
   origin?: string;
   originLogo?: string;
   account: Account;
+  multiAction?: MultiActionProps;
 }) => {
-  const actionName = useMemo(() => {
-    return getActionTypeText(data);
-  }, [data]);
-  const { t } = useTranslation();
+  const isMultiAction = useMemo(() => {
+    return !!multiAction;
+  }, [multiAction]);
   const colors = useThemeColors();
   const styles = getActionsStyle(colors);
-  const commonStyle = useCommonStyle();
-
-  const notShowBalanceChange = useMemo(() => {
-    if (
-      data.approveNFT ||
-      data.approveNFTCollection ||
-      data.approveToken ||
-      data.cancelTx ||
-      data.deployContract ||
-      data.pushMultiSig ||
-      data.revokeNFT ||
-      data.revokeNFTCollection ||
-      data.revokeToken ||
-      data.permit2BatchRevokeToken ||
-      data.revokePermit2
-    ) {
-      const balanceChange = txDetail.balance_change;
-      if (!txDetail.pre_exec.success) return false;
-      if (
-        balanceChange.receive_nft_list.length +
-          balanceChange.receive_token_list.length +
-          balanceChange.send_nft_list.length +
-          balanceChange.send_token_list.length <=
-        0
-      ) {
-        return true;
-      }
-    }
-    return false;
-  }, [data, txDetail]);
-
-  const handleViewRawClick = () => {
-    ViewRawModal.open({
-      raw,
-      abi: txDetail?.abi_str,
-    });
-  };
-
-  const isUnknown = data?.contractCall;
 
   return (
     <View style={styles.actionWrapper}>
@@ -228,104 +319,41 @@ const Actions = ({
           originLogo={originLogo}
           engineResults={engineResults}
         />
-        {!notShowBalanceChange && (
-          <>
-            <Divide />
-            <BalanceChange
-              version={txDetail.pre_exec_version}
-              data={txDetail.balance_change}
-              account={account}
-            />
-          </>
-        )}
+        <BalanceChangeWrapper
+          data={data}
+          balanceChange={txDetail.balance_change}
+          preExecSuccess={txDetail.pre_exec.success}
+          preExecVersion={txDetail.pre_exec_version}
+        />
       </Card>
-
-      <Card>
-        <View
-          style={{
-            ...styles.actionHeader,
-            ...(isUnknown ? styles.isUnknown : {}),
-          }}>
-          <View
-            style={StyleSheet.flatten({
-              flexDirection: 'row',
-              alignItems: 'center',
-            })}>
-            {isSpeedUp && (
-              <Tip placement="bottom" content={t('page.signTx.speedUpTooltip')}>
-                <IconSpeedUp style={styles.speedUpIcon} />
-              </Tip>
-            )}
-            <Text
-              style={StyleSheet.flatten({
-                ...styles.leftText,
-                ...(isUnknown ? styles.isUnknownText : {}),
-              })}>
-              {actionName}
-            </Text>
-            {isUnknown && (
-              <Tip
-                placement="bottom"
-                isLight
-                content={
-                  <NoActionAlert
-                    account={account}
-                    data={{
-                      chainId: chain.serverId,
-                      contractAddress:
-                        requireData && 'id' in requireData
-                          ? requireData.id
-                          : txDetail.type_call?.contract,
-                      selector: raw.data.toString(),
-                    }}
-                  />
-                }>
-                <IconQuestionMark
-                  width={styles.icon.width}
-                  height={styles.icon.height}
-                  color={styles.icon.color}
-                  style={styles.icon}
-                />
-              </Tip>
-            )}
-          </View>
-          <TouchableOpacity
-            style={styles.signTitleRight}
-            onPress={handleViewRawClick}>
-            <Text style={styles.viewRawText}>{t('page.signTx.viewRaw')}</Text>
-            <RcIconArrowRight />
-          </TouchableOpacity>
-        </View>
-        <Divide />
-        <View style={styles.container}>
-          <Col>
-            <Row isTitle>
-              <Text style={commonStyle.rowTitleText}>
-                {t('page.signTx.chain')}
-              </Text>
-            </Row>
-            <Row>
-              <View style={styles.chainInfo}>
-                <ChainIconImage
-                  chainEnum={chain.enum}
-                  size={16}
-                  isShowRPCStatus
-                  badgeStyle={styles.rpcBadge}
-                />
-                <Text style={commonStyle.primaryText}>{chain.name}</Text>
-              </View>
-            </Row>
-          </Col>
-          <TransactionActionList
-            data={data}
-            requireData={requireData}
+      {isMultiAction && multiAction ? (
+        (multiAction.actionList as ParsedActionData[]).map((action, index) => (
+          <ActionItem
+            key={index}
+            data={action}
+            requireData={multiAction.requireDataList[index]}
             chain={chain}
-            engineResults={engineResults}
+            engineResults={multiAction.engineResultList[index]}
             raw={raw}
+            account={account}
+            txDetail={txDetail}
             onChange={onChange}
+            isSpeedUp={isSpeedUp}
           />
-        </View>
-      </Card>
+        ))
+      ) : (
+        <ActionItem
+          data={data}
+          requireData={requireData}
+          chain={chain}
+          engineResults={engineResults}
+          raw={raw}
+          account={account}
+          txDetail={txDetail}
+          onChange={onChange}
+          isSpeedUp={isSpeedUp}
+        />
+      )}
     </View>
   );
 };

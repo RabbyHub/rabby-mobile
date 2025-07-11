@@ -10,6 +10,7 @@ import {
   ParsedActionData,
 } from '@rabby-wallet/rabby-action';
 import { Account } from '@/core/services/preference';
+import { MultiActionProps } from '../TypedDataActions';
 
 export const TxTypeComponent = ({
   actionRequireData,
@@ -24,6 +25,7 @@ export const TxTypeComponent = ({
   origin,
   originLogo,
   account,
+  multiAction,
 }: {
   actionRequireData: ActionRequireData;
   actionData: ParsedActionData;
@@ -37,12 +39,13 @@ export const TxTypeComponent = ({
   origin?: string;
   originLogo?: string;
   account: Account;
+  multiAction?: MultiActionProps;
 }) => {
   if (!isReady) {
     return <Loading />;
   }
 
-  if (actionData && actionRequireData) {
+  if (multiAction || (actionData && actionRequireData)) {
     return (
       <Actions
         account={account}
@@ -61,6 +64,7 @@ export const TxTypeComponent = ({
         isSpeedUp={isSpeedUp}
         origin={origin}
         originLogo={originLogo}
+        multiAction={multiAction}
       />
     );
   }
