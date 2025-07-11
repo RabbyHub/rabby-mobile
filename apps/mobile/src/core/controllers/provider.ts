@@ -1311,7 +1311,11 @@ class ProviderController extends BaseController {
       const connected = dappService.getConnectedDapp(session.origin);
       if (connected) {
         const { chainId } = data.params[0];
-        if (Number(chainId) === findChain({ enum: connected.chainId })?.id) {
+        if (
+          findChain({
+            id: +chainId,
+          })
+        ) {
           return true;
         }
         throw ethErrors.provider.custom({
@@ -1340,10 +1344,6 @@ class ProviderController extends BaseController {
       chainId = chainId.toLowerCase();
     }
     const chain = findChain({ hex: chainId });
-
-    if (!chain) {
-      throw new Error('This chain is not supported by Rabby yet.');
-    }
 
     if (!chain) {
       throw ethErrors.provider.custom({

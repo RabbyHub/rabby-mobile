@@ -1,3 +1,4 @@
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BroadcastEvent } from '@/constant/event';
 import { BackgroundBridge } from '../bridges/BackgroundBridge';
 import { globalSerivceEvents } from '../apis/serviceEvent';
@@ -110,7 +111,9 @@ export class SessionService {
 
     // same origin
     if (origin) {
-      sessions = sessions.filter(session => session.data.origin === origin);
+      sessions = sessions.filter(
+        session => safeGetOrigin(session.data.origin) === safeGetOrigin(origin),
+      );
     }
 
     sessions.forEach(session => {

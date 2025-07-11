@@ -6,6 +6,7 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { Account } from './preference';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { WebViewProps } from 'react-native-webview';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export interface DappInfo {
   origin: string;
@@ -134,7 +135,7 @@ export class DappService extends StoreServiceBase<
     if (origin === INTERNAL_REQUEST_ORIGIN) {
       return true;
     }
-    return !!this.store.dapps[origin]?.isConnected;
+    return !!this.store.dapps[safeGetOrigin(origin)]?.isConnected;
   }
 
   isInternalDapp(origin: string) {
