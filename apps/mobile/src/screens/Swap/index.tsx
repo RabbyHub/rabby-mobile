@@ -857,44 +857,6 @@ const Swap = ({
     return _lowCreditToken;
   }, [_lowCreditToken, navState]);
 
-  useEffect(() => {
-    if (noQuote) {
-      setShowMoreOpen(true);
-    }
-  }, [noQuote]);
-
-  useDebounce(
-    () => {
-      if (
-        !isWrapToken &&
-        Number(payAmount) > 0 &&
-        inSufficientCanGetQuote &&
-        amountAvailable &&
-        !quoteLoading &&
-        !!payToken &&
-        !!receiveToken &&
-        activeProvider &&
-        Number(slippage) >= Number(SWAP_SLIPPAGE[1])
-      ) {
-        setShowMoreOpen(true);
-      }
-    },
-    10,
-    [
-      showMoreVisible,
-      isWrapToken,
-      payAmount,
-      inSufficientCanGetQuote,
-      amountAvailable,
-      payToken,
-      receiveToken,
-      activeProvider,
-      autoSlippage,
-      activeProvider,
-      quoteLoading,
-    ],
-  );
-
   const openFeePopup = useCallback(() => {
     if (isWrapToken) {
       return;
