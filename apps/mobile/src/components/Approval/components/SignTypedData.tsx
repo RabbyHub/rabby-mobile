@@ -60,6 +60,10 @@ import { GnosisSameMessageModal } from './TxComponents/GnosisSameMessageModal';
 import { underline2Camelcase } from '@/core/utils/common';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import {
+  MultiAction,
+  TypeDataActionItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 
 interface SignTypedDataProps {
   method: string;
@@ -126,6 +130,17 @@ export const SignTypedData = ({
     useState<ActionRequireData>(null);
   const [parsedActionData, setParsedActionData] =
     useState<ParsedTypedDataActionData | null>(null);
+  const [multiActionList, setMultiActionList] = useState<
+    ParsedTypedDataActionData[]
+  >([]);
+  const [multiActionRequireDataList, setMultiActionRequireDataList] = useState<
+    ActionRequireData[]
+  >([]);
+  const [multiActionEngineResultList, setMultiActionEngineResultList] =
+    useState<Result[][]>([]);
+  const isMultiActions = useMemo(() => {
+    return !parsedActionData && multiActionList.length > 0;
+  }, [parsedActionData, multiActionList]);
   const [cantProcessReason, setCantProcessReason] =
     useState<ReactNode | null>();
   const securityLevel = useMemo(() => {
@@ -259,9 +274,9 @@ export const SignTypedData = ({
       if (isTestnetChainId(chainId)) {
         return null;
       }
-      return await openapi.parseTypedData({
-        typedData: signTypedData,
-        address: currentAccount!.address,
+      return await openapi.parseCommon({
+        typed_data: signTypedData,
+        user_addr: currentAccount!.address,
         origin: session.origin,
       });
     }
@@ -459,49 +474,63 @@ export const SignTypedData = ({
         })?.id?.toString();
       }
     }
-    if (currentAccount) {
-      let chainServerId: string | undefined;
-      if (data.chainId) {
-        chainServerId = findChain({
-          id: Number(data.chainId),
-        })?.serverId;
-      }
-      const cexInfo = getCexInfo(data.send?.to || '');
-      const requireData = await fetchActionRequiredData({
-        type: 'typed_data',
-        actionData: data,
-        sender: currentAccount.address,
-        chainId: chainServerId || CHAINS.ETH.serverId,
-        cex: cexInfo,
-        walletProvider: {
-          hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-          hasAddress: keyringService.hasAddress.bind(keyringService),
-          getWhitelist: async () => whitelistService.getWhitelist(),
-          isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
-          getPendingTxsByNonce: async (...args) =>
-            transactionHistoryService.getPendingTxsByNonce(...args),
-          findChain,
-          ALIAS_ADDRESS,
-        },
-        apiProvider: isTestnetChainId(data.chainId) ? testOpenapi : openapi,
-      });
-      setActionRequireData(requireData);
-      const ctx = await formatSecurityEngineContext({
-        type: 'typed_data',
-        actionData: data,
-        requireData,
-        chainId: chainServerId || CHAINS.ETH.serverId,
-        isTestnet: isTestnetChainId(data.chainId),
-        provider: {
-          getTimeSpan,
-          hasAddress: keyringService.hasAddress.bind(keyringService),
-        },
-        origin: params.session.origin,
-      });
-      const result = await executeEngine(ctx);
-      setEngineResults(result);
+    if (!currentAccount) throw new Error('No current account found');
+    let chainServerId: string | undefined;
+    if (data.chainId) {
+      chainServerId = findChain({
+        id: Number(data.chainId),
+      })?.serverId;
     }
-    setIsLoading(false);
+    const cexInfo = await getCexInfo(data.send?.to || '');
+
+    const requireData = await fetchActionRequiredData({
+      type: 'typed_data',
+      actionData: data,
+      sender: currentAccount.address,
+      chainId: chainServerId || CHAINS.ETH.serverId,
+      walletProvider: {
+        hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
+        hasAddress: keyringService.hasAddress.bind(keyringService),
+        getWhitelist: async () => whitelistService.getWhitelist(),
+        isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+        getPendingTxsByNonce: async (...args) =>
+          transactionHistoryService.getPendingTxsByNonce(...args),
+        findChain,
+        ALIAS_ADDRESS,
+      },
+      apiProvider: isTestnetChainId(data.chainId) ? testOpenapi : openapi,
+      cex: cexInfo,
+    });
+    return requireData;
+  };
+
+  const getSecurityEngineResult = async ({
+    data,
+    requireData,
+  }: {
+    data: ParsedTypedDataActionData;
+    requireData: ActionRequireData;
+  }) => {
+    let chainServerId: string | undefined;
+    if (data.chainId) {
+      chainServerId = findChain({
+        id: Number(data.chainId),
+      })?.serverId;
+    }
+    const ctx = await formatSecurityEngineContext({
+      type: 'typed_data',
+      actionData: data,
+      requireData,
+      chainId: chainServerId || CHAINS.ETH.serverId,
+      isTestnet: isTestnetChainId(data.chainId),
+      provider: {
+        getTimeSpan,
+        hasAddress: keyringService.hasAddress.bind(keyringService),
+      },
+      origin: params.session.origin,
+    });
+    const result = await executeEngine(ctx);
+    return result;
   };
 
   const executeSecurityEngine = async () => {
@@ -650,33 +679,77 @@ export const SignTypedData = ({
   useEffect(() => {
     const sender = isSignTypedDataV1 ? params.data[1] : params.data[0];
     if (!loading) {
+      console.log('typedDataActionData', typedDataActionData);
       if (typedDataActionData) {
-        const parsed = parseAction({
-          type: 'typed_data',
-          data: typedDataActionData.action,
-          typedData: signTypedData,
-          sender,
-        });
-        setParsedActionData(parsed);
-        getRequireData(parsed);
+        if (typedDataActionData?.action?.type === 'multi_actions') {
+          const actions = typedDataActionData.action.data as MultiAction;
+          const res = actions.map(action =>
+            parseAction({
+              type: 'typed_data',
+              data: action as TypeDataActionItem,
+              typedData: signTypedData,
+              sender,
+              balanceChange:
+                typedDataActionData.pre_exec_result?.balance_change,
+              preExecVersion:
+                typedDataActionData.pre_exec_result?.pre_exec_version,
+              gasUsed: typedDataActionData.pre_exec_result?.gas.gas_used,
+            }),
+          );
+          setMultiActionList(res);
+          Promise.all(
+            res.map(item => {
+              if (!item.contractId) {
+                item.contractId =
+                  typedDataActionData.contract_call_data?.contract.id;
+              }
+              return getRequireData(item);
+            }),
+          ).then(async requireDataList => {
+            setMultiActionRequireDataList(requireDataList);
+            const results = await Promise.all(
+              requireDataList.map((requireData, index) => {
+                return getSecurityEngineResult({
+                  data: res[index],
+                  requireData,
+                });
+              }),
+            );
+            setMultiActionEngineResultList(results);
+            setIsLoading(false);
+          });
+        } else {
+          const parsed = parseAction({
+            type: 'typed_data',
+            data: typedDataActionData.action as any,
+            typedData: signTypedData,
+            sender,
+            balanceChange: typedDataActionData.pre_exec_result?.balance_change,
+            preExecVersion:
+              typedDataActionData.pre_exec_result?.pre_exec_version,
+            gasUsed: typedDataActionData.pre_exec_result?.gas.gas_used,
+          });
+          setParsedActionData(parsed);
+          if (!parsed.contractId) {
+            parsed.contractId =
+              typedDataActionData.contract_call_data?.contract.id;
+          }
+          getRequireData(parsed).then(async requireData => {
+            setActionRequireData(requireData);
+            const securityEngineResult = await getSecurityEngineResult({
+              data: parsed,
+              requireData,
+            });
+            setEngineResults(securityEngineResult);
+            setIsLoading(false);
+          });
+        }
       } else {
         setIsLoading(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, typedDataActionData, signTypedData, params, isSignTypedDataV1]);
-
-  // useEffect(() => {
-  //   if (scrollRef.current && scrollInfo && scrollRefSize) {
-  //     const avaliableHeight =
-  //       scrollRef.current.scrollHeight - scrollRefSize.height;
-  //     if (avaliableHeight <= 0) {
-  //       setFooterShowShadow(false);
-  //     } else {
-  //       setFooterShowShadow(avaliableHeight - 20 > scrollInfo.y);
-  //     }
-  //   }
-  // }, [scrollInfo, scrollRefSize]);
 
   useEffect(() => {
     init();
@@ -707,6 +780,16 @@ export const SignTypedData = ({
             message={parsedMessage}
             origin={params.session.origin}
             originLogo={site?.icon}
+            typedDataActionData={typedDataActionData}
+            multiAction={
+              isMultiActions
+                ? {
+                    actionList: multiActionList,
+                    requireDataList: multiActionRequireDataList,
+                    engineResultList: multiActionEngineResultList,
+                  }
+                : undefined
+            }
           />
         )}
         {chain?.isTestnet ? (

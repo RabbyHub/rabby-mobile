@@ -165,7 +165,14 @@ export const CommonAction = ({
           </Text>
         </Row>
         <Row style={{ flex: 1 }}>
-          <Text style={commonStyle.primaryText}>{actionData.desc}</Text>
+          <Text
+            style={{
+              ...commonStyle.primaryText,
+              textAlign: 'right',
+              width: '100%',
+            }}>
+            {actionData.desc}
+          </Text>
         </Row>
       </Col>
       {(requireData as ContractCallRequireData)?.payNativeTokenAmount &&
