@@ -2,7 +2,7 @@ import { transactionHistoryService } from '@/core/services/shared';
 import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { eventBus, EVENTS } from '@/utils/events';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
@@ -23,6 +23,7 @@ import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { Spin } from '@/components/Spin';
+import { useUnmount } from 'ahooks';
 
 enum QR_HARDWARE_STATUS {
   SYNC,
@@ -78,8 +79,9 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     content: {
       fontSize: 20,
-      fontWeight: '500',
+      fontWeight: '900',
       lineHeight: 24,
+      fontFamily: 'SF Pro Rounded',
     },
     contentWrapper: {
       flexDirection: 'row',
@@ -218,9 +220,18 @@ export const KeystoneHardwareWaiting = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signFinishedData, isClickDone]);
 
+  const cancelRef = useRef(false);
+
   const handleCancel = () => {
-    rejectApproval('User rejected the request.');
+    cancelRef.current = true;
+    rejectApproval('user cancel');
   };
+
+  useUnmount(() => {
+    if (!cancelRef.current) {
+      rejectApproval('user cancel');
+    }
+  });
   const handleRequestSignature = async () => {
     const approval = await getApproval();
     if (account) {

@@ -402,7 +402,18 @@
       "typedDataMessage": "Sign Typed Data",
       "label": "Label",
       "addressSource": "Address Source",
-      "maxPriorityFeeDisabledAlert": "Please set Gas Price first"
+      "maxPriorityFeeDisabledAlert": "Please set Gas Price first",
+      "errorRetry": {
+        "defaultTips": "Something is wrong. Please retry later.",
+        "insufficient": "Your gas balance isn’t enough to cover the network gas fee. Add funds for gas and try again.",
+        "gasPriceTooLow": "Gas price too low. We’ll adjust it by 30% to help your transaction confirm. Click “Retry” to confirm and try again.",
+        "nonceTooLow": "Nonce too low. We’ll update it to {{nonce}}. Click “Retry” to confirm and try again.",
+        "nonceTooHigh": "Nonce too high. Please adjust the nonce and try again.",
+        "alreadySubmitted": "Transaction already submitted. Duplicate transaction detected.",
+        "gasExceedsBlockGasLimit": "Gas exceeds block gas limit. Please adjust and try again.",
+        "InvalidTx": "Invalid transaction.",
+        "gasLimitTooLow": "Gas limit too low"
+      }
     },
     "importSuccess": {
       "addressCount_one": "{{count}} Wallet",
@@ -445,6 +456,7 @@
         "signWith": "Sign with {{brand}}",
         "failedToGetExplain": "Failed to get explain",
         "txFailed": "Fail to create",
+        "txFailedRetry": "Fail to create: Please Retry",
         "sigCompleted": "Transaction created",
         "getSig": "Get signature",
         "qrcodeDesc": "Scan with your {{brand}} to sign\nAfter signing, click the button below to receive the signature",
@@ -474,7 +486,8 @@
       "cancelCurrentConnection": "Cancel current connection",
       "startSigning": "Start Signing",
       "ledgerConfirm": "Confirm",
-      "oneKeyConfirm": "Confirm"
+      "oneKeyConfirm": "Confirm",
+      "got": "I Got it"
     },
     "signTypedData": {
       "safeCantSignText": "This is a Safe address, and it cannot be used to sign text.",

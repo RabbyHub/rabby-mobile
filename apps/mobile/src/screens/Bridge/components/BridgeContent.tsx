@@ -426,6 +426,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         });
         console.log(error);
       } finally {
+        refresh(e => e + 1);
         setFetchingBridgeQuote(false);
       }
     }

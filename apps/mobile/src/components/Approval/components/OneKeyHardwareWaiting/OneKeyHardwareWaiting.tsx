@@ -8,7 +8,7 @@ import {
 import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import { APPROVAL_STATUS_MAP, eventBus, EVENTS } from '@/utils/events';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ApprovalPopupContainer,
@@ -29,12 +29,24 @@ import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 import { findChain } from '@/utils/chain';
+import {
+  getTxFailedResult,
+  retryTxReset,
+  RetryUpdateType,
+  setRetryTxRecommendNonce,
+  setRetryTxType,
+  useDebugToastErrorTxRetryInfo,
+} from '@/utils/errorTxRetry';
+import useAsync from 'react-use/lib/useAsync';
+import { useUnmount } from 'ahooks';
 
 interface ApprovalParams {
   address: string;
   chainId?: number;
   isGnosis?: boolean;
   data?: string[];
+  from?: string;
+  nonce?: string;
   account?: Account;
   $ctx?: any;
   extra?: Record<string, any>;
@@ -67,8 +79,9 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     content: {
       fontSize: 20,
-      fontWeight: '500',
+      fontWeight: '900',
       lineHeight: 24,
+      fontFamily: 'SF Pro Rounded',
     },
     contentWrapper: {
       flexDirection: 'row',
@@ -110,21 +123,56 @@ export const OneKeyHardwareWaiting = ({
   const mountedRef = React.useRef(false);
   const showDueToStatusChangeRef = React.useRef(false);
 
+  const account = params.isGnosis ? params.account! : $account;
+
+  const cancelRef = useRef(false);
+
   const handleCancel = () => {
+    cancelRef.current = true;
     rejectApproval('user cancel');
   };
 
+  useUnmount(() => {
+    if (!cancelRef.current) {
+      rejectApproval('user cancel');
+    }
+  });
+
+  const [isRetrying, setIsRetrying] = React.useState(false);
+
   const handleRetry = async (showToast = true) => {
+    if (isRetrying) {
+      return;
+    }
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
       toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
+    setIsRetrying(true);
+
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    notificationService.callCurrentRequestDeferFn();
+
+    retryTxReset();
+    if (params.nonce && params.chainId && params.from && account) {
+      setRetryTxType(retryUpdateType);
+      if (retryUpdateType === 'nonce') {
+        try {
+          await setRetryTxRecommendNonce({
+            from: params.from,
+            chainId: params.chainId,
+            account: account,
+            nonce: params.nonce,
+          });
+        } catch (error) {}
+      }
+    }
+
+    notificationService.callCurrentRequestDeferFn(true);
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
     emitSignComponentAmounted();
+    setIsRetrying(false);
   };
 
   const init = async () => {
@@ -296,10 +344,38 @@ export const OneKeyHardwareWaiting = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectStatus, errorMessage]);
 
-  const currentDescription = React.useMemo(() => {
-    return description;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [description]);
+  const { value: recommendNonce } = useAsync(async () => {
+    if (params.nonce && params.chainId && params.from && account) {
+      return setRetryTxRecommendNonce({
+        from: params.from,
+        chainId: params.chainId,
+        account: account,
+        nonce: params.nonce,
+      });
+    }
+    return '0x0';
+  }, [params.nonce, params.chainId, params.from, account]);
+
+  const [currentDescription, retryUpdateType]: [string, RetryUpdateType] =
+    React.useMemo(() => {
+      return params.nonce &&
+        params.chainId &&
+        params.from &&
+        account &&
+        [APPROVAL_STATUS_MAP.REJECTED, APPROVAL_STATUS_MAP.FAILED].includes(
+          connectStatus,
+        )
+        ? getTxFailedResult(description || '', { nonce: recommendNonce })
+        : [description, 'origin'];
+    }, [
+      connectStatus,
+      description,
+      params.chainId,
+      params.from,
+      params.nonce,
+      recommendNonce,
+      account,
+    ]);
 
   const renderContent = React.useCallback(
     ({ contentColor }) => (
@@ -318,14 +394,30 @@ export const OneKeyHardwareWaiting = ({
     [colors, content, styles.content, styles.contentWrapper],
   );
 
+  const showBranIconTitle =
+    retryUpdateType &&
+    retryUpdateType !== 'gasPrice' &&
+    retryUpdateType !== 'nonce';
+
+  useDebugToastErrorTxRetryInfo({
+    description: description,
+    isFailedTx:
+      connectStatus === APPROVAL_STATUS_MAP.FAILED ||
+      connectStatus === APPROVAL_STATUS_MAP.REJECTED,
+    tx: params,
+    account: $account,
+  });
+
   return (
     <View>
-      <View style={styles.titleWrapper}>
-        <OneKeySVG width={20} height={20} style={styles.brandIcon} />
-        <Text style={styles.title}>
-          {t('page.signFooterBar.qrcode.signWith', { brand: 'OneKey' })}
-        </Text>
-      </View>
+      {showBranIconTitle && (
+        <View style={styles.titleWrapper}>
+          <OneKeySVG width={20} height={20} style={styles.brandIcon} />
+          <Text style={styles.title}>
+            {t('page.signFooterBar.qrcode.signWith', { brand: 'OneKey' })}
+          </Text>
+        </View>
+      )}
 
       <ApprovalPopupContainer
         showAnimation
@@ -339,6 +431,8 @@ export const OneKeyHardwareWaiting = ({
         hasMoreDescription={
           statusProp === 'REJECTED' || statusProp === 'FAILED'
         }
+        BrandIcon={OneKeySVG}
+        retryUpdateType={retryUpdateType}
       />
     </View>
   );

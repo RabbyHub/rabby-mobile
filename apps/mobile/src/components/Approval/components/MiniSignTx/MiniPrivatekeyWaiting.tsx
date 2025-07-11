@@ -3,11 +3,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { MiniApprovalPopupContainer } from '../Popup/MiniApprovalPopupContainer';
+import { getTxFailedResult, setRetryTxType } from '@/utils/errorTxRetry';
 
 interface Props {
   onCancel?: () => void;
@@ -39,7 +39,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       fontSize: 20,
       textAlign: 'center',
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '700',
+      fontWeight: '900',
       lineHeight: 24,
       color: colors2024['red-default'],
     },
@@ -55,13 +55,19 @@ export const MiniPrivatekeyWaiting = ({
   onRetry,
   error,
 }: Props) => {
-  const { styles, colors } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();
 
+  const [description, retryUpdateType] = useMemo(
+    () => getTxFailedResult(error?.description || ''),
+    [error?.description],
+  );
+
   const handleRetry = async () => {
-    toast.success(t('page.signFooterBar.ledger.resent'));
+    // toast.success(t('page.signFooterBar.ledger.resent'));
+    setRetryTxType(retryUpdateType);
     onRetry?.();
   };
 
@@ -71,10 +77,11 @@ export const MiniPrivatekeyWaiting = ({
         style={StyleSheet.flatten([
           styles.content,
           {
-            color: colors[contentColor],
+            color: colors2024[contentColor],
           },
         ])}>
         {error?.content}
+        {retryUpdateType ? ': Please Retry' : ''}
       </Text>
     </View>
   ));
@@ -87,10 +94,11 @@ export const MiniPrivatekeyWaiting = ({
         status={error?.status}
         onRetry={handleRetry}
         content={renderContent}
-        description={error.description}
+        description={description}
         onDone={onDone}
         onCancel={onCancel}
-        hasMoreDescription={!!error.description}
+        hasMoreDescription={!!description}
+        retryUpdateType={retryUpdateType}
       />
     </View>
   );

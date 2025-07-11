@@ -785,7 +785,7 @@ export const MiniSignTx = ({
         ((isSend || isSwap || isBridge) && customGasPrice) ||
         isSpeedUp ||
         isCancel ||
-        lastTimeGas?.lastTimeSelect === 'gasPrice'
+        (lastTimeGas?.lastTimeSelect === 'gasPrice' && !directSubmit)
       ) {
         gas = gasList.find(item => item.level === 'custom')!;
       } else if (
@@ -1077,6 +1077,8 @@ export const MiniSignTx = ({
     }
   });
 
+  const [isDirectSigning] = useAtom(directSigningAtom);
+
   useEffect(() => {
     if (visible && simulateError) {
       onReject?.(simulateError);
@@ -1084,10 +1086,10 @@ export const MiniSignTx = ({
   }, [onReject, simulateError, visible]);
 
   useEffect(() => {
-    if (directSubmit && simulateError) {
+    if (directSubmit && simulateError && isDirectSigning) {
       onReject?.(simulateError);
     }
-  }, [onReject, simulateError, directSubmit]);
+  }, [onReject, simulateError, directSubmit, isDirectSigning]);
 
   useEffect(() => {
     if (
