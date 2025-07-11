@@ -1072,6 +1072,8 @@ export const MiniSignTx = ({
     }
   });
 
+  const [isDirectSigning] = useAtom(directSigningAtom);
+
   useEffect(() => {
     if (visible && simulateError) {
       onReject?.(simulateError);
@@ -1079,10 +1081,10 @@ export const MiniSignTx = ({
   }, [onReject, simulateError, visible]);
 
   useEffect(() => {
-    if (directSubmit && simulateError) {
+    if (directSubmit && simulateError && isDirectSigning) {
       onReject?.(simulateError);
     }
-  }, [onReject, simulateError, directSubmit]);
+  }, [onReject, simulateError, directSubmit, isDirectSigning]);
 
   useEffect(() => {
     if (

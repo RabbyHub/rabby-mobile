@@ -83,14 +83,14 @@ export const MiniDirectSubmitApproval = ({
   const resetMiniApprovalDirectSignState =
     useResetMiniApprovalDirectSignState();
 
-  const handleClearTask = useMemoizedFn(() => {
+  const handleClearTask = useMemoizedFn((e: any) => {
     task.clear();
     resetMiniApprovalDirectSignState();
     onVisibleChange?.(false);
     cancelOverlayLoading();
 
     if (!visible) {
-      onReject?.();
+      onReject?.(e);
     }
   });
 

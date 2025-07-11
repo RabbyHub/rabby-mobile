@@ -438,6 +438,8 @@ const Swap = ({
         }, 500);
       } catch (error) {
         console.error(error);
+      } finally {
+        refresh(e => e + 1);
       }
     }
   });
