@@ -122,6 +122,7 @@ import MockBatchRevokeModal, {
 } from './sheetModals/DevMockBatchRevoke';
 import { preferenceService } from '@/core/services';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
+import WebView from 'react-native-webview';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -189,6 +190,8 @@ function SettingsBlocks() {
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
   const { clearBrowserData } = useClearBrowserData();
+
+  const webviewRef = useRef<WebView>(null);
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -407,6 +410,7 @@ function SettingsBlocks() {
                     style: 'destructive',
                     onPress: async () => {
                       clearBrowserData();
+                      webviewRef?.current?.clearCache?.(true);
                       toast.success('Cleared');
                     },
                   },
@@ -459,6 +463,8 @@ function SettingsBlocks() {
       <SelectAutolockTimeBottomSheetModal ref={selectAutolockTimeRef} />
 
       <CurrentLanguageSelectorModal />
+
+      <WebView ref={webviewRef} style={styles.hidden} />
     </>
   );
 }
@@ -900,6 +906,9 @@ const getStyles = createGetStyles2024(ctx => {
       fontStyle: 'normal',
       fontWeight: '500',
       lineHeight: 20,
+    },
+    hidden: {
+      display: 'none',
     },
   };
 });
