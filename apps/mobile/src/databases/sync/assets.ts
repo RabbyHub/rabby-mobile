@@ -37,28 +37,33 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
     b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
 
+  const syncTimestamp = Date.now();
+
   const tokenItems = tokens.map(raw => {
     const tokenItem = new TokenItemEntity();
     TokenItemEntity.fillEntity(tokenItem, address, raw);
+    tokenItem._local_updated_at = syncTimestamp;
 
     return tokenItem;
   });
 
   await prepareAppDataSource();
 
-  await TokenItemEntity.deleteForAddress(address);
+  // await TokenItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
     owner_addr: address,
     taskFor: 'token',
     batchSize: 300,
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
+    waitTaskDoneReturn: true,
   })
-    .then(({ taskSignal, taskKey }) => {
-      if (taskSignal.aborted) {
-        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+    .then(({ taskSignal, taskKey, queueCompleted }) => {
+      if (queueCompleted) {
+        console.debug(`[${taskKey}] batch upsert tasks completed`);
+        TokenItemEntity.cleanupStaleTokens(address, syncTimestamp);
       } else {
-        console.debug(`[${taskKey}] batch upsert tasks created`);
+        console.warn(`[${taskKey}] batch upsert tasks aborted.`);
       }
     })
     .catch(error => {
@@ -359,8 +364,6 @@ export const deleteDBResourceForAddress = async (_address: string) => {
 export async function patchSingleToken(address: string, token: TokenItem) {
   const tokenItem = new TokenItemEntity();
   TokenItemEntity.fillEntity(tokenItem, address, token);
-  await TokenItemEntity.deleteForAddressAndToken(address, token.id);
-
   await prepareAppDataSource();
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, [tokenItem], {
     owner_addr: address,
