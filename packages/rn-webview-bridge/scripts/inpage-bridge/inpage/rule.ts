@@ -33,6 +33,9 @@ const setupRainbowKitBtn = () => {
 const hackRainbowkit = () => {
   const hasRainbowkit = Boolean(window.localStorage.getItem('rk-version'));
   if (!hasRainbowkit) {
+    setTimeout(() => {
+      hackRainbowkit();
+    }, 100);
     return;
   }
   setupMetamaskMode();
@@ -52,6 +55,16 @@ const hackRainbowkit = () => {
     childList: true,
     subtree: true,
   });
+};
+
+const hackMetamaskMode = async () => {
+  const isMetamaskMode = await (window as any).rabby.request({
+    method: 'rabby_getIsMetamaskMode',
+    params: [],
+  });
+  if (isMetamaskMode) {
+    setupMetamaskMode();
+  }
 };
 
 const rules: Rule[] = [
@@ -144,5 +157,6 @@ export const startCheckRules = () => {
     }
 
     hackRainbowkit();
+    hackMetamaskMode();
   });
 };

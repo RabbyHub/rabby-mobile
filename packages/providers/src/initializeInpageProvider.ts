@@ -62,7 +62,16 @@ export function initializeProvider({
 
   const proxiedProvider = new Proxy(provider, {
     // some common libraries, e.g. web3@1.x, mess with our API
-    deleteProperty: () => true,
+    deleteProperty: (target, prop) => {
+      if (
+        typeof prop === 'string' &&
+        ['on', 'isRabby', 'isMetaMask', '_isRabby'].includes(prop)
+      ) {
+        // @ts-ignore
+        delete target[prop];
+      }
+      return true;
+    },
     // fix issue with Proxy unable to access private variables from getters
     // https://stackoverflow.com/a/73051482
     get(target, propName: 'chainId' | 'networkVersion' | 'selectedAddress') {
@@ -94,9 +103,14 @@ export function initializeProvider({
  *
  * @param providerInstance - The provider instance.
  */
-export function setGlobalProvider(
-  providerInstance: RabbyInpageProvider,
-): void {
+export function setGlobalProvider(providerInstance: RabbyInpageProvider): void {
   (window as Record<string, any>).ethereum = providerInstance;
+
+  Object.defineProperty(window, 'rabby', {
+    value: providerInstance,
+    configurable: false,
+    writable: false,
+  });
+
   window.dispatchEvent(new Event('ethereum#initialized'));
 }

@@ -1,7 +1,7 @@
 import { keyBy } from 'lodash';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { keyringService } from '../services';
-import { dappService } from '@/core/services/shared';
+import { dappService, metamaskModeService } from '@/core/services/shared';
 import providerController from './provider';
 import { findChain, findChainByEnum } from '@/utils/chain';
 import { ProviderRequest } from './type';
@@ -95,10 +95,20 @@ const getOriginIsScam = async (req: ProviderRequest) => {
   return openapi.getOriginIsScam(args.origin, args.source);
 };
 
+const getIsMetamaskMode = async (req: ProviderRequest) => {
+  const origin = req.session.origin;
+
+  if (!origin) {
+    return false;
+  }
+  return metamaskModeService.checkIsMetamaskMode(origin);
+};
+
 export default {
   tabCheckin,
   getProviderState,
   rabby_getProviderState: getProviderState,
   rabby_getDappsInfo: getDappsInfo,
   rabby_getOriginIsScam: getOriginIsScam,
+  rabby_getIsMetamaskMode: getIsMetamaskMode,
 };

@@ -40,6 +40,7 @@ import { migrateAppStorage, migrateServices } from '@/migrations/migrations';
 import { OfflineChainService } from './offlineChain';
 import { BrowserService } from './browserService';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
+import { MetamaskModeService } from './metamaskModeService';
 import { SyncChainService } from './syncChainService';
 
 migrateAppStorage(appStorage);
@@ -211,6 +212,10 @@ export const browserService = new BrowserService({
   storageAdapter: appStorage,
 });
 
+export const metamaskModeService = new MetamaskModeService({
+  storageAdapter: appStorage,
+});
+
 export const syncChainService = new SyncChainService({
   storageAdapter: appStorage,
 });
@@ -232,5 +237,6 @@ migrateServices({
   gasAccount: gasAccountService,
   offlineChain: offlineChainService,
   browser: browserService,
+  metamaskMode: metamaskModeService,
   syncChain: syncChainService,
 });
