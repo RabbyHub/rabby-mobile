@@ -78,11 +78,9 @@ const getStyles = createGetStyles2024(() => ({
     paddingHorizontal: 20,
     textAlign: 'center',
   },
-  footer: {
-    paddingBottom: 56,
-  },
+  footer: {},
   description: {
-    paddingTop: 12,
+    paddingTop: 10,
     paddingBottom: 30,
   },
   noDescription: {
@@ -206,20 +204,20 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return;
     }
   }, [status]);
-  // const { snapToIndexPopup } = useApprovalPopup();
+  const { snapToIndexPopup } = useApprovalPopup();
 
-  // useDebounce(
-  //   () => {
-  //     if ((status === 'FAILED' || status === 'REJECTED') && description) {
-  //       // snapToIndexPopup(1);
-  //     } else {
-  //       // snapToIndexPopup(0);
-  //     }
-  //   },
-  //   10,
-  //   [snapToIndexPopup, hdType, status, description],
-  // );
-  // const isHD = hdType === 'ledger';
+  useDebounce(
+    () => {
+      if ((status === 'FAILED' || status === 'REJECTED') && description) {
+        snapToIndexPopup(1);
+      } else {
+        snapToIndexPopup(0);
+      }
+    },
+    10,
+    [snapToIndexPopup, hdType, status, description],
+  );
+  const isHD = hdType === 'ledger';
   const isFailedOrRejected = status === 'FAILED' || status === 'REJECTED';
 
   const showSendSvg = retryUpdateType === 'origin' && !isFailedOrRejected;
@@ -297,7 +295,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
           />
         )}
       </View>
-      {/* {children} */}
+      {children}
     </View>
   );
 };

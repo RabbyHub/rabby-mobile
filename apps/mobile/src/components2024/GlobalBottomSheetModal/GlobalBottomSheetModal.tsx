@@ -96,17 +96,6 @@ export const GlobalBottomSheetModal2024 = () => {
       const approvalComponent = _approval?.data
         ?.approvalComponent as APPROVAL_MODAL_NAMES;
 
-      const isWaitingComponent =
-        approvalComponent &&
-        params.name === MODAL_NAMES.APPROVAL &&
-        APPROVAL_SNAP_POINTS[approvalComponent] &&
-        [
-          APPROVAL_MODAL_NAMES.LedgerHardwareWaiting,
-          APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
-          APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
-          APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
-        ].includes(approvalComponent);
-
       setModals(prev => [
         ...prev,
         {
@@ -114,17 +103,12 @@ export const GlobalBottomSheetModal2024 = () => {
           params: {
             ...params,
             approvalComponent,
-            bottomSheetModalProps: {
-              ...params.bottomSheetModalProps,
-              enableDynamicSizing: isWaitingComponent ? true : false,
-            },
           },
-          snapPoints: isWaitingComponent
-            ? []
-            : approvalComponent && params.name === MODAL_NAMES.APPROVAL
-            ? APPROVAL_SNAP_POINTS[approvalComponent] ??
-              APPROVAL_SNAP_POINTS.Unknown
-            : SNAP_POINTS[params.name],
+          snapPoints:
+            approvalComponent && params.name === MODAL_NAMES.APPROVAL
+              ? APPROVAL_SNAP_POINTS[approvalComponent] ??
+                APPROVAL_SNAP_POINTS.Unknown
+              : SNAP_POINTS[params.name],
           ref: React.createRef<AppBottomSheetModal>(),
         },
       ]);
