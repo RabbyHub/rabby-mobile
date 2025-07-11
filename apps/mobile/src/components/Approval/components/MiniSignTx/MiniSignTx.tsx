@@ -977,6 +977,10 @@ export const MiniSignTx = ({
             ],
           });
           let estimateGas = 0;
+          if (preExecResult.pre_exec.success) {
+            console.log(preExecResult);
+            throw new Error('Pre exec failed');
+          }
           if (!preExecResult.pre_exec.success) {
             console.log(preExecResult);
             throw new Error('Pre exec failed');
@@ -1072,6 +1076,8 @@ export const MiniSignTx = ({
     }
   });
 
+  const [isDirectSigning] = useAtom(directSigningAtom);
+
   useEffect(() => {
     if (visible && simulateError) {
       onReject?.(simulateError);
@@ -1079,10 +1085,10 @@ export const MiniSignTx = ({
   }, [onReject, simulateError, visible]);
 
   useEffect(() => {
-    if (directSubmit && simulateError) {
+    if (directSubmit && simulateError && isDirectSigning) {
       onReject?.(simulateError);
     }
-  }, [onReject, simulateError, directSubmit]);
+  }, [onReject, simulateError, directSubmit, isDirectSigning]);
 
   useEffect(() => {
     if (

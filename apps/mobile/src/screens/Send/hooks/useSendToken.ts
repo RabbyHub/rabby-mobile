@@ -860,7 +860,7 @@ export function useSendTokenForm({
         isAccountSupportMiniApproval(currentAccount?.type || '') &&
         !chain.isTestnet &&
         isAccountSupportDirectSign(currentAccount?.type || '');
-      if (isNativeToken && !directSubmit) {
+      if (isNativeToken && (!directSubmit || isForceSignTx)) {
         // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
         const couldSpecifyIntrinsicGas =
           !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
