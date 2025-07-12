@@ -33,7 +33,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 8,
     width: '100%',
     paddingHorizontal: 16,
-    marginBottom: 56,
   },
   item: {
     width: '50%',
