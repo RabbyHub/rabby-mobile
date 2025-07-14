@@ -20,7 +20,7 @@ const CHANNEL_PROVIDER = 'rabby-provider';
 // the wallet background ready to receive requests and that the
 // inpage provider should retry and pending requests it has not
 // yet received a response for.
-let metamaskConnectSent = false;
+let isConnectSent = false;
 // Setup stream for content script communication
 const rabbyStream = new ReactNativePostMessageStream({
   name: PORT_INPAGE,
@@ -177,15 +177,15 @@ function logStreamDisconnectWarning(remoteLabel, err) {
 
 /**
  * The function notifies inpage when the background bridge stream connection is ready. When the
- * 'metamask_chainChanged' method is received from the background bridge, it implies that the
+ * 'rabby_chainChanged' method is received from the background bridge, it implies that the
  * background state is completely initialized and it is ready to process method calls.
  * This is used as a notification to replay any pending messages.
  *
  * @param msg - instance of message received
  */
 function backgroundBridgeStreamMessageListener(msg) {
-  if (!metamaskConnectSent && msg.data.method === 'rabby_chainChanged') {
-    metamaskConnectSent = true;
+  if (!isConnectSent && msg.data.method === 'rabby_chainChanged') {
+    isConnectSent = true;
     window.postMessage(
       {
         target: PORT_INPAGE,
