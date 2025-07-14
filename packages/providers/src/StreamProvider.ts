@@ -128,34 +128,17 @@ export abstract class AbstractStreamProvider extends BaseProvider {
   protected async _initializeStateAsync() {
     let initialState: Parameters<BaseProvider['_initializeState']>[0];
 
-    const isInitialized = await Promise.race([
-      (async () => {
-        try {
-          // todo check this why pending
-          initialState = (await this.request({
-            method: 'rabby_getProviderState',
-          })) as Parameters<BaseProvider['_initializeState']>[0];
-        } catch (error) {
-          this._log.error(
-            'Rabby: Failed to get initial state. Please report this bug.',
-            error,
-          );
-        }
-        this._initializeState(initialState);
-        return true;
-      })(),
-      new Promise(resolve => {
-        setTimeout(() => {
-          resolve(false);
-        }, 200);
-      }),
-    ]);
-
-    if (!isInitialized) {
-      this._state.initialized = true;
-      this._state.isUnlocked = true;
-      this.emit('_initialized');
+    try {
+      initialState = (await this.request({
+        method: 'rabby_getProviderState',
+      })) as Parameters<BaseProvider['_initializeState']>[0];
+    } catch (error) {
+      this._log.error(
+        'Rabby: Failed to get initial state. Please report this bug.',
+        error,
+      );
     }
+    this._initializeState(initialState);
   }
 
   /**

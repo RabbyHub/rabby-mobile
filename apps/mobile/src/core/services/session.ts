@@ -21,6 +21,7 @@ export class Session {
 
   pushMessage(event: BroadcastEvent, data: any) {
     this.pms.forEach(pm => {
+      console.log('notification', event, data, this.origin);
       pm.port.postMessage(
         {
           name: 'rabby-provider',
