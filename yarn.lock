@@ -9847,11 +9847,11 @@ __metadata:
 
 "@scure/bip39@patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.3.0
-  resolution: "@scure/bip39@patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch::version=1.3.0&hash=a21ef4&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@scure/bip39@patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch::version=1.3.0&hash=52ad7b&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@noble/hashes": ~1.4.0
     "@scure/base": ~1.1.6
-  checksum: 21edb229526459723d7d3866371265fce2fcd4b36f24cfe0d6bd0877505d7460ef547c755385f120089be5e92d2a6b56339ad3ebe73fa39da25d8946b9f11b6b
+  checksum: e7b14faf0d1ab6ca3b8a7421dc5baae921b05ad1244a8c7c4041e2eaea76f77316f770c1c33d03f9d6ca742eeeaa505a6667bb1a652e90d812abaa5b017fda1f
   languageName: node
   linkType: hard
 
