@@ -1,11 +1,30 @@
 import { WALLET_ICON, WALLET_NAME } from './constant';
 import { setupMetamaskMode } from './metamaskMode';
-import { domReadyCall } from './util';
+import { domReadyCall, retry } from './util';
 
 type Rule = {
   matches: string[];
   hiddenSelectors?: string[];
   runner?(): void;
+};
+
+const detectIsRainbowKit = (callback: () => void) => {
+  const hasRainbowKit = () => window.localStorage.getItem('rk-version');
+  if (hasRainbowKit()) {
+    callback();
+  } else {
+    retry(
+      async () => {
+        if (!hasRainbowKit()) {
+          throw new Error('not found rainbowkit');
+        }
+      },
+      {
+        retries: 10,
+        delay: 300,
+      },
+    ).then(callback);
+  }
 };
 
 const setupRainbowKitBtn = () => {
@@ -31,29 +50,27 @@ const setupRainbowKitBtn = () => {
 };
 
 const hackRainbowkit = () => {
-  const hasRainbowkit = Boolean(window.localStorage.getItem('rk-version'));
-  if (!hasRainbowkit) {
-    setTimeout(() => {
-      hackRainbowkit();
-    }, 100);
-    return;
-  }
-  setupMetamaskMode();
-  setupRainbowKitBtn();
+  detectIsRainbowKit(() => {
+    localStorage.setItem('rk-recent', JSON.stringify(['rabby', 'metamask']));
+    setupMetamaskMode({
+      isKeepRabby: true,
+    });
+    setupRainbowKitBtn();
 
-  const observer = new MutationObserver(function (mutations) {
-    mutations.forEach(function (mutation) {
-      mutation.addedNodes.forEach(function (node) {
-        if (node.nodeType === 1) {
-          setupRainbowKitBtn();
-        }
+    const observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        mutation.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1) {
+            setupRainbowKitBtn();
+          }
+        });
       });
     });
-  });
 
-  observer.observe(document, {
-    childList: true,
-    subtree: true,
+    observer.observe(document, {
+      childList: true,
+      subtree: true,
+    });
   });
 };
 

@@ -100,7 +100,7 @@ export class BackgroundBridge extends EventEmitter {
             name: 'rabby-provider',
             data: {
               method: BroadcastEvent.chainChanged,
-              data: {
+              params: {
                 chainId: chain.hex,
                 networkVersion: chain.network,
               },
