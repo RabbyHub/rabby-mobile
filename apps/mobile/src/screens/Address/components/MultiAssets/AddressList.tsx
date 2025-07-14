@@ -69,6 +69,7 @@ export const AddressList = () => {
       return {
         ...item,
         balance: account?.balance || item.balance || 0,
+        evmBalance: account?.evmBalance || item.evmBalance || 0,
       };
     });
   }, [balanceAccounts, _rawList]);
@@ -81,7 +82,7 @@ export const AddressList = () => {
         ]?.data?.some(i => i.usd_value !== 0);
         const chartData = getChangeData(
           multiTimeStamp[item.address.toLocaleLowerCase()]?.data || [],
-          item.balance,
+          item.evmBalance,
           new Date().getTime(),
         );
         return {
