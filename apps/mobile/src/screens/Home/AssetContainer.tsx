@@ -94,7 +94,7 @@ export const AssetContainer: React.FC<Props> = ({
     loadingNft,
     loadingPortfolio,
     chainsInfo,
-  } = useQueryProjects(currentAccount?.address);
+  } = useQueryProjects(currentAccount?.address?.toLocaleLowerCase());
 
   const { tokens, portfolios, nftList } = useMemo(() => {
     return {
