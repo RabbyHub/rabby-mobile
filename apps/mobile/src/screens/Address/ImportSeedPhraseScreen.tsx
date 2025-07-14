@@ -15,7 +15,7 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import { requestKeyring } from '@/core/apis/keyring';
 import { toast } from '@/components/Toast';
 import { useFocusEffect } from '@react-navigation/native';
-import bip39 from '@scure/bip39';
+import * as bip39 from '@scure/bip39';
 import * as import_english from '@scure/bip39/wordlists/english';
 
 const getStyles = (colors: AppColorsVariants) =>

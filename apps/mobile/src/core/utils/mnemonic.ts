@@ -1,4 +1,4 @@
-import bip39 from '@scure/bip39';
+import * as bip39 from '@scure/bip39';
 import { HDKey } from 'ethereum-cryptography/hdkey';
 import * as sigUtil from 'eth-sig-util';
 import { bytesToHex, publicToAddress, privateToPublic } from '@ethereumjs/util';
