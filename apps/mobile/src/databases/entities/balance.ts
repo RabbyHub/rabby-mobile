@@ -3,14 +3,17 @@ import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { BALANCE_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';
-import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { columnConverter } from './_helpers';
+import { EvmTotalBalanceResponse } from '../hooks/balance';
 
 @Entity('cache_balance')
 export class BalanceEntity extends EntityAddressAssetBase {
   // balance
   @Column('real')
   balance: number = 0;
+  // evm balance
+  @Column('real')
+  evm_usd_value: number = 0;
   // is_core
   @Column('boolean', { default: false })
   isCore: boolean = false;
@@ -31,10 +34,11 @@ export class BalanceEntity extends EntityAddressAssetBase {
     e: BalanceEntity,
     owner_addr: string,
     isCore: boolean,
-    input: TotalBalanceResponse,
+    input: EvmTotalBalanceResponse,
   ) {
     e.owner_addr = owner_addr;
     e.balance = input.total_usd_value;
+    e.evm_usd_value = input.evm_usd_value || 0;
     e.chain_list = columnConverter.jsonObjToString(input.chain_list || []);
     e.isCore = !!isCore;
     e.makeDbId();
@@ -62,7 +66,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
   static async queryBalance(
     owner_addr: string,
     isCore: boolean,
-  ): Promise<TotalBalanceResponse> {
+  ): Promise<EvmTotalBalanceResponse> {
     await prepareAppDataSource();
     const result = await this.getRepository().findOneBy({
       owner_addr,
@@ -71,6 +75,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
 
     return {
       total_usd_value: result?.balance || 0,
+      evm_usd_value: result?.evm_usd_value || 0,
       chain_list:
         columnConverter.jsonStringToObj(result?.chain_list || '[]') || [],
     };

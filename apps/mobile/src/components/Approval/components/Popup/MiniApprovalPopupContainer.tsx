@@ -2,9 +2,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FooterResend } from './FooterResend';
 import { FooterButton } from './FooterButton';
-import { FooterResendCancelGroup } from './FooterResendCancelGroup';
-import TxFailedSVG from '@/assets/icons/approval/tx-failed-1.svg';
-import IconWarningSvg from '@/assets/icons/swap/warning-cc.svg';
 import TxSucceedSVG from '@/assets/icons/approval/tx-succeed.svg';
 import ConnectWiredSVG from '@/assets/icons/approval/connect-wired.svg';
 import ConnectBleSVG from '@/assets/icons/approval/connect-ble.svg';
@@ -31,6 +28,9 @@ import { useApprovalPopup } from '@/hooks/useApprovalPopup';
 import useDebounce from 'react-use/lib/useDebounce';
 import { createGetStyles2024 } from '@/utils/styles';
 import { MiniFooterResendCancelGroup } from './MiniFooterResendCancelGroup';
+import { RetryUpdateType } from '@/utils/errorTxRetry';
+
+import TxFailedSVG from '@/assets2024/icons/common/failed-retry.svg';
 
 const getStyle = createGetStyles2024(({ colors }) =>
   StyleSheet.create({
@@ -57,26 +57,28 @@ const getStyle = createGetStyles2024(({ colors }) =>
     titleWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
+      marginTop: 12,
     },
     hdTitleWrapper: {
       // marginTop: 25,
     },
     infoIcon: {
-      width: 20,
-      height: 20,
-      marginRight: 6,
+      width: 24,
+      height: 24,
+      marginRight: 8,
     },
     descriptionText: {
-      fontSize: 14,
+      fontSize: 16,
       lineHeight: 16,
       fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'center',
     },
     footer: {},
     description: {
-      marginTop: 8,
-      marginBottom: 32,
-      height: 46,
-      paddingHorizontal: 16,
+      marginTop: 10,
+      marginBottom: 30,
+      paddingHorizontal: 20,
     },
     noDescription: {
       height: 20,
@@ -114,6 +116,7 @@ export interface Props {
   showAnimation?: boolean;
   BrandIcon?: React.FC<SvgProps>;
   style?: StyleProp<ViewStyle>;
+  retryUpdateType?: RetryUpdateType;
 }
 
 export const MiniApprovalPopupContainer: React.FC<Props> = ({
@@ -130,11 +133,12 @@ export const MiniApprovalPopupContainer: React.FC<Props> = ({
   showAnimation,
   BrandIcon,
   style,
+  retryUpdateType = 'origin',
 }) => {
   const [iconColor, setIconColor] = React.useState('');
   const [contentColor, setContentColor] = React.useState('');
   const { t } = useTranslation();
-  const { styles, colors, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const SendSVG = React.useMemo(() => {
     switch (hdType) {
@@ -161,18 +165,19 @@ export const MiniApprovalPopupContainer: React.FC<Props> = ({
   React.useEffect(() => {
     switch (status) {
       case 'SENDING':
-        setIconColor('bg-blue-light');
+        setIconColor('blue-light-1');
         setContentColor('neutral-title-1');
         break;
       case 'WAITING':
       case 'SUBMITTING':
-        setIconColor('bg-blue-light');
+        setIconColor('blue-light-1');
         setContentColor('neutral-title-1');
         break;
       case 'FAILED':
       case 'REJECTED':
-        setIconColor('bg-red-forbidden');
-        setContentColor('red-default');
+        setIconColor('orange-default');
+        setContentColor('neutral-title-1');
+
         break;
       case 'RESOLVED':
         setIconColor('bg-green');
@@ -245,7 +250,7 @@ export const MiniApprovalPopupContainer: React.FC<Props> = ({
           style={[
             styles.descriptionText,
             {
-              color: colors[contentColor],
+              color: colors2024['neutral-secondary'],
             },
           ]}>
           {description}
@@ -260,6 +265,7 @@ export const MiniApprovalPopupContainer: React.FC<Props> = ({
             BrandIcon={BrandIcon}
             onCancel={onCancel}
             onResend={onRetry}
+            retryUpdateType={retryUpdateType}
           />
         )}
         {status === 'RESOLVED' && <FooterDoneButton onDone={onDone} hide />}
@@ -268,6 +274,7 @@ export const MiniApprovalPopupContainer: React.FC<Props> = ({
             BrandIcon={BrandIcon}
             onCancel={onCancel}
             onResend={onRetry}
+            retryUpdateType={retryUpdateType}
           />
         )}
         {status === 'SUBMITTING' && (

@@ -402,7 +402,18 @@
       "typedDataMessage": "Sign Typed Data",
       "label": "Label",
       "addressSource": "Address Source",
-      "maxPriorityFeeDisabledAlert": "Please set Gas Price first"
+      "maxPriorityFeeDisabledAlert": "Please set Gas Price first",
+      "errorRetry": {
+        "defaultTips": "Something is wrong. Please retry later.",
+        "insufficient": "Your gas balance isn’t enough to cover the network gas fee. Add funds for gas and try again.",
+        "gasPriceTooLow": "Gas price too low. We’ll adjust it by 30% to help your transaction confirm. Click “Retry” to confirm and try again.",
+        "nonceTooLow": "Nonce too low. We’ll update it to {{nonce}}. Click “Retry” to confirm and try again.",
+        "nonceTooHigh": "Nonce too high. Please adjust the nonce and try again.",
+        "alreadySubmitted": "Transaction already submitted. Duplicate transaction detected.",
+        "gasExceedsBlockGasLimit": "Gas exceeds block gas limit. Please adjust and try again.",
+        "InvalidTx": "Invalid transaction.",
+        "gasLimitTooLow": "Gas limit too low"
+      }
     },
     "importSuccess": {
       "addressCount_one": "{{count}} Wallet",
@@ -445,6 +456,7 @@
         "signWith": "Sign with {{brand}}",
         "failedToGetExplain": "Failed to get explain",
         "txFailed": "Fail to create",
+        "txFailedRetry": "Fail to create: Please Retry",
         "sigCompleted": "Transaction created",
         "getSig": "Get signature",
         "qrcodeDesc": "Scan with your {{brand}} to sign\nAfter signing, click the button below to receive the signature",
@@ -474,7 +486,8 @@
       "cancelCurrentConnection": "Cancel current connection",
       "startSigning": "Start Signing",
       "ledgerConfirm": "Confirm",
-      "oneKeyConfirm": "Confirm"
+      "oneKeyConfirm": "Confirm",
+      "got": "I Got it"
     },
     "signTypedData": {
       "safeCantSignText": "This is a Safe address, and it cannot be used to sign text.",
@@ -962,6 +975,16 @@
         "title": "Copy Trading from Smart Money",
         "description": "Discover tokens based on recent activity from smart money wallets. Tap a token to see detailed trade amounts and historical profits from those wallets."
       },
+      "filterRule": {
+        "24HChange": "24H Change",
+        "smartMoney": "Trading Smart Wallets",
+        "smartWalletCount": "Smart Wallet Count",
+        "tokenCreate": "Recently Created"
+      },
+      "bought": "Bought",
+      "earned": "Earned",
+      "timeSmartWallet": "Time / Smart Wallet",
+      "buyEarn": "24H Buy / Earn",
       "smartMoneyWallets": "Smart Money Wallets",
       "smartMoneyWallet": "Smart Money Wallet",
       "recentBuy": "Recent Buy",
@@ -969,7 +992,28 @@
       "noMoreData": "No more data",
       "updateText": "{{count}} Trends Updated",
       "refreshTitle": "Loading More Copy Trading From Smart Money",
-      "buy": "Buy"
+      "twitterNews": "News in X",
+      "tokenInfo": "Token Info",
+      "smartWallets": "Smart Wallets",
+      "sameNameTokens": "Same Name Tokens",
+      "myCopyTradingEarnings": "My Copy Trading Earnings",
+      "myCopyTrading": "My Copy Trading",
+      "myBalanceFromCopyTrading": "My Balance from Copy Trading",
+      "token": "Token",
+      "timeLabelAgo": "Created {{time}} ago",
+      "smartWalletsBuying": "{{len}} Smart Wallets Buying",
+      "holdingProfit": "Holding/Profit",
+      "info": "Info",
+      "createdTime": "Created Time",
+      "tokenName": "Token Name",
+      "chain": "Chain",
+      "noOtherTokensWithSameName": "No other tokens with the same name were found",
+      "currentToken": "Current Token",
+      "contractAddress": "Contract Address",
+      "Liquidity": "Liquidity",
+      "buy": "Buy",
+      "loss": "Loss",
+      "earn": "Earn"
     },
     "dashboard": {
       "home": {
@@ -1776,7 +1820,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "View in Dapp",
-      "viewSiteInWebsite": "View in Website"
+      "viewSiteInWebsite": "View in Website",
+      "appChain": "On {{chain}} Account"
     },
     "approvalsAddressList": {
       "title": "Approvals"
@@ -1806,7 +1851,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Price:"
-      }
+      },
+      "appChain": "Dapp Account"
     },
     "search": {
       "sectionHeader": {
@@ -1939,7 +1985,7 @@
         "wallet_one": "Wallet",
         "wallet_other": "Wallets"
       },
-      "scamTokenHeader": "Scam tokens"
+      "lowValueTokenHeader": "Low-value tokens"
     },
     "browser": {
       "BrowserBookmarkSection": {

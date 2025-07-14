@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column, In, Brackets, Not } from 'typeorm/browser';
+import { Entity, Column, In, Brackets, Not, LessThan } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
@@ -360,8 +360,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       ])
       .orderBy('tokenitem_token_usd_value', 'DESC');
 
-    if (filter_tokenGte10Dollar)
-      queryBuilder.andWhere(`tokenitem_token_usd_value >= 10`);
+    if (filter_tokenGte10Dollar) {
+      queryBuilder.andWhere('tokenitem_token_usd_value >= 10');
+    }
 
     if (filter_tokenProportionGte10Percent) {
       const loggerPrefix = `[queryTokensByOwner::${repo.metadata.tableName}::${owner_addr}]`;
@@ -507,5 +508,37 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     await prepareAppDataSource();
 
     return this.getRepository().delete({ owner_addr, id: tokenId });
+  }
+
+  // delete tokens that are not updated in last batch reload token list
+  static async cleanupStaleTokens(owner_addr: string, syncTimestamp: number) {
+    try {
+      await prepareAppDataSource();
+      const repo = this.getRepository();
+      const deleteResult = await repo
+        .createQueryBuilder()
+        .delete()
+        .from(TokenItemEntity)
+        .where('owner_addr = :address', { owner_addr })
+        .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
+        .execute();
+
+      console.debug(
+        `🧹 Cleaned ${
+          deleteResult.affected || 0
+        } stale tokens for ${owner_addr}`,
+      );
+
+      return {
+        deletedCount: deleteResult.affected || 0,
+        success: true,
+      };
+    } catch (error) {
+      console.error(
+        `❌ Failed to cleanup stale tokens for ${owner_addr}:`,
+        error,
+      );
+      throw error;
+    }
   }
 }

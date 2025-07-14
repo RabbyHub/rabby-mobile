@@ -88,6 +88,7 @@ export const useMultiCurve = (
   addresses: string[],
   disableAutoFetch?: boolean,
   totalBalance?: number,
+  totalEvmBalance?: number,
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
@@ -215,11 +216,13 @@ export const useMultiCurve = (
     const isAllGet = list.length === addresses.length;
     return formChartData(
       combineMulitCurve(list),
-      isAllGet ? totalBalance || 0 : 0,
+      isAllGet ? totalEvmBalance || 0 : 0,
       isAllGet ? new Date().getTime() : 0,
+      CurveDayType.DAY,
+      isAllGet ? totalBalance : 0,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addresses.length, multiTimeStamp, totalBalance]);
+  }, [addresses.length, multiTimeStamp, totalBalance, totalEvmBalance]);
 
   useEffect(() => {
     if (disableAutoFetch || queue.size > 0) {

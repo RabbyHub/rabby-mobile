@@ -402,7 +402,18 @@
       "typedDataMessage": "Tanda Tangan Data Tipe",
       "advancedSettings": "Pengaturan Lanjutan",
       "addressSource": "Sumber Alamat",
-      "contract": "Kontrak pintar"
+      "contract": "Kontrak pintar",
+      "errorRetry": {
+        "gasLimitTooLow": "Batas Gas terlalu rendah",
+        "nonceTooHigh": "Nonce terlalu tinggi. Silakan sesuaikan nonce dan coba lagi.",
+        "gasExceedsBlockGasLimit": "Gas melebihi batas gas blok. Silakan sesuaikan dan coba lagi.",
+        "nonceTooLow": "Nonce terlalu rendah. Kami akan memperbarui menjadi {{nonce}}. Klik “Retry” untuk mengonfirmasi dan mencoba lagi.",
+        "defaultTips": "Sesuatu yang salah. Silakan coba lagi nanti.",
+        "insufficient": "Saldo gas Anda tidak cukup untuk menutupi biaya gas jaringan. Tambahkan dana untuk gas dan coba lagi.",
+        "InvalidTx": "Transaksi tidak valid.",
+        "gasPriceTooLow": "Harga gas terlalu rendah. Kami akan menyesuaikannya sebesar 30% untuk membantu transaksi Anda dikonfirmasi. Klik “Retry” untuk mengonfirmasi dan mencoba lagi.",
+        "alreadySubmitted": "Transaksi sudah diajukan. Transaksi duplikat terdeteksi."
+      }
     },
     "importSuccess": {
       "addressCount": "{{count}} Alamat",
@@ -442,7 +453,8 @@
         "misMatchSignId": "Data transaksi tidak sesuai. Silakan periksa detail transaksi.",
         "unknownQRCode": "Kesalahan: Kami tidak dapat mengidentifikasi kode QR itu",
         "getSig": "Dapatkan tanda tangan",
-        "qrcodeDesc": "Pindai dengan {{brand}} Anda untuk menandatangani  \nSetelah menandatangani, klik tombol di bawah untuk menerima tanda tangan"
+        "qrcodeDesc": "Pindai dengan {{brand}} Anda untuk menandatangani  \nSetelah menandatangani, klik tombol di bawah untuk menerima tanda tangan",
+        "txFailedRetry": "Gagal untuk membuat: Silakan Coba Lagi"
       },
       "ledger": {
         "resubmited": "Dikirim ulang",
@@ -475,7 +487,8 @@
       "cancelCurrentTransaction": "Batalkan transaksi saat ini",
       "resend": "Coba lagi",
       "ledgerConfirm": "Konfirmasi",
-      "oneKeyConfirm": "Konfirmasi"
+      "oneKeyConfirm": "Konfirmasi",
+      "got": "Saya mengerti"
     },
     "signTypedData": {
       "permit": {
@@ -1788,7 +1801,8 @@
       },
       "nft": {
         "floorPrice": "/Harga Lantai:"
-      }
+      },
+      "appChain": "Akun Dapp"
     },
     "search": {
       "sectionHeader": {
@@ -1921,7 +1935,7 @@
         "wallet_one": "Dompet",
         "wallet_other": "Dompet"
       },
-      "scamTokenHeader": "Token penipuan"
+      "lowValueTokenHeader": "Token bernilai rendah"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1963,7 +1977,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "Lihat di Dapp",
-      "viewSiteInWebsite": "Lihat di Situs Web"
+      "viewSiteInWebsite": "Lihat di Situs Web",
+      "appChain": "Pada Akun {{chain}}"
     },
     "component": {
       "ChainSelector": {
@@ -1983,7 +1998,38 @@
       "historyProfit": "Riwayat Keuntungan",
       "smartMoneyWallets": "Smart Money Wallets",
       "refreshTitle": "Memuat Lebih Banyak Copy Trading Dari Smart Money",
-      "smartMoneyWallet": "Smart Money Wallet"
+      "smartMoneyWallet": "Smart Money Wallet",
+      "filterRule": {
+        "24HChange": "24H Perubahan",
+        "tokenCreate": "Baru Dibuat",
+        "smartMoney": "Trading Smart Wallets",
+        "smartWalletCount": "Jumlah Dompet Pintar"
+      },
+      "chain": "Rantai",
+      "tokenName": "Nama Token",
+      "bought": "Dibeli",
+      "contractAddress": "Alamat Kontrak",
+      "info": "Info",
+      "earn": "Dapatkan",
+      "holdingProfit": "Holding/Pendapatan",
+      "myCopyTradingEarnings": "Penghasilan Copy Trading Saya",
+      "loss": "Kehilangan",
+      "timeSmartWallet": "Waktu / Dompet Pintar",
+      "buyEarn": "24H Beli / Dapatkan",
+      "sameNameTokens": "Token Nama yang Sama",
+      "smartWalletsBuying": "{{len}} Smart Wallets Membeli",
+      "myCopyTrading": "Salin Perdagangan Saya",
+      "smartWallets": "Dompet Cerdas",
+      "earned": "Diperoleh",
+      "currentToken": "Token Saat Ini",
+      "Liquidity": "Likuiditas",
+      "noOtherTokensWithSameName": "Tidak ada token lain dengan nama yang sama ditemukan",
+      "createdTime": "Waktu Dibuat",
+      "tokenInfo": "Informasi Token",
+      "token": "Token",
+      "twitterNews": "Berita di X",
+      "timeLabelAgo": "Dibuat {{time}} yang lalu",
+      "myBalanceFromCopyTrading": "Saldo Saya dari Copy Trading"
     }
   },
   "component": {

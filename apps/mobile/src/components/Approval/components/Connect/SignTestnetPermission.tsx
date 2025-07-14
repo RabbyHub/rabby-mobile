@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import IconArrowdown from '@/assets/icons/approval/arrow-down.svg';
 import { useTranslation } from 'react-i18next';
 import {
@@ -28,8 +28,8 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-1'],
       paddingHorizontal: 20,
       paddingVertical: 11,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
       flexDirection: 'row',
     },
     radioText: {
@@ -86,15 +86,19 @@ export const SignTestnetPermission = ({
   const value = _value || SIGN_PERMISSION_TYPES.MAINNET_AND_TESTNET;
 
   const { t } = useTranslation();
-  const options = SIGN_PERMISSION_OPTIONS.map(item => {
-    return {
-      ...item,
-      label: t(`constant.SIGN_PERMISSION_OPTIONS.${item.value}` as const),
-    };
-  });
+  const options = useMemo(
+    () =>
+      SIGN_PERMISSION_OPTIONS.map(item => {
+        return {
+          ...item,
+          label: t(`constant.SIGN_PERMISSION_OPTIONS.${item.value}` as const),
+        };
+      }),
+    [t],
+  );
   const label = React.useMemo(() => {
     return options.find(item => item.value === value)?.label;
-  }, [value]);
+  }, [value, options]);
 
   if (!isShowTestnet) {
     return null;

@@ -672,6 +672,17 @@
           "title": "切換到 Rabby 的 Safe Service",
           "content": "Safe API 無法使用。切換到由 Rabby 部署的 Safe 服務以保持您的 Safe 功能正常。<1></1><2>所有 Safe 簽署者必須使用 Rabby Wallet 授權交易。</2>"
         }
+      },
+      "errorRetry": {
+        "InvalidTx": "無效的交易。",
+        "defaultTips": "出現了問題。請稍後重試。",
+        "nonceTooHigh": "Nonce 太高。請調整 nonce 並再試一次。",
+        "alreadySubmitted": "交易已提交。檢測到重複交易。",
+        "gasExceedsBlockGasLimit": "Gas 超出區塊 gas 限制。請調整後重試。",
+        "insufficient": "您的 gas 余额不足以支付网络 gas 费用。请添加 gas 资金后再试。",
+        "nonceTooLow": "Nonce 過低。我們將把它更新為 {{nonce}}。點擊“重試”以確認並再試一次。",
+        "gasLimitTooLow": "Gas 限制過低",
+        "gasPriceTooLow": "Gas 價格太低。我們將調整它 30% 以幫助您的交易確認。點擊「重試」以確認並再試一次。"
       }
     },
     "signTypedData": {
@@ -982,7 +993,8 @@
         "failedToGetExplain": "獲取解釋失敗",
         "signWith": "使用 {{brand}} 簽名",
         "submitting": "已簽名。創建交易",
-        "afterSignDesc": "掃描 Keystone 上的二維碼以獲取簽名"
+        "afterSignDesc": "掃描 Keystone 上的二維碼以獲取簽名",
+        "txFailedRetry": "創建失敗：請重試"
       },
       "ledger": {
         "resent": "重發",
@@ -997,7 +1009,8 @@
       "keystoneSign": "簽署",
       "startSigning": "開始簽署",
       "ledgerConfirm": "確認",
-      "oneKeyConfirm": "確認"
+      "oneKeyConfirm": "確認",
+      "got": "我明白了"
     },
     "switchChain": {
       "requestRabbyToSupport": "請求 Rabby 支援",
@@ -1509,7 +1522,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Price:"
-      }
+      },
+      "appChain": "Dapp 帳戶"
     },
     "rabbyPoints": {
       "earn-points": "賺取積分",
@@ -2038,7 +2052,7 @@
         "wallet_other": "錢包",
         "wallet_one": "錢包"
       },
-      "scamTokenHeader": "詐騙代幣"
+      "lowValueTokenHeader": "低價值的 tokens"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2080,7 +2094,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "在 Dapp 中查看",
-      "viewSiteInWebsite": "在網站中查看"
+      "viewSiteInWebsite": "在網站中查看",
+      "appChain": "在 {{chain}} 帳戶"
     },
     "component": {
       "ChainSelector": {
@@ -2100,7 +2115,38 @@
       "noMoreData": "沒有更多資料",
       "smartMoneyWallets": "Smart Money 錢包",
       "recentBuy": "最近購買",
-      "refreshTitle": "載入更多來自 Smart Money 的 Copy Trading"
+      "refreshTitle": "載入更多來自 Smart Money 的 Copy Trading",
+      "filterRule": {
+        "tokenCreate": "最近創建的",
+        "24HChange": "24H 變化",
+        "smartMoney": "Smart Money 交易數",
+        "smartWalletCount": "Smart Money 數量"
+      },
+      "sameNameTokens": "相同名稱代幣",
+      "contractAddress": "合約地址",
+      "bought": "購買",
+      "currentToken": "當前代幣",
+      "chain": "鏈接",
+      "earn": "賺取",
+      "holdingProfit": "持有/利潤",
+      "smartWalletsBuying": "{{len}} 智能錢包購買",
+      "token": "代幣",
+      "Liquidity": "流动性",
+      "myCopyTradingEarnings": "我的 Copy Trading 收益",
+      "createdTime": "創建時間",
+      "tokenName": "代幣名稱",
+      "loss": "損失",
+      "noOtherTokensWithSameName": "未找到其他具有相同名稱的代幣。",
+      "info": "資訊",
+      "twitterNews": "X中的新聞",
+      "timeLabelAgo": "創建於 {{time}} 前",
+      "timeSmartWallet": "時間 / 智能錢包",
+      "earned": "賺取",
+      "buyEarn": "24H 購買 / 賺取",
+      "tokenInfo": "代幣信息",
+      "smartWallets": "智能錢包",
+      "myCopyTrading": "我的拷贝交易",
+      "myBalanceFromCopyTrading": "我的 Copy Trading 余额"
     }
   },
   "component": {

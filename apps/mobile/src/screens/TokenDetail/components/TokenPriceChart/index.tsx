@@ -5,7 +5,13 @@ import { createGetStyles2024 } from '@/utils/styles';
 import * as d3Shape from 'd3-shape';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  ImageBackground,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Animated, {
   SharedValue,
   useAnimatedStyle,
@@ -27,7 +33,6 @@ import { RelatedDeFiType, TokenFromAddressItem } from '../..';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { useTranslation } from 'react-i18next';
-
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
 const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
@@ -42,6 +47,7 @@ interface Props {
   isSingleAddress?: boolean;
   relateDefiList?: RelatedDeFiType[];
   onUpChange?: (isUp: boolean) => void;
+  extraMetaInfo?: React.ReactNode;
 }
 export function TokenPriceChart(props: Props) {
   const {
@@ -51,6 +57,7 @@ export function TokenPriceChart(props: Props) {
     amountList,
     finalAccount,
     relateDefiList,
+    extraMetaInfo,
     onUpChange,
   } = props;
   const { colors2024, styles } = useTheme2024({ getStyle });
@@ -70,19 +77,15 @@ export function TokenPriceChart(props: Props) {
       deFiAmount += item.amount;
     });
 
-    if ('totalAmount' in originToken && !isSingleAddress) {
-      return (originToken.totalAmount as unknown as number) + deFiAmount;
+    if (isSingleAddress) {
+      return token.amount + deFiAmount;
     } else {
-      const currentAddress = finalAccount?.address;
-      if ('fromAddress' in originToken && currentAddress) {
-        const tokenAmount = originToken.fromAddress.find(
-          item => item.address === currentAddress,
-        );
-        return (tokenAmount?.amount ?? originToken.amount) + deFiAmount;
-      }
-      return originToken.amount + deFiAmount;
+      const totalTokenAmount = amountList.reduce((acc, item) => {
+        return acc + item.amount;
+      }, 0);
+      return totalTokenAmount + deFiAmount;
     }
-  }, [originToken, isSingleAddress, finalAccount, relateDefiList]);
+  }, [amountList, token, isSingleAddress, relateDefiList]);
 
   const amount = useMemo(
     () => (priceType === 'holding' ? amountSum : 1),
@@ -139,9 +142,12 @@ export function TokenPriceChart(props: Props) {
     if (data?.list?.length) {
       const pre = data?.list?.[0]?.value;
       const now = data?.list?.[data?.list?.length - 1]?.value;
-      const isLoss = now < pre;
+      let isLoss = now < pre;
       let currentPercent = '';
       if (activeKey === '24h') {
+        isLoss = token?.price_24h_change
+          ? Number(token.price_24h_change) < 0
+          : false;
         currentPercent =
           Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%';
       } else {
@@ -172,13 +178,17 @@ export function TokenPriceChart(props: Props) {
   const currentInfo = useMemo(() => {
     const price =
       priceType === 'holding' ? token.price * amountSum : token.price;
+    // price_24h_change will loss some zero point
+    const oneDayIsLoss = token.price_24h_change
+      ? Number(token.price_24h_change) < 0
+      : false;
     return {
       date: dayjs().format(DATE_FORMATTER),
       balance: '$' + formatPrice(price || 0, 8, true),
-      isLoss: !!data?.isLoss,
+      isLoss: activeKey === '24h' ? oneDayIsLoss : !!data?.isLoss,
       percent: percent,
     };
-  }, [data?.isLoss, percent, token.price, amountSum, priceType]);
+  }, [data?.isLoss, percent, amountSum, priceType, activeKey, token]);
 
   const curve24hXOffset = useSharedValue(0);
   const timeMachineXOffset = useSharedValue(0);
@@ -243,6 +253,7 @@ export function TokenPriceChart(props: Props) {
             isNoAssets={false}
             pathColor={pathColor}
             xOffset={e.key === '24h' ? curve24hXOffset : timeMachineXOffset}
+            extraMetaInfo={extraMetaInfo}
           />
         </View>
       ))}
@@ -270,6 +281,7 @@ function Chart({
   loading,
   pathColor,
   xOffset,
+  extraMetaInfo,
 }: {
   amount: number;
   isOffline: boolean;
@@ -285,6 +297,7 @@ function Chart({
   isNoAssets: boolean;
   pathColor: string;
   xOffset: SharedValue<number>;
+  extraMetaInfo?: React.ReactNode;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
@@ -292,6 +305,7 @@ function Chart({
     <LineChart.Provider data={data}>
       <DataHeaderInfo
         key={activeKey}
+        activeKey={activeKey}
         currentPercentChange={currentInfo.percent}
         currentIsLoss={currentInfo.isLoss}
         currentBalance={currentInfo.balance}
@@ -300,6 +314,8 @@ function Chart({
         isLoading={loading}
         isNoAssets={false}
       />
+
+      {loading ? null : data?.length ? extraMetaInfo : null}
 
       {loading ? (
         <CurveLoader />
@@ -321,7 +337,7 @@ function Chart({
               color={pathColor}
               outerSize={12}
               size={8}>
-              <LineChart.Tooltip cursorGutter={114} yGutter={-8}>
+              {/* <LineChart.Tooltip cursorGutter={114} yGutter={-8}>
                 <LineChart.DatetimeText
                   style={styles.dateTime}
                   format={({ value }) => {
@@ -343,13 +359,18 @@ function Chart({
                     return `${MM} ${DD}, ${YYYY}`;
                   }}
                 />
-              </LineChart.Tooltip>
+              </LineChart.Tooltip> */}
             </LineChart.CursorCrosshair>
             <Mask xOffset={xOffset} />
           </LineChart>
         </>
       ) : (
-        <View style={styles.empty} />
+        <ImageBackground
+          source={require('@/assets2024/singleHome/ImgEmptyChart.png')}
+          resizeMode="cover"
+          style={styles.emptyChart}
+        />
+        // <View style={styles.empty} />
       )}
     </LineChart.Provider>
   );
@@ -462,5 +483,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 4,
     // justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  emptyChart: {
+    width: winInfo.width - 40,
+    height: 115,
+    // marginTop: 24,
+    marginHorizontal: 20,
   },
 }));

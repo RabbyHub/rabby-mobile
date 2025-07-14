@@ -1,0 +1,510 @@
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useTheme2024, useGetBinaryMode } from '@/hooks/theme';
+import { useTranslation } from 'react-i18next';
+
+import AutoLockView from '@/components/AutoLockView';
+import { createGetStyles2024 } from '@/utils/styles';
+import {
+  Dimensions,
+  Text,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Image,
+  Linking,
+  ImageBackground,
+} from 'react-native';
+import { naviPush } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import ImgTwitter from '@/assets2024/icons/copyTrading/ImgTwitter.png';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import {
+  CopyTradeTokenItem,
+  CopyTradeTokenItemV2,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
+import { AssetAvatar } from '@/components';
+import { getTokenSymbol } from '@/utils/token';
+import { Button } from '@/components2024/Button';
+import { useMemoizedFn, useRequest } from 'ahooks';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { findChain } from '@/utils/chain';
+import { CHAINS_ENUM } from '@/constant/chains';
+import { RcIconRightCC, RcIconSelectCC } from '@/assets/icons/common';
+
+import { TokenInfo } from './TokenInfo';
+import { SmartWallets } from './SmartWallets';
+import { SameNameTokens } from './SameNameTokens';
+import { toast } from '@/components/Toast';
+import { openapi } from '@/core/request';
+import { removeAllGlobalBottomSheetModals2024 } from '@/components2024/GlobalBottomSheetModal';
+import { matomoRequestEvent } from '@/utils/analytics';
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { TransactionNavigatorParamList } from '@/navigation-type';
+import { useNavigationState } from '@react-navigation/native';
+import { useProfitData } from './useProfit';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+
+export enum TabType {
+  tokenInfo = 'tokenInfo',
+  smartWallets = 'smartWallets',
+  sameNameTokens = 'sameNameTokens',
+}
+
+export default function CopyTradingTokenDetail() {
+  const { t } = useTranslation();
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { safeOffHeader } = useSafeSizes();
+  const navState = useNavigationState(
+    s =>
+      s.routes.find(r => r.name === RootNames.CopyTradingTokenDetail)?.params,
+  ) as TransactionNavigatorParamList['CopyTradingTokenDetail'];
+
+  const { tradingTokenItem, showTabType } = navState!;
+  const { updateSingleTokenPrice, profitData } = useProfitData();
+
+  const currentTokenProfitData = useMemo(() => {
+    return profitData?.itemData.find(
+      p => p.id === tradingTokenItem.id && p.chain === tradingTokenItem.chain,
+    );
+  }, [profitData, tradingTokenItem]);
+
+  // Tab state management
+  const [activeTab, setActiveTab] = useState<TabType>(
+    showTabType || TabType.tokenInfo,
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUp, setIsUp] = useState(true);
+  const [detailInfo, setDetailInfo] = useState<
+    CopyTradeTokenItemV2 | TokenItem
+  >(tradingTokenItem || ({} as CopyTradeTokenItemV2 | TokenItem));
+
+  const tabBarData = React.useMemo(() => {
+    return [
+      { key: TabType.tokenInfo, label: t('page.copyTrading.tokenInfo') },
+      { key: TabType.smartWallets, label: t('page.copyTrading.smartWallets') },
+      {
+        key: TabType.sameNameTokens,
+        label: t('page.copyTrading.sameNameTokens'),
+      },
+    ];
+  }, [t]);
+
+  const { list: accounts } = useAccountInfo();
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+
+  const handleBuyPress = useMemoizedFn(
+    async (item: CopyTradeTokenItemV2 | TokenItem, type: 'Buy' | 'Sell') => {
+      const chain = findChain({
+        serverId: item.chain,
+      });
+
+      if (type === 'Sell' && currentTokenProfitData) {
+        const toAccount = accounts.find(i =>
+          isSameAddress(currentTokenProfitData.owner_addr, i.address),
+        );
+        if (toAccount) {
+          await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
+        }
+      }
+
+      naviPush(RootNames.StackTransaction, {
+        screen: RootNames.MultiSwap,
+        params: {
+          chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+          tokenId: item?.id,
+          type,
+          isFromCopyTrading: true,
+        },
+      });
+      matomoRequestEvent({
+        category: 'CopyTrading',
+        action:
+          type === 'Sell'
+            ? 'CopyTrading_TokenClickSell'
+            : 'CopyTrading_TokenClickBuy',
+      });
+    },
+  );
+
+  const handleTwitterPress = useMemoizedFn(async () => {
+    const symbol = getTokenSymbol(tradingTokenItem);
+    const searchQuery = encodeURIComponent(`$${symbol}`);
+    const appUrls = [
+      `twitter://search?query=${searchQuery}`,
+      `x://search?query=${searchQuery}`,
+    ];
+    const webUrl = `https://x.com/search?q=${searchQuery}`;
+
+    try {
+      for (const appUrl of appUrls) {
+        const canOpen = await Linking.canOpenURL(appUrl);
+        if (canOpen) {
+          await Linking.openURL(appUrl);
+          return;
+        }
+      }
+
+      await Linking.openURL(webUrl);
+    } catch (error) {
+      console.error('Failed to open Twitter/X:', error);
+      try {
+        await Linking.openURL(webUrl);
+      } catch (fallbackError) {
+        console.error('Failed to open web URL:', fallbackError);
+      }
+    }
+    matomoRequestEvent({
+      category: 'CopyTrading',
+      action: 'CopyTrading_LinkToX',
+    });
+  });
+
+  const fetchDetailInfo = useMemoizedFn(async () => {
+    try {
+      setIsLoading(true);
+      const info = await openapi.getCopyTradingDetail({
+        token_id: tradingTokenItem.id,
+        chain_id: tradingTokenItem.chain,
+      });
+      info.price_24h_change = info.price_change || info.price_24h_change || 0;
+      setDetailInfo(info);
+      updateSingleTokenPrice(
+        tradingTokenItem.id,
+        tradingTokenItem.chain,
+        info.price,
+      );
+      setDetailInfo(info);
+    } catch (e) {
+      console.log('fetchDetailInfo error', e);
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setIsLoading(false);
+    }
+  });
+
+  useEffect(() => {
+    fetchDetailInfo();
+  }, [fetchDetailInfo]);
+
+  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+
+  const getHeaderTitle = useCallback(() => {
+    return (
+      <View style={styles.tokenHeader}>
+        <AssetAvatar
+          logo={tradingTokenItem?.logo_url}
+          size={36}
+          chain={tradingTokenItem?.chain}
+          chainSize={16}
+        />
+        <Text style={styles.tokenName} numberOfLines={1} ellipsizeMode="tail">
+          {ellipsisOverflowedText(getTokenSymbol(tradingTokenItem), 10)}
+        </Text>
+      </View>
+    );
+  }, [tradingTokenItem, styles]);
+
+  const getHeaderRight = useCallback(() => {
+    return (
+      <TouchableOpacity
+        style={styles.tokenHeaderTwitter}
+        onPress={handleTwitterPress}>
+        <Image source={ImgTwitter} style={styles.tokenHeaderTwitterIcon} />
+        <Text style={styles.twitterName} numberOfLines={1} ellipsizeMode="tail">
+          {t('page.copyTrading.twitterNews')}
+        </Text>
+        <RcIconRightCC
+          width={18}
+          height={18}
+          color={colors2024['neutral-title-1']}
+        />
+      </TouchableOpacity>
+    );
+  }, [styles, handleTwitterPress, t, colors2024]);
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+      headerRight: getHeaderRight,
+      headerTitleAlign: 'left',
+    });
+  }, [setNavigationOptions, getHeaderRight, getHeaderTitle]);
+
+  const TabContentComponent = useMemo(() => {
+    switch (activeTab) {
+      case TabType.tokenInfo:
+        return (
+          <TokenInfo
+            tradingTokenItem={detailInfo}
+            currentTokenProfitData={currentTokenProfitData}
+            onUpChange={b => setIsUp(b)}
+          />
+        );
+      case TabType.smartWallets:
+        return (
+          <SmartWallets tradingTokenItem={detailInfo as CopyTradeTokenItemV2} />
+        );
+      case TabType.sameNameTokens:
+        return (
+          <SameNameTokens
+            tradingTokenItem={detailInfo}
+            updateSingleTokenPrice={updateSingleTokenPrice}
+          />
+        );
+    }
+  }, [activeTab, detailInfo, updateSingleTokenPrice, currentTokenProfitData]);
+
+  return (
+    <NormalScreenContainer2024 overwriteStyle={styles.container}>
+      <View style={styles.headerContainer}>
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          {tabBarData.map(tab => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.tabItem]}
+              onPress={() => setActiveTab(tab.key)}>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === tab.key && styles.tabTextActive,
+                ]}>
+                {tab.label}
+              </Text>
+              {activeTab === tab.key && <View style={styles.tabUnderline} />}
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.scrollContent}>{TabContentComponent}</View>
+
+      {/* Fixed bottom button */}
+      <View style={styles.bottomButton}>
+        {Boolean(currentTokenProfitData) &&
+          currentTokenProfitData?.realAmount &&
+          currentTokenProfitData?.realAmount > 0 && (
+            <Button
+              type="ghost"
+              buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
+              title={t('page.tokenDetail.action.Sell')}
+              containerStyle={StyleSheet.flatten([styles.btnContainer])}
+              onPress={() => handleBuyPress(tradingTokenItem, 'Sell')}
+            />
+          )}
+        <Button
+          type="primary"
+          buttonStyle={styles.btnInnerContainer}
+          title={t('page.copyTrading.buy')}
+          containerStyle={StyleSheet.flatten([styles.btnContainer])}
+          onPress={() => handleBuyPress(tradingTokenItem, 'Buy')}
+        />
+      </View>
+    </NormalScreenContainer2024>
+  );
+}
+
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
+  container: {
+    height: '100%',
+    // paddingHorizontal: 16,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+  },
+  btnContainer: {
+    flex: 1,
+  },
+  btnInnerContainer: {
+    borderRadius: 12,
+  },
+  ghostBtn: {
+    backgroundColor: colors2024['brand-light-1'],
+  },
+  headerContainer: {
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors2024['neutral-line'],
+  },
+  trendChart: {
+    width: '100%',
+    height: 100,
+    marginTop: 10,
+    paddingHorizontal: 4,
+  },
+  skeletonBorder: {
+    borderRadius: 4,
+    backgroundColor: colors2024['neutral-bg-5'],
+  },
+  header: {
+    height: 38,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  tokenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    flex: 1,
+  },
+  tokenHeaderTwitterIcon: {
+    width: 20,
+    height: 20,
+  },
+  tokenHeaderTwitter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    // alignSelf: 'flex-start',
+    justifyContent: 'center',
+    backgroundColor: colors2024['neutral-bg-5'],
+    borderRadius: 100,
+    padding: 6,
+  },
+  twitterName: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  tokenName: {
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  listHeader: {
+    paddingBottom: 0,
+  },
+  flatListContent: {
+    paddingBottom: 20,
+  },
+  priceSection: {
+    gap: 4,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  price: {
+    fontSize: 40,
+    lineHeight: 45,
+    fontWeight: '900',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  priceChangeLabel: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+  },
+  priceChange: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  dateTime: {
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    paddingTop: 0,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    flex: 1,
+  },
+  recentBuy: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  bottomButton: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    height: 115,
+    flexDirection: 'row',
+    gap: 16,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    position: 'relative',
+  },
+  tabItem: {
+    // padding: 8,
+    paddingHorizontal: 2,
+    paddingVertical: 6,
+    alignItems: 'center',
+    borderRadius: 4,
+    color: colors2024['neutral-secondary'],
+    position: 'relative',
+  },
+  tabText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  tabTextActive: {
+    fontWeight: '700',
+    color: colors2024['neutral-body'],
+  },
+  tabUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    borderRadius: 4,
+    backgroundColor: colors2024['neutral-body'],
+  },
+}));

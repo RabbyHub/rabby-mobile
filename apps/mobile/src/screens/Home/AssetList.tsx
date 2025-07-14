@@ -668,6 +668,10 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
             }
           }}
           onViewableItemsChanged={({ viewableItems }) => {
+            if (viewableItems[1]?.item?.type && viewableItems[0]?.index) {
+              setFirstRowType(viewableItems[1].item.type);
+              return;
+            }
             if (viewableItems[0]?.item?.type) {
               setFirstRowType(viewableItems[0].item.type);
             }

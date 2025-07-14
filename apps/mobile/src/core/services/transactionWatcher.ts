@@ -11,6 +11,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import type { TransactionHistoryService } from './transactionHistory';
 import { customTestnetService } from './customTestnetService';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { customRPCService } from './customRPCService';
 
 class Transaction {
   createdTime = 0;
@@ -103,8 +104,9 @@ export class TransactionWatcherService {
         .catch(() => null);
     }
 
-    return openapi
-      .ethRpc(chainItem.serverId, {
+    return customRPCService
+      .defaultEthRPC({
+        chainServerId: chainItem.serverId,
         method: 'eth_getTransactionReceipt',
         params: [hash],
       })

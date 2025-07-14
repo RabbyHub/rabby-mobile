@@ -9,7 +9,6 @@ import {
   NFTItem,
   SwapTradeList,
   TokenItem,
-  TotalBalanceResponse,
   TxAllHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { PortocolItemEntity } from '../entities/portocolItem';
@@ -27,6 +26,7 @@ import { deleteCurveCache } from '@/utils/24balanceCurveCache';
 import { transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
+import { EvmTotalBalanceResponse } from '../hooks/balance';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
   const data = [..._tokens];
@@ -37,28 +37,33 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
     b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
 
+  const syncTimestamp = Date.now();
+
   const tokenItems = tokens.map(raw => {
     const tokenItem = new TokenItemEntity();
     TokenItemEntity.fillEntity(tokenItem, address, raw);
+    tokenItem._local_updated_at = syncTimestamp;
 
     return tokenItem;
   });
 
   await prepareAppDataSource();
 
-  await TokenItemEntity.deleteForAddress(address);
+  // await TokenItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
     owner_addr: address,
     taskFor: 'token',
     batchSize: 300,
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
+    waitTaskDoneReturn: true,
   })
-    .then(({ taskSignal, taskKey }) => {
-      if (taskSignal.aborted) {
-        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
+    .then(({ taskSignal, taskKey, queueCompleted }) => {
+      if (queueCompleted) {
+        console.debug(`[${taskKey}] batch upsert tasks completed`);
+        TokenItemEntity.cleanupStaleTokens(address, syncTimestamp);
       } else {
-        console.debug(`[${taskKey}] batch upsert tasks created`);
+        console.warn(`[${taskKey}] batch upsert tasks aborted.`);
       }
     })
     .catch(error => {
@@ -138,7 +143,6 @@ export async function syncRemoteHistory(
     //   console.error('TokenItemEntity.save err', err);
     //   throw err;
     // });
-    console.debug('syncRemoteHistory batchSaveWithPQueueAndTransaction');
     await batchSaveWithPQueueAndTransaction(
       HistoryItemEntity,
       historyItems,
@@ -360,8 +364,6 @@ export const deleteDBResourceForAddress = async (_address: string) => {
 export async function patchSingleToken(address: string, token: TokenItem) {
   const tokenItem = new TokenItemEntity();
   TokenItemEntity.fillEntity(tokenItem, address, token);
-  await TokenItemEntity.deleteForAddressAndToken(address, token.id);
-
   await prepareAppDataSource();
   await batchSaveWithPQueueAndTransaction(TokenItemEntity, [tokenItem], {
     owner_addr: address,
@@ -385,7 +387,7 @@ export async function patchSingleToken(address: string, token: TokenItem) {
 export async function syncBalance(
   address: string,
   isCore: boolean,
-  balance: TotalBalanceResponse,
+  balance: EvmTotalBalanceResponse,
 ) {
   const balanceItem = new BalanceEntity();
   BalanceEntity.fillEntity(balanceItem, address, isCore, balance);

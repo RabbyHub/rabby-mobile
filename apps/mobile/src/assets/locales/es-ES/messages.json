@@ -638,6 +638,17 @@
           "title": "Cambiar al Servicio Seguro de Rabby",
           "content": "La API de Safe no está disponible. Cambia al servicio Safe implementado por Rabby para mantener tu Safe operativo. <1></1><2>Todos los firmantes de Safe deben usar Rabby Wallet para autorizar transacciones.<2>"
         }
+      },
+      "errorRetry": {
+        "gasLimitTooLow": "Límite de gas demasiado bajo",
+        "alreadySubmitted": "Transacción ya enviada. Se ha detectado una transacción duplicada.",
+        "nonceTooHigh": "Nonce demasiado alto. Por favor, ajusta el nonce y vuelve a intentar.",
+        "defaultTips": "Algo ha salido mal. Por favor, inténtalo de nuevo más tarde.",
+        "insufficient": "Tu saldo de gas no es suficiente para cubrir la tarifa de gas de la red. Agrega fondos para gas y vuelve a intentarlo.",
+        "gasExceedsBlockGasLimit": "El gas excede el límite de gas del bloque. Por favor, ajusta y vuelve a intentarlo.",
+        "nonceTooLow": "Nonce demasiado bajo. Lo actualizaremos a {{nonce}}. Haz clic en \"Reintentar\" para confirmar y volver a intentarlo.",
+        "gasPriceTooLow": "El precio del gas es demasiado bajo. Lo ajustaremos en un 30% para ayudar a que su transacción se confirme. Haga clic en \"Reintentar\" para confirmar y volver a intentarlo.",
+        "InvalidTx": "Transacción inválida."
       }
     },
     "activities": {
@@ -778,13 +789,15 @@
         "getSig": "Obtener firma",
         "qrcodeDesc": "Escanea con tu {{brand}} para firmar  \nDespués de firmar, haz clic en el botón de abajo para recibir la firma",
         "misMatchSignId": "Datos de transacción incongruentes. Por favor, comprueba los detalles de la transacción.",
-        "signWith": "Firmar con {{brand}}"
+        "signWith": "Firmar con {{brand}}",
+        "txFailedRetry": "Error al crear: Por favor, inténtelo de nuevo."
       },
       "cancelCurrentConnection": "Cancelar la conexión actual",
       "keystoneSign": "Firmar",
       "startSigning": "Comenzar a Firmar",
       "ledgerConfirm": "Confirmar",
-      "oneKeyConfirm": "Confirmar"
+      "oneKeyConfirm": "Confirmar",
+      "got": "Lo tengo"
     },
     "approvals": {
       "search": {
@@ -1745,7 +1758,8 @@
       },
       "nft": {
         "floorPrice": "/Precio de suelo:"
-      }
+      },
+      "appChain": "Cuenta Dapp"
     },
     "customTestnet": {
       "empty": "Sin red personalizada",
@@ -2108,7 +2122,7 @@
         "wallet_other": "Carteras",
         "wallet_one": "Billetera"
       },
-      "scamTokenHeader": "Tokens de estafa"
+      "lowValueTokenHeader": "Tokens de bajo valor"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2150,7 +2164,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "Ver en Dapp",
-      "viewSiteInWebsite": "Ver en el sitio web"
+      "viewSiteInWebsite": "Ver en el sitio web",
+      "appChain": "En la cuenta {{chain}}"
     },
     "component": {
       "ChainSelector": {
@@ -2170,7 +2185,38 @@
       "smartMoneyWallet": "Smart Money Wallet",
       "recentBuy": "Compra reciente",
       "refreshTitle": "Cargando más Copy Trading de Smart Money",
-      "comingSoon": "Próximamente..."
+      "comingSoon": "Próximamente...",
+      "filterRule": {
+        "24HChange": "24H Cambio",
+        "smartMoney": "Carteras Inteligentes de Trading",
+        "tokenCreate": "Recientemente creado",
+        "smartWalletCount": "Contador de Smart Wallet"
+      },
+      "currentToken": "Token Actual",
+      "contractAddress": "Dirección del contrato",
+      "token": "Token",
+      "chain": "Cadena",
+      "timeLabelAgo": "Creado hace {{time}}",
+      "myCopyTradingEarnings": "Mis ganancias por Copy Trading",
+      "createdTime": "Hora de creación",
+      "tokenInfo": "Información del Token",
+      "bought": "Comprado",
+      "twitterNews": "Noticias en X",
+      "Liquidity": "Liquidez",
+      "tokenName": "Nombre del Token",
+      "myCopyTrading": "Mi Copy Trading",
+      "noOtherTokensWithSameName": "No se encontraron otros tokens con el mismo nombre.",
+      "timeSmartWallet": "Tiempo / Smart Wallet",
+      "smartWalletsBuying": "{{len}} Cartera Inteligente Comprando",
+      "earned": "Ganado",
+      "holdingProfit": "Tenencia/Beneficio",
+      "loss": "Pérdida",
+      "buyEarn": "24H Comprar / Ganar",
+      "earn": "Ganar",
+      "smartWallets": "Carteras Inteligentes",
+      "info": "Información",
+      "sameNameTokens": "Tokens con el mismo nombre",
+      "myBalanceFromCopyTrading": "Mi saldo de Copy Trading"
     }
   },
   "global": {

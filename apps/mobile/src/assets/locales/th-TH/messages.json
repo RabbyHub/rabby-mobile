@@ -793,6 +793,17 @@
           "title": "เปลี่ยนเป็นบริการ Safe ของ Rabby",
           "content": "Safe API ไม่พร้อมใช้งาน สลับไปยังการใช้งาน Safe ที่ให้บริการโดย Rabby เพื่อให้ Safe ของคุณทำงานได้ <1></1><2>ผู้ลงนาม Safe ทุกคนจะต้องใช้ Rabby Wallet เพื่ออนุมัติธุรกรรม<2>"
         }
+      },
+      "errorRetry": {
+        "InvalidTx": "ธุรกรรมไม่ถูกต้อง。",
+        "gasLimitTooLow": "ขีดจำกัดก๊าซต่ำเกินไป",
+        "alreadySubmitted": "รายการถูกส่งแล้ว พบการทำรายการซ้ำ",
+        "gasExceedsBlockGasLimit": "Gas เกินขีดจำกัดก๊าซบล็อก กรุณาปรับและลองอีกครั้ง",
+        "nonceTooHigh": "Nonce สูงเกินไป กรุณาปรับ nonce และลองอีกครั้ง。",
+        "defaultTips": "มีบางอย่างผิดปกติ กรุณาลองอีกครั้งในภายหลัง。",
+        "nonceTooLow": "Nonce ต่ำเกินไป เราจะอัปเดตเป็น {{nonce}} คลิก “Retry” เพื่อยืนยันและลองอีกครั้ง",
+        "insufficient": "ยอดเงินก๊าซของคุณไม่เพียงพอที่จะครอบคลุมค่าธรรมเนียมก๊าซของเครือข่าย เติมเงินสำหรับก๊าซและลองอีกครั้ง。",
+        "gasPriceTooLow": "ราคาก๊าซต่ำเกินไป เราจะปรับมันขึ้น 30% เพื่อช่วยให้การทำธุรกรรมของคุณยืนยัน คลิก “Retry” เพื่อยืนยันและลองอีกครั้ง"
       }
     },
     "signFooterBar": {
@@ -851,12 +862,14 @@
         "signWith": "ลงชื่อด้วย {{brand}}",
         "misMatchSignId": "ข้อมูลธุรกรรมไม่สอดคล้องกัน กรุณาตรวจสอบรายละเอียดธุรกรรม",
         "qrcodeDesc": "สแกนด้วย {{brand}} ของคุณเพื่อเซ็นชื่อ หลังจากเซ็นชื่อแล้ว คลิกที่ปุ่มด้านล่างเพื่อรับลายเซ็น",
-        "afterSignDesc": "สแกนรหัส QR บน Keystone เพื่อรับลายเซ็น"
+        "afterSignDesc": "สแกนรหัส QR บน Keystone เพื่อรับลายเซ็น",
+        "txFailedRetry": "ล้มเหลวในการสร้าง: โปรดลองอีกครั้ง"
       },
       "keystoneSign": "ลงชื่อ",
       "startSigning": "เริ่มต้นการลงนาม",
       "oneKeyConfirm": "ยืนยัน",
-      "ledgerConfirm": "ยืนยัน"
+      "ledgerConfirm": "ยืนยัน",
+      "got": "ฉันเข้าใจแล้ว"
     },
     "home": {
       "services": {
@@ -1726,7 +1739,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Price:"
-      }
+      },
+      "appChain": "Dapp Account"
     },
     "gasAccount": {
       "switchLoginAddressBeforeDeposit": {
@@ -2093,7 +2107,7 @@
         "wallet_one": "กระเป๋าเงิน",
         "wallet_other": "กระเป๋าเงิน"
       },
-      "scamTokenHeader": "โทเค็นหลอกลวง"
+      "lowValueTokenHeader": "โทเค็นมูลค่าต่ำ"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2135,7 +2149,8 @@
     },
     "defiDetail": {
       "viewSiteInWebsite": "ดูในเว็บไซต์",
-      "viewSiteInApp": "ดูใน Dapp"
+      "viewSiteInApp": "ดูใน Dapp",
+      "appChain": "บนบัญชี {{chain}}"
     },
     "component": {
       "ChainSelector": {
@@ -2155,7 +2170,38 @@
       "updateText": "{{count}} แนวโน้มที่อัปเดตแล้ว",
       "historyProfit": "ประวัติผลกำไร",
       "smartMoneyWallets": "กระเป๋า Smart Money",
-      "smartMoneyWallet": "Smart Money Wallet"
+      "smartMoneyWallet": "Smart Money Wallet",
+      "filterRule": {
+        "tokenCreate": "สร้างขึ้นเมื่อเร็วๆ นี้",
+        "smartMoney": "การซื้อขาย Smart Wallets",
+        "24HChange": "การเปลี่ยนแปลง 24 ชั่วโมง",
+        "smartWalletCount": "จำนวนกระเป๋าเงินอัจฉริยะ"
+      },
+      "bought": "ซื้อ",
+      "Liquidity": "สภาพคล่อง",
+      "contractAddress": "ที่อยู่สัญญา",
+      "tokenName": "ชื่อโทเค็น",
+      "createdTime": "เวลาที่สร้าง",
+      "tokenInfo": "ข้อมูลโทเค็น",
+      "token": "โทเค็น",
+      "buyEarn": "24H ซื้อ / ทำกำไร",
+      "myCopyTrading": "การซื้อขายสำเนาของฉัน",
+      "loss": "การสูญเสีย",
+      "earn": "หารายได้",
+      "earned": "ได้รับ",
+      "myCopyTradingEarnings": "รายได้จากการซื้อขายสำเนาของฉัน",
+      "twitterNews": "ข่าวใน X",
+      "timeSmartWallet": "เวลา / Smart Wallet",
+      "currentToken": "โทเค็นปัจจุบัน",
+      "sameNameTokens": "โทเค็นชื่อเดียวกัน",
+      "noOtherTokensWithSameName": "ไม่พบโทเค็นอื่นที่มีชื่อเดียวกัน",
+      "smartWalletsBuying": "{{len}} กระเป๋าเงินอัจฉริยะ สำหรับการซื้อ",
+      "holdingProfit": "การถือครอง/กำไร",
+      "chain": "Chain",
+      "timeLabelAgo": "สร้างเมื่อ {{time}} ที่แล้ว",
+      "info": "ข้อมูล",
+      "smartWallets": "กระเป๋าเงินอัจฉริยะ",
+      "myBalanceFromCopyTrading": "ยอดเงินของฉันจาก Copy Trading"
     }
   },
   "native": {

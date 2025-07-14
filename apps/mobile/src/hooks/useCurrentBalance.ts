@@ -12,6 +12,7 @@ import { keyringService } from '@/core/services';
 import { CORE_KEYRING_TYPES } from '@rabby-wallet/keyring-utils';
 
 const balanceAtom = atom<number | null>(null);
+const evmBalanceAtom = atom<number | null>(null);
 const testnetBalanceAtom = atom<string | null>(null);
 const balanceUpdateNonceAtom = atom<number>(0);
 const forceUpdateAtom = atom<boolean>(false);
@@ -46,6 +47,7 @@ export default function useCurrentBalance(
   } = opts || {};
 
   const [balance, setBalance] = useAtom(balanceAtom);
+  const [evmBalance, setEvmBalance] = useAtom(evmBalanceAtom);
   const [success, setSuccess] = useState(true);
   const { balanceNonce } = useTriggerHomeBalanceUpdate();
   const [forceUpdate, setForceUpdate] = useAtom(forceUpdateAtom);
@@ -88,17 +90,22 @@ export default function useCurrentBalance(
       const cachedBalance = await BalanceEntity.queryBalance(address, core);
       if (cachedBalance) {
         setBalance(cachedBalance.total_usd_value);
+        setEvmBalance(cachedBalance.evm_usd_value || 0);
         setSuccess(true);
         setBalanceLoading(false);
         setBalanceFromCache(false);
         setBalanceUpdating(false);
       }
-      const { total_usd_value: totalUsdValue, chain_list: chainList } =
-        await apiBalance.getAddressBalance(address, { force });
+      const {
+        total_usd_value: totalUsdValue,
+        chain_list: chainList,
+        evm_usd_value: evmUsdValue,
+      } = await apiBalance.getAddressBalance(address, { force });
       if (isCanceled) {
         return;
       }
       setBalance(totalUsdValue);
+      setEvmBalance(evmUsdValue || 0);
       setSuccess(true);
       setChainBalances(chainList.filter(i => i.usd_value > 0).map(formatChain));
       setHasValueChainBalances(chainList.filter(item => item.usd_value > 0));
@@ -158,6 +165,7 @@ export default function useCurrentBalance(
     if (cacheData) {
       setBalanceFromCache(true);
       setBalance(cacheData.total_usd_value);
+      setEvmBalance(cacheData.evm_usd_value || 0);
       const chanList = cacheData.chain_list
         .filter(item => item.born_at !== null)
         .map(formatChain);
@@ -208,6 +216,7 @@ export default function useCurrentBalance(
   }, [account?.toLocaleLowerCase(), balanceNonce]);
   return {
     balance,
+    evmBalance,
     chainBalances,
     getAddressBalance,
     success,

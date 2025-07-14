@@ -57,6 +57,7 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { emptyTab } from '@/core/services/browserService';
 import { coerceInteger } from '@/utils/number';
 import { isValidAppStoreUrl } from '@/utils/browser';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 type BrowserTabProps = {
   origin: string;
@@ -508,7 +509,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     return webviewActions.onNavigationStateChange(event);
                   }}
                   onOpenWindow={handleOnOpenWindow}
-                  webviewDebuggingEnabled={__DEV__}
+                  webviewDebuggingEnabled={isNonPublicProductionEnv}
                   contentMode={contentMode}
                   {...(contentMode === 'desktop' && {
                     scalesPageToFit: true,
@@ -573,7 +574,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     console.warn('IOS Content process terminated', nativeEvent);
 
                     if (isActive) {
-                      handleReload();
+                      // handleReload();
+                      setRefreshKey(key => key + 1);
                     } else {
                       onUpdateTab?.({
                         initialUrl: nativeEvent.url,

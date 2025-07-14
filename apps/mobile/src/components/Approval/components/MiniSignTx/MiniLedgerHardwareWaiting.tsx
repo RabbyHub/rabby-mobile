@@ -7,8 +7,12 @@ import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { MiniApprovalPopupContainer } from '../Popup/MiniApprovalPopupContainer';
+import {
+  getTxFailedResult,
+  RetryUpdateType,
+  setRetryTxType,
+} from '@/utils/errorTxRetry';
 
 interface Props {
   onCancel?: () => void;
@@ -40,7 +44,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) =>
       fontSize: 20,
       textAlign: 'center',
       fontFamily: 'SF Pro Rounded',
-      fontWeight: '700',
+      fontWeight: '900',
       lineHeight: 24,
       color: colors2024['red-default'],
     },
@@ -55,35 +59,38 @@ export const MiniLedgerHardwareWaiting = ({
   onRetry,
   error,
 }: Props) => {
-  const { styles, colors } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();
 
+  const [currentDescription, retryUpdateType]: [string, RetryUpdateType] =
+    React.useMemo(() => {
+      const description = error.description;
+      if (description?.includes('0x650f')) {
+        return [t('page.newAddress.ledger.error.lockedOrNoEthApp'), 'origin'];
+      }
+      if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
+        return [t('page.signFooterBar.ledger.unlockAlert'), 'origin'];
+      } else if (
+        description?.includes('0x6e00') ||
+        description?.includes('0x6b00')
+      ) {
+        return [t('page.signFooterBar.ledger.updateFirmwareAlert'), 'origin'];
+      } else if (description?.includes('0x6985')) {
+        return [t('page.signFooterBar.ledger.txRejectedByLedger'), 'origin'];
+      }
+
+      return getTxFailedResult(error.description || '');
+      // return description;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [error.description]);
+
   const handleRetry = async () => {
-    toast.success(t('page.signFooterBar.ledger.resent'));
+    // toast.success(t('page.signFooterBar.ledger.resent'));
+    setRetryTxType(retryUpdateType);
     onRetry?.();
   };
-
-  const currentDescription = React.useMemo(() => {
-    const description = error.description;
-    if (description?.includes('0x650f')) {
-      return t('page.newAddress.ledger.error.lockedOrNoEthApp');
-    }
-    if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
-      return t('page.signFooterBar.ledger.unlockAlert');
-    } else if (
-      description?.includes('0x6e00') ||
-      description?.includes('0x6b00')
-    ) {
-      return t('page.signFooterBar.ledger.updateFirmwareAlert');
-    } else if (description?.includes('0x6985')) {
-      return t('page.signFooterBar.ledger.txRejectedByLedger');
-    }
-
-    return description;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [error.description]);
 
   const renderContent = useMemoizedFn(({ contentColor }) => (
     <View style={styles.contentWrapper}>
@@ -91,10 +98,10 @@ export const MiniLedgerHardwareWaiting = ({
         style={StyleSheet.flatten([
           styles.content,
           {
-            color: colors[contentColor],
+            color: colors2024[contentColor],
           },
         ])}>
-        {error.content}
+        {error.content} {retryUpdateType ? ': Please Retry' : ''}
       </Text>
     </View>
   ));
@@ -121,6 +128,7 @@ export const MiniLedgerHardwareWaiting = ({
         hasMoreDescription={
           error.status === 'REJECTED' || error.status === 'FAILED'
         }
+        retryUpdateType={retryUpdateType}
       />
     </View>
   );

@@ -8,12 +8,14 @@ interface Props {
   children: React.ReactNode;
   blurAmount?: number;
   isLight?: boolean;
+  borderRadius?: number;
 }
 
 export const BlurShadowView = ({
   children,
   isLight,
   blurAmount = 29,
+  borderRadius = 20,
 }: Props) => {
   if (!isLight || isAndroid) {
     return children;
@@ -21,7 +23,7 @@ export const BlurShadowView = ({
   return (
     <View style={isLight ? styles.lightContainer : styles.container}>
       <BlurView
-        style={styles.blur}
+        style={StyleSheet.flatten([styles.blur, { borderRadius }])}
         blurAmount={blurAmount}
         blurType="light"
         reducedTransparencyFallbackColor="white">

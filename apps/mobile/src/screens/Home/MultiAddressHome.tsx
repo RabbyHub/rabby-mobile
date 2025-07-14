@@ -415,7 +415,12 @@ function MultiAddressHome(): JSX.Element {
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
-  } = useMultiCurve(top10Addresses, true, top10Balance);
+  } = useMultiCurve(
+    top10Addresses,
+    true,
+    top10Balance.total,
+    top10Balance.totalEvm,
+  );
   useCexSupportList();
   useFetchCexInfo();
   useInitDetectDBAssets();

@@ -265,7 +265,8 @@
         "misMatchSignId": "Dữ liệu giao dịch không đồng nhất. Vui lòng kiểm tra chi tiết giao dịch.",
         "afterSignDesc": "Quét mã QR trên Keystone để lấy chữ ký",
         "failedToGetExplain": "Không thể lấy giải thích",
-        "qrcodeDesc": "Quét bằng {{brand}} của bạn để ký  \nSau khi ký, nhấn nút bên dưới để nhận chữ ký"
+        "qrcodeDesc": "Quét bằng {{brand}} của bạn để ký  \nSau khi ký, nhấn nút bên dưới để nhận chữ ký",
+        "txFailedRetry": "Không thể tạo: Vui lòng thử lại"
       },
       "gasAccount": {
         "WalletConnectTips": "GasAccount không hỗ trợ WalletConnect",
@@ -292,7 +293,8 @@
       "keystoneSign": "Ký tên",
       "startSigning": "Bắt đầu ký",
       "ledgerConfirm": "Xác nhận",
-      "oneKeyConfirm": "Xác nhận"
+      "oneKeyConfirm": "Xác nhận",
+      "got": "Tôi đã hiểu."
     },
     "activities": {
       "signedTx": {
@@ -639,6 +641,17 @@
           "button": "OK",
           "title": "Chuyển sang Dịch vụ An toàn của Rabby"
         }
+      },
+      "errorRetry": {
+        "InvalidTx": "Giao dịch không hợp lệ.",
+        "gasExceedsBlockGasLimit": "Gas vượt quá giới hạn gas của khối. Vui lòng điều chỉnh và thử lại.",
+        "gasLimitTooLow": "Giới hạn Gas quá thấp",
+        "defaultTips": "Có gì đó không ổn. Vui lòng thử lại sau.",
+        "nonceTooHigh": "Nonce quá cao. Vui lòng điều chỉnh nonce và thử lại.",
+        "alreadySubmitted": "Giao dịch đã được gửi. Phát hiện giao dịch trùng lặp.",
+        "insufficient": "Số dư gas của bạn không đủ để trang trải phí gas mạng. Thêm tiền cho gas và thử lại.",
+        "nonceTooLow": "Nonce quá thấp. Chúng tôi sẽ cập nhật nó thành {{nonce}}. Nhấn \"Retry\" để xác nhận và thử lại.",
+        "gasPriceTooLow": "Giá gas quá thấp. Chúng tôi sẽ điều chỉnh nó lên 30% để giúp giao dịch của bạn được xác nhận. Nhấn “Retry” để xác nhận và thử lại."
       }
     },
     "sendNFT": {
@@ -1446,7 +1459,8 @@
       },
       "nft": {
         "floorPrice": "/Giá sàn:"
-      }
+      },
+      "appChain": "Tài khoản Dapp"
     },
     "approvalsAddressList": {
       "title": "Phê duyệt"
@@ -1981,7 +1995,7 @@
         "wallet_other": "Ví dụ",
         "wallet_one": "Ví"
       },
-      "scamTokenHeader": "Token lừa đảo"
+      "lowValueTokenHeader": "Token giá trị thấp"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2023,7 +2037,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "Xem trong Dapp",
-      "viewSiteInWebsite": "Xem trên Website"
+      "viewSiteInWebsite": "Xem trên Website",
+      "appChain": "Trên tài khoản {{chain}}"
     },
     "component": {
       "ChainSelector": {
@@ -2043,7 +2058,38 @@
       "smartMoneyWallet": "Ví tiền Smart Money",
       "recentBuy": "Mua gần đây",
       "historyProfit": "Lịch sử lợi nhuận",
-      "updateText": "{{count}} Xu Hướng Đã Cập Nhật"
+      "updateText": "{{count}} Xu Hướng Đã Cập Nhật",
+      "filterRule": {
+        "smartMoney": "Giao dịch Smart Wallets",
+        "tokenCreate": "Gần đây được tạo",
+        "24HChange": "24H Thay đổi",
+        "smartWalletCount": "Số lượng Smart Wallet"
+      },
+      "myCopyTrading": "My Copy Trading",
+      "info": "Thông tin",
+      "earned": "Kiếm được",
+      "holdingProfit": "Nắm giữ/Lợi nhuận",
+      "earn": "Kiếm tiền",
+      "currentToken": "Token hiện tại",
+      "timeSmartWallet": "Thời gian / Ví thông minh",
+      "token": "Token",
+      "twitterNews": "Tin tức trong X",
+      "smartWallets": "Ví thông minh",
+      "Liquidity": "Tính thanh khoản",
+      "tokenInfo": "Thông tin Token",
+      "loss": "Mất mát",
+      "chain": "Chuỗi",
+      "buyEarn": "24H Mua / Kiếm",
+      "createdTime": "Thời gian tạo",
+      "contractAddress": "Địa chỉ hợp đồng",
+      "noOtherTokensWithSameName": "Không tìm thấy mã thông báo nào khác có cùng tên.",
+      "tokenName": "Tên Token",
+      "myCopyTradingEarnings": "Thu nhập từ sao chép giao dịch của tôi",
+      "timeLabelAgo": "Tạo {{time}} trước",
+      "sameNameTokens": "Token Tên Giống Nhau",
+      "bought": "Đã mua",
+      "smartWalletsBuying": "{{len}} Ví Điện Tử Thông Minh Mua Sắm",
+      "myBalanceFromCopyTrading": "Số dư của tôi từ Copy Trading"
     }
   },
   "component": {

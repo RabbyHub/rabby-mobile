@@ -5,7 +5,7 @@ import { Chain } from '@/constant/chains';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { apisSafe } from '@/core/apis/safe';
 import { openapi } from '@/core/request';
-import { preferenceService } from '@/core/services';
+import { customRPCService, preferenceService } from '@/core/services';
 import { Account, ChainGas } from '@/core/services/preference';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -720,6 +720,11 @@ export const MiniSignTx = ({
       return;
     }
     try {
+      await customRPCService.syncDefaultRPC();
+    } catch (e) {
+      console.error(' miniSignTx sync default rpc error', e);
+    }
+    try {
       const is1559 =
         support1559 &&
         SUPPORT_1559_KEYRING_TYPE.includes(currentAccount.type as any);
@@ -780,7 +785,7 @@ export const MiniSignTx = ({
         ((isSend || isSwap || isBridge) && customGasPrice) ||
         isSpeedUp ||
         isCancel ||
-        lastTimeGas?.lastTimeSelect === 'gasPrice'
+        (lastTimeGas?.lastTimeSelect === 'gasPrice' && !directSubmit)
       ) {
         gas = gasList.find(item => item.level === 'custom')!;
       } else if (
@@ -1072,6 +1077,8 @@ export const MiniSignTx = ({
     }
   });
 
+  const [isDirectSigning] = useAtom(directSigningAtom);
+
   useEffect(() => {
     if (visible && simulateError) {
       onReject?.(simulateError);
@@ -1079,10 +1086,10 @@ export const MiniSignTx = ({
   }, [onReject, simulateError, visible]);
 
   useEffect(() => {
-    if (directSubmit && simulateError) {
+    if (directSubmit && simulateError && isDirectSigning) {
       onReject?.(simulateError);
     }
-  }, [onReject, simulateError, directSubmit]);
+  }, [onReject, simulateError, directSubmit, isDirectSigning]);
 
   useEffect(() => {
     if (

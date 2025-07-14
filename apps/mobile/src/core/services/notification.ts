@@ -95,7 +95,7 @@ export class NotificationService extends Events {
   _approvals: Approval[] = [];
   notifyWindowId: null | string = null;
   isLocked = false;
-  currentRequestDeferFn?: () => void;
+  currentRequestDeferFn?: (isRetry?: boolean) => void;
   statsData: StatsData | undefined;
   preferenceService: import('./preference').PreferenceService;
   transactionHistoryService: import('./transactionHistory').TransactionHistoryService;
@@ -399,12 +399,12 @@ export class NotificationService extends Events {
       apisAppWin.createGlobalBottomSheetModal(winProps) ?? null;
   };
 
-  setCurrentRequestDeferFn = (fn: () => void) => {
+  setCurrentRequestDeferFn = (fn: (isRetry?: boolean) => void) => {
     this.currentRequestDeferFn = fn;
   };
 
-  callCurrentRequestDeferFn = () => {
-    return this.currentRequestDeferFn?.();
+  callCurrentRequestDeferFn = (isRetry?: boolean) => {
+    return this.currentRequestDeferFn?.(isRetry);
   };
 
   setStatsData = (data?: StatsData) => {
