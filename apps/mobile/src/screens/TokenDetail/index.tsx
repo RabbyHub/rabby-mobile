@@ -268,7 +268,7 @@ export const TokenDetailScreen = () => {
 
       return await TokenItemEntity.batchMultiAddressTokensByIdAndChain(
         isSingleAddress
-          ? [finalAccount!.address]
+          ? [finalAccount!.address.toLowerCase()]
           : top10Addresses.map(item => item.toLowerCase()),
         token.chain,
         token._tokenId,
@@ -481,8 +481,8 @@ export const TokenDetailScreen = () => {
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
     if (isSingleAddress && token.amount) {
-      const dbToken = tokenEntityList?.find(
-        item => item.owner_addr === finalAccount!.address,
+      const dbToken = tokenEntityList?.find(item =>
+        isSameAddress(item.owner_addr, finalAccount!.address),
       );
       const amount = dbToken?.amount || token.amount;
       res.push({
