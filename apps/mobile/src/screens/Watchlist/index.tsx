@@ -6,6 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { Text } from 'react-native';
+import SearchEntry from './SearchEntry';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -21,6 +22,7 @@ function WatchlistScreen(): JSX.Element {
       type="linear"
       overwriteStyle={styles.overwriteStyle}>
       <Text>xxx</Text>
+      <SearchEntry />
     </NormalScreenContainer2024>
   );
 }
@@ -28,6 +30,7 @@ function WatchlistScreen(): JSX.Element {
 const getStyle = createGetStyles2024(() => ({
   overwriteStyle: {
     paddingTop: 0,
+    position: 'relative',
   },
   accountRoot: {
     paddingTop: 0,
