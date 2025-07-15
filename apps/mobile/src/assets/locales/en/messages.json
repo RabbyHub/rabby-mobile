@@ -966,7 +966,8 @@
         "queue": "Queue",
         "websites": "Websites",
         "copyTrading": "Copy Trading",
-        "search": "Search Token"
+        "search": "Search Token",
+        "watchlist": "Watchlist"
       }
     },
     "copyTrading": {
