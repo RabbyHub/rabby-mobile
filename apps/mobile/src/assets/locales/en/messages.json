@@ -2025,6 +2025,14 @@
       "ChainSelector": {
         "title": "Select Chain"
       }
+    },
+    "watchlist": {
+      "empty": {
+        "title": "No tokens in your watchlist yet"
+      },
+      "search": {
+        "title": "Search tokens"
+      }
     }
   },
   "component": {

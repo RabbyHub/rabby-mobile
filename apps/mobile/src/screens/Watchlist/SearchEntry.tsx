@@ -6,6 +6,7 @@ import { RcNextSearchCC } from '@/assets/icons/common';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useTranslation } from 'react-i18next';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   fabContainer: {
@@ -70,6 +71,7 @@ const SearchEntry: React.FC = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { navigation } = useSafeSetNavigationOptions();
 
+  const { t } = useTranslation();
   const handlePress = () => {
     navigation.navigate(RootNames.StackHomeNonTab, {
       screen: RootNames.Search,
@@ -98,7 +100,7 @@ const SearchEntry: React.FC = () => {
             style={styles.icon}
             color={colors2024['neutral-body']}
           />
-          <Text style={styles.text}>Search Tokens</Text>
+          <Text style={styles.text}>{t('page.watchlist.search.title')}</Text>
         </View>
       </LinearGradient>
     </TouchableOpacity>
