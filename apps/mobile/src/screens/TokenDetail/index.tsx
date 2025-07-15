@@ -277,7 +277,6 @@ export const TokenDetailScreen = () => {
   const finalAccount =
     account || accounts[0] || preferenceService.getFallbackAccount();
 
-  console.log('rawPortfolios', rawPortfolios);
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
     if (isSingleAddress && rawPortfolios) {
