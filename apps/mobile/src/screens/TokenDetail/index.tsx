@@ -280,14 +280,14 @@ export const TokenDetailScreen = () => {
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
     if (isSingleAddress && rawPortfolios) {
-      rawPortfolios?.map(portfolio => {
+      rawPortfolios?.forEach(portfolio => {
         if (portfolio.chain !== token.chain) {
           return;
         }
 
         let amount = 0;
         const { _portfolios } = portfolio;
-        _portfolios?.map(portfolioItem => {
+        _portfolios?.forEach(portfolioItem => {
           const { _tokenList } = portfolioItem;
 
           const sameItem = _tokenList.find(
