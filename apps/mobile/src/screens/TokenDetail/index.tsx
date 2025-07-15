@@ -221,6 +221,7 @@ export const TokenDetailScreen = () => {
     unHold: _unHold,
     isSingleAddress,
     tokenSelectType,
+    rawPortfolios, // only isSingleAddress === true can use
   } = route.params || {};
 
   const { styles, isLight } = useTheme2024({
@@ -276,8 +277,37 @@ export const TokenDetailScreen = () => {
   const finalAccount =
     account || accounts[0] || preferenceService.getFallbackAccount();
 
+  console.log('rawPortfolios', rawPortfolios);
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
+    if (isSingleAddress && rawPortfolios) {
+      rawPortfolios?.map(portfolio => {
+        if (portfolio.chain !== token.chain) {
+          return;
+        }
+
+        let amount = 0;
+        const { _portfolios } = portfolio;
+        _portfolios?.map(portfolioItem => {
+          const { _tokenList } = portfolioItem;
+
+          const sameItem = _tokenList.find(
+            item => item._tokenId === token._tokenId,
+          );
+          if (sameItem) {
+            amount += sameItem.amount;
+          }
+        });
+
+        amount &&
+          resList.push({
+            ...portfolio,
+            amount,
+          });
+      });
+      return resList;
+    }
+
     Object.keys(assetsMap).map(address => {
       if (isSingleAddress && !isSameAddress(address, finalAccount!.address)) {
         return;
@@ -318,7 +348,14 @@ export const TokenDetailScreen = () => {
       });
     });
     return resList;
-  }, [token, assetsMap, isSingleAddress, finalAccount, accounts]);
+  }, [
+    token,
+    assetsMap,
+    isSingleAddress,
+    finalAccount,
+    accounts,
+    rawPortfolios,
+  ]);
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {

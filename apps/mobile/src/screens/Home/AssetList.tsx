@@ -76,6 +76,7 @@ interface Props {
   foldNft: boolean;
   foldDefi: boolean;
   refreshing: boolean;
+  rawPortfolios: DisplayedProject[];
   setFoldHideList: React.Dispatch<React.SetStateAction<boolean>>;
   setFoldNft: React.Dispatch<React.SetStateAction<boolean>>;
   setFoldDefi: React.Dispatch<React.SetStateAction<boolean>>;
@@ -104,6 +105,7 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       setFoldScam,
       refreshing,
       setFirstRowType,
+      rawPortfolios,
       account: currentAccount,
     },
     ref,
@@ -135,9 +137,10 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
           token: token,
           isSingleAddress: true,
           account: currentAccount as any,
+          rawPortfolios,
         });
       },
-      [currentAccount],
+      [currentAccount, rawPortfolios],
     );
     const handleOpenDefiDetail = useCallback(
       (data: AbstractProject, itemList: AbstractPortfolio[]) => {
