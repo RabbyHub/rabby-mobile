@@ -90,7 +90,8 @@ export const RightMore: React.FC<{
   isMultiAddress?: boolean;
   triggerUpdate: () => void;
   refreshTags: () => void;
-}> = ({ token, triggerUpdate, refreshTags }) => {
+  unHold?: boolean;
+}> = ({ token, triggerUpdate, refreshTags, unHold }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
   const { colors2024 } = useTheme2024();
@@ -229,15 +230,17 @@ export const RightMore: React.FC<{
           }
         />
       </TouchableOpacity>
-      <DropDownMenuView
-        menuConfig={{
-          menuActions: menuActions,
-        }}
-        triggerProps={{ action: 'press' }}>
-        <CustomTouchableOpacity hitSlop={hitSlop}>
-          <RcIconMore width={24} height={24} />
-        </CustomTouchableOpacity>
-      </DropDownMenuView>
+      {!unHold && (
+        <DropDownMenuView
+          menuConfig={{
+            menuActions: menuActions,
+          }}
+          triggerProps={{ action: 'press' }}>
+          <CustomTouchableOpacity hitSlop={hitSlop}>
+            <RcIconMore width={24} height={24} />
+          </CustomTouchableOpacity>
+        </DropDownMenuView>
+      )}
     </>
   );
 };
@@ -453,17 +456,6 @@ export const TokenDetailScreen = () => {
     tokenRefresh();
   }, [isSingleAddress, singleTokenRefresh, tokenRefresh]);
 
-  const getHeaderRight = useCallback(() => {
-    return (
-      <RightMore
-        token={token}
-        triggerUpdate={triggerUpdate}
-        isMultiAddress={!isSingleAddress}
-        refreshTags={refreshTag}
-      />
-    );
-  }, [token, triggerUpdate, isSingleAddress, refreshTag]);
-
   const getHeaderTitle = useCallback(() => {
     return <TokenDetailHeaderArea key={finalAccount?.address} token={token} />;
   }, [finalAccount?.address, token]);
@@ -550,10 +542,22 @@ export const TokenDetailScreen = () => {
     [_unHold, tokenFromAddress],
   );
 
+  const getHeaderRight = useCallback(() => {
+    return (
+      <RightMore
+        token={token}
+        triggerUpdate={triggerUpdate}
+        isMultiAddress={!isSingleAddress}
+        refreshTags={refreshTag}
+        unHold={unHold}
+      />
+    );
+  }, [token, triggerUpdate, isSingleAddress, refreshTag, unHold]);
+
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
-      headerRight: unHold ? () => null : getHeaderRight,
+      headerRight: getHeaderRight,
       headerTitleAlign: 'left',
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);

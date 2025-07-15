@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { ScrollView, Text } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -8,6 +8,11 @@ import SearchEntry from './SearchEntry';
 import { EmptyWatchlist } from './EmptyHolder';
 import { TokenListItem } from './TokenItem';
 import TokenHeader, { SortState } from './TokenHeader';
+import { Button } from '@/components2024/Button';
+import { useTranslation } from 'react-i18next';
+import { usePinTokens } from '../Search/usePinTokens';
+import { useFocusEffect } from '@react-navigation/native';
+import { preferenceService } from '@/core/services';
 
 const mockData = [
   {
@@ -149,8 +154,31 @@ const mockData = [
 
 function WatchlistScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const { data: pinTokens, handleFetchTokens } = usePinTokens();
+
   const [tokenSort, setTokenSort] = useState<SortState>('default');
   const [changeSort, setChangeSort] = useState<SortState>('default');
+  const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
+
+  const showGuide = useMemo(() => {
+    return !skip && pinTokens.length === 0;
+  }, [skip, pinTokens]);
+
+  const centerEmpty = useMemo(() => {
+    return pinTokens.length === 0 && !showGuide;
+  }, [pinTokens, showGuide]);
+
+  useFocusEffect(
+    useCallback(() => {
+      handleFetchTokens();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
+
+  useEffect(() => {
+    setSkip(preferenceService.getWatchlistSkip());
+  }, []);
 
   const list = useMemo(() => {
     return mockData.sort((a, b) => {
@@ -174,36 +202,99 @@ function WatchlistScreen(): JSX.Element {
     <NormalScreenContainer2024
       type="bg0"
       overwriteStyle={styles.overwriteStyle}>
-      <EmptyWatchlist />
-      <ScrollView style={styles.scrollView}>
-        <TokenHeader
-          tokenSort={tokenSort}
-          onTokenSort={() => {
-            setTokenSort(tokenSort === 'asc' ? 'desc' : 'asc');
-            setChangeSort('default');
-          }}
-          changeSort={changeSort}
-          onChangeSort={() => {
-            setChangeSort(changeSort === 'asc' ? 'desc' : 'asc');
-            setTokenSort('default');
-          }}
-        />
-        {list.map(item => (
-          <TokenListItem key={item.id} item={item} onPress={() => {}} />
-        ))}
-      </ScrollView>
-      <SearchEntry />
+      {pinTokens.length === 0 && (
+        <EmptyWatchlist style={centerEmpty ? styles.centerEmpty : undefined} />
+      )}
+      {showGuide ? (
+        <>
+          <TokenHeader
+            tokenSort={tokenSort}
+            onTokenSort={() => {
+              setTokenSort(tokenSort === 'asc' ? 'desc' : 'asc');
+              setChangeSort('default');
+            }}
+            changeSort={changeSort}
+            onChangeSort={() => {
+              setChangeSort(changeSort === 'asc' ? 'desc' : 'asc');
+              setTokenSort('default');
+            }}
+          />
+          <ScrollView style={styles.scrollView}>
+            {list.map(item => (
+              <TokenListItem key={item.id} item={item} onPress={() => {}} />
+            ))}
+          </ScrollView>
+          <View style={styles.footer}>
+            <Pressable
+              onPress={() => {
+                preferenceService.setWatchlistSkip(true);
+                setSkip(true);
+              }}>
+              <Text style={styles.skipText}>
+                {t('page.watchlist.footer.skip')}
+              </Text>
+            </Pressable>
+            <Button
+              title={t('page.watchlist.footer.add', { count: list.length })}
+              onPress={() => {}}
+            />
+          </View>
+        </>
+      ) : (
+        <>
+          {pinTokens.length > 0 && (
+            <>
+              <TokenHeader
+                tokenSort={tokenSort}
+                onTokenSort={() => {
+                  setTokenSort(tokenSort === 'asc' ? 'desc' : 'asc');
+                  setChangeSort('default');
+                }}
+                changeSort={changeSort}
+                onChangeSort={() => {
+                  setChangeSort(changeSort === 'asc' ? 'desc' : 'asc');
+                  setTokenSort('default');
+                }}
+              />
+              <ScrollView style={styles.scrollView}>
+                {list.map(item => (
+                  <TokenListItem key={item.id} item={item} onPress={() => {}} />
+                ))}
+              </ScrollView>
+            </>
+          )}
+          <SearchEntry />
+        </>
+      )}
     </NormalScreenContainer2024>
   );
 }
 
-const getStyle = createGetStyles2024(() => ({
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
   overwriteStyle: {
     paddingTop: 0,
     position: 'relative',
   },
   scrollView: {
     paddingHorizontal: 12,
+    flex: 1,
+  },
+  centerEmpty: {
+    marginTop: '50%',
+  },
+  footer: {
+    paddingHorizontal: 12,
+    paddingBottom: 48,
+  },
+  skipText: {
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    paddingBottom: 14,
+    paddingTop: 6,
   },
 }));
 

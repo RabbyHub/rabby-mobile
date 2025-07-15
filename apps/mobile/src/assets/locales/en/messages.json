@@ -2037,6 +2037,10 @@
         "token": "Token/FDV",
         "price": "Price",
         "change": "24H Change"
+      },
+      "footer": {
+        "skip": "Skip",
+        "add": "Add to Watchlist {{count}}"
       }
     }
   },
