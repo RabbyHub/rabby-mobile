@@ -397,7 +397,7 @@ export async function syncBalance(
 
   await prepareAppDataSource();
   // @TODO: remove this line, we don't need delete data first because we use upsert when save data
-  await BalanceEntity.deleteForAddress(address);
+  // await BalanceEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
     owner_addr: address,
     taskFor: 'balance',
@@ -428,7 +428,7 @@ export async function syncCexInfo(address: string, cex?: Cex) {
   );
 
   await prepareAppDataSource();
-  await CexEntity.deleteForAddress(address);
+  // await CexEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(CexEntity, [cexItem], {
     owner_addr: address,
     taskFor: 'cex',
