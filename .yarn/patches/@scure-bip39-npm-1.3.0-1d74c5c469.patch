@@ -1,98 +1,274 @@
-diff --git a/index.js b/index.js
-index f79318c817c35ea977ac4e51dbfb06ce25055832..38f490efb4c29b05c9ad5166438c32c731751a8c 100644
---- a/index.js
-+++ b/index.js
-@@ -3,11 +3,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
- exports.mnemonicToSeedSync = exports.mnemonicToSeed = exports.validateMnemonic = exports.entropyToMnemonic = exports.mnemonicToEntropy = exports.generateMnemonic = void 0;
- /*! scure-bip39 - MIT License (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com) */
- const _assert_1 = require("@noble/hashes/_assert");
--const pbkdf2_1 = require("@noble/hashes/pbkdf2");
-+// const pbkdf2_1 = require("@noble/hashes/pbkdf2");
- const sha256_1 = require("@noble/hashes/sha256");
--const sha512_1 = require("@noble/hashes/sha512");
-+// const sha512_1 = require("@noble/hashes/sha512");
- const utils_1 = require("@noble/hashes/utils");
- const base_1 = require("@scure/base");
-+const import_wordlist_en = require("./wordlists/english")
-+const react_native_quick_crypto = require("react-native-quick-crypto");
-+const react_native_buffer = require("@craftzdog/react-native-buffer");
-+
- // Japanese wordlist
- const isJapanese = (wordlist) => wordlist[0] === '\u3042\u3044\u3053\u304f\u3057\u3093';
- // Normalization replaces equivalent sequences of characters
-@@ -74,8 +78,16 @@ function getCoder(wordlist) {
+diff --git a/index.d.ts b/index.d.ts
+index 3fa1d1de4b56d4873d7ea90e1415e13fda4e425c..13d8f7eb805f217bb8ccdb54b9443751280d096b 100644
+--- a/index.d.ts
++++ b/index.d.ts
+@@ -20,7 +20,7 @@ export declare function generateMnemonic(wordlist: string[], strength?: number):
+  *   0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f
   * ])
   */
- function mnemonicToEntropy(mnemonic, wordlist) {
+-export declare function mnemonicToEntropy(mnemonic: string, wordlist: string[]): Uint8Array;
++export declare function mnemonicToEntropy(mnemonic: string | Uint8Array, wordlist: string[]): Uint8Array;
+ /**
+  * Reversible: Converts raw entropy in form of byte array to mnemonic string.
+  * @param entropy byte array
+@@ -38,10 +38,11 @@ export declare function entropyToMnemonic(entropy: Uint8Array, wordlist: string[
+ /**
+  * Validates mnemonic for being 12-24 words contained in `wordlist`.
+  */
+-export declare function validateMnemonic(mnemonic: string, wordlist: string[]): boolean;
++export declare function validateMnemonic(mnemonic: string | Uint8Array, wordlist: string[]): boolean;
+ /**
+  * Irreversible: Uses KDF to derive 64 bytes of key data from mnemonic + optional password.
+- * @param mnemonic 12-24 words
++ * @param mnemonic 12-24 words (string | Uint8Array)
++ * @param wordlist array of 2048 words used to recover the mnemonic string from a Uint8Array
+  * @param passphrase string that will additionally protect the key
+  * @returns 64 bytes of key data
+  * @example
+@@ -49,10 +50,11 @@ export declare function validateMnemonic(mnemonic: string, wordlist: string[]):
+  * await mnemonicToSeed(mnem, 'password');
+  * // new Uint8Array([...64 bytes])
+  */
+-export declare function mnemonicToSeed(mnemonic: string, passphrase?: string): Promise<Uint8Array>;
++export declare function mnemonicToSeed(mnemonic: string | Uint8Array, passphrase?: string): Promise<Uint8Array>;
+ /**
+  * Irreversible: Uses KDF to derive 64 bytes of key data from mnemonic + optional password.
+- * @param mnemonic 12-24 words
++ * @param mnemonic 12-24 words (string | Uint8Array)
++ * @param wordlist array of 2048 words used to recover the mnemonic string from a Uint8Array
+  * @param passphrase string that will additionally protect the key
+  * @returns 64 bytes of key data
+  * @example
+@@ -60,5 +62,4 @@ export declare function mnemonicToSeed(mnemonic: string, passphrase?: string): P
+  * mnemonicToSeedSync(mnem, 'password');
+  * // new Uint8Array([...64 bytes])
+  */
+-export declare function mnemonicToSeedSync(mnemonic: string, passphrase?: string): Uint8Array;
+-//# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
++export declare function mnemonicToSeedSync(mnemonic: string | Uint8Array, passphrase?: string): Uint8Array;
+diff --git a/index.js b/index.js
+index f79318c817c35ea977ac4e51dbfb06ce25055832..84877040bd48a8c1b4ed38ce7be025770c3e67b6 100644
+--- a/index.js
++++ b/index.js
+@@ -8,12 +8,89 @@ const sha256_1 = require("@noble/hashes/sha256");
+ const sha512_1 = require("@noble/hashes/sha512");
+ const utils_1 = require("@noble/hashes/utils");
+ const base_1 = require("@scure/base");
+-// Japanese wordlist
+-const isJapanese = (wordlist) => wordlist[0] === '\u3042\u3044\u3053\u304f\u3057\u3093';
++
++const Crypto = require("react-native-quick-crypto");
++const { wordlist: englishWordlist } = require('./wordlists/english');
++const { assert, assertExhaustive, stringToBytes } = require('@metamask/utils');
++
++
++const KDF_ALGORITHM = 'PBKDF2';
++
++/**
++ * Converts bytes length to bits length
++ *
++ * @param {number} bytesLength - Bytes length to convert
++ * @returns {number} Bits length
++ */
++function bytesLengthToBitsLength(bytesLength) {
++  return bytesLength * 8;
++}
++
++// function stringToBytes(value) {
++//     return new TextEncoder().encode(value);
++// }
++
++const MNEMONIC_PHRASE_LENGTHS = [12, 15, 18, 21, 24];
++
++/**
++ * Validate a BIP-39 mnemonic phrase. The phrase must:
++ *
++ * - Consist of 12, 15, 18, 21, or 24 words.
++ * - Contain only words from the English wordlist.
++ *
++ * @param {string} mnemonicPhrase - The mnemonic phrase to validate.
++ * @throws If the mnemonic phrase is invalid.
++ */
++function validateMnemonicPhrase(mnemonicPhrase) {
++  const words = mnemonicPhrase.split(' ');
++
++  assert(
++    MNEMONIC_PHRASE_LENGTHS.includes(words.length),
++    `Invalid mnemonic phrase: The mnemonic phrase must consist of 12, 15, 18, 21, or 24 words.`,
++  );
++
++  assert(
++    words.every((word) => englishWordlist.includes(word)),
++    'Invalid mnemonic phrase: The mnemonic phrase contains an unknown word.',
++  );
++}
++
++/**
++ * Derives a key using PBKDF2.
++ *
++ * @param {Uint8Array} password - The password used to generate the key.
++ * @param {Uint8Array} salt - The salt used during key generation.
++ * @param {number} iterations - The number of iterations used during key generation.
++ * @param {number} keyLength - The length (in bytes) of the key to generate.
++ * @returns {Promise<Uint8Array>} The generated key.
++ */
++const pbkdf2Sync = (
++  password,
++  salt,
++  iterations,
++  keyLength,
++) => {
++  const key = Crypto.subtle.importKeySync(
++    'raw',
++    password,
++    { name: KDF_ALGORITHM },
++    false,
++    ['deriveBits', 'deriveKey'],
++  );
++
++  const derivedBits = Crypto.subtle.deriveBitsSync(
++    { name: KDF_ALGORITHM, salt, iterations, hash: 'SHA-512' },
++    key,
++    bytesLengthToBitsLength(keyLength)
++  );
++
++  return new Uint8Array(derivedBits);
++};
++
++
+ // Normalization replaces equivalent sequences of characters
+ // so that any two texts that are equivalent will be reduced
+ // to the same sequence of code points, called the normal form of the original text.
+-// https://tonsky.me/blog/unicode/#why-is-a----
+ function nfkd(str) {
+     if (typeof str !== 'string')
+         throw new TypeError(`Invalid mnemonic type: ${typeof str}`);
+@@ -27,7 +104,7 @@ function normalize(str) {
+     return { nfkd: norm, words };
+ }
+ function assertEntropy(entropy) {
+-    (0, _assert_1.bytes)(entropy, 16, 20, 24, 28, 32);
++    _assert_1.default.bytes(entropy, 16, 20, 24, 28, 32);
+ }
+ /**
+  * Generate x random words. Uses Cryptographically-Secure Random Number Generator.
+@@ -38,7 +115,7 @@ function assertEntropy(entropy) {
+  * // 'legal winner thank year wave sausage worth useful legal winner thank yellow'
+  */
+ function generateMnemonic(wordlist, strength = 128) {
+-    (0, _assert_1.number)(strength);
++    _assert_1.default.number(strength);
+     if (strength % 32 !== 0 || strength > 256)
+         throw new TypeError('Invalid entropy');
+     return entropyToMnemonic((0, utils_1.randomBytes)(strength / 8), wordlist);
+@@ -52,8 +129,8 @@ const calcChecksum = (entropy) => {
+     return new Uint8Array([((0, sha256_1.sha256)(entropy)[0] >> bitsLeft) << bitsLeft]);
+ };
+ function getCoder(wordlist) {
+-    if (!Array.isArray(wordlist) || wordlist.length !== 2048 || typeof wordlist[0] !== 'string')
+-        throw new Error('Wordlist: expected array of 2048 strings');
++    if (!Array.isArray(wordlist) || wordlist.length !== 2 ** 11 || typeof wordlist[0] !== 'string')
++        throw new Error('Worlist: expected array of 2048 strings');
+     wordlist.forEach((i) => {
+         if (typeof i !== 'string')
+             throw new Error(`Wordlist: non-string element: ${i}`);
+@@ -73,9 +150,15 @@ function getCoder(wordlist) {
+  *   0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f
+  * ])
+  */
+-function mnemonicToEntropy(mnemonic, wordlist) {
 -    const { words } = normalize(mnemonic);
 -    const entropy = getCoder(wordlist).decode(words);
++function mnemonicToEntropy(mnemonic, wordlist = englishWordlist) {
 +    let entropy;
 +    if (typeof mnemonic === 'string') {
 +        const { words } = normalize(mnemonic);
 +        entropy = getCoder(wordlist).decode(words);
 +    } else {
 +        // expected intanceOf Uint8Array when used with eth-hd-keyring
-+        entropy = getCoder(wordlist).decode(
-+            Array.from(new Uint16Array(mnemonic.buffer)).map((i) => wordlist[i])
-+        );
++        entropy = getCoder(wordlist).decode(Array.from(new Uint16Array(mnemonic.buffer)).map((i) => wordlist[i]));
 +    }
      assertEntropy(entropy);
      return entropy;
  }
-@@ -96,7 +108,12 @@ exports.mnemonicToEntropy = mnemonicToEntropy;
- function entropyToMnemonic(entropy, wordlist) {
+@@ -93,16 +176,20 @@ exports.mnemonicToEntropy = mnemonicToEntropy;
+  * entropyToMnemonic(ent, wordlist);
+  * // 'legal winner thank year wave sausage worth useful legal winner thank yellow'
+  */
+-function entropyToMnemonic(entropy, wordlist) {
++function entropyToMnemonic(entropy, wordlist = englishWordlist) {
      assertEntropy(entropy);
      const words = getCoder(wordlist).encode(entropy);
 +
      return words.join(isJapanese(wordlist) ? '\u3000' : ' ');
-+
 +    // const indices = words.map((word) => wordlist.indexOf(word));
 +    // const uInt8ArrayOfMnemonic = new Uint8Array(new Uint16Array(indices).buffer);
 +    // return uInt8ArrayOfMnemonic;
  }
  exports.entropyToMnemonic = entropyToMnemonic;
  /**
-@@ -123,8 +140,12 @@ const salt = (passphrase) => nfkd(`mnemonic${passphrase}`);
-  * await mnemonicToSeed(mnem, 'password');
+  * Validates mnemonic for being 12-24 words contained in `wordlist`.
+  */
+-function validateMnemonic(mnemonic, wordlist) {
++function validateMnemonic(mnemonic, wordlist = englishWordlist) {
+     try {
+         mnemonicToEntropy(mnemonic, wordlist);
+     }
+@@ -115,7 +202,7 @@ exports.validateMnemonic = validateMnemonic;
+ const salt = (passphrase) => nfkd(`mnemonic${passphrase}`);
+ /**
+  * Irreversible: Uses KDF to derive 64 bytes of key data from mnemonic + optional password.
+- * @param mnemonic 12-24 words
++ * @param mnemonic 12-24 words (string | Uint8Array)
+  * @param passphrase string that will additionally protect the key
+  * @returns 64 bytes of key data
+  * @example
+@@ -124,12 +211,13 @@ const salt = (passphrase) => nfkd(`mnemonic${passphrase}`);
   * // new Uint8Array([...64 bytes])
   */
--function mnemonicToSeed(mnemonic, passphrase = '') {
+ function mnemonicToSeed(mnemonic, passphrase = '') {
 -    return (0, pbkdf2_1.pbkdf2Async)(sha512_1.sha512, normalize(mnemonic).nfkd, salt(passphrase), { c: 2048, dkLen: 64 });
-+async function mnemonicToSeed(mnemonic, passphrase = '') {
-+    // const encodedMnemonicUint8Array = encodeMnemonicForSeedDerivation(mnemonic, wordlist);
-+    // return (0, pbkdf2_1.pbkdf2Async)(sha512_1.sha512, encodedMnemonicUint8Array, salt(passphrase), { c: 2048, dkLen: 64 });
-+    const mnemonicBuffer = new react_native_buffer.Buffer(mnemonic, "utf8");
-+    const saltBuffer = new react_native_buffer.Buffer(salt(passphrase), "utf8");
-+    return react_native_quick_crypto.pbkdf2Sync(mnemonicBuffer, saltBuffer, 2048, 64, "sha512");
++    const encodedMnemonicUint8Array = encodeMnemonicForSeedDerivation(mnemonic, englishWordlist);
++    return (0, pbkdf2_1.pbkdf2Async)(sha512_1.sha512, encodedMnemonicUint8Array, salt(passphrase), { c: 2048, dkLen: 64 });
  }
  exports.mnemonicToSeed = mnemonicToSeed;
  /**
-@@ -138,6 +159,27 @@ exports.mnemonicToSeed = mnemonicToSeed;
+  * Irreversible: Uses KDF to derive 64 bytes of key data from mnemonic + optional password.
+- * @param mnemonic 12-24 words
++ * @param mnemonic 12-24 words (string | Uint8Array)
+  * @param passphrase string that will additionally protect the key
+  * @returns 64 bytes of key data
+  * @example
+@@ -138,6 +226,30 @@ exports.mnemonicToSeed = mnemonicToSeed;
   * // new Uint8Array([...64 bytes])
   */
  function mnemonicToSeedSync(mnemonic, passphrase = '') {
 -    return (0, pbkdf2_1.pbkdf2)(sha512_1.sha512, normalize(mnemonic).nfkd, salt(passphrase), { c: 2048, dkLen: 64 });
 +    // const encodedMnemonicUint8Array = encodeMnemonicForSeedDerivation(mnemonic, wordlist);
 +    // return (0, pbkdf2_1.pbkdf2)(sha512_1.sha512, encodedMnemonicUint8Array, salt(passphrase), { c: 2048, dkLen: 64 });
-+    const mnemonicBuffer = new react_native_buffer.Buffer(mnemonic, "utf8");
-+    const saltBuffer = new react_native_buffer.Buffer(salt(passphrase), "utf8");
-+    return react_native_quick_crypto.pbkdf2Sync(mnemonicBuffer, saltBuffer, 2048, 64, "sha512");
++    return pbkdf2Sync(
++        encodeMnemonicForSeedDerivation(mnemonic, englishWordlist),
++        stringToBytes(salt(passphrase)),
++        2048,
++        64
++    );
  }
  exports.mnemonicToSeedSync = mnemonicToSeedSync;
-+
 +/**
 + * Helper function to encode mnemonic passed either as a string or `Uint8Array` for deriving a seed/key with pbkdf2.
 + */
-+function encodeMnemonicForSeedDerivation(mnemonic, wordlist = import_wordlist_en.wordlist) {
-+  let encodedMnemonicUint8Array;
-+  if (typeof mnemonic === 'string') {
-+    encodedMnemonicUint8Array = new TextEncoder().encode(normalize(mnemonic).nfkd);
-+  } else {
-+    encodedMnemonicUint8Array = new TextEncoder().encode(
-+      Array.from(new Uint16Array(mnemonic.buffer))
-+        .map((i) => wordlist[i])
-+        .join(' ')
-+    );
-+  }
-+  return encodedMnemonicUint8Array;
++function encodeMnemonicForSeedDerivation(mnemonic, wordlist = englishWordlist) {
++    let encodedMnemonicUint8Array;
++    if (typeof mnemonic === 'string') {
++        // validateMnemonicPhrase(mnemonic);
++        encodedMnemonicUint8Array = stringToBytes(normalize(mnemonic).nfkd);
++    } else {
++        const mnemonicString = Array.from(new Uint16Array(mnemonic.buffer))
++            .map((i) => wordlist[i])
++            .join(' ');
++        // validateMnemonicPhrase(mnemonicString);
++        encodedMnemonicUint8Array = stringToBytes(mnemonicString);
++    }
++    return encodedMnemonicUint8Array;
 +}

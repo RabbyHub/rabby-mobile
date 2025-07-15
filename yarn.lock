@@ -8234,7 +8234,6 @@ __metadata:
     ethereumjs-wallet: ^1.0.2
     jest: ^27.5.1
     loglevel: ^1.8.1
-    react-native-quick-bip39: 0.0.9
     sinon: ^9.2.4
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
@@ -9847,11 +9846,11 @@ __metadata:
 
 "@scure/bip39@patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 1.3.0
-  resolution: "@scure/bip39@patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch::version=1.3.0&hash=2cebfa&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@scure/bip39@patch:@scure/bip39@npm%3A1.3.0#./.yarn/patches/@scure-bip39-npm-1.3.0-1d74c5c469.patch::version=1.3.0&hash=81dff5&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@noble/hashes": ~1.4.0
     "@scure/base": ~1.1.6
-  checksum: 00a5d39e3b6855a9d9469ec0e0ed90d819d5dcc5496bbbbdfaa9538acdaa45af642318f800596f4c9f22a506da63c1657a8e58dfbf1de2dc7fe615a76faedd9c
+  checksum: c916c4ff8934079a6de3995085b9ee3a3a6c36e04f6066427af157b97eef9f4d2f05a2f9bb5306ab50b1e3c9fce1368f35f599171d858ce979ee761b090d8329
   languageName: node
   linkType: hard
 
@@ -19826,7 +19825,7 @@ __metadata:
 
 "fast-base64-decode@npm:^1.0.0":
   version: 1.0.0
-  resolution: "fast-base64-decode@npm:1.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ffast-base64-decode%2F-%2Ffast-base64-decode-1.0.0.tgz"
+  resolution: "fast-base64-decode@npm:1.0.0"
   checksum: 4c59eb1775a7f132333f296c5082476fdcc8f58d023c42ed6d378d2e2da4c328c7a71562f271181a725dd17cdaa8f2805346cc330cdbad3b8e4b9751508bd0a3
   languageName: node
   linkType: hard
@@ -30766,13 +30765,13 @@ __metadata:
   linkType: hard
 
 "react-native-get-random-values@npm:^1.10.0":
-  version: 1.10.0
-  resolution: "react-native-get-random-values@npm:1.10.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-get-random-values%2F-%2Freact-native-get-random-values-1.10.0.tgz"
+  version: 1.11.0
+  resolution: "react-native-get-random-values@npm:1.11.0"
   dependencies:
     fast-base64-decode: ^1.0.0
   peerDependencies:
     react-native: ">=0.56"
-  checksum: 7100682d5096d8b0e208b2698c3a21221b0e26fe181202f09cc9b481a22b01b4d3baf23db313397e673fd244ba0a870e457e0292ef22ce380147c15b6718f0a9
+  checksum: 07729f70a007f7a3b8f98ebf687c1298ba288b87dd71d8ba385be6b5a377718b27b97547bbe1db6b225b83ee109dfce0b01721e6ed535d53892f3ac81e6bf975
   languageName: node
   linkType: hard
 
@@ -30974,17 +30973,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-quick-bip39@npm:0.0.9":
-  version: 0.0.9
-  resolution: "react-native-quick-bip39@npm:0.0.9"
-  dependencies:
-    "@craftzdog/react-native-buffer": ^6.0.5
-    react-native-quick-crypto: ^0.7.7
-  checksum: 1beb61bcf124fda8d803baaee18b9ca3f8aa6cf14dc18ed168c4c5e7f75095dc0edd619fd72049b40e7456d07cd90ee611b4e2071dcbeb1bcc64a2260c47727f
-  languageName: node
-  linkType: hard
-
-"react-native-quick-crypto@npm:0.7.13, react-native-quick-crypto@npm:^0.7.7":
+"react-native-quick-crypto@npm:0.7.13":
   version: 0.7.13
   resolution: "react-native-quick-crypto@npm:0.7.13"
   dependencies:
@@ -30999,14 +30988,14 @@ __metadata:
 
 "react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.13#./.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 0.7.13
-  resolution: "react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.13#./.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch::version=0.7.13&hash=3afa41&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-quick-crypto@patch:react-native-quick-crypto@npm%3A0.7.13#./.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch::version=0.7.13&hash=4cfb30&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@craftzdog/react-native-buffer": ^6.0.5
     events: ^3.3.0
     readable-stream: ^4.5.2
     string_decoder: ^1.3.0
     util: ^0.12.5
-  checksum: 4bb3ae24170680aa5cd45b9f6dbdb0a8f39798f98cf696adeb0db4610290474b6b4e017c18dc49da1fcb8bc3882f0b8d56d71b94d4c33359f7c1f6bf67c2d6b3
+  checksum: 8200a1dd4df2a21b3fac573b9ee1f615325602d714ab450b3bc80ac79d7c797eedd52d7dfba50e35b3d20fc5d34ba1e002e02af5dd3fc6cacee9463ac02cf94c
   languageName: node
   linkType: hard
 

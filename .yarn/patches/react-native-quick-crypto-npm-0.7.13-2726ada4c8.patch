@@ -44,3 +44,169 @@ index f52cc589a4aef892833ecb2c43a547927c435a3d..8f5e1575519fcbbfed7e35ecc3bdfa1a
  };
  
  /**
+diff --git a/lib/module/pbkdf2.js b/lib/module/pbkdf2.js
+index 3208e7763b0273a4a3c73a74167feab53cff477e..66e618739c2dac8fabd28b8c93c050006cef2de9 100644
+--- a/lib/module/pbkdf2.js
++++ b/lib/module/pbkdf2.js
+@@ -70,4 +70,32 @@ export async function pbkdf2DeriveBits(algorithm, baseKey, length) {
+   }
+   return bufferLikeToArrayBuffer(result);
+ }
++
++export function pbkdf2DeriveBitsSync(algorithm, baseKey, length) {
++  const {
++    iterations,
++    hash,
++    salt
++  } = algorithm;
++  const normalizedHash = normalizeHashName(hash);
++  if (!normalizedHash) {
++    throw lazyDOMException('hash cannot be blank', 'OperationError');
++  }
++  if (!iterations || iterations === 0) {
++    throw lazyDOMException('iterations cannot be zero', 'OperationError');
++  }
++  if (!salt) {
++    throw lazyDOMException(WRONG_SALT, 'OperationError');
++  }
++  const raw = baseKey.keyObject.export();
++  if (length === 0) throw lazyDOMException('length cannot be zero', 'OperationError');
++  if (length === null) throw lazyDOMException('length cannot be null', 'OperationError');
++  if (length % 8) {
++    throw lazyDOMException('length must be a multiple of 8', 'OperationError');
++  }
++  const sanitizedPassword = sanitizeInput(raw, WRONG_PASS);
++  const sanitizedSalt = sanitizeInput(salt, WRONG_SALT);
++  const result = pbkdf2Sync(sanitizedPassword, sanitizedSalt, iterations, length / 8, normalizedHash);
++  return bufferLikeToArrayBuffer(result);
++}
+ //# sourceMappingURL=pbkdf2.js.map
+\ No newline at end of file
+diff --git a/lib/module/subtle.js b/lib/module/subtle.js
+index 41f8de04c11ec8a2b37db641f9dedd2111fae992..c8eb14f65221fcd464626b574b5a537a699dc71a 100644
+--- a/lib/module/subtle.js
++++ b/lib/module/subtle.js
+@@ -4,7 +4,7 @@ import { Buffer as SBuffer } from 'safe-buffer';
+ import { CryptoKey, KWebCryptoKeyFormat, createSecretKey, CipherOrWrapMode } from './keys';
+ import { hasAnyNotIn, lazyDOMException, normalizeHashName, HashContext, validateMaxBufferLength, bufferLikeToArrayBuffer } from './Utils';
+ import { ecImportKey, ecExportKey, ecGenerateKey, ecdsaSignVerify } from './ec';
+-import { pbkdf2DeriveBits } from './pbkdf2';
++import { pbkdf2DeriveBits, pbkdf2DeriveBitsSync } from './pbkdf2';
+ import { asyncDigest } from './Hash';
+ import { aesCipher, aesGenerateKey, aesImportKey, getAlgorithmName } from './aes';
+ import { rsaCipher, rsaExportKey, rsaImportKey, rsaKeyGenerate } from './rsa';
+@@ -160,7 +160,7 @@ const exportKeyJWK = key => {
+   }
+   throw lazyDOMException(`JWK export not yet supported: ${key.algorithm.name}`, 'NotSupportedError');
+ };
+-const importGenericSecretKey = async ({
++const importGenericSecretKeySync = ({
+   name,
+   length
+ }, format, keyData, extractable, keyUsages) => {
+@@ -193,6 +193,14 @@ const importGenericSecretKey = async ({
+   }
+   throw new Error(`Unable to import ${name} key with format ${format}`);
+ };
++const importGenericSecretKey = async ({
++  name,
++  length
++}, format, keyData, extractable, keyUsages) => {
++  return importGenericSecretKeySync({ name,
++    length
++  }, format, keyData, extractable, keyUsages);
++}
+ 
+ // const checkCryptoKeyUsages = (key: CryptoKey) => {
+ //   if (
+@@ -293,6 +301,27 @@ export class Subtle {
+     const normalizedAlgorithm = normalizeAlgorithm(algorithm, 'digest');
+     return asyncDigest(normalizedAlgorithm, data);
+   }
++  deriveBitsSync(algorithm, baseKey, length) {
++    if (!baseKey.keyUsages.includes('deriveBits')) {
++      throw new Error('baseKey does not have deriveBits usage');
++    }
++    if (baseKey.algorithm.name !== algorithm.name) throw new Error('Key algorithm mismatch');
++    switch (algorithm.name) {
++      // case 'X25519':
++      //   // Fall through
++      // case 'X448':
++      //   // Fall through
++      // case 'ECDH':
++      //   return require('internal/crypto/diffiehellman')
++      //     .ecdhDeriveBits(algorithm, baseKey, length);
++      // case 'HKDF':
++      //   return require('internal/crypto/hkdf')
++      //     .hkdfDeriveBits(algorithm, baseKey, length);
++      case 'PBKDF2':
++        return pbkdf2DeriveBitsSync(algorithm, baseKey, length);
++    }
++    throw new Error(`'subtle.deriveBits()' for ${algorithm.name} is not implemented.`);
++  }
+   async deriveBits(algorithm, baseKey, length) {
+     if (!baseKey.keyUsages.includes('deriveBits')) {
+       throw new Error('baseKey does not have deriveBits usage');
+@@ -376,6 +405,62 @@ export class Subtle {
+     }
+     return result;
+   }
++  importKeySync(format, data, algorithm, extractable, keyUsages) {
++    const normalizedAlgorithm = normalizeAlgorithm(algorithm, 'importKey');
++    let result;
++    switch (normalizedAlgorithm.name) {
++      case 'RSASSA-PKCS1-v1_5':
++      // Fall through
++      case 'RSA-PSS':
++      // Fall through
++      case 'RSA-OAEP':
++        result = rsaImportKey(format, data, normalizedAlgorithm, extractable, keyUsages);
++        break;
++      case 'ECDSA':
++      // Fall through
++      case 'ECDH':
++        result = ecImportKey(format, data, normalizedAlgorithm, extractable, keyUsages);
++        break;
++      // case 'Ed25519':
++      // // Fall through
++      // case 'Ed448':
++      // // Fall through
++      // case 'X25519':
++      // // Fall through
++      // case 'X448':
++      //   result = await require('internal/crypto/cfrg').cfrgImportKey(
++      //     format,
++      //     keyData,
++      //     algorithm,
++      //     extractable,
++      //     keyUsages
++      //   );
++      //   break;
++      // case 'HMAC':
++      //   result = await hmacImportKey(normalizedAlgorithm, format, data, extractable, keyUsages);
++      //   break;
++      case 'AES-CTR':
++      // Fall through
++      case 'AES-CBC':
++      // Fall through
++      case 'AES-GCM':
++      // Fall through
++      // case 'AES-KW':
++      //   result = await aesImportKey(normalizedAlgorithm, format, data, extractable, keyUsages);
++      //   break;
++      // case 'HKDF':
++      // // Fall through
++      case 'PBKDF2':
++        result = importGenericSecretKeySync(normalizedAlgorithm, format, data, extractable, keyUsages);
++        break;
++      default:
++        throw new Error(`"subtle.importKey()" is not implemented for ${normalizedAlgorithm.name}`);
++    }
++    if ((result.type === 'secret' || result.type === 'private') && result.usages.length === 0) {
++      throw new Error(`Usages cannot be empty when importing a ${result.type} key.`);
++    }
++    return result;
++  }
+   async importKey(format, data, algorithm, extractable, keyUsages) {
+     const normalizedAlgorithm = normalizeAlgorithm(algorithm, 'importKey');
+     let result;
