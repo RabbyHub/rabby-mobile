@@ -279,7 +279,7 @@ export const TokenDetailScreen = () => {
 
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
-    if (isSingleAddress && rawPortfolios) {
+    if (isSingleAddress && rawPortfolios && rawPortfolios.length) {
       rawPortfolios?.forEach(portfolio => {
         if (portfolio.chain !== token.chain) {
           return;
