@@ -1542,7 +1542,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-get-random-values (1.10.0):
+  - react-native-get-random-values (1.11.0):
     - React-Core
   - react-native-ios-context-menu (1.15.3):
     - React-Core
@@ -1591,6 +1591,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-quick-base64 (2.2.0):
+    - React-Core
   - react-native-quick-crypto (0.7.13):
     - DoubleConversion
     - glog
@@ -2320,6 +2322,7 @@ DEPENDENCIES:
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
+  - react-native-quick-base64 (from `../node_modules/react-native-quick-base64`)
   - react-native-quick-crypto (from `../node_modules/react-native-quick-crypto`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -2510,6 +2513,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-pager-view:
     :path: "../node_modules/react-native-pager-view"
+  react-native-quick-base64:
+    :path: "../node_modules/react-native-quick-base64"
   react-native-quick-crypto:
     :path: "../node_modules/react-native-quick-crypto"
   react-native-randombytes:
@@ -2698,11 +2703,12 @@ SPEC CHECKSUMS:
   react-native-blur: 89fca766002a2cf738ff37cca82a9776700841e6
   react-native-cloud-storage: c6dcdd85718315adf3a2598b34fb7d3e7de7715a
   react-native-compat: 39946b7c56b5f95619353d20d3dcd39c8c7003c5
-  react-native-get-random-values: 384787fd76976f5aec9465aff6fa9e9129af1e74
+  react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-ios-context-menu: e529171ba760a1af7f2ef0729f5a7f4d226171c5
   react-native-mmkv: 5fc4966efbe7bf2b317be36c613518b6672d5855
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-pager-view: 31ec5d2c3bb0298e353bb704234dd94e6240a6fc
+  react-native-quick-base64: 5c67f3f20cf7878e9deb449188b432de897d212c
   react-native-quick-crypto: dc51e77fcb59697adaff88b30b36fcfdc4804a3f
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-safe-area-context: 8870dc3e45c8d241336cd8ee3fa3fc76f3a040ac

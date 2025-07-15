@@ -80,8 +80,13 @@ const config = {
     extraNodeModules: {
       ...require('node-libs-react-native'),
       assert: require.resolve('assert'),
-      crypto: require.resolve('react-native-quick-crypto'),
+      crypto: require.resolve('react-native-crypto'),
       stream: require.resolve('readable-stream'),
+      'base64-js': 'react-native-quick-base64',
+      base64: 'react-native-quick-base64',
+      'js-base64': 'react-native-quick-base64',
+      buffer: '@craftzdog/react-native-buffer',
+      'node:buffer': '@craftzdog/react-native-buffer',
       'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
     },
     /**

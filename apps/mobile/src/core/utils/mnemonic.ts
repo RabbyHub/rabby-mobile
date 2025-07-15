@@ -1,4 +1,5 @@
 import * as bip39 from '@scure/bip39';
+import * as import_english from '@scure/bip39/wordlists/english';
 import { HDKey } from 'ethereum-cryptography/hdkey';
 import * as sigUtil from 'eth-sig-util';
 import { bytesToHex, publicToAddress, privateToPublic } from '@ethereumjs/util';
@@ -8,7 +9,7 @@ function _addressFromPublicKey(publicKey: Uint8Array) {
 }
 
 export const getAddressFromMnemonic = (mnemonic: string, index: number) => {
-  const seed = bip39.mnemonicToSeedSync(mnemonic);
+  const seed = bip39.mnemonicToSeedSync(mnemonic, import_english.wordlist);
   const hdWallet = HDKey.fromMasterSeed(seed);
   const child = hdWallet!.derive(`m/44'/60'/0'/0/${index}`);
   const publicKey = privateToPublic(child.privateKey!);
