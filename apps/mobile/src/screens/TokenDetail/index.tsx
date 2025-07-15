@@ -29,6 +29,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
@@ -61,6 +62,8 @@ import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappP
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { useTokenDetail } from './hook';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -90,6 +93,7 @@ export const RightMore: React.FC<{
 }> = ({ token, triggerUpdate, refreshTags }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
+  const { colors2024 } = useTheme2024();
 
   const menuActions = React.useMemo(() => {
     return [
@@ -169,8 +173,62 @@ export const RightMore: React.FC<{
     ] as MenuAction[];
   }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
 
+  const {
+    removePinedToken,
+    pinToken,
+    userTokenSettings,
+    fetchUserTokenSettings,
+  } = useUserTokenSettings();
+
+  useEffect(() => {
+    fetchUserTokenSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isPined = useMemo(
+    () =>
+      userTokenSettings?.pinedQueue?.some(
+        pinned =>
+          pinned.chainId === token.chain && pinned.tokenId === token._tokenId,
+      ),
+    [token._tokenId, token.chain, userTokenSettings?.pinedQueue],
+  );
+
+  const handlePress = useCallback(() => {
+    if (isPined) {
+      removePinedToken({
+        id: token._tokenId,
+        chain: token.chain,
+      });
+    } else {
+      pinToken({
+        id: token._tokenId,
+        chain: token.chain,
+      });
+    }
+    setTimeout(() => {
+      refreshTags();
+    }, 0);
+  }, [
+    isPined,
+    pinToken,
+    refreshTags,
+    removePinedToken,
+    token._tokenId,
+    token.chain,
+  ]);
+
   return (
     <>
+      <TouchableOpacity style={{ marginRight: 18 }} onPress={handlePress}>
+        <RcIconFavorite
+          width={22}
+          height={21}
+          color={
+            isPined ? colors2024['orange-default'] : colors2024['neutral-info']
+          }
+        />
+      </TouchableOpacity>
       <DropDownMenuView
         menuConfig={{
           menuActions: menuActions,
@@ -407,14 +465,8 @@ export const TokenDetailScreen = () => {
   }, [token, triggerUpdate, isSingleAddress, refreshTag]);
 
   const getHeaderTitle = useCallback(() => {
-    return (
-      <TokenDetailHeaderArea
-        key={finalAccount?.address}
-        token={token}
-        refreshTags={refreshTag}
-      />
-    );
-  }, [finalAccount?.address, token, refreshTag]);
+    return <TokenDetailHeaderArea key={finalAccount?.address} token={token} />;
+  }, [finalAccount?.address, token]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
