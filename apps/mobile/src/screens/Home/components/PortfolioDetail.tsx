@@ -118,7 +118,8 @@ export const TokenList = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenNavigationProps<'DeFiDetail'>['route']>();
-  const { relateTokenId, isSingleAddress, account } = route.params || {};
+  const { relateTokenId, isSingleAddress, account, rawPortfolios } =
+    route.params || {};
 
   const [highlightAnim] = useState(new Animated.Value(0));
 
@@ -257,11 +258,12 @@ export const TokenList = ({
           _tokenId: token.id,
         } as any, // to do fix type
         isSingleAddress,
+        rawPortfolios: isSingleAddress ? rawPortfolios : undefined,
         account,
         fromPortfolio: true,
       });
     },
-    [account, isSingleAddress],
+    [account, isSingleAddress, rawPortfolios],
   );
 
   return list.length ? (

@@ -248,7 +248,7 @@ export const TokenDetailScreen = () => {
     return _token;
   }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
-  const { top10Addresses, list: accounts } = useAccountInfo();
+  const { top10Addresses, list: accounts, rawAllAccounts } = useAccountInfo();
   // const { tokensByAddress, isReady: tokenListIsReady } = useTokenDetail(
   //   token.chain,
   //   token._tokenId,
@@ -257,6 +257,9 @@ export const TokenDetailScreen = () => {
   //   isSingleAddress,
   // );
 
+  const finalAccount =
+    account || accounts[0] || preferenceService.getFallbackAccount();
+
   const { data: tokenEntityList } = useRequest(
     async () => {
       if (!token || !token._tokenId || !top10Addresses.length) {
@@ -264,19 +267,26 @@ export const TokenDetailScreen = () => {
       }
 
       return await TokenItemEntity.batchMultiAddressTokensByIdAndChain(
-        top10Addresses.map(item => item.toLowerCase()),
+        isSingleAddress
+          ? [finalAccount!.address]
+          : top10Addresses.map(item => item.toLowerCase()),
         token.chain,
         token._tokenId,
       );
     },
     {
-      refreshDeps: [token.chain, token._tokenId, top10Addresses],
+      refreshDeps: [
+        token.chain,
+        token._tokenId,
+        top10Addresses,
+        isSingleAddress,
+        finalAccount?.address,
+      ],
     },
   );
 
-  const finalAccount =
-    account || accounts[0] || preferenceService.getFallbackAccount();
-
+  console.log('rawPortfolios', rawPortfolios);
+  console.log('finalAccount', finalAccount.address);
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
     if (isSingleAddress && rawPortfolios && rawPortfolios.length) {
@@ -471,10 +481,14 @@ export const TokenDetailScreen = () => {
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
     if (isSingleAddress && token.amount) {
+      const dbToken = tokenEntityList?.find(
+        item => item.owner_addr === finalAccount!.address,
+      );
+      const amount = dbToken?.amount || token.amount;
       res.push({
         ...token,
-        amountStr: token._amountStr!,
-        amount: token.amount,
+        amountStr: formatTokenAmount(amount),
+        amount,
         address: finalAccount!.address,
         type: finalAccount!.type,
         aliasName:
@@ -657,6 +671,7 @@ export const TokenDetailScreen = () => {
           accounts={accounts}
           amountList={tokenFromAddress}
           token={token}
+          rawAllAccounts={rawAllAccounts}
         />
         {relateDefiList.length > 0 && (
           <RelatedDeFi

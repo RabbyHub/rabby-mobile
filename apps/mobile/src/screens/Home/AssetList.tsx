@@ -147,12 +147,13 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
         navigate(RootNames.DeFiDetail, {
           data,
           portfolioList: itemList,
+          rawPortfolios,
           account: currentAccount,
           cache: true,
           isSingleAddress: true,
         });
       },
-      [currentAccount],
+      [currentAccount, rawPortfolios],
     );
     const handlePressNft = useCallback(
       (item: NftItemWithCollection) => {

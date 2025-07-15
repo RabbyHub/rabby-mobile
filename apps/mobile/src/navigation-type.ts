@@ -65,6 +65,7 @@ export type RootStackParamsList = {
   [RootNames.DeFiDetail]?: {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];
+    rawPortfolios?: DisplayedProject[];
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
     cache: boolean;
