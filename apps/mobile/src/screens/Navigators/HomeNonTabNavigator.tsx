@@ -49,7 +49,7 @@ export default function HomeNonTabNavigator() {
             title: t('page.home.services.watchlist'),
             headerTransparent: false,
             headerStyle: {
-              backgroundColor: colors2024['neutral-bg-1'],
+              backgroundColor: colors2024['neutral-bg-0'],
             },
             headerShown: true,
             headerTitleStyle: styles.headerTitleText,
