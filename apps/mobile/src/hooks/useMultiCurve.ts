@@ -5,7 +5,7 @@ import {
 } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
@@ -92,6 +92,7 @@ export const useMultiCurve = (
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
+  const loadingMapRef = useRef<Record<string, boolean>>({});
 
   const fetch = useCallback(
     async (addres: string[], force = false) => {
@@ -150,6 +151,10 @@ export const useMultiCurve = (
         Array.from(nextCheckAddress).forEach(_addr => {
           const addr = _addr.toLowerCase();
           queue.add(async () => {
+            if (multiTimeStamp[addr]?.loading || loadingMapRef.current[addr]) {
+              return;
+            }
+            loadingMapRef.current[addr] = true;
             setMultiTimeStamp(prev => ({
               ...prev,
               [addr]: {
@@ -186,7 +191,11 @@ export const useMultiCurve = (
                   }),
                 },
               }));
-            } catch (error) {}
+            } catch (error) {
+              console.error('Fetch curve error', error);
+            } finally {
+              loadingMapRef.current[addr] = false;
+            }
           });
         });
         await waitQueueFinished(queue);
@@ -196,7 +205,7 @@ export const useMultiCurve = (
         setLoading(false);
       }
     },
-    [setLoading, setMultiTimeStamp],
+    [multiTimeStamp, setLoading, setMultiTimeStamp],
   );
 
   const refresh = useCallback(
@@ -222,22 +231,20 @@ export const useMultiCurve = (
       isAllGet ? totalBalance : 0,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addresses.length, multiTimeStamp, totalBalance, totalEvmBalance]);
+  }, [addresses.join('-'), multiTimeStamp, totalBalance, totalEvmBalance]);
 
   useEffect(() => {
     if (disableAutoFetch || queue.size > 0) {
       return;
     }
-    if (combineData.list.length === 0) {
+    const missingAddresses = addresses.filter(address => {
+      const addressData = multiTimeStamp[address.toLowerCase()];
+      return !addressData?.data?.length;
+    });
+    if (missingAddresses.length > 0) {
       fetch(addresses);
     }
-  }, [
-    addresses,
-    combineData.list.length,
-    disableAutoFetch,
-    fetch,
-    multiTimeStamp,
-  ]);
+  }, [addresses, disableAutoFetch, fetch, multiTimeStamp]);
 
   const isLoadingNew = useMemo(() => {
     return addresses?.every(address => {
