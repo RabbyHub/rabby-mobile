@@ -38,6 +38,7 @@ export default function HomeNonTabNavigator() {
           headerTitle: 'Search',
           headerTransparent: true,
           headerShown: false,
+          gestureEnabled: true,
         }}
       />
       <HomeNonTabStack.Screen
