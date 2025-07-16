@@ -251,7 +251,6 @@ export const SearchAssets: React.FC<Props> = ({
                 <Text style={styles.chainName}>{chainInfo.name}</Text>
               </View>
               <TouchableWithoutFeedback
-                disallowInterruption={true}
                 style={styles.close}
                 onPress={() => {
                   setChainEnum?.(undefined);
