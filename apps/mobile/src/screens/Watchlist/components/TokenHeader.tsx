@@ -18,8 +18,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   headerCell: {
     flexDirection: 'row',

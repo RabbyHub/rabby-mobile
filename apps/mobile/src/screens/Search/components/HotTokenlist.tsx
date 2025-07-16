@@ -128,7 +128,6 @@ const getStyle = createGetStyles2024(ctx => ({
     flex: 1,
   },
   titleContainer: {
-    // paddingTop: 12,
     paddingBottom: 16,
     paddingLeft: 20,
   },

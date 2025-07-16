@@ -107,9 +107,12 @@ const TokenListItemComponent = ({
               {ellipsisOverflowedText(getTokenSymbol(item), 12)}
             </Text>
             {/* FDV */}
-            <Text style={styles.tokenFdv}>
-              {item.identity?.fdv ? formatUsdValueKMB(item.identity?.fdv) : '-'}
-            </Text>
+            {!!item.identity?.fdv && (
+              <Text style={styles.tokenFdv}>
+                {formatUsdValueKMB(item.identity.fdv)}
+              </Text>
+            )}
+            {/* Chain Logo */}
           </View>
         </View>
       </View>
@@ -117,7 +120,7 @@ const TokenListItemComponent = ({
         {/* 价格 */}
         <Text style={styles.priceText}>${formatPrice(item.price)}</Text>
         {/* 24小时价格曲线 */}
-        <View>
+        <View style={styles.trendChartContainer}>
           <TrendChart
             isPositive={isPositive}
             data={item.price_curve_24h || []}
@@ -204,13 +207,19 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   changeText: {
     fontWeight: '700',
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 18,
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    marginTop: -4,
   },
   changeTextPositive: {
     color: colors2024['red-default'],
+  },
+  trendChartContainer: {
+    display: 'flex',
+    flexDirection: 'column',
   },
   leftSlot: {
     width: 24,

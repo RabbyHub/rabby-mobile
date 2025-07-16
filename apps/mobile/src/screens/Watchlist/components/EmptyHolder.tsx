@@ -68,5 +68,6 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    paddingBottom: 27,
   },
 }));

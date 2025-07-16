@@ -279,8 +279,8 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
-    paddingBottom: 14,
-    paddingTop: 6,
+    paddingBottom: 17,
+    paddingTop: 14,
   },
   bottomPadding: {
     height: 120,
