@@ -17,7 +17,11 @@ export const useHotTokenList = (visible?: boolean) => {
         }
         setLoading(true);
         const hotTokenListRes = await openapi.getHotTokenList();
-        setHotTokenList(hotTokenListRes);
+        setHotTokenList(
+          hotTokenListRes.sort((a, b) => {
+            return (b.identity?.fdv ?? 0) - (a.identity?.fdv ?? 0);
+          }),
+        );
         setLoading(false);
       } catch (error) {
         console.error('getHotTokenList error', error);

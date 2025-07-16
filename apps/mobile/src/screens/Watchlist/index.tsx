@@ -121,7 +121,7 @@ function WatchlistScreen(): JSX.Element {
         }
         return (b.price_24h_change ?? 0) - (a.price_24h_change ?? 0);
       }
-      return (b.credit_score ?? 0) - (a.credit_score ?? 0);
+      return (b.identity?.fdv ?? 0) - (a.identity?.fdv ?? 0);
     });
   }, [watchlistTokens, tokenSort, changeSort]);
 
