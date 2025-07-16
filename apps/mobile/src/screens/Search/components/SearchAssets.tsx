@@ -3,13 +3,12 @@ import RcIconClose from '@/assets2024/icons/search/RcIconClose.svg';
 import RcIconRight from '@/assets2024/icons/search/IconRight.svg';
 import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
 import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
-import React, { useCallback, useMemo, useState } from 'react';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Keyboard, Text, View } from 'react-native';
-import {
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-} from 'react-native-gesture-handler';
+import { TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 
 import { ASSETS_SECTION_HEADER, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -31,6 +30,8 @@ import { findChainByEnum } from '@/utils/chain';
 import { Skeleton } from '@rneui/themed';
 import { add0x, ellipsisAddress } from '@/utils/address';
 import { isValidHexAddress } from '@metamask/utils';
+import { IManageToken } from '@/core/services/preference';
+import { preferenceService } from '@/core/services';
 
 interface Props {
   resultTokens: AbstractPortfolioToken[];
@@ -52,6 +53,10 @@ export const SearchAssets: React.FC<Props> = ({
     return findChainByEnum(chainEnum);
   }, [chainEnum]);
 
+  const [watchlistTokenList, setWatchlistTokenList] = useState<IManageToken[]>(
+    [],
+  );
+
   const modalRef = React.useRef<MODAL_ID>();
 
   const removeChainModal = React.useCallback(() => {
@@ -59,6 +64,38 @@ export const SearchAssets: React.FC<Props> = ({
       removeGlobalBottomSheetModal2024(modalRef.current);
     }
   }, []);
+
+  const fetchPinedTokenList = useCallback(() => {
+    preferenceService.getUserTokenSettings().then(res => {
+      setWatchlistTokenList(res.pinedQueue || []);
+    });
+  }, []);
+
+  const handlePressFavorite = useCallback(
+    (tokenId: string, chainId: string) => {
+      if (
+        watchlistTokenList.some(
+          t => t.chainId === chainId && t.tokenId === tokenId,
+        )
+      ) {
+        preferenceService.removePinedToken({
+          chainId: chainId,
+          tokenId: tokenId,
+        });
+      } else {
+        preferenceService.pinToken({
+          chainId: chainId,
+          tokenId: tokenId,
+        });
+      }
+      fetchPinedTokenList();
+    },
+    [fetchPinedTokenList, watchlistTokenList],
+  );
+
+  useEffect(() => {
+    fetchPinedTokenList();
+  }, [fetchPinedTokenList]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -80,11 +117,39 @@ export const SearchAssets: React.FC<Props> = ({
             style={styles.renderItemWrapper}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
+            rightSlot={
+              <TouchableOpacity
+                style={styles.rightSlot}
+                onPress={e => {
+                  e.stopPropagation();
+                  handlePressFavorite(item.id, item.chain);
+                }}
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+                <RcIconFavorite
+                  width={22}
+                  height={21}
+                  color={
+                    watchlistTokenList.some(
+                      t => t.chainId === item.chain && t.tokenId === item.id,
+                    )
+                      ? colors2024['orange-default']
+                      : colors2024['neutral-info']
+                  }
+                />
+              </TouchableOpacity>
+            }
           />
         )
       );
     },
-    [handleOpenTokenDetail, styles],
+    [
+      colors2024,
+      handleOpenTokenDetail,
+      handlePressFavorite,
+      styles.renderItemWrapper,
+      styles.rightSlot,
+      watchlistTokenList,
+    ],
   );
 
   const createChainModal = React.useCallback(() => {
@@ -354,5 +419,8 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   footer: {
     height: 200,
+  },
+  rightSlot: {
+    marginLeft: 13,
   },
 }));

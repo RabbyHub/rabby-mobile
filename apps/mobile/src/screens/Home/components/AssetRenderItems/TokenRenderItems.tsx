@@ -259,6 +259,7 @@ export const ExternalTokenRow = memo(
     touchable = true,
     decimalPrecision = false,
     isPined = false,
+    rightSlot,
   }: {
     data: TokenRowDataType;
     style?: ViewStyle;
@@ -270,6 +271,7 @@ export const ExternalTokenRow = memo(
     onTokenPress?(token: TokenRowDataType): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
+    rightSlot?: ReactNode;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
@@ -415,6 +417,7 @@ export const ExternalTokenRow = memo(
                 </Text>
               </View>
             </View>
+            {rightSlot}
           </View>
 
           {ExtraContent}
