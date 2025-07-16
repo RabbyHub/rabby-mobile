@@ -25,6 +25,7 @@ import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '../Home/utils/token';
 import { useHotTokenList } from './hooks/useHotTokenList';
 import { WatchlistCheckbox } from './components/Checkbox';
+import { Skeleton } from '@rneui/themed';
 
 function WatchlistScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
@@ -54,11 +55,8 @@ function WatchlistScreen(): JSX.Element {
     return !hasData && !showGuide;
   }, [hasData, showGuide]);
 
-  const {
-    hotTokenList,
-    handleFetchHotTokenList,
-    loading: hotTokenListLoading,
-  } = useHotTokenList(showGuide);
+  const { hotTokenList, loading: hotTokenListLoading } =
+    useHotTokenList(showGuide);
 
   useFocusEffect(
     useCallback(() => {
@@ -177,6 +175,11 @@ function WatchlistScreen(): JSX.Element {
             showsHorizontalScrollIndicator={false}
             showsVerticalScrollIndicator={false}
             style={styles.scrollView}>
+            {hotTokenListLoading &&
+              hotTokenList.length === 0 &&
+              Array.from({ length: 8 }).map((_, idx) => (
+                <Skeleton style={styles.skeletonBlock} key={idx} />
+              ))}
             {hotTokenList.map(item => (
               <TokenListItem
                 leftSlot={
@@ -226,10 +229,15 @@ function WatchlistScreen(): JSX.Element {
                 style={styles.scrollView}
                 refreshControl={
                   <RefreshControl
-                    refreshing={watchlistLoading}
+                    refreshing={watchlistLoading && list.length !== 0}
                     onRefresh={() => handleFetchTokens(true)}
                   />
                 }>
+                {watchlistLoading &&
+                  list.length === 0 &&
+                  Array.from({ length: 8 }).map((_, idx) => (
+                    <Skeleton style={styles.skeletonBlock} key={idx} />
+                  ))}
                 {list.map(item => (
                   <TokenListItem
                     key={item.id}
@@ -248,7 +256,7 @@ function WatchlistScreen(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   overwriteStyle: {
     paddingTop: 0,
     position: 'relative',
@@ -276,6 +284,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   bottomPadding: {
     height: 120,
+  },
+  skeletonBlock: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+    width: '100%',
+    height: 74,
+    padding: 0,
+    borderRadius: 16,
+    marginTop: 8,
   },
 }));
 

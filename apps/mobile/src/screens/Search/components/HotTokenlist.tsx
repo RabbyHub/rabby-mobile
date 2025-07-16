@@ -8,10 +8,17 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { IManageToken } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+import { Skeleton } from '@rneui/themed';
 
 export const HotTokenList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -74,7 +81,18 @@ export const HotTokenList = () => {
       <ScrollView
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={hotTokenListLoading && hotTokenList.length !== 0}
+            onRefresh={() => handleFetchHotTokenList(true)}
+          />
+        }
         style={styles.scrollView}>
+        {hotTokenListLoading &&
+          hotTokenList.length === 0 &&
+          Array.from({ length: 8 }).map((_, idx) => (
+            <Skeleton style={styles.skeletonBlock} key={idx} />
+          ))}
         {hotTokenList.map(item => (
           <TokenListItem
             key={item.id}
@@ -82,7 +100,6 @@ export const HotTokenList = () => {
             onPress={() => handleOpenTokenDetail(item)}
             rightSlot={
               <TouchableOpacity
-                style={{ marginRight: 18 }}
                 onPress={() => handlePress(item)}
                 hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
                 <RcIconFavorite
@@ -121,5 +138,15 @@ const getStyle = createGetStyles2024(ctx => ({
     lineHeight: 20,
     color: ctx.colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+  },
+  skeletonBlock: {
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
+    width: '100%',
+    height: 74,
+    padding: 0,
+    borderRadius: 16,
+    marginTop: 8,
   },
 }));
