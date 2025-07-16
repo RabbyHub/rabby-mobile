@@ -10,20 +10,20 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import SearchEntry from './SearchEntry';
-import { EmptyWatchlist } from './EmptyHolder';
-import { TokenListItem } from './TokenItem';
-import TokenHeader from './TokenHeader';
+import SearchEntry from './components/SearchEntry';
+import { EmptyWatchlist } from './components/EmptyHolder';
+import { TokenListItem } from './components/TokenItem';
+import TokenHeader from './components/TokenHeader';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { preferenceService } from '@/core/services';
-import { useWatchlistTokens } from './useWatchlistTokens';
+import { useWatchlistTokens } from './hooks/useWatchlistTokens';
 import { navigate } from '@/utils/navigation';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '../Home/utils/token';
-import { useHotTokenList } from './useHotTokenList';
+import { useHotTokenList } from './hooks/useHotTokenList';
 
 function WatchlistScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });

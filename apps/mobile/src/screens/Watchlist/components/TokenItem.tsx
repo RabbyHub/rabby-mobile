@@ -8,7 +8,7 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { formatUsdValueKMB } from '../Home/utils/price';
+import { formatUsdValueKMB } from '../../Home/utils/price';
 import { formatPrice } from '@/utils/number';
 
 export const formatPercentage = (x: number) => {
@@ -22,9 +22,11 @@ export const formatPercentage = (x: number) => {
 const TrendChartComponent = ({
   isPositive,
   data,
+  width,
 }: {
   isPositive: boolean;
   data: { time_at: number; price: number }[];
+  width: number;
 }) => {
   const { colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -53,9 +55,10 @@ const TrendChartComponent = ({
     : colors2024['red-default'];
 
   return (
-    <View style={{ width: 90, height: 30, marginTop: -10, marginBottom: 10 }}>
+    <View
+      style={{ width: width, height: 30, marginTop: -10, marginBottom: 10 }}>
       <LineChart.Provider data={chartData}>
-        <LineChart height={50} width={90} shape={d3Shape.curveCatmullRom}>
+        <LineChart height={50} width={width} shape={d3Shape.curveCatmullRom}>
           <LineChart.Path showInactivePath={false} color={pathColor} width={1}>
             <LineChart.Gradient color={pathColor} />
           </LineChart.Path>
@@ -68,16 +71,27 @@ const TrendChartComponent = ({
 interface TokenListItemProps {
   item: TokenDetailWithPriceCurve;
   onPress: (item: TokenDetailWithPriceCurve) => void;
+  leftSlot?: React.ReactNode;
+  rightSlot?: React.ReactNode;
 }
 
 const TrendChart = React.memo(TrendChartComponent);
 
-const TokenListItemComponent = ({ item, onPress }: TokenListItemProps) => {
+const TokenListItemComponent = ({
+  item,
+  onPress,
+  leftSlot,
+  rightSlot,
+}: TokenListItemProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const isPositive = (item.price_24h_change || 0) >= 0;
+  const hasSlot = !!leftSlot || !!rightSlot;
+  const trendChartWidth = hasSlot ? 58 : 78;
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
+      {/* 左slot */}
+      {leftSlot && <View style={styles.leftSlot}>{leftSlot}</View>}
       <View style={styles.tokenLeftSection}>
         <View style={styles.tokenInfoContainer}>
           {/* Token Chain Logo */}
@@ -107,6 +121,7 @@ const TokenListItemComponent = ({ item, onPress }: TokenListItemProps) => {
           <TrendChart
             isPositive={isPositive}
             data={item.price_curve_24h || []}
+            width={trendChartWidth}
           />
           {/* 24小时价格百分比 */}
           <Text
@@ -118,6 +133,8 @@ const TokenListItemComponent = ({ item, onPress }: TokenListItemProps) => {
           </Text>
         </View>
       </View>
+      {/* 右slot */}
+      {rightSlot && <View style={styles.rightSlot}>{rightSlot}</View>}
     </TouchableOpacity>
   );
 };
@@ -194,5 +211,19 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   changeTextPositive: {
     color: colors2024['red-default'],
+  },
+  leftSlot: {
+    width: 24,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+  },
+  rightSlot: {
+    width: 24,
+    marginLeft: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'stretch',
   },
 }));

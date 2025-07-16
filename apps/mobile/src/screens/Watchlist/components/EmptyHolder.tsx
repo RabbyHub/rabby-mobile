@@ -27,7 +27,7 @@ export const EmptyWatchlist = ({ style }: { style?: ViewProps['style'] }) => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors, colors2024, isLight }) => ({
+const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   img: {
     width: 163,
     height: 126,
