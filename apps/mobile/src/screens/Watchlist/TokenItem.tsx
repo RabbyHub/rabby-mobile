@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
-import { CopyTradeTokenItemV2 } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -66,45 +66,36 @@ const TrendChartComponent = ({
 };
 
 interface TokenListItemProps {
-  item: CopyTradeTokenItemV2;
-  onPress: (item: CopyTradeTokenItemV2) => void;
+  item: TokenDetailWithPriceCurve;
+  onPress: (item: TokenDetailWithPriceCurve) => void;
 }
 
 const TrendChart = React.memo(TrendChartComponent);
 
 const TokenListItemComponent = ({ item, onPress }: TokenListItemProps) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const isPositive = (item.price_change || item.price_24h_change || 0) >= 0;
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  const isPositive = (item.price_24h_change || 0) >= 0;
 
   return (
     <TouchableOpacity style={styles.tokenItem} onPress={() => onPress(item)}>
       <View style={styles.tokenLeftSection}>
         <View style={styles.tokenInfoContainer}>
-          {/* Token头像 */}
+          {/* Token Chain Logo */}
           <AssetAvatar
             logo={item.logo_url}
             size={46}
             chain={item.chain}
             chainSize={16}
           />
-          {/* 链头像 */}
-          {/* {item.chain && (
-              <Image
-                source={{ uri: item.chain }}
-                style={styles.chainLogo}
-              />
-            )} */}
           <View style={styles.tokenInfo}>
             {/* symbol */}
             <Text style={styles.tokenName}>
               {ellipsisOverflowedText(getTokenSymbol(item), 12)}
             </Text>
-            {/* 市值 */}
-            {item.fdv && (
-              <Text style={styles.tokenFdv}>
-                {item.fdv ? formatUsdValueKMB(item.fdv) : '-'}
-              </Text>
-            )}
+            {/* FDV */}
+            <Text style={styles.tokenFdv}>
+              {item.identity?.fdv ? formatUsdValueKMB(item.identity?.fdv) : '-'}
+            </Text>
           </View>
         </View>
       </View>
@@ -123,9 +114,7 @@ const TokenListItemComponent = ({ item, onPress }: TokenListItemProps) => {
               styles.changeText,
               !isPositive && styles.changeTextPositive,
             ])}>
-            {formatPercentage(
-              Number(item.price_change) || Number(item.price_24h_change) || 0,
-            )}
+            {formatPercentage(Number(item.price_24h_change) || 0)}
           </Text>
         </View>
       </View>
