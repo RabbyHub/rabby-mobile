@@ -335,8 +335,8 @@ export const DeFiDetailScreen = () => {
   const sumNetWorth = useMemo(() => {
     const addressMap = new Map<string, SectionListItem>();
     sectionsMultiProject.forEach(item => {
-      if (!addressMap.has(item.address.toLocaleLowerCase())) {
-        addressMap.set(item.address.toLocaleLowerCase(), item);
+      if (!addressMap.has(item.address.toLowerCase())) {
+        addressMap.set(item.address.toLowerCase(), item);
       }
     });
     const res = Array.from(addressMap.values()).reduce((pre, cur) => {

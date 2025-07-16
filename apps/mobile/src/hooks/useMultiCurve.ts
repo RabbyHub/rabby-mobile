@@ -104,7 +104,7 @@ export const useMultiCurve = (
         const nextCheckAddress = new Set([...addres]);
         !force &&
           addres.forEach(_addr => {
-            const addr = _addr.toLocaleLowerCase();
+            const addr = _addr.toLowerCase();
             setMultiTimeStamp(prev => ({
               ...prev,
               [addr]: {
@@ -148,7 +148,7 @@ export const useMultiCurve = (
           });
         queue.clear();
         Array.from(nextCheckAddress).forEach(_addr => {
-          const addr = _addr.toLocaleLowerCase();
+          const addr = _addr.toLowerCase();
           queue.add(async () => {
             setMultiTimeStamp(prev => ({
               ...prev,
@@ -209,7 +209,7 @@ export const useMultiCurve = (
   const combineData = useMemo(() => {
     const list = addresses
       .map(address => {
-        const data = multiTimeStamp[address.toLocaleLowerCase()];
+        const data = multiTimeStamp[address.toLowerCase()];
         return data?.data || [];
       })
       .filter(data => data.length > 0);
@@ -241,7 +241,7 @@ export const useMultiCurve = (
 
   const isLoadingNew = useMemo(() => {
     return addresses?.every(address => {
-      return !multiTimeStamp[address.toLocaleLowerCase()]?.data?.length;
+      return !multiTimeStamp[address.toLowerCase()]?.data?.length;
     });
   }, [addresses, multiTimeStamp]);
 

@@ -212,7 +212,7 @@ export const useSelectTokens = ({
       return [];
     }
     if (currentAddress) {
-      resTokens = tokensMap[currentAddress?.toLocaleLowerCase()] || [];
+      resTokens = tokensMap[currentAddress?.toLowerCase()] || [];
     } else {
       resTokens = Object.values(tokensMap).flat();
     }
@@ -224,15 +224,15 @@ export const useSelectTokens = ({
         .filter(item => {
           const matchKeyWords = [item.id, item.symbol];
           return matchKeyWords.some(i =>
-            i?.toLocaleLowerCase().includes(keyword.toLocaleLowerCase()),
+            i?.toLowerCase().includes(keyword.toLowerCase()),
           );
         })
         .sort((a, b) => {
-          const keywordLower = keyword.toLocaleLowerCase();
-          const aIdLower = a.id?.toLocaleLowerCase() || '';
-          const bIdLower = b.id?.toLocaleLowerCase() || '';
-          const aSymbolLower = a.symbol?.toLocaleLowerCase() || '';
-          const bSymbolLower = b.symbol?.toLocaleLowerCase() || '';
+          const keywordLower = keyword.toLowerCase();
+          const aIdLower = a.id?.toLowerCase() || '';
+          const bIdLower = b.id?.toLowerCase() || '';
+          const aSymbolLower = a.symbol?.toLowerCase() || '';
+          const bSymbolLower = b.symbol?.toLowerCase() || '';
 
           // Check exact matches
           const aExactMatch =
