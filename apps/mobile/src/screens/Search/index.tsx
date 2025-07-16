@@ -17,6 +17,7 @@ import LinearGradient, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePinTokens } from './usePinTokens';
 import { PinedTokenList } from './components/PinedTokenList';
+import { HotTokenList } from './components/HotTokenlist';
 
 function SearchScreen(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -95,7 +96,7 @@ function SearchScreen(): JSX.Element {
             searchState={searchState}
           />
         ) : (
-          <PinedTokenList />
+          <HotTokenList />
         )}
       </View>
     </NormalScreenContainer2024>

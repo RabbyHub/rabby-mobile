@@ -1879,6 +1879,9 @@
         "title": "All Results",
         "searching": "Results for",
         "searchTips": "Search the web"
+      },
+      "hotTokenList": {
+        "title": "Suggested"
       }
     },
     "setting": {
