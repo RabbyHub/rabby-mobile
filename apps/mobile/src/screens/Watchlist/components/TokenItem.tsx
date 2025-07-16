@@ -214,14 +214,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   leftSlot: {
     width: 24,
-    marginRight: 8,
+    marginRight: 0,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'stretch',
   },
   rightSlot: {
     width: 24,
-    marginLeft: 12,
+    marginLeft: 4,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'stretch',

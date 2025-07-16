@@ -2040,7 +2040,7 @@
       },
       "footer": {
         "skip": "Skip",
-        "add": "Add to Watchlist {{count}}"
+        "add": "Add to Watchlist ({{count}})"
       }
     }
   },

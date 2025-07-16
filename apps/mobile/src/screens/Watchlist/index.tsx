@@ -24,6 +24,7 @@ import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '../Home/utils/token';
 import { useHotTokenList } from './hooks/useHotTokenList';
+import { WatchlistCheckbox } from './components/Checkbox';
 
 function WatchlistScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
@@ -42,6 +43,8 @@ function WatchlistScreen(): JSX.Element {
     'default',
   );
   const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
+  const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const showGuide = useMemo(() => {
     return !skip && !hasData;
@@ -68,6 +71,43 @@ function WatchlistScreen(): JSX.Element {
     preferenceService.setWatchlistSkip(false);
     setSkip(preferenceService.getWatchlistSkip());
   }, []);
+
+  // 当 hotTokenList 数据变化时，自动选中前五个（仅第一次）
+  useEffect(() => {
+    if (hotTokenList.length > 0 && !hasInitialized) {
+      const firstFiveIds = hotTokenList
+        .slice(0, 5)
+        .map(token => `${token.chain}:${token.id}`);
+      setSelectedTokens(new Set(firstFiveIds));
+      setHasInitialized(true);
+    }
+  }, [hotTokenList, hasInitialized]);
+
+  // 处理选中/取消选中
+  const handleTokenSelect = useCallback((tokenId: string) => {
+    setSelectedTokens(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(tokenId)) {
+        newSet.delete(tokenId);
+      } else {
+        newSet.add(tokenId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleAddToWatchlist = useCallback(() => {
+    const tokens = hotTokenList.filter(token =>
+      selectedTokens.has(`${token.chain}:${token.id}`),
+    );
+    tokens.forEach(token => {
+      preferenceService.pinToken({
+        chainId: token.chain,
+        tokenId: token.id,
+      });
+    });
+    handleFetchTokens();
+  }, [handleFetchTokens, hotTokenList, selectedTokens]);
 
   const list = useMemo(() => {
     return watchlistTokens.sort((a, b) => {
@@ -133,9 +173,24 @@ function WatchlistScreen(): JSX.Element {
       )}
       {showGuide ? (
         <>
-          <ScrollView style={styles.scrollView}>
+          <ScrollView
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            style={styles.scrollView}>
             {hotTokenList.map(item => (
-              <TokenListItem key={item.id} item={item} onPress={() => {}} />
+              <TokenListItem
+                leftSlot={
+                  <WatchlistCheckbox
+                    checked={selectedTokens.has(`${item.chain}:${item.id}`)}
+                    onPress={() =>
+                      handleTokenSelect(`${item.chain}:${item.id}`)
+                    }
+                  />
+                }
+                key={item.id}
+                item={item}
+                onPress={() => handleTokenSelect(`${item.chain}:${item.id}`)}
+              />
             ))}
           </ScrollView>
           <View style={styles.footer}>
@@ -149,8 +204,11 @@ function WatchlistScreen(): JSX.Element {
               </Text>
             </Pressable>
             <Button
-              title={t('page.watchlist.footer.add', { count: list.length })}
-              onPress={() => {}}
+              title={t('page.watchlist.footer.add', {
+                count: selectedTokens.size,
+              })}
+              disabled={selectedTokens.size === 0}
+              onPress={handleAddToWatchlist}
             />
           </View>
         </>
@@ -179,6 +237,7 @@ function WatchlistScreen(): JSX.Element {
                     onPress={handleOpenTokenDetail}
                   />
                 ))}
+                <View style={styles.bottomPadding} />
               </ScrollView>
             </>
           )}
@@ -214,6 +273,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     paddingBottom: 14,
     paddingTop: 6,
+  },
+  bottomPadding: {
+    height: 120,
   },
 }));
 
