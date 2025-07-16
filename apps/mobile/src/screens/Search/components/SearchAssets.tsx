@@ -32,6 +32,7 @@ import { add0x, ellipsisAddress } from '@/utils/address';
 import { isValidHexAddress } from '@metamask/utils';
 import { IManageToken } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
+import { toast } from '@/components2024/Toast';
 
 interface Props {
   resultTokens: AbstractPortfolioToken[];
@@ -82,6 +83,7 @@ export const SearchAssets: React.FC<Props> = ({
           chainId: chainId,
           tokenId: tokenId,
         });
+        toast.success(t('page.watchlist.toast.remove'));
       } else {
         preferenceService.pinToken({
           chainId: chainId,
@@ -90,7 +92,7 @@ export const SearchAssets: React.FC<Props> = ({
       }
       fetchPinedTokenList();
     },
-    [fetchPinedTokenList, watchlistTokenList],
+    [fetchPinedTokenList, t, watchlistTokenList],
   );
 
   useEffect(() => {

@@ -19,6 +19,7 @@ import { IManageToken } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { Skeleton } from '@rneui/themed';
+import { toast } from '@/components2024/Toast';
 
 export const HotTokenList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -62,6 +63,7 @@ export const HotTokenList = () => {
           chainId: token.chain,
           tokenId: token.id,
         });
+        toast.success(t('page.watchlist.toast.remove'));
       } else {
         preferenceService.pinToken({
           chainId: token.chain,
@@ -70,7 +72,7 @@ export const HotTokenList = () => {
       }
       fetchPinedTokenList();
     },
-    [fetchPinedTokenList, watchlistTokenList],
+    [fetchPinedTokenList, t, watchlistTokenList],
   );
 
   return (

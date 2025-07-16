@@ -28,7 +28,7 @@ import { WatchlistCheckbox } from './components/Checkbox';
 import { Skeleton } from '@rneui/themed';
 
 function WatchlistScreen(): JSX.Element {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const {
     data: watchlistTokens,
@@ -164,7 +164,7 @@ function WatchlistScreen(): JSX.Element {
 
   return (
     <NormalScreenContainer2024
-      type="bg0"
+      type={isLight ? 'bg0' : 'bg1'}
       overwriteStyle={styles.overwriteStyle}>
       {!hasData && (
         <EmptyWatchlist style={centerEmpty ? styles.centerEmpty : undefined} />

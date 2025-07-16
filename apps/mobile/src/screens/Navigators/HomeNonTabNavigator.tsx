@@ -13,7 +13,7 @@ const HomeNonTabStack =
   createCustomNativeStackNavigator<HomeNonTabNavigatorParamsList>();
 
 export default function HomeNonTabNavigator() {
-  const { colors, colors2024, styles } = useTheme2024({ getStyle });
+  const { colors, colors2024, styles, isLight } = useTheme2024({ getStyle });
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
   const { t } = useTranslation();
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
@@ -50,7 +50,9 @@ export default function HomeNonTabNavigator() {
             title: t('page.home.services.watchlist'),
             headerTransparent: false,
             headerStyle: {
-              backgroundColor: colors2024['neutral-bg-0'],
+              backgroundColor: isLight
+                ? colors2024['neutral-bg-0']
+                : colors2024['neutral-bg-1'],
             },
             headerShown: true,
             headerTitleStyle: styles.headerTitleText,
