@@ -18,11 +18,12 @@ import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { preferenceService } from '@/core/services';
-import { useWatchlistTokens } from './usePinTokens';
+import { useWatchlistTokens } from './useWatchlistTokens';
 import { navigate } from '@/utils/navigation';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '../Home/utils/token';
+import { useHotTokenList } from './useHotTokenList';
 
 function WatchlistScreen(): JSX.Element {
   const { styles } = useTheme2024({ getStyle });
@@ -50,6 +51,12 @@ function WatchlistScreen(): JSX.Element {
     return !hasData && !showGuide;
   }, [hasData, showGuide]);
 
+  const {
+    hotTokenList,
+    handleFetchHotTokenList,
+    loading: hotTokenListLoading,
+  } = useHotTokenList(showGuide);
+
   useFocusEffect(
     useCallback(() => {
       handleFetchTokens();
@@ -58,6 +65,7 @@ function WatchlistScreen(): JSX.Element {
   );
 
   useEffect(() => {
+    preferenceService.setWatchlistSkip(false);
     setSkip(preferenceService.getWatchlistSkip());
   }, []);
 
@@ -125,14 +133,8 @@ function WatchlistScreen(): JSX.Element {
       )}
       {showGuide ? (
         <>
-          <TokenHeader
-            tokenSort={tokenSort}
-            onTokenSort={handleTokenSort}
-            changeSort={changeSort}
-            onChangeSort={handleChangeSort}
-          />
           <ScrollView style={styles.scrollView}>
-            {list.map(item => (
+            {hotTokenList.map(item => (
               <TokenListItem key={item.id} item={item} onPress={() => {}} />
             ))}
           </ScrollView>
