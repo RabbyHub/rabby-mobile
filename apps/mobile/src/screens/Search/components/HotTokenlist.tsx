@@ -21,6 +21,7 @@ import { preferenceService } from '@/core/services';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { Skeleton } from '@rneui/themed';
 import { toast } from '@/components2024/Toast';
+import { useFocusEffect } from '@react-navigation/native';
 
 export const HotTokenList = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -49,9 +50,9 @@ export const HotTokenList = () => {
       setWatchlistTokenList(res.pinedQueue || []);
     });
   }, []);
-  useEffect(() => {
+  useFocusEffect(() => {
     fetchPinedTokenList();
-  }, [fetchPinedTokenList]);
+  });
 
   const handlePress = useCallback(
     (token: TokenDetailWithPriceCurve) => {
