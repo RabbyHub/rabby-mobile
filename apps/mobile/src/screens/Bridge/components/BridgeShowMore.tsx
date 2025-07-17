@@ -139,8 +139,11 @@ const BridgeShowMore = ({
   const [showGasFeeError, setShowGasFeeError] = useState(false);
 
   const closedError = useMemo(
-    () => !quoteLoading && !open && (showGasFeeError || showSlippageError),
-    [open, quoteLoading, showGasFeeError, showSlippageError],
+    () =>
+      !quoteLoading &&
+      !open &&
+      (showGasFeeError || showSlippageError || data?.showLoss),
+    [data?.showLoss, open, quoteLoading, showGasFeeError, showSlippageError],
   );
 
   useDebounce(
