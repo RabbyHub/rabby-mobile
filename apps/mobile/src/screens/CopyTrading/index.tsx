@@ -69,8 +69,6 @@ import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/
 import { matomoRequestEvent } from '@/utils/analytics';
 const DEFAULT_COUNT = 10;
 
-const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
-
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SkeletonTabList = React.memo(() => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -144,18 +142,12 @@ export const CopyTradingScreen = () => {
     ];
   }, [t]);
 
-  const { chainList, comingChainList } = useMemo(() => {
+  const { chainList } = useMemo(() => {
     const list = chainIdList
       .map(chainId => findChainByServerID(chainId))
       .filter(item => Boolean(item?.enum));
-    const comingList = DEFAULT_COMING_CHAIN_ID.filter(
-      id => !chainIdList.includes(id),
-    ).slice(0, 4 - list.length);
     return {
       chainList: list,
-      comingChainList: comingList
-        .map(chainId => findChainByServerID(chainId))
-        .filter(item => Boolean(item?.enum)),
     };
   }, [chainIdList]);
 
@@ -489,25 +481,6 @@ export const CopyTradingScreen = () => {
                     {chain?.name}
                   </Text>
                 </TouchableOpacity>
-              ))}
-              {comingChainList.map(chain => (
-                <Tip content={t('page.copyTrading.comingSoon')} key={chain?.id}>
-                  <View
-                    key={chain?.id}
-                    style={StyleSheet.flatten([
-                      styles.chainItem,
-                      styles.chainItemDisabled,
-                    ])}>
-                    <ChainIconImage
-                      size={18}
-                      chainEnum={chain?.enum}
-                      isShowRPCStatus={true}
-                    />
-                    <Text style={StyleSheet.flatten([styles.chainItemText])}>
-                      {chain?.name}
-                    </Text>
-                  </View>
-                </Tip>
               ))}
             </ScrollView>
             <FilterDropdownMenu
