@@ -209,7 +209,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     paddingBottom: 40,
     paddingTop: 12,
-    // backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-1'],
     // ...makeDebugBorder(),
   },
   navControlItem: {
