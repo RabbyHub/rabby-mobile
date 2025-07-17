@@ -19,6 +19,20 @@ export const useHotTokenList = (visible?: boolean) => {
         const hotTokenListRes = await openapi.getHotTokenList();
         setHotTokenList(
           hotTokenListRes.sort((a, b) => {
+            // ETH-ETH 默认排在最前面
+            const aIsEthEth =
+              a.chain.toLowerCase() === 'eth' && a.id.toLowerCase() === 'eth';
+            const bIsEthEth =
+              b.chain.toLowerCase() === 'eth' && b.id.toLowerCase() === 'eth';
+
+            if (aIsEthEth && !bIsEthEth) {
+              return -1;
+            }
+            if (!aIsEthEth && bIsEthEth) {
+              return 1;
+            }
+
+            // 其他代币按 fdv 排序
             return (b.identity?.fdv ?? 0) - (a.identity?.fdv ?? 0);
           }),
         );

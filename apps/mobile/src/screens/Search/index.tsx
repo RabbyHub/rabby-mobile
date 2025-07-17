@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Keyboard, SafeAreaView, TouchableOpacity, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -26,6 +27,7 @@ function SearchScreen(): JSX.Element {
   const { t } = useTranslation();
 
   const inputRef = useRef<any>(null);
+  const [hasFocused, setHasFocused] = useState(false);
 
   const insets = useSafeAreaInsets();
 
@@ -49,6 +51,22 @@ function SearchScreen(): JSX.Element {
 
   const { resultTokens, searched, loading, handleSearch } =
     useSearchTokens(searchState);
+
+  // 页面获得焦点后延迟300ms聚焦输入框（仅第一次）
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!hasFocused) {
+        const timer = setTimeout(() => {
+          inputRef.current?.focus();
+          setHasFocused(true);
+        }, 500);
+
+        return () => {
+          clearTimeout(timer);
+        };
+      }
+    }, [hasFocused]),
+  );
 
   return (
     <NormalScreenContainer2024
@@ -80,9 +98,7 @@ function SearchScreen(): JSX.Element {
             setSearchState(v);
           }}
           returnKeyType="search"
-          autoFocus={true}
           onSubmitEditing={() => {
-            console.log('onSubmitEditing', searchState);
             handleSearch(searchState);
           }}
           ref={inputRef}

@@ -70,12 +70,12 @@ export const WatchlistCheckbox = ({
     <TouchableOpacity onPress={onPress}>
       {checked ? (
         <RcIconCheckboxCC
-          fillColor={colors2024['brand-default']}
-          strokeColor={colors2024['orange-default']}
+          fillColor={colors2024['orange-default']}
+          strokeColor={colors2024['brand-default']}
         />
       ) : (
         <RcIconUncheckboxCC
-          strokeColor={colors2024['neutral-body']}
+          strokeColor={colors2024['neutral-foot']}
           width={24}
           height={24}
         />

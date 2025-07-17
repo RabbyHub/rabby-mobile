@@ -38,7 +38,7 @@ function WatchlistScreen(): JSX.Element {
   } = useWatchlistTokens();
 
   const [tokenSort, setTokenSort] = useState<'desc' | 'asc' | 'default'>(
-    'default',
+    'desc',
   );
   const [changeSort, setChangeSort] = useState<'desc' | 'asc' | 'default'>(
     'default',
@@ -144,6 +144,9 @@ function WatchlistScreen(): JSX.Element {
       if (prev === 'desc') {
         return 'asc';
       }
+      if (prev === 'asc') {
+        return 'desc';
+      }
       return 'default';
     });
     setChangeSort('default');
@@ -156,6 +159,9 @@ function WatchlistScreen(): JSX.Element {
       }
       if (prev === 'desc') {
         return 'asc';
+      }
+      if (prev === 'asc') {
+        return 'desc';
       }
       return 'default';
     });

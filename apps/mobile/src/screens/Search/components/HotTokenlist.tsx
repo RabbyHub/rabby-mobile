@@ -9,6 +9,7 @@ import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Keyboard,
   RefreshControl,
   ScrollView,
   Text,
@@ -83,6 +84,9 @@ export const HotTokenList = () => {
       <ScrollView
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
+        onScroll={() => {
+          Keyboard.dismiss();
+        }}
         refreshControl={
           <RefreshControl
             refreshing={hotTokenListLoading && hotTokenList.length !== 0}
@@ -119,6 +123,7 @@ export const HotTokenList = () => {
             }
           />
         ))}
+        <View style={styles.footer} />
       </ScrollView>
     </>
   );
@@ -149,5 +154,8 @@ const getStyle = createGetStyles2024(ctx => ({
     padding: 0,
     borderRadius: 16,
     marginTop: 8,
+  },
+  footer: {
+    height: 120,
   },
 }));
