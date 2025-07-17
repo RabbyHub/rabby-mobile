@@ -15,11 +15,14 @@ export const tabsAtom = atom({
   activeTabId: emptyTab.id,
 });
 
+export const visibleAtom = atom(false);
+
 export function useBrowser() {
-  const navigation = useRabbyAppNavigation();
+  // const navigation = useRabbyAppNavigation();
 
   const [store, setStore] = useAtom(tabsAtom);
-  const route = useRoute();
+  const [visible, setVisible] = useAtom(visibleAtom);
+  // const route = useRoute();
 
   const getBrowserTabs = useMemoizedFn(() => {
     setStore(browserService.getBrowserTabs());
@@ -31,14 +34,14 @@ export function useBrowser() {
   });
 
   const navigateToBrowserScreen = useMemoizedFn(() => {
-    if (route.name === RootNames.BrowserScreen) {
-      return;
-    }
-    navigation.dispatch(
-      TabActions.jumpTo(RootNames.StackBrowser, {
-        screen: RootNames.BrowserScreen,
-      }),
-    );
+    // if (route.name === RootNames.BrowserScreen) {
+    //   return;
+    // }
+    // navigation.dispatch(
+    //   TabActions.jumpTo(RootNames.StackBrowser, {
+    //     screen: RootNames.BrowserScreen,
+    //   }),
+    // );
     // navigation.navigate(RootNames.StackBrowser, {
     //   screen: RootNames.BrowserScreen,
     // });
@@ -101,6 +104,7 @@ export function useBrowser() {
   );
 
   const openTab = useMemoizedFn((url?: string) => {
+    setVisible(true);
     if (!url || !/^https?:\/\//.test(url)) {
       switchToTab(emptyTab.id);
       return;
@@ -151,5 +155,7 @@ export function useBrowser() {
     updateTab,
     openTab,
     closeAllTabs,
+    visible,
+    setVisible,
   };
 }

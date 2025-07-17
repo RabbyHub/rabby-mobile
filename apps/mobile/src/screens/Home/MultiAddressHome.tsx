@@ -93,6 +93,7 @@ import { RateModal } from '@/components/RateModal/RateModal';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useInitDetectDBAssets } from '../Search/useAssets';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 
 const HeaderHeight = 24;
 
@@ -621,6 +622,7 @@ function MultiAddressHome(): JSX.Element {
     });
   }, [navigation]);
 
+  const { setVisible } = useBrowser();
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
       switch (key) {
@@ -676,10 +678,11 @@ function MultiAddressHome(): JSX.Element {
           );
           break;
         case MultiHomeFeatTitle.Dapps:
-          navigation.navigate(RootNames.StackBrowser, {
-            screen: RootNames.BrowserScreen,
-            params: {},
-          });
+          // navigation.navigate(RootNames.StackBrowser, {
+          //   screen: RootNames.BrowserScreen,
+          //   params: {},
+          // });
+          setVisible(true);
           break;
         case MultiHomeFeatTitle.Search: {
           handlePressSearch();
@@ -707,6 +710,7 @@ function MultiAddressHome(): JSX.Element {
       handlePressSearch,
       navigateToSendPolyScreen,
       navigation,
+      setVisible,
       toggleUseAllAccountsOnScene,
     ],
   );

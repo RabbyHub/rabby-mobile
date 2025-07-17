@@ -17,7 +17,7 @@ import { IS_IOS } from '@/core/native/utils';
 import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { useMyAccounts } from '@/hooks/account';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+// import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { getAddressBarTitle, isGoogle } from '@/utils/browser';
 import { findChain } from '@/utils/chain';
@@ -49,7 +49,7 @@ export function BrowserHeader({
 
   const { t } = useTranslation();
 
-  const navigation = useRabbyAppNavigation();
+  // const navigation = useRabbyAppNavigation();
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -67,7 +67,7 @@ export function BrowserHeader({
   const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
 
   const handleClose = useMemoizedFn(() => {
-    navigation.goBack();
+    // navigation.goBack();
   });
 
   const chain = useMemo(() => {

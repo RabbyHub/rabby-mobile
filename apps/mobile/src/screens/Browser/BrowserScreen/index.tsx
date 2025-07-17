@@ -1,4 +1,10 @@
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -24,7 +30,8 @@ export function BrowserScreen() {
 
   const activeDappWebViewControlRef = useRef<any>(null);
 
-  const { tabs, activeTabId, closeTab, updateTab, openTab } = useBrowser();
+  const { visible, tabs, activeTabId, closeTab, updateTab, openTab } =
+    useBrowser();
 
   const activeTabOrigin = useMemo(() => {
     const tab = tabs.find(t => t.id === activeTabId);
@@ -47,18 +54,24 @@ export function BrowserScreen() {
 
   useSyncDappsInfo();
 
-  useFocusEffect(
-    useCallback(() => {
-      globalSetActiveDappState({
-        isScreenHide: false,
-      });
-      return () => {
-        globalSetActiveDappState({
-          isScreenHide: true,
-        });
-      };
-    }, []),
-  );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     globalSetActiveDappState({
+  //       isScreenHide: false,
+  //     });
+  //     return () => {
+  //       globalSetActiveDappState({
+  //         isScreenHide: true,
+  //       });
+  //     };
+  //   }, []),
+  // );
+
+  useEffect(() => {
+    globalSetActiveDappState({
+      isScreenHide: !visible,
+    });
+  }, [visible]);
 
   return (
     <View

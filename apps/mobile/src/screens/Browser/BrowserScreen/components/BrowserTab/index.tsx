@@ -136,7 +136,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [contentMode, setContentMode] =
       useState<WebViewProps['contentMode']>('mobile');
 
-    const navigation = useRabbyAppNavigation();
+    // const navigation = useRabbyAppNavigation();
     const { dapps, disconnectDapp, setDapp } = useDapps();
     const { bookmarkStore, addBookmark, removeBookmark } = useBrowserBookmark();
 
@@ -331,9 +331,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleViewTabs = useMemoizedFn(async () => {
       await handleViewShot(webviewState.url);
-      navigation.navigate(RootNames.StackBrowser, {
-        screen: RootNames.BrowserManageScreen,
-      });
+      // navigation.navigate(RootNames.StackBrowser, {
+      //   screen: RootNames.BrowserManageScreen,
+      // });
     });
 
     const handleGoHome = useMemoizedFn(() => {
