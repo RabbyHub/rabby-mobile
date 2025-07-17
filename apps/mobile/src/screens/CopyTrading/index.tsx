@@ -324,7 +324,7 @@ export const CopyTradingScreen = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.COPY_TRADING_EARNINGS,
       bottomSheetModalProps: {
-        enableContentPanningGesture: false,
+        enableContentPanningGesture: true,
         enablePanDownToClose: true,
         handleStyle: {
           backgroundColor: isLight
