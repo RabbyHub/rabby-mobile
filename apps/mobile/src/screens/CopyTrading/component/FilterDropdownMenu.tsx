@@ -97,7 +97,7 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
           <RcIconVectorCC
             height={15}
             color={colors2024['neutral-line']}
-            style={{ marginRight: 12 }}
+            style={{ marginRight: 8 }}
           />
           {getRenderIcon(selectedRule, 22, colors2024['brand-default'])}
           <RcIconArrowDownCC
@@ -209,7 +209,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'absolute',
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 12,
-    paddingVertical: 8,
     minWidth: 120,
     shadowColor: colors2024['neutral-bg-1'],
     padding: 12,

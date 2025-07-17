@@ -682,7 +682,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   chainItem: {
     display: 'flex',
     flexDirection: 'row',
-    // alignItems: 'center',
+    alignItems: 'center',
     gap: 6,
     paddingVertical: 6,
     paddingHorizontal: 8,
