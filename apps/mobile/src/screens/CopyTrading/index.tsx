@@ -69,8 +69,6 @@ import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/
 import { matomoRequestEvent } from '@/utils/analytics';
 const DEFAULT_COUNT = 10;
 
-const DEFAULT_COMING_CHAIN_ID = ['base', 'eth', 'bsc', 'avax'];
-
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SkeletonTabList = React.memo(() => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -144,18 +142,12 @@ export const CopyTradingScreen = () => {
     ];
   }, [t]);
 
-  const { chainList, comingChainList } = useMemo(() => {
+  const { chainList } = useMemo(() => {
     const list = chainIdList
       .map(chainId => findChainByServerID(chainId))
       .filter(item => Boolean(item?.enum));
-    const comingList = DEFAULT_COMING_CHAIN_ID.filter(
-      id => !chainIdList.includes(id),
-    ).slice(0, 4 - list.length);
     return {
       chainList: list,
-      comingChainList: comingList
-        .map(chainId => findChainByServerID(chainId))
-        .filter(item => Boolean(item?.enum)),
     };
   }, [chainIdList]);
 
@@ -324,7 +316,7 @@ export const CopyTradingScreen = () => {
     const modalId = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.COPY_TRADING_EARNINGS,
       bottomSheetModalProps: {
-        enableContentPanningGesture: false,
+        enableContentPanningGesture: true,
         enablePanDownToClose: true,
         handleStyle: {
           backgroundColor: isLight
@@ -490,25 +482,6 @@ export const CopyTradingScreen = () => {
                   </Text>
                 </TouchableOpacity>
               ))}
-              {comingChainList.map(chain => (
-                <Tip content={t('page.copyTrading.comingSoon')} key={chain?.id}>
-                  <View
-                    key={chain?.id}
-                    style={StyleSheet.flatten([
-                      styles.chainItem,
-                      styles.chainItemDisabled,
-                    ])}>
-                    <ChainIconImage
-                      size={18}
-                      chainEnum={chain?.enum}
-                      isShowRPCStatus={true}
-                    />
-                    <Text style={StyleSheet.flatten([styles.chainItemText])}>
-                      {chain?.name}
-                    </Text>
-                  </View>
-                </Tip>
-              ))}
             </ScrollView>
             <FilterDropdownMenu
               isVisible={isMenuVisible}
@@ -524,7 +497,9 @@ export const CopyTradingScreen = () => {
       {currentUpdateCount > 0 && (
         <View style={styles.updateContainer}>
           <Text style={styles.updateText}>
-            {t('page.copyTrading.updateText', { count: currentUpdateCount })}
+            {t('page.copyTrading.updateTokenText', {
+              count: currentUpdateCount,
+            })}
           </Text>
         </View>
       )}
@@ -579,7 +554,7 @@ export const CopyTradingScreen = () => {
                     }).start();
                   }, 500);
                 }}
-                title={t('page.copyTrading.refreshTitle')}
+                title={t('page.copyTrading.gettingLatest')}
                 titleColor={colors2024['neutral-secondary']}
                 tintColor={colors2024['neutral-secondary']}
                 progressBackgroundColor={colors2024['neutral-bg-1']}
@@ -682,7 +657,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   chainItem: {
     display: 'flex',
     flexDirection: 'row',
-    // alignItems: 'center',
+    alignItems: 'center',
     gap: 6,
     paddingVertical: 6,
     paddingHorizontal: 8,

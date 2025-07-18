@@ -1,5 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
+  BackHandler,
   Image,
   Text,
   TouchableOpacity,
@@ -25,6 +32,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { CurrentDappPopup } from './CurrentDappPopup';
+import { useFocusEffect } from '@react-navigation/native';
 
 export function BrowserHeader({
   dapp,
@@ -91,6 +99,23 @@ export function BrowserHeader({
       }, 100);
     }
   }, [isFocused]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        setIsShowAccountPopup(false);
+        setIsShowCurrentDappPopup(false);
+        return false;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
+
+      return () => subscription.remove();
+    }, []),
+  );
 
   if (isFocused) {
     return (

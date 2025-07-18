@@ -1125,6 +1125,11 @@ export class TransactionHistoryService {
         isSameAddress(address, item.address) && item.status === 'pending'
       );
     });
+    this.store.bridgeTxHistory = this.store.bridgeTxHistory.filter(item => {
+      return !(
+        isSameAddress(address, item.address) && item.status !== 'allSuccess'
+      );
+    });
   }
 
   removeFeatPendingByLocal(localItem: TransactionHistoryItem) {
@@ -1143,6 +1148,15 @@ export class TransactionHistoryService {
           isSameAddress(localItem.address, tx.address) &&
           tx.status === 'pending' &&
           localItem.chainId === tx.chainId &&
+          localItem?.hash === tx.hash
+        ),
+    );
+    this.store.bridgeTxHistory = this.store.bridgeTxHistory.filter(
+      tx =>
+        !(
+          isSameAddress(localItem.address, tx.address) &&
+          tx.status !== 'allSuccess' &&
+          localItem.chainId === tx.fromChainId &&
           localItem?.hash === tx.hash
         ),
     );

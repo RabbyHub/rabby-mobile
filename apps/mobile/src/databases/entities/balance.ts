@@ -12,7 +12,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
   @Column('real')
   balance: number = 0;
   // evm balance
-  @Column('real')
+  @Column('real', { default: 0 })
   evm_usd_value: number = 0;
   // is_core
   @Column('boolean', { default: false })

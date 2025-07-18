@@ -70,3 +70,48 @@ export function compareVersions(v1: string, v2: string): number {
 
   return 0;
 }
+
+interface RetryOptions {
+  /** 最大重试次数，默认为 3 */
+  retries?: number;
+  /** 重试间隔时间(毫秒)，默认为 1000 */
+  delay?: number;
+  /** 每次重试时的回调函数 */
+  onRetry?: (error: Error, remainingRetries: number) => void;
+}
+
+/**
+ * 重试函数
+ * @param fn 需要重试的函数，应返回 Promise
+ * @param options 配置选项
+ * @returns 返回 fn 的成功结果或最终错误
+ */
+export function retry<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {},
+): Promise<T> {
+  const { retries = 3, delay = 1000, onRetry } = options;
+  let attempts = 0;
+
+  return new Promise((resolve, reject) => {
+    const attempt = () => {
+      fn()
+        .then(resolve)
+        .catch((error: Error) => {
+          attempts++;
+          const remainingRetries = retries - attempts;
+
+          if (remainingRetries >= 0) {
+            if (typeof onRetry === 'function') {
+              onRetry(error, remainingRetries);
+            }
+            setTimeout(attempt, delay);
+          } else {
+            reject(error);
+          }
+        });
+    };
+
+    attempt();
+  });
+}
