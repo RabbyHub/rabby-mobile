@@ -89,6 +89,8 @@ export const HotTokenList = () => {
       <ScrollView
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
         onScroll={() => {
           Keyboard.dismiss();
         }}
