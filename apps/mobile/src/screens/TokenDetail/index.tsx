@@ -285,8 +285,6 @@ export const TokenDetailScreen = () => {
     },
   );
 
-  console.log('rawPortfolios', rawPortfolios);
-  console.log('finalAccount', finalAccount.address);
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
     if (isSingleAddress && rawPortfolios && rawPortfolios.length) {
