@@ -47,8 +47,8 @@ function WatchlistScreen(): JSX.Element {
   const [hasInitialized, setHasInitialized] = useState(false);
 
   const showGuide = useMemo(() => {
-    return !skip && !hasData;
-  }, [hasData, skip]);
+    return !skip && !hasData && !watchlistLoading;
+  }, [hasData, skip, watchlistLoading]);
 
   const centerEmpty = useMemo(() => {
     return !hasData && !showGuide;
@@ -65,7 +65,6 @@ function WatchlistScreen(): JSX.Element {
   );
 
   useEffect(() => {
-    preferenceService.setWatchlistSkip(false);
     setSkip(preferenceService.getWatchlistSkip());
   }, []);
 
