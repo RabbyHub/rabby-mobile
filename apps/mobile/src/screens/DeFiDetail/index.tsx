@@ -331,8 +331,15 @@ export const DeFiDetailScreen = () => {
     );
   }, [data, assetsMap, accounts, isSingleAddress, finalAccount, portfolioList]);
 
+  // 来自同一个地址的totalUsdValue不重复计算
   const sumNetWorth = useMemo(() => {
-    const res = sectionsMultiProject.reduce((pre, cur) => {
+    const addressMap = new Map<string, SectionListItem>();
+    sectionsMultiProject.forEach(item => {
+      if (!addressMap.has(item.address.toLowerCase())) {
+        addressMap.set(item.address.toLowerCase(), item);
+      }
+    });
+    const res = Array.from(addressMap.values()).reduce((pre, cur) => {
       return pre.plus(cur.totalUsdValue);
     }, new BigNumber(0));
     return res ? formatNetworth(res.toNumber()) : data._netWorth;

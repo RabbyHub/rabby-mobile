@@ -178,7 +178,7 @@ function SendScreen({
       const toCexId = addrDesc?.cex?.id;
       if (toCexId) {
         const noSupportToken = token.cex_ids?.every?.(
-          id => id.toLocaleLowerCase() !== toCexId.toLocaleLowerCase(),
+          id => id.toLowerCase() !== toCexId.toLowerCase(),
         );
         if (!token?.cex_ids?.length || noSupportToken) {
           return {
@@ -191,10 +191,10 @@ function SendScreen({
           .filter(([, contract]) => {
             return contract.multisig;
           })
-          .map(([chain]) => chain?.toLocaleLowerCase());
+          .map(([chain]) => chain?.toLowerCase());
         if (
           safeChains.length > 0 &&
-          !safeChains.includes(token?.chain?.toLocaleLowerCase())
+          !safeChains.includes(token?.chain?.toLowerCase())
         ) {
           return {
             disable: true,
@@ -202,11 +202,11 @@ function SendScreen({
           };
         }
         const contactChains = Object.entries(addrDesc?.contract || {}).map(
-          ([chain]) => chain?.toLocaleLowerCase(),
+          ([chain]) => chain?.toLowerCase(),
         );
         if (
           contactChains.length > 0 &&
-          !contactChains.includes(token?.chain?.toLocaleLowerCase())
+          !contactChains.includes(token?.chain?.toLowerCase())
         ) {
           return {
             disable: true,

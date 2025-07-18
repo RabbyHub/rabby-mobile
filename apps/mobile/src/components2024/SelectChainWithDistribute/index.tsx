@@ -61,7 +61,7 @@ export default function SelectChainWithDistribute({
     }
     return (
       chainList?.filter(item =>
-        item.chain.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
+        item.chain.toLowerCase().includes(search.toLowerCase()),
       ) || []
     );
   }, [chainList, search]);

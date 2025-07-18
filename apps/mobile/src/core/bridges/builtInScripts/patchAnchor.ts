@@ -2,7 +2,7 @@ export const PATCH_ANCHOR_CLICK = `
 (function(){
   document.body.addEventListener('click', function () {
     const target = event.target || event.srcElement;
-    if (target.nodeName.toLocaleLowerCase() === 'a') {
+    if (target.nodeName.toLowerCase() === 'a') {
         if (event.preventDefault) {
             event.preventDefault();
         } else {
