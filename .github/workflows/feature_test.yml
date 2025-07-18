@@ -96,7 +96,7 @@ jobs:
         run: |
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
-          nvm install v22 && nvm use;
+          nvm use;
           rm -rf node_modules;
           yarn install;
           bundle install;
