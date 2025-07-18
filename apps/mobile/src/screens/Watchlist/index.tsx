@@ -59,9 +59,11 @@ function WatchlistScreen(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
+      if (skip && !hasData) {
+        return;
+      }
       handleFetchTokens();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []),
+    }, [skip, hasData, handleFetchTokens]),
   );
 
   useEffect(() => {
@@ -77,7 +79,7 @@ function WatchlistScreen(): JSX.Element {
       setSelectedTokens(new Set(firstFiveIds));
       setHasInitialized(true);
     }
-  }, [hotTokenList, hasInitialized]);
+  }, [hotTokenList.length, hasInitialized, hotTokenList]);
 
   // 处理选中/取消选中
   const handleTokenSelect = useCallback((tokenId: string) => {

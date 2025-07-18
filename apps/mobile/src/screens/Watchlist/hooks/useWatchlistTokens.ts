@@ -22,61 +22,66 @@ export const useWatchlistTokens = () => {
   // token级别缓存，key为chainId:tokenId
   const cacheRef = useRef<Map<string, TokenDetailWithPriceCurve>>(new Map());
 
-  const getWatchlistTokens = useCallback(async (force = false) => {
-    try {
-      setLoading(true);
-      const { pinedQueue = [] } =
-        await preferenceService.getUserTokenSettings();
-      setHasData(pinedQueue.length > 0);
-      // 生成所有token的key
-      const allKeys = pinedQueue
-        .filter(t => t.chainId && t.tokenId)
-        .map(i => `${i.chainId}:${i.tokenId}`);
-      let needFetchKeys = allKeys;
-      if (!force) {
-        needFetchKeys = allKeys.filter(key => !cacheRef.current.has(key));
-      }
-      // 分批请求未缓存的token
-      let newTokenDetails: TokenDetailWithPriceCurve[] = [];
-      const batches = chunkArray(
-        pinedQueue.filter(t =>
-          needFetchKeys.includes(`${t.chainId}:${t.tokenId}`),
-        ),
-        50,
-      );
-      for (const batch of batches) {
-        const batchKeys = batch.map(i => `${i.chainId}:${i.tokenId}`);
-        if (batchKeys.length === 0) {
-          continue;
+  const getWatchlistTokens = useCallback(
+    async (force = false) => {
+      try {
+        if (data.length === 0) {
+          setLoading(true);
         }
-        const batchDetails = await openapi.getTokensDetailByUuids(batchKeys);
-        // 更新缓存
-        batchDetails.forEach(token => {
-          const key = `${token.chain}:${token.id}`;
-          cacheRef.current.set(key, token);
-        });
-        newTokenDetails = [...newTokenDetails, ...batchDetails];
+        const { pinedQueue = [] } =
+          await preferenceService.getUserTokenSettings();
+        setHasData(pinedQueue.length > 0);
+        // 生成所有token的key
+        const allKeys = pinedQueue
+          .filter(t => t.chainId && t.tokenId)
+          .map(i => `${i.chainId}:${i.tokenId}`);
+        let needFetchKeys = allKeys;
+        if (!force) {
+          needFetchKeys = allKeys.filter(key => !cacheRef.current.has(key));
+        }
+        // 分批请求未缓存的token
+        let newTokenDetails: TokenDetailWithPriceCurve[] = [];
+        const batches = chunkArray(
+          pinedQueue.filter(t =>
+            needFetchKeys.includes(`${t.chainId}:${t.tokenId}`),
+          ),
+          50,
+        );
+        for (const batch of batches) {
+          const batchKeys = batch.map(i => `${i.chainId}:${i.tokenId}`);
+          if (batchKeys.length === 0) {
+            continue;
+          }
+          const batchDetails = await openapi.getTokensDetailByUuids(batchKeys);
+          // 更新缓存
+          batchDetails.forEach(token => {
+            const key = `${token.chain}:${token.id}`;
+            cacheRef.current.set(key, token);
+          });
+          newTokenDetails = [...newTokenDetails, ...batchDetails];
+        }
+        // force时，清理缓存并重新填充
+        if (force) {
+          cacheRef.current.clear();
+          newTokenDetails.forEach(token => {
+            const key = `${token.chain}:${token.id}`;
+            cacheRef.current.set(key, token);
+          });
+        }
+        // 返回顺序与pinedQueue一致的完整token列表
+        const result = allKeys
+          .map(key => cacheRef.current.get(key))
+          .filter(Boolean) as TokenDetailWithPriceCurve[];
+        setLoading(false);
+        return result;
+      } catch (error) {
+        console.error('getWatchlistTokens error', error);
+        setLoading(false);
+        return [];
       }
-      // force时，清理缓存并重新填充
-      if (force) {
-        cacheRef.current.clear();
-        newTokenDetails.forEach(token => {
-          const key = `${token.chain}:${token.id}`;
-          cacheRef.current.set(key, token);
-        });
-      }
-      // 返回顺序与pinedQueue一致的完整token列表
-      const result = allKeys
-        .map(key => cacheRef.current.get(key))
-        .filter(Boolean) as TokenDetailWithPriceCurve[];
-      setLoading(false);
-      return result;
-    } catch (error) {
-      console.error('getWatchlistTokens error', error);
-      setLoading(false);
-      return [];
-    }
-  }, []);
+    },
+    [data.length],
+  );
 
   const handleFetchTokens = useCallback(
     (force = false) => {
