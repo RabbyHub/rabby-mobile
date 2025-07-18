@@ -105,6 +105,15 @@ export default function EarningDialog({ onClose }: RNViewProps & DialogProps) {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const isPositive = (totalProfit || 0) >= 0;
 
+  const [totalValue, setTotalValue] = useState(0);
+  useEffect(() => {
+    // set state to refresh page to avoid scroll bug
+    const value = itemData.reduce((acc, item) => {
+      return acc + item.holdingUsdValue;
+    }, 0);
+    setTotalValue(value);
+  }, [itemData]);
+
   const handleTokenPress = useMemoizedFn((token: TokenItemEntity) => {
     const newToken = {
       ...token,
