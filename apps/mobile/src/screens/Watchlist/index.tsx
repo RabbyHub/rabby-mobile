@@ -170,7 +170,9 @@ function WatchlistScreen(): JSX.Element {
   return (
     <NormalScreenContainer2024
       type={isLight ? 'bg0' : 'bg1'}
+      noHeader
       overwriteStyle={styles.overwriteStyle}>
+      <View style={styles.header} />
       {!hasData && (
         <EmptyWatchlist style={centerEmpty ? styles.centerEmpty : undefined} />
       )}
@@ -263,8 +265,13 @@ function WatchlistScreen(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   overwriteStyle: {
-    paddingTop: 0,
     position: 'relative',
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
+  },
+  header: {
+    height: 44,
   },
   scrollView: {
     paddingHorizontal: 12,

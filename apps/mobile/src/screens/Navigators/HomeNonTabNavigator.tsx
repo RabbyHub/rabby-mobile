@@ -13,10 +13,10 @@ const HomeNonTabStack =
   createCustomNativeStackNavigator<HomeNonTabNavigatorParamsList>();
 
 export default function HomeNonTabNavigator() {
-  const { colors, colors2024, styles, isLight } = useTheme2024({ getStyle });
+  const { colors, colors2024, isLight } = useTheme2024({ getStyle });
   const headerPresets = makeHeadersPresets({ colors, colors2024 });
   const { t } = useTranslation();
-  const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
   return (
     <HomeNonTabStack.Navigator
       screenOptions={mergeScreenOptions({
@@ -44,20 +44,22 @@ export default function HomeNonTabNavigator() {
       <HomeNonTabStack.Screen
         name={RootNames.Watchlist}
         component={WatchlistScreen}
-        options={mergeScreenOptions2024([
-          {
-            headerTitle: t('page.home.services.watchlist'),
-            title: t('page.home.services.watchlist'),
-            headerTransparent: false,
-            headerStyle: {
-              backgroundColor: isLight
-                ? colors2024['neutral-bg-0']
-                : colors2024['neutral-bg-1'],
-            },
-            headerShown: true,
-            headerTitleStyle: styles.headerTitleText,
+        options={mergeScreenOptions({
+          title: t('page.home.services.watchlist'),
+          ...headerPresets.withBgCard1_2024,
+          headerTintColor: colors['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
           },
-        ])}
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+        })}
       />
     </HomeNonTabStack.Navigator>
   );
