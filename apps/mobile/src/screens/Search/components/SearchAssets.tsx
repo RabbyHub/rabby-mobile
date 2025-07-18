@@ -7,7 +7,7 @@ import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Keyboard, Text, View } from 'react-native';
+import { FlatList, Keyboard, Pressable, Text, View } from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -124,7 +124,7 @@ export const SearchAssets: React.FC<Props> = ({
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
             rightSlot={
-              <TouchableOpacity
+              <Pressable
                 style={styles.rightSlot}
                 onPress={e => {
                   e.stopPropagation();
@@ -142,7 +142,7 @@ export const SearchAssets: React.FC<Props> = ({
                       : colors2024['neutral-info']
                   }
                 />
-              </TouchableOpacity>
+              </Pressable>
             }
           />
         )
