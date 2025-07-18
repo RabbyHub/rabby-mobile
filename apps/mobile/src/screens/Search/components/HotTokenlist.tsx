@@ -53,7 +53,9 @@ export const HotTokenList = () => {
     });
   }, []);
   useFocusEffect(() => {
-    fetchPinedTokenList();
+    setTimeout(() => {
+      fetchPinedTokenList();
+    }, 200);
   });
 
   const handlePress = useCallback(

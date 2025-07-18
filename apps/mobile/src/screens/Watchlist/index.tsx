@@ -207,8 +207,8 @@ function WatchlistScreen(): JSX.Element {
           <View style={styles.footer}>
             <Pressable
               onPress={() => {
-                preferenceService.setWatchlistSkip(true);
                 setSkip(true);
+                preferenceService.setWatchlistSkip(true);
               }}>
               <Text style={styles.skipText}>
                 {t('page.watchlist.footer.skip')}
