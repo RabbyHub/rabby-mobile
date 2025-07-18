@@ -7,6 +7,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
+import { BlurView } from '@react-native-community/blur';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   fabContainer: {
@@ -18,7 +19,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     width: 'auto',
     ...Platform.select({
       ios: {
-        shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.2)',
+        shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
         shadowOffset: { width: 0, height: isLight ? -6 : -27 },
         shadowOpacity: 1,
         shadowRadius: isLight ? 20 : 13,
@@ -78,25 +79,30 @@ const SearchEntry: React.FC = () => {
 
   return (
     <TouchableOpacity style={styles.fabContainer} onPress={handlePress}>
-      <LinearGradient
-        colors={
-          isLight
-            ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
-            : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.8)']
-        }
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}>
-        <View style={styles.innerCircle}>
-          <RcNextSearchCC
-            width={22}
-            height={22}
-            style={styles.icon}
-            color={colors2024['neutral-body']}
-          />
-          <Text style={styles.text}>{t('page.watchlist.search.title')}</Text>
-        </View>
-      </LinearGradient>
+      <BlurView
+        blurType={isLight ? 'light' : 'dark'}
+        blurAmount={14.5}
+        style={{ borderRadius: 20 }}>
+        <LinearGradient
+          colors={
+            isLight
+              ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
+              : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.8)']
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}>
+          <View style={styles.innerCircle}>
+            <RcNextSearchCC
+              width={22}
+              height={22}
+              style={styles.icon}
+              color={colors2024['neutral-body']}
+            />
+            <Text style={styles.text}>{t('page.watchlist.search.title')}</Text>
+          </View>
+        </LinearGradient>
+      </BlurView>
     </TouchableOpacity>
   );
 };
