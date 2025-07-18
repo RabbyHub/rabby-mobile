@@ -815,22 +815,11 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                 if (!isForMultipleAddress) {
                   normalSetChainToken();
                 } else {
-                  const { accountSwitchTo } = switchAccountOnSelectedToken({
+                  switchAccountOnSelectedToken({
                     token,
                     currentAccount,
                   });
-                  if (!accountSwitchTo) {
-                    normalSetChainToken();
-                  } else {
-                    const chainItem = findChainByServerID(token.chain);
-                    naviReplace(RootNames.StackTransaction, {
-                      screen: RootNames.MultiBridge,
-                      params: {
-                        chainEnum: chainItem?.enum,
-                        tokenId: token.id,
-                      },
-                    });
-                  }
+                  normalSetChainToken();
                 }
               }}
               onChangeChain={switchFromChain}
