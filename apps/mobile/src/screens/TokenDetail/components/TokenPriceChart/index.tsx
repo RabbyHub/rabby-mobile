@@ -151,8 +151,9 @@ export function TokenPriceChart(props: Props) {
         isLoss = token?.price_24h_change
           ? Number(token.price_24h_change) < 0
           : false;
-        currentPercent =
-          Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%';
+        currentPercent = token?.price_24h_change
+          ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
+          : '';
       } else {
         currentPercent =
           pre === 0

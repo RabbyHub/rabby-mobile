@@ -885,7 +885,8 @@
         "gasAccount": "GasAccount",
         "queue": "คิว",
         "search": "ค้นหา Token",
-        "copyTrading": "การคัดลอกการซื้อขาย"
+        "copyTrading": "การคัดลอกการซื้อขาย",
+        "watchlist": "รายการเฝ้าติดตาม"
       }
     },
     "gasTopUp": {
@@ -1126,7 +1127,8 @@
       "need-to-approve-token-before-swap": "จำเป็นต้องอนุมัติโทเค็นก่อนการ swap",
       "historyTitle": "ประวัติการ Swap",
       "swapped": "สลับแล้ว",
-      "selectChainModalTitle": "เลือกโซ่"
+      "selectChainModalTitle": "เลือกโซ่",
+      "results": "ผลลัพธ์"
     },
     "nextComponent": {
       "addAddress": {
@@ -1703,6 +1705,9 @@
         "verifyDangerTips": "นี่คือโทเค็นหลอกลวง",
         "Issuedby": "ออกโดย",
         "scamWarningTips": "นี่คือโทเค็นคุณภาพต่ำและอาจเป็นการหลอกลวง"
+      },
+      "hotTokenList": {
+        "title": "ร้อน"
       }
     },
     "receiveAddressList": {
@@ -2201,7 +2206,29 @@
       "timeLabelAgo": "สร้างเมื่อ {{time}} ที่แล้ว",
       "info": "ข้อมูล",
       "smartWallets": "กระเป๋าเงินอัจฉริยะ",
-      "myBalanceFromCopyTrading": "ยอดเงินของฉันจาก Copy Trading"
+      "myBalanceFromCopyTrading": "ยอดเงินของฉันจาก Copy Trading",
+      "updateTokenText": "{{count}} โทเค็นที่อัปเดตแล้ว",
+      "gettingLatest": "รับข้อมูลล่าสุดจาก Smart Money..."
+    },
+    "watchlist": {
+      "empty": {
+        "title": "ยังไม่มีโทเค็นในรายการเฝ้าดูของคุณ"
+      },
+      "search": {
+        "title": "ค้นหาโทเค็น"
+      },
+      "tokenHeader": {
+        "token": "Token/FDV",
+        "price": "ราคา",
+        "change": "การเปลี่ยนแปลง 24 ชั่วโมง"
+      },
+      "footer": {
+        "add": "เพิ่มในรายการดู ({{count}})",
+        "skip": "ข้าม"
+      },
+      "toast": {
+        "remove": "ลบออกจากรายการเฝ้าดูเรียบร้อยแล้ว"
+      }
     }
   },
   "native": {

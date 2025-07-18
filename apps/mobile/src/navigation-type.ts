@@ -110,6 +110,7 @@ export type HomeNavigatorParamsList = {
 
 export type HomeNonTabNavigatorParamsList = {
   [RootNames.Search]?: {};
+  [RootNames.Watchlist]?: {};
 };
 
 export type DappsNavigatorParamsList = {

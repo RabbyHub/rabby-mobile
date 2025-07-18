@@ -84,7 +84,9 @@ export const LinearGradientContainer: React.FC<
               : type === 'tx-page'
               ? makeTxPageColors({ isLight, colors2024 })
               : // bg2
-                colors2024['neutral-bg-2'],
+              type === 'bg0'
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-2'],
         },
       ]}
     />

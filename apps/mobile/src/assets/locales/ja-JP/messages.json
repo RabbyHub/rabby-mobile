@@ -845,7 +845,8 @@
       "directlySwap": "スマートコントラクトで{{symbol}}トークンを直接ラッピングする",
       "historyTitle": "スワップ履歴",
       "swapped": "スワップ完了",
-      "selectChainModalTitle": "チェーンを選択します"
+      "selectChainModalTitle": "チェーンを選択します",
+      "results": "結果"
     },
     "signTypedData": {
       "createKey": {
@@ -901,7 +902,8 @@
         "send": "送る",
         "websites": "ウェブサイト",
         "search": "Search Token",
-        "copyTrading": "コピー取引"
+        "copyTrading": "コピー取引",
+        "watchlist": "ウォッチリスト"
       }
     },
     "nextComponent": {
@@ -1792,6 +1794,9 @@
         "Issuedby": "発行者",
         "verifyDangerTips": "これは詐欺トークンです",
         "scamWarningTips": "これは低品質のトークンであり、詐欺の可能性があります。"
+      },
+      "hotTokenList": {
+        "title": "ホット"
       }
     },
     "createPassword": {
@@ -2082,7 +2087,29 @@
       "noOtherTokensWithSameName": "同じ名前のトークンは見つかりませんでした。",
       "earned": "獲得した",
       "twitterNews": "Xに関するニュース",
-      "myBalanceFromCopyTrading": "私のCopy Tradingからの残高"
+      "myBalanceFromCopyTrading": "私のCopy Tradingからの残高",
+      "updateTokenText": "{{count}} トークンが更新されました。",
+      "gettingLatest": "スマートマネーから最新情報を取得中…"
+    },
+    "watchlist": {
+      "empty": {
+        "title": "監視リストにトークンはまだありません"
+      },
+      "search": {
+        "title": "トークンを検索"
+      },
+      "tokenHeader": {
+        "price": "価格",
+        "change": "24時間の変化",
+        "token": "トークン/FDV"
+      },
+      "footer": {
+        "skip": "スキップ",
+        "add": "ウォッチリストに追加（{{count}}）"
+      },
+      "toast": {
+        "remove": "ウォッチリストから削除成功"
+      }
     }
   },
   "global": {
