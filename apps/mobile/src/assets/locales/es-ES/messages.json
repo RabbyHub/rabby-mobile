@@ -974,7 +974,8 @@
         "gasAccount": "GasAccount",
         "queue": "Cola",
         "search": "Buscar Token",
-        "copyTrading": "Copy Trading"
+        "copyTrading": "Copy Trading",
+        "watchlist": "Lista de seguimiento"
       }
     },
     "dashboard": {
@@ -1102,7 +1103,8 @@
       "wrap-contract": "Wrap Contract",
       "historyTitle": "Historial de Swap",
       "swapped": "Intercambiado",
-      "selectChainModalTitle": "Seleccionar cadena"
+      "selectChainModalTitle": "Seleccionar cadena",
+      "results": "Resultados"
     },
     "nextComponent": {
       "addAddress": {
@@ -1735,6 +1737,9 @@
         "verifyDangerTips": "Este es un token de estafa",
         "Issuedby": "Emitido por",
         "scamWarningTips": "Este es un token de baja calidad y puede ser una estafa"
+      },
+      "hotTokenList": {
+        "title": "Caliente"
       }
     },
     "singleHome": {
@@ -2216,7 +2221,29 @@
       "smartWallets": "Carteras Inteligentes",
       "info": "Información",
       "sameNameTokens": "Tokens con el mismo nombre",
-      "myBalanceFromCopyTrading": "Mi saldo de Copy Trading"
+      "myBalanceFromCopyTrading": "Mi saldo de Copy Trading",
+      "updateTokenText": "{{count}} tokens actualizados",
+      "gettingLatest": "Obteniendo lo último de Smart Money..."
+    },
+    "watchlist": {
+      "empty": {
+        "title": "Aún no hay tokens en tu lista de seguimiento"
+      },
+      "search": {
+        "title": "Buscar tokens"
+      },
+      "tokenHeader": {
+        "token": "Token/FDV",
+        "price": "Precio",
+        "change": "Cambio 24H"
+      },
+      "footer": {
+        "skip": "Saltar",
+        "add": "Añadir a la lista de seguimiento ({{count}})"
+      },
+      "toast": {
+        "remove": "Eliminar de la lista de seguimiento con éxito"
+      }
     }
   },
   "global": {
