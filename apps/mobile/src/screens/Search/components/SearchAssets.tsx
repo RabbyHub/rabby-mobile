@@ -5,10 +5,13 @@ import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
 import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Keyboard, Text, View } from 'react-native';
-import { TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+import {
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native-gesture-handler';
 
 import { ASSETS_SECTION_HEADER, RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
@@ -27,12 +30,13 @@ import {
 import { CHAINS_ENUM } from '@debank/common';
 import { Image } from 'react-native';
 import { findChainByEnum } from '@/utils/chain';
-import { Skeleton } from '@rneui/themed';
 import { add0x, ellipsisAddress } from '@/utils/address';
 import { isValidHexAddress } from '@metamask/utils';
 import { IManageToken } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
+import { useFocusEffect } from '@react-navigation/native';
+import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
 
 interface Props {
   resultTokens: AbstractPortfolioToken[];
@@ -95,9 +99,9 @@ export const SearchAssets: React.FC<Props> = ({
     [fetchPinedTokenList, t, watchlistTokenList],
   );
 
-  useEffect(() => {
+  useFocusEffect(() => {
     fetchPinedTokenList();
-  }, [fetchPinedTokenList]);
+  });
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -195,7 +199,7 @@ export const SearchAssets: React.FC<Props> = ({
       ) : loading ? (
         <>
           {Array.from({ length: 8 }).map((_, idx) => (
-            <Skeleton style={styles.skeletonBlock} key={idx} />
+            <TokenItemSkeleton key={idx} />
           ))}
         </>
       ) : null,
@@ -206,7 +210,6 @@ export const SearchAssets: React.FC<Props> = ({
       resultTokens,
       styles.emptyView,
       styles.emptyText,
-      styles.skeletonBlock,
       t,
     ],
   );
@@ -235,7 +238,7 @@ export const SearchAssets: React.FC<Props> = ({
               )}"`}</Text>
             </View>
           ) : (
-            <Text style={styles.sectionHeader}>{t('page.swap.token')}</Text>
+            <Text style={styles.sectionHeader}>{t('page.swap.results')}</Text>
           )}
           {chainInfo ? (
             <View
@@ -251,6 +254,7 @@ export const SearchAssets: React.FC<Props> = ({
                 <Text style={styles.chainName}>{chainInfo.name}</Text>
               </View>
               <TouchableWithoutFeedback
+                disallowInterruption
                 style={styles.close}
                 onPress={() => {
                   setChainEnum?.(undefined);
@@ -393,7 +397,7 @@ const getStyles = createGetStyles2024(ctx => ({
   sectionHeader: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 20,
     // height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['neutral-secondary'],

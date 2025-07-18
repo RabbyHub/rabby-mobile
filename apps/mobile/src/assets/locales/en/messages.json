@@ -881,6 +881,7 @@
       "no-quote-found": "No quote found",
       "source": "Source",
       "token": "Token",
+      "results": "Results",
       "insufficient": "Insufficient Balance:",
       "rabbyFee": {
         "title": "Rabby fee",

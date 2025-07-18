@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Pressable, Text } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import RcIconArrowDownCC from '@/assets2024/icons/copyTrading/IconDownPolygon.svg';
+import RcIconArrowDownCC from '@/assets2024/icons/watchlist/sort.svg';
 import { useTranslation } from 'react-i18next';
 
 export type SortState = 'desc' | 'asc' | 'default';
@@ -29,12 +29,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 2,
   },
   priceCell: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    width: 'auto',
+    marginRight: 11.6,
   },
   changeCell: {
-    flex: 1.2,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
@@ -57,8 +57,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 1,
   },
   icon: {
-    width: 12,
-    height: 12,
+    width: 4,
+    height: 3,
   },
   iconUp: {
     transform: [{ rotate: '180deg' }],
@@ -74,59 +74,67 @@ const TokenHeader: React.FC<TokenHeaderProps> = ({
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  // 箭头颜色逻辑
-  const getArrowColor = (sort: SortState, direction: 'asc' | 'desc') => {
-    if (sort === direction) {
-      return colors2024['brand-default'];
-    }
-    return colors2024['neutral-info'];
-  };
+  const getArrowColor = useCallback(
+    (sort: SortState, direction: 'asc' | 'desc') => {
+      if (sort === direction) {
+        return colors2024['brand-default'];
+      }
+      return colors2024['neutral-info'];
+    },
+    [colors2024],
+  );
 
-  const getTextStyle = (sort: SortState) => {
-    if (sort === 'default') {
-      return styles.headerText;
-    }
-    return [styles.headerText, styles.headerTextActive];
-  };
+  const getTextStyle = useCallback(
+    (sort: SortState) => {
+      if (sort === 'default') {
+        return styles.headerText;
+      }
+      return [styles.headerText, styles.headerTextActive];
+    },
+    [styles.headerText, styles.headerTextActive],
+  );
 
-  const renderArrows = (sort: SortState) => (
-    <View style={styles.iconWrap}>
-      <RcIconArrowDownCC
-        style={[styles.icon, styles.iconUp]}
-        color={getArrowColor(sort, 'asc')}
-      />
-      <RcIconArrowDownCC
-        style={styles.icon}
-        color={getArrowColor(sort, 'desc')}
-      />
-    </View>
+  const renderArrows = useCallback(
+    (sort: SortState) => (
+      <View style={styles.iconWrap}>
+        <RcIconArrowDownCC
+          style={[styles.icon, styles.iconUp]}
+          color={getArrowColor(sort, 'asc')}
+        />
+        <RcIconArrowDownCC
+          style={styles.icon}
+          color={getArrowColor(sort, 'desc')}
+        />
+      </View>
+    ),
+    [getArrowColor, styles.icon, styles.iconUp, styles.iconWrap],
   );
 
   return (
     <View style={styles.headerRow}>
-      <TouchableOpacity
+      <Pressable
         style={[styles.headerCell, styles.tokenCell]}
-        activeOpacity={0.7}
+        hitSlop={10}
         onPress={onTokenSort}>
         <Text style={getTextStyle(tokenSort)}>
           {t('page.watchlist.tokenHeader.token')}
         </Text>
         {renderArrows(tokenSort)}
-      </TouchableOpacity>
+      </Pressable>
       <View style={[styles.headerCell, styles.priceCell]}>
         <Text style={styles.headerText}>
           {t('page.watchlist.tokenHeader.price')}
         </Text>
       </View>
-      <TouchableOpacity
+      <Pressable
         style={[styles.headerCell, styles.changeCell]}
-        activeOpacity={0.7}
+        hitSlop={10}
         onPress={onChangeSort}>
         <Text style={getTextStyle(changeSort)}>
           {t('page.watchlist.tokenHeader.change')}
         </Text>
         {renderArrows(changeSort)}
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 };

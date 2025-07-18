@@ -12,7 +12,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import SearchEntry from './components/SearchEntry';
 import { EmptyWatchlist } from './components/EmptyHolder';
-import { TokenListItem } from './components/TokenItem';
+import { TokenItemSkeleton, TokenListItem } from './components/TokenItem';
 import TokenHeader from './components/TokenHeader';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +25,6 @@ import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '../Home/utils/token';
 import { useHotTokenList } from './hooks/useHotTokenList';
 import { WatchlistCheckbox } from './components/Checkbox';
-import { Skeleton } from '@rneui/themed';
 
 function WatchlistScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
@@ -184,7 +183,7 @@ function WatchlistScreen(): JSX.Element {
             {hotTokenListLoading &&
               hotTokenList.length === 0 &&
               Array.from({ length: 8 }).map((_, idx) => (
-                <Skeleton style={styles.skeletonBlock} key={idx} />
+                <TokenItemSkeleton key={idx} />
               ))}
             {hotTokenList.map(item => (
               <TokenListItem
@@ -242,7 +241,7 @@ function WatchlistScreen(): JSX.Element {
                 {watchlistLoading &&
                   list.length === 0 &&
                   Array.from({ length: 8 }).map((_, idx) => (
-                    <Skeleton style={styles.skeletonBlock} key={idx} />
+                    <TokenItemSkeleton key={idx} />
                   ))}
                 {list.map(item => (
                   <TokenListItem
@@ -275,7 +274,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
     marginTop: '50%',
   },
   footer: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     paddingBottom: 48,
   },
   skipText: {

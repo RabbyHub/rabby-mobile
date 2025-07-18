@@ -1,13 +1,16 @@
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { TokenListItem } from '@/screens/Watchlist/components/TokenItem';
+import {
+  TokenListItem,
+  TokenItemSkeleton,
+} from '@/screens/Watchlist/components/TokenItem';
 import { useHotTokenList } from '@/screens/Watchlist/hooks/useHotTokenList';
 import { navigate } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TokenDetailWithPriceCurve } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Keyboard,
   RefreshControl,
@@ -19,7 +22,6 @@ import {
 import { IManageToken } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
-import { Skeleton } from '@rneui/themed';
 import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -98,7 +100,7 @@ export const HotTokenList = () => {
         {hotTokenListLoading &&
           hotTokenList.length === 0 &&
           Array.from({ length: 8 }).map((_, idx) => (
-            <Skeleton style={styles.skeletonBlock} key={idx} />
+            <TokenItemSkeleton key={idx} />
           ))}
         {hotTokenList.map(item => (
           <TokenListItem

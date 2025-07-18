@@ -1,4 +1,5 @@
 import IconEmptyWatchlist from '@/assets2024/images/watchlist/empty-watchlist.png';
+import IconEmptyWatchlistDark from '@/assets2024/images/watchlist/empty-watchlist-dark.png';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -12,7 +13,7 @@ export const EmptyWatchlist = ({ style }: { style?: ViewProps['style'] }) => {
     <View style={[styles.container, style]}>
       <View style={styles.empty}>
         <Image
-          source={isLight ? IconEmptyWatchlist : IconEmptyWatchlist}
+          source={isLight ? IconEmptyWatchlist : IconEmptyWatchlistDark}
           width={163}
           height={126}
           style={styles.img}

@@ -16,17 +16,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     right: 8,
     zIndex: 10,
     width: 'auto',
-    elevation: 10,
-  },
-  gradient: {
-    padding: 12,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: isLight
-      ? colors2024['neutral-bg-1']
-      : colors2024['neutral-line'],
     ...Platform.select({
       ios: {
         shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.2)',
@@ -37,6 +26,16 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       android: {},
     }),
   },
+  gradient: {
+    padding: 12,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-5'],
+  },
   innerCircle: {
     width: '100%',
     display: 'flex',
@@ -46,9 +45,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-5']
-      : colors2024['neutral-bg-3'],
+    backgroundColor: colors2024['neutral-bg-5'],
     position: 'relative',
   },
   icon: {
@@ -80,15 +77,12 @@ const SearchEntry: React.FC = () => {
   };
 
   return (
-    <TouchableOpacity
-      style={styles.fabContainer}
-      activeOpacity={0.8}
-      onPress={handlePress}>
+    <TouchableOpacity style={styles.fabContainer} onPress={handlePress}>
       <LinearGradient
         colors={
           isLight
             ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
-            : ['rgba(35, 36, 40, 0.8)', 'rgba(35, 36, 40, 0.4)']
+            : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.8)']
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}

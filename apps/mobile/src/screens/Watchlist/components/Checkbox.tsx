@@ -75,7 +75,7 @@ export const WatchlistCheckbox = ({
         />
       ) : (
         <RcIconUncheckboxCC
-          strokeColor={colors2024['neutral-foot']}
+          strokeColor={colors2024['neutral-info']}
           width={24}
           height={24}
         />
