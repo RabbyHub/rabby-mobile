@@ -5,6 +5,7 @@ import {
   Text,
   View,
   RefreshControl,
+  Platform,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -25,6 +26,8 @@ import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '../Home/utils/token';
 import { useHotTokenList } from './hooks/useHotTokenList';
 import { WatchlistCheckbox } from './components/Checkbox';
+
+const isAndroid = Platform.OS === 'android';
 
 function WatchlistScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
@@ -59,11 +62,8 @@ function WatchlistScreen(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
-      if (skip && !hasData) {
-        return;
-      }
       handleFetchTokens();
-    }, [skip, hasData, handleFetchTokens]),
+    }, [handleFetchTokens]),
   );
 
   useEffect(() => {
@@ -272,7 +272,7 @@ const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
       : colors2024['neutral-bg-1'],
   },
   header: {
-    height: 44,
+    height: isAndroid ? 46 : 44,
   },
   scrollView: {
     paddingHorizontal: 12,
