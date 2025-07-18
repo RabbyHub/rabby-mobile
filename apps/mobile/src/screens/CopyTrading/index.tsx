@@ -497,7 +497,9 @@ export const CopyTradingScreen = () => {
       {currentUpdateCount > 0 && (
         <View style={styles.updateContainer}>
           <Text style={styles.updateText}>
-            {t('page.copyTrading.updateText', { count: currentUpdateCount })}
+            {t('page.copyTrading.updateTokenText', {
+              count: currentUpdateCount,
+            })}
           </Text>
         </View>
       )}
@@ -552,7 +554,7 @@ export const CopyTradingScreen = () => {
                     }).start();
                   }, 500);
                 }}
-                title={t('page.copyTrading.refreshTitle')}
+                title={t('page.copyTrading.gettingLatest')}
                 titleColor={colors2024['neutral-secondary']}
                 tintColor={colors2024['neutral-secondary']}
                 progressBackgroundColor={colors2024['neutral-bg-1']}
