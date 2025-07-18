@@ -138,7 +138,7 @@ const BridgeShowMore = ({
 
   const [showGasFeeError, setShowGasFeeError] = useState(false);
 
-  const closedError = useMemo(
+  const showErrorWhenClosed = useMemo(
     () =>
       !quoteLoading &&
       !open &&
@@ -162,11 +162,11 @@ const BridgeShowMore = ({
     <View
       style={StyleSheet.flatten([
         styles.container,
-        closedError && {
+        showErrorWhenClosed && {
           marginTop: 0,
         },
       ])}>
-      {closedError ? (
+      {showErrorWhenClosed ? (
         <View style={{ marginBottom: 24 }}>
           {data?.showLoss && !quoteLoading && (
             <View style={{ marginTop: 12 }}>
@@ -459,26 +459,6 @@ export const DirectSignGasInfo = ({
     }
   }, [loading, setGasTipsComponent, setMiniApprovalGas]);
 
-  useEffect(() => {
-    if (showGasContent && miniApprovalGas?.showGasLevelPopup) {
-      openShowMore(true);
-    } else {
-      openShowMore(false);
-    }
-  }, [miniApprovalGas?.showGasLevelPopup, openShowMore, showGasContent]);
-
-  useEffect(() => {
-    if (
-      showGasContent &&
-      miniApprovalGas?.gasCostUsdStr &&
-      new BigNumber(miniApprovalGas?.gasCostUsdStr?.replaceAll('$', '')).gt(
-        chainEnum === CHAINS_ENUM.ETH ? 10 : 1,
-      )
-    ) {
-      openShowMore(true);
-    }
-  }, [chainEnum, miniApprovalGas?.gasCostUsdStr, openShowMore, showGasContent]);
-
   const calcGasAccountUsd = useCallback((n: number | string) => {
     const v = Number(n);
     if (!Number.isNaN(v) && v < 0.0001) {
@@ -490,6 +470,35 @@ export const DirectSignGasInfo = ({
   const gasAccountCost = miniApprovalGas?.gasAccountCost;
 
   const [isGasAccountHovering, setIsGasAccountHovering] = useState(false);
+
+  const gasCostUsd =
+    miniApprovalGas?.gasMethod === 'gasAccount'
+      ? calcGasAccountUsd(
+          (gasAccountCost?.estimate_tx_cost || 0) +
+            (gasAccountCost?.gas_cost || 0),
+        )
+      : miniApprovalGas?.gasCostUsdStr;
+
+  useEffect(() => {
+    if (
+      showGasContent &&
+      (miniApprovalGas?.showGasLevelPopup ||
+        (gasCostUsd &&
+          new BigNumber(gasCostUsd?.replaceAll('$', '') || '0').gt(
+            chainEnum === CHAINS_ENUM.ETH ? 10 : 1,
+          )))
+    ) {
+      openShowMore(true);
+    } else {
+      openShowMore(false);
+    }
+  }, [
+    chainEnum,
+    gasCostUsd,
+    miniApprovalGas?.showGasLevelPopup,
+    openShowMore,
+    showGasContent,
+  ]);
 
   useEffect(() => {
     if (loading || !showGasContent || noQuote) {
@@ -626,9 +635,7 @@ export const DirectSignGasInfo = ({
                       color: colors2024['red-default'],
                     },
                   ]}>
-                  {miniApprovalGas.gasMethod === 'gasAccount'
-                    ? calcGasAccountUsd(gasAccountCost?.total_cost || '0')
-                    : miniApprovalGas!.gasCostUsdStr}
+                  {gasCostUsd}
                 </Text>
                 <Animated.View
                   style={{
@@ -692,7 +699,7 @@ export const SendShowMore = ({
 
   const [showGasFeeError, setShowGasFeeError] = useState(false);
 
-  const closedError = useMemo(
+  const showErrorWhenClosed = useMemo(
     () => !open && showGasFeeError,
     [open, showGasFeeError],
   );
@@ -704,13 +711,13 @@ export const SendShowMore = ({
     <View
       style={StyleSheet.flatten([
         styles.container,
-        closedError && {
+        showErrorWhenClosed && {
           marginTop: 0,
         },
       ])}>
-      {closedError ? (
+      {showErrorWhenClosed ? (
         <View style={{ marginBottom: 24 }}>
-          {closedError ? (
+          {showErrorWhenClosed ? (
             <DirectSignGasInfo
               supportDirectSign={supportDirectSign}
               loading={false}
