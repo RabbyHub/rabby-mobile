@@ -51,6 +51,8 @@ export const ScreenLayouts2 = {
   // dappWebViewControlHeaderHeight: (IS_ANDROID ? 10 : 0) /* padding-top */ + 56,
   dappWebViewControlHeaderHeight: 52,
   dappWebViewControlNavHeight: 68,
+
+  TabbedDappWebViewControlNavHeight: IS_ANDROID ? 57 : 68,
 };
 
 export const ScreenWithAccountSwitcherLayouts = {
