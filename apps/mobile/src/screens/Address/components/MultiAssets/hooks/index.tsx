@@ -72,5 +72,6 @@ export const useAccountInfo = () => {
     hasWatchAddress,
     hasSafeAddress,
     fetchAccounts,
+    rawAllAccounts: accounts,
   };
 };
