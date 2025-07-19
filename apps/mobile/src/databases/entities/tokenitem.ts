@@ -519,7 +519,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         .createQueryBuilder()
         .delete()
         .from(TokenItemEntity)
-        .where('owner_addr = :address', { owner_addr })
+        .where('owner_addr = :owner_addr', { owner_addr })
         .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
         .execute();
 
