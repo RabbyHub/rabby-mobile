@@ -19,7 +19,7 @@ export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
           try {
             const sceneAccountsObj = JSON.parse(sceneAccounts);
             dappSceneAccount =
-              sceneAccountsObj['@ActiveDappWebViewModal']?.currentAccount;
+              sceneAccountsObj?.['@ActiveDappWebViewModal']?.currentAccount;
           } catch (error) {
             console.error(error);
           }

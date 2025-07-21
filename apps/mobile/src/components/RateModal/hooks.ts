@@ -180,6 +180,7 @@ const getDefaultValue = () => ({
   userStar: STAR_COUNT,
 
   userFeedback: '',
+  isSubmitting: false,
 });
 const rateModalAtom = atom(getDefaultValue());
 
@@ -234,20 +235,27 @@ export function useRateModal() {
     [setRateModalState],
   );
 
-  const submitFeedback = useCallback(
-    async (params: { totalBalanceText: string }) => {
-      if (rateModalState.userStar > 3) return;
+  const pushRateDetails = useCallback(
+    async (params: { totalBalanceText: string; userStar?: number }) => {
+      const userStar = params.userStar ?? rateModalState.userStar;
+      const needFeedbackText = userStar <= 3;
 
       const feedbackText = rateModalState.userFeedback.trim();
 
+      const starText = `${makeStarText(userStar, 5)} (${userStar})`;
+      const balanceText = params.totalBalanceText;
+      const versionText = APP_VERSIONS.forFeedback;
+
       const feedbackContent = [
-        `Comment: ${feedbackText}`,
-        '  ',
-        `Rate: ${makeStarText(rateModalState.userStar, 5)} (${
-          rateModalState.userStar
-        }) `,
-        `Total Balance: ${params.totalBalanceText}`,
-        `App Version: ${APP_VERSIONS.forFeedback}`,
+        ...(!needFeedbackText
+          ? [`${starText} (${balanceText}; ${versionText}) `]
+          : [
+              `Comment: ${feedbackText}`,
+              `Rate: ${starText}`,
+              `Total Balance: ${balanceText}`,
+              `App Version: ${versionText}`,
+              '  ',
+            ]),
       ]
         .concat(
           isNonPublicProductionEnv
@@ -268,15 +276,18 @@ export function useRateModal() {
        **/
 
       try {
-        await openapi.submitFeedback({
-          text: feedbackContent,
-          usage: 'rating',
-        });
-        matomoRequestEvent({
-          category: 'Rate Rabby',
-          action: 'Rate_SubmitAdvice',
-          label: [rateModalState.userStar].join('|'),
-        });
+        setRateModalState(prev => ({ ...prev, isSubmitting: true }));
+        if (needFeedbackText) {
+          await openapi.submitFeedback({
+            text: feedbackContent,
+            usage: 'rating',
+          });
+          matomoRequestEvent({
+            category: 'Rate Rabby',
+            action: 'Rate_SubmitAdvice',
+            label: [userStar].join('|'),
+          });
+        }
       } catch (error) {
         Sentry.captureException(error, {
           extra: {
@@ -285,9 +296,11 @@ export function useRateModal() {
           },
         });
         console.error('Failed to submit feedback:', error);
+      } finally {
+        setRateModalState(prev => ({ ...prev, isSubmitting: false }));
       }
     },
-    [rateModalState],
+    [rateModalState, setRateModalState],
   );
 
   const openAppRateUrl = useCallback(() => {
@@ -310,7 +323,8 @@ export function useRateModal() {
     feedbackOverLimit:
       rateModalState.userFeedback.length > FEEDBACK_LEN_LIMIT - 1,
     onChangeFeedback,
-    submitFeedback,
+    isSubmitting: rateModalState.isSubmitting,
+    pushRateDetails,
 
     openAppRateUrl,
   };

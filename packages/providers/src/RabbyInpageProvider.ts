@@ -139,7 +139,7 @@ export class RabbyInpageProvider extends AbstractStreamProvider {
     this._metamask = this._getExperimentalApi();
 
     // handle JSON-RPC notifications
-    this._jsonRpcConnection.events.on('notification', (payload) => {
+    this._jsonRpcConnection.events.on('notification', payload => {
       const { method } = payload;
       if (EMITTED_NOTIFICATIONS.includes(method)) {
         // deprecated
@@ -438,7 +438,7 @@ export class RabbyInpageProvider extends AbstractStreamProvider {
          */
         isUnlocked: async () => {
           if (!this._state.initialized) {
-            await new Promise<void>((resolve) => {
+            await new Promise<void>(resolve => {
               this.on('_initialized', () => resolve());
             });
           }

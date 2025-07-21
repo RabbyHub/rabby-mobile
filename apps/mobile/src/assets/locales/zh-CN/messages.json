@@ -480,6 +480,17 @@
           "button": "OK",
           "title": "切换到 Rabby 的 Safe 服务"
         }
+      },
+      "errorRetry": {
+        "nonceTooHigh": "Nonce太高。请调整nonce后再试。",
+        "gasExceedsBlockGasLimit": "Gas 超过区块 gas 限制。请调整后再试。",
+        "defaultTips": "出现了问题。请稍后再试。",
+        "alreadySubmitted": "交易已提交。检测到重复交易。",
+        "gasLimitTooLow": "Gas limit 过低",
+        "InvalidTx": "无效交易。",
+        "insufficient": "您的 gas 余额不足以支付网络 gas 费用。请为 gas 添加资金后再试。",
+        "gasPriceTooLow": "Gas 价格太低。我们会将其调整 30% 以帮助您的交易确认。点击“重试”以确认并再次尝试。",
+        "nonceTooLow": "Nonce太低。我们将更新为{{nonce}}。点击“重试”确认并再试一次。"
       }
     },
     "activities": {
@@ -548,7 +559,12 @@
       }
     },
     "sendNFT": {
-      "sendButton": "发送"
+      "sendButton": "发送",
+      "Collection": "集合",
+      "NFT": "NFT",
+      "Chain": "链",
+      "Contract": "合约",
+      "SendAmount": "发送金额"
     },
     "sendTokenComponents": {
       "GasReserved": "预留 <1>0</1> {{ tokenName }} 用于 gas 费用"
@@ -717,12 +733,14 @@
         "unknownQRCode": "错误：我们无法识别该二维码",
         "submitting": "已签名。创建交易",
         "qrcodeDesc": "使用您的 {{brand}} 扫描以签名  \n签名后，点击下面的按钮以接收签名",
-        "afterSignDesc": "扫描 Keystone 上的二维码以获取签名"
+        "afterSignDesc": "扫描 Keystone 上的二维码以获取签名",
+        "txFailedRetry": "创建失败：请重试"
       },
       "keystoneSign": "签名",
       "startSigning": "开始签名",
       "oneKeyConfirm": "确认",
-      "ledgerConfirm": "确认"
+      "ledgerConfirm": "确认",
+      "got": "我明白了"
     },
     "gasTopUp": {
       "Token": "Token",
@@ -747,7 +765,8 @@
         "dapps": "Dapps",
         "approvals": "授权",
         "search": "搜索 Token",
-        "copyTrading": "跟单交易"
+        "copyTrading": "跟单交易",
+        "watchlist": "观察列表"
       }
     },
     "manageAddress": {
@@ -954,7 +973,8 @@
       "gas-fee-too-high": "Gas 费用过高",
       "swapped": "已交换",
       "historyTitle": "Swap 历史记录",
-      "selectChainModalTitle": "选择链"
+      "selectChainModalTitle": "选择链",
+      "results": "结果"
     },
     "dashboard": {
       "home": {
@@ -1551,7 +1571,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Price:"
-      }
+      },
+      "appChain": "Dapp账户"
     },
     "miniSignFooterBar": {
       "signWithLedger": "签名",
@@ -1724,6 +1745,9 @@
         "verifyDangerTips": "这是一个 scam token",
         "Issuedby": "发行者：",
         "scamWarningTips": "这是一种低质量的代币，可能是骗局。"
+      },
+      "hotTokenList": {
+        "title": "热"
       }
     },
     "receiveAddressList": {
@@ -1985,7 +2009,7 @@
         "wallet_one": "钱包",
         "wallet_other": "钱包"
       },
-      "scamTokenHeader": "诈骗代币"
+      "lowValueTokenHeader": "低价值代币"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2027,7 +2051,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "在 Dapp 中查看",
-      "viewSiteInWebsite": "在网站中查看"
+      "viewSiteInWebsite": "在网站中查看",
+      "appChain": "在 {{chain}} 账户"
     },
     "component": {
       "ChainSelector": {
@@ -2047,7 +2072,60 @@
       "comingSoon": "即将推出...",
       "smartMoneyWallets": "Smart Money 钱包",
       "refreshTitle": "加载更多来自 Smart Money 的跟单交易",
-      "smartMoneyWallet": "Smart Money Wallet"
+      "smartMoneyWallet": "Smart Money Wallet",
+      "filterRule": {
+        "tokenCreate": "最近创建的",
+        "smartMoney": "Smart Money 交易数",
+        "24HChange": "24小时变化",
+        "smartWalletCount": "Smart Money 数量"
+      },
+      "chain": "链",
+      "info": "信息",
+      "sameNameTokens": "同名代币",
+      "earned": "已赚取",
+      "tokenName": "代币名称",
+      "Liquidity": "流动性",
+      "smartWalletsBuying": "{{len}} Smart Money 购买",
+      "timeLabelAgo": "创建于 {{time}} 前",
+      "earn": "赚取",
+      "contractAddress": "合约地址",
+      "noOtherTokensWithSameName": "没有找到其他名称相同的代币",
+      "holdingProfit": "持有/利润",
+      "buyEarn": "24小时购买 / 赚取",
+      "loss": "损失",
+      "tokenInfo": "代币信息",
+      "bought": "购买",
+      "token": "令牌",
+      "twitterNews": "X 中的新闻",
+      "createdTime": "创建时间",
+      "timeSmartWallet": "时间 / Smart Money",
+      "myCopyTradingEarnings": "我的跟单交易收益",
+      "myCopyTrading": "我的跟单交易",
+      "smartWallets": "Smart Money 钱包",
+      "currentToken": "当前代币",
+      "myBalanceFromCopyTrading": "我从 Copy Trading 的余额",
+      "updateTokenText": "{{count}} 个 tokens 已更新",
+      "gettingLatest": "获取最新的 Smart Money..."
+    },
+    "watchlist": {
+      "empty": {
+        "title": "您的观察列表中还没有代币"
+      },
+      "search": {
+        "title": "搜索 tokens"
+      },
+      "tokenHeader": {
+        "change": "24小时变化",
+        "token": "Token/FDV",
+        "price": "价格"
+      },
+      "footer": {
+        "skip": "跳过",
+        "add": "添加到关注列表（{{count}}）"
+      },
+      "toast": {
+        "remove": "成功从观察列表中移除"
+      }
     }
   },
   "component": {

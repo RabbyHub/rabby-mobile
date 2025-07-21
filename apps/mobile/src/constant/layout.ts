@@ -51,6 +51,8 @@ export const ScreenLayouts2 = {
   // dappWebViewControlHeaderHeight: (IS_ANDROID ? 10 : 0) /* padding-top */ + 56,
   dappWebViewControlHeaderHeight: 52,
   dappWebViewControlNavHeight: 68,
+
+  TabbedDappWebViewControlNavHeight: IS_ANDROID ? 57 : 68,
 };
 
 export const ScreenWithAccountSwitcherLayouts = {
@@ -89,6 +91,7 @@ export const RootNames = {
   Dapps: 'Dapps',
   FavoriteDapps: 'FavoriteDapps',
   Search: 'Search',
+  Watchlist: 'Watchlist',
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
@@ -135,6 +138,7 @@ export const RootNames = {
   Approvals: 'Approvals',
   BatchRevoke: 'BatchRevoke',
   History: 'History',
+  CopyTradingTokenDetail: 'CopyTradingTokenDetail',
   HistoryFilterScam: 'HistoryFilterScam',
   HistoryDetail: 'HistoryDetail',
   HistoryLocalDetail: 'HistoryLocalDetail',

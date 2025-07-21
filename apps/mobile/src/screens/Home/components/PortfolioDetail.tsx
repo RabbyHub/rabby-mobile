@@ -118,7 +118,8 @@ export const TokenList = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const route = useRoute<GetRootScreenNavigationProps<'DeFiDetail'>['route']>();
-  const { relateTokenId, isSingleAddress, account } = route.params || {};
+  const { relateTokenId, isSingleAddress, account, rawPortfolios } =
+    route.params || {};
 
   const [highlightAnim] = useState(new Animated.Value(0));
 
@@ -257,11 +258,12 @@ export const TokenList = ({
           _tokenId: token.id,
         } as any, // to do fix type
         isSingleAddress,
+        rawPortfolios: isSingleAddress ? rawPortfolios : undefined,
         account,
         fromPortfolio: true,
       });
     },
-    [account, isSingleAddress],
+    [account, isSingleAddress, rawPortfolios],
   );
 
   return list.length ? (
@@ -292,7 +294,7 @@ export const TokenList = ({
             ]}
             key={l.id}>
             <TouchableWithoutFeedback
-              onPress={() => l.isToken && handleOpenTokenDetail(l)}>
+              onPress={() => l.isToken && l.chain && handleOpenTokenDetail(l)}>
               <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
                 <AssetAvatar
                   logo={l._logo}
@@ -307,7 +309,7 @@ export const TokenList = ({
                   numberOfLines={1}>
                   {l._symbol}
                 </Text>
-                {l.isToken && (
+                {l.isToken && l.chain && (
                   <RcIconRightCC
                     style={styles.arrowStyle}
                     width={14}
@@ -418,6 +420,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
+    maxWidth: 160,
     flexShrink: 1,
   },
   portfolioNetWorth: {

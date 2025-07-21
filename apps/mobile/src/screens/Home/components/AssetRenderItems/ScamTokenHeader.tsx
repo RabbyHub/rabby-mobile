@@ -52,7 +52,7 @@ export const ScamTokenHeader = memo(
             ))}
           </View>
           <Text style={styles.title}>
-            {t('page.multiAddressAssets.scamTokenHeader')}
+            {t('page.multiAddressAssets.lowValueTokenHeader')}
           </Text>
         </View>
 

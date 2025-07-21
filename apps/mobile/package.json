@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.23",
+  "version": "0.6.27",
   "private": true,
   "repository": {
     "type": "git",
@@ -43,6 +43,7 @@
     "@onekeyfe/hd-transport-react-native/@onekeyfe/react-native-ble-plx": "npm:react-native-ble-plx@3.1.2"
   },
   "dependencies": {
+    "@craftzdog/react-native-buffer": "^6.0.5",
     "@debank/common": "0.3.60",
     "@debank/festats": "1.0.4",
     "@eth-optimism/contracts-ts": "^0.17.0",
@@ -67,10 +68,10 @@
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.12",
-    "@rabby-wallet/rabby-api": "0.9.25",
+    "@rabby-wallet/rabby-api": "0.9.29",
     "@rabby-wallet/rabby-security-engine": "2.0.10",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
-    "@rabby-wallet/rabby-swap": "0.0.56",
+    "@rabby-wallet/rabby-swap": "0.0.61",
     "@rabby-wallet/react-native-sqlite-storage": "7.0.0-alpha.1",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
@@ -161,7 +162,6 @@
     "react-native-pager-view": "6.7.0",
     "react-native-permissions": "5.3.0",
     "react-native-qrcode-svg": "^6.2.0",
-    "react-native-quick-bip39": "0.0.9",
     "react-native-quick-crypto": "0.7.13",
     "react-native-randombytes": "^3.6.1",
     "react-native-reanimated": "3.17.1",

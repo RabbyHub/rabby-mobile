@@ -9,7 +9,8 @@ import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddr
 import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
 
 export enum MODAL_NAMES {
-  'RECENTLY_BUY_LIST' = 'RECENTLY_BUY_LIST',
+  // 'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
+  'COPY_TRADING_EARNINGS' = 'COPY_TRADING_EARNINGS',
   'NOT_MATTER_ADDRESS_DIALOG' = 'NOT_MATTER_ADDRESS_DIALOG',
   'APPROVAL' = 'APPROVAL',
   'SWITCH_ADDRESS' = 'SWITCH_ADDRESS',
@@ -159,6 +160,5 @@ export type GlobalSheetModalListeners = {
   [EVENT_NAMES.PRESENT]: (id: MODAL_ID) => any;
   [EVENT_NAMES.PRESENTED]: (id: MODAL_ID) => any;
   [EVENT_NAMES.DISMISS]: (id: MODAL_ID) => any;
-
   [EVENT_NAMES.SNAP_TO_INDEX]: (id: string, index: number) => any;
 };

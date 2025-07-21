@@ -1,14 +1,12 @@
 /* eslint-disable react-native/no-inline-styles */
 import { Text, View, TouchableOpacity } from 'react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { AddressEntry } from './RenderRow/AddressEntry';
 import { Card } from '@/components2024/Card';
 import { useTheme2024 } from '@/hooks/theme';
-import PlusSVG from '@/assets2024/icons/common/plus-cc.svg';
 import RightArrowSVG from '@/assets2024/icons/common/right-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from './hooks';
-import { OtherAddressNav } from '../OtherAddressNav';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CurrentAddressProps } from '../AddressListScreenContainer';
 import { StackActions, useNavigation } from '@react-navigation/native';
@@ -35,12 +33,12 @@ export const AddressList = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
+  const modalRef =
+    useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
   const {
     top10Addresses,
     notMatterAccounts,
     list: _rawList,
-    hasWatchAddress,
-    hasSafeAddress,
     fetchAccounts,
   } = useAccountInfo();
 
@@ -57,7 +55,8 @@ export const AddressList = () => {
   const { multiTimeStamp, refresh: refreshCurve } = useMultiCurve(
     top10Addresses,
     false,
-    top10Balance,
+    top10Balance.total,
+    top10Balance.totalEvm,
   );
 
   useBalanceUpdate(triggerUpdate);
@@ -70,6 +69,7 @@ export const AddressList = () => {
       return {
         ...item,
         balance: account?.balance || item.balance || 0,
+        evmBalance: account?.evmBalance || item.evmBalance || 0,
       };
     });
   }, [balanceAccounts, _rawList]);
@@ -78,11 +78,11 @@ export const AddressList = () => {
     return [
       ...list.map(item => {
         const hasChangeData = multiTimeStamp[
-          item.address.toLocaleLowerCase()
+          item.address.toLowerCase()
         ]?.data?.some(i => i.usd_value !== 0);
         const chartData = getChangeData(
-          multiTimeStamp[item.address.toLocaleLowerCase()]?.data || [],
-          item.balance,
+          multiTimeStamp[item.address.toLowerCase()]?.data || [],
+          item.evmBalance,
           new Date().getTime(),
         );
         return {
@@ -109,18 +109,6 @@ export const AddressList = () => {
     [styles.itemGap],
   );
 
-  const onGotoWatchAddress = useCallback(() => {
-    navigation.push(RootNames.StackAddress, {
-      screen: RootNames.WatchAddressList,
-    });
-  }, [navigation]);
-
-  const onGotoSafeAddress = useCallback(() => {
-    navigation.push(RootNames.StackAddress, {
-      screen: RootNames.SafeAddressList,
-    });
-  }, [navigation]);
-
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const gotoAddAddress = useCallback(() => {
@@ -142,15 +130,18 @@ export const AddressList = () => {
   }, [shouldRedirectToSetPasswordBefore2024, navigation]);
 
   const handleMoreWalletsPress = useCallback(() => {
-    console.log('Show more wallets detail');
-    const id = createGlobalBottomSheetModal2024({
+    if (modalRef.current) {
+      removeGlobalBottomSheetModal2024(modalRef.current);
+    }
+    modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG,
       bottomSheetModalProps: {
         enablePanDownToClose: true,
         enableContentPanningGesture: true,
       },
       onDone: () => {
-        removeGlobalBottomSheetModal2024(id);
+        removeGlobalBottomSheetModal2024(modalRef.current);
+        modalRef.current = undefined;
       },
     });
   }, []);
@@ -384,7 +375,7 @@ const getStyles = createGetStyles2024(ctx => ({
   stackedIcon: {
     position: 'absolute',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 1)',
+    borderColor: ctx.colors2024['neutral-bg-1'],
     borderRadius: 10,
   },
   moreWalletsButtonIconImage: {

@@ -291,8 +291,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   contentText: {
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '700',
   },
   icon: {

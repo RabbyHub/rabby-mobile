@@ -129,9 +129,6 @@ export const useSwapHistory = () => {
 
 export const swapPendingCountAtom = atom(0);
 export const swapPendingTxDataAtom = atom<SwapItem | null>(null);
-export const swapLocalTxDataAtom = atom<
-  SwapTxHistoryItem | SendTxHistoryItem | null
->(null);
 export const swapHistoryRedDotAtom = atom(false);
 export const useReadPendingCount = () => {
   return useAtomValue(swapPendingCountAtom);
@@ -178,8 +175,9 @@ export const useReadSwapHistoryRedDot = () => {
 export const usePollSwapPendingNumber = (timer = 10000) => {
   const [, setCount] = useAtom(swapPendingCountAtom);
   const [, setTxData] = useAtom(swapPendingTxDataAtom);
-  const [localPendingTxData, setLocalPendingTxData] =
-    useAtom(swapLocalTxDataAtom);
+  const [localPendingTxData, setLocalPendingTxData] = useState<
+    SwapTxHistoryItem | SendTxHistoryItem | null
+  >(null);
   const [, setSwapHistoryRedDot] = useAtom(swapHistoryRedDotAtom);
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',

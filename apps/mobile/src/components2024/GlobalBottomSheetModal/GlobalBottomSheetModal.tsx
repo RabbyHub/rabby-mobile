@@ -10,6 +10,7 @@ import {
   GlobalSheetModalListeners,
   MODAL_ID,
   MODAL_NAMES,
+  RemoveParams,
 } from './types';
 import { MODAL_VIEWS, SNAP_POINTS } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
@@ -29,9 +30,33 @@ type ModalData = {
   ref: React.RefObject<AppBottomSheetModal>;
 };
 
+let globalRemoveAllModals: ((params?: RemoveParams) => void) | null = null;
+
 export const GlobalBottomSheetModal2024 = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
   const [modals, setModals] = React.useState<ModalData[]>([]);
+
+  const removeAllModals = React.useCallback((params?: RemoveParams) => {
+    // Close all current modals
+    Object.values(modalRefs.current).forEach(modalRef => {
+      modalRef.current?.close(
+        Object.keys(params || {}).length ? { ...params } : undefined,
+      );
+    });
+
+    // Clear all modal refs
+    modalRefs.current = {};
+
+    // Clear all modals from state
+    setModals([]);
+  }, []);
+
+  React.useEffect(() => {
+    globalRemoveAllModals = removeAllModals;
+    return () => {
+      globalRemoveAllModals = null;
+    };
+  }, [removeAllModals]);
 
   React.useEffect(() => {
     modalRefs.current = modals.reduce((acc, modal) => {
@@ -71,6 +96,16 @@ export const GlobalBottomSheetModal2024 = () => {
       const approvalComponent = _approval?.data
         ?.approvalComponent as APPROVAL_MODAL_NAMES;
 
+      const isWaitingComponent =
+        approvalComponent &&
+        params.name === MODAL_NAMES.APPROVAL &&
+        [
+          APPROVAL_MODAL_NAMES.LedgerHardwareWaiting,
+          APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
+          APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
+          APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
+        ].includes(approvalComponent);
+
       setModals(prev => [
         ...prev,
         {
@@ -78,12 +113,19 @@ export const GlobalBottomSheetModal2024 = () => {
           params: {
             ...params,
             approvalComponent,
+            bottomSheetModalProps: {
+              ...params.bottomSheetModalProps,
+              enableDynamicSizing: isWaitingComponent
+                ? true
+                : params?.bottomSheetModalProps?.enableDynamicSizing || false,
+            },
           },
-          snapPoints:
-            approvalComponent && params.name === MODAL_NAMES.APPROVAL
-              ? APPROVAL_SNAP_POINTS[approvalComponent] ??
-                APPROVAL_SNAP_POINTS.Unknown
-              : SNAP_POINTS[params.name],
+          snapPoints: isWaitingComponent
+            ? undefined
+            : approvalComponent && params.name === MODAL_NAMES.APPROVAL
+            ? APPROVAL_SNAP_POINTS[approvalComponent] ??
+              APPROVAL_SNAP_POINTS.Unknown
+            : SNAP_POINTS[params.name],
           ref: React.createRef<AppBottomSheetModal>(),
         },
       ]);
@@ -223,4 +265,10 @@ export const GlobalBottomSheetModal2024 = () => {
       })}
     </View>
   );
+};
+
+export const removeAllGlobalBottomSheetModals = (params?: RemoveParams) => {
+  if (globalRemoveAllModals) {
+    globalRemoveAllModals(params);
+  }
 };

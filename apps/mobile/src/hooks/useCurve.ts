@@ -17,6 +17,20 @@ export type CurvePoint = {
   timestamp: number;
   dateString: string;
   clockTimeString: string;
+  dateTimeString: string;
+};
+
+export const formatSmallUsdValue = (value: number) => {
+  if (!value) {
+    return '$0';
+  }
+  if (value < 0.01) {
+    return '<$0.01';
+  }
+  if (value <= 10) {
+    return `$${splitNumberByStep(value.toFixed(2))}`;
+  }
+  return formatUsdValue(value, value > 1000000 ? 2 : 0, true);
 };
 
 export const formChartData = (
@@ -24,6 +38,7 @@ export const formChartData = (
   realtimeNetWorth = 0,
   realtimeTimestamp?: number,
   type = CurveDayType.DAY,
+  staticBalance?: number | null,
 ) => {
   const startData = data[0] || { value: 0, timestamp: 0, usd_value: 0 };
   const step = type === CurveDayType.DAY ? 30 * 60 : 3 * 60 * 60;
@@ -48,7 +63,7 @@ export const formChartData = (
 
         return {
           value: x.usd_value || 0,
-          netWorth: x.usd_value ? `${formatUsdValue(x.usd_value)}` : '$0',
+          netWorth: formatSmallUsdValue(x.usd_value),
           change: `${formatUsdValue(Math.abs(change))}`,
           isLoss: change < 0,
           changePercent:
@@ -58,6 +73,7 @@ export const formChartData = (
           timestamp: x.timestamp,
           dateString: dayjs.unix(x.timestamp).format('MM DD, HH:mm'),
           clockTimeString: dayjs.unix(x.timestamp).format('HH:mm'),
+          dateTimeString: dayjs.unix(x.timestamp).format('MM DD, HH:mm'),
         };
       }) || [];
 
@@ -67,7 +83,7 @@ export const formChartData = (
 
     list.push({
       value: realtimeNetWorth || 0,
-      netWorth: realtimeNetWorth ? `${formatUsdValue(realtimeNetWorth)}` : '$0',
+      netWorth: formatSmallUsdValue(realtimeNetWorth),
       change: `${formatUsdValue(Math.abs(realtimeChange))}`,
       isLoss: realtimeChange < 0,
       changePercent:
@@ -79,6 +95,9 @@ export const formChartData = (
       timestamp: Math.floor(realtimeTimestamp / 1000),
       dateString: dayjs.unix(realtimeTimestamp / 1000).format('MM DD, HH:mm'),
       clockTimeString: dayjs.unix(realtimeTimestamp / 1000).format('HH:mm'),
+      dateTimeString: dayjs
+        .unix(realtimeTimestamp / 1000)
+        .format('MM DD, HH:mm'),
     });
   }
 
@@ -88,15 +107,7 @@ export const formChartData = (
 
   return {
     list,
-    netWorthWithDot:
-      endNetWorth === 0 ? '$0' : `${formatUsdValue(endNetWorth)}`,
-    netWorth:
-      endNetWorth === 0
-        ? '$0'
-        : '$' +
-          splitNumberByStep(
-            endNetWorth > 10 ? Math.floor(endNetWorth) : endNetWorth.toFixed(2),
-          ),
+    netWorth: formatSmallUsdValue(staticBalance || endNetWorth),
     change: `${formatUsdValue(Math.abs(assetsChange))}`,
     changePercent:
       startData.usd_value !== 0
@@ -134,6 +145,7 @@ export const useCurve = (
   nonce: number,
   realtimeNetWorth: number | null,
   days: CurveDayType = CurveDayType.DAY,
+  staticBalance: number | null,
 ) => {
   const [data, setData] = useState<
     {
@@ -148,8 +160,9 @@ export const useCurve = (
       realtimeNetWorth ?? 0,
       new Date().getTime(),
       days,
+      staticBalance,
     );
-  }, [data, realtimeNetWorth, days]);
+  }, [data, realtimeNetWorth, days, staticBalance]);
 
   const fetch = useCallback(
     async (addr: string, force = false) => {

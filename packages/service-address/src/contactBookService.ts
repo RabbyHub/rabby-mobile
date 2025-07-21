@@ -41,7 +41,7 @@ export class ContactBookService {
     contacts.forEach(contact => {
       this.store.contacts = {
         ...this.store.contacts,
-        [contact.address.toLocaleLowerCase()]: contact,
+        [contact.address.toLowerCase()]: contact,
       };
     });
   }
@@ -51,7 +51,7 @@ export class ContactBookService {
   }
 
   getContactByAddress(address: string) {
-    const contact = this.store.contacts[address.toLocaleLowerCase()];
+    const contact = this.store.contacts[address.toLowerCase()];
     if (!contact) {
       return undefined;
     }
@@ -68,7 +68,7 @@ export class ContactBookService {
     aliases.forEach(alias => {
       this.store.aliases = {
         ...this.store.aliases,
-        [alias.address.toLocaleLowerCase()]: alias,
+        [alias.address.toLowerCase()]: alias,
       };
     });
   }
@@ -81,10 +81,10 @@ export class ContactBookService {
     if (!address) {
       return undefined;
     }
-    const alias = this.store.aliases[address.toLocaleLowerCase()];
+    const alias = this.store.aliases[address.toLowerCase()];
     if (!alias) {
       return {
-        address: address.toLocaleLowerCase(),
+        address: address.toLowerCase(),
         alias: ellipsis(address, 6),
       };
     }

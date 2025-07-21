@@ -64,6 +64,7 @@ import {
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useRecentSendPendingTx } from './useRecentSend';
 import { last } from 'lodash';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 function makeDefaultToken(): TokenItem & {
   tokenId?: string;
@@ -859,7 +860,7 @@ export function useSendTokenForm({
         isAccountSupportMiniApproval(currentAccount?.type || '') &&
         !chain.isTestnet &&
         isAccountSupportDirectSign(currentAccount?.type || '');
-      if (isNativeToken && !directSubmit) {
+      if (isNativeToken && (!directSubmit || isForceSignTx)) {
         // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
         const couldSpecifyIntrinsicGas =
           !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
@@ -1009,17 +1010,18 @@ export function useSendTokenForm({
               account,
             })
               .then(resp => {
-                transactionHistoryService.addSendTxHistory({
-                  token: currentToken,
-                  amount: Number(amount),
-                  to,
-                  from: currentAccount?.address!,
-                  chainId: chain.id,
-                  hash: last(resp)?.txHash!,
-                  address: currentAccount?.address!,
-                  status: 'pending',
-                  createdAt: Date.now(),
-                });
+                currentAccount.type !== KEYRING_CLASS.GNOSIS &&
+                  transactionHistoryService.addSendTxHistory({
+                    token: currentToken,
+                    amount: Number(amount),
+                    to,
+                    from: currentAccount?.address!,
+                    chainId: chain.id,
+                    hash: last(resp)?.txHash!,
+                    address: currentAccount?.address!,
+                    status: 'pending',
+                    createdAt: Date.now(),
+                  });
 
                 runFetchPendingCount();
                 runFetchLocalPendingTx();
@@ -1066,17 +1068,18 @@ export function useSendTokenForm({
             .then(resp => {
               const hash = resp as string;
               console.debug('hash', hash);
-              transactionHistoryService.addSendTxHistory({
-                token: currentToken,
-                amount: Number(amount),
-                to,
-                from: currentAccount?.address!,
-                chainId: chain.id,
-                hash,
-                address: currentAccount?.address!,
-                status: 'pending',
-                createdAt: Date.now(),
-              });
+              currentAccount.type !== KEYRING_CLASS.GNOSIS &&
+                transactionHistoryService.addSendTxHistory({
+                  token: currentToken,
+                  amount: Number(amount),
+                  to,
+                  from: currentAccount?.address!,
+                  chainId: chain.id,
+                  hash,
+                  address: currentAccount?.address!,
+                  status: 'pending',
+                  createdAt: Date.now(),
+                });
 
               runFetchPendingCount();
               runFetchLocalPendingTx();

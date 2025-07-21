@@ -11,7 +11,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { nanoid } from 'nanoid';
 import { Object as ObjectType } from 'ts-toolbelt';
-import { findMaxGasTx } from '../utils/tx';
+import { findMaxGasTx, getRpcTxReceipt } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { sortBy, minBy, maxBy, uniqBy, flatten } from 'lodash';
 import { openapi, testOpenapi } from '../request';
@@ -28,9 +28,14 @@ import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 // import { updateExpiredTime } from '@/databases/sync/assets'
 import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
-import { loadTxSaveFromLocalStore } from '@/screens/Transaction/components/utils';
+import {
+  loadTxSaveFromLocalStore,
+  txDonePatchTokenAmountInDb,
+  insertCopyTradingBuyItem,
+} from '@/screens/Transaction/components/utils';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { updateExpiredTime } from '@/databases/sync/utils';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -90,6 +95,22 @@ export interface TransactionSigningItem {
   isSubmitted?: boolean;
 }
 
+export interface BridgeTxHistoryItem {
+  address: string;
+  fromChainId: number;
+  toChainId: number;
+  fromToken: TokenItem;
+  toToken: TokenItem;
+  slippage: number;
+  fromAmount: number;
+  toAmount: number;
+  dexId: string;
+  status: 'pending' | 'fromSuccess' | 'allSuccess' | 'failed';
+  hash: string;
+  createdAt: number;
+  completedAt?: number;
+}
+
 export interface SwapTxHistoryItem {
   address: string;
   chainId: number;
@@ -103,6 +124,10 @@ export interface SwapTxHistoryItem {
   hash: string;
   createdAt: number;
   completedAt?: number;
+  isFromCopyTrading?: boolean;
+  copyTradingExtra?: {
+    type: 'Buy' | 'Sell';
+  };
 }
 
 export interface SendTxHistoryItem {
@@ -122,6 +147,7 @@ interface TxHistoryStore {
   transactions: TransactionHistoryItem[];
   swapTxHistory: SwapTxHistoryItem[];
   sendTxHistory: SendTxHistoryItem[];
+  bridgeTxHistory: BridgeTxHistoryItem[];
   successList: string[];
   failList: string[];
   sendSuccessList: string[];
@@ -154,6 +180,7 @@ export class TransactionHistoryService {
         template: {
           transactions: [],
           swapTxHistory: [],
+          bridgeTxHistory: [],
           successList: [],
           failList: [],
           sendSuccessList: [],
@@ -193,6 +220,10 @@ export class TransactionHistoryService {
 
     if (!Array.isArray(this.store.sendFailList)) {
       this.store.sendFailList = [];
+    }
+
+    if (!Array.isArray(this.store.bridgeTxHistory)) {
+      this.store.bridgeTxHistory = [];
     }
 
     if (typeof this.store.isNeedFetchTxHistory !== 'object') {
@@ -312,7 +343,7 @@ export class TransactionHistoryService {
     this.store.swapTxHistory.push(tx);
     this.store.swapTxHistory = this.store.swapTxHistory
       .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 100);
+      .slice(0, 200);
   }
 
   addSendTxHistory(tx: SendTxHistoryItem) {
@@ -322,7 +353,14 @@ export class TransactionHistoryService {
       .slice(0, 500); // need use to show send history list
   }
 
-  getRecentPendingTxHistory(address: string, type: 'swap' | 'send') {
+  addBridgeTxHistory(tx: BridgeTxHistoryItem) {
+    this.store.bridgeTxHistory.push(tx);
+    this.store.bridgeTxHistory = this.store.bridgeTxHistory
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 200);
+  }
+
+  getRecentPendingTxHistory(address: string, type: 'swap' | 'send' | 'bridge') {
     const recentItem = this.store[`${type}TxHistory`]
       .filter(item => {
         return isSameAddress(address, item.address);
@@ -354,34 +392,59 @@ export class TransactionHistoryService {
     chainId: number,
     status: SwapTxHistoryItem['status'],
   ) {
-    const arr = [this.store.swapTxHistory, this.store.sendTxHistory];
+    const arr = [
+      this.store.swapTxHistory,
+      this.store.sendTxHistory,
+      this.store.bridgeTxHistory,
+    ];
     const hashArr = txs.map(item => item.hash);
     arr.forEach(async history => {
       const index = history.findIndex(
-        (item: SwapTxHistoryItem | SendTxHistoryItem) =>
-          item.chainId === chainId && hashArr.includes(item.hash),
+        (item: SwapTxHistoryItem | SendTxHistoryItem | BridgeTxHistoryItem) =>
+          ('fromChainId' in item ? item.fromChainId : item.chainId) ===
+            chainId && hashArr.includes(item.hash),
       );
-      if (index !== -1) {
-        history[index].status = status;
+      if (index > -1) {
+        if ('fromChainId' in history[index]) {
+          // bridge tx
+          history[index].status =
+            status === 'success' ? 'fromSuccess' : 'failed';
+        } else {
+          history[index].status = status;
+        }
         history[index].completedAt = Date.now();
+        if (
+          'isFromCopyTrading' in history[index] &&
+          history[index].isFromCopyTrading
+        ) {
+          const isSell = history[index].copyTradingExtra?.type === 'Sell';
+          if (!isSell) {
+            // only buy insert buy item
+            insertCopyTradingBuyItem(history[index]);
+          }
+          matomoRequestEvent({
+            category: 'CopyTrading',
+            action: isSell
+              ? 'CopyTrading_SellFinishSwap'
+              : 'CopyTrading_BuyFinishSwap',
+          });
+        }
       }
     });
   }
-  // if (index !== -1) {
-  //   this.store.swapTxHistory[index].status = status;
-  //   this.store.swapTxHistory[index].completedAt = Date.now();
-  // const completeItem = this.store.swapTxHistory[index];
-  // // clear before pending by nonce lower than complete item
-  // this.store.swapTxHistory = this.store.swapTxHistory.filter(item => {
-  //   return !(
-  //     isSameAddress(completeItem.address, item.address) &&
-  //     item.chainId === completeItem.chainId &&
-  //     item.createdAt < completeItem.createdAt &&
-  //     item.status === 'pending'
-  //   );
-  // });
-  // }
-  // }
+
+  completeBridgeTxHistory(
+    from_tx_id: string,
+    chainId: number,
+    status: BridgeTxHistoryItem['status'],
+  ) {
+    this.store.bridgeTxHistory.forEach(item => {
+      if (item.fromChainId === chainId && item.hash === from_tx_id) {
+        item.status = status;
+        item.completedAt = Date.now();
+      }
+    });
+  }
 
   getIsNeedFetchTxHistory(address: string) {
     const res = this.store.isNeedFetchTxHistory[address];
@@ -570,7 +633,7 @@ export class TransactionHistoryService {
       item => -item.createdAt,
     );
     const maxCompletedNonceByChain = completeds.reduce((res, item) => {
-      res[item.chainId] = Math.max(res[item.chainId] || 0, item.nonce);
+      res[item.chainId] = Math.max(res[item.chainId] ?? -1, item.nonce);
       return res;
     }, {} as Record<string, number>);
 
@@ -579,7 +642,7 @@ export class TransactionHistoryService {
         groups.filter(
           item =>
             item.isPending &&
-            item.nonce > (maxCompletedNonceByChain[item.chainId] || 0),
+            item.nonce > (maxCompletedNonceByChain[item.chainId] ?? -1),
         ),
         item => {
           return -item.createdAt;
@@ -786,6 +849,7 @@ export class TransactionHistoryService {
         }
         loadTxSaveFromLocalStore(newTx); // send type tx save local db
         this.setNeedFetchTxHistory(address.toLowerCase());
+        txDonePatchTokenAmountInDb(newTx);
       }
     });
 
@@ -857,17 +921,12 @@ export class TransactionHistoryService {
               hash: tx.hash!,
             });
           } else {
-            return openapi.getTx(
-              chain.serverId,
-              tx.hash!,
-              Number(tx.rawTx.gasPrice || tx.rawTx.maxFeePerGas || 0),
-            );
+            // Use standard RPC to get transaction receipt
+            return getRpcTxReceipt(chain.serverId, tx.hash!);
           }
         }),
       );
-      const completed = results.find(
-        result => result.code === 0 && result.status !== 0,
-      );
+      const completed = results.find(result => result.code === 0);
       if (!completed) {
         if (
           duration !== false &&
@@ -900,6 +959,7 @@ export class TransactionHistoryService {
       eventBus.emit(EVENTS.RELOAD_TX, {
         addressList: [address],
       });
+      return completed.gas_used;
     } catch (e) {
       if (
         duration !== false &&
@@ -1065,6 +1125,11 @@ export class TransactionHistoryService {
         isSameAddress(address, item.address) && item.status === 'pending'
       );
     });
+    this.store.bridgeTxHistory = this.store.bridgeTxHistory.filter(item => {
+      return !(
+        isSameAddress(address, item.address) && item.status !== 'allSuccess'
+      );
+    });
   }
 
   removeFeatPendingByLocal(localItem: TransactionHistoryItem) {
@@ -1083,6 +1148,15 @@ export class TransactionHistoryService {
           isSameAddress(localItem.address, tx.address) &&
           tx.status === 'pending' &&
           localItem.chainId === tx.chainId &&
+          localItem?.hash === tx.hash
+        ),
+    );
+    this.store.bridgeTxHistory = this.store.bridgeTxHistory.filter(
+      tx =>
+        !(
+          isSameAddress(localItem.address, tx.address) &&
+          tx.status !== 'allSuccess' &&
+          localItem.chainId === tx.fromChainId &&
           localItem?.hash === tx.hash
         ),
     );

@@ -38,6 +38,7 @@ import { useHistoryTokenDict } from './historyTokenDict';
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
   balance?: number;
+  evmBalance?: number;
 };
 
 const accountsAtom = atom<KeyringAccountWithAlias[]>([]);
@@ -68,6 +69,7 @@ async function fetchAllAccounts() {
           return {
             ...account,
             aliasName: '',
+            evmBalance: balance?.evm_usd_value || 0,
             balance: balance?.total_usd_value || 0,
           };
         });

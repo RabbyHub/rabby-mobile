@@ -1,5 +1,6 @@
 import { WALLET_ICON, WALLET_NAME } from './constant';
-import { domReadyCall } from './util';
+import { setupMetamaskMode } from './metamaskMode';
+import { domReadyCall, retry } from './util';
 
 type Rule = {
   matches: string[];
@@ -7,11 +8,33 @@ type Rule = {
   runner?(): void;
 };
 
-const hackRainbowkit = () => {
+const detectIsRainbowKit = (callback: () => void) => {
+  const hasRainbowKit = () => window.localStorage.getItem('rk-version');
+  if (hasRainbowKit()) {
+    callback();
+  } else {
+    retry(
+      async () => {
+        if (!hasRainbowKit()) {
+          throw new Error('not found rainbowkit');
+        }
+      },
+      {
+        retries: 10,
+        delay: 300,
+      },
+    ).then(callback);
+  }
+};
+
+const setupRainbowKitBtn = () => {
+  const $rabbyBtn = document.querySelector(
+    '[data-testid="rk-wallet-option-rabby"]',
+  );
   const $metamaskBtn = document.querySelector(
     '[data-testid="rk-wallet-option-metaMask"]:not([rabby-injected])',
   );
-  if (!$metamaskBtn) {
+  if ($rabbyBtn || !$metamaskBtn) {
     return;
   }
   const $imgEl = $metamaskBtn?.querySelector('img');
@@ -26,15 +49,42 @@ const hackRainbowkit = () => {
   $metamaskBtn?.setAttribute('rabby-injected', 'true');
 };
 
+const hackRainbowkit = () => {
+  detectIsRainbowKit(() => {
+    localStorage.setItem('rk-recent', JSON.stringify(['rabby', 'metamask']));
+    setupMetamaskMode({
+      isKeepRabby: true,
+    });
+    setupRainbowKitBtn();
+
+    const observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        mutation.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1) {
+            setupRainbowKitBtn();
+          }
+        });
+      });
+    });
+
+    observer.observe(document, {
+      childList: true,
+      subtree: true,
+    });
+  });
+};
+
+const hackMetamaskMode = async () => {
+  const isMetamaskMode = await (window as any).rabby.request({
+    method: 'rabby_getIsMetamaskMode',
+    params: [],
+  });
+  if (isMetamaskMode) {
+    setupMetamaskMode();
+  }
+};
+
 const rules: Rule[] = [
-  {
-    matches: [
-      'https://rainbowkit.com',
-      'https://app.spark.fi',
-      'https://swap.defillama.com',
-    ],
-    runner: hackRainbowkit,
-  },
   {
     matches: ['https://app.uniswap.org'],
     hiddenSelectors: [
@@ -122,5 +172,8 @@ export const startCheckRules = () => {
         subtree: true,
       });
     }
+
+    hackRainbowkit();
+    hackMetamaskMode();
   });
 };

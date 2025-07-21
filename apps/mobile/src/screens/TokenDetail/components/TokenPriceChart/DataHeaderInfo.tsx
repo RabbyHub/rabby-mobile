@@ -14,8 +14,10 @@ import {
 import { LineChart } from 'react-native-wagmi-charts';
 import { LoadingLinear } from './LoadingLinear';
 import { CurvePoint } from '@/hooks/useCurve';
+import { TabKey } from './TimeTab';
 
 export const DataHeaderInfo = ({
+  activeKey,
   currentPercentChange,
   currentIsLoss,
   currentBalance,
@@ -24,6 +26,7 @@ export const DataHeaderInfo = ({
   isLoading,
   isNoAssets,
 }: {
+  activeKey: TabKey;
   currentPercentChange: string;
   currentIsLoss: boolean;
   currentBalance: string;
@@ -39,7 +42,7 @@ export const DataHeaderInfo = ({
   const usdValue = useDerivedValue(() => {
     return isLoading
       ? ' '
-      : data?.[currentIndex?.value]?.value
+      : data?.[currentIndex?.value]
       ? data?.[currentIndex.value].netWorth
       : currentBalance;
   }, [
@@ -91,6 +94,22 @@ export const DataHeaderInfo = ({
     };
   }, [currentIsLoss, data, currentIndex, colors, styles, isLoading]);
 
+  const dateTime = useDerivedValue(() => {
+    return (
+      (data?.[currentIndex?.value]
+        ? activeKey === '24h'
+          ? data?.[currentIndex?.value]?.clockTimeString
+          : data?.[currentIndex?.value]?.dateTimeString
+        : '') || ''
+    );
+  }, [data, currentIndex, activeKey]);
+
+  const dateTimeAnimatedProps = useAnimatedProps(() => {
+    return {
+      text: dateTime.value,
+    };
+  });
+
   return (
     <>
       <View style={styles.wrapper}>
@@ -99,15 +118,24 @@ export const DataHeaderInfo = ({
             <>
               <View
                 // eslint-disable-next-line react-native/no-inline-styles
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                style={{
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}>
                 <AnimateableText
                   style={styles.usdValue}
                   animatedProps={usdValueAnimatedProps}
                 />
-                <AnimateableText
-                  style={lossStyleProps}
-                  animatedProps={percentChangeAnimatedProps}
-                />
+                <View style={styles.changeSection}>
+                  <AnimateableText
+                    style={lossStyleProps}
+                    animatedProps={percentChangeAnimatedProps}
+                  />
+                  <AnimateableText
+                    style={styles.changeTime}
+                    animatedProps={dateTimeAnimatedProps}
+                  />
+                </View>
               </View>
               {/* <AnimateableText
                 style={lossStyleProps}
@@ -120,6 +148,12 @@ export const DataHeaderInfo = ({
                 width={181}
                 height={42}
                 style={styles.skeleton}
+                LinearGradientComponent={LoadingLinear}
+              />
+              <Skeleton
+                width={100}
+                height={20}
+                style={[styles.skeleton, { borderRadius: 4 }]}
                 LinearGradientComponent={LoadingLinear}
               />
             </>
@@ -145,17 +179,32 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   wrapper: {
     paddingHorizontal: 25,
     gap: 8,
-    height: 50,
+    height: 74,
   },
 
   balanceChangeWrapper: {
     flexDirection: 'column',
     gap: 7,
   },
+  changeTime: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
+  },
+  changeSection: {
+    flexDirection: 'row',
+    gap: 2,
+    marginTop: 4,
+    alignItems: 'center',
+    // justifyContent: 'center',
+  },
   usdValue: {
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
-    fontSize: 36,
+    fontSize: 42,
     lineHeight: 42,
     fontWeight: '900',
   },

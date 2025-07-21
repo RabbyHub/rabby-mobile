@@ -45,13 +45,15 @@ function starToText(number: number) {
       return 'Unknown';
   }
 }
-
-export function RateModalTriggerOnHome({ style }: RNViewProps) {
+export function RateModalTriggerOnHome({
+  style,
+  totalBalanceText,
+}: RNViewProps & { totalBalanceText: string }) {
   const { isLight, styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
 
-  const { toggleShowRateModal } = useRateModal();
+  const { toggleShowRateModal, pushRateDetails } = useRateModal();
   const [userSelectedStar, setUserSelectedStar] = useState(0);
   const { shouldShowRateGuideOnHome, disableExposureRateGuide } =
     useExposureRateGuide();

@@ -15,6 +15,7 @@ import type {
 } from '@rabby-wallet/keyring-utils';
 import type { Chain, CHAINS_ENUM } from './constant/chains';
 import type {
+  CopyTradeTokenItemV2,
   NFTItem,
   SendAction,
   TokenItem,
@@ -34,6 +35,9 @@ import {
   AssetApprovalSpender,
 } from './screens/Approvals/useApprovalsPage';
 import { HistoryItemCateType } from './screens/Transaction/components/type';
+import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
+import { TabType } from './screens/CopyTrading/component/CopyTradingTokenDetail';
+import { DisplayedProject } from './screens/Home/utils/project';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -61,6 +65,7 @@ export type RootStackParamsList = {
   [RootNames.DeFiDetail]?: {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];
+    rawPortfolios?: DisplayedProject[];
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
     cache: boolean;
@@ -79,6 +84,7 @@ export type RootStackParamsList = {
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
+    rawPortfolios?: DisplayedProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
@@ -104,6 +110,7 @@ export type HomeNavigatorParamsList = {
 
 export type HomeNonTabNavigatorParamsList = {
   [RootNames.Search]?: {};
+  [RootNames.Watchlist]?: {};
 };
 
 export type DappsNavigatorParamsList = {
@@ -249,6 +256,10 @@ export type SingleAddressNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
+  [RootNames.CopyTradingTokenDetail]?: {
+    tradingTokenItem: CopyTradeTokenItemV2 | TokenItem;
+    showTabType?: TabType;
+  };
   [RootNames.History]?: {};
   [RootNames.MultiAddressHistory]?: {
     isInTokenDetail?: boolean;
@@ -291,8 +302,11 @@ export type TransactionNavigatorParamList = {
   [RootNames.SendNFT]: {
     nftItem: NFTItem;
     collectionName?: string;
-    address?: string;
-    account: Account;
+    fromAddress?: string;
+    fromAccount?: Account;
+    toAddress?: string;
+    addressBrandName?: string;
+    addrDesc?: AddrDescResponse['desc'];
   };
   [RootNames.Swap]?: {
     chainEnum?: CHAINS_ENUM | undefined;
@@ -303,7 +317,7 @@ export type TransactionNavigatorParamList = {
     swapTokenId?: TokenItem['id'][];
     isSwapToTokenDetail?: boolean;
     isFromSwap?: boolean;
-    payUseBaseToken?: boolean;
+    isFromCopyTrading?: boolean;
   };
   [RootNames.MultiSwap]?: TransactionNavigatorParamList['Swap'] & object;
   [RootNames.GnosisTransactionQueue]: {

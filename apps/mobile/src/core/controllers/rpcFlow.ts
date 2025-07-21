@@ -26,8 +26,10 @@ import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
 import { reject } from 'lodash';
-import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
-import { Account } from '../services/preference';
+import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
+import { hexToNumber, isHex } from 'viem';
+import { intToHex } from '@/utils/number';
+import BigNumber from 'bignumber.js';
 
 export const resemblesETHAddress = (str: string): boolean => {
   return str.length === 42;
@@ -270,55 +272,99 @@ const flowContext = flow
     const {
       session: { origin, $mobileCtx },
     } = request;
-    const requestDeferFn = async () =>
-      new Promise(async resolve => {
-        let waitSignComponentPromise = Promise.resolve();
-        if (isSignApproval(approvalType) && uiRequestComponent) {
-          waitSignComponentPromise = waitSignComponentAmounted();
-        }
 
-        if (approvalRes?.isGnosis) return resolve(undefined);
+    const createRequestDeferFn =
+      (originApprovalRes: typeof approvalRes) =>
+      async (isRetry = false) =>
+        new Promise(async resolve => {
+          let waitSignComponentPromise = Promise.resolve();
+          if (isSignApproval(approvalType) && uiRequestComponent) {
+            waitSignComponentPromise = waitSignComponentAmounted();
+          }
 
-        return waitSignComponentPromise.then(() =>
-          Promise.resolve(
-            providerController[mapMethod]({
-              ...request,
-              approvalRes,
-            }),
-          )
-            .then(result => {
-              if (isSignApproval(approvalType)) {
-                eventBus.emit(EVENTS.SIGN_FINISHED, {
-                  success: true,
-                  data: result,
-                });
-              }
-              return result;
-            })
-            .then(resolve)
-            .catch((e: any) => {
-              const payload = {
-                method: EVENTS.SIGN_FINISHED,
-                params: {
-                  success: false,
-                  errorMsg: e?.message || JSON.stringify(e),
-                },
-              };
-              if (e.method) {
-                payload.method = e.method;
-                payload.params = e.message;
-              }
+          if (originApprovalRes?.isGnosis) return resolve(undefined);
 
-              Sentry.captureException(e);
-              if (isSignApproval(approvalType)) {
-                eventBus.emit(payload.method, payload.params);
-              } else if (__DEV__) {
-                console.error(e);
+          return waitSignComponentPromise.then(() => {
+            let _approvalRes = originApprovalRes;
+
+            if (isRetry && mapMethod === 'ethSendTransaction') {
+              _approvalRes = { ...originApprovalRes };
+              const retryType = getRetryTxType();
+              switch (retryType) {
+                case 'nonce':
+                  const recommendNonce = getRetryTxRecommendNonce();
+                  console.log('current nonce', _approvalRes.nonce);
+                  console.log('recommendNonce nonce', recommendNonce);
+                  _approvalRes.nonce = intToHex(
+                    hexToNumber(recommendNonce as '0x${string}'),
+                  );
+                  break;
+                case 'gasPrice':
+                  if (_approvalRes.gasPrice) {
+                    _approvalRes.gasPrice = `0x${new BigNumber(
+                      new BigNumber(_approvalRes.gasPrice, 16)
+                        .times(1.3)
+                        .toFixed(0),
+                    ).toString(16)}`;
+                  }
+                  if (_approvalRes.maxFeePerGas) {
+                    _approvalRes.maxFeePerGas = `0x${new BigNumber(
+                      new BigNumber(_approvalRes.maxFeePerGas, 16)
+                        .times(1.3)
+                        .toFixed(0),
+                    ).toString(16)}`;
+                  }
+                  break;
+                default:
+                  break;
               }
-              reject(e);
-            }),
-        );
-      });
+              if (retryType) {
+                notificationService.setCurrentRequestDeferFn(
+                  createRequestDeferFn(_approvalRes),
+                );
+              }
+            }
+
+            return Promise.resolve(
+              providerController[mapMethod]({
+                ...request,
+                approvalRes: _approvalRes,
+              }),
+            )
+              .then(result => {
+                if (isSignApproval(approvalType)) {
+                  eventBus.emit(EVENTS.SIGN_FINISHED, {
+                    success: true,
+                    data: result,
+                  });
+                }
+                return result;
+              })
+              .then(resolve)
+              .catch((e: any) => {
+                const payload = {
+                  method: EVENTS.SIGN_FINISHED,
+                  params: {
+                    success: false,
+                    errorMsg: e?.message || JSON.stringify(e),
+                  },
+                };
+                if (e.method) {
+                  payload.method = e.method;
+                  payload.params = e.message;
+                }
+
+                Sentry.captureException(e);
+                if (isSignApproval(approvalType)) {
+                  eventBus.emit(payload.method, payload.params);
+                } else if (__DEV__) {
+                  console.error(e);
+                }
+                reject(e);
+              });
+          });
+        });
+    const requestDeferFn = createRequestDeferFn(approvalRes);
 
     notificationService.setCurrentRequestDeferFn(requestDeferFn);
     const requestDefer = requestDeferFn();
@@ -422,28 +468,8 @@ function reportStatsData() {
 }
 
 export default async (request: ProviderRequest) => {
-  const origin = request.session?.origin || request.origin;
-  let account: Account | undefined = undefined;
-
-  if (origin) {
-    if (origin === INTERNAL_REQUEST_ORIGIN) {
-      account =
-        request.account || preferenceService.getFallbackAccount() || undefined;
-    } else {
-      const site = dappService.getDapp(origin);
-      if (site?.isConnected) {
-        account =
-          site.currentAccount ||
-          preferenceService.getFallbackAccount() ||
-          undefined;
-      }
-    }
-  }
-
-  console.log(account);
-
   const ctx: any = {
-    request: { ...request, account, requestedApproval: false },
+    request: { ...request, requestedApproval: false },
   };
   notificationService.setStatsData();
   return flowContext(ctx).finally(() => {

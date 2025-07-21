@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { Dimensions, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -8,57 +8,16 @@ import { AssetAvatar, Text } from '@/components';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
-import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { useAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 
 const screenWidth = Dimensions.get('window').width;
 interface Props {
   token: AbstractPortfolioToken;
-  refreshTags: () => void;
 }
-export const TokenDetailHeaderArea: React.FC<Props> = ({
-  token,
-  refreshTags,
-}) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { removePinedToken, pinToken, userTokenSettings } =
-    useUserTokenSettings();
-
+export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssets();
-
-  const isPined = useMemo(
-    () =>
-      userTokenSettings?.pinedQueue?.some(
-        pinned =>
-          pinned.chainId === token.chain && pinned.tokenId === token._tokenId,
-      ),
-    [token._tokenId, token.chain, userTokenSettings?.pinedQueue],
-  );
-  const handlePress = useCallback(() => {
-    if (isPined) {
-      removePinedToken({
-        id: token._tokenId,
-        chain: token.chain,
-      });
-    } else {
-      pinToken({
-        id: token._tokenId,
-        chain: token.chain,
-      });
-    }
-    setTimeout(() => {
-      refreshTags();
-    }, 0);
-  }, [
-    isPined,
-    pinToken,
-    refreshTags,
-    removePinedToken,
-    token._tokenId,
-    token.chain,
-  ]);
 
   return (
     <View style={styles.root}>
@@ -77,17 +36,6 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
             ellipsizeMode="tail">
             {ellipsisOverflowedText(getTokenSymbol(token), 15)}
           </Text>
-          <TouchableOpacity onPress={handlePress}>
-            <RcIconFavorite
-              width={22}
-              height={21}
-              color={
-                isPined
-                  ? colors2024['orange-default']
-                  : colors2024['neutral-info']
-              }
-            />
-          </TouchableOpacity>
           {refreshing && <LoadingCircle />}
         </View>
       </View>

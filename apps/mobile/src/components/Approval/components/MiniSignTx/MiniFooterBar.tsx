@@ -366,15 +366,7 @@ export const MiniFooterBar: React.FC<Props> = ({
       setMiniApprovalGas(pre => ({
         ...pre,
         disabledProcess,
-        showGasLevelPopup:
-          (showGasLess && !useGasLess && !canGotoUseGasAccount) ||
-          (payGasByGasAccount &&
-            !(
-              !isWalletConnect &&
-              gasAccountCost?.balance_is_enough &&
-              !gasAccountCost?.chain_not_support &&
-              noCustomRPC
-            )),
+        showGasLevelPopup: disabledProcess,
       }));
     }
   }, [

@@ -297,7 +297,10 @@ export const SwapTokenItem = (props: SwapTokenItemProps) => {
                 : colors2024['neutral-foot']
             }
           />
-          <Text style={[styles.balance, inSufficient && styles.inSufficient]}>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[styles.balance, inSufficient && styles.inSufficient]}>
             {balance}
           </Text>
         </View>
@@ -399,6 +402,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   balance: {
     fontSize: 12,
     fontWeight: '400',
+    maxWidth: 200,
     color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },

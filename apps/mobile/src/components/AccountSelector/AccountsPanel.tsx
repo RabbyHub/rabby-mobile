@@ -413,7 +413,7 @@ export function AccountsPanelInSheetModal({
             !!safeAddresses.length &&
             !isGasAccount && (
               <>
-                <View style={{ height: 18 }} />
+                <View style={{ marginTop: 30 }} />
                 <SectionCollapsableNav
                   title={t(
                     'page.addressDetail.addressListScreen.importSafeAddress',

@@ -16,11 +16,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
 import { preferenceService } from '@/core/services';
 import { toast } from '@/components2024/Toast';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 export const PinedTokenList = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const { data: pinTokens, handleFetchTokens } = usePinTokens();
+  const { removePinedToken } = useUserTokenSettings();
   const handleOpenTokenDetail = useCallback((token: AbstractPortfolioToken) => {
     navigate(RootNames.TokenDetail, {
       token: token,
@@ -56,9 +58,9 @@ export const PinedTokenList = () => {
                   androidIconName: 'ic_rabby_menu_token_unfavorite',
                   key: 'favorite',
                   action() {
-                    preferenceService.removePinedToken({
-                      tokenId: token.id,
-                      chainId: token.chain,
+                    removePinedToken({
+                      id: token.id,
+                      chain: token.chain,
                     });
                     setTimeout(() => {
                       handleFetchTokens();

@@ -138,7 +138,8 @@ export default function ShowMoreGasSelectModal({
             costUsd = isActive
               ? miniApprovalGas.gasMethod === 'gasAccount'
                 ? calcGasAccountUsd(
-                    miniApprovalGas?.gasAccountCost?.total_cost || '0',
+                    (miniApprovalGas?.gasAccountCost?.estimate_tx_cost || 0) +
+                      (miniApprovalGas?.gasAccountCost?.gas_cost || 0),
                   )
                 : miniApprovalGas!.gasCostUsdStr
               : costUsd;
@@ -157,8 +158,8 @@ export default function ShowMoreGasSelectModal({
                   miniApprovalGas?.externalPanelSelection?.(gas);
                   if (gas.level === 'custom') {
                     miniApprovalGas?.handleClickEdit?.();
-                    onCancel();
                   }
+                  onCancel();
                 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text style={styles.level}>{levelTitle}</Text>

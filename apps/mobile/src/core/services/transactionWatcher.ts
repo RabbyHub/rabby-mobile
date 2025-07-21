@@ -11,6 +11,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import type { TransactionHistoryService } from './transactionHistory';
 import { customTestnetService } from './customTestnetService';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
+import { customRPCService } from './customRPCService';
 
 class Transaction {
   createdTime = 0;
@@ -103,8 +104,9 @@ export class TransactionWatcherService {
         .catch(() => null);
     }
 
-    return openapi
-      .ethRpc(chainItem.serverId, {
+    return customRPCService
+      .defaultEthRPC({
+        chainServerId: chainItem.serverId,
         method: 'eth_getTransactionReceipt',
         params: [hash],
       })
@@ -124,9 +126,10 @@ export class TransactionWatcherService {
 
     const url = chainItem.scanLink.replace(/_s_/, hash);
     const [address] = id.split('_');
+    let gasUsed: number | undefined;
 
     if (txReceipt) {
-      await this.transactionHistoryService.reloadTx({
+      gasUsed = await this.transactionHistoryService.reloadTx({
         address,
         nonce: Number(nonce),
         chainId: chainItem.id,
@@ -151,7 +154,7 @@ export class TransactionWatcherService {
 
     // notification.create(url, title, content, 2);
 
-    eventBus.emit(EVENTS.TX_COMPLETED, { address, hash });
+    eventBus.emit(EVENTS.TX_COMPLETED, { address, hash, gasUsed });
   };
 
   // fetch pending txs status every 5s

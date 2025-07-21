@@ -714,10 +714,26 @@
           "title": "Wechseln Sie zum Rabby Safe Service",
           "content": "Safe API ist nicht verfügbar. Wechseln Sie zu dem von Rabby bereitgestellten Safe-Dienst, um Ihre Safe-Funktionen aufrechtzuerhalten. <1></1><2>Alle Safe-Unterzeichner müssen Rabby Wallet verwenden, um Transaktionen zu autorisieren.<2>"
         }
+      },
+      "errorRetry": {
+        "InvalidTx": "Ungültige Transaktion.",
+        "gasLimitTooLow": "Gas Limit zu niedrig",
+        "alreadySubmitted": "Transaktion bereits eingereicht. Duplikat-Transaktion erkannt.",
+        "gasExceedsBlockGasLimit": "Der Gasbetrag überschreitet das Blockgaslimit. Bitte passen Sie es an und versuchen Sie es erneut.",
+        "nonceTooLow": "Nonce zu niedrig. Wir werden es auf {{nonce}} aktualisieren. Klicken Sie auf „Wiederholen“, um zu bestätigen und es erneut zu versuchen.",
+        "gasPriceTooLow": "Gas-Preis zu niedrig. Wir werden ihn um 30 % anpassen, um Ihnen bei der Bestätigung Ihrer Transaktion zu helfen. Klicken Sie auf \"Wiederholen\", um zu bestätigen und es erneut zu versuchen.",
+        "defaultTips": "Etwas stimmt nicht. Bitte versuchen Sie es später erneut.",
+        "insufficient": "Ihr Gasguthaben reicht nicht aus, um die Netzwerk-Gebühr für Gas zu decken. Fügen Sie Geld für Gas hinzu und versuchen Sie es erneut.",
+        "nonceTooHigh": "Nonce zu hoch. Bitte passen Sie die Nonce an und versuchen Sie es erneut."
       }
     },
     "sendNFT": {
-      "sendButton": "Senden"
+      "sendButton": "Senden",
+      "Collection": "Sammlung",
+      "NFT": "NFT",
+      "Chain": "Kette",
+      "SendAmount": "Betrag senden",
+      "Contract": "Vertrag"
     },
     "sendTokenComponents": {
       "GasReserved": "Reserviert <1>0</1> {{ tokenName }} für Gaskosten"
@@ -878,13 +894,15 @@
         "getSig": "Signatur abrufen",
         "afterSignDesc": "Scannen Sie den QR-Code auf Keystone, um die Signatur zu erhalten",
         "misMatchSignId": "Inkonsistente Transaktionsdaten. Bitte überprüfen Sie die Transaktionsdetails.",
-        "qrcodeDesc": "Scannen Sie mit Ihrem {{brand}}, um zu unterschreiben  \nNach der Unterschrift klicken Sie auf die Schaltfläche unten, um die Unterschrift zu erhalten"
+        "qrcodeDesc": "Scannen Sie mit Ihrem {{brand}}, um zu unterschreiben  \nNach der Unterschrift klicken Sie auf die Schaltfläche unten, um die Unterschrift zu erhalten",
+        "txFailedRetry": "Fehler beim Erstellen: Bitte erneut versuchen"
       },
       "blockDappFromSendingRequests": "Blockiere Dapp für 1 Minute vom Senden von Anfragen",
       "keystoneSign": "Unterzeichnen",
       "startSigning": "Beginnen Sie mit dem Signieren",
       "ledgerConfirm": "Bestätigen",
-      "oneKeyConfirm": "Bestätigen"
+      "oneKeyConfirm": "Bestätigen",
+      "got": "Ich habe es."
     },
     "gasTopUp": {
       "Loading_Tokens": "Lade Tokens...",
@@ -1000,7 +1018,8 @@
         "gasAccount": "GasAccount",
         "queue": "Warteschlange",
         "search": "Token suchen",
-        "copyTrading": "Copy Trading"
+        "copyTrading": "Copy Trading",
+        "watchlist": "Überwachungsliste"
       }
     },
     "manageAddress": {
@@ -1077,7 +1096,8 @@
       },
       "swapped": "Getauscht",
       "historyTitle": "Tauschhistorie",
-      "selectChainModalTitle": "Kette auswählen"
+      "selectChainModalTitle": "Kette auswählen",
+      "results": "Ergebnisse"
     },
     "bridge": {
       "liquidity": "Liquidität",
@@ -1738,7 +1758,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Price:"
-      }
+      },
+      "appChain": "Dapp-Konto"
     },
     "receiveAddressList": {
       "selectChainTitle": "Kette auswählen",
@@ -1877,6 +1898,9 @@
         "Issuedby": "Ausgestellt von",
         "verifyDangerTips": "Dies ist ein Betrugstoken",
         "scamWarningTips": "Dies ist ein minderwertiges Token und könnte ein Betrug sein。"
+      },
+      "hotTokenList": {
+        "title": "Heiß"
       }
     },
     "tokenDetail": {
@@ -2147,7 +2171,7 @@
         "wallet_one": "Brieftasche",
         "wallet_other": "Brieftaschen"
       },
-      "scamTokenHeader": "Scam-Token"
+      "lowValueTokenHeader": "Low-Value-Token"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -2189,7 +2213,8 @@
     },
     "defiDetail": {
       "viewSiteInApp": "In Dapp anzeigen",
-      "viewSiteInWebsite": "Auf der Website ansehen"
+      "viewSiteInWebsite": "Auf der Website ansehen",
+      "appChain": "Auf {{chain}} Konto"
     },
     "component": {
       "ChainSelector": {
@@ -2209,7 +2234,60 @@
       "updateText": "{{count}} Trends Aktualisiert",
       "noMoreData": "Keine weiteren Daten",
       "refreshTitle": "Lade mehr Copy Trading von Smart Money",
-      "comingSoon": "Bald verfügbar..."
+      "comingSoon": "Bald verfügbar...",
+      "filterRule": {
+        "24HChange": "24H Veränderung",
+        "smartMoney": "Handel mit Smart Wallets",
+        "tokenCreate": "Zuletzt erstellt",
+        "smartWalletCount": "Smart Wallet Anzahl"
+      },
+      "earn": "Verdienen",
+      "myCopyTrading": "Mein Copy Trading",
+      "bought": "Gekauft",
+      "info": "Info",
+      "buyEarn": "24H Kaufen / Verdienen",
+      "createdTime": "Erstellt am",
+      "holdingProfit": "Halten/Gewinn",
+      "token": "Token",
+      "loss": "Verlust",
+      "Liquidity": "Liquidität",
+      "twitterNews": "Nachrichten in X",
+      "earned": "Verdient",
+      "myCopyTradingEarnings": "Meine Copy Trading Einnahmen",
+      "contractAddress": "Vertragsadresse",
+      "sameNameTokens": "Gleiche Namen Token",
+      "timeSmartWallet": "Zeit / Smart Wallet",
+      "tokenName": "Token-Name",
+      "noOtherTokensWithSameName": "Es wurden keine anderen Token mit dem gleichen Namen gefunden.",
+      "smartWalletsBuying": "{{len}} Smart Wallets Kaufen",
+      "timeLabelAgo": "Vor {{time}} erstellt",
+      "currentToken": "Aktueller Token",
+      "smartWallets": "Intelligente Geldbörsen",
+      "tokenInfo": "Token-Info",
+      "chain": "Kette",
+      "myBalanceFromCopyTrading": "Mein Guthaben aus Copy Trading",
+      "updateTokenText": "{{count}} Tokens aktualisiert",
+      "gettingLatest": "Die neuesten Informationen von Smart Money erhalten..."
+    },
+    "watchlist": {
+      "empty": {
+        "title": "Noch keine Token in Ihrer Beobachtungsliste"
+      },
+      "search": {
+        "title": "Suche Tokens"
+      },
+      "tokenHeader": {
+        "price": "Preis",
+        "change": "24H Veränderung",
+        "token": "Token/FDV"
+      },
+      "footer": {
+        "skip": "Überspringen",
+        "add": "Zur Beobachtungsliste hinzufügen ({{count}})"
+      },
+      "toast": {
+        "remove": "Erfolgreich von der Watchlist entfernt"
+      }
     }
   },
   "constant": {

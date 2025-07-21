@@ -210,13 +210,11 @@ export const useQuoteMethods = () => {
       };
 
       const [
-        lastTimeGas,
         gasMarket,
         [tokenApproved, shouldTwoStepApprove],
         nativeToken,
         gasUsed,
       ] = await Promise.all([
-        preferenceService.getLastTimeGasSelection(chainInfo.id),
         apiProvider.gasMarketV2(
           {
             chain: chainInfo,
@@ -243,32 +241,7 @@ export const useQuoteMethods = () => {
       ]);
 
       const getGasPrice = () => {
-        let gasPrice = 0;
-        if (
-          lastTimeGas?.lastTimeSelect === 'gasPrice' &&
-          lastTimeGas.gasPrice
-        ) {
-          // use cached gasPrice if exist
-          gasPrice = lastTimeGas.gasPrice;
-        } else if (
-          lastTimeGas?.lastTimeSelect &&
-          lastTimeGas?.lastTimeSelect === 'gasLevel'
-        ) {
-          const target = gasMarket.find(
-            item => item.level === lastTimeGas?.gasLevel,
-          )!;
-          if (target) {
-            gasPrice = target.price;
-          } else {
-            gasPrice =
-              gasMarket.find(item => item.level === 'normal')?.price || 0;
-          }
-        } else {
-          // no cache, use the fast level in gasMarket
-          gasPrice =
-            gasMarket.find(item => item.level === 'normal')?.price || 0;
-        }
-        return gasPrice;
+        return gasMarket.find(item => item.level === 'normal')?.price || 0;
       };
 
       const gasPrice = getGasPrice();

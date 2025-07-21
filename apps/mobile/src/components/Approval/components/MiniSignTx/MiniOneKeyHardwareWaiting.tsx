@@ -6,8 +6,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { MiniApprovalPopupContainer } from '../Popup/MiniApprovalPopupContainer';
+import { getTxFailedResult, setRetryTxType } from '@/utils/errorTxRetry';
 
 interface Props {
   onCancel?: () => void;
@@ -54,18 +54,19 @@ export const MiniOneKeyHardwareWaiting = ({
   onRetry,
   error,
 }: Props) => {
-  const { styles, colors } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();
 
   const handleRetry = async () => {
-    toast.success(t('page.signFooterBar.ledger.resent'));
+    // toast.success(t('page.signFooterBar.ledger.resent'));
+    setRetryTxType(retryUpdateType);
     onRetry?.();
   };
 
-  const currentDescription = React.useMemo(() => {
-    const description = error.description;
+  const [currentDescription, retryUpdateType] = React.useMemo(() => {
+    const description = getTxFailedResult(error.description || '');
     return description;
   }, [error.description]);
 
@@ -76,14 +77,14 @@ export const MiniOneKeyHardwareWaiting = ({
           style={StyleSheet.flatten([
             styles.content,
             {
-              color: colors[contentColor],
+              color: colors2024[contentColor],
             },
           ])}>
           {error.content}
         </Text>
       </View>
     ),
-    [colors, error.content, styles.content, styles.contentWrapper],
+    [colors2024, error.content, styles.content, styles.contentWrapper],
   );
 
   return (
@@ -108,6 +109,7 @@ export const MiniOneKeyHardwareWaiting = ({
         hasMoreDescription={
           error.status === 'REJECTED' || error.status === 'FAILED'
         }
+        retryUpdateType={retryUpdateType}
       />
     </View>
   );

@@ -98,7 +98,10 @@ export function BalanceSection({
                     ) : null}
                   </Text>
                 ) : (
-                  <Text style={styles.balanceText}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.balanceText}>
                     {t('page.sendToken.sectionBalance.title')}:{' '}
                     {currentTokenBalance}
                   </Text>
@@ -160,6 +163,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontWeight: '400',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
+      maxWidth: 240,
     },
 
     titleSection: {

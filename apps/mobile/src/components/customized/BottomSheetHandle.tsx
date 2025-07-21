@@ -23,8 +23,8 @@ export const AppBottomSheetHandle = (
       style={[
         styles.handleStyles,
         {
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
           flexDirection: 'row',
           alignItems: 'flex-start',
           justifyContent: 'center',

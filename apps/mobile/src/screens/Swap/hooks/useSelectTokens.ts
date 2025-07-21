@@ -118,29 +118,40 @@ export const useSelectTokens = ({
   }, [userTokenSettings, visible]);
 
   const loadToken = useCallback(
-    async (address: string, force?: boolean) => {
+    async (_address: string, force?: boolean) => {
+      const address = _address.toLowerCase();
       if (!address) {
         return;
       }
-      const tokensExisted = !!tokensMap[address]?.length;
-      // if token exist and not expired, don't sync to store
-      const tokenRes = await syncTokens(address, force, tokensExisted);
-      if (!tokenRes.length) {
-        return;
+      try {
+        const tokensExisted = !!tokensMap[address]?.length;
+        if (!tokensExisted) {
+          setLoading(true);
+        }
+        // if token exist and not expired, don't sync to store
+        const tokenRes = await syncTokens(address, force, tokensExisted);
+        if (!tokenRes.length) {
+          setLoading(false);
+          return;
+        }
+        updateTokens({
+          address,
+          newTokens: tokenRes || [],
+        });
+      } catch (error) {
+      } finally {
+        setLoading(false);
       }
-      updateTokens({
-        address,
-        newTokens: tokenRes || [],
-      });
     },
-    [tokensMap, updateTokens],
+    [setLoading, tokensMap, updateTokens],
   );
 
   const batchLoadCacheTokens = useCallback(
-    async (addresses: string[]) => {
-      if (!addresses.length) {
+    async (_addresses: string[]) => {
+      if (!_addresses.length) {
         return;
       }
+      const addresses = _addresses.map(i => i.toLowerCase());
       setLoading(true);
       const cachedTokens = await TokenItemEntity.batchMultAddressTokens(
         addresses,
@@ -212,7 +223,7 @@ export const useSelectTokens = ({
       return [];
     }
     if (currentAddress) {
-      resTokens = tokensMap[currentAddress?.toLocaleLowerCase()] || [];
+      resTokens = tokensMap[currentAddress?.toLowerCase()] || [];
     } else {
       resTokens = Object.values(tokensMap).flat();
     }
@@ -224,15 +235,15 @@ export const useSelectTokens = ({
         .filter(item => {
           const matchKeyWords = [item.id, item.symbol];
           return matchKeyWords.some(i =>
-            i?.toLocaleLowerCase().includes(keyword.toLocaleLowerCase()),
+            i?.toLowerCase().includes(keyword.toLowerCase()),
           );
         })
         .sort((a, b) => {
-          const keywordLower = keyword.toLocaleLowerCase();
-          const aIdLower = a.id?.toLocaleLowerCase() || '';
-          const bIdLower = b.id?.toLocaleLowerCase() || '';
-          const aSymbolLower = a.symbol?.toLocaleLowerCase() || '';
-          const bSymbolLower = b.symbol?.toLocaleLowerCase() || '';
+          const keywordLower = keyword.toLowerCase();
+          const aIdLower = a.id?.toLowerCase() || '';
+          const bIdLower = b.id?.toLowerCase() || '';
+          const aSymbolLower = a.symbol?.toLowerCase() || '';
+          const bSymbolLower = b.symbol?.toLowerCase() || '';
 
           // Check exact matches
           const aExactMatch =
@@ -246,9 +257,15 @@ export const useSelectTokens = ({
 
           // Calculate scores based on match type and is_core status
           const getScore = (exactMatch: boolean, isCore: boolean) => {
-            if (exactMatch && isCore) return 4;
-            if (exactMatch && !isCore) return 3;
-            if (!exactMatch && isCore) return 2;
+            if (exactMatch && isCore) {
+              return 4;
+            }
+            if (exactMatch && !isCore) {
+              return 3;
+            }
+            if (!exactMatch && isCore) {
+              return 2;
+            }
             return 1;
           };
 
@@ -271,10 +288,18 @@ export const useSelectTokens = ({
           const aSymbolMatch = aSymbolLower.includes(keywordLower);
           const bSymbolMatch = bSymbolLower.includes(keywordLower);
 
-          if (aIdMatch && !bIdMatch) return -1;
-          if (!aIdMatch && bIdMatch) return 1;
-          if (aSymbolMatch && !bSymbolMatch) return -1;
-          if (!aSymbolMatch && bSymbolMatch) return 1;
+          if (aIdMatch && !bIdMatch) {
+            return -1;
+          }
+          if (!aIdMatch && bIdMatch) {
+            return 1;
+          }
+          if (aSymbolMatch && !bSymbolMatch) {
+            return -1;
+          }
+          if (!aSymbolMatch && bSymbolMatch) {
+            return 1;
+          }
 
           // sort with balance
           const aUsdValue = a.usd_value || a.price * a.amount;

@@ -1,11 +1,10 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import * as Sentry from '@sentry/react-native';
+
 import i18n, { SupportedLang } from '@/utils/i18n';
 import dayjs from 'dayjs';
-import {
-  TokenItem,
-  TotalBalanceResponse,
-} from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS_ENUM } from '@/constant/chains';
 import createPersistStore, {
   StorageAdapaterOptions,
@@ -17,10 +16,9 @@ import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { appServiceEvents } from './_utils';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
-import { stats } from '@/utils/stats';
-import { IS_IOS } from '../native/utils';
 import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
+import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 
 const { isSameAddress } = addressUtils;
 
@@ -109,10 +107,10 @@ export interface PreferenceStore {
     [address: string]: string;
   };
   balanceMap: {
-    [address: string]: TotalBalanceResponse;
+    [address: string]: EvmTotalBalanceResponse;
   };
   testnetBalanceMap: {
-    [address: string]: TotalBalanceResponse;
+    [address: string]: EvmTotalBalanceResponse;
   };
   locale: string;
   lastTimeSendToken: Record<string, TokenItem>;
@@ -169,6 +167,8 @@ export interface PreferenceStore {
    * For temporary account switch
    */
   tempCurrentAccount?: Account;
+  /** 用户是否跳过了watchlist引导 */
+  watchlistSkip?: boolean;
 }
 
 export interface AddressSortStore {
@@ -245,10 +245,18 @@ export class PreferenceService {
           safeSelfHostConfirm: {},
           addressAvatarMap: {},
           hasOpenCopyTrading: false,
+          watchlistSkip: false,
         },
       },
       {
         storage: options?.storageAdapter,
+        beforePersist(obj) {
+          if (!obj) {
+            const msg = `[preferenceService] preference set as nil value (${obj}), it's unexpected`;
+            if (__DEV__) console.error(msg);
+            Sentry.captureException(new Error(msg));
+          }
+        },
       },
     );
     // reset current account if app not closed properly
@@ -510,7 +518,7 @@ export class PreferenceService {
 
   updateTestnetAddressBalance = (
     address: string,
-    data: TotalBalanceResponse,
+    data: EvmTotalBalanceResponse,
   ) => {
     const testnetBalanceMap = this.store.testnetBalanceMap || {};
     this.store.testnetBalanceMap = {
@@ -519,7 +527,7 @@ export class PreferenceService {
     };
   };
 
-  updateAddressBalance = (address: string, data: TotalBalanceResponse) => {
+  updateAddressBalance = (address: string, data: EvmTotalBalanceResponse) => {
     const balanceMap = this.store.balanceMap || {};
     this.store.balanceMap = {
       ...balanceMap,
@@ -545,12 +553,14 @@ export class PreferenceService {
     }
   };
 
-  getAddressBalance = (address: string): TotalBalanceResponse | null => {
+  getAddressBalance = (address: string): EvmTotalBalanceResponse | null => {
     const balanceMap = this.store.balanceMap || {};
     return balanceMap[address.toLowerCase()] || null;
   };
 
-  getTestnetAddressBalance = (address: string): TotalBalanceResponse | null => {
+  getTestnetAddressBalance = (
+    address: string,
+  ): EvmTotalBalanceResponse | null => {
     const balanceMap = this.store.testnetBalanceMap || {};
     return balanceMap[address.toLowerCase()] || null;
   };
@@ -779,6 +789,14 @@ export class PreferenceService {
   };
   setIsShowTestnet = (value: boolean) => {
     this.store.isShowTestnet = value;
+  };
+
+  setWatchlistSkip = (value: boolean) => {
+    this.store.watchlistSkip = value;
+  };
+
+  getWatchlistSkip = () => {
+    return !!this.store.watchlistSkip;
   };
 
   resetAddressSortStoreExpiredValue = () => {

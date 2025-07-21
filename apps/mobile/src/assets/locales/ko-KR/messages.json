@@ -133,7 +133,12 @@
       "addressCount_one": "{{count}} 지갑"
     },
     "sendNFT": {
-      "sendButton": "보내기"
+      "sendButton": "보내기",
+      "NFT": "NFT",
+      "Collection": "컬렉션",
+      "SendAmount": "금액 전송",
+      "Contract": "계약",
+      "Chain": "체인"
     },
     "signFooterBar": {
       "confirm": "확인",
@@ -177,7 +182,8 @@
         "unknownQRCode": "오류: 해당 QR 코드를 식별할 수 없습니다.",
         "misMatchSignId": "일치하지 않는 거래 데이터입니다. 거래 세부 정보를 확인하십시오.",
         "qrcodeDesc": "스캔하여 {{brand}}로 서명하세요  \n서명한 후 아래 버튼을 클릭하여 서명을 받으세요",
-        "afterSignDesc": "Keystone에서 QR 코드를 스캔하여 signature 받기"
+        "afterSignDesc": "Keystone에서 QR 코드를 스캔하여 signature 받기",
+        "txFailedRetry": "생성 실패: 다시 시도해 주세요"
       },
       "blockDappFromSendingRequests": "Dapp이 1분 동안 요청을 보내지 못하도록 차단합니다.",
       "resend": "재시도",
@@ -196,7 +202,8 @@
       "keystoneSign": "서명",
       "startSigning": "서명 시작",
       "oneKeyConfirm": "확인",
-      "ledgerConfirm": "확인"
+      "ledgerConfirm": "확인",
+      "got": "내가 알았어"
     },
     "gasTopUp": {
       "InsufficientBalanceTips": "잔액 부족",
@@ -598,6 +605,17 @@
           "button": "OK",
           "content": "Safe API를 사용할 수 없습니다. Safe 기능을 유지하려면 Rabby가 배포한 Safe 서비스를 사용하세요. <1></1><2>모든 Safe 서명자는 거래를 승인하기 위해 Rabby Wallet을 사용해야 합니다.<2>"
         }
+      },
+      "errorRetry": {
+        "alreadySubmitted": "거래가 이미 제출되었습니다. 중복 거래가 감지되었습니다.",
+        "gasLimitTooLow": "가스 한도가 너무 낮습니다",
+        "defaultTips": "문제가 발생했습니다. 나중에 다시 시도해 주세요.",
+        "nonceTooHigh": "Nonce가 너무 높습니다. nonce를 조정하고 다시 시도하세요.",
+        "gasExceedsBlockGasLimit": "가스가 블록 가스 한도를 초과합니다. 조정한 후 다시 시도해 주십시오.",
+        "nonceTooLow": "Nonce가 너무 낮습니다. {{nonce}}로 업데이트하겠습니다. \"Retry\"를 클릭하여 확인하고 다시 시도하세요.",
+        "InvalidTx": "잘못된 거래입니다.",
+        "insufficient": "귀하의 가스 잔액이 네트워크 가스 요금을 충당하기에 충분하지 않습니다. 가스를 위한 자금을 추가하고 다시 시도하세요.",
+        "gasPriceTooLow": "가스 가격이 너무 낮습니다. 거래가 확인될 수 있도록 30% 조정하겠습니다. \"다시 시도\"를 클릭하여 확인하고 다시 시도하세요."
       }
     },
     "swap": {
@@ -659,7 +677,8 @@
       },
       "swapped": "교환됨",
       "historyTitle": "스왑 기록",
-      "selectChainModalTitle": "체인을 선택하십시오"
+      "selectChainModalTitle": "체인을 선택하십시오",
+      "results": "결과"
     },
     "activities": {
       "signedTx": {
@@ -740,7 +759,8 @@
         "dapps": "Dapps",
         "approvals": "승인",
         "search": "토큰 검색",
-        "copyTrading": "복사 거래"
+        "copyTrading": "복사 거래",
+        "watchlist": "관심 목록"
       }
     },
     "bridge": {
@@ -1436,7 +1456,8 @@
       },
       "nft": {
         "floorPrice": "/Floor Price:"
-      }
+      },
+      "appChain": "Dapp 계정"
     },
     "search": {
       "header": {
@@ -1462,6 +1483,9 @@
         "verifyDangerTips": "이것은 사기 토큰입니다",
         "Issuedby": "발행자",
         "scamWarningTips": "이 토큰은 저품질이며 사기일 수 있습니다."
+      },
+      "hotTokenList": {
+        "title": "핫"
       }
     },
     "receiveAddressList": {
@@ -1917,7 +1941,7 @@
         "wallet_one": "지갑",
         "wallet_other": "지갑"
       },
-      "scamTokenHeader": "스캠 토큰"
+      "lowValueTokenHeader": "저가 토큰"
     },
     "browser": {
       "BrowserBookmarkSection": {
@@ -1959,7 +1983,8 @@
     },
     "defiDetail": {
       "viewSiteInWebsite": "웹사이트에서 보기",
-      "viewSiteInApp": "Dapp에서 보기"
+      "viewSiteInApp": "Dapp에서 보기",
+      "appChain": "{{chain}} 계좌에서"
     },
     "component": {
       "ChainSelector": {
@@ -1979,7 +2004,60 @@
       "smartMoneyWallet": "스마트 머니 지갑",
       "buy": "구매하다",
       "refreshTitle": "스마트 머니에서 복사 거래를 더 로드하는 중",
-      "recentBuy": "최근 구매"
+      "recentBuy": "최근 구매",
+      "filterRule": {
+        "tokenCreate": "최근 생성됨",
+        "smartMoney": "스마트 월렛 거래",
+        "24HChange": "24H 변화",
+        "smartWalletCount": "스마트 지갑 수"
+      },
+      "chain": "체인",
+      "twitterNews": "X의 뉴스",
+      "earned": "획득한",
+      "sameNameTokens": "동일 이름 토큰",
+      "tokenName": "토큰 이름",
+      "tokenInfo": "토큰 정보",
+      "smartWallets": "스마트 지갑",
+      "timeSmartWallet": "시간 / 스마트 지갑",
+      "contractAddress": "계약 주소",
+      "createdTime": "생성 시간",
+      "smartWalletsBuying": "{{len}} 스마트 지갑 구매",
+      "myCopyTradingEarnings": "내 복사 거래 수익",
+      "myCopyTrading": "내 카피 트레이딩",
+      "holdingProfit": "보유/수익",
+      "Liquidity": "유동성",
+      "loss": "손실",
+      "currentToken": "현재 토큰",
+      "earn": "수익을 얻다",
+      "token": "토큰",
+      "bought": "구매함",
+      "info": "정보",
+      "buyEarn": "24H 구매 / 수익",
+      "timeLabelAgo": "{{time}} 전에 생성됨",
+      "noOtherTokensWithSameName": "동일한 이름의 다른 토큰을 찾을 수 없습니다.",
+      "myBalanceFromCopyTrading": "내 Copy Trading에서의 잔액",
+      "gettingLatest": "스마트 머니의 최신 정보를 받고 있습니다...",
+      "updateTokenText": "{{count}} 토큰이 업데이트되었습니다"
+    },
+    "watchlist": {
+      "empty": {
+        "title": "아직 귀하의 감시 리스트에 토큰이 없습니다."
+      },
+      "search": {
+        "title": "토큰 검색"
+      },
+      "tokenHeader": {
+        "change": "24시간 변화",
+        "token": "토큰/FDV",
+        "price": "가격"
+      },
+      "footer": {
+        "skip": "건너뛰기",
+        "add": "대기목록에 추가 ({{count}})"
+      },
+      "toast": {
+        "remove": "관심목록에서 제거 성공"
+      }
     }
   },
   "global": {

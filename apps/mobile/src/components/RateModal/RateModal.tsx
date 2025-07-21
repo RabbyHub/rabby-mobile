@@ -23,8 +23,6 @@ import {
   useExposureRateGuide,
   useRateModal,
 } from './hooks';
-import { openExternalUrl } from '@/core/utils/linking';
-import { APP_URLS } from '@/constant';
 import { toast } from '@/components2024/Toast';
 import PressableStar from './RateStar';
 
@@ -34,7 +32,6 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
-  const { disableExposureRateGuide } = useExposureRateGuide();
   const {
     rateModalShown,
     toggleShowRateModal,
@@ -44,7 +41,8 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
 
     userFeedback,
     onChangeFeedback,
-    submitFeedback,
+    isSubmitting,
+    pushRateDetails,
     feedbackOverLimit,
 
     openAppRateUrl,
@@ -121,6 +119,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                 <View style={styles.rateButtonsContainer}>
                   <Button
                     type="primary"
+                    loading={isSubmitting}
                     containerStyle={styles.rateButtonContainer}
                     buttonStyle={[styles.rateButton, styles.rateButtonConfirm]}
                     titleStyle={[
@@ -129,7 +128,9 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                     ]}
                     onPress={() => {
                       openAppRateUrl();
-                      disableExposureRateGuide();
+                      pushRateDetails({ totalBalanceText }).finally(() => {
+                        closeModal();
+                      });
                     }}
                     title={
                       IS_ANDROID
@@ -211,6 +212,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                   />
                   <Button
                     type="primary"
+                    loading={isSubmitting}
                     disabled={disableSubmit}
                     containerStyle={styles.feedbackButtonContainer}
                     buttonStyle={[
@@ -222,7 +224,7 @@ export function RateModal({ totalBalanceText }: { totalBalanceText: string }) {
                       styles.feedbackButtonConfirmText,
                     ]}
                     onPress={() => {
-                      submitFeedback({ totalBalanceText })
+                      pushRateDetails({ totalBalanceText })
                         .then(() => {
                           toast.success(
                             t('page.nextComponent.rateModal.feedbackSuccess'),

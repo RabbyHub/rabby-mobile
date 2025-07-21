@@ -66,6 +66,9 @@ import {
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
 import { BridgePendingTxItem } from './PendingTxItem';
+import { last } from 'lodash';
+import { transactionHistoryService } from '@/core/services/shared';
+import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -200,7 +203,8 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
 
   const {
     runAsync: runFetchBridgePendingCount,
-    pendingTxData,
+    localPendingTxData,
+    runFetchLocalPendingTx,
     clearLocalPendingTxData,
     clearBridgeHistoryRedDot,
   } = usePollBridgePendingNumber();
@@ -348,6 +352,19 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
           status: tx ? 'success' : 'fail',
           payAmount: amount,
         });
+        const addBridgeTxHistoryObj = {
+          address: currentAccount?.address!,
+          fromChainId: findChainByEnum(fromToken?.chain || '')?.id || 0,
+          toChainId: findChainByEnum(toToken?.chain || '')?.id || 0,
+          fromToken: fromToken!,
+          toToken: toToken!,
+          slippage: new BigNumber(slippage).div(100).toNumber(),
+          fromAmount: Number(amount),
+          toAmount: Number(selectedBridgeQuote?.to_token_amount || 0),
+          dexId: selectedBridgeQuote?.aggregator.id!,
+          createdAt: Date.now(),
+          status: 'pending' as BridgeTxHistoryItem['status'],
+        };
         await bridgeToken(
           {
             to: tx.to,
@@ -388,7 +405,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               trigger: 'bridge',
             },
           },
+          addBridgeTxHistoryObj,
         );
+        runFetchLocalPendingTx();
         handleAmountChange('');
         setTimeout(() => {
           runFetchBridgePendingCount();
@@ -407,6 +426,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         });
         console.log(error);
       } finally {
+        refresh(e => e + 1);
         setFetchingBridgeQuote(false);
       }
     }
@@ -602,17 +622,19 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
             toast.info('please retry');
             throw new Error('no txs');
           }
+          let txHash = '';
           if (canShowDirectSubmit) {
             if (isDirectSigning) {
               return;
             } else {
               setDirectSigning(true);
             }
-            await sendPrepareMiniTransactions({
+            const resTx = await sendPrepareMiniTransactions({
               directSubmit: true,
             });
+            txHash = last(resTx)?.txHash || '';
           } else {
-            await sendMiniTransactions({
+            const resTx = await sendMiniTransactions({
               txs: res,
               ga: {
                 category: 'Bridge',
@@ -622,9 +644,28 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               directSubmit: false,
               account: currentAccount!,
             });
+            txHash = last(resTx)?.txHash || '';
+          }
+
+          if (txHash) {
+            transactionHistoryService.addBridgeTxHistory({
+              address: currentAccount?.address!,
+              fromChainId: findChainByEnum(fromToken?.chain || '')?.id || 0,
+              toChainId: findChainByEnum(toToken?.chain || '')?.id || 0,
+              fromToken: fromToken!,
+              toToken: toToken!,
+              slippage: new BigNumber(slippageState).div(100).toNumber(),
+              fromAmount: Number(amount),
+              dexId: selectedBridgeQuote?.aggregator.id!,
+              toAmount: Number(selectedBridgeQuote?.to_token_amount || 0),
+              status: 'pending',
+              hash: txHash,
+              createdAt: Date.now(),
+            });
           }
 
           mutateTxs([]);
+          runFetchLocalPendingTx();
           handleAmountChange('');
           setTimeout(() => {
             runFetchBridgePendingCount();
@@ -891,11 +932,11 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
         {Boolean(
           !(selectedBridgeQuote && inSufficientCanGetQuote) &&
             !recommendFromToken &&
-            pendingTxData,
+            localPendingTxData,
         ) && (
           <BridgePendingTxItem
             openHistory={openHistory}
-            data={pendingTxData!}
+            data={localPendingTxData!}
             clearLocalPendingTxData={clearLocalPendingTxData}
           />
         )}

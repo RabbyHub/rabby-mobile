@@ -4,14 +4,12 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
-import { useThemeStyles } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { TransactionNavigatorParamList } from '@/navigation-type';
-import { createGetStyles } from '@/utils/styles';
 import { StackActions, useNavigationState } from '@react-navigation/native';
-import { NFTAmountSection, SendNFTSection } from './Section';
-import { ChainInfo } from './components/ChainInfo';
-import FromAddressInfo from './components/FromAddressInfo';
-import ToAddressControl from './components/ToAddressControl';
+import { NFTSection, SendNFTSection } from './Section';
+import ToAddressControl2024 from '@/screens/Send/components/ToAddressControl2024';
+import FromAddressControl2024 from '@/screens/Send/components/FromAddressControl';
 import {
   SendNFTEvents,
   SendNFTInternalContextProvider,
@@ -24,9 +22,11 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import BottomArea from './components/BottomArea';
 import { findChain } from '@/utils/chain';
 import { AccountSwitcherModal } from '@/components/AccountSwitcher/Modal';
+import { useTranslation } from 'react-i18next';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export default function SendNFT() {
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useRabbyAppNavigation();
   const navParams = useNavigationState(
@@ -35,7 +35,13 @@ export default function SendNFT() {
 
   const nftItem = navParams?.nftItem;
   const chainItem = findChain({ serverId: nftItem?.chain });
-  const account = navParams?.account;
+  const collectionName = navParams?.collectionName;
+  const fromAccount = navParams?.fromAccount;
+
+  const toAddress = navParams?.toAddress || '';
+  const addressBrandName = navParams?.addressBrandName;
+  const addrDesc = navParams?.addrDesc;
+  const account = fromAccount || undefined;
 
   const {
     sendNFTScreenState: screenState,
@@ -55,10 +61,19 @@ export default function SendNFT() {
       toAddressIsValid,
       toAddressInWhitelist,
       canSubmit,
+      canDirectSign,
     },
   } = useSendNFTForm({ nftToken: nftItem, account });
 
   const { fetchContactAccounts } = useContactAccounts();
+  const { t } = useTranslation();
+
+  // Initialize formValues.to with toAddress from navParams
+  React.useEffect(() => {
+    if (toAddress && toAddress !== formValues.to) {
+      handleFieldChange('to', toAddress);
+    }
+  }, [toAddress, formValues.to, handleFieldChange]);
 
   React.useEffect(() => {
     const disposeRets = [] as Function[];
@@ -107,6 +122,7 @@ export default function SendNFT() {
           toAddressInContactBook,
           chainItem,
           currentNFT: nftItem,
+          canDirectSign,
         },
         events: sendNFTEvents,
         formik,
@@ -119,37 +135,25 @@ export default function SendNFT() {
           handleFieldChange,
         },
       }}>
-      <NormalScreenContainer style={styles.container}>
+      <NormalScreenContainer overwriteStyle={styles.container}>
         <AccountSwitcherModal forScene="SendNFT" inScreen />
         <View style={styles.sendNFTScreen}>
           <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
-            {/* FromToSection */}
-            <SendNFTSection>
-              {/* ChainInfo */}
-              <View style={{ marginTop: 0 }}>
-                <Text style={styles.sectionTitle}>Chain</Text>
-                <ChainInfo
-                  style={{ marginTop: 8 }}
-                  chainEnum={chainItem.enum}
-                  // onChange={handleChainChanged}
-                />
-              </View>
+            {/* From */}
+            <FromAddressControl2024 disableSwitch={true} forScene="SendNFT" />
 
-              {/* From */}
-              <View style={{ marginTop: 20 }}>
-                <Text style={styles.sectionTitle}>From</Text>
-                <FromAddressInfo style={{ marginTop: 8 }} account={account} />
-              </View>
-
-              {/* To */}
-              <ToAddressControl style={{ marginTop: 20 }} />
-            </SendNFTSection>
+            {/* To */}
+            <ToAddressControl2024
+              address={toAddress}
+              brandName={addressBrandName}
+              addrDesc={addrDesc}
+            />
 
             {/* nft amount info */}
-            <NFTAmountSection
-              collectionName={navParams?.collectionName}
-              nftItem={navParams?.nftItem}
-              style={{ marginTop: 16 }}
+            <NFTSection
+              collectionName={collectionName}
+              nftItem={nftItem}
+              chainItem={chainItem}
             />
           </KeyboardAwareScrollView>
           <BottomArea />
@@ -159,40 +163,35 @@ export default function SendNFT() {
   );
 }
 
-const getStyles = createGetStyles(colors => ({
+const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: colors['neutral-card2'],
+    backgroundColor: colors2024['neutral-bg-1'],
     position: 'relative',
   },
   sendNFTScreen: {
     width: '100%',
     height: '100%',
     flexDirection: 'column',
+    backgroundColor: colors2024['neutral-bg-1'],
     justifyContent: 'space-between',
   },
   mainContent: {
     width: '100%',
-    // height: '100%',
     alignItems: 'center',
     padding: 20,
-    paddingTop: 0,
-  },
-  sectionTitle: {
-    color: colors['neutral-body'],
-    fontSize: 13,
-    fontWeight: 'normal',
+    paddingTop: 16,
   },
 
   bottomDockArea: {
     bottom: 0,
     width: '100%',
     padding: 20,
-    backgroundColor: colors['neutral-bg1'],
+    backgroundColor: colors2024['neutral-bg1'],
     borderTopWidth: 0.5,
     borderTopStyle: 'solid',
-    borderTopColor: colors['neutral-line'],
+    borderTopColor: colors2024['neutral-line'],
     position: 'absolute',
   },
 
@@ -201,6 +200,6 @@ const getStyles = createGetStyles(colors => ({
     height: 52,
   },
   button: {
-    backgroundColor: colors['blue-default'],
+    backgroundColor: colors2024['blue-default'],
   },
 }));

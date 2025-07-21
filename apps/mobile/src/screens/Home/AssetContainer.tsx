@@ -22,9 +22,6 @@ import {
   AssestAllHeader,
   AsssetKey,
 } from './components/AssetRenderItems/SectionHeaders';
-import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import throttle from 'lodash/throttle';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -41,6 +38,7 @@ import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { Account } from '@/core/services/preference';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { NetWorkError } from '@/components2024/GlobalWarning/NetWorkError';
+import { CurveDayType } from '@/utils/curveDayType';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -95,11 +93,8 @@ export const AssetContainer: React.FC<Props> = ({
     loadingToken,
     loadingNft,
     loadingPortfolio,
-    updateTokens,
-    updatePortfolio,
-    reloadNftList,
     chainsInfo,
-  } = useQueryProjects(currentAccount?.address);
+  } = useQueryProjects(currentAccount?.address?.toLowerCase());
 
   const { tokens, portfolios, nftList } = useMemo(() => {
     return {
@@ -121,53 +116,6 @@ export const AssetContainer: React.FC<Props> = ({
     };
   }, [_rawNftList, _rawPortfolios, _rawTokens, selectChainItem?.chain]);
   const sortTokens = useSortToken(tokens || [], currentAccount);
-
-  const throttleUpdateTokens = useCallback(
-    () => throttle(updateTokens, 4000),
-    [updateTokens],
-  );
-  const throttleUpdatePortfolio = useCallback(
-    () => throttle(updatePortfolio, 4000),
-    [updatePortfolio],
-  );
-  const throttleReloadNftList = useCallback(
-    () => throttle(reloadNftList, 4000),
-    [reloadNftList],
-  );
-
-  useAppOrmSyncEvents({
-    taskFor: ['token', 'nfts', 'protocols'],
-    onRemoteDataUpserted: useCallback(
-      ctx => {
-        if (
-          !currentAccount?.address ||
-          !isSameAddress(ctx.owner_addr, currentAccount?.address) ||
-          !ctx.success
-        ) {
-          return;
-        }
-        switch (ctx.taskFor) {
-          case 'token':
-            throttleUpdateTokens();
-            break;
-          case 'nfts':
-            throttleReloadNftList();
-            break;
-          case 'protocols':
-            throttleUpdatePortfolio();
-            break;
-          default:
-            break;
-        }
-      },
-      [
-        currentAccount?.address,
-        throttleReloadNftList,
-        throttleUpdatePortfolio,
-        throttleUpdateTokens,
-      ],
-    ),
-  });
 
   const foldNftList: ActionItem[] = useMemo(
     () =>
@@ -455,16 +403,25 @@ export const AssetContainer: React.FC<Props> = ({
     return 'token';
   }, [firstRowType]);
 
-  const { balance } = useCurrentBalance(currentAccount?.address, {
-    update: true,
-    noNeedBalance: false,
-  });
+  const { balance, balanceLoading, evmBalance } = useCurrentBalance(
+    currentAccount?.address,
+    {
+      update: true,
+      noNeedBalance: false,
+    },
+  );
   const {
     result: curveData,
     isLoading: isLoadingCurve,
     refresh: refreshCurve,
     hasNoData: hasNoCurveData,
-  } = useCurve(currentAccount?.address, 0, balance);
+  } = useCurve(
+    currentAccount?.address,
+    0,
+    evmBalance,
+    CurveDayType.DAY,
+    balance,
+  );
 
   const handleRefresh = useCallback(
     async (ignoreLoading?: boolean) => {
@@ -554,7 +511,7 @@ export const AssetContainer: React.FC<Props> = ({
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
           curveData={curveData}
-          isLoadingCurve={isLoadingCurve}
+          isLoadingCurve={isLoadingCurve || (balanceLoading && !evmBalance)}
           isDisConnnect={isDisConnnect}
           onRefresh={() => handleRefresh(true)}
         />
@@ -571,6 +528,8 @@ export const AssetContainer: React.FC<Props> = ({
       </View>
     );
   }, [
+    evmBalance,
+    balanceLoading,
     chainsInfo.chainLength,
     currentAccount,
     currentSection,
@@ -643,6 +602,7 @@ export const AssetContainer: React.FC<Props> = ({
           foldHideList={foldHideList}
           setFoldHideList={setFoldHideList}
           foldNft={foldNft}
+          rawPortfolios={_rawPortfolios}
           setFoldNft={setFoldNft}
           foldDefi={foldDefi}
           setFoldDefi={setFoldDefi}

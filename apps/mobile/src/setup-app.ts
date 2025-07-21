@@ -6,6 +6,7 @@ import {
 import { initSentry } from './core/sentry';
 import './perfs/bundle-splitter-analysis.ts';
 import './databases/orm';
+import './core/services';
 
 setJSExceptionHandler((error, isFatal) => {
   console.debug('setJSExceptionHandler:: error');

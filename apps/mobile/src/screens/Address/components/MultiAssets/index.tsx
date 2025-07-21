@@ -48,7 +48,8 @@ export const MultiAssets = ({
   const { combineData, isLoadingNew: isLoadingCurve } = useMultiCurve(
     top10Addresses,
     false,
-    top10Balance,
+    top10Balance.total,
+    top10Balance.totalEvm,
   );
 
   const { isDisConnnect } = useGlobalStatus();

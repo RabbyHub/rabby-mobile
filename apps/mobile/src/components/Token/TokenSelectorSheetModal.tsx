@@ -761,6 +761,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         )}
                       </Text>
                       <Text
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
                         style={[
                           styles.tokenHeaderAmount,
                           { marginTop: 4 },
@@ -1309,6 +1311,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '400',
       lineHeight: 18,
       textAlign: 'right',
+      maxWidth: 200,
       fontFamily: 'SF Pro Rounded',
     },
     textSecondary: {

@@ -100,6 +100,7 @@ import { Account } from '@/core/services/preference';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { last } from 'lodash';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
+import { matomoRequestEvent } from '@/utils/analytics';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -196,7 +197,7 @@ const Swap = ({
 
     showMoreVisible,
 
-    lowCreditToken,
+    lowCreditToken: _lowCreditToken,
     lowCreditVisible,
     setLowCreditToken,
     setLowCreditVisible,
@@ -326,7 +327,7 @@ const Swap = ({
         switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
           payTokenId: navState?.tokenId,
           changeTo: isBuy,
-          payUseBaseToken: navState?.payUseBaseToken,
+          payUseBaseToken: navState?.isFromCopyTrading,
         });
       }
     }
@@ -360,6 +361,22 @@ const Swap = ({
 
   const { safeOffBottom } = useSafeSizes();
 
+  const currentIsCopyTrading = useMemo(() => {
+    if (navState?.type === 'Sell') {
+      return (
+        navState?.isFromCopyTrading &&
+        payToken?.id === navState?.tokenId &&
+        chain === navState.chainEnum
+      );
+    }
+
+    return (
+      navState?.isFromCopyTrading &&
+      receiveToken?.id === navState?.tokenId &&
+      chain === navState.chainEnum
+    );
+  }, [navState, receiveToken?.id, chain, payToken?.id]);
+
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
@@ -382,6 +399,10 @@ const Swap = ({
           dexId: activeProvider?.name || 'WrapToken',
           createdAt: Date.now(),
           status: 'pending' as SwapTxHistoryItem['status'],
+          isFromCopyTrading: currentIsCopyTrading,
+          copyTradingExtra: {
+            type: navState?.type || 'Buy',
+          },
         };
         await dexSwap(
           {
@@ -429,6 +450,8 @@ const Swap = ({
         }, 500);
       } catch (error) {
         console.error(error);
+      } finally {
+        refresh(e => e + 1);
       }
     }
   });
@@ -598,6 +621,10 @@ const Swap = ({
             dexId: activeProvider?.name || 'WrapToken',
             createdAt: Date.now(),
             status: 'pending',
+            isFromCopyTrading: currentIsCopyTrading,
+            copyTradingExtra: {
+              type: navState?.type || 'Buy',
+            },
           });
           handleAmountChange('');
           setTimeout(() => {
@@ -610,6 +637,15 @@ const Swap = ({
               chain: chainServerId,
             },
           );
+          if (currentIsCopyTrading) {
+            matomoRequestEvent({
+              category: 'CopyTrading',
+              action:
+                navState?.type === 'Sell'
+                  ? 'CopyTrading_SellCreateSwap'
+                  : 'CopyTrading_BuyCreateSwap',
+            });
+          }
         } catch (e) {
           setDirectSigning(false);
           if ((e as any)?.name === 'SimulateError') {
@@ -664,6 +700,7 @@ const Swap = ({
       Number(payAmount) > 0 &&
       inSufficientCanGetQuote &&
       !!payToken &&
+      activeProvider?.quote &&
       !!receiveToken
     );
   }, [
@@ -672,6 +709,7 @@ const Swap = ({
     showMoreVisible,
     payToken,
     receiveToken,
+    activeProvider?.quote,
   ]);
 
   const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
@@ -831,43 +869,19 @@ const Swap = ({
 
   const noQuote = useDebounceValue(noQuoteOrigin, 10);
 
-  useEffect(() => {
-    if (noQuote) {
-      setShowMoreOpen(true);
+  const lowCreditToken = useMemo(() => {
+    if (!navState) {
+      return _lowCreditToken;
     }
-  }, [noQuote]);
-
-  useDebounce(
-    () => {
-      if (
-        !isWrapToken &&
-        Number(payAmount) > 0 &&
-        inSufficientCanGetQuote &&
-        amountAvailable &&
-        !quoteLoading &&
-        !!payToken &&
-        !!receiveToken &&
-        activeProvider &&
-        Number(slippage) >= Number(SWAP_SLIPPAGE[1])
-      ) {
-        setShowMoreOpen(true);
-      }
-    },
-    10,
-    [
-      showMoreVisible,
-      isWrapToken,
-      payAmount,
-      inSufficientCanGetQuote,
-      amountAvailable,
-      payToken,
-      receiveToken,
-      activeProvider,
-      autoSlippage,
-      activeProvider,
-      quoteLoading,
-    ],
-  );
+    const isCopyTrading =
+      navState?.isFromCopyTrading &&
+      _lowCreditToken?.id === navState?.tokenId &&
+      _lowCreditToken?.chain === findChainByEnum(navState.chainEnum)?.serverId;
+    if (isCopyTrading) {
+      return undefined;
+    }
+    return _lowCreditToken;
+  }, [_lowCreditToken, navState]);
 
   const openFeePopup = useCallback(() => {
     if (isWrapToken) {
