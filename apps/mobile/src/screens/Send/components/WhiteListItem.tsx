@@ -132,7 +132,7 @@ export const WhiteListItem = ({
     const name = account.aliasName || ellipisName;
     return {
       formatName: name,
-      hideTail: name.toLocaleLowerCase() === ellipisName.toLocaleLowerCase(),
+      hideTail: name.toLowerCase() === ellipisName.toLowerCase(),
     };
   }, [account.address, account.aliasName]);
 
@@ -281,7 +281,7 @@ export const WhiteListItemSwitch = ({
     const name = account.aliasName || ellipisName;
     return {
       formatName: name,
-      hideTail: name.toLocaleLowerCase() === ellipisName.toLocaleLowerCase(),
+      hideTail: name.toLowerCase() === ellipisName.toLowerCase(),
     };
   }, [account.address, account.aliasName]);
 

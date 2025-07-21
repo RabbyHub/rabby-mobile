@@ -213,7 +213,7 @@ export default function useCurrentBalance(
       // eslint-disable-next-line react-hooks/exhaustive-deps
       isCanceled = true;
     };
-  }, [account?.toLocaleLowerCase(), balanceNonce]);
+  }, [account?.toLowerCase(), balanceNonce]);
   return {
     balance,
     evmBalance,

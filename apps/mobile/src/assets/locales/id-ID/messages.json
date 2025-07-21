@@ -897,7 +897,8 @@
       "historyTitle": "Riwayat swap",
       "swapped": "Ditukar",
       "transaction-might-be-frontrun-because-of-high-slippage-tolerance": "Transaksi mungkin akan terfront-run karena toleransi slippage yang tinggi",
-      "selectChainModalTitle": "Pilih Rantai"
+      "selectChainModalTitle": "Pilih Rantai",
+      "results": "Hasil"
     },
     "bridge": {
       "showMore": {
@@ -967,7 +968,8 @@
         "queue": "排队",
         "websites": "Situs Web",
         "approvals": "Persetujuan",
-        "copyTrading": "Copy Trading"
+        "copyTrading": "Copy Trading",
+        "watchlist": "Daftar Pantauan"
       }
     },
     "dashboard": {
@@ -1828,6 +1830,9 @@
         "noResults": "Tidak Ada Hasil",
         "searchTips": "Cari di web",
         "title": "Semua Hasil"
+      },
+      "hotTokenList": {
+        "title": "Panas"
       }
     },
     "setting": {
@@ -2029,7 +2034,29 @@
       "token": "Token",
       "twitterNews": "Berita di X",
       "timeLabelAgo": "Dibuat {{time}} yang lalu",
-      "myBalanceFromCopyTrading": "Saldo Saya dari Copy Trading"
+      "myBalanceFromCopyTrading": "Saldo Saya dari Copy Trading",
+      "gettingLatest": "Mendapatkan yang terbaru dari Smart Money...",
+      "updateTokenText": "{{count}} token diperbarui"
+    },
+    "watchlist": {
+      "empty": {
+        "title": "Belum ada token di daftar pantauan Anda."
+      },
+      "search": {
+        "title": "Cari token"
+      },
+      "tokenHeader": {
+        "change": "Perubahan 24H",
+        "price": "Harga",
+        "token": "Token/FDV"
+      },
+      "footer": {
+        "skip": "Lewati",
+        "add": "Tambahkan ke Daftar Pantauan ({{count}})"
+      },
+      "toast": {
+        "remove": "Hapus dari Daftar Pantauan Berhasil"
+      }
     }
   },
   "component": {

@@ -677,7 +677,8 @@
       },
       "swapped": "교환됨",
       "historyTitle": "스왑 기록",
-      "selectChainModalTitle": "체인을 선택하십시오"
+      "selectChainModalTitle": "체인을 선택하십시오",
+      "results": "결과"
     },
     "activities": {
       "signedTx": {
@@ -758,7 +759,8 @@
         "dapps": "Dapps",
         "approvals": "승인",
         "search": "토큰 검색",
-        "copyTrading": "복사 거래"
+        "copyTrading": "복사 거래",
+        "watchlist": "관심 목록"
       }
     },
     "bridge": {
@@ -1481,6 +1483,9 @@
         "verifyDangerTips": "이것은 사기 토큰입니다",
         "Issuedby": "발행자",
         "scamWarningTips": "이 토큰은 저품질이며 사기일 수 있습니다."
+      },
+      "hotTokenList": {
+        "title": "핫"
       }
     },
     "receiveAddressList": {
@@ -2030,7 +2035,29 @@
       "buyEarn": "24H 구매 / 수익",
       "timeLabelAgo": "{{time}} 전에 생성됨",
       "noOtherTokensWithSameName": "동일한 이름의 다른 토큰을 찾을 수 없습니다.",
-      "myBalanceFromCopyTrading": "내 Copy Trading에서의 잔액"
+      "myBalanceFromCopyTrading": "내 Copy Trading에서의 잔액",
+      "gettingLatest": "스마트 머니의 최신 정보를 받고 있습니다...",
+      "updateTokenText": "{{count}} 토큰이 업데이트되었습니다"
+    },
+    "watchlist": {
+      "empty": {
+        "title": "아직 귀하의 감시 리스트에 토큰이 없습니다."
+      },
+      "search": {
+        "title": "토큰 검색"
+      },
+      "tokenHeader": {
+        "change": "24시간 변화",
+        "token": "토큰/FDV",
+        "price": "가격"
+      },
+      "footer": {
+        "skip": "건너뛰기",
+        "add": "대기목록에 추가 ({{count}})"
+      },
+      "toast": {
+        "remove": "관심목록에서 제거 성공"
+      }
     }
   },
   "global": {

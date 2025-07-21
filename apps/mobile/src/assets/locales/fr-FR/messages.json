@@ -842,7 +842,8 @@
       },
       "historyTitle": "Historique des swaps",
       "swapped": "Échangé",
-      "selectChainModalTitle": "Sélectionner la chaîne"
+      "selectChainModalTitle": "Sélectionner la chaîne",
+      "results": "Résultats"
     },
     "manageAddress": {
       "seed-phrase": "Phrase secrète",
@@ -873,7 +874,8 @@
         "more": "Plus",
         "send": "Envoyer",
         "search": "Rechercher Token",
-        "copyTrading": "Copy Trading"
+        "copyTrading": "Copy Trading",
+        "watchlist": "Liste de surveillance"
       }
     },
     "bridge": {
@@ -1538,6 +1540,9 @@
         "Issuedby": "Émis par",
         "verifyDangerTips": "C'est un jeton d'escroquerie",
         "scamWarningTips": "Il s'agit d'un jeton de faible qualité et il peut s'agir d'une arnaque."
+      },
+      "hotTokenList": {
+        "title": "Chaud"
       }
     },
     "gasAccount": {
@@ -2039,7 +2044,29 @@
       "tokenInfo": "Informations sur le Token",
       "smartWalletsBuying": "{{len}} Portefeuilles Intelligents à Acheter",
       "Liquidity": "Liquidité",
-      "myBalanceFromCopyTrading": "Mon solde provenant du Copy Trading"
+      "myBalanceFromCopyTrading": "Mon solde provenant du Copy Trading",
+      "updateTokenText": "{{count}} tokens mis à jour",
+      "gettingLatest": "Obtenez les dernières nouvelles de Smart Money..."
+    },
+    "watchlist": {
+      "empty": {
+        "title": "Pas de tokens dans votre liste de surveillance pour l’instant"
+      },
+      "search": {
+        "title": "Rechercher des tokens"
+      },
+      "tokenHeader": {
+        "token": "Token/FDV",
+        "change": "Changement 24H",
+        "price": "Prix"
+      },
+      "footer": {
+        "skip": "Passer",
+        "add": "Ajouter à la liste de surveillance ({{count}})"
+      },
+      "toast": {
+        "remove": "Retiré de la liste de surveillance avec succès"
+      }
     }
   },
   "native": {

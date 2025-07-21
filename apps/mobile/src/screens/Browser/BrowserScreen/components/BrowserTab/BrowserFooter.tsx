@@ -11,7 +11,7 @@ import {
 } from '@/assets2024/icons/browser';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { DropdownMenuView } from './DropdownMenuView';
 import { WebViewProps } from 'react-native-webview';
@@ -209,6 +209,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     paddingBottom: 40,
     backgroundColor: colors2024['neutral-bg-1'],
+    // ...makeDebugBorder(),
   },
   navControlItem: {
     height: '100%',

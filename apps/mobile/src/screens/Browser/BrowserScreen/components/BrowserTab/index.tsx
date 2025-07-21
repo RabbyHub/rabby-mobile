@@ -39,7 +39,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useDapps } from '@/hooks/useDapps';
 import { sleep } from '@/utils/async';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import {
   canoicalizeDappUrl,
@@ -269,7 +269,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         onOpenTab?.(urlToGo);
       } else {
         webviewRef?.current?.injectJavaScript(
-          `window.location.href = '${urlUtils.sanitizeUrlInput(urlToGo)}'; 
+          `window.location.href = '${urlUtils.sanitizeUrlInput(urlToGo)}';
           true; // Required for iOS
         `,
         );
@@ -748,7 +748,7 @@ const getStyles = createGetStyles2024(ctx =>
       // maxHeight:
       //   Dimensions.get('window').height -
       //   ScreenLayouts2.dappWebViewControlHeaderHeight -
-      //   ScreenLayouts2.dappWebViewControlNavHeight,
+      //   ScreenLayouts2.TabbedDappWebViewControlNavHeight,
       width: '100%',
       opacity: 0.99,
       overflow: 'hidden',
@@ -758,7 +758,9 @@ const getStyles = createGetStyles2024(ctx =>
       flexGrow: 0,
       // height: ScreenLayouts2.dappWebViewControlNavHeight,
       height: 124,
+      // height: ScreenLayouts2.TabbedDappWebViewControlNavHeight,
       backgroundColor: ctx.colors['neutral-bg-1'],
+      // ...makeDebugBorder(),
     },
     progressBar: {
       position: 'absolute',

@@ -325,7 +325,7 @@ export const useAssetsMap = () => {
         const currentAssets = pre[lowerAddress] || {};
         return {
           ...pre,
-          [address]: {
+          [lowerAddress]: {
             ...currentAssets,
             tokens: newTokens,
           },
@@ -348,7 +348,7 @@ export const useAssetsMap = () => {
         const currentAssets = pre[lowerAddress] || {};
         return {
           ...pre,
-          [address]: {
+          [lowerAddress]: {
             ...currentAssets,
             portfolios: newPortfolios,
           },
@@ -364,7 +364,7 @@ export const useAssetsMap = () => {
         const currentAssets = pre[lowerAddress] || {};
         return {
           ...pre,
-          [address]: {
+          [lowerAddress]: {
             ...currentAssets,
             nfts: newNFTs,
           },

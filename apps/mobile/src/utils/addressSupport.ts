@@ -75,9 +75,9 @@ export const isAddrsssContractSupportToken = async (
     return [true, []];
   }
   const supportChains = Object.entries(addressDesc?.contract || {}).map(
-    ([chainName]) => chainName?.toLocaleLowerCase(),
+    ([chainName]) => chainName?.toLowerCase(),
   );
-  return [supportChains.includes(chain?.toLocaleLowerCase()), supportChains];
+  return [supportChains.includes(chain?.toLowerCase()), supportChains];
 };
 
 export const getContractRecommendToken = async (
