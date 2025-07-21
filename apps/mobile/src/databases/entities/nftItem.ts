@@ -207,4 +207,24 @@ export class NFTItemEntity extends EntityAddressAssetBase {
 
     return this.getRepository().delete({ owner_addr });
   }
+  static async cleanupStaleNFTs(owner_addr: string, syncTimestamp: number) {
+    await prepareAppDataSource();
+
+    const deleteResult = await this.getRepository()
+      .createQueryBuilder()
+      .delete()
+      .from(NFTItemEntity)
+      .where('owner_addr = :owner_addr', { owner_addr })
+      .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
+      .execute();
+
+    console.debug(
+      `🧹 Cleaned ${deleteResult.affected || 0} stale NFTs for ${owner_addr}`,
+    );
+
+    return {
+      deletedCount: deleteResult.affected || 0,
+      success: true,
+    };
+  }
 }

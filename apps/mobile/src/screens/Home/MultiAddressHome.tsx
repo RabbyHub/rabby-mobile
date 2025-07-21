@@ -34,7 +34,7 @@ import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
-import RcIconSearch from '@/assets2024/icons/home/IconSearch.svg';
+import RcIconWatchlist from '@/assets2024/icons/home/IconWatchlist.svg';
 
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
@@ -359,9 +359,9 @@ function MultiAddressHome(): JSX.Element {
           icon: RcIconDapps,
         },
         {
-          key: MultiHomeFeatTitle.Search,
-          title: t('page.home.services.search'),
-          icon: RcIconSearch,
+          key: MultiHomeFeatTitle.Watchlist,
+          title: t('page.home.services.watchlist'),
+          icon: RcIconWatchlist,
         },
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
@@ -614,9 +614,9 @@ function MultiAddressHome(): JSX.Element {
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
-  const handlePressSearch = useCallback(() => {
+  const handlePressWatchlist = useCallback(() => {
     navigation.navigate(RootNames.StackHomeNonTab, {
-      screen: RootNames.Search,
+      screen: RootNames.Watchlist,
       params: {},
     });
   }, [navigation]);
@@ -681,8 +681,8 @@ function MultiAddressHome(): JSX.Element {
             params: {},
           });
           break;
-        case MultiHomeFeatTitle.Search: {
-          handlePressSearch();
+        case MultiHomeFeatTitle.Watchlist: {
+          handlePressWatchlist();
           break;
         }
         case MultiHomeFeatTitle.Ecosystem:
@@ -704,7 +704,7 @@ function MultiAddressHome(): JSX.Element {
       }
     },
     [
-      handlePressSearch,
+      handlePressWatchlist,
       navigateToSendPolyScreen,
       navigation,
       toggleUseAllAccountsOnScene,

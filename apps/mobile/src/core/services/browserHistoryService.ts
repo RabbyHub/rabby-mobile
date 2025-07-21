@@ -76,7 +76,7 @@ export class BrowserHistoryService extends StoreServiceBase<
 
   removeHistory(origin: string) {
     this.store.browserHistory = omit(this.store.browserHistory, [
-      origin.toLocaleLowerCase(),
+      origin.toLowerCase(),
     ]);
   }
 }
