@@ -34,7 +34,7 @@ export const useAccountInfo = () => {
     const top10Account = list.slice(0, 10);
 
     const addresses = [
-      ...new Set(list.slice(0, 10).map(i => i.address.toLocaleLowerCase())),
+      ...new Set(list.slice(0, 10).map(i => i.address.toLowerCase())),
     ];
     let totalBalance = 0;
     addresses.forEach(address => {
@@ -72,5 +72,6 @@ export const useAccountInfo = () => {
     hasWatchAddress,
     hasSafeAddress,
     fetchAccounts,
+    rawAllAccounts: accounts,
   };
 };

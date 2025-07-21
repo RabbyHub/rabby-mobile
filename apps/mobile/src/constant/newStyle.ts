@@ -11,6 +11,7 @@ export enum MultiHomeFeatTitle {
   Points = 'Rabby Points',
   Buy = 'Buy',
   Search = 'Search',
+  Watchlist = 'Watchlist',
   CopyTrading = 'Copy Trading',
 
   /** @deprecated */

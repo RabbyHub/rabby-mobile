@@ -68,7 +68,7 @@ export const RecentSendItem = ({
     const name = account.aliasName || ellipisName;
     return {
       formatName: name,
-      hideTail: name.toLocaleLowerCase() === ellipisName.toLocaleLowerCase(),
+      hideTail: name.toLowerCase() === ellipisName.toLowerCase(),
     };
   }, [account.address, account.aliasName]);
 

@@ -55,7 +55,7 @@ function try_catch_issue_on_preference({
   try {
     const preferenceData = appStorage.getItem(APP_STORE_NAMES.preference);
     if (!preferenceData && keyringState) {
-      const msg = `[${pos}] keyringState is not empty but preference is empty}`;
+      const msg = `[${pos}] keyringState is not empty but preference is empty`;
       if (__DEV__) console.error(msg);
       Sentry.captureException(new Error(msg));
     }

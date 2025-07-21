@@ -854,7 +854,8 @@
         "history": "歷史",
         "gasAccount": "GasAccount",
         "search": "搜尋 Token",
-        "copyTrading": "複製交易"
+        "copyTrading": "複製交易",
+        "watchlist": "觀察清單"
       }
     },
     "dashboard": {
@@ -1076,7 +1077,8 @@
       "Completed": "完成",
       "historyTitle": "交換記錄",
       "swapped": "已交換",
-      "selectChainModalTitle": "選擇鏈"
+      "selectChainModalTitle": "選擇鏈",
+      "results": "結果"
     },
     "signText": {
       "title": "簽署文本",
@@ -1593,6 +1595,9 @@
         "verifyDangerTips": "這是一個騙局代幣",
         "Issuedby": "由...發行",
         "scamWarningTips": "這是一個低質量的代幣，可能是騙局。"
+      },
+      "hotTokenList": {
+        "title": "熱"
       }
     },
     "customRpc": {
@@ -2146,7 +2151,29 @@
       "tokenInfo": "代幣信息",
       "smartWallets": "智能錢包",
       "myCopyTrading": "我的拷贝交易",
-      "myBalanceFromCopyTrading": "我的 Copy Trading 余额"
+      "myBalanceFromCopyTrading": "我的 Copy Trading 余额",
+      "updateTokenText": "{{count}} 個 tokens 已更新",
+      "gettingLatest": "獲取來自 Smart Money 的最新資訊..."
+    },
+    "watchlist": {
+      "empty": {
+        "title": "您還沒有在觀察列表中添加任何代幣"
+      },
+      "search": {
+        "title": "搜尋 tokens"
+      },
+      "tokenHeader": {
+        "token": "Token/FDV",
+        "price": "價格",
+        "change": "24H 變化"
+      },
+      "footer": {
+        "skip": "跳過",
+        "add": "加入觀察清單 ({{count}})"
+      },
+      "toast": {
+        "remove": "從觀察名單中移除成功"
+      }
     }
   },
   "component": {

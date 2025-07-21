@@ -20,7 +20,7 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
   useLayoutEffect(() => {
     (async () => {
       const groupAccounts = groupBy(accounts, item =>
-        item.address.toLocaleLowerCase(),
+        item.address.toLowerCase(),
       );
       const uniqueAccounts = Object.values(groupAccounts).map(item =>
         findAccountByPriority(item),

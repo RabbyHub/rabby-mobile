@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import {
   Modal,
@@ -7,11 +8,17 @@ import {
   Text,
   StyleSheet,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import RcIconArrowDownCC from '@/assets2024/icons/copyTrading/IconDownPolygon.svg';
 import RcIconSelectedCC from '@/assets2024/icons/copyTrading/IconSelected.svg';
+import RcIconVectorCC from '@/assets2024/icons/copyTrading/IconVectorCC.svg';
+import RcIconTabCountCC from '@/assets2024/icons/copyTrading/IconTabCountCC.svg';
+import RcIconTabChangeCC from '@/assets2024/icons/copyTrading/IconTabChangeCC.svg';
+
+import RcIconTabTimeCC from '@/assets2024/icons/copyTrading/IconTabTimeCC.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenLayouts } from '@/constant/layout';
 import { IS_IOS } from '@/core/native/utils';
@@ -45,7 +52,7 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
   onClose,
   onSelectItem,
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const selectedFilterRule = filterTabList.find(
     item => item.key === selectedRule,
@@ -59,12 +66,40 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
 
   const iosAddTop = IS_IOS ? 16 : 0;
 
+  const getRenderIcon = (rule: FilterRuleEnum, size: number, color: string) => {
+    switch (rule) {
+      case FilterRuleEnum.smartMoney:
+        return <RcIconTabCountCC width={size} height={size} color={color} />;
+      case FilterRuleEnum['24hPrice']:
+        return <RcIconTabChangeCC width={size} height={size} color={color} />;
+      case FilterRuleEnum.tokenCreate:
+        return <RcIconTabTimeCC width={size} height={size} color={color} />;
+    }
+  };
+
   return (
     <>
       {/* Filter Button */}
+      <LinearGradient
+        colors={
+          isLight
+            ? ['rgba(255, 255, 255, 0)', '#FFFFFF']
+            : ['rgba(19, 20, 22, 0)', 'rgba(19, 20, 22, 1)']
+        }
+        locations={[0, 0.3624]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.gradientMask}
+        pointerEvents="none"
+      />
       <View style={styles.filterContainer}>
-        <TouchableOpacity style={styles.filterButton} onPress={onOpen}>
-          <Text style={styles.filterText}>{selectedFilterRule?.title}</Text>
+        <TouchableOpacity onPress={onOpen} style={styles.filterButton}>
+          <RcIconVectorCC
+            height={15}
+            color={colors2024['neutral-line']}
+            style={{ marginRight: 8 }}
+          />
+          {getRenderIcon(selectedRule, 22, colors2024['brand-default'])}
           <RcIconArrowDownCC
             width={8}
             color={colors2024['brand-default']}
@@ -98,6 +133,13 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
                     selectedRule === item.key && styles.menuItemSelected,
                   ]}
                   onPress={() => handleSelectMenuItem(item.key)}>
+                  {getRenderIcon(
+                    item.key,
+                    20,
+                    selectedRule === item.key
+                      ? colors2024['brand-default']
+                      : colors2024['neutral-info'],
+                  )}
                   <Text
                     style={[
                       styles.menuItemText,
@@ -123,30 +165,29 @@ export const FilterDropdownMenu: React.FC<FilterDropdownMenuProps> = ({
 
 const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   filterContainer: {
-    // position: 'absolute',
+    position: 'relative',
     // zIndex: 1,
     // right: 0,
     // top: 10,
-    paddingRight: 12,
+    paddingRight: 16,
+    zIndex: 11,
+    // paddingLeft: 12,
     paddingVertical: 6,
     // backgroundColor: colors2024['neutral-bg-1'],
+  },
+  verticalLine: {
+    width: 1,
+    height: 15,
+    marginRight: 12,
+    backgroundColor: colors2024['neutral-line'],
+  },
+  linearGradient: {
+    paddingLeft: 42,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: colors2024['neutral-bg-1'],
-    shadowColor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(0, 0, 0, 0.12)',
-    shadowOffset: {
-      width: -7,
-      height: 0,
-    },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 2,
   },
   filterText: {
     fontSize: 14,
@@ -168,7 +209,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'absolute',
     backgroundColor: colors2024['neutral-bg-1'],
     borderRadius: 12,
-    paddingVertical: 8,
     minWidth: 120,
     shadowColor: colors2024['neutral-bg-1'],
     padding: 12,
@@ -197,9 +237,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 6,
   },
   menuItemText: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '400',
+    marginLeft: 4,
+    fontSize: 13,
+    fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
     flex: 1,
@@ -207,5 +247,15 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   menuItemTextSelected: {
     color: colors2024['brand-default'],
     fontWeight: '500',
+  },
+  gradientMask: {
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    top: 0,
+    // left: 0,
+    bottom: 0,
+    width: 102,
+    zIndex: 10,
+    right: 0,
   },
 }));
