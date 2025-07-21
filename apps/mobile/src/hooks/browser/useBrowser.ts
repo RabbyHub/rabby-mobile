@@ -16,12 +16,15 @@ export const tabsAtom = atom({
 });
 
 export const visibleAtom = atom(false);
+const managePopupAtom = atom(false);
 
 export function useBrowser() {
   // const navigation = useRabbyAppNavigation();
 
   const [store, setStore] = useAtom(tabsAtom);
   const [visible, setVisible] = useAtom(visibleAtom);
+  const [isShowManagePopup, setIsShowManagePopup] = useAtom(managePopupAtom);
+
   // const route = useRoute();
 
   const getBrowserTabs = useMemoizedFn(() => {
@@ -45,6 +48,7 @@ export function useBrowser() {
     // navigation.navigate(RootNames.StackBrowser, {
     //   screen: RootNames.BrowserScreen,
     // });
+    setIsShowManagePopup(false);
   });
 
   const switchToTab = useMemoizedFn((tabId: string) => {
@@ -157,5 +161,7 @@ export function useBrowser() {
     closeAllTabs,
     visible,
     setVisible,
+    isShowManagePopup,
+    setIsShowManagePopup,
   };
 }

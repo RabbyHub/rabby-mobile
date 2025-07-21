@@ -22,6 +22,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
 export interface Props extends Omit<TextInputProps, 'style'> {
   style?: StyleProp<ViewStyle>;
@@ -104,7 +105,7 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
               />
             )}
           </TouchableWithoutFeedback>
-          <TextInput
+          <BottomSheetTextInput
             ref={inputRef}
             style={StyleSheet.flatten([
               styles.input,

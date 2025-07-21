@@ -90,7 +90,10 @@ import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/
 import { EVENT_ROUTE_CHANGE, eventBus } from './utils/events';
 // import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
 import { useOpenedActiveDappState } from './screens/Dapps/hooks/useDappView';
-import { BottomSheetBrowser } from './screens/Browser/BottomSheetBrowser';
+import {
+  BottomSheetBrowser,
+  BrowserManagePopup,
+} from './screens/Browser/BottomSheetBrowser';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -507,6 +510,7 @@ export default function AppNavigation({
         <BiometricsStubModal />
         <ApprovalTokenDetailSheetModalStub />
         <BottomSheetBrowser />
+        <BrowserManagePopup />
       </NavigationContainer>
       <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />

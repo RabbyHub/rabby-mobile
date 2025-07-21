@@ -20,6 +20,7 @@ import { View } from 'react-native';
 import { BrowserTab } from './components/BrowserTab';
 import { useFocusEffect } from '@react-navigation/native';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { BrowserManage } from './components/BrowserManage';
 
 export function BrowserScreen() {
   const { styles: stylesScreen } = useTheme2024({
@@ -77,9 +78,7 @@ export function BrowserScreen() {
     <View
       style={[
         stylesScreen.container,
-        stylesScreen.containerDefaultPadding,
         {
-          paddingTop: safeTop,
           paddingBottom: androidOnlyBottomOffset,
         },
       ]}>

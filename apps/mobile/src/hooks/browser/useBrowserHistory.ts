@@ -1,3 +1,4 @@
+import { SectionList } from 'react-native';
 import { browserService } from '@/core/services';
 import { BrowserHistoryItem } from '@/core/services/browserService';
 import { DappInfo } from '@/core/services/dappService';
@@ -8,7 +9,14 @@ import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 import { dappsAtom } from '../useDapps';
 import { useBrowserBookmark } from './useBrowserBookmark';
-import { safeParseURL } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import {
+  safeGetOrigin,
+  safeParseURL,
+} from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { groupBy, sortBy, unionBy, uniqBy } from 'lodash';
+import dayjs from 'dayjs';
+import { formatTimestamp } from '@/utils/time';
+import { useTranslation } from 'react-i18next';
 
 export const browserHistoryAtom = atom<EntityState<BrowserHistoryItem, string>>(
   {
@@ -21,6 +29,7 @@ export function useBrowserHistory() {
   const [store, setStore] = useAtom(browserHistoryAtom);
   const [dapps] = useAtom(dappsAtom);
   const { bookmarkStore } = useBrowserBookmark();
+  const { t } = useTranslation();
 
   const getBrowserHistoryList = useMemoizedFn(() => {
     const entities = browserService.history.selectors.selectEntities();
@@ -59,9 +68,12 @@ export function useBrowserHistory() {
     getBrowserHistoryList();
   });
 
-  const browserHistoryList: DappInfo[] = useMemo(() => {
-    return store.ids
-      .map(key => {
+  const { list: browserHistoryList, sectionList: browserHistorySectionList } =
+    useMemo(() => {
+      const list: DappInfo[] = [];
+      const dict: Record<number, DappInfo[]> = {};
+
+      uniqBy(store.ids, url => safeGetOrigin(url)).forEach(key => {
         const item = store.entities[key];
         if (!item || !/^https?:\/\//.test(item.url)) {
           return;
@@ -76,19 +88,42 @@ export function useBrowserHistory() {
                 bookmarkStore.entities[urlInfo.origin + '/']
               )
             : !!bookmarkStore.entities[key];
-        return {
+
+        const dappInfo = {
           ...dapp,
           ...item,
           icon: dapp?.icon || dapp?.info?.logo_url || undefined,
           origin,
           isFavorite,
         };
-      })
-      .filter(v => !!v);
-  }, [bookmarkStore.entities, dapps, store.entities, store.ids]);
+
+        list.push(dappInfo);
+        const timestamp = dayjs(dappInfo.createdAt).startOf('day').valueOf();
+        if (dict[timestamp]) {
+          dict[timestamp].push(dappInfo);
+        } else {
+          dict[timestamp] = [dappInfo];
+        }
+      });
+
+      return {
+        list,
+        sectionList: sortBy(
+          Object.entries(dict).map(([key, value]) => {
+            return {
+              timestamp: +key,
+              title: formatTimestamp(+key, t),
+              data: value,
+            };
+          }),
+          item => -item.timestamp,
+        ),
+      };
+    }, [bookmarkStore.entities, dapps, store.entities, store.ids, t]);
 
   return {
     browserHistoryList,
+    browserHistorySectionList,
     setBrowserHistory,
     removeBrowserHistory,
     getBrowserHistoryList,

@@ -58,6 +58,7 @@ import { emptyTab } from '@/core/services/browserService';
 import { coerceInteger } from '@/utils/number';
 import { isValidAppStoreUrl } from '@/utils/browser';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { BrowserSearch } from '../BrowserSearch';
 
 type BrowserTabProps = {
   origin: string;
@@ -120,7 +121,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [searchText, setSearchText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
-    const { switchToTab } = useBrowser();
+    const { switchToTab, setIsShowManagePopup } = useBrowser();
 
     const {
       webviewRef,
@@ -330,7 +331,11 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleViewTabs = useMemoizedFn(async () => {
-      await handleViewShot(webviewState.url);
+      if (isActive && !isShowSearch) {
+        await handleViewShot(webviewState.url);
+      }
+      setIsShowManagePopup(true);
+
       // navigation.navigate(RootNames.StackBrowser, {
       //   screen: RootNames.BrowserManageScreen,
       // });
@@ -403,47 +408,46 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [refreshKey, setRefreshKey] = useState(0);
 
     return (
-      <AutoLockView style={[style, styles.dappWebViewControl]}>
-        {isActive ? (
-          <BrowserHeader
-            dapp={dappInfo}
-            url={webviewState.url}
-            isFocused={isShowSearch}
+      <View style={[style, styles.dappWebViewControl]}>
+        {isShowSearch ? (
+          <BrowserSearch
             searchText={searchText}
-            onSearchTextChange={setSearchText}
-            onFocusChange={v => {
-              setIsShowSearch(v);
+            setSearchText={setSearchText}
+            onClose={() => {
+              setIsShowSearch(false);
             }}
-            onSearch={handleSearch}
+            onOpenURL={url => {
+              setIsShowSearch(false);
+              handleGoTo(url);
+            }}
           />
         ) : null}
-
-        {isShowSearch && searchText ? (
+        {/* {isShowSearch && searchText ? (
           <BrowserSearchAutoComplete
             text={searchText}
             onSelect={handleSearchGoogle}
           />
-        ) : null}
+        ) : null} */}
 
         <ViewShot
           ref={viewShotRef}
           style={[
             { flex: 1, backgroundColor: colors2024['neutral-bg-1'] },
-            isShowSearch && searchText ? styles.hidden : null,
+            isShowSearch ? styles.hidden : null,
           ]}
           options={{
             format: 'jpg',
             quality: 0.2,
             result: 'data-uri',
           }}>
-          {(isShowSearch && !searchText) || (!isShowSearch && !url) ? (
+          {/* {(isShowSearch && !searchText) || (!isShowSearch && !url) ? (
             <BrowserBookmarkSection
               onPress={dapp => {
                 const urlToGo = dapp.url || dapp.origin;
                 handleGoTo(urlToGo);
               }}
             />
-          ) : null}
+          ) : null} */}
           <View
             // renderToHardwareTextureAndroid
             style={[
@@ -627,8 +631,20 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             )}
           </View>
         </ViewShot>
-        {isShowSearch ? null : isActive ? (
+        {isActive && !isShowSearch ? (
           <View style={styles.dappWebViewNavControl}>
+            <BrowserHeader
+              dapp={dappInfo}
+              url={webviewState.url}
+              // isFocused={isShowSearch}
+              // searchText={searchText}
+              // onSearchTextChange={setSearchText}
+              onFocusChange={v => {
+                setIsShowSearch(true);
+                setSearchText(webviewState.url);
+              }}
+              onSearch={handleSearch}
+            />
             <BrowserFooter
               url={webviewState.url}
               onGoHome={handleGoHome}
@@ -650,7 +666,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             />
           </View>
         ) : null}
-      </AutoLockView>
+      </View>
     );
   },
 );
@@ -739,7 +755,9 @@ const getStyles = createGetStyles2024(ctx =>
     },
     dappWebViewNavControl: {
       flexShrink: 0,
-      height: ScreenLayouts2.dappWebViewControlNavHeight,
+      flexGrow: 0,
+      // height: ScreenLayouts2.dappWebViewControlNavHeight,
+      height: 124,
       backgroundColor: ctx.colors['neutral-bg-1'],
     },
     progressBar: {

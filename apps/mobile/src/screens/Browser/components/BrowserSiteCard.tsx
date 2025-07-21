@@ -49,11 +49,13 @@ interface DappCardProps {
   isActive?: boolean;
   isShowDesc?: boolean;
   keyword?: string;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 export const BrowserSiteCard: React.FC<DappCardProps> = ({
   data,
   onPress,
+  containerStyle,
   ...rest
 }) => {
   // const { styles } = useTheme2024({ getStyle });
@@ -62,7 +64,8 @@ export const BrowserSiteCard: React.FC<DappCardProps> = ({
     <TouchableOpacity
       onPress={() => {
         onPress?.(data);
-      }}>
+      }}
+      style={containerStyle}>
       <BrowserSiteCardInner data={data} {...rest} />
     </TouchableOpacity>
   );

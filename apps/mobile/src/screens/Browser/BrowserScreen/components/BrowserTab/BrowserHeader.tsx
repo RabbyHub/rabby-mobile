@@ -104,7 +104,7 @@ export function BrowserHeader({
               : t('page.browser.BrowserHeader.searchAndroid')
           }
           value={searchText}
-          searchIcon={<RcIconGoogle />}
+          // searchIcon={<RcIconGoogle />}
           autoFocus
           selectTextOnFocus
           alwaysShowCancel
@@ -237,7 +237,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 5,
-    paddingBottom: 9,
     gap: 12,
     width: '100%',
     // borderBottomWidth: 1,
