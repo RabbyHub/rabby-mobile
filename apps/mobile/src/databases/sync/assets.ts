@@ -230,29 +230,28 @@ export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
   const nfts = data.sort((a, b) =>
     b.is_core === a.is_core ? 0 : b.is_core ? 1 : -1,
   );
-  const syncTimestamp = Date.now();
   const nftItems = nfts.map(raw => {
     const nftItem = new NFTItemEntity();
     NFTItemEntity.fillEntity(nftItem, address, raw);
-    nftItem._local_updated_at = syncTimestamp;
+
     return nftItem;
   });
 
   await prepareAppDataSource();
+  // @TODO: remove this line, we don't need delete data first because we use upsert when save data
+  await NFTItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(NFTItemEntity, nftItems, {
     owner_addr: address,
     taskFor: 'nfts',
     batchSize: 200,
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
-    waitTaskDoneReturn: true,
   })
-    .then(({ taskSignal, taskKey, queueCompleted }) => {
-      if (queueCompleted) {
-        console.debug(`[${taskKey}] batch upsert tasks completed`);
-        NFTItemEntity.cleanupStaleNFTs(address, syncTimestamp);
+    .then(({ taskSignal, taskKey }) => {
+      if (taskSignal.aborted) {
+        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
       } else {
-        console.warn(`[${taskKey}] batch upsert tasks aborted.`);
+        console.debug(`[${taskKey}] batch upsert tasks created`);
       }
     })
     .catch(error => {
@@ -268,30 +267,28 @@ export async function syncRemotePortocols(
   if (data.length === 0) {
     data.push(EMPTY_PROTOCOL_ITEM);
   }
-  const syncTimestamp = Date.now();
   const items = data.map(raw => {
     const protocalItem = new PortocolItemEntity();
     PortocolItemEntity.fillEntity(protocalItem, address, raw);
-    protocalItem._local_updated_at = syncTimestamp;
 
     return protocalItem;
   });
 
   await prepareAppDataSource();
+  // @TODO: remove this line, we don't need delete data first because we use upsert when save data
+  await PortocolItemEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(PortocolItemEntity, items, {
     owner_addr: address,
     taskFor: 'protocols',
     batchSize: 200,
     concurrency: 1,
     delayBetweenTasks: 1.5 * 1e3,
-    waitTaskDoneReturn: true,
   })
-    .then(({ taskSignal, taskKey, queueCompleted }) => {
-      if (queueCompleted) {
-        console.debug(`[${taskKey}] batch upsert tasks completed`);
-        PortocolItemEntity.cleanupStaleProtocols(address, syncTimestamp);
+    .then(({ taskSignal, taskKey }) => {
+      if (taskSignal.aborted) {
+        console.warn(`[${taskKey}] Batch upsertion was aborted.`);
       } else {
-        console.warn(`[${taskKey}] batch upsert tasks aborted.`);
+        console.debug(`[${taskKey}] batch upsert tasks created`);
       }
     })
     .catch(error => {
@@ -397,7 +394,7 @@ export async function syncBalance(
 
   await prepareAppDataSource();
   // @TODO: remove this line, we don't need delete data first because we use upsert when save data
-  // await BalanceEntity.deleteForAddress(address);
+  await BalanceEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(BalanceEntity, [balanceItem], {
     owner_addr: address,
     taskFor: 'balance',
@@ -428,7 +425,7 @@ export async function syncCexInfo(address: string, cex?: Cex) {
   );
 
   await prepareAppDataSource();
-  // await CexEntity.deleteForAddress(address);
+  await CexEntity.deleteForAddress(address);
   await batchSaveWithPQueueAndTransaction(CexEntity, [cexItem], {
     owner_addr: address,
     taskFor: 'cex',
