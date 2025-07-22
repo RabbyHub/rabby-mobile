@@ -503,7 +503,7 @@ function MultiAddressHome(): JSX.Element {
 
     const pinedQueue = preferenceService.getPinToken();
     list.map(i => {
-      const isSmallTx = judgeIsSmallUsdTx(i, tokenDict, pinedQueue);
+      const isSmallTx = judgeIsSmallUsdTx(i, pinedQueue);
       if (!isSmallTx) {
         const status = i.status ?? 1;
         const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;

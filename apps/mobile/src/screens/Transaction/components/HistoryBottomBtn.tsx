@@ -32,13 +32,12 @@ import { Account } from '@/core/services/preference';
 
 interface ItemProps {
   status: number;
-  tokenDict: Record<string, TokenItem | NFTItem>;
   className?: string;
   type: HistoryItemCateType;
   chain: string;
-  receives: TxDisplayItem['receives'];
-  sends: TxDisplayItem['sends'];
-  approve: TxDisplayItem['token_approve'];
+  receives: HistoryDisplayItem['receives'];
+  sends: HistoryDisplayItem['sends'];
+  approve: HistoryDisplayItem['token_approve'];
   data: HistoryDisplayItem;
   isForMultipleAddress?: boolean;
   buttonContainerStyle?: RNViewProps['style'];
@@ -46,7 +45,6 @@ interface ItemProps {
 }
 
 export const HistoryBottomBtn = ({
-  tokenDict,
   status,
   type,
   sends,
@@ -118,9 +116,7 @@ export const HistoryBottomBtn = ({
           <Button
             buttonStyle={buttonStyle}
             onPress={async () => {
-              const sendToken =
-                tokenDict[sends[0]?.token_id] ||
-                tokenDict[fetchHistoryTokenUUId(sends[0]?.token_id, chain)];
+              const sendToken = sends[0]?.token;
               const chainItem = findChain({
                 serverId: sendToken.chain,
               });

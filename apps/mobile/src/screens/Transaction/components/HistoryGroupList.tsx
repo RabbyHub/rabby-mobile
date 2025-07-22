@@ -118,7 +118,7 @@ export const HistoryList = forwardRef(
     const markedList = useMemo(() => {
       return markFirstItems(
         unionBy(list, item => {
-          if ('projectDict' in item) {
+          if ('project_item' in item) {
             return `${item.address.toLowerCase()}-${item.id}`;
           } else {
             return `${item.address.toLowerCase()}-${item.maxGasTx.hash}`;
@@ -131,7 +131,7 @@ export const HistoryList = forwardRef(
     const { bottom } = useSafeAreaInsets();
 
     const renderItem = ({ item }: { item: DisplayHistoryItem }) => {
-      if ('projectDict' in item.data) {
+      if ('project_item' in item.data) {
         return (
           <>
             {item.isDateStart ? (
@@ -146,9 +146,6 @@ export const HistoryList = forwardRef(
             <HistoryItem
               data={item.data}
               isForMultipleAddress={isForMultipleAddress}
-              projectDict={item.data.projectDict}
-              cateDict={item.data.cateDict}
-              tokenDict={item.data.tokenDict || {}}
               getCexInfoByAddress={getCexInfoByAddress}
               onPress={onPresssItem}
             />

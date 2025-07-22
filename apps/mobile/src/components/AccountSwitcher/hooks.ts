@@ -38,7 +38,6 @@ const DefaultStates: {
 
   History: makeDefaultState(),
   MultiHistory: makeDefaultState(),
-  // HistoryFilterScam: makeDefaultState(),
 
   // Receive: makeDefaultState(),
   // GasAccount: makeDefaultState(),

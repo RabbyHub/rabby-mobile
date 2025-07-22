@@ -160,12 +160,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               res.history_list.length,
             );
             // if (res.history_list.length) {
-            runOnJS(syncRemoteHistory)(
-              address,
-              res.history_list,
-              setHistoryLoading,
-              setTokenDict,
-            );
+            runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
             // }
@@ -187,12 +182,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               'add length:',
               res.history_list.length,
             );
-            runOnJS(syncRemoteHistory)(
-              address,
-              res.history_list,
-              setHistoryLoading,
-              setTokenDict,
-            );
+            runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
             synHistoryInRealTimeApi(address, latestTime, lastItemTime);
@@ -316,12 +306,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               res.history_list.length,
             );
             if (res.history_list.length) {
-              runOnJS(syncRemoteHistory)(
-                address,
-                res.history_list,
-                setHistoryLoading,
-                setTokenDict,
-              );
+              runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
               setProjectDict(prev => ({ ...prev, ...res.project_dict }));
               setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
             }
@@ -343,12 +328,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               'add length:',
               res.history_list.length,
             );
-            runOnJS(syncRemoteHistory)(
-              address,
-              res.history_list,
-              setHistoryLoading,
-              setTokenDict,
-            );
+            runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
             setProjectDict(prev => ({ ...prev, ...res.project_dict }));
             setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
             syncUserAllHistory(

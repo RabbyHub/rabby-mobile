@@ -288,13 +288,12 @@ function HistoryDetailScreen(): JSX.Element {
     const isDoubleToken =
       cate === HistoryItemCateType.Swap || cate === HistoryItemCateType.Bridge;
 
-    const { tokenDict } = data;
     if (isDoubleToken) {
       const send = data.sends[0];
       const receive = data.receives[0];
 
       return {
-        formatToken: [tokenDict[send?.token_id], tokenDict[receive?.token_id]],
+        formatToken: [send?.token, receive?.token],
         isNft: false,
       };
     } else {
@@ -306,8 +305,7 @@ function HistoryDetailScreen(): JSX.Element {
         ? (data.token_approve?.token_id as string)
         : commonItem?.token_id;
       const tokenIsNft = tokenId?.length === 32;
-      const tokenUUID = `${data.chain}_token:${tokenId}`;
-      const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+      const token = data.token_approve?.token || commonItem?.token;
       return {
         formatToken: {
           ...token,
@@ -329,10 +327,8 @@ function HistoryDetailScreen(): JSX.Element {
   const usdGasFee = data.tx?.eth_gas_fee;
 
   const formatProject = useMemo(() => {
-    const projectDict = data.projectDict;
-
     if (data.project_id) {
-      return projectDict[data.project_id];
+      return data.project_item;
     }
   }, [data]);
 
@@ -434,7 +430,6 @@ function HistoryDetailScreen(): JSX.Element {
           type={formatType}
           token={formatToken}
           status={status}
-          tokenDict={data.tokenDict}
           account={txAccount}
         />
         <View style={[styles.detailContainer, styles.detailContainerLastOne]}>
@@ -606,18 +601,15 @@ function HistoryDetailScreen(): JSX.Element {
             </View>
           )}
         </View>
-        {data.cate_id === 'approve' && data.token_approve ? (
+        {data.cate_id === 'approve' &&
+        data.token_approve &&
+        data.token_approve.token ? (
           <RevokeTokenBtn
             style={{
               marginTop: -8,
               marginBottom: 20,
             }}
-            token={
-              data.tokenDict[data.token_approve?.token_id] ||
-              data.tokenDict[
-                `${data.chain}_token:${data.token_approve?.token_id}`
-              ]
-            }
+            token={data.token_approve?.token}
             spender={data.token_approve?.spender}
             account={txAccount}
           />
@@ -634,7 +626,6 @@ function HistoryDetailScreen(): JSX.Element {
           status={status || 0}
           data={data}
           isForMultipleAddress={isForMultipleAddress}
-          tokenDict={data.tokenDict}
           buttonContainerStyle={buttonContainerStyle}
           account={txAccount}
         />

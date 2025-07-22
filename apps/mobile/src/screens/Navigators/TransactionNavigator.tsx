@@ -14,7 +14,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
 
-import HistoryFilterScamScreen from '../Transaction/HistoryFilterScamScreen';
 import { HistoryDetailScreen } from '../Transaction/HistoryDetailScreen';
 import { HistoryLocalDetailScreen } from '../Transaction/HistoryLocalDetailScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
@@ -224,25 +223,6 @@ export default function TransactionNavigator() {
             }),
           },
         }}
-      />
-      <TransactionStack.Screen
-        name={RootNames.HistoryFilterScam}
-        component={HistoryFilterScamScreen}
-        options={mergeScreenOptions({
-          headerTitle: 'Hide scam transactions',
-          title: 'Hide scam transactions',
-          ...headerPresets.withBgCard2,
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            color: colors['neutral-title-1'],
-          },
-          headerStyle: {
-            backgroundColor: colors2024?.['neutral-bg-1'],
-          },
-        })}
       />
       <TransactionStack.Screen
         name={RootNames.HistoryDetail}

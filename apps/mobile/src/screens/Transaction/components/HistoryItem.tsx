@@ -38,7 +38,7 @@ type HistoryItemProps = {
   isForMultipleAddress?: boolean;
   getCexInfoByAddress?: (address: string) => ProjectItem;
   onPress?: (data: HistoryDisplayItem) => void;
-} & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
+};
 
 export type TokenChangeDataItem = {
   amount: number;
@@ -51,7 +51,6 @@ export type TokenChangeDataItem = {
 export const HistoryItem = React.memo(
   ({
     data,
-    tokenDict,
     style,
     isForMultipleAddress,
     onPress,
@@ -77,8 +76,7 @@ export const HistoryItem = React.memo(
       }
 
       const tokenId = data.token_approve?.token_id || '';
-      const tokenUUID = `${data.chain}_token:${tokenId}`;
-      const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+      const token = data.token_approve?.token;
       res.push({
         amount: data.token_approve?.value!,
         token,
@@ -87,7 +85,7 @@ export const HistoryItem = React.memo(
       });
 
       return res;
-    }, [data, tokenDict]);
+    }, [data]);
 
     const formatTitle = useMemo(() => {
       switch (formatType) {
@@ -141,9 +139,7 @@ export const HistoryItem = React.memo(
       const FromText = t('page.swap.from') + ' ';
       const ToText = t('page.swap.to') + ' ';
       let address: string | React.ReactNode = '';
-      const project = data.project_id
-        ? data.projectDict[data.project_id]
-        : null;
+      const project = data.project_item;
       switch (formatType) {
         case HistoryItemCateType.GAS_RECEIVED:
         case HistoryItemCateType.GAS_WITHDRAW:
@@ -257,8 +253,7 @@ export const HistoryItem = React.memo(
       const receives = data.receives
         .map(item => {
           const tokenId = item?.token_id;
-          const tokenUUID = `${data.chain}_token:${tokenId}`;
-          const token = tokenDict[tokenId] || tokenDict[tokenUUID] || {};
+          const token = item?.token || {};
           return {
             amount: item.amount,
             token,
@@ -277,8 +272,7 @@ export const HistoryItem = React.memo(
       const sends = data.sends
         .map(item => {
           const tokenId = item?.token_id;
-          const tokenUUID = `${data.chain}_token:${tokenId}`;
-          const token = tokenDict[tokenId] || tokenDict[tokenUUID] || {};
+          const token = item?.token || {};
           return {
             amount: item.amount,
             token,
@@ -294,7 +288,7 @@ export const HistoryItem = React.memo(
           return a.token?.is_core ? 1 : -1;
         });
       return [...receives, ...sends];
-    }, [data, tokenDict]);
+    }, [data]);
 
     if (formatType === HistoryItemCateType.Buy && data.buyDetails) {
       return (

@@ -13,8 +13,8 @@ const storeProjectBase = atomByMMKV<TxAllHistoryResult['project_dict']>(
   {} as TxAllHistoryResult['project_dict'],
 );
 
-const historyTimetBase = atomByMMKV<Record<string, number>>(
-  '@HistoryTimeDictV2',
+const historyTimeBase = atomByMMKV<Record<string, number>>(
+  '@HistoryTimeDictV3',
   {} as Record<string, number>,
 );
 
@@ -30,7 +30,7 @@ const historyLoadingDict = atomByMMKV<Record<string, boolean>>(
 export function useHistoryTokenDict() {
   const [tokenDict, setTokenDict] = useAtom(storeTokenBase);
   const [projectDict, setProjectDict] = useAtom(storeProjectBase);
-  const [updateHistoryTime, setUpdateHistoryTime] = useAtom(historyTimetBase);
+  const [updateHistoryTime, setUpdateHistoryTime] = useAtom(historyTimeBase);
   const [historyEnsureNoData, setHistoryEnsureNoData] = useAtom(
     historyEnsureNoDataBase,
   );

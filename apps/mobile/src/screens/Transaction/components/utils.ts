@@ -33,9 +33,6 @@ export function getHistoryItemType(
   if (data.isLocalBuy) {
     return HistoryItemCateType.Buy;
   }
-  if (data.historyItemCateType) {
-    return data.historyItemCateType;
-  }
   if (data.cate_id === 'approve') {
     if (!data.token_approve?.value) {
       return HistoryItemCateType.Revoke;
@@ -86,13 +83,12 @@ export function getHistoryItemType(
 
 export function getApproveTokeName(data: HistoryDisplayItem): string {
   const tokenId = data.token_approve?.token_id || '';
-  const tokenUUID = `${data.chain}_token:${tokenId}`;
   const tokenIsNft = tokenId?.length === 32;
   if (tokenIsNft) {
     return 'NFT';
   }
 
-  return getTokenSymbol(data.tokenDict[tokenId] || data.tokenDict[tokenUUID]);
+  return getTokenSymbol(data.token_approve?.token);
 }
 
 export const fetchHistoryTokenUUId = (
@@ -102,11 +98,20 @@ export const fetchHistoryTokenUUId = (
   return `${chain}_token:${token_id}`;
 };
 
+export const fetchHistoryTokenItem = (
+  token_id: string,
+  chain: string,
+  tokenDict: Record<string, TokenItem>,
+) => {
+  const tokenUUID = `${chain}_token:${token_id}`;
+  return tokenDict[tokenUUID] || tokenDict[token_id] || {};
+};
+
 export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
   return {
     ...item,
-    receives: isString(item.receives) && safeParseJSON(item.receives),
-    sends: isString(item.sends) && safeParseJSON(item.sends),
+    receives: item.receives,
+    sends: item.sends,
     id: item.txHash,
     tx: {
       id: item.txHash,
@@ -125,7 +130,9 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
       token_id: item.token_approve_id,
       spender: item.token_approve_spender,
       value: item.token_approve_value,
+      token: item.token_approve_item,
     },
+    project_item: item.project_item,
     key: `${item.owner_addr}_${item.chain}_${item.txHash}`,
     address: item.owner_addr,
 
@@ -136,7 +143,6 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
 
 export const judgeIsSmallUsdTx = (
   item: HistoryItemEntity,
-  tokenDict: Record<string, TokenItem>,
   pinedQueue: IManageToken[],
 ) => {
   const currentTime = new Date().getTime();
@@ -149,20 +155,14 @@ export const judgeIsSmallUsdTx = (
     return false;
   }
 
-  const receives = safeParseJSON(item.receives) as {
-    amount: number;
-    from_addr: string;
-    token_id: string;
-  }[];
+  const receives = item.receives;
   if (!receives || !receives.length) {
     return true;
   }
   let allUsd = new BigNumber(0);
 
   for (const i of receives) {
-    const token =
-      tokenDict[fetchHistoryTokenUUId(i.token_id, item.chain)] ||
-      tokenDict[i.token_id];
+    const token = i.token;
     const tokenIsNft = i.token_id?.length === 32;
     if (tokenIsNft) {
       // reeives nft

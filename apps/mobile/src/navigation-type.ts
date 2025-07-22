@@ -268,7 +268,6 @@ export type TransactionNavigatorParamList = {
     currentAddress?: string;
   };
   [RootNames.CopyTrading]?: {};
-  [RootNames.HistoryFilterScam]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
     isForMultipleAddress?: boolean;

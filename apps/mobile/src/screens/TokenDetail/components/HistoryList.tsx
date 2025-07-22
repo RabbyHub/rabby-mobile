@@ -127,9 +127,6 @@ export const HistoryList = ({
         key={`${item.address}-${item.id}`}
         data={item}
         isForMultipleAddress={isForMultipleAddress}
-        projectDict={item.projectDict}
-        cateDict={item.cateDict}
-        tokenDict={item.tokenDict || {}}
       />
     );
   });

@@ -7,7 +7,10 @@ import React, {
 } from 'react';
 
 import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import {
+  HistoryItemEntity,
+  ProjectItemType,
+} from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -25,6 +28,7 @@ import { Text, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import {
   BuyHistoryItem,
+  TokenItem,
   TxAllHistoryResult,
   TxHistoryItem,
   TxHistoryResult,
@@ -52,6 +56,7 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import {
   ensureHistoryListItemFromDb,
+  fetchHistoryTokenItem,
   judgeIsSmallUsdTx,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
@@ -68,10 +73,33 @@ const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
-  projectDict: TxHistoryResult['project_dict'];
-  cateDict: TxHistoryResult['cate_dict'];
-  tokenDict: TxHistoryResult['token_dict'];
+  // projectDict: TxHistoryResult['project_dict'];
+  // cateDict: TxHistoryResult['cate_dict'];
+  // tokenDict: TxHistoryResult['token_dict'];
+  receives: {
+    amount: number;
+    from_addr: string;
+    token_id: string;
+    price?: number;
+    token: TokenItem;
+  }[];
+  sends: {
+    amount: number;
+    to_addr: string;
+    token_id: string;
+    price?: number;
+    token: TokenItem;
+  }[];
+  time_at: number;
+  token_approve: {
+    spender: string;
+    token_id: string;
+    value: number;
+    price?: number;
+    token?: TokenItem;
+  } | null;
   address: string;
+  project_item: ProjectItemType;
   key: string;
   account?: KeyringAccountWithAlias;
   isLocalBuy?: boolean;
@@ -79,7 +107,6 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   isLocalSwap?: boolean;
   isShowSuccess?: boolean;
   isSmallUsdTx?: boolean;
-  historyItemCateType?: HistoryItemCateType | '';
 }
 
 interface IFetchHistory {
@@ -137,8 +164,7 @@ function History({
 
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(top10Addresses);
-  const { projectDict, tokenDict, historyLoading, historyEnsureNoData } =
-    useHistoryTokenDict();
+  const { historyLoading, historyEnsureNoData } = useHistoryTokenDict();
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
 
@@ -184,9 +210,9 @@ function History({
           ...ensureHistoryListItemFromDb(item),
           isLocalBuy: !!localBuyItem,
           buyDetails: localBuyItem,
-          isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
-          tokenDict,
-          projectDict,
+          isSmallUsdTx: judgeIsSmallUsdTx(item, pinedQueue),
+          // tokenDict,
+          // projectDict,
           isShowSuccess: historySuccessList.includes(
             `${item.owner_addr.toLowerCase()}-${item.txHash}`,
           ),
@@ -327,15 +353,32 @@ function History({
       const { project_dict, cate_dict, history_list: list } = res;
       const token_dict = (res as TxHistoryResult).token_dict;
       const token_uuid_dict = (res as TxAllHistoryResult).token_uuid_dict;
+      const tokenDict = token_dict || token_uuid_dict;
 
       const displayList = list
         .map(item => ({
           ...item,
-          projectDict: project_dict,
-          cateDict: cate_dict,
-          tokenDict: token_dict || token_uuid_dict,
           address,
           key: `${address}_${item.chain}_${item.id}`,
+          project_item: project_dict[item.project_id || ''] || null,
+          token_approve: item.token_approve
+            ? {
+                ...item.token_approve,
+                token: fetchHistoryTokenItem(
+                  item.token_approve?.token_id || '',
+                  item.chain,
+                  tokenDict,
+                ),
+              }
+            : null,
+          receives: item.receives.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          sends: item.sends.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
         }))
         .sort((v1, v2) => v2.time_at - v1.time_at);
       return {
