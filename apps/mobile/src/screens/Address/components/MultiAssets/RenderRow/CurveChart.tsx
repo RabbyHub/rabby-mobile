@@ -31,14 +31,14 @@ function Chart({
   isNoAssets,
   pathColor,
   handleScroll,
-  isDisConnnect,
+  isDisConnect,
 }: {
   isOffline: boolean;
   data: ReturnType<typeof formChartData>;
   loading: boolean;
   isNoAssets: boolean;
   pathColor: string;
-  isDisConnnect: boolean;
+  isDisConnect: boolean;
   handleScroll: (y: number) => void;
 }) {
   const { styles, colors, isLight } = useTheme2024({ getStyle });
@@ -80,7 +80,7 @@ function Chart({
     <View
       style={[
         styles.container,
-        { height: HEADER_CHART_HEIGHT + (isDisConnnect ? ALERT_HEIGHT : 0) },
+        { height: HEADER_CHART_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0) },
       ]}>
       <ImageBackground
         source={topBg}
@@ -96,7 +96,7 @@ function Chart({
       />
 
       <GlobalWarning
-        hasError={isDisConnnect}
+        hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
         onRefresh={() => {

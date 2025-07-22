@@ -83,7 +83,7 @@ export const AssetContainer: React.FC<Props> = ({
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
 
-  const { isDisConnnect } = useGlobalStatus();
+  const { isDisConnect } = useGlobalStatus();
 
   const {
     tokens: _rawTokens,
@@ -505,14 +505,14 @@ export const AssetContainer: React.FC<Props> = ({
             ASSETS_SECTION_HEADER +
             SPACE_BETWEEN_HEADER_AND_CHART +
             ASSETS_SECTION_HEADER +
-            (isDisConnnect ? ALERT_HEIGHT : 0),
+            (isDisConnect ? ALERT_HEIGHT : 0),
         }}>
         <HomeTopArea
           currentAccount={currentAccount}
           onUpdateIsDecrease={onUpdateIsDecrease}
           curveData={curveData}
           isLoadingCurve={isLoadingCurve || (balanceLoading && !evmBalance)}
-          isDisConnnect={isDisConnnect}
+          isDisConnect={isDisConnect}
           onRefresh={() => handleRefresh(true)}
         />
         <View style={{ height: SPACE_BETWEEN_HEADER_AND_CHART }} />
@@ -538,7 +538,7 @@ export const AssetContainer: React.FC<Props> = ({
     handleOnChainClick,
     handleRefresh,
     handleSwitchTab,
-    isDisConnnect,
+    isDisConnect,
     isLoadingCurve,
     onUpdateIsDecrease,
     renderStickHeader,
@@ -559,8 +559,8 @@ export const AssetContainer: React.FC<Props> = ({
   }, [chainsInfo.chainLength, loadingNft, loadingPortfolio, loadingToken]);
 
   const errorNotAssets = useMemo(() => {
-    return isDisConnnect && hasNotAssets && hasNoCurveData;
-  }, [hasNoCurveData, hasNotAssets, isDisConnnect]);
+    return isDisConnect && hasNotAssets && hasNoCurveData;
+  }, [hasNoCurveData, hasNotAssets, isDisConnect]);
 
   if (!currentAccount?.address) {
     return null;
@@ -568,7 +568,7 @@ export const AssetContainer: React.FC<Props> = ({
   if (errorNotAssets) {
     return (
       <NetWorkError
-        hasError={isDisConnnect}
+        hasError={isDisConnect}
         onRefresh={() => {
           handleRefresh(true);
         }}
@@ -584,7 +584,7 @@ export const AssetContainer: React.FC<Props> = ({
         HEADER_TOP_AREA_HEIGHT +
         ASSETS_SECTION_HEADER +
         ASSETS_SECTION_HEADER +
-        (isDisConnnect ? ALERT_HEIGHT : 0)
+        (isDisConnect ? ALERT_HEIGHT : 0)
       }
       renderTabBar={renderTabBar}
       tabBarHeight={0}
