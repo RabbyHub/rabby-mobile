@@ -43,9 +43,9 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
   }, [isPined, pinToken, removePinedToken, token]);
 
   const gotoTokenDetail = useCallback(() => {
-    setTimeout(() => {
-      closeBottomSheet();
-    }, 100);
+    // setTimeout(() => {
+    // closeBottomSheet();
+    // }, 100);
 
     navigate(RootNames.TokenDetail, {
       token: {
@@ -55,7 +55,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       needUseCacheToken: true,
       tokenSelectType: type,
     });
-  }, [closeBottomSheet, isPined, token, type]);
+  }, [isPined, token, type]);
 
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
