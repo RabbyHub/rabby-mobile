@@ -14,18 +14,26 @@ const getLinkingConfig = () => {
       screens: {
         [RootNames.Buy]: RootNames.Buy.toLowerCase(),
         [RootNames.MultiBuy]: RootNames.MultiBuy.toLowerCase(),
+        [RootNames.Send]: 'send',
+        [RootNames.SendTo]: 'sendto',
       },
     },
     NotFound: '*',
   };
 
   return {
-    prefixes: ['rabby://'],
+    prefixes: ['rabby://', 'rabbymobile://', 'ethereum:'],
     config: {
       screens: screens,
     },
 
     getStateFromPath: (path: string, options: any) => {
+      // Handle ethereum: URIs separately as they don't follow standard navigation paths
+      if (path.startsWith('ethereum:')) {
+        // Return undefined to let the app handle it through Linking events
+        return undefined;
+      }
+
       const newPath = path.replace('mobile-redirect/', '')?.toLowerCase();
 
       if (

@@ -128,12 +128,22 @@ function SendScreen({
         toAddress?: string;
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
+        amount?: string;
+        rawAmount?: string;
+        isRawAmount?: boolean;
+        gasLimit?: string;
+        gasPrice?: string;
       }
     | {
         safeInfo: { nonce: number; chainId: number };
         toAddress?: string;
         addressBrandName?: string;
         addrDesc?: AddrDescResponse['desc'];
+        amount?: string;
+        rawAmount?: string;
+        isRawAmount?: boolean;
+        gasLimit?: string;
+        gasPrice?: string;
       }
     | undefined;
 
@@ -142,6 +152,7 @@ function SendScreen({
   const [addrDesc, setAddrDesc] = useState<
     AddrDescResponse['desc'] | undefined
   >(navParams?.addrDesc || getInitDescWithCexLocalCache(navParams?.toAddress));
+
   useEffect(() => {
     if (addrDesc || !navParams?.toAddress) {
       return;
@@ -247,6 +258,9 @@ function SendScreen({
     isForMultipleAddress: isForMultipleAddress,
     disableItemCheck,
     currentAccount: currentAccount!,
+    initialAmount: navParams?.isRawAmount ? undefined : navParams?.amount,
+    gasLimit: navParams?.gasLimit,
+    gasPrice: navParams?.gasPrice,
   });
 
   const { fetchOrderedChainList } = useLoadMatteredChainBalances({
@@ -366,13 +380,30 @@ function SendScreen({
       //   }
       // }
       await Promise.race([
-        await loadCurrentToken(
+        loadCurrentToken(
           targetToken.id,
           targetToken.chain,
           currentAccount!.address,
         ),
         sleep(5000),
       ]);
+
+      // After token is loaded, convert raw amount if needed
+      if (navParams?.isRawAmount && navParams?.rawAmount) {
+        // Get the loaded token info
+        const loadedToken = await openapi.getToken(
+          currentAccount!.address,
+          targetToken.chain,
+          targetToken.id,
+        );
+
+        if (loadedToken?.decimals !== undefined) {
+          const convertedAmount = new BigNumber(navParams.rawAmount)
+            .dividedBy(new BigNumber(10).pow(loadedToken.decimals))
+            .toFixed();
+          handleFieldChange('amount', convertedAmount);
+        }
+      }
     } finally {
       hideLoading();
       isShowLoadingRef.current = true;

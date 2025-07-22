@@ -90,6 +90,8 @@ import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/
 import { EVENT_ROUTE_CHANGE, eventBus } from './utils/events';
 // import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
 import { useOpenedActiveDappState } from './screens/Dapps/hooks/useDappView';
+import { setupDeepLinkListener } from './utils/deeplink';
+import { useSendRoutes } from './hooks/useSendRoutes';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -191,6 +193,29 @@ function useDetermineExitAppOnPressBack() {
     return () => backHandler.remove();
   }, [getBackRestCount, setBackStage]);
 }
+
+// Component to handle deep links inside NavigationContainer
+const DeepLinkHandler = () => {
+  const { isAppUnlocked } = useAppUnlocked();
+  const { navigateToSendPolyScreen } = useSendRoutes();
+
+  React.useEffect(() => {
+    if (isAppUnlocked) {
+      const unsubscribe = setupDeepLinkListener(result => {
+        if (result.handled && result.navigation) {
+          if (result.navigation.screen === 'SendERC681') {
+            // Navigate to send screen with pre-filled data
+            navigateToSendPolyScreen(true, result.navigation.params);
+          }
+        }
+      });
+
+      return unsubscribe;
+    }
+  }, [isAppUnlocked, navigateToSendPolyScreen]);
+
+  return null;
+};
 
 const StackMain = () => {
   const { mergeScreenOptions } = useStackScreenConfig();
@@ -351,7 +376,6 @@ export default function AppNavigation({
   const { setNavigationReady } = useSetNavigationReady();
 
   const { setCurrentRouteName } = useSetCurrentRouteName();
-
   const onRouteChange = useCallback(
     (currentRouteName?: string) => {
       currentRouteName =
@@ -463,6 +487,7 @@ export default function AppNavigation({
         independent
         // linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <DeepLinkHandler />
         <DuplicateAddressModal />
         <AliasNameEditModal />
         <QrCodeModal />

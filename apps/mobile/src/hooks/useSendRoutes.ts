@@ -48,7 +48,7 @@ export const useSendRoutes = () => {
     (mergedParams: { [key: string]: any }, isForSingleAddress: boolean) => {
       const targetScreen = getTargetScreen(mergedParams, isForSingleAddress);
 
-      navigation.push(RootNames.StackTransaction, {
+      navigation.navigate(RootNames.StackTransaction, {
         screen: targetScreen,
         params: mergedParams,
       } as NavigatorScreenParams<TransactionNavigatorParamList>);
@@ -101,7 +101,7 @@ export const useSendRoutes = () => {
         }
         return;
       }
-      navigation.push(RootNames.StackTransaction, {
+      navigation.navigate(RootNames.StackTransaction, {
         screen: RootNames.SendTo,
       });
     },
