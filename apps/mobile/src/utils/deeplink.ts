@@ -50,6 +50,15 @@ export async function handleDeepLink(
         // For ERC20 transfers, we need to set the token
         // Token ID format in Rabby is "address" only, chain is handled separately
         params.tokenId = parsed.tokenAddress.toLowerCase();
+      } else {
+        // For ETH transfers, we need to set the native token
+        // Get the native token address for the chain
+        if (chainEnum) {
+          const chain = findChainByID(parsed.chain_id!);
+          if (chain) {
+            params.tokenId = chain.nativeTokenAddress;
+          }
+        }
       }
 
       if (parsed.isERC20Transfer && parsed.parameters?.uint256) {
