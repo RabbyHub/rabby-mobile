@@ -37,6 +37,7 @@ export interface Props extends Omit<TextInputProps, 'style'> {
     blur(): void;
     clear(): void;
   }>;
+  as?: 'TextInput' | 'BottomSheetTextInput';
 }
 
 export const NextSearchBar: React.FC<Props> = React.forwardRef(
@@ -54,6 +55,7 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
       onFocus,
       onCancel,
       noCancel,
+      as = 'TextInput',
       ...rest
     },
     ref,
@@ -73,6 +75,9 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
       setIsFocus(true);
       onFocus?.(e);
     });
+
+    const InputComponent =
+      as === 'TextInput' ? TextInput : BottomSheetTextInput;
 
     useImperativeHandle(ref, () => {
       return {
@@ -105,7 +110,7 @@ export const NextSearchBar: React.FC<Props> = React.forwardRef(
               />
             )}
           </TouchableWithoutFeedback>
-          <BottomSheetTextInput
+          <InputComponent
             ref={inputRef}
             style={StyleSheet.flatten([
               styles.input,

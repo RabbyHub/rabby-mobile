@@ -23,8 +23,15 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
-  const { tabs, activeTabId, switchToTab, closeTab, openTab, closeAllTabs } =
-    useBrowser();
+  const {
+    tabs,
+    activeTabId,
+    switchToTab,
+    closeTab,
+    openTab,
+    closeAllTabs,
+    setPartialBrowserState,
+  } = useBrowser();
   const { t } = useTranslation();
   // const navigation = useRabbyAppNavigation();
 
@@ -66,6 +73,7 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
       }
     }, 50);
   });
+
   return (
     <View style={[styles.container, style]}>
       <FlatList
@@ -114,7 +122,16 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
             <Text style={styles.bottomText}>{t('global.Edit')}</Text>
           </TouchableOpacity>
         </DropDownMenuView>
-        <TouchableOpacity onPress={() => openTab()}>
+        <TouchableOpacity
+          onPress={() => {
+            setPartialBrowserState({
+              isShowBrowser: true,
+              isShowManage: false,
+              isShowSearch: true,
+              searchText: '',
+              searchTabId: '',
+            });
+          }}>
           <RcIconAddPlusCircle
             width={44}
             height={44}
@@ -125,7 +142,9 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
-            // navigation.goBack();
+            setPartialBrowserState({
+              isShowManage: false,
+            });
           }}>
           <Text style={styles.bottomText}>{t('global.Done')}</Text>
         </TouchableOpacity>
@@ -139,7 +158,6 @@ const ItemSeparatorComponent = () => <View style={{ height: 12 }} />;
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     paddingTop: 5,
-    paddingBottom: 9,
     gap: 12,
     position: 'relative',
     height: '100%',

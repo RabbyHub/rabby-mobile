@@ -90,6 +90,8 @@ export type BrowserRef = {
   getWebViewId: () => string;
   getWebViewState: () => WebViewState;
   getWebViewActions: () => WebViewActions;
+  getTabId: () => string;
+  navigateTo: (url: string) => void;
 };
 export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
   (
@@ -121,7 +123,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [searchText, setSearchText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
-    const { switchToTab, setIsShowManagePopup } = useBrowser();
+    const { switchToTab, setPartialBrowserState } = useBrowser();
 
     const {
       webviewRef,
@@ -234,17 +236,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const { entryScriptWeb3Loaded, fullScript } =
       useJavaScriptBeforeContentLoaded({ isTop: false });
 
-    React.useImperativeHandle(
-      ref,
-      () => ({
-        getWebViewDappOrigin: () => origin,
-        getWebViewId: () => webviewIdRef.current || '',
-        getWebViewState: () => webviewState,
-        getWebViewActions: () => webviewActions,
-      }),
-      [origin, webviewIdRef, webviewState, webviewActions],
-    );
-
     const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
       dappOrigin: origin,
       webviewRef,
@@ -334,7 +325,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       if (isActive && !isShowSearch) {
         await handleViewShot(webviewState.url);
       }
-      setIsShowManagePopup(true);
+
+      setPartialBrowserState({
+        isShowManage: true,
+      });
 
       // navigation.navigate(RootNames.StackBrowser, {
       //   screen: RootNames.BrowserManageScreen,
@@ -379,6 +373,19 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     //   }
     // }, [handleViewShot, isActive, isEmptyTab, isShowSearch]);
 
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        getWebViewDappOrigin: () => origin,
+        getWebViewId: () => webviewIdRef.current || '',
+        getWebViewState: () => webviewState,
+        getWebViewActions: () => webviewActions,
+        getTabId: () => tabId || '',
+        navigateTo: handleGoTo,
+      }),
+      [handleGoTo, origin, webviewIdRef, webviewState, webviewActions, tabId],
+    );
+
     useEffect(() => {
       if (!isActive && !isEmptyTab) {
         const id = setTimeout(() => {
@@ -409,7 +416,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     return (
       <View style={[style, styles.dappWebViewControl]}>
-        {isShowSearch ? (
+        {/* {isShowSearch ? (
           <BrowserSearch
             searchText={searchText}
             setSearchText={setSearchText}
@@ -421,7 +428,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               handleGoTo(url);
             }}
           />
-        ) : null}
+        ) : null} */}
         {/* {isShowSearch && searchText ? (
           <BrowserSearchAutoComplete
             text={searchText}
@@ -636,14 +643,15 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             <BrowserHeader
               dapp={dappInfo}
               url={webviewState.url}
-              // isFocused={isShowSearch}
-              // searchText={searchText}
-              // onSearchTextChange={setSearchText}
-              onFocusChange={v => {
-                setIsShowSearch(true);
-                setSearchText(webviewState.url);
+              onViewTabs={handleViewTabs}
+              onLocationBarPress={str => {
+                setPartialBrowserState({
+                  isShowSearch: true,
+                  searchText: str,
+                  searchTabId: tabId,
+                });
               }}
-              onSearch={handleSearch}
+              tabsCount={tabsCount}
             />
             <BrowserFooter
               url={webviewState.url}

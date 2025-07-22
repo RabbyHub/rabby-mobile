@@ -94,6 +94,7 @@ import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 
 const HeaderHeight = 24;
 
@@ -352,13 +353,13 @@ function MultiAddressHome(): JSX.Element {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
         //   icon: RcIconDapps,
         // },
-        {
-          key: MultiHomeFeatTitle.Dapps,
-          title: IS_IOS
-            ? t('page.home.services.websites')
-            : t('page.home.services.dapps'),
-          icon: RcIconDapps,
-        },
+        // {
+        //   key: MultiHomeFeatTitle.Dapps,
+        //   title: IS_IOS
+        //     ? t('page.home.services.websites')
+        //     : t('page.home.services.dapps'),
+        //   icon: RcIconDapps,
+        // },
         {
           key: MultiHomeFeatTitle.Watchlist,
           title: t('page.home.services.watchlist'),
@@ -622,7 +623,6 @@ function MultiAddressHome(): JSX.Element {
     });
   }, [navigation]);
 
-  const { setVisible } = useBrowser();
   const handleClickMenu = useCallback(
     (key: MultiHomeFeatTitle) => {
       switch (key) {
@@ -677,13 +677,6 @@ function MultiAddressHome(): JSX.Element {
             }),
           );
           break;
-        case MultiHomeFeatTitle.Dapps:
-          // navigation.navigate(RootNames.StackBrowser, {
-          //   screen: RootNames.BrowserScreen,
-          //   params: {},
-          // });
-          setVisible(true);
-          break;
         case MultiHomeFeatTitle.Watchlist: {
           handlePressWatchlist();
           break;
@@ -710,7 +703,6 @@ function MultiAddressHome(): JSX.Element {
       handlePressWatchlist,
       navigateToSendPolyScreen,
       navigation,
-      setVisible,
       toggleUseAllAccountsOnScene,
     ],
   );
@@ -804,7 +796,7 @@ function MultiAddressHome(): JSX.Element {
           contentContainerStyle={[
             styles.scrollContainer,
             {
-              paddingBottom: bottom,
+              paddingBottom: bottom + 82,
             },
           ]}
           refreshControl={
@@ -862,6 +854,7 @@ function MultiAddressHome(): JSX.Element {
             })}
           </View>
         </ScrollView>
+        <BrowserSearchEntry />
       </View>
     </NormalScreenContainer2024>
   );

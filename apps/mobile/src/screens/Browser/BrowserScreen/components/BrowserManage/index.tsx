@@ -31,7 +31,7 @@ export function BrowserManage({ onClose }: { onClose?(): void }): JSX.Element {
         key: 'tab',
       },
       {
-        label: t('page.browserManage.option.history'),
+        label: t('page.browserManage.option.recent'),
         key: 'history',
       },
       {
@@ -85,7 +85,7 @@ export function BrowserManage({ onClose }: { onClose?(): void }): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   page: {
-    // backgroundColor: 'transparent',
+    backgroundColor: colors2024['neutral-bg-0'],
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
@@ -112,10 +112,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   navbar: {
     height: 32,
     backgroundColor: colors2024['neutral-bg-4'],
+    width: 'auto',
   },
   navbarItem: {
     height: 24,
     borderRadius: 12,
+    flex: 0,
+    paddingHorizontal: 16,
+    // minWidth: '20%',
   },
   navbarItemActive: {
     backgroundColor: colors2024['neutral-bg-1'],
@@ -136,15 +140,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   navbarLeft: { width: 24, flexShrink: 0 },
 
   tabList: {
-    paddingTop: 16,
+    paddingTop: 12,
     flex: 1,
   },
   historyList: {
-    paddingTop: 14,
+    paddingTop: 12,
     flex: 1,
   },
   favoritesList: {
-    paddingTop: 14,
+    paddingTop: 12,
     flex: 1,
   },
 }));

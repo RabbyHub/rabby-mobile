@@ -25,7 +25,7 @@ export const BrowserBookmarkList = ({
   style?: StyleProp<ViewStyle>;
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
-  const { openTab } = useBrowser();
+  const { openTab, setPartialBrowserState } = useBrowser();
   const { bookmarkList, removeBookmark, addBookmark, getBookmark } =
     useBrowserBookmark();
 
@@ -33,7 +33,7 @@ export const BrowserBookmarkList = ({
     openTab(dappInfo.url || dappInfo.origin);
   });
 
-  const handleFavoritePress = useMemoizedFn((dappInfo: DappInfo) => {
+  const handleDeletePress = useMemoizedFn((dappInfo: DappInfo) => {
     const key = dappInfo.url || dappInfo.origin;
     if (getBookmark(key)) {
       removeBookmark(key);
@@ -56,10 +56,10 @@ export const BrowserBookmarkList = ({
       <BrowserSiteCardList
         data={bookmarkList}
         onPress={handlePress}
-        onFavoritePress={handleFavoritePress}
         style={styles.list}
         ListEmptyComponent={BrowserBookmarkEmpty}
         isShowDelete={isShowDelete}
+        onDeletePress={handleDeletePress}
       />
       <View
         // eslint-disable-next-line react-native/no-inline-styles
@@ -73,7 +73,9 @@ export const BrowserBookmarkList = ({
           onPress={() => {
             setIsShowDelete(prev => !prev);
           }}>
-          <Text style={styles.bottomText}>{t('global.Edit')}</Text>
+          <Text style={styles.bottomText}>
+            {isShowDelete ? t('global.cancel') : t('global.Edit')}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => openTab()}>
           <RcIconAddPlusCircle
@@ -86,7 +88,9 @@ export const BrowserBookmarkList = ({
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
-            // navigation.goBack();
+            setPartialBrowserState({
+              isShowManage: false,
+            });
           }}>
           <Text style={styles.bottomText}>{t('global.Done')}</Text>
         </TouchableOpacity>

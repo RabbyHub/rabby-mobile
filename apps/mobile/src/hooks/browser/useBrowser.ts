@@ -9,6 +9,7 @@ import { v4 as uuid } from 'uuid';
 import { useRabbyAppNavigation } from '../navigation';
 import { browserService } from '@/core/services';
 import { omit } from 'lodash';
+import { boolean } from 'yup';
 
 export const tabsAtom = atom({
   tabs: [emptyTab],
@@ -17,6 +18,13 @@ export const tabsAtom = atom({
 
 export const visibleAtom = atom(false);
 const managePopupAtom = atom(false);
+const browserStateAtom = atom({
+  isShowBrowser: false,
+  isShowSearch: false,
+  isShowManage: false,
+  searchText: '',
+  searchTabId: '',
+});
 
 export function useBrowser() {
   // const navigation = useRabbyAppNavigation();
@@ -24,6 +32,16 @@ export function useBrowser() {
   const [store, setStore] = useAtom(tabsAtom);
   const [visible, setVisible] = useAtom(visibleAtom);
   const [isShowManagePopup, setIsShowManagePopup] = useAtom(managePopupAtom);
+  const [browserState, setBrowserState] = useAtom(browserStateAtom);
+
+  const setPartialBrowserState = useMemoizedFn(
+    (payload: Partial<typeof browserState>) => {
+      return setBrowserState(prev => ({
+        ...prev,
+        ...payload,
+      }));
+    },
+  );
 
   // const route = useRoute();
 
@@ -61,7 +79,11 @@ export function useBrowser() {
     updateBrowserTabs({
       activeTabId: tabId,
     });
-    navigateToBrowserScreen();
+    setPartialBrowserState({
+      isShowBrowser: true,
+      isShowManage: false,
+      isShowSearch: false,
+    });
   });
   const closeTab = useMemoizedFn((tabId: string) => {
     if (tabId === store.activeTabId) {
@@ -108,7 +130,10 @@ export function useBrowser() {
   );
 
   const openTab = useMemoizedFn((url?: string) => {
-    setVisible(true);
+    setPartialBrowserState({
+      isShowBrowser: true,
+      isShowSearch: false,
+    });
     if (!url || !/^https?:\/\//.test(url)) {
       switchToTab(emptyTab.id);
       return;
@@ -150,6 +175,13 @@ export function useBrowser() {
     return true;
   });
 
+  const showBrowser = useMemoizedFn((options?: { isOpenNewTab?: boolean }) => {
+    setPartialBrowserState({
+      isShowBrowser: true,
+      isShowSearch: false,
+    });
+  });
+
   return {
     getBrowserTabs,
     activeTabId: store.activeTabId,
@@ -163,5 +195,18 @@ export function useBrowser() {
     setVisible,
     isShowManagePopup,
     setIsShowManagePopup,
+    showBrowser,
+    browserState,
+    setBrowserState,
+    setPartialBrowserState,
   };
 }
+
+// export function useBrowserSearch() {
+//   const [searchState, setSearchState] = useAtom(searchStateAtom);
+
+//   return {
+//     searchState,
+//     setSearchState,
+//   };
+// }

@@ -27,7 +27,7 @@ export const BrowserHistoryList = ({
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { browserHistorySectionList, removeBrowserHistory } =
     useBrowserHistory();
-  const { openTab } = useBrowser();
+  const { openTab, setPartialBrowserState } = useBrowser();
   const { removeBookmark, addBookmark, getBookmark } = useBrowserBookmark();
 
   const handlePress = useMemoizedFn((dappInfo: DappInfo) => {
@@ -75,7 +75,9 @@ export const BrowserHistoryList = ({
           menuConfig={{
             menuActions: [
               {
-                title: t('page.browserManage.BrowserTabList.closeAllTabs'),
+                title: t(
+                  'page.browserManage.BrowserHistoryList.clearAllHistory',
+                ),
                 key: 'close_all_tabs',
                 icon: isLight
                   ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear.png')
@@ -93,7 +95,16 @@ export const BrowserHistoryList = ({
             <Text style={styles.bottomText}>{t('global.Edit')}</Text>
           </TouchableOpacity>
         </DropDownMenuView>
-        <TouchableOpacity onPress={() => openTab()}>
+        <TouchableOpacity
+          onPress={() => {
+            setPartialBrowserState({
+              isShowBrowser: true,
+              isShowManage: false,
+              isShowSearch: true,
+              searchText: '',
+              searchTabId: '',
+            });
+          }}>
           <RcIconAddPlusCircle
             width={44}
             height={44}
@@ -104,7 +115,9 @@ export const BrowserHistoryList = ({
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
-            // navigation.goBack();
+            setPartialBrowserState({
+              isShowManage: false,
+            });
           }}>
           <Text style={styles.bottomText}>{t('global.Done')}</Text>
         </TouchableOpacity>

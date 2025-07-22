@@ -6,6 +6,7 @@ export { default as RcIconRightCC } from './right-cc.svg';
 
 import { default as RcIconDisconnectCC } from './icon-disconnect-cc.svg';
 export { default as RcIconDynamicArrowCC } from './dynamic-arrow-cc.svg';
+export { default as RcIconDynamicArrowDownCC } from './dynamic-arrow-down-cc.svg';
 export { default as RcIconGoogle } from './icon-google.svg';
 export { RcIconDisconnectCC };
 

@@ -2015,7 +2015,8 @@
       "option": {
         "tab": "Tab",
         "history": "History",
-        "favorites": "Favorites"
+        "favorites": "Favorites",
+        "recent": "Recent"
       },
       "BrowserTabList": {
         "closeAllTabs": "Close all tabs"
@@ -2024,7 +2025,8 @@
         "title": "Favorites"
       },
       "BrowserHistoryList": {
-        "title": "History"
+        "title": "History",
+        "clearAllHistory": "Clear all History"
       }
     },
     "component": {

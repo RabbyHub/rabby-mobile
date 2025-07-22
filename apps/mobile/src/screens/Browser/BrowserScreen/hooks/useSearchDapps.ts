@@ -1,23 +1,30 @@
-import { TextInputProps } from 'react-native';
 /* eslint-disable @typescript-eslint/no-shadow */
 // import { useOpenDappView } from '../hooks/useDappView';
-import { CHAINS_ENUM } from '@/constant/chains';
 import { openapi } from '@/core/request';
 import { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
-import { findChainByEnum } from '@/utils/chain';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { useDebounce, useInfiniteScroll, useSetState } from 'ahooks';
-import { useEffect, useMemo, useState } from 'react';
+import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
+import { useDebounce, useInfiniteScroll } from 'ahooks';
+import { useMemo } from 'react';
 
 export const useSearchDapps = (searchText: string) => {
   const { dapps } = useDapps();
 
-  // const url = useParsePossibleURL(debouncedSearchValue);
+  const debouncedSearchValue = useDebounce(searchText, {
+    wait: 500,
+  });
 
-  const { data, loadMore } = useInfiniteScroll(
+  const { data, loadMore } = useInfiniteScroll<{
+    list: BasicDappInfo[];
+    page?: {
+      limit: number;
+      total: number;
+    };
+    next?: number;
+  }>(
     async d => {
-      if (!searchText) {
+      if (!debouncedSearchValue) {
         return {
           list: [],
           page: {
@@ -31,7 +38,7 @@ export const useSearchDapps = (searchText: string) => {
       const limit = d?.page?.limit || 30;
       const start = d?.next || 0;
       const res = await openapi.searchDapp({
-        q: searchText,
+        q: debouncedSearchValue,
         start,
         limit,
       });
@@ -42,9 +49,9 @@ export const useSearchDapps = (searchText: string) => {
       };
     },
     {
-      reloadDeps: [searchText],
+      reloadDeps: [debouncedSearchValue],
       isNoMore(data) {
-        return !!data && (data?.list?.length || 0) >= data?.page?.total;
+        return !!data && (data?.list?.length || 0) >= (data?.page?.total || 0);
       },
       onFinally() {},
     },
@@ -62,6 +69,8 @@ export const useSearchDapps = (searchText: string) => {
 
       const dappInfo = {
         ...local,
+        name: local?.name || info?.name,
+        icon: local?.icon || info?.logo_url,
         origin,
         info,
       } as DappInfo;
@@ -84,7 +93,7 @@ export const useSearchDapps = (searchText: string) => {
 
   return {
     list,
-    total: currentDapp ? data?.page?.total - 1 : data?.page?.total,
+    total: currentDapp ? (data?.page?.total || 0) - 1 : data?.page?.total,
     currentDapp,
     loadMore,
     currentURL: url,

@@ -2,13 +2,15 @@ import { DappInfo } from '@/core/services/dappService';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { FlatListProps, StyleSheet, Text, View } from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
+import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
 import { BrowserSiteCard } from './BrowserSiteCard';
+import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
 
 export const BrowserSiteCardList = ({
   data,
   onPress,
   onFavoritePress,
+  onDeletePress,
   ListEmptyComponent,
   ListHeaderComponent,
   style,
@@ -17,6 +19,7 @@ export const BrowserSiteCardList = ({
   data: DappInfo[];
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
+  onDeletePress?: (dapp: DappInfo) => void;
   ListHeaderComponent?:
     | React.ComponentType<any>
     | React.ReactElement<any, string | React.JSXElementConstructor<any>>
@@ -42,11 +45,15 @@ export const BrowserSiteCardList = ({
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>
-            {isShowDelete ? <Text>删除</Text> : null}
-            <View
-              style={{
-                width: '100%',
-              }}>
+            {isShowDelete ? (
+              <TouchableOpacity
+                onPress={() => {
+                  onDeletePress?.(item);
+                }}>
+                <RcIconDelete width={20} height={20} />
+              </TouchableOpacity>
+            ) : null}
+            <View style={styles.listItemContent}>
               <BrowserSiteCard
                 data={item}
                 onPress={onPress}
@@ -73,5 +80,8 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 16,
+    },
+    listItemContent: {
+      width: '100%',
     },
   });

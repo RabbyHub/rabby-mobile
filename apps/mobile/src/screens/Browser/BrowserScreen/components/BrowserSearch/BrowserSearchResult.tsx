@@ -1,23 +1,14 @@
-import React, { useState } from 'react';
-import { FlatList, Keyboard, Text, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { FlatList, Text, View } from 'react-native';
 
-import { RcArrowRight2CC, RcSearchCC } from '@/assets/icons/common';
-import { RcIconArrowTopLeftCC } from '@/assets2024/icons/browser';
-import { openapi } from '@/core/request';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import { useRequest } from 'ahooks';
-import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
-import { NextInput } from '@/components2024/Form/Input';
-import { NextSearchBar } from '@/components2024/SearchBar';
+import { RcArrowRight2CC } from '@/assets/icons/common';
 import { RcIconBallCC, RcIconGoogle } from '@/assets/icons/dapp';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { BrowserHistorySiteItem } from '@/screens/Browser/BrowserManageScreen/components/BrowserHistoryList/BrowserHistorySiteList';
-import {
-  BrowserSiteCard,
-  BrowserSiteCardInner,
-} from '@/screens/Browser/components/BrowserSiteCard';
 import { DappInfo } from '@/core/services/dappService';
+import { useTheme2024 } from '@/hooks/theme';
+import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
+import { createGetStyles2024 } from '@/utils/styles';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { parse } from 'tldts';
 
 export function BrowserSearchResult({
   data,
@@ -31,6 +22,11 @@ export function BrowserSearchResult({
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
+
+  const isValidDomain = useMemo(() => {
+    const pared = parse(searchText);
+    return !searchText.includes('@') && (pared.isIcann || pared.isIp);
+  }, [searchText]);
 
   return (
     <FlatList
@@ -67,36 +63,40 @@ export function BrowserSearchResult({
                 />
               </View>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.listItem}
-              onPress={() => {
-                onOpenURL?.(
-                  /^https?:\/\//.test(searchText)
-                    ? searchText
-                    : `https://${searchText}`,
-                );
-              }}>
-              <RcIconBallCC
-                style={styles.listItemIcon}
-                color={colors2024['neutral-secondary']}
-              />
-              <View style={styles.listItemContent}>
-                <Text
-                  style={styles.listItemText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  Open "{searchText}"
-                </Text>
-                <RcArrowRight2CC
-                  style={styles.listItemArrowIcon}
-                  color={colors2024['neutral-body']}
+            {isValidDomain ? (
+              <TouchableOpacity
+                style={styles.listItem}
+                onPress={() => {
+                  onOpenURL?.(
+                    /^https?:\/\//.test(searchText)
+                      ? searchText
+                      : `https://${searchText}`,
+                  );
+                }}>
+                <RcIconBallCC
+                  style={styles.listItemIcon}
+                  color={colors2024['neutral-secondary']}
                 />
-              </View>
-            </TouchableOpacity>
+                <View style={styles.listItemContent}>
+                  <Text
+                    style={styles.listItemText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    Open "{searchText}"
+                  </Text>
+                  <RcArrowRight2CC
+                    style={styles.listItemArrowIcon}
+                    color={colors2024['neutral-body']}
+                  />
+                </View>
+              </TouchableOpacity>
+            ) : null}
           </View>
-          <View style={styles.header}>
-            <Text style={styles.title}>Results</Text>
-          </View>
+          {data?.length ? (
+            <View style={styles.header}>
+              <Text style={styles.title}>Results</Text>
+            </View>
+          ) : null}
         </>
       }
       renderItem={({ item }) => {
@@ -106,6 +106,9 @@ export function BrowserSearchResult({
               // keyword={keyword}
               data={item}
               onPress={dapp => onOpenURL?.(dapp.url || dapp.origin)}
+              isShowBorder
+              isShowFavorite
+              isShowListBy
               // onFavoritePress={onFavoritePress}
               // onPress={onPress}
               // isShowDesc
@@ -134,6 +137,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   dappList: {
     paddingHorizontal: 20,
+    paddingTop: 22,
   },
   dappListItem: {
     marginBottom: 12,

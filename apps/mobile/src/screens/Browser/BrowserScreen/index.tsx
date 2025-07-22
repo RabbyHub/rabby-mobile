@@ -17,10 +17,12 @@ import { useSyncDappsInfo } from '@/hooks/useSyncDappsInfo';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { View } from 'react-native';
-import { BrowserTab } from './components/BrowserTab';
+import { BrowserRef, BrowserTab } from './components/BrowserTab';
 import { useFocusEffect } from '@react-navigation/native';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BrowserManage } from './components/BrowserManage';
+import { BrowserSearchResult } from './components/BrowserSearch/BrowserSearchResult';
+import { BrowserSearch } from './components/BrowserSearch';
 
 export function BrowserScreen() {
   const { styles: stylesScreen } = useTheme2024({
@@ -29,10 +31,18 @@ export function BrowserScreen() {
 
   const { safeTop, androidOnlyBottomOffset } = useSafeSizes();
 
-  const activeDappWebViewControlRef = useRef<any>(null);
+  const activeDappWebViewControlRef = useRef<BrowserRef | null>(null);
 
-  const { visible, tabs, activeTabId, closeTab, updateTab, openTab } =
-    useBrowser();
+  const {
+    tabs,
+    activeTabId,
+    closeTab,
+    updateTab,
+    openTab,
+    browserState,
+    setBrowserState,
+    setPartialBrowserState,
+  } = useBrowser();
 
   const activeTabOrigin = useMemo(() => {
     const tab = tabs.find(t => t.id === activeTabId);
@@ -70,9 +80,9 @@ export function BrowserScreen() {
 
   useEffect(() => {
     globalSetActiveDappState({
-      isScreenHide: !visible,
+      isScreenHide: !browserState.isShowBrowser,
     });
-  }, [visible]);
+  }, [browserState.isShowBrowser]);
 
   return (
     <View
@@ -82,79 +92,112 @@ export function BrowserScreen() {
           paddingBottom: androidOnlyBottomOffset,
         },
       ]}>
-      <View style={[stylesScreen.containerInner]}>
-        {!tabs.length ? (
-          <BrowserTab origin={''} url="" onOpenTab={openTab} />
-        ) : (
-          <>
-            {tabs.map((tab, idx) => {
-              const isActiveTab = activeTabId === tab.id;
-              const key = tab.id;
-              const urlInfo = urlUtils.canoicalizeDappUrl(
-                tab.initialUrl || tab.url,
-              );
+      <>
+        {tabs.map((tab, idx) => {
+          const isActiveTab = activeTabId === tab.id;
+          const key = tab.id;
+          const urlInfo = urlUtils.canoicalizeDappUrl(
+            tab.initialUrl || tab.url,
+          );
 
-              if (tab.isTerminate && !isActiveTab) {
-                return null;
-              }
+          if (tab.isTerminate && !isActiveTab) {
+            return null;
+          }
 
-              return (
-                <BrowserTab
-                  key={key}
-                  ref={inst => {
-                    if (isActiveTab) {
-                      globalSetActiveDappState({ dappOrigin: urlInfo.origin });
-                      activeDappWebViewControlRef.current = inst;
-                      globalSetActiveDappState({
-                        dappOrigin: urlInfo.origin,
-                        tabId: tab.id,
-                      });
-                    }
-                  }}
-                  isActive={isActiveTab}
-                  onUpdateTab={params => {
-                    updateTab(tab.id, params);
-                  }}
-                  onUpdateHistory={({ url, name }) => {
-                    setBrowserHistory({
-                      url,
-                      name,
-                      createdAt: Date.now(),
-                    });
-                  }}
-                  onOpenTab={openTab}
-                  style={[!isActiveTab && { display: 'none' }]}
-                  origin={urlInfo.origin}
-                  tabId={tab.id}
-                  url={tab.initialUrl}
-                  tabsCount={tabs.length}
-                  onSelfClose={reason => {
-                    if (reason === 'phishing') {
-                      // todo
-                      closeTab(tab.id);
-                    }
-                  }}
-                  // webviewContainerMaxHeight={webviewMaxHeight}
-                  webviewProps={{
-                    /**
-                     * @platform ios
-                     */
-                    contentMode: 'mobile',
-                    /**
-                     * set nestedScrollEnabled to true will cause custom animated gesture not working,
-                     * but whatever, we CAN'T apply any type meaningful gesture to RNW
-                     * @platform android
-                     */
-                    nestedScrollEnabled: false,
-                    allowsInlineMediaPlayback: true,
-                    disableJsPromptLike: !isActiveTab,
-                  }}
-                />
-              );
-            })}
-          </>
-        )}
-      </View>
+          return (
+            <BrowserTab
+              key={key}
+              ref={inst => {
+                if (isActiveTab) {
+                  globalSetActiveDappState({ dappOrigin: urlInfo.origin });
+                  activeDappWebViewControlRef.current = inst;
+                  globalSetActiveDappState({
+                    dappOrigin: urlInfo.origin,
+                    tabId: tab.id,
+                  });
+                }
+              }}
+              isActive={isActiveTab}
+              onUpdateTab={params => {
+                updateTab(tab.id, params);
+              }}
+              onUpdateHistory={({ url, name }) => {
+                setBrowserHistory({
+                  url,
+                  name,
+                  createdAt: Date.now(),
+                });
+              }}
+              onOpenTab={openTab}
+              style={[!isActiveTab && { display: 'none' }]}
+              origin={urlInfo.origin}
+              tabId={tab.id}
+              url={tab.initialUrl}
+              tabsCount={tabs.length}
+              onSelfClose={reason => {
+                if (reason === 'phishing') {
+                  // todo
+                  closeTab(tab.id);
+                }
+              }}
+              // webviewContainerMaxHeight={webviewMaxHeight}
+              webviewProps={{
+                /**
+                 * @platform ios
+                 */
+                contentMode: 'mobile',
+                /**
+                 * set nestedScrollEnabled to true will cause custom animated gesture not working,
+                 * but whatever, we CAN'T apply any type meaningful gesture to RNW
+                 * @platform android
+                 */
+                nestedScrollEnabled: false,
+                allowsInlineMediaPlayback: true,
+                disableJsPromptLike: !isActiveTab,
+              }}
+            />
+          );
+        })}
+      </>
+
+      {browserState.isShowSearch ? (
+        <BrowserSearch
+          searchText={browserState.searchText}
+          setSearchText={v => {
+            setPartialBrowserState({
+              searchText: v,
+            });
+          }}
+          onClose={() => {
+            setPartialBrowserState({
+              // isShowBrowser: false,
+              isShowSearch: false,
+              searchText: '',
+              searchTabId: '',
+            });
+            console.log('onClose');
+            // setVisibleState(prev => ({
+            //   ...prev,
+            //   isShowSearch: false,
+            // }));
+            // setSearchState(prev => ({
+            //   ..
+            // }))
+          }}
+          onOpenURL={url => {
+            console.log(activeDappWebViewControlRef?.current?.getTabId());
+            if (
+              browserState.searchTabId &&
+              activeDappWebViewControlRef?.current?.getTabId() ===
+                browserState.searchTabId
+            ) {
+              activeDappWebViewControlRef?.current.navigateTo(url);
+            } else {
+              openTab(url);
+            }
+          }}
+        />
+      ) : null}
     </View>
   );
 }
@@ -163,15 +206,12 @@ const getScreenStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
       height: '100%',
-      backgroundColor: 'transparent',
+      backgroundColor: colors2024['neutral-bg-1'],
+      position: 'relative',
     },
     containerDefaultPadding: {
       paddingTop: 56,
       paddingBottom: IS_ANDROID ? 0 : 0,
-    },
-    containerInner: {
-      height: '100%',
-      backgroundColor: colors2024['neutral-bg-1'],
     },
     __TEST_TEXT__: {
       color: colors2024['neutral-title-1'],

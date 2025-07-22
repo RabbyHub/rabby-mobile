@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { Text, View } from 'react-native';
 import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
+import { useTheme2024 } from '@/hooks/theme';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -20,21 +21,22 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => (
 
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
-  const { visible, setVisible } = useBrowser();
+  const { browserState, setPartialBrowserState } = useBrowser();
+  const { colors2024 } = useTheme2024();
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   useEffect(() => {
-    if (visible) {
+    if (browserState.isShowBrowser) {
       modalRef.current?.present();
     } else {
       modalRef.current?.close();
     }
-  }, [visible]);
+  }, [browserState.isShowBrowser]);
 
   return (
     <AppBottomSheetModal
-      index={visible ? 0 : -1}
+      index={browserState.isShowBrowser ? 0 : -1}
       enableContentPanningGesture={false}
       enablePanDownToClose
       enableHandlePanningGesture
@@ -44,9 +46,33 @@ export const BottomSheetBrowser = () => {
       enableDismissOnClose={false}
       keyboardBlurBehavior="restore"
       keyboardBehavior="extend"
+      handleStyle={{
+        backgroundColor: colors2024['neutral-bg-0'],
+        // backgroundColor: 'transparent',
+        // // height: 0,
+      }}
+      // backgroundComponent={({ style }) => {
+      //   return (
+      //     <View
+      //       style={[
+      //         style,
+      //         {
+      //           backgroundColor: colors2024['neutral-bg-0'],
+      //           borderTopLeftRadius: 20,
+      //           borderTopRightRadius: 20,
+      //         },
+      //       ]}
+      //     />
+      //   );
+      // }}
       onChange={index => {
         if (index === -1) {
-          setVisible(false);
+          setPartialBrowserState({
+            isShowBrowser: false,
+            isShowSearch: false,
+            searchText: '',
+            searchTabId: '',
+          });
         }
       }}>
       <AutoLockView as="BottomSheetView">
@@ -58,32 +84,38 @@ export const BottomSheetBrowser = () => {
 
 export const BrowserManagePopup = () => {
   const { safeOffScreenTop } = useSafeSizes();
-  const { isShowManagePopup: visible, setIsShowManagePopup: setVisible } =
-    useBrowser();
+
+  const { browserState, setPartialBrowserState } = useBrowser();
+  const { colors2024 } = useTheme2024();
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   useEffect(() => {
-    if (visible) {
+    if (browserState.isShowManage) {
       modalRef.current?.present();
     } else {
       modalRef.current?.close();
     }
-  }, [visible]);
+  }, [browserState.isShowManage]);
 
   return (
     <AppBottomSheetModal
-      index={visible ? 0 : -1}
+      index={browserState.isShowManage ? 0 : -1}
       enableContentPanningGesture={false}
       enablePanDownToClose
       enableHandlePanningGesture
       // name="urlWebviewContainerRef"
+      handleStyle={{
+        backgroundColor: colors2024['neutral-bg-0'],
+      }}
       ref={modalRef}
       snapPoints={[safeOffScreenTop]}
       // enableDismissOnClose={false}
       onChange={index => {
         if (index === -1) {
-          setVisible(false);
+          setPartialBrowserState({
+            isShowManage: false,
+          });
         }
       }}>
       <AutoLockView as="BottomSheetView">

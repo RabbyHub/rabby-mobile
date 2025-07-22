@@ -48,3 +48,35 @@ export const RcIconAddPlusCircle = ({
     />
   </Svg>
 );
+
+export const ReactIconHome = (
+  props: SvgProps & {
+    backgroundColor?: string;
+  },
+) => (
+  <Svg
+    // xmlns="http://www.w3.org/2000/svg"
+    width={44}
+    height={44}
+    fill="none"
+    {...props}>
+    <Rect
+      width={44}
+      height={44}
+      fill={props.backgroundColor}
+      fillOpacity={0.5}
+      rx={22}
+      transform="matrix(-1 0 0 1 44 0)"
+    />
+    <Path
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeWidth={2.2}
+      d="m11 20.4 9.25-7.4a2 2 0 0 1 2.5 0L32 20.4"
+    />
+    <Path
+      fill="currentColor"
+      d="M30.5 20v9a2 2 0 0 1-2 2H24v-6a1 1 0 0 0-1-1h-3a1 1 0 0 0-1 1v6h-4.5a2 2 0 0 1-2-2v-9l9-7 9 7Z"
+    />
+  </Svg>
+);
