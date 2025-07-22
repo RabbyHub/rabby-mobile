@@ -22,7 +22,7 @@ const getLinkingConfig = () => {
   };
 
   return {
-    prefixes: ['rabby://', 'rabbymobile://', 'ethereum:'],
+    prefixes: ['rabby://', 'ethereum:'],
     config: {
       screens: screens,
     },
