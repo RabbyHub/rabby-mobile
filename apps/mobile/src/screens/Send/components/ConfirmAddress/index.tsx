@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { noop } from 'lodash';
 
@@ -26,7 +26,7 @@ import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { toast } from '@/components2024/Toast';
 export interface ConfirmAddressScreenProps {
   title?: string;
-  disbaleWhiteSwitch?: boolean;
+  disableWhiteSwitch?: boolean;
   cex?: ProjectItem;
   account: KeyringAccountWithAlias;
   onConfirm?: (
@@ -41,7 +41,7 @@ const ConfirmAddress = ({
   onConfirm,
   title,
   cex,
-  disbaleWhiteSwitch,
+  disableWhiteSwitch,
 }: ConfirmAddressScreenProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -49,6 +49,9 @@ const ConfirmAddress = ({
   const [inWhiteList, setInWhiteList] = useState(
     isAddrOnWhitelist(account.address),
   );
+  const shouldPasswordValidation = useMemo(() => {
+    return disableWhiteSwitch || inWhiteList;
+  }, [disableWhiteSwitch, inWhiteList]);
   const { loading, risks, addressDesc } = useRisks(
     account.address,
     !!account.balance,
@@ -88,7 +91,7 @@ const ConfirmAddress = ({
   );
 
   const handleConfirm = () => {
-    if (!disbaleWhiteSwitch) {
+    if (!disableWhiteSwitch) {
       setInWhitelist(inWhiteList);
     }
     onConfirm?.(account, addressDesc);
@@ -98,7 +101,7 @@ const ConfirmAddress = ({
       style={[
         styles.screen,
         loading && {
-          minHeight: disbaleWhiteSwitch ? 464 : 515,
+          minHeight: disableWhiteSwitch ? 464 : 515,
         },
       ]}>
       <Text style={styles.modalTitle}>
@@ -115,7 +118,7 @@ const ConfirmAddress = ({
         account={account}
         style={styles.addressCard}
       />
-      {!loading && !disbaleWhiteSwitch && (
+      {!loading && !disableWhiteSwitch && (
         <View style={styles.whitelist}>
           <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
           <AppSwitch2024 onValueChange={setInWhiteList} value={inWhiteList} />
@@ -125,7 +128,7 @@ const ConfirmAddress = ({
         style={[
           styles.riskList,
           loading && {
-            marginTop: disbaleWhiteSwitch ? 41 : 92,
+            marginTop: disableWhiteSwitch ? 41 : 92,
             marginBottom: 123,
           },
         ]}>
@@ -165,7 +168,7 @@ const ConfirmAddress = ({
             styles.footerButtonGroup,
             { marginBottom: safeSizes.footerButtonGroupMb },
           ])}
-          authButton
+          authButton={shouldPasswordValidation}
           onCancel={onCancel ?? noop}
           onConfirm={handleConfirm}
           confirmDisabled={risks.length > 0 && !isChecked}

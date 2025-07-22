@@ -139,7 +139,7 @@ function SendHistoryScreen() {
           name: MODAL_NAMES.CONFIRM_ADDRESS,
           account,
           title: t('page.confirmAddress.addToWhitelist'),
-          disbaleWhiteSwitch: true,
+          disableWhiteSwitch: true,
           bottomSheetModalProps: {
             enableDynamicSizing: true,
           },
