@@ -12,7 +12,7 @@ import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import dayjs from 'dayjs';
 import { uniqBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { runOnJS } from 'react-native-reanimated';
+import { runOnUI } from 'react-native-reanimated';
 import useAsync from 'react-use/lib/useAsync';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import useDebounce from 'react-use/lib/useDebounce';
@@ -90,7 +90,7 @@ const syncBuyHistory = async (addr: string, data: BuyHistoryList) => {
     i => pendingIdList.includes(i.id) || i.create_at > latestTime,
   );
   if (added?.length) {
-    runOnJS(syncRemoteBuyHistory)(addr, added);
+    runOnUI(syncRemoteBuyHistory)(addr, added);
   }
 };
 

@@ -12,7 +12,7 @@ import { AbstractPortfolioToken } from '../types';
 import { ITokenSetting } from '@/core/services/preference';
 import { syncRemoteTokens } from '@/databases/sync/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { runOnJS } from 'react-native-reanimated';
+import { runOnUI } from 'react-native-reanimated';
 
 export const queryTokensCache = async (user_id: string, isTestnet = false) => {
   return requestOpenApiWithChainId(
@@ -76,7 +76,7 @@ export const batchQueryTokensWithLocalCache = async (
     const isExpired = await TokenItemEntity.isExpired(user_id);
     if (force || isExpired) {
       const tokens = await batchQueryTokens(user_id, chainId, isTestnet);
-      runOnJS(syncRemoteTokens)(user_id, [...tokens]);
+      runOnUI(syncRemoteTokens)(user_id, [...tokens]);
       return tokens;
     } else {
       return onlySync ? [] : TokenItemEntity.batchQueryTokens(user_id);

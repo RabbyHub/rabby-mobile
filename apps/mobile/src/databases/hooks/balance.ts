@@ -1,6 +1,6 @@
 import { openapi } from '@/core/request';
 import { BalanceEntity } from '../entities/balance';
-import { runOnJS } from 'react-native-reanimated';
+import { runOnUI } from 'react-native-reanimated';
 import { syncBalance } from '../sync/assets';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 
@@ -66,7 +66,7 @@ export const batchBalanceWithLocalCache = async (
       );
       formatBalance.total_usd_value += appChainUsdValue;
     }
-    runOnJS(syncBalance)(address, isCore, formatBalance);
+    runOnUI(syncBalance)(address, isCore, formatBalance);
     return formatBalance;
   } else {
     return onlySync

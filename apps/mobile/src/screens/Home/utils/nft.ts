@@ -2,7 +2,7 @@ import { openapi } from '@/core/request';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { syncRemoteNFTs } from '@/databases/sync/assets';
 import { Collection, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { runOnJS } from 'react-native-reanimated';
+import { runOnUI } from 'react-native-reanimated';
 
 export const batchQueryNFTsWithLocalCache = async (
   params: { id: string; isAll?: boolean; sortByCredit?: boolean },
@@ -27,7 +27,7 @@ export const batchQueryNFTsWithLocalCache = async (
           } as unknown as Collection,
         };
       });
-      runOnJS(syncRemoteNFTs)(id, [...nftsWithCollection]);
+      runOnUI(syncRemoteNFTs)(id, [...nftsWithCollection]);
       return nftsWithCollection;
     } else {
       return onlySync ? [] : NFTItemEntity.batchQueryNFTs(id);

@@ -1,7 +1,7 @@
 import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
 import { chunk } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { runOnJS } from 'react-native-reanimated';
+import { runOnUI } from 'react-native-reanimated';
 
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { syncRemotePortocols } from '@/databases/sync/assets';
@@ -124,7 +124,7 @@ export const syncProtocols = async (
   );
   const appChainProtocols = await loadAppChainComplexProtocols(address);
   protocols.push(...appChainProtocols);
-  runOnJS(syncRemotePortocols)(address, [...protocols]);
+  runOnUI(syncRemotePortocols)(address, [...protocols]);
   return protocols;
 };
 

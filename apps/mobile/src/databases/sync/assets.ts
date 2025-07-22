@@ -29,6 +29,7 @@ import { removeCexId } from '@/utils/addressCexId';
 import { EvmTotalBalanceResponse } from '../hooks/balance';
 
 export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
+  'worklet';
   const data = [..._tokens];
   if (data.length === 0) {
     data.push(EMPTY_TOKEN_ITEM);
@@ -124,6 +125,7 @@ export async function syncRemoteHistory(
   setHistoryLoading: any,
   setTokenDict: any,
 ) {
+  'worklet';
   try {
     console.debug('syncRemoteHistory history_list.length', history_list.length);
 
@@ -177,6 +179,7 @@ export async function syncRemoteSwapHistory(
   address: string,
   history_list: SwapTradeList['history_list'],
 ) {
+  'worklet';
   try {
     console.debug('syncRemoteSwapHistory length', history_list.length);
 
@@ -223,6 +226,7 @@ export async function syncRemoteSwapHistory(
 }
 
 export async function syncRemoteNFTs(address: string, _nfts: NFTItem[]) {
+  'worklet';
   const data = [..._nfts];
   if (data.length === 0) {
     data.push(EMPTY_NFT_ITEM);
@@ -264,6 +268,7 @@ export async function syncRemotePortocols(
   address: string,
   protocals: ComplexProtocol[],
 ) {
+  'worklet';
   const data = [...protocals];
   if (data.length === 0) {
     data.push(EMPTY_PROTOCOL_ITEM);
@@ -303,6 +308,7 @@ export async function syncRemoteBuyHistory(
   address: string,
   history_list: BuyHistoryList['histories'],
 ) {
+  'worklet';
   try {
     console.debug('syncRemoteBuyHistory length', history_list.length);
 
@@ -392,6 +398,7 @@ export async function syncBalance(
   isCore: boolean,
   balance: EvmTotalBalanceResponse,
 ) {
+  'worklet';
   const balanceItem = new BalanceEntity();
   BalanceEntity.fillEntity(balanceItem, address, isCore, balance);
 
@@ -417,6 +424,7 @@ export async function syncBalance(
 }
 
 export async function syncCexInfo(address: string, cex?: Cex) {
+  'worklet';
   const cexItem = new CexEntity();
   CexEntity.fillEntity(
     cexItem,

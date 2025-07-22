@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { runOnJS } from 'react-native-reanimated';
+import { runOnUI } from 'react-native-reanimated';
 import {
   syncRemoteBuyHistory,
   syncRemoteHistory,
@@ -106,7 +106,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
         res.history_list.length,
       );
       if (res.history_list.length) {
-        runOnJS(syncRemoteSwapHistory)(address, res.history_list);
+        runOnUI(syncRemoteSwapHistory)(address, res.history_list);
         if (isAddUpdate && lastItemTime > latestTime) {
           console.debug('getSwapTradeListV2 sync data need to loop:', address);
           syncSwapHistory(address, lastItemTime, latestTime);
@@ -160,7 +160,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               res.history_list.length,
             );
             // if (res.history_list.length) {
-            runOnJS(syncRemoteHistory)(
+            runOnUI(syncRemoteHistory)(
               address,
               res.history_list,
               setHistoryLoading,
@@ -187,7 +187,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               'add length:',
               res.history_list.length,
             );
-            runOnJS(syncRemoteHistory)(
+            runOnUI(syncRemoteHistory)(
               address,
               res.history_list,
               setHistoryLoading,
@@ -246,7 +246,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
 
       if (res.histories.length) {
         console.log('syncRemoteBuyHistory', address, res.histories);
-        runOnJS(syncRemoteBuyHistory)(
+        runOnUI(syncRemoteBuyHistory)(
           address,
           res.histories as unknown as BuyHistoryList['histories'],
         );
@@ -316,7 +316,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               res.history_list.length,
             );
             if (res.history_list.length) {
-              runOnJS(syncRemoteHistory)(
+              runOnUI(syncRemoteHistory)(
                 address,
                 res.history_list,
                 setHistoryLoading,
@@ -343,7 +343,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               'add length:',
               res.history_list.length,
             );
-            runOnJS(syncRemoteHistory)(
+            runOnUI(syncRemoteHistory)(
               address,
               res.history_list,
               setHistoryLoading,
