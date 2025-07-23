@@ -136,6 +136,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       iconRef,
 
       webviewState,
+      setWebViewState,
 
       webviewActions,
     } = useWebViewControl({ initialTabId: tabId });
@@ -147,8 +148,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const { bookmarkStore, addBookmark, removeBookmark } = useBrowserBookmark();
 
     const urlInfo = useMemo(() => {
-      return canoicalizeDappUrl(webviewState.url);
-    }, [webviewState.url]);
+      return canoicalizeDappUrl(webviewState.resolvedUrl);
+    }, [webviewState.resolvedUrl]);
 
     const dappInfo = useMemo(() => {
       return dapps[urlInfo.origin];
@@ -156,13 +157,13 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleDisconnect = useMemoizedFn(() => {
       disconnectDapp(urlInfo.origin);
-      onCloseTab?.(webviewState.url);
+      onCloseTab?.(webviewState.resolvedUrl);
     });
 
     const handleContentModeChange = useMemoizedFn(
       (mode: WebViewProps['contentMode']) => {
         onUpdateTab?.({
-          initialUrl: webviewState.url,
+          initialUrl: webviewState.resolvedUrl,
         });
         setContentMode(mode);
       },
@@ -223,16 +224,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       // return !!bookmarkStore.entities[webviewState.url];
 
       return !!bookmarkStore.ids.find(
-        url => safeGetOrigin(url) === safeGetOrigin(webviewState.url),
+        url => safeGetOrigin(url) === safeGetOrigin(webviewState.resolvedUrl),
       );
-    }, [bookmarkStore.ids, webviewState.url]);
+    }, [bookmarkStore.ids, webviewState.resolvedUrl]);
 
     const handleBookmark = useMemoizedFn(() => {
       if (isBookmark) {
-        removeBookmark(webviewState.url);
+        removeBookmark(webviewState.resolvedUrl);
       } else {
         addBookmark({
-          url: webviewState.url,
+          url: webviewState.resolvedUrl,
           name: webviewState.title,
           createdAt: Date.now(),
         });
@@ -261,6 +262,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         return;
       }
       webviewRef.current?.stopLoading();
+      setWebViewState(prev => ({ ...prev, resolvedUrl: urlToGo }));
       if (isEmptyTab) {
         setIsShowSearch(false);
         await sleep(200);
@@ -318,7 +320,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleReload = useMemoizedFn(() => {
-      handleGoTo(webviewState.url);
+      handleGoTo(webviewState.resolvedUrl);
       // // todo some times not work
       // if (Platform.OS === 'android') {
       //   webviewRef.current?.injectJavaScript(`(function(){
@@ -331,7 +333,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleViewTabs = useMemoizedFn(async () => {
       if (isActive && !isShowSearch) {
-        await handleViewShot(webviewState.url);
+        await handleViewShot(webviewState.resolvedUrl);
       }
 
       setPartialBrowserState({
@@ -423,6 +425,17 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     // );
 
     const [refreshKey, setRefreshKey] = useState(0);
+
+    useEffect(() => {
+      if (!webviewState.resolvedUrl && url) {
+        setWebViewState(prev => {
+          return {
+            ...prev,
+            resolvedUrl: url,
+          };
+        });
+      }
+    }, [setWebViewState, url, webviewState.resolvedUrl]);
 
     return (
       <View style={[style, styles.dappWebViewControl]}>
@@ -557,6 +570,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       url: nativeEvent.url,
                       name: nativeEvent.title,
                     });
+                    setWebViewState(prev => {
+                      return {
+                        ...prev,
+                        resolvedUrl: nativeEvent.url,
+                      };
+                    });
                     onUpdateHistory?.({
                       name: nativeEvent.title,
                       url: nativeEvent.url,
@@ -597,13 +616,21 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       setRefreshKey(key => key + 1);
                     } else {
                       onUpdateTab?.({
-                        initialUrl: webviewState.url,
-                        url: webviewState.url,
+                        initialUrl: webviewState.resolvedUrl,
+                        url: webviewState.resolvedUrl,
                         isTerminate: true,
                       });
                     }
                   }}
                   // onError={errorLog}
+                  onError={e => {
+                    setWebViewState(prev => {
+                      return {
+                        ...prev,
+                        resolvedUrl: e.nativeEvent.url,
+                      };
+                    });
+                  }}
                   onMessage={event => {
                     // // leave here for debug
                     // if (__DEV__) {
@@ -632,7 +659,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           <View style={styles.dappWebViewNavControl}>
             <BrowserHeader
               dapp={dappInfo}
-              url={webviewState.url}
+              url={webviewState.resolvedUrl}
               onViewTabs={handleViewTabs}
               onLocationBarPress={str => {
                 setPartialBrowserState({
@@ -644,7 +671,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               tabsCount={tabsCount}
             />
             <BrowserFooter
-              url={webviewState.url}
+              url={webviewState.resolvedUrl}
               onGoHome={handleGoHome}
               canReload={!isEmptyTab}
               onReload={handleReload}
