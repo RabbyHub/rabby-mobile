@@ -27,12 +27,10 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     root: {
       position: 'relative',
-      flex: 1,
     },
     qrCodeContainer: {
       alignItems: 'center',
       justifyContent: 'center',
-      flex: 1,
     },
     qrCode: {
       backgroundColor: 'white',
