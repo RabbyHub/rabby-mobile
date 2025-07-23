@@ -58,6 +58,7 @@ interface ApprovalParams {
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     root: {
+      minHeight: 440,
       flex: 1,
     },
     brandIcon: {
