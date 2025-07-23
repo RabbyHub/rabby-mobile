@@ -52,7 +52,7 @@
     "@rabby-wallet/base-utils": "*"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=22"
   },
   "publishConfig": {
     "access": "public",
