@@ -15,7 +15,6 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 interface Props {
   token: AbstractPortfolioToken | CombineTokensItem;
@@ -24,7 +23,6 @@ interface Props {
   isSingleAddress?: boolean;
   finalAccount?: KeyringAccountWithAlias;
   accounts: KeyringAccountWithAlias[];
-  rawAllAccounts: KeyringAccountWithAlias[];
 }
 
 export const TokenArea: React.FC<Props> = ({
@@ -33,7 +31,6 @@ export const TokenArea: React.FC<Props> = ({
   isSingleAddress,
   finalAccount,
   accounts,
-  rawAllAccounts,
   tokenUsdValue,
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -61,9 +58,7 @@ export const TokenArea: React.FC<Props> = ({
 
   const handleOnPress = useCallback(
     (item: TokenFromAddressItem) => {
-      const account = rawAllAccounts.find(
-        a => isSameAddress(a.address, item.address) && item.type === a.type,
-      );
+      const account = accounts.find(a => a.address === item.address);
       if (account) {
         navigate(RootNames.SingleAddressStack, {
           screen: RootNames.SingleAddressHome,
@@ -73,7 +68,7 @@ export const TokenArea: React.FC<Props> = ({
         });
       }
     },
-    [rawAllAccounts],
+    [accounts],
   );
 
   const renderItem = useCallback(

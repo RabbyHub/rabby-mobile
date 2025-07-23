@@ -52,6 +52,7 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
     success: number;
     fail: number;
   }>();
+  console.log('historyCount', historyCount);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
 
   const fetchHistory = useCallback(() => {

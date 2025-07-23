@@ -78,17 +78,14 @@ export function TokenPriceChart(props: Props) {
     });
 
     if (isSingleAddress) {
-      const tokenAmount = amountList.find(
-        item => item.address === finalAccount?.address,
-      )?.amount;
-      return (tokenAmount || 0) + deFiAmount;
+      return token.amount + deFiAmount;
     } else {
       const totalTokenAmount = amountList.reduce((acc, item) => {
         return acc + item.amount;
       }, 0);
       return totalTokenAmount + deFiAmount;
     }
-  }, [amountList, isSingleAddress, relateDefiList, finalAccount?.address]);
+  }, [amountList, token, isSingleAddress, relateDefiList]);
 
   const amount = useMemo(
     () => (priceType === 'holding' ? amountSum : 1),

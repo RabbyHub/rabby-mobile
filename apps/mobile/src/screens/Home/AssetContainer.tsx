@@ -602,7 +602,6 @@ export const AssetContainer: React.FC<Props> = ({
           foldHideList={foldHideList}
           setFoldHideList={setFoldHideList}
           foldNft={foldNft}
-          rawPortfolios={_rawPortfolios}
           setFoldNft={setFoldNft}
           foldDefi={foldDefi}
           setFoldDefi={setFoldDefi}

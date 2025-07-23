@@ -282,7 +282,6 @@ export const TokenDetailScreen = () => {
     unHold: _unHold,
     isSingleAddress,
     tokenSelectType,
-    rawPortfolios, // only isSingleAddress === true can use
   } = route.params || {};
 
   const { styles, isLight } = useTheme2024({
@@ -309,7 +308,7 @@ export const TokenDetailScreen = () => {
     return _token;
   }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
-  const { top10Addresses, list: accounts, rawAllAccounts } = useAccountInfo();
+  const { top10Addresses, list: accounts } = useAccountInfo();
   // const { tokensByAddress, isReady: tokenListIsReady } = useTokenDetail(
   //   token.chain,
   //   token._tokenId,
@@ -318,9 +317,6 @@ export const TokenDetailScreen = () => {
   //   isSingleAddress,
   // );
 
-  const finalAccount =
-    account || accounts[0] || preferenceService.getFallbackAccount();
-
   const { data: tokenEntityList } = useRequest(
     async () => {
       if (!token || !token._tokenId || !top10Addresses.length) {
@@ -328,54 +324,21 @@ export const TokenDetailScreen = () => {
       }
 
       return await TokenItemEntity.batchMultiAddressTokensByIdAndChain(
-        isSingleAddress
-          ? [finalAccount!.address.toLowerCase()]
-          : top10Addresses.map(item => item.toLowerCase()),
+        top10Addresses.map(item => item.toLowerCase()),
         token.chain,
         token._tokenId,
       );
     },
     {
-      refreshDeps: [
-        token.chain,
-        token._tokenId,
-        top10Addresses,
-        isSingleAddress,
-        finalAccount?.address,
-      ],
+      refreshDeps: [token.chain, token._tokenId, top10Addresses],
     },
   );
 
+  const finalAccount =
+    account || accounts[0] || preferenceService.getFallbackAccount();
+
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
-    if (isSingleAddress && rawPortfolios && rawPortfolios.length) {
-      rawPortfolios?.forEach(portfolio => {
-        if (portfolio.chain !== token.chain) {
-          return;
-        }
-
-        let amount = 0;
-        const { _portfolios } = portfolio;
-        _portfolios?.forEach(portfolioItem => {
-          const { _tokenList } = portfolioItem;
-
-          const sameItem = _tokenList.find(
-            item => item._tokenId === token._tokenId,
-          );
-          if (sameItem) {
-            amount += sameItem.amount;
-          }
-        });
-
-        amount &&
-          resList.push({
-            ...portfolio,
-            amount,
-          });
-      });
-      return resList;
-    }
-
     Object.keys(assetsMap).map(address => {
       if (isSingleAddress && !isSameAddress(address, finalAccount!.address)) {
         return;
@@ -416,14 +379,7 @@ export const TokenDetailScreen = () => {
       });
     });
     return resList;
-  }, [
-    token,
-    assetsMap,
-    isSingleAddress,
-    finalAccount,
-    accounts,
-    rawPortfolios,
-  ]);
+  }, [token, assetsMap, isSingleAddress, finalAccount, accounts]);
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
@@ -523,14 +479,10 @@ export const TokenDetailScreen = () => {
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
     if (isSingleAddress && token.amount) {
-      const dbToken = tokenEntityList?.find(item =>
-        isSameAddress(item.owner_addr, finalAccount!.address),
-      );
-      const amount = dbToken?.amount || token.amount;
       res.push({
         ...token,
-        amountStr: formatTokenAmount(amount),
-        amount,
+        amountStr: token._amountStr!,
+        amount: token.amount,
         address: finalAccount!.address,
         type: finalAccount!.type,
         aliasName:
@@ -725,7 +677,6 @@ export const TokenDetailScreen = () => {
           accounts={accounts}
           amountList={tokenFromAddress}
           token={token}
-          rawAllAccounts={rawAllAccounts}
         />
         {relateDefiList.length > 0 && (
           <RelatedDeFi
