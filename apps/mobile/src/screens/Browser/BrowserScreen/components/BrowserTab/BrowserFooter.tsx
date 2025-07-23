@@ -102,8 +102,8 @@ export function BrowserFooter({
       isConnected && {
         title: 'Close and Disconnect',
         textColor: colors2024['red-dark'],
-        iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_disconnect.png'),
-        androidIconName: 'ic_rabby_menu_disconnect',
+        iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_close.png'),
+        androidIconName: 'ic_rabby_menu_close',
         key: 'disconnect',
         onSelect: () => {
           onDisconnect?.();
