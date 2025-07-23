@@ -25,8 +25,11 @@ export const BrowserHistoryList = ({
   style?: StyleProp<ViewStyle>;
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
-  const { browserHistorySectionList, removeBrowserHistory } =
-    useBrowserHistory();
+  const {
+    browserHistorySectionList,
+    removeBrowserHistory,
+    removeAllBrowserHistory,
+  } = useBrowserHistory();
   const { openTab, setPartialBrowserState } = useBrowser();
   const { removeBookmark, addBookmark, getBookmark } = useBrowserBookmark();
 
@@ -51,6 +54,7 @@ export const BrowserHistoryList = ({
   const handleDelete = useMemoizedFn((dappInfo: DappInfo) => {
     removeBrowserHistory(dappInfo.url || dappInfo.origin);
   });
+
   const { t } = useTranslation();
 
   return (
@@ -86,7 +90,7 @@ export const BrowserHistoryList = ({
                   ? 'ic_rabby_menu_clear'
                   : 'ic_rabby_menu_clear_dark',
                 action: () => {
-                  // closeAllTabs();
+                  removeAllBrowserHistory();
                 },
               },
             ],

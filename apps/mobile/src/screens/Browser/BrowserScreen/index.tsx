@@ -8,7 +8,7 @@ import {
 import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID } from '@/core/native/utils';
-import { preferenceService } from '@/core/services';
+import { browserService, preferenceService } from '@/core/services';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
@@ -35,6 +35,7 @@ export function BrowserScreen() {
 
   const {
     tabs,
+    displayedTabs,
     activeTabId,
     closeTab,
     updateTab,
@@ -133,12 +134,20 @@ export function BrowserScreen() {
               origin={urlInfo.origin}
               tabId={tab.id}
               url={tab.initialUrl}
-              tabsCount={tabs.length}
+              tabsCount={displayedTabs.length}
               onSelfClose={reason => {
                 if (reason === 'phishing') {
                   // todo
                   closeTab(tab.id);
                 }
+              }}
+              onCloseTab={() => {
+                if (tabs.length === 1) {
+                  setPartialBrowserState({
+                    isShowBrowser: false,
+                  });
+                }
+                closeTab(tab.id);
               }}
               // webviewContainerMaxHeight={webviewMaxHeight}
               webviewProps={{
@@ -169,12 +178,20 @@ export function BrowserScreen() {
             });
           }}
           onClose={() => {
-            setPartialBrowserState({
-              // isShowBrowser: false,
-              isShowSearch: false,
-              searchText: '',
-              searchTabId: '',
-            });
+            if (!browserService.getBrowserTabs()?.tabs?.length) {
+              setPartialBrowserState({
+                isShowBrowser: false,
+                isShowSearch: false,
+                searchText: '',
+                searchTabId: '',
+              });
+            } else {
+              setPartialBrowserState({
+                isShowSearch: false,
+                searchText: '',
+                searchTabId: '',
+              });
+            }
             console.log('onClose');
             // setVisibleState(prev => ({
             //   ...prev,

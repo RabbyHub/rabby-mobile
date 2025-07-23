@@ -103,6 +103,14 @@ export const BrowserHistorySiteList = ({
       renderSectionHeader={({ section: { title } }) => (
         <Text style={styles.sectionTitle}>{title}</Text>
       )}
+      contentContainerStyle={
+        data?.length
+          ? null
+          : {
+              flexGrow: 1,
+              justifyContent: 'center',
+            }
+      }
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={ListEmptyComponent}
     />

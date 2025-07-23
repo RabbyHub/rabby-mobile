@@ -42,6 +42,10 @@ export const BrowserSiteCardList = ({
       style={[styles.list, style]}
       keyExtractor={item => item.url || item.origin}
       showsVerticalScrollIndicator={false}
+      contentContainerStyle={[
+        { flexGrow: 1 },
+        data.length ? null : { justifyContent: 'center' },
+      ]}
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>

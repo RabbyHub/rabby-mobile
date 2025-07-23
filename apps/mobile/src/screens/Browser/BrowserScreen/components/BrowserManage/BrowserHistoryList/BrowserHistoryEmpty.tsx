@@ -22,11 +22,6 @@ export const BrowserHistoryEmpty = () => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   empty: {
-    borderRadius: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderStyle: 'solid',
-    borderColor: colors2024['neutral-line'],
-    borderWidth: 1,
     paddingVertical: 20,
 
     display: 'flex',
@@ -41,10 +36,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 126,
   },
   emptyText: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-secondary'],
     textAlign: 'center',
   },
 }));

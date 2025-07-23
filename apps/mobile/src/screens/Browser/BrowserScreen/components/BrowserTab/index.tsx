@@ -43,6 +43,7 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import {
   canoicalizeDappUrl,
+  safeGetOrigin,
   safeParseURL,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useFocusEffect } from '@react-navigation/native';
@@ -83,6 +84,7 @@ type BrowserTabProps = {
   }) => void;
   onOpenTab?(url: string): void;
   onUpdateHistory?: (params: { url: string; name?: string }) => void;
+  onCloseTab?(url: string): void;
 };
 
 export type BrowserRef = {
@@ -106,6 +108,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       tabsCount,
       onUpdateTab,
       onOpenTab,
+      onCloseTab,
       onUpdateHistory,
       isActive,
     },
@@ -153,6 +156,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleDisconnect = useMemoizedFn(() => {
       disconnectDapp(urlInfo.origin);
+      onCloseTab?.(webviewState.url);
     });
 
     const handleContentModeChange = useMemoizedFn(
@@ -207,17 +211,21 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     );
 
     const isBookmark = useMemo(() => {
-      if (
-        urlInfo &&
-        [urlInfo?.origin, urlInfo?.origin + '/'].includes(webviewState.url)
-      ) {
-        return !!(
-          bookmarkStore.entities[urlInfo?.origin] ||
-          bookmarkStore.entities[urlInfo?.origin + '/']
-        );
-      }
-      return !!bookmarkStore.entities[webviewState.url];
-    }, [bookmarkStore.entities, urlInfo, webviewState.url]);
+      // if (
+      //   urlInfo &&
+      //   [urlInfo?.origin, urlInfo?.origin + '/'].includes(webviewState.url)
+      // ) {
+      //   return !!(
+      //     bookmarkStore.entities[urlInfo?.origin] ||
+      //     bookmarkStore.entities[urlInfo?.origin + '/']
+      //   );
+      // }
+      // return !!bookmarkStore.entities[webviewState.url];
+
+      return !!bookmarkStore.ids.find(
+        url => safeGetOrigin(url) === safeGetOrigin(webviewState.url),
+      );
+    }, [bookmarkStore.ids, webviewState.url]);
 
     const handleBookmark = useMemoizedFn(() => {
       if (isBookmark) {
@@ -336,7 +344,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleGoHome = useMemoizedFn(() => {
-      switchToTab(emptyTab.id);
+      setPartialBrowserState({
+        isShowBrowser: false,
+      });
     });
 
     const handleOnOpenWindow = useMemoizedFn(
@@ -416,26 +426,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     return (
       <View style={[style, styles.dappWebViewControl]}>
-        {/* {isShowSearch ? (
-          <BrowserSearch
-            searchText={searchText}
-            setSearchText={setSearchText}
-            onClose={() => {
-              setIsShowSearch(false);
-            }}
-            onOpenURL={url => {
-              setIsShowSearch(false);
-              handleGoTo(url);
-            }}
-          />
-        ) : null} */}
-        {/* {isShowSearch && searchText ? (
-          <BrowserSearchAutoComplete
-            text={searchText}
-            onSelect={handleSearchGoogle}
-          />
-        ) : null} */}
-
         <ViewShot
           ref={viewShotRef}
           style={[

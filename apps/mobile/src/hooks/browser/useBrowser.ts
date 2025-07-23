@@ -1,19 +1,26 @@
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
 import { RootNames } from '@/constant/layout';
 import { emptyTab, Tab } from '@/core/services/browserService';
-import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import {
+  canoicalizeDappUrl,
+  safeGetOrigin,
+} from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { TabActions, useRoute } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { v4 as uuid } from 'uuid';
 import { useRabbyAppNavigation } from '../navigation';
-import { browserService } from '@/core/services';
+import { browserService, dappService } from '@/core/services';
 import { omit } from 'lodash';
 import { boolean } from 'yup';
+import { useMemo } from 'react';
 
-export const tabsAtom = atom({
-  tabs: [emptyTab],
-  activeTabId: emptyTab.id,
+export const tabsAtom = atom<{
+  tabs: Tab[];
+  activeTabId: string;
+}>({
+  tabs: [],
+  activeTabId: '',
 });
 
 export const visibleAtom = atom(false);
@@ -93,7 +100,7 @@ export function useBrowser() {
       }
       const newActiveTab = store.tabs[index + 1] || store.tabs[index - 1];
       updateBrowserTabs({
-        activeTabId: newActiveTab?.id || emptyTab.id,
+        activeTabId: newActiveTab?.id || '',
       });
     }
     const newTabs = store.tabs.filter(item => item.id !== tabId);
@@ -104,8 +111,8 @@ export function useBrowser() {
 
   const closeAllTabs = useMemoizedFn(() => {
     updateBrowserTabs({
-      tabs: [emptyTab],
-      activeTabId: emptyTab.id,
+      tabs: [],
+      activeTabId: '',
     });
   });
 
@@ -133,9 +140,10 @@ export function useBrowser() {
     setPartialBrowserState({
       isShowBrowser: true,
       isShowSearch: false,
+      isShowManage: false,
     });
     if (!url || !/^https?:\/\//.test(url)) {
-      switchToTab(emptyTab.id);
+      // switchToTab(emptyTab.id);
       return;
     }
     const newTab: Tab = {
@@ -158,20 +166,6 @@ export function useBrowser() {
       activeTabId: newTab.id,
     });
 
-    navigateToBrowserScreen();
-
-    // activate(dappInfo);
-    //
-    // const routeName = getLatestNavigationName();
-    // const needRedirect = routeName && routeName !== RootNames.BrowserScreen;
-    // if (needRedirect) {
-    //   navigateToBrowserScreen();
-    //   // try trigger notify again
-    //   // setTimeout(() => activate(dapps[item.origin]), 1 * 1e3);
-    // } else {
-    //   // activate(dapps[item.origin]);
-    // }
-
     return true;
   });
 
@@ -182,10 +176,18 @@ export function useBrowser() {
     });
   });
 
+  const displayedTabs = useMemo(() => {
+    return store.tabs.filter(item => {
+      const origin = safeGetOrigin(item.url || item.initialUrl);
+      return dappService.getDapp(origin)?.isDapp;
+    });
+  }, [store.tabs]);
+
   return {
     getBrowserTabs,
     activeTabId: store.activeTabId,
     tabs: store.tabs,
+    displayedTabs,
     switchToTab,
     closeTab,
     updateTab,

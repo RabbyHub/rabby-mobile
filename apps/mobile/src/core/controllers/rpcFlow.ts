@@ -471,6 +471,17 @@ export default async (request: ProviderRequest) => {
   const ctx: any = {
     request: { ...request, requestedApproval: false },
   };
+  try {
+    console.log('[request]: ', request);
+    const origin = request.origin || request.session.origin;
+    const dapp = dappService.getDapp(origin);
+    if (dapp && !dapp.isDapp) {
+      dappService.updateDapp({
+        ...dapp,
+        isDapp: true,
+      });
+    }
+  } catch (e) {}
   notificationService.setStatsData();
   return flowContext(ctx).finally(() => {
     reportStatsData();

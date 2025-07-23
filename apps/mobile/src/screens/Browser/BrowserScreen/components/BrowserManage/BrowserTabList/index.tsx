@@ -18,13 +18,14 @@ import { BrowserTabCard } from './BrowserTabCard';
 import { Tab } from '@/core/services/browserService';
 // import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useRef } from 'react';
+import { BrowserTabEmpty } from './BrowserTabEmpty';
 
 export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
   const {
-    tabs,
+    displayedTabs,
     activeTabId,
     switchToTab,
     closeTab,
@@ -55,7 +56,14 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
           tab={item}
           isActive={activeTabId === item.id}
           onPress={tab => switchToTab(tab.id)}
-          onPressClose={tab => closeTab(tab.id)}
+          onPressClose={tab => {
+            if (displayedTabs.length === 1) {
+              setPartialBrowserState({
+                isShowBrowser: false,
+              });
+            }
+            closeTab(tab.id);
+          }}
         />
       </View>
     );
@@ -64,7 +72,7 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const ref = useRef<FlatList>(null);
   useMount(() => {
     setTimeout(() => {
-      const index = tabs.findIndex(item => item.id === activeTabId);
+      const index = displayedTabs.findIndex(item => item.id === activeTabId);
       if (index !== -1) {
         ref.current?.scrollToIndex({
           index: Math.floor(index / 2),
@@ -78,7 +86,7 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
     <View style={[styles.container, style]}>
       <FlatList
         style={styles.tabList}
-        data={tabs.filter(item => !!item.url)}
+        data={displayedTabs}
         renderItem={renderItem}
         numColumns={2}
         keyExtractor={item => item.id}
@@ -90,6 +98,10 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
           offset: 242 * index,
           index,
         })}
+        contentContainerStyle={
+          !displayedTabs.length ? styles.contentContainerStyle : null
+        }
+        ListEmptyComponent={BrowserTabEmpty}
       />
       <View
         // eslint-disable-next-line react-native/no-inline-styles
@@ -114,6 +126,9 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
                   : 'ic_rabby_menu_clear_dark',
                 action: () => {
                   closeAllTabs();
+                  setPartialBrowserState({
+                    isShowBrowser: false,
+                  });
                 },
               },
             ],
@@ -161,6 +176,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
     position: 'relative',
     height: '100%',
+  },
+  contentContainerStyle: {
+    flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
   },
   tabList: {
     paddingHorizontal: 14,

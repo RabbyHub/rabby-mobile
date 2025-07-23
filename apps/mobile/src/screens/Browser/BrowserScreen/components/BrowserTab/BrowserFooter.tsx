@@ -100,7 +100,6 @@ export function BrowserFooter({
       },
 
       isConnected && {
-        // todo
         title: 'Close and Disconnect',
         textColor: colors2024['red-dark'],
         iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_disconnect.png'),

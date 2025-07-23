@@ -21,7 +21,8 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => (
 
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
-  const { browserState, setPartialBrowserState } = useBrowser();
+  const { browserState, setPartialBrowserState, closeTab, activeTabId } =
+    useBrowser();
   const { colors2024 } = useTheme2024();
 
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -30,6 +31,7 @@ export const BottomSheetBrowser = () => {
     if (browserState.isShowBrowser) {
       modalRef.current?.present();
     } else {
+      console.log('[close]');
       modalRef.current?.close();
     }
   }, [browserState.isShowBrowser]);
@@ -44,7 +46,7 @@ export const BottomSheetBrowser = () => {
       ref={modalRef}
       snapPoints={[safeOffScreenTop]}
       enableDismissOnClose={false}
-      keyboardBlurBehavior="restore"
+      // keyboardBlurBehavior="restore"
       keyboardBehavior="extend"
       handleStyle={{
         backgroundColor: colors2024['neutral-bg-0'],
@@ -66,7 +68,12 @@ export const BottomSheetBrowser = () => {
       //   );
       // }}
       onChange={index => {
+        console.log('[onChange]', index);
         if (index === -1) {
+          // 手动下拉关闭？
+          if (browserState.isShowBrowser && !browserState.isShowSearch) {
+            closeTab(activeTabId);
+          }
           setPartialBrowserState({
             isShowBrowser: false,
             isShowSearch: false,

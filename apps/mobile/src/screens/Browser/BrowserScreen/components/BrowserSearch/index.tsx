@@ -1,20 +1,12 @@
-import React, { useState } from 'react';
-import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { Keyboard, View } from 'react-native';
 
-import { RcArrowRight2CC, RcSearchCC } from '@/assets/icons/common';
-import { RcIconArrowTopLeftCC } from '@/assets2024/icons/browser';
-import { openapi } from '@/core/request';
+import { NextSearchBar } from '@/components2024/SearchBar';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useRequest } from 'ahooks';
-import { ScrollView } from 'react-native-gesture-handler';
-import { NextInput } from '@/components2024/Form/Input';
-import { NextSearchBar } from '@/components2024/SearchBar';
-import { RcIconBallCC, RcIconGoogle } from '@/assets/icons/dapp';
-import { BrowserRecent } from './BrowserRecent';
 import { useSearchDapps } from '../../hooks/useSearchDapps';
+import { BrowserRecent } from './BrowserRecent';
 import { BrowserSearchResult } from './BrowserSearchResult';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
 export function BrowserSearch({
   onClose,

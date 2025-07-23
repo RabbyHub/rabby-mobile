@@ -75,7 +75,7 @@ export function BrowserHeader({
   return (
     <>
       <View style={styles.header}>
-        {url ? (
+        {url && dapp?.isDapp ? (
           <TouchableOpacity
             style={styles.account}
             onPress={() => {

@@ -1,25 +1,17 @@
-import { RcNextLeftCC } from '@/assets/icons/common';
 import { PillsSwitch } from '@/components2024/PillsSwitch';
-import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
-import { BrowserTabList } from './BrowserTabList';
-import { BrowserHistoryList } from './BrowserHistoryList';
+import { View } from 'react-native';
 import { BrowserBookmarkList } from './BrowserBookmarkList';
-import { useBrowser } from '@/hooks/browser/useBrowser';
+import { BrowserHistoryList } from './BrowserHistoryList';
+import { BrowserTabList } from './BrowserTabList';
 
-export function BrowserManage({ onClose }: { onClose?(): void }): JSX.Element {
+export function BrowserManage(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
-
-  // const renderTabBar = useMemoizedFn((props: TabBarProps<TabName>) => {
-  //   return null;
-  // });
 
   const [activeTab, setActiveTab] = useState('tab');
   const { t } = useTranslation();

@@ -44,19 +44,14 @@ export function useBrowserHistory() {
     if (!item || !/^https?:\/\//.test(item.url)) {
       return;
     }
+    const historyId = store.ids.find(
+      id => safeGetOrigin(id) === safeGetOrigin(item.url),
+    );
     try {
-      const entry = browserService.history.selectors.selectById(item.url);
-      if (entry) {
-        browserService.history.updateOne({
-          id: item.url,
-          changes: {
-            ...item,
-            // createdAt: Date.now(),
-          },
-        });
-      } else {
-        browserService.history.addOne(item);
+      if (historyId) {
+        browserService.history.removeOne(historyId);
       }
+      browserService.history.addOne(item);
       getBrowserHistoryList();
     } catch (e) {
       console.error(e);
@@ -68,12 +63,17 @@ export function useBrowserHistory() {
     getBrowserHistoryList();
   });
 
+  const removeAllBrowserHistory = useMemoizedFn(() => {
+    browserService.history.reset();
+    getBrowserHistoryList();
+  });
+
   const { list: browserHistoryList, sectionList: browserHistorySectionList } =
     useMemo(() => {
       const list: DappInfo[] = [];
       const dict: Record<number, DappInfo[]> = {};
 
-      uniqBy(store.ids, url => safeGetOrigin(url)).forEach(key => {
+      store.ids.forEach(key => {
         const item = store.entities[key];
         if (!item || !/^https?:\/\//.test(item.url)) {
           return;
@@ -127,5 +127,6 @@ export function useBrowserHistory() {
     setBrowserHistory,
     removeBrowserHistory,
     getBrowserHistoryList,
+    removeAllBrowserHistory,
   };
 }

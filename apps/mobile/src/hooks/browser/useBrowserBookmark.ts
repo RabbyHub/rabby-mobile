@@ -7,7 +7,10 @@ import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 import { dappsAtom } from '../useDapps';
-import { safeParseURL } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import {
+  safeGetOrigin,
+  safeParseURL,
+} from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const browserBookmarkAtom = atom<EntityState<BrowserBookmarkItem, string>>({
   ids: [],
@@ -31,36 +34,36 @@ export function useBrowserBookmark() {
     if (!item || !/^https?:\/\//.test(item.url)) {
       return;
     }
+    removeBookmark(item.url);
     browserService.bookmark.addOne(item);
     getBookmarkList();
   });
 
   const removeBookmark = useMemoizedFn((url: string) => {
     const urlInfo = safeParseURL(url);
-    if (urlInfo && [urlInfo?.origin, urlInfo?.origin + '/'].includes(url)) {
-      browserService.bookmark.removeMany([
-        urlInfo?.origin,
-        urlInfo?.origin + '/',
-      ]);
-    } else {
-      browserService.bookmark.removeOne(url);
+    const idsToRemove = store.ids.filter(id => {
+      return safeGetOrigin(id) === urlInfo?.origin;
+    });
+    if (idsToRemove.length) {
+      browserService.bookmark.removeMany(idsToRemove);
     }
     getBookmarkList();
   });
 
-  const updateBookmark = useMemoizedFn((item: BrowserBookmarkItem) => {
-    browserService.bookmark.updateOne({
-      id: item.url,
-      changes: item,
-    });
-    getBookmarkList();
-  });
+  // const updateBookmark = useMemoizedFn((item: BrowserBookmarkItem) => {
+  //   browserService.bookmark.updateOne({
+  //     id: item.url,
+  //     changes: item,
+  //   });
+  //   getBookmarkList();
+  // });
 
   const getBookmark = useMemoizedFn(url => {
     const urlInfo = safeParseURL(url);
-    return urlInfo && [urlInfo.origin, urlInfo?.origin + '/'].includes(url)
-      ? store.entities[urlInfo.origin] || store.entities[urlInfo.origin + '/']
-      : store.entities[url];
+    const id = store.ids.find(i => safeGetOrigin(i) === urlInfo?.origin);
+    if (id) {
+      return store.entities[id];
+    }
   });
 
   const bookmarkList: DappInfo[] = useMemo(() => {
@@ -89,7 +92,7 @@ export function useBrowserBookmark() {
     getBookmark,
     addBookmark,
     removeBookmark,
-    updateBookmark,
+    // updateBookmark,
     getBookmarkList,
   };
 }
