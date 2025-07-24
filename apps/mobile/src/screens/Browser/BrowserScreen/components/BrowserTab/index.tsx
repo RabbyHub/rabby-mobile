@@ -416,7 +416,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           clearTimeout(id);
         };
       }
-    }, [isActive, isEmptyTab, onUpdateTab, urlRef]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isActive, isEmptyTab, urlRef]);
 
     // useFocusEffect(
     //   React.useCallback(() => {
