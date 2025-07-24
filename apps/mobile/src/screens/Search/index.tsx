@@ -52,21 +52,21 @@ function SearchScreen(): JSX.Element {
   const { resultTokens, searched, loading, handleSearch } =
     useSearchTokens(searchState);
 
-  // 页面获得焦点后延迟300ms聚焦输入框（仅第一次）
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     if (!hasFocused) {
-  //       const timer = setTimeout(() => {
-  //         inputRef.current?.focus();
-  //         setHasFocused(true);
-  //       }, 500);
+  // 页面获得焦点后延迟100ms聚焦输入框（仅第一次）
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!hasFocused) {
+        const timer = setTimeout(() => {
+          inputRef.current?.focus();
+          setHasFocused(true);
+        }, 100);
 
-  //       return () => {
-  //         clearTimeout(timer);
-  //       };
-  //     }
-  //   }, [hasFocused]),
-  // );
+        return () => {
+          clearTimeout(timer);
+        };
+      }
+    }, [hasFocused]),
+  );
 
   return (
     <NormalScreenContainer2024
@@ -94,7 +94,7 @@ function SearchScreen(): JSX.Element {
           style={styles.searchBar}
           placeholder={t('page.search.header.searchPlaceHolder')}
           value={searchState}
-          autoFocus
+          // autoFocus
           onChangeText={v => {
             setSearchState(v);
           }}
