@@ -48,7 +48,7 @@ import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { useScreenSceneAccountContext } from '@/hooks/accountsSwitcher';
 import { RootNames } from '@/constant/layout';
 import { isWatchOrSafeAccount } from '@/utils/account';
-import { shouldReopenSelectorPopupAtom, useLongPressTokenAtom } from '../hooks';
+import { useLongPressTokenAtom } from '../hooks';
 import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSelectTokens } from '../hooks/useSelectTokens';
@@ -123,9 +123,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const queryConds = useDebounceValue(_queryConds, 250);
     // settimoutout ref
     const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [shouldReopenSelectorPopup, setShouldReopenSelectorPopup] = useAtom(
-      shouldReopenSelectorPopupAtom,
-    );
     const currentAccount = queryConds.account;
     const {
       tokens,
@@ -141,19 +138,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       chain_server_id: queryConds.chainServerId,
       type: type,
     });
-
-    useFocusEffect(
-      useCallback(() => {
-        if (shouldReopenSelectorPopup) {
-          setTokenSelectorVisible(true);
-          setShouldReopenSelectorPopup(false);
-        }
-      }, [
-        shouldReopenSelectorPopup,
-        setTokenSelectorVisible,
-        setShouldReopenSelectorPopup,
-      ]),
-    );
 
     const isSwapTo = type === 'swapTo';
 

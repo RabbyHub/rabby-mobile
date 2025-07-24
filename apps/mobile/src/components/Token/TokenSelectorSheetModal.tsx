@@ -86,6 +86,8 @@ import { isScamTokenForSelect } from '@/screens/Home/utils/collection';
 import { SCAM_TOKEN_HAEDER_ID, SCAM_TOKEN_HEADER_DATA } from './constant';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { NextSearchBar } from '@/components2024/SearchBar';
+import { shouldHideSelectorPopupAtom } from '@/screens/Swap/hooks/atom';
+import { useAtom } from 'jotai';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -217,7 +219,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
   ) => {
     const { sheetModalRef: tokenSelectorModal, toggleShowSheetModal } =
       useSheetModal();
-
+    const [shouldHideSelectorPopup, setShouldHideSelectorPopup] = useAtom(
+      shouldHideSelectorPopupAtom,
+    );
     const [fold, setFold] = useState(true);
     const [isScamFold, setIsScamFold] = useState(true);
 
@@ -298,6 +302,16 @@ export const TokenSelectorSheetModal = React.forwardRef<
     ) {
       toggleShowSheetModal('destroy');
     }
+    const shouldHideModal = shouldHideSelectorPopup;
+    useEffect(() => {
+      if (shouldHideSelectorPopup && isFocused) {
+        const timer = setTimeout(() => {
+          setShouldHideSelectorPopup(false);
+        }, 0);
+
+        return () => clearTimeout(timer);
+      }
+    }, [shouldHideSelectorPopup, isFocused, setShouldHideSelectorPopup]);
 
     const { chainItem, chainSearchCtx } = useMemo(() => {
       const chain = !chainServerId ? null : findChainByServerID(chainServerId);
@@ -451,7 +465,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             {...props}
             style={[
               props.style,
-              swapToTokenDetail && {
+              (shouldHideModal || swapToTokenDetail) && {
                 zIndex: hiddenZIndex,
               },
             ]}
@@ -461,7 +475,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           />
         );
       },
-      [onCancel, swapToTokenDetail],
+      [onCancel, shouldHideModal, swapToTokenDetail],
     );
 
     const ListHeader = useMemo(() => {
@@ -904,11 +918,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
           }
         }}
         {...{
-          containerStyle: swapToTokenDetail
-            ? {
-                zIndex: hiddenZIndex,
-              }
-            : {},
+          containerStyle:
+            shouldHideModal || swapToTokenDetail
+              ? {
+                  zIndex: hiddenZIndex,
+                }
+              : {},
           style: {
             overflow: 'hidden',
             borderRadius: 32,

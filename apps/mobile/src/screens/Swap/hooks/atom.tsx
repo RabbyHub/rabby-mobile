@@ -35,4 +35,4 @@ const longPressTokenAtom = atom({
 
 export const useLongPressTokenAtom = () => useAtom(longPressTokenAtom);
 
-export const shouldReopenSelectorPopupAtom = atom(false);
+export const shouldHideSelectorPopupAtom = atom(false);

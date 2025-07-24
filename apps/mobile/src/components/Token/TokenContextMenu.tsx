@@ -10,11 +10,11 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { shouldHideSelectorPopupAtom } from '@/screens/Swap/hooks/atom';
+import { useSetAtom } from 'jotai';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { type TokenSelectType } from './TokenSelectorSheetModal';
 import { IS_ANDROID } from '@/core/native/utils';
-import { shouldReopenSelectorPopupAtom } from '@/screens/Swap/hooks/atom';
-import { useSetAtom } from 'jotai';
 
 interface Props {
   token: TokenItem;
@@ -27,9 +27,8 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
 
   const { userTokenSettings, pinToken, removePinedToken } =
     useUserTokenSettings();
-  const setShouldReopenSelectorPopup = useSetAtom(
-    shouldReopenSelectorPopupAtom,
-  );
+
+  const setShouldHideSelectorPopup = useSetAtom(shouldHideSelectorPopupAtom);
 
   const isPined = useMemo(
     () =>
@@ -48,10 +47,8 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
   }, [isPined, pinToken, removePinedToken, token]);
 
   const gotoTokenDetail = useCallback(() => {
-    setTimeout(() => {
-      closeBottomSheet();
-    }, 100);
-    setShouldReopenSelectorPopup(true);
+    setShouldHideSelectorPopup(true);
+
     navigate(RootNames.TokenDetail, {
       token: {
         ...ensureAbstractPortfolioToken(token),
@@ -60,7 +57,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       needUseCacheToken: true,
       tokenSelectType: type,
     });
-  }, [isPined, token, type, closeBottomSheet, setShouldReopenSelectorPopup]);
+  }, [isPined, token, type, setShouldHideSelectorPopup]);
 
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
