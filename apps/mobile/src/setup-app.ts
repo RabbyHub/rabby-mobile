@@ -26,10 +26,9 @@ setJSExceptionHandler((error, isFatal) => {
 // );
 
 ErrorUtils.setGlobalHandler((error, isFatal) => {
-  // if (__DEV__) {
-  //   console.debug('setGlobalHandler:: error');
-  //   console.log(error);
-  // }
+  if (__DEV__) {
+    console.debug('setGlobalHandler:: error', error?.message);
+  }
 
   if (isFatal) {
     // WIP: alert on release mode?

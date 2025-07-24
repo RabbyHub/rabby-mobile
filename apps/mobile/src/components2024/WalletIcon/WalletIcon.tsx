@@ -1,6 +1,7 @@
+import { useGetAvatarByAccount } from '@/databases/hooks/media';
 import { useTheme2024 } from '@/hooks/theme';
 import {
-  getWalletAvator2024,
+  getWalletAvatar2024,
   getWalletIcon2024,
   showSubWalletIcon,
 } from '@/utils/walletInfo2024';
@@ -29,9 +30,10 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   address,
 }) => {
   const { isLight } = useTheme2024();
-  const avator = useMemo(
-    () => getWalletAvator2024(type, isLight, address),
-    [type, isLight, address],
+  const { getAvatarsByAccount } = useGetAvatarByAccount();
+  const avatar = useMemo(
+    () => getAvatarsByAccount({ type, address }, isLight),
+    [type, isLight, address, getAvatarsByAccount],
   );
   const Icon = getWalletIcon2024(type, isLight);
   const styleProps = style ? StyleSheet.flatten(style) : {};
@@ -47,7 +49,7 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   const subWalletIconBorderWidth = (2 * size) / 40;
   const subWalletIconBorderRadius = (5 * size) / 40;
 
-  if (!avator) {
+  if (!avatar) {
     return (
       <Image
         source={Icon}
@@ -80,7 +82,7 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
         style,
       ])}>
       <Image
-        source={avator}
+        source={avatar}
         width={width}
         height={height}
         style={StyleSheet.flatten([

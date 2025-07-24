@@ -18,6 +18,7 @@ import { abortAllSyncTasks } from './sync/_task';
 import { BuyItemEntity } from './entities/buyItem';
 import { CexEntity } from './entities/cex';
 import { CopyTradingBuyItemEntity } from './entities/copyTradingBuyItem';
+import { MediaEntity } from './entities/media';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -48,6 +49,7 @@ const dbOptions: DataSourceOptions = {
     BuyItemEntity,
     CexEntity,
     CopyTradingBuyItemEntity,
+    MediaEntity,
   ],
   maxQueryExecutionTime: 10000,
   // only enable file logger in non-public production env, avoid leaking user's sensitive info

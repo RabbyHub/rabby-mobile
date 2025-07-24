@@ -100,6 +100,7 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   const doFetchAccounts = useCallback(async () => {
     const nextAccounts = await fetchAllAccounts();
     setAccounts(nextAccounts);
+    return nextAccounts;
   }, [setAccounts]);
 
   const { fetchAction: fetchAccounts } = useAtomicRequest({

@@ -103,6 +103,7 @@ export interface ITokenManageSettingMap {
 
 export interface PreferenceStore {
   currentAccount: Account | undefined | null;
+  /** @deprecated */
   addressAvatarMap: {
     [address: string]: string;
   };
@@ -278,6 +279,7 @@ export class PreferenceService {
     return this.store.hasOpenCopyTrading;
   };
 
+  /** @deprecated */
   addAddressAvatar = (address: string, avatar: string) => {
     const key = address.toLowerCase();
     this.store.addressAvatarMap = {
@@ -286,6 +288,7 @@ export class PreferenceService {
     };
   };
 
+  /** @deprecated */
   removeAddressAvatar = (address: string) => {
     const key = address.toLowerCase();
     if (key in this.store.addressAvatarMap) {
@@ -295,6 +298,7 @@ export class PreferenceService {
     }
   };
 
+  /** @deprecated */
   getAddressAvatar = (address: string) => {
     const key = address.toLowerCase();
     return this.store.addressAvatarMap[key];

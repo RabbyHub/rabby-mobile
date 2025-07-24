@@ -16,6 +16,7 @@ import { useAccounts } from './account';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { useBiometrics } from './biometrics';
 import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
+import { useAddressAvatarsInDatabase } from '@/databases/hooks/media';
 
 const syncCustomTestChainList = () => {
   try {
@@ -75,6 +76,7 @@ export function useInitializeAppOnTop() {
   }, []);
 
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const { queryOrMakeAddressesAvatars } = useAddressAvatarsInDatabase();
   React.useEffect(() => {
     const onUnlock = () => {
       console.debug('useBootstrap::onUnlock');
@@ -82,7 +84,7 @@ export function useInitializeAppOnTop() {
       sendUserAddressEvent();
 
       doInitializeApis();
-      fetchAccounts();
+      fetchAccounts().then(accounts => queryOrMakeAddressesAvatars(accounts));
     };
     const onLock = () => {
       setAppLock(prev => ({ ...prev, appUnlocked: false }));
@@ -95,7 +97,12 @@ export function useInitializeAppOnTop() {
       keyringService.off('unlock', onUnlock);
       keyringService.off('lock', onLock);
     };
-  }, [setAppLock, doInitializeApis, fetchAccounts]);
+  }, [
+    setAppLock,
+    doInitializeApis,
+    fetchAccounts,
+    queryOrMakeAddressesAvatars,
+  ]);
 
   const { fetchTop5TokensForAllAccountsOnce } = useFetchTokensForAllAccounts();
   React.useEffect(() => {

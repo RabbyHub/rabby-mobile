@@ -16,7 +16,7 @@ import RcIconCorrectCC from './icons/correct-cc.svg';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useCallback, useMemo, useState } from 'react';
 import { Account } from '@/core/services/preference';
-import { getWalletAvator2024 } from '@/utils/walletInfo2024';
+import { getWalletAvatar2024 } from '@/utils/walletInfo2024';
 import { SvgProps } from 'react-native-svg';
 import { AddressItemSizes } from './AddressItemInPanel';
 
@@ -137,7 +137,7 @@ export function UseAllAccountsItemInPanel({
       .slice(0, 3)
       .reverse()
       .map(account =>
-        getWalletAvator2024(account.brandName, isLight, account.address),
+        getWalletAvatar2024(account.brandName, isLight, account.address),
       )
       .filter(Boolean) as ImageSourcePropType[];
   }, [allAccounts, isLight]);

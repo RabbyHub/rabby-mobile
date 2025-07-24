@@ -13,17 +13,16 @@ import SafePNG from '@/assets2024/icons/wallet/safe.png';
 import blockies from 'ethereum-blockies-base64';
 import { preferenceService } from '@/core/services';
 
-export const getWalletAvator2024 = (
+export const getWalletAvatar2024 = (
   brandName: string | undefined,
   isLight?: boolean,
   address?: string,
 ) => {
-  const watchAvator = isLight ? WatchPNG : WatchDarkDark;
   if (brandName === KEYRING_CLASS.GNOSIS) {
     return SafePNG;
   }
   if (brandName === KEYRING_CLASS.WATCH) {
-    return watchAvator;
+    return isLight ? WatchPNG : WatchDarkDark;
   }
   if (address) {
     const cacheAvatar = preferenceService.getAddressAvatar(address);

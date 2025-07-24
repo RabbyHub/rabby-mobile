@@ -95,3 +95,15 @@ export const bigNumberTransformer: ValueTransformer = {
     BigNumber.isBigNumber(val) ? val.toString() : new BigNumber(val).toString(),
   from: (val: any) => new BigNumber(val),
 };
+
+/**
+ * @description blob stored as base64 on backend, we need transform it
+ */
+export const textBlobTransformer: ValueTransformer = {
+  to: (val: string) => {
+    return val;
+  },
+  from: (val: string) => {
+    return val;
+  },
+};
