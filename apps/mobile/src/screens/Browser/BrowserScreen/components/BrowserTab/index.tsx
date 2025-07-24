@@ -81,6 +81,7 @@ type BrowserTabProps = {
     viewShot?: string;
     name?: string;
     isTerminate?: boolean;
+    openTime?: number;
   }) => void;
   onOpenTab?(url: string): void;
   onUpdateHistory?: (params: { url: string; name?: string }) => void;
@@ -400,6 +401,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     useEffect(() => {
       if (!isActive && !isEmptyTab) {
+        onUpdateTab?.({
+          initialUrl: urlRef.current ? urlRef.current : undefined,
+          openTime: Date.now(),
+        });
         const id = setTimeout(() => {
           onUpdateTab?.({
             initialUrl: urlRef.current ? urlRef.current : undefined,
@@ -683,6 +688,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               onViewTabs={handleViewTabs}
               isBookmark={!!isBookmark}
               isConnected={dappInfo?.isConnected}
+              isDapp={dappInfo?.isDapp}
               onBookmark={handleBookmark}
               onDisconnect={handleDisconnect}
               contentMode={contentMode}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, View } from 'react-native';
 
 import { NextSearchBar } from '@/components2024/SearchBar';
@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSearchDapps } from '../../hooks/useSearchDapps';
 import { BrowserRecent } from './BrowserRecent';
 import { BrowserSearchResult } from './BrowserSearchResult';
+import { parse } from 'tldts';
 
 export function BrowserSearchInHome({
   onClose,
@@ -25,6 +26,10 @@ export function BrowserSearchInHome({
   });
 
   const { list } = useSearchDapps(searchText);
+  const isValidDomain = useMemo(() => {
+    const pared = parse(searchText);
+    return !searchText.includes('@') && (pared.isIcann || pared.isIp);
+  }, [searchText]);
   const { top } = useSafeAreaInsets();
 
   return (
@@ -49,16 +54,20 @@ export function BrowserSearchInHome({
           style={{
             height: '100%',
           }}>
-          <BrowserSearchResult
-            searchText={searchText}
-            data={list || []}
-            onOpenURL={url => {
-              Keyboard.dismiss();
-              setTimeout(() => {
-                onOpenURL?.(url);
-              }, 60);
-            }}
-          />
+          {searchText?.trim() ? (
+            <BrowserSearchResult
+              searchText={searchText}
+              data={list || []}
+              onOpenURL={url => {
+                Keyboard.dismiss();
+                setTimeout(() => {
+                  onOpenURL?.(url);
+                }, 60);
+              }}
+            />
+          ) : (
+            <View style={{ flex: 1 }} />
+          )}
 
           <View style={styles.footer}>
             <NextSearchBar
@@ -77,7 +86,27 @@ export function BrowserSearchInHome({
                   onClose?.();
                 }, 60);
               }}
+              onSubmitEditing={() => {
+                if (!searchText) {
+                  return;
+                }
+                if (isValidDomain) {
+                  onOpenURL?.(
+                    /^https?:\/\//.test(searchText)
+                      ? searchText
+                      : `https://${searchText}`,
+                  );
+                } else {
+                  onOpenURL?.(
+                    `https://www.google.com/search?q=${encodeURIComponent(
+                      searchText,
+                    )}`,
+                  );
+                }
+              }}
+              enterKeyHint="go"
               autoFocus
+              placeholder="Search Websites"
             />
           </View>
         </KeyboardAvoidingView>

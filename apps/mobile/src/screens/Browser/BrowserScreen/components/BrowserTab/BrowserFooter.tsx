@@ -34,6 +34,7 @@ export function BrowserFooter({
   onDisconnect,
   onContentModeChange,
   onGoHome,
+  isDapp,
 }: {
   isBookmark?: boolean;
   isConnected?: boolean;
@@ -44,6 +45,7 @@ export function BrowserFooter({
   tabsCount?: number;
   canViewMore?: boolean;
   contentMode?: WebViewProps['contentMode'];
+  isDapp?: boolean;
 
   onGoBack?(): void;
   onGoForward?(): void;
@@ -62,7 +64,7 @@ export function BrowserFooter({
     const urlInfo = urlUtils.canoicalizeDappUrl(url || '');
 
     const menuActions = [
-      {
+      isDapp && {
         title: 'Favorite',
         iosIconSource: isBookmark
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_filled.png')
@@ -132,13 +134,14 @@ export function BrowserFooter({
     } as React.ComponentProps<typeof DropdownMenuView>['menuConfig'];
   }, [
     url,
-    contentMode,
-    isLight,
+    isDapp,
     isBookmark,
+    isLight,
+    contentMode,
     isConnected,
     colors2024,
-    onContentModeChange,
     onBookmark,
+    onContentModeChange,
     onDisconnect,
   ]);
 

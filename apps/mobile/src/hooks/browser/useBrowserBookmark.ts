@@ -75,6 +75,9 @@ export function useBrowserBookmark() {
         }
         const origin = urlUtils.canoicalizeDappUrl(item.url).httpOrigin;
         const dapp = dapps[origin];
+        if (!dapp?.isDapp) {
+          return null;
+        }
         return {
           ...dapp,
           ...item,

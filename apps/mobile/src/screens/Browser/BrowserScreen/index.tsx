@@ -105,6 +105,10 @@ export function BrowserScreen() {
             return null;
           }
 
+          if (isActiveTab && tab.isTerminate && browserState.isShowSearch) {
+            return null;
+          }
+
           return (
             <BrowserTab
               key={key}

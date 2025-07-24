@@ -1,6 +1,6 @@
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
-import { entries, sortBy, uniq, uniqBy } from 'lodash';
+import { entries, last, sortBy, uniq, uniqBy } from 'lodash';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import * as Sentry from '@sentry/react-native';
 import {
@@ -158,18 +158,19 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
 
       const tabs: Tab[] = [];
       browserTabsStore.tabs.forEach(tab => {
-        const isActive = tab.id === browserTabsStore.activeTabId;
         const res = {
           ...tab,
           initialUrl: tab.url || tab.initialUrl,
-          isTerminate: !isActive,
+          isTerminate: true,
         };
         if (/^https?:\/\//.test(res.initialUrl)) {
           tabs.push(res);
         }
       });
       browserTabsStore.activeTabId =
-        tabs.find(tab => tab.id === browserTabsStore.activeTabId)?.id || '';
+        tabs.find(tab => tab.id === browserTabsStore.activeTabId)?.id ||
+        last(tabs)?.id ||
+        '';
       browserTabsStore.tabs = tabs;
       this.store.browserTabs = browserTabsStore;
     } catch (e) {

@@ -85,7 +85,7 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
 
   return (
     <View style={[styles.container, style]}>
-      <BottomSheetFlatList
+      <FlatList
         style={styles.tabList}
         data={displayedTabs}
         renderItem={renderItem}

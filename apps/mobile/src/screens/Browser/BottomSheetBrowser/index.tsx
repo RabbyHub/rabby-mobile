@@ -23,8 +23,13 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => (
 
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
-  const { browserState, setPartialBrowserState, closeTab, activeTabId } =
-    useBrowser();
+  const {
+    browserState,
+    setPartialBrowserState,
+    closeTab,
+    onHideBrowser,
+    activeTabId,
+  } = useBrowser();
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
@@ -69,6 +74,7 @@ export const BottomSheetBrowser = () => {
             searchText: '',
             searchTabId: '',
           });
+          onHideBrowser();
         }
       }}>
       <AutoLockView as="BottomSheetView" style={styles.customContentStyle}>

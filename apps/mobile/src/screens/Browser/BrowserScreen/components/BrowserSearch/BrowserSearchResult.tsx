@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { FlatList, Text, View } from 'react-native';
 
 import { RcArrowRight3CC } from '@/assets/icons/common';
@@ -7,9 +7,8 @@ import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { parse } from 'tldts';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export function BrowserSearchResult({
   data,

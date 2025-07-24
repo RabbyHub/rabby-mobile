@@ -11,7 +11,7 @@ import { atom, useAtom } from 'jotai';
 import { v4 as uuid } from 'uuid';
 import { useRabbyAppNavigation } from '../navigation';
 import { browserService, dappService } from '@/core/services';
-import { omit } from 'lodash';
+import { omit, last } from 'lodash';
 import { boolean } from 'yup';
 import { useMemo } from 'react';
 
@@ -183,6 +183,24 @@ export function useBrowser() {
     });
   }, [store.tabs]);
 
+  const onHideBrowser = useMemoizedFn(() => {
+    setStore(pre => {
+      const tabs = pre.tabs.filter(
+        tab =>
+          dappService.getDapp(safeGetOrigin(tab.url || tab.initialUrl))?.isDapp,
+      );
+      const activeTabId = tabs.find(tab => tab.id === pre.activeTabId)
+        ? pre.activeTabId
+        : last(tabs)?.id || '';
+      const res = {
+        activeTabId,
+        tabs,
+      };
+      updateBrowserTabs(res);
+      return res;
+    });
+  });
+
   return {
     getBrowserTabs,
     activeTabId: store.activeTabId,
@@ -201,6 +219,7 @@ export function useBrowser() {
     browserState,
     setBrowserState,
     setPartialBrowserState,
+    onHideBrowser,
   };
 }
 

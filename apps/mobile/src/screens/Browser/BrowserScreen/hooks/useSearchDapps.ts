@@ -9,6 +9,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { useDebounce, useInfiniteScroll } from 'ahooks';
 import { useMemo } from 'react';
+import { dappService } from '@/core/services';
 
 export const useSearchDapps = (searchText: string) => {
   const { dapps } = useDapps();
@@ -79,7 +80,12 @@ export const useSearchDapps = (searchText: string) => {
         isFavorite: !!bookmarkList.find(
           item => safeGetOrigin(item.origin || item.url || '') === origin,
         ),
+        isDapp: true,
       } as DappInfo;
+
+      if (!local?.isDapp) {
+        dappService.updateDapp(dappInfo);
+      }
 
       if (!_currentDapp && origin === url) {
         _currentDapp = dappInfo;

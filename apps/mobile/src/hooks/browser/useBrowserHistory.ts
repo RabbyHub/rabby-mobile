@@ -98,6 +98,10 @@ export function useBrowserHistory() {
           isFavorite,
         };
 
+        if (!dapp?.isDapp) {
+          return;
+        }
+
         list.push(dappInfo);
         const timestamp = dayjs(dappInfo.createdAt).startOf('day').valueOf();
         if (dict[timestamp]) {

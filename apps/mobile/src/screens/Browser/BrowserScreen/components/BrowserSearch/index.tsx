@@ -95,6 +95,7 @@ export function BrowserSearch({
           }}
           enterKeyHint="go"
           autoFocus
+          placeholder="Search Websites"
         />
       </View>
     </View>

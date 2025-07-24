@@ -78,7 +78,16 @@ export const BrowserBookmarkList = ({
             {isShowDelete ? t('global.cancel') : t('global.Edit')}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => openTab()}>
+        <TouchableOpacity
+          onPress={() => {
+            setPartialBrowserState({
+              isShowBrowser: true,
+              isShowManage: false,
+              isShowSearch: true,
+              searchText: '',
+              searchTabId: '',
+            });
+          }}>
           <RcIconAddPlusCircle
             width={44}
             height={44}
