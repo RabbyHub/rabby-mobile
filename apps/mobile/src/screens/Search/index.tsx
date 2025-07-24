@@ -52,7 +52,7 @@ function SearchScreen(): JSX.Element {
   const { resultTokens, searched, loading, handleSearch } =
     useSearchTokens(searchState);
 
-  // 页面获得焦点后延迟100ms聚焦输入框（仅第一次）
+  // 页面获得焦点后延迟300ms聚焦输入框（仅第一次）
   // useFocusEffect(
   //   React.useCallback(() => {
   //     if (!hasFocused) {
