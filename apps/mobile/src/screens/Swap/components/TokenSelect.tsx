@@ -344,22 +344,18 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       }, 0);
     }, []);
 
-    const resetQueryConds = useCallback(() => {
+    const handleSelectToken = useCallback(() => {
+      // 先设置好搜索项
       setQueryConds(prev => ({
         ...prev,
-        chainServerId: chainId,
         account: accountInScreen,
+        chainServerId: chainId,
       }));
-    }, [chainId, accountInScreen]);
-
-    const handleSelectToken = useCallback(() => {
-      if (allTokenItems.length > 0) {
-        setUpdateNonce(updateNonce + 1);
-      }
-
-      resetQueryConds();
-      setTokenSelectorVisible(true);
-    }, [allTokenItems, updateNonce, resetQueryConds]);
+      // 再异步打开弹窗，确保 queryConds 已经是最新
+      setTimeout(() => {
+        setTokenSelectorVisible(true);
+      }, 0);
+    }, [accountInScreen, chainId]);
 
     useEffect(() => {
       setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
