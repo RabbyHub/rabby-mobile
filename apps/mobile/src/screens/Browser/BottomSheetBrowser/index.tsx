@@ -5,13 +5,14 @@ import AutoLockView from '@/components/AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BrowserScreen } from '../BrowserScreen';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { Platform, Text, useWindowDimensions, View } from 'react-native';
 import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
 import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -30,12 +31,25 @@ export const BottomSheetBrowser = () => {
     onHideBrowser,
     activeTabId,
   } = useBrowser();
+  const { browserHistoryList } = useBrowserHistory();
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
 
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { width } = useWindowDimensions();
+
+  const isTransparent = useMemo(() => {
+    return (
+      browserState.trigger === 'home' &&
+      !browserHistoryList?.length &&
+      !browserState.searchText.trim()
+    );
+  }, [
+    browserHistoryList?.length,
+    browserState.searchText,
+    browserState.trigger,
+  ]);
 
   useEffect(() => {
     if (browserState.isShowBrowser) {
@@ -73,21 +87,26 @@ export const BottomSheetBrowser = () => {
             isShowSearch: false,
             searchText: '',
             searchTabId: '',
+            trigger: '',
           });
           onHideBrowser();
         }
       }}>
       <AutoLockView as="BottomSheetView" style={styles.customContentStyle}>
-        <BottomSheetHandlableView
-          style={[
-            styles.customHandleContainer,
-            {
-              left: width / 2 - 25,
-            },
-          ]}>
-          <View style={styles.customHandle} />
-        </BottomSheetHandlableView>
-        <BrowserScreen />
+        {!isTransparent ? (
+          <BottomSheetHandlableView
+            style={[
+              styles.customHandleContainer,
+              {
+                left: width / 2 - 25,
+              },
+            ]}>
+            <View style={styles.customHandle} />
+          </BottomSheetHandlableView>
+        ) : null}
+        <BrowserScreen
+          style={isTransparent ? { backgroundColor: 'transparent' } : null}
+        />
       </AutoLockView>
     </AppBottomSheetModal>
   );

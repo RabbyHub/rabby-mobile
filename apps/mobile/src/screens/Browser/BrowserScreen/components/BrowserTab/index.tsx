@@ -672,6 +672,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                   isShowSearch: true,
                   searchText: str,
                   searchTabId: tabId,
+                  trigger: 'browser',
                 });
               }}
               tabsCount={tabsCount}

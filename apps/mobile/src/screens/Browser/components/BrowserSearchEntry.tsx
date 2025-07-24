@@ -145,16 +145,13 @@ export const BrowserSearchEntry: React.FC = () => {
 
   const { t } = useTranslation();
   const handlePress = useMemoizedFn(() => {
-    if (browserHistoryList.length) {
-      setPartialBrowserState({
-        isShowBrowser: true,
-        isShowSearch: true,
-        searchText: '',
-        searchTabId: '',
-      });
-    } else {
-      setIsShowRecent(true);
-    }
+    setPartialBrowserState({
+      isShowBrowser: true,
+      isShowSearch: true,
+      searchText: '',
+      searchTabId: '',
+      trigger: 'home',
+    });
   });
 
   const handleTabPress = useMemoizedFn(() => {

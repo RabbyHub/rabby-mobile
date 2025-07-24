@@ -50,7 +50,7 @@ export function BrowserSearchInHome({
           },
         ]}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'android' ? 'height' : 'padding'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{
             height: '100%',
           }}>

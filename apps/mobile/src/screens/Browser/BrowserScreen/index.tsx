@@ -16,7 +16,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useSyncDappsInfo } from '@/hooks/useSyncDappsInfo';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
-import { View } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import { BrowserRef, BrowserTab } from './components/BrowserTab';
 import { useFocusEffect } from '@react-navigation/native';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -24,7 +24,7 @@ import { BrowserManage } from './components/BrowserManage';
 import { BrowserSearchResult } from './components/BrowserSearch/BrowserSearchResult';
 import { BrowserSearch } from './components/BrowserSearch';
 
-export function BrowserScreen() {
+export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
   const { styles: stylesScreen } = useTheme2024({
     getStyle: getScreenStyle,
   });
@@ -92,6 +92,7 @@ export function BrowserScreen() {
         {
           paddingBottom: androidOnlyBottomOffset,
         },
+        style,
       ]}>
       <>
         {tabs.map((tab, idx) => {
@@ -134,7 +135,11 @@ export function BrowserScreen() {
                 });
               }}
               onOpenTab={openTab}
-              style={[!isActiveTab && { display: 'none' }]}
+              style={[
+                !isActiveTab || browserState.isShowSearch
+                  ? { display: 'none' }
+                  : null,
+              ]}
               origin={urlInfo.origin}
               tabId={tab.id}
               url={tab.initialUrl}
@@ -179,8 +184,9 @@ export function BrowserScreen() {
               searchText: v,
             });
           }}
-          onClose={() => {
-            if (!browserService.getBrowserTabs()?.tabs?.length) {
+          trigger={browserState.trigger}
+          onClose={shouldClose => {
+            if (shouldClose || !browserService.getBrowserTabs()?.tabs?.length) {
               setPartialBrowserState({
                 isShowBrowser: false,
                 isShowSearch: false,

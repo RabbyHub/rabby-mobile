@@ -31,6 +31,7 @@ const browserStateAtom = atom({
   isShowManage: false,
   searchText: '',
   searchTabId: '',
+  trigger: '',
 });
 
 export function useBrowser() {

@@ -14,19 +14,15 @@ import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 export function BrowserRecent({
   onPress,
   isInBottomSheet,
+  list,
 }: {
   onPress?(dapp: DappInfo): void;
   isInBottomSheet?: boolean;
+  list?: DappInfo[];
 }) {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
-
-  const { browserHistoryList } = useBrowserHistory();
-
-  const list = useMemo(() => {
-    return browserHistoryList.slice(0, 3);
-  }, [browserHistoryList]);
 
   const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
 

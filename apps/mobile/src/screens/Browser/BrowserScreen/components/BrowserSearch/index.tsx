@@ -8,17 +8,20 @@ import { useSearchDapps } from '../../hooks/useSearchDapps';
 import { BrowserRecent } from './BrowserRecent';
 import { BrowserSearchResult } from './BrowserSearchResult';
 import { parse } from 'tldts';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 
 export function BrowserSearch({
   onClose,
   onOpenURL,
   searchText,
   setSearchText,
+  trigger,
 }: {
-  onClose?(): void;
+  onClose?(shouldClosePopup?: boolean): void;
   onOpenURL?(url: string): void;
   searchText: string;
   setSearchText?(v: string): void;
+  trigger?: string;
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
@@ -26,23 +29,46 @@ export function BrowserSearch({
 
   const { list } = useSearchDapps(searchText);
 
+  const { browserHistoryList } = useBrowserHistory();
+
+  const displayedBrowserHistoryList = useMemo(() => {
+    return browserHistoryList.slice(0, 3);
+  }, [browserHistoryList]);
+
   const isValidDomain = useMemo(() => {
     const pared = parse(searchText);
     return !searchText.includes('@') && (pared.isIcann || pared.isIp);
   }, [searchText]);
 
+  const isTransparent =
+    trigger === 'home' && !displayedBrowserHistoryList.length && !searchText;
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+
+        isTransparent
+          ? {
+              backgroundColor: 'transparent',
+            }
+          : null,
+      ]}>
       {!searchText?.trim() ? (
-        <BrowserRecent
-          isInBottomSheet
-          onPress={dapp => {
-            Keyboard.dismiss();
-            setTimeout(() => {
-              onOpenURL?.(dapp.url || dapp.origin);
-            }, 60);
-          }}
-        />
+        trigger === 'home' && !displayedBrowserHistoryList.length ? (
+          <View style={{ flex: 1 }} />
+        ) : (
+          <BrowserRecent
+            isInBottomSheet
+            list={displayedBrowserHistoryList}
+            onPress={dapp => {
+              Keyboard.dismiss();
+              setTimeout(() => {
+                onOpenURL?.(dapp.url || dapp.origin);
+              }, 60);
+            }}
+          />
+        )
       ) : (
         <BrowserSearchResult
           isInBottomSheet
@@ -66,13 +92,13 @@ export function BrowserSearch({
           onCancel={() => {
             Keyboard.dismiss();
             setTimeout(() => {
-              onClose?.();
+              onClose?.(isTransparent && !searchText);
             }, 60);
           }}
           onBlur={() => {
             Keyboard.dismiss();
             setTimeout(() => {
-              onClose?.();
+              onClose?.(isTransparent && !searchText);
             }, 60);
           }}
           onSubmitEditing={() => {
