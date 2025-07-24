@@ -19,6 +19,7 @@ import { Tab } from '@/core/services/browserService';
 // import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useRef } from 'react';
 import { BrowserTabEmpty } from './BrowserTabEmpty';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles, isLight } = useTheme2024({
@@ -68,8 +69,8 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
       </View>
     );
   });
-
-  const ref = useRef<FlatList>(null);
+  // todo fix any
+  const ref = useRef<any>(null);
   useMount(() => {
     setTimeout(() => {
       const index = displayedTabs.findIndex(item => item.id === activeTabId);
@@ -84,7 +85,7 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
 
   return (
     <View style={[styles.container, style]}>
-      <FlatList
+      <BottomSheetFlatList
         style={styles.tabList}
         data={displayedTabs}
         renderItem={renderItem}
@@ -195,12 +196,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   bottomText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     color: colors2024['neutral-title-1'],
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 24,
   },
 }));

@@ -1,14 +1,9 @@
-import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
-import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
-import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
-import { HighlightText } from '@/components2024/HighlightText';
+import RcIconStarFull from '@/assets/icons/dapp/icon-star-mini-full.svg';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { noop } from 'lodash';
 import React from 'react';
 import {
   Image,
@@ -180,10 +175,12 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   dappCard: {
     borderRadius: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     // borderWidth: 1,
     // borderColor: colors2024['neutral-line'],
     paddingVertical: 12,

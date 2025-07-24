@@ -92,6 +92,7 @@ export function useBrowserHistory() {
         const dappInfo = {
           ...dapp,
           ...item,
+          name: item?.name || dapp?.name,
           icon: dapp?.icon || dapp?.info?.logo_url || undefined,
           origin,
           isFavorite,

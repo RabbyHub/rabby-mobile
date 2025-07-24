@@ -1,7 +1,9 @@
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 /* eslint-disable @typescript-eslint/no-shadow */
 // import { useOpenDappView } from '../hooks/useDappView';
 import { openapi } from '@/core/request';
 import { DappInfo } from '@/core/services/dappService';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useDapps } from '@/hooks/useDapps';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
@@ -10,6 +12,7 @@ import { useMemo } from 'react';
 
 export const useSearchDapps = (searchText: string) => {
   const { dapps } = useDapps();
+  const { bookmarkList } = useBrowserBookmark();
 
   const debouncedSearchValue = useDebounce(searchText, {
     wait: 500,
@@ -73,6 +76,9 @@ export const useSearchDapps = (searchText: string) => {
         icon: local?.icon || info?.logo_url,
         origin,
         info,
+        isFavorite: !!bookmarkList.find(
+          item => safeGetOrigin(item.origin || item.url || '') === origin,
+        ),
       } as DappInfo;
 
       if (!_currentDapp && origin === url) {
@@ -85,7 +91,7 @@ export const useSearchDapps = (searchText: string) => {
       list,
       currentDapp: _currentDapp as DappInfo | null,
     };
-  }, [dapps, data?.list, url]);
+  }, [bookmarkList, dapps, data?.list]);
 
   const returnKeyType = useMemo(() => {
     return url ? ('go' as const) : undefined;

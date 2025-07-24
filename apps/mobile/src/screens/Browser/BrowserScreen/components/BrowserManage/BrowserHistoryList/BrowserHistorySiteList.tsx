@@ -3,6 +3,7 @@ import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { BrowserSiteCardInner } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { noop } from 'lodash';
 import React from 'react';
@@ -87,7 +88,7 @@ export const BrowserHistorySiteList = ({
   });
 
   return (
-    <SectionList
+    <BottomSheetSectionList
       sections={data}
       style={styles.list}
       showsVerticalScrollIndicator={false}

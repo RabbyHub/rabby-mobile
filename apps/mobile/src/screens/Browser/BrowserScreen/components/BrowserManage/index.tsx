@@ -75,9 +75,11 @@ export function BrowserManage(): JSX.Element {
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   page: {
-    backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
     display: 'flex',
     flexDirection: 'column',
     height: '100%',

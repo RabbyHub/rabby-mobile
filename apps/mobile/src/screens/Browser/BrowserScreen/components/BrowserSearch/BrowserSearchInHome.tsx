@@ -1,5 +1,5 @@
 import React from 'react';
-import { Keyboard, KeyboardAvoidingView, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, View } from 'react-native';
 
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -20,7 +20,7 @@ export function BrowserSearchInHome({
   searchText: string;
   setSearchText?(v: string): void;
 }) {
-  const { colors2024, styles } = useTheme2024({
+  const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
 
@@ -36,36 +36,29 @@ export function BrowserSearchInHome({
             top: -top - 2,
             paddingTop: top + 2,
             backgroundColor: searchText
-              ? colors2024['neutral-bg-0']
-              : 'rgba(0,0,0,0.3)',
+              ? isLight
+                ? colors2024['neutral-bg-0']
+                : colors2024['neutral-bg-1']
+              : isLight
+              ? 'rgba(0,0,0,0.3)'
+              : 'rgba(0,0,0,0.6)',
           },
         ]}>
         <KeyboardAvoidingView
-          behavior="padding"
+          behavior={Platform.OS === 'android' ? 'height' : 'padding'}
           style={{
             height: '100%',
           }}>
-          {!searchText?.trim() ? (
-            <BrowserRecent
-              onPress={dapp => {
-                Keyboard.dismiss();
-                setTimeout(() => {
-                  onOpenURL?.(dapp.url || dapp.origin);
-                }, 60);
-              }}
-            />
-          ) : (
-            <BrowserSearchResult
-              searchText={searchText}
-              data={list || []}
-              onOpenURL={url => {
-                Keyboard.dismiss();
-                setTimeout(() => {
-                  onOpenURL?.(url);
-                }, 60);
-              }}
-            />
-          )}
+          <BrowserSearchResult
+            searchText={searchText}
+            data={list || []}
+            onOpenURL={url => {
+              Keyboard.dismiss();
+              setTimeout(() => {
+                onOpenURL?.(url);
+              }, 60);
+            }}
+          />
 
           <View style={styles.footer}>
             <NextSearchBar

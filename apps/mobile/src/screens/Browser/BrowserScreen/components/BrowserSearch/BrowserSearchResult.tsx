@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { FlatList, Text, View } from 'react-native';
 
-import { RcArrowRight2CC } from '@/assets/icons/common';
+import { RcArrowRight3CC } from '@/assets/icons/common';
 import { RcIconBallCC, RcIconGoogle } from '@/assets/icons/dapp';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
@@ -9,27 +9,29 @@ import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { parse } from 'tldts';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 export function BrowserSearchResult({
   data,
   searchText,
   onOpenURL,
+  isValidDomain,
+  isInBottomSheet,
 }: {
   data: DappInfo[];
   searchText: string;
   onOpenURL?(url: string): void;
+  isValidDomain?: boolean;
+  isInBottomSheet?: boolean;
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
 
-  const isValidDomain = useMemo(() => {
-    const pared = parse(searchText);
-    return !searchText.includes('@') && (pared.isIcann || pared.isIp);
-  }, [searchText]);
+  const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
 
   return (
-    <FlatList
+    <Component
       data={data}
       style={styles.dappList}
       keyExtractor={item => item.origin}
@@ -39,59 +41,65 @@ export function BrowserSearchResult({
       // ListEmptyComponent={ListEmptyComponent}
       ListHeaderComponent={
         <>
-          <View style={styles.list}>
-            <TouchableOpacity
-              style={styles.listItem}
-              onPress={() => {
-                onOpenURL?.(
-                  `https://www.google.com/search?q=${encodeURIComponent(
-                    searchText,
-                  )}`,
-                );
-              }}>
-              <RcIconGoogle style={styles.listItemIcon} />
-              <View style={styles.listItemContent}>
-                <Text
-                  style={styles.listItemText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  Search "{searchText}" in Google
-                </Text>
-                <RcArrowRight2CC
-                  style={styles.listItemArrowIcon}
-                  color={colors2024['neutral-body']}
-                />
-              </View>
-            </TouchableOpacity>
-            {isValidDomain ? (
+          {searchText ? (
+            <View style={styles.list}>
               <TouchableOpacity
                 style={styles.listItem}
                 onPress={() => {
                   onOpenURL?.(
-                    /^https?:\/\//.test(searchText)
-                      ? searchText
-                      : `https://${searchText}`,
+                    `https://www.google.com/search?q=${encodeURIComponent(
+                      searchText,
+                    )}`,
                   );
                 }}>
-                <RcIconBallCC
-                  style={styles.listItemIcon}
-                  color={colors2024['neutral-secondary']}
-                />
+                <RcIconGoogle style={styles.listItemIcon} />
                 <View style={styles.listItemContent}>
                   <Text
                     style={styles.listItemText}
                     numberOfLines={1}
                     ellipsizeMode="tail">
-                    Open "{searchText}"
+                    Search "{searchText}" in Google
                   </Text>
-                  <RcArrowRight2CC
+                  <RcArrowRight3CC
+                    width={16}
+                    height={16}
                     style={styles.listItemArrowIcon}
                     color={colors2024['neutral-body']}
                   />
                 </View>
               </TouchableOpacity>
-            ) : null}
-          </View>
+              {isValidDomain ? (
+                <TouchableOpacity
+                  style={styles.listItem}
+                  onPress={() => {
+                    onOpenURL?.(
+                      /^https?:\/\//.test(searchText)
+                        ? searchText
+                        : `https://${searchText}`,
+                    );
+                  }}>
+                  <RcIconBallCC
+                    style={styles.listItemIcon}
+                    color={colors2024['neutral-secondary']}
+                  />
+                  <View style={styles.listItemContent}>
+                    <Text
+                      style={styles.listItemText}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      Open "{searchText}"
+                    </Text>
+                    <RcArrowRight3CC
+                      width={16}
+                      height={16}
+                      style={styles.listItemArrowIcon}
+                      color={colors2024['neutral-body']}
+                    />
+                  </View>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : null}
           {data?.length ? (
             <View style={styles.header}>
               <Text style={styles.title}>Results</Text>

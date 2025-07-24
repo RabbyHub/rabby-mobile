@@ -5,6 +5,7 @@ import { FlatListProps, StyleSheet, Text, View } from 'react-native';
 import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
 import { BrowserSiteCard } from './BrowserSiteCard';
 import RcIconDelete from '@/assets2024/icons/common/delete-cc.svg';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 export const BrowserSiteCardList = ({
   data,
@@ -15,6 +16,7 @@ export const BrowserSiteCardList = ({
   ListHeaderComponent,
   style,
   isShowDelete,
+  isInBottomSheet,
 }: {
   data: DappInfo[];
   onPress?: (dapp: DappInfo) => void;
@@ -32,12 +34,15 @@ export const BrowserSiteCardList = ({
     | undefined;
   style?: FlatListProps<DappInfo>['style'];
   isShowDelete?: boolean;
+  isInBottomSheet?: boolean;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
+  const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
+
   return (
-    <FlatList
+    <Component
       data={data}
       style={[styles.list, style]}
       keyExtractor={item => item.url || item.origin}

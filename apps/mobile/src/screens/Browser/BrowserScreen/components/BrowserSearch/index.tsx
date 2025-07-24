@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Keyboard, View } from 'react-native';
 
 import { NextSearchBar } from '@/components2024/SearchBar';
@@ -7,6 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useSearchDapps } from '../../hooks/useSearchDapps';
 import { BrowserRecent } from './BrowserRecent';
 import { BrowserSearchResult } from './BrowserSearchResult';
+import { parse } from 'tldts';
 
 export function BrowserSearch({
   onClose,
@@ -25,10 +26,16 @@ export function BrowserSearch({
 
   const { list } = useSearchDapps(searchText);
 
+  const isValidDomain = useMemo(() => {
+    const pared = parse(searchText);
+    return !searchText.includes('@') && (pared.isIcann || pared.isIp);
+  }, [searchText]);
+
   return (
     <View style={styles.container}>
       {!searchText?.trim() ? (
         <BrowserRecent
+          isInBottomSheet
           onPress={dapp => {
             Keyboard.dismiss();
             setTimeout(() => {
@@ -38,8 +45,10 @@ export function BrowserSearch({
         />
       ) : (
         <BrowserSearchResult
+          isInBottomSheet
           searchText={searchText}
           data={list || []}
+          isValidDomain={!!isValidDomain}
           onOpenURL={url => {
             Keyboard.dismiss();
             setTimeout(() => {
@@ -66,16 +75,37 @@ export function BrowserSearch({
               onClose?.();
             }, 60);
           }}
+          onSubmitEditing={() => {
+            if (!searchText) {
+              return;
+            }
+            if (isValidDomain) {
+              onOpenURL?.(
+                /^https?:\/\//.test(searchText)
+                  ? searchText
+                  : `https://${searchText}`,
+              );
+            } else {
+              onOpenURL?.(
+                `https://www.google.com/search?q=${encodeURIComponent(
+                  searchText,
+                )}`,
+              );
+            }
+          }}
+          enterKeyHint="go"
           autoFocus
         />
       </View>
     </View>
   );
 }
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     flex: 1,
-    backgroundColor: colors2024['neutral-bg-0'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
     display: 'flex',
     flexDirection: 'column',
     position: 'absolute',
@@ -83,6 +113,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     left: 0,
     right: 0,
     bottom: 0,
+    paddingTop: 38,
   },
   list: {
     flex: 1,
@@ -123,6 +154,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
     paddingVertical: 12,
+    // marginBottom: 30,
     // box-shadow: 0px -6px 40px 0px rgba(55, 56, 63, 0.12);
     // backdrop-filter: blur(14.5px);
   },

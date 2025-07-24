@@ -142,11 +142,9 @@ export function BrowserScreen() {
                 }
               }}
               onCloseTab={() => {
-                if (tabs.length === 1) {
-                  setPartialBrowserState({
-                    isShowBrowser: false,
-                  });
-                }
+                setPartialBrowserState({
+                  isShowBrowser: false,
+                });
                 closeTab(tab.id);
               }}
               // webviewContainerMaxHeight={webviewMaxHeight}
@@ -171,7 +169,7 @@ export function BrowserScreen() {
 
       {browserState.isShowSearch ? (
         <BrowserSearch
-          searchText={browserState.searchText}
+          searchText={browserState.searchText.trim()}
           setSearchText={v => {
             setPartialBrowserState({
               searchText: v,

@@ -9,8 +9,15 @@ import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
-export function BrowserRecent({ onPress }: { onPress?(dapp: DappInfo): void }) {
+export function BrowserRecent({
+  onPress,
+  isInBottomSheet,
+}: {
+  onPress?(dapp: DappInfo): void;
+  isInBottomSheet?: boolean;
+}) {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
@@ -21,8 +28,10 @@ export function BrowserRecent({ onPress }: { onPress?(dapp: DappInfo): void }) {
     return browserHistoryList.slice(0, 3);
   }, [browserHistoryList]);
 
+  const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
+
   return (
-    <FlatList
+    <Component
       data={list}
       style={styles.list}
       keyExtractor={item => item.url || item.origin}

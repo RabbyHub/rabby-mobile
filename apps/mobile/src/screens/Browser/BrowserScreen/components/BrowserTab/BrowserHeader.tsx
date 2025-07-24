@@ -123,13 +123,13 @@ export function BrowserHeader({
             style={styles.icon}
             color={colors2024['neutral-secondary']}
           />
-          <View style={styles.addressBarInner}>
-            <TouchableWithoutFeedback
-              onPress={() => {
-                onLocationBarPress?.(
-                  isGoogle(url || '') ? renderText || url : url,
-                );
-              }}>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              onLocationBarPress?.(
+                isGoogle(url || '') ? renderText || url : url,
+              );
+            }}>
+            <View style={styles.addressBarInner}>
               {url ? (
                 <Text style={styles.addressBarText}>{renderText}</Text>
               ) : (
@@ -139,8 +139,8 @@ export function BrowserHeader({
                     : t('page.browser.BrowserHeader.searchAndroid')}
                 </Text>
               )}
-            </TouchableWithoutFeedback>
-          </View>
+            </View>
+          </TouchableWithoutFeedback>
 
           <TouchableOpacity
             style={[styles.navControlItem]}
@@ -206,6 +206,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 8,
     gap: 12,
     width: '100%',
+    backgroundColor: colors2024['neutral-bg-1'],
     // borderBottomWidth: 1,
     // borderBottomColor: colors2024['neutral-line'],
   },
