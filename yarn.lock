@@ -6597,7 +6597,7 @@ __metadata:
 
 "@ledgerhq/hw-app-eth@patch:@ledgerhq/hw-app-eth@npm%3A6.45.0#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.45.0-24dc988cd5.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 6.45.0
-  resolution: "@ledgerhq/hw-app-eth@patch:@ledgerhq/hw-app-eth@npm%3A6.45.0#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.45.0-24dc988cd5.patch::version=6.45.0&hash=1d3d34&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@ledgerhq/hw-app-eth@patch:@ledgerhq/hw-app-eth@npm%3A6.45.0#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.45.0-24dc988cd5.patch::version=6.45.0&hash=79262d&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@ethersproject/abi": ^5.7.0
     "@ethersproject/rlp": ^5.7.0
@@ -6614,7 +6614,7 @@ __metadata:
     bignumber.js: ^9.1.2
     jest-sonar: 0.2.16
     semver: ^7.3.5
-  checksum: 1336b9cab93dc1ca7e3179449c2801f9e2ef1027a12fb0d8bce3fa36615aca79ce92006a33e38ab770f8e6dc4980ba1a29aeb14a20f1ae7af4330a0fbcdaca86
+  checksum: 444a292ac9cf329473c40523a31fcec4e54683f6e27f2280610cbb4c0f934fa897d16a291e0cc3d037f11c5f8ec6b4defa5c502c782b0d66f084678a78100bf1
   languageName: node
   linkType: hard
 
