@@ -57,7 +57,10 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
         loading: newNavState.loading,
         title: newNavState.title,
         url: newNavState.url,
-        resolvedUrl: prev.resolvedUrl,
+        resolvedUrl:
+          newNavState.navigationType === 'backforward'
+            ? newNavState.url
+            : prev.resolvedUrl,
       }));
 
       if (!newNavState.url) {

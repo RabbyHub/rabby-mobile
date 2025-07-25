@@ -9,6 +9,8 @@ import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { dappService } from '@/core/services';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export function BrowserSearchResult({
   data,
@@ -112,7 +114,15 @@ export function BrowserSearchResult({
             <BrowserSiteCard
               // keyword={keyword}
               data={item}
-              onPress={dapp => onOpenURL?.(dapp.url || dapp.origin)}
+              onPress={dapp => {
+                if (
+                  !dappService.getDapp(safeGetOrigin(dapp.url || dapp.origin))
+                    ?.isDapp
+                ) {
+                  dappService.updateDapp(dapp);
+                }
+                onOpenURL?.(dapp.url || dapp.origin);
+              }}
               isShowBorder
               isShowFavorite
               isShowListBy

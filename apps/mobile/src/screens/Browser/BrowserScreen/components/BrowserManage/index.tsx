@@ -7,11 +7,21 @@ import { View } from 'react-native';
 import { BrowserBookmarkList } from './BrowserBookmarkList';
 import { BrowserHistoryList } from './BrowserHistoryList';
 import { BrowserTabList } from './BrowserTabList';
+import { BrowserSearch } from '../BrowserSearch';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useMemoizedFn } from 'ahooks';
 
 export function BrowserManage(): JSX.Element {
   const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
+
+  const [searchState, setSearchState] = useState({
+    isShowSearch: false,
+    searchText: '',
+  });
+
+  const { openTab } = useBrowser();
 
   const [activeTab, setActiveTab] = useState('tab');
   const { t } = useTranslation();
@@ -37,6 +47,13 @@ export function BrowserManage(): JSX.Element {
   const tabRef = React.useRef<any>();
   // const navigation = useRabbyAppNavigation();
 
+  const handleNewTab = useMemoizedFn(() => {
+    setSearchState({
+      isShowSearch: true,
+      searchText: '',
+    });
+  });
+
   return (
     <View style={styles.page}>
       <View style={styles.header}>
@@ -58,18 +75,43 @@ export function BrowserManage(): JSX.Element {
       </View>
       {activeTab === 'tab' ? (
         <View style={styles.tabList}>
-          <BrowserTabList />
+          <BrowserTabList onNewTab={handleNewTab} />
         </View>
       ) : null}
       {activeTab === 'history' ? (
         <View style={styles.historyList}>
-          <BrowserHistoryList />
+          <BrowserHistoryList onNewTab={handleNewTab} />
         </View>
       ) : null}
       {activeTab === 'favorites' ? (
         <View style={styles.favoritesList}>
-          <BrowserBookmarkList />
+          <BrowserBookmarkList onNewTab={handleNewTab} />
         </View>
+      ) : null}
+      {searchState.isShowSearch ? (
+        <BrowserSearch
+          style={{
+            paddingTop: 0,
+          }}
+          searchText={searchState.searchText}
+          setSearchText={v => {
+            setSearchState(prev => {
+              return {
+                ...prev,
+                searchText: v,
+              };
+            });
+          }}
+          onClose={() => {
+            setSearchState({
+              isShowSearch: false,
+              searchText: '',
+            });
+          }}
+          onOpenURL={url => {
+            openTab(url);
+          }}
+        />
       ) : null}
     </View>
   );

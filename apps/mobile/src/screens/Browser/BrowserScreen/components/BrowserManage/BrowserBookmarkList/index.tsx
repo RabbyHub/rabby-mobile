@@ -21,8 +21,10 @@ import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
 
 export const BrowserBookmarkList = ({
   style,
+  onNewTab,
 }: {
   style?: StyleProp<ViewStyle>;
+  onNewTab?(): void;
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { openTab, setPartialBrowserState } = useBrowser();
@@ -79,15 +81,17 @@ export const BrowserBookmarkList = ({
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => {
-            setPartialBrowserState({
-              isShowBrowser: true,
-              isShowManage: false,
-              isShowSearch: true,
-              searchText: '',
-              searchTabId: '',
-            });
-          }}>
+          onPress={onNewTab}
+          // onPress={() => {
+          //   setPartialBrowserState({
+          //     isShowBrowser: true,
+          //     isShowManage: false,
+          //     isShowSearch: true,
+          //     searchText: '',
+          //     searchTabId: '',
+          //   });
+          // }}
+        >
           <RcIconAddPlusCircle
             width={44}
             height={44}

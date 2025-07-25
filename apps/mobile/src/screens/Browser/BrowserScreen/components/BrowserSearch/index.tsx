@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Keyboard, View } from 'react-native';
+import { Keyboard, StyleProp, View, ViewStyle } from 'react-native';
 
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,12 +16,14 @@ export function BrowserSearch({
   searchText,
   setSearchText,
   trigger,
+  style,
 }: {
   onClose?(shouldClosePopup?: boolean): void;
   onOpenURL?(url: string): void;
   searchText: string;
   setSearchText?(v: string): void;
   trigger?: string;
+  style?: StyleProp<ViewStyle>;
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
@@ -47,6 +49,8 @@ export function BrowserSearch({
     <View
       style={[
         styles.container,
+
+        style,
 
         isTransparent
           ? {

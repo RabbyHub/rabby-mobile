@@ -141,6 +141,7 @@ export const BrowserManagePopup = () => {
         backgroundColor: 'transparent',
       }}
       ref={modalRef}
+      keyboardBehavior="extend"
       snapPoints={[safeOffScreenTop]}
       // enableDismissOnClose={false}
       onChange={index => {

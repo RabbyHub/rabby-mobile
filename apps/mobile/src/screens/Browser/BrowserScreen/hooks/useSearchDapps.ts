@@ -83,10 +83,6 @@ export const useSearchDapps = (searchText: string) => {
         isDapp: true,
       } as DappInfo;
 
-      if (!local?.isDapp) {
-        dappService.updateDapp(dappInfo);
-      }
-
       if (!_currentDapp && origin === url) {
         _currentDapp = dappInfo;
       } else {

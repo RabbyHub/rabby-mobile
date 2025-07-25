@@ -200,11 +200,6 @@ export function useBrowser() {
   );
 
   const openTab = useMemoizedFn((url?: string) => {
-    setPartialBrowserState({
-      isShowBrowser: true,
-      isShowSearch: false,
-      isShowManage: false,
-    });
     if (!url || !/^https?:\/\//.test(url)) {
       // switchToTab(emptyTab.id);
       return;
@@ -223,6 +218,12 @@ export function useBrowser() {
     if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) {
       return false;
     }
+
+    setPartialBrowserState({
+      isShowBrowser: true,
+      isShowSearch: false,
+      isShowManage: false,
+    });
 
     updateBrowserTabs({
       tabs: [...store.tabs, newTab],

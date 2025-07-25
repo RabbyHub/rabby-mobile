@@ -21,7 +21,13 @@ import { useRef } from 'react';
 import { BrowserTabEmpty } from './BrowserTabEmpty';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
-export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
+export const BrowserTabList = ({
+  style,
+  onNewTab,
+}: {
+  style?: StyleProp<ViewStyle>;
+  onNewTab?(): void;
+}) => {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
@@ -139,15 +145,17 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
           </TouchableOpacity>
         </DropDownMenuView>
         <TouchableOpacity
-          onPress={() => {
-            setPartialBrowserState({
-              isShowBrowser: true,
-              isShowManage: false,
-              isShowSearch: true,
-              searchText: '',
-              searchTabId: '',
-            });
-          }}>
+          onPress={onNewTab}
+          // onPress={() => {
+          //   setPartialBrowserState({
+          //     isShowBrowser: true,
+          //     isShowManage: false,
+          //     isShowSearch: true,
+          //     searchText: '',
+          //     searchTabId: '',
+          //   });
+          // }}
+        >
           <RcIconAddPlusCircle
             width={44}
             height={44}
