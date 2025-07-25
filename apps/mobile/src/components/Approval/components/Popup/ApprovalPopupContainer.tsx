@@ -52,6 +52,11 @@ const getStyles = createGetStyles2024(() => ({
     top: 71,
     zIndex: 1,
   },
+  oneKeyBrandIcon: {
+    left: 38,
+    top: 68,
+  },
+
   titleWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -224,12 +229,15 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
 
   const showSendSvg = retryUpdateType === 'origin' && !isFailedOrRejected;
 
+  const isOneKey = hdType === 'onekey';
+
   return (
     <View style={StyleSheet.flatten([styles.wrapper, style])}>
       {SendSVG && showSendSvg ? (
         <View style={styles.mainContainer}>
           {BrandIcon && (
-            <View style={[styles.brandIcon]}>
+            <View
+              style={[styles.brandIcon, isOneKey && styles.oneKeyBrandIcon]}>
               <BrandIcon width={'100%'} height={'100%'} />
             </View>
           )}
