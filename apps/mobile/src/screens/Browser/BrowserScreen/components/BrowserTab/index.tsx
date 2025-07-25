@@ -41,10 +41,6 @@ import { useDapps } from '@/hooks/useDapps';
 import { sleep } from '@/utils/async';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
-import {
-  canoicalizeDappUrl,
-  safeParseURL,
-} from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import ViewShot from 'react-native-view-shot';
@@ -129,6 +125,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       titleRef,
       iconRef,
 
+      lastLoadedUrl,
       webviewState,
 
       webviewActions,
@@ -140,22 +137,40 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const { dapps, disconnectDapp, setDapp } = useDapps();
     const { bookmarkStore, addBookmark, removeBookmark } = useBrowserBookmark();
 
-    const urlInfo = useMemo(() => {
-      return canoicalizeDappUrl(webviewState.url);
-    }, [webviewState.url]);
+    const { stateUrlInfo, stateUrlDappInfo, trustableStateUrlDappInfo } =
+      useMemo(() => {
+        const urlInfo = urlUtils.canoicalizeDappUrl(webviewState.url);
+        const dappInfo = dapps[urlInfo.origin];
 
-    const dappInfo = useMemo(() => {
-      return dapps[urlInfo.origin];
-    }, [dapps, urlInfo.origin]);
+        const trustableStateUrlDappInfo =
+          dappInfo?.isFavorite || dappInfo?.isConnected ? dappInfo : null;
+        return {
+          stateUrlInfo: urlInfo,
+          stateUrlDappInfo: dappInfo,
+          trustableStateUrlDappInfo,
+        };
+      }, [webviewState.url, dapps]);
+
+    const { loadedTrustedUrl } = useMemo(() => {
+      const urlInfo = urlUtils.canoicalizeDappUrl(lastLoadedUrl);
+      const dappInfo = dapps[urlInfo.origin];
+
+      const trustableUrlDappInfo =
+        dappInfo?.isFavorite || dappInfo?.isConnected ? dappInfo : null;
+      return {
+        loadedTrustableUrlDappInfo: trustableUrlDappInfo,
+        loadedTrustedUrl: trustableUrlDappInfo ? lastLoadedUrl : undefined,
+      };
+    }, [lastLoadedUrl, dapps]);
 
     const handleDisconnect = useMemoizedFn(() => {
-      disconnectDapp(urlInfo.origin);
+      disconnectDapp(stateUrlInfo.origin);
     });
 
     const handleContentModeChange = useMemoizedFn(
       (mode: WebViewProps['contentMode']) => {
         onUpdateTab?.({
-          initialUrl: webviewState.url,
+          initialUrl: loadedTrustedUrl,
         });
         setContentMode(mode);
       },
@@ -205,18 +220,22 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const isBookmark = useMemo(() => {
       if (
-        urlInfo &&
-        [urlInfo?.origin, urlInfo?.origin + '/'].includes(webviewState.url)
+        stateUrlInfo &&
+        [stateUrlInfo?.origin, stateUrlInfo?.origin + '/'].includes(
+          webviewState.url,
+        )
       ) {
         return !!(
-          bookmarkStore.entities[urlInfo?.origin] ||
-          bookmarkStore.entities[urlInfo?.origin + '/']
+          bookmarkStore.entities[stateUrlInfo?.origin] ||
+          bookmarkStore.entities[stateUrlInfo?.origin + '/']
         );
       }
       return !!bookmarkStore.entities[webviewState.url];
-    }, [bookmarkStore.entities, urlInfo, webviewState.url]);
+    }, [bookmarkStore.entities, stateUrlInfo, webviewState.url]);
 
     const handleBookmark = useMemoizedFn(() => {
+      if (!webviewState.loading) return;
+
       if (isBookmark) {
         removeBookmark(webviewState.url);
       } else {
@@ -330,7 +349,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleViewTabs = useMemoizedFn(async () => {
-      await handleViewShot(webviewState.url);
+      await handleViewShot(lastLoadedUrl);
       navigation.navigate(RootNames.StackBrowser, {
         screen: RootNames.BrowserManageScreen,
       });
@@ -357,7 +376,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           return;
         }
 
-        const currentUrl = webviewState.url;
+        const currentUrl = lastLoadedUrl;
         if (currentUrl === targetUrl) {
           return;
         }
@@ -406,8 +425,13 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       <AutoLockView style={[style, styles.dappWebViewControl]}>
         {isActive ? (
           <BrowserHeader
-            dapp={dappInfo}
-            url={webviewState.url}
+            dapp={trustableStateUrlDappInfo}
+            url={
+              (!webviewState.loading && !isLoading) ||
+              !!trustableStateUrlDappInfo?.origin
+                ? webviewState.url
+                : loadedTrustedUrl
+            }
             isFocused={isShowSearch}
             searchText={searchText}
             onSearchTextChange={setSearchText}
@@ -596,8 +620,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       setRefreshKey(key => key + 1);
                     } else {
                       onUpdateTab?.({
-                        initialUrl: webviewState.url,
-                        url: webviewState.url,
+                        initialUrl: lastLoadedUrl,
+                        url: lastLoadedUrl,
                         isTerminate: true,
                       });
                     }
@@ -630,7 +654,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         {isShowSearch ? null : isActive ? (
           <View style={styles.dappWebViewNavControl}>
             <BrowserFooter
-              url={webviewState.url}
+              url={lastLoadedUrl}
               onGoHome={handleGoHome}
               canReload={!isEmptyTab}
               onReload={handleReload}
@@ -641,7 +665,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               tabsCount={tabsCount}
               onViewTabs={handleViewTabs}
               isBookmark={!!isBookmark}
-              isConnected={dappInfo?.isConnected}
+              isConnected={stateUrlDappInfo?.isConnected}
               onBookmark={handleBookmark}
               onDisconnect={handleDisconnect}
               contentMode={contentMode}

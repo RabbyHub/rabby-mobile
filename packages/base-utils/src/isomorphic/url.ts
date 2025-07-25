@@ -189,10 +189,11 @@ export function canoicalizeDappUrl(url: string): ICanonalizedUrlInfo {
   };
 
   origins.dappOrigin =
-    urlInfo?.origin ||
-    `${urlInfo?.protocol}//${hostname}${
-      urlInfo?.port ? `:${urlInfo?.port}` : ''
-    }`;
+    urlInfo?.origin || [
+      urlInfo?.protocol ? `${urlInfo?.protocol}//` : '',
+      hostname || '',
+      urlInfo?.port ? `:${urlInfo?.port}` : '',
+    ].filter(Boolean).join('');
   origins.httpOrigin = origins.dappOrigin;
 
   const domainInfo = getDomainFromHostname(hostname);

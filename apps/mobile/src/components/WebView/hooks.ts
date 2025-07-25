@@ -14,6 +14,7 @@ export type WebViewActions = ReturnType<
 >['webviewActions'];
 
 import { BLANK_PAGE } from '@/core/bridges/useBackgroundBridge';
+import { useRefState } from '@/hooks/common/useRefState';
 export {
   BLANK_PAGE,
   BLANK_RABBY_PAGE,
@@ -38,6 +39,9 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
     url: '',
   });
 
+  const { state: lastLoadedUrl, setRefState: setLoadedUrl } =
+    useRefState<string>(urlRef.current);
+
   const onNavigationStateChange = useCallback(
     (newNavState: WebViewNavigation) => {
       // // leave here for debug
@@ -46,6 +50,10 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
       // update ref first, then trigger state update
       urlRef.current = newNavState.url || '';
       titleRef.current = newNavState.title || '';
+
+      if (!newNavState.loading) {
+        setLoadedUrl(newNavState.url, true);
+      }
 
       setWebViewState({
         canGoBack: newNavState.canGoBack,
@@ -59,7 +67,7 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
         return;
       }
     },
-    [],
+    [setLoadedUrl],
   );
 
   const handleGoBack = useCallback((event?: GestureResponderEvent) => {
@@ -90,6 +98,7 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
     titleRef,
     iconRef,
 
+    lastLoadedUrl,
     latestUrl: webviewState.url,
 
     webviewActions: {

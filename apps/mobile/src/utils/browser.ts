@@ -197,6 +197,13 @@ const googleDomainList = [
   'www.google.cat',
 ];
 
+function shouldHidePort(port: string | number): boolean {
+  if (!port) return true;
+
+  const portStr = String(port);
+  return portStr === '80' || portStr === '443';
+}
+
 export const getAddressBarTitle = (url: string) => {
   const urlInfo = urlUtils.safeParseURL(url || '');
   if (!urlInfo) {
@@ -208,7 +215,9 @@ export const getAddressBarTitle = (url: string) => {
       return search;
     }
   }
-  return urlInfo.hostname;
+  return [urlInfo.hostname, !shouldHidePort(urlInfo.port) && urlInfo.port]
+    .filter(Boolean)
+    .join(':');
 };
 
 export const isGoogle = (url?: string) => {
