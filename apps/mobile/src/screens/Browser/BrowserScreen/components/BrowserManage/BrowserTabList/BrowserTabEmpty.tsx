@@ -6,9 +6,11 @@ import RcIconEmpty from '@/assets/icons/dapp/dapp-history-empty.svg';
 import RcIconEmptyDark from '@/assets/icons/dapp/dapp-history-empty-dark.svg';
 import { IS_IOS } from '@/core/native/utils';
 import { RcIconDynamicArrowCC } from '@/assets/icons/dapp';
+import { useTranslation } from 'react-i18next';
 
 export const BrowserTabEmpty = () => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   return (
     <View style={styles.empty}>
@@ -18,8 +20,12 @@ export const BrowserTabEmpty = () => {
         ) : (
           <RcIconEmptyDark style={styles.emptyIcon} />
         )}
-        <Text style={styles.emptyTitle}>No open tabs yet</Text>
-        <Text style={styles.emptyText}>Open a new tab now</Text>
+        <Text style={styles.emptyTitle}>
+          {t('page.browserManage.BrowserTabList.emptyTitle')}
+        </Text>
+        <Text style={styles.emptyText}>
+          {t('page.browserManage.BrowserTabList.emptyDesc')}
+        </Text>
       </View>
     </View>
   );

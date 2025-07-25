@@ -200,7 +200,7 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
                 searchTabId: '',
               });
             }
-            console.log('onClose');
+            // console.log('onClose');
             // setVisibleState(prev => ({
             //   ...prev,
             //   isShowSearch: false,

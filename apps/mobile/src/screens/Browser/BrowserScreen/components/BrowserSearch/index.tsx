@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useTransition } from 'react';
 import { Keyboard, StyleProp, View, ViewStyle } from 'react-native';
 
 import { NextSearchBar } from '@/components2024/SearchBar';
@@ -29,6 +29,7 @@ export function BrowserSearch({
     getStyle,
   });
 
+  const { t } = useTransition();
   const { list } = useSearchDapps(searchText);
 
   const { browserHistoryList } = useBrowserHistory();
@@ -125,7 +126,7 @@ export function BrowserSearch({
           }}
           enterKeyHint="go"
           autoFocus
-          placeholder="Search Websites"
+          placeholder={t('page.browser.BrowserSearch.placeholder')}
         />
       </View>
     </View>

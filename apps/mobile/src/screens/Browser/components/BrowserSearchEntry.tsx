@@ -202,7 +202,9 @@ export const BrowserSearchEntry: React.FC = () => {
                 style={styles.icon}
                 color={colors2024['neutral-secondary']}
               />
-              <Text style={styles.text}>Open Websites</Text>
+              <Text style={styles.text}>
+                {t('page.browser.BrowserSearchEntry.openWebsites')}
+              </Text>
               <TouchableOpacity
                 style={[styles.navControlItem]}
                 onPress={handleTabPress}>

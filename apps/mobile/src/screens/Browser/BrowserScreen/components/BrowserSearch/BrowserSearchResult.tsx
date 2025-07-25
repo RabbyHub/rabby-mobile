@@ -11,6 +11,7 @@ import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { dappService } from '@/core/services';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useTranslation } from 'react-i18next';
 
 export function BrowserSearchResult({
   data,
@@ -30,6 +31,8 @@ export function BrowserSearchResult({
   });
 
   const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
+
+  const { t } = useTranslation();
 
   return (
     <Component
@@ -59,7 +62,9 @@ export function BrowserSearchResult({
                     style={styles.listItemText}
                     numberOfLines={1}
                     ellipsizeMode="tail">
-                    Search "{searchText}" in Google
+                    {t('page.browser.BrowserSearch.searchInGoogle', {
+                      searchText: searchText,
+                    })}
                   </Text>
                   <RcArrowRight3CC
                     width={16}
@@ -88,7 +93,9 @@ export function BrowserSearchResult({
                       style={styles.listItemText}
                       numberOfLines={1}
                       ellipsizeMode="tail">
-                      Open "{searchText}"
+                      {t('page.browser.BrowserSearch.openUrl', {
+                        searchText: searchText,
+                      })}
                     </Text>
                     <RcArrowRight3CC
                       width={16}
@@ -103,7 +110,9 @@ export function BrowserSearchResult({
           ) : null}
           {data?.length ? (
             <View style={styles.header}>
-              <Text style={styles.title}>Results</Text>
+              <Text style={styles.title}>
+                {t('page.browser.BrowserSearch.results')}
+              </Text>
             </View>
           ) : null}
         </>

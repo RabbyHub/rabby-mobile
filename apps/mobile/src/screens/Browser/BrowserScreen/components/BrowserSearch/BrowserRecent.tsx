@@ -10,6 +10,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { BrowserSiteCard } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { useTranslation } from 'react-i18next';
 
 export function BrowserRecent({
   onPress,
@@ -23,6 +24,8 @@ export function BrowserRecent({
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
+
+  const { t } = useTranslation();
 
   const Component = isInBottomSheet ? BottomSheetFlatList : FlatList;
 
@@ -39,7 +42,9 @@ export function BrowserRecent({
       ListHeaderComponent={
         list?.length ? (
           <View style={styles.header}>
-            <Text style={styles.title}>Recent</Text>
+            <Text style={styles.title}>
+              {t('page.browser.BrowserSearch.recent')}
+            </Text>
           </View>
         ) : null
       }

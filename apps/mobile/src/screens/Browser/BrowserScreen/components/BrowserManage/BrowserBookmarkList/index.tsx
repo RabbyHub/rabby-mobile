@@ -1,8 +1,13 @@
+import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
 import { DappInfo } from '@/core/services/dappService';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTheme2024 } from '@/hooks/theme';
+import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   StyleProp,
   Text,
@@ -10,14 +15,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { useBrowser } from '@/hooks/browser/useBrowser';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
 import { BrowserBookmarkEmpty } from './BrowserBookmarkEmpty';
-import { useTranslation } from 'react-i18next';
-import { DropDownMenuView } from '@/components2024/DropDownMenu';
-import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
 
 export const BrowserBookmarkList = ({
   style,
