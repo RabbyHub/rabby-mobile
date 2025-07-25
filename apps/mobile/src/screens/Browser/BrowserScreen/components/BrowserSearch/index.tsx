@@ -65,12 +65,14 @@ export function BrowserSearch({
       ]}>
       {!searchText?.trim() ? (
         trigger === 'home' && !displayedBrowserHistoryList.length ? (
-          <TouchableWithoutFeedback
-            onPress={() => {
-              Keyboard.dismiss();
-            }}>
-            <View style={{ flex: 1 }} />
-          </TouchableWithoutFeedback>
+          <View style={{ flex: 1 }}>
+            <TouchableWithoutFeedback
+              onPress={() => {
+                Keyboard.dismiss();
+              }}>
+              <View style={{ height: '100%' }} />
+            </TouchableWithoutFeedback>
+          </View>
         ) : (
           <BrowserRecent
             isInBottomSheet
