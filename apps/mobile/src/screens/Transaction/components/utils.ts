@@ -130,7 +130,7 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
       token: item.token_approve_item,
     },
     project_item: item.project_item,
-    key: `${item.owner_addr}_${item.chain}_${item.txHash}`,
+    key: item._db_id,
     address: item.owner_addr,
     isSmallUsdTx: item.is_small_tx,
     cateDict: {}, // no use

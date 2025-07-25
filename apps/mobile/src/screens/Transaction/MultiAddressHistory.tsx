@@ -137,8 +137,8 @@ function History({
   const lastMap = useRef<Record<string, number>>({});
   const dbLastCursorRef = useRef<number>(0);
   const dbHasMoreRef = useRef<boolean>(false);
+  const dbFetchLoadingRef = useRef<boolean>(false);
   const hasMoreMap = useRef<Record<string, boolean>>({});
-  const [currentPage, setCurrentPage] = useState(0);
   const [isShowAll, setIsShowAll] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
@@ -155,6 +155,20 @@ function History({
     transactionHistoryService.getSucceedList(),
   );
 
+  const mergeDataWithDeduplication = useMemoizedFn(
+    (
+      existingData: HistoryDisplayItem[],
+      newData: HistoryDisplayItem[],
+      insertType: 'front' | 'back',
+    ) => {
+      const existingKeys = new Set(existingData.map(item => item.key));
+      const uniqueNewData = newData.filter(item => !existingKeys.has(item.key));
+      return insertType === 'front'
+        ? [...uniqueNewData, ...existingData]
+        : [...existingData, ...uniqueNewData];
+    },
+  );
+
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(top10Addresses);
   const { historyLoading } = useHistoryTokenDict();
@@ -165,50 +179,45 @@ function History({
     async (filterScamAndSmallTx?: boolean) => {
       // fetch data from local database
 
+      // judge if is need
+      // if (dbFetchLoadingRef.current) {
+      //   return [];
+      // }
+      dbFetchLoadingRef.current = true;
       const addresses = isSceneUsingAllAccounts
         ? top10Addresses.map(i => i.toLowerCase())
         : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
-      const fetchHistoryFromDbData = async (isFirst?: boolean) => {
-        const {
-          items: historyList,
-          hasMore,
-          nextCursor,
-        } = await HistoryItemEntity.getHistoryItemsPaginated(addresses, {
-          pageSize: 20,
-          lastTimeAt: isFirst ? 0 : dbLastCursorRef.current,
-          filterScamAndSmallTx:
-            filterScamAndSmallTx === undefined
-              ? !isShowAll
-              : filterScamAndSmallTx,
-        });
+      const {
+        items: historyList,
+        hasMore,
+        nextCursor,
+      } = await HistoryItemEntity.getHistoryItemsPaginated(addresses, {
+        pageSize: 20,
+        lastTimeAt: dbLastCursorRef.current,
+        filterScamAndSmallTx:
+          filterScamAndSmallTx === undefined
+            ? !isShowAll
+            : filterScamAndSmallTx,
+      });
 
-        const list = historyList.map(item => {
-          return {
-            ...ensureHistoryListItemFromDb(item),
-            isShowSuccess: historySuccessList.includes(
-              `${item.owner_addr.toLowerCase()}-${item.txHash}`,
-            ),
-          } as HistoryDisplayItem;
-        });
+      const list = historyList.map(item => {
+        return {
+          ...ensureHistoryListItemFromDb(item),
+          isShowSuccess: historySuccessList.includes(
+            `${item.owner_addr.toLowerCase()}-${item.txHash}`,
+          ),
+        } as HistoryDisplayItem;
+      });
 
-        if (dbLastCursorRef.current === 0) {
-          setDbData(list);
-        } else {
-          setDbData(prev => [...prev, ...list]);
-        }
-        console.log('dbLastCursorRef.current', nextCursor, hasMore);
-        dbLastCursorRef.current = nextCursor || 0;
-        dbHasMoreRef.current = hasMore;
-        setFirstFetchDone(true);
-        return list;
-      };
-      // if (!dbData.length) {
-      //   // first init 50 count
-      //   await fetchHistoryFromDbData(true);
-      // }
-
-      // later fetch all data
-      const list = await fetchHistoryFromDbData(false);
+      if (dbLastCursorRef.current === 0) {
+        setDbData(list);
+      } else {
+        setDbData(prev => mergeDataWithDeduplication(prev, list, 'back'));
+      }
+      dbLastCursorRef.current = nextCursor || 0;
+      dbHasMoreRef.current = hasMore;
+      dbFetchLoadingRef.current = false;
+      setFirstFetchDone(true);
       return list;
     },
   );
@@ -243,7 +252,7 @@ function History({
       } as HistoryDisplayItem;
     });
 
-    setDbData(prev => [...list, ...prev]);
+    setDbData(prev => mergeDataWithDeduplication(prev, list, 'front'));
   });
 
   const isNeedFetchFromApi = useMemo(() => {
@@ -464,7 +473,6 @@ function History({
   const refresh = useMemoizedFn(() => {
     lastMap.current = {};
     hasMoreMap.current = {};
-    setCurrentPage(0);
     runFetchLocalTx();
     if (isNeedFetchFromApi) {
       reloadAsync();
@@ -515,6 +523,9 @@ function History({
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
     isNoMore: () => {
+      if (loadingMore) {
+        return true;
+      }
       if (!isNeedFetchFromApi) {
         // load from db
         return !dbHasMoreRef.current;
@@ -522,10 +533,7 @@ function History({
       return Object.values(hasMoreMap.current).every(item => !item);
     },
     onSuccess() {
-      if (!isNeedFetchFromApi) {
-        setCurrentPage(currentPage + 1);
-        runFetchLocalTx();
-      }
+      runFetchLocalTx();
     },
   });
 

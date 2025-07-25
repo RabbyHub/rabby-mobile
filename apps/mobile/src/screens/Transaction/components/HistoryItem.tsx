@@ -25,7 +25,6 @@ import { RootNames } from '@/constant/layout';
 import { getHistoryItemType } from './utils';
 import { TxStatusItem } from '../HistoryDetailScreen';
 import { useTranslation } from 'react-i18next';
-import { BuyHistoryItem } from '@/components2024/HistoryItem/BuyHistoryItem';
 import { HistoryItemCateType } from './type';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { HistoryItemTokenArea } from './HistoryItemTokenArea';
