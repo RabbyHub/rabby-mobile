@@ -5,14 +5,22 @@ import AutoLockView from '@/components/AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BrowserScreen } from '../BrowserScreen';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { Platform, Text, useWindowDimensions, View } from 'react-native';
+import {
+  BackHandler,
+  Platform,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
 import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
+import { useFocusEffect } from '@react-navigation/native';
+import { useMemoizedFn } from 'ahooks';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -61,6 +69,26 @@ export const BottomSheetBrowser = () => {
       modalRef.current?.close();
     }
   }, [browserState.isShowBrowser]);
+
+  const handleBackPress = useCallback(() => {
+    if (browserState.isShowBrowser) {
+      setPartialBrowserState({
+        isShowBrowser: false,
+        isShowSearch: false,
+        searchText: '',
+      });
+      return false;
+    }
+    return true;
+  }, [browserState.isShowBrowser, setPartialBrowserState]);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+    return () => subscription.remove();
+  }, [handleBackPress]);
 
   return (
     <AppBottomSheetModal
@@ -129,6 +157,24 @@ export const BrowserManagePopup = () => {
       modalRef.current?.close();
     }
   }, [browserState.isShowManage]);
+
+  const handleBackPress = useCallback(() => {
+    if (browserState.isShowManage) {
+      setPartialBrowserState({
+        isShowManage: false,
+      });
+      return false;
+    }
+    return true;
+  }, [browserState.isShowManage, setPartialBrowserState]);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+    return () => subscription.remove();
+  }, [handleBackPress]);
 
   return (
     <AppBottomSheetModal

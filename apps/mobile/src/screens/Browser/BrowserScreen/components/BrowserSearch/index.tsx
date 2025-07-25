@@ -79,10 +79,10 @@ export function BrowserSearch({
             list={displayedBrowserHistoryList}
             onPress={dapp => {
               Keyboard.dismiss();
+              isOpenURLRef.current = true;
               setTimeout(() => {
                 onOpenURL?.(dapp.url || dapp.origin);
-                isOpenURLRef.current = true;
-              }, 30);
+              }, 200);
             }}
           />
         )
@@ -94,10 +94,10 @@ export function BrowserSearch({
           isValidDomain={!!isValidDomain}
           onOpenURL={url => {
             Keyboard.dismiss();
+            isOpenURLRef.current = true;
             setTimeout(() => {
               onOpenURL?.(url);
-              isOpenURLRef.current = true;
-            }, 30);
+            }, 200);
           }}
         />
       )}
@@ -112,14 +112,14 @@ export function BrowserSearch({
             setTimeout(() => {
               // onClose?.(isTransparent && !searchText);
               onClose?.(trigger === 'home' && !isOpenURLRef.current);
-            }, 60);
+            }, 200);
           }}
           onBlur={() => {
             Keyboard.dismiss();
             setTimeout(() => {
               // onClose?.(isTransparent && !searchText);
               onClose?.(trigger === 'home' && !isOpenURLRef.current);
-            }, 60);
+            }, 200);
           }}
           onSubmitEditing={() => {
             if (!searchText) {
