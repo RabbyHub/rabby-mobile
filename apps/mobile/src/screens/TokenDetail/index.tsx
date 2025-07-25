@@ -5,7 +5,6 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { Tip } from '@/components/Tip';
-import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import {
@@ -13,14 +12,13 @@ import {
   AbstractPortfolioToken,
   AbstractProject,
 } from '@/screens/Home/types';
-import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -61,7 +59,6 @@ import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import { useTokenDetail } from './hook';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
@@ -70,7 +67,6 @@ import {
   isFromBackAtom,
   shouldHideSelectorPopupAtom,
 } from '../Swap/hooks/atom';
-import { useSheetModal } from '@/hooks/useSheetModal';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -252,7 +248,7 @@ export const RightMore: React.FC<{
 
 export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
   const { styles } = useTheme2024({
-    getStyle: getStyle,
+    getStyle,
   });
   const { t } = useTranslation();
   return isDanger ? (
@@ -612,40 +608,23 @@ export const TokenDetailScreen = () => {
     );
   }, [token, triggerUpdate, isSingleAddress, refreshTag, unHold]);
 
-  const handleBackPress = useCallback(() => {
-    setShouldHideSelectorPopup(false);
-    setIsFromBack(true);
-    navigation.goBack();
-  }, [navigation, setShouldHideSelectorPopup, setIsFromBack]);
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // 页面失焦（返回/左滑/点击返回按钮）时统一副作用
+        setShouldHideSelectorPopup(false);
+        setIsFromBack(true);
+      };
+    }, [setShouldHideSelectorPopup, setIsFromBack]),
+  );
 
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
       headerRight: getHeaderRight,
       headerTitleAlign: 'left',
-      headerLeft: () => (
-        <CustomTouchableOpacity
-          style={styles.backButtonStyle}
-          hitSlop={24}
-          onPress={handleBackPress}>
-          <RcIconHeaderBack
-            width={24}
-            height={24}
-            color={colors2024['neutral-title-1']}
-          />
-        </CustomTouchableOpacity>
-      ),
     });
-  }, [
-    setNavigationOptions,
-    setIsFromBack,
-    getHeaderRight,
-    getHeaderTitle,
-    unHold,
-    colors2024,
-    handleBackPress,
-    styles.backButtonStyle,
-  ]);
+  }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
 
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
