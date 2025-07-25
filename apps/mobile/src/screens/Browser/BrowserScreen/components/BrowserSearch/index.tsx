@@ -9,6 +9,7 @@ import { BrowserRecent } from './BrowserRecent';
 import { BrowserSearchResult } from './BrowserSearchResult';
 import { parse } from 'tldts';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
+import { useTranslation } from 'react-i18next';
 
 export function BrowserSearch({
   onClose,
@@ -29,7 +30,7 @@ export function BrowserSearch({
     getStyle,
   });
 
-  const { t } = useTransition();
+  const { t } = useTranslation();
   const { list } = useSearchDapps(searchText);
 
   const { browserHistoryList } = useBrowserHistory();
