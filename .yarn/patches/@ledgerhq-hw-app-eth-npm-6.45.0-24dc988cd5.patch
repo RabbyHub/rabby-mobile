@@ -1,3 +1,20 @@
+diff --git a/lib/Eth.js b/lib/Eth.js
+index d1ff46fb98656f96dfcfb3ffaf2d28bbbdc0a5f7..ffa770f25a0ec739891011a44e509e478cef0537 100644
+--- a/lib/Eth.js
++++ b/lib/Eth.js
+@@ -189,7 +189,11 @@ class Eth {
+                 await this.provideNFTInformation(nft);
+             }
+             for (const data of resolution.erc20Tokens) {
+-                await this.provideERC20TokenInformation(data);
++                try {
++                    await this.provideERC20TokenInformation(data);
++                } catch (e) {
++                    console.warn("Failed to provide ERC20 token information, continuing with blind signing:", e);
++                }
+             }
+         }
+         const rawTx = Buffer.from(rawTxHex, "hex");
 diff --git a/lib/services/ledger/contracts.js b/lib/services/ledger/contracts.js
 index 1cdbad1e6b28d44dfdffb41d446270c60fb723e8..96edab28145178eb3837f05d240c887afe4751ed 100644
 --- a/lib/services/ledger/contracts.js
