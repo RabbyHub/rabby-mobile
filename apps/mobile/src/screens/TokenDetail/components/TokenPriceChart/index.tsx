@@ -33,6 +33,7 @@ import { RelatedDeFiType, TokenFromAddressItem } from '../..';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { useTranslation } from 'react-i18next';
+import { unionBy } from 'lodash';
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
 const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
@@ -83,9 +84,13 @@ export function TokenPriceChart(props: Props) {
       )?.amount;
       return (tokenAmount || 0) + deFiAmount;
     } else {
-      const totalTokenAmount = amountList.reduce((acc, item) => {
+      const amountUnionBy = unionBy(amountList, item =>
+        item.address.toLowerCase(),
+      );
+      const totalTokenAmount = amountUnionBy.reduce((acc, item) => {
         return acc + item.amount;
       }, 0);
+
       return totalTokenAmount + deFiAmount;
     }
   }, [amountList, isSingleAddress, relateDefiList, finalAccount?.address]);
