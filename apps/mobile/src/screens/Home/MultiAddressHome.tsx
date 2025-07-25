@@ -436,7 +436,6 @@ function MultiAddressHome(): JSX.Element {
 
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
-  const { tokenDict } = useHistoryTokenDict();
 
   const displayFundWallet = useMemo(
     () =>
@@ -497,7 +496,6 @@ function MultiAddressHome(): JSX.Element {
       top10Addresses,
       200,
       true,
-      undefined,
       timestamp / 1000,
     );
 

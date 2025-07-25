@@ -30,9 +30,6 @@ import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradingBuyIte
 export function getHistoryItemType(
   data: HistoryDisplayItem,
 ): HistoryItemCateType {
-  if (data.isLocalBuy) {
-    return HistoryItemCateType.Buy;
-  }
   if (data.cate_id === 'approve') {
     if (!data.token_approve?.value) {
       return HistoryItemCateType.Revoke;
@@ -135,7 +132,7 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
     project_item: item.project_item,
     key: `${item.owner_addr}_${item.chain}_${item.txHash}`,
     address: item.owner_addr,
-
+    isSmallUsdTx: item.is_small_tx,
     cateDict: {}, // no use
     debt_liquidated: null,
   };

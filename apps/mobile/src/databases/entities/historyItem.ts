@@ -1,5 +1,9 @@
 import 'reflect-metadata';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  BuyServiceProvider,
+  NFTItem,
+  TokenItem,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
 import {
   Entity,
@@ -14,7 +18,12 @@ import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
-import { fetchHistoryTokenItem } from '@/screens/Transaction/components/utils';
+import {
+  fetchHistoryTokenItem,
+  judgeIsSmallUsdTx,
+} from '@/screens/Transaction/components/utils';
+import { BuyItemEntity } from './buyItem';
+import { IManageToken } from '@/core/services/preference';
 
 export type ProjectItemType = {
   chain: string;
@@ -22,11 +31,16 @@ export type ProjectItemType = {
   logo_url: string;
   name: string;
 };
+
 @Entity('cache_historyitem')
 export class HistoryItemEntity extends EntityAddressAssetBase {
   // is_scam
   @Column('boolean')
   is_scam: TxHistoryItem['is_scam'] = false;
+  // is_small_tx
+  @Column('boolean', { default: false })
+  is_small_tx?: boolean = false;
+
   // id
   @Column('text', { default: '' })
   txHash: TxHistoryItem['id'] = '';
@@ -163,18 +177,63 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       .join('-')}`);
   }
 
+  static judgeIsSmallUsdTx(
+    item: HistoryItemEntity,
+    pinedQueue: IManageToken[],
+  ) {
+    if (item.tx_from_address.toLowerCase() === item.owner_addr.toLowerCase()) {
+      return false;
+    }
+
+    const receives = item.receives;
+    if (!receives || !receives.length) {
+      return true;
+    }
+    let allUsd = 0;
+
+    for (const i of receives) {
+      const token = i.token;
+      const tokenIsNft = i.token_id?.length === 32;
+      if (tokenIsNft) {
+        // reeives nft
+        const nftToken = token as unknown as NFTItem;
+        if (!nftToken || !nftToken.collection) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+      const isCore =
+        token?.is_core ||
+        token?.is_verified ||
+        pinedQueue.find(
+          p => p.chainId === item.chain && p.tokenId === i.token_id,
+        );
+      const price = isCore ? i?.price || 0 : 0; // is not core token price to 0
+      const usd = i.amount * price;
+      allUsd += usd;
+    }
+
+    if (allUsd < 0.1) {
+      return true;
+    }
+
+    return false;
+  }
+
   static fillEntity(
     e: HistoryItemEntity,
     owner_addr: string,
     input: TxHistoryItem,
     tokenDict: Record<string, TokenItem>,
     projectDict: Record<string, ProjectItemType>,
+    pinedQueue: IManageToken[],
   ) {
     e.owner_addr = owner_addr;
-
     e.other_addr = input.other_addr ?? '';
     e.is_scam = input.is_scam ?? false;
     e.txHash = input.id ?? '';
+    e.chain = input.chain ?? 'eth';
     e.receives = input.receives.map(item => {
       const token = fetchHistoryTokenItem(item.token_id, e.chain, tokenDict);
       return {
@@ -189,7 +248,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
         token,
       };
     });
-    e.chain = input.chain ?? 'eth';
     e.status = input.tx?.status ?? 1;
     e.time_at = input.time_at ?? 0;
     e.cate_id = input.cate_id ?? '';
@@ -208,7 +266,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.tx_to_address = input.tx?.to_addr ?? '';
     e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
     e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
-
+    e.is_small_tx = judgeIsSmallUsdTx(e, pinedQueue);
     e.makeDbId();
   }
 
@@ -266,6 +324,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return this.getRepository().findBy({ owner_addr });
   }
 
+  /** @deprecated */
   static async getAllSendItemsTriggeredByImportedAddr(
     owner_addrs: string[],
     count?: number,
@@ -296,36 +355,115 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     owner_addrs: string[],
     count?: number,
     filterNotScam?: boolean,
-    cate_id?: string,
     maxTimeAt?: number,
   ) {
     await prepareAppDataSource();
     const currentTime = new Date().getTime();
     const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
     console.log('getAllHistoryItemSortedByTime exec');
+
     const repo = this.getRepository();
     const queryBuilder = repo
       .createQueryBuilder('historyitem')
       .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
-      .andWhere('historyitem.time_at >= :ninetyDaysAgo', {
+      .andWhere('historyitem.time_at > :ninetyDaysAgo', {
         ninetyDaysAgo: maxTimeAt ?? ninetyDaysAgo,
       })
       .orderBy('historyitem.time_at', 'DESC')
-      .take(count || 10000); // limit
+      .take(count || 10000);
 
     if (filterNotScam) {
       queryBuilder.andWhere('historyitem.is_scam = :is_scam', {
         is_scam: false,
       });
     }
-    if (cate_id) {
-      queryBuilder.andWhere('historyitem.cate_id = :cate_id', {
-        cate_id,
-      });
-    }
 
     const res = await queryBuilder.getMany();
+
+    console.log(
+      'getAllHistoryItemSortedByTime exec time:',
+      new Date().getTime() - currentTime,
+      'count:',
+      res.length,
+    );
     return res;
+  }
+
+  static async getHistoryItemsPaginated(
+    owner_addrs: string[],
+    options: {
+      pageSize?: number;
+      lastTimeAt?: number; // page cursor
+      maxTimeAt?: number;
+      filterScamAndSmallTx?: boolean;
+    } = {},
+  ) {
+    await prepareAppDataSource();
+    const currentTime = new Date().getTime();
+    const { pageSize = 50, lastTimeAt, maxTimeAt } = options;
+
+    const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
+    console.log('getHistoryItemsPaginated exec', { pageSize, lastTimeAt });
+
+    const repo = this.getRepository();
+    let queryBuilder = repo
+      .createQueryBuilder('historyitem')
+      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .andWhere('historyitem.time_at >= :ninetyDaysAgo', {
+        ninetyDaysAgo: maxTimeAt ?? ninetyDaysAgo,
+      });
+
+    if (options.filterScamAndSmallTx) {
+      // filter scam tx
+      queryBuilder = queryBuilder.andWhere('historyitem.is_scam = :is_scam', {
+        is_scam: false,
+      });
+
+      // filter small tx out of 1 hour
+      const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
+      queryBuilder = queryBuilder.andWhere(
+        '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
+        {
+          oneHourAgo,
+          is_small_tx: false,
+        },
+      );
+    }
+
+    // cursor page
+    if (lastTimeAt) {
+      queryBuilder = queryBuilder.andWhere(
+        'historyitem.time_at < :lastTimeAt',
+        {
+          lastTimeAt,
+        },
+      );
+    }
+
+    const res = await queryBuilder
+      .orderBy('historyitem.time_at', 'DESC')
+      // make receive front of send by cate_id order by asc
+      .addOrderBy('historyitem.cate_id', 'ASC')
+      .take(pageSize + 1) // add one for check has more
+      .getMany();
+
+    const hasMore = res.length > pageSize;
+    const items = hasMore ? res.slice(0, pageSize) : res;
+    const nextCursor =
+      items.length > 0 ? items[items.length - 1].time_at : undefined;
+
+    console.log(
+      'getHistoryItemsPaginated exec time:',
+      new Date().getTime() - currentTime,
+      'count:',
+      items.length,
+    );
+
+    return {
+      items,
+      hasMore,
+      nextCursor,
+    };
   }
 
   static async getTokenHistoryItemSortedByTime(
@@ -372,51 +510,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     const res = await queryBuilder.getMany();
     console.log(
       'getTokenHistoryItemSortedByTime exec done',
-      new Date().getTime() - currentTime,
-    );
-    return res;
-  }
-
-  /**
-   * 优化版本：利用新的表结构进行更高效的token历史查询
-   * 优先使用直接字段查询，减少JSON解析开销
-   */
-  static async getTokenHistoryItemSortedByTimeOptimized(
-    owner_addrs: string[],
-    tokenId: string,
-    chain: string,
-    count?: number,
-  ) {
-    await prepareAppDataSource();
-
-    const repo = this.getRepository();
-    const currentTime = new Date().getTime();
-    console.log('getTokenHistoryItemSortedByTimeOptimized exec');
-
-    const queryBuilder = repo
-      .createQueryBuilder('historyitem')
-      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
-      .andWhere('historyitem.chain = :chain', { chain })
-      .andWhere(
-        new Brackets(qb => {
-          qb
-            // 直接字段查询（最快）
-            .where('historyitem.token_approve_id = :tokenId')
-            // 简化的字符串匹配查询（比JSON解析快）
-            .orWhere('historyitem.receives LIKE :tokenIdPattern')
-            .orWhere('historyitem.sends LIKE :tokenIdPattern');
-        }),
-        {
-          tokenId,
-          tokenIdPattern: `%"token_id":"${tokenId}"%`,
-        },
-      )
-      .orderBy('historyitem.time_at', 'DESC')
-      .take(count || 10000);
-
-    const res = await queryBuilder.getMany();
-    console.log(
-      'getTokenHistoryItemSortedByTimeOptimized exec done',
       new Date().getTime() - currentTime,
     );
     return res;

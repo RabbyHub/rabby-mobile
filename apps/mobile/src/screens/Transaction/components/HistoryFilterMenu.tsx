@@ -19,12 +19,17 @@ const historyHitSlop = {
 interface Props {
   setIsShowAll: (value: React.SetStateAction<boolean>) => void;
   isShowAll: boolean;
+  handleSwitchShowAll: (value: boolean) => void;
 }
 
-export const HistoryFilterMenu = ({ setIsShowAll, isShowAll }: Props) => {
+export const HistoryFilterMenu = ({
+  setIsShowAll,
+  isShowAll,
+  handleSwitchShowAll,
+}: Props) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const switchShowAll = () => {
+  const switchShowAll = (e: boolean) => {
     setIsShowAll(prev => {
       if (prev) {
         toast.success(t('page.transactions.HideScamTransactions'));
@@ -33,11 +38,12 @@ export const HistoryFilterMenu = ({ setIsShowAll, isShowAll }: Props) => {
       }
       return !prev;
     });
+    handleSwitchShowAll(e);
   };
   return (
     <View style={styles.container}>
       {/* <TouchableOpacity hitSlop={historyHitSlop} onPress={switchShowAll}> */}
-      <AppSwitch2024 value={!isShowAll} onValueChange={e => switchShowAll()} />
+      <AppSwitch2024 value={!isShowAll} onValueChange={e => switchShowAll(e)} />
       {/* {isShowAll ? (
           <RcIconEyeCC
             color={colors2024['neutral-foot']}

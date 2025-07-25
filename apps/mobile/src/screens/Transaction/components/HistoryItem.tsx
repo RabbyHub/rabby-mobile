@@ -185,9 +185,6 @@ export const HistoryItem = React.memo(
           address = (isSend ? ToText : FromText) + name;
           break;
 
-        case HistoryItemCateType.Buy:
-          address = FromText + data.buyDetails?.service_provider?.name;
-          break;
         case HistoryItemCateType.Cancel:
           address = getAliasName(data.address) || ellipsisAddress(data.address);
           break;
@@ -289,16 +286,6 @@ export const HistoryItem = React.memo(
         });
       return [...receives, ...sends];
     }, [data]);
-
-    if (formatType === HistoryItemCateType.Buy && data.buyDetails) {
-      return (
-        <TouchableOpacity
-          onPress={handleNavigateDetail}
-          style={{ marginBottom: 8 }}>
-          <BuyHistoryItem data={data.buyDetails} />
-        </TouchableOpacity>
-      );
-    }
 
     return (
       <TouchableOpacity onPress={handleNavigateDetail}>

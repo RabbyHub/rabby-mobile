@@ -63,8 +63,6 @@ export function useHistoryBasicInfo({ enableAutoFetch = false }) {
 export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
   const {
-    setProjectDict,
-    setTokenDict,
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
     setHistoryEnsureNoData,
@@ -143,11 +141,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           i => i.time_at > ninetyDaysAgo,
         );
 
-        const tokenUUDict: Record<string, TokenItem> = {};
-        Object.keys(res.token_dict).map(id => {
-          const chain = res.token_dict[id].chain;
-          tokenUUDict[`${chain}_token:${id}`] = res.token_dict[id];
-        });
         if (res.history_list.length) {
           const lastItemTime =
             res.history_list[res.history_list.length - 1].time_at;
@@ -161,8 +154,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
             );
             // if (res.history_list.length) {
             runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
-            setProjectDict(prev => ({ ...prev, ...res.project_dict }));
-            setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
             // }
             console.debug(
               'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: No more history',
@@ -183,8 +174,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               res.history_list.length,
             );
             runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
-            setProjectDict(prev => ({ ...prev, ...res.project_dict }));
-            setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
             synHistoryInRealTimeApi(address, latestTime, lastItemTime);
           }
         }
@@ -307,8 +296,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
             );
             if (res.history_list.length) {
               runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
-              setProjectDict(prev => ({ ...prev, ...res.project_dict }));
-              setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
             }
             console.debug(
               '🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history',
@@ -329,8 +316,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               res.history_list.length,
             );
             runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
-            setProjectDict(prev => ({ ...prev, ...res.project_dict }));
-            setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
             syncUserAllHistory(
               address,
               lastItemTime,

@@ -24,7 +24,7 @@ import { batchSaveWithPQueueAndTransaction } from './_task';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
 import { deleteCurveCache } from '@/utils/24balanceCurveCache';
-import { transactionHistoryService } from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
 import { EvmTotalBalanceResponse } from '../hooks/balance';
@@ -130,6 +130,7 @@ export async function syncRemoteHistory(
 
     const projectDict = project_dict;
 
+    const pinedQueue = preferenceService.getPinToken();
     const swapFailHistoryList =
       transactionHistoryService.getSwapFailTransactions(address);
     const historyItems = history_list
@@ -142,6 +143,7 @@ export async function syncRemoteHistory(
           raw,
           tokenDict,
           projectDict,
+          pinedQueue,
         );
         updateSwapFailHistoryItem(item, swapFailHistoryList);
         return item;

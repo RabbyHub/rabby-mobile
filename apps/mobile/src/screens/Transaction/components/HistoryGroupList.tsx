@@ -1,4 +1,4 @@
-import { minBy, range, unionBy } from 'lodash';
+import { groupBy, minBy, range, unionBy } from 'lodash';
 import React, {
   useMemo,
   useRef,
@@ -21,6 +21,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGetCexList } from '../hook';
+import { useMemoizedFn } from 'ahooks';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -36,40 +37,35 @@ function markFirstItems(
   if (arr.length === 0) {
     return [];
   }
-  const newArr: DisplayHistoryItem[] = [];
+
+  const result: DisplayHistoryItem[] = [];
+  let prevDateKey = '';
+
   for (let i = 0; i < arr.length; i++) {
     const item = arr[i];
-    const newItem: DisplayHistoryItem = {
+
+    const time =
+      'time_at' in item && item.time_at
+        ? item.time_at * 1000
+        : 'completedAt' in item && item.completedAt
+        ? item.completedAt
+        : Date.now();
+
+    const date = new Date(time);
+    const currentDateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+
+    const isDateStart = i === 0 || currentDateKey !== prevDateKey;
+
+    result.push({
       data: item,
-      time:
-        ('time_at' in item ? item.time_at * 1000 : undefined) ||
-        ('completedAt' in item && item.completedAt
-          ? item.completedAt
-          : new Date().getTime()),
-    };
+      time,
+      isDateStart,
+    });
 
-    const prev = arr[i - 1];
-
-    if (i === 0) {
-      newItem.isDateStart = true;
-    } else {
-      // judgs is date start
-      const curDate = dayjs(newItem.time);
-      const prevTime =
-        ('time_at' in prev ? prev.time_at * 1000 : undefined) ||
-        ('completedAt' in prev && prev.completedAt
-          ? prev.completedAt
-          : new Date().getTime());
-      const prevDate = dayjs(prevTime); // get time at
-      if (!curDate.isSame(prevDate, 'date')) {
-        newItem.isDateStart = true;
-      }
-    }
-
-    newArr.push(newItem);
+    prevDateKey = currentDateKey;
   }
 
-  return newArr;
+  return result;
 }
 
 export const HistoryList = forwardRef(
@@ -91,7 +87,7 @@ export const HistoryList = forwardRef(
       firstFetchDone?: boolean;
       historySuccessList?: string[];
       localTxList?: TransactionGroup[];
-      list?: (HistoryDisplayItem | TransactionGroup)[];
+      list: (HistoryDisplayItem | TransactionGroup)[];
       loading?: boolean;
       loadingMore?: boolean;
       refreshLoading?: boolean;
@@ -116,75 +112,88 @@ export const HistoryList = forwardRef(
     }));
 
     const markedList = useMemo(() => {
-      return markFirstItems(
-        unionBy(list, item => {
-          if ('project_item' in item) {
-            return `${item.address.toLowerCase()}-${item.id}`;
-          } else {
-            return `${item.address.toLowerCase()}-${item.maxGasTx.hash}`;
-          }
-        }) || [],
-      );
+      return markFirstItems(list);
     }, [list]);
     const { styles } = useTheme2024({ getStyle });
     const { t } = useTranslation();
     const { bottom } = useSafeAreaInsets();
 
-    const renderItem = ({ item }: { item: DisplayHistoryItem }) => {
-      if ('project_item' in item.data) {
-        return (
-          <>
-            {item.isDateStart ? (
-              <Text
-                style={[
-                  styles.date,
-                  !isForMultipleAddress && styles.marginBottom,
-                ]}>
-                {formatTimestamp(item.time, t)}
-              </Text>
-            ) : null}
-            <HistoryItem
-              data={item.data}
-              isForMultipleAddress={isForMultipleAddress}
-              getCexInfoByAddress={getCexInfoByAddress}
-              onPress={onPresssItem}
-            />
-          </>
-        );
-      } else {
-        const canCancel =
-          minBy(
-            localTxList?.filter(
-              i =>
-                i.chainId === (item.data as TransactionGroup).chainId &&
-                i.isPending,
-            ) || [],
-            i => i.nonce,
-          )?.nonce === item.data.nonce;
-
-        return (
-          <>
-            {item.isDateStart ? (
-              <Text
-                style={[
-                  styles.date,
-                  !isForMultipleAddress && styles.marginBottom,
-                ]}>
-                {formatTimestamp(item.time, t)}
-              </Text>
-            ) : null}
-            <TransactionItem
-              getCexInfoByAddress={getCexInfoByAddress}
-              isForMultipleAddress={isForMultipleAddress}
-              historySuccessList={historySuccessList}
-              data={item.data}
-              canCancel={canCancel}
-              onRefresh={onRefresh}
-            />
-          </>
-        );
+    const minLocalTxNonceByChain = useMemo(() => {
+      const pendingGroup = localTxList?.filter(i => i.isPending);
+      if (!pendingGroup?.length) {
+        return {};
       }
-    };
+
+      const tempObj: Record<string, number> = {};
+      Object.entries(
+        groupBy(pendingGroup, i => `${i.address}-${i.chainId}`),
+      ).forEach(([key, txs]) => {
+        tempObj[key] = minBy(txs, i => i.nonce)?.nonce || 0;
+      });
+      return tempObj;
+    }, [localTxList]);
+
+    const renderItem = useMemoizedFn(
+      ({ item }: { item: DisplayHistoryItem }) => {
+        if ('project_item' in item.data) {
+          return (
+            <>
+              {item.isDateStart ? (
+                <Text
+                  style={[
+                    styles.date,
+                    !isForMultipleAddress && styles.marginBottom,
+                  ]}>
+                  {formatTimestamp(item.time, t)}
+                </Text>
+              ) : null}
+              <HistoryItem
+                data={item.data}
+                isForMultipleAddress={isForMultipleAddress}
+                getCexInfoByAddress={getCexInfoByAddress}
+                onPress={onPresssItem}
+              />
+            </>
+          );
+        } else {
+          // const canCancel =
+          //   minBy(
+          //     localTxList?.filter(
+          //       i =>
+          //         i.chainId === (item.data as TransactionGroup).chainId &&
+          //         i.isPending,
+          //     ) || [],
+          //     i => i.nonce,
+          //   )?.nonce === item.data.nonce;
+          const canCancel =
+            minLocalTxNonceByChain[
+              `${item.data.address}-${item.data.chainId}`
+            ] === item.data.nonce;
+
+          return (
+            <>
+              {item.isDateStart ? (
+                <Text
+                  style={[
+                    styles.date,
+                    !isForMultipleAddress && styles.marginBottom,
+                  ]}>
+                  {formatTimestamp(item.time, t)}
+                </Text>
+              ) : null}
+              <TransactionItem
+                getCexInfoByAddress={getCexInfoByAddress}
+                isForMultipleAddress={isForMultipleAddress}
+                historySuccessList={historySuccessList}
+                data={item.data}
+                canCancel={canCancel}
+                onRefresh={onRefresh}
+              />
+            </>
+          );
+        }
+      },
+    );
 
     if (loading) {
       return (
@@ -202,7 +211,7 @@ export const HistoryList = forwardRef(
         data={markedList}
         renderItem={renderItem}
         windowSize={5}
-        initialNumToRender={Math.min(markedList.length, 50)}
+        initialNumToRender={Math.min(markedList.length, 20)}
         ListEmptyComponent={
           loading ? null : firstFetchDone ? (
             <Empty
@@ -215,13 +224,14 @@ export const HistoryList = forwardRef(
           ) : null
         }
         style={styles.container}
-        keyExtractor={(item, index) =>
-          `${
-            'id' in item.data ? item.data.id : item.data.maxGasTx.hash
-          }-${index}`
+        keyExtractor={item =>
+          'id' in item.data
+            ? `${item.data.address}-${item.data.chain}-${item.data.id}`
+            : `${item.data.address}-${item.data.chainId}-${item.data.maxGasTx.hash}`
         }
         onEndReached={loadMore}
-        onEndReachedThreshold={0.8}
+        onEndReachedThreshold={0.5}
+        removeClippedSubviews={true}
         ListFooterComponent={
           loadingMore ? <SkeletonCard /> : <View style={{ height: bottom }} />
         }

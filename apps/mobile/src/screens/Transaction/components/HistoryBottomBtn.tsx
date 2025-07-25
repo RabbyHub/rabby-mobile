@@ -173,40 +173,6 @@ export const HistoryBottomBtn = ({
           />
         </View>
       );
-
-    case HistoryItemCateType.Buy:
-      if (!data.buyDetails?.receive_tx_id || !data.id) {
-        return null;
-      }
-      return (
-        <View style={btnContainerViewStyle}>
-          <Button
-            buttonStyle={buttonStyle}
-            onPress={() => {
-              if (!isForMultipleAddress) {
-                switchSceneCurrentAccount(
-                  'MakeTransactionAbout',
-                  currentAccount,
-                );
-              }
-              console.log('isForMultipleAddress', isForMultipleAddress);
-              navigation.dispatch(
-                StackActions.push(RootNames.StackTransaction, {
-                  screen: isForMultipleAddress
-                    ? RootNames.MultiBuy
-                    : RootNames.Buy,
-                  params: {
-                    buyAgain: true,
-                    receiveToken: data.buyDetails?.receive_token,
-                  },
-                }),
-              );
-            }}
-            title={t('page.transactions.detail.BuyAgain')}
-          />
-        </View>
-      );
-    // todo
     case HistoryItemCateType.Contract:
     case HistoryItemCateType.Cancel:
     case HistoryItemCateType.Bridge:

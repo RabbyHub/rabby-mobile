@@ -29,7 +29,6 @@ import SendPolyScreen from '../Send/SubScreens/SelectPolyScreen';
 import SendInputScreen from '../Send/SubScreens/SendInput';
 import SelectMyAddressScreen from '../Send/SubScreens/SelectMyAddress';
 import SelectWatchScreenScreen from '../Send/SubScreens/SelectTypeAddress';
-import SendHistoryScreen from '../WhiteList/SelectSendTransationAddress';
 import { CopyTradingScreen } from '../CopyTrading';
 import { GnosisQueueScreen } from '../GnosisQueue';
 import WhitelistInputScreen from '../WhiteList/InputScreen';
@@ -70,19 +69,6 @@ export default function TransactionNavigator() {
         })}
       />
 
-      <TransactionStack.Screen
-        name={RootNames.SendHistory}
-        component={SendHistoryScreen}
-        options={mergeScreenOptions({
-          title: 'Select Address to add',
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '900',
-            fontFamily: 'SF Pro Rounded',
-            fontSize: 20,
-          },
-        })}
-      />
       <TransactionStack.Screen
         name={RootNames.SendInput}
         component={SendInputScreen}

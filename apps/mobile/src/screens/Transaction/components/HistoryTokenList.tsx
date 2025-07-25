@@ -181,7 +181,6 @@ export const HistoryTokenList = ({
       const tokenId = isApprove
         ? approve?.token_id || ''
         : receives?.[0]?.token_id || sends?.[0]?.token_id;
-      const tokenUUID = `${chain}_token:${tokenId}`;
       const singleAmount = isApprove
         ? approve?.value
         : receives?.[0]?.amount || sends?.[0]?.amount;
@@ -309,98 +308,6 @@ export const HistoryTokenList = ({
         </View>
       );
 
-    case HistoryItemCateType.Buy:
-      const isPending =
-        data?.buyDetails?.status === 'pending' &&
-        !data?.id &&
-        !data.buyDetails.receive_tx_id;
-      return (
-        <TouchableOpacity
-          onPress={() =>
-            handlePress(
-              (singeToken || data?.buyDetails?.receive_token)!,
-              tokenIsNft,
-            )
-          }>
-          <View style={[styles.singleBox]}>
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={styles.iconContainer}>
-                <BuyWalletIcon style={styles.walletIcon} />
-                <AssetAvatar
-                  logo={data?.buyDetails?.receive_token?.logo_url}
-                  size={57}
-                />
-              </View>
-              {isPending ? (
-                <View
-                  style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
-                  <Text
-                    style={[
-                      styles.tokenAmountText,
-                      { color: colors2024['neutral-title-1'] },
-                    ]}>
-                    -{' '}
-                    {formatTokenAmount(data?.buyDetails?.pay_usd_amount || '0')}{' '}
-                    {data?.buyDetails?.pay_currency_code || ''}
-                  </Text>
-                  <Text
-                    style={[
-                      {
-                        fontSize: 16,
-                        fontWeight: '500',
-                        lineHeight: 20,
-                        fontFamily: 'SF Pro',
-                      },
-                      styles.isSendTextColor,
-                    ]}>
-                    {t('page.transactions.detail.WillReceive', {
-                      token: `${formatTokenAmount(
-                        data?.receives?.[0]?.amount ||
-                          data?.buyDetails?.receive_amount ||
-                          '0',
-                      )} ${getTokenSymbol(data?.buyDetails?.receive_token)}`,
-                    })}
-                  </Text>
-                </View>
-              ) : (
-                <View
-                  style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
-                  <Text style={[styles.tokenAmountText]}>
-                    +{' '}
-                    {formatTokenAmount(
-                      data?.receives?.[0]?.amount ||
-                        data?.buyDetails?.receive_amount ||
-                        '0',
-                    )}{' '}
-                    {getTokenSymbol(data?.buyDetails?.receive_token)}
-                  </Text>
-                  <Text
-                    style={[
-                      {
-                        fontSize: 16,
-                        fontWeight: '500',
-                        lineHeight: 20,
-                        fontFamily: 'SF Pro',
-                      },
-                      styles.isSendTextColor,
-                    ]}>
-                    -{data?.buyDetails?.pay_usd_amount || '0'}{' '}
-                    {data?.buyDetails?.pay_currency_code || ''}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <RcIconSingleArrow
-                width={32}
-                height={32}
-                color={colors2024['neutral-bg-2']}
-              />
-            </View>
-          </View>
-        </TouchableOpacity>
-      );
     case HistoryItemCateType.Contract:
     case HistoryItemCateType.Cancel:
     case HistoryItemCateType.UnKnown:

@@ -288,7 +288,6 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.Send]?: {};
   [RootNames.SendTo]?: {};
-  [RootNames.SendHistory]?: {};
   [RootNames.SendInput]?: {
     autoScan?: boolean;
   };

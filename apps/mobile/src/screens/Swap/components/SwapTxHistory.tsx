@@ -245,7 +245,6 @@ export const SwapTxHistory = ({
   const { visible, setVisible } = useSwapTxHistoryVisible();
   const { colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { projectDict, tokenDict } = useHistoryTokenDict();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
