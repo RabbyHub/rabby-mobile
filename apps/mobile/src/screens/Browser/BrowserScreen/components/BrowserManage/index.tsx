@@ -91,7 +91,7 @@ export function BrowserManage(): JSX.Element {
       {searchState.isShowSearch ? (
         <BrowserSearch
           style={{
-            paddingTop: 0,
+            paddingTop: 18,
           }}
           searchText={searchState.searchText}
           setSearchText={v => {

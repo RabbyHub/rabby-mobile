@@ -1,4 +1,4 @@
-import React, { useMemo, useTransition } from 'react';
+import React, { useMemo, useRef, useTransition } from 'react';
 import { Keyboard, StyleProp, View, ViewStyle } from 'react-native';
 
 import { NextSearchBar } from '@/components2024/SearchBar';
@@ -10,6 +10,7 @@ import { BrowserSearchResult } from './BrowserSearchResult';
 import { parse } from 'tldts';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTranslation } from 'react-i18next';
+import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
 
 export function BrowserSearch({
   onClose,
@@ -47,6 +48,8 @@ export function BrowserSearch({
   const isTransparent =
     trigger === 'home' && !displayedBrowserHistoryList.length && !searchText;
 
+  const isOpenURLRef = useRef(false);
+
   return (
     <View
       style={[
@@ -62,7 +65,12 @@ export function BrowserSearch({
       ]}>
       {!searchText?.trim() ? (
         trigger === 'home' && !displayedBrowserHistoryList.length ? (
-          <View style={{ flex: 1 }} />
+          <TouchableWithoutFeedback
+            onPress={() => {
+              Keyboard.dismiss();
+            }}>
+            <View style={{ flex: 1 }} />
+          </TouchableWithoutFeedback>
         ) : (
           <BrowserRecent
             isInBottomSheet
@@ -71,7 +79,8 @@ export function BrowserSearch({
               Keyboard.dismiss();
               setTimeout(() => {
                 onOpenURL?.(dapp.url || dapp.origin);
-              }, 60);
+                isOpenURLRef.current = true;
+              }, 30);
             }}
           />
         )
@@ -85,7 +94,8 @@ export function BrowserSearch({
             Keyboard.dismiss();
             setTimeout(() => {
               onOpenURL?.(url);
-            }, 60);
+              isOpenURLRef.current = true;
+            }, 30);
           }}
         />
       )}
@@ -98,13 +108,15 @@ export function BrowserSearch({
           onCancel={() => {
             Keyboard.dismiss();
             setTimeout(() => {
-              onClose?.(isTransparent && !searchText);
+              // onClose?.(isTransparent && !searchText);
+              onClose?.(trigger === 'home' && !isOpenURLRef.current);
             }, 60);
           }}
           onBlur={() => {
             Keyboard.dismiss();
             setTimeout(() => {
-              onClose?.(isTransparent && !searchText);
+              // onClose?.(isTransparent && !searchText);
+              onClose?.(trigger === 'home' && !isOpenURLRef.current);
             }, 60);
           }}
           onSubmitEditing={() => {
@@ -124,6 +136,7 @@ export function BrowserSearch({
                 )}`,
               );
             }
+            isOpenURLRef.current = true;
           }}
           enterKeyHint="go"
           autoFocus

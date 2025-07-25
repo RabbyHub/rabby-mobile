@@ -202,7 +202,11 @@ export const syncBasicDappsInfo = async () => {
         if (item.id) {
           const dappOrigin = stringUtils.ensurePrefix(item.id, 'https://');
           if (dappOrigin) {
-            accu[dappOrigin] = { info: item, infoUpdateAt: Date.now() };
+            accu[dappOrigin] = {
+              info: item,
+              infoUpdateAt: Date.now(),
+              isDapp: true,
+            };
           }
         }
         return accu;

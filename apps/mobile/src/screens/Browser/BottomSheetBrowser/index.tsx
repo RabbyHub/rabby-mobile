@@ -43,10 +43,12 @@ export const BottomSheetBrowser = () => {
     return (
       browserState.trigger === 'home' &&
       !browserHistoryList?.length &&
-      !browserState.searchText.trim()
+      !browserState.searchText.trim() &&
+      browserState.isShowSearch
     );
   }, [
     browserHistoryList?.length,
+    browserState.isShowSearch,
     browserState.searchText,
     browserState.trigger,
   ]);
