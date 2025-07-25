@@ -43,7 +43,7 @@ export function BrowserHeader({
   searchText,
   onSearchTextChange,
 }: {
-  dapp?: DappInfo;
+  dapp?: DappInfo | null;
   url?: string;
   isFocused?: boolean;
   onFocusChange?(isFocused: boolean): void;
