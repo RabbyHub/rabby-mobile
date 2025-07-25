@@ -84,7 +84,9 @@ export function TokenPriceChart(props: Props) {
       )?.amount;
       return (tokenAmount || 0) + deFiAmount;
     } else {
-      const amountUnionBy = unionBy(amountList, 'address');
+      const amountUnionBy = unionBy(amountList, item =>
+        item.address.toLowerCase(),
+      );
       const totalTokenAmount = amountUnionBy.reduce((acc, item) => {
         return acc + item.amount;
       }, 0);
