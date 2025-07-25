@@ -11,9 +11,10 @@ import { atom, useAtom } from 'jotai';
 import { v4 as uuid } from 'uuid';
 import { useRabbyAppNavigation } from '../navigation';
 import { browserService, dappService } from '@/core/services';
-import { omit, last } from 'lodash';
+import { omit, last, sortBy } from 'lodash';
 import { boolean } from 'yup';
 import { useMemo } from 'react';
+import { dappsAtom } from '../useDapps';
 
 export const tabsAtom = atom<{
   tabs: Tab[];
@@ -34,6 +35,18 @@ const browserStateAtom = atom({
   trigger: '',
 });
 
+const MAX_ACTIVE_TABS_COUNT = 4;
+
+const displayedTabsAtom = atom(get => {
+  const store = get(tabsAtom);
+  const dapps = get(dappsAtom);
+
+  return store.tabs.filter(item => {
+    const origin = safeGetOrigin(item.url || item.initialUrl);
+    return dapps[origin]?.isDapp;
+  });
+});
+
 export function useBrowser() {
   // const navigation = useRabbyAppNavigation();
 
@@ -41,6 +54,7 @@ export function useBrowser() {
   const [visible, setVisible] = useAtom(visibleAtom);
   const [isShowManagePopup, setIsShowManagePopup] = useAtom(managePopupAtom);
   const [browserState, setBrowserState] = useAtom(browserStateAtom);
+  const [displayedTabs] = useAtom(displayedTabsAtom);
 
   const setPartialBrowserState = useMemoizedFn(
     (payload: Partial<typeof browserState>) => {
@@ -92,6 +106,7 @@ export function useBrowser() {
       isShowManage: false,
       isShowSearch: false,
     });
+    terminateTabs();
   });
   const closeTab = useMemoizedFn((tabId: string) => {
     if (tabId === store.activeTabId) {
@@ -114,6 +129,53 @@ export function useBrowser() {
     updateBrowserTabs({
       tabs: [],
       activeTabId: '',
+    });
+  });
+
+  const terminateTabs = useMemoizedFn(() => {
+    setTimeout(() => {
+      setStore(prev => {
+        const tabs = sortBy(
+          prev.tabs.filter(
+            tab =>
+              dappService.getDapp(safeGetOrigin(tab.url || tab.initialUrl))
+                ?.isDapp,
+          ),
+          tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
+        );
+
+        if (tabs.length <= MAX_ACTIVE_TABS_COUNT) {
+          return prev;
+        }
+
+        const time = tabs[3]?.openTime || 0;
+        if (!time) {
+          return prev;
+        }
+
+        const finalTabs = prev.tabs.map(tab => {
+          if (
+            (!dappService.getDapp(safeGetOrigin(tab.url || tab.initialUrl))
+              ?.isDapp ||
+              tab.openTime < time) &&
+            tab.id !== prev.activeTabId
+          ) {
+            return {
+              ...tab,
+              isTerminate: true,
+            };
+          }
+          return tab;
+        });
+
+        const result = {
+          ...prev,
+          tabs: finalTabs,
+        };
+
+        browserService.updateBrowserTabs(result);
+        return result;
+      });
     });
   });
 
@@ -167,6 +229,8 @@ export function useBrowser() {
       activeTabId: newTab.id,
     });
 
+    terminateTabs();
+
     return true;
   });
 
@@ -176,13 +240,6 @@ export function useBrowser() {
       isShowSearch: false,
     });
   });
-
-  const displayedTabs = useMemo(() => {
-    return store.tabs.filter(item => {
-      const origin = safeGetOrigin(item.url || item.initialUrl);
-      return dappService.getDapp(origin)?.isDapp;
-    });
-  }, [store.tabs]);
 
   const onHideBrowser = useMemoizedFn(() => {
     setStore(pre => {
@@ -197,7 +254,7 @@ export function useBrowser() {
         activeTabId,
         tabs,
       };
-      updateBrowserTabs(res);
+      browserService.updateBrowserTabs(res);
       return res;
     });
   });

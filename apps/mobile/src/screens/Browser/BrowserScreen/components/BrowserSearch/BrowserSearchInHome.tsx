@@ -10,6 +10,9 @@ import { BrowserRecent } from './BrowserRecent';
 import { BrowserSearchResult } from './BrowserSearchResult';
 import { parse } from 'tldts';
 
+/**
+ * @deprecated
+ */
 export function BrowserSearchInHome({
   onClose,
   onOpenURL,
