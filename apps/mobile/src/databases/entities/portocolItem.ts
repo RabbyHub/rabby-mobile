@@ -90,9 +90,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
       .map(i => ({
         ...i,
-        portfolio_item_list: columnConverter.jsonStringToObj(
-          i.portfolio_item_list,
-        ),
+        portfolio_item_list: [],
       }));
   }
 
@@ -103,9 +101,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
       .map(i => ({
         ...i,
-        portfolio_item_list: columnConverter.jsonStringToObj(
-          i.portfolio_item_list,
-        ),
+        portfolio_item_list: [],
       }));
   }
 

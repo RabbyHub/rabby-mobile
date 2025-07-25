@@ -61,6 +61,7 @@ import { EmptyTokenRow } from '@/screens/Home/components/AssetRenderItems/EmptyT
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
+import { getItemId } from '@/screens/Home/utils/listRenderId';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
@@ -190,8 +191,9 @@ export const Portfolios = () => {
       },
       {
         show: !!isLoading && !tokens.length,
-        data: Array.from({ length: 5 }, () => ({
+        data: Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton',
+          data: index.toString(),
         })),
       },
       {
@@ -220,8 +222,9 @@ export const Portfolios = () => {
       },
       {
         show: !!isLoading && !portfolios.length,
-        data: Array.from({ length: 2 }, () => ({
+        data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
+          data: index.toString(),
         })),
       },
       {
@@ -430,6 +433,7 @@ export const Portfolios = () => {
                 onTokenPress={handleOpenTokenDetail}
                 logoSize={46}
                 style={styles.renderItemWrapper}
+                disableMenu
                 chainLogoSize={18}
                 menuActions={getTokenMenuActions(data)}
               />
@@ -447,6 +451,7 @@ export const Portfolios = () => {
                 ])}
                 menuActions={getDefiOrNftMenuAction('defi', data[0])}
                 logoSize={40}
+                disableMenu
                 onPress={() =>
                   handleOpenDefiDetail(data[0], [
                     ...(data[0]._portfolios || []),
@@ -462,6 +467,7 @@ export const Portfolios = () => {
                   ])}
                   menuActions={getDefiOrNftMenuAction('defi', data[1])}
                   logoSize={40}
+                  disableMenu
                   onPress={() =>
                     handleOpenDefiDetail(data[1], [
                       ...(data[1]._portfolios || []),
@@ -697,6 +703,7 @@ export const Portfolios = () => {
 
   return (
     <Tabs.FlashList
+      keyExtractor={item => getItemId(item)}
       data={hasNotAssets ? [{ type: 'empty-token' }] : portfolioListData}
       renderItem={renderItem}
       estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}

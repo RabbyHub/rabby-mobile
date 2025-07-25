@@ -234,7 +234,7 @@ export const useMultiCurve = (
       return;
     }
     if (combineData.list.length === 0) {
-      fetch(addresses);
+      // fetch(addresses);
     }
   }, [addresses, combineData.list.length, disableAutoFetch, fetch]);
 
