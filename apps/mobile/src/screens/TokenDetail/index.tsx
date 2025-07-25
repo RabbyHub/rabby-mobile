@@ -13,6 +13,7 @@ import {
   AbstractPortfolioToken,
   AbstractProject,
 } from '@/screens/Home/types';
+import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -64,8 +65,12 @@ import { useTokenDetail } from './hook';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
-import { forceSelectCloseAtom } from '../Swap/hooks';
-import { useAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
+import {
+  isFromBackAtom,
+  shouldHideSelectorPopupAtom,
+} from '../Swap/hooks/atom';
+import { useSheetModal } from '@/hooks/useSheetModal';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -288,8 +293,12 @@ export const TokenDetailScreen = () => {
   const { styles, isLight } = useTheme2024({
     getStyle,
   });
-  const [_, setForceSelect] = useAtom(forceSelectCloseAtom);
+  const { colors2024 } = useTheme2024();
 
+  const [shouldHideSelectorPopup, setShouldHideSelectorPopup] = useAtom(
+    shouldHideSelectorPopupAtom,
+  );
+  const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
   const [isUp, setIsUp] = useState(true);
   const {
@@ -603,13 +612,40 @@ export const TokenDetailScreen = () => {
     );
   }, [token, triggerUpdate, isSingleAddress, refreshTag, unHold]);
 
+  const handleBackPress = useCallback(() => {
+    setShouldHideSelectorPopup(false);
+    setIsFromBack(true);
+    navigation.goBack();
+  }, [navigation, setShouldHideSelectorPopup, setIsFromBack]);
+
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
       headerRight: getHeaderRight,
       headerTitleAlign: 'left',
+      headerLeft: () => (
+        <CustomTouchableOpacity
+          style={styles.backButtonStyle}
+          hitSlop={24}
+          onPress={handleBackPress}>
+          <RcIconHeaderBack
+            width={24}
+            height={24}
+            color={colors2024['neutral-title-1']}
+          />
+        </CustomTouchableOpacity>
+      ),
     });
-  }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
+  }, [
+    setNavigationOptions,
+    setIsFromBack,
+    getHeaderRight,
+    getHeaderTitle,
+    unHold,
+    colors2024,
+    handleBackPress,
+    styles.backButtonStyle,
+  ]);
 
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
@@ -636,7 +672,9 @@ export const TokenDetailScreen = () => {
             ) || finalAccount
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
-      setForceSelect(true);
+      // 关闭弹窗隐藏
+      setShouldHideSelectorPopup(false);
+      setIsFromBack(false);
       navigation.push(RootNames.StackTransaction, {
         screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
         params: {
@@ -912,6 +950,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['red-light-1'],
       borderRadius: 8,
       // marginTop: 12,
+    },
+    backButtonStyle: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      marginLeft: -16,
+      paddingLeft: 16,
     },
     tokenRowContent: {
       flexDirection: 'row',
