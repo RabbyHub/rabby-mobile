@@ -180,9 +180,10 @@ function History({
       // fetch data from local database
 
       // judge if is need
-      // if (dbFetchLoadingRef.current) {
-      //   return [];
-      // }
+      if (dbFetchLoadingRef.current) {
+        console.warn('loading multi time , pls check what happened');
+        return [];
+      }
       dbFetchLoadingRef.current = true;
       const addresses = isSceneUsingAllAccounts
         ? top10Addresses.map(i => i.toLowerCase())
@@ -325,7 +326,7 @@ function History({
       if (accountList.length > 0) {
         await waitQueueFinished(queue);
       }
-      return { list: list };
+      return { list: orderBy(list, 'time_at', 'desc') };
     }
   });
 
@@ -535,6 +536,7 @@ function History({
     onSuccess() {
       runFetchLocalTx();
     },
+    reloadDeps: [batchFetchData],
   });
 
   const throttleBatchFetchData = useMemo(
@@ -584,6 +586,7 @@ function History({
 
   const displayList = useMemo(() => {
     const dataList = isNeedFetchFromApi ? fetchApiData : { list: dbData };
+
     return (
       dataList?.list.filter(tx => {
         // based on tx type
@@ -737,6 +740,8 @@ function History({
           isForMultipleAddress={isForMultipleAddress}
           loadMore={() => {
             console.log('load more');
+            // avoid exec multi times loadMore
+            dbHasMoreRef.current = false;
             loadMore();
           }}
           onRefresh={refresh}
