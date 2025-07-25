@@ -86,7 +86,10 @@ import { isScamTokenForSelect } from '@/screens/Home/utils/collection';
 import { SCAM_TOKEN_HAEDER_ID, SCAM_TOKEN_HEADER_DATA } from './constant';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { NextSearchBar } from '@/components2024/SearchBar';
-import { shouldHideSelectorPopupAtom } from '@/screens/Swap/hooks/atom';
+import {
+  forceSelectCloseAtom,
+  shouldHideSelectorPopupAtom,
+} from '@/screens/Swap/hooks/atom';
 import { useAtom } from 'jotai';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -222,6 +225,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const [shouldHideSelectorPopup, setShouldHideSelectorPopup] = useAtom(
       shouldHideSelectorPopupAtom,
     );
+    const [forceSelect, setForceSelect] = useAtom(forceSelectCloseAtom);
     const [fold, setFold] = useState(true);
     const [isScamFold, setIsScamFold] = useState(true);
 
@@ -300,18 +304,26 @@ export const TokenSelectorSheetModal = React.forwardRef<
       visible &&
       isFocused
     ) {
+      console.log('DEBUG: toggleShowSheetModal destroy');
       toggleShowSheetModal('destroy');
     }
     const shouldHideModal = shouldHideSelectorPopup;
     useEffect(() => {
-      if (shouldHideSelectorPopup && isFocused) {
+      if (shouldHideSelectorPopup && isFocused && !forceSelect) {
         const timer = setTimeout(() => {
           setShouldHideSelectorPopup(false);
+          setForceSelect(false);
         }, 0);
 
         return () => clearTimeout(timer);
       }
-    }, [shouldHideSelectorPopup, isFocused, setShouldHideSelectorPopup]);
+    }, [
+      shouldHideSelectorPopup,
+      isFocused,
+      forceSelect,
+      setShouldHideSelectorPopup,
+      setForceSelect,
+    ]);
 
     const { chainItem, chainSearchCtx } = useMemo(() => {
       const chain = !chainServerId ? null : findChainByServerID(chainServerId);

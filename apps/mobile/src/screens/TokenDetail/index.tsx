@@ -64,6 +64,8 @@ import { useTokenDetail } from './hook';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { forceSelectCloseAtom } from '../Swap/hooks';
+import { useAtom } from 'jotai';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -95,7 +97,6 @@ export const RightMore: React.FC<{
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
   const { colors2024 } = useTheme2024();
-
   const menuActions = React.useMemo(() => {
     return [
       {
@@ -173,7 +174,6 @@ export const RightMore: React.FC<{
       },
     ] as MenuAction[];
   }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
-
   const {
     removePinedToken,
     pinToken,
@@ -288,6 +288,7 @@ export const TokenDetailScreen = () => {
   const { styles, isLight } = useTheme2024({
     getStyle,
   });
+  const [_, setForceSelect] = useAtom(forceSelectCloseAtom);
 
   const { safeOffHeader } = useSafeSizes();
   const [isUp, setIsUp] = useState(true);
@@ -635,7 +636,7 @@ export const TokenDetailScreen = () => {
             ) || finalAccount
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
-
+      setForceSelect(true);
       navigation.push(RootNames.StackTransaction, {
         screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
         params: {
