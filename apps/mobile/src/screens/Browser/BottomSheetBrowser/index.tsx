@@ -93,7 +93,7 @@ export const BottomSheetBrowser = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowBrowser ? 0 : -1}
-      enableContentPanningGesture={Platform.OS === 'ios'}
+      enableContentPanningGesture={false}
       enablePanDownToClose
       enableHandlePanningGesture
       name="urlWebviewContainerRef"
