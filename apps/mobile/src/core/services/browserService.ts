@@ -38,6 +38,7 @@ export type Tab = {
   openTime: number;
   viewShot?: string;
   isTerminate?: boolean;
+  isDapp?: boolean;
 };
 
 export const emptyTab: Tab = {

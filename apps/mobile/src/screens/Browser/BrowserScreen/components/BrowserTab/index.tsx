@@ -55,7 +55,7 @@ import { BrowserHeader } from './BrowserHeader';
 import { BrowserProgressBar } from './BrowserProgressBar';
 import { BrowserSearchAutoComplete } from './BrowserSearchAutoComplete';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { emptyTab } from '@/core/services/browserService';
+import { emptyTab, Tab } from '@/core/services/browserService';
 import { coerceInteger } from '@/utils/number';
 import { isValidAppStoreUrl } from '@/utils/browser';
 import { isNonPublicProductionEnv } from '@/constant/env';
@@ -76,14 +76,7 @@ type BrowserTabProps = {
   isActive?: boolean;
   onSelfClose?: (reason: 'phishing') => void;
   tabsCount?: number;
-  onUpdateTab?: (params: {
-    initialUrl?: string;
-    url?: string;
-    viewShot?: string;
-    name?: string;
-    isTerminate?: boolean;
-    openTime?: number;
-  }) => void;
+  onUpdateTab?: (params: Partial<Tab>) => void;
   onOpenTab?(url: string): void;
   onUpdateHistory?: (params: { url: string; name?: string }) => void;
   onCloseTab?(url: string): void;
@@ -400,14 +393,19 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       [handleGoTo, origin, webviewIdRef, webviewState, webviewActions, tabId],
     );
 
+    const handleUpdateTab = useMemoizedFn((params: Partial<Tab>) => {
+      return onUpdateTab?.(params);
+    });
+
     useEffect(() => {
       if (!isActive && !isEmptyTab) {
-        onUpdateTab?.({
+        console.log('useEffect');
+        handleUpdateTab?.({
           initialUrl: urlRef.current ? urlRef.current : undefined,
           openTime: Date.now(),
         });
         const id = setTimeout(() => {
-          onUpdateTab?.({
+          handleUpdateTab?.({
             initialUrl: urlRef.current ? urlRef.current : undefined,
             isTerminate: true,
           });
@@ -417,8 +415,15 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           clearTimeout(id);
         };
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isActive, isEmptyTab, urlRef]);
+    }, [handleUpdateTab, isActive, isEmptyTab, urlRef]);
+
+    useEffect(() => {
+      if (dappInfo?.isDapp) {
+        handleUpdateTab({
+          isDapp: true,
+        });
+      }
+    }, [dappInfo?.isDapp, handleUpdateTab]);
 
     // useFocusEffect(
     //   React.useCallback(() => {

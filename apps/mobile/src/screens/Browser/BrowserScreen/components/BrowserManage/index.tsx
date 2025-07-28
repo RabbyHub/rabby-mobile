@@ -276,7 +276,9 @@ export function BrowserManage(): JSX.Element {
             });
           }}
           onOpenURL={url => {
-            openTab(url);
+            openTab(url, {
+              isDapp: true,
+            });
           }}
         />
       ) : null}

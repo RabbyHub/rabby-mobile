@@ -44,11 +44,9 @@ const MAX_ACTIVE_TABS_COUNT = 4;
 
 const displayedTabsAtom = atom(get => {
   const store = get(tabsAtom);
-  const dapps = get(dappsAtom);
 
   return store.tabs.filter(item => {
-    const origin = safeGetOrigin(item.url || item.initialUrl);
-    return dapps[origin]?.isDapp;
+    return item.isDapp;
   });
 });
 
@@ -141,11 +139,7 @@ export function useBrowser() {
     setTimeout(() => {
       setStore(prev => {
         const tabs = sortBy(
-          prev.tabs.filter(
-            tab =>
-              dappService.getDapp(safeGetOrigin(tab.url || tab.initialUrl))
-                ?.isDapp,
-          ),
+          prev.tabs.filter(tab => tab.isDapp),
           tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
         );
 
@@ -204,41 +198,49 @@ export function useBrowser() {
     },
   );
 
-  const openTab = useMemoizedFn((url?: string) => {
-    if (!url || !/^https?:\/\//.test(url)) {
-      // switchToTab(emptyTab.id);
-      return;
-    }
-    const newTab: Tab = {
-      url,
-      initialUrl: url,
-      id: uuid(),
-      openTime: Date.now(),
-    };
+  const openTab = useMemoizedFn(
+    (
+      url: string,
+      options?: {
+        isDapp?: boolean;
+      },
+    ) => {
+      if (!url || !/^https?:\/\//.test(url)) {
+        // switchToTab(emptyTab.id);
+        return;
+      }
+      const newTab: Tab = {
+        url,
+        initialUrl: url,
+        id: uuid(),
+        openTime: Date.now(),
+        ...options,
+      };
 
-    const { httpOrigin: targetOrigin, urlInfo } = canoicalizeDappUrl(
-      newTab.url,
-    );
+      const { httpOrigin: targetOrigin, urlInfo } = canoicalizeDappUrl(
+        newTab.url,
+      );
 
-    if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) {
-      return false;
-    }
+      if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) {
+        return false;
+      }
 
-    setPartialBrowserState({
-      isShowBrowser: true,
-      isShowSearch: false,
-      isShowManage: false,
-    });
+      setPartialBrowserState({
+        isShowBrowser: true,
+        isShowSearch: false,
+        isShowManage: false,
+      });
 
-    updateBrowserTabs({
-      tabs: [...store.tabs, newTab],
-      activeTabId: newTab.id,
-    });
+      updateBrowserTabs({
+        tabs: [...store.tabs, newTab],
+        activeTabId: newTab.id,
+      });
 
-    terminateTabs();
+      terminateTabs();
 
-    return true;
-  });
+      return true;
+    },
+  );
 
   const forceShowBrowser = useMemoizedFn(() => {
     eventBus.emit(EVENT_SHOW_BROWSER, true);
@@ -257,10 +259,7 @@ export function useBrowser() {
 
   const onHideBrowser = useMemoizedFn(() => {
     setStore(pre => {
-      const tabs = pre.tabs.filter(
-        tab =>
-          dappService.getDapp(safeGetOrigin(tab.url || tab.initialUrl))?.isDapp,
-      );
+      const tabs = pre.tabs.filter(tab => tab.isDapp);
       const activeTabId = tabs.find(tab => tab.id === pre.activeTabId)
         ? pre.activeTabId
         : last(tabs)?.id || '';
