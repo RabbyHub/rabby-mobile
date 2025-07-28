@@ -189,7 +189,6 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
             if (shouldClose || !browserService.getBrowserTabs()?.tabs?.length) {
               setPartialBrowserState({
                 isShowBrowser: false,
-                isShowSearch: false,
                 searchText: '',
                 searchTabId: '',
               });
@@ -200,17 +199,8 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
                 searchTabId: '',
               });
             }
-            // console.log('onClose');
-            // setVisibleState(prev => ({
-            //   ...prev,
-            //   isShowSearch: false,
-            // }));
-            // setSearchState(prev => ({
-            //   ..
-            // }))
           }}
           onOpenURL={url => {
-            console.log(activeDappWebViewControlRef?.current?.getTabId());
             if (
               browserState.searchTabId &&
               activeDappWebViewControlRef?.current?.getTabId() ===

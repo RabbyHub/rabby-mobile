@@ -1,4 +1,3 @@
-import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
 import { DappInfo } from '@/core/services/dappService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
@@ -6,23 +5,17 @@ import { useTheme2024 } from '@/hooks/theme';
 import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import { BrowserBookmarkEmpty } from './BrowserBookmarkEmpty';
 
 export const BrowserBookmarkList = ({
   style,
-  onNewTab,
+  isShowDelete,
 }: {
   style?: StyleProp<ViewStyle>;
-  onNewTab?(): void;
+  isShowDelete?: boolean;
 }) => {
   const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
   const { openTab, setPartialBrowserState } = useBrowser();
@@ -49,8 +42,6 @@ export const BrowserBookmarkList = ({
 
   const { t } = useTranslation();
 
-  const [isShowDelete, setIsShowDelete] = useState(false);
-
   return (
     <View style={[styles.container, style]}>
       <BrowserSiteCardList
@@ -62,51 +53,6 @@ export const BrowserBookmarkList = ({
         isShowDelete={isShowDelete}
         onDeletePress={handleDeletePress}
       />
-      <View
-        // eslint-disable-next-line react-native/no-inline-styles
-        style={{
-          ...styles.bottomArea,
-          borderColor: isLight
-            ? 'rgba(0, 0, 0, 0.06)'
-            : 'rgba(255, 255, 255, 0.06)',
-        }}>
-        <TouchableOpacity
-          onPress={() => {
-            setIsShowDelete(prev => !prev);
-          }}>
-          <Text style={styles.bottomText}>
-            {isShowDelete ? t('global.cancel') : t('global.Edit')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={onNewTab}
-          // onPress={() => {
-          //   setPartialBrowserState({
-          //     isShowBrowser: true,
-          //     isShowManage: false,
-          //     isShowSearch: true,
-          //     searchText: '',
-          //     searchTabId: '',
-          //   });
-          // }}
-        >
-          <RcIconAddPlusCircle
-            width={44}
-            height={44}
-            color={colors2024['neutral-foot']}
-            borderColor={colors2024['neutral-line']}
-            backgroundColor={colors2024['neutral-bg-1']}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            setPartialBrowserState({
-              isShowManage: false,
-            });
-          }}>
-          <Text style={styles.bottomText}>{t('global.Done')}</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };

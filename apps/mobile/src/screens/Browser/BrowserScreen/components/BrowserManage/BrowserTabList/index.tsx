@@ -1,33 +1,17 @@
-import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
+import { Tab } from '@/core/services/browserService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn, useMount } from 'ahooks';
 import { useTranslation } from 'react-i18next';
-import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
-import {
-  ListRenderItem,
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { ListRenderItem, StyleProp, View, ViewStyle } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { BrowserTabCard } from './BrowserTabCard';
-import { Tab } from '@/core/services/browserService';
 // import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useRef } from 'react';
 import { BrowserTabEmpty } from './BrowserTabEmpty';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
-export const BrowserTabList = ({
-  style,
-  onNewTab,
-}: {
-  style?: StyleProp<ViewStyle>;
-  onNewTab?(): void;
-}) => {
+export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
@@ -36,8 +20,6 @@ export const BrowserTabList = ({
     activeTabId,
     switchToTab,
     closeTab,
-    openTab,
-    closeAllTabs,
     setPartialBrowserState,
   } = useBrowser();
   const { t } = useTranslation();
@@ -110,69 +92,6 @@ export const BrowserTabList = ({
         }
         ListEmptyComponent={BrowserTabEmpty}
       />
-      <View
-        // eslint-disable-next-line react-native/no-inline-styles
-        style={{
-          ...styles.bottomArea,
-          borderColor: isLight
-            ? 'rgba(0, 0, 0, 0.06)'
-            : 'rgba(255, 255, 255, 0.06)',
-        }}>
-        <DropDownMenuView
-          triggerProps={{ action: 'press' }}
-          menuConfig={{
-            menuActions: [
-              {
-                title: t('page.browserManage.BrowserTabList.closeAllTabs'),
-                key: 'close_all_tabs',
-                icon: isLight
-                  ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear.png')
-                  : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear_dark.png'),
-                androidIconName: isLight
-                  ? 'ic_rabby_menu_clear'
-                  : 'ic_rabby_menu_clear_dark',
-                action: () => {
-                  closeAllTabs();
-                  setPartialBrowserState({
-                    isShowBrowser: false,
-                  });
-                },
-              },
-            ],
-          }}>
-          <TouchableOpacity>
-            <Text style={styles.bottomText}>{t('global.Edit')}</Text>
-          </TouchableOpacity>
-        </DropDownMenuView>
-        <TouchableOpacity
-          onPress={onNewTab}
-          // onPress={() => {
-          //   setPartialBrowserState({
-          //     isShowBrowser: true,
-          //     isShowManage: false,
-          //     isShowSearch: true,
-          //     searchText: '',
-          //     searchTabId: '',
-          //   });
-          // }}
-        >
-          <RcIconAddPlusCircle
-            width={44}
-            height={44}
-            color={colors2024['neutral-foot']}
-            borderColor={colors2024['neutral-line']}
-            backgroundColor={colors2024['neutral-bg-1']}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            setPartialBrowserState({
-              isShowManage: false,
-            });
-          }}>
-          <Text style={styles.bottomText}>{t('global.Done')}</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
@@ -181,7 +100,6 @@ const ItemSeparatorComponent = () => <View style={{ height: 12 }} />;
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    paddingTop: 5,
     gap: 12,
     position: 'relative',
     height: '100%',
@@ -194,23 +112,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   tabList: {
     paddingHorizontal: 14,
-  },
-  bottomArea: {
-    paddingVertical: 6,
-    paddingHorizontal: 35,
-    paddingBottom: 30,
-    borderTopWidth: 1,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  bottomText: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    color: colors2024['neutral-title-1'],
-    fontWeight: '700',
-    lineHeight: 24,
   },
 }));

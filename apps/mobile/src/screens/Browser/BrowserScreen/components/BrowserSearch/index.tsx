@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useTransition } from 'react';
-import { Keyboard, StyleProp, View, ViewStyle } from 'react-native';
+import { Keyboard, Platform, StyleProp, View, ViewStyle } from 'react-native';
 
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -11,6 +11,7 @@ import { parse } from 'tldts';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTranslation } from 'react-i18next';
 import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
+import { useMemoizedFn } from 'ahooks';
 
 export function BrowserSearch({
   onClose,
@@ -50,6 +51,28 @@ export function BrowserSearch({
 
   const isOpenURLRef = useRef(false);
 
+  const waitKeyboardHide = useMemoizedFn(async () => {
+    if (!Keyboard.isVisible()) {
+      return;
+    }
+    return new Promise((resolve, reject) => {
+      const keyboardHideListener =
+        Platform.OS === 'android'
+          ? Keyboard.addListener('keyboardDidHide', () => {
+              setTimeout(() => {
+                resolve(true);
+              }, 60);
+              keyboardHideListener.remove();
+            })
+          : Keyboard.addListener('keyboardWillHide', () => {
+              setTimeout(() => {
+                resolve(true);
+              }, 350);
+              keyboardHideListener.remove();
+            });
+    });
+  });
+
   return (
     <View
       style={[
@@ -77,12 +100,11 @@ export function BrowserSearch({
           <BrowserRecent
             isInBottomSheet
             list={displayedBrowserHistoryList}
-            onPress={dapp => {
+            onPress={async dapp => {
               Keyboard.dismiss();
               isOpenURLRef.current = true;
-              setTimeout(() => {
-                onOpenURL?.(dapp.url || dapp.origin);
-              }, 200);
+              await waitKeyboardHide();
+              onOpenURL?.(dapp.url || dapp.origin);
             }}
           />
         )
@@ -92,12 +114,11 @@ export function BrowserSearch({
           searchText={searchText}
           data={list || []}
           isValidDomain={!!isValidDomain}
-          onOpenURL={url => {
+          onOpenURL={async url => {
             Keyboard.dismiss();
             isOpenURLRef.current = true;
-            setTimeout(() => {
-              onOpenURL?.(url);
-            }, 200);
+            await waitKeyboardHide();
+            onOpenURL?.(url);
           }}
         />
       )}
@@ -107,19 +128,15 @@ export function BrowserSearch({
           as="BottomSheetTextInput"
           value={searchText}
           onChangeText={setSearchText}
-          onCancel={() => {
+          onCancel={async () => {
             Keyboard.dismiss();
-            setTimeout(() => {
-              // onClose?.(isTransparent && !searchText);
-              onClose?.(trigger === 'home' && !isOpenURLRef.current);
-            }, 200);
+            await waitKeyboardHide();
+            onClose?.(trigger === 'home' && !isOpenURLRef.current);
           }}
-          onBlur={() => {
+          onBlur={async () => {
             Keyboard.dismiss();
-            setTimeout(() => {
-              // onClose?.(isTransparent && !searchText);
-              onClose?.(trigger === 'home' && !isOpenURLRef.current);
-            }, 200);
+            await waitKeyboardHide();
+            onClose?.(trigger === 'home' && !isOpenURLRef.current);
           }}
           onSubmitEditing={() => {
             if (!searchText) {

@@ -3,16 +3,21 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { BrowserBookmarkList } from './BrowserBookmarkList';
 import { BrowserHistoryList } from './BrowserHistoryList';
 import { BrowserTabList } from './BrowserTabList';
 import { BrowserSearch } from '../BrowserSearch';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useMemoizedFn } from 'ahooks';
+import { TabBarProps, Tabs } from 'react-native-collapsible-tab-view';
+import { TabName } from 'react-native-collapsible-tab-view/lib/typescript/src/types';
+import { DropDownMenuView } from '@/components2024/DropDownMenu';
+import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 
 export function BrowserManage(): JSX.Element {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
 
@@ -21,10 +26,16 @@ export function BrowserManage(): JSX.Element {
     searchText: '',
   });
 
-  const { openTab } = useBrowser();
+  const { openTab, setPartialBrowserState, closeAllTabs } = useBrowser();
+  const { removeAllBrowserHistory } = useBrowserHistory();
 
   const [activeTab, setActiveTab] = useState('tab');
   const { t } = useTranslation();
+  const [isShowDelete, setIsShowDelete] = useState(false);
+
+  const renderTabBar = useMemoizedFn((props: TabBarProps<TabName>) => {
+    return null;
+  });
 
   const options = useMemo(() => {
     return [
@@ -73,19 +84,175 @@ export function BrowserManage(): JSX.Element {
           />
         </View>
       </View>
+
+      <Tabs.Container
+        ref={tabRef}
+        renderTabBar={renderTabBar}
+        headerHeight={0}
+        initialTabName={activeTab}
+        revealHeaderOnScroll={false}
+        tabBarHeight={90}
+        onTabChange={data => {
+          console.log('onTabchange', data);
+          setActiveTab(data.tabName);
+        }}>
+        <Tabs.Tab name="tab" label={'Tab'}>
+          <View style={styles.tabList}>
+            <BrowserTabList />
+          </View>
+        </Tabs.Tab>
+        <Tabs.Tab name="history" label={'History'}>
+          <View style={styles.historyList}>
+            <BrowserHistoryList />
+          </View>
+        </Tabs.Tab>
+        <Tabs.Tab name="favorites" label={'Favorites'}>
+          <View style={styles.favoritesList}>
+            <BrowserBookmarkList isShowDelete={isShowDelete} />
+          </View>
+        </Tabs.Tab>
+      </Tabs.Container>
       {activeTab === 'tab' ? (
-        <View style={styles.tabList}>
-          <BrowserTabList onNewTab={handleNewTab} />
+        <View
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{
+            ...styles.bottomArea,
+            borderColor: isLight
+              ? 'rgba(0, 0, 0, 0.06)'
+              : 'rgba(255, 255, 255, 0.06)',
+          }}>
+          <DropDownMenuView
+            triggerProps={{ action: 'press' }}
+            menuConfig={{
+              menuActions: [
+                {
+                  title: t('page.browserManage.BrowserTabList.closeAllTabs'),
+                  key: 'close_all_tabs',
+                  icon: isLight
+                    ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear.png')
+                    : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear_dark.png'),
+                  androidIconName: isLight
+                    ? 'ic_rabby_menu_clear'
+                    : 'ic_rabby_menu_clear_dark',
+                  action: () => {
+                    closeAllTabs();
+                    setPartialBrowserState({
+                      isShowBrowser: false,
+                    });
+                  },
+                },
+              ],
+            }}>
+            <TouchableOpacity>
+              <Text style={styles.bottomText}>{t('global.Edit')}</Text>
+            </TouchableOpacity>
+          </DropDownMenuView>
+          <TouchableOpacity onPress={handleNewTab}>
+            <RcIconAddPlusCircle
+              width={44}
+              height={44}
+              color={colors2024['neutral-foot']}
+              borderColor={colors2024['neutral-line']}
+              backgroundColor={colors2024['neutral-bg-1']}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setPartialBrowserState({
+                isShowManage: false,
+              });
+            }}>
+            <Text style={styles.bottomText}>{t('global.Done')}</Text>
+          </TouchableOpacity>
         </View>
       ) : null}
       {activeTab === 'history' ? (
-        <View style={styles.historyList}>
-          <BrowserHistoryList onNewTab={handleNewTab} />
+        <View
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{
+            ...styles.bottomArea,
+            borderColor: isLight
+              ? 'rgba(0, 0, 0, 0.06)'
+              : 'rgba(255, 255, 255, 0.06)',
+          }}>
+          <DropDownMenuView
+            triggerProps={{ action: 'press' }}
+            menuConfig={{
+              menuActions: [
+                {
+                  title: t(
+                    'page.browserManage.BrowserHistoryList.clearAllHistory',
+                  ),
+                  key: 'close_all_tabs',
+                  icon: isLight
+                    ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear.png')
+                    : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_clear_dark.png'),
+                  androidIconName: isLight
+                    ? 'ic_rabby_menu_clear'
+                    : 'ic_rabby_menu_clear_dark',
+                  action: () => {
+                    removeAllBrowserHistory();
+                  },
+                },
+              ],
+            }}>
+            <TouchableOpacity>
+              <Text style={styles.bottomText}>{t('global.Edit')}</Text>
+            </TouchableOpacity>
+          </DropDownMenuView>
+          <TouchableOpacity onPress={handleNewTab}>
+            <RcIconAddPlusCircle
+              width={44}
+              height={44}
+              color={colors2024['neutral-foot']}
+              borderColor={colors2024['neutral-line']}
+              backgroundColor={colors2024['neutral-bg-1']}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setPartialBrowserState({
+                isShowManage: false,
+              });
+            }}>
+            <Text style={styles.bottomText}>{t('global.Done')}</Text>
+          </TouchableOpacity>
         </View>
       ) : null}
       {activeTab === 'favorites' ? (
-        <View style={styles.favoritesList}>
-          <BrowserBookmarkList onNewTab={handleNewTab} />
+        <View
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{
+            ...styles.bottomArea,
+            borderColor: isLight
+              ? 'rgba(0, 0, 0, 0.06)'
+              : 'rgba(255, 255, 255, 0.06)',
+          }}>
+          <TouchableOpacity
+            onPress={() => {
+              setIsShowDelete(prev => !prev);
+            }}>
+            <Text style={styles.bottomText}>
+              {isShowDelete ? t('global.cancel') : t('global.Edit')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleNewTab}>
+            <RcIconAddPlusCircle
+              width={44}
+              height={44}
+              color={colors2024['neutral-foot']}
+              borderColor={colors2024['neutral-line']}
+              backgroundColor={colors2024['neutral-bg-1']}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setPartialBrowserState({
+                isShowManage: false,
+              });
+            }}>
+            <Text style={styles.bottomText}>{t('global.Done')}</Text>
+          </TouchableOpacity>
         </View>
       ) : null}
       {searchState.isShowSearch ? (
@@ -186,5 +353,23 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   favoritesList: {
     paddingTop: 12,
     flex: 1,
+  },
+  bottomArea: {
+    paddingVertical: 6,
+    paddingHorizontal: 35,
+    paddingBottom: 30,
+    borderTopWidth: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  bottomText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
+    lineHeight: 24,
   },
 }));
