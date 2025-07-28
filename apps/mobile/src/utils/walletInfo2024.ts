@@ -22,19 +22,19 @@ export const getWalletAvator2024 = (
   if (brandName === KEYRING_CLASS.GNOSIS) {
     return SafePNG;
   }
-  if (brandName === KEYRING_CLASS.WATCH) {
-    return watchAvator;
-  }
-  if (address) {
-    const cacheAvatar = preferenceService.getAddressAvatar(address);
-    if (cacheAvatar) {
-      return { uri: cacheAvatar };
-    }
-    const avatar = blockies(address);
-    preferenceService.addAddressAvatar(address, avatar);
-    return { uri: avatar };
-  }
-  return undefined;
+  return watchAvator;
+  // if (brandName === KEYRING_CLASS.WATCH) {
+  // }
+  // if (address) {
+  //   const cacheAvatar = preferenceService.getAddressAvatar(address);
+  //   if (cacheAvatar) {
+  //     return { uri: cacheAvatar };
+  //   }
+  //   const avatar = blockies(address);
+  //   preferenceService.addAddressAvatar(address, avatar);
+  //   return { uri: avatar };
+  // }
+  // return undefined;
 };
 
 export const getWalletIcon2024 = (

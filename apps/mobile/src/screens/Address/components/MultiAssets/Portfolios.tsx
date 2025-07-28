@@ -585,42 +585,42 @@ export const Portfolios = () => {
     inited.current = false;
   }, [top10Addresses.length]);
 
-  useEffect(() => {
-    if (!isFocused) {
-      return;
-    }
-    const id = setTimeout(() => {
-      if (inited.current) {
-        return;
-      }
-      inited.current = true;
-      checkIsExpireAndUpdate(false, {
-        disableNFT: true,
-        realTimeAddresses: top10Addresses,
-        ignoreLoading: !top10Balance,
-      });
-    }, 200);
-    return () => {
-      id && clearTimeout(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, top10Addresses.length]);
+  // useEffect(() => {
+  //   if (!isFocused) {
+  //     return;
+  //   }
+  //   const id = setTimeout(() => {
+  //     if (inited.current) {
+  //       return;
+  //     }
+  //     inited.current = true;
+  //     checkIsExpireAndUpdate(false, {
+  //       disableNFT: true,
+  //       realTimeAddresses: top10Addresses,
+  //       ignoreLoading: !top10Balance,
+  //     });
+  //   }, 200);
+  //   return () => {
+  //     id && clearTimeout(id);
+  //   };
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [isFocused, top10Addresses.length]);
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (!isListVisable) {
-        return;
-      }
-      getCacheTop10Assets({
-        disableNFT: true,
-        realTimeAddresses: top10Addresses,
-      });
-    }, 100);
-    return () => {
-      id && clearTimeout(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10Addresses.length, isListVisable]);
+  // useEffect(() => {
+  //   const id = setTimeout(() => {
+  //     if (!isListVisable) {
+  //       return;
+  //     }
+  //     getCacheTop10Assets({
+  //       disableNFT: true,
+  //       realTimeAddresses: top10Addresses,
+  //     });
+  //   }, 100);
+  //   return () => {
+  //     id && clearTimeout(id);
+  //   };
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [top10Addresses.length, isListVisable]);
 
   const getItemType = useCallback((item: ActionItem) => {
     if (item.type === 'empty-token') {
@@ -694,12 +694,12 @@ export const Portfolios = () => {
     }
   }, [checkIsExpireAndUpdate, refreshCurve, triggerUpdate]);
 
-  useEffect(() => {
-    if (triggerRefresh) {
-      onRefresh();
-      setTriggerRefresh(false);
-    }
-  }, [isFocused, onRefresh, setTriggerRefresh, triggerRefresh]);
+  // useEffect(() => {
+  //   if (triggerRefresh) {
+  //     onRefresh();
+  //     setTriggerRefresh(false);
+  //   }
+  // }, [isFocused, onRefresh, setTriggerRefresh, triggerRefresh]);
 
   return (
     <Tabs.FlashList
