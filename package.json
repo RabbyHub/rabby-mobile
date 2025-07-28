@@ -132,7 +132,7 @@
   },
   "packageManager": "yarn@3.3.0",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=22"
   },
   "lavamoat": {
     "allowScripts": {

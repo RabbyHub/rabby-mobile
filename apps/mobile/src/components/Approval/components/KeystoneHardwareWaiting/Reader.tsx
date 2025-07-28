@@ -21,12 +21,11 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     root: {
       position: 'relative',
-      flex: 1,
     },
     qrCode: {
+      marginTop: 20,
       alignItems: 'center',
       justifyContent: 'center',
-      flex: 1,
     },
     scanner: {
       width: 200,
