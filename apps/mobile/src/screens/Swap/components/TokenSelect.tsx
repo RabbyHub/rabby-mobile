@@ -119,11 +119,37 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
     const [updateNonce, setUpdateNonce] = useState(0);
     const [_, setLongPressToken] = useLongPressTokenAtom();
+    // 添加搜索状态管理，避免重复搜索
+    const lastSearchRef = useRef<string>('');
+    const isInitialLoadRef = useRef<boolean>(false);
     const queryConds = useDebounceValue(_queryConds, 250);
     // settimoutout ref
     const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const currentAccount = queryConds.account;
+
+    // 避免重复搜索，只在必要时调用useSelectTokens
+    const shouldFetchTokens = useMemo(() => {
+      // 如果弹窗未打开，不获取数据
+      if (!tokenSelectorVisible) {
+        return false;
+      }
+
+      // 如果是首次加载，需要获取数据
+      if (!isInitialLoadRef.current) {
+        isInitialLoadRef.current = true;
+        return true;
+      }
+
+      // 如果搜索关键词变化，需要重新获取
+      if (lastSearchRef.current !== queryConds.keyword) {
+        lastSearchRef.current = queryConds.keyword || '';
+        return true;
+      }
+
+      return false;
+    }, [tokenSelectorVisible, queryConds.keyword]);
+
     const {
       tokens,
       getCacheTop10Tokens,
@@ -133,7 +159,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       isLoading: isLoadingAllTokens,
     } = useSelectTokens({
       currentAccount,
-      visible: tokenSelectorVisible,
+      visible: shouldFetchTokens,
       keyword: queryConds.keyword,
       chain_server_id: queryConds.chainServerId,
       type: type,
@@ -181,7 +207,13 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         }
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tokenSelectorVisible, currentAccount?.address, useSwapTokenList]);
+    }, [
+      tokenSelectorVisible,
+      currentAccount?.address,
+      useSwapTokenList,
+      queryConds.keyword,
+      tokens.length,
+    ]);
 
     // swap token list
     const { value: swapTokenList, loading: swapTokenListLoading } =
@@ -312,18 +344,21 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']
     >(
       async ctx => {
-        setQueryConds(prev => ({
-          ...prev,
+        const newQueryConds = {
           ...(typeof ctx === 'string'
             ? { keyword: ctx }
             : {
                 account: ctx.filterAccountItem ?? null,
                 keyword: ctx.keyword,
-                chainServerId: ctx.chainServerId ?? prev.chainServerId,
+                chainServerId: ctx.chainServerId ?? queryConds.chainServerId,
               }),
+        };
+        setQueryConds(prev => ({
+          ...prev,
+          ...newQueryConds,
         }));
       },
-      [setQueryConds],
+      [setQueryConds, queryConds.chainServerId],
     );
 
     const handleCurrentTokenChange = useCallback<
@@ -341,29 +376,36 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       //FIXME: snap to close will retrigger render
       setTimeout(() => {
         setTokenSelectorVisible(false);
+        // 关闭弹窗时重置搜索状态
+        isInitialLoadRef.current = false;
+        lastSearchRef.current = '';
       }, 0);
     }, []);
 
     const handleSelectToken = useCallback(() => {
-      // 先设置好搜索项
-      setQueryConds(prev => ({
-        ...prev,
-        account: accountInScreen,
-        chainServerId: chainId,
-      }));
-      // 再异步打开弹窗，确保 queryConds 已经是最新
-      setTimeout(() => {
-        setTokenSelectorVisible(true);
-      }, 0);
+      // 避免重复设置，只在需要时更新
+      setQueryConds(prev => {
+        const needsUpdate =
+          prev.account !== accountInScreen || prev.chainServerId !== chainId;
+        if (!needsUpdate) {
+          return prev;
+        }
+        return {
+          ...prev,
+          account: accountInScreen,
+          chainServerId: chainId,
+        };
+      });
+      setTokenSelectorVisible(true);
     }, [accountInScreen, chainId]);
 
     useEffect(() => {
-      setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
-    }, [chainId]);
-
-    useLayoutEffect(() => {
-      setQueryConds(prev => ({ ...prev, account: accountInScreen }));
-    }, [accountInScreen]);
+      setQueryConds(prev => ({
+        ...prev,
+        chainServerId: chainId,
+        account: accountInScreen,
+      }));
+    }, [chainId, accountInScreen]);
 
     const { t } = useTranslation();
     const { styles } = useTheme2024({ getStyle });
