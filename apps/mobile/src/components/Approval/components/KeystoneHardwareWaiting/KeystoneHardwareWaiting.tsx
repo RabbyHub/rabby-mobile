@@ -57,9 +57,6 @@ interface ApprovalParams {
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
-    root: {
-      flex: 1,
-    },
     brandIcon: {
       width: 20,
       height: 20,
@@ -90,8 +87,8 @@ const getStyles = (colors: AppColorsVariants) =>
       marginTop: 30,
     },
     payloadEmptyContainer: {
-      width: '100%',
-      height: '100%',
+      width: 440,
+      height: 440,
       marginBottom: -100,
     },
   });
@@ -324,7 +321,7 @@ export const KeystoneHardwareWaiting = ({
   );
 
   return (
-    <View style={styles.root}>
+    <View>
       <View style={styles.titleWrapper}>
         <KeystoneSVG width={20} height={20} style={styles.brandIcon} />
         <Text style={styles.title}>

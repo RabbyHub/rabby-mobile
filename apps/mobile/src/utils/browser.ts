@@ -198,6 +198,8 @@ const googleDomainList = [
 ];
 
 function shouldHidePort(port: string | number): boolean {
+  if (!port) return true;
+
   const portStr = String(port);
   return portStr === '80' || portStr === '443';
 }

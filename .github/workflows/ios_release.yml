@@ -48,7 +48,7 @@ jobs:
       # - name: Setup Nodejs and Yarn
       #   uses: actions/setup-node@v3
       #   with:
-      #     node-version: 18
+      #     node-version: 22
 
       # - name: Setup Ruby & Fastlane
       #   uses: ruby/setup-ruby@v1

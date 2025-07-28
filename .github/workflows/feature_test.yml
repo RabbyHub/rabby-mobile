@@ -64,7 +64,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 22
 
       - name: '[Linux] Setup Ruby & Fastlane'
         if: runner.os == 'Linux'
@@ -96,6 +96,7 @@ jobs:
         run: |
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           cd apps/mobile;
+          nvm use;
           rm -rf node_modules;
           yarn install;
           bundle install;

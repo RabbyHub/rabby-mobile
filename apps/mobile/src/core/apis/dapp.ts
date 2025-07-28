@@ -202,11 +202,14 @@ export const syncBasicDappsInfo = async () => {
         if (item.id) {
           const dappOrigin = stringUtils.ensurePrefix(item.id, 'https://');
           if (dappOrigin) {
-            accu[dappOrigin] = {
+            const patch: Partial<DappInfo> = {
               info: item,
               infoUpdateAt: Date.now(),
-              isDapp: true,
             };
+            if (item?.collected_list?.length) {
+              patch.isDapp = true;
+            }
+            accu[dappOrigin] = patch;
           }
         }
         return accu;

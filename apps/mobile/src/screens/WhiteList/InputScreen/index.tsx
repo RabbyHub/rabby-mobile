@@ -144,7 +144,7 @@ const WhitelistInputScreen = () => {
           },
           title: t('page.confirmAddress.addToWhitelist'),
           cex: isCex ? cex : undefined,
-          disbaleWhiteSwitch: true,
+          disableWhiteSwitch: true,
           bottomSheetModalProps: {
             enableDynamicSizing: true,
           },

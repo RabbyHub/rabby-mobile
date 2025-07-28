@@ -186,7 +186,7 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
           }}
           trigger={browserState.trigger}
           onClose={shouldClose => {
-            if (shouldClose || !browserService.getBrowserTabs()?.tabs?.length) {
+            if (shouldClose) {
               setPartialBrowserState({
                 isShowBrowser: false,
                 searchText: '',

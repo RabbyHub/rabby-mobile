@@ -32,7 +32,7 @@ export function BrowserHeader({
   onLocationBarPress,
   tabsCount,
 }: {
-  dapp?: DappInfo;
+  dapp?: DappInfo | null;
   url?: string;
   onViewTabs?(): void;
   onLocationBarPress?(str?: string): void;
