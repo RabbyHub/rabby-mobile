@@ -571,9 +571,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       setIsLoading(false);
                       webviewProps?.onLoadEnd?.(e);
                       const { nativeEvent } = e;
-                      if (nativeEvent.loading) {
-                        return;
-                      }
+                      // if (nativeEvent.loading) {
+                      //   return;
+                      // }
                       onUpdateTab?.({
                         url: nativeEvent.url,
                         name: nativeEvent.title,
@@ -584,6 +584,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                           resolvedUrl: nativeEvent.url,
                         };
                       });
+
                       onUpdateHistory?.({
                         name: nativeEvent.title,
                         url: nativeEvent.url,

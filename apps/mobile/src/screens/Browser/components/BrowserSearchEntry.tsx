@@ -138,7 +138,13 @@ const BlurViewOnlyIOSWrapper = ({
 export const BrowserSearchEntry: React.FC = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { navigation } = useSafeSetNavigationOptions();
-  const { setPartialBrowserState, displayedTabs, openTab } = useBrowser();
+  const {
+    setPartialBrowserState,
+    displayedTabs,
+    openTab,
+    forceShowBrowser,
+    forceShowBrowserManage,
+  } = useBrowser();
   const { browserHistoryList } = useBrowserHistory();
   const [isShowSearch, setIsShowRecent] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -152,6 +158,7 @@ export const BrowserSearchEntry: React.FC = () => {
       searchTabId: '',
       trigger: 'home',
     });
+    forceShowBrowser();
   });
 
   const handleTabPress = useMemoizedFn(() => {
@@ -162,6 +169,7 @@ export const BrowserSearchEntry: React.FC = () => {
       searchText: '',
       searchTabId: '',
     });
+    forceShowBrowserManage();
   });
 
   return (

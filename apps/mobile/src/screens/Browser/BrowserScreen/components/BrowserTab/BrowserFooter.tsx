@@ -195,7 +195,7 @@ export function BrowserFooter({
       </TouchableOpacity>
       {canViewMore ? (
         <View style={[styles.navControlItem]}>
-          <DropdownMenuView menuConfig={menuConfigs}>
+          <DropdownMenuView menuConfig={menuConfigs} key={url || ''}>
             <RcIconMoreCC
               width={44}
               height={44}

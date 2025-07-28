@@ -126,7 +126,9 @@ export function BrowserHeader({
           <TouchableWithoutFeedback
             onPress={() => {
               onLocationBarPress?.(
-                isGoogle(url || '') ? renderText || url : url,
+                isGoogle(url || '') && !renderText.includes('.')
+                  ? renderText || url
+                  : url,
               );
             }}>
             <View style={styles.addressBarInner}>

@@ -15,6 +15,11 @@ import { omit, last, sortBy } from 'lodash';
 import { boolean } from 'yup';
 import { useMemo } from 'react';
 import { dappsAtom } from '../useDapps';
+import {
+  EVENT_SHOW_BROWSER,
+  EVENT_SHOW_BROWSER_MANAGE,
+  eventBus,
+} from '@/utils/events';
 
 export const tabsAtom = atom<{
   tabs: Tab[];
@@ -235,7 +240,15 @@ export function useBrowser() {
     return true;
   });
 
-  const showBrowser = useMemoizedFn((options?: { isOpenNewTab?: boolean }) => {
+  const forceShowBrowser = useMemoizedFn(() => {
+    eventBus.emit(EVENT_SHOW_BROWSER, true);
+  });
+
+  const forceShowBrowserManage = useMemoizedFn(() => {
+    eventBus.emit(EVENT_SHOW_BROWSER_MANAGE, true);
+  });
+
+  const showBrowser = useMemoizedFn(() => {
     setPartialBrowserState({
       isShowBrowser: true,
       isShowSearch: false,
@@ -279,6 +292,8 @@ export function useBrowser() {
     setBrowserState,
     setPartialBrowserState,
     onHideBrowser,
+    forceShowBrowser,
+    forceShowBrowserManage,
   };
 }
 

@@ -21,6 +21,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
+import {
+  EVENT_SHOW_BROWSER,
+  EVENT_SHOW_BROWSER_MANAGE,
+  eventBus,
+} from '@/utils/events';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -89,6 +94,17 @@ export const BottomSheetBrowser = () => {
     );
     return () => subscription.remove();
   }, [handleBackPress]);
+
+  useEffect(() => {
+    const handler = () => {
+      modalRef?.current?.present();
+    };
+    eventBus.addListener(EVENT_SHOW_BROWSER, handler);
+
+    return () => {
+      eventBus.removeListener(EVENT_SHOW_BROWSER, handler);
+    };
+  }, []);
 
   return (
     <AppBottomSheetModal
@@ -175,6 +191,17 @@ export const BrowserManagePopup = () => {
     );
     return () => subscription.remove();
   }, [handleBackPress]);
+
+  useEffect(() => {
+    const handler = () => {
+      modalRef?.current?.present();
+    };
+    eventBus.addListener(EVENT_SHOW_BROWSER_MANAGE, handler);
+
+    return () => {
+      eventBus.removeListener(EVENT_SHOW_BROWSER_MANAGE, handler);
+    };
+  }, []);
 
   return (
     <AppBottomSheetModal
