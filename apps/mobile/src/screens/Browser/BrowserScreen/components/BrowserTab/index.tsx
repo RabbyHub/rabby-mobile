@@ -581,7 +581,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       // }
                       onUpdateTab?.({
                         url: nativeEvent.url,
-                        name: nativeEvent.title,
+                        // name: nativeEvent.title,
                       });
                       setWebViewState(prev => {
                         return {
