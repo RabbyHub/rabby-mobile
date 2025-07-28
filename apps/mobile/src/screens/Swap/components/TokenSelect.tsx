@@ -122,23 +122,19 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     // 添加搜索状态管理，避免重复搜索
     const lastSearchRef = useRef<string>('');
     const isInitialLoadRef = useRef<boolean>(false);
+    const lastAccountRef = useRef<string>('');
+    const lastChainRef = useRef<string>('');
     const queryConds = useDebounceValue(_queryConds, 250);
     // settimoutout ref
     const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const currentAccount = queryConds.account;
 
-    // 避免重复搜索，只在必要时调用useSelectTokens
+    // 优化数据获取逻辑：确保弹窗打开时有数据，同时避免重复搜索
     const shouldFetchTokens = useMemo(() => {
       // 如果弹窗未打开，不获取数据
       if (!tokenSelectorVisible) {
         return false;
-      }
-
-      // 如果是首次加载，需要获取数据
-      if (!isInitialLoadRef.current) {
-        isInitialLoadRef.current = true;
-        return true;
       }
 
       // 如果搜索关键词变化，需要重新获取
@@ -147,8 +143,29 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         return true;
       }
 
+      // 如果账户或链ID变化，需要重新获取
+      if (
+        currentAccount?.address !== lastAccountRef.current ||
+        queryConds.chainServerId !== lastChainRef.current
+      ) {
+        lastAccountRef.current = currentAccount?.address || '';
+        lastChainRef.current = queryConds.chainServerId || '';
+        return true;
+      }
+
+      // 如果是首次加载，需要获取数据
+      if (!isInitialLoadRef.current) {
+        isInitialLoadRef.current = true;
+        return true;
+      }
+
       return false;
-    }, [tokenSelectorVisible, queryConds.keyword]);
+    }, [
+      tokenSelectorVisible,
+      queryConds.keyword,
+      currentAccount?.address,
+      queryConds.chainServerId,
+    ]);
 
     const {
       tokens,
@@ -184,7 +201,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         if (!tokenSelectorVisible || useSwapTokenList) {
           return;
         }
-        if (!tokens.length) {
+
+        // 确保弹窗打开时获取数据
+        if (tokens.length === 0) {
           if (type === 'send') {
             currentAccount?.address &&
               (await getCacheTokens([currentAccount.address]));
@@ -192,6 +211,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
             await getCacheTop10Tokens();
           }
         }
+
+        // 延迟获取最新数据
         timeRef.current = setTimeout(() => {
           if (currentAccount?.address) {
             loadToken(currentAccount.address, true);
@@ -379,6 +400,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         // 关闭弹窗时重置搜索状态
         isInitialLoadRef.current = false;
         lastSearchRef.current = '';
+        lastAccountRef.current = '';
+        lastChainRef.current = '';
       }, 0);
     }, []);
 
