@@ -235,6 +235,6 @@ export async function batchSaveWithPQueueAndTransaction<
   return {
     taskKey,
     taskSignal: currentSignal,
-    queueCompleted: waitTaskDoneReturn && !currentSignal.aborted,
+    queueCompleted: waitTaskDoneReturn,
   };
 }
