@@ -40,8 +40,8 @@ export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
         }
       },
     },
-    '2025-07-25T00:00:00Z': {
-      shouldMigration: ctx => ctx.semverModule.gte(ctx.appVersion, '0.6.27'),
+    '2025-07-26T00:00:00Z': {
+      shouldMigration: ctx => ctx.semverModule.gte(ctx.appVersion, '0.6.28'),
       migrate: ctx => {
         try {
           const dappService = ctx.service;
@@ -57,7 +57,12 @@ export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
                 isDapp: true,
               });
             }
-            if (dapp.origin === 'https://www.google.com' && dapp.isDapp) {
+            if (
+              ['https://www.google.com', 'https://www.google.com.hk'].includes(
+                dapp.origin,
+              ) &&
+              dapp.isDapp
+            ) {
               dappService.updateDapp({
                 ...dapp,
                 isDapp: false,
