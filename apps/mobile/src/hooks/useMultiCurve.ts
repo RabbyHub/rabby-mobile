@@ -151,10 +151,6 @@ export const useMultiCurve = (
         Array.from(nextCheckAddress).forEach(_addr => {
           const addr = _addr.toLowerCase();
           queue.add(async () => {
-            if (multiTimeStamp[addr]?.loading || loadingMapRef.current[addr]) {
-              return;
-            }
-            loadingMapRef.current[addr] = true;
             setMultiTimeStamp(prev => ({
               ...prev,
               [addr]: {
@@ -205,7 +201,7 @@ export const useMultiCurve = (
         setLoading(false);
       }
     },
-    [multiTimeStamp, setLoading, setMultiTimeStamp],
+    [setLoading, setMultiTimeStamp],
   );
 
   const refresh = useCallback(
@@ -231,20 +227,16 @@ export const useMultiCurve = (
       isAllGet ? totalBalance : 0,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addresses.join('-'), multiTimeStamp, totalBalance, totalEvmBalance]);
+  }, [addresses.length, multiTimeStamp, totalBalance, totalEvmBalance]);
 
   useEffect(() => {
     if (disableAutoFetch || queue.size > 0) {
       return;
     }
-    const missingAddresses = addresses.filter(address => {
-      const addressData = multiTimeStamp[address.toLowerCase()];
-      return !addressData?.data?.length;
-    });
-    if (missingAddresses.length > 0) {
+    if (combineData.list.length === 0) {
       fetch(addresses);
     }
-  }, [addresses, disableAutoFetch, fetch, multiTimeStamp]);
+  }, [addresses, combineData.list.length, disableAutoFetch, fetch]);
 
   const isLoadingNew = useMemo(() => {
     return addresses?.every(address => {

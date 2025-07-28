@@ -91,7 +91,7 @@ export const HotTokenList = () => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="none"
-        onScroll={() => {
+        onScrollBeginDrag={() => {
           Keyboard.dismiss();
         }}
         refreshControl={
