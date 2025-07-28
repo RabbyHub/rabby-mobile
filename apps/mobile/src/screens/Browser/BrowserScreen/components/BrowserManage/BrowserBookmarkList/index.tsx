@@ -45,7 +45,7 @@ export const BrowserBookmarkList = ({
   return (
     <View style={[styles.container, style]}>
       <BrowserSiteCardList
-        isInBottomSheet
+        // isInBottomSheet
         data={bookmarkList}
         onPress={handlePress}
         style={styles.list}

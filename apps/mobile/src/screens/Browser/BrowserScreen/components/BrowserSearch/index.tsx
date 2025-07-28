@@ -12,6 +12,7 @@ import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTranslation } from 'react-i18next';
 import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export function BrowserSearch({
   onClose,
@@ -31,6 +32,7 @@ export function BrowserSearch({
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
+  const { androidOnlyBottomOffset } = useSafeSizes();
 
   const { t } = useTranslation();
   const { list } = useSearchDapps(searchText);
@@ -123,7 +125,13 @@ export function BrowserSearch({
         />
       )}
 
-      <View style={styles.footer}>
+      <View
+        style={[
+          styles.footer,
+          {
+            marginBottom: androidOnlyBottomOffset,
+          },
+        ]}>
         <NextSearchBar
           as="BottomSheetTextInput"
           value={searchText}

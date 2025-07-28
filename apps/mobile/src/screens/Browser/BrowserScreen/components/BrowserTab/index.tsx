@@ -555,7 +555,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       ) {
                         onUpdateTab?.({
                           url: nativeEvent.url,
-                          name: nativeEvent.title,
+                          // name: nativeEvent.title,
                         });
                         onUpdateHistory?.({
                           name: nativeEvent.title,
@@ -802,8 +802,8 @@ const getStyles = createGetStyles2024(ctx =>
       flexShrink: 0,
       flexGrow: 0,
       // height: ScreenLayouts2.dappWebViewControlNavHeight,
-      height: 124,
-      // height: ScreenLayouts2.TabbedDappWebViewControlNavHeight,
+      // height: 124,
+      height: ScreenLayouts2.TabbedDappWebViewControlNavHeightV2,
       backgroundColor: ctx.colors['neutral-bg-1'],
       // ...makeDebugBorder(),
     },

@@ -128,11 +128,13 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
                 updateTab(tab.id, params);
               }}
               onUpdateHistory={({ url, name }) => {
-                setBrowserHistory({
-                  url,
-                  name,
-                  createdAt: Date.now(),
-                });
+                if (!browserState.isShowSearch) {
+                  setBrowserHistory({
+                    url,
+                    name,
+                    createdAt: Date.now(),
+                  });
+                }
               }}
               onOpenTab={openTab}
               style={[

@@ -27,6 +27,8 @@ import {
   eventBus,
 } from '@/utils/events';
 
+const EXTRA_OFFSET = 8;
+
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
     {...props}
@@ -109,15 +111,15 @@ export const BottomSheetBrowser = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowBrowser ? 0 : -1}
-      enableContentPanningGesture={false}
+      enableContentPanningGesture={browserState.isShowSearch}
       enablePanDownToClose
       enableHandlePanningGesture
       name="urlWebviewContainerRef"
       ref={modalRef}
-      snapPoints={[safeOffScreenTop]}
+      snapPoints={[safeOffScreenTop - EXTRA_OFFSET]}
       enableDismissOnClose={false}
-      // keyboardBlurBehavior="restore"
       keyboardBehavior="extend"
+      android_keyboardInputMode="adjustResize"
       handleStyle={styles.hidden}
       containerStyle={styles.customContentStyle}
       backgroundComponent={null}
@@ -217,7 +219,8 @@ export const BrowserManagePopup = () => {
       }}
       ref={modalRef}
       keyboardBehavior="extend"
-      snapPoints={[safeOffScreenTop]}
+      android_keyboardInputMode="adjustResize"
+      snapPoints={[safeOffScreenTop - EXTRA_OFFSET]}
       // enableDismissOnClose={false}
       onChange={index => {
         if (index === -1) {

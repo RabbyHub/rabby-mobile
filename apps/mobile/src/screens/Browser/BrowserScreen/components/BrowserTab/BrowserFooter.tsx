@@ -195,7 +195,7 @@ export function BrowserFooter({
       </TouchableOpacity>
       {canViewMore ? (
         <View style={[styles.navControlItem]}>
-          <DropdownMenuView menuConfig={menuConfigs} key={url || ''}>
+          <DropdownMenuView menuConfig={menuConfigs}>
             <RcIconMoreCC
               width={44}
               height={44}
@@ -222,7 +222,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 40,
     backgroundColor: colors2024['neutral-bg-1'],
     // ...makeDebugBorder(),
   },
