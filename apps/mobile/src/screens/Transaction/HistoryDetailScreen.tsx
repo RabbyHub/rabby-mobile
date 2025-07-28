@@ -36,7 +36,7 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { HistoryTokenList } from './components/HistoryTokenList';
-import { getApproveTokeName, getHistoryItemType } from './components/utils';
+import { getApproveTokeName } from './components/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { HistoryBottomBtn } from './components/HistoryBottomBtn';
@@ -256,8 +256,8 @@ function HistoryDetailScreen(): JSX.Element {
     disableAutoFetch: true,
   });
 
-  const formatType: HistoryItemCateType = useMemo(() => {
-    return getHistoryItemType(data);
+  const formatType = useMemo(() => {
+    return data.historyType;
   }, [data]);
 
   const { formatToken, isNft } = useMemo(() => {
@@ -274,7 +274,9 @@ function HistoryDetailScreen(): JSX.Element {
         isNft: false,
       };
     } else {
-      const isApprove = cate === HistoryItemCateType.Approve;
+      const isApprove =
+        cate === HistoryItemCateType.Approve ||
+        cate === HistoryItemCateType.Revoke;
       const commonItem =
         cate === HistoryItemCateType.Send ? data.sends[0] : data.receives[0];
 

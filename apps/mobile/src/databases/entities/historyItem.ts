@@ -5,25 +5,22 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToMany,
-  JoinTable,
-  ManyToOne,
-  Brackets,
-} from 'typeorm';
+import { Entity, Column, Brackets } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import {
   fetchHistoryTokenItem,
-  judgeIsSmallUsdTx,
+  getHistoryItemType,
+  isNFTTokenId,
 } from '@/screens/Transaction/components/utils';
-import { BuyItemEntity } from './buyItem';
 import { IManageToken } from '@/core/services/preference';
+import {
+  GAS_ACCOUNT_RECEIVED_ADDRESS,
+  GAS_ACCOUNT_WITHDRAWED_ADDRESS,
+  L2_DEPOSIT_ADDRESS_MAP,
+} from '@/constant/gas-account';
 
 export type ProjectItemType = {
   chain: string;
@@ -171,6 +168,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   })
   tx_eth_gas_fee: number = 0;
 
+  @Column('text', { default: HistoryItemCateType.UnKnown })
+  history_type: HistoryItemCateType = HistoryItemCateType.UnKnown;
+
   makeDbId(): string {
     return (this._db_id = `${this.owner_addr}-${[this.chain, this.txHash]
       .filter(Boolean)
@@ -221,6 +221,64 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return false;
   }
 
+  static getHistoryItemType(data: HistoryItemEntity) {
+    try {
+      if (data.cate_id === 'approve') {
+        if (!data.token_approve_value) {
+          return HistoryItemCateType.Revoke;
+        } else {
+          return HistoryItemCateType.Approve;
+        }
+      }
+
+      if (data.cate_id === 'cancel') {
+        return HistoryItemCateType.Cancel;
+      }
+
+      const receives = data.receives;
+      const sends = data.sends;
+      if (
+        receives?.filter(item => !isNFTTokenId(item.token_id)).length === 1 &&
+        sends?.filter(item => !isNFTTokenId(item.token_id)).length === 1
+      ) {
+        return HistoryItemCateType.Swap;
+      }
+
+      if (receives?.length === 1 && sends?.length === 0) {
+        if (
+          data?.tx_from_address.toLowerCase() === GAS_ACCOUNT_WITHDRAWED_ADDRESS
+        ) {
+          return HistoryItemCateType.GAS_WITHDRAW;
+        }
+
+        if (
+          data?.tx_from_address.toLowerCase() === GAS_ACCOUNT_RECEIVED_ADDRESS
+        ) {
+          return HistoryItemCateType.GAS_RECEIVED;
+        }
+
+        return HistoryItemCateType.Recieve;
+      }
+
+      if (receives?.length === 0 && sends?.length === 1) {
+        if (
+          Object.values(L2_DEPOSIT_ADDRESS_MAP).includes(
+            data.other_addr.toLowerCase() || '',
+          )
+        ) {
+          return HistoryItemCateType.GAS_DEPOSIT;
+        }
+
+        return HistoryItemCateType.Send;
+      }
+
+      return HistoryItemCateType.UnKnown;
+    } catch (error) {
+      console.error(error);
+      return HistoryItemCateType.UnKnown;
+    }
+  }
+
   static fillEntity(
     e: HistoryItemEntity,
     owner_addr: string,
@@ -266,8 +324,9 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.tx_to_address = input.tx?.to_addr ?? '';
     e.tx_usd_gas_fee = input.tx?.usd_gas_fee ?? 0;
     e.tx_eth_gas_fee = input.tx?.eth_gas_fee ?? 0;
-    e.is_small_tx = judgeIsSmallUsdTx(e, pinedQueue);
+    e.is_small_tx = this.judgeIsSmallUsdTx(e, pinedQueue);
     e.makeDbId();
+    e.history_type = this.getHistoryItemType(e);
   }
 
   static async getAllHistoryItem(owner_addr?: string) {

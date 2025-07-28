@@ -14,7 +14,7 @@ async function checkIfTableExists(queryRunner: QueryRunner, tableName: string) {
   return tableExists.length > 0;
 }
 
-export class UpdateHistoryTableRestart1753167283999
+export class UpdateHistoryTableRestart1753686720048
   implements MigrationInterface
 {
   transaction = false;

@@ -63,6 +63,7 @@ import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
+import { HistoryItemCateType } from './components/type';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
@@ -99,6 +100,7 @@ export interface HistoryDisplayItem extends TxHistoryItem {
   isSmallUsdTx?: boolean;
   account?: KeyringAccountWithAlias;
   isShowSuccess?: boolean;
+  historyType: HistoryItemCateType;
 }
 
 interface IFetchHistory {
@@ -233,7 +235,6 @@ function History({
       ? top10Addresses.map(i => i.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
     const dbFirstItemTime = dbData[0]?.time_at || 0;
-    console.log('batchFetchDataFromDbUpsert dbFirstItemTime:', dbFirstItemTime);
     const historyList = await HistoryItemEntity.getAllHistoryItemSortedByTime(
       addresses,
       10000,
@@ -265,7 +266,6 @@ function History({
   }, [isSceneUsingAllAccounts, finalSceneCurrentAccount, isInTokenDetail]);
 
   const batchFetchData = useMemoizedFn(async () => {
-    console.log('batchFetchData');
     const list: HistoryDisplayItem[] = [];
 
     if (!isNeedFetchFromApi) {
@@ -739,7 +739,6 @@ function History({
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAddress={isForMultipleAddress}
           loadMore={() => {
-            console.log('load more');
             // avoid exec multi times loadMore
             dbHasMoreRef.current = false;
             loadMore();

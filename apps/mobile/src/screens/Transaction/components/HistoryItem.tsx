@@ -22,7 +22,6 @@ import { ellipsisAddress } from '@/utils/address';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { getHistoryItemType } from './utils';
 import { TxStatusItem } from '../HistoryDetailScreen';
 import { useTranslation } from 'react-i18next';
 import { HistoryItemCateType } from './type';
@@ -64,8 +63,8 @@ export const HistoryItem = React.memo(
     const { styles, isLight } = useTheme2024({ getStyle });
 
     const formatType: HistoryItemCateType = useMemo(() => {
-      return getHistoryItemType(data);
-    }, [data]);
+      return data.history_type;
+    }, [data.history_type]);
 
     const tokenApproveData = useMemo(() => {
       const res: TokenChangeDataItem[] = [];

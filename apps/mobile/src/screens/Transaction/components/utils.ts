@@ -1,13 +1,10 @@
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { getTokenSymbol } from '@/utils/token';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { isString, omit } from 'lodash';
-import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import {
   NFTItem,
   TokenItem,
   TokenItemWithEntity,
-  TxHistoryItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { IManageToken } from '@/core/services/preference';
@@ -17,66 +14,9 @@ import {
 } from '@/core/services/transactionHistory';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
 import { appJsonStore } from '@/core/storage/mmkv';
-import { HistoryItemCateType } from './type';
-import {
-  GAS_ACCOUNT_RECEIVED_ADDRESS,
-  GAS_ACCOUNT_WITHDRAWED_ADDRESS,
-  L2_DEPOSIT_ADDRESS_MAP,
-} from '@/constant/gas-account';
 import { openapi } from '@/core/request';
 import { patchSingleToken } from '@/databases/sync/assets';
 import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradingBuyItem';
-
-export function getHistoryItemType(
-  data: HistoryDisplayItem,
-): HistoryItemCateType {
-  if (data.cate_id === 'approve') {
-    if (!data.token_approve?.value) {
-      return HistoryItemCateType.Revoke;
-    } else {
-      return HistoryItemCateType.Approve;
-    }
-  }
-
-  if (data.cate_id === 'cancel') {
-    return HistoryItemCateType.Cancel;
-  }
-
-  const receives = data.receives;
-  const sends = data.sends;
-  if (
-    receives?.filter(item => !isNFTTokenId(item.token_id)).length === 1 &&
-    sends?.filter(item => !isNFTTokenId(item.token_id)).length === 1
-  ) {
-    return HistoryItemCateType.Swap;
-  }
-
-  if (receives?.length === 1 && sends?.length === 0) {
-    if (data.tx?.from_addr.toLowerCase() === GAS_ACCOUNT_WITHDRAWED_ADDRESS) {
-      return HistoryItemCateType.GAS_WITHDRAW;
-    }
-
-    if (data.tx?.from_addr.toLowerCase() === GAS_ACCOUNT_RECEIVED_ADDRESS) {
-      return HistoryItemCateType.GAS_RECEIVED;
-    }
-
-    return HistoryItemCateType.Recieve;
-  }
-
-  if (receives?.length === 0 && sends?.length === 1) {
-    if (
-      Object.values(L2_DEPOSIT_ADDRESS_MAP).includes(
-        data.other_addr.toLowerCase() || '',
-      )
-    ) {
-      return HistoryItemCateType.GAS_DEPOSIT;
-    }
-
-    return HistoryItemCateType.Send;
-  }
-
-  return HistoryItemCateType.UnKnown;
-}
 
 export function getApproveTokeName(data: HistoryDisplayItem): string {
   const tokenId = data.token_approve?.token_id || '';
@@ -107,6 +47,7 @@ export const fetchHistoryTokenItem = (
 export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
   return {
     ...item,
+    historyType: item.history_type,
     receives: item.receives,
     sends: item.sends,
     id: item.txHash,
