@@ -56,6 +56,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       },
       needUseCacheToken: true,
       tokenSelectType: type,
+      timestamp: Date.now(), // 添加时间戳确保每次都是新页面
     });
   }, [isPined, token, type, setShouldHideSelectorPopup]);
 
