@@ -12,7 +12,6 @@ import { prepareAppDataSource } from '../imports';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
 import {
   fetchHistoryTokenItem,
-  getHistoryItemType,
   isNFTTokenId,
 } from '@/screens/Transaction/components/utils';
 import { IManageToken } from '@/core/services/preference';

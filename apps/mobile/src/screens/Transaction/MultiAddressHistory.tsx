@@ -56,6 +56,7 @@ import { TransactionAlert } from '../TransactionRecord/components/TransactionAle
 import {
   ensureHistoryListItemFromDb,
   fetchHistoryTokenItem,
+  getHistoryItemType,
   judgeIsSmallUsdTx,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
@@ -186,6 +187,8 @@ function History({
         console.warn('loading multi time , pls check what happened');
         return [];
       }
+      const isFilter =
+        filterScamAndSmallTx === undefined ? !isShowAll : filterScamAndSmallTx;
       dbFetchLoadingRef.current = true;
       const addresses = isSceneUsingAllAccounts
         ? top10Addresses.map(i => i.toLowerCase())
@@ -197,15 +200,14 @@ function History({
       } = await HistoryItemEntity.getHistoryItemsPaginated(addresses, {
         pageSize: 20,
         lastTimeAt: dbLastCursorRef.current,
-        filterScamAndSmallTx:
-          filterScamAndSmallTx === undefined
-            ? !isShowAll
-            : filterScamAndSmallTx,
+        filterScamAndSmallTx: isFilter,
       });
 
       const list = historyList.map(item => {
         return {
           ...ensureHistoryListItemFromDb(item),
+          // hidden small and scam no need this prop
+          isSmallUsdTx: isFilter ? false : item.is_small_tx,
           isShowSuccess: historySuccessList.includes(
             `${item.owner_addr.toLowerCase()}-${item.txHash}`,
           ),
@@ -387,6 +389,7 @@ function History({
             ...e,
             token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
           })),
+          historyType: getHistoryItemType(item),
         }))
         .sort((v1, v2) => v2.time_at - v1.time_at);
       return {
