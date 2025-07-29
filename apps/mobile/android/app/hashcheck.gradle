@@ -1,0 +1,13 @@
+android {
+    println "==> Applying hashcheck.gradle"
+
+    buildFeatures {
+        buildConfig = false // Avoids build timestamp in BuildConfig.java
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true // Ensures stable binary layout
+        }
+    }
+}

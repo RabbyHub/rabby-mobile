@@ -146,7 +146,7 @@ platform :android do
   end
 
   desc "Valid android adhoc"
-  lane :hashcheck do
+  lane :hashcheck do |options|
     gradle(task: 'clean', project_dir: './android')
     build_rabbymobile_app(tasks: ['assembleHash'], properties: {
       "org.gradle.daemon"=>false,
@@ -154,13 +154,23 @@ platform :android do
       "org.gradle.parallel"=>false,
       "android.useAndroidX"=>true,
       "android.buildfeatures.buildId"=>false,
+      "hashcheck" => true,
     })
 
     apk_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
-    sh "shasum -a 256 #{apk_path}"
 
-    puts "✅ Verification bundle complete."
-    puts "APK at: #{apk_path}"
+    destination_path = options[:destination_path]
+    if destination_path
+      begin
+        FileUtils.cp(apk_path, destination_path)
+        UI.success("Successfully copied APK to: #{destination_path}")
+      rescue => ex
+        UI.user_error!("Failed to copy APK from '#{apk_path}' to '#{destination_path}'. Error: #{ex}")
+      end
+    else
+      sh "shasum -a 256 #{apk_path}"
+    end
+
   end
 
 

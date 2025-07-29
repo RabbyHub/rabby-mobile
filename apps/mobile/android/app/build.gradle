@@ -188,6 +188,10 @@ android {
     // }
 }
 
+if (project.hasProperty('hashcheck')) {
+    apply from: 'hashcheck.gradle'
+}
+
 androidComponents {
   onVariants(selector().withBuildType("debug")) {
     // packaging.jniLibs.pickFirsts.add('lib/**/libssl.so')
