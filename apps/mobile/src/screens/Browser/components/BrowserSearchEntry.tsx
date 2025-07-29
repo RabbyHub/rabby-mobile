@@ -137,17 +137,12 @@ const BlurViewOnlyIOSWrapper = ({
 
 export const BrowserSearchEntry: React.FC = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const { navigation } = useSafeSetNavigationOptions();
   const {
     setPartialBrowserState,
     displayedTabs,
-    openTab,
     forceShowBrowser,
     forceShowBrowserManage,
   } = useBrowser();
-  const { browserHistoryList } = useBrowserHistory();
-  const [isShowSearch, setIsShowRecent] = useState(false);
-  const [searchText, setSearchText] = useState('');
 
   const { t } = useTranslation();
   const handlePress = useMemoizedFn(() => {
@@ -174,21 +169,6 @@ export const BrowserSearchEntry: React.FC = () => {
 
   return (
     <>
-      {isShowSearch ? (
-        <BrowserSearchInHome
-          searchText={searchText}
-          setSearchText={setSearchText}
-          onClose={() => {
-            setIsShowRecent(false);
-            setSearchText('');
-          }}
-          onOpenURL={url => {
-            openTab(url);
-            setIsShowRecent(false);
-            setSearchText('');
-          }}
-        />
-      ) : null}
       <TouchableOpacity style={styles.fabContainer} onPress={handlePress}>
         <BlurViewOnlyIOSWrapper
           isLight={isLight}
