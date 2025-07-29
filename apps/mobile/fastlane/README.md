@@ -44,6 +44,14 @@ Release for the iOS production
 
 ## Android
 
+### android hashcheck
+
+```sh
+[bundle exec] fastlane android hashcheck
+```
+
+Valid android adhoc
+
 ### android selfhost
 
 ```sh

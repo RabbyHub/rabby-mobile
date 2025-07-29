@@ -150,6 +150,12 @@ android {
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
+        hash {
+          initWith release
+          signingConfig null
+          proguardFile "proguard-hashcheck.pro"
+          matchingFallbacks = ['release']
+        }
         regression {
             initWith release
             applicationIdSuffix ".regression"

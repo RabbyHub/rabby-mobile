@@ -36,7 +36,7 @@ PROJECT_PATH=$(dirname -- "${SCRIPT_DIR}")
 cd "${SCRIPT_DIR}/.."
 
 export ZERO_AR_DATE=1
-export SOURCE_DATE_EPOCH=1600000000
+export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
 
 # 不上传 sentry 报告了，没啥用
 export SENTRY_DISABLE_AUTO_UPLOAD=true
