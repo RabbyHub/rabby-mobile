@@ -164,6 +164,7 @@ export default function UnlockScreen() {
   const {
     computed: { isBiometricsEnabled, isFaceID },
     fetchBiometrics,
+    toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
     useUnlockForm(navigation);
@@ -207,6 +208,10 @@ export default function UnlockScreen() {
       if (incToReset() === 0) {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
         setUsingBiometrics(false);
+      } else if (error.code === 'NIL_KEYCHAIN_OBJECT') {
+        toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
+        setUsingBiometrics(false);
+        toggleBiometrics(false, {});
       } else {
         toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
       }
@@ -234,7 +239,7 @@ export default function UnlockScreen() {
         }
       }
     }
-  }, [unlockApp, t]);
+  }, [unlockApp, toggleBiometrics, t]);
 
   const lockBiometricRef = React.useRef(false);
   const manualUnlockWithBiometrics = useCallback(async () => {
