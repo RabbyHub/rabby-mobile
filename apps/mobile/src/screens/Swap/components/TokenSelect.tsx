@@ -120,7 +120,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const [updateNonce, setUpdateNonce] = useState(0);
     const [_, setLongPressToken] = useLongPressTokenAtom();
     const queryConds = useDebounceValue(_queryConds, 250);
-    // settimoutout ref
     const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const currentAccount = queryConds.account;

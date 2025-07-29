@@ -30,7 +30,6 @@ import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { SearchInput } from '../Form/SearchInput';
 import {
   DisplayedTokenWithOwner,
   getTokenSymbol,
@@ -48,7 +47,6 @@ import { Skeleton } from '@rneui/themed';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
-import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { ellipsisOverflowedText } from '@/utils/text';
@@ -275,11 +273,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const route = useRoute<SwapRouteProps['route']>();
     const isFocused = useIsFocused();
     const { userTokenSettings } = useUserTokenSettings();
-
-    const isSingleAddress = useMemo(
-      () => route.name === RootNames.Swap,
-      [route.name],
-    );
 
     const isSwapRoute =
       route.name === RootNames.Swap || route.name === RootNames.MultiSwap;
@@ -551,7 +544,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
               pinned.tokenId === $originMaybeToken?.id,
           );
         const isManualFold = $originMaybeToken.isManualFold;
-        const isSelected = selectToken && selectToken.tokenId === token.id;
         const token_key = [
           ownerKey,
           `${$originMaybeToken.id}-${token._symbol}-${token._chain}`,
@@ -788,8 +780,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         isLoading,
         disableItemCheck,
         chainSearchCtx.filterAccountItem,
-        userTokenSettings?.pinedQueue,
-        selectToken,
+        userTokenSettings.pinedQueue,
         supportChains,
         isFromModalType,
         isSwapTo,
