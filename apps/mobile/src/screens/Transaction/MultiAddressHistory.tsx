@@ -233,6 +233,7 @@ function History({
       return;
     }
 
+    const isFilterScamAndSmallTx = !isShowAll;
     const addresses = isSceneUsingAllAccounts
       ? top10Addresses.map(i => i.toLowerCase())
       : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
@@ -240,7 +241,7 @@ function History({
     const historyList = await HistoryItemEntity.getAllHistoryItemSortedByTime(
       addresses,
       10000,
-      false,
+      isFilterScamAndSmallTx,
       dbFirstItemTime,
     );
     if (historyList.length === 0) {
@@ -250,6 +251,8 @@ function History({
     const list = historyList.map(item => {
       return {
         ...ensureHistoryListItemFromDb(item),
+        // hidden small and scam no need this prop
+        isSmallUsdTx: isFilterScamAndSmallTx ? false : item.is_small_tx,
         isShowSuccess: historySuccessList.includes(
           `${item.owner_addr.toLowerCase()}-${item.txHash}`,
         ),

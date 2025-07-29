@@ -412,7 +412,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   static async getAllHistoryItemSortedByTime(
     owner_addrs: string[],
     count?: number,
-    filterNotScam?: boolean,
+    filterScamAndSmallTx?: boolean,
     maxTimeAt?: number,
   ) {
     await prepareAppDataSource();
@@ -430,10 +430,21 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
       .orderBy('historyitem.time_at', 'DESC')
       .take(count || 10000);
 
-    if (filterNotScam) {
+    if (filterScamAndSmallTx) {
+      // filter scam tx
       queryBuilder.andWhere('historyitem.is_scam = :is_scam', {
         is_scam: false,
       });
+
+      // filter small tx out of 1 hour
+      const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
+      queryBuilder.andWhere(
+        '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
+        {
+          oneHourAgo,
+          is_small_tx: false,
+        },
+      );
     }
 
     const res = await queryBuilder.getMany();
