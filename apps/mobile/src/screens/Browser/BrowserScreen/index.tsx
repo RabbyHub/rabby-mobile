@@ -212,6 +212,11 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
                 browserState.searchTabId
             ) {
               activeDappWebViewControlRef?.current.navigateTo(url);
+              setPartialBrowserState({
+                isShowSearch: false,
+                searchText: '',
+                searchTabId: '',
+              });
             } else {
               openTab(url);
             }
