@@ -84,9 +84,9 @@ export const BottomSheetBrowser = () => {
         isShowSearch: false,
         searchText: '',
       });
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }, [browserState.isShowBrowser, setPartialBrowserState]);
 
   useEffect(() => {
@@ -181,9 +181,9 @@ export const BrowserManagePopup = () => {
       setPartialBrowserState({
         isShowManage: false,
       });
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }, [browserState.isShowManage, setPartialBrowserState]);
 
   useEffect(() => {

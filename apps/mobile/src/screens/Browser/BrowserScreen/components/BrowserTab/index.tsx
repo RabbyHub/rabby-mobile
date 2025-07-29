@@ -114,14 +114,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const isEmptyTab = !url;
-    const [isShowSearch, setIsShowSearch] = useState(
-      false,
-      // isActive && isEmptyTab
-    );
-    const [searchText, setSearchText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
-    const { switchToTab, setPartialBrowserState } = useBrowser();
+    const { browserState, setPartialBrowserState } = useBrowser();
 
     const {
       webviewRef,
@@ -259,7 +254,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       webviewRef.current?.stopLoading();
       setWebViewState(prev => ({ ...prev, resolvedUrl: urlToGo }));
       if (isEmptyTab) {
-        setIsShowSearch(false);
         await sleep(200);
         await handleViewShot('');
         onOpenTab?.(urlToGo);
@@ -272,7 +266,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
       setIsLoading(true);
       setProgress(0.1);
-      setIsShowSearch(false);
     });
 
     const handleSearch = useMemoizedFn((search: string) => {
@@ -291,7 +284,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       handleGoTo(
         `https://www.google.com/search?q=${encodeURIComponent(search)}`,
       );
-      setSearchText('');
     });
 
     const handleViewShot = useMemoizedFn(async (url: string) => {
@@ -327,7 +319,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleViewTabs = useMemoizedFn(async () => {
-      if (isActive && !isShowSearch) {
+      if (isActive) {
         await handleViewShot(webviewState.resolvedUrl);
       }
 
@@ -452,10 +444,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       <View style={[style, styles.dappWebViewControl]}>
         <ViewShot
           ref={viewShotRef}
-          style={[
-            { flex: 1, backgroundColor: colors2024['neutral-bg-1'] },
-            isShowSearch ? styles.hidden : null,
-          ]}
+          style={[{ flex: 1, backgroundColor: colors2024['neutral-bg-1'] }]}
           options={{
             format: 'jpg',
             quality: 0.2,
@@ -474,7 +463,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               // renderToHardwareTextureAndroid
               style={[
                 styles.dappWebViewContainer,
-                isShowSearch && styles.opacity0,
                 !webviewContainerMaxHeight
                   ? {}
                   : {
@@ -500,11 +488,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     allowsInlineMediaPlayback={false}
                     originWhitelist={['*']}
                     {...webviewProps}
-                    style={[
-                      styles.dappWebView,
-                      webviewProps?.style,
-                      isShowSearch ? styles.hidden : null,
-                    ]}
+                    style={[styles.dappWebView, webviewProps?.style]}
                     ref={webviewRef}
                     source={{
                       ...(embedHtml
@@ -672,7 +656,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             </View>
           </NativeViewGestureHandler>
         </ViewShot>
-        {isActive && !isShowSearch ? (
+        {isActive && !browserState.isShowSearch ? (
           <View style={styles.dappWebViewNavControl}>
             <BrowserHeader
               dapp={dappInfo}
@@ -814,9 +798,6 @@ const getStyles = createGetStyles2024(ctx =>
     },
     hidden: {
       display: 'none',
-    },
-    opacity0: {
-      opacity: 0,
     },
   }),
 );

@@ -128,7 +128,11 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
                 updateTab(tab.id, params);
               }}
               onUpdateHistory={({ url, name }) => {
-                if (!browserState.isShowSearch) {
+                if (
+                  !browserState.isShowSearch &&
+                  browserState.isShowBrowser &&
+                  isActiveTab
+                ) {
                   setBrowserHistory({
                     url,
                     name,
@@ -138,9 +142,8 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
               }}
               onOpenTab={openTab}
               style={[
-                !isActiveTab || browserState.isShowSearch
-                  ? { display: 'none' }
-                  : null,
+                !isActiveTab ? stylesScreen.hidden : null,
+                browserState.isShowSearch ? stylesScreen.opacity0 : null,
               ]}
               origin={urlInfo.origin}
               tabId={tab.id}
@@ -234,6 +237,12 @@ const getScreenStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-title-1'],
       fontSize: 16,
       fontFamily: 'SF Pro',
+    },
+    hidden: {
+      display: 'none',
+    },
+    opacity0: {
+      opacity: 0,
     },
   };
 });
