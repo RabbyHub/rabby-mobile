@@ -399,7 +399,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     useEffect(() => {
       if (!isActive && !isEmptyTab) {
-        console.log('useEffect');
         handleUpdateTab?.({
           initialUrl: urlRef.current ? urlRef.current : undefined,
           openTime: Date.now(),

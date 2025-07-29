@@ -73,7 +73,7 @@ export const useSearchDapps = (searchText: string) => {
 
       const dappInfo = {
         ...local,
-        name: local?.name || info?.name,
+        name: info?.name || local?.name,
         icon: local?.icon || info?.logo_url,
         origin,
         info,

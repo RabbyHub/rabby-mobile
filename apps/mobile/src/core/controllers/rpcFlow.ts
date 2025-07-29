@@ -472,7 +472,6 @@ export default async (request: ProviderRequest) => {
     request: { ...request, requestedApproval: false },
   };
   try {
-    console.log('[request]: ', request);
     const origin = request.origin || request.session.origin;
     const dapp = dappService.getDapp(origin);
     if (dapp && !dapp.isDapp) {

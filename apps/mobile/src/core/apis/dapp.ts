@@ -189,9 +189,7 @@ export const syncBasicDappsInfo = async () => {
   const dapps = Object.values(dappService.getDapps());
   const ids = dapps
     .filter(
-      item =>
-        ['www.google.com', 'x.com'].includes(item.origin) &&
-        Date.now() - (item.infoUpdateAt || 0) > 3 * 24 * 60 * 60 * 1000,
+      item => Date.now() - (item.infoUpdateAt || 0) > 3 * 24 * 60 * 60 * 1000,
     )
     .map(item => item.origin.replace(/^https?:\/\//, ''));
   if (ids.length) {
@@ -208,9 +206,9 @@ export const syncBasicDappsInfo = async () => {
               info: item,
               infoUpdateAt: Date.now(),
             };
-            if (item?.collected_list?.length) {
-              patch.isDapp = true;
-            }
+            // if (item?.collected_list?.length) {
+            //   patch.isDapp = true;
+            // }
             accu[dappOrigin] = patch;
           }
         }

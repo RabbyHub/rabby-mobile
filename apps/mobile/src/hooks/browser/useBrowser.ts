@@ -13,7 +13,7 @@ import { useRabbyAppNavigation } from '../navigation';
 import { browserService, dappService } from '@/core/services';
 import { omit, last, sortBy } from 'lodash';
 import { boolean } from 'yup';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { dappsAtom } from '../useDapps';
 import {
   EVENT_SHOW_BROWSER,
@@ -153,12 +153,7 @@ export function useBrowser() {
         }
 
         const finalTabs = prev.tabs.map(tab => {
-          if (
-            (!dappService.getDapp(safeGetOrigin(tab.url || tab.initialUrl))
-              ?.isDapp ||
-              tab.openTime < time) &&
-            tab.id !== prev.activeTabId
-          ) {
+          if (tab.openTime < time && tab.id !== prev.activeTabId) {
             return {
               ...tab,
               isTerminate: true,

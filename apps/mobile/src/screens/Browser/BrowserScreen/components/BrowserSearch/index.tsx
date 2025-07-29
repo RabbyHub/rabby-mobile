@@ -103,8 +103,8 @@ export function BrowserSearch({
             isInBottomSheet
             list={displayedBrowserHistoryList}
             onPress={async dapp => {
-              Keyboard.dismiss();
               isOpenURLRef.current = true;
+              Keyboard.dismiss();
               await waitKeyboardHide();
               onOpenURL?.(dapp.url || dapp.origin);
             }}
@@ -117,8 +117,8 @@ export function BrowserSearch({
           data={list || []}
           isValidDomain={!!isValidDomain}
           onOpenURL={async url => {
-            Keyboard.dismiss();
             isOpenURLRef.current = true;
+            Keyboard.dismiss();
             await waitKeyboardHide();
             onOpenURL?.(url);
           }}
@@ -150,6 +150,7 @@ export function BrowserSearch({
             if (!searchText) {
               return;
             }
+            isOpenURLRef.current = true;
             if (isValidDomain) {
               onOpenURL?.(
                 /^https?:\/\//.test(searchText)
@@ -163,7 +164,6 @@ export function BrowserSearch({
                 )}`,
               );
             }
-            isOpenURLRef.current = true;
           }}
           enterKeyHint="go"
           autoFocus

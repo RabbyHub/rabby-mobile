@@ -40,8 +40,8 @@ export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
         }
       },
     },
-    '2025-07-26T01:00:00Z': {
-      shouldMigration: ctx => ctx.semverModule.gte(ctx.appVersion, '0.6.28'),
+    '2025-07-28T00:00:00Z': {
+      shouldMigration: ctx => ctx.semverModule.gte(ctx.appVersion, '0.6.27'),
       migrate: ctx => {
         try {
           const dappService = ctx.service;

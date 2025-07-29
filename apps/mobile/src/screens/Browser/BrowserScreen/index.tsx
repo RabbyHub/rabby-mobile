@@ -81,9 +81,9 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
 
   useEffect(() => {
     globalSetActiveDappState({
-      isScreenHide: !browserState.isShowBrowser,
+      isScreenHide: !browserState.isShowBrowser && !browserState.isShowSearch,
     });
-  }, [browserState.isShowBrowser]);
+  }, [browserState.isShowBrowser, browserState.isShowSearch]);
 
   return (
     <View
@@ -180,7 +180,7 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
 
       {browserState.isShowSearch ? (
         <BrowserSearch
-          searchText={browserState.searchText.trim()}
+          searchText={browserState.searchText}
           setSearchText={v => {
             setPartialBrowserState({
               searchText: v,
