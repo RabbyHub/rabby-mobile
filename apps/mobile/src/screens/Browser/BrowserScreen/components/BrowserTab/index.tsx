@@ -61,6 +61,7 @@ import { isValidAppStoreUrl } from '@/utils/browser';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { BrowserSearch } from '../BrowserSearch';
 import { NativeViewGestureHandler } from 'react-native-gesture-handler';
+import RNFS from 'react-native-fs';
 
 type BrowserTabProps = {
   origin: string;
@@ -230,7 +231,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
     });
 
-    const viewShotRef = useRef<any>(null);
+    const viewShotRef = useRef<ViewShot | null>(null);
 
     const { entryScriptWeb3Loaded, fullScript } =
       useJavaScriptBeforeContentLoaded({ isTop: false });
@@ -288,12 +289,18 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleViewShot = useMemoizedFn(async (url: string) => {
       try {
-        console.log('viewShot', url);
-        // const viewShot = await viewShotRef.current?.capture();
-        // onUpdateTab?.({
-        //   url: url,
-        //   viewShot,
-        // });
+        const viewShot = await viewShotRef.current?.capture?.();
+        if (!viewShot || !tabId) {
+          return;
+        }
+        const filePath = await browserService.saveScreenshot({
+          tempUri: viewShot,
+          tabId,
+        });
+        onUpdateTab?.({
+          url: url,
+          viewShot: filePath,
+        });
       } catch (e) {
         console.error('viewShot', e);
       }
@@ -449,7 +456,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           options={{
             format: 'jpg',
             quality: 0.2,
-            result: 'data-uri',
           }}>
           {/* {(isShowSearch && !searchText) || (!isShowSearch && !url) ? (
             <BrowserBookmarkSection
@@ -578,7 +584,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         name: nativeEvent.title,
                         url: nativeEvent.url,
                       });
-                      if (isActive) {
+                      if (
+                        isActive &&
+                        browserState.isShowBrowser &&
+                        !browserState.isShowSearch &&
+                        !browserState.isShowManage
+                      ) {
                         handleViewShot(nativeEvent.url);
                       }
                     }}

@@ -126,9 +126,13 @@ export function useBrowser() {
     updateBrowserTabs({
       tabs: newTabs,
     });
+    browserService.removeScreenshot({ tabId });
   });
 
   const closeAllTabs = useMemoizedFn(() => {
+    store.tabs.forEach(tab => {
+      browserService.removeScreenshot({ tabId: tab.id });
+    });
     updateBrowserTabs({
       tabs: [],
       activeTabId: '',

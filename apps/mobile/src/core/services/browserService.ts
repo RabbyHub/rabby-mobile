@@ -14,6 +14,7 @@ import {
   safeGetOrigin,
   safeParseURL,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import RNFS from 'react-native-fs';
 
 export interface BrowserHistoryItem {
   url: string;
@@ -371,5 +372,33 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
    */
   hasHistory(origin: string) {
     return !!this.getHistory(origin);
+  }
+
+  async saveScreenshot({ tempUri, tabId }: { tempUri: string; tabId: string }) {
+    const fileName = `screenshot-${tabId}.jpg`;
+    const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+    try {
+      if (await RNFS.exists(filePath)) {
+        await RNFS.unlink(filePath);
+      }
+      await RNFS.copyFile(tempUri, filePath);
+      return filePath;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async removeScreenshot({ tabId }: { tabId: string }) {
+    const fileName = `screenshot-${tabId}.jpg`;
+    const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+    try {
+      if (await RNFS.exists(filePath)) {
+        await RNFS.unlink(filePath);
+      }
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
   }
 }
