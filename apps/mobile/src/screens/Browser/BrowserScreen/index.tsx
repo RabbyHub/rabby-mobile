@@ -23,6 +23,7 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BrowserManage } from './components/BrowserManage';
 import { BrowserSearchResult } from './components/BrowserSearch/BrowserSearchResult';
 import { BrowserSearch } from './components/BrowserSearch';
+import { Freeze } from 'react-freeze';
 
 export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
   const { styles: stylesScreen } = useTheme2024({
@@ -111,72 +112,73 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
           }
 
           return (
-            <BrowserTab
-              key={key}
-              ref={inst => {
-                if (isActiveTab) {
-                  globalSetActiveDappState({ dappOrigin: urlInfo.origin });
-                  activeDappWebViewControlRef.current = inst;
-                  globalSetActiveDappState({
-                    dappOrigin: urlInfo.origin,
-                    tabId: tab.id,
+            <Freeze freeze={!isActiveTab} key={key}>
+              <BrowserTab
+                ref={inst => {
+                  if (isActiveTab) {
+                    globalSetActiveDappState({ dappOrigin: urlInfo.origin });
+                    activeDappWebViewControlRef.current = inst;
+                    globalSetActiveDappState({
+                      dappOrigin: urlInfo.origin,
+                      tabId: tab.id,
+                    });
+                  }
+                }}
+                isActive={isActiveTab}
+                onUpdateTab={params => {
+                  updateTab(tab.id, params);
+                }}
+                onUpdateHistory={({ url, name }) => {
+                  if (
+                    !browserState.isShowSearch &&
+                    browserState.isShowBrowser &&
+                    isActiveTab
+                  ) {
+                    setBrowserHistory({
+                      url,
+                      name,
+                      createdAt: Date.now(),
+                    });
+                  }
+                }}
+                onOpenTab={openTab}
+                style={[
+                  !isActiveTab ? stylesScreen.hidden : null,
+                  browserState.isShowSearch ? stylesScreen.opacity0 : null,
+                ]}
+                origin={urlInfo.origin}
+                tabId={tab.id}
+                url={tab.initialUrl}
+                tabsCount={displayedTabs.length}
+                onSelfClose={reason => {
+                  if (reason === 'phishing') {
+                    // todo
+                    closeTab(tab.id);
+                  }
+                }}
+                onCloseTab={() => {
+                  setPartialBrowserState({
+                    isShowBrowser: false,
                   });
-                }
-              }}
-              isActive={isActiveTab}
-              onUpdateTab={params => {
-                updateTab(tab.id, params);
-              }}
-              onUpdateHistory={({ url, name }) => {
-                if (
-                  !browserState.isShowSearch &&
-                  browserState.isShowBrowser &&
-                  isActiveTab
-                ) {
-                  setBrowserHistory({
-                    url,
-                    name,
-                    createdAt: Date.now(),
-                  });
-                }
-              }}
-              onOpenTab={openTab}
-              style={[
-                !isActiveTab ? stylesScreen.hidden : null,
-                browserState.isShowSearch ? stylesScreen.opacity0 : null,
-              ]}
-              origin={urlInfo.origin}
-              tabId={tab.id}
-              url={tab.initialUrl}
-              tabsCount={displayedTabs.length}
-              onSelfClose={reason => {
-                if (reason === 'phishing') {
-                  // todo
                   closeTab(tab.id);
-                }
-              }}
-              onCloseTab={() => {
-                setPartialBrowserState({
-                  isShowBrowser: false,
-                });
-                closeTab(tab.id);
-              }}
-              // webviewContainerMaxHeight={webviewMaxHeight}
-              webviewProps={{
-                /**
-                 * @platform ios
-                 */
-                contentMode: 'mobile',
-                /**
-                 * set nestedScrollEnabled to true will cause custom animated gesture not working,
-                 * but whatever, we CAN'T apply any type meaningful gesture to RNW
-                 * @platform android
-                 */
-                nestedScrollEnabled: false,
-                allowsInlineMediaPlayback: true,
-                disableJsPromptLike: !isActiveTab,
-              }}
-            />
+                }}
+                // webviewContainerMaxHeight={webviewMaxHeight}
+                webviewProps={{
+                  /**
+                   * @platform ios
+                   */
+                  contentMode: 'mobile',
+                  /**
+                   * set nestedScrollEnabled to true will cause custom animated gesture not working,
+                   * but whatever, we CAN'T apply any type meaningful gesture to RNW
+                   * @platform android
+                   */
+                  nestedScrollEnabled: false,
+                  allowsInlineMediaPlayback: true,
+                  disableJsPromptLike: !isActiveTab,
+                }}
+              />
+            </Freeze>
           );
         })}
       </>
