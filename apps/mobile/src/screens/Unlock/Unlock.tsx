@@ -141,8 +141,8 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
 
 const unlockFailedRef = { current: 0 };
 function incToReset(isOnMount = false) {
-  // always reset to 0 on production
-  if (!__DEV__) return 0;
+  // // always reset to 0 on production
+  // if (!__DEV__) return 0;
 
   if (!isOnMount) {
     unlockFailedRef.current += 1;
@@ -205,9 +205,10 @@ export default function UnlockScreen() {
     } catch (error: any) {
       if (__DEV__) console.error(error);
 
-      if (incToReset() === 0) {
+      if (__DEV__ && incToReset() === 0) {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
         setUsingBiometrics(false);
+        toggleBiometrics(false, {});
       } else if (error.code === 'NIL_KEYCHAIN_OBJECT') {
         toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
         setUsingBiometrics(false);
