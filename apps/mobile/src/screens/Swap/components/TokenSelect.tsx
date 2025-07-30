@@ -176,7 +176,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       isLoading: isLoadingAllTokens,
     } = useSelectTokens({
       currentAccount,
-      visible: shouldFetchTokens,
+      visible: tokenSelectorVisible,
       keyword: queryConds.keyword,
       chain_server_id: queryConds.chainServerId,
       type: type,
@@ -202,24 +202,42 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           return;
         }
 
-        // 确保弹窗打开时获取数据
-        if (tokens.length === 0) {
-          if (type === 'send') {
-            currentAccount?.address &&
-              (await getCacheTokens([currentAccount.address]));
-          } else {
-            await getCacheTop10Tokens();
-          }
+        // 如果有搜索关键词，不进行额外的数据刷新
+        if (queryConds.keyword) {
+          return;
         }
 
-        // 延迟获取最新数据
-        timeRef.current = setTimeout(() => {
-          if (currentAccount?.address) {
-            loadToken(currentAccount.address, true);
-          } else {
-            checkIsExpireAndUpdate();
-          }
-        }, 500);
+        // 使用shouldFetchTokens来控制是否需要获取数据
+        if (!shouldFetchTokens) {
+          return;
+        }
+
+        // 如果已有数据，只延迟刷新最新数据
+        if (tokens.length > 0) {
+          timeRef.current = setTimeout(() => {
+            if (currentAccount?.address) {
+              loadToken(currentAccount.address, true);
+            } else {
+              checkIsExpireAndUpdate();
+            }
+          }, 100);
+          return;
+        }
+
+        // 如果没有数据，先获取缓存数据，然后获取最新数据
+        if (type === 'send') {
+          currentAccount?.address &&
+            (await getCacheTokens([currentAccount.address]));
+        } else {
+          await getCacheTop10Tokens();
+        }
+
+        // 获取最新数据
+        if (currentAccount?.address) {
+          loadToken(currentAccount.address, true);
+        } else {
+          checkIsExpireAndUpdate();
+        }
       })();
       return () => {
         if (timeRef.current) {
@@ -233,7 +251,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       currentAccount?.address,
       useSwapTokenList,
       queryConds.keyword,
-      tokens.length,
+      shouldFetchTokens,
     ]);
 
     // swap token list
