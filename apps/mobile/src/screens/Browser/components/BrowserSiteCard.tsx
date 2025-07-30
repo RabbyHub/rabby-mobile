@@ -89,7 +89,7 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
         isShowBorder ? styles.dappCardBorder : null,
         style,
       ]}>
-      <View style={styles.body} onStartShouldSetResponder={() => true}>
+      <View style={styles.body}>
         <View style={styles.dappIconWraper}>
           <DappIcon
             source={

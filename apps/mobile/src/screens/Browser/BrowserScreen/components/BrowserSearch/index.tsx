@@ -11,7 +11,7 @@ import { parse } from 'tldts';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTranslation } from 'react-i18next';
 import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
-import { useMemoizedFn } from 'ahooks';
+import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export function BrowserSearch({
@@ -53,6 +53,12 @@ export function BrowserSearch({
 
   const isOpenURLRef = useRef(false);
 
+  const handleClose = useMemoizedFn(async () => {
+    Keyboard.dismiss();
+    await waitKeyboardHide();
+    onClose?.(trigger === 'home' && !isOpenURLRef.current);
+  });
+
   const waitKeyboardHide = useMemoizedFn(async () => {
     if (!Keyboard.isVisible()) {
       return;
@@ -73,6 +79,29 @@ export function BrowserSearch({
               keyboardHideListener.remove();
             });
     });
+  });
+
+  const handleOpenUrl = useMemoizedFn(async (url: string) => {
+    isOpenURLRef.current = true;
+    Keyboard.dismiss();
+    await waitKeyboardHide();
+    onOpenURL?.(url);
+  });
+
+  const handleSubmitEditing = useMemoizedFn(() => {
+    if (!searchText) {
+      return;
+    }
+    isOpenURLRef.current = true;
+    if (isValidDomain) {
+      onOpenURL?.(
+        /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
+      );
+    } else {
+      onOpenURL?.(
+        `https://www.google.com/search?q=${encodeURIComponent(searchText)}`,
+      );
+    }
   });
 
   return (
@@ -100,28 +129,20 @@ export function BrowserSearch({
           </View>
         ) : (
           <BrowserRecent
-            isInBottomSheet
+            // isInBottomSheet
             list={displayedBrowserHistoryList}
-            onPress={async dapp => {
-              isOpenURLRef.current = true;
-              Keyboard.dismiss();
-              await waitKeyboardHide();
-              onOpenURL?.(dapp.url || dapp.origin);
+            onPress={dapp => {
+              handleOpenUrl(dapp.url || dapp.origin);
             }}
           />
         )
       ) : (
         <BrowserSearchResult
-          isInBottomSheet
+          // isInBottomSheet
           searchText={searchText}
           data={list || []}
           isValidDomain={!!isValidDomain}
-          onOpenURL={async url => {
-            isOpenURLRef.current = true;
-            Keyboard.dismiss();
-            await waitKeyboardHide();
-            onOpenURL?.(url);
-          }}
+          onOpenURL={handleOpenUrl}
         />
       )}
 
@@ -136,35 +157,9 @@ export function BrowserSearch({
           as="BottomSheetTextInput"
           value={searchText}
           onChangeText={setSearchText}
-          onCancel={async () => {
-            Keyboard.dismiss();
-            await waitKeyboardHide();
-            onClose?.(trigger === 'home' && !isOpenURLRef.current);
-          }}
-          onBlur={async () => {
-            Keyboard.dismiss();
-            await waitKeyboardHide();
-            onClose?.(trigger === 'home' && !isOpenURLRef.current);
-          }}
-          onSubmitEditing={() => {
-            if (!searchText) {
-              return;
-            }
-            isOpenURLRef.current = true;
-            if (isValidDomain) {
-              onOpenURL?.(
-                /^https?:\/\//.test(searchText)
-                  ? searchText
-                  : `https://${searchText}`,
-              );
-            } else {
-              onOpenURL?.(
-                `https://www.google.com/search?q=${encodeURIComponent(
-                  searchText,
-                )}`,
-              );
-            }
-          }}
+          onCancel={handleClose}
+          onBlur={handleClose}
+          onSubmitEditing={handleSubmitEditing}
           enterKeyHint="go"
           autoFocus
           placeholder={t('page.browser.BrowserSearch.placeholder')}
