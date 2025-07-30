@@ -40,6 +40,7 @@ import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
 import { findChainByServerID } from '@/utils/chain';
 import ChainFilterItem, { AccountFilterItem } from './ChainFilterItem';
+import FavoriteFilterItem, { FavoriteFilterType } from './FavoriteFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '../Toast';
 import { ModalLayouts, RootNames } from '@/constant/layout';
@@ -173,6 +174,9 @@ export interface TokenSelectorProps<
   showTestNetSwitch?: boolean;
   selectTab?: 'mainnet' | 'testnet';
   onTabChange?: (tab: 'mainnet' | 'testnet') => void;
+  showFavoriteFilter?: boolean;
+  favoriteFilterValue?: FavoriteFilterType;
+  onFavoriteFilterChange?: (value: FavoriteFilterType) => void;
 }
 const filterTestnetTokenItem = (token: TokenItem) => {
   return !findChainByServerID(token.chain)?.isTestnet;
@@ -210,6 +214,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
       showTestNetSwitch,
       selectTab,
       onTabChange,
+      showFavoriteFilter = false,
+      favoriteFilterValue = 'all',
+      onFavoriteFilterChange,
     },
     ref,
   ) => {
@@ -875,13 +882,23 @@ export const TokenSelectorSheetModal = React.forwardRef<
           !!filterAccount &&
           !isWatchOrSafeAccount(filterAccount);
         const _willShowChainFilter = !!chainItem && !hideChainFilter;
+        const _willShowFavoriteFilter = !!showFavoriteFilter;
 
         return {
           willShowChainFilter: _willShowChainFilter,
           willShowAccountFilter: _willShowAccountFilter,
-          willShowFilterRow: _willShowAccountFilter || _willShowChainFilter,
+          willShowFilterRow:
+            _willShowAccountFilter ||
+            _willShowChainFilter ||
+            _willShowFavoriteFilter,
         };
-      }, [displayAccountFilter, filterAccount, chainItem, hideChainFilter]);
+      }, [
+        displayAccountFilter,
+        filterAccount,
+        chainItem,
+        hideChainFilter,
+        showFavoriteFilter,
+      ]);
 
     return (
       <AppBottomSheetModal
@@ -1024,6 +1041,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   }}
                 />
               </View>
+            )}
+
+            {showFavoriteFilter && (
+              <FavoriteFilterItem
+                value={favoriteFilterValue}
+                onChange={onFavoriteFilterChange || (() => {})}
+              />
             )}
           </View>
           {(!isSwapTo || (query && !tokens.length)) && <>{customHeaderTitle}</>}

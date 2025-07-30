@@ -55,6 +55,7 @@ import { useSelectTokens } from '../hooks/useSelectTokens';
 import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -118,6 +119,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
     const [updateNonce, setUpdateNonce] = useState(0);
+    const [favoriteFilterValue, setFavoriteFilterValue] =
+      useState<FavoriteFilterType>('all');
+
     const [_, setLongPressToken] = useLongPressTokenAtom();
     const queryConds = useDebounceValue(_queryConds, 250);
     const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -250,17 +254,32 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       [type],
     );
 
+    const { userTokenSettings, fetchUserTokenSettings } =
+      useUserTokenSettings();
+    const pinedQueue = useMemo(
+      () => userTokenSettings.pinedQueue,
+      [userTokenSettings.pinedQueue],
+    );
+
     const foldTokensList = useMemo(() => {
       if (!isFromModalType || queryConds.keyword) {
         return [];
       }
 
-      const list = convertSmallTokenList(
-        allTokens.filter(i => {
-          const condition = !!i._isFold || (!i.is_core && !i._isPined);
-          return condition;
-        }),
-      ).map(
+      let filteredTokens = allTokens.filter(i => {
+        const condition = !!i._isFold || (!i.is_core && !i._isPined);
+        return condition;
+      });
+
+      if (favoriteFilterValue === 'favorite') {
+        filteredTokens = filteredTokens.filter(token =>
+          pinedQueue?.some(
+            x => x.chainId === token.chain && x.tokenId === token._tokenId,
+          ),
+        );
+      }
+
+      const list = convertSmallTokenList(filteredTokens).map(
         e =>
           ({
             ...abstractTokenToTokenItem(e),
@@ -271,7 +290,14 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         list.filter(e => !isExcludedTokens(e)),
         e => makeKeyForTokenItemMaybeWithOwner(e),
       );
-    }, [allTokens, isExcludedTokens, isFromModalType, queryConds.keyword]);
+    }, [
+      allTokens,
+      isExcludedTokens,
+      isFromModalType,
+      queryConds.keyword,
+      favoriteFilterValue,
+      pinedQueue,
+    ]);
 
     const availableToken = useMemo(() => {
       const _tokens = queryConds.chainServerId
@@ -374,9 +400,19 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const recentDisplayToTokens = useMemo(() => {
       if (type === 'swapTo' && queryConds.keyword.length < 1) {
-        return recentToTokens.filter(item => {
+        let filteredRecentTokens = recentToTokens.filter(item => {
           return item.chain === chainId && !isExcludedTokens(item);
         });
+
+        if (favoriteFilterValue === 'favorite') {
+          filteredRecentTokens = filteredRecentTokens.filter(token =>
+            pinedQueue?.some(
+              x => x.chainId === token.chain && x.tokenId === token.id,
+            ),
+          );
+        }
+
+        return filteredRecentTokens;
       }
       return [];
     }, [
@@ -385,15 +421,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       recentToTokens,
       chainId,
       isExcludedTokens,
+      favoriteFilterValue,
+      pinedQueue,
     ]);
-
-    const { userTokenSettings, fetchUserTokenSettings } =
-      useUserTokenSettings();
-
-    const pinedQueue = useMemo(
-      () => userTokenSettings.pinedQueue,
-      [userTokenSettings.pinedQueue],
-    );
 
     useFocusEffect(
       useCallback(() => {
@@ -410,19 +440,25 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     }, []);
 
     const list = useMemo(() => {
-      if (pinedQueue?.length) {
-        return [
-          ...availableToken.map(e => ({
-            ...e,
-            isPined: pinedQueue?.some(
-              x => x.chainId === e.chain && x.tokenId === e.id,
-            ),
-          })),
-        ] as TokenItem[];
+      let filteredTokens = availableToken;
+
+      if (favoriteFilterValue === 'favorite') {
+        filteredTokens = availableToken.filter(token =>
+          pinedQueue?.some(
+            x => x.chainId === token.chain && x.tokenId === token.id,
+          ),
+        );
       }
 
-      return [...availableToken];
-    }, [availableToken, pinedQueue]);
+      const tokensWithPinStatus = filteredTokens.map(e => ({
+        ...e,
+        isPined: pinedQueue?.some(
+          x => x.chainId === e.chain && x.tokenId === e.id,
+        ),
+      })) as TokenItem[];
+
+      return tokensWithPinStatus;
+    }, [availableToken, pinedQueue, favoriteFilterValue]);
 
     const unshiftList = useMemo(() => {
       if (recentDisplayToTokens.length) {
@@ -585,6 +621,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           isLoading={
             selectedTab === 'testnet' ? testnetTokenListLoading : isListLoading
           }
+          showFavoriteFilter
+          favoriteFilterValue={favoriteFilterValue}
+          onFavoriteFilterChange={setFavoriteFilterValue}
           type={type}
           disableItemCheck={disableItemCheck}
           selectToken={token}
