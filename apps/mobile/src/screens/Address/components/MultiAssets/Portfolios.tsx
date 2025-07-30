@@ -691,27 +691,22 @@ export const Portfolios = () => {
     }
   }, [checkIsExpireAndUpdate, refreshCurve, triggerUpdate]);
 
-  // useEffect(() => {
-  //   if (triggerRefresh) {
-  //     onRefresh();
-  //     setTriggerRefresh(false);
-  //   }
-  // }, [isFocused, onRefresh, setTriggerRefresh, triggerRefresh]);
+  useEffect(() => {
+    if (triggerRefresh) {
+      onRefresh();
+      setTriggerRefresh(false);
+    }
+  }, [isFocused, onRefresh, setTriggerRefresh, triggerRefresh]);
 
   return (
     <Tabs.FlatList
       keyExtractor={item => getItemId(item)}
       data={hasNotAssets ? [{ type: 'empty-token' }] : portfolioListData}
       renderItem={renderItem}
-      estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
-      getItemType={getItemType}
-      overrideItemLayout={overrideItemLayout}
       ItemSeparatorComponent={ListRenderSeparator}
       onViewableItemsChanged={() => {
         setIsListVisable(true);
       }}
-      drawDistance={1000}
-      removeClippedSubviews={true}
       ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}

@@ -18,8 +18,8 @@ type AssetAvatarProps = {
   style?: RNViewProps['style'];
   logoStyle?: ViewStyle;
   innerChainStyle?: ImageStyle | FastImageProps['style'];
-  lazyLoad?: boolean; // 是否启用懒加载
-  lazyLoadDelay?: number; // 懒加载延迟时间（毫秒）
+  lazyLoad?: boolean;
+  lazyLoadDelay?: number;
 };
 
 // 没有用 svg 因为在 虚拟列表中，会有问题
@@ -64,11 +64,9 @@ export const AssetAvatar = memo(
     const { styles, isLight } = useThemeStyles(getStyles);
     const { on, turnOn } = useSwitch();
 
-    // 懒加载状态
     const [shouldLoadImage, setShouldLoadImage] = useState(false);
     const containerRef = useRef<View>(null);
 
-    // 懒加载逻辑：延迟加载图片
     useEffect(() => {
       if (!logo) {
         setShouldLoadImage(false);
@@ -76,12 +74,10 @@ export const AssetAvatar = memo(
       }
 
       if (!lazyLoad) {
-        // 如果不启用懒加载，立即加载
         setShouldLoadImage(true);
         return;
       }
 
-      // 延迟加载图片，避免一次性加载太多图片
       const timer = setTimeout(() => {
         setShouldLoadImage(true);
       }, lazyLoadDelay);
