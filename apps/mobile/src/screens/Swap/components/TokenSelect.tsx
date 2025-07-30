@@ -567,13 +567,26 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
     });
 
-    const { testnetTokenList, loading: testnetTokenListLoading } =
-      useSearchTestnetToken({
-        address: currentAccount?.address,
-        withBalance: false,
-        q: queryConds.keyword,
-        enabled: selectedTab === 'testnet' && isSend,
-      });
+    const {
+      testnetTokenList: rawTestnetTokenList,
+      loading: testnetTokenListLoading,
+    } = useSearchTestnetToken({
+      address: currentAccount?.address,
+      withBalance: false,
+      q: queryConds.keyword,
+      enabled: selectedTab === 'testnet' && isSend,
+    });
+
+    const testnetTokenList = useMemo(() => {
+      if (favoriteFilterValue === 'favorite') {
+        return rawTestnetTokenList.filter(token =>
+          pinedQueue?.some(
+            x => x.chainId === token.chain && x.tokenId === token.id,
+          ),
+        );
+      }
+      return rawTestnetTokenList;
+    }, [rawTestnetTokenList, favoriteFilterValue, pinedQueue]);
 
     return (
       <>

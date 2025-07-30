@@ -903,7 +903,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     return (
       <AppBottomSheetModal
         ref={tokenSelectorModal}
-        snapPoints={[ModalLayouts.defaultHeightPercentText]}
+        snapPoints={['90%']}
         enableContentPanningGesture
         enableDismissOnClose
         onChange={idx => {
@@ -943,9 +943,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
           ]}>
           <View style={[styles.titleArea, styles.internalBlock]}>
             <BottomSheetHandlableView>
-              <Text style={[styles.modalTitle, styles.modalMainTitle]}>
+              {/* <Text style={[styles.modalTitle, styles.modalMainTitle]}>
                 {t('page.swap.select-token')}
-              </Text>
+              </Text> */}
               {showTestNetSwitch ? (
                 <NetSwitchTabs
                   value={selectTab}
