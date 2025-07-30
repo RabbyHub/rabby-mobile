@@ -3,7 +3,7 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { atomByMMKV } from '@/core/storage/mmkv';
 
 const historyTimeBase = atomByMMKV<Record<string, number>>(
-  '@HistoryTimeDictV4',
+  '@HistoryTimeDictV3',
   {} as Record<string, number>,
 );
 
