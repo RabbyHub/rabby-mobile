@@ -50,34 +50,32 @@ export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
 export SENTRY_DISABLE_AUTO_UPLOAD=true # 不上传 sentry 报告了，没啥用
 export APP_ENV=hashing
 
-# @description 覆写 .env.local
-override_dotenv() {
-  # https://www.npmjs.com/package/react-native-dotenv#override-envname
-  OVERRIDE_ENV_FILE=".env"
+# --- 覆写 .env.local ---
+# https://www.npmjs.com/package/react-native-dotenv#override-envname
+OVERRIDE_ENV_FILE=".env"
 
-  if [ -f "$OVERRIDE_ENV_FILE" ]; then
-    echo "ℹ️ Loading environment variables from $OVERRIDE_ENV_FILE..."
-    # 使用 set -a 来自动导出之后设置的变量
-    # 读取文件，忽略注释和空行，然后导出
-    # 注意：这种方法对于包含特殊字符（如空格、#）的值处理可能需要更复杂的解析
-    # 一个更健壮的方法是逐行读取和解析
-    while IFS='=' read -r key value || [ -n "$key" ]; do
-      # 移除可能的注释 (从第一个'#'开始)
-      key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1')                                       # awk '{$1=$1};1' 用于去除首尾空格
-      value_cleaned=$(echo "$value" | sed 's/#.*//' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//') # 去除首尾空格
+if [ -f "$OVERRIDE_ENV_FILE" ]; then
+  echo "ℹ️ Loading environment variables from $OVERRIDE_ENV_FILE..."
+  # 使用 set -a 来自动导出之后设置的变量
+  # 读取文件，忽略注释和空行，然后导出
+  # 注意：这种方法对于包含特殊字符（如空格、#）的值处理可能需要更复杂的解析
+  # 一个更健壮的方法是逐行读取和解析
+  while IFS='=' read -r key value || [ -n "$key" ]; do
+    # 移除可能的注释 (从第一个'#'开始)
+    key_cleaned=$(echo "$key" | sed 's/#.*//' | awk '{$1=$1};1')                                       # awk '{$1=$1};1' 用于去除首尾空格
+    value_cleaned=$(echo "$value" | sed 's/#.*//' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//') # 去除首尾空格
 
-      # 移除可能存在于值两边的引号 (单引号或双引号)
-      value_cleaned=$(echo "$value_cleaned" | sed -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
+    # 移除可能存在于值两边的引号 (单引号或双引号)
+    value_cleaned=$(echo "$value_cleaned" | sed -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
 
-      value_to_export="${value_cleaned:-pesudo_for_hashing}"
+    value_to_export="${value_cleaned:-pesudo_for_hashing}"
 
-      if [ -n "$key_cleaned" ]; then # 确保 key 不是空的 (例如，空行或纯注释行)
-        export "$key_cleaned=$value_to_export"
-      fi
-    done < <(grep -vE '^[[:space:]]*#|^[[:space:]]*$' "$OVERRIDE_ENV_FILE") # 先过滤掉纯注释行和空行
-    echo "✅ Environment variables from $OVERRIDE_ENV_FILE loaded and exported."
-  fi
-}
+    if [ -n "$key_cleaned" ]; then # 确保 key 不是空的 (例如，空行或纯注释行)
+      export "$key_cleaned=$value_to_export"
+    fi
+  done < <(grep -vE '^[[:space:]]*#|^[[:space:]]*$' "$OVERRIDE_ENV_FILE") # 先过滤掉纯注释行和空行
+  echo "✅ Environment variables from $OVERRIDE_ENV_FILE loaded and exported."
+fi
 
 #@description 计算 moduleId 有没有冲突
 validate_module_ids() {

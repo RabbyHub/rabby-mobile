@@ -83,6 +83,11 @@ def jscFlavor = 'org.webkit:android-jsc:+'
 
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
 
+// 必须放在 android {} 前，不然 agp 组装配置的时候会忽略它
+if (project.hasProperty('hashcheck')) {
+    apply from: 'hashcheck.gradle'
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -186,10 +191,6 @@ android {
     //     ]
     //   }
     // }
-}
-
-if (project.hasProperty('hashcheck')) {
-    apply from: 'hashcheck.gradle'
 }
 
 androidComponents {
