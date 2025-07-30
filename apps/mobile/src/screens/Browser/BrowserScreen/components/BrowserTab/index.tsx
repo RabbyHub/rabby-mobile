@@ -288,11 +288,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleViewShot = useMemoizedFn(async (url: string) => {
       try {
-        const viewShot = await viewShotRef.current?.capture();
-        onUpdateTab?.({
-          url: url,
-          viewShot,
-        });
+        console.log('viewShot', url);
+        // const viewShot = await viewShotRef.current?.capture();
+        // onUpdateTab?.({
+        //   url: url,
+        //   viewShot,
+        // });
       } catch (e) {
         console.error('viewShot', e);
       }
