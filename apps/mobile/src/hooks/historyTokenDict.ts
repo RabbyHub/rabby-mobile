@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { atom, useAtom, useAtomValue } from 'jotai';
-import { atomByMMKV } from '@/core/storage/mmkv';
+import { useAtom } from 'jotai';
+import { atomByMMKV, removeLegacyMMKVStorageByKey } from '@/core/storage/mmkv';
 
 const historyTimeBase = atomByMMKV<Record<string, number>>(
   '@HistoryTimeDictV3',
@@ -11,6 +11,14 @@ const historyLoadingDict = atomByMMKV<Record<string, boolean>>(
   '@historyLoadingDict',
   {} as Record<string, boolean>,
 );
+
+(() => {
+  setTimeout(() => {
+    removeLegacyMMKVStorageByKey('@HistoryTokenDict');
+    removeLegacyMMKVStorageByKey('@HistoryProjectDict');
+    removeLegacyMMKVStorageByKey('@historyEnsureNoDataDict');
+  }, 1000);
+})();
 
 export function useHistoryTokenDict() {
   const [updateHistoryTime, setUpdateHistoryTime] = useAtom(historyTimeBase);

@@ -14,7 +14,7 @@ import { MMKV_FILE_NAMES, walkThroughMMKVFiles } from '../utils/appFS';
 import RNHelpers from '../native/RNHelpers';
 import { IS_IOS } from '../native/utils';
 
-export function makeAppStorage(options?: MMKVConfiguration) {
+function makeAppStorage(options?: MMKVConfiguration) {
   const mmkv = new MMKV(options);
 
   function getItem<T>(key: string): T | null {
@@ -52,6 +52,9 @@ export function makeAppStorage(options?: MMKVConfiguration) {
     setItem,
     removeItem,
     clearAll,
+    hasItem: (key: string): boolean => {
+      return mmkv.contains(key);
+    },
   };
 
   return {
@@ -142,6 +145,24 @@ export const atomByMMKV = <T = any>(
 
   return atomWithStorage<T>(key, initialValue, jsonStore);
 };
+
+const LEGACY_KEYS: string[] = [];
+export function removeLegacyMMKVStorageByKey(key: `@${string}`) {
+  if (!key.startsWith('@') || LEGACY_KEYS.includes(key)) {
+    console.warn(
+      `removeLegacyMMKVStorageByKey: key "${key}" is not a valid legacy key or already removed.`,
+    );
+    return;
+  }
+
+  if (appMethods.hasItem(key)) {
+    console.debug(`removeLegacyMMKVStorageByKey: removing key "${key}"`);
+    appMethods.removeItem(key);
+    console.debug(`removeLegacyMMKVStorageByKey: key "${key}" removed.`);
+  } else if (__DEV__) {
+    console.warn(`removeLegacyMMKVStorageByKey: key "${key}" does not exist.`);
+  }
+}
 
 // iife process
 (async function ensureMmkvFilesNotBackupable() {
