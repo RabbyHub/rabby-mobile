@@ -355,11 +355,26 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       foldTokensList,
     ]);
 
-    const isListLoading = queryConds.keyword
-      ? isSearchLoading
-      : useSwapTokenList
-      ? swapTokenListLoading
-      : isLoadingAllTokens;
+    const isListLoading = useMemo(() => {
+      if (queryConds.keyword) {
+        if (tokenSelectorVisible && !isLoadingAllTokens) {
+          return true;
+        }
+        return isLoadingAllTokens;
+      }
+
+      if (useSwapTokenList) {
+        return swapTokenListLoading;
+      }
+
+      return isLoadingAllTokens;
+    }, [
+      queryConds.keyword,
+      tokenSelectorVisible,
+      isLoadingAllTokens,
+      useSwapTokenList,
+      swapTokenListLoading,
+    ]);
 
     const handleSearchTokens = useCallback<
       React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']
