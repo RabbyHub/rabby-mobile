@@ -160,27 +160,23 @@ export const DefiRow = memo(
                 marginRight: 55,
               },
             ]}>
-            <HighlightText
-              style={styles.projectName}
-              highlightStyle={styles.highlightText}
+            <Text
               numberOfLines={1}
               ellipsizeMode="tail"
-              searchWords={[filterText || '']}
-              textToHighlight={data?.name}
-            />
+              style={styles.projectName}>
+              {data?.name}
+            </Text>
             {!hideFoldTag && data._isManualFold && <TextBadge type="folded" />}
           </View>
         </View>
         <View style={styles.projectHeaderUsd}>
           {data.filterTokenDesc ? (
-            <HighlightText
-              style={styles.projectHeaderNetWorth}
-              highlightStyle={styles.highlightText}
+            <Text
               numberOfLines={1}
               ellipsizeMode="tail"
-              searchWords={[filterText || '']}
-              textToHighlight={data?.filterTokenDesc}
-            />
+              style={styles.projectHeaderNetWorth}>
+              {data?.filterTokenDesc}
+            </Text>
           ) : (
             <Text
               style={[

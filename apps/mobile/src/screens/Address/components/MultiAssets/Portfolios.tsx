@@ -435,7 +435,6 @@ export const Portfolios = () => {
                 style={styles.renderItemWrapper}
                 disableMenu
                 chainLogoSize={18}
-                menuActions={getTokenMenuActions(data)}
               />
             </View>
           );
@@ -449,14 +448,8 @@ export const Portfolios = () => {
                   styles.renderDefiItemWrapper,
                   !isLight && styles.bg2,
                 ])}
-                menuActions={getDefiOrNftMenuAction('defi', data[0])}
                 logoSize={40}
                 disableMenu
-                onPress={() =>
-                  handleOpenDefiDetail(data[0], [
-                    ...(data[0]._portfolios || []),
-                  ])
-                }
               />
               {data[1] && (
                 <DefiRow
@@ -465,14 +458,8 @@ export const Portfolios = () => {
                     styles.renderDefiItemWrapper,
                     !isLight && styles.bg2,
                   ])}
-                  menuActions={getDefiOrNftMenuAction('defi', data[1])}
                   logoSize={40}
                   disableMenu
-                  onPress={() =>
-                    handleOpenDefiDetail(data[1], [
-                      ...(data[1]._portfolios || []),
-                    ])
-                  }
                 />
               )}
             </View>
@@ -486,23 +473,14 @@ export const Portfolios = () => {
                 styles.renderItemWrapper,
                 !isLight && styles.bg2,
               ])}
-              onPress={() => {
-                setFoldScam(false);
-              }}
             />
           );
         case 'toggle_token_fold':
           return (
             <TokenRowSectionHeader
               style={styles.tokenSectionHeader}
-              str={getTotalFoldToken(tokens.filter(i => i._isFold))}
+              str={'1'}
               fold={foldHideList}
-              onPressFold={() => {
-                if (!foldHideList) {
-                  setFoldScam(true);
-                }
-                setFoldHideList(pre => !pre);
-              }}
             />
           );
         case 'defi_header':
@@ -514,18 +492,13 @@ export const Portfolios = () => {
         case 'toggle_defi_fold':
           return (
             <TokenRowSectionHeader
-              str={getAllDefiCount(
-                portfolios.filter(
-                  i => i._isFold,
-                ) as unknown as DisplayedProject[],
-              )}
+              str={'1'}
               fold={foldDefi}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
                 styles.buttonHeader,
                 !isLight && styles.bg2,
               ])}
-              onPressFold={() => setFoldDefi(pre => !pre)}
             />
           );
         case 'empty-assets':
@@ -553,15 +526,11 @@ export const Portfolios = () => {
     [
       foldDefi,
       foldHideList,
-      getDefiOrNftMenuAction,
-      getTokenMenuActions,
       handleOnBuy,
       handleOnImport,
       handleOnReceive,
-      handleOpenDefiDetail,
       handleOpenTokenDetail,
       isLight,
-      portfolios,
       styles.bg2,
       styles.buttonHeader,
       styles.defiGroups,
@@ -575,7 +544,6 @@ export const Portfolios = () => {
       styles.sectionTextHeader,
       styles.tokenSectionHeader,
       t,
-      tokens,
     ],
   );
 
@@ -702,7 +670,7 @@ export const Portfolios = () => {
   // }, [isFocused, onRefresh, setTriggerRefresh, triggerRefresh]);
 
   return (
-    <Tabs.FlashList
+    <Tabs.FlatList
       keyExtractor={item => getItemId(item)}
       data={hasNotAssets ? [{ type: 'empty-token' }] : portfolioListData}
       renderItem={renderItem}
@@ -713,6 +681,8 @@ export const Portfolios = () => {
       onViewableItemsChanged={() => {
         setIsListVisable(true);
       }}
+      drawDistance={1000}
+      removeClippedSubviews={true}
       ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}

@@ -30,7 +30,6 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
-import { HighlightText } from '@/components2024/HighlightText';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatPrice, formatUsdValue } from '@/utils/number';
@@ -153,14 +152,12 @@ export const TokenRow = memo(
           </View>
           <View style={styles.tokenRowTokenInner}>
             <View style={styles.tokenHeader}>
-              <HighlightText
-                style={styles.tokenSymbol}
-                highlightStyle={styles.highlightText}
+              <Text
                 numberOfLines={1}
                 ellipsizeMode="tail"
-                searchWords={[filterText || '']}
-                textToHighlight={data.symbol}
-              />
+                style={styles.tokenSymbol}>
+                {data.symbol}
+              </Text>
               {!hideFoldTag && data._isManualFold && (
                 <TextBadge type="folded" />
               )}
