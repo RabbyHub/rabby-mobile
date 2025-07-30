@@ -3,14 +3,10 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { atomByMMKV } from '@/core/storage/mmkv';
 
 const historyTimeBase = atomByMMKV<Record<string, number>>(
-  '@HistoryTimeDictV3',
+  '@HistoryTimeDictV4',
   {} as Record<string, number>,
 );
 
-const historyEnsureNoDataBase = atomByMMKV<Record<string, boolean>>(
-  '@historyEnsureNoDataDict',
-  {} as Record<string, boolean>,
-);
 const historyLoadingDict = atomByMMKV<Record<string, boolean>>(
   '@historyLoadingDict',
   {} as Record<string, boolean>,
@@ -18,9 +14,6 @@ const historyLoadingDict = atomByMMKV<Record<string, boolean>>(
 
 export function useHistoryTokenDict() {
   const [updateHistoryTime, setUpdateHistoryTime] = useAtom(historyTimeBase);
-  const [historyEnsureNoData, setHistoryEnsureNoData] = useAtom(
-    historyEnsureNoDataBase,
-  );
   const [historyLoading, setHistoryLoading] = useAtom(historyLoadingDict);
 
   const updateHistoryTimeSingleAddress = (add: string, time?: number) => {
@@ -38,8 +31,6 @@ export function useHistoryTokenDict() {
     resetUpdateHistoryTime,
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
-    historyEnsureNoData,
-    setHistoryEnsureNoData,
     historyLoading,
     setHistoryLoading,
   };

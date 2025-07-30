@@ -65,7 +65,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
   const {
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
-    setHistoryEnsureNoData,
     setHistoryLoading,
   } = useHistoryTokenDict();
 
@@ -177,11 +176,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
             synHistoryInRealTimeApi(address, latestTime, lastItemTime);
           }
         }
-        !startTime &&
-          setHistoryEnsureNoData(prev => ({
-            ...prev,
-            [address]: !res.history_list.length,
-          }));
         !start_time &&
           !res.history_list.length &&
           setHistoryLoading(prev => ({ ...prev, [address]: false }));
@@ -325,11 +319,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           }
         }
         !start_time &&
-          setHistoryEnsureNoData(prev => ({
-            ...prev,
-            [address]: !res.history_list.length,
-          }));
-        !start_time &&
           !res.history_list.length &&
           setHistoryLoading(prev => ({ ...prev, [address]: false }));
       } catch (error) {
@@ -449,7 +438,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           try {
             await Promise.all([
               syncUserAllHistory(address, 0, 0, isUserRealTimeApi),
-              syncBuyHistory(address),
             ]);
           } catch (error) {
             console.error(

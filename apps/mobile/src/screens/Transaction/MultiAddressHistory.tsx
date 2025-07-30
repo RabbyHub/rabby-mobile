@@ -139,7 +139,6 @@ function History({
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
   const dbLastCursorRef = useRef<number>(0);
-  const dbHasMoreRef = useRef<boolean>(false);
   const dbFetchLoadingRef = useRef<boolean>(false);
   const hasMoreMap = useRef<Record<string, boolean>>({});
   const [isShowAll, setIsShowAll] = useState(false);
@@ -185,7 +184,10 @@ function History({
       // judge if is need
       if (dbFetchLoadingRef.current) {
         console.warn('loading multi time , pls check what happened');
-        return [];
+        return {
+          list: [],
+          hasMore: false,
+        };
       }
       const isFilter =
         filterScamAndSmallTx === undefined ? !isShowAll : filterScamAndSmallTx;
@@ -220,10 +222,9 @@ function History({
         setDbData(prev => mergeDataWithDeduplication(prev, list, 'back'));
       }
       dbLastCursorRef.current = nextCursor || 0;
-      dbHasMoreRef.current = hasMore;
       dbFetchLoadingRef.current = false;
       setFirstFetchDone(true);
-      return list;
+      return { list, hasMore };
     },
   );
 
@@ -278,7 +279,7 @@ function History({
       if (!isReady.current) {
         isReady.current = true;
       }
-      return { list: res };
+      return res;
     } else {
       const accountListArr = isSceneUsingAllAccounts
         ? accountList.slice(0, 10)
@@ -331,7 +332,10 @@ function History({
       if (accountList.length > 0) {
         await waitQueueFinished(queue);
       }
-      return { list: orderBy(list, 'time_at', 'desc') };
+      return {
+        list: orderBy(list, 'time_at', 'desc'),
+        hasMore: Object.values(hasMoreMap.current).some(item => item),
+      };
     }
   });
 
@@ -485,7 +489,6 @@ function History({
       reloadAsync();
     } else {
       dbLastCursorRef.current = 0;
-      dbHasMoreRef.current = false;
       isSceneUsingAllAccounts
         ? syncTop10History(true)
         : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
@@ -509,7 +512,6 @@ function History({
       if (!isNeedFetchFromApi) {
         setFirstFetchDone(false);
         dbLastCursorRef.current = 0;
-        dbHasMoreRef.current = false;
         batchFetchDataFromDb();
         runFetchLocalTx();
       } else {
@@ -526,29 +528,31 @@ function History({
     loading,
     loadingMore,
     loadMore,
+    noMore,
     reloadAsync,
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
-    isNoMore: () => {
-      if (loadingMore) {
-        return true;
-      }
-      if (!isNeedFetchFromApi) {
-        // load from db
-        return !dbHasMoreRef.current;
-      }
-      return Object.values(hasMoreMap.current).every(item => !item);
-    },
+    // isNoMore: ({ hasMore }) => {
+    //   if (loadingMore) {
+    //     console.log('11111111111111111111111111');
+    //     return true;
+    //   }
+    //   if (!isNeedFetchFromApi) {
+    //     // load from db
+    //     return hasMore;
+    //   }
+    //   console.log('?????????????');
+    //   return Object.values(hasMoreMap.current).every(item => !item);
+    // },
     onSuccess() {
       runFetchLocalTx();
     },
     reloadDeps: [batchFetchData],
   });
-
   const throttleBatchFetchData = useMemo(
     () =>
-      debounce(batchFetchDataFromDbUpsert, 2000, {
-        leading: false,
+      debounce(batchFetchDataFromDbUpsert, 1000, {
+        leading: true,
         trailing: true,
       }),
     [batchFetchDataFromDbUpsert],
@@ -634,7 +638,6 @@ function History({
         handleSwitchShowAll={value => {
           historyListRef.current?.scrollToTop();
           dbLastCursorRef.current = 0;
-          dbHasMoreRef.current = false;
           batchFetchDataFromDb(value);
         }}
       />
@@ -746,7 +749,6 @@ function History({
           isForMultipleAddress={isForMultipleAddress}
           loadMore={() => {
             // avoid exec multi times loadMore
-            dbHasMoreRef.current = false;
             loadMore();
           }}
           onRefresh={refresh}
