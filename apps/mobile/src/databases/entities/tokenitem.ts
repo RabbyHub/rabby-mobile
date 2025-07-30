@@ -232,14 +232,27 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
-  static async batchMultAddressTokens(addresses: string[]) {
+  static async batchMultAddressTokens(
+    addresses: string[],
+    core?: boolean,
+    maxLength?: number,
+  ) {
     await prepareAppDataSource();
 
-    return (
-      await this.getRepository().findBy({
-        owner_addr: In(addresses),
-      })
-    )
+    const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
+
+    if (core) {
+      queryBuilder.andWhere({ is_core: true });
+    }
+    if (maxLength) {
+      queryBuilder.take(maxLength);
+    }
+
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
+
+    const tokens = await queryBuilder.getMany();
+
+    return tokens
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
       .filter(i => i.amount > 0)
       .map(i => ({

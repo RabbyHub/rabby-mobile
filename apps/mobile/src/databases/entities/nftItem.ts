@@ -158,14 +158,26 @@ export class NFTItemEntity extends EntityAddressAssetBase {
       }));
   }
 
-  static async batchMultAddressNFTs(addresses: string[]) {
+  static async batchMultAddressNFTs(
+    addresses: string[],
+    core?: boolean,
+    maxLength?: number,
+  ) {
     await prepareAppDataSource();
 
-    return (
-      await this.getRepository().findBy({
-        owner_addr: In(addresses),
-      })
-    )
+    const queryBuilder = this.getRepository().createQueryBuilder('nftitem');
+
+    if (core) {
+      queryBuilder.andWhere({ is_core: true });
+    }
+    if (maxLength) {
+      queryBuilder.take(maxLength);
+    }
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
+
+    const nfts = await queryBuilder.getMany();
+
+    return nfts
       .filter(i => i.id !== EMPTY_NFT_ITEM_ID)
       .map(i => ({
         ...i,

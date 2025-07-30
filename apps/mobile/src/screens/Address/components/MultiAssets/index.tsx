@@ -99,11 +99,30 @@ export const MultiAssets = ({
     [colors2024, combineData.isLoss],
   );
 
-  const { refreshing } = useAssets();
+  const { tokens, refreshing, getCacheTop10Assets } = useAssets();
   const isLoadingMultiCurve = useAtomValue(loadingMultiCurveAtom);
   const renderCirleLoading = useCallback(() => {
     return refreshing || isLoadingMultiCurve ? <LoadingCircle /> : '';
   }, [isLoadingMultiCurve, refreshing]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (tokens.length) {
+        return;
+      }
+      getCacheTop10Assets({
+        disableNFT: true,
+        realTimeAddresses: top10Addresses,
+        core: true,
+        maxTokenLength: 200,
+        maxDefiLength: 20,
+      });
+    }, 0);
+    return () => {
+      id && clearTimeout(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleScroll = useCallback(
     (y: number) => {

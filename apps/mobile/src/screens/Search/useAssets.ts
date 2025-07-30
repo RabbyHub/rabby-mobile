@@ -29,6 +29,7 @@ import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 export const loadingAtom = atom(true);
 export const isFirstFetchAtom = atom(true);
+export const shortCacheAtom = atom(true);
 export const useAssets = () => {
   const [isLoading, setLoading] = useAtom(loadingAtom);
   const { accounts } = useMyAccounts({
@@ -36,6 +37,7 @@ export const useAssets = () => {
   });
   const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useAtom(isFirstFetchAtom);
+  const [shortCache, setShortCache] = useAtom(shortCacheAtom);
   const {
     tokens,
     portfolios,
@@ -148,13 +150,22 @@ export const useAssets = () => {
   });
 
   const batchLoadCacheTokens = useMemoizedFn(
-    async (addresses: string[], setting: any) => {
+    async (
+      addresses: string[],
+      setting: any,
+      options?: {
+        core?: boolean;
+        maxLength?: number;
+      },
+    ) => {
       if (!addresses.length) {
         return;
       }
       setLoading(true);
       const cachedTokens = await TokenItemEntity.batchMultAddressTokens(
         addresses,
+        options?.core,
+        options?.maxLength,
       );
       if (!cachedTokens.length) {
         setLoading(false);
@@ -212,12 +223,19 @@ export const useAssets = () => {
   );
 
   const batchLoadCacheDefi = useMemoizedFn(
-    async (addresses: string[], setting: any) => {
+    async (
+      addresses: string[],
+      setting: any,
+      options?: {
+        maxLength?: number;
+      },
+    ) => {
       if (!addresses.length) {
         return;
       }
       const cachedPortcols = await PortocolItemEntity.batchMultAddressPortocols(
         addresses,
+        options?.maxLength,
       );
       if (!cachedPortcols) {
         return;
@@ -254,11 +272,22 @@ export const useAssets = () => {
     },
   );
   const batchLoadCacheNFT = useMemoizedFn(
-    async (addresses: string[], setting: any) => {
+    async (
+      addresses: string[],
+      setting: any,
+      options?: {
+        core?: boolean;
+        maxLength?: number;
+      },
+    ) => {
       if (!addresses.length) {
         return;
       }
-      const cacheNfts = await NFTItemEntity.batchMultAddressNFTs(addresses);
+      const cacheNfts = await NFTItemEntity.batchMultAddressNFTs(
+        addresses,
+        options?.core,
+        options?.maxLength,
+      );
       if (!cacheNfts.length) {
         return;
       }
@@ -344,6 +373,10 @@ export const useAssets = () => {
       disableDefi?: boolean;
       disableNFT?: boolean;
       realTimeAddresses?: string[];
+      core?: boolean;
+      maxTokenLength?: number;
+      maxDefiLength?: number;
+      maxNFTLength?: number;
     }) => {
       const { disableToken, disableDefi, disableNFT } = options || {};
       const top10Account = sortedAccounts
@@ -353,15 +386,35 @@ export const useAssets = () => {
         ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
       ];
       removeUnNeedAssets(addresses);
-      if (Object.keys(assetsMap).length) {
+      // 有cache，不查了
+      if (Object.keys(assetsMap).length && !shortCache) {
         return;
       }
+      setShortCache(
+        !!(
+          options?.maxTokenLength ||
+          options?.maxDefiLength ||
+          options?.maxNFTLength
+        ),
+      );
+
       const tokenSetting = await preferenceService.getUserTokenSettings();
-      !disableToken && (await batchLoadCacheTokens(addresses, tokenSetting));
+      !disableToken &&
+        (await batchLoadCacheTokens(addresses, tokenSetting, {
+          core: options?.core,
+          maxLength: options?.maxTokenLength,
+        }));
       setTimeout(() => {
         Promise.all([
-          !disableDefi && batchLoadCacheDefi(addresses, tokenSetting),
-          !disableNFT && batchLoadCacheNFT(addresses, tokenSetting),
+          !disableDefi &&
+            batchLoadCacheDefi(addresses, tokenSetting, {
+              maxLength: options?.maxDefiLength,
+            }),
+          !disableNFT &&
+            batchLoadCacheNFT(addresses, tokenSetting, {
+              core: options?.core,
+              maxLength: options?.maxNFTLength,
+            }),
         ]);
       }, 0);
     },
