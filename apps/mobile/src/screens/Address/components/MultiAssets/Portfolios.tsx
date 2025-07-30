@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 
 import {
@@ -14,7 +14,6 @@ import {
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_LIST_HEADER,
   ASSETS_SECTION_HEADER,
-  ASSETS_SEPARATOR_HEIGHT,
   DEFI_ITEM_HEIGHT,
   RootNames,
   SWITCH_HEADER_HEIGHT,
@@ -62,10 +61,20 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { StackActions } from '@react-navigation/native';
 import { useTriggerUpdate } from './hooks/triggerUpdate';
 import { getItemId } from '@/screens/Home/utils/listRenderId';
+import { CombineDefiItem } from '@/screens/Home/hooks/store';
 
 const SPACING_HEIGHT = 8;
 const FOOTER_HEIGHT = 58;
 const HEADER_PADDING_HEIGHT = 16;
+
+const MemoizedTokenRow = React.memo(TokenRow);
+const MemoizedDefiRow = React.memo(DefiRow);
+const MemoizedScamTokenHeader = React.memo(ScamTokenHeader);
+const MemoizedTokenRowSectionHeader = React.memo(TokenRowSectionHeader);
+const MemoizedEmptyAssets = React.memo(EmptyAssets);
+const MemoizedItemLoader = React.memo(ItemLoader);
+const MemoizedDefiItemLoader = React.memo(DefiItemLoader);
+const MemoizedEmptyTokenRow = React.memo(EmptyTokenRow);
 
 export const Portfolios = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
@@ -98,13 +107,14 @@ export const Portfolios = () => {
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
 
-  const portfolioListData = useMemo(() => {
+  const tokenLists = useMemo(() => {
     const unFoldList: ActionItem[] = tokens
       .filter(i => !i._isFold)
       .map(item => ({
         type: 'unfold_token',
         data: item,
       }));
+
     const foldAndIncludeBalanceTokenList: ActionItem[] = tokens
       .filter(
         i =>
@@ -117,6 +127,7 @@ export const Portfolios = () => {
         type: 'fold_token',
         data: item,
       }));
+
     const foldAndExcludeBalanceTokenList: ActionItem[] = tokens
       .filter(
         i =>
@@ -128,16 +139,23 @@ export const Portfolios = () => {
         type: 'fold_token',
         data: item,
       }));
+
     const scamTokens: ActionItem[] = tokens
       .filter(isScamHidenToken)
       .map(item => ({
         type: 'fold_token',
         data: item,
       }));
-    const foldTokenList = [
-      ...foldAndIncludeBalanceTokenList,
-      ...foldAndExcludeBalanceTokenList,
-    ];
+
+    return {
+      unFoldList,
+      foldAndIncludeBalanceTokenList,
+      foldAndExcludeBalanceTokenList,
+      scamTokens,
+    };
+  }, [tokens]);
+
+  const defiLists = useMemo(() => {
     const foldAndIncludeBalanceDefiList = portfolios.filter(
       i => i._isFold && !i._isExcludeBalance && i.netWorth > 0,
     );
@@ -158,36 +176,52 @@ export const Portfolios = () => {
       type: 'unfold_defi',
       data: item as unknown as DisplayedProject[],
     }));
+
+    return {
+      foldDefiList,
+      unFoldDefiList,
+    };
+  }, [portfolios]);
+
+  const portfolioListData = useMemo(() => {
+    const foldTokenList = [
+      ...tokenLists.foldAndIncludeBalanceTokenList,
+      ...tokenLists.foldAndExcludeBalanceTokenList,
+    ];
+
     const itemData: Array<{
       show: boolean;
       data: ActionItem[];
     }> = [
       {
         show: true,
-        data: [...unFoldList],
+        data: [...tokenLists.unFoldList],
       },
       {
         show: !!foldTokenList.length,
         data: [
-          { type: 'toggle_token_fold' },
+          {
+            type: 'toggle_token_fold',
+            data: getTotalFoldToken(tokens.filter(i => i._isFold)),
+          },
           ...(foldHideList ? [] : foldTokenList),
         ],
       },
       {
-        show: !foldHideList && !!scamTokens.length,
+        show: !foldHideList && !!tokenLists.scamTokens.length,
         data: foldScam
           ? [
               {
                 type: 'scam_token',
                 data: {
-                  total: scamTokens.length,
-                  logoUrls: (scamTokens as CombineToken[])
+                  total: tokenLists.scamTokens.length,
+                  logoUrls: (tokenLists.scamTokens as CombineToken[])
                     .slice(0, 3)
                     .map(i => i.data?.logo_url),
                 },
               },
             ]
-          : scamTokens,
+          : tokenLists.scamTokens,
       },
       {
         show: !!isLoading && !tokens.length,
@@ -209,15 +243,20 @@ export const Portfolios = () => {
       },
       {
         show: true,
-        data: [{ type: 'defi_header' }, ...unFoldDefiList],
+        data: [{ type: 'defi_header' }, ...defiLists.unFoldDefiList],
       },
       {
-        show: !!foldDefiList.length,
+        show: !!defiLists.foldDefiList.length,
         data: [
           {
             type: 'toggle_defi_fold',
+            data: getAllDefiCount(
+              portfolios.filter(
+                i => i._isFold,
+              ) as unknown as DisplayedProject[],
+            ),
           },
-          ...(foldDefi ? [] : foldDefiList),
+          ...(foldDefi ? [] : defiLists.foldDefiList),
         ],
       },
       {
@@ -243,7 +282,17 @@ export const Portfolios = () => {
       .filter(item => item.show)
       .map(item => item.data)
       .flat();
-  }, [foldDefi, foldHideList, foldScam, isLoading, portfolios, t, tokens]);
+  }, [
+    foldDefi,
+    foldHideList,
+    foldScam,
+    isLoading,
+    portfolios,
+    t,
+    tokens,
+    tokenLists,
+    defiLists,
+  ]);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -420,6 +469,31 @@ export const Portfolios = () => {
     );
   }, [navigation]);
 
+  const handleOpenScamToken = useCallback(() => {
+    setFoldScam(false);
+  }, []);
+
+  const handleToggleDefiFold = useCallback(() => {
+    setFoldDefi(pre => !pre);
+  }, [setFoldDefi]);
+
+  const handleToggleTokenFold = useCallback(() => {
+    if (!foldHideList) {
+      setFoldScam(true);
+    }
+    setFoldHideList(pre => !pre);
+  }, [foldHideList]);
+
+  const getDefiMenuActions = useCallback(
+    (data: CombineDefiItem): MenuAction[] => {
+      return getDefiOrNftMenuAction(
+        'defi',
+        data as unknown as DisplayedProject,
+      );
+    },
+    [getDefiOrNftMenuAction],
+  );
+
   const renderItem = useCallback(
     ({ item }) => {
       const { type, data } = item;
@@ -428,13 +502,13 @@ export const Portfolios = () => {
         case 'fold_token':
           return (
             <View style={styles.rowWrap}>
-              <TokenRow
+              <MemoizedTokenRow
                 data={data}
                 onTokenPress={handleOpenTokenDetail}
                 logoSize={46}
                 style={styles.renderItemWrapper}
                 chainLogoSize={18}
-                menuActions={getTokenMenuActions(data)}
+                getMenuActions={getTokenMenuActions}
               />
             </View>
           );
@@ -442,101 +516,74 @@ export const Portfolios = () => {
         case 'fold_defi':
           return (
             <View style={styles.defiGroups}>
-              <DefiRow
+              <MemoizedDefiRow
                 data={data[0]}
-                style={StyleSheet.flatten([
-                  styles.renderDefiItemWrapper,
-                  !isLight && styles.bg2,
-                ])}
-                menuActions={getDefiOrNftMenuAction('defi', data[0])}
+                style={styles.renderDefiItemWrapper}
+                getMenuActions={getDefiMenuActions}
                 logoSize={40}
-                onPress={() =>
-                  handleOpenDefiDetail(data[0], [
-                    ...(data[0]._portfolios || []),
-                  ])
-                }
+                onPress={handleOpenDefiDetail}
               />
               {data[1] && (
-                <DefiRow
+                <MemoizedDefiRow
                   data={data[1]}
-                  style={StyleSheet.flatten([
-                    styles.renderDefiItemWrapper,
-                    !isLight && styles.bg2,
-                  ])}
-                  menuActions={getDefiOrNftMenuAction('defi', data[1])}
+                  style={styles.renderDefiItemWrapper}
+                  getMenuActions={getDefiMenuActions}
                   logoSize={40}
-                  onPress={() =>
-                    handleOpenDefiDetail(data[1], [
-                      ...(data[1]._portfolios || []),
-                    ])
-                  }
+                  onPress={handleOpenDefiDetail}
                 />
               )}
             </View>
           );
         case 'scam_token':
           return (
-            <ScamTokenHeader
+            <MemoizedScamTokenHeader
               total={data.total}
               logoUrls={data.logoUrls}
-              style={StyleSheet.flatten([
-                styles.renderItemWrapper,
-                !isLight && styles.bg2,
-              ])}
-              onPress={() => {
-                setFoldScam(false);
-              }}
+              style={styles.renderItemWrapper}
+              onPress={handleOpenScamToken}
             />
           );
         case 'toggle_token_fold':
           return (
-            <TokenRowSectionHeader
+            <MemoizedTokenRowSectionHeader
               style={styles.tokenSectionHeader}
-              str={getTotalFoldToken(tokens.filter(i => i._isFold))}
+              str={data}
               fold={foldHideList}
-              onPressFold={() => {
-                if (!foldHideList) {
-                  setFoldScam(true);
-                }
-                setFoldHideList(pre => !pre);
-              }}
+              onPressFold={handleToggleTokenFold}
             />
           );
         case 'defi_header':
           return (
-            <Text style={[styles.sectionHeader, styles.sectionTextHeader]}>
+            <Text style={styles.sectionTextHeader}>
               {t('page.search.sectionHeader.Defi')}
             </Text>
           );
         case 'toggle_defi_fold':
           return (
-            <TokenRowSectionHeader
-              str={getAllDefiCount(
-                portfolios.filter(
-                  i => i._isFold,
-                ) as unknown as DisplayedProject[],
-              )}
+            <MemoizedTokenRowSectionHeader
+              str={data}
               fold={foldDefi}
               style={styles.sectionHeader}
-              buttonStyle={StyleSheet.flatten([
-                styles.buttonHeader,
-                !isLight && styles.bg2,
-              ])}
-              onPressFold={() => setFoldDefi(pre => !pre)}
+              buttonStyle={styles.buttonHeader}
+              onPressFold={handleToggleDefiFold}
             />
           );
         case 'empty-assets':
         case 'empty-defi':
           return (
-            <EmptyAssets style={styles.emptyAssets} desc={data} type={type} />
+            <MemoizedEmptyAssets
+              style={styles.emptyAssets}
+              desc={data}
+              type={type}
+            />
           );
         case 'loading-skeleton':
-          return <ItemLoader style={{ height: ASSETS_ITEM_HEIGHT_NEW }} />;
+          return <MemoizedItemLoader style={styles.loadingItem} />;
         case 'loading-defi-skeleton':
-          return <DefiItemLoader style={styles.defiLoading} />;
+          return <MemoizedDefiItemLoader style={styles.defiLoading} />;
         case 'empty-token':
           return (
-            <EmptyTokenRow
+            <MemoizedEmptyTokenRow
               style={styles.emptyTokenHolder}
               onReceive={handleOnReceive}
               onBuy={handleOnBuy}
@@ -550,29 +597,18 @@ export const Portfolios = () => {
     [
       foldDefi,
       foldHideList,
-      getDefiOrNftMenuAction,
+      getDefiMenuActions,
       getTokenMenuActions,
       handleOnBuy,
       handleOnImport,
       handleOnReceive,
       handleOpenDefiDetail,
+      handleOpenScamToken,
       handleOpenTokenDetail,
-      isLight,
-      portfolios,
-      styles.bg2,
-      styles.buttonHeader,
-      styles.defiGroups,
-      styles.defiLoading,
-      styles.emptyAssets,
-      styles.emptyTokenHolder,
-      styles.renderDefiItemWrapper,
-      styles.renderItemWrapper,
-      styles.rowWrap,
-      styles.sectionHeader,
-      styles.sectionTextHeader,
-      styles.tokenSectionHeader,
+      handleToggleDefiFold,
+      handleToggleTokenFold,
+      styles,
       t,
-      tokens,
     ],
   );
 
@@ -620,26 +656,27 @@ export const Portfolios = () => {
   }, [top10Addresses.length, isListVisable]);
 
   const getItemType = useCallback((item: ActionItem) => {
-    if (item.type === 'empty-token') {
+    const type = item.type;
+    if (type === 'empty-token') {
       return 'empty_token';
     }
-    if (item.type === 'empty-assets') {
+    if (type === 'empty-assets') {
       return 'empty_assets';
     }
-    if (item.type === 'empty-defi') {
+    if (type === 'empty-defi') {
       return 'empty_defi';
     }
     if (
-      item.type === 'fold_defi' ||
-      item.type === 'unfold_defi' ||
-      item.type === 'loading-defi-skeleton'
+      type === 'fold_defi' ||
+      type === 'unfold_defi' ||
+      type === 'loading-defi-skeleton'
     ) {
       return 'defi';
     }
-    if (item?.type?.includes('_header')) {
+    if (type?.includes('_header')) {
       return 'asset_header';
     }
-    if (item?.type?.includes('toggle_')) {
+    if (type?.includes('toggle_')) {
       return 'header';
     }
     return 'body';
@@ -648,26 +685,15 @@ export const Portfolios = () => {
   const overrideItemLayout = useCallback(
     (layout: { span?: number; size?: number }, item: ActionItem) => {
       const type = getItemType(item);
-      switch (type) {
-        case 'asset_header':
-          layout.size = ASSETS_LIST_HEADER;
-          break;
-        case 'header':
-          layout.size = ASSETS_SECTION_HEADER;
-          break;
-        case 'empty_token':
-          layout.size = TOKEN_EMPTY_ROW_HIGHT;
-          break;
-        case 'empty_assets':
-        case 'empty_defi':
-          layout.size = ASSETS_EMPTY_ROW_HIGHT;
-          break;
-        case 'defi':
-          layout.size = DEFI_ITEM_HEIGHT;
-          break;
-        default:
-          layout.size = ASSETS_ITEM_HEIGHT_NEW;
-      }
+      const sizeMap = {
+        asset_header: ASSETS_LIST_HEADER,
+        header: ASSETS_SECTION_HEADER,
+        empty_token: TOKEN_EMPTY_ROW_HIGHT,
+        empty_assets: ASSETS_EMPTY_ROW_HIGHT,
+        empty_defi: ASSETS_EMPTY_ROW_HIGHT,
+        defi: DEFI_ITEM_HEIGHT,
+      };
+      layout.size = sizeMap[type] || ASSETS_ITEM_HEIGHT_NEW;
     },
     [getItemType],
   );
@@ -698,9 +724,13 @@ export const Portfolios = () => {
     }
   }, [isFocused, onRefresh, setTriggerRefresh, triggerRefresh]);
 
+  const keyExtractor = useCallback((item: ActionItem) => {
+    return getItemId(item);
+  }, []);
+
   return (
     <Tabs.FlatList
-      keyExtractor={item => getItemId(item)}
+      keyExtractor={keyExtractor}
       data={hasNotAssets ? [{ type: 'empty-token' }] : portfolioListData}
       renderItem={renderItem}
       ItemSeparatorComponent={ListRenderSeparator}
@@ -781,6 +811,17 @@ const getStyles = createGetStyles2024(ctx => ({
       : ctx.colors2024['neutral-bg-1'],
   },
   sectionTextHeader: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontWeight: '500',
+    lineHeight: 22,
+    color: ctx.colors2024['neutral-secondary'],
+    paddingLeft: 0,
+    paddingRight: 0,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-0']
+      : ctx.colors2024['neutral-bg-1'],
+
     height: ASSETS_LIST_HEADER,
   },
   tokenSectionHeader: {
@@ -789,6 +830,9 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   emptyAssets: {
     marginHorizontal: 0,
+  },
+  loadingItem: {
+    height: ASSETS_ITEM_HEIGHT_NEW,
   },
   emptyTokenHolder: {
     paddingHorizontal: 0,
@@ -812,7 +856,9 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'flex-start',
   },
   renderDefiItemWrapper: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
     borderRadius: 16,
     height: DEFI_ITEM_HEIGHT,
     paddingLeft: 12,
@@ -822,7 +868,9 @@ const getStyles = createGetStyles2024(ctx => ({
     backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
   buttonHeader: {
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
   },
   footerGap: {
     height: 70,

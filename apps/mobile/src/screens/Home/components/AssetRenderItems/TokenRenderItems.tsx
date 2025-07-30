@@ -59,7 +59,7 @@ export const TokenRow = memo(
     logoSize = 40,
     chainLogoSize = 16,
     logoStyle,
-    menuActions,
+    getMenuActions,
     filterText,
     onTokenPress,
     hideFoldTag,
@@ -71,7 +71,7 @@ export const TokenRow = memo(
     logoSize?: number;
     chainLogoSize?: number;
     filterText?: string;
-    menuActions?: MenuAction[];
+    getMenuActions?: (token: AbstractPortfolioToken) => MenuAction[];
     hideFoldTag?: boolean;
     disableMenu?: boolean;
     onTokenPress?(token: AbstractPortfolioToken): void;
@@ -214,7 +214,8 @@ export const TokenRow = memo(
     return (
       <ContextMenuView
         menuConfig={{
-          menuActions: showContextMenu && menuActions ? menuActions : [],
+          menuActions:
+            showContextMenu && getMenuActions ? getMenuActions(data) : [],
         }}
         preViewBorderRadius={12}
         triggerProps={{ action: 'longPress' }}>

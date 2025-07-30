@@ -53,6 +53,7 @@ import { Tabs, useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
 import { Account } from '@/core/services/preference';
+import { CombineDefiItem } from './hooks/store';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -386,6 +387,15 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
       );
     }, [navigation]);
 
+    const getDefiMenuActions = useCallback(
+      (data: CombineDefiItem): MenuAction[] => {
+        return getDefiOrNftMenuAction(
+          'defi',
+          data as unknown as DisplayedProject,
+        );
+      },
+      [getDefiOrNftMenuAction],
+    );
     const renderItem = useCallback(
       (_type, _data) => {
         const { type, data } = _data;
@@ -401,7 +411,7 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
                     !isLight && styles.bg2,
                   ])}
                   onTokenPress={handleOpenTokenDetail}
-                  menuActions={getTokenMenuActions(data)}
+                  getMenuActions={getTokenMenuActions}
                   logoSize={46}
                   chainLogoSize={18}
                 />
@@ -417,13 +427,9 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
                     styles.renderDefiItemWrapper,
                     !isLight && styles.bg2,
                   ])}
-                  menuActions={getDefiOrNftMenuAction('defi', data[0])}
+                  getMenuActions={getDefiMenuActions}
                   logoSize={40}
-                  onPress={() =>
-                    handleOpenDefiDetail(data[0], [
-                      ...(data[0]._portfolios || []),
-                    ])
-                  }
+                  onPress={handleOpenDefiDetail}
                 />
                 {data[1] && (
                   <DefiRow
@@ -432,13 +438,9 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
                       styles.renderDefiItemWrapper,
                       !isLight && styles.bg2,
                     ])}
-                    menuActions={getDefiOrNftMenuAction('defi', data[1])}
+                    getMenuActions={getDefiMenuActions}
                     logoSize={40}
-                    onPress={() =>
-                      handleOpenDefiDetail(data[1], [
-                        ...(data[1]._portfolios || []),
-                      ])
-                    }
+                    onPress={handleOpenDefiDetail}
                   />
                 )}
               </View>
@@ -562,6 +564,7 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
         foldHideList,
         foldNft,
         foldNftAmount,
+        getDefiMenuActions,
         getDefiOrNftMenuAction,
         getTokenMenuActions,
         handleOnBuy,
