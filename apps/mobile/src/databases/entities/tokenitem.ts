@@ -188,12 +188,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   static async batchQueryTokens(owner_addr: string) {
     await prepareAppDataSource();
 
-    return (await this.getRepository().findBy({ owner_addr, is_core: true }))
+    return (await this.getRepository().findBy({ owner_addr }))
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
       .filter(i => i.amount > 0)
       .map(i => ({
         ...i,
-        cex_ids: [],
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
       }));
   }
 
@@ -211,13 +211,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         owner_addr: In(addresses),
         chain,
         id: token_id,
-        is_core: true,
       })
     )
       .filter(i => i.amount > 0)
       .map(i => ({
         ...i,
-        cex_ids: [],
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
       }));
 
     console.log('batchMultAddressTokensByIdAndChain', Date.now() - time);
@@ -231,14 +230,13 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return (
       await this.getRepository().findBy({
         owner_addr: In(addresses),
-        is_core: true,
       })
     )
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
       .filter(i => i.amount > 0)
       .map(i => ({
         ...i,
-        cex_ids: [],
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
       }));
   }
 
@@ -323,7 +321,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .filter(i => i.amount > 0)
       .map(i => ({
         ...i,
-        cex_ids: [],
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
       }));
   }
 
@@ -414,7 +412,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .filter(i => i.amount > 0)
       .map(i => ({
         ...i,
-        cex_ids: [],
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
       }));
   }
 
@@ -459,7 +457,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
     return {
       find: !!result,
-      cex_ids: [],
+      cex_ids: columnConverter.jsonStringToObj(result?.cex_ids || '[]'),
     };
   }
   // 获取原生代币列表中美元总价值最大的一个token

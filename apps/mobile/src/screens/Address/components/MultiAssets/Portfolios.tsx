@@ -265,7 +265,7 @@ export const Portfolios = () => {
 
   const { refresh: refreshCurve } = useMultiCurve(
     top10Addresses,
-    false,
+    true,
     top10Balance.total,
     top10Balance.totalEvm,
   );
@@ -433,8 +433,8 @@ export const Portfolios = () => {
                 onTokenPress={handleOpenTokenDetail}
                 logoSize={46}
                 style={styles.renderItemWrapper}
-                disableMenu
                 chainLogoSize={18}
+                menuActions={getTokenMenuActions(data)}
               />
             </View>
           );
@@ -448,8 +448,13 @@ export const Portfolios = () => {
                   styles.renderDefiItemWrapper,
                   !isLight && styles.bg2,
                 ])}
+                menuActions={getDefiOrNftMenuAction('defi', data[0])}
                 logoSize={40}
-                disableMenu
+                onPress={() =>
+                  handleOpenDefiDetail(data[0], [
+                    ...(data[0]._portfolios || []),
+                  ])
+                }
               />
               {data[1] && (
                 <DefiRow
@@ -458,8 +463,13 @@ export const Portfolios = () => {
                     styles.renderDefiItemWrapper,
                     !isLight && styles.bg2,
                   ])}
+                  menuActions={getDefiOrNftMenuAction('defi', data[1])}
                   logoSize={40}
-                  disableMenu
+                  onPress={() =>
+                    handleOpenDefiDetail(data[1], [
+                      ...(data[1]._portfolios || []),
+                    ])
+                  }
                 />
               )}
             </View>
@@ -473,14 +483,23 @@ export const Portfolios = () => {
                 styles.renderItemWrapper,
                 !isLight && styles.bg2,
               ])}
+              onPress={() => {
+                setFoldScam(false);
+              }}
             />
           );
         case 'toggle_token_fold':
           return (
             <TokenRowSectionHeader
               style={styles.tokenSectionHeader}
-              str={'1'}
+              str={getTotalFoldToken(tokens.filter(i => i._isFold))}
               fold={foldHideList}
+              onPressFold={() => {
+                if (!foldHideList) {
+                  setFoldScam(true);
+                }
+                setFoldHideList(pre => !pre);
+              }}
             />
           );
         case 'defi_header':
@@ -492,13 +511,18 @@ export const Portfolios = () => {
         case 'toggle_defi_fold':
           return (
             <TokenRowSectionHeader
-              str={'1'}
+              str={getAllDefiCount(
+                portfolios.filter(
+                  i => i._isFold,
+                ) as unknown as DisplayedProject[],
+              )}
               fold={foldDefi}
               style={styles.sectionHeader}
               buttonStyle={StyleSheet.flatten([
                 styles.buttonHeader,
                 !isLight && styles.bg2,
               ])}
+              onPressFold={() => setFoldDefi(pre => !pre)}
             />
           );
         case 'empty-assets':
@@ -526,11 +550,15 @@ export const Portfolios = () => {
     [
       foldDefi,
       foldHideList,
+      getDefiOrNftMenuAction,
+      getTokenMenuActions,
       handleOnBuy,
       handleOnImport,
       handleOnReceive,
+      handleOpenDefiDetail,
       handleOpenTokenDetail,
       isLight,
+      portfolios,
       styles.bg2,
       styles.buttonHeader,
       styles.defiGroups,
@@ -544,6 +572,7 @@ export const Portfolios = () => {
       styles.sectionTextHeader,
       styles.tokenSectionHeader,
       t,
+      tokens,
     ],
   );
 
@@ -553,42 +582,42 @@ export const Portfolios = () => {
     inited.current = false;
   }, [top10Addresses.length]);
 
-  // useEffect(() => {
-  //   if (!isFocused) {
-  //     return;
-  //   }
-  //   const id = setTimeout(() => {
-  //     if (inited.current) {
-  //       return;
-  //     }
-  //     inited.current = true;
-  //     checkIsExpireAndUpdate(false, {
-  //       disableNFT: true,
-  //       realTimeAddresses: top10Addresses,
-  //       ignoreLoading: !top10Balance,
-  //     });
-  //   }, 200);
-  //   return () => {
-  //     id && clearTimeout(id);
-  //   };
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [isFocused, top10Addresses.length]);
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+    const id = setTimeout(() => {
+      if (inited.current) {
+        return;
+      }
+      inited.current = true;
+      checkIsExpireAndUpdate(false, {
+        disableNFT: true,
+        realTimeAddresses: top10Addresses,
+        ignoreLoading: !top10Balance,
+      });
+    }, 200);
+    return () => {
+      id && clearTimeout(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocused, top10Addresses.length]);
 
-  // useEffect(() => {
-  //   const id = setTimeout(() => {
-  //     if (!isListVisable) {
-  //       return;
-  //     }
-  //     getCacheTop10Assets({
-  //       disableNFT: true,
-  //       realTimeAddresses: top10Addresses,
-  //     });
-  //   }, 100);
-  //   return () => {
-  //     id && clearTimeout(id);
-  //   };
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [top10Addresses.length, isListVisable]);
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (!isListVisable) {
+        return;
+      }
+      getCacheTop10Assets({
+        disableNFT: true,
+        realTimeAddresses: top10Addresses,
+      });
+    }, 100);
+    return () => {
+      id && clearTimeout(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [top10Addresses.length, isListVisable]);
 
   const getItemType = useCallback((item: ActionItem) => {
     if (item.type === 'empty-token') {

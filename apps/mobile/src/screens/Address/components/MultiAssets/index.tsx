@@ -105,30 +105,30 @@ export const MultiAssets = ({
     return refreshing || isLoadingMultiCurve ? <LoadingCircle /> : '';
   }, [isLoadingMultiCurve, refreshing]);
 
-  // const handleScroll = useCallback(
-  //   (y: number) => {
-  //     // 10 is buffer
-  //     const isHideHeader = y > HEADER_CHART_HEIGHT - 10;
-  //     if (isHideHeader) {
-  //       setNavigationOptions({
-  //         headerTitle: getHeaderTitle,
-  //         headerTitleAlign: 'left',
-  //       });
-  //     } else {
-  //       setNavigationOptions({
-  //         headerTitle: renderCirleLoading,
-  //         headerTitleAlign: 'left',
-  //       });
-  //     }
-  //     onReachTopStatusChange?.(!isHideHeader);
-  //   },
-  //   [
-  //     getHeaderTitle,
-  //     onReachTopStatusChange,
-  //     renderCirleLoading,
-  //     setNavigationOptions,
-  //   ],
-  // );
+  const handleScroll = useCallback(
+    (y: number) => {
+      // 10 is buffer
+      const isHideHeader = y > HEADER_CHART_HEIGHT - 10;
+      if (isHideHeader) {
+        setNavigationOptions({
+          headerTitle: getHeaderTitle,
+          headerTitleAlign: 'left',
+        });
+      } else {
+        setNavigationOptions({
+          headerTitle: renderCirleLoading,
+          headerTitleAlign: 'left',
+        });
+      }
+      onReachTopStatusChange?.(!isHideHeader);
+    },
+    [
+      getHeaderTitle,
+      onReachTopStatusChange,
+      renderCirleLoading,
+      setNavigationOptions,
+    ],
+  );
 
   const renderHeader = useCallback(() => {
     return (
@@ -139,10 +139,10 @@ export const MultiAssets = ({
         pathColor={pathColor}
         isNoAssets={false}
         isDisConnnect={isDisConnnect}
-        handleScroll={() => {}}
+        handleScroll={handleScroll}
       />
     );
-  }, [combineData, isDisConnnect, isLoadingCurve, pathColor]);
+  }, [combineData, handleScroll, isDisConnnect, isLoadingCurve, pathColor]);
 
   const listLength = useMemo(() => {
     return list.length > 10 ? 10 : list.length;
