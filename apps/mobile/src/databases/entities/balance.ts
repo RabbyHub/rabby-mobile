@@ -39,7 +39,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
     e.owner_addr = owner_addr;
     e.balance = input.total_usd_value;
     e.evm_usd_value = input.evm_usd_value || 0;
-    e.chain_list = '[]';
+    e.chain_list = columnConverter.jsonObjToString(input.chain_list || []);
     e.isCore = !!isCore;
     e.makeDbId();
   }
@@ -68,17 +68,16 @@ export class BalanceEntity extends EntityAddressAssetBase {
     isCore: boolean,
   ): Promise<EvmTotalBalanceResponse> {
     await prepareAppDataSource();
-    const result = await this.getRepository()
-      .createQueryBuilder('balance')
-      .select(['balance.balance', 'balance.evm_usd_value'])
-      .where('balance.owner_addr = :owner_addr', { owner_addr })
-      .andWhere('balance.isCore = :isCore', { isCore })
-      .getOne();
+    const result = await this.getRepository().findOneBy({
+      owner_addr,
+      isCore,
+    });
 
     return {
       total_usd_value: result?.balance || 0,
       evm_usd_value: result?.evm_usd_value || 0,
-      chain_list: [],
+      chain_list:
+        columnConverter.jsonStringToObj(result?.chain_list || '[]') || [],
     };
   }
 
