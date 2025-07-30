@@ -358,10 +358,12 @@ export const useAssets = () => {
       }
       const tokenSetting = await preferenceService.getUserTokenSettings();
       !disableToken && (await batchLoadCacheTokens(addresses, tokenSetting));
-      Promise.all([
-        !disableDefi && batchLoadCacheDefi(addresses, tokenSetting),
-        !disableNFT && batchLoadCacheNFT(addresses, tokenSetting),
-      ]);
+      setTimeout(() => {
+        Promise.all([
+          !disableDefi && batchLoadCacheDefi(addresses, tokenSetting),
+          !disableNFT && batchLoadCacheNFT(addresses, tokenSetting),
+        ]);
+      }, 0);
     },
   );
 

@@ -1,6 +1,14 @@
 import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column, In, Brackets, Not, LessThan } from 'typeorm/browser';
+import {
+  Entity,
+  Column,
+  In,
+  Brackets,
+  Not,
+  LessThan,
+  MoreThan,
+} from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
@@ -230,14 +238,14 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return (
       await this.getRepository().findBy({
         owner_addr: In(addresses),
+        is_core: true,
+        id: Not(EMPTY_TOKEN_ITEM_ID),
+        amount: MoreThan(0),
       })
-    )
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    ).map(i => ({
+      ...i,
+      cex_ids: [],
+    }));
   }
 
   /**

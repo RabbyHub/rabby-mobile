@@ -164,6 +164,7 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     return (
       await this.getRepository().findBy({
         owner_addr: In(addresses),
+        is_core: true,
       })
     )
       .filter(i => i.id !== EMPTY_NFT_ITEM_ID)
