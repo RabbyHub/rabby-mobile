@@ -146,9 +146,8 @@ export const atomByMMKV = <T = any>(
   return atomWithStorage<T>(key, initialValue, jsonStore);
 };
 
-const LEGACY_KEYS: string[] = [];
 export function removeLegacyMMKVStorageByKey(key: `@${string}`) {
-  if (!key.startsWith('@') || LEGACY_KEYS.includes(key)) {
+  if (!key.startsWith('@')) {
     console.warn(
       `removeLegacyMMKVStorageByKey: key "${key}" is not a valid legacy key or already removed.`,
     );
