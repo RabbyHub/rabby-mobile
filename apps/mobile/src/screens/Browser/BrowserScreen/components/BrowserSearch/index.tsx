@@ -167,6 +167,7 @@ export function BrowserSearch({
           enterKeyHint="go"
           autoFocus
           placeholder={t('page.browser.BrowserSearch.placeholder')}
+          alwaysShowCancel
         />
       </View>
     </View>
