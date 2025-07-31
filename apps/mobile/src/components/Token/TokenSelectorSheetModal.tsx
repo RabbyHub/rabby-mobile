@@ -87,6 +87,8 @@ import { SCAM_TOKEN_HAEDER_ID, SCAM_TOKEN_HEADER_DATA } from './constant';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { Favorite } from '@/components2024/Favorite';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { navigate } from '@/utils/navigation';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -618,43 +620,54 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        // if (
-        //   isSwapTo ||
-        //   (query && (type === 'bridgeFrom' || type === 'swapFrom'))
-        // ) {
-        //   return (
-        //     <View style={{ marginTop: 8, marginHorizontal: 12 }}>
-        //       <TokenItemContextMenu
-        //         token={$originMaybeToken}
-        //         closeBottomSheet={() => {
-        //           toggleShowSheetModal('destroy');
-        //         }}
-        //         type={type}>
-        //         <TouchableOpacity
-        //           delayLongPress={200}
-        //           onLongPress={() => {
-        //             console.log('prevent trigger onPress');
-        //           }}
-        //           onPress={() => {
-        //             if (disabled) {
-        //               disabledTips && toast.info(disabledTips);
-        //               return;
-        //             }
-        //             onConfirm($originMaybeToken);
-        //             toggleShowSheetModal('collapse');
-        //           }}>
-        //           <ExternalTokenRow
-        //             decimalPrecision
-        //             isPined={isPined}
-        //             data={token.$origin as TokenRowDataType}
-        //             logoSize={40}
-        //             touchable={false}
-        //           />
-        //         </TouchableOpacity>
-        //       </TokenItemContextMenu>
-        //     </View>
-        //   );
-        // }
+        if (query && (type === 'bridgeFrom' || type === 'swapFrom')) {
+          return (
+            <View style={{ marginTop: 8, marginHorizontal: 12 }}>
+              <TokenItemContextMenu
+                token={$originMaybeToken}
+                closeBottomSheet={() => {
+                  toggleShowSheetModal('destroy');
+                }}
+                type={type}>
+                <TouchableOpacity
+                  delayLongPress={200}
+                  onLongPress={() => {
+                    console.log('prevent trigger onPress');
+                  }}
+                  onPress={() => {
+                    if (disabled) {
+                      disabledTips && toast.info(disabledTips);
+                      return;
+                    }
+                    onConfirm($originMaybeToken);
+                    toggleShowSheetModal('collapse');
+                  }}>
+                  <ExternalTokenRow
+                    decimalPrecision
+                    isPined={isPined}
+                    data={token.$origin as TokenRowDataType}
+                    logoSize={40}
+                    touchable={false}
+                    onPressRightIcon={() => {
+                      setTimeout(() => {
+                        toggleShowSheetModal('destroy');
+                      }, 100);
+
+                      navigate(RootNames.TokenDetail, {
+                        token: {
+                          ...ensureAbstractPortfolioToken($originMaybeToken),
+                          _isPined: isPined,
+                        },
+                        needUseCacheToken: true,
+                        tokenSelectType: type,
+                      });
+                    }}
+                  />
+                </TouchableOpacity>
+              </TokenItemContextMenu>
+            </View>
+          );
+        }
 
         return (
           <View style={{ marginTop: 8, marginHorizontal: 12 }}>
@@ -794,6 +807,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         userTokenSettings.pinedQueue,
         supportChains,
         isFromModalType,
+        query,
         type,
         styles.tokenItem,
         styles.tokenItemDisabled,

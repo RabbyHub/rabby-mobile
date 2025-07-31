@@ -1,6 +1,7 @@
 import React, { memo, ReactNode, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -259,6 +260,7 @@ export const ExternalTokenRow = memo(
     decimalPrecision = false,
     isPined = false,
     leftSlot,
+    onPressRightIcon,
   }: {
     data: TokenRowDataType;
     style?: ViewStyle;
@@ -271,9 +273,9 @@ export const ExternalTokenRow = memo(
     touchable?: boolean;
     decimalPrecision?: boolean;
     leftSlot?: ReactNode;
+    onPressRightIcon?(): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-    const { t } = useTranslation();
 
     const mediaStyle = useMemo(
       () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
@@ -285,19 +287,6 @@ export const ExternalTokenRow = memo(
     const onPressToken = useCallback(() => {
       return onTokenPress?.(data);
     }, [data, onTokenPress]);
-
-    const percentColor = useMemo(() => {
-      if (
-        !data?.price_24h_change ||
-        Math.abs(data.price_24h_change) < 0.00001
-      ) {
-        return colors2024['neutral-secondary'];
-      }
-      if (data.price_24h_change > 0) {
-        return colors2024['green-default'];
-      }
-      return colors2024['red-default'];
-    }, [colors2024, data.price_24h_change]);
 
     const ExtraContent = useMemo(() => {
       return (
@@ -350,7 +339,14 @@ export const ExternalTokenRow = memo(
                 />
               </View>
             )}
-            <View>
+            <Pressable
+              hitSlop={hitSlop}
+              onPress={e => {
+                if (onPressRightIcon) {
+                  e.stopPropagation();
+                  onPressRightIcon?.();
+                }
+              }}>
               <RcNextRightCC
                 style={styles.tips}
                 color={
@@ -361,7 +357,7 @@ export const ExternalTokenRow = memo(
                     : colors2024['neutral-title-1']
                 }
               />
-            </View>
+            </Pressable>
           </View>
         </View>
       );
@@ -385,6 +381,7 @@ export const ExternalTokenRow = memo(
       data.is_verified,
       data.is_suspicious,
       colors2024,
+      onPressRightIcon,
     ]);
 
     return (

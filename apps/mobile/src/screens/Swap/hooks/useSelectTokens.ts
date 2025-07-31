@@ -16,6 +16,10 @@ import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { Account } from '@/core/services/preference';
 import { isAddress } from 'viem';
+import BigNumber from 'bignumber.js';
+import { formatUsdValue } from '@/utils/number';
+import { formatAmount } from '@/utils/math';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 
 type LocalDBTokenItem = TokenItem & {
   _db_id?: TokenItemEntity['_db_id'];
@@ -69,6 +73,7 @@ export const useSelectTokens = ({
   const { tokensMap, setTokensMap, updateTokens } = useTokenAssetsMap();
   const [userTokenSettings, setUserTokenSettings] = useState({});
   const currentAddress = currentAccount?.address;
+  const { top10Addresses } = useAccountInfo();
 
   const enableSearchTokensV2 = useMemo(
     () =>
@@ -87,26 +92,64 @@ export const useSelectTokens = ({
       const list = await openapi.searchTokensV2({
         q: keyword,
       });
+
+      const filterAddresses = currentAddress
+        ? [currentAddress]
+        : top10Addresses;
+
+      const tokenList = list.map(token => ({
+        chain: token.chain,
+        tokenId: token.id,
+      }));
+
+      let localAmounts: Array<{
+        chain: string;
+        tokenId: string;
+        amount: number;
+      }> = [];
+      if (filterAddresses.length > 0 && tokenList.length > 0) {
+        try {
+          localAmounts = await TokenItemEntity.getTokenListAmount({
+            owner_addr: filterAddresses,
+            tokenList,
+          });
+        } catch (error) {
+          console.error('Failed to get local token amounts:', error);
+        }
+      }
+
+      const amountMap = new Map<string, number>();
+      localAmounts.forEach(item => {
+        const key = `${item.chain}-${item.tokenId}`;
+        amountMap.set(key, item.amount);
+      });
+
       return list
         .filter(e => (chain_server_id ? e.chain === chain_server_id : true))
         .filter(e =>
           isAddress(keyword, { strict: false }) ? true : !!e.is_core,
         )
-        .map(
-          e =>
-            ({
-              ...e,
-              _isPined: false,
-              _isFold: false,
-              _isExcludeBalance: false,
-              _usdValueStr: 0,
-              _amountStr: 1,
-              _tokenId: e.id,
-            } as any as AbstractPortfolioToken),
-        );
+        .map(e => {
+          const key = `${e.chain}-${e.id}`;
+          const localAmount = amountMap.get(key) || 0;
+
+          const amountBn = new BigNumber(localAmount);
+          const priceBn = new BigNumber(e.price || 0);
+          const usdValue = amountBn.times(priceBn).toNumber();
+
+          return {
+            ...e,
+            _isPined: false,
+            _isFold: false,
+            _isExcludeBalance: false,
+            _usdValueStr: formatUsdValue(usdValue),
+            _amountStr: formatAmount(localAmount),
+            _tokenId: e.id,
+          } as any as AbstractPortfolioToken;
+        });
     }
     return [];
-  }, [enableSearchTokensV2, keyword, chain_server_id]);
+  }, [enableSearchTokensV2, keyword, chain_server_id, currentAccount?.address]);
 
   useEffect(() => {
     if (visible && Object.keys(userTokenSettings).length === 0) {
