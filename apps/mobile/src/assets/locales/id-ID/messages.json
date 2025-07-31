@@ -836,7 +836,8 @@
       "Loading_Tokens": "Memuat Token...",
       "Value": "Nilai",
       "InsufficientBalanceTips": "Saldo tidak cukup",
-      "Select-from-supported-tokens": "Pilih dari token yang didukung"
+      "Select-from-supported-tokens": "Pilih dari token yang didukung",
+      "Deposit-tip": ""
     },
     "swap": {
       "rabbyFee": {

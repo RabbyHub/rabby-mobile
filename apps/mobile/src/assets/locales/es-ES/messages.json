@@ -955,6 +955,7 @@
       "No_Tokens": "Sin tokens",
       "Value": "Valor",
       "Select-from-supported-tokens": "Seleccionar entre los tokens compatibles",
+      "Deposit-tip": "",
       "Token": "Token",
       "Loading_Tokens": "Cargando Tokens...",
       "InsufficientBalanceTips": "Saldo insuficiente",

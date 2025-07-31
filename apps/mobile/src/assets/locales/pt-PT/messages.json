@@ -907,6 +907,7 @@
     "gasTopUp": {
       "InsufficientBalanceTips": "Saldo insuficiente",
       "Select-from-supported-tokens": "Selecione dos tokens suportados",
+      "Deposit-tip": "",
       "Value": "Valor",
       "No_Tokens": "Sem Tokens",
       "Loading_Tokens": "A carregar Tokens...",

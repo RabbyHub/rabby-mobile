@@ -910,6 +910,7 @@
       "No_Tokens": "Keine Tokens",
       "Token": "Token",
       "Select-from-supported-tokens": "Aus unterstützten Token auswählen",
+      "Deposit-tip": "",
       "InsufficientBalanceTips": "Unzureichendes Guthaben",
       "Balance": "Guthaben"
     },

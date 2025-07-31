@@ -631,6 +631,7 @@
       "Value": "バリュー",
       "No_Tokens": "トークンなし",
       "Select-from-supported-tokens": "サポートされているトークンから選択してください",
+      "Deposit-tip": "",
       "Loading_Tokens": "トークンを読み込み中...",
       "Balance": "残高"
     },
