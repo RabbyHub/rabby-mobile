@@ -16,6 +16,7 @@ import {
   SectionListRenderItem,
   TextInput,
   ScrollView,
+  Pressable,
 } from 'react-native';
 import {
   BottomSheetBackdropProps,
@@ -644,10 +645,32 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   }}>
                   <ExternalTokenRow
                     decimalPrecision
-                    isPined={isPined}
                     data={token.$origin as TokenRowDataType}
                     logoSize={40}
                     touchable={false}
+                    leftSlot={
+                      <Pressable
+                        style={styles.leftSlot}
+                        onPress={e => {
+                          e.stopPropagation();
+                          if (isPined) {
+                            removePinedToken(token.$origin as any);
+                          } else {
+                            pinToken(token.$origin as any);
+                          }
+                        }}
+                        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+                        <RcIconFavorite
+                          width={22}
+                          height={21}
+                          color={
+                            isPined
+                              ? colors2024['orange-default']
+                              : colors2024['neutral-info']
+                          }
+                        />
+                      </Pressable>
+                    }
                     onPressRightIcon={() => {
                       setTimeout(() => {
                         toggleShowSheetModal('destroy');
@@ -833,6 +856,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.arrow,
         styles.tokenRowUsdValueWrap,
         styles.tokenRowUsdValue,
+        styles.leftSlot,
         isBridgeTo,
         colors2024,
         t,
@@ -1355,7 +1379,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       lineHeight: 18,
       textAlign: 'right',
-      maxWidth: 200,
+      maxWidth: 120,
       fontFamily: 'SF Pro Rounded',
     },
     textSecondary: {
@@ -1420,6 +1444,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       zIndex: 1,
     },
     favorite: {
+      marginRight: 8,
+    },
+    leftSlot: {
       marginRight: 8,
     },
   };

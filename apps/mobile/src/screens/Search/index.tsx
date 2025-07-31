@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Keyboard, TouchableOpacity, View } from 'react-native';
 
 import { createGetStyles2024 } from '@/utils/styles';
@@ -15,11 +15,14 @@ import LinearGradient, {
   LinearGradientProps,
 } from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDebounce } from 'ahooks';
 
 function SearchScreen(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { searchState, setSearchState } = useSearch();
+  const debouncedSearchValue = useDebounce(searchState, { wait: 600 });
+
   const { t } = useTranslation();
 
   const inputRef = useRef<any>(null);
@@ -46,6 +49,13 @@ function SearchScreen(): JSX.Element {
 
   const { resultTokens, searched, loading, handleSearch } =
     useSearchTokens(searchState);
+
+  useEffect(() => {
+    if (debouncedSearchValue) {
+      handleSearch(debouncedSearchValue);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchValue]);
 
   return (
     <NormalScreenContainer2024
@@ -87,7 +97,7 @@ function SearchScreen(): JSX.Element {
       <View style={styles.safeView}>
         {(searched || loading) && (
           <SearchAssets
-            resultTokens={resultTokens}
+            resultTokens={searchState ? resultTokens : []}
             loading={loading}
             searchState={searchState}
           />

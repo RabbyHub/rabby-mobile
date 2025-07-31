@@ -142,8 +142,8 @@ export const useSelectTokens = ({
             _isPined: false,
             _isFold: false,
             _isExcludeBalance: false,
-            _usdValueStr: formatUsdValue(usdValue),
-            _amountStr: formatAmount(localAmount),
+            _usdValueStr: usdValue ? formatUsdValue(usdValue) : '$0',
+            _amountStr: localAmount ? formatAmount(localAmount) : '0',
             _tokenId: e.id,
           } as any as AbstractPortfolioToken;
         });
