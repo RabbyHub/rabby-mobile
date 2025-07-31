@@ -114,8 +114,8 @@ export const MultiAssets = ({
         disableNFT: true,
         realTimeAddresses: top10Addresses,
         core: true,
-        maxTokenLength: 200,
-        maxDefiLength: 20,
+        maxTokenLength: 500,
+        maxDefiLength: 80,
       });
     }, 0);
     return () => {

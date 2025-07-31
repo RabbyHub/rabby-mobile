@@ -138,6 +138,7 @@ export const DefiRow = memo(
             <AssetAvatar
               logo={data?.logo}
               size={logoSize}
+              lazyLoad
               logoStyle={{ borderRadius: 12 }}
             />
             {isFromAppChain ? (
@@ -150,7 +151,7 @@ export const DefiRow = memo(
               <View style={styles.topFiveTokens}>
                 {topFiveTokens.map(token => (
                   <View key={token.id}>
-                    <AssetAvatar logo={token.logoUrl} size={14} />
+                    <AssetAvatar lazyLoad logo={token.logoUrl} size={14} />
                   </View>
                 ))}
               </View>

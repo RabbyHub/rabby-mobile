@@ -58,8 +58,8 @@ export const AssetAvatar = memo(
     style,
     logoStyle,
     innerChainStyle,
-    lazyLoad = true,
-    lazyLoadDelay = 100,
+    lazyLoad = false,
+    lazyLoadDelay = 50,
   }: AssetAvatarProps) => {
     const { styles, isLight } = useThemeStyles(getStyles);
     const { on, turnOn } = useSwitch();

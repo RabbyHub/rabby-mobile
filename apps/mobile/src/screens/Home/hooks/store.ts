@@ -469,3 +469,90 @@ export const useAssetsMap = () => {
     setAssetsMap,
   };
 };
+
+export const useMainnetTokens = (address?: string) => {
+  const [assetsMap, setAssetsMap] = useAtom(assetAtom);
+  const updateTokens = useCallback(
+    (newTokens: AbstractPortfolioToken[]) => {
+      if (!address) {
+        return;
+      }
+      const lowerAddress = address.toLowerCase();
+      setAssetsMap(pre => {
+        const currentAssets = pre[lowerAddress] || {};
+        return {
+          ...pre,
+          [lowerAddress]: {
+            ...currentAssets,
+            tokens: newTokens,
+          },
+        };
+      });
+    },
+    [address, setAssetsMap],
+  );
+  if (!address) {
+    return [[] as AbstractPortfolioToken[], updateTokens] as const;
+  }
+  return [
+    assetsMap[address.toLowerCase()]?.tokens || [],
+    updateTokens,
+  ] as const;
+};
+
+export const useMainnetPortfolios = (address?: string) => {
+  const [assetsMap, setAssetsMap] = useAtom(assetAtom);
+  const updatePortfolios = useCallback(
+    (newPortfolios: DisplayedProject[]) => {
+      if (!address) {
+        return;
+      }
+      const lowerAddress = address.toLowerCase();
+      setAssetsMap(pre => {
+        const currentAssets = pre[lowerAddress] || {};
+        return {
+          ...pre,
+          [lowerAddress]: {
+            ...currentAssets,
+            portfolios: newPortfolios,
+          },
+        };
+      });
+    },
+    [address, setAssetsMap],
+  );
+  if (!address) {
+    return [[] as DisplayedProject[], updatePortfolios] as const;
+  }
+  return [
+    assetsMap[address.toLowerCase()]?.portfolios || [],
+    updatePortfolios,
+  ] as const;
+};
+
+export const useMainnetNFTs = (address?: string) => {
+  const [assetsMap, setAssetsMap] = useAtom(assetAtom);
+  const updateNFTs = useCallback(
+    (newNFTs: DisplayNftItem[]) => {
+      if (!address) {
+        return;
+      }
+      const lowerAddress = address.toLowerCase();
+      setAssetsMap(pre => {
+        const currentAssets = pre[lowerAddress] || {};
+        return {
+          ...pre,
+          [lowerAddress]: {
+            ...currentAssets,
+            nfts: newNFTs,
+          },
+        };
+      });
+    },
+    [address, setAssetsMap],
+  );
+  if (!address) {
+    return [[] as DisplayNftItem[], updateNFTs] as const;
+  }
+  return [assetsMap[address.toLowerCase()]?.nfts || [], updateNFTs] as const;
+};

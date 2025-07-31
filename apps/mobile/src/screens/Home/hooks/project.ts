@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useQueryNft } from './nft';
@@ -127,7 +127,7 @@ export const useQueryProjects = (userAddr: string | undefined) => {
     };
   }, [tokens, portfolios, nftList]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (userAddr) {
       refreshPositions();
       return;

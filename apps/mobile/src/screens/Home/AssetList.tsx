@@ -54,6 +54,8 @@ import { useAnimatedReaction } from 'react-native-reanimated';
 import { runOnJS } from 'react-native-reanimated';
 import { Account } from '@/core/services/preference';
 import { CombineDefiItem } from './hooks/store';
+import { FlatList } from 'react-native';
+import { getItemId } from './utils/listRenderId';
 
 export const icons = {
   unfoldDark: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png'),
@@ -88,7 +90,7 @@ interface Props {
 const FOOTER_HEIGHT = 56;
 const SPACING_HEIGHT = 8;
 
-export const AssetList = forwardRef<FlashList<any>, Props>(
+export const AssetList = forwardRef<FlatList<any>, Props>(
   (
     {
       onRefresh,
@@ -620,60 +622,61 @@ export const AssetList = forwardRef<FlashList<any>, Props>(
     );
     return (
       <View style={styles.container}>
-        <Tabs.FlashList
+        <Tabs.FlatList
           ref={ref}
           data={dataList}
+          keyExtractor={getItemId}
           renderItem={({ item }) => renderItem(item.type, item)}
-          estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
+          // estimatedItemSize={ASSETS_ITEM_HEIGHT_NEW + ASSETS_SEPARATOR_HEIGHT}
           ItemSeparatorComponent={ListRenderSeparator}
-          getItemType={item => {
-            if (item.type === 'empty-token') {
-              return 'empty_token';
-            }
-            if (item.type === 'empty-assets') {
-              return 'empty_assets';
-            }
-            if (item.type === 'empty-defi') {
-              return 'empty_defi';
-            }
-            if (
-              item.type === 'fold_defi' ||
-              item.type === 'unfold_defi' ||
-              item.type === 'loading-defi-skeleton'
-            ) {
-              return 'defi';
-            }
-            if (item?.type?.includes('_header')) {
-              return 'asset_header';
-            }
-            if (item?.type?.includes('toggle_')) {
-              return 'header';
-            }
-            return 'body';
-          }}
-          overrideItemLayout={(layout, item) => {
-            const type = item.type;
-            switch (type) {
-              case 'asset_header':
-                layout.size = ASSETS_SECTION_HEADER;
-                break;
-              case 'header':
-                layout.size = ASSETS_SECTION_HEADER;
-                break;
-              case 'empty_token':
-                layout.size = TOKEN_EMPTY_ROW_HIGHT;
-                break;
-              case 'empty_assets':
-              case 'empty_defi':
-                layout.size = ASSETS_EMPTY_ROW_HIGHT;
-                break;
-              case 'defi':
-                layout.size = DEFI_ITEM_HEIGHT;
-                break;
-              default:
-                layout.size = ASSETS_ITEM_HEIGHT_NEW;
-            }
-          }}
+          // getItemType={item => {
+          //   if (item.type === 'empty-token') {
+          //     return 'empty_token';
+          //   }
+          //   if (item.type === 'empty-assets') {
+          //     return 'empty_assets';
+          //   }
+          //   if (item.type === 'empty-defi') {
+          //     return 'empty_defi';
+          //   }
+          //   if (
+          //     item.type === 'fold_defi' ||
+          //     item.type === 'unfold_defi' ||
+          //     item.type === 'loading-defi-skeleton'
+          //   ) {
+          //     return 'defi';
+          //   }
+          //   if (item?.type?.includes('_header')) {
+          //     return 'asset_header';
+          //   }
+          //   if (item?.type?.includes('toggle_')) {
+          //     return 'header';
+          //   }
+          //   return 'body';
+          // }}
+          // overrideItemLayout={(layout, item) => {
+          //   const type = item.type;
+          //   switch (type) {
+          //     case 'asset_header':
+          //       layout.size = ASSETS_SECTION_HEADER;
+          //       break;
+          //     case 'header':
+          //       layout.size = ASSETS_SECTION_HEADER;
+          //       break;
+          //     case 'empty_token':
+          //       layout.size = TOKEN_EMPTY_ROW_HIGHT;
+          //       break;
+          //     case 'empty_assets':
+          //     case 'empty_defi':
+          //       layout.size = ASSETS_EMPTY_ROW_HIGHT;
+          //       break;
+          //     case 'defi':
+          //       layout.size = DEFI_ITEM_HEIGHT;
+          //       break;
+          //     default:
+          //       layout.size = ASSETS_ITEM_HEIGHT_NEW;
+          //   }
+          // }}
           onViewableItemsChanged={({ viewableItems }) => {
             if (viewableItems[1]?.item?.type && viewableItems[0]?.index) {
               setFirstRowType(viewableItems[1].item.type);
