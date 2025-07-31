@@ -29,6 +29,8 @@ import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useRequest } from 'ahooks';
 import { transactionHistoryService } from '@/core/services';
 import { Account } from '@/core/services/preference';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import { findAccountByPriority } from '@/utils/account';
 
 interface ItemProps {
   status: number;
@@ -77,9 +79,15 @@ export const HistoryBottomBtn = ({
   });
 
   const fromAddrIsImported = useMemo(() => {
-    return accounts.find(account =>
-      addressUtils.isSameAddress(account.address, data.tx?.from_addr || ''),
-    );
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        addressUtils.isSameAddress(acc.address, data.tx?.from_addr || '') &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    const fromAccount = findAccountByPriority(canUseAccountList);
+
+    return fromAccount;
   }, [accounts, data]);
 
   const { btnContainerViewStyle, buttonStyle } = useMemo(() => {
