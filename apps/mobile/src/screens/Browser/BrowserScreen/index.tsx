@@ -8,7 +8,11 @@ import {
 import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID } from '@/core/native/utils';
-import { browserService, preferenceService } from '@/core/services';
+import {
+  browserService,
+  dappService,
+  preferenceService,
+} from '@/core/services';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
@@ -24,6 +28,7 @@ import { BrowserManage } from './components/BrowserManage';
 import { BrowserSearchResult } from './components/BrowserSearch/BrowserSearchResult';
 import { BrowserSearch } from './components/BrowserSearch';
 import { Freeze } from 'react-freeze';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
   const { styles: stylesScreen } = useTheme2024({
@@ -219,6 +224,13 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
                 searchText: '',
                 searchTabId: '',
               });
+              if (dappService.getDapp(safeGetOrigin(url))?.isDapp) {
+                matomoRequestEvent({
+                  category: 'Websites Usage',
+                  action: 'Website_OpenDapp',
+                  label: url,
+                });
+              }
             } else {
               openTab(url);
             }

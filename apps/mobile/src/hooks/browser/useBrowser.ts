@@ -20,6 +20,7 @@ import {
   EVENT_SHOW_BROWSER_MANAGE,
   eventBus,
 } from '@/utils/events';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export const tabsAtom = atom<{
   tabs: Tab[];
@@ -219,6 +220,14 @@ export function useBrowser() {
       const { httpOrigin: targetOrigin, urlInfo } = canoicalizeDappUrl(
         newTab.url,
       );
+
+      if (dappService.getDapp(targetOrigin)?.isDapp) {
+        matomoRequestEvent({
+          category: 'Websites Usage',
+          action: 'Website_OpenDapp',
+          label: url,
+        });
+      }
 
       if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) {
         return false;

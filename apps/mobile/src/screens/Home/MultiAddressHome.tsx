@@ -40,7 +40,11 @@ import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import {
+  browserService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -95,6 +99,7 @@ import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useInitDetectDBAssets } from '../Search/useAssets';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
+import dayjs from 'dayjs';
 
 const HeaderHeight = 24;
 
@@ -756,6 +761,32 @@ function MultiAddressHome(): JSX.Element {
       action: `ThemeMode_${appThemeConfig}`,
     });
   }, [appThemeConfig]);
+
+  useEffect(() => {
+    const lastReportTime =
+      preferenceService.getPreference('lastReportTime') || 0;
+    if (!lastReportTime || !dayjs(lastReportTime).isToday()) {
+      preferenceService.setPreference({
+        lastReportTime: Date.now(),
+      });
+
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: `Website_LikeStatus`,
+        label: `LikeDapp:${
+          browserService.bookmark.getState().ids?.length || 0
+        }`,
+      });
+
+      matomoRequestEvent({
+        category: 'Watchlist Usage',
+        action: `Watchlist_LikeStatus`,
+        label: `LikeToken:${
+          preferenceService.getPreference('pinedQueue')?.length || 0
+        }`,
+      });
+    }
+  }, []);
 
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();

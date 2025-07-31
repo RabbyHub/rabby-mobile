@@ -57,6 +57,7 @@ import { BrowserProgressBar } from './BrowserProgressBar';
 
 import Animated from 'react-native-reanimated';
 import { useWebviewGesture } from '../../hooks/useWebviewGesture';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 type BrowserTabProps = {
   origin: string;

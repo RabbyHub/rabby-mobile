@@ -19,6 +19,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { BrowserSearch } from '../BrowserScreen/components/BrowserSearch';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { BrowserSearchInHome } from '../BrowserScreen/components/BrowserSearch/BrowserSearchInHome';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -154,6 +155,10 @@ export const BrowserSearchEntry: React.FC = () => {
       trigger: 'home',
     });
     forceShowBrowser();
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: 'Website_Start',
+    });
   });
 
   const handleTabPress = useMemoizedFn(() => {
