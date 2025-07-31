@@ -229,38 +229,40 @@ function History({
   );
 
   const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
-    if (dbData.length === 0) {
-      await batchFetchDataFromDb();
-      return;
-    }
+    dbLastCursorRef.current = 0;
+    await batchFetchDataFromDb();
+    // if (dbData.length === 0) {
+    //   await batchFetchDataFromDb();
+    //   return;
+    // }
 
-    const isFilterScamAndSmallTx = !isShowAll;
-    const addresses = isSceneUsingAllAccounts
-      ? top10Addresses.map(i => i.toLowerCase())
-      : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
-    const dbFirstItemTime = dbData[0]?.time_at || 0;
-    const historyList = await HistoryItemEntity.getAllHistoryItemSortedByTime(
-      addresses,
-      10000,
-      isFilterScamAndSmallTx,
-      dbFirstItemTime,
-    );
-    if (historyList.length === 0) {
-      return;
-    }
+    // const isFilterScamAndSmallTx = !isShowAll;
+    // const addresses = isSceneUsingAllAccounts
+    //   ? top10Addresses.map(i => i.toLowerCase())
+    //   : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
+    // const dbFirstItemTime = dbData[0]?.time_at || 0;
+    // const historyList = await HistoryItemEntity.getAllHistoryItemSortedByTime(
+    //   addresses,
+    //   10000,
+    //   isFilterScamAndSmallTx,
+    //   dbFirstItemTime,
+    // );
+    // if (historyList.length === 0) {
+    //   return;
+    // }
 
-    const list = historyList.map(item => {
-      return {
-        ...ensureHistoryListItemFromDb(item),
-        // hidden small and scam no need this prop
-        isSmallUsdTx: isFilterScamAndSmallTx ? false : item.is_small_tx,
-        isShowSuccess: historySuccessList.includes(
-          `${item.owner_addr.toLowerCase()}-${item.txHash}`,
-        ),
-      } as HistoryDisplayItem;
-    });
+    // const list = historyList.map(item => {
+    //   return {
+    //     ...ensureHistoryListItemFromDb(item),
+    //     // hidden small and scam no need this prop
+    //     isSmallUsdTx: isFilterScamAndSmallTx ? false : item.is_small_tx,
+    //     isShowSuccess: historySuccessList.includes(
+    //       `${item.owner_addr.toLowerCase()}-${item.txHash}`,
+    //     ),
+    //   } as HistoryDisplayItem;
+    // });
 
-    setDbData(prev => mergeDataWithDeduplication(prev, list, 'front'));
+    // setDbData(prev => mergeDataWithDeduplication(prev, list, 'front'));
   });
 
   const isNeedFetchFromApi = useMemo(() => {
@@ -547,7 +549,6 @@ function History({
     onSuccess() {
       runFetchLocalTx();
     },
-    reloadDeps: [batchFetchData],
   });
   const throttleBatchFetchData = useMemo(
     () =>
