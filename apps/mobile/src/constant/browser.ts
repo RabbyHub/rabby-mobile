@@ -33,5 +33,5 @@ export const WEBVIEW_HEIGHT =
   Dimensions.get('screen').height - 124 - BOTTOM_SHEET_EXTRA;
 export const GROW_WEBVIEW_THRESHOLD = 10;
 export const SHRINK_WEBVIEW_THRESHOLD = 10;
-export const EXTRA_WEBVIEW_HEIGHT = Platform.OS === 'ios' ? 64 : 44;
+export const EXTRA_WEBVIEW_HEIGHT = Platform.OS === 'ios' ? 68 : 44;
 export const EXTRA_MIN_MARGIN = 16;

@@ -45,7 +45,11 @@ export function BrowserSearch({
 
   const isValidDomain = useMemo(() => {
     const pared = parse(searchText);
-    return !searchText.includes('@') && (pared.isIcann || pared.isIp);
+    return (
+      !searchText.includes('@') &&
+      searchText.includes('.') &&
+      (pared.isIcann || pared.isIp)
+    );
   }, [searchText]);
 
   const isTransparent =

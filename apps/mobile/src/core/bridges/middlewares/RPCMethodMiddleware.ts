@@ -101,16 +101,16 @@ RPCMethodsMiddleParameters) =>
     };
 
     // todo check this
-    // const methodAllowed =
-    //   req.method === SELF_CHECK_RPC_METHOD ||
-    //   SAFE_RPC_METHODS.includes(req.method) ||
-    //   req.method === 'eth_accounts' ||
-    //   checkTabActive();
-
     const methodAllowed =
       req.method === SELF_CHECK_RPC_METHOD ||
+      SAFE_RPC_METHODS.includes(req.method) ||
       req.method === 'eth_accounts' ||
       checkTabActive();
+
+    // const methodAllowed =
+    //   req.method === SELF_CHECK_RPC_METHOD ||
+    //   req.method === 'eth_accounts' ||
+    //   checkTabActive();
 
     const rpcMethods = {
       [SELF_CHECK_RPC_METHOD]: async () => {
