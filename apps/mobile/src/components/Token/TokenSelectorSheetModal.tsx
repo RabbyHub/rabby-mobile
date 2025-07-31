@@ -1228,9 +1228,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginBottom: 8,
     },
     filterRowScrollView: {
+      height: 34,
       maxHeight: 34,
+      minHeight: 34,
       marginTop: 2,
       marginBottom: 4,
+      overflow: 'visible',
     },
 
     filterRow: {
@@ -1238,6 +1241,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'flex-start',
       alignItems: 'center',
       gap: 8,
+      height: 34,
       // ...makeDebugBorder(),
     },
 
