@@ -417,7 +417,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           amount: x.amount,
           _logo: x.logo_url,
           _symbol: getTokenSymbol(x),
-          _amount: formatAmount(x.amount),
+          _amount: x.amount ? formatAmount(x.amount) : '0',
           _price: '$' + formatPrice(x.price),
           _netWorth: _netWorth,
           _netWorthStr: formatNetworth(_netWorth),
@@ -617,43 +617,43 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        if (
-          isSwapTo ||
-          (query && (type === 'bridgeFrom' || type === 'swapFrom'))
-        ) {
-          return (
-            <View style={{ marginTop: 8, marginHorizontal: 12 }}>
-              <TokenItemContextMenu
-                token={$originMaybeToken}
-                closeBottomSheet={() => {
-                  toggleShowSheetModal('destroy');
-                }}
-                type={type}>
-                <TouchableOpacity
-                  delayLongPress={200}
-                  onLongPress={() => {
-                    console.log('prevent trigger onPress');
-                  }}
-                  onPress={() => {
-                    if (disabled) {
-                      disabledTips && toast.info(disabledTips);
-                      return;
-                    }
-                    onConfirm($originMaybeToken);
-                    toggleShowSheetModal('collapse');
-                  }}>
-                  <ExternalTokenRow
-                    decimalPrecision
-                    isPined={isPined}
-                    data={token.$origin as TokenRowDataType}
-                    logoSize={40}
-                    touchable={false}
-                  />
-                </TouchableOpacity>
-              </TokenItemContextMenu>
-            </View>
-          );
-        }
+        // if (
+        //   isSwapTo ||
+        //   (query && (type === 'bridgeFrom' || type === 'swapFrom'))
+        // ) {
+        //   return (
+        //     <View style={{ marginTop: 8, marginHorizontal: 12 }}>
+        //       <TokenItemContextMenu
+        //         token={$originMaybeToken}
+        //         closeBottomSheet={() => {
+        //           toggleShowSheetModal('destroy');
+        //         }}
+        //         type={type}>
+        //         <TouchableOpacity
+        //           delayLongPress={200}
+        //           onLongPress={() => {
+        //             console.log('prevent trigger onPress');
+        //           }}
+        //           onPress={() => {
+        //             if (disabled) {
+        //               disabledTips && toast.info(disabledTips);
+        //               return;
+        //             }
+        //             onConfirm($originMaybeToken);
+        //             toggleShowSheetModal('collapse');
+        //           }}>
+        //           <ExternalTokenRow
+        //             decimalPrecision
+        //             isPined={isPined}
+        //             data={token.$origin as TokenRowDataType}
+        //             logoSize={40}
+        //             touchable={false}
+        //           />
+        //         </TouchableOpacity>
+        //       </TokenItemContextMenu>
+        //     </View>
+        //   );
+        // }
 
         return (
           <View style={{ marginTop: 8, marginHorizontal: 12 }}>
@@ -676,7 +676,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 }}
                 style={[
                   styles.tokenItem,
-                  isSwapTo && { paddingRight: 0, paddingVertical: 0 },
+                  // isSwapTo && { paddingRight: 0, paddingVertical: 0 },
                   (disabled || lightDisable) && styles.tokenItemDisabled,
                 ]}>
                 <View style={styles.tokenLeft}>
@@ -789,8 +789,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         userTokenSettings.pinedQueue,
         supportChains,
         isFromModalType,
-        isSwapTo,
-        query,
         type,
         styles.tokenItem,
         styles.tokenItemDisabled,
