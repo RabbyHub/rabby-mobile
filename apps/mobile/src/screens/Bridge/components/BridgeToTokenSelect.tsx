@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
 import { uniqBy } from 'lodash';
@@ -21,6 +27,9 @@ import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useLongPressTokenAtom } from '@/screens/Swap/hooks';
 import { trigger } from 'react-native-haptic-feedback';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -56,6 +65,8 @@ const BridgeToTokenSelect = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+  const [favoriteFilterValue, setFavoriteFilterValue] =
+    useState<FavoriteFilterType>('all');
 
   const handleCurrentTokenChange = (token: TokenItem) => {
     onChange && onChange('');
@@ -64,6 +75,22 @@ const BridgeToTokenSelect = ({
 
     setQueryConds(prev => ({ ...prev }));
   };
+
+  const { userTokenSettings, fetchUserTokenSettings } = useUserTokenSettings();
+  const pinedQueue = useMemo(
+    () => userTokenSettings.pinedQueue,
+    [userTokenSettings.pinedQueue],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        if (currentAccount?.address) {
+          fetchUserTokenSettings();
+        }
+      })();
+    }, [currentAccount?.address, fetchUserTokenSettings]),
+  );
 
   const { value: tokenList, loading: tokenListLoading } = useAsync(async () => {
     if (fromChainId && chainId) {
@@ -81,8 +108,17 @@ const BridgeToTokenSelect = ({
   const availableToken = useMemo(() => {
     return uniqBy(tokenList, item => {
       return `${item.chain}-${item.id}`;
-    }).filter(e => !excludeTokens.includes(e.id));
-  }, [tokenList, excludeTokens]);
+    })
+      .filter(e => !excludeTokens.includes(e.id))
+      .filter(e => {
+        if (favoriteFilterValue === 'favorite') {
+          return pinedQueue?.some(
+            x => x.chainId === e.chain && x.tokenId === e.id,
+          );
+        }
+        return true;
+      });
+  }, [tokenList, excludeTokens, favoriteFilterValue, pinedQueue]);
 
   const displayTokenList = useSortToken(availableToken || [], currentAccount);
 
@@ -202,6 +238,9 @@ const BridgeToTokenSelect = ({
         displayAccountFilter={false}
         // filterAccount={account}
         hideChainFilter={true}
+        showFavoriteFilter
+        favoriteFilterValue={favoriteFilterValue}
+        onFavoriteFilterChange={setFavoriteFilterValue}
         selectToken={token}
         headerTitle={
           <View style={styles.headerBox}>
