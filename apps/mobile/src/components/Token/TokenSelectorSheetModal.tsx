@@ -714,69 +714,69 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         {token._price}
                       </Text>
                     )}
+                    {isBridgeTo && (
+                      <View
+                        style={[
+                          styles.tokenInfoColRight,
+                          styles.tardeLevel,
+                          {
+                            backgroundColor:
+                              token.trade_volume_level === 'low'
+                                ? colors2024['orange-light-4']
+                                : colors2024['green-light-4'],
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.tardeLevelText,
+                            {
+                              color:
+                                token.trade_volume_level === 'low'
+                                  ? colors2024['orange-default']
+                                  : colors2024['green-default'],
+                            },
+                          ]}>
+                          {token.trade_volume_level === 'low'
+                            ? t('component.TokenSelector.bridgeTo.low')
+                            : t('component.TokenSelector.bridgeTo.high')}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
-                {isBridgeTo ? (
-                  <View
-                    style={[
-                      styles.tokenInfoColRight,
-                      styles.tardeLevel,
-                      {
-                        backgroundColor:
-                          token.trade_volume_level === 'low'
-                            ? colors2024['orange-light-4']
-                            : colors2024['green-light-4'],
-                      },
-                    ]}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
+                    <Text style={[styles.tokenHeaderNetworth]}>
+                      {isExcludeBalanceShowTips ? (
+                        <TouchableOpacity
+                          hitSlop={hitSlop}
+                          onPress={handleShowExcludeTips}>
+                          <RcTipCC
+                            style={styles.tips}
+                            color={colors2024['neutral-info']}
+                          />
+                        </TouchableOpacity>
+                      ) : (
+                        token._netWorthStr
+                      )}
+                    </Text>
                     <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
                       style={[
-                        styles.tardeLevelText,
-                        {
-                          color:
-                            token.trade_volume_level === 'low'
-                              ? colors2024['orange-default']
-                              : colors2024['green-default'],
-                        },
+                        styles.tokenHeaderAmount,
+                        { marginTop: 4 },
+                        isExcludeBalanceShowTips && styles.textSecondary,
                       ]}>
-                      {token.trade_volume_level}
+                      {token._amount} {token._symbol}
                     </Text>
                   </View>
-                ) : (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}>
-                    <View
-                      style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
-                      <Text style={[styles.tokenHeaderNetworth]}>
-                        {isExcludeBalanceShowTips ? (
-                          <TouchableOpacity
-                            hitSlop={hitSlop}
-                            onPress={handleShowExcludeTips}>
-                            <RcTipCC
-                              style={styles.tips}
-                              color={colors2024['neutral-info']}
-                            />
-                          </TouchableOpacity>
-                        ) : (
-                          token._netWorthStr
-                        )}
-                      </Text>
-                      <Text
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        style={[
-                          styles.tokenHeaderAmount,
-                          { marginTop: 4 },
-                          isExcludeBalanceShowTips && styles.textSecondary,
-                        ]}>
-                        {token._amount} {token._symbol}
-                      </Text>
-                    </View>
-                  </View>
-                )}
+                </View>
               </TouchableOpacity>
             </TokenItemContextMenu>
           </View>
@@ -816,6 +816,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.tokenRowUsdValue,
         isBridgeTo,
         colors2024,
+        t,
         handleShowExcludeTips,
         onConfirm,
         toggleShowSheetModal,
@@ -1187,14 +1188,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: 900,
       color: colors2024['green-default'],
       backgroundColor: colors2024['green-light-4'],
-      paddingHorizontal: 12,
-      paddingVertical: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 1,
+      marginTop: 5,
     },
     tardeLevelText: {
       color: colors2024['green-default'],
-      fontSize: 14,
+      fontSize: 12,
       fontWeight: '700',
-      lineHeight: 18,
+      lineHeight: 16,
       fontFamily: 'SF Pro Rounded',
     },
     internalBlock: {

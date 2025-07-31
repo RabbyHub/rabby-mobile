@@ -242,36 +242,7 @@ const BridgeToTokenSelect = ({
         favoriteFilterValue={favoriteFilterValue}
         onFavoriteFilterChange={setFavoriteFilterValue}
         selectToken={token}
-        headerTitle={
-          <View style={styles.headerBox}>
-            <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
-            <View style={styles.liquidityBox}>
-              <Text style={styles.headerBoxText}>
-                {t('page.bridge.liquidity')}
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  createGlobalBottomSheetModal2024({
-                    name: MODAL_NAMES.DESCRIPTION,
-                    bottomSheetModalProps: {
-                      enableContentPanningGesture: true,
-                      enablePanDownToClose: true,
-                      snapPoints: [200],
-                    },
-                    title: 'About Liquidity',
-                    sections: [
-                      {
-                        description:
-                          'The higher the historical trade volume, the more likely the bridge will succeed.',
-                      },
-                    ],
-                  });
-                }}>
-                <RcIcHelp color={colors2024['neutral-secondary']} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        }
+        headerTitle={null}
         type={'bridgeTo'}
         placeholder={placeholder}
         chainServerId={chainId}
