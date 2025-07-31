@@ -415,7 +415,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       ];
 
       const formatList = (allList ?? []).map(x => {
-        const _netWorth = isBridgeTo ? 0 : x.amount * x.price || 0;
+        const _netWorth = x.amount * x.price || 0;
         return {
           id: x.id,
           amount: x.amount,
@@ -424,7 +424,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           _amount: x.amount ? formatAmount(x.amount) : '0',
           _price: '$' + formatPrice(x.price),
           _netWorth: _netWorth,
-          _netWorthStr: formatNetworth(_netWorth),
+          _netWorthStr: _netWorth ? formatNetworth(_netWorth) : '$0',
           _chain: x.chain,
           // @ts-expect-error
           trade_volume_level: x?.trade_volume_level,
@@ -441,14 +441,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       return isFromModalType
         ? formatList
         : formatList.sort((m, n) => n._netWorth - m._netWorth);
-    }, [
-      foldTokensList,
-      displayList,
-      fold,
-      isScamFold,
-      isFromModalType,
-      isBridgeTo,
-    ]);
+    }, [foldTokensList, displayList, fold, isScamFold, isFromModalType]);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => {

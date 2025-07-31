@@ -6,7 +6,6 @@ import React, {
   useCallback,
 } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
@@ -20,8 +19,6 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import { useBridgeSupportedChains } from '../hooks';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useLongPressTokenAtom } from '@/screens/Swap/hooks';
@@ -42,6 +39,7 @@ interface BridgeToTokenSelectProps {
   placeholder?: string;
   fromChainId?: string;
   fromTokenId?: string;
+  address?: string;
 }
 const defaultExcludeTokens = [];
 const BridgeToTokenSelect = ({
@@ -54,6 +52,7 @@ const BridgeToTokenSelect = ({
   chainId,
   excludeTokens = defaultExcludeTokens,
   placeholder,
+  address,
 }: BridgeToTokenSelectProps) => {
   const [queryConds, setQueryConds] = useState({
     keyword: '',
@@ -99,6 +98,7 @@ const BridgeToTokenSelect = ({
         from_token_id: fromTokenId,
         to_chain_id: chainId,
         q: queryConds.keyword,
+        user_addr: address,
       });
       return list?.token_list;
     }
