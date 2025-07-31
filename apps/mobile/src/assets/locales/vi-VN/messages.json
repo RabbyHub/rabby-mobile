@@ -826,7 +826,7 @@
       "No_Tokens": "Không có Token",
       "Token": "Token",
       "Select-from-supported-tokens": "Chọn từ các token được hỗ trợ",
-      "Deposit-tip": "",
+      "Deposit-tip": "Nạp tiền bằng USDC/USDT",
       "Value": "Giá trị",
       "InsufficientBalanceTips": "Số dư không đủ",
       "Balance": "Số dư"

@@ -910,7 +910,7 @@
       "No_Tokens": "Keine Tokens",
       "Token": "Token",
       "Select-from-supported-tokens": "Aus unterstützten Token auswählen",
-      "Deposit-tip": "",
+      "Deposit-tip": "Mit USDC/USDT einzahlen",
       "InsufficientBalanceTips": "Unzureichendes Guthaben",
       "Balance": "Guthaben"
     },

@@ -893,7 +893,7 @@
       "No_Tokens": "ไม่มี Tokens",
       "Token": "Token",
       "Select-from-supported-tokens": "เลือกจากโทเค็นที่รองรับ",
-      "Deposit-tip": "",
+      "Deposit-tip": "ฝากด้วย USDC/USDT",
       "Value": "มูลค่า",
       "Loading_Tokens": "กำลังโหลดโทเค็น...",
       "InsufficientBalanceTips": "ยอดเงินคงเหลือไม่เพียงพอ",

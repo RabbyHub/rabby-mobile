@@ -212,7 +212,7 @@
       "Loading_Tokens": "토큰 로드 중...",
       "No_Tokens": "토큰 없음",
       "Select-from-supported-tokens": "지원되는 토큰 중에서 선택",
-      "Deposit-tip": "",
+      "Deposit-tip": "USDC/USDT로 입금하기",
       "Balance": "잔액"
     },
     "receive": {

@@ -631,7 +631,7 @@
       "Value": "バリュー",
       "No_Tokens": "トークンなし",
       "Select-from-supported-tokens": "サポートされているトークンから選択してください",
-      "Deposit-tip": "",
+      "Deposit-tip": "USDC/USDTで入金する",
       "Loading_Tokens": "トークンを読み込み中...",
       "Balance": "残高"
     },

@@ -746,7 +746,7 @@
       "Token": "Token",
       "Loading_Tokens": "正在加载代币...",
       "Select-from-supported-tokens": "从支持的代币中选择",
-      "Deposit-tip": "",
+      "Deposit-tip": "使用 USDC/USDT 存款",
       "Value": "价值",
       "InsufficientBalanceTips": "余额不足",
       "No_Tokens": "无代币",
