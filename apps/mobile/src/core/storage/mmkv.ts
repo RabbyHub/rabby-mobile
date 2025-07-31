@@ -25,7 +25,7 @@ function checkIfJsonStringifiedString(input: any) {
   return typeof input === 'string' && input.startsWith('"');
 }
 
-function makeAppStorage(options?: MMKVConfiguration) {
+function makeAppJsonStorage(options?: MMKVConfiguration) {
   const mmkv = new MMKV(options);
 
   function getItem<T>(key: string): T | null {
@@ -117,11 +117,11 @@ const {
   storage: appStorage,
   methods: appMethods,
   mmkv: appMMKV,
-} = makeAppStorage({
+} = makeAppJsonStorage({
   id: MMKV_FILE_NAMES.DEFAULT,
 });
 
-const { storage: keyringStorage } = makeAppStorage({
+const { storage: keyringStorage } = makeAppJsonStorage({
   id: MMKV_FILE_NAMES.KEYRING,
   encryptionKey: 'keyring',
 });
@@ -176,7 +176,7 @@ type StringStorageOption =
  * be JSON.stringify twice and JSON.parse twice. This is a bad behavior.
  */
 function makeJsonStore<T = any>(options?: { storage?: StringStorageOption }) {
-  const { storage } = options || {};
+  const { storage = MMKVStorageStrategy.legacy } = options || {};
 
   const jsonStore =
     storage === MMKVStorageStrategy.legacy ||
@@ -239,7 +239,7 @@ export const atomByMMKV = <T = any>(
     }): /* subscribe */ SyncStorage<T>['subscribe'] & Function;
   },
 ) => {
-  const { storage } = options || {};
+  const { storage = MMKVStorageStrategy.legacy } = options || {};
   const jsonStore = makeJsonStore<T>({ storage });
 
   if (typeof options?.setupSubscribe === 'function') {
