@@ -498,23 +498,18 @@ function MultiAddressHome(): JSX.Element {
       true,
       timestamp / 1000,
     );
-
-    const pinedQueue = preferenceService.getPinToken();
     list.map(i => {
-      const isSmallTx = judgeIsSmallUsdTx(i, pinedQueue);
-      if (!isSmallTx) {
-        const status = i.status ?? 1;
-        const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
-        const addressTs =
-          clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? 0;
-        if (addressTs && addressTs / 1000 > i.time_at) {
-          return;
-        }
-        if (status === 1) {
-          transactionHistoryService.setSucceedList(id);
-        } else {
-          transactionHistoryService.setFailedList(id);
-        }
+      const status = i.status ?? 1;
+      const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
+      const addressTs =
+        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? 0;
+      if (addressTs && addressTs / 1000 > i.time_at) {
+        return;
+      }
+      if (status === 1) {
+        transactionHistoryService.setSucceedList(id);
+      } else {
+        transactionHistoryService.setFailedList(id);
       }
     });
 
