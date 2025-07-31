@@ -281,7 +281,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const [swapToTokenDetail, setSwapToTokenDetail] = useState(false);
     const route = useRoute<SwapRouteProps['route']>();
     const isFocused = useIsFocused();
-    const { userTokenSettings } = useUserTokenSettings();
+    const { userTokenSettings, pinToken, removePinedToken } =
+      useUserTokenSettings();
 
     const isSwapRoute =
       route.name === RootNames.Swap || route.name === RootNames.MultiSwap;
@@ -684,7 +685,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     favorite={isPined}
                     style={styles.favorite}
                     handlePressFavorite={() => {
-                      console.log('favorite');
+                      if (isPined) {
+                        removePinedToken(token.$origin as any);
+                      } else {
+                        pinToken(token.$origin as any);
+                      }
                     }}
                   />
                   <AssetAvatar
@@ -823,6 +828,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
         onPressToken,
         fold,
         disabledTips,
+        removePinedToken,
+        pinToken,
       ],
     );
 
