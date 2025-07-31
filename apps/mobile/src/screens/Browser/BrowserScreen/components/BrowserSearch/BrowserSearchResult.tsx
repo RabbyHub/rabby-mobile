@@ -49,6 +49,7 @@ export function BrowserSearchResult({
             <View style={styles.list}>
               <TouchableOpacity
                 style={styles.listItem}
+                hitSlop={10}
                 onPress={() => {
                   onOpenURL?.(
                     `https://www.google.com/search?q=${encodeURIComponent(
@@ -77,6 +78,7 @@ export function BrowserSearchResult({
               {isValidDomain ? (
                 <TouchableOpacity
                   style={styles.listItem}
+                  hitSlop={10}
                   onPress={() => {
                     onOpenURL?.(
                       /^https?:\/\//.test(searchText)

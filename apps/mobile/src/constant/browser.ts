@@ -30,7 +30,7 @@ export const APP_STORE_URL_PREFIXES = [
 
 export const BOTTOM_SHEET_EXTRA = 10;
 export const WEBVIEW_HEIGHT =
-  Dimensions.get('window').height - 124 - BOTTOM_SHEET_EXTRA;
+  Dimensions.get('screen').height - 124 - BOTTOM_SHEET_EXTRA;
 export const GROW_WEBVIEW_THRESHOLD = 10;
 export const SHRINK_WEBVIEW_THRESHOLD = 10;
 export const EXTRA_WEBVIEW_HEIGHT = Platform.OS === 'ios' ? 64 : 44;

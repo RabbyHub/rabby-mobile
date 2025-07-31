@@ -24,7 +24,7 @@ import {
 // todo move to file
 
 export const useWebviewGesture = () => {
-  const { safeOffScreenTop } = useSafeSizes();
+  const { safeTop } = useSafeSizes();
   const scrollPositionRef = useRef<number | undefined>(undefined);
   const startScrollPositionRef = useRef<number | undefined>(undefined);
   const touchPositionYRef = useRef<number | undefined>(undefined);
@@ -62,10 +62,8 @@ export const useWebviewGesture = () => {
     scrollPositionRef.current = scrollY;
 
     const contentHeight = event.nativeEvent.contentSize.height;
-    if (
-      contentHeight <
-      WEBVIEW_HEIGHT - safeOffScreenTop + EXTRA_WEBVIEW_HEIGHT
-    ) {
+
+    if (contentHeight < WEBVIEW_HEIGHT - safeTop + EXTRA_WEBVIEW_HEIGHT) {
       shouldCollapseBottomBar.value = false;
       return;
     }

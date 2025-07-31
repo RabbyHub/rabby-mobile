@@ -377,13 +377,11 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       },
     );
 
-    // useEffect(() => {
-    //   if (isEmptyTab && isActive) {
-    //     setTimeout(() => {
-    //       handleViewShot('');
-    //     }, 300);
-    //   }
-    // }, [handleViewShot, isActive, isEmptyTab, isShowSearch]);
+    useEffect(() => {
+      if (isActive) {
+        resetScrollHandlers();
+      }
+    }, [isActive, resetScrollHandlers]);
 
     React.useImperativeHandle(
       ref,
@@ -747,6 +745,7 @@ const getStyles = createGetStyles2024(ctx =>
     animatedContainer: {
       flex: 1,
       position: 'relative',
+      zIndex: 10,
     },
     dappWebViewHeadContainer: {
       flexShrink: 0,
