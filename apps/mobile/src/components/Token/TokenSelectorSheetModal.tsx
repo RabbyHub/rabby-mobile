@@ -86,6 +86,7 @@ import { isScamTokenForSelect } from '@/screens/Home/utils/collection';
 import { SCAM_TOKEN_HAEDER_ID, SCAM_TOKEN_HEADER_DATA } from './constant';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { NextSearchBar } from '@/components2024/SearchBar';
+import { Favorite } from '@/components2024/Favorite';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -665,9 +666,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
               <TouchableOpacity
                 key={token_key}
                 delayLongPress={200}
-                onLongPress={() => {
-                  console.log('prevent trigger onPress');
-                }}
                 onPress={() => {
                   if (disabled) {
                     disabledTips && toast.info(disabledTips);
@@ -682,6 +680,13 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   (disabled || lightDisable) && styles.tokenItemDisabled,
                 ]}>
                 <View style={styles.tokenLeft}>
+                  <Favorite
+                    favorite={isPined}
+                    style={styles.favorite}
+                    handlePressFavorite={() => {
+                      console.log('favorite');
+                    }}
+                  />
                   <AssetAvatar
                     logo={token?._logo}
                     size={40}
@@ -742,7 +747,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                       flexDirection: 'row',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      paddingRight: 16,
                     }}>
                     <View
                       style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
@@ -768,14 +772,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           { marginTop: 4 },
                           isExcludeBalanceShowTips && styles.textSecondary,
                         ]}>
-                        {token._amount}
+                        {token._amount} {token._symbol}
                       </Text>
                     </View>
-                  </View>
-                )}
-                {isPined && (
-                  <View style={[styles.favoriteBadge]}>
-                    <RcIconFavorite color={colors2024['orange-default']} />
                   </View>
                 )}
               </TouchableOpacity>
@@ -784,7 +783,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         );
       },
       [
-        query,
         isLoading,
         disableItemCheck,
         chainSearchCtx.filterAccountItem,
@@ -792,10 +790,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
         supportChains,
         isFromModalType,
         isSwapTo,
+        query,
         type,
         styles.tokenItem,
         styles.tokenItemDisabled,
         styles.tokenLeft,
+        styles.favorite,
         styles.tokenInfoCol,
         styles.tokenNameBox,
         styles.tokenName,
@@ -807,7 +807,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.tips,
         styles.tokenHeaderAmount,
         styles.textSecondary,
-        styles.favoriteBadge,
         styles.scamHeader,
         styles.tokenRowWrap,
         styles.tokenRowTokenWrap,
@@ -1265,7 +1264,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       height: ITEM_HEIGHT,
       // paddingHorizontal: 8,
-      paddingRight: 16,
+      paddingRight: 12,
       paddingLeft: 12,
       // marginHorizontal: 12,
       // marginTop: 8,
@@ -1312,9 +1311,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontFamily: 'SF Pro Rounded',
     },
     tokenPrice: {
-      color: colors2024['neutral-foot'],
+      color: colors2024['neutral-secondary'],
       fontSize: 14,
-      fontWeight: '400',
+      fontWeight: '500',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
     },
@@ -1326,9 +1325,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       textAlign: 'right',
     },
     tokenHeaderAmount: {
-      color: colors2024['neutral-foot'],
+      color: colors2024['neutral-secondary'],
       fontSize: 14,
-      fontWeight: '400',
+      fontWeight: '500',
       lineHeight: 18,
       textAlign: 'right',
       maxWidth: 200,
@@ -1394,6 +1393,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       right: 0,
       bottom: 0,
       zIndex: 1,
+    },
+    favorite: {
+      marginRight: 8,
     },
   };
 });

@@ -17,6 +17,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     container: {
       flexDirection: 'row',
       alignItems: 'center',
+      height: 31,
       gap: 8,
     },
     filterButton: {
@@ -27,11 +28,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors2024['neutral-bg-5'],
+      borderWidth: 1,
+      borderColor: 'transparent',
     },
     filterButtonActive: {
       backgroundColor: colors2024['brand-light-1'],
       borderColor: colors2024['brand-disable'],
-      borderWidth: 1,
     },
     filterButtonText: {
       color: colors2024['neutral-body'],
