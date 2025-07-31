@@ -413,8 +413,7 @@ export const ExternalTokenRow = memo(
                     {getTokenSymbol(data)}
                   </Text>
                 </View>
-
-                {/* TODO: usd value */}
+                <Text style={styles.usdValue}>{data._usdValueStr}</Text>
               </View>
               <View style={styles.colContent}>
                 <Text style={styles.tokenRowAmount}>
@@ -423,15 +422,8 @@ export const ExternalTokenRow = memo(
                     data.price || 0,
                   )}
                 </Text>
-                <Text
-                  style={StyleSheet.compose(styles.percent, {
-                    ...(data._isExcludeBalance && (data._usdValue || 0) > 0
-                      ? styles.exclude
-                      : {}),
-                    color: percentColor,
-                  })}>
-                  {/* TODO: amount */}
-                  {formatPercentage(data.price_24h_change || 0)}
+                <Text style={styles.searchAmountStr}>
+                  {data._amountStr} {data.symbol}
                 </Text>
               </View>
             </View>
@@ -567,6 +559,14 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
     // ...makeDebugBorder(),
+  },
+  usdValue: {
+    marginTop: 4,
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
   },
   tokenRowLogo: {
     marginRight: 12,
@@ -711,6 +711,15 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  searchAmountStr: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    marginTop: 4,
+    textAlign: 'right',
   },
   searchTokenIssuedby: {
     color: ctx.colors2024['neutral-secondary'],

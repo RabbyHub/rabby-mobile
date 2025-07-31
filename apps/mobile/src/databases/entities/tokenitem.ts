@@ -541,4 +541,63 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       throw error;
     }
   }
+
+  static async getTokenListAmount({
+    owner_addr,
+    tokenList,
+  }: {
+    owner_addr: string[];
+    tokenList: { chain: string; tokenId: string }[];
+  }): Promise<Array<{ chain: string; tokenId: string; amount: number }>> {
+    try {
+      await prepareAppDataSource();
+
+      if (!owner_addr.length || !tokenList.length) {
+        return [];
+      }
+
+      const repo = this.getRepository();
+      const whereConditions = tokenList.map((token, index) => {
+        const chainParam = `chain${index}`;
+        const tokenIdParam = `tokenId${index}`;
+        return `(tokenitem.chain = :${chainParam} AND tokenitem.id = :${tokenIdParam})`;
+      });
+
+      const params: Record<string, any> = {};
+      tokenList.forEach((token, index) => {
+        params[`chain${index}`] = token.chain;
+        params[`tokenId${index}`] = token.tokenId;
+      });
+
+      const result = await repo
+        .createQueryBuilder('tokenitem')
+        .select([
+          'tokenitem.chain',
+          'tokenitem.id',
+          `SUM(${correctBadRealOnSql('tokenitem.amount')}) as total_amount`,
+        ])
+        .where(`tokenitem.owner_addr IN (:...owner_addr)`, { owner_addr })
+        .andWhere(`(${whereConditions.join(' OR ')})`, params)
+        .groupBy('tokenitem.chain, tokenitem.id')
+        .getRawMany();
+
+      const amountMap = new Map<string, number>();
+      result.forEach(item => {
+        const key = `${item.tokenitem_chain}-${item.tokenitem_id}`;
+        amountMap.set(key, parseFloat(item.total_amount) || 0);
+      });
+
+      return tokenList.map(token => {
+        const key = `${token.chain}-${token.tokenId}`;
+        return {
+          chain: token.chain,
+          tokenId: token.tokenId,
+          amount: amountMap.get(key) || 0,
+        };
+      });
+    } catch (error) {
+      console.error('Failed to get token list amount:', error);
+      throw error;
+    }
+  }
 }
