@@ -123,9 +123,9 @@ export const SearchAssets: React.FC<Props> = ({
             style={styles.renderItemWrapper}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
-            rightSlot={
+            leftSlot={
               <Pressable
-                style={styles.rightSlot}
+                style={styles.leftSlot}
                 onPress={e => {
                   e.stopPropagation();
                   handlePressFavorite(item.id, item.chain);
@@ -152,8 +152,8 @@ export const SearchAssets: React.FC<Props> = ({
       colors2024,
       handleOpenTokenDetail,
       handlePressFavorite,
+      styles.leftSlot,
       styles.renderItemWrapper,
-      styles.rightSlot,
       watchlistTokenList,
     ],
   );
@@ -425,7 +425,7 @@ const getStyles = createGetStyles2024(ctx => ({
   footer: {
     height: 200,
   },
-  rightSlot: {
-    marginLeft: 13,
+  leftSlot: {
+    marginRight: 8,
   },
 }));

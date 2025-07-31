@@ -10,12 +10,11 @@ import {
 
 import RcFoldCC from '@/assets2024/icons/common/fold.svg';
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
-import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
-import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
-import RcTipCC from '@/assets2024/icons/common/tips.svg';
+import RcTipCC from '@/assets2024/icons/common/warning-circle-cc.svg';
+import RcNextRightCC from '@/assets/icons/common/arrow-right-cc.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { AbstractPortfolioToken } from '../../types';
 import {
   ContextMenuView,
@@ -34,9 +33,9 @@ import { HighlightText } from '@/components2024/HighlightText';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatPrice, formatUsdValue } from '@/utils/number';
-import { RiskTokenTips } from '@/screens/TokenDetail';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { formatUsdValueKMB } from '../../utils/price';
+import { ellipsisAddress } from '@/utils/address';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -259,7 +258,7 @@ export const ExternalTokenRow = memo(
     touchable = true,
     decimalPrecision = false,
     isPined = false,
-    rightSlot,
+    leftSlot,
   }: {
     data: TokenRowDataType;
     style?: ViewStyle;
@@ -271,7 +270,7 @@ export const ExternalTokenRow = memo(
     onTokenPress?(token: TokenRowDataType): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
-    rightSlot?: ReactNode;
+    leftSlot?: ReactNode;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
@@ -280,13 +279,6 @@ export const ExternalTokenRow = memo(
       () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
       [logoStyle, styles.tokenRowLogo],
     );
-
-    const siteList = useMemo(() => {
-      return [
-        ...(data?.identity?.listed_sites || []),
-        ...(data?.identity?.cex_list || []),
-      ];
-    }, [data]);
 
     const isGasToken = useMemo(() => data.id === data.chain, [data]);
 
@@ -308,36 +300,92 @@ export const ExternalTokenRow = memo(
     }, [colors2024, data.price_24h_change]);
 
     const ExtraContent = useMemo(() => {
-      if (data.is_verified === false) {
-        return <RiskTokenTips isDanger={true} />;
-      }
-
-      if (data.is_suspicious) {
-        return <RiskTokenTips isDanger={false} />;
-      }
-
-      if (data.identity?.domain_id) {
-        const isBridgeDomain = data.identity.bridge_ids?.length > 0;
-        const isVerified = data.identity.is_domain_verified;
-
-        return (
-          <View style={styles.searchTokenExtraInfo}>
-            <Text style={styles.searchTokenIssuedby}>
-              {t('page.search.tokenItem.Issuedby')}
-            </Text>
-            <View style={styles.tokenRowContent}>
-              <Text style={styles.searchTokenDomain}>
-                {data.identity?.domain_id}
+      return (
+        <View style={styles.searchTokenExtraInfo}>
+          <View style={styles.bubbleArrow} />
+          <View style={styles.leftSection}>
+            {isGasToken ? (
+              <View style={styles.gasBadgeTextRoot}>
+                <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
+              </View>
+            ) : (
+              <Text
+                style={styles.searchSubText}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {'FDV'}
+                <Text style={styles.fdvValue}>
+                  {':'}
+                  {data.identity?.fdv
+                    ? formatUsdValueKMB(data.identity?.fdv || 0)
+                    : '-'}
+                </Text>
               </Text>
-              {isVerified &&
-                (isBridgeDomain ? <IconBridgeTo /> : <IconOrigin />)}
+            )}
+            {!isGasToken && data?.identity?.token_id && (
+              <View style={styles.verticalLine} />
+            )}
+            {!isGasToken && data?.identity?.token_id && (
+              <View style={styles.tokenRowContent}>
+                <Text style={styles.caValue}>
+                  {'CA'}
+                  <Text style={styles.caValueText}>
+                    {':'}
+                    {ellipsisAddress(data?.identity?.token_id)}
+                  </Text>
+                </Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.rightSection}>
+            {(!data.is_verified || data.is_suspicious) && (
+              <View>
+                <RcTipCC
+                  style={styles.tips}
+                  color={
+                    !data.is_verified
+                      ? colors2024['red-default']
+                      : colors2024['orange-default']
+                  }
+                />
+              </View>
+            )}
+            <View>
+              <RcNextRightCC
+                style={styles.tips}
+                color={
+                  !data.is_verified
+                    ? colors2024['red-default']
+                    : data.is_suspicious
+                    ? colors2024['orange-default']
+                    : colors2024['neutral-title-1']
+                }
+              />
             </View>
           </View>
-        );
-      }
-
-      return null;
-    }, [data.identity, styles, t, data.is_verified, data.is_suspicious]);
+        </View>
+      );
+    }, [
+      styles.searchTokenExtraInfo,
+      styles.bubbleArrow,
+      styles.leftSection,
+      styles.gasBadgeTextRoot,
+      styles.gasBadgeText,
+      styles.searchSubText,
+      styles.fdvValue,
+      styles.verticalLine,
+      styles.tokenRowContent,
+      styles.caValue,
+      styles.caValueText,
+      styles.rightSection,
+      styles.tips,
+      isGasToken,
+      data.identity?.fdv,
+      data.identity?.token_id,
+      data.is_verified,
+      data.is_suspicious,
+      colors2024,
+    ]);
 
     return (
       <Container
@@ -347,6 +395,7 @@ export const ExternalTokenRow = memo(
         onPress={onPressToken}>
         <View style={styles.serachTokenRowTokenWrap}>
           <View style={styles.serachTokenContent}>
+            {leftSlot}
             <AssetAvatar
               logo={data?.logo_url}
               chain={data?.chain}
@@ -363,41 +412,9 @@ export const ExternalTokenRow = memo(
                     ellipsizeMode="tail">
                     {getTokenSymbol(data)}
                   </Text>
-                  {siteList.length > 0 && (
-                    <>
-                      <View style={styles.verticalLine} />
-                      <View style={styles.siteList}>
-                        {siteList.map(
-                          (item, idx) =>
-                            item.logo_url && (
-                              <AssetAvatar
-                                key={idx}
-                                logo={item.logo_url}
-                                size={12}
-                              />
-                            ),
-                        )}
-                      </View>
-                    </>
-                  )}
                 </View>
 
-                {isGasToken ? (
-                  <View style={styles.gasBadgeTextRoot}>
-                    <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
-                  </View>
-                ) : (
-                  <Text
-                    style={styles.searchSubText}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {`FDV ${
-                      data.identity?.fdv
-                        ? formatUsdValueKMB(data.identity?.fdv || 0)
-                        : '-'
-                    }`}
-                  </Text>
-                )}
+                {/* TODO: usd value */}
               </View>
               <View style={styles.colContent}>
                 <Text style={styles.tokenRowAmount}>
@@ -413,11 +430,11 @@ export const ExternalTokenRow = memo(
                       : {}),
                     color: percentColor,
                   })}>
+                  {/* TODO: amount */}
                   {formatPercentage(data.price_24h_change || 0)}
                 </Text>
               </View>
             </View>
-            {rightSlot}
           </View>
 
           {ExtraContent}
@@ -575,6 +592,27 @@ const getStyles = createGetStyles2024(ctx => ({
       : ctx.colors2024['neutral-bg-1'],
     borderRadius: 8,
     // marginTop: 12,
+    position: 'relative',
+  },
+  bubbleArrow: {
+    position: 'absolute',
+    top: -12,
+    left: 44,
+    ...makeTriangleStyle({
+      dir: 'up',
+      size: 6.5,
+      color: ctx.colors2024['brand-light-1'],
+      backgroundColor: 'transparent',
+    }),
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   searchTokenRowTokenInner: {
     // flexShrink: 1,
@@ -657,6 +695,9 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
+  fdvValue: {
+    color: ctx.colors2024['neutral-title-1'],
+  },
   tokenRowUsdValueWrap: {
     flexShrink: 0,
     justifyContent: 'flex-end',
@@ -703,6 +744,16 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  caValue: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+  },
+  caValueText: {
+    color: ctx.colors2024['neutral-title-1'],
   },
   searchTokenDanger: {
     flex: 1,

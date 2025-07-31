@@ -85,14 +85,13 @@ function SearchScreen(): JSX.Element {
         />
       </View>
       <View style={styles.safeView}>
-        {searched ||
-          (loading && (
-            <SearchAssets
-              resultTokens={resultTokens}
-              loading={loading}
-              searchState={searchState}
-            />
-          ))}
+        {(searched || loading) && (
+          <SearchAssets
+            resultTokens={resultTokens}
+            loading={loading}
+            searchState={searchState}
+          />
+        )}
       </View>
     </NormalScreenContainer2024>
   );
