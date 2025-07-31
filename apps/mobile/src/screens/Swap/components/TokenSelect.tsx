@@ -117,11 +117,11 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     });
 
     const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
-    const [updateNonce, setUpdateNonce] = useState(0);
     const [_, setLongPressToken] = useLongPressTokenAtom();
     const queryConds = useDebounceValue(_queryConds, 250);
-    // settimoutout ref
-    const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+      null,
+    );
 
     const currentAccount = queryConds.account;
     const {
@@ -148,40 +148,45 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       },
     }));
 
-    // fetch tokens
-    useEffect(() => {
-      (async () => {
-        if (timeRef.current) {
-          clearTimeout(timeRef.current);
-          timeRef.current = null;
-        }
-        if (!tokenSelectorVisible || useSwapTokenList) {
-          return;
-        }
-        if (!tokens.length) {
+    const loadTokensOnce = useMemoizedFn(async () => {
+      if (!tokenSelectorVisible || useSwapTokenList) {
+        return;
+      }
+
+      const accountAddress = currentAccount?.address;
+
+      // 清除之前的加载请求
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+
+      // 直接加载完整数据，只刷新一次
+      loadingTimeoutRef.current = setTimeout(async () => {
+        if (accountAddress) {
+          await loadToken(accountAddress, true);
+        } else {
           if (type === 'send') {
-            currentAccount?.address &&
-              (await getCacheTokens([currentAccount.address]));
+            return;
           } else {
-            await getCacheTop10Tokens();
+            await checkIsExpireAndUpdate();
           }
         }
-        timeRef.current = setTimeout(() => {
-          if (currentAccount?.address) {
-            loadToken(currentAccount.address, true);
-          } else {
-            checkIsExpireAndUpdate();
-          }
-        }, 500);
-      })();
+      }, 0);
+    });
+
+    useEffect(() => {
+      if (tokenSelectorVisible) {
+        loadTokensOnce();
+      }
+
       return () => {
-        if (timeRef.current) {
-          clearTimeout(timeRef.current);
-          timeRef.current = null;
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+          loadingTimeoutRef.current = null;
         }
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tokenSelectorVisible, currentAccount?.address, useSwapTokenList]);
+    }, [tokenSelectorVisible, loadTokensOnce]);
 
     // swap token list
     const { value: swapTokenList, loading: swapTokenListLoading } =
@@ -203,30 +208,34 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const allRemoteTokens = useSortToken(tokens, accountInScreen);
 
-    const searchedLocalTokensWithOwner = useMemo(
-      () =>
+    const searchedLocalTokensWithOwner = useMemo(() => {
+      const shouldUseFilteredTokens =
         (isSwapTo || type === 'bridgeFrom' || type === 'swapFrom') &&
-        queryConds.keyword
-          ? tokens
-          : tokens.map(
-              e =>
-                ({
-                  ...abstractTokenToTokenItem(e),
-                  ownerAccount:
-                    'ownerAccount' in e ? e.ownerAccount : undefined,
-                } as TokenItemMaybeWithOwner),
-            ),
-      [isSwapTo, queryConds.keyword, tokens, type],
-    );
+        queryConds.keyword;
+
+      if (shouldUseFilteredTokens) {
+        return tokens;
+      }
+
+      return tokens.map(
+        e =>
+          ({
+            ...abstractTokenToTokenItem(e),
+            ownerAccount: 'ownerAccount' in e ? e.ownerAccount : undefined,
+          } as TokenItemMaybeWithOwner),
+      );
+    }, [isSwapTo, queryConds.keyword, tokens, type]);
 
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
       useMemo(() => {
+        const tokenItems = useSwapTokenList
+          ? swapTokenList || []
+          : searchedLocalTokensWithOwner;
+
         return {
           isSearchLoading: isLoadingAllTokens,
           allTokens: allRemoteTokens,
-          allTokenItems: useSwapTokenList
-            ? swapTokenList || []
-            : searchedLocalTokensWithOwner,
+          allTokenItems: tokenItems,
           searchedTokenByQuery: searchedLocalTokensWithOwner,
         };
       }, [
@@ -239,9 +248,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const isExcludedTokens = useCallback(
       (e: AbstractPortfolioToken | TokenItemMaybeWithOwner) => {
-        return !!excludeTokens?.includes(
-          e instanceof DisplayedToken ? e._tokenId : e.id,
-        );
+        if (!excludeTokens?.length) return false;
+        const tokenId = e instanceof DisplayedToken ? e._tokenId : e.id;
+        return excludeTokens.includes(tokenId);
       },
       [excludeTokens],
     );
@@ -256,12 +265,11 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         return [];
       }
 
-      const list = convertSmallTokenList(
-        allTokens.filter(i => {
-          const condition = !!i._isFold || (!i.is_core && !i._isPined);
-          return condition;
-        }),
-      ).map(
+      const filteredTokens = allTokens.filter(i => {
+        return !!i._isFold || (!i.is_core && !i._isPined);
+      });
+
+      const convertedList = convertSmallTokenList(filteredTokens).map(
         e =>
           ({
             ...abstractTokenToTokenItem(e),
@@ -269,29 +277,35 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           } as TokenItemMaybeWithOwner),
       );
       return uniqBy(
-        list.filter(e => !isExcludedTokens(e)),
+        convertedList.filter(e => !isExcludedTokens(e)),
         e => makeKeyForTokenItemMaybeWithOwner(e),
       );
     }, [allTokens, isExcludedTokens, isFromModalType, queryConds.keyword]);
 
     const availableToken = useMemo(() => {
-      const _tokens = queryConds.chainServerId
+      const filteredTokens = queryConds.chainServerId
         ? allTokenItems.filter(t => t.chain === queryConds.chainServerId)
         : allTokenItems;
-      return uniqBy(queryConds.keyword ? searchedTokenByQuery : _tokens, t => {
-        return makeKeyForTokenItemMaybeWithOwner(t);
-      }).filter((e: TokenItemMaybeWithOwner) => {
-        const res =
-          !isExcludedTokens(e) &&
-          !foldTokensList.some(f => {
-            return (
-              f.chain === e.chain &&
-              f.id === e.id &&
-              f?.ownerAccount?.address.toLowerCase() ===
-                e?.ownerAccount?.address.toLowerCase()
-            );
-          });
-        return res;
+
+      const tokensToUse = queryConds.keyword
+        ? searchedTokenByQuery
+        : filteredTokens;
+
+      const uniqueTokens = uniqBy(tokensToUse, t =>
+        makeKeyForTokenItemMaybeWithOwner(t),
+      );
+
+      return uniqueTokens.filter((e: TokenItemMaybeWithOwner) => {
+        if (isExcludedTokens(e)) return false;
+
+        return !foldTokensList.some(f => {
+          return (
+            f.chain === e.chain &&
+            f.id === e.id &&
+            f?.ownerAccount?.address.toLowerCase() ===
+              e?.ownerAccount?.address.toLowerCase()
+          );
+        });
       });
     }, [
       queryConds.chainServerId,
@@ -310,21 +324,18 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const handleSearchTokens = useCallback<
       React.ComponentProps<typeof TokenSelectorSheetModal>['onSearch']
-    >(
-      async ctx => {
-        setQueryConds(prev => ({
-          ...prev,
-          ...(typeof ctx === 'string'
-            ? { keyword: ctx }
-            : {
-                account: ctx.filterAccountItem ?? null,
-                keyword: ctx.keyword,
-                chainServerId: ctx.chainServerId ?? prev.chainServerId,
-              }),
-        }));
-      },
-      [setQueryConds],
-    );
+    >(async ctx => {
+      setQueryConds(prev => ({
+        ...prev,
+        ...(typeof ctx === 'string'
+          ? { keyword: ctx }
+          : {
+              account: ctx.filterAccountItem ?? null,
+              keyword: ctx.keyword,
+              chainServerId: ctx.chainServerId ?? prev.chainServerId,
+            }),
+      }));
+    }, []);
 
     const handleCurrentTokenChange = useCallback<
       React.ComponentProps<typeof TokenSelectorSheetModal>['onConfirm']
@@ -353,20 +364,26 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     }, [chainId, accountInScreen]);
 
     const handleSelectToken = useCallback(() => {
-      if (allTokenItems.length > 0) {
-        setUpdateNonce(updateNonce + 1);
-      }
-
       resetQueryConds();
       setTokenSelectorVisible(true);
-    }, [allTokenItems, updateNonce, resetQueryConds]);
+    }, [resetQueryConds]);
 
     useEffect(() => {
-      setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
+      setQueryConds(prev => {
+        if (prev.chainServerId !== chainId) {
+          return { ...prev, chainServerId: chainId };
+        }
+        return prev;
+      });
     }, [chainId]);
 
     useLayoutEffect(() => {
-      setQueryConds(prev => ({ ...prev, account: accountInScreen }));
+      setQueryConds(prev => {
+        if (prev.account !== accountInScreen) {
+          return { ...prev, account: accountInScreen };
+        }
+        return prev;
+      });
     }, [accountInScreen]);
 
     const { t } = useTranslation();
@@ -374,12 +391,13 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const [recentToTokens] = useSwapRecentToTokens();
 
     const recentDisplayToTokens = useMemo(() => {
-      if (type === 'swapTo' && queryConds.keyword.length < 1) {
-        return recentToTokens.filter(item => {
-          return item.chain === chainId && !isExcludedTokens(item);
-        });
+      if (type !== 'swapTo' || queryConds.keyword.length >= 1) {
+        return [];
       }
-      return [];
+
+      return recentToTokens.filter(item => {
+        return item.chain === chainId && !isExcludedTokens(item);
+      });
     }, [
       type,
       queryConds.keyword.length,
@@ -398,11 +416,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     useFocusEffect(
       useCallback(() => {
-        (async () => {
-          if (currentAccount?.address) {
-            fetchUserTokenSettings();
-          }
-        })();
+        if (currentAccount?.address) {
+          fetchUserTokenSettings();
+        }
       }, [currentAccount?.address, fetchUserTokenSettings]),
     );
 
@@ -411,18 +427,16 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     }, []);
 
     const list = useMemo(() => {
-      if (pinedQueue?.length) {
-        return [
-          ...availableToken.map(e => ({
-            ...e,
-            isPined: pinedQueue?.some(
-              x => x.chainId === e.chain && x.tokenId === e.id,
-            ),
-          })),
-        ] as TokenItem[];
+      if (!pinedQueue?.length) {
+        return [...availableToken];
       }
 
-      return [...availableToken];
+      return availableToken.map(e => ({
+        ...e,
+        isPined: pinedQueue.some(
+          x => x.chainId === e.chain && x.tokenId === e.id,
+        ),
+      })) as TokenItem[];
     }, [availableToken, pinedQueue]);
 
     const unshiftList = useMemo(() => {
