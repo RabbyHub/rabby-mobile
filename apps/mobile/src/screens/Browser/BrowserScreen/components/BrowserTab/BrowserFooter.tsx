@@ -1,5 +1,11 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import {
+  StyleProp,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import {
   RcIconBackCC,
@@ -15,6 +21,7 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { DropdownMenuView } from './DropdownMenuView';
 import { WebViewProps } from 'react-native-webview';
+import Animated from 'react-native-reanimated';
 
 export function BrowserFooter({
   isConnected,
@@ -35,6 +42,7 @@ export function BrowserFooter({
   onContentModeChange,
   onGoHome,
   isDapp,
+  style,
 }: {
   isBookmark?: boolean;
   isConnected?: boolean;
@@ -46,6 +54,7 @@ export function BrowserFooter({
   canViewMore?: boolean;
   contentMode?: WebViewProps['contentMode'];
   isDapp?: boolean;
+  style: StyleProp<ViewStyle>;
 
   onGoBack?(): void;
   onGoForward?(): void;
@@ -146,7 +155,7 @@ export function BrowserFooter({
   ]);
 
   return (
-    <View style={[styles.navControls]}>
+    <Animated.View style={[styles.navControls, style]}>
       <TouchableOpacity style={[styles.navControlItem]} onPress={onGoHome}>
         <ReactIconHome
           width={44}
@@ -212,7 +221,7 @@ export function BrowserFooter({
           />
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 }
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
