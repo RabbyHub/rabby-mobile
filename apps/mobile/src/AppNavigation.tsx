@@ -315,6 +315,10 @@ const StackMain = () => {
             backgroundColor: 'transparent',
           },
         })}
+        getId={({ params }) => {
+          // 使用时间戳作为唯一ID，确保每次都是新页面
+          return params?.timestamp?.toString() || 'default';
+        }}
       />
       <RootStack.Screen
         name={RootNames.Scanner}

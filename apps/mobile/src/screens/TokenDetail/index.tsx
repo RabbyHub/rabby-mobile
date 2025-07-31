@@ -5,7 +5,6 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { Tip } from '@/components/Tip';
-import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import {
@@ -19,7 +18,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -60,10 +59,14 @@ import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import { useTokenDetail } from './hook';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { useAtom, useSetAtom } from 'jotai';
+import {
+  isFromBackAtom,
+  shouldHideSelectorPopupAtom,
+} from '../Swap/hooks/atom';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -95,7 +98,6 @@ export const RightMore: React.FC<{
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
   const { colors2024 } = useTheme2024();
-
   const menuActions = React.useMemo(() => {
     return [
       {
@@ -173,7 +175,6 @@ export const RightMore: React.FC<{
       },
     ] as MenuAction[];
   }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
-
   const {
     removePinedToken,
     pinToken,
@@ -247,7 +248,7 @@ export const RightMore: React.FC<{
 
 export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
   const { styles } = useTheme2024({
-    getStyle: getStyle,
+    getStyle,
   });
   const { t } = useTranslation();
   return isDanger ? (
@@ -288,7 +289,12 @@ export const TokenDetailScreen = () => {
   const { styles, isLight } = useTheme2024({
     getStyle,
   });
+  const { colors2024 } = useTheme2024();
 
+  const [shouldHideSelectorPopup, setShouldHideSelectorPopup] = useAtom(
+    shouldHideSelectorPopupAtom,
+  );
+  const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
   const [isUp, setIsUp] = useState(true);
   const {
@@ -602,6 +608,16 @@ export const TokenDetailScreen = () => {
     );
   }, [token, triggerUpdate, isSingleAddress, refreshTag, unHold]);
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // 页面失焦（返回/左滑/点击返回按钮）时统一副作用
+        setShouldHideSelectorPopup(false);
+        setIsFromBack(true);
+      };
+    }, [setShouldHideSelectorPopup, setIsFromBack]),
+  );
+
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
@@ -635,7 +651,9 @@ export const TokenDetailScreen = () => {
             ) || finalAccount
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
-
+      // 关闭弹窗隐藏
+      setShouldHideSelectorPopup(false);
+      setIsFromBack(false);
       navigation.push(RootNames.StackTransaction, {
         screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
         params: {
@@ -911,6 +929,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['red-light-1'],
       borderRadius: 8,
       // marginTop: 12,
+    },
+    backButtonStyle: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      marginLeft: -16,
+      paddingLeft: 16,
     },
     tokenRowContent: {
       flexDirection: 'row',
