@@ -288,16 +288,31 @@ export const ExternalTokenRow = memo(
       return onTokenPress?.(data);
     }, [data, onTokenPress]);
 
+    const fdv = useMemo(() => {
+      if (data.identity?.fdv) {
+        return data.identity?.fdv;
+      }
+      //TODO: MISS BridgeTo/Send FDV data
+      return 0;
+    }, [data.identity?.fdv]);
+
     const ExtraContent = useMemo(() => {
       return (
-        <View style={styles.searchTokenExtraInfo}>
+        <Pressable
+          onPress={e => {
+            if (onPressRightIcon) {
+              e.stopPropagation();
+              onPressRightIcon?.();
+            }
+          }}
+          style={styles.searchTokenExtraInfo}>
           <View style={styles.bubbleArrow} />
           <View style={styles.leftSection}>
             {isGasToken ? (
               <View style={styles.gasBadgeTextRoot}>
                 <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
               </View>
-            ) : (
+            ) : fdv ? (
               <Text
                 style={styles.searchSubText}
                 numberOfLines={1}
@@ -305,22 +320,20 @@ export const ExternalTokenRow = memo(
                 {'FDV'}
                 <Text style={styles.fdvValue}>
                   {':'}
-                  {data.identity?.fdv
-                    ? formatUsdValueKMB(data.identity?.fdv || 0)
-                    : '-'}
+                  {formatUsdValueKMB(fdv || 0)}
                 </Text>
               </Text>
-            )}
-            {!isGasToken && data?.identity?.token_id && (
+            ) : null}
+            {!isGasToken && (data?.identity?.token_id || data.id) && !!fdv && (
               <View style={styles.verticalLine} />
             )}
-            {!isGasToken && data?.identity?.token_id && (
+            {!isGasToken && (data?.identity?.token_id || data.id) && (
               <View style={styles.tokenRowContent}>
                 <Text style={styles.caValue}>
                   {'CA'}
                   <Text style={styles.caValueText}>
                     {':'}
-                    {ellipsisAddress(data?.identity?.token_id)}
+                    {ellipsisAddress(data?.identity?.token_id || data.id)}
                   </Text>
                 </Text>
               </View>
@@ -339,14 +352,7 @@ export const ExternalTokenRow = memo(
                 />
               </View>
             )}
-            <Pressable
-              hitSlop={hitSlop}
-              onPress={e => {
-                if (onPressRightIcon) {
-                  e.stopPropagation();
-                  onPressRightIcon?.();
-                }
-              }}>
+            <View>
               <RcNextRightCC
                 style={styles.tips}
                 color={
@@ -357,9 +363,9 @@ export const ExternalTokenRow = memo(
                     : colors2024['neutral-title-1']
                 }
               />
-            </Pressable>
+            </View>
           </View>
-        </View>
+        </Pressable>
       );
     }, [
       styles.searchTokenExtraInfo,
@@ -376,8 +382,9 @@ export const ExternalTokenRow = memo(
       styles.rightSection,
       styles.tips,
       isGasToken,
-      data.identity?.fdv,
-      data.identity?.token_id,
+      fdv,
+      data?.identity?.token_id,
+      data.id,
       data.is_verified,
       data.is_suspicious,
       colors2024,
@@ -410,16 +417,19 @@ export const ExternalTokenRow = memo(
                     {getTokenSymbol(data)}
                   </Text>
                 </View>
-                <Text style={styles.usdValue}>{data._usdValueStr}</Text>
-              </View>
-              <View style={styles.colContent}>
-                <Text style={styles.tokenRowAmount}>
+                <Text style={styles.usdValue}>
                   {decimalPrecision ? '$' : ''}
                   {(decimalPrecision ? formatPrice : formatUsdValue)(
                     data.price || 0,
                   )}
                 </Text>
-                <Text style={styles.searchAmountStr}>
+              </View>
+              <View style={styles.colContent}>
+                <Text style={styles.tokenRowAmount}>{data._usdValueStr}</Text>
+                <Text
+                  style={styles.searchAmountStr}
+                  ellipsizeMode="tail"
+                  numberOfLines={1}>
                   {data._amountStr} {data.symbol}
                 </Text>
               </View>
@@ -555,6 +565,7 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+    maxWidth: 150,
     // ...makeDebugBorder(),
   },
   usdValue: {
@@ -717,6 +728,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     marginTop: 4,
     textAlign: 'right',
+    maxWidth: 100,
   },
   searchTokenIssuedby: {
     color: ctx.colors2024['neutral-secondary'],

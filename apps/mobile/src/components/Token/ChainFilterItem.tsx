@@ -7,6 +7,7 @@ import CloseBoldSVG from '@/assets2024/icons/common/close-bold-cc.svg';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Account } from '@/core/services/preference';
 import { ellipsisAddress } from '@/utils/address';
+import { useMemo } from 'react';
 
 const FILTER_ITEM_H = 34;
 
@@ -86,6 +87,16 @@ export function AccountFilterItem({
     getStyle: getAccountFilterItemStyle,
   });
 
+  const aliasName = useMemo(() => {
+    if (
+      filterAccount?.address &&
+      filterAccount?.aliasName === ellipsisAddress(filterAccount?.address)
+    ) {
+      return ellipsisAddress(filterAccount?.address, 4);
+    }
+    return filterAccount?.aliasName || '';
+  }, [filterAccount?.aliasName, filterAccount?.address]);
+
   if (!filterAccount) return null;
 
   return (
@@ -94,10 +105,7 @@ export function AccountFilterItem({
         return (
           <View style={styles.filterAccountButton}>
             <WalletIcon style={styles.filterAccountWalletIcon} />
-            <Text style={styles.filterAccountAddress}>
-              {filterAccount.aliasName ||
-                ellipsisAddress(filterAccount?.address)}
-            </Text>
+            <Text style={styles.filterAccountAddress}>{aliasName}</Text>
             <TouchableOpacity
               hitSlop={10}
               style={styles.filterAccountClose}

@@ -199,7 +199,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
       visible,
       list,
       foldTokensList = [],
-      selectToken,
       displayAccountFilter = false,
       filterAccount,
       chainServerId,
@@ -416,15 +415,17 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
       const formatList = (allList ?? []).map(x => {
         const _netWorth = x.amount * x.price || 0;
+        const amountStr = x.amount ? formatAmount(x.amount) : '0';
+        const usdValueStr = _netWorth ? formatNetworth(_netWorth) : '$0';
         return {
           id: x.id,
           amount: x.amount,
           _logo: x.logo_url,
           _symbol: getTokenSymbol(x),
-          _amount: x.amount ? formatAmount(x.amount) : '0',
+          _amount: amountStr,
           _price: '$' + formatPrice(x.price),
           _netWorth: _netWorth,
-          _netWorthStr: _netWorth ? formatNetworth(_netWorth) : '$0',
+          _netWorthStr: usdValueStr,
           _chain: x.chain,
           // @ts-expect-error
           trade_volume_level: x?.trade_volume_level,
@@ -432,7 +433,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
            * @description in fact, it's impossible to be TokenItemFromAbstractPortfolioToken, it's always TokenItemForRender!
            * Just left here to keep the type consistent for old code
            */
-          $origin: x as
+          $origin: {
+            _amountStr: amountStr,
+            _usdValueStr: usdValueStr,
+            ...x,
+          } as unknown as
             | TokenItemForRender
             | TokenItemFromAbstractPortfolioTokenWithExtra,
         };
@@ -487,7 +492,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const renderItemRenderComponent = useCallback<
       SectionListRenderItem<(typeof tokens)[number]>
     >(
-      ({ item: token, index }) => {
+      ({ item: token }) => {
         if (isLoading) {
           return null;
         }
@@ -500,7 +505,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         // You can pass TokenItemForRender from another property, such as `extraRenderData` rather than `unshiftList`, as it's NOT something in list.
         const $originMaybeToken =
           token.$origin as TokenItemFromAbstractPortfolioTokenWithExtra;
-        const $originMaybeRender = token.$origin as TokenItemForRender;
 
         const { disable: lightDisable } =
           disableItemCheck?.($originMaybeToken) || {};
@@ -512,35 +516,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
           : `${ownerAccount.type}-${ownerAccount.address}`;
 
         const showOwnerAccount = !chainSearchCtx.filterAccountItem;
-
-        if (
-          $originMaybeRender.recentList?.length &&
-          $originMaybeRender.TokenRender
-        ) {
-          const TokenRender = $originMaybeRender.TokenRender;
-          return (
-            <View
-              style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                gap: 12,
-                paddingHorizontal: 8,
-                marginHorizontal: 12,
-                marginBottom: 16,
-              }}>
-              {$originMaybeRender.recentList?.map(tokenItem => (
-                <TouchableOpacity
-                  key={tokenItem.id}
-                  onPress={() => {
-                    onConfirm(tokenItem);
-                    toggleShowSheetModal('collapse');
-                  }}>
-                  <TokenRender token={tokenItem} ownerAccount={ownerAccount} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          );
-        }
 
         const isPined =
           $originMaybeToken.isPined ||
@@ -614,7 +589,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        if (query && (type === 'bridgeFrom' || type === 'swapFrom')) {
+        if (query) {
           return (
             <View style={{ marginTop: 8, marginHorizontal: 12 }}>
               <TokenItemContextMenu
@@ -729,7 +704,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   />
                   <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
                     <View style={styles.tokenNameBox}>
-                      <Text style={styles.tokenName} numberOfLines={1}>
+                      <Text
+                        style={styles.tokenName}
+                        ellipsizeMode="tail"
+                        numberOfLines={1}>
                         {ellipsisOverflowedText(token?._symbol, 15)}
                       </Text>
                       {isManualFold && <TextBadge type="folded" />}
@@ -1350,6 +1328,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
       fontWeight: '700',
       lineHeight: 20,
+      maxWidth: 150,
       fontFamily: 'SF Pro Rounded',
     },
     tokenPrice: {
@@ -1372,7 +1351,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontWeight: '500',
       lineHeight: 18,
       textAlign: 'right',
-      maxWidth: 120,
+      maxWidth: 100,
       fontFamily: 'SF Pro Rounded',
     },
     textSecondary: {

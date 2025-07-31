@@ -12,14 +12,10 @@ import React, {
 import { View, Text, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 
-import { omit, uniqBy } from 'lodash';
+import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
-import {
-  isSwapTokenType,
-  ITokenCheck,
-  TokenItemForRender,
-} from '@/components/Token/TokenSelectorSheetModal';
+import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken } from '@/hooks/chainAndToken/useToken';
 import {
@@ -35,10 +31,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import { convertSmallTokenList } from '@/screens/Home/utils/converAssets';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { useSwapRecentToTokens } from '../hooks/recent';
-import { customTestnetService, preferenceService } from '@/core/services';
+import { customTestnetService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
-import { Account, IManageToken } from '@/core/services/preference';
+import { Account } from '@/core/services/preference';
 import {
   makeKeyForTokenItemMaybeWithOwner,
   TokenItemMaybeWithOwner,
@@ -396,34 +391,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const { t } = useTranslation();
     const { styles } = useTheme2024({ getStyle });
-    const [recentToTokens] = useSwapRecentToTokens();
-
-    const recentDisplayToTokens = useMemo(() => {
-      if (type === 'swapTo' && queryConds.keyword.length < 1) {
-        let filteredRecentTokens = recentToTokens.filter(item => {
-          return item.chain === chainId && !isExcludedTokens(item);
-        });
-
-        if (favoriteFilterValue === 'favorite') {
-          filteredRecentTokens = filteredRecentTokens.filter(token =>
-            pinedQueue?.some(
-              x => x.chainId === token.chain && x.tokenId === token.id,
-            ),
-          );
-        }
-
-        return filteredRecentTokens;
-      }
-      return [];
-    }, [
-      type,
-      queryConds.keyword.length,
-      recentToTokens,
-      chainId,
-      isExcludedTokens,
-      favoriteFilterValue,
-      pinedQueue,
-    ]);
 
     useFocusEffect(
       useCallback(() => {
@@ -434,10 +401,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         })();
       }, [currentAccount?.address, fetchUserTokenSettings]),
     );
-
-    const recentTitle = useMemo(() => {
-      return <View style={{ paddingTop: 10 }} />;
-    }, []);
 
     const list = useMemo(() => {
       let filteredTokens = availableToken;
@@ -459,45 +422,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
       return tokensWithPinStatus;
     }, [availableToken, pinedQueue, favoriteFilterValue]);
-
-    const unshiftList = useMemo(() => {
-      if (recentDisplayToTokens.length) {
-        const recentObj = {
-          header: () => recentTitle,
-          data: [
-            {
-              _chain: 'swapToRecentList',
-              recentList: recentDisplayToTokens.map(e => ({
-                ...omit(e, ['isPined', 'pinIndex']),
-                group: 'recent',
-              })),
-              TokenRender: ({ token: _token }: { token: TokenItem }) => {
-                return (
-                  <View style={styles.recentItemWrapper}>
-                    <AssetAvatar
-                      size={26}
-                      chain={_token.chain}
-                      logo={_token.logo_url}
-                    />
-                    <Text numberOfLines={1} style={styles.tokenSymbol}>
-                      {ellipsisOverflowedText(getTokenSymbol(_token), 5)}
-                    </Text>
-                  </View>
-                );
-              },
-            } as TokenItemForRender,
-          ],
-        };
-
-        return [recentObj];
-      }
-      return;
-    }, [
-      recentDisplayToTokens,
-      recentTitle,
-      styles.recentItemWrapper,
-      styles.tokenSymbol,
-    ]);
 
     const { forScene, ofScreen } = useScreenSceneAccountContext();
     const allowClearAccountFilter = useMemo(() => {
@@ -625,7 +549,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         <TokenSelectorSheetModal
           searchPlaceholder={searchPlaceholder}
           visible={tokenSelectorVisible}
-          unshiftList={unshiftList}
+          unshiftList={[]}
           list={selectedTab === 'testnet' ? testnetTokenList : list}
           foldTokensList={selectedTab === 'testnet' ? [] : foldTokensList}
           onConfirm={handleCurrentTokenChange}

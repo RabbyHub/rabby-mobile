@@ -123,6 +123,7 @@ export const SearchAssets: React.FC<Props> = ({
             style={styles.renderItemWrapper}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
+            decimalPrecision
             leftSlot={
               <Pressable
                 style={styles.leftSlot}
