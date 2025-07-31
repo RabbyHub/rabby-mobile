@@ -15,6 +15,7 @@ import {
   Platform,
   SectionListRenderItem,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import {
   BottomSheetBackdropProps,
@@ -999,12 +1000,21 @@ export const TokenSelectorSheetModal = React.forwardRef<
             </View>
           </View>
 
-          <View
-            style={[
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterRowScrollView}
+            contentContainerStyle={[
               styles.filterRow,
               styles.internalBlock,
               !willShowFilterRow && { display: 'none' },
             ]}>
+            {showFavoriteFilter && (
+              <FavoriteFilterItem
+                value={favoriteFilterValue}
+                onChange={onFavoriteFilterChange || (() => {})}
+              />
+            )}
             {willShowAccountFilter && (
               <AccountFilterItem
                 filterAccount={filterAccount}
@@ -1042,14 +1052,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 />
               </View>
             )}
-
-            {showFavoriteFilter && (
-              <FavoriteFilterItem
-                value={favoriteFilterValue}
-                onChange={onFavoriteFilterChange || (() => {})}
-              />
-            )}
-          </View>
+          </ScrollView>
           {(!isSwapTo || (query && !tokens.length)) && <>{customHeaderTitle}</>}
           <BottomSheetSectionList
             contentInset={{ bottom: 30 }}
@@ -1225,15 +1228,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       marginBottom: 8,
     },
+    filterRowScrollView: {
+      maxHeight: 34,
+      marginTop: 2,
+      marginBottom: 4,
+    },
 
     filterRow: {
       flexDirection: 'row',
       justifyContent: 'flex-start',
       alignItems: 'center',
       gap: 8,
-      maxHeight: 34,
-      marginTop: 2,
-      marginBottom: 4,
       // ...makeDebugBorder(),
     },
 
