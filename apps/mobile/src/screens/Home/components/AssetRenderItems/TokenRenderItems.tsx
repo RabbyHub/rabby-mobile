@@ -303,6 +303,8 @@ export const ExternalTokenRow = memo(
             if (onPressRightIcon) {
               e.stopPropagation();
               onPressRightIcon?.();
+            } else {
+              onPressToken?.();
             }
           }}
           style={styles.searchTokenExtraInfo}>
@@ -370,6 +372,10 @@ export const ExternalTokenRow = memo(
         </Pressable>
       );
     }, [
+      data.is_verified,
+      data?.identity?.token_id,
+      data.id,
+      data.is_suspicious,
       styles.searchTokenExtraInfo,
       styles.bubbleArrow,
       styles.leftSection,
@@ -385,12 +391,9 @@ export const ExternalTokenRow = memo(
       styles.tips,
       isGasToken,
       fdv,
-      data?.identity?.token_id,
-      data.id,
-      data.is_verified,
-      data.is_suspicious,
       colors2024,
       onPressRightIcon,
+      onPressToken,
     ]);
 
     return (
