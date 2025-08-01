@@ -833,6 +833,7 @@
       "InsufficientBalanceTips": "Insufficient balance",
       "Loading_Tokens": "Loading Tokens...",
       "Select-from-supported-tokens": "Select from supported tokens",
+      "Deposit-tip": "Deposit with USDC/USDT",
       "Value": "Value",
       "Token": "Token",
       "Balance": "Balance"
