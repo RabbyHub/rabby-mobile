@@ -464,7 +464,9 @@ export const DeFiDetailScreen = () => {
                 : t('page.defiDetail.viewSiteInApp')
             }
             onPress={() => {
-              openTab(data.site_url);
+              if (data.site_url) {
+                openTab(data.site_url);
+              }
             }}
           />
         </View>

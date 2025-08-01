@@ -536,6 +536,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     try {
       await prepareAppDataSource();
       const repo = this.getRepository();
+      const currentTime = Date.now();
       const deleteResult = await repo
         .createQueryBuilder()
         .delete()
@@ -548,6 +549,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         `🧹 Cleaned ${
           deleteResult.affected || 0
         } stale tokens for ${owner_addr}`,
+        'time:',
+        Date.now() - currentTime,
       );
 
       return {

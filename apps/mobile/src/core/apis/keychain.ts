@@ -152,6 +152,15 @@ export async function resetGenericPassword() {
   return result;
 }
 
+type KeyChainError = Error & {
+  code: 'NIL_KEYCHAIN_OBJECT';
+};
+export function makeKeyChainError(code: 'NIL_KEYCHAIN_OBJECT', msg: string) {
+  const error = new Error(msg);
+  (error as KeyChainError).code = code;
+  return error;
+}
+
 type PlainUserCredentials = RNKeychain.UserCredentials & {
   rawPassword?: string;
 };
@@ -196,7 +205,11 @@ export async function requestGenericPassword<
     });
 
     if (!keychainObject) {
-      return onRequestReturn(instance);
+      throw makeKeyChainError(
+        'NIL_KEYCHAIN_OBJECT',
+        'Failed to retrieve keychain object',
+      );
+      // return onRequestReturn(instance);
     } else if (keychainObject.password) {
       const encryptedPassword = keychainObject.password;
       delete keychainObject.password;

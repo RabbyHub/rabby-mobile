@@ -47,7 +47,6 @@ export const AddWhitelistSelectMethod: React.FC<Props> = ({
         />
         <ListItem
           onPress={() => {
-            // navigateTo(RootNames.SendHistory);
             onDone();
           }}
           style={styles.importItem}

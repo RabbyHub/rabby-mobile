@@ -2,6 +2,7 @@
 export { default as RcIconRightCC } from './arrow-right-cc.svg';
 export { default as RcArrowRightCC } from './arrow-right-cc.svg';
 export { default as RcArrowRight2CC } from './right-2-cc.svg';
+export { default as RcArrowRight3CC } from './right-3-cc.svg';
 
 export { default as RcIconCorrectCC } from './correct-cc.svg';
 

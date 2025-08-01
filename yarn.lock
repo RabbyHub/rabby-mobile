@@ -6597,7 +6597,7 @@ __metadata:
 
 "@ledgerhq/hw-app-eth@patch:@ledgerhq/hw-app-eth@npm%3A6.45.0#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.45.0-24dc988cd5.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 6.45.0
-  resolution: "@ledgerhq/hw-app-eth@patch:@ledgerhq/hw-app-eth@npm%3A6.45.0#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.45.0-24dc988cd5.patch::version=6.45.0&hash=1d3d34&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "@ledgerhq/hw-app-eth@patch:@ledgerhq/hw-app-eth@npm%3A6.45.0#./.yarn/patches/@ledgerhq-hw-app-eth-npm-6.45.0-24dc988cd5.patch::version=6.45.0&hash=79262d&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     "@ethersproject/abi": ^5.7.0
     "@ethersproject/rlp": ^5.7.0
@@ -6614,7 +6614,7 @@ __metadata:
     bignumber.js: ^9.1.2
     jest-sonar: 0.2.16
     semver: ^7.3.5
-  checksum: 1336b9cab93dc1ca7e3179449c2801f9e2ef1027a12fb0d8bce3fa36615aca79ce92006a33e38ab770f8e6dc4980ba1a29aeb14a20f1ae7af4330a0fbcdaca86
+  checksum: 444a292ac9cf329473c40523a31fcec4e54683f6e27f2280610cbb4c0f934fa897d16a291e0cc3d037f11c5f8ec6b4defa5c502c782b0d66f084678a78100bf1
   languageName: node
   linkType: hard
 
@@ -8113,9 +8113,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.61":
-  version: 0.0.61
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.61"
+"@rabby-wallet/rabby-swap@npm:0.0.63":
+  version: 0.0.63
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.63"
   dependencies:
     "@ethersproject/abi": ^5.7.0
     axios: ^0.27.2
@@ -8124,7 +8124,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.60"
     "@rabby-wallet/rabby-api": ">=0.6.28"
-  checksum: 2c0febf02d74fe1a18c89e0c87c6953ca4f0d49fe40888b34c4afe49a3f224a65a9b93fe2b98c2627951cd9d1c3dded6204eac8be866b8d5fd2bdb42543097e2
+  checksum: 3338ce4b954baab75c08aae9c5cc88c1c9b3cf71c07b3323f7094aa603b902966871986bf933bf6c30a84de63a9b4f4d9db9888cea6b0a0e7800c74239a53a55
   languageName: node
   linkType: hard
 
@@ -29941,7 +29941,7 @@ __metadata:
     "@rabby-wallet/rabby-api": 0.9.29
     "@rabby-wallet/rabby-security-engine": 2.0.10
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
-    "@rabby-wallet/rabby-swap": 0.0.61
+    "@rabby-wallet/rabby-swap": 0.0.63
     "@rabby-wallet/react-native-sqlite-storage": 7.0.0-alpha.1
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
@@ -30029,6 +30029,7 @@ __metadata:
     react-content-loader: ^6.2.1
     react-devtools: ^4.28.5
     react-error-boundary: ^4.0.12
+    react-freeze: 1.0.4
     react-i18next: ^14.0.0
     react-is: 18.2.0
     react-native: 0.76.9
@@ -30096,6 +30097,7 @@ __metadata:
     svg2vectordrawable: ^2.9.1
     tailwindcss: 3.3.2
     tinycolor2: ^1.6.0
+    tldts: 7.0.10
     ts-toolbelt: ^9.6.0
     typeorm: ^0.3.20
     typescript: 5.7.3
@@ -30373,7 +30375,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-freeze@npm:^1.0.0":
+"react-freeze@npm:1.0.4, react-freeze@npm:^1.0.0":
   version: 1.0.4
   resolution: "react-freeze@npm:1.0.4"
   peerDependencies:
@@ -35033,6 +35035,24 @@ __metadata:
   version: 1.6.0
   resolution: "tinycolor2@npm:1.6.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ftinycolor2%2F-%2Ftinycolor2-1.6.0.tgz"
   checksum: 6df4d07fceeedc0a878d7bac47e2cd47c1ceeb1078340a9eb8a295bc0651e17c750f73d47b3028d829f30b85c15e0572c0fd4142083e4c21a30a597e47f47230
+  languageName: node
+  linkType: hard
+
+"tldts-core@npm:^7.0.10":
+  version: 7.0.10
+  resolution: "tldts-core@npm:7.0.10"
+  checksum: 5916e89a55b44d844b3c56e6779e4cb704ca5b98542e6e832e5a4c843d16ab4388f245f16482e41e0d56aed51fabd57a4c36b147f3c783844db03312c37c39ee
+  languageName: node
+  linkType: hard
+
+"tldts@npm:7.0.10":
+  version: 7.0.10
+  resolution: "tldts@npm:7.0.10"
+  dependencies:
+    tldts-core: ^7.0.10
+  bin:
+    tldts: bin/cli.js
+  checksum: 24682220b198272be3ac6f8128a376a183804c79c6019cc8dc216d3a2b8b6b6a53c8af6eda545c91c5082814eaf02be128ebde54276d10d02d81d7acff6682cd
   languageName: node
   linkType: hard
 

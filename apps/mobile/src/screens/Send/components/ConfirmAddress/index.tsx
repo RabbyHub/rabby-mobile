@@ -24,6 +24,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { toast } from '@/components2024/Toast';
+import { contactService } from '@/core/services';
 export interface ConfirmAddressScreenProps {
   title?: string;
   disableWhiteSwitch?: boolean;
@@ -49,6 +50,7 @@ const ConfirmAddress = ({
   const [inWhiteList, setInWhiteList] = useState(
     isAddrOnWhitelist(account.address),
   );
+  const [editingAlias, setEditingAlias] = useState('');
   const shouldPasswordValidation = useMemo(() => {
     return disableWhiteSwitch || inWhiteList;
   }, [disableWhiteSwitch, inWhiteList]);
@@ -66,7 +68,7 @@ const ConfirmAddress = ({
   });
 
   const setInWhitelist = useCallback(
-    (bool: boolean) => {
+    async (bool: boolean) => {
       if (bool) {
         const isImported = accounts.some(i =>
           isSameAddress(i.address, account.address),
@@ -77,22 +79,28 @@ const ConfirmAddress = ({
             ? 'Send_AddWhitelist_imported'
             : 'Send_AddWhitelist_notImported',
         });
-        addWhitelist(account.address, {
+        return addWhitelist(account.address, {
           hasValidated: true,
           onAdded: () => {
             toast.success(t('page.whitelist.addSuccessful'));
           },
         });
       } else {
-        removeWhitelist(account.address);
+        return removeWhitelist(account.address);
       }
     },
     [account.address, addWhitelist, removeWhitelist, t, accounts],
   );
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!disableWhiteSwitch) {
-      setInWhitelist(inWhiteList);
+      await setInWhitelist(inWhiteList);
+    }
+    if (editingAlias.trim().length) {
+      contactService.updateAlias({
+        address: account.address,
+        name: editingAlias,
+      });
     }
     onConfirm?.(account, addressDesc);
   };
@@ -116,6 +124,9 @@ const ConfirmAddress = ({
         loading={loading}
         addressDesc={addressDesc}
         account={account}
+        allowEditAlias={!disableWhiteSwitch} // not for whitelist
+        editingAlias={editingAlias}
+        setEditingAlias={setEditingAlias}
         style={styles.addressCard}
       />
       {!loading && !disableWhiteSwitch && (

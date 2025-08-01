@@ -4,10 +4,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { Text, View } from 'react-native';
-import { IS_IOS } from '@/core/native/utils';
+import { useTranslation } from 'react-i18next';
 
 export const BrowserBookmarkEmpty = () => {
   const { styles, isLight } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   return (
     <View style={styles.empty}>
@@ -17,7 +18,7 @@ export const BrowserBookmarkEmpty = () => {
         <RcIconEmptyDark style={styles.emptyIcon} />
       )}
       <Text style={styles.emptyText}>
-        {IS_IOS ? 'No website added yet' : 'No Dapps added yet'}
+        {t('page.browserManage.BrowserBookmarkList.emptyTitle')}
       </Text>
     </View>
   );
@@ -25,13 +26,7 @@ export const BrowserBookmarkEmpty = () => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   empty: {
-    borderRadius: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderStyle: 'solid',
-    borderColor: colors2024['neutral-line'],
-    borderWidth: 1,
     paddingVertical: 20,
-
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -44,10 +39,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 126,
   },
   emptyText: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-secondary'],
     textAlign: 'center',
   },
 }));

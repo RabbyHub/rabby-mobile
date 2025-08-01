@@ -1,12 +1,5 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  BackHandler,
   Image,
   Text,
   TouchableOpacity,
@@ -14,50 +7,42 @@ import {
   View,
 } from 'react-native';
 
-import { RcIconCloseCC } from '@/assets/icons/common';
-import { RcIconDisconnectCC, RcIconGoogle } from '@/assets/icons/dapp';
+import { RcNextSearchCC } from '@/assets/icons/common';
+import { RcIconDisconnectCC } from '@/assets/icons/dapp';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
-import { NextSearchBar } from '@/components2024/SearchBar';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { IS_IOS } from '@/core/native/utils';
 import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { useMyAccounts } from '@/hooks/account';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+// import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { RcIconTabsCC } from '@/assets2024/icons/browser';
 import { useTheme2024 } from '@/hooks/theme';
 import { getAddressBarTitle, isGoogle } from '@/utils/browser';
 import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { CurrentDappPopup } from './CurrentDappPopup';
-import { useFocusEffect } from '@react-navigation/native';
 
 export function BrowserHeader({
   dapp,
   url,
-  isFocused,
-  onFocusChange,
-  onSearch,
-  searchText,
-  onSearchTextChange,
+  onViewTabs,
+  onLocationBarPress,
+  tabsCount,
 }: {
   dapp?: DappInfo;
   url?: string;
-  isFocused?: boolean;
-  onFocusChange?(isFocused: boolean): void;
-  onSearch?(search: string): void;
-  searchText?: string;
-  onSearchTextChange?(v: string): void;
+  onViewTabs?(): void;
+  onLocationBarPress?(str?: string): void;
+  tabsCount?: number;
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
   });
 
   const { t } = useTranslation();
-
-  const navigation = useRabbyAppNavigation();
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -74,10 +59,6 @@ export function BrowserHeader({
   const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
   const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
 
-  const handleClose = useMemoizedFn(() => {
-    navigation.goBack();
-  });
-
   const chain = useMemo(() => {
     if (!dapp?.isConnected) {
       return null;
@@ -87,77 +68,14 @@ export function BrowserHeader({
     });
   }, [dapp?.chainId, dapp?.isConnected]);
 
-  const inputRef = useRef<any>(null);
   const renderText = useMemo(() => {
     return getAddressBarTitle(url || '');
   }, [url]);
 
-  useEffect(() => {
-    if (isFocused) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-    }
-  }, [isFocused]);
-
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        setIsShowAccountPopup(false);
-        setIsShowCurrentDappPopup(false);
-        return false;
-      };
-
-      const subscription = BackHandler.addEventListener(
-        'hardwareBackPress',
-        onBackPress,
-      );
-
-      return () => subscription.remove();
-    }, []),
-  );
-
-  if (isFocused) {
-    return (
-      <View style={styles.header}>
-        <NextSearchBar
-          style={styles.searchBar}
-          inputStyle={styles.searchBarInput}
-          placeholder={
-            IS_IOS
-              ? t('page.browser.BrowserHeader.searchIos')
-              : t('page.browser.BrowserHeader.searchAndroid')
-          }
-          value={searchText}
-          searchIcon={<RcIconGoogle />}
-          autoFocus
-          selectTextOnFocus
-          alwaysShowCancel
-          onChangeText={onSearchTextChange}
-          onFocus={() => {
-            onFocusChange?.(true);
-          }}
-          onBlur={() => {
-            onFocusChange?.(false);
-          }}
-          onCancel={() => {
-            inputRef.current.blur();
-          }}
-          ref={inputRef}
-          onSubmitEditing={e => {
-            inputRef.current.blur();
-            onSearch?.(e.nativeEvent.text);
-          }}
-          enterKeyHint={'go'}
-        />
-      </View>
-    );
-  }
-
   return (
     <>
       <View style={styles.header}>
-        {url ? (
+        {url && dapp?.isDapp ? (
           <TouchableOpacity
             style={styles.account}
             onPress={() => {
@@ -199,24 +117,50 @@ export function BrowserHeader({
           </TouchableOpacity>
         ) : null}
         <View style={styles.addressBar}>
+          <RcNextSearchCC
+            width={20}
+            height={20}
+            style={styles.icon}
+            color={colors2024['neutral-secondary']}
+          />
           <TouchableWithoutFeedback
             onPress={() => {
-              onSearchTextChange?.(isGoogle(url) ? renderText : url || '');
-              onFocusChange?.(true);
+              onLocationBarPress?.(
+                isGoogle(url || '') && !renderText.includes('.')
+                  ? renderText || url
+                  : url,
+              );
             }}>
-            {url ? (
-              <Text style={styles.addressBarText}>{renderText}</Text>
-            ) : (
-              <Text style={styles.addressBarPlaceholder}>
-                {IS_IOS
-                  ? t('page.browser.BrowserHeader.searchIos')
-                  : t('page.browser.BrowserHeader.searchAndroid')}
-              </Text>
-            )}
+            <View style={styles.addressBarInner}>
+              {url ? (
+                <Text style={styles.addressBarText}>{renderText}</Text>
+              ) : (
+                <Text style={styles.addressBarPlaceholder}>
+                  {IS_IOS
+                    ? t('page.browser.BrowserHeader.searchIos')
+                    : t('page.browser.BrowserHeader.searchAndroid')}
+                </Text>
+              )}
+            </View>
           </TouchableWithoutFeedback>
+
+          <TouchableOpacity
+            style={[styles.navControlItem]}
+            onPress={onViewTabs}>
+            <View style={styles.tabIconContainer}>
+              <RcIconTabsCC
+                color={colors2024['neutral-body']}
+                width={24}
+                height={24}
+              />
+              <View style={styles.tabCountContainer}>
+                <Text style={styles.tabCount}>{tabsCount || 0}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
         </View>
-        <View>
-          <TouchableOpacity onPress={handleClose}>
+        {/* <View>
+          <TouchableOpacity>
             <View style={styles.iconCloseCircle}>
               <RcIconCloseCC
                 width={21}
@@ -225,7 +169,7 @@ export function BrowserHeader({
               />
             </View>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </View>
       {dapp ? (
         <>
@@ -261,10 +205,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 5,
-    paddingBottom: 9,
+    paddingVertical: 8,
     gap: 12,
     width: '100%',
+    backgroundColor: colors2024['neutral-bg-1'],
     // borderBottomWidth: 1,
     // borderBottomColor: colors2024['neutral-line'],
   },
@@ -289,6 +233,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  icon: {
+    flexShrink: 0,
+  },
   addressBar: {
     minWidth: 0,
     flex: 1,
@@ -297,12 +244,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 12,
     height: 42,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   addressBarInner: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    flex: 1,
+    justifyContent: 'center',
   },
   addressBarText: {
     color: colors2024['neutral-body'],
@@ -334,5 +285,35 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   searchBarInput: {
     height: 42,
+  },
+
+  navControlItem: {
+    flexShrink: 0,
+  },
+  tabIconContainer: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  tabCountContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabCount: {
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 17,
+    fontWeight: '700',
   },
 }));

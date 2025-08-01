@@ -101,6 +101,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
+    textAlign: 'center',
   },
   closeIcon: {
     position: 'absolute',

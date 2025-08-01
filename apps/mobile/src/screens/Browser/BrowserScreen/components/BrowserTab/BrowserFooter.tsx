@@ -7,7 +7,7 @@ import {
   RcIconMoreCC,
   RcIconRefreshCC,
   RcIconTabsCC,
-  RcIconHomeCC,
+  ReactIconHome,
 } from '@/assets2024/icons/browser';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useTheme2024 } from '@/hooks/theme';
@@ -34,6 +34,7 @@ export function BrowserFooter({
   onDisconnect,
   onContentModeChange,
   onGoHome,
+  isDapp,
 }: {
   isBookmark?: boolean;
   isConnected?: boolean;
@@ -44,6 +45,7 @@ export function BrowserFooter({
   tabsCount?: number;
   canViewMore?: boolean;
   contentMode?: WebViewProps['contentMode'];
+  isDapp?: boolean;
 
   onGoBack?(): void;
   onGoForward?(): void;
@@ -62,6 +64,23 @@ export function BrowserFooter({
     const urlInfo = urlUtils.canoicalizeDappUrl(url || '');
 
     const menuActions = [
+      isDapp && {
+        title: 'Favorite',
+        iosIconSource: isBookmark
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_filled.png')
+          : isLight
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_dark.png'),
+        androidIconName: isBookmark
+          ? 'ic_rabby_menu_favorite_filled'
+          : isLight
+          ? 'ic_rabby_menu_favorite'
+          : 'ic_rabby_menu_favorite_dark',
+        key: 'favorite',
+        onSelect: () => {
+          onBookmark?.();
+        },
+      },
       {
         title:
           contentMode === 'desktop'
@@ -81,28 +100,12 @@ export function BrowserFooter({
           );
         },
       },
-      {
-        title: 'Favorite',
-        iosIconSource: isBookmark
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_filled.png')
-          : isLight
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_dark.png'),
-        androidIconName: isBookmark
-          ? 'ic_rabby_menu_favorite_filled'
-          : isLight
-          ? 'ic_rabby_menu_favorite'
-          : 'ic_rabby_menu_favorite_dark',
-        key: 'favorite',
-        onSelect: () => {
-          onBookmark?.();
-        },
-      },
+
       isConnected && {
-        title: 'Disconnect',
+        title: 'Close and Disconnect',
         textColor: colors2024['red-dark'],
-        iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_disconnect.png'),
-        androidIconName: 'ic_rabby_menu_disconnect',
+        iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_close.png'),
+        androidIconName: 'ic_rabby_menu_close',
         key: 'disconnect',
         onSelect: () => {
           onDisconnect?.();
@@ -131,26 +134,34 @@ export function BrowserFooter({
     } as React.ComponentProps<typeof DropdownMenuView>['menuConfig'];
   }, [
     url,
-    contentMode,
-    isLight,
+    isDapp,
     isBookmark,
+    isLight,
+    contentMode,
     isConnected,
     colors2024,
-    onContentModeChange,
     onBookmark,
+    onContentModeChange,
     onDisconnect,
   ]);
 
   return (
     <View style={[styles.navControls]}>
       <TouchableOpacity style={[styles.navControlItem]} onPress={onGoHome}>
-        <RcIconHomeCC color={colors2024['neutral-body']} />
+        <ReactIconHome
+          width={44}
+          height={44}
+          color={colors2024['neutral-title-1']}
+          backgroundColor={colors2024['neutral-bg-5']}
+        />
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.navControlItem]}
         disabled={!canGoBack}
         onPress={onGoBack}>
         <RcIconBackCC
+          width={44}
+          height={44}
           color={
             canGoBack ? colors2024['neutral-body'] : colors2024['neutral-info']
           }
@@ -161,6 +172,8 @@ export function BrowserFooter({
         disabled={!canGoForward}
         onPress={onGoForward}>
         <RcIconForwardCC
+          width={44}
+          height={44}
           color={
             canGoForward
               ? colors2024['neutral-body']
@@ -173,28 +186,30 @@ export function BrowserFooter({
         style={[styles.navControlItem]}
         onPress={onReload}>
         <RcIconRefreshCC
+          width={44}
+          height={44}
           color={
             canReload ? colors2024['neutral-body'] : colors2024['neutral-info']
           }
         />
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.navControlItem]} onPress={onViewTabs}>
-        <View style={styles.tabIconContainer}>
-          <RcIconTabsCC color={colors2024['neutral-body']} />
-          <View style={styles.tabCountContainer}>
-            <Text style={styles.tabCount}>{tabsCount || 0}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
       {canViewMore ? (
         <View style={[styles.navControlItem]}>
           <DropdownMenuView menuConfig={menuConfigs}>
-            <RcIconMoreCC color={colors2024['neutral-body']} />
+            <RcIconMoreCC
+              width={44}
+              height={44}
+              color={colors2024['neutral-body']}
+            />
           </DropdownMenuView>
         </View>
       ) : (
         <View style={[styles.navControlItem]}>
-          <RcIconMoreCC color={colors2024['neutral-info']} />
+          <RcIconMoreCC
+            width={44}
+            height={44}
+            color={colors2024['neutral-info']}
+          />
         </View>
       )}
     </View>
@@ -207,8 +222,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 40,
-    paddingTop: 12,
     backgroundColor: colors2024['neutral-bg-1'],
     // ...makeDebugBorder(),
   },

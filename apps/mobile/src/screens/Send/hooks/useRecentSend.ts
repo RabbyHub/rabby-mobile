@@ -138,7 +138,7 @@ export const useRecentSend = ({
       .sort((a, b) => b.time - a.time)
       .filter(item => item.time > Date.now() - 60 * 60 * 1000) // in 1 hours
       .map(item => {
-        if ('projectDict' in item.data) {
+        if ('project_item' in item.data) {
           return {
             toAddress: item.data.sends[0].to_addr,
             time: item.time / 1000,

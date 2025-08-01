@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.6.28",
+  "version": "0.6.29",
   "private": true,
   "repository": {
     "type": "git",
@@ -72,7 +72,7 @@
     "@rabby-wallet/rabby-api": "0.9.29",
     "@rabby-wallet/rabby-security-engine": "2.0.10",
     "@rabby-wallet/rabby-sign-bvm": "0.1.1",
-    "@rabby-wallet/rabby-swap": "0.0.61",
+    "@rabby-wallet/rabby-swap": "0.0.63",
     "@rabby-wallet/react-native-sqlite-storage": "7.0.0-alpha.1",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
@@ -130,6 +130,7 @@
     "react": "18.3.1",
     "react-content-loader": "^6.2.1",
     "react-error-boundary": "^4.0.12",
+    "react-freeze": "1.0.4",
     "react-i18next": "^14.0.0",
     "react-is": "18.2.0",
     "react-native": "0.76.9",
@@ -186,6 +187,7 @@
     "ripple-keypairs": "^2.0.0",
     "semver": "^7.5.4",
     "styled-components": "^6.1.1",
+    "tldts": "7.0.10",
     "typeorm": "^0.3.20",
     "use-count-up": "^3.0.1",
     "viem": "^2.17.4",

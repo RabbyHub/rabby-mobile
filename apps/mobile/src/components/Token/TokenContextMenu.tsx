@@ -10,6 +10,8 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { shouldHideSelectorPopupAtom } from '@/screens/Swap/hooks/atom';
+import { useSetAtom } from 'jotai';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { type TokenSelectType } from './TokenSelectorSheetModal';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -25,6 +27,8 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
 
   const { userTokenSettings, pinToken, removePinedToken } =
     useUserTokenSettings();
+
+  const setShouldHideSelectorPopup = useSetAtom(shouldHideSelectorPopupAtom);
 
   const isPined = useMemo(
     () =>
@@ -43,9 +47,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
   }, [isPined, pinToken, removePinedToken, token]);
 
   const gotoTokenDetail = useCallback(() => {
-    setTimeout(() => {
-      closeBottomSheet();
-    }, 100);
+    setShouldHideSelectorPopup(true);
 
     navigate(RootNames.TokenDetail, {
       token: {
@@ -54,8 +56,9 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       },
       needUseCacheToken: true,
       tokenSelectType: type,
+      timestamp: Date.now(), // 添加时间戳确保每次都是新页面
     });
-  }, [closeBottomSheet, isPined, token, type]);
+  }, [isPined, token, type, setShouldHideSelectorPopup]);
 
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
