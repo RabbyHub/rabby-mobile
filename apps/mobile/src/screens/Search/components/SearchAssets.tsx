@@ -123,7 +123,7 @@ export const SearchAssets: React.FC<Props> = ({
             style={styles.renderItemWrapper}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
-            rightSlot={
+            leftSlot={
               <Pressable
                 style={styles.rightSlot}
                 onPress={e => {
@@ -426,6 +426,6 @@ const getStyles = createGetStyles2024(ctx => ({
     height: 200,
   },
   rightSlot: {
-    marginLeft: 13,
+    marginRight: 13,
   },
 }));

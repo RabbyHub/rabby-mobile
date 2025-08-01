@@ -111,7 +111,7 @@ export const HotTokenList = () => {
             key={item.id}
             item={item}
             onPress={() => handleOpenTokenDetail(item)}
-            rightSlot={
+            leftSlot={
               <TouchableOpacity
                 onPress={() => handlePress(item)}
                 hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>

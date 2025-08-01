@@ -260,6 +260,7 @@ export const ExternalTokenRow = memo(
     decimalPrecision = false,
     isPined = false,
     rightSlot,
+    leftSlot,
   }: {
     data: TokenRowDataType;
     style?: ViewStyle;
@@ -272,6 +273,7 @@ export const ExternalTokenRow = memo(
     touchable?: boolean;
     decimalPrecision?: boolean;
     rightSlot?: ReactNode;
+    leftSlot?: ReactNode;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
     const { t } = useTranslation();
@@ -345,8 +347,9 @@ export const ExternalTokenRow = memo(
         touchable={touchable}
         delayLongPress={200}
         onPress={onPressToken}>
-        <View style={styles.serachTokenRowTokenWrap}>
-          <View style={styles.serachTokenContent}>
+        <View style={styles.searchTokenRowTokenWrap}>
+          <View style={styles.searchTokenContent}>
+            {leftSlot}
             <AssetAvatar
               logo={data?.logo_url}
               chain={data?.chain}
@@ -509,13 +512,13 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingRight: 16 + 8,
     paddingLeft: 16,
   },
-  serachTokenContent: {
+  searchTokenContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
   },
-  serachTokenRowTokenWrap: {
+  searchTokenRowTokenWrap: {
     flexShrink: 1,
     // flex: 1,
     flexDirection: 'column',
@@ -592,6 +595,7 @@ const getStyles = createGetStyles2024(ctx => ({
   leftColContent: {
     maxWidth: '70%',
     overflow: 'hidden',
+    flexShrink: 1,
   },
   verticalLine: {
     width: 1,
@@ -602,6 +606,8 @@ const getStyles = createGetStyles2024(ctx => ({
   siteList: {
     gap: 4,
     flexDirection: 'row',
+    flexShrink: 1,
+    overflow: 'hidden',
   },
   gasBadgeText: {
     fontSize: 12,
