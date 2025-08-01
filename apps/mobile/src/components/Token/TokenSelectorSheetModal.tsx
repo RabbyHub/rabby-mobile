@@ -15,8 +15,8 @@ import {
   Platform,
   SectionListRenderItem,
   TextInput,
-  ScrollView,
   Pressable,
+  Dimensions,
 } from 'react-native';
 import {
   BottomSheetBackdropProps,
@@ -188,6 +188,10 @@ const filterTestnetTokenItem = (token: TokenItem) => {
 };
 
 const isAndroid = Platform.OS === 'android';
+
+const screenHeight = Dimensions.get('window').height;
+const modalHeight = screenHeight - 120;
+const snapPoints = [modalHeight];
 
 type TokenSelectorInst = {};
 export const TokenSelectorSheetModal = React.forwardRef<
@@ -920,7 +924,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     return (
       <AppBottomSheetModal
         ref={tokenSelectorModal}
-        snapPoints={['90%']}
+        snapPoints={snapPoints}
         enableContentPanningGesture
         enableDismissOnClose
         onChange={idx => {
