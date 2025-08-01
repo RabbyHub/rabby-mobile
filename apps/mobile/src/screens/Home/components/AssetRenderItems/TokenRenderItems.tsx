@@ -292,11 +292,11 @@ export const ExternalTokenRow = memo(
       if (data.identity?.fdv) {
         return data.identity?.fdv;
       }
-      //TODO: MISS BridgeTo/Send FDV data
-      return 0;
-    }, [data.identity?.fdv]);
+      return 'fdv' in data ? (data.fdv as number) : 0;
+    }, [data]);
 
     const ExtraContent = useMemo(() => {
+      const notVerified = data.is_verified === false;
       return (
         <Pressable
           onPress={e => {
@@ -340,12 +340,12 @@ export const ExternalTokenRow = memo(
             )}
           </View>
           <View style={styles.rightSection}>
-            {(!data.is_verified || data.is_suspicious) && (
+            {notVerified && (
               <View>
                 <RcTipCC
                   style={styles.tips}
                   color={
-                    !data.is_verified
+                    notVerified
                       ? colors2024['red-default']
                       : colors2024['orange-default']
                   }
@@ -356,7 +356,7 @@ export const ExternalTokenRow = memo(
               <RcNextRightCC
                 style={styles.tips}
                 color={
-                  !data.is_verified
+                  notVerified
                     ? colors2024['red-default']
                     : data.is_suspicious
                     ? colors2024['orange-default']
