@@ -62,6 +62,7 @@ export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
                 'https://www.google.com',
                 'https://www.google.com.hk',
                 'https://x.com',
+                'https://github.com',
               ].includes(dapp.origin) &&
               dapp.isDapp
             ) {
