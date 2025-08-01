@@ -40,5 +40,42 @@ export const dappServiceMigration = makeServiceMigration<APP_STORE_NAMES.dapps>(
         }
       },
     },
+    '2025-07-28T00:00:00Z': {
+      shouldMigration: ctx => ctx.semverModule.gte(ctx.appVersion, '0.6.27'),
+      migrate: ctx => {
+        try {
+          const dappService = ctx.service;
+
+          const dapps = Object.values(dappService.getDapps());
+          dapps.forEach(dapp => {
+            if (
+              !dapp.isDapp &&
+              (dapp.isConnected || dapp.info?.collected_list?.length)
+            ) {
+              dappService.updateDapp({
+                ...dapp,
+                isDapp: true,
+              });
+            }
+            if (
+              [
+                'https://www.google.com',
+                'https://www.google.com.hk',
+                'https://x.com',
+                'https://github.com',
+              ].includes(dapp.origin) &&
+              dapp.isDapp
+            ) {
+              dappService.updateDapp({
+                ...dapp,
+                isDapp: false,
+              });
+            }
+          });
+        } catch (e) {
+          // DO NOTHING
+        }
+      },
+    },
   },
 );

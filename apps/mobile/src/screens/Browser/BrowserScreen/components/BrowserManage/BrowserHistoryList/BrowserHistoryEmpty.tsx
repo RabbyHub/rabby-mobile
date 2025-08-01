@@ -4,9 +4,11 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 export const BrowserHistoryEmpty = () => {
   const { styles, isLight } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   return (
     <View style={styles.empty}>
@@ -15,18 +17,15 @@ export const BrowserHistoryEmpty = () => {
       ) : (
         <RcIconEmptyDark style={styles.emptyIcon} />
       )}
-      <Text style={styles.emptyText}>No history in the past 30 days</Text>
+      <Text style={styles.emptyText}>
+        {t('page.browserManage.BrowserHistoryList.emptyTitle')}
+      </Text>
     </View>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   empty: {
-    borderRadius: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderStyle: 'solid',
-    borderColor: colors2024['neutral-line'],
-    borderWidth: 1,
     paddingVertical: 20,
 
     display: 'flex',
@@ -41,10 +40,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 126,
   },
   emptyText: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-secondary'],
     textAlign: 'center',
   },
 }));

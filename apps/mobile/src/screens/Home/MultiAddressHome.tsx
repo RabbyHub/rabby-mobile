@@ -40,7 +40,11 @@ import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import {
+  browserService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -93,6 +97,9 @@ import { RateModal } from '@/components/RateModal/RateModal';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useInitDetectDBAssets } from '../Search/useAssets';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
+import dayjs from 'dayjs';
 
 const HeaderHeight = 24;
 
@@ -351,13 +358,13 @@ function MultiAddressHome(): JSX.Element {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
         //   icon: RcIconDapps,
         // },
-        {
-          key: MultiHomeFeatTitle.Dapps,
-          title: IS_IOS
-            ? t('page.home.services.websites')
-            : t('page.home.services.dapps'),
-          icon: RcIconDapps,
-        },
+        // {
+        //   key: MultiHomeFeatTitle.Dapps,
+        //   title: IS_IOS
+        //     ? t('page.home.services.websites')
+        //     : t('page.home.services.dapps'),
+        //   icon: RcIconDapps,
+        // },
         {
           key: MultiHomeFeatTitle.Watchlist,
           title: t('page.home.services.watchlist'),
@@ -668,12 +675,6 @@ function MultiAddressHome(): JSX.Element {
             }),
           );
           break;
-        case MultiHomeFeatTitle.Dapps:
-          navigation.navigate(RootNames.StackBrowser, {
-            screen: RootNames.BrowserScreen,
-            params: {},
-          });
-          break;
         case MultiHomeFeatTitle.Watchlist: {
           handlePressWatchlist();
           break;
@@ -754,6 +755,32 @@ function MultiAddressHome(): JSX.Element {
     });
   }, [appThemeConfig]);
 
+  useEffect(() => {
+    const lastReportTime =
+      preferenceService.getPreference('lastReportTime') || 0;
+    if (!lastReportTime || !dayjs(lastReportTime).isToday()) {
+      preferenceService.setPreference({
+        lastReportTime: Date.now(),
+      });
+
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: `Website_LikeStatus`,
+        label: `LikeDapp:${
+          browserService.bookmark.getState().ids?.length || 0
+        }`,
+      });
+
+      matomoRequestEvent({
+        category: 'Watchlist Usage',
+        action: `Watchlist_LikeStatus`,
+        label: `LikeToken:${
+          preferenceService.getPreference('pinedQueue')?.length || 0
+        }`,
+      });
+    }
+  }, []);
+
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
 
@@ -793,7 +820,7 @@ function MultiAddressHome(): JSX.Element {
           contentContainerStyle={[
             styles.scrollContainer,
             {
-              paddingBottom: bottom,
+              paddingBottom: bottom + 82,
             },
           ]}
           refreshControl={
@@ -851,6 +878,7 @@ function MultiAddressHome(): JSX.Element {
             })}
           </View>
         </ScrollView>
+        <BrowserSearchEntry />
       </View>
     </NormalScreenContainer2024>
   );

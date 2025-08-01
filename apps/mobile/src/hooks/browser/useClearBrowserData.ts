@@ -12,8 +12,8 @@ export function useClearBrowserData() {
   const clearBrowserData = useMemoizedFn(() => {
     browserService.clearBrowserData();
     setTabs({
-      tabs: [emptyTab],
-      activeTabId: emptyTab.id,
+      tabs: [],
+      activeTabId: '',
     });
     setHistory({
       ids: [],

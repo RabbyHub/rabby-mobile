@@ -30029,6 +30029,7 @@ __metadata:
     react-content-loader: ^6.2.1
     react-devtools: ^4.28.5
     react-error-boundary: ^4.0.12
+    react-freeze: 1.0.4
     react-i18next: ^14.0.0
     react-is: 18.2.0
     react-native: 0.76.9
@@ -30096,6 +30097,7 @@ __metadata:
     svg2vectordrawable: ^2.9.1
     tailwindcss: 3.3.2
     tinycolor2: ^1.6.0
+    tldts: 7.0.10
     ts-toolbelt: ^9.6.0
     typeorm: ^0.3.20
     typescript: 5.7.3
@@ -30373,7 +30375,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-freeze@npm:^1.0.0":
+"react-freeze@npm:1.0.4, react-freeze@npm:^1.0.0":
   version: 1.0.4
   resolution: "react-freeze@npm:1.0.4"
   peerDependencies:
@@ -35033,6 +35035,24 @@ __metadata:
   version: 1.6.0
   resolution: "tinycolor2@npm:1.6.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ftinycolor2%2F-%2Ftinycolor2-1.6.0.tgz"
   checksum: 6df4d07fceeedc0a878d7bac47e2cd47c1ceeb1078340a9eb8a295bc0651e17c750f73d47b3028d829f30b85c15e0572c0fd4142083e4c21a30a597e47f47230
+  languageName: node
+  linkType: hard
+
+"tldts-core@npm:^7.0.10":
+  version: 7.0.10
+  resolution: "tldts-core@npm:7.0.10"
+  checksum: 5916e89a55b44d844b3c56e6779e4cb704ca5b98542e6e832e5a4c843d16ab4388f245f16482e41e0d56aed51fabd57a4c36b147f3c783844db03312c37c39ee
+  languageName: node
+  linkType: hard
+
+"tldts@npm:7.0.10":
+  version: 7.0.10
+  resolution: "tldts@npm:7.0.10"
+  dependencies:
+    tldts-core: ^7.0.10
+  bin:
+    tldts: bin/cli.js
+  checksum: 24682220b198272be3ac6f8128a376a183804c79c6019cc8dc216d3a2b8b6b6a53c8af6eda545c91c5082814eaf02be128ebde54276d10d02d81d7acff6682cd
   languageName: node
   linkType: hard
 

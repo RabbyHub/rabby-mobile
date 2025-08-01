@@ -2010,22 +2010,38 @@
         "connectChain": "Connect Chain",
         "connectWallet": "Connect Wallet",
         "disconnect": "Disconnect"
+      },
+      "BrowserSearch": {
+        "recent": "Recent",
+        "searchInGoogle": "Search \"{{searchText}}\" in Google",
+        "openUrl": "Open \"{{searchText}}\"",
+        "results": "Results",
+        "placeholder": "Search Websites"
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "Open Websites"
       }
     },
     "browserManage": {
       "option": {
         "tab": "Tab",
         "history": "History",
-        "favorites": "Favorites"
+        "favorites": "Favorites",
+        "recent": "Recent"
       },
       "BrowserTabList": {
-        "closeAllTabs": "Close all tabs"
+        "closeAllTabs": "Close all tabs",
+        "emptyTitle": "No open tabs yet ",
+        "emptyDesc": " Open a new tab now"
       },
       "BrowserBookmarkList": {
-        "title": "Favorites"
+        "title": "Favorites",
+        "emptyTitle": "No website added yet"
       },
       "BrowserHistoryList": {
-        "title": "History"
+        "title": "History",
+        "clearAllHistory": "Clear all History",
+        "emptyTitle": " No history in the past 30 days"
       }
     },
     "component": {
