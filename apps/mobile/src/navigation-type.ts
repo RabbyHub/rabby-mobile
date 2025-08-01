@@ -269,7 +269,6 @@ export type TransactionNavigatorParamList = {
     currentAddress?: string;
   };
   [RootNames.CopyTrading]?: {};
-  [RootNames.HistoryFilterScam]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
     isForMultipleAddress?: boolean;
@@ -290,7 +289,6 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.Send]?: {};
   [RootNames.SendTo]?: {};
-  [RootNames.SendHistory]?: {};
   [RootNames.SendInput]?: {
     autoScan?: boolean;
   };

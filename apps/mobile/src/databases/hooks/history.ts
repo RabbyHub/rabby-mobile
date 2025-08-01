@@ -63,11 +63,8 @@ export function useHistoryBasicInfo({ enableAutoFetch = false }) {
 export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
   const [isSyncing, setIsSyncing] = useSafeState(false);
   const {
-    setProjectDict,
-    setTokenDict,
     updateHistoryTime,
     updateHistoryTimeSingleAddress,
-    setHistoryEnsureNoData,
     setHistoryLoading,
   } = useHistoryTokenDict();
 
@@ -143,11 +140,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           i => i.time_at > ninetyDaysAgo,
         );
 
-        const tokenUUDict: Record<string, TokenItem> = {};
-        Object.keys(res.token_dict).map(id => {
-          const chain = res.token_dict[id].chain;
-          tokenUUDict[`${chain}_token:${id}`] = res.token_dict[id];
-        });
         if (res.history_list.length) {
           const lastItemTime =
             res.history_list[res.history_list.length - 1].time_at;
@@ -160,14 +152,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               res.history_list.length,
             );
             // if (res.history_list.length) {
-            runOnJS(syncRemoteHistory)(
-              address,
-              res.history_list,
-              setHistoryLoading,
-              setTokenDict,
-            );
-            setProjectDict(prev => ({ ...prev, ...res.project_dict }));
-            setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
+            runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
             // }
             console.debug(
               'synHistoryInRealTimeApi CUSTOM_LOGGER:=>: No more history',
@@ -187,22 +172,10 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               'add length:',
               res.history_list.length,
             );
-            runOnJS(syncRemoteHistory)(
-              address,
-              res.history_list,
-              setHistoryLoading,
-              setTokenDict,
-            );
-            setProjectDict(prev => ({ ...prev, ...res.project_dict }));
-            setTokenDict(prev => ({ ...prev, ...tokenUUDict }));
+            runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
             synHistoryInRealTimeApi(address, latestTime, lastItemTime);
           }
         }
-        !startTime &&
-          setHistoryEnsureNoData(prev => ({
-            ...prev,
-            [address]: !res.history_list.length,
-          }));
         !start_time &&
           !res.history_list.length &&
           setHistoryLoading(prev => ({ ...prev, [address]: false }));
@@ -316,14 +289,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               res.history_list.length,
             );
             if (res.history_list.length) {
-              runOnJS(syncRemoteHistory)(
-                address,
-                res.history_list,
-                setHistoryLoading,
-                setTokenDict,
-              );
-              setProjectDict(prev => ({ ...prev, ...res.project_dict }));
-              setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
+              runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
             }
             console.debug(
               '🔍syncUserAllHistory CUSTOM_LOGGER:=>: No more history',
@@ -343,14 +309,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
               'add length:',
               res.history_list.length,
             );
-            runOnJS(syncRemoteHistory)(
-              address,
-              res.history_list,
-              setHistoryLoading,
-              setTokenDict,
-            );
-            setProjectDict(prev => ({ ...prev, ...res.project_dict }));
-            setTokenDict(prev => ({ ...prev, ...res.token_uuid_dict }));
+            runOnJS(syncRemoteHistory)(address, res, setHistoryLoading);
             syncUserAllHistory(
               address,
               lastItemTime,
@@ -359,11 +318,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
             );
           }
         }
-        !start_time &&
-          setHistoryEnsureNoData(prev => ({
-            ...prev,
-            [address]: !res.history_list.length,
-          }));
         !start_time &&
           !res.history_list.length &&
           setHistoryLoading(prev => ({ ...prev, [address]: false }));
@@ -484,7 +438,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
           try {
             await Promise.all([
               syncUserAllHistory(address, 0, 0, isUserRealTimeApi),
-              syncBuyHistory(address),
             ]);
           } catch (error) {
             console.error(
