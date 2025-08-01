@@ -292,7 +292,7 @@ export const ExternalTokenRow = memo(
       if (data.identity?.fdv) {
         return data.identity?.fdv;
       }
-      return 'fdv' in data ? (data.fdv as number) : 0;
+      return data.fdv || 0;
     }, [data]);
 
     const ExtraContent = useMemo(() => {
@@ -312,7 +312,7 @@ export const ExternalTokenRow = memo(
               <View style={styles.gasBadgeTextRoot}>
                 <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
               </View>
-            ) : fdv ? (
+            ) : (
               <Text
                 style={styles.searchSubText}
                 numberOfLines={1}
@@ -320,11 +320,11 @@ export const ExternalTokenRow = memo(
                 {'FDV'}
                 <Text style={styles.fdvValue}>
                   {':'}
-                  {formatUsdValueKMB(fdv || 0)}
+                  {fdv ? formatUsdValueKMB(fdv || 0) : ' -'}
                 </Text>
               </Text>
-            ) : null}
-            {!isGasToken && (data?.identity?.token_id || data.id) && !!fdv && (
+            )}
+            {!isGasToken && (data?.identity?.token_id || data.id) && (
               <View style={styles.verticalLine} />
             )}
             {!isGasToken && (data?.identity?.token_id || data.id) && (

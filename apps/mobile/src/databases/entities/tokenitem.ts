@@ -105,7 +105,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   // low_credit_score
   @Column('boolean')
   low_credit_score: TokenItem['low_credit_score'] = false;
-
+  // fdv
+  @Column('real', { default: 0 })
+  fdv: TokenItem['fdv'] = 0;
   @Column('text', { default: '1' })
   value_24h_change: string = '1';
   // cex_ids
@@ -162,6 +164,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.low_credit_score = input.low_credit_score ?? false;
     e.value_24h_change = input.value_24h_change ?? '1';
     e.cex_ids = columnConverter.jsonObjToString(input.cex_ids || []);
+    e.fdv = input.fdv ?? 0;
 
     e.makeDbId();
   }
