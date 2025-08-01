@@ -55,6 +55,7 @@ import { useSelectTokens } from '../hooks/useSelectTokens';
 import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { useAtom } from 'jotai';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -122,7 +123,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const queryConds = useDebounceValue(_queryConds, 250);
     // settimoutout ref
     const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
     const currentAccount = queryConds.account;
     const {
       tokens,

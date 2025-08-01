@@ -44,6 +44,8 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Account } from '@/core/services/preference';
+import { findAccountByPriority } from '@/utils/account';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 
 interface Props {
   data: TransactionGroup;
@@ -265,12 +267,15 @@ export const Send: React.FC<Props> = ({
                     onPressBottomBtn(actionData);
                     return;
                   }
-                  const fromAccount = accounts.find(account =>
-                    addressUtils.isSameAddress(
-                      account.address,
-                      data.maxGasTx.address || '',
-                    ),
-                  );
+                  const canUseAccountList = accounts.filter(acc => {
+                    return (
+                      addressUtils.isSameAddress(
+                        acc.address,
+                        data.maxGasTx.address || '',
+                      ) && acc.type !== KEYRING_TYPE.WatchAddressKeyring
+                    );
+                  });
+                  const fromAccount = findAccountByPriority(canUseAccountList);
                   if (!isSingleAddress && fromAccount) {
                     await switchSceneCurrentAccount(
                       'MakeTransactionAbout',

@@ -139,7 +139,6 @@ export const RootNames = {
   BatchRevoke: 'BatchRevoke',
   History: 'History',
   CopyTradingTokenDetail: 'CopyTradingTokenDetail',
-  HistoryFilterScam: 'HistoryFilterScam',
   HistoryDetail: 'HistoryDetail',
   HistoryLocalDetail: 'HistoryLocalDetail',
   MultiAddressHistory: 'MultiAddressHistory',

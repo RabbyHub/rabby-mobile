@@ -88,6 +88,7 @@ export type RootStackParamsList = {
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
+    timestamp?: number; // 添加时间戳确保每次都是新页面
   };
 };
 
@@ -268,7 +269,6 @@ export type TransactionNavigatorParamList = {
     currentAddress?: string;
   };
   [RootNames.CopyTrading]?: {};
-  [RootNames.HistoryFilterScam]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
     isForMultipleAddress?: boolean;
@@ -289,7 +289,6 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.Send]?: {};
   [RootNames.SendTo]?: {};
-  [RootNames.SendHistory]?: {};
   [RootNames.SendInput]?: {
     autoScan?: boolean;
   };

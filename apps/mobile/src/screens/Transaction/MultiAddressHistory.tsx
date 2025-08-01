@@ -7,7 +7,10 @@ import React, {
 } from 'react';
 
 import { makeTxPageBackgroundColors, RootNames } from '@/constant/layout';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import {
+  HistoryItemEntity,
+  ProjectItemType,
+} from '@/databases/entities/historyItem';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { findChain, findChainByServerID } from '@/utils/chain';
@@ -25,6 +28,7 @@ import { Text, View } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import {
   BuyHistoryItem,
+  TokenItem,
   TxAllHistoryResult,
   TxHistoryItem,
   TxHistoryResult,
@@ -47,39 +51,57 @@ import { AssetAvatar } from '@/components';
 import { ScreenHeaderAccountSwitcher } from '@/components/AccountSwitcher/OnScreenHeader';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { HistoryFilterMenu } from './components/HistoryFilterMenu';
-import { SwapItemEntity } from '@/databases/entities/swapitem';
 import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
-import { useSortAddressList } from '../Address/useSortAddressList';
+import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
 import {
   ensureHistoryListItemFromDb,
+  fetchHistoryTokenItem,
+  getHistoryItemType,
   judgeIsSmallUsdTx,
 } from './components/utils';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
-import { BuyItemEntity } from '@/databases/entities/buyItem';
-import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
-import { HistoryItemCateType } from './components/type';
-import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
+import { HistoryItemCateType } from './components/type';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;
 
 export interface HistoryDisplayItem extends TxHistoryItem {
-  projectDict: TxHistoryResult['project_dict'];
-  cateDict: TxHistoryResult['cate_dict'];
-  tokenDict: TxHistoryResult['token_dict'];
+  // projectDict: TxHistoryResult['project_dict'];
+  // cateDict: TxHistoryResult['cate_dict'];
+  // tokenDict: TxHistoryResult['token_dict'];
+  receives: {
+    amount: number;
+    from_addr: string;
+    token_id: string;
+    price?: number;
+    token: TokenItem;
+  }[];
+  sends: {
+    amount: number;
+    to_addr: string;
+    token_id: string;
+    price?: number;
+    token: TokenItem;
+  }[];
+  time_at: number;
+  token_approve: {
+    spender: string;
+    token_id: string;
+    value: number;
+    price?: number;
+    token?: TokenItem;
+  } | null;
   address: string;
+  project_item: ProjectItemType;
   key: string;
-  account?: KeyringAccountWithAlias;
-  isLocalBuy?: boolean;
-  buyDetails?: BuyItemEntity & BuyHistoryItem;
-  isLocalSwap?: boolean;
-  isShowSuccess?: boolean;
   isSmallUsdTx?: boolean;
-  historyItemCateType?: HistoryItemCateType | '';
+  account?: KeyringAccountWithAlias;
+  isShowSuccess?: boolean;
+  historyType: HistoryItemCateType;
 }
 
 interface IFetchHistory {
@@ -116,9 +138,9 @@ function History({
   const { t } = useTranslation();
   const isReady = useRef(false);
   const lastMap = useRef<Record<string, number>>({});
+  const dbLastCursorRef = useRef<number>(0);
+  const dbFetchLoadingRef = useRef<boolean>(false);
   const hasMoreMap = useRef<Record<string, boolean>>({});
-  const [currentPage, setCurrentPage] = useState(0);
-  const [currentNoDbData, setCurrentNoDbData] = useState(false);
   const [isShowAll, setIsShowAll] = useState(false);
   const { styles } = useTheme2024({ getStyle });
   const [dbData, setDbData] = useState<HistoryDisplayItem[]>([]);
@@ -135,77 +157,113 @@ function History({
     transactionHistoryService.getSucceedList(),
   );
 
+  const mergeDataWithDeduplication = useMemoizedFn(
+    (
+      existingData: HistoryDisplayItem[],
+      newData: HistoryDisplayItem[],
+      insertType: 'front' | 'back',
+    ) => {
+      const existingKeys = new Set(existingData.map(item => item.key));
+      const uniqueNewData = newData.filter(item => !existingKeys.has(item.key));
+      return insertType === 'front'
+        ? [...uniqueNewData, ...existingData]
+        : [...existingData, ...uniqueNewData];
+    },
+  );
+
   const { syncTop10History, syncSingleAddress } =
     useSyncHistoryDB(top10Addresses);
-  const { projectDict, tokenDict, historyLoading, historyEnsureNoData } =
-    useHistoryTokenDict();
+  const { historyLoading } = useHistoryTokenDict();
 
   const historyListRef = useRef<{ scrollToTop: () => void }>(null);
 
-  const batchFetchDataV2 = async () => {
-    // fetch data from local database
+  const batchFetchDataFromDb = useMemoizedFn(
+    async (filterScamAndSmallTx?: boolean) => {
+      // fetch data from local database
 
-    const addresses = isSceneUsingAllAccounts
-      ? top10Addresses.map(i => i.toLowerCase())
-      : [finalSceneCurrentAccount?.address.toLowerCase()!];
-    const fetchHistoryFromDbData = async (isFirst?: boolean) => {
-      const [historyList, buyList] = await Promise.all([
-        HistoryItemEntity.getAllHistoryItemSortedByTime(
-          addresses,
-          isFirst ? 50 : 10000,
-          isFirst, // first not show scam tx
-        ),
-        BuyItemEntity.getAllHistoryItem(addresses, isFirst ? 20 : 10000),
-      ]);
-
-      // const historyList: HistoryItemEntity[] = unionBy(
-      //   localHistoryList.concat(_historyList),
-      //   item => item._db_id,
-      // );
-
-      if (isFirst) {
-        setCurrentNoDbData(historyList.length === 0);
-        setFirstFetchDone(true);
+      // judge if is need
+      if (dbFetchLoadingRef.current) {
+        console.warn('loading multi time , pls check what happened');
+        return {
+          list: [],
+          hasMore: false,
+        };
       }
+      const isFilter =
+        filterScamAndSmallTx === undefined ? !isShowAll : filterScamAndSmallTx;
+      dbFetchLoadingRef.current = true;
+      const addresses = isSceneUsingAllAccounts
+        ? top10Addresses.map(i => i.toLowerCase())
+        : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
+      const {
+        items: historyList,
+        hasMore,
+        nextCursor,
+      } = await HistoryItemEntity.getHistoryItemsPaginated(addresses, {
+        pageSize: 20,
+        lastTimeAt: dbLastCursorRef.current,
+        filterScamAndSmallTx: isFilter,
+      });
 
-      // !isFirst &&
-      //   historyList.length === 0 &&
-      //   !isSceneUsingAllAccounts &&
-      //   syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
-
-      const pinedQueue = preferenceService.getPinToken();
       const list = historyList.map(item => {
-        const localBuyItem = buyList.find(
-          e =>
-            e.receive_tx_id === item.txHash &&
-            e.receive_chain_id === item.chain,
-        );
         return {
           ...ensureHistoryListItemFromDb(item),
-          isLocalBuy: !!localBuyItem,
-          buyDetails: localBuyItem,
-          isSmallUsdTx: judgeIsSmallUsdTx(item, tokenDict, pinedQueue),
-          tokenDict,
-          projectDict,
+          // hidden small and scam no need this prop
+          isSmallUsdTx: isFilter ? false : item.is_small_tx,
           isShowSuccess: historySuccessList.includes(
             `${item.owner_addr.toLowerCase()}-${item.txHash}`,
           ),
         } as HistoryDisplayItem;
       });
 
-      setDbData(list);
+      if (dbLastCursorRef.current === 0) {
+        setDbData(list);
+      } else {
+        setDbData(prev => mergeDataWithDeduplication(prev, list, 'back'));
+      }
+      dbLastCursorRef.current = nextCursor || 0;
+      dbFetchLoadingRef.current = false;
       setFirstFetchDone(true);
-      return list;
-    };
-    if (!dbData.length) {
-      // first init 50 count
-      await fetchHistoryFromDbData(true);
-    }
+      return { list, hasMore };
+    },
+  );
 
-    // later fetch all data
-    const list = await fetchHistoryFromDbData(false);
-    return list;
-  };
+  const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
+    dbLastCursorRef.current = 0;
+    await batchFetchDataFromDb();
+    // if (dbData.length === 0) {
+    //   await batchFetchDataFromDb();
+    //   return;
+    // }
+
+    // const isFilterScamAndSmallTx = !isShowAll;
+    // const addresses = isSceneUsingAllAccounts
+    //   ? top10Addresses.map(i => i.toLowerCase())
+    //   : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
+    // const dbFirstItemTime = dbData[0]?.time_at || 0;
+    // const historyList = await HistoryItemEntity.getAllHistoryItemSortedByTime(
+    //   addresses,
+    //   10000,
+    //   isFilterScamAndSmallTx,
+    //   dbFirstItemTime,
+    // );
+    // if (historyList.length === 0) {
+    //   return;
+    // }
+
+    // const list = historyList.map(item => {
+    //   return {
+    //     ...ensureHistoryListItemFromDb(item),
+    //     // hidden small and scam no need this prop
+    //     isSmallUsdTx: isFilterScamAndSmallTx ? false : item.is_small_tx,
+    //     isShowSuccess: historySuccessList.includes(
+    //       `${item.owner_addr.toLowerCase()}-${item.txHash}`,
+    //     ),
+    //   } as HistoryDisplayItem;
+    // });
+
+    // setDbData(prev => mergeDataWithDeduplication(prev, list, 'front'));
+  });
 
   const isNeedFetchFromApi = useMemo(() => {
     const isUseingContactsOrSafe =
@@ -215,26 +273,19 @@ function History({
     return isInTokenDetail || isUseingContactsOrSafe;
   }, [isSceneUsingAllAccounts, finalSceneCurrentAccount, isInTokenDetail]);
 
-  const batchFetchData = async () => {
+  const batchFetchData = useMemoizedFn(async () => {
     const list: HistoryDisplayItem[] = [];
 
     if (!isNeedFetchFromApi) {
-      const res = await batchFetchDataV2();
+      const res = await batchFetchDataFromDb();
       if (!isReady.current) {
         isReady.current = true;
       }
-      return { list: res };
+      return res;
     } else {
       const accountListArr = isSceneUsingAllAccounts
         ? accountList.slice(0, 10)
         : [finalSceneCurrentAccount];
-      const addresses = isSceneUsingAllAccounts
-        ? top10Addresses.map(a => a.toLowerCase())
-        : [finalSceneCurrentAccount?.address.toLowerCase()!];
-
-      // just for single token history
-      const swapList = await SwapItemEntity.getAllHistoryItem(addresses);
-      const buyList = await BuyItemEntity.getAllHistoryItem(addresses);
 
       const queue = new PQueue({
         interval: 2000,
@@ -269,18 +320,9 @@ function History({
 
           list.push(
             ...result.list.map(item => {
-              const localBuyItem = buyList.find(
-                e =>
-                  e.receive_tx_id === item.id &&
-                  e.receive_chain_id === item.chain,
-              );
               return {
                 ...item,
-                isLocalBuy: !!localBuyItem,
-                buyDetails: localBuyItem as unknown as any,
-                isLocalSwap: swapList.some(e => e.tx_id === item.id),
                 account,
-                // isSmallUsdTx: judgeIsSmallUsdTxInApi(item, tokenDict, pinedQueue),
               };
             }),
           );
@@ -292,9 +334,12 @@ function History({
       if (accountList.length > 0) {
         await waitQueueFinished(queue);
       }
-      return { list: list };
+      return {
+        list: orderBy(list, 'time_at', 'desc'),
+        hasMore: Object.values(hasMoreMap.current).some(item => item),
+      };
     }
-  };
+  });
 
   const fetchData = async (
     address: string,
@@ -324,18 +369,36 @@ function History({
         token_id,
       });
 
-      const { project_dict, cate_dict, history_list: list } = res;
+      const { project_dict, history_list: list } = res;
       const token_dict = (res as TxHistoryResult).token_dict;
       const token_uuid_dict = (res as TxAllHistoryResult).token_uuid_dict;
+      const tokenDict = token_dict || token_uuid_dict;
 
       const displayList = list
         .map(item => ({
           ...item,
-          projectDict: project_dict,
-          cateDict: cate_dict,
-          tokenDict: token_dict || token_uuid_dict,
           address,
           key: `${address}_${item.chain}_${item.id}`,
+          project_item: project_dict[item.project_id || ''] || null,
+          token_approve: item.token_approve
+            ? {
+                ...item.token_approve,
+                token: fetchHistoryTokenItem(
+                  item.token_approve?.token_id || '',
+                  item.chain,
+                  tokenDict,
+                ),
+              }
+            : null,
+          receives: item.receives.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          sends: item.sends.map(e => ({
+            ...e,
+            token: fetchHistoryTokenItem(e.token_id, item.chain, tokenDict),
+          })),
+          historyType: getHistoryItemType(item),
         }))
         .sort((v1, v2) => v2.time_at - v1.time_at);
       return {
@@ -391,7 +454,7 @@ function History({
         ? completeds
         : completeds.filter(item => {
             const isSynced =
-              !!allTxHistory.find(tx => {
+              !!rawDataList?.list.find(tx => {
                 return (
                   tx.id === item.maxGasTx.hash &&
                   findChainByServerID(tx.chain)?.id === item.chainId
@@ -423,12 +486,11 @@ function History({
   const refresh = useMemoizedFn(() => {
     lastMap.current = {};
     hasMoreMap.current = {};
-    setCurrentPage(0);
     runFetchLocalTx();
-
     if (isNeedFetchFromApi) {
       reloadAsync();
     } else {
+      dbLastCursorRef.current = 0;
       isSceneUsingAllAccounts
         ? syncTop10History(true)
         : syncSingleAddress(finalSceneCurrentAccount?.address.toLowerCase()!);
@@ -451,7 +513,8 @@ function History({
     if (isReady.current) {
       if (!isNeedFetchFromApi) {
         setFirstFetchDone(false);
-        batchFetchDataV2();
+        dbLastCursorRef.current = 0;
+        batchFetchDataFromDb();
         runFetchLocalTx();
       } else {
         cancel();
@@ -463,33 +526,51 @@ function History({
   }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
 
   const {
-    data: _data,
+    data: fetchApiData,
     loading,
     loadingMore,
     loadMore,
+    noMore,
     reloadAsync,
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
-    isNoMore: () => {
-      if (!isNeedFetchFromApi) {
-        return true;
-      }
-      return Object.values(hasMoreMap.current).every(item => !item);
-    },
+    // isNoMore: ({ hasMore }) => {
+    //   if (loadingMore) {
+    //     console.log('11111111111111111111111111');
+    //     return true;
+    //   }
+    //   if (!isNeedFetchFromApi) {
+    //     // load from db
+    //     return hasMore;
+    //   }
+    //   console.log('?????????????');
+    //   return Object.values(hasMoreMap.current).every(item => !item);
+    // },
     onSuccess() {
-      setCurrentPage(currentPage + 1);
       runFetchLocalTx();
     },
   });
+  const throttleBatchFetchData = useMemo(
+    () =>
+      debounce(batchFetchDataFromDbUpsert, 1000, {
+        leading: true,
+        trailing: true,
+      }),
+    [batchFetchDataFromDbUpsert],
+  );
 
-  const thorttleBatchFetchData = debounce(batchFetchData, 1000);
+  useEffect(() => {
+    return () => {
+      throttleBatchFetchData.cancel();
+    };
+  }, [throttleBatchFetchData]);
 
   useAppOrmSyncEvents({
     taskFor: ['all-history'],
     onRemoteDataUpserted: ctx => {
       switch (ctx.taskFor) {
         case 'all-history':
-          thorttleBatchFetchData();
+          throttleBatchFetchData();
           break;
         default:
           break;
@@ -497,14 +578,14 @@ function History({
     },
   });
 
-  const data = useMemo(() => {
-    return isNeedFetchFromApi ? _data : { list: dbData };
-  }, [_data, isNeedFetchFromApi, dbData]);
+  const rawDataList = useMemo(() => {
+    return isNeedFetchFromApi ? fetchApiData : { list: dbData };
+  }, [fetchApiData, isNeedFetchFromApi, dbData]);
 
-  const allTxHistory = useMemo(() => {
-    // make receive front of send by cate_id order by asc
-    return orderBy(data?.list || [], ['time_at', 'cate_id'], ['desc', 'asc']);
-  }, [data]);
+  // const allTxHistory = useMemo(() => {
+  //   // make receive front of send by cate_id order by asc
+  //   return orderBy(data?.list || [], ['time_at', 'cate_id'], ['desc', 'asc']);
+  // }, [data]);
 
   useMount(() => {
     const list = transactionHistoryService.getSucceedList();
@@ -515,50 +596,54 @@ function History({
   });
 
   const displayList = useMemo(() => {
-    return allTxHistory
-      .filter(tx => {
-        if (isShowAll) {
-          // show all
-          return true;
-        } else {
-          if (tx.isSmallUsdTx || tx.is_scam) {
-            return false;
-          }
-          return true;
-        }
-      })
-      .filter(tx => {
-        if (isSceneUsingAllAccounts) {
-          return true;
-        }
-        return isSameAddress(
-          finalSceneCurrentAccount?.address || '',
-          tx.address,
-        );
-      });
-    // .slice(0, (currentPage + 1) * PAGE_COUNT);
+    const dataList = isNeedFetchFromApi ? fetchApiData : { list: dbData };
+
+    return (
+      dataList?.list.filter(tx => {
+        // based on tx type
+        const shouldShowBasedOnType =
+          isShowAll || !isNeedFetchFromApi || !tx.is_scam;
+
+        // based on account
+        const shouldShowBasedOnAccount =
+          isSceneUsingAllAccounts ||
+          isSameAddress(finalSceneCurrentAccount?.address || '', tx.address);
+
+        // both conditions need to be met
+        return shouldShowBasedOnType && shouldShowBasedOnAccount;
+      }) || []
+    );
   }, [
-    allTxHistory,
+    fetchApiData,
+    dbData,
+    isNeedFetchFromApi,
     isShowAll,
     // currentPage,
     isSceneUsingAllAccounts,
     finalSceneCurrentAccount,
   ]);
 
-  useFocusEffect(
-    useCallback(() => {
-      eventBus.addListener(EVENTS.RELOAD_TX, runFetchLocalTx);
-      return () => {
-        eventBus.removeListener(EVENTS.RELOAD_TX, runFetchLocalTx);
-      };
-    }, [runFetchLocalTx]),
-  );
+  useEffect(() => {
+    eventBus.addListener(EVENTS.RELOAD_TX, runFetchLocalTx);
+    return () => {
+      eventBus.removeListener(EVENTS.RELOAD_TX, runFetchLocalTx);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getHeaderRight = useCallback(() => {
     return (
-      <HistoryFilterMenu isShowAll={isShowAll} setIsShowAll={setIsShowAll} />
+      <HistoryFilterMenu
+        isShowAll={isShowAll}
+        setIsShowAll={setIsShowAll}
+        handleSwitchShowAll={value => {
+          historyListRef.current?.scrollToTop();
+          dbLastCursorRef.current = 0;
+          batchFetchDataFromDb(value);
+        }}
+      />
     );
-  }, [isShowAll, setIsShowAll]);
+  }, [isShowAll, setIsShowAll, batchFetchDataFromDb]);
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
@@ -616,26 +701,46 @@ function History({
     () =>
       Boolean(
         firstFetchDone &&
-          !allTxHistory.length &&
+          !rawDataList?.list.length &&
           !groups?.length &&
           ensureCurrentIsLoading,
       ),
     [
       firstFetchDone,
-      allTxHistory.length,
+      rawDataList?.list.length,
       groups?.length,
       ensureCurrentIsLoading,
     ],
   );
 
+  const combinedList = useMemo(() => {
+    // create a key Set for the recent transactions, for quick lookup
+    const recentTxKeys = new Set(
+      displayList
+        .slice(0, 10)
+        .map(item => `${item.address.toLowerCase()}-${item.id}`),
+    );
+
+    // filter out groups that are the same as the recent transactions
+    const uniqueGroups =
+      groups?.filter(
+        group =>
+          !recentTxKeys.has(
+            `${group.address.toLowerCase()}-${group.maxGasTx.hash}`,
+          ),
+      ) || [];
+    return [...(uniqueGroups || []), ...(displayList || [])];
+  }, [groups, displayList]);
+
   return (
+    // eslint-disable-next-line react-native/no-inline-styles
     <View style={{ paddingTop: 0, position: 'relative' }}>
       <>
         <TransactionAlert pendingTxs={groups?.filter(item => item.isPending)} />
         <HistoryList
           ref={historyListRef}
           historySuccessList={historySuccessList}
-          list={[...(groups || []), ...(displayList || [])]}
+          list={combinedList}
           localTxList={groups}
           loading={isNeedFetchFromApi ? loading : fetchFromDbLoading}
           isNeedFetchFromApi={isNeedFetchFromApi}
@@ -643,7 +748,10 @@ function History({
           loadingMore={loadingMore}
           refreshLoading={isNeedFetchFromApi && loading}
           isForMultipleAddress={isForMultipleAddress}
-          loadMore={loadMore}
+          loadMore={() => {
+            // avoid exec multi times loadMore
+            loadMore();
+          }}
           onRefresh={refresh}
         />
       </>
