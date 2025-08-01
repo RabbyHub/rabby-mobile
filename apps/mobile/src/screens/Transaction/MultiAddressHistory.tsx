@@ -545,12 +545,14 @@ function History({
     finalSceneCurrentAccount,
   ]);
 
-  useFocusEffect(() => {
-    eventBus.addListener(EVENTS.RELOAD_TX, runFetchLocalTx);
-    return () => {
-      eventBus.removeListener(EVENTS.RELOAD_TX, runFetchLocalTx);
-    };
-  });
+  useFocusEffect(
+    useCallback(() => {
+      eventBus.addListener(EVENTS.RELOAD_TX, runFetchLocalTx);
+      return () => {
+        eventBus.removeListener(EVENTS.RELOAD_TX, runFetchLocalTx);
+      };
+    }, [runFetchLocalTx]),
+  );
 
   const getHeaderRight = useCallback(() => {
     return (

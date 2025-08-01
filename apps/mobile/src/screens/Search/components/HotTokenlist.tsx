@@ -52,11 +52,7 @@ export const HotTokenList = () => {
       setWatchlistTokenList(res.pinedQueue || []);
     });
   }, []);
-  useFocusEffect(() => {
-    setTimeout(() => {
-      fetchPinedTokenList();
-    }, 200);
-  });
+  useFocusEffect(fetchPinedTokenList);
 
   const handlePress = useCallback(
     (token: TokenDetailWithPriceCurve) => {

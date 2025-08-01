@@ -99,9 +99,7 @@ export const SearchAssets: React.FC<Props> = ({
     [fetchPinedTokenList, t, watchlistTokenList],
   );
 
-  useFocusEffect(() => {
-    fetchPinedTokenList();
-  });
+  useFocusEffect(fetchPinedTokenList);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
