@@ -253,7 +253,7 @@ export const ExternalTokenRow = memo(
     data,
     style,
     logoSize = 40,
-    chainLogoSize = 16,
+    chainLogoSize = 18,
     logoStyle,
     onTokenPress,
     touchable = true,
@@ -406,6 +406,7 @@ export const ExternalTokenRow = memo(
               style={mediaStyle}
               size={logoSize}
               chainSize={chainLogoSize}
+              innerChainStyle={styles.chainLogo}
             />
             <View style={styles.searchTokenRowTokenInner}>
               <View style={[styles.colContent, styles.leftColContent]}>
@@ -530,6 +531,12 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
+  },
+  chainLogo: {
+    borderWidth: 1.5,
+    borderColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
   },
   serachTokenRowTokenWrap: {
     flexShrink: 1,

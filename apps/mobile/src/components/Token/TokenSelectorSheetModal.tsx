@@ -700,7 +700,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     logo={token?._logo}
                     size={40}
                     chain={token?._chain}
-                    chainSize={16}
+                    chainSize={18}
+                    innerChainStyle={styles.chainLogo}
                   />
                   <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
                     <View style={styles.tokenNameBox}>
@@ -807,6 +808,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.tokenItemDisabled,
         styles.tokenLeft,
         styles.favorite,
+        styles.chainLogo,
         styles.tokenInfoCol,
         styles.tokenNameBox,
         styles.tokenName,
@@ -832,10 +834,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
         colors2024,
         t,
         handleShowExcludeTips,
-        onConfirm,
-        toggleShowSheetModal,
         onPressToken,
         fold,
+        toggleShowSheetModal,
+        onConfirm,
         disabledTips,
         removePinedToken,
         pinToken,
@@ -1346,6 +1348,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 20,
       maxWidth: 150,
       fontFamily: 'SF Pro Rounded',
+    },
+    chainLogo: {
+      borderWidth: 1.5,
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
     },
     tokenPrice: {
       color: colors2024['neutral-secondary'],
