@@ -24,7 +24,7 @@ export const Favorite = ({
         width={22}
         height={21}
         color={
-          favorite ? colors2024['orange-default'] : colors2024['neutral-info']
+          favorite ? colors2024['orange-default'] : colors2024['neutral-line']
         }
       />
     </Pressable>

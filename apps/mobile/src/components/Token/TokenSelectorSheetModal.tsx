@@ -1079,6 +1079,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             style={[styles.scrollView]}
             onScrollBeginDrag={() => Keyboard.dismiss()}
             windowSize={5}
+            showsVerticalScrollIndicator={false}
             keyExtractor={token => {
               const $originMaybeToken =
                 token.$origin as TokenItemFromAbstractPortfolioToken & {

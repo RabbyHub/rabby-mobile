@@ -354,6 +354,8 @@ export const ExternalTokenRow = memo(
             )}
             <View>
               <RcNextRightCC
+                width={14}
+                height={14}
                 style={styles.tips}
                 color={
                   notVerified
@@ -576,7 +578,7 @@ const getStyles = createGetStyles2024(ctx => ({
     // ...makeDebugBorder(),
   },
   usdValue: {
-    marginTop: 4,
+    marginTop: 2,
     color: ctx.colors2024['neutral-secondary'],
     fontSize: 14,
     lineHeight: 18,
@@ -616,7 +618,9 @@ const getStyles = createGetStyles2024(ctx => ({
     ...makeTriangleStyle({
       dir: 'up',
       size: 6.5,
-      color: ctx.colors2024['brand-light-1'],
+      color: ctx.isLight
+        ? ctx.colors2024['neutral-bg-2']
+        : ctx.colors2024['neutral-bg-1'],
       backgroundColor: 'transparent',
     }),
   },
@@ -649,7 +653,7 @@ const getStyles = createGetStyles2024(ctx => ({
   verticalLine: {
     width: 1,
     height: 12,
-    backgroundColor: ctx.colors2024['brand-light-2'],
+    backgroundColor: ctx.colors2024['neutral-secondary'],
     marginHorizontal: 4,
   },
   siteList: {
@@ -733,7 +737,7 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 18,
     fontWeight: '500',
     fontFamily: 'SF Pro Rounded',
-    marginTop: 4,
+    marginTop: 2,
     textAlign: 'right',
     maxWidth: 100,
   },

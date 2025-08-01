@@ -82,6 +82,8 @@ export default function FavoriteFilterItem({
         ]}
         onPress={() => onChange('favorite')}>
         <RcIconFavorite
+          width={18}
+          height={18}
           style={styles.favoriteIcon}
           color={colors2024['orange-default']}
         />

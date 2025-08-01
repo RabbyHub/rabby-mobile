@@ -13,7 +13,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 
-import { ASSETS_SECTION_HEADER, RootNames } from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { navigate } from '@/utils/navigation';
@@ -43,6 +43,8 @@ interface Props {
   loading: boolean;
   searchState: string;
 }
+
+const STICKY_HEADER_HEIGHT = 28;
 
 export const SearchAssets: React.FC<Props> = ({
   resultTokens,
@@ -334,7 +336,7 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-    marginTop: ASSETS_SECTION_HEADER,
+    marginTop: STICKY_HEADER_HEIGHT,
   },
   close: {
     paddingHorizontal: 4,
@@ -371,7 +373,7 @@ const getStyles = createGetStyles2024(ctx => ({
     top: 0,
     left: 0,
     // right: 0,
-    height: ASSETS_SECTION_HEADER,
+    height: STICKY_HEADER_HEIGHT,
     zIndex: 1,
   },
   bgContainer: {
@@ -400,7 +402,6 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
-    // height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['neutral-secondary'],
     // backgroundColor: ctx.isLight
     //   ? ctx.colors2024['neutral-bg-0']
@@ -411,7 +412,6 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
-    // height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['brand-default'],
     // marginLeft: -24,
   },
