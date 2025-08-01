@@ -10,6 +10,7 @@ import {
   StyleProp,
   ViewStyle,
   Image,
+  Pressable,
 } from 'react-native';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { RcIconLockCC } from '@/assets/icons/send';
@@ -19,24 +20,38 @@ import { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { getBrandColors } from '@/utils/brand';
 import { useTranslation } from 'react-i18next';
 import { ellipsisAddress } from '@/utils/address';
+import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+
 import {
   BRAND_ALIAS_TYPE_TEXT,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils/dist/types';
 import { Skeleton } from '@rneui/themed';
 import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
+import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
 
 interface IProps {
   account: KeyringAccountWithAlias;
   style?: StyleProp<ViewStyle>;
   loading?: boolean;
   addressDesc?: AddrDescResponse['desc'];
+  editingAlias?: string;
+  setEditingAlias?: (alias: string) => void;
+  allowEditAlias?: boolean;
 }
-const AddressSource = ({ account, style, addressDesc, loading }: IProps) => {
+const AddressSource = ({
+  account,
+  style,
+  addressDesc,
+  loading,
+  editingAlias,
+  setEditingAlias,
+  allowEditAlias,
+}: IProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { whitelist } = useWhitelist();
   const { t } = useTranslation();
-
+  const editAliasName = useAliasNameEditModal();
   const inWhiteList = useMemo(() => {
     return whitelist.some(item => isSameAddress(item, account.address));
   }, [account.address, whitelist]);
@@ -92,8 +107,32 @@ const AddressSource = ({ account, style, addressDesc, loading }: IProps) => {
               <View style={styles.itemInfo}>
                 <View style={styles.itemNameWrapper}>
                   <Text style={styles.itemNameText}>
-                    {account.aliasName || ellipsisAddress(account.address, 6)}
+                    {editingAlias ||
+                      account.aliasName ||
+                      ellipsisAddress(account.address, 6)}
                   </Text>
+                  {allowEditAlias && (
+                    <Pressable
+                      onPress={() => {
+                        editAliasName.show(
+                          {
+                            ...account,
+                            aliasName: editingAlias || account.aliasName,
+                          },
+                          undefined,
+                          alias => {
+                            setEditingAlias?.(alias);
+                          },
+                        );
+                      }}
+                      style={styles.editButton}>
+                      <EditSVG
+                        color={colors2024['neutral-body']}
+                        width={11}
+                        height={11}
+                      />
+                    </Pressable>
+                  )}
                 </View>
                 {((cexDesc?.is_deposit && cexDesc?.id) ||
                   account.type !== KEYRING_TYPE.WatchAddressKeyring) && (
@@ -234,5 +273,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   loadingSquare: {
     backgroundColor: colors2024['neutral-bg-4'],
     borderRadius: 12,
+  },
+  editButton: {
+    padding: 4.5,
+    marginLeft: 6,
+    backgroundColor: colors2024['neutral-line'],
+    borderRadius: 30,
   },
 }));
