@@ -29,7 +29,10 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
         .filter(acc => isAddrOnWhitelist(acc.address))
         .map(acc => ({
           address: acc.address,
-          aliasName: acc.aliasName || ellipsisAddress(acc.address),
+          aliasName:
+            contactService.getAliasByAddress(acc.address)?.alias ||
+            acc.aliasName ||
+            ellipsisAddress(acc.address),
           balance: acc.balance || 0,
           type: acc.brandName as KeyringTypeName,
           brandName: acc.brandName,
