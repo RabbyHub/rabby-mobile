@@ -338,15 +338,15 @@ const NextInputComponent = React.forwardRef<
   },
 );
 
-export type NextInputProps = React.ComponentProps<typeof NextInput>;
+export type NextInputProps = React.ComponentProps<typeof NextInputComponent>;
 
-function PasswordInput({
-  initialPasswordVisible = false,
-  ...props
-}: NextInputProps & {
-  initialPasswordVisible?: boolean;
-  iconColor?: string;
-}) {
+const PasswordInput = React.forwardRef<
+  TextInput,
+  NextInputProps & {
+    initialPasswordVisible?: boolean;
+    iconColor?: string;
+  }
+>(({ initialPasswordVisible = false, ...props }, ref) => {
   const { styles, colors2024 } = useTheme2024({
     getStyle: getPasswordInputStyles,
   });
@@ -400,7 +400,7 @@ function PasswordInput({
       customIcon={customIconProp}
     />
   );
-}
+});
 
 const getPasswordInputStyles = createGetStyles2024(ctx => {
   return {
