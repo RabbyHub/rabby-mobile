@@ -595,7 +595,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
         if (query) {
           return (
-            <View style={{ marginTop: 8, marginHorizontal: 12 }}>
+            <View style={{ marginTop: 8, marginHorizontal: 16 }}>
               <TokenItemContextMenu
                 token={$originMaybeToken}
                 closeBottomSheet={() => {
@@ -665,7 +665,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         }
 
         return (
-          <View style={{ marginTop: 8, marginHorizontal: 12 }}>
+          <View style={{ marginTop: 8, marginHorizontal: 16 }}>
             <TokenItemContextMenu
               token={token.$origin as any}
               closeBottomSheet={() => {
@@ -977,7 +977,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               ) : null}
             </BottomSheetHandlableView>
 
-            <View style={styles.searchInputContainer}>
+            <View style={[styles.searchInputContainer, { marginBottom: 8 }]}>
               <NextSearchBar
                 onCancel={() => {
                   setQuery('');
@@ -1247,10 +1247,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     searchInputContainer: {
       position: 'relative',
       borderRadius: 12,
-      // paddingHorizontal: 12,
-      // borderColor: 'transparent',
       alignItems: 'center',
-      marginBottom: 8,
     },
     filterRowScrollView: {
       height: 34,
@@ -1269,8 +1266,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: '100%',
       maxHeight: 34,
       minHeight: 34,
-      marginTop: 2,
-      marginBottom: 4,
+      marginTop: 6,
+      marginBottom: 6,
       // ...makeDebugBorder(),
     },
     leftFilters: {
