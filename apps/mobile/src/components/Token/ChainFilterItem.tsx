@@ -1,4 +1,4 @@
-import { Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, TouchableOpacity, View } from 'react-native';
 import { Chain } from '@/constant/chains';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -6,8 +6,6 @@ import ChainIconImage from '../Chain/ChainIconImage';
 import CloseBoldSVG from '@/assets2024/icons/common/close-bold-cc.svg';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Account } from '@/core/services/preference';
-import { ellipsisAddress } from '@/utils/address';
-import { useMemo } from 'react';
 
 const FILTER_ITEM_H = 34;
 
@@ -18,6 +16,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       borderRadius: 12,
       backgroundColor: colors2024['neutral-bg-5'],
       paddingHorizontal: 8,
+      gap: 6,
 
       flexDirection: 'row',
       alignItems: 'center',
@@ -61,7 +60,7 @@ export default function ChainFilterItem({
         onPress={onPress}
         style={{ flexDirection: 'row', alignItems: 'center' }}>
         <ChainIconImage size={16} chainEnum={chainItem.enum} />
-        <Text style={[styles.chainFilterChainName]}>{chainItem.name}</Text>
+        {/* <Text style={[styles.chainFilterChainName]}>{chainItem.name}</Text> */}
       </Pressable>
       <TouchableOpacity
         hitSlop={10}
@@ -87,16 +86,6 @@ export function AccountFilterItem({
     getStyle: getAccountFilterItemStyle,
   });
 
-  const aliasName = useMemo(() => {
-    if (
-      filterAccount?.address &&
-      filterAccount?.aliasName === ellipsisAddress(filterAccount?.address)
-    ) {
-      return ellipsisAddress(filterAccount?.address, 4);
-    }
-    return filterAccount?.aliasName || '';
-  }, [filterAccount?.aliasName, filterAccount?.address]);
-
   if (!filterAccount) return null;
 
   return (
@@ -105,7 +94,7 @@ export function AccountFilterItem({
         return (
           <View style={styles.filterAccountButton}>
             <WalletIcon style={styles.filterAccountWalletIcon} />
-            <Text style={styles.filterAccountAddress}>{aliasName}</Text>
+            {/* <Text style={styles.filterAccountAddress}>{aliasName}</Text> */}
             <TouchableOpacity
               hitSlop={10}
               style={styles.filterAccountClose}
@@ -129,7 +118,7 @@ const getAccountFilterItemStyle = createGetStyles2024(({ colors2024 }) => {
       borderRadius: 12,
       backgroundColor: colors2024['neutral-bg-5'],
       paddingHorizontal: 8,
-
+      gap: 6,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',

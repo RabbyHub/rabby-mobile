@@ -1014,59 +1014,61 @@ export const TokenSelectorSheetModal = React.forwardRef<
             </View>
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.filterRowScrollView}
-            contentContainerStyle={[
+          <View
+            style={[
               styles.filterRow,
               styles.internalBlock,
               !willShowFilterRow && { display: 'none' },
             ]}>
-            {showFavoriteFilter && (
-              <FavoriteFilterItem
-                value={favoriteFilterValue}
-                onChange={onFavoriteFilterChange || (() => {})}
-              />
-            )}
-            {willShowAccountFilter && (
-              <AccountFilterItem
-                filterAccount={filterAccount}
-                onRemoveFilter={account => {
-                  if (account && isSameAccount(account, filterAccount)) {
-                    onSearch({
-                      ...chainSearchCtx,
-                      filterAccountItem: null,
-                      chainServerId,
-                      keyword: query,
-                    });
-                  }
-                }}
-              />
-            )}
+            <View style={styles.leftFilters}>
+              {showFavoriteFilter && (
+                <FavoriteFilterItem
+                  value={favoriteFilterValue}
+                  onChange={onFavoriteFilterChange || (() => {})}
+                />
+              )}
+            </View>
 
-            {/* TODO: chain selector */}
-            {willShowChainFilter && (
-              <View style={[styles.chainFiltersContainer]}>
-                <ChainFilterItem
-                  chainItem={chainItem}
-                  onRemoveFilter={() => {
-                    onRemoveChainFilter?.({
-                      chainServerId,
-                      chainItem,
-                      filterAccountItem: null,
-                    });
-                    onSearch({
-                      ...chainSearchCtx,
-                      chainItem: null,
-                      chainServerId: '',
-                      keyword: query,
-                    });
+            <View style={styles.rightFilters}>
+              {willShowAccountFilter && (
+                <AccountFilterItem
+                  filterAccount={filterAccount}
+                  onRemoveFilter={account => {
+                    if (account && isSameAccount(account, filterAccount)) {
+                      onSearch({
+                        ...chainSearchCtx,
+                        filterAccountItem: null,
+                        chainServerId,
+                        keyword: query,
+                      });
+                    }
                   }}
                 />
-              </View>
-            )}
-          </ScrollView>
+              )}
+
+              {/* TODO: chain selector */}
+              {willShowChainFilter && (
+                <View style={[styles.chainFiltersContainer]}>
+                  <ChainFilterItem
+                    chainItem={chainItem}
+                    onRemoveFilter={() => {
+                      onRemoveChainFilter?.({
+                        chainServerId,
+                        chainItem,
+                        filterAccountItem: null,
+                      });
+                      onSearch({
+                        ...chainSearchCtx,
+                        chainItem: null,
+                        chainServerId: '',
+                        keyword: query,
+                      });
+                    }}
+                  />
+                </View>
+              )}
+            </View>
+          </View>
           {(!isSwapTo || (query && !tokens.length)) && <>{customHeaderTitle}</>}
           <BottomSheetSectionList
             contentInset={{ bottom: 30 }}
@@ -1254,11 +1256,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
     filterRow: {
       flexDirection: 'row',
-      justifyContent: 'flex-start',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      height: 34,
+      width: '100%',
+      maxHeight: 34,
+      minHeight: 34,
+      marginTop: 2,
+      marginBottom: 4,
+      // ...makeDebugBorder(),
+    },
+    leftFilters: {
+      flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      height: 34,
-      // ...makeDebugBorder(),
+    },
+    rightFilters: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
 
     chainFiltersContainer: {
