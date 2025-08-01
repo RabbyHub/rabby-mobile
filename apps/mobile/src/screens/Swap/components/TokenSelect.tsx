@@ -153,7 +153,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           clearTimeout(timeRef.current);
           timeRef.current = null;
         }
-        if (!tokenSelectorVisible || useSwapTokenList) {
+        if (!tokenSelectorVisible) {
           return;
         }
         if (!tokens.length) {
