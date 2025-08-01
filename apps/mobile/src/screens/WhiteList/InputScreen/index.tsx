@@ -540,8 +540,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 15,
-    paddingBottom: 17,
+    height: 58,
   },
   exChangeContent: {
     width: '100%',
