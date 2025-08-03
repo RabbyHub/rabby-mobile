@@ -48,6 +48,7 @@ export const GASPRICE_RANGE = {
   [CHAINS_ENUM.CRO]: [0, 500000],
   [CHAINS_ENUM.BTT]: [0, 20000000000],
   [CHAINS_ENUM.METIS]: [0, 50000],
+  [CHAINS_ENUM.BITROCK]: [0, 20000],
 };
 export const validateGasPriceRange = (tx: Tx) => {
   const chain = findChain({
