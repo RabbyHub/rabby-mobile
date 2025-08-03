@@ -12,6 +12,7 @@ export function supportedChainToChain(item: SupportedChain): Chain {
   const chainServerIdEnumDict = {
     eth: 'ETH',
     bsc: 'BSC',
+    brock: 'BITROCK',
     xdai: 'GNOSIS',
     matic: 'POLYGON',
     ftm: 'FTM',
