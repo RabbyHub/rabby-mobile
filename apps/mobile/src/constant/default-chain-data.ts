@@ -163,15 +163,15 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
   "brock": {
     "id": "brock",
     "community_id": 7171,
-    "name": "Bitrock",
+    "name": "",
     "native_token": {
       "id": "brock",
       "symbol": "BROCK",
-      "logo": "https://icons.llamao.fi/icons/chains/rsz_bitrock.jpg",
+      "logo": "https://static.debank.com/image/eth_token/logo_url/0xde67d97b8770dc98c746a3fc0093c538666eb493/e6fbdba8d34cb6599090e3c128713d0e.png",
       "decimals": 18
     },
-    "logo_url": "https://icons.llamao.fi/icons/chains/rsz_bitrock.jpg",
-    "white_logo_url": "https://icons.llamao.fi/icons/chains/rsz_bitrock.jpg",
+    "logo_url": "https://static.debank.com/image/project/logo_url/bitrock/91cec30150ad88b17dc0fa98ad29116a.png",
+    "white_logo_url": "https://static.debank.com/image/project/logo_url/bitrock/91cec30150ad88b17dc0fa98ad29116a.png",
     "eip_1559": true,
     "is_disabled": false,
     "explorer_host": "https://explorer.bit-rock.io",
