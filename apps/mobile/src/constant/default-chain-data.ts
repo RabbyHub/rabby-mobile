@@ -159,6 +159,26 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "severity": 0,
     "block_interval": 0.25
   },
+,
+  "brock": {
+    "id": "brock",
+    "community_id": 7171,
+    "name": "Bitrock",
+    "native_token": {
+      "id": "brock",
+      "symbol": "BROCK",
+      "logo": "https://icons.llamao.fi/icons/chains/rsz_bitrock.jpg",
+      "decimals": 18
+    },
+    "logo_url": "https://icons.llamao.fi/icons/chains/rsz_bitrock.jpg",
+    "white_logo_url": "https://icons.llamao.fi/icons/chains/rsz_bitrock.jpg",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://explorer.bit-rock.io",
+    "need_estimate_gas": false,
+    "severity": 0,
+    "block_interval": 0.25
+  },
   "celo": {
     "id": "celo",
     "community_id": 42220,
