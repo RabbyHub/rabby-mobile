@@ -17,6 +17,7 @@ export const GAS_TOP_UP_SUPPORT_TOKENS: Record<string, string[]> = {
     '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
     'arb',
   ],
+  bitrock: ['brock'],
   astar: ['astar'],
   aurora: ['aurora'],
   avax: ['avax'],
@@ -80,6 +81,7 @@ export const MINIMUM_GAS_LIMIT = 21000;
 // non-opstack L2 chains
 export const L2_ENUMS = [
   CHAINS_ENUM.ARBITRUM,
+  CHAINS_ENUM.BITROCK,
   CHAINS_ENUM.AURORA,
   CHAINS_ENUM.NOVA,
   CHAINS_ENUM.BOBA,
