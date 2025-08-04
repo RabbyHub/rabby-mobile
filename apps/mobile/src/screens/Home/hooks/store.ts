@@ -19,6 +19,9 @@ import { tagProfiles } from './usePortfolio';
 import { tagNfts } from './nft';
 import { tokenNounceAtom, deFiNounceAtom, nftNounceAtom } from './refresh';
 
+let top20TokensCache: CombineTokensItem[] = [];
+let top10PortfoliosCache: CombineDefiItem[] = [];
+
 type DisplayedProjectWithoutMethods = Omit<
   DisplayedProject,
   'setPortfolios' | 'patchHistory' | 'afterHistoryPatched' | 'patchPrice'
@@ -305,7 +308,11 @@ export const combinedNFTs = (assetsMap: {
 
 export const assetAtom = atom<{ [address: string]: IAssets }>({});
 
-export const useAssetsMap = () => {
+export const useAssetsMap = ({
+  hideCombined = false,
+}: {
+  hideCombined?: boolean;
+}) => {
   const [assetsMap, setAssetsMap] = useAtom(assetAtom);
   const { handleFetchTokens } = usePinTokens();
   const [tokenNounce, setTokenNounce] = useAtom(tokenNounceAtom);
@@ -447,16 +454,28 @@ export const useAssetsMap = () => {
   }, [refreshTagNft, nftNounce, setNftNounce]);
 
   const memoTokens = useMemo(() => {
-    return combinedTokens(assetsMap);
-  }, [assetsMap]);
+    if (hideCombined) {
+      return top20TokensCache;
+    }
+
+    const tokens = combinedTokens(assetsMap);
+    top20TokensCache = tokens.slice(0, 20);
+    return tokens;
+  }, [assetsMap, hideCombined]);
 
   const memoPortfolios = useMemo(() => {
-    return combinedProtocols(assetsMap);
-  }, [assetsMap]);
+    if (hideCombined) {
+      return top10PortfoliosCache;
+    }
+
+    const portfolios = combinedProtocols(assetsMap);
+    top10PortfoliosCache = portfolios.slice(0, 10);
+    return portfolios;
+  }, [assetsMap, hideCombined]);
 
   const memoNFTs = useMemo(() => {
-    return combinedNFTs(assetsMap);
-  }, [assetsMap]);
+    return hideCombined ? [] : combinedNFTs(assetsMap);
+  }, [assetsMap, hideCombined]);
 
   return {
     updateTokens,

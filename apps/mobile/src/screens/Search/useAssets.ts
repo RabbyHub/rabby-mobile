@@ -30,7 +30,11 @@ import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 export const loadingAtom = atom(true);
 export const isFirstFetchAtom = atom(true);
 export const shortCacheAtom = atom(true);
-export const useAssets = () => {
+export const useAssets = ({
+  hideCombined = false,
+}: {
+  hideCombined?: boolean;
+} = {}) => {
   const [isLoading, setLoading] = useAtom(loadingAtom);
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -47,7 +51,7 @@ export const useAssets = () => {
     updateNFTs,
     updatePortfolios,
     updateTokens,
-  } = useAssetsMap();
+  } = useAssetsMap({ hideCombined });
 
   const loadToken = useMemoizedFn(async (address: string, force?: boolean) => {
     if (!address) {

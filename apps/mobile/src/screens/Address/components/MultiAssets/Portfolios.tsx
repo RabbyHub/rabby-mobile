@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { Tabs } from 'react-native-collapsible-tab-view';
+import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
 
 import {
   ASSETS_ITEM_HEIGHT_NEW,
@@ -81,6 +81,8 @@ export const Portfolios = () => {
     cacheTime: 10 * 60 * 1000,
     accountsNoUnique: true,
   });
+  const focusedTab = useFocusedTab();
+  const isFocused = useMemo(() => focusedTab === 'portfolios', [focusedTab]);
 
   const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
     useTriggerUpdate();
@@ -91,7 +93,7 @@ export const Portfolios = () => {
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     isLoading,
-  } = useAssets();
+  } = useAssets({ hideCombined: !isFocused });
 
   const { navigation } = useSafeSetNavigationOptions();
 
@@ -432,8 +434,10 @@ export const Portfolios = () => {
   );
 
   const hasNotAssets = useMemo(() => {
-    return tokens.length === 0 && portfolios.length === 0 && !isLoading;
-  }, [tokens.length, portfolios.length, isLoading]);
+    return (
+      tokens.length === 0 && portfolios.length === 0 && !isLoading && isFocused
+    );
+  }, [tokens.length, portfolios.length, isLoading, isFocused]);
 
   const handleOnReceive = useCallback(() => {
     navigation.dispatch(
@@ -616,6 +620,9 @@ export const Portfolios = () => {
     let checkIsExpireAndUpdateId: NodeJS.Timeout | null = null;
 
     const cacheTop10AssetsId = setTimeout(() => {
+      if (!isFocused) {
+        return;
+      }
       checkIsExpireAndUpdateId && clearTimeout(checkIsExpireAndUpdateId);
       getCacheTop10Assets({
         disableNFT: true,
@@ -639,7 +646,7 @@ export const Portfolios = () => {
       checkIsExpireAndUpdateId && clearTimeout(checkIsExpireAndUpdateId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!top10Balance, top10Addresses.length]);
+  }, [isFocused, !top10Balance, top10Addresses.length]);
 
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -671,6 +678,12 @@ export const Portfolios = () => {
     return getItemId(item);
   }, []);
 
+  console.log('CUSTOM_LOGGER:=>: FlatList', {
+    tokens: tokens.length,
+    portfolios: portfolios.length,
+    portfolioListData: portfolioListData.length,
+  });
+
   return (
     <Tabs.FlatList
       keyExtractor={keyExtractor}
@@ -678,6 +691,9 @@ export const Portfolios = () => {
       renderItem={renderItem}
       ItemSeparatorComponent={ListRenderSeparator}
       initialNumToRender={15}
+      onViewableItemsChanged={() => {
+        console.log('CUSTOM_LOGGER:=>: onViewableItemsChanged');
+      }}
       ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}

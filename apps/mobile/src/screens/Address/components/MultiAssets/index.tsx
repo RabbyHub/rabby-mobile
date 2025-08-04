@@ -19,7 +19,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
 import { isTabsSwiping } from './hooks';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
-import { useAssetsRefreshing } from '@/screens/Search/useAssets';
+import { useAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useAtomValue } from 'jotai';
 
@@ -100,7 +100,7 @@ export const MultiAssets = ({
     [colors2024, combineData.isLoss],
   );
 
-  const { refreshing } = useAssetsRefreshing();
+  const { refreshing, getCacheTop10Assets } = useAssets({ hideCombined: true });
   const isLoadingMultiCurve = useAtomValue(loadingMultiCurveAtom);
   const renderCircleLoading = useCallback(() => {
     return refreshing || isLoadingMultiCurve ? <LoadingCircle /> : '';
@@ -149,6 +149,22 @@ export const MultiAssets = ({
     return list.length > 10 ? 10 : list.length;
   }, [list.length]);
 
+  useEffect(() => {
+    const id = setTimeout(() => {
+      getCacheTop10Assets({
+        disableNFT: true,
+        realTimeAddresses: top10Addresses,
+        core: true,
+        maxTokenLength: 500,
+        maxDefiLength: 80,
+      });
+    }, 0);
+    return () => {
+      id && clearTimeout(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Tabs.Container
       containerStyle={styles.container}
@@ -157,7 +173,6 @@ export const MultiAssets = ({
       renderTabBar={renderTabBar}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
       renderHeader={renderHeader}
-      lazy
       pagerProps={{
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
