@@ -8,6 +8,7 @@ import BigNumber from 'bignumber.js';
 import { findChain } from '@/utils/chain';
 import { TransactionHistoryItem } from '@/core/services/transactionHistory';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
+import { monitorDBQuery } from '../performance';
 
 @Entity('cache_localhistoryitem')
 export class LocalHistoryItemEntity extends EntityAddressAssetBase {
@@ -183,12 +184,20 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
+  @monitorDBQuery({
+    entity: 'LocalHistoryItemEntity',
+    method: 'getAllHistoryItem',
+  })
   static async getAllHistoryItem(owner_addr?: string) {
     await prepareAppDataSource();
 
     return await this.getRepository().findBy({ owner_addr });
   }
 
+  @monitorDBQuery({
+    entity: 'LocalHistoryItemEntity',
+    method: 'getCountOfAccount',
+  })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -202,12 +211,14 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
+  @monitorDBQuery({ entity: 'LocalHistoryItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
+  @monitorDBQuery({ entity: 'LocalHistoryItemEntity', method: 'getLatestTime' })
   static async getLatestTime(owner_addr?: string): Promise<number> {
     await prepareAppDataSource();
 
@@ -231,12 +242,20 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
     return result.maxTimeAt;
   }
 
+  @monitorDBQuery({
+    entity: 'LocalHistoryItemEntity',
+    method: 'batchQueryHistory',
+  })
   static async batchQueryHistory(owner_addr: string) {
     await prepareAppDataSource();
 
     return this.getRepository().findBy({ owner_addr });
   }
 
+  @monitorDBQuery({
+    entity: 'LocalHistoryItemEntity',
+    method: 'getAllHistoryItemSortedByTime',
+  })
   static async getAllHistoryItemSortedByTime(
     owner_addrs: string[],
     count?: number,
@@ -257,6 +276,10 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
+  @monitorDBQuery({
+    entity: 'LocalHistoryItemEntity',
+    method: 'batchMultAddressSend',
+  })
   static async batchMultAddressSend(addresses: string[]) {
     await prepareAppDataSource();
     return await this.getRepository()
@@ -271,6 +294,10 @@ export class LocalHistoryItemEntity extends EntityAddressAssetBase {
       .getMany();
   }
 
+  @monitorDBQuery({
+    entity: 'LocalHistoryItemEntity',
+    method: 'deleteForAddress',
+  })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

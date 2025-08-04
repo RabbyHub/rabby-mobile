@@ -6,6 +6,8 @@ const appDataSourceInitRef = {
   current: null as null | Promise<DataSource>,
 };
 
+import { dbQueryMonitor } from './performance';
+
 export async function initializeAppDataSource(dbOptions?: DataSourceOptions) {
   if (dbOptions) {
     const appDataSource = new DataSource({ ...dbOptions });
@@ -16,6 +18,20 @@ export async function initializeAppDataSource(dbOptions?: DataSourceOptions) {
         console.debug(
           `[initializeAppDataSource] initialized, will runMigrations`,
         );
+
+        // 添加查询监控
+        const originalQuery = as.query.bind(as);
+        as.query = async (sql: string, parameters?: any[]) => {
+          return dbQueryMonitor.monitorQuery(
+            () => originalQuery(sql, parameters),
+            {
+              query: sql,
+              entity: 'DataSource',
+              method: 'query',
+            },
+          );
+        };
+
         await as
           .runMigrations({
             transaction: 'each',

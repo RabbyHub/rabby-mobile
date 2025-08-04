@@ -5,6 +5,7 @@ import { EntityAddressAssetBase } from './base';
 import { prepareAppDataSource } from '../imports';
 import { TokenItemEntity } from './tokenitem';
 import { DECIMALS_INT_RATIO } from './_helpers';
+import { monitorDBQuery, monitorRawQuery } from '../performance';
 
 const TABLE_NAME = 'rabby_copy_trading_buyitem';
 const TABLE_NAME_TOKENITEM = 'rabby_cache_tokenitem';
@@ -91,6 +92,10 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
+  @monitorDBQuery({
+    entity: 'CopyTradingBuyItemEntity',
+    method: 'getCountOfAccount',
+  })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -104,24 +109,37 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
+  @monitorDBQuery({ entity: 'CopyTradingBuyItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
+  @monitorDBQuery({
+    entity: 'CopyTradingBuyItemEntity',
+    method: 'deleteForAddress',
+  })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
     return this.getRepository().delete({ owner_addr });
   }
 
+  @monitorDBQuery({
+    entity: 'CopyTradingBuyItemEntity',
+    method: 'selectAllBuyItem',
+  })
   static async selectAllBuyItem() {
     await prepareAppDataSource();
 
     return this.getRepository().find();
   }
 
+  @monitorDBQuery({
+    entity: 'CopyTradingBuyItemEntity',
+    method: 'insertBuyItem',
+  })
   static async insertBuyItem(
     owner_addr: string,
     tokenData: {
@@ -146,6 +164,10 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     return true;
   }
 
+  @monitorDBQuery({
+    entity: 'CopyTradingBuyItemEntity',
+    method: 'deleteExpiredBuyItem',
+  })
   static async deleteExpiredBuyItem() {
     try {
       await prepareAppDataSource();
@@ -157,9 +179,9 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
       const invalidRecords = await repo.query(`
         SELECT ct._db_id
         FROM ${TABLE_NAME} ct
-        LEFT JOIN ${TABLE_NAME_TOKENITEM} token 
-          ON ct.id = token.id 
-          AND ct.chain = token.chain 
+        LEFT JOIN ${TABLE_NAME_TOKENITEM} token
+          ON ct.id = token.id
+          AND ct.chain = token.chain
           AND ct.owner_addr = token.owner_addr
         WHERE (token.id IS NULL OR token.amount = 0)
           AND ct.create_time < ${oneHourAgo}
@@ -177,9 +199,9 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
           `
           SELECT ct._db_id
           FROM ${TABLE_NAME} ct
-          LEFT JOIN ${TABLE_NAME_TOKENITEM} token 
-            ON ct.id = token.id 
-            AND ct.chain = token.chain 
+          LEFT JOIN ${TABLE_NAME_TOKENITEM} token
+            ON ct.id = token.id
+            AND ct.chain = token.chain
             AND ct.owner_addr = token.owner_addr
           WHERE ct._db_id IN (${invalidIds.map(() => '?').join(',')})
             AND (token.id IS NULL OR token.amount = 0)
@@ -224,7 +246,10 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
    * Optimized version: use CTE to first aggregate CopyTradingBuyItem, then join with TokenItem
    * @returns raw SQL query results containing TokenItem fields plus buy_amount and buy_price
    */
-
+  @monitorRawQuery({
+    entity: 'CopyTradingBuyItemEntity',
+    method: 'queryCopyTradingItems',
+  })
   static async queryCopyTradingItems(): Promise<
     QueryCopyTradingBuyItemResult[]
   > {
@@ -238,23 +263,23 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
       const queryStartTime = Date.now();
       const validRecords = await repo.query(`
         WITH aggregated_buys AS (
-          SELECT 
-            id, 
-            chain, 
+          SELECT
+            id,
+            chain,
             owner_addr,
             SUM(amount) as buy_amount,
             SUM(from_token_amount * from_token_price) / SUM(amount) as buy_price
           FROM ${TABLE_NAME}
           GROUP BY id, chain, owner_addr
         )
-        SELECT 
+        SELECT
           tokenitem.*,
           ab.buy_amount,
           ab.buy_price
         FROM aggregated_buys ab
         INNER JOIN ${TABLE_NAME_TOKENITEM} tokenitem
-          ON ab.id = tokenitem.id 
-          AND ab.chain = tokenitem.chain 
+          ON ab.id = tokenitem.id
+          AND ab.chain = tokenitem.chain
           AND ab.owner_addr = tokenitem.owner_addr
         WHERE tokenitem.amount > 0
       `);

@@ -5,6 +5,7 @@ import { BALANCE_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
 import { EvmTotalBalanceResponse } from '../hooks/balance';
+import { monitorDBQuery } from '../performance';
 
 @Entity('cache_balance')
 export class BalanceEntity extends EntityAddressAssetBase {
@@ -44,6 +45,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
+  @monitorDBQuery({ entity: 'BalanceEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -57,12 +59,14 @@ export class BalanceEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
+  @monitorDBQuery({ entity: 'BalanceEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
+  @monitorDBQuery({ entity: 'BalanceEntity', method: 'queryBalance' })
   static async queryBalance(
     owner_addr: string,
     isCore: boolean,
@@ -81,6 +85,7 @@ export class BalanceEntity extends EntityAddressAssetBase {
     };
   }
 
+  @monitorDBQuery({ entity: 'BalanceEntity', method: 'isExpired' })
   static async isExpired(owner_addr: string, isCore: boolean) {
     await prepareAppDataSource();
 
@@ -98,11 +103,13 @@ export class BalanceEntity extends EntityAddressAssetBase {
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > BALANCE_EXPIRED_TIME;
   }
+  @monitorDBQuery({ entity: 'BalanceEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
     return this.getRepository().delete({ owner_addr });
   }
+  @monitorDBQuery({ entity: 'BalanceEntity', method: 'deleteForAddressCore' })
   static async deleteForAddressCore(owner_addr: string, isCore: boolean) {
     await prepareAppDataSource();
 

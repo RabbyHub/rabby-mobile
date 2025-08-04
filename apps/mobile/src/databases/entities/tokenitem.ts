@@ -18,6 +18,7 @@ import {
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
+import { monitorDBQuery, monitorRawQuery } from '../performance';
 
 @Entity('cache_tokenitem')
 export class TokenItemEntity extends EntityAddressAssetBase {
@@ -174,6 +175,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
+  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -187,12 +189,14 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
+  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
+  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'batchQueryTokens' })
   static async batchQueryTokens(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -205,6 +209,10 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       }));
   }
 
+  @monitorDBQuery({
+    entity: 'TokenItemEntity',
+    method: 'batchMultiAddressTokensByIdAndChain',
+  })
   static async batchMultiAddressTokensByIdAndChain(
     addresses: string[],
     chain: string,
@@ -232,38 +240,44 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
+  @monitorDBQuery({
+    entity: 'TokenItemEntity',
+    method: 'batchMultAddressTokens',
+  })
   static async batchMultAddressTokens(
     addresses: string[],
     core?: boolean,
     maxLength?: number,
   ) {
-    await prepareAppDataSource();
+    return [];
+    // await prepareAppDataSource();
 
-    const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
+    // const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
 
-    if (core) {
-      queryBuilder.andWhere({ is_core: true });
-    }
-    if (maxLength) {
-      queryBuilder.take(maxLength);
-    }
+    // if (core) {
+    //   queryBuilder.andWhere({ is_core: true });
+    // }
+    // if (maxLength) {
+    //   queryBuilder.take(maxLength);
+    // }
 
-    queryBuilder.andWhere({ owner_addr: In(addresses) });
+    // queryBuilder.andWhere({ owner_addr: In(addresses) });
 
-    const tokens = await queryBuilder.getMany();
+    // const tokens = await queryBuilder.getMany();
 
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    // return tokens
+    //   .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+    //   .filter(i => i.amount > 0)
+    //   .map(i => ({
+    //     ...i,
+    //     cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+    //   }));
   }
 
   /**
    * @description query tokens, order by tokenitem_token_usd_value DESC by default
    */
+  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'searchAllTokens' })
   static async searchAllTokens(options?: {
     /**
      * @description vary with owner_addr, default is false
@@ -346,6 +360,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       }));
   }
 
+  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'queryTokensByOwner' })
   static async queryTokensByOwner(
     owner_addr: string,
     options?: {
@@ -357,84 +372,85 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       // excludeTokenIds?: string[]
     },
   ) {
-    await prepareAppDataSource();
+    return [];
+    // await prepareAppDataSource();
 
-    let {
-      topCount = 5,
-      filter_tokenGte10Dollar = true,
-      filter_tokenProportionGte10Percent = true,
-      // excludeTokenIds = []
-    } = options || {};
-    topCount = Math.max(0, topCount || 0);
+    // let {
+    //   topCount = 5,
+    //   filter_tokenGte10Dollar = true,
+    //   filter_tokenProportionGte10Percent = true,
+    //   // excludeTokenIds = []
+    // } = options || {};
+    // topCount = Math.max(0, topCount || 0);
 
-    const repo = this.getRepository();
-    const queryBuilder = repo
-      .createQueryBuilder('tokenitem')
-      .where({ owner_addr, is_core: true, id: Not(EMPTY_TOKEN_ITEM_ID) })
-      .select([
-        // TODO: which need customized sqlite drivers
-        // `"tokenitem"."raw_amount" / pow(10, tokenitem.decimals) AS tokenitme_token_amount`,
-        `(${correctBadRealOnSql('tokenitem.price')} * ${correctBadRealOnSql(
-          'tokenitem.amount',
-        )}) AS tokenitem_token_usd_value`,
-        'tokenitem',
-      ])
-      .orderBy('tokenitem_token_usd_value', 'DESC');
+    // const repo = this.getRepository();
+    // const queryBuilder = repo
+    //   .createQueryBuilder('tokenitem')
+    //   .where({ owner_addr, is_core: true, id: Not(EMPTY_TOKEN_ITEM_ID) })
+    //   .select([
+    //     // TODO: which need customized sqlite drivers
+    //     // `"tokenitem"."raw_amount" / pow(10, tokenitem.decimals) AS tokenitme_token_amount`,
+    //     `(${correctBadRealOnSql('tokenitem.price')} * ${correctBadRealOnSql(
+    //       'tokenitem.amount',
+    //     )}) AS tokenitem_token_usd_value`,
+    //     'tokenitem',
+    //   ])
+    //   .orderBy('tokenitem_token_usd_value', 'DESC');
 
-    if (filter_tokenGte10Dollar) {
-      queryBuilder.andWhere('tokenitem_token_usd_value >= 10');
-    }
-
-    if (filter_tokenProportionGte10Percent) {
-      const loggerPrefix = `[queryTokensByOwner::${repo.metadata.tableName}::${owner_addr}]`;
-      // notice: result[0]?.total_value maybe null is there's no any record about owner_addr
-      const result = await repo
-        .query(
-          // `SELECT SUM( ${correctBadRealOnSql('tokenitem.price')} * ("tokenitem"."raw_amount" / pow(10, tokenitem.decimals)) ) AS total_value
-          `SELECT SUM( ${correctBadRealOnSql(
-            'tokenitem.price',
-          )} * ${correctBadRealOnSql('tokenitem.amount')} ) AS total_value
-        FROM "${repo.metadata.tableName}" "tokenitem"
-        WHERE owner_addr = '${owner_addr}' AND is_core = 1`,
-        )
-        .catch(error => {
-          console.error(`${loggerPrefix} error on get total_value`, error);
-          return [{ total_value: NaN }];
-        });
-
-      const totalValue = result[0]?.total_value;
-      if (typeof totalValue !== 'number' || !totalValue) {
-        console.debug(
-          `${loggerPrefix} don't queried valid total_value (result: ${JSON.stringify(
-            result,
-          )}), will not filter by tokenProportionGte10Percent`,
-        );
-      } else if (Number.isNaN(totalValue)) {
-        console.warn(
-          `${loggerPrefix} totalValue is NaN, will not filter by tokenProportionGte10Percent`,
-        );
-      } else {
-        queryBuilder.andWhere(
-          `(tokenitem_token_usd_value / ${totalValue}) >= 0.1`,
-        );
-      }
-    }
-
-    // if (excludeTokenIds?.length) {
-    //   queryBuilder.andWhere(`tokenitem.id NOT IN (:...excludeTokenIds)`, { excludeTokenIds });
+    // if (filter_tokenGte10Dollar) {
+    //   queryBuilder.andWhere('tokenitem_token_usd_value >= 10');
     // }
 
-    if (topCount) {
-      queryBuilder.take(topCount);
-    }
-    const tokens = await queryBuilder.getMany();
-    return tokens
-      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-      .filter(i => i.amount > 0)
-      .map(i => ({
-        ...i,
-        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-      }));
+    // if (filter_tokenProportionGte10Percent) {
+    //   const loggerPrefix = `[queryTokensByOwner::${repo.metadata.tableName}::${owner_addr}]`;
+    //   // notice: result[0]?.total_value maybe null is there's no any record about owner_addr
+    //   const result = await repo
+    //     .query(
+    //       // `SELECT SUM( ${correctBadRealOnSql('tokenitem.price')} * ("tokenitem"."raw_amount" / pow(10, tokenitem.decimals)) ) AS total_value
+    //       `SELECT SUM( ${correctBadRealOnSql(
+    //         'tokenitem.price',
+    //       )} * ${correctBadRealOnSql('tokenitem.amount')} ) AS total_value
+    //     FROM "${repo.metadata.tableName}" "tokenitem"
+    //     WHERE owner_addr = '${owner_addr}' AND is_core = 1`,
+    //     )
+    //     .catch(error => {
+    //       console.error(`${loggerPrefix} error on get total_value`, error);
+    //       return [{ total_value: NaN }];
+    //     });
+
+    //   const totalValue = result[0]?.total_value;
+    //   if (typeof totalValue !== 'number' || !totalValue) {
+    //     console.debug(
+    //       `${loggerPrefix} don't queried valid total_value (result: ${JSON.stringify(
+    //         result,
+    //       )}), will not filter by tokenProportionGte10Percent`,
+    //     );
+    //   } else if (Number.isNaN(totalValue)) {
+    //     console.warn(
+    //       `${loggerPrefix} totalValue is NaN, will not filter by tokenProportionGte10Percent`,
+    //     );
+    //   } else {
+    //     queryBuilder.andWhere(
+    //       `(tokenitem_token_usd_value / ${totalValue}) >= 0.1`,
+    //     );
+    //   }
+    // }
+
+    // // if (excludeTokenIds?.length) {
+    // //   queryBuilder.andWhere(`tokenitem.id NOT IN (:...excludeTokenIds)`, { excludeTokenIds });
+    // // }
+
+    // if (topCount) {
+    //   queryBuilder.take(topCount);
+    // }
+    // const tokens = await queryBuilder.getMany();
+    // return tokens
+    //   .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+    //   .filter(i => i.amount > 0)
+    //   .map(i => ({
+    //     ...i,
+    //     cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+    //   }));
   }
 
   static async isExpired(owner_addr: string) {
@@ -453,6 +469,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
+
+  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'willExpired' })
   static async willExpired(owner_addr: string, offest?: number) {
     if (await this.isExpired(owner_addr)) {
       return;
@@ -465,6 +483,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .where('owner_addr = :owner_addr', { owner_addr })
       .execute();
   }
+
+  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'getCexIds' })
   static async getCexIds(tokenId: string, chain: string) {
     await prepareAppDataSource();
 
@@ -481,7 +501,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       cex_ids: columnConverter.jsonStringToObj(result?.cex_ids || '[]'),
     };
   }
+
   // 获取原生代币列表中美元总价值最大的一个token
+  @monitorDBQuery({
+    entity: 'TokenItemEntity',
+    method: 'getTokenWithMaxUsdValue',
+  })
   static async getTokenWithMaxUsdValue(
     owner_addr: string,
     tokenList: { chain: string; tokenId: string }[],
@@ -519,12 +544,17 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return result;
   }
 
+  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
     return this.getRepository().delete({ owner_addr });
   }
 
+  @monitorDBQuery({
+    entity: 'TokenItemEntity',
+    method: 'deleteForAddressAndToken',
+  })
   static async deleteForAddressAndToken(owner_addr: string, tokenId: string) {
     await prepareAppDataSource();
 
@@ -532,6 +562,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   }
 
   // delete tokens that are not updated in last batch reload token list
+  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'cleanupStaleTokens' })
   static async cleanupStaleTokens(owner_addr: string, syncTimestamp: number) {
     try {
       await prepareAppDataSource();

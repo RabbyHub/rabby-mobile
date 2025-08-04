@@ -20,6 +20,7 @@ import {
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
+import { monitorDBQuery } from '../performance';
 
 export type ProjectItemType = {
   chain: string;
@@ -328,12 +329,14 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.history_type = this.getHistoryItemType(e);
   }
 
+  @monitorDBQuery({ entity: 'HistoryItemEntity', method: 'getAllHistoryItem' })
   static async getAllHistoryItem(owner_addr?: string) {
     await prepareAppDataSource();
 
     return await this.getRepository().findBy({ owner_addr });
   }
 
+  @monitorDBQuery({ entity: 'HistoryItemEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -347,6 +350,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
+  @monitorDBQuery({ entity: 'HistoryItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
@@ -376,6 +380,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return result.maxTimeAt;
   }
 
+  @monitorDBQuery({ entity: 'HistoryItemEntity', method: 'batchQueryHistory' })
   static async batchQueryHistory(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -383,6 +388,10 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   }
 
   /** @deprecated */
+  @monitorDBQuery({
+    entity: 'HistoryItemEntity',
+    method: 'getAllSendItemsTriggeredByImportedAddr',
+  })
   static async getAllSendItemsTriggeredByImportedAddr(
     owner_addrs: string[],
     count?: number,
@@ -409,55 +418,64 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
+  @monitorDBQuery({
+    entity: 'HistoryItemEntity',
+    method: 'getAllHistoryItemSortedByTime',
+  })
   static async getAllHistoryItemSortedByTime(
     owner_addrs: string[],
     count?: number,
     filterScamAndSmallTx?: boolean,
     maxTimeAt?: number,
   ) {
-    await prepareAppDataSource();
-    const currentTime = new Date().getTime();
-    const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
-    console.log('getAllHistoryItemSortedByTime exec');
+    return [];
+    // await prepareAppDataSource();
+    // const currentTime = new Date().getTime();
+    // const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
+    // console.log('getAllHistoryItemSortedByTime exec');
 
-    const repo = this.getRepository();
-    const queryBuilder = repo
-      .createQueryBuilder('historyitem')
-      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
-      .andWhere('historyitem.time_at > :ninetyDaysAgo', {
-        ninetyDaysAgo: maxTimeAt ?? ninetyDaysAgo,
-      })
-      .orderBy('historyitem.time_at', 'DESC')
-      .take(count || 10000);
+    // const repo = this.getRepository();
+    // const queryBuilder = repo
+    //   .createQueryBuilder('historyitem')
+    //   .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+    //   .andWhere('historyitem.time_at > :ninetyDaysAgo', {
+    //     ninetyDaysAgo: maxTimeAt ?? ninetyDaysAgo,
+    //   })
+    //   .orderBy('historyitem.time_at', 'DESC')
+    //   .take(count || 10000);
 
-    if (filterScamAndSmallTx) {
-      // filter scam tx
-      queryBuilder.andWhere('historyitem.is_scam = :is_scam', {
-        is_scam: false,
-      });
+    // if (filterScamAndSmallTx) {
+    //   // filter scam tx
+    //   queryBuilder.andWhere('historyitem.is_scam = :is_scam', {
+    //     is_scam: false,
+    //   });
 
-      // filter small tx out of 1 hour
-      const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
-      queryBuilder.andWhere(
-        '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
-        {
-          oneHourAgo,
-          is_small_tx: false,
-        },
-      );
-    }
+    //   // filter small tx out of 1 hour
+    //   const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
+    //   queryBuilder.andWhere(
+    //     '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
+    //     {
+    //       oneHourAgo,
+    //       is_small_tx: false,
+    //     },
+    //   );
+    // }
 
-    const res = await queryBuilder.getMany();
+    // const res = await queryBuilder.getMany();
 
-    console.log(
-      'getAllHistoryItemSortedByTime exec time:',
-      new Date().getTime() - currentTime,
-      'count:',
-      res.length,
-    );
-    return res;
+    // console.log(
+    //   'getAllHistoryItemSortedByTime exec time:',
+    //   new Date().getTime() - currentTime,
+    //   'count:',
+    //   res.length,
+    // );
+    // return res;
   }
 
+  @monitorDBQuery({
+    entity: 'HistoryItemEntity',
+    method: 'getHistoryItemsPaginated',
+  })
   static async getHistoryItemsPaginated(
     owner_addrs: string[],
     options: {
@@ -535,6 +553,10 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     };
   }
 
+  @monitorDBQuery({
+    entity: 'HistoryItemEntity',
+    method: 'getTokenHistoryItemSortedByTime',
+  })
   static async getTokenHistoryItemSortedByTime(
     owner_addrs: string[],
     tokenId: string,
@@ -584,6 +606,7 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
+  @monitorDBQuery({ entity: 'HistoryItemEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

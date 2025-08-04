@@ -4,6 +4,7 @@ import { EntityAddressAssetBase } from './base';
 import { CEX_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
+import { monitorDBQuery } from '../performance';
 
 @Entity('cache_cex')
 export class CexEntity extends EntityAddressAssetBase {
@@ -42,6 +43,7 @@ export class CexEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
+  @monitorDBQuery({ entity: 'CexEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -55,30 +57,40 @@ export class CexEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
+  @monitorDBQuery({ entity: 'CexEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
+  @monitorDBQuery({ entity: 'CexEntity', method: 'queryCexInfo' })
   static async queryCexInfo(owner_addr: string): Promise<Cex> {
-    await prepareAppDataSource();
-    const result = await this.getRepository().findOneBy({
-      owner_addr,
-    });
-
     return {
-      id: result?.cexId || '',
-      is_deposit: result?.is_deposit || false,
-      name: result?.name || '',
-      logo_url: result?.logo_url || '',
+      id: 'binance',
+      is_deposit: true,
+      name: 'Binance',
+      logo_url: '',
     };
+
+    // await prepareAppDataSource();
+    // const result = await this.getRepository().findOneBy({
+    //   owner_addr,
+    // });
+
+    // return {
+    //   id: result?.cexId || '',
+    //   is_deposit: result?.is_deposit || false,
+    //   name: result?.name || '',
+    //   logo_url: result?.logo_url || '',
+    // };
   }
 
   private static cexListCache: CexEntity[] = [];
   private static cacheExpiry: number = 0;
   private static readonly CACHE_DURATION = 60 * 1000; // 1 min
 
+  @monitorDBQuery({ entity: 'CexEntity', method: 'getCexList' })
   static async getCexList(): Promise<CexEntity[]> {
     if (this.cexListCache && Date.now() < this.cacheExpiry) {
       return this.cexListCache;
@@ -93,22 +105,28 @@ export class CexEntity extends EntityAddressAssetBase {
     return result;
   }
 
+  @monitorDBQuery({ entity: 'CexEntity', method: 'isExpired' })
   static async isExpired(owner_addr: string) {
-    await prepareAppDataSource();
+    return false;
+    // await prepareAppDataSource();
 
-    const repo = this.getRepository();
-    const result = await repo
-      .createQueryBuilder('cex')
-      .select('MIN(cex._local_updated_at)', 'minUpdatedAt')
-      .where('cex.owner_addr = :owner_addr', { owner_addr })
-      .getRawOne();
+    // const repo = this.getRepository();
+    // const result = await repo
+    //   .createQueryBuilder('cex')
+    //   .select('cex._local_updated_at', 'updatedAt')
+    //   .where('cex.owner_addr = :owner_addr', { owner_addr })
+    //   .orderBy('cex._local_updated_at', 'ASC') // 按时间升序，找到最早的记录
+    //   .limit(1) // 只取第一条记录
+    //   .getRawOne();
 
-    if (!result.minUpdatedAt) {
-      return true;
-    }
-    const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
-    return Date.now() - firstUpdateTime > CEX_EXPIRED_TIME;
+    // if (!result.minUpdatedAt) {
+    //   return true;
+    // }
+    // const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
+    // return Date.now() - firstUpdateTime > CEX_EXPIRED_TIME;
   }
+
+  @monitorDBQuery({ entity: 'CexEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

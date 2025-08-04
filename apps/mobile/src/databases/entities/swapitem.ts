@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { prepareAppDataSource } from '../imports';
+import { monitorDBQuery } from '../performance';
 
 @Entity('cache_swapitem')
 export class SwapItemEntity extends EntityAddressAssetBase {
@@ -46,6 +47,7 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
+  @monitorDBQuery({ entity: 'SwapItemEntity', method: 'getAllHistoryItem' })
   static async getAllHistoryItem(owner_addrs: string[], count?: number) {
     await prepareAppDataSource();
 
@@ -57,6 +59,7 @@ export class SwapItemEntity extends EntityAddressAssetBase {
       .getMany();
   }
 
+  @monitorDBQuery({ entity: 'SwapItemEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -70,12 +73,14 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
+  @monitorDBQuery({ entity: 'SwapItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
+  @monitorDBQuery({ entity: 'SwapItemEntity', method: 'getLatestTime' })
   static async getLatestTime(owner_addr: string): Promise<number> {
     await prepareAppDataSource();
 
@@ -92,12 +97,14 @@ export class SwapItemEntity extends EntityAddressAssetBase {
     return result.maxTimeAt;
   }
 
+  @monitorDBQuery({ entity: 'SwapItemEntity', method: 'batchQueryHistory' })
   static async batchQueryHistory(owner_addr: string) {
     await prepareAppDataSource();
 
     return this.getRepository().findBy({ owner_addr });
   }
 
+  @monitorDBQuery({ entity: 'SwapItemEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

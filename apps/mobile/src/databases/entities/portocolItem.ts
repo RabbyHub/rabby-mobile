@@ -6,6 +6,7 @@ import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_PROTOCOL_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
+import { monitorDBQuery } from '../performance';
 
 @Entity('cache_portocolitem')
 export class PortocolItemEntity extends EntityAddressAssetBase {
@@ -64,6 +65,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
+  @monitorDBQuery({ entity: 'PortocolItemEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -77,12 +79,17 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
+  @monitorDBQuery({ entity: 'PortocolItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
+  @monitorDBQuery({
+    entity: 'PortocolItemEntity',
+    method: 'batchQueryPortocols',
+  })
   static async batchQueryPortocols(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -96,32 +103,38 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
       }));
   }
 
+  @monitorDBQuery({
+    entity: 'PortocolItemEntity',
+    method: 'batchMultAddressPortocols',
+  })
   static async batchMultAddressPortocols(
     addresses: string[],
     maxLength?: number,
   ) {
-    await prepareAppDataSource();
+    return [];
+    // await prepareAppDataSource();
 
-    const queryBuilder =
-      this.getRepository().createQueryBuilder('portocolitem');
+    // const queryBuilder =
+    //   this.getRepository().createQueryBuilder('portocolitem');
 
-    if (maxLength) {
-      queryBuilder.take(maxLength);
-    }
-    queryBuilder.andWhere({ owner_addr: In(addresses) });
+    // if (maxLength) {
+    //   queryBuilder.take(maxLength);
+    // }
+    // queryBuilder.andWhere({ owner_addr: In(addresses) });
 
-    const portocols = await queryBuilder.getMany();
+    // const portocols = await queryBuilder.getMany();
 
-    return portocols
-      .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
-      .map(i => ({
-        ...i,
-        portfolio_item_list: columnConverter.jsonStringToObj(
-          i.portfolio_item_list,
-        ),
-      }));
+    // return portocols
+    //   .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
+    //   .map(i => ({
+    //     ...i,
+    //     portfolio_item_list: columnConverter.jsonStringToObj(
+    //       i.portfolio_item_list,
+    //     ),
+    //   }));
   }
 
+  @monitorDBQuery({ entity: 'PortocolItemEntity', method: 'isExpired' })
   static async isExpired(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -137,6 +150,7 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
+  @monitorDBQuery({ entity: 'PortocolItemEntity', method: 'willExpired' })
   static async willExpired(owner_addr: string, offest?: number) {
     if (await this.isExpired(owner_addr)) {
       return;
@@ -149,12 +163,17 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
       .where('owner_addr = :owner_addr', { owner_addr })
       .execute();
   }
+  @monitorDBQuery({ entity: 'PortocolItemEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
     return this.getRepository().delete({ owner_addr });
   }
 
+  @monitorDBQuery({
+    entity: 'PortocolItemEntity',
+    method: 'cleanupStaleProtocols',
+  })
   static async cleanupStaleProtocols(
     owner_addr: string,
     syncTimestamp: number,

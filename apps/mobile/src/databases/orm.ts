@@ -18,6 +18,8 @@ import { abortAllSyncTasks } from './sync/_task';
 import { BuyItemEntity } from './entities/buyItem';
 import { CexEntity } from './entities/cex';
 import { CopyTradingBuyItemEntity } from './entities/copyTradingBuyItem';
+// 导入数据库性能监控模块
+import './performance/init';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
