@@ -3,10 +3,11 @@ import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { BrowserSiteCardInner } from '@/screens/Browser/components/BrowserSiteCard';
 import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { noop } from 'lodash';
 import React from 'react';
-import { View } from 'react-native';
+import { SectionList, Text, View } from 'react-native';
 import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
 
 export const BrowserHistorySiteItem = ({
@@ -64,7 +65,10 @@ export const BrowserHistorySiteList = ({
   ListEmptyComponent,
   ListHeaderComponent,
 }: {
-  data: DappInfo[];
+  data: {
+    title: string;
+    data: DappInfo[];
+  }[];
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
   onDeletePress?: (dapp: DappInfo) => void;
@@ -84,11 +88,11 @@ export const BrowserHistorySiteList = ({
   });
 
   return (
-    <FlatList
-      data={data}
+    <SectionList
+      sections={data}
       style={styles.list}
-      keyExtractor={item => item.url || item.origin}
       showsVerticalScrollIndicator={false}
+      stickySectionHeadersEnabled={false}
       renderItem={({ item }) => (
         <BrowserHistorySiteItem
           item={item}
@@ -97,6 +101,17 @@ export const BrowserHistorySiteList = ({
           onPress={onPress}
         />
       )}
+      renderSectionHeader={({ section: { title } }) => (
+        <Text style={styles.sectionTitle}>{title}</Text>
+      )}
+      contentContainerStyle={
+        data?.length
+          ? null
+          : {
+              flexGrow: 1,
+              justifyContent: 'center',
+            }
+      }
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={ListEmptyComponent}
     />
@@ -105,7 +120,7 @@ export const BrowserHistorySiteList = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   list: {
-    marginBottom: 20,
+    // marginBottom: 20,
     paddingHorizontal: 20,
   },
   listItem: {
@@ -113,5 +128,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   deleteText: {
     color: colors2024['red-default'],
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-secondary'],
+    paddingHorizontal: 8,
+    marginBottom: 12,
   },
 }));

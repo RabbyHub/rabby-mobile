@@ -729,6 +729,7 @@
       "No_Tokens": "無代幣",
       "Value": "價值",
       "Select-from-supported-tokens": "從支持的代幣中選擇",
+      "Deposit-tip": "使用 USDC/USDT 存款",
       "InsufficientBalanceTips": "餘額不足",
       "Token": "Token",
       "Loading_Tokens": "正在加載代幣...",

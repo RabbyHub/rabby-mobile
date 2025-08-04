@@ -82,7 +82,7 @@ export const SendHistory = ({
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
   const renderItem = ({ item }: { item: DisplayHistoryItem }) => {
-    if ('projectDict' in item.data) {
+    if ('project_item' in item.data) {
       return (
         <>
           {item.isDateStart ? (
@@ -91,9 +91,6 @@ export const SendHistory = ({
           <HistoryItem
             data={item.data}
             isForMultipleAddress={isForMultipleAddress}
-            projectDict={item.data.projectDict}
-            cateDict={item.data.cateDict}
-            tokenDict={item.data.tokenDict || {}}
             getCexInfoByAddress={getCexInfoByAddress}
             // onPress={onPresssItem}
           />

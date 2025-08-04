@@ -31,6 +31,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { transactionHistoryService } from '@/core/services';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
+import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   flatList: {
@@ -244,7 +245,6 @@ export const SwapTxHistory = ({
   const { visible, setVisible } = useSwapTxHistoryVisible();
   const { colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const { projectDict, tokenDict } = useHistoryTokenDict();
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
@@ -262,9 +262,7 @@ export const SwapTxHistory = ({
       if (historyItem) {
         const detailData = {
           ...ensureHistoryListItemFromDb(historyItem),
-          tokenDict,
-          projectDict,
-        };
+        } as HistoryDisplayItem;
 
         onDismiss();
         navigate(RootNames.StackTransaction, {
@@ -296,14 +294,7 @@ export const SwapTxHistory = ({
         }
       }
     },
-    [
-      onDismiss,
-      projectDict,
-      t,
-      tokenDict,
-      isForMultipleAddress,
-      currentAccount?.address,
-    ],
+    [onDismiss, t, isForMultipleAddress, currentAccount?.address],
   );
 
   useEffect(() => {

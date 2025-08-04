@@ -1,8 +1,6 @@
 import { HistoryDisplayItem } from '../MultiAddressHistory';
 import { getTokenSymbol } from '@/utils/token';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { isString, omit } from 'lodash';
-import { safeParseJSON } from '@rabby-wallet/base-utils/dist/isomorphic/string';
 import {
   NFTItem,
   TokenItem,
@@ -17,25 +15,27 @@ import {
 } from '@/core/services/transactionHistory';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
 import { duplicatelyStringifiedAppJsonStore } from '@/core/storage/mmkv';
+import { openapi } from '@/core/request';
+import { patchSingleToken } from '@/databases/sync/assets';
+import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradingBuyItem';
 import { HistoryItemCateType } from './type';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
-import { openapi } from '@/core/request';
-import { patchSingleToken } from '@/databases/sync/assets';
-import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradingBuyItem';
 
-export function getHistoryItemType(
-  data: HistoryDisplayItem,
-): HistoryItemCateType {
-  if (data.isLocalBuy) {
-    return HistoryItemCateType.Buy;
+export function getApproveTokeName(data: HistoryDisplayItem): string {
+  const tokenId = data.token_approve?.token_id || '';
+  const tokenIsNft = tokenId?.length === 32;
+  if (tokenIsNft) {
+    return 'NFT';
   }
-  if (data.historyItemCateType) {
-    return data.historyItemCateType;
-  }
+
+  return getTokenSymbol(data.token_approve?.token);
+}
+
+export function getHistoryItemType(data: TxHistoryItem): HistoryItemCateType {
   if (data.cate_id === 'approve') {
     if (!data.token_approve?.value) {
       return HistoryItemCateType.Revoke;
@@ -84,17 +84,6 @@ export function getHistoryItemType(
   return HistoryItemCateType.UnKnown;
 }
 
-export function getApproveTokeName(data: HistoryDisplayItem): string {
-  const tokenId = data.token_approve?.token_id || '';
-  const tokenUUID = `${data.chain}_token:${tokenId}`;
-  const tokenIsNft = tokenId?.length === 32;
-  if (tokenIsNft) {
-    return 'NFT';
-  }
-
-  return getTokenSymbol(data.tokenDict[tokenId] || data.tokenDict[tokenUUID]);
-}
-
 export const fetchHistoryTokenUUId = (
   token_id: string,
   chain: string,
@@ -102,11 +91,21 @@ export const fetchHistoryTokenUUId = (
   return `${chain}_token:${token_id}`;
 };
 
+export const fetchHistoryTokenItem = (
+  token_id: string,
+  chain: string,
+  tokenDict: Record<string, TokenItem>,
+) => {
+  const tokenUUID = `${chain}_token:${token_id}`;
+  return tokenDict[tokenUUID] || tokenDict[token_id] || {};
+};
+
 export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
   return {
     ...item,
-    receives: isString(item.receives) && safeParseJSON(item.receives),
-    sends: isString(item.sends) && safeParseJSON(item.sends),
+    historyType: item.history_type,
+    receives: item.receives,
+    sends: item.sends,
     id: item.txHash,
     tx: {
       id: item.txHash,
@@ -125,10 +124,12 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
       token_id: item.token_approve_id,
       spender: item.token_approve_spender,
       value: item.token_approve_value,
+      token: item.token_approve_item,
     },
-    key: `${item.owner_addr}_${item.chain}_${item.txHash}`,
+    project_item: item.project_item,
+    key: item._db_id,
     address: item.owner_addr,
-
+    isSmallUsdTx: item.is_small_tx,
     cateDict: {}, // no use
     debt_liquidated: null,
   };
@@ -136,7 +137,6 @@ export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
 
 export const judgeIsSmallUsdTx = (
   item: HistoryItemEntity,
-  tokenDict: Record<string, TokenItem>,
   pinedQueue: IManageToken[],
 ) => {
   const currentTime = new Date().getTime();
@@ -149,20 +149,14 @@ export const judgeIsSmallUsdTx = (
     return false;
   }
 
-  const receives = safeParseJSON(item.receives) as {
-    amount: number;
-    from_addr: string;
-    token_id: string;
-  }[];
+  const receives = item.receives;
   if (!receives || !receives.length) {
     return true;
   }
   let allUsd = new BigNumber(0);
 
   for (const i of receives) {
-    const token =
-      tokenDict[fetchHistoryTokenUUId(i.token_id, item.chain)] ||
-      tokenDict[i.token_id];
+    const token = i.token;
     const tokenIsNft = i.token_id?.length === 32;
     if (tokenIsNft) {
       // reeives nft

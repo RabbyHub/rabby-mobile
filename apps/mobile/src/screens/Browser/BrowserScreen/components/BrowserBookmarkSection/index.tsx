@@ -17,10 +17,10 @@ import { BrowserBookmarkEmpty } from './BrowserBookmarkEmpty';
 import { BrowserBookmarkItem } from './BrowserBookmarkItem';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useTranslation } from 'react-i18next';
-import { BrowserHistorySiteItem } from '../../../BrowserManageScreen/components/BrowserHistoryList/BrowserHistorySiteList';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useMemoizedFn } from 'ahooks';
 import { useBrowser } from '@/hooks/browser/useBrowser';
+import { BrowserHistorySiteItem } from '../BrowserManage/BrowserHistoryList/BrowserHistorySiteList';
 
 export const BrowserBookmarkSection = ({
   onPress,

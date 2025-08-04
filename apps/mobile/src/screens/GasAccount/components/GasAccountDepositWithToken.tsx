@@ -287,9 +287,7 @@ const TokenSelector = ({
           : colors2024['neutral-bg-1'],
       }}>
       <View style={{ paddingHorizontal: 20 }}>
-        <Text style={styles.title}>
-          {t('page.gasTopUp.Select-from-supported-tokens')}
-        </Text>
+        <Text style={styles.title}>{t('page.gasTopUp.Deposit-tip')}</Text>
 
         <SearchInput
           isActive={isInputActive}

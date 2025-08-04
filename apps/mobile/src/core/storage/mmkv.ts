@@ -25,7 +25,7 @@ function checkIfJsonStringifiedString(input: any) {
   return typeof input === 'string' && input.startsWith('"');
 }
 
-export function makeAppStorage(options?: MMKVConfiguration) {
+function makeAppStorage(options?: MMKVConfiguration) {
   const mmkv = new MMKV(options);
 
   function getItem<T>(key: string): T | null {
@@ -101,6 +101,9 @@ export function makeAppStorage(options?: MMKVConfiguration) {
     setRawString,
     getRawString,
     clearAll,
+    hasItem: (key: string): boolean => {
+      return mmkv.contains(key);
+    },
   };
 
   return {
@@ -245,6 +248,23 @@ export const atomByMMKV = <T = any>(
 
   return atomWithStorage<T>(key, initialValue, jsonStore);
 };
+
+export function removeLegacyMMKVStorageByKey(key: `@${string}`) {
+  if (!key.startsWith('@')) {
+    console.warn(
+      `removeLegacyMMKVStorageByKey: key "${key}" is not a valid legacy key or already removed.`,
+    );
+    return;
+  }
+
+  if (appMethods.hasItem(key)) {
+    console.debug(`removeLegacyMMKVStorageByKey: removing key "${key}"`);
+    appMethods.removeItem(key);
+    console.debug(`removeLegacyMMKVStorageByKey: key "${key}" removed.`);
+  } else if (__DEV__) {
+    console.warn(`removeLegacyMMKVStorageByKey: key "${key}" does not exist.`);
+  }
+}
 
 // iife process
 (async function ensureMmkvFilesNotBackupable() {

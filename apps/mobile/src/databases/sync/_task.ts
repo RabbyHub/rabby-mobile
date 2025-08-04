@@ -136,10 +136,12 @@ export async function batchSaveWithPQueueAndTransaction<
 
           // leave here for debug
           if (eventPayload.taskFor === 'all-history') {
-            setHistoryLoading?.(prev => ({
-              ...prev,
-              [eventPayload.owner_addr]: false,
-            }));
+            setTimeout(() => {
+              setHistoryLoading?.(prev => ({
+                ...prev,
+                [eventPayload.owner_addr]: false,
+              }));
+            }, 2000);
             printLog &&
               console.debug(
                 `[debug] will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,
