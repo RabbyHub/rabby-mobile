@@ -1,0 +1,32 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.debank.rabbymobile.debug",
+      "sha256_cert_fingerprints": [
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.debank.rabbymobile.regression",
+      "sha256_cert_fingerprints": [
+        "63:5F:29:73:64:D1:39:B0:18:3A:C0:7A:87:28:4B:8D:D2:37:2F:B4:DF:13:ED:1D:D0:3D:D0:D9:B0:CA:82:E5"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.debank.rabbymobile",
+      "sha256_cert_fingerprints": [
+        "2C:55:F6:E7:EA:A6:07:D5:76:A8:61:85:1E:37:96:F0:57:03:C7:7E:69:77:BA:B9:67:38:D3:AA:2A:35:52:1E"
+      ]
+    }
+  }
+]
