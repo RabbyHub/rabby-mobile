@@ -5,11 +5,6 @@ android {
         buildConfig = false // Avoids build timestamp in BuildConfig.java
     }
 
-    // 完全禁用基线配置文件的生成和打包 (关键路径 AOT 机器码)
-    baselineProfile {
-        enable = false
-    }
-
     packagingOptions {
         jniLibs {
             useLegacyPackaging = true // Ensures stable binary layout

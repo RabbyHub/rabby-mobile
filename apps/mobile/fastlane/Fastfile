@@ -139,7 +139,7 @@ platform :android do
       "MYAPP_UPLOAD_STORE_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD'],
       "MYAPP_UPLOAD_KEY_ALIAS" => ENV['RABBY_MOBILE_ANDROID_KEY_ALIAS'],
       "MYAPP_UPLOAD_KEY_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD']
-    })
+    }.merge(opts.fetch(:properties, {})))
 
     android_version_code = android_get_version_code(gradle_file: "./android/app/build.gradle")
     android_version_name = android_get_version_name(gradle_file: "./android/app/build.gradle")

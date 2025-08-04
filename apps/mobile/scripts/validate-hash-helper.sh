@@ -24,11 +24,11 @@ WORK_DIR="/tmp/validate-rabby-mobile-$git_head_7"
 APP_DIR="$WORK_DIR/apps/mobile"
 script_dir="$APP_DIR/scripts"
 
-if [ "$repo_root" != "$WORK_DIR" ]; then
-  # if [ -d "$WORK_DIR" ]; then
-  #   echo "ℹ️: Removing existing work directory $WORK_DIR ..."
-  #   rm -rf $WORK_DIR
-  # fi
+
+if [ -d "$WORK_DIR" ]; then
+  echo "ℹ️: Removing existing work directory $WORK_DIR ..."
+  # rm -rf $WORK_DIR
+else
   echo "Will clone repo to $WORK_DIR"
   git clone $repo_root $WORK_DIR && cd $WORK_DIR && git checkout $git_head_7
 fi
