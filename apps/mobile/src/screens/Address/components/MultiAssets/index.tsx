@@ -157,6 +157,7 @@ export const MultiAssets = ({
       renderTabBar={renderTabBar}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
       renderHeader={renderHeader}
+      lazy
       pagerProps={{
         onPageScrollStateChanged: event => {
           isTabsSwiping.value = event?.nativeEvent?.pageScrollState !== 'idle';
