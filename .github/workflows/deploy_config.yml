@@ -1,0 +1,19 @@
+name: deploy ios & android config
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload-aws:
+    name: upload aws
+    runs-on: self-hosted
+    steps:
+      - name: upload android well-known
+        run: |
+          cd apps/mobile
+          # upload android well-known
+          aws s3 cp ./.well-known/assetlinks.json s3://${RABBY_MOBILE_BUILD_BUCKET}/rabby-go/.well-known/assetlinks.json --content-type application/json --acl public-read
+          # upload ios well-known
+          aws s3 cp ./.well-known/apple-app-site-association s3://${RABBY_MOBILE_BUILD_BUCKET}/rabby-go/.well-known/apple-app-site-association --content-type application/json --acl public-read
+        env:
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
