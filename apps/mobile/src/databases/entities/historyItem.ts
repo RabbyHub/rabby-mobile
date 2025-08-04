@@ -428,48 +428,47 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     filterScamAndSmallTx?: boolean,
     maxTimeAt?: number,
   ) {
-    return [];
-    // await prepareAppDataSource();
-    // const currentTime = new Date().getTime();
-    // const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
-    // console.log('getAllHistoryItemSortedByTime exec');
+    await prepareAppDataSource();
+    const currentTime = new Date().getTime();
+    const ninetyDaysAgo = Math.floor(currentTime / 1000) - 90 * 24 * 60 * 60;
+    console.log('getAllHistoryItemSortedByTime exec');
 
-    // const repo = this.getRepository();
-    // const queryBuilder = repo
-    //   .createQueryBuilder('historyitem')
-    //   .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
-    //   .andWhere('historyitem.time_at > :ninetyDaysAgo', {
-    //     ninetyDaysAgo: maxTimeAt ?? ninetyDaysAgo,
-    //   })
-    //   .orderBy('historyitem.time_at', 'DESC')
-    //   .take(count || 10000);
+    const repo = this.getRepository();
+    const queryBuilder = repo
+      .createQueryBuilder('historyitem')
+      .where('historyitem.owner_addr IN (:...owner_addrs)', { owner_addrs })
+      .andWhere('historyitem.time_at > :ninetyDaysAgo', {
+        ninetyDaysAgo: maxTimeAt ?? ninetyDaysAgo,
+      })
+      .orderBy('historyitem.time_at', 'DESC')
+      .take(count || 10000);
 
-    // if (filterScamAndSmallTx) {
-    //   // filter scam tx
-    //   queryBuilder.andWhere('historyitem.is_scam = :is_scam', {
-    //     is_scam: false,
-    //   });
+    if (filterScamAndSmallTx) {
+      // filter scam tx
+      queryBuilder.andWhere('historyitem.is_scam = :is_scam', {
+        is_scam: false,
+      });
 
-    //   // filter small tx out of 1 hour
-    //   const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
-    //   queryBuilder.andWhere(
-    //     '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
-    //     {
-    //       oneHourAgo,
-    //       is_small_tx: false,
-    //     },
-    //   );
-    // }
+      // filter small tx out of 1 hour
+      const oneHourAgo = Math.floor(currentTime / 1000) - 60 * 60;
+      queryBuilder.andWhere(
+        '(historyitem.time_at > :oneHourAgo OR historyitem.is_small_tx = :is_small_tx)',
+        {
+          oneHourAgo,
+          is_small_tx: false,
+        },
+      );
+    }
 
-    // const res = await queryBuilder.getMany();
+    const res = await queryBuilder.getMany();
 
-    // console.log(
-    //   'getAllHistoryItemSortedByTime exec time:',
-    //   new Date().getTime() - currentTime,
-    //   'count:',
-    //   res.length,
-    // );
-    // return res;
+    console.log(
+      'getAllHistoryItemSortedByTime exec time:',
+      new Date().getTime() - currentTime,
+      'count:',
+      res.length,
+    );
+    return res;
   }
 
   @monitorDBQuery({

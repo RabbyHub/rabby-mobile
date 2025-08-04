@@ -249,29 +249,28 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     core?: boolean,
     maxLength?: number,
   ) {
-    return [];
-    // await prepareAppDataSource();
+    await prepareAppDataSource();
 
-    // const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
+    const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
 
-    // if (core) {
-    //   queryBuilder.andWhere({ is_core: true });
-    // }
-    // if (maxLength) {
-    //   queryBuilder.take(maxLength);
-    // }
+    if (core) {
+      queryBuilder.andWhere({ is_core: true });
+    }
+    if (maxLength) {
+      queryBuilder.take(maxLength);
+    }
 
-    // queryBuilder.andWhere({ owner_addr: In(addresses) });
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
 
-    // const tokens = await queryBuilder.getMany();
+    const tokens = await queryBuilder.getMany();
 
-    // return tokens
-    //   .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-    //   .filter(i => i.amount > 0)
-    //   .map(i => ({
-    //     ...i,
-    //     cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-    //   }));
+    return tokens
+      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+      .filter(i => i.amount > 0)
+      .map(i => ({
+        ...i,
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+      }));
   }
 
   /**
@@ -372,85 +371,84 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       // excludeTokenIds?: string[]
     },
   ) {
-    return [];
-    // await prepareAppDataSource();
+    await prepareAppDataSource();
 
-    // let {
-    //   topCount = 5,
-    //   filter_tokenGte10Dollar = true,
-    //   filter_tokenProportionGte10Percent = true,
-    //   // excludeTokenIds = []
-    // } = options || {};
-    // topCount = Math.max(0, topCount || 0);
+    let {
+      topCount = 5,
+      filter_tokenGte10Dollar = true,
+      filter_tokenProportionGte10Percent = true,
+      // excludeTokenIds = []
+    } = options || {};
+    topCount = Math.max(0, topCount || 0);
 
-    // const repo = this.getRepository();
-    // const queryBuilder = repo
-    //   .createQueryBuilder('tokenitem')
-    //   .where({ owner_addr, is_core: true, id: Not(EMPTY_TOKEN_ITEM_ID) })
-    //   .select([
-    //     // TODO: which need customized sqlite drivers
-    //     // `"tokenitem"."raw_amount" / pow(10, tokenitem.decimals) AS tokenitme_token_amount`,
-    //     `(${correctBadRealOnSql('tokenitem.price')} * ${correctBadRealOnSql(
-    //       'tokenitem.amount',
-    //     )}) AS tokenitem_token_usd_value`,
-    //     'tokenitem',
-    //   ])
-    //   .orderBy('tokenitem_token_usd_value', 'DESC');
+    const repo = this.getRepository();
+    const queryBuilder = repo
+      .createQueryBuilder('tokenitem')
+      .where({ owner_addr, is_core: true, id: Not(EMPTY_TOKEN_ITEM_ID) })
+      .select([
+        // TODO: which need customized sqlite drivers
+        // `"tokenitem"."raw_amount" / pow(10, tokenitem.decimals) AS tokenitme_token_amount`,
+        `(${correctBadRealOnSql('tokenitem.price')} * ${correctBadRealOnSql(
+          'tokenitem.amount',
+        )}) AS tokenitem_token_usd_value`,
+        'tokenitem',
+      ])
+      .orderBy('tokenitem_token_usd_value', 'DESC');
 
-    // if (filter_tokenGte10Dollar) {
-    //   queryBuilder.andWhere('tokenitem_token_usd_value >= 10');
+    if (filter_tokenGte10Dollar) {
+      queryBuilder.andWhere('tokenitem_token_usd_value >= 10');
+    }
+
+    if (filter_tokenProportionGte10Percent) {
+      const loggerPrefix = `[queryTokensByOwner::${repo.metadata.tableName}::${owner_addr}]`;
+      // notice: result[0]?.total_value maybe null is there's no any record about owner_addr
+      const result = await repo
+        .query(
+          // `SELECT SUM( ${correctBadRealOnSql('tokenitem.price')} * ("tokenitem"."raw_amount" / pow(10, tokenitem.decimals)) ) AS total_value
+          `SELECT SUM( ${correctBadRealOnSql(
+            'tokenitem.price',
+          )} * ${correctBadRealOnSql('tokenitem.amount')} ) AS total_value
+        FROM "${repo.metadata.tableName}" "tokenitem"
+        WHERE owner_addr = '${owner_addr}' AND is_core = 1`,
+        )
+        .catch(error => {
+          console.error(`${loggerPrefix} error on get total_value`, error);
+          return [{ total_value: NaN }];
+        });
+
+      const totalValue = result[0]?.total_value;
+      if (typeof totalValue !== 'number' || !totalValue) {
+        console.debug(
+          `${loggerPrefix} don't queried valid total_value (result: ${JSON.stringify(
+            result,
+          )}), will not filter by tokenProportionGte10Percent`,
+        );
+      } else if (Number.isNaN(totalValue)) {
+        console.warn(
+          `${loggerPrefix} totalValue is NaN, will not filter by tokenProportionGte10Percent`,
+        );
+      } else {
+        queryBuilder.andWhere(
+          `(tokenitem_token_usd_value / ${totalValue}) >= 0.1`,
+        );
+      }
+    }
+
+    // if (excludeTokenIds?.length) {
+    //   queryBuilder.andWhere(`tokenitem.id NOT IN (:...excludeTokenIds)`, { excludeTokenIds });
     // }
 
-    // if (filter_tokenProportionGte10Percent) {
-    //   const loggerPrefix = `[queryTokensByOwner::${repo.metadata.tableName}::${owner_addr}]`;
-    //   // notice: result[0]?.total_value maybe null is there's no any record about owner_addr
-    //   const result = await repo
-    //     .query(
-    //       // `SELECT SUM( ${correctBadRealOnSql('tokenitem.price')} * ("tokenitem"."raw_amount" / pow(10, tokenitem.decimals)) ) AS total_value
-    //       `SELECT SUM( ${correctBadRealOnSql(
-    //         'tokenitem.price',
-    //       )} * ${correctBadRealOnSql('tokenitem.amount')} ) AS total_value
-    //     FROM "${repo.metadata.tableName}" "tokenitem"
-    //     WHERE owner_addr = '${owner_addr}' AND is_core = 1`,
-    //     )
-    //     .catch(error => {
-    //       console.error(`${loggerPrefix} error on get total_value`, error);
-    //       return [{ total_value: NaN }];
-    //     });
-
-    //   const totalValue = result[0]?.total_value;
-    //   if (typeof totalValue !== 'number' || !totalValue) {
-    //     console.debug(
-    //       `${loggerPrefix} don't queried valid total_value (result: ${JSON.stringify(
-    //         result,
-    //       )}), will not filter by tokenProportionGte10Percent`,
-    //     );
-    //   } else if (Number.isNaN(totalValue)) {
-    //     console.warn(
-    //       `${loggerPrefix} totalValue is NaN, will not filter by tokenProportionGte10Percent`,
-    //     );
-    //   } else {
-    //     queryBuilder.andWhere(
-    //       `(tokenitem_token_usd_value / ${totalValue}) >= 0.1`,
-    //     );
-    //   }
-    // }
-
-    // // if (excludeTokenIds?.length) {
-    // //   queryBuilder.andWhere(`tokenitem.id NOT IN (:...excludeTokenIds)`, { excludeTokenIds });
-    // // }
-
-    // if (topCount) {
-    //   queryBuilder.take(topCount);
-    // }
-    // const tokens = await queryBuilder.getMany();
-    // return tokens
-    //   .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
-    //   .filter(i => i.amount > 0)
-    //   .map(i => ({
-    //     ...i,
-    //     cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
-    //   }));
+    if (topCount) {
+      queryBuilder.take(topCount);
+    }
+    const tokens = await queryBuilder.getMany();
+    return tokens
+      .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
+      .filter(i => i.amount > 0)
+      .map(i => ({
+        ...i,
+        cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
+      }));
   }
 
   static async isExpired(owner_addr: string) {

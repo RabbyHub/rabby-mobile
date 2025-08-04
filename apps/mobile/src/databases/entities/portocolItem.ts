@@ -111,27 +111,26 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     addresses: string[],
     maxLength?: number,
   ) {
-    return [];
-    // await prepareAppDataSource();
+    await prepareAppDataSource();
 
-    // const queryBuilder =
-    //   this.getRepository().createQueryBuilder('portocolitem');
+    const queryBuilder =
+      this.getRepository().createQueryBuilder('portocolitem');
 
-    // if (maxLength) {
-    //   queryBuilder.take(maxLength);
-    // }
-    // queryBuilder.andWhere({ owner_addr: In(addresses) });
+    if (maxLength) {
+      queryBuilder.take(maxLength);
+    }
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
 
-    // const portocols = await queryBuilder.getMany();
+    const portocols = await queryBuilder.getMany();
 
-    // return portocols
-    //   .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
-    //   .map(i => ({
-    //     ...i,
-    //     portfolio_item_list: columnConverter.jsonStringToObj(
-    //       i.portfolio_item_list,
-    //     ),
-    //   }));
+    return portocols
+      .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
+      .map(i => ({
+        ...i,
+        portfolio_item_list: columnConverter.jsonStringToObj(
+          i.portfolio_item_list,
+        ),
+      }));
   }
 
   @monitorDBQuery({ entity: 'PortocolItemEntity', method: 'isExpired' })
