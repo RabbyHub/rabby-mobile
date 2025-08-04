@@ -19,7 +19,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { HeaderTitle } from './HeaderTitle';
 import { isTabsSwiping } from './hooks';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
-import { useAssets } from '@/screens/Search/useAssets';
+import { useAssetsRefreshing } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useAtomValue } from 'jotai';
 
@@ -43,7 +43,8 @@ export const MultiAssets = ({
 
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [top10Addresses.join(','), getTotalBalance]);
 
   const { combineData, isLoadingNew: isLoadingCurve } = useMultiCurve(
     top10Addresses,
@@ -99,30 +100,11 @@ export const MultiAssets = ({
     [colors2024, combineData.isLoss],
   );
 
-  const { tokens, refreshing, getCacheTop10Assets } = useAssets();
+  const { refreshing } = useAssetsRefreshing();
   const isLoadingMultiCurve = useAtomValue(loadingMultiCurveAtom);
-  const renderCirleLoading = useCallback(() => {
+  const renderCircleLoading = useCallback(() => {
     return refreshing || isLoadingMultiCurve ? <LoadingCircle /> : '';
   }, [isLoadingMultiCurve, refreshing]);
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (tokens.length) {
-        return;
-      }
-      getCacheTop10Assets({
-        disableNFT: true,
-        realTimeAddresses: top10Addresses,
-        core: true,
-        maxTokenLength: 500,
-        maxDefiLength: 80,
-      });
-    }, 0);
-    return () => {
-      id && clearTimeout(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleScroll = useCallback(
     (y: number) => {
@@ -135,7 +117,7 @@ export const MultiAssets = ({
         });
       } else {
         setNavigationOptions({
-          headerTitle: renderCirleLoading,
+          headerTitle: renderCircleLoading,
           headerTitleAlign: 'left',
         });
       }
@@ -144,7 +126,7 @@ export const MultiAssets = ({
     [
       getHeaderTitle,
       onReachTopStatusChange,
-      renderCirleLoading,
+      renderCircleLoading,
       setNavigationOptions,
     ],
   );
@@ -165,7 +147,7 @@ export const MultiAssets = ({
 
   const listLength = useMemo(() => {
     return list.length > 10 ? 10 : list.length;
-  }, [list]);
+  }, [list.length]);
 
   return (
     <Tabs.Container

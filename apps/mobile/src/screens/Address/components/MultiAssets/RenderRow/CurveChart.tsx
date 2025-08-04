@@ -2,7 +2,7 @@ import { LineChart } from 'react-native-wagmi-charts';
 import * as d3Shape from 'd3-shape';
 import { useTheme2024 } from '@/hooks/theme';
 import { formChartData, CurvePoint } from '@/hooks/useCurve';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, useCallback, useState } from 'react';
 import { Dimensions, ImageBackground, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ALERT_HEIGHT, HEADER_CHART_HEIGHT } from '@/constant/layout';
@@ -62,17 +62,35 @@ function Chart({
   }, [data.isLoss, isLight]);
 
   const scrollY = useCurrentTabScrollY();
+  const [isInitialized, setIsInitialized] = useState(false);
+
   useEffect(() => {
+    // 延迟初始化动画，避免页面切换时的卡顿
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 100);
+
     return () => {
+      clearTimeout(timer);
       setTriggerUpdate?.(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleScrollCallback = useCallback(
+    (currentScrollY: number) => {
+      if (isInitialized) {
+        handleScroll(currentScrollY);
+      }
+    },
+    [handleScroll, isInitialized],
+  );
+
   useAnimatedReaction(
     () => scrollY.value,
     currentScrollY => {
-      runOnJS(handleScroll)(currentScrollY);
+      // 只有在初始化后才处理滚动事件
+      runOnJS(handleScrollCallback)(currentScrollY);
     },
   );
 
@@ -115,24 +133,28 @@ function Chart({
             loading={loading}
           />
           {isOffline || isNoAssets ? null : !loading ? (
-            <LineChart
-              height={114}
-              width={ScreenWidth - 32}
-              shape={d3Shape.curveCatmullRom}
-              style={styles.relative}>
-              <LineChart.Path
-                showInactivePath={false}
-                color={pathColor}
-                width={2}>
-                <LineChart.Gradient color={pathColor} />
-              </LineChart.Path>
-              <LineChart.CursorLine color={colors['neutral-line']} />
-              <LineChart.CursorCrosshair
-                color={pathColor}
-                outerSize={12}
-                size={8}
-              />
-            </LineChart>
+            isInitialized ? (
+              <LineChart
+                height={114}
+                width={ScreenWidth - 32}
+                shape={d3Shape.curveCatmullRom}
+                style={styles.relative}>
+                <LineChart.Path
+                  showInactivePath={false}
+                  color={pathColor}
+                  width={2}>
+                  <LineChart.Gradient color={pathColor} />
+                </LineChart.Path>
+                <LineChart.CursorLine color={colors['neutral-line']} />
+                <LineChart.CursorCrosshair
+                  color={pathColor}
+                  outerSize={12}
+                  size={8}
+                />
+              </LineChart>
+            ) : (
+              <CurveLoader style={styles.loading} />
+            )
           ) : (
             <CurveLoader style={styles.loading} />
           )}
@@ -161,7 +183,26 @@ export const ChartHeader = ({
 }: IHeaderProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { currentIndex } = LineChart.useChart();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    // 延迟初始化动画计算
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 150);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
   const percentChange = useDerivedValue(() => {
+    // 如果还没初始化，返回默认值避免计算
+    if (!isInitialized) {
+      return `${isLoss ? '-' : '+'}${changePercent}(${
+        isLoss ? '-' : '+'
+      }${change})`;
+    }
+
     const isActiveIndexData =
       data?.[currentIndex?.value]?.changePercent !== undefined;
     const formatChangeValue = isActiveIndexData
@@ -176,21 +217,40 @@ export const ChartHeader = ({
     return `${formatLoss ? '-' : '+'}${formatChangePercent}(${
       formatLoss ? '-' : '+'
     }${formatChangeValue})`;
-  }, [data, currentIndex.value, change, changePercent, isLoss]);
+  }, [data, currentIndex.value, change, changePercent, isLoss, isInitialized]);
 
   const dateTime = useDerivedValue(() => {
+    // 如果还没初始化，返回默认值
+    if (!isInitialized) {
+      return '24h';
+    }
+
     return (
       (data?.[currentIndex?.value]?.netWorth
         ? data?.[currentIndex?.value]?.clockTimeString
         : '24h') || '24h'
     );
-  }, [data, currentIndex, netWorth]);
+  }, [data, currentIndex, netWorth, isInitialized]);
 
   const formatNetWorth = useDerivedValue(() => {
+    // 如果还没初始化，返回默认值
+    if (!isInitialized) {
+      return netWorth;
+    }
+
     return data?.[currentIndex?.value]?.netWorth || netWorth;
-  }, [data, currentIndex, netWorth]);
+  }, [data, currentIndex, netWorth, isInitialized]);
 
   const lossStyleProps = useAnimatedStyle(() => {
+    // 如果还没初始化，使用默认样式
+    if (!isInitialized) {
+      return {
+        ...styles.changePercent,
+        display: loading ? 'none' : 'flex',
+        color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
+      };
+    }
+
     if (data?.[currentIndex?.value]) {
       return {
         ...styles.changePercent,
@@ -205,23 +265,25 @@ export const ChartHeader = ({
       display: loading ? 'none' : 'flex',
       color: isLoss ? colors2024['red-default'] : colors2024['green-default'],
     };
-  }, [isLoss, data, currentIndex, colors2024, styles, loading]);
+  }, [isLoss, data, currentIndex, colors2024, styles, loading, isInitialized]);
 
   const netWorthAnimatedProps = useAnimatedProps(() => {
     return {
       text: formatNetWorth.value,
     };
-  });
+  }, [formatNetWorth.value]);
+
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
       text: percentChange.value,
     };
-  });
+  }, [percentChange.value]);
+
   const dateTimeAnimatedProps = useAnimatedProps(() => {
     return {
       text: dateTime.value,
     };
-  });
+  }, [dateTime.value]);
 
   if (loading) {
     return (

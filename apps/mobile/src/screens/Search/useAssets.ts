@@ -21,7 +21,7 @@ import _, { debounce } from 'lodash';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useMemo } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
@@ -432,6 +432,14 @@ export const useAssets = () => {
     batchLoadCacheTokens,
     batchLoadCacheDefi,
     batchLoadCacheNFT,
+    refreshing: !!isLoading && !isFirstFetch,
+  };
+};
+
+export const useAssetsRefreshing = () => {
+  const isLoading = useAtomValue(loadingAtom);
+  const isFirstFetch = useAtomValue(isFirstFetchAtom);
+  return {
     refreshing: !!isLoading && !isFirstFetch,
   };
 };

@@ -296,6 +296,7 @@ function MultiAddressHome(): JSX.Element {
 
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
+  const lastFocusEffectTimeRef = useRef<number>(0);
 
   const { width } = Dimensions.get('window');
   const itemWidth =
@@ -578,6 +579,18 @@ function MultiAddressHome(): JSX.Element {
   useFocusEffect(
     useCallback(() => {
       if (appState === 'active') {
+        const now = Date.now();
+        const timeSinceLastExecution = now - lastFocusEffectTimeRef.current;
+        const oneMinute = 60 * 1000; // 1分钟 = 60秒 * 1000毫秒
+
+        // 如果距离上次执行时间不足1分钟，则跳过执行
+        if (timeSinceLastExecution < oneMinute) {
+          return;
+        }
+
+        // 更新最后执行时间
+        lastFocusEffectTimeRef.current = now;
+
         triggerUpdate();
         triggerUpdateAlert();
         syncTop10Assets();
