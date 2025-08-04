@@ -66,24 +66,17 @@ export class CexEntity extends EntityAddressAssetBase {
 
   @monitorDBQuery({ entity: 'CexEntity', method: 'queryCexInfo' })
   static async queryCexInfo(owner_addr: string): Promise<Cex> {
+    await prepareAppDataSource();
+    const result = await this.getRepository().findOneBy({
+      owner_addr,
+    });
+
     return {
-      id: 'binance',
-      is_deposit: true,
-      name: 'Binance',
-      logo_url: '',
+      id: result?.cexId || '',
+      is_deposit: result?.is_deposit || false,
+      name: result?.name || '',
+      logo_url: result?.logo_url || '',
     };
-
-    // await prepareAppDataSource();
-    // const result = await this.getRepository().findOneBy({
-    //   owner_addr,
-    // });
-
-    // return {
-    //   id: result?.cexId || '',
-    //   is_deposit: result?.is_deposit || false,
-    //   name: result?.name || '',
-    //   logo_url: result?.logo_url || '',
-    // };
   }
 
   private static cexListCache: CexEntity[] = [];
@@ -107,23 +100,20 @@ export class CexEntity extends EntityAddressAssetBase {
 
   @monitorDBQuery({ entity: 'CexEntity', method: 'isExpired' })
   static async isExpired(owner_addr: string) {
-    return false;
-    // await prepareAppDataSource();
+    await prepareAppDataSource();
 
-    // const repo = this.getRepository();
-    // const result = await repo
-    //   .createQueryBuilder('cex')
-    //   .select('cex._local_updated_at', 'updatedAt')
-    //   .where('cex.owner_addr = :owner_addr', { owner_addr })
-    //   .orderBy('cex._local_updated_at', 'ASC') // 按时间升序，找到最早的记录
-    //   .limit(1) // 只取第一条记录
-    //   .getRawOne();
+    const repo = this.getRepository();
+    const result = await repo
+      .createQueryBuilder('cex')
+      .select('MIN(cex._local_updated_at)', 'minUpdatedAt')
+      .where('cex.owner_addr = :owner_addr', { owner_addr })
+      .getRawOne();
 
-    // if (!result.minUpdatedAt) {
-    //   return true;
-    // }
-    // const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
-    // return Date.now() - firstUpdateTime > CEX_EXPIRED_TIME;
+    if (!result.minUpdatedAt) {
+      return true;
+    }
+    const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
+    return Date.now() - firstUpdateTime > CEX_EXPIRED_TIME;
   }
 
   @monitorDBQuery({ entity: 'CexEntity', method: 'deleteForAddress' })

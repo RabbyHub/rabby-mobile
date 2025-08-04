@@ -37,14 +37,20 @@ export const useFetchCexInfo = () => {
     if (queue.size > 0) {
       return;
     }
-    pendFechCexAddresses.forEach(address => {
-      queue.add(async () => {
-        try {
-          await getCexWithLocalCache(address, false);
-        } catch (error) {
-          console.error('cex desc fetch error', error);
-        }
+
+    const timeoutId = setTimeout(() => {
+      pendFechCexAddresses.forEach(address => {
+        queue.add(async () => {
+          try {
+            await getCexWithLocalCache(address, false);
+          } catch (error) {
+            console.error('cex desc fetch error', error);
+          }
+        });
       });
-    });
-  }, [pendFechCexAddresses]);
+    }, 100); // 100ms 防抖
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendFechCexAddresses.join(',')]);
 };
