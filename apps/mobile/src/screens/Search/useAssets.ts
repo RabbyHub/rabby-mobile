@@ -386,8 +386,21 @@ export const useAssets = () => {
         ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
       ];
       removeUnNeedAssets(addresses);
+      const isCurrentShortCacheFetch = !!(
+        options?.maxTokenLength ||
+        options?.maxDefiLength ||
+        options?.maxNFTLength
+      );
+
       // 有cache，不查了
       if (Object.keys(assetsMap).length && !shortCache) {
+        return;
+      }
+      if (
+        shortCache &&
+        isCurrentShortCacheFetch &&
+        Object.keys(assetsMap).length
+      ) {
         return;
       }
       setShortCache(

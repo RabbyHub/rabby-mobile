@@ -7,17 +7,15 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { Tabs, useFocusedTab } from 'react-native-collapsible-tab-view';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import {
-  ASSETS_EMPTY_ROW_HIGHT,
   ASSETS_ITEM_HEIGHT_NEW,
   ASSETS_LIST_HEADER,
   ASSETS_SECTION_HEADER,
   DEFI_ITEM_HEIGHT,
   RootNames,
   SWITCH_HEADER_HEIGHT,
-  TOKEN_EMPTY_ROW_HIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import {
@@ -79,9 +77,6 @@ const MemoizedEmptyTokenRow = React.memo(EmptyTokenRow);
 export const Portfolios = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
   const { top10Addresses } = useAccountInfo();
-  const focusedTab = useFocusedTab();
-  const isFocused = useMemo(() => focusedTab === 'portfolios', [focusedTab]);
-
   const { triggerUpdate, getTotalBalance } = useAccountsBalance({
     cacheTime: 10 * 60 * 1000,
     accountsNoUnique: true,
@@ -99,7 +94,6 @@ export const Portfolios = () => {
   } = useAssets();
 
   const { navigation } = useSafeSetNavigationOptions();
-  const [isListVisable, setIsListVisable] = useState(false);
 
   const { t } = useTranslation();
 
@@ -619,84 +613,33 @@ export const Portfolios = () => {
   }, [top10Addresses.length]);
 
   useEffect(() => {
-    if (!isFocused) {
-      return;
-    }
-    const id = setTimeout(() => {
-      if (inited.current) {
-        return;
-      }
-      inited.current = true;
-      checkIsExpireAndUpdate(false, {
-        disableNFT: true,
-        realTimeAddresses: top10Addresses,
-        ignoreLoading: !top10Balance,
-      });
-    }, 200);
-    return () => {
-      id && clearTimeout(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, top10Addresses.length]);
+    let checkIsExpireAndUpdateId: NodeJS.Timeout | null = null;
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (!isListVisable) {
-        return;
-      }
+    const cacheTop10AssetsId = setTimeout(() => {
+      checkIsExpireAndUpdateId && clearTimeout(checkIsExpireAndUpdateId);
       getCacheTop10Assets({
         disableNFT: true,
         realTimeAddresses: top10Addresses,
+      }).then(() => {
+        checkIsExpireAndUpdateId = setTimeout(() => {
+          if (inited.current) {
+            return;
+          }
+          inited.current = true;
+          checkIsExpireAndUpdate(false, {
+            disableNFT: true,
+            realTimeAddresses: top10Addresses,
+            ignoreLoading: !top10Balance,
+          });
+        }, 500);
       });
-    }, 100);
+    }, 50);
     return () => {
-      id && clearTimeout(id);
+      cacheTop10AssetsId && clearTimeout(cacheTop10AssetsId);
+      checkIsExpireAndUpdateId && clearTimeout(checkIsExpireAndUpdateId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10Addresses.length, isListVisable]);
-
-  const getItemType = useCallback((item: ActionItem) => {
-    const type = item.type;
-    if (type === 'empty-token') {
-      return 'empty_token';
-    }
-    if (type === 'empty-assets') {
-      return 'empty_assets';
-    }
-    if (type === 'empty-defi') {
-      return 'empty_defi';
-    }
-    if (
-      type === 'fold_defi' ||
-      type === 'unfold_defi' ||
-      type === 'loading-defi-skeleton'
-    ) {
-      return 'defi';
-    }
-    if (type?.includes('_header')) {
-      return 'asset_header';
-    }
-    if (type?.includes('toggle_')) {
-      return 'header';
-    }
-    return 'body';
-  }, []);
-
-  const overrideItemLayout = useCallback(
-    (layout: { span?: number; size?: number }, item: ActionItem) => {
-      const type = getItemType(item);
-      const sizeMap = {
-        asset_header: ASSETS_LIST_HEADER,
-        header: ASSETS_SECTION_HEADER,
-        empty_token: TOKEN_EMPTY_ROW_HIGHT,
-        empty_assets: ASSETS_EMPTY_ROW_HIGHT,
-        empty_defi: ASSETS_EMPTY_ROW_HIGHT,
-        defi: DEFI_ITEM_HEIGHT,
-      };
-      layout.size = sizeMap[type] || ASSETS_ITEM_HEIGHT_NEW;
-    },
-    [getItemType],
-  );
+  }, [!top10Balance, top10Addresses.length]);
 
   const ListRenderSeparator = useCallback(() => {
     return <View style={{ height: SPACING_HEIGHT }} />;
@@ -722,7 +665,7 @@ export const Portfolios = () => {
       onRefresh();
       setTriggerRefresh(false);
     }
-  }, [isFocused, onRefresh, setTriggerRefresh, triggerRefresh]);
+  }, [onRefresh, setTriggerRefresh, triggerRefresh]);
 
   const keyExtractor = useCallback((item: ActionItem) => {
     return getItemId(item);
@@ -734,9 +677,7 @@ export const Portfolios = () => {
       data={hasNotAssets ? [{ type: 'empty-token' }] : portfolioListData}
       renderItem={renderItem}
       ItemSeparatorComponent={ListRenderSeparator}
-      onViewableItemsChanged={() => {
-        setIsListVisable(true);
-      }}
+      initialNumToRender={15}
       ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}
