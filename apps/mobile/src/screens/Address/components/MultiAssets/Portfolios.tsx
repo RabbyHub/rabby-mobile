@@ -82,7 +82,15 @@ export const Portfolios = () => {
     accountsNoUnique: true,
   });
   const focusedTab = useFocusedTab();
-  const isFocused = useMemo(() => focusedTab === 'portfolios', [focusedTab]);
+  const hasBeenFocusedRef = useRef(false);
+
+  const isFocused = useMemo(() => {
+    const currentFocused = focusedTab === 'portfolios';
+    if (currentFocused) {
+      hasBeenFocusedRef.current = true;
+    }
+    return hasBeenFocusedRef.current;
+  }, [focusedTab]);
 
   const { triggerUpdate: triggerRefresh, setTriggerUpdate: setTriggerRefresh } =
     useTriggerUpdate();
@@ -623,16 +631,18 @@ export const Portfolios = () => {
       if (!isFocused) {
         return;
       }
+      if (inited.current) {
+        return;
+      }
+      inited.current = true;
       checkIsExpireAndUpdateId && clearTimeout(checkIsExpireAndUpdateId);
+      console.log('CUSTOM_LOGGER:=>: getCacheTop10Assets');
       getCacheTop10Assets({
         disableNFT: true,
         realTimeAddresses: top10Addresses,
       }).then(() => {
+        console.log('CUSTOM_LOGGER:=>: checkIsExpireAndUpdateId');
         checkIsExpireAndUpdateId = setTimeout(() => {
-          if (inited.current) {
-            return;
-          }
-          inited.current = true;
           checkIsExpireAndUpdate(false, {
             disableNFT: true,
             realTimeAddresses: top10Addresses,
@@ -678,12 +688,6 @@ export const Portfolios = () => {
     return getItemId(item);
   }, []);
 
-  console.log('CUSTOM_LOGGER:=>: FlatList', {
-    tokens: tokens.length,
-    portfolios: portfolios.length,
-    portfolioListData: portfolioListData.length,
-  });
-
   return (
     <Tabs.FlatList
       keyExtractor={keyExtractor}
@@ -691,9 +695,6 @@ export const Portfolios = () => {
       renderItem={renderItem}
       ItemSeparatorComponent={ListRenderSeparator}
       initialNumToRender={15}
-      onViewableItemsChanged={() => {
-        console.log('CUSTOM_LOGGER:=>: onViewableItemsChanged');
-      }}
       ListHeaderComponent={<View style={{ height: HEADER_PADDING_HEIGHT }} />}
       ListFooterComponent={ListRenderFooter}
       showsVerticalScrollIndicator={false}

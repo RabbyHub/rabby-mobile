@@ -68,7 +68,7 @@ function Chart({
     // 延迟初始化动画，避免页面切换时的卡顿
     const timer = setTimeout(() => {
       setIsInitialized(true);
-    }, 100);
+    }, 150);
 
     return () => {
       clearTimeout(timer);

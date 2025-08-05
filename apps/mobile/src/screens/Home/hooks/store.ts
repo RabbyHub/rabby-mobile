@@ -459,7 +459,7 @@ export const useAssetsMap = ({
     }
 
     const tokens = combinedTokens(assetsMap);
-    top20TokensCache = tokens.slice(0, 20);
+    top20TokensCache = tokens.filter(item => !item._isFold).slice(0, 20);
     return tokens;
   }, [assetsMap, hideCombined]);
 
