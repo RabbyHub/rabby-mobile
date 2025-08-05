@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { Alert } from 'react-native';
 
 import { BackgroundBridge } from './BackgroundBridge';
@@ -12,48 +12,11 @@ import {
   trustedProtocolToDeeplink,
 } from '@/constant/dappView';
 import { createDappBySession } from '../apis/dapp';
+import { useRefState } from '@/hooks/common/useRefState';
 
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
 export const BUILTIN_SPECIAL_URLS = [BLANK_PAGE, BLANK_RABBY_PAGE];
-
-export function useBackgroundBridges() {
-  const [, setSpinner] = useState(false);
-  const backgroundBridgeRefs = useRef<BackgroundBridge[]>([]);
-
-  const putBackgroundBridge = useCallback((bridge: BackgroundBridge) => {
-    const prev = backgroundBridgeRefs.current;
-    prev.push(bridge);
-
-    backgroundBridgeRefs.current = prev;
-    setSpinner(prev => !prev);
-  }, []);
-
-  const removeBackgroundBridge = useCallback((bridge: BackgroundBridge) => {
-    const prev = backgroundBridgeRefs.current;
-    const idx = prev.indexOf(bridge);
-
-    if (idx === -1) {
-      return prev;
-    }
-
-    prev.splice(idx, 1);
-
-    backgroundBridgeRefs.current = prev;
-  }, []);
-
-  const clearBackgroundBridges = useCallback(() => {
-    backgroundBridgeRefs.current = [];
-    setSpinner(prev => !prev);
-  }, []);
-
-  return {
-    backgroundBridgeRefs,
-    putBackgroundBridge,
-    removeBackgroundBridge,
-    clearBackgroundBridges,
-  };
-}
 
 type WebView = import('react-native-webview').WebView;
 type OnLoadStart = (
@@ -68,13 +31,12 @@ type OnMessage = import('react-native-webview').WebViewProps['onMessage'] &
 export type OnSelfClose = (reason: 'phishing') => void;
 
 export function useSetupWebview({
-  dappOrigin,
   siteInfoRefs: { urlRef, titleRef, iconRef },
   webviewRef,
   webviewIdRef,
-}: // onSelfClose,
-{
-  dappOrigin: string;
+}: {
+  /** @deprecated */
+  dappOrigin?: string;
   siteInfoRefs: {
     urlRef: React.MutableRefObject<string>;
     titleRef: React.MutableRefObject<string>;
@@ -82,10 +44,9 @@ export function useSetupWebview({
   };
   webviewIdRef: React.MutableRefObject<string>;
   webviewRef: React.MutableRefObject<WebView | null>;
-  // onSelfClose?: OnSelfClose;
 }) {
-  const { backgroundBridgeRefs, putBackgroundBridge, removeBackgroundBridge } =
-    useBackgroundBridges();
+  const { state: currentBridge, setRefState: putBackgroundBridge } =
+    useRefState<BackgroundBridge | null>(null);
 
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
@@ -124,26 +85,14 @@ export function useSetupWebview({
           return;
         }
         if (data.name) {
-          const senderOrigin = urlUtils.canoicalizeDappUrl(
-            nativeEvent.url,
-          ).httpOrigin;
-
-          backgroundBridgeRefs.current.forEach(bridge => {
-            const bridgeOrigin = urlUtils.canoicalizeDappUrl(
-              bridge.url,
-            ).httpOrigin;
-
-            if (bridgeOrigin === senderOrigin) {
-              bridge.onMessage(data);
-            }
-          });
+          currentBridge?.onMessage(data);
           return;
         }
       } catch (e) {
         console.error(e, `Browser::onMessage on ${urlRef.current}`);
       }
     },
-    [backgroundBridgeRefs, urlRef],
+    [currentBridge, urlRef],
   );
 
   const changeUrl = useCallback(
@@ -155,51 +104,66 @@ export function useSetupWebview({
     [urlRef, titleRef],
   );
 
+  const onReloadingRef = useRef<boolean>(false);
   // would be called every time the url changes
   const onLoadStart: OnLoadStart = useCallback(
     async ({ nativeEvent }, treatAsReload = false) => {
-      if (
-        nativeEvent.url !== urlRef.current &&
-        nativeEvent.loading &&
-        nativeEvent.navigationType === 'backforward'
-      ) {
-        // changeAddressBar({ ...nativeEvent });
-      }
+      if (onReloadingRef.current) return;
+      onReloadingRef.current = treatAsReload;
 
-      // setError(false);
+      try {
+        if (
+          nativeEvent.url !== urlRef.current &&
+          nativeEvent.loading &&
+          nativeEvent.navigationType === 'backforward'
+        ) {
+          // changeAddressBar({ ...nativeEvent });
+        }
 
-      changeUrl(nativeEvent);
-      // sendActiveAccount();
+        // setError(false);
 
-      // icon.current = null;
+        changeUrl(nativeEvent);
+        // sendActiveAccount();
 
-      if (treatAsReload) {
-        // Reset the previous bridges
-        backgroundBridgeRefs.current.length &&
-          backgroundBridgeRefs.current.forEach(bridge => {
-            bridge.onDisconnect();
-            sessionService.deleteSession(bridge);
-          });
+        // icon.current = null;
 
-        // // Cancel loading the page if we detect its a phishing page
-        // const { hostname } = new URL(nativeEvent.url);
-        // if (!isAllowedUrl(hostname)) {
-        //   handleNotAllowedUrl(url);
-        //   return false;
-        // }
+        if (treatAsReload) {
+          if (currentBridge) {
+            currentBridge.onDisconnect();
+            sessionService.deleteSession(currentBridge);
+          }
 
-        const dappOrigin = nativeEvent.url;
-        backgroundBridgeRefs.current = [];
-        const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
-          ? dappOrigin
-          : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
-        initializeBackgroundBridge(formattedDappOrigin, true);
+          // // Cancel loading the page if we detect its a phishing page
+          // const { hostname } = new URL(nativeEvent.url);
+          // if (!isAllowedUrl(hostname)) {
+          //   handleNotAllowedUrl(url);
+          //   return false;
+          // }
+
+          const dappOrigin = nativeEvent.url;
+          putBackgroundBridge(null, false);
+          const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
+            ? dappOrigin
+            : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
+          initializeBackgroundBridge(formattedDappOrigin, true);
+        }
+      } catch (e: any) {
+        console.error('useSetupWebview::onLoadStart::', e);
+      } finally {
+        onReloadingRef.current = false;
       }
     },
-    [backgroundBridgeRefs, changeUrl, initializeBackgroundBridge, urlRef],
+    [
+      currentBridge,
+      changeUrl,
+      initializeBackgroundBridge,
+      urlRef,
+      putBackgroundBridge,
+    ],
   );
 
   return {
+    currentBridge,
     onLoadStart,
     onMessage,
   };
