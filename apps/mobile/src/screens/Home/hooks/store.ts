@@ -80,9 +80,15 @@ export interface IAssets {
   nfts?: DisplayNftItem[];
 }
 
-export const combinedTokens = (assetsMap: {
-  [address: string]: IAssets;
-}): CombineTokensItem[] => {
+export const combinedTokens = (
+  assetsMap: {
+    [address: string]: IAssets;
+  },
+  filter?: {
+    chain?: string;
+    tokenId?: string;
+  },
+): CombineTokensItem[] => {
   const { unfoldTokens = [] } =
     preferenceService.getUserTokenSettingsSync() || {};
   const tokenMap: Record<string, OriginalCombineTokensItem> = {};
@@ -96,6 +102,16 @@ export const combinedTokens = (assetsMap: {
     }
     lowerAddresses.delete(address.toLowerCase());
     assets.tokens?.forEach(token => {
+      if (filter) {
+        if (filter.chain && filter.tokenId) {
+          if (
+            filter.chain.toLowerCase() !== token.chain.toLowerCase() ||
+            filter.tokenId.toLowerCase() !== token._tokenId.toLowerCase()
+          ) {
+            return;
+          }
+        }
+      }
       const key = `${token._tokenId}-${token.chain}`;
       if (!tokenMap[key]) {
         tokenMap[key] = {
@@ -453,6 +469,13 @@ export const useAssetsMap = ({
     }
   }, [refreshTagNft, nftNounce, setNftNounce]);
 
+  const getTokenCombined = useCallback(
+    (tokenId: string, chain: string) => {
+      return combinedTokens(assetsMap, { tokenId, chain });
+    },
+    [assetsMap],
+  );
+
   const memoTokens = useMemo(() => {
     if (hideCombined) {
       return top20TokensCache;
@@ -485,6 +508,7 @@ export const useAssetsMap = ({
     portfolios: memoPortfolios,
     nftList: memoNFTs,
     assetsMap,
+    getTokenCombined,
     setAssetsMap,
   };
 };

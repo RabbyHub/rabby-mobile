@@ -51,6 +51,7 @@ export const useAssets = ({
     updateNFTs,
     updatePortfolios,
     updateTokens,
+    getTokenCombined,
   } = useAssetsMap({ hideCombined });
 
   const loadToken = useMemoizedFn(async (address: string, force?: boolean) => {
@@ -443,6 +444,7 @@ export const useAssets = ({
     nftList,
     assetsMap,
     isLoading,
+    getTokenCombined,
     hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
@@ -468,7 +470,7 @@ export const useInitDetectDBAssets = () => {
     batchLoadCacheTokens,
     batchLoadCacheDefi,
     batchLoadCacheNFT,
-  } = useAssets();
+  } = useAssets({ hideCombined: true });
   const { userTokenSettings } = useUserTokenSettings();
 
   const debounceReloadTokenList = useMemo(
