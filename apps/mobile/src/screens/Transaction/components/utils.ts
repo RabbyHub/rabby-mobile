@@ -237,25 +237,12 @@ export const judgeIsSmallUsdTxInApi = (
   return false;
 };
 
-const localHistoryFillTokenDict = (token: TokenItem) => {
-  const resTokenDict = duplicatelyStringifiedAppJsonStore.getItem(
-    '@HistoryTokenDict',
-    {},
-  );
-  duplicatelyStringifiedAppJsonStore.setItem('@HistoryTokenDict', {
-    ...resTokenDict,
-    [`${token.chain}_token:${token.id}`]: token,
-  });
-};
-
 export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
   try {
     const actionData = tx.action?.actionData;
     if (!actionData?.send) {
       return;
     }
-
-    localHistoryFillTokenDict(actionData.send.token);
 
     const item = new LocalHistoryItemEntity();
     LocalHistoryItemEntity.fillEntityFromLocalSend(item, tx);
