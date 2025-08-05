@@ -328,7 +328,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleViewTabs = useMemoizedFn(async () => {
       if (isActive) {
-        await handleViewShot(webviewState.resolvedUrl);
+        setTimeout(() => {
+          handleViewShot(webviewState.resolvedUrl);
+        }, 2000);
       }
 
       setPartialBrowserState({
@@ -591,14 +593,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         name: nativeEvent.title,
                         url: nativeEvent.url,
                       });
-                      // if (
-                      //   isActive &&
-                      //   browserState.isShowBrowser &&
-                      //   !browserState.isShowSearch &&
-                      //   !browserState.isShowManage
-                      // ) {
-                      //   handleViewShot(nativeEvent.url);
-                      // }
+                      if (
+                        isActive &&
+                        browserState.isShowBrowser &&
+                        !browserState.isShowSearch &&
+                        !browserState.isShowManage
+                      ) {
+                        setTimeout(() => {
+                          handleViewShot(nativeEvent.url);
+                        }, 200);
+                      }
                     }}
                     onShouldStartLoadWithRequest={nativeEvent => {
                       return checkShouldStartLoadingWithRequestForDappWebView(
