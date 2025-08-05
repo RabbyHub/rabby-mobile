@@ -221,7 +221,7 @@ export function useBrowser() {
         newTab.url,
       );
 
-      if (dappService.getDapp(targetOrigin)?.isDapp) {
+      if (dappService.getDapp(targetOrigin)?.isDapp && url?.trim()) {
         matomoRequestEvent({
           category: 'Websites Usage',
           action: 'Website_OpenDapp',
