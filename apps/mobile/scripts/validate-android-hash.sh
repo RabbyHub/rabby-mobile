@@ -5,6 +5,15 @@ set -euo pipefail
 
 bundle exec fastlane android hashcheck destination_path:"$LOG_DIR"
 
+
+# 关键路径 AOT 机器码
+files_to_delete=(
+  "assets/dexopt/baseline.prof"
+  "assets/dexopt/baseline.profm"
+)
+
+zip -d -q "$LOG_DIR/app-hash-unsigned.apk" "${files_to_delete[@]}" || true
+
 apk_hash=$(shasum -a 256 "$LOG_DIR/app-hash-unsigned.apk" | awk '{print $1}')
 bundle_hash=$(shasum -a 256 "$APP_DIR/android/app/build/generated/assets/createBundleHashJsAndAssets/index.android.bundle" | awk '{print $1}')
 
