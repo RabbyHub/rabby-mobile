@@ -401,10 +401,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     useEffect(() => {
       if (!isActive && !isEmptyTab) {
-        handleUpdateTab?.({
-          initialUrl: urlRef.current ? urlRef.current : undefined,
-          openTime: Date.now(),
-        });
         const id = setTimeout(() => {
           handleUpdateTab?.({
             initialUrl: urlRef.current ? urlRef.current : undefined,
