@@ -1,5 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
-import { Alert } from 'react-native';
+import React, { useCallback, useRef, useEffect } from 'react';
 
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
@@ -45,8 +44,11 @@ export function useSetupWebview({
   webviewIdRef: React.MutableRefObject<string>;
   webviewRef: React.MutableRefObject<WebView | null>;
 }) {
-  const { state: currentBridge, setRefState: putBackgroundBridge } =
-    useRefState<BackgroundBridge | null>(null);
+  const {
+    state: currentBridge,
+    setRefState: putBackgroundBridge,
+    stateRef: currentBridgeRef,
+  } = useRefState<BackgroundBridge | null>(null);
 
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
@@ -71,9 +73,9 @@ export function useSetupWebview({
         dappService.addDapp(createDappBySession(session));
       }
 
-      putBackgroundBridge(newBridge);
+      putBackgroundBridge(newBridge, true);
     },
-    [iconRef, putBackgroundBridge, titleRef, urlRef, webviewRef, webviewIdRef],
+    [urlRef, webviewRef, webviewIdRef, titleRef, iconRef, putBackgroundBridge],
   );
 
   const onMessage = useCallback(
@@ -161,6 +163,15 @@ export function useSetupWebview({
       putBackgroundBridge,
     ],
   );
+
+  useEffect(() => {
+    return () => {
+      if (currentBridgeRef.current) {
+        currentBridgeRef.current?.onDisconnect();
+        currentBridgeRef.current = null;
+      }
+    };
+  }, [currentBridgeRef]);
 
   return {
     currentBridge,
