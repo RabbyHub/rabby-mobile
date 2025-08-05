@@ -31325,14 +31325,14 @@ __metadata:
 
 "react-native-webview@patch:react-native-webview@npm%3A13.10.5#./.yarn/patches/react-native-webview-npm-13.10.5-714eb41569.patch::locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A.":
   version: 13.10.5
-  resolution: "react-native-webview@patch:react-native-webview@npm%3A13.10.5#./.yarn/patches/react-native-webview-npm-13.10.5-714eb41569.patch::version=13.10.5&hash=7c58c0&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
+  resolution: "react-native-webview@patch:react-native-webview@npm%3A13.10.5#./.yarn/patches/react-native-webview-npm-13.10.5-714eb41569.patch::version=13.10.5&hash=07550e&locator=%40rabby-wallet%2Fmobile-monorepo%40workspace%3A."
   dependencies:
     escape-string-regexp: 2.0.0
     invariant: 2.2.4
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: d6d297695c676aecd9c72c0ddd4db37361a8b0925cc2317944f1e65ce294886d798d6ee24aad97ed94bda035b953dc8ef023d59490cf258c1c7826f62778cd2e
+  checksum: 451749d3241dd7d0f9132f2a0c610cdc19383c68c5b46c64b4fc0de33032883972457858ce31ad16b982b9e684444e454527ceb85eb0bb66023825ff1e8541e3
   languageName: node
   linkType: hard
 
