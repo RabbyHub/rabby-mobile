@@ -64,10 +64,6 @@ def isNewArchitectureEnabled() {
   return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true"
 }
 
-if (isNewArchitectureEnabled()) {
-  apply plugin: "com.facebook.react"
-}
-
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
@@ -201,8 +197,6 @@ androidComponents {
 }
 
 dependencies {
-    implementation "com.facebook.react:react-native:+"
-
     implementation 'com.google.firebase:firebase-bom:33.2.0'
 
     implementation 'com.google.firebase:firebase-analytics:17.4.1'
