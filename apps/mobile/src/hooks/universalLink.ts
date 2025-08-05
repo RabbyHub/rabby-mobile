@@ -88,10 +88,13 @@ export function useUniversalLinkOnTop() {
         pwdStatus === PasswordStatus.UseBuiltIn ||
         (await getRabbyLockInfo()).isUseBuiltInPwd
       ) {
-        toastTip(t('page.universalLink.error.setupWalletFirst'), {
-          duration: 3000,
-          hideOnPress: true,
-        });
+        hideToastRef.current = toastTip(
+          t('page.universalLink.error.setupWalletFirst'),
+          {
+            duration: 3000,
+            hideOnPress: true,
+          },
+        );
         setNextAppLink('');
       } else {
         // notify trigger unlock request here
