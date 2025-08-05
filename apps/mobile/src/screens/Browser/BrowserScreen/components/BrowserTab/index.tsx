@@ -256,7 +256,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       setWebViewState(prev => ({ ...prev, resolvedUrl: urlToGo }));
       if (isEmptyTab) {
         await sleep(200);
-        await handleViewShot('');
+        await handleViewShot();
         onOpenTab?.(urlToGo);
       } else {
         webviewRef?.current?.injectJavaScript(
@@ -287,7 +287,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       );
     });
 
-    const handleViewShot = useMemoizedFn(async (url: string) => {
+    const handleViewShot = useMemoizedFn(async () => {
       try {
         const viewShot = await viewShotRef.current?.capture?.();
         if (!viewShot || !tabId) {
@@ -298,7 +298,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           tabId,
         });
         onUpdateTab?.({
-          url: url,
           viewShot: filePath,
         });
       } catch (e) {
@@ -328,9 +327,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleViewTabs = useMemoizedFn(async () => {
       if (isActive) {
-        setTimeout(() => {
-          handleViewShot(webviewState.resolvedUrl);
-        }, 2000);
+        await handleViewShot();
       }
 
       setPartialBrowserState({
@@ -344,7 +341,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleGoHome = useMemoizedFn(async () => {
       if (isActive) {
-        await handleViewShot(webviewState.resolvedUrl);
+        await handleViewShot();
       }
       setPartialBrowserState({
         isShowBrowser: false,
@@ -377,13 +374,13 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       },
     );
 
-    // useEffect(() => {
-    //   if (isEmptyTab && isActive) {
-    //     setTimeout(() => {
-    //       handleViewShot('');
-    //     }, 300);
-    //   }
-    // }, [handleViewShot, isActive, isEmptyTab, isShowSearch]);
+    useEffect(() => {
+      if (isActive && progress === 1) {
+        setTimeout(() => {
+          handleViewShot();
+        }, 300);
+      }
+    }, [handleViewShot, isActive, progress]);
 
     React.useImperativeHandle(
       ref,
@@ -593,16 +590,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         name: nativeEvent.title,
                         url: nativeEvent.url,
                       });
-                      if (
-                        isActive &&
-                        browserState.isShowBrowser &&
-                        !browserState.isShowSearch &&
-                        !browserState.isShowManage
-                      ) {
-                        setTimeout(() => {
-                          handleViewShot(nativeEvent.url);
-                        }, 200);
-                      }
+                      // if (
+                      //   isActive &&
+                      //   browserState.isShowBrowser &&
+                      //   !browserState.isShowSearch &&
+                      //   !browserState.isShowManage
+                      // ) {
+                      //   setTimeout(() => {
+                      //     handleViewShot(nativeEvent.url);
+                      //   }, 200);
+                      // }
                     }}
                     onShouldStartLoadWithRequest={nativeEvent => {
                       return checkShouldStartLoadingWithRequestForDappWebView(
