@@ -6,8 +6,9 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { createGetStyles2024 } from '@/utils/styles';
-import { NFTCollection } from '@rabby-wallet/rabby-api/dist/types';
+import { NFTCollection, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,32 +29,45 @@ export const RevokeNFTCollectionBtn = ({
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
+  const { sendMiniTransactions } = useMiniApproval();
 
-  const { data: isApproved } = useRequest(async () => {
-    return getNFTApprovedForAll({
-      chainServerId: collection.chain || (collection as any).chain_id,
-      contractAddress: collection.id,
-      spender: spender,
-      address: account.address,
-      account,
-    });
-  });
+  const { data: isApproved, runAsync: getApprovedStatus } = useRequest(
+    async () => {
+      return getNFTApprovedForAll({
+        chainServerId: collection.chain || (collection as any).chain_id,
+        contractAddress: collection.id,
+        spender: spender,
+        address: account.address,
+        account,
+      });
+    },
+  );
 
   const handleRevoke = useMemoizedFn(async () => {
     try {
-      await revokeNFTApprove({
-        chainServerId: collection.chain || (collection as any).chain_id,
-        spender: spender!,
-        contractId: collection.id,
-        abi: 'ERC721',
-        isApprovedForAll: true,
+      const data = await revokeNFTApprove(
+        {
+          chainServerId: collection.chain || (collection as any).chain_id,
+          spender: spender!,
+          contractId: collection.id,
+          abi: 'ERC721',
+          isApprovedForAll: true,
+          account,
+        },
+        undefined,
+        true,
+      );
+      const tx = data.params[0] as Tx;
+      const res = await sendMiniTransactions({
+        txs: [tx],
         account,
       });
+      setTimeout(() => {
+        getApprovedStatus();
+      }, 500);
     } catch (error) {
       console.error(error);
     }
-
-    resetNavigationTo(navigation, 'Home');
   });
 
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
