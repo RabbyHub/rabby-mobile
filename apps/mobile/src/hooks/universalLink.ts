@@ -1,22 +1,14 @@
-import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { Linking } from 'react-native';
+import { t } from 'i18next';
 import { keyringService } from '@/core/services';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useBrowser } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
-import { toast, toastIndicator, toastWithIcon } from '@/components/Toast';
+import { toastIndicator, toastWithIcon } from '@/components/Toast';
 import { RcIconInfoForToast } from '@/screens/Unlock/icons';
-
-// const nextAppLinkAtom = atom<string | null>(null);
-
-// export function useNextAppAction() {
-//   const [nextAppLink, setNextAppLink] = useAtom(nextAppLinkAtom);
-
-//   return {
-//     nextAppLink,
-//   }
-// }
+import { getRabbyLockInfo, PasswordStatus } from '@/core/apis/lock';
+import { usePasswordStatus } from './useLock';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -83,17 +75,28 @@ export function useUniversalLinkOnTop() {
     [openTab],
   );
 
+  const { pwdStatus } = usePasswordStatus();
+
   const hideToastRef = useRef<() => void>(() => {});
   const handleAppLink = useCallback(
-    (url: string, isInit = false) => {
+    async (url: string, isInit = false) => {
       if (keyringService.isUnlocked()) {
         // just parse the link if app is unlocked
         parseActionAndProcessLink(url, handleActions);
         setNextAppLink('');
+      } else if (
+        pwdStatus === PasswordStatus.UseBuiltIn ||
+        (await getRabbyLockInfo()).isUseBuiltInPwd
+      ) {
+        toastTip(t('page.universalLink.error.setupWalletFirst'), {
+          duration: 3000,
+          hideOnPress: true,
+        });
+        setNextAppLink('');
       } else {
         // notify trigger unlock request here
         hideToastRef.current = toastIndicator(
-          'Please unlock the app to open the link.',
+          t('page.universalLink.error.unlockWalletFirst'),
           {
             duration: 30000,
             hideOnPress: false,
@@ -108,7 +111,7 @@ export function useUniversalLinkOnTop() {
         }
       }
     },
-    [handleActions],
+    [pwdStatus, handleActions],
   );
 
   useMount(() => {
