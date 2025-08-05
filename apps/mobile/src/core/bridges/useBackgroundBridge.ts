@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Alert } from 'react-native';
 
 import { BackgroundBridge } from './BackgroundBridge';
@@ -30,6 +30,7 @@ export function useBackgroundBridges() {
   }, []);
 
   const removeBackgroundBridge = useCallback((bridge: BackgroundBridge) => {
+    bridge.onDisconnect();
     const prev = backgroundBridgeRefs.current;
     const idx = prev.indexOf(bridge);
 
@@ -83,9 +84,15 @@ export function useSetupWebview({
   const { backgroundBridgeRefs, putBackgroundBridge, removeBackgroundBridge } =
     useBackgroundBridges();
 
+  const backgroundBridgeRef = useRef<BackgroundBridge | undefined>(undefined);
+
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
       urlRef.current = urlBridge;
+      if (backgroundBridgeRef.current) {
+        removeBackgroundBridge(backgroundBridgeRef.current);
+      }
+      backgroundBridgeRef.current = undefined;
       const newBridge = new BackgroundBridge({
         webview: webviewRef,
         webviewIdRef: webviewIdRef,
@@ -95,6 +102,7 @@ export function useSetupWebview({
         isMainFrame,
       });
 
+      backgroundBridgeRef.current = newBridge;
       const session = sessionService.getOrCreateSession(newBridge);
       session?.setProp({
         origin: urlBridge,
@@ -108,7 +116,15 @@ export function useSetupWebview({
 
       putBackgroundBridge(newBridge);
     },
-    [iconRef, putBackgroundBridge, titleRef, urlRef, webviewRef, webviewIdRef],
+    [
+      urlRef,
+      webviewRef,
+      webviewIdRef,
+      titleRef,
+      iconRef,
+      putBackgroundBridge,
+      removeBackgroundBridge,
+    ],
   );
 
   const onMessage = useCallback(
@@ -192,6 +208,14 @@ export function useSetupWebview({
     },
     [backgroundBridgeRefs, changeUrl, initializeBackgroundBridge, urlRef],
   );
+
+  useEffect(() => {
+    return () => {
+      if (backgroundBridgeRef.current) {
+        removeBackgroundBridge(backgroundBridgeRef.current);
+      }
+    };
+  }, [removeBackgroundBridge]);
 
   return {
     onLoadStart,

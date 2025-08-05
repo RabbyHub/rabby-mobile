@@ -382,7 +382,7 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         await RNFS.unlink(filePath);
       }
       await RNFS.copyFile(tempUri, filePath);
-      return filePath;
+      return filePath?.startsWith('file://') ? filePath : `file://${filePath}`;
     } catch (e) {
       console.error(e);
     }

@@ -213,6 +213,9 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
             }
           }}
           onOpenURL={url => {
+            if (!url?.trim()) {
+              return;
+            }
             if (
               browserState.searchTabId &&
               activeDappWebViewControlRef?.current?.getTabId() ===

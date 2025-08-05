@@ -205,7 +205,7 @@ export function useBrowser() {
         isDapp?: boolean;
       },
     ) => {
-      if (!url || !/^https?:\/\//.test(url)) {
+      if (!url?.trim() || !/^https?:\/\//.test(url)) {
         // switchToTab(emptyTab.id);
         return;
       }

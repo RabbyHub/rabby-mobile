@@ -340,7 +340,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       // });
     });
 
-    const handleGoHome = useMemoizedFn(() => {
+    const handleGoHome = useMemoizedFn(async () => {
+      if (isActive) {
+        await handleViewShot(webviewState.resolvedUrl);
+      }
       setPartialBrowserState({
         isShowBrowser: false,
       });
@@ -534,8 +537,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     onLoadStart={e => {
                       webviewProps?.onLoadStart?.(e);
                       onLoadStart(e);
-                      setIsLoading(true);
-                      setProgress(0);
+                      if (e.nativeEvent.loading) {
+                        setIsLoading(true);
+                        setProgress(0);
+                      }
                       const { nativeEvent } = e;
 
                       if (
@@ -563,7 +568,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       changeViewPortForDesktop(contentMode, 0);
                     }}
                     onLoadEnd={e => {
-                      setIsLoading(false);
+                      if (!e.nativeEvent.loading) {
+                        setIsLoading(false);
+                      }
                       webviewProps?.onLoadEnd?.(e);
                       const { nativeEvent } = e;
                       // if (nativeEvent.loading) {
@@ -584,14 +591,14 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         name: nativeEvent.title,
                         url: nativeEvent.url,
                       });
-                      if (
-                        isActive &&
-                        browserState.isShowBrowser &&
-                        !browserState.isShowSearch &&
-                        !browserState.isShowManage
-                      ) {
-                        handleViewShot(nativeEvent.url);
-                      }
+                      // if (
+                      //   isActive &&
+                      //   browserState.isShowBrowser &&
+                      //   !browserState.isShowSearch &&
+                      //   !browserState.isShowManage
+                      // ) {
+                      //   handleViewShot(nativeEvent.url);
+                      // }
                     }}
                     onShouldStartLoadWithRequest={nativeEvent => {
                       return checkShouldStartLoadingWithRequestForDappWebView(

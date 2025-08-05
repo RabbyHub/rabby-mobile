@@ -204,7 +204,11 @@ export const getAddressBarTitle = (url: string) => {
   }
   if (googleDomainList.includes(urlInfo.hostname)) {
     const search = urlInfo.searchParams.get('q');
-    if (urlInfo.pathname === '/search' && search && !search.includes('.')) {
+    if (
+      urlInfo.pathname === '/search' &&
+      search?.trim() &&
+      !search.includes('.')
+    ) {
       return search;
     }
   }
