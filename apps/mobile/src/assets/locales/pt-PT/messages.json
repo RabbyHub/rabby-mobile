@@ -907,6 +907,7 @@
     "gasTopUp": {
       "InsufficientBalanceTips": "Saldo insuficiente",
       "Select-from-supported-tokens": "Selecione dos tokens suportados",
+      "Deposit-tip": "Depositar com USDC/USDT",
       "Value": "Valor",
       "No_Tokens": "Sem Tokens",
       "Loading_Tokens": "A carregar Tokens...",
@@ -927,7 +928,8 @@
         "gasAccount": "GasAccount",
         "websites": "Websites",
         "search": "Pesquisar Token",
-        "copyTrading": "Copy Trading"
+        "copyTrading": "Copy Trading",
+        "watchlist": "Lista de Vigilância"
       }
     },
     "manageAddress": {
@@ -1094,7 +1096,8 @@
       },
       "historyTitle": "Histórico de Swap",
       "swapped": "Trocado",
-      "selectChainModalTitle": "Selecione Cadeia"
+      "selectChainModalTitle": "Selecione Cadeia",
+      "results": "Resultados"
     },
     "approvals": {
       "tab-switch": {
@@ -1803,6 +1806,9 @@
         "verifyDangerTips": "Este é um token de scam",
         "Issuedby": "Emitido por",
         "scamWarningTips": "Este é um token de baixa qualidade e pode ser uma fraude"
+      },
+      "hotTokenList": {
+        "title": "Quente"
       }
     },
     "tokenDetail": {
@@ -2260,7 +2266,29 @@
       "holdingProfit": "Holding/Profit",
       "smartWallets": "Carteiras Inteligentes",
       "twitterNews": "Notícias em X",
-      "myBalanceFromCopyTrading": "O meu saldo de Copy Trading"
+      "myBalanceFromCopyTrading": "O meu saldo de Copy Trading",
+      "gettingLatest": "A obter as últimas informações do Smart Money...",
+      "updateTokenText": "{{count}} tokens atualizados"
+    },
+    "watchlist": {
+      "empty": {
+        "title": "Ainda não há tokens na sua lista de observação"
+      },
+      "search": {
+        "title": "Pesquisar tokens"
+      },
+      "tokenHeader": {
+        "price": "Preço",
+        "token": "Token/FDV",
+        "change": "Mudança em 24H"
+      },
+      "footer": {
+        "skip": "Saltar",
+        "add": "Adicionar à Lista de Observação ({{count}})"
+      },
+      "toast": {
+        "remove": "Remover da Lista de Vigilância com Sucesso"
+      }
     }
   },
   "constant": {

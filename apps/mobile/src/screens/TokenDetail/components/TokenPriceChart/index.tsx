@@ -33,6 +33,7 @@ import { RelatedDeFiType, TokenFromAddressItem } from '../..';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { useTranslation } from 'react-i18next';
+import { unionBy } from 'lodash';
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
 const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
@@ -78,14 +79,21 @@ export function TokenPriceChart(props: Props) {
     });
 
     if (isSingleAddress) {
-      return token.amount + deFiAmount;
+      const tokenAmount = amountList.find(
+        item => item.address === finalAccount?.address,
+      )?.amount;
+      return (tokenAmount || 0) + deFiAmount;
     } else {
-      const totalTokenAmount = amountList.reduce((acc, item) => {
+      const amountUnionBy = unionBy(amountList, item =>
+        item.address.toLowerCase(),
+      );
+      const totalTokenAmount = amountUnionBy.reduce((acc, item) => {
         return acc + item.amount;
       }, 0);
+
       return totalTokenAmount + deFiAmount;
     }
-  }, [amountList, token, isSingleAddress, relateDefiList]);
+  }, [amountList, isSingleAddress, relateDefiList, finalAccount?.address]);
 
   const amount = useMemo(
     () => (priceType === 'holding' ? amountSum : 1),
@@ -148,8 +156,9 @@ export function TokenPriceChart(props: Props) {
         isLoss = token?.price_24h_change
           ? Number(token.price_24h_change) < 0
           : false;
-        currentPercent =
-          Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%';
+        currentPercent = token?.price_24h_change
+          ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
+          : '';
       } else {
         currentPercent =
           pre === 0

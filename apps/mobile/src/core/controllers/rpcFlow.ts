@@ -26,8 +26,6 @@ import { findChain } from '@/utils/chain';
 import { gnosisController } from './gnosisController';
 import { underline2Camelcase } from '../utils/common';
 import { reject } from 'lodash';
-import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
-import { Account } from '../services/preference';
 import { getRetryTxRecommendNonce, getRetryTxType } from '@/utils/errorTxRetry';
 import { hexToNumber, isHex } from 'viem';
 import { intToHex } from '@/utils/number';
@@ -470,29 +468,19 @@ function reportStatsData() {
 }
 
 export default async (request: ProviderRequest) => {
-  const origin = request.session?.origin || request.origin;
-  let account: Account | undefined = undefined;
-
-  if (origin) {
-    if (origin === INTERNAL_REQUEST_ORIGIN) {
-      account =
-        request.account || preferenceService.getFallbackAccount() || undefined;
-    } else {
-      const site = dappService.getDapp(origin);
-      if (site?.isConnected) {
-        account =
-          site.currentAccount ||
-          preferenceService.getFallbackAccount() ||
-          undefined;
-      }
-    }
-  }
-
-  console.log(account);
-
   const ctx: any = {
-    request: { ...request, account, requestedApproval: false },
+    request: { ...request, requestedApproval: false },
   };
+  try {
+    const origin = request.origin || request.session.origin;
+    const dapp = dappService.getDapp(origin);
+    if (dapp && !dapp.isDapp) {
+      dappService.updateDapp({
+        ...dapp,
+        isDapp: true,
+      });
+    }
+  } catch (e) {}
   notificationService.setStatsData();
   return flowContext(ctx).finally(() => {
     reportStatsData();

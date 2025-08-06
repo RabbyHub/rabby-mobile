@@ -34,13 +34,17 @@ import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
 import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
 import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
-import RcIconSearch from '@/assets2024/icons/home/IconSearch.svg';
+import RcIconWatchlist from '@/assets2024/icons/home/IconWatchlist.svg';
 
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import {
+  browserService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -93,6 +97,9 @@ import { RateModal } from '@/components/RateModal/RateModal';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useInitDetectDBAssets } from '../Search/useAssets';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
+import dayjs from 'dayjs';
 
 const HeaderHeight = 24;
 
@@ -351,17 +358,17 @@ function MultiAddressHome(): JSX.Element {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
         //   icon: RcIconDapps,
         // },
+        // {
+        //   key: MultiHomeFeatTitle.Dapps,
+        //   title: IS_IOS
+        //     ? t('page.home.services.websites')
+        //     : t('page.home.services.dapps'),
+        //   icon: RcIconDapps,
+        // },
         {
-          key: MultiHomeFeatTitle.Dapps,
-          title: IS_IOS
-            ? t('page.home.services.websites')
-            : t('page.home.services.dapps'),
-          icon: RcIconDapps,
-        },
-        {
-          key: MultiHomeFeatTitle.Search,
-          title: t('page.home.services.search'),
-          icon: RcIconSearch,
+          key: MultiHomeFeatTitle.Watchlist,
+          title: t('page.home.services.watchlist'),
+          icon: RcIconWatchlist,
         },
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
@@ -436,7 +443,6 @@ function MultiAddressHome(): JSX.Element {
 
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
-  const { tokenDict } = useHistoryTokenDict();
 
   const displayFundWallet = useMemo(
     () =>
@@ -497,26 +503,20 @@ function MultiAddressHome(): JSX.Element {
       top10Addresses,
       200,
       true,
-      undefined,
       timestamp / 1000,
     );
-
-    const pinedQueue = preferenceService.getPinToken();
     list.map(i => {
-      const isSmallTx = judgeIsSmallUsdTx(i, tokenDict, pinedQueue);
-      if (!isSmallTx) {
-        const status = i.status ?? 1;
-        const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
-        const addressTs =
-          clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? 0;
-        if (addressTs && addressTs / 1000 > i.time_at) {
-          return;
-        }
-        if (status === 1) {
-          transactionHistoryService.setSucceedList(id);
-        } else {
-          transactionHistoryService.setFailedList(id);
-        }
+      const status = i.status ?? 1;
+      const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
+      const addressTs =
+        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? 0;
+      if (addressTs && addressTs / 1000 > i.time_at) {
+        return;
+      }
+      if (status === 1) {
+        transactionHistoryService.setSucceedList(id);
+      } else {
+        transactionHistoryService.setFailedList(id);
       }
     });
 
@@ -614,9 +614,9 @@ function MultiAddressHome(): JSX.Element {
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
-  const handlePressSearch = useCallback(() => {
+  const handlePressWatchlist = useCallback(() => {
     navigation.navigate(RootNames.StackHomeNonTab, {
-      screen: RootNames.Search,
+      screen: RootNames.Watchlist,
       params: {},
     });
   }, [navigation]);
@@ -675,14 +675,8 @@ function MultiAddressHome(): JSX.Element {
             }),
           );
           break;
-        case MultiHomeFeatTitle.Dapps:
-          navigation.navigate(RootNames.StackBrowser, {
-            screen: RootNames.BrowserScreen,
-            params: {},
-          });
-          break;
-        case MultiHomeFeatTitle.Search: {
-          handlePressSearch();
+        case MultiHomeFeatTitle.Watchlist: {
+          handlePressWatchlist();
           break;
         }
         case MultiHomeFeatTitle.Ecosystem:
@@ -704,7 +698,7 @@ function MultiAddressHome(): JSX.Element {
       }
     },
     [
-      handlePressSearch,
+      handlePressWatchlist,
       navigateToSendPolyScreen,
       navigation,
       toggleUseAllAccountsOnScene,
@@ -761,6 +755,32 @@ function MultiAddressHome(): JSX.Element {
     });
   }, [appThemeConfig]);
 
+  useEffect(() => {
+    const lastReportTime =
+      preferenceService.getPreference('lastReportTime') || 0;
+    if (!lastReportTime || !dayjs(lastReportTime).isToday()) {
+      preferenceService.setPreference({
+        lastReportTime: Date.now(),
+      });
+
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: `Website_LikeStatus`,
+        label: `LikeDapp:${
+          browserService.bookmark.getState().ids?.length || 0
+        }`,
+      });
+
+      matomoRequestEvent({
+        category: 'Watchlist Usage',
+        action: `Watchlist_LikeStatus`,
+        label: `LikeToken:${
+          preferenceService.getPreference('pinedQueue')?.length || 0
+        }`,
+      });
+    }
+  }, []);
+
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
 
@@ -800,7 +820,7 @@ function MultiAddressHome(): JSX.Element {
           contentContainerStyle={[
             styles.scrollContainer,
             {
-              paddingBottom: bottom,
+              paddingBottom: bottom + 82,
             },
           ]}
           refreshControl={
@@ -858,6 +878,7 @@ function MultiAddressHome(): JSX.Element {
             })}
           </View>
         </ScrollView>
+        <BrowserSearchEntry />
       </View>
     </NormalScreenContainer2024>
   );

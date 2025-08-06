@@ -155,9 +155,7 @@ function GetStartedScreen(): JSX.Element {
           </View>
 
           <Text style={styles.appDesc}>
-            The game-changing wallet
-            {'\n'}
-            for Ethereum and all EVM chains
+            Your go-to wallet for Ethereum and EVM
           </Text>
         </View>
       </View>

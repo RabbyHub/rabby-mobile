@@ -63,7 +63,7 @@ export const useRisks = (
       let hasError = false;
       try {
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('timeout')), 2000);
+          setTimeout(() => reject(new Error('timeout')), 3000);
         });
 
         const addressDescPromise = getAddrDescWithCexLocalCacheSync(address);
@@ -148,7 +148,7 @@ export const useRisks = (
           timeoutPromise,
         ]);
 
-        if (!hasSended && !hasError) {
+        if (!hasSended) {
           setRisks([
             ...currRisks,
             {
@@ -162,7 +162,13 @@ export const useRisks = (
       } catch (error) {
         console.error('check transfer timeout or error', error);
         queue.clear();
-        setRisks(currRisks);
+        setRisks([
+          ...currRisks,
+          {
+            type: RiskType.NEVER_SEND,
+            value: t('page.confirmAddress.risks.noSend'),
+          },
+        ]);
       }
       setLoading(false);
     })();

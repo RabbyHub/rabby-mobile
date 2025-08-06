@@ -826,6 +826,7 @@
       "No_Tokens": "Không có Token",
       "Token": "Token",
       "Select-from-supported-tokens": "Chọn từ các token được hỗ trợ",
+      "Deposit-tip": "Nạp tiền bằng USDC/USDT",
       "Value": "Giá trị",
       "InsufficientBalanceTips": "Số dư không đủ",
       "Balance": "Số dư"
@@ -892,7 +893,8 @@
       "directlySwap": "Gói token {{symbol}} trực tiếp với hợp đồng thông minh",
       "historyTitle": "Lịch sử Swap",
       "swapped": "Đã trao đổi",
-      "selectChainModalTitle": "Chọn Chuỗi"
+      "selectChainModalTitle": "Chọn Chuỗi",
+      "results": "Kết quả"
     },
     "bridge": {
       "for-available-quote": "để có báo giá khả dụng",
@@ -1135,7 +1137,8 @@
         "receive": "Nhận",
         "websites": "Websites",
         "search": "Tìm kiếm Token",
-        "copyTrading": "Copy Trading"
+        "copyTrading": "Copy Trading",
+        "watchlist": "Danh sách theo dõi"
       }
     },
     "securityEngine": {
@@ -1502,6 +1505,9 @@
         "verifyDangerTips": "Đây là một token lừa đảo",
         "scamWarningTips": "Đây là một token chất lượng thấp và có thể là một trò lừa đảo",
         "Issuedby": "Được phát hành bởi"
+      },
+      "hotTokenList": {
+        "title": "Nóng"
       }
     },
     "sign": {
@@ -2089,7 +2095,29 @@
       "sameNameTokens": "Token Tên Giống Nhau",
       "bought": "Đã mua",
       "smartWalletsBuying": "{{len}} Ví Điện Tử Thông Minh Mua Sắm",
-      "myBalanceFromCopyTrading": "Số dư của tôi từ Copy Trading"
+      "myBalanceFromCopyTrading": "Số dư của tôi từ Copy Trading",
+      "updateTokenText": "{{count}} tokens đã được cập nhật",
+      "gettingLatest": "Nhận thông tin mới nhất từ Smart Money..."
+    },
+    "watchlist": {
+      "empty": {
+        "title": "Chưa có token nào trong danh sách theo dõi của bạn"
+      },
+      "search": {
+        "title": "Tìm kiếm token"
+      },
+      "tokenHeader": {
+        "price": "Giá",
+        "token": "Token/FDV",
+        "change": "24H Thay đổi"
+      },
+      "footer": {
+        "skip": "Bỏ qua",
+        "add": "Thêm vào Danh sách Theo dõi ({{count}})"
+      },
+      "toast": {
+        "remove": "Xóa khỏi danh sách theo dõi thành công"
+      }
     }
   },
   "component": {

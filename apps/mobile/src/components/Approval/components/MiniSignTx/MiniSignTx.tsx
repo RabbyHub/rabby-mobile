@@ -913,7 +913,8 @@ export const MiniSignTx = ({
               return result;
             });
             return [
-              gasAccountRes.gas_account_cost.total_cost,
+              (gasAccountRes.gas_account_cost.estimate_tx_cost || 0) +
+                (gasAccountRes.gas_account_cost?.gas_cost || 0),
               gasAccountRes.balance_is_enough,
               _.flatten(checkResult)?.some(e => e.code === 3001),
             ];
@@ -966,6 +967,10 @@ export const MiniSignTx = ({
 
           if (support1559) {
             tx = convertLegacyTo1559(tx);
+            tx.maxPriorityFeePerGas =
+              maxPriorityFee <= 0
+                ? tx.maxFeePerGas
+                : intToHex(Math.round(maxPriorityFee));
           }
 
           const preExecResult = await openapi.preExecTx({

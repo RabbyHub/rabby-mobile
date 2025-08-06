@@ -36,8 +36,6 @@ import {
 } from '@/components2024/GlobalBottomSheetModal/types';
 import { useWhiteListAddress } from '@/screens/Send/hooks/useWhiteListAddress';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
-import EditSVG from '@/assets2024/icons/common/edit-cc.svg';
-import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CaretDownIconCC } from '@/components/AccountSwitcher/icons/CaretDownIconCC';
@@ -110,7 +108,7 @@ const WhitelistInputScreen = () => {
     setHistoryVisible(false);
   }, []);
 
-  const confrimModalIRef = useRef<any>(null);
+  const confirmModalIRef = useRef<any>(null);
 
   const handleDone = useMemoizedFn(async () => {
     if (!input) {
@@ -132,11 +130,11 @@ const WhitelistInputScreen = () => {
       if (inWhitelist) {
         toast.show(t('page.whitelist.alreadyAdded'));
       } else {
-        if (confrimModalIRef.current) {
+        if (confirmModalIRef.current) {
           // clear last modal
-          removeGlobalBottomSheetModal2024(confrimModalIRef.current);
+          removeGlobalBottomSheetModal2024(confirmModalIRef.current);
         }
-        confrimModalIRef.current = createGlobalBottomSheetModal2024({
+        confirmModalIRef.current = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.CONFIRM_ADDRESS,
           account: {
             ...account,
@@ -144,20 +142,20 @@ const WhitelistInputScreen = () => {
           },
           title: t('page.confirmAddress.addToWhitelist'),
           cex: isCex ? cex : undefined,
-          disbaleWhiteSwitch: true,
+          disableWhiteSwitch: true,
           bottomSheetModalProps: {
             enableDynamicSizing: true,
           },
           onCancel: () => {
-            confrimModalIRef.current &&
-              removeGlobalBottomSheetModal2024(confrimModalIRef.current);
-            confrimModalIRef.current = null;
+            confirmModalIRef.current &&
+              removeGlobalBottomSheetModal2024(confirmModalIRef.current);
+            confirmModalIRef.current = null;
           },
           onConfirm: async () => {
             Keyboard.dismiss();
-            confrimModalIRef.current &&
-              removeGlobalBottomSheetModal2024(confrimModalIRef.current);
-            confrimModalIRef.current = null;
+            confirmModalIRef.current &&
+              removeGlobalBottomSheetModal2024(confirmModalIRef.current);
+            confirmModalIRef.current = null;
             matomoRequestEvent({
               category: 'Send Usage',
               action: isImported
@@ -244,8 +242,6 @@ const WhitelistInputScreen = () => {
     [cex, input, onSelectCex],
   );
 
-  const editAliasName = useAliasNameEditModal();
-
   useEffect(() => {
     if (scanner.text) {
       setInput(scanner.text);
@@ -262,7 +258,8 @@ const WhitelistInputScreen = () => {
     setCex(undefined);
     setAliasName('');
     if (isValidHexAddress(input as Hex)) {
-      setAliasName(contactService.getAliasByAddress(input)?.alias || '');
+      const aliasInfo = contactService.getAliasByAddress(input);
+      setAliasName(aliasInfo?.isDefaultAlias ? '' : aliasInfo?.alias || '');
       getAddrDescWithCexLocalCacheSync(input).then(res => {
         if (res?.cex?.id && res?.cex?.is_deposit) {
           setIsCex(true);
@@ -289,7 +286,7 @@ const WhitelistInputScreen = () => {
           title: t('global.Confirm'),
           onPress: debouncedHandleDone,
           loading: loading,
-          disabled: !input || !!error,
+          disabled: !input || !!error || !aliasName,
         }}
         style={styles.screen}
         footerBottomOffset={56}
@@ -370,38 +367,20 @@ const WhitelistInputScreen = () => {
                   {t('page.whitelist.header.name')}
                 </Text>
               </View>
-              <TouchableOpacity
-                onPress={() => {
-                  if (!isValidHexAddress(input as Hex)) {
-                    return;
-                  }
-                  const targetAccount =
-                    findAccountWithoutBalance(input).account;
-                  editAliasName.show(
-                    {
-                      ...targetAccount,
-                      aliasName: aliasName || targetAccount.aliasName,
-                    },
-                    undefined,
-                    editAlias => setAliasName(editAlias),
-                  );
+              <NextInput
+                style={styles.editContainer}
+                inputStyle={styles.aliasName}
+                tipText={''}
+                hasError={!!error}
+                inputProps={{
+                  placeholder: t('page.whitelist.placeholder.name'),
+                  placeholderTextColor: colors2024['neutral-secondary'],
+                  value: aliasName,
+                  onChangeText: setAliasName,
                 }}
-                style={styles.editContainer}>
-                {aliasName ? (
-                  <Text style={styles.aliasName}>{aliasName}</Text>
-                ) : (
-                  <Text style={styles.aliasNamePlaceholder}>
-                    {t('page.whitelist.placeholder.name')}
-                  </Text>
-                )}
-                <View style={styles.button}>
-                  <EditSVG
-                    color={colors2024['neutral-body']}
-                    width={20}
-                    height={20}
-                  />
-                </View>
-              </TouchableOpacity>
+                containerStyle={styles.nameInput}
+                fieldErrorTextStyle={styles.error}
+              />
             </View>
             <View style={styles.exChangeContent}>
               <View style={styles.header}>
@@ -501,8 +480,8 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 14,
     paddingHorizontal: 20,
     backgroundColor: ctx.colors['neutral-card-1'],
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 17,
+    fontWeight: '400',
     fontFamily: 'SF Pro Rounded',
   },
   error: {
@@ -544,9 +523,9 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
   },
   aliasName: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '400',
     color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
@@ -561,9 +540,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 15,
-    paddingBottom: 17,
-    paddingHorizontal: 20,
+    height: 58,
   },
   exChangeContent: {
     width: '100%',
@@ -604,5 +581,9 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-title-1'],
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  nameInput: {
+    borderRadius: 16,
+    borderColor: 'transparent',
   },
 }));

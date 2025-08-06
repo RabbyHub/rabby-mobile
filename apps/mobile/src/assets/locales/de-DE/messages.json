@@ -910,6 +910,7 @@
       "No_Tokens": "Keine Tokens",
       "Token": "Token",
       "Select-from-supported-tokens": "Aus unterstützten Token auswählen",
+      "Deposit-tip": "Mit USDC/USDT einzahlen",
       "InsufficientBalanceTips": "Unzureichendes Guthaben",
       "Balance": "Guthaben"
     },
@@ -1018,7 +1019,8 @@
         "gasAccount": "GasAccount",
         "queue": "Warteschlange",
         "search": "Token suchen",
-        "copyTrading": "Copy Trading"
+        "copyTrading": "Copy Trading",
+        "watchlist": "Überwachungsliste"
       }
     },
     "manageAddress": {
@@ -1095,7 +1097,8 @@
       },
       "swapped": "Getauscht",
       "historyTitle": "Tauschhistorie",
-      "selectChainModalTitle": "Kette auswählen"
+      "selectChainModalTitle": "Kette auswählen",
+      "results": "Ergebnisse"
     },
     "bridge": {
       "liquidity": "Liquidität",
@@ -1896,6 +1899,9 @@
         "Issuedby": "Ausgestellt von",
         "verifyDangerTips": "Dies ist ein Betrugstoken",
         "scamWarningTips": "Dies ist ein minderwertiges Token und könnte ein Betrug sein。"
+      },
+      "hotTokenList": {
+        "title": "Heiß"
       }
     },
     "tokenDetail": {
@@ -2260,7 +2266,29 @@
       "smartWallets": "Intelligente Geldbörsen",
       "tokenInfo": "Token-Info",
       "chain": "Kette",
-      "myBalanceFromCopyTrading": "Mein Guthaben aus Copy Trading"
+      "myBalanceFromCopyTrading": "Mein Guthaben aus Copy Trading",
+      "updateTokenText": "{{count}} Tokens aktualisiert",
+      "gettingLatest": "Die neuesten Informationen von Smart Money erhalten..."
+    },
+    "watchlist": {
+      "empty": {
+        "title": "Noch keine Token in Ihrer Beobachtungsliste"
+      },
+      "search": {
+        "title": "Suche Tokens"
+      },
+      "tokenHeader": {
+        "price": "Preis",
+        "change": "24H Veränderung",
+        "token": "Token/FDV"
+      },
+      "footer": {
+        "skip": "Überspringen",
+        "add": "Zur Beobachtungsliste hinzufügen ({{count}})"
+      },
+      "toast": {
+        "remove": "Erfolgreich von der Watchlist entfernt"
+      }
     }
   },
   "constant": {

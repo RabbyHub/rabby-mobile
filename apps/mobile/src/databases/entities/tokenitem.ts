@@ -515,11 +515,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     try {
       await prepareAppDataSource();
       const repo = this.getRepository();
+      const currentTime = Date.now();
       const deleteResult = await repo
         .createQueryBuilder()
         .delete()
         .from(TokenItemEntity)
-        .where('owner_addr = :address', { owner_addr })
+        .where('owner_addr = :owner_addr', { owner_addr })
         .andWhere('_local_updated_at < :syncTimestamp', { syncTimestamp })
         .execute();
 
@@ -527,6 +528,8 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         `🧹 Cleaned ${
           deleteResult.affected || 0
         } stale tokens for ${owner_addr}`,
+        'time:',
+        Date.now() - currentTime,
       );
 
       return {

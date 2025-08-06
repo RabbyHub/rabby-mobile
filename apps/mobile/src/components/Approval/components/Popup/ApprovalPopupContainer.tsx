@@ -52,6 +52,11 @@ const getStyles = createGetStyles2024(() => ({
     top: 71,
     zIndex: 1,
   },
+  oneKeyBrandIcon: {
+    left: 38,
+    top: 68,
+  },
+
   titleWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -78,9 +83,11 @@ const getStyles = createGetStyles2024(() => ({
     paddingHorizontal: 20,
     textAlign: 'center',
   },
-  footer: {},
+  footer: {
+    paddingBottom: 56,
+  },
   description: {
-    paddingTop: 10,
+    paddingTop: 12,
     paddingBottom: 30,
   },
   noDescription: {
@@ -204,30 +211,33 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return;
     }
   }, [status]);
-  const { snapToIndexPopup } = useApprovalPopup();
+  // const { snapToIndexPopup } = useApprovalPopup();
 
-  useDebounce(
-    () => {
-      if ((status === 'FAILED' || status === 'REJECTED') && description) {
-        snapToIndexPopup(1);
-      } else {
-        snapToIndexPopup(0);
-      }
-    },
-    10,
-    [snapToIndexPopup, hdType, status, description],
-  );
-  const isHD = hdType === 'ledger';
+  // useDebounce(
+  //   () => {
+  //     if ((status === 'FAILED' || status === 'REJECTED') && description) {
+  //       // snapToIndexPopup(1);
+  //     } else {
+  //       // snapToIndexPopup(0);
+  //     }
+  //   },
+  //   10,
+  //   [snapToIndexPopup, hdType, status, description],
+  // );
+  // const isHD = hdType === 'ledger';
   const isFailedOrRejected = status === 'FAILED' || status === 'REJECTED';
 
   const showSendSvg = retryUpdateType === 'origin' && !isFailedOrRejected;
+
+  const isOneKey = hdType === 'onekey';
 
   return (
     <View style={StyleSheet.flatten([styles.wrapper, style])}>
       {SendSVG && showSendSvg ? (
         <View style={styles.mainContainer}>
           {BrandIcon && (
-            <View style={[styles.brandIcon]}>
+            <View
+              style={[styles.brandIcon, isOneKey && styles.oneKeyBrandIcon]}>
               <BrandIcon width={'100%'} height={'100%'} />
             </View>
           )}
@@ -295,7 +305,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
           />
         )}
       </View>
-      {children}
+      {/* {children} */}
     </View>
   );
 };

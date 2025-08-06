@@ -167,6 +167,10 @@ export interface PreferenceStore {
    * For temporary account switch
    */
   tempCurrentAccount?: Account;
+  /** 用户是否跳过了watchlist引导 */
+  watchlistSkip?: boolean;
+
+  lastReportTime?: number;
 }
 
 export interface AddressSortStore {
@@ -243,6 +247,7 @@ export class PreferenceService {
           safeSelfHostConfirm: {},
           addressAvatarMap: {},
           hasOpenCopyTrading: false,
+          watchlistSkip: false,
         },
       },
       {
@@ -786,6 +791,14 @@ export class PreferenceService {
   };
   setIsShowTestnet = (value: boolean) => {
     this.store.isShowTestnet = value;
+  };
+
+  setWatchlistSkip = (value: boolean) => {
+    this.store.watchlistSkip = value;
+  };
+
+  getWatchlistSkip = () => {
+    return !!this.store.watchlistSkip;
   };
 
   resetAddressSortStoreExpiredValue = () => {

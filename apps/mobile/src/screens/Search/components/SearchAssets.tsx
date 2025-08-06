@@ -3,9 +3,11 @@ import RcIconClose from '@/assets2024/icons/search/RcIconClose.svg';
 import RcIconRight from '@/assets2024/icons/search/IconRight.svg';
 import RcIconEmpty from '@/assets2024/icons/history/ImgEmpty.svg';
 import RcIconEmptyDark from '@/assets2024/icons/history/ImgEmptyDark.svg';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Keyboard, Text, View } from 'react-native';
+import { FlatList, Keyboard, Pressable, Text, View } from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -28,9 +30,13 @@ import {
 import { CHAINS_ENUM } from '@debank/common';
 import { Image } from 'react-native';
 import { findChainByEnum } from '@/utils/chain';
-import { Skeleton } from '@rneui/themed';
 import { add0x, ellipsisAddress } from '@/utils/address';
 import { isValidHexAddress } from '@metamask/utils';
+import { IManageToken } from '@/core/services/preference';
+import { preferenceService } from '@/core/services';
+import { toast } from '@/components2024/Toast';
+import { useFocusEffect } from '@react-navigation/native';
+import { TokenItemSkeleton } from '@/screens/Watchlist/components/TokenItem';
 
 interface Props {
   resultTokens: AbstractPortfolioToken[];
@@ -52,6 +58,10 @@ export const SearchAssets: React.FC<Props> = ({
     return findChainByEnum(chainEnum);
   }, [chainEnum]);
 
+  const [watchlistTokenList, setWatchlistTokenList] = useState<IManageToken[]>(
+    [],
+  );
+
   const modalRef = React.useRef<MODAL_ID>();
 
   const removeChainModal = React.useCallback(() => {
@@ -59,6 +69,37 @@ export const SearchAssets: React.FC<Props> = ({
       removeGlobalBottomSheetModal2024(modalRef.current);
     }
   }, []);
+
+  const fetchPinedTokenList = useCallback(() => {
+    preferenceService.getUserTokenSettings().then(res => {
+      setWatchlistTokenList(res.pinedQueue || []);
+    });
+  }, []);
+
+  const handlePressFavorite = useCallback(
+    (tokenId: string, chainId: string) => {
+      if (
+        watchlistTokenList.some(
+          t => t.chainId === chainId && t.tokenId === tokenId,
+        )
+      ) {
+        preferenceService.removePinedToken({
+          chainId: chainId,
+          tokenId: tokenId,
+        });
+        toast.success(t('page.watchlist.toast.remove'));
+      } else {
+        preferenceService.pinToken({
+          chainId: chainId,
+          tokenId: tokenId,
+        });
+      }
+      fetchPinedTokenList();
+    },
+    [fetchPinedTokenList, t, watchlistTokenList],
+  );
+
+  useFocusEffect(fetchPinedTokenList);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
@@ -80,11 +121,39 @@ export const SearchAssets: React.FC<Props> = ({
             style={styles.renderItemWrapper}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
+            rightSlot={
+              <Pressable
+                style={styles.rightSlot}
+                onPress={e => {
+                  e.stopPropagation();
+                  handlePressFavorite(item.id, item.chain);
+                }}
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+                <RcIconFavorite
+                  width={22}
+                  height={21}
+                  color={
+                    watchlistTokenList.some(
+                      t => t.chainId === item.chain && t.tokenId === item.id,
+                    )
+                      ? colors2024['orange-default']
+                      : colors2024['neutral-info']
+                  }
+                />
+              </Pressable>
+            }
           />
         )
       );
     },
-    [handleOpenTokenDetail, styles],
+    [
+      colors2024,
+      handleOpenTokenDetail,
+      handlePressFavorite,
+      styles.renderItemWrapper,
+      styles.rightSlot,
+      watchlistTokenList,
+    ],
   );
 
   const createChainModal = React.useCallback(() => {
@@ -128,7 +197,7 @@ export const SearchAssets: React.FC<Props> = ({
       ) : loading ? (
         <>
           {Array.from({ length: 8 }).map((_, idx) => (
-            <Skeleton style={styles.skeletonBlock} key={idx} />
+            <TokenItemSkeleton key={idx} />
           ))}
         </>
       ) : null,
@@ -139,7 +208,6 @@ export const SearchAssets: React.FC<Props> = ({
       resultTokens,
       styles.emptyView,
       styles.emptyText,
-      styles.skeletonBlock,
       t,
     ],
   );
@@ -168,7 +236,7 @@ export const SearchAssets: React.FC<Props> = ({
               )}"`}</Text>
             </View>
           ) : (
-            <Text style={styles.sectionHeader}>{t('page.swap.token')}</Text>
+            <Text style={styles.sectionHeader}>{t('page.swap.results')}</Text>
           )}
           {chainInfo ? (
             <View
@@ -184,7 +252,7 @@ export const SearchAssets: React.FC<Props> = ({
                 <Text style={styles.chainName}>{chainInfo.name}</Text>
               </View>
               <TouchableWithoutFeedback
-                disallowInterruption={true}
+                disallowInterruption
                 style={styles.close}
                 onPress={() => {
                   setChainEnum?.(undefined);
@@ -327,7 +395,7 @@ const getStyles = createGetStyles2024(ctx => ({
   sectionHeader: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '700',
     lineHeight: 20,
     // height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['neutral-secondary'],
@@ -354,5 +422,8 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   footer: {
     height: 200,
+  },
+  rightSlot: {
+    marginLeft: 13,
   },
 }));

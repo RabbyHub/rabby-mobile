@@ -685,6 +685,17 @@ const Swap = ({
 
   const isFocused = useIsFocused();
 
+  // 监听页面焦点变化，当从TokenDetail返回时确保参数被正确设置
+  // useEffect(() => {
+  //   if (isFocused && navState?.isSwapToTokenDetail) {
+  //     console.log('DEBUG: Swap page focused, setting isSwapToTokenDetail to false');
+  //     navigation.setParams({
+  //       ...navState,
+  //       isSwapToTokenDetail: false,
+  //     });
+  //   }
+  // }, [isFocused, navState?.isSwapToTokenDetail, navigation]);
+
   const swapBtnDisabled =
     quoteLoading ||
     !payToken ||
@@ -960,22 +971,11 @@ const Swap = ({
                 if (!isForMultipleAddress) {
                   normalSetChainToken();
                 } else {
-                  const { accountSwitchTo } = switchAccountOnSelectedToken({
+                  switchAccountOnSelectedToken({
                     token,
                     currentAccount,
                   });
-                  if (!accountSwitchTo) {
-                    normalSetChainToken();
-                  } else {
-                    const chainItem = findChainByServerID(token.chain);
-                    naviReplace(RootNames.StackTransaction, {
-                      screen: RootNames.MultiSwap,
-                      params: {
-                        chainEnum: chainItem?.enum,
-                        tokenId: token.id,
-                      },
-                    });
-                  }
+                  normalSetChainToken();
                 }
               }}
               account={currentAccount}

@@ -833,6 +833,7 @@
       "InsufficientBalanceTips": "Insufficient balance",
       "Loading_Tokens": "Loading Tokens...",
       "Select-from-supported-tokens": "Select from supported tokens",
+      "Deposit-tip": "Deposit with USDC/USDT",
       "Value": "Value",
       "Token": "Token",
       "Balance": "Balance"
@@ -881,6 +882,7 @@
       "no-quote-found": "No quote found",
       "source": "Source",
       "token": "Token",
+      "results": "Results",
       "insufficient": "Insufficient Balance:",
       "rabbyFee": {
         "title": "Rabby fee",
@@ -966,7 +968,8 @@
         "queue": "Queue",
         "websites": "Websites",
         "copyTrading": "Copy Trading",
-        "search": "Search Token"
+        "search": "Search Token",
+        "watchlist": "Watchlist"
       }
     },
     "copyTrading": {
@@ -991,7 +994,9 @@
       "historyProfit": "History Profit",
       "noMoreData": "No more data",
       "updateText": "{{count}} Trends Updated",
+      "updateTokenText": "{{count}} tokens updated",
       "refreshTitle": "Loading More Copy Trading From Smart Money",
+      "gettingLatest": "Getting the latest from smart money...",
       "twitterNews": "News in X",
       "tokenInfo": "Token Info",
       "smartWallets": "Smart Wallets",
@@ -1878,6 +1883,9 @@
         "title": "All Results",
         "searching": "Results for",
         "searchTips": "Search the web"
+      },
+      "hotTokenList": {
+        "title": "Hot"
       }
     },
     "setting": {
@@ -2002,27 +2010,63 @@
         "connectChain": "Connect Chain",
         "connectWallet": "Connect Wallet",
         "disconnect": "Disconnect"
+      },
+      "BrowserSearch": {
+        "recent": "Recent",
+        "searchInGoogle": "Search \"{{searchText}}\" in Google",
+        "openUrl": "Open \"{{searchText}}\"",
+        "results": "Results",
+        "placeholder": "Search Websites"
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "Open Websites"
       }
     },
     "browserManage": {
       "option": {
         "tab": "Tab",
         "history": "History",
-        "favorites": "Favorites"
+        "favorites": "Favorites",
+        "recent": "Recent"
       },
       "BrowserTabList": {
-        "closeAllTabs": "Close all tabs"
+        "closeAllTabs": "Close all tabs",
+        "emptyTitle": "No open tabs yet ",
+        "emptyDesc": " Open a new tab now"
       },
       "BrowserBookmarkList": {
-        "title": "Favorites"
+        "title": "Favorites",
+        "emptyTitle": "No website added yet"
       },
       "BrowserHistoryList": {
-        "title": "History"
+        "title": "History",
+        "clearAllHistory": "Clear all History",
+        "emptyTitle": " No history in the past 30 days"
       }
     },
     "component": {
       "ChainSelector": {
         "title": "Select Chain"
+      }
+    },
+    "watchlist": {
+      "empty": {
+        "title": "No tokens in your watchlist yet"
+      },
+      "search": {
+        "title": "Search tokens"
+      },
+      "tokenHeader": {
+        "token": "Token/FDV",
+        "price": "Price",
+        "change": "24H Change"
+      },
+      "footer": {
+        "skip": "Skip",
+        "add": "Add to Watchlist ({{count}})"
+      },
+      "toast": {
+        "remove": "Remove from Watchlist Success"
       }
     }
   },
@@ -2214,7 +2258,7 @@
   },
   "global": {
     "appName": "Rabby Wallet",
-    "appDescription": "The game-changing wallet for Ethereum and all EVM chains",
+    "appDescription": "Your go-to wallet for Ethereum and EVM",
     "copied": "Copied",
     "confirm": "Confirm",
     "next": "Next",

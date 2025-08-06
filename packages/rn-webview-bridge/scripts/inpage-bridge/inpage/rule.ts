@@ -1,11 +1,30 @@
 import { WALLET_ICON, WALLET_NAME } from './constant';
 import { setupMetamaskMode } from './metamaskMode';
-import { domReadyCall } from './util';
+import { domReadyCall, retry } from './util';
 
 type Rule = {
   matches: string[];
   hiddenSelectors?: string[];
   runner?(): void;
+};
+
+const detectIsRainbowKit = (callback: () => void) => {
+  const hasRainbowKit = () => window.localStorage.getItem('rk-version');
+  if (hasRainbowKit()) {
+    callback();
+  } else {
+    retry(
+      async () => {
+        if (!hasRainbowKit()) {
+          throw new Error('not found rainbowkit');
+        }
+      },
+      {
+        retries: 10,
+        delay: 300,
+      },
+    ).then(callback);
+  }
 };
 
 const setupRainbowKitBtn = () => {
@@ -31,29 +50,27 @@ const setupRainbowKitBtn = () => {
 };
 
 const hackRainbowkit = () => {
-  const hasRainbowkit = Boolean(window.localStorage.getItem('rk-version'));
-  if (!hasRainbowkit) {
-    setTimeout(() => {
-      hackRainbowkit();
-    }, 100);
-    return;
-  }
-  setupMetamaskMode();
-  setupRainbowKitBtn();
+  detectIsRainbowKit(() => {
+    localStorage.setItem('rk-recent', JSON.stringify(['rabby', 'metamask']));
+    setupMetamaskMode({
+      isKeepRabby: true,
+    });
+    setupRainbowKitBtn();
 
-  const observer = new MutationObserver(function (mutations) {
-    mutations.forEach(function (mutation) {
-      mutation.addedNodes.forEach(function (node) {
-        if (node.nodeType === 1) {
-          setupRainbowKitBtn();
-        }
+    const observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        mutation.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1) {
+            setupRainbowKitBtn();
+          }
+        });
       });
     });
-  });
 
-  observer.observe(document, {
-    childList: true,
-    subtree: true,
+    observer.observe(document, {
+      childList: true,
+      subtree: true,
+    });
   });
 };
 
@@ -73,6 +90,17 @@ const rules: Rule[] = [
     hiddenSelectors: [
       '#AppHeader ._display-flex._alignItems-stretch._flexBasis-auto._boxSizing-border-box._minHeight-0px._minWidth-0px._flexShrink-0._flexDirection-column._position-relative._zIndex-1020._pointerEvents-auto',
     ],
+    runner: () => {
+      const $toggleBtn: HTMLDivElement | null = document.querySelector(
+        '[data-testid="account-drawer"] ._display-flex._flexBasis-auto._boxSizing-border-box._position-relative._minHeight-0px._minWidth-0px._flexShrink-0._flexDirection-row._alignItems-center._mr-18px._ml-18px:not([rabby-injected])',
+      );
+      if (!$toggleBtn) {
+        return;
+      }
+
+      $toggleBtn.setAttribute('rabby-injected', 'true');
+      $toggleBtn.click();
+    },
   },
   {
     matches: ['https://aerodrome.finance'],

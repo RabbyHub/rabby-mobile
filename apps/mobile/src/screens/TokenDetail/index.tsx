@@ -5,7 +5,6 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { Tip } from '@/components/Tip';
-import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import {
@@ -19,7 +18,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +28,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
@@ -59,8 +59,14 @@ import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import { useTokenDetail } from './hook';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { useAtom, useSetAtom } from 'jotai';
+import {
+  isFromBackAtom,
+  shouldHideSelectorPopupAtom,
+} from '../Swap/hooks/atom';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -87,10 +93,11 @@ export const RightMore: React.FC<{
   isMultiAddress?: boolean;
   triggerUpdate: () => void;
   refreshTags: () => void;
-}> = ({ token, triggerUpdate, refreshTags }) => {
+  unHold?: boolean;
+}> = ({ token, triggerUpdate, refreshTags, unHold }) => {
   const isDarkTheme = useGetBinaryMode() === 'dark';
   const { t } = useTranslation();
-
+  const { colors2024 } = useTheme2024();
   const menuActions = React.useMemo(() => {
     return [
       {
@@ -168,25 +175,80 @@ export const RightMore: React.FC<{
       },
     ] as MenuAction[];
   }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
+  const {
+    removePinedToken,
+    pinToken,
+    userTokenSettings,
+    fetchUserTokenSettings,
+  } = useUserTokenSettings();
+
+  useEffect(() => {
+    fetchUserTokenSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isPined = useMemo(
+    () =>
+      userTokenSettings?.pinedQueue?.some(
+        pinned =>
+          pinned.chainId === token.chain && pinned.tokenId === token._tokenId,
+      ),
+    [token._tokenId, token.chain, userTokenSettings?.pinedQueue],
+  );
+
+  const handlePress = useCallback(() => {
+    if (isPined) {
+      removePinedToken({
+        id: token._tokenId,
+        chain: token.chain,
+      });
+    } else {
+      pinToken({
+        id: token._tokenId,
+        chain: token.chain,
+      });
+    }
+    setTimeout(() => {
+      refreshTags();
+    }, 0);
+  }, [
+    isPined,
+    pinToken,
+    refreshTags,
+    removePinedToken,
+    token._tokenId,
+    token.chain,
+  ]);
 
   return (
     <>
-      <DropDownMenuView
-        menuConfig={{
-          menuActions: menuActions,
-        }}
-        triggerProps={{ action: 'press' }}>
-        <CustomTouchableOpacity hitSlop={hitSlop}>
-          <RcIconMore width={24} height={24} />
-        </CustomTouchableOpacity>
-      </DropDownMenuView>
+      <TouchableOpacity style={{ marginRight: 18 }} onPress={handlePress}>
+        <RcIconFavorite
+          width={22}
+          height={21}
+          color={
+            isPined ? colors2024['orange-default'] : colors2024['neutral-info']
+          }
+        />
+      </TouchableOpacity>
+      {!unHold && (
+        <DropDownMenuView
+          menuConfig={{
+            menuActions: menuActions,
+          }}
+          triggerProps={{ action: 'press' }}>
+          <CustomTouchableOpacity hitSlop={hitSlop}>
+            <RcIconMore width={24} height={24} />
+          </CustomTouchableOpacity>
+        </DropDownMenuView>
+      )}
     </>
   );
 };
 
 export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
   const { styles } = useTheme2024({
-    getStyle: getStyle,
+    getStyle,
   });
   const { t } = useTranslation();
   return isDanger ? (
@@ -221,12 +283,18 @@ export const TokenDetailScreen = () => {
     unHold: _unHold,
     isSingleAddress,
     tokenSelectType,
+    rawPortfolios, // only isSingleAddress === true can use
   } = route.params || {};
 
   const { styles, isLight } = useTheme2024({
     getStyle,
   });
+  const { colors2024 } = useTheme2024();
 
+  const [shouldHideSelectorPopup, setShouldHideSelectorPopup] = useAtom(
+    shouldHideSelectorPopupAtom,
+  );
+  const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
   const [isUp, setIsUp] = useState(true);
   const {
@@ -247,7 +315,7 @@ export const TokenDetailScreen = () => {
     return _token;
   }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
-  const { top10Addresses, list: accounts } = useAccountInfo();
+  const { top10Addresses, list: accounts, rawAllAccounts } = useAccountInfo();
   // const { tokensByAddress, isReady: tokenListIsReady } = useTokenDetail(
   //   token.chain,
   //   token._tokenId,
@@ -256,6 +324,9 @@ export const TokenDetailScreen = () => {
   //   isSingleAddress,
   // );
 
+  const finalAccount =
+    account || accounts[0] || preferenceService.getFallbackAccount();
+
   const { data: tokenEntityList } = useRequest(
     async () => {
       if (!token || !token._tokenId || !top10Addresses.length) {
@@ -263,21 +334,54 @@ export const TokenDetailScreen = () => {
       }
 
       return await TokenItemEntity.batchMultiAddressTokensByIdAndChain(
-        top10Addresses.map(item => item.toLowerCase()),
+        isSingleAddress
+          ? [finalAccount!.address.toLowerCase()]
+          : top10Addresses.map(item => item.toLowerCase()),
         token.chain,
         token._tokenId,
       );
     },
     {
-      refreshDeps: [token.chain, token._tokenId, top10Addresses],
+      refreshDeps: [
+        token.chain,
+        token._tokenId,
+        top10Addresses,
+        isSingleAddress,
+        finalAccount?.address,
+      ],
     },
   );
 
-  const finalAccount =
-    account || accounts[0] || preferenceService.getFallbackAccount();
-
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
+    if (isSingleAddress && rawPortfolios && rawPortfolios.length) {
+      rawPortfolios?.forEach(portfolio => {
+        if (portfolio.chain !== token.chain) {
+          return;
+        }
+
+        let amount = 0;
+        const { _portfolios } = portfolio;
+        _portfolios?.forEach(portfolioItem => {
+          const { _tokenList } = portfolioItem;
+
+          const sameItem = _tokenList.find(
+            item => item._tokenId === token._tokenId,
+          );
+          if (sameItem) {
+            amount += sameItem.amount;
+          }
+        });
+
+        amount &&
+          resList.push({
+            ...portfolio,
+            amount,
+          });
+      });
+      return resList;
+    }
+
     Object.keys(assetsMap).map(address => {
       if (isSingleAddress && !isSameAddress(address, finalAccount!.address)) {
         return;
@@ -318,7 +422,14 @@ export const TokenDetailScreen = () => {
       });
     });
     return resList;
-  }, [token, assetsMap, isSingleAddress, finalAccount, accounts]);
+  }, [
+    token,
+    assetsMap,
+    isSingleAddress,
+    finalAccount,
+    accounts,
+    rawPortfolios,
+  ]);
 
   const handleOpenDefiDetail = useCallback(
     (data: AbstractProject, itemList: AbstractPortfolio[]) => {
@@ -395,26 +506,9 @@ export const TokenDetailScreen = () => {
     tokenRefresh();
   }, [isSingleAddress, singleTokenRefresh, tokenRefresh]);
 
-  const getHeaderRight = useCallback(() => {
-    return (
-      <RightMore
-        token={token}
-        triggerUpdate={triggerUpdate}
-        isMultiAddress={!isSingleAddress}
-        refreshTags={refreshTag}
-      />
-    );
-  }, [token, triggerUpdate, isSingleAddress, refreshTag]);
-
   const getHeaderTitle = useCallback(() => {
-    return (
-      <TokenDetailHeaderArea
-        key={finalAccount?.address}
-        token={token}
-        refreshTags={refreshTag}
-      />
-    );
-  }, [finalAccount?.address, token, refreshTag]);
+    return <TokenDetailHeaderArea key={finalAccount?.address} token={token} />;
+  }, [finalAccount?.address, token]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
@@ -435,10 +529,14 @@ export const TokenDetailScreen = () => {
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
     if (isSingleAddress && token.amount) {
+      const dbToken = tokenEntityList?.find(item =>
+        isSameAddress(item.owner_addr, finalAccount!.address),
+      );
+      const amount = dbToken?.amount || token.amount;
       res.push({
         ...token,
-        amountStr: token._amountStr!,
-        amount: token.amount,
+        amountStr: formatTokenAmount(amount),
+        amount,
         address: finalAccount!.address,
         type: finalAccount!.type,
         aliasName:
@@ -498,10 +596,32 @@ export const TokenDetailScreen = () => {
     [_unHold, tokenFromAddress],
   );
 
+  const getHeaderRight = useCallback(() => {
+    return (
+      <RightMore
+        token={token}
+        triggerUpdate={triggerUpdate}
+        isMultiAddress={!isSingleAddress}
+        refreshTags={refreshTag}
+        unHold={unHold}
+      />
+    );
+  }, [token, triggerUpdate, isSingleAddress, refreshTag, unHold]);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // 页面失焦（返回/左滑/点击返回按钮）时统一副作用
+        setShouldHideSelectorPopup(false);
+        setIsFromBack(true);
+      };
+    }, [setShouldHideSelectorPopup, setIsFromBack]),
+  );
+
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
-      headerRight: unHold ? () => null : getHeaderRight,
+      headerRight: getHeaderRight,
       headerTitleAlign: 'left',
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
@@ -531,7 +651,9 @@ export const TokenDetailScreen = () => {
             ) || finalAccount
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
-
+      // 关闭弹窗隐藏
+      setShouldHideSelectorPopup(false);
+      setIsFromBack(false);
       navigation.push(RootNames.StackTransaction, {
         screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
         params: {
@@ -621,6 +743,7 @@ export const TokenDetailScreen = () => {
           accounts={accounts}
           amountList={tokenFromAddress}
           token={token}
+          rawAllAccounts={rawAllAccounts}
         />
         {relateDefiList.length > 0 && (
           <RelatedDeFi
@@ -806,6 +929,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['red-light-1'],
       borderRadius: 8,
       // marginTop: 12,
+    },
+    backButtonStyle: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      marginLeft: -16,
+      paddingLeft: 16,
     },
     tokenRowContent: {
       flexDirection: 'row',

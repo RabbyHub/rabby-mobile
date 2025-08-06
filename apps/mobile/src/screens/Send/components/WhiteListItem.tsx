@@ -38,6 +38,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { getCexWithLocalCache } from '@/databases/hooks/cex';
+import { useAlias2 } from '@/hooks/alias';
 
 interface IProps {
   account: KeyringAccountWithAlias;
@@ -132,7 +133,7 @@ export const WhiteListItem = ({
     const name = account.aliasName || ellipisName;
     return {
       formatName: name,
-      hideTail: name.toLocaleLowerCase() === ellipisName.toLocaleLowerCase(),
+      hideTail: name.toLowerCase() === ellipisName.toLowerCase(),
     };
   }, [account.address, account.aliasName]);
 
@@ -276,14 +277,15 @@ export const WhiteListItemSwitch = ({
     () => addrDesc?.cex || cacheCexDes,
     [addrDesc?.cex, cacheCexDes],
   );
+  const { adderssAlias } = useAlias2(account.address, { autoFetch: true });
   const { formatName, hideTail } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
-    const name = account.aliasName || ellipisName;
+    const name = adderssAlias || account.aliasName || ellipisName;
     return {
       formatName: name,
-      hideTail: name.toLocaleLowerCase() === ellipisName.toLocaleLowerCase(),
+      hideTail: name.toLowerCase() === ellipisName.toLowerCase(),
     };
-  }, [account.address, account.aliasName]);
+  }, [account.address, account.aliasName, adderssAlias]);
 
   useLayoutEffect(() => {
     if (cacheCexDes || cexDes) {

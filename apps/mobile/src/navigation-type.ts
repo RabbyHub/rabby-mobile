@@ -37,6 +37,7 @@ import {
 import { HistoryItemCateType } from './screens/Transaction/components/type';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { TabType } from './screens/CopyTrading/component/CopyTradingTokenDetail';
+import { DisplayedProject } from './screens/Home/utils/project';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -64,6 +65,7 @@ export type RootStackParamsList = {
   [RootNames.DeFiDetail]?: {
     data: AbstractProject;
     portfolioList: AbstractPortfolio[];
+    rawPortfolios?: DisplayedProject[];
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
     cache: boolean;
@@ -82,9 +84,11 @@ export type RootStackParamsList = {
     needUseCacheToken?: boolean;
     isSingleAddress?: boolean;
     account?: KeyringAccountWithAlias | null;
+    rawPortfolios?: DisplayedProject[]; // only for single address
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
+    timestamp?: number; // 添加时间戳确保每次都是新页面
   };
 };
 
@@ -107,6 +111,7 @@ export type HomeNavigatorParamsList = {
 
 export type HomeNonTabNavigatorParamsList = {
   [RootNames.Search]?: {};
+  [RootNames.Watchlist]?: {};
 };
 
 export type DappsNavigatorParamsList = {
@@ -264,7 +269,6 @@ export type TransactionNavigatorParamList = {
     currentAddress?: string;
   };
   [RootNames.CopyTrading]?: {};
-  [RootNames.HistoryFilterScam]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
     isForMultipleAddress?: boolean;
@@ -285,7 +289,6 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.Send]?: {};
   [RootNames.SendTo]?: {};
-  [RootNames.SendHistory]?: {};
   [RootNames.SendInput]?: {
     autoScan?: boolean;
   };

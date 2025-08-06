@@ -831,6 +831,7 @@
       "No_Tokens": "Нет токенов",
       "InsufficientBalanceTips": "Недостаточно средств",
       "Select-from-supported-tokens": "Выберите из поддерживаемых токенов",
+      "Deposit-tip": "Депозит с USDC/USDT",
       "Balance": "Баланс"
     },
     "bridge": {
@@ -901,7 +902,8 @@
         "websites": "Веб-сайты",
         "send": "Отправить",
         "search": "Поиск токена",
-        "copyTrading": "Копирование торговли"
+        "copyTrading": "Копирование торговли",
+        "watchlist": "Список наблюдения"
       }
     },
     "dashboard": {
@@ -1014,7 +1016,8 @@
       },
       "swapped": "Обменяно",
       "historyTitle": "История свапов",
-      "selectChainModalTitle": "Выберите цепь"
+      "selectChainModalTitle": "Выберите цепь",
+      "results": "Результаты"
     },
     "nextComponent": {
       "multiAddressHome": {
@@ -1665,6 +1668,9 @@
         "verifyDangerTips": "Это мошеннический токен",
         "Issuedby": "Выпущено",
         "scamWarningTips": "Это токен низкого качества и может быть мошенничеством"
+      },
+      "hotTokenList": {
+        "title": "Горячий"
       }
     },
     "setting": {
@@ -2089,7 +2095,29 @@
       "timeLabelAgo": "Создано {{time}} назад",
       "loss": "Потеря",
       "sameNameTokens": "Токены с одинаковым названием",
-      "myBalanceFromCopyTrading": "Мой баланс от Copy Trading"
+      "myBalanceFromCopyTrading": "Мой баланс от Copy Trading",
+      "gettingLatest": "Получение последних новостей от smart money...",
+      "updateTokenText": "{{count}} токенов обновлено"
+    },
+    "watchlist": {
+      "empty": {
+        "title": "В вашем списке наблюдения еще нет токенов"
+      },
+      "search": {
+        "title": "Поиск токенов"
+      },
+      "tokenHeader": {
+        "price": "Цена",
+        "change": "24H Изменение",
+        "token": "Token/FDV"
+      },
+      "footer": {
+        "skip": "Пропустить",
+        "add": "Добавить в список наблюдения ({{count}})"
+      },
+      "toast": {
+        "remove": "Успешно удалено из списка наблюдения"
+      }
     }
   },
   "component": {

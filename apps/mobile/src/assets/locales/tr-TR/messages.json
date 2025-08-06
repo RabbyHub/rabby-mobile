@@ -833,6 +833,7 @@
       "InsufficientBalanceTips": "Yetersiz bakiye",
       "Loading_Tokens": "Token'lar Yükleniyor...",
       "Select-from-supported-tokens": "Desteklenen tokenlardan seçin",
+      "Deposit-tip": "USDC/USDT ile Para Yatırın",
       "Balance": "Bakiye",
       "Value": "Değer",
       "Token": "Token",
@@ -897,7 +898,8 @@
       "selectChainModalTitle": "Zincir Seçin",
       "swapped": "Değiştirildi",
       "no-transaction-records": "Hiçbir işlem kaydı yok",
-      "historyTitle": "Takasa geçmişi"
+      "historyTitle": "Takasa geçmişi",
+      "results": "Sonuçlar"
     },
     "bridge": {
       "showMore": {
@@ -967,7 +969,8 @@
         "dapps": "Dapps",
         "queue": "Kuyruk",
         "websites": "Web Siteleri",
-        "copyTrading": "Copy Trading"
+        "copyTrading": "Copy Trading",
+        "watchlist": "Göz Atma Listesi"
       }
     },
     "dashboard": {
@@ -1828,6 +1831,9 @@
         "noResult": "Sonuç Bulunamadı için",
         "searching": "Sonuçlar için",
         "noResults": "Sonuç Yok"
+      },
+      "hotTokenList": {
+        "title": "Sıcak"
       }
     },
     "setting": {
@@ -2029,7 +2035,29 @@
       "sameNameTokens": "Aynı İsimli Token'lar",
       "earn": "Kazan",
       "smartWallets": "Akıllı Cüzdanlar",
-      "myBalanceFromCopyTrading": "Copy Trading'den Bakiyem"
+      "myBalanceFromCopyTrading": "Copy Trading'den Bakiyem",
+      "gettingLatest": "Akıllı paranın en son haberlerini alıyorum...",
+      "updateTokenText": "{{count}} token güncellendi"
+    },
+    "watchlist": {
+      "empty": {
+        "title": "Henüz izleme listenizde hiçbir token yok."
+      },
+      "search": {
+        "title": "Token'leri ara"
+      },
+      "tokenHeader": {
+        "change": "24H Değişiklik",
+        "token": "Token/FDV",
+        "price": "Fiyat"
+      },
+      "footer": {
+        "add": "İzleme Listesine Ekle ({{count}})",
+        "skip": "Atla"
+      },
+      "toast": {
+        "remove": "İzleme listesinden kaldırıldı Başarıyla"
+      }
     }
   },
   "component": {

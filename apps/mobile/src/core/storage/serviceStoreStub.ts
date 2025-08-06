@@ -16,6 +16,7 @@ import {
 } from '@/utils/events';
 import { useMount } from 'ahooks';
 import { browserService, dappService } from '../services/shared';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 /**
  * @description only call this hook on app's top level
@@ -69,6 +70,22 @@ export function useSetupServiceStub() {
   useMount(() => {
     getBookmarkList();
     getBrowserHistoryList();
-    setTabs(browserService.getBrowserTabs());
+    const data = browserService.getBrowserTabs();
+    setTabs({
+      ...data,
+      tabs: data.tabs.map(tab => {
+        if (tab.isDapp) {
+          return tab;
+        }
+        const isDapp = !!dappService.getDapp(
+          safeGetOrigin(tab.url || tab.initialUrl),
+        )?.isDapp;
+
+        return {
+          ...tab,
+          isDapp,
+        };
+      }),
+    });
   });
 }

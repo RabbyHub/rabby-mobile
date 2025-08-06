@@ -15,7 +15,8 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import { requestKeyring } from '@/core/apis/keyring';
 import { toast } from '@/components/Toast';
 import { useFocusEffect } from '@react-navigation/native';
-import * as bip39 from 'react-native-quick-bip39';
+import * as bip39 from '@scure/bip39';
+import * as import_english from '@scure/bip39/wordlists/english';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -111,13 +112,13 @@ export const ImportSeedPhraseScreen = () => {
           });
         } else {
           try {
-            bip39.mnemonicToEntropy(mnemonics?.trim(), bip39.wordlists.english);
+            bip39.mnemonicToEntropy(mnemonics?.trim(), import_english.wordlist);
           } catch (e) {
             if ((e as any).message.includes('Unknown letter:')) {
               let errorWords: string[] = [];
               mnemonics.split(/\s+/).forEach(word => {
                 let v = word?.trim();
-                if (v && !bip39.wordlists.english.includes(v)) {
+                if (v && !import_english.wordlist.includes(v)) {
                   errorWords.push(v);
                 }
               });

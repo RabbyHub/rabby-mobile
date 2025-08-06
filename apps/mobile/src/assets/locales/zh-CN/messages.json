@@ -746,6 +746,7 @@
       "Token": "Token",
       "Loading_Tokens": "正在加载代币...",
       "Select-from-supported-tokens": "从支持的代币中选择",
+      "Deposit-tip": "使用 USDC/USDT 存款",
       "Value": "价值",
       "InsufficientBalanceTips": "余额不足",
       "No_Tokens": "无代币",
@@ -765,7 +766,8 @@
         "dapps": "Dapps",
         "approvals": "授权",
         "search": "搜索 Token",
-        "copyTrading": "跟单交易"
+        "copyTrading": "跟单交易",
+        "watchlist": "观察列表"
       }
     },
     "manageAddress": {
@@ -972,7 +974,8 @@
       "gas-fee-too-high": "Gas 费用过高",
       "swapped": "已交换",
       "historyTitle": "Swap 历史记录",
-      "selectChainModalTitle": "选择链"
+      "selectChainModalTitle": "选择链",
+      "results": "结果"
     },
     "dashboard": {
       "home": {
@@ -1743,6 +1746,9 @@
         "verifyDangerTips": "这是一个 scam token",
         "Issuedby": "发行者：",
         "scamWarningTips": "这是一种低质量的代币，可能是骗局。"
+      },
+      "hotTokenList": {
+        "title": "热"
       }
     },
     "receiveAddressList": {
@@ -2098,7 +2104,29 @@
       "myCopyTrading": "我的跟单交易",
       "smartWallets": "Smart Money 钱包",
       "currentToken": "当前代币",
-      "myBalanceFromCopyTrading": "我从 Copy Trading 的余额"
+      "myBalanceFromCopyTrading": "我从 Copy Trading 的余额",
+      "updateTokenText": "{{count}} 个 tokens 已更新",
+      "gettingLatest": "获取最新的 Smart Money..."
+    },
+    "watchlist": {
+      "empty": {
+        "title": "您的观察列表中还没有代币"
+      },
+      "search": {
+        "title": "搜索 tokens"
+      },
+      "tokenHeader": {
+        "change": "24小时变化",
+        "token": "Token/FDV",
+        "price": "价格"
+      },
+      "footer": {
+        "skip": "跳过",
+        "add": "添加到关注列表（{{count}}）"
+      },
+      "toast": {
+        "remove": "成功从观察列表中移除"
+      }
     }
   },
   "component": {

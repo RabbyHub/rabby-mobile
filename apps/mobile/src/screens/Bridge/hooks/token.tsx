@@ -74,14 +74,31 @@ const useToken = (type: 'from' | 'to') => {
   });
   const userAddress = currentAccount?.address;
 
-  const [chain, setChain] = useState<CHAINS_ENUM>();
+  // 使用 useRef 保持 chain 状态，避免账户切换时重置
+  const chainRef = useRef<CHAINS_ENUM | undefined>();
+  const [chain, setChain] = useState<CHAINS_ENUM | undefined>(chainRef.current);
+
+  // 标记是否已经初始化过 chain，避免重复初始化
+  const isInitializedRef = useRef(false);
 
   const [token, setToken] = useState<TokenItem & { tokenId?: string }>();
+
+  // 同步 chain 状态到 ref，保持状态持久化
+  useEffect(() => {
+    if (chain) {
+      chainRef.current = chain;
+    }
+  }, [chain]);
 
   const switchChain: (changeChain?: CHAINS_ENUM, resetToken?: boolean) => void =
     useCallback(
       (changeChain?: CHAINS_ENUM, resetToken = true) => {
+        // 同时更新 state 和 ref
         setChain(changeChain);
+        if (changeChain) {
+          chainRef.current = changeChain;
+          isInitializedRef.current = true; // 标记已初始化
+        }
         if (resetToken) {
           if (type === 'from') {
             setToken(
@@ -132,8 +149,35 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     useToken('from');
   const [toChain, toToken, setToToken, switchToChain] = useToken('to');
 
+  // 标记是否已经初始化过 fromChain，避免重复初始化
+  const isFromChainInitializedRef = useRef(false);
+  // 标记是否已经初始化过 toChain，避免重复初始化
+  const isToChainInitializedRef = useRef(false);
+
+  // 包装 switchFromChain，更新初始化标记
+  const wrappedSwitchFromChain = useCallback(
+    (chain?: CHAINS_ENUM, resetToken?: boolean) => {
+      if (chain) {
+        isFromChainInitializedRef.current = true;
+      }
+      switchFromChain(chain, resetToken);
+    },
+    [switchFromChain],
+  );
+
+  // 包装 switchToChain，更新初始化标记
+  const wrappedSwitchToChain = useCallback(
+    (chain?: CHAINS_ENUM, resetToken?: boolean) => {
+      if (chain) {
+        isToChainInitializedRef.current = true;
+      }
+      switchToChain(chain, resetToken);
+    },
+    [switchToChain],
+  );
+
   if (!toChain && toToken) {
-    switchToChain();
+    wrappedSwitchToChain();
   }
 
   const [amount, setAmount] = useState('');
@@ -193,13 +237,13 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       if (latestToToken) {
         const lastBridgeChain = findChainByServerID(latestToToken.chain);
         if (lastBridgeChain && lastBridgeChain.enum !== chain) {
-          switchToChain(lastBridgeChain.enum);
+          wrappedSwitchToChain(lastBridgeChain.enum);
           setToToken(latestToToken);
         } else {
-          switchToChain(remoteChain);
+          wrappedSwitchToChain(remoteChain);
         }
       } else {
-        switchToChain(remoteChain);
+        wrappedSwitchToChain(remoteChain);
       }
     }
   };
@@ -214,6 +258,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
             to_chain_id: findChainByEnum(toChain)!.serverId,
             to_token_id: toToken?.id,
           });
+          console.log('data123', data);
           return data?.every(e => e.is_same);
         } catch (error) {
           return false;
@@ -261,7 +306,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     }
 
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
-    switchFromChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
+    wrappedSwitchFromChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
     setFromToken({
       ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
       id: navState?.tokenId,
@@ -269,8 +314,8 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   });
 
   const switchToken = useCallback(() => {
-    switchFromChain(toChain, false);
-    switchToChain(fromChain, false);
+    wrappedSwitchFromChain(toChain, false);
+    wrappedSwitchToChain(fromChain, false);
     setFromToken(toToken);
     setToToken(fromToken);
   }, [
@@ -278,9 +323,9 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     toToken,
     setToToken,
     fromToken,
-    switchFromChain,
+    wrappedSwitchFromChain,
     toChain,
-    switchToChain,
+    wrappedSwitchToChain,
     fromChain,
   ]);
 
@@ -484,7 +529,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     if (recommendFromToken) {
       const targetChain = findChainByServerID(recommendFromToken?.chain);
       if (targetChain) {
-        switchFromChain(targetChain.enum, false);
+        wrappedSwitchFromChain(targetChain.enum, false);
         setFromToken(recommendFromToken);
         setAmount('');
         setSlider(0);
@@ -493,7 +538,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     }
   }, [
     recommendFromToken,
-    switchFromChain,
+    wrappedSwitchFromChain,
     setFromToken,
     setSlider,
     setIsDraggingSlider,
@@ -830,14 +875,27 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     setAmount('');
     setSlider(0);
     setIsDraggingSlider(false);
-    !navState?.chainEnum && switchFromChain(firstChainEnum);
+    // 只有在没有导航状态且未初始化时才设置 chain
+    if (!navState?.chainEnum && !isFromChainInitializedRef.current) {
+      console.log('initChainByCache - setting initial chain:', firstChainEnum);
+      wrappedSwitchFromChain(firstChainEnum);
+    }
     const getRemoteRecommendChain = async () => {
       if (initIdRef.current === currentFetchId) {
         const data = await openapi.getRecommendBridgeToChain({
           from_chain_id: findChainByEnum(firstChainEnum)!.serverId,
         });
-        initIdRef.current === currentFetchId &&
-          switchToChain(findChainByServerID(data.to_chain_id)?.enum);
+        // 只有在未初始化时才设置 to chain
+        if (
+          initIdRef.current === currentFetchId &&
+          !isToChainInitializedRef.current
+        ) {
+          console.log(
+            'initChainByCache - setting initial to chain:',
+            findChainByServerID(data.to_chain_id)?.enum,
+          );
+          wrappedSwitchToChain(findChainByServerID(data.to_chain_id)?.enum);
+        }
       }
     };
     if (userAddress) {
@@ -850,15 +908,15 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         return;
       }
       const latestToToken = latestTx?.history_list?.[0]?.to_token;
-      if (latestToToken) {
+      if (latestToToken && !isToChainInitializedRef.current) {
         const lastBridgeChain = findChainByServerID(latestToToken.chain);
         if (lastBridgeChain && lastBridgeChain.enum !== firstChainEnum) {
-          switchToChain(lastBridgeChain.enum);
+          wrappedSwitchToChain(lastBridgeChain.enum);
           setToToken(latestToToken);
         } else {
           await getRemoteRecommendChain();
         }
-      } else {
+      } else if (!isToChainInitializedRef.current) {
         await getRemoteRecommendChain();
       }
     }
@@ -868,10 +926,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     setSlider,
     setIsDraggingSlider,
     navState?.chainEnum,
-    switchFromChain,
+    wrappedSwitchFromChain,
     userAddress,
-    switchToChain,
+    wrappedSwitchToChain,
     setToToken,
+    isFromChainInitializedRef,
+    isToChainInitializedRef,
   ]);
 
   useEffect(() => {
@@ -924,11 +984,11 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     fromChain,
     fromToken,
     setFromToken,
-    switchFromChain,
+    switchFromChain: wrappedSwitchFromChain,
     toChain,
     toToken,
     setToToken,
-    switchToChain,
+    switchToChain: wrappedSwitchToChain,
     switchToken,
 
     recommendFromToken,

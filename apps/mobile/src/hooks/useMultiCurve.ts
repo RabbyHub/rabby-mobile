@@ -5,7 +5,7 @@ import {
 } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { formChartData } from './useCurve';
 import PQueue from 'p-queue';
 import { atom, useAtom } from 'jotai';
@@ -92,6 +92,7 @@ export const useMultiCurve = (
 ) => {
   const [multiTimeStamp, setMultiTimeStamp] = useAtom(multiTimeStampAtom);
   const [loading, setLoading] = useAtom(loadingMultiCurveAtom);
+  const loadingMapRef = useRef<Record<string, boolean>>({});
 
   const fetch = useCallback(
     async (addres: string[], force = false) => {
@@ -104,7 +105,7 @@ export const useMultiCurve = (
         const nextCheckAddress = new Set([...addres]);
         !force &&
           addres.forEach(_addr => {
-            const addr = _addr.toLocaleLowerCase();
+            const addr = _addr.toLowerCase();
             setMultiTimeStamp(prev => ({
               ...prev,
               [addr]: {
@@ -148,7 +149,7 @@ export const useMultiCurve = (
           });
         queue.clear();
         Array.from(nextCheckAddress).forEach(_addr => {
-          const addr = _addr.toLocaleLowerCase();
+          const addr = _addr.toLowerCase();
           queue.add(async () => {
             setMultiTimeStamp(prev => ({
               ...prev,
@@ -186,7 +187,11 @@ export const useMultiCurve = (
                   }),
                 },
               }));
-            } catch (error) {}
+            } catch (error) {
+              console.error('Fetch curve error', error);
+            } finally {
+              loadingMapRef.current[addr] = false;
+            }
           });
         });
         await waitQueueFinished(queue);
@@ -209,7 +214,7 @@ export const useMultiCurve = (
   const combineData = useMemo(() => {
     const list = addresses
       .map(address => {
-        const data = multiTimeStamp[address.toLocaleLowerCase()];
+        const data = multiTimeStamp[address.toLowerCase()];
         return data?.data || [];
       })
       .filter(data => data.length > 0);
@@ -231,17 +236,11 @@ export const useMultiCurve = (
     if (combineData.list.length === 0) {
       fetch(addresses);
     }
-  }, [
-    addresses,
-    combineData.list.length,
-    disableAutoFetch,
-    fetch,
-    multiTimeStamp,
-  ]);
+  }, [addresses, combineData.list.length, disableAutoFetch, fetch]);
 
   const isLoadingNew = useMemo(() => {
     return addresses?.every(address => {
-      return !multiTimeStamp[address.toLocaleLowerCase()]?.data?.length;
+      return !multiTimeStamp[address.toLowerCase()]?.data?.length;
     });
   }, [addresses, multiTimeStamp]);
 
