@@ -326,7 +326,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleViewTabs = useMemoizedFn(async () => {
-      if (isActive) {
+      if (isActive && progress === 1) {
         await handleViewShot();
       }
 
@@ -340,7 +340,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleGoHome = useMemoizedFn(async () => {
-      if (isActive) {
+      if (isActive && progress === 1) {
         await handleViewShot();
       }
       setPartialBrowserState({
