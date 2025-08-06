@@ -47,7 +47,7 @@ import {
   safeParseURL,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useFocusEffect } from '@react-navigation/native';
-import { useMemoizedFn } from 'ahooks';
+import { useDebounce, useMemoizedFn } from 'ahooks';
 import ViewShot from 'react-native-view-shot';
 import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
 import { BrowserFooter } from './BrowserFooter';
@@ -118,6 +118,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
     const { browserState, setPartialBrowserState } = useBrowser();
+    const debounceProgress = useDebounce(progress, { wait: 450 });
 
     const {
       webviewRef,
@@ -326,7 +327,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleViewTabs = useMemoizedFn(async () => {
-      if (isActive && progress === 1) {
+      if (isActive && debounceProgress === 1) {
         await handleViewShot();
       }
 
@@ -340,7 +341,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleGoHome = useMemoizedFn(async () => {
-      if (isActive && progress === 1) {
+      if (isActive && debounceProgress === 1) {
         await handleViewShot();
       }
       setPartialBrowserState({
@@ -375,12 +376,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     );
 
     useEffect(() => {
-      if (isActive && progress === 1) {
-        setTimeout(() => {
-          handleViewShot();
-        }, 300);
+      if (isActive && debounceProgress === 1) {
+        handleViewShot();
       }
-    }, [handleViewShot, isActive, progress]);
+    }, [debounceProgress, handleViewShot, isActive]);
 
     React.useImperativeHandle(
       ref,
