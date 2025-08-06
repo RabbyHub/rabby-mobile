@@ -30,11 +30,7 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { sendMiniTransactions } = useMiniApproval();
-  const {
-    data: allowance,
-    loading,
-    runAsync: getAllowance,
-  } = useRequest(async () => {
+  const { data: allowance, loading } = useRequest(async () => {
     const res = await getERC20Allowance(
       token.chain,
       token.id,
@@ -65,14 +61,15 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
         txs: [tx],
         account,
       });
-      setTimeout(() => {
-        getAllowance();
-      }, 500);
     } catch (error) {
       console.error(error);
     }
 
-    // resetNavigationTo(navigation, 'Home');
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      resetNavigationTo(navigation, 'Home');
+    }
   });
 
   const timerRef = useRef<ReturnType<typeof setTimeout>>();

@@ -31,17 +31,15 @@ export const RevokeNFTCollectionBtn = ({
   const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
   const { sendMiniTransactions } = useMiniApproval();
 
-  const { data: isApproved, runAsync: getApprovedStatus } = useRequest(
-    async () => {
-      return getNFTApprovedForAll({
-        chainServerId: collection.chain || (collection as any).chain_id,
-        contractAddress: collection.id,
-        spender: spender,
-        address: account.address,
-        account,
-      });
-    },
-  );
+  const { data: isApproved } = useRequest(async () => {
+    return getNFTApprovedForAll({
+      chainServerId: collection.chain || (collection as any).chain_id,
+      contractAddress: collection.id,
+      spender: spender,
+      address: account.address,
+      account,
+    });
+  });
 
   const handleRevoke = useMemoizedFn(async () => {
     try {
@@ -62,11 +60,13 @@ export const RevokeNFTCollectionBtn = ({
         txs: [tx],
         account,
       });
-      setTimeout(() => {
-        getApprovedStatus();
-      }, 500);
     } catch (error) {
       console.error(error);
+    }
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      resetNavigationTo(navigation, 'Home');
     }
   });
 

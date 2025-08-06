@@ -24,19 +24,18 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { sendMiniTransactions } = useMiniApproval();
+  const { navigation } = useSafeSetNavigationOptions();
 
-  const { data: isApproved, runAsync: getApprovedStatus } = useRequest(
-    async () => {
-      const approvedToAddress = await getErc721Approved({
-        chainServerId: nft.chain,
-        nftTokenId: nft.inner_id,
-        contractAddress: nft.contract_id,
-        account,
-      });
+  const { data: isApproved } = useRequest(async () => {
+    const approvedToAddress = await getErc721Approved({
+      chainServerId: nft.chain,
+      nftTokenId: nft.inner_id,
+      contractAddress: nft.contract_id,
+      account,
+    });
 
-      return isSameAddress(spender, approvedToAddress);
-    },
-  );
+    return isSameAddress(spender, approvedToAddress);
+  });
 
   const handleRevoke = useMemoizedFn(async () => {
     try {
@@ -58,11 +57,14 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
         txs: [tx],
         account,
       });
-      setTimeout(() => {
-        getApprovedStatus();
-      }, 500);
     } catch (e) {
       console.error(e);
+    }
+
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      resetNavigationTo(navigation, 'Home');
     }
   });
 
