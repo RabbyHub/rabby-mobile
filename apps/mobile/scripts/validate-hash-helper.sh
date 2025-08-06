@@ -50,6 +50,9 @@ export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
 export SENTRY_DISABLE_AUTO_UPLOAD=true # 不上传 sentry 报告了，没啥用
 export APP_ENV=hashing
 
+# --- 覆盖代码中用到的环境变量 ---
+export RABBY_MOBILE_CODE="RABBY_MOBILE_CODE_DEV"
+
 # --- 覆写 .env.local ---
 # https://www.npmjs.com/package/react-native-dotenv#override-envname
 OVERRIDE_ENV_FILE=".env"
