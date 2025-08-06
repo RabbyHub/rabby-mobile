@@ -45,7 +45,6 @@ export const useAssets = ({
   const {
     tokens,
     portfolios,
-    nftList,
     assetsMap,
     setAssetsMap,
     updateNFTs,
@@ -441,11 +440,10 @@ export const useAssets = ({
   return {
     tokens,
     portfolios,
-    nftList,
     assetsMap,
     isLoading,
     getTokenCombined,
-    hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
+    hasAssets: !!tokens?.length || !!portfolios?.length,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     batchLoadCacheTokens,

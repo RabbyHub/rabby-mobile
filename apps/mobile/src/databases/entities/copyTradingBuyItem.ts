@@ -5,7 +5,6 @@ import { EntityAddressAssetBase } from './base';
 import { prepareAppDataSource } from '../imports';
 import { TokenItemEntity } from './tokenitem';
 import { DECIMALS_INT_RATIO } from './_helpers';
-import { monitorDBQuery, monitorRawQuery } from '../performance';
 
 const TABLE_NAME = 'rabby_copy_trading_buyitem';
 const TABLE_NAME_TOKENITEM = 'rabby_cache_tokenitem';
@@ -92,10 +91,6 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
-  @monitorDBQuery({
-    entity: 'CopyTradingBuyItemEntity',
-    method: 'getCountOfAccount',
-  })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -109,37 +104,24 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
-  @monitorDBQuery({ entity: 'CopyTradingBuyItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
-  @monitorDBQuery({
-    entity: 'CopyTradingBuyItemEntity',
-    method: 'deleteForAddress',
-  })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
     return this.getRepository().delete({ owner_addr });
   }
 
-  @monitorDBQuery({
-    entity: 'CopyTradingBuyItemEntity',
-    method: 'selectAllBuyItem',
-  })
   static async selectAllBuyItem() {
     await prepareAppDataSource();
 
     return this.getRepository().find();
   }
 
-  @monitorDBQuery({
-    entity: 'CopyTradingBuyItemEntity',
-    method: 'insertBuyItem',
-  })
   static async insertBuyItem(
     owner_addr: string,
     tokenData: {
@@ -164,10 +146,6 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
     return true;
   }
 
-  @monitorDBQuery({
-    entity: 'CopyTradingBuyItemEntity',
-    method: 'deleteExpiredBuyItem',
-  })
   static async deleteExpiredBuyItem() {
     try {
       await prepareAppDataSource();
@@ -246,10 +224,7 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
    * Optimized version: use CTE to first aggregate CopyTradingBuyItem, then join with TokenItem
    * @returns raw SQL query results containing TokenItem fields plus buy_amount and buy_price
    */
-  @monitorRawQuery({
-    entity: 'CopyTradingBuyItemEntity',
-    method: 'queryCopyTradingItems',
-  })
+
   static async queryCopyTradingItems(): Promise<
     QueryCopyTradingBuyItemResult[]
   > {

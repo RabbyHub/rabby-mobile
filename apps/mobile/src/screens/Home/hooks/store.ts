@@ -496,17 +496,12 @@ export const useAssetsMap = ({
     return portfolios;
   }, [assetsMap, hideCombined]);
 
-  const memoNFTs = useMemo(() => {
-    return hideCombined ? [] : combinedNFTs(assetsMap);
-  }, [assetsMap, hideCombined]);
-
   return {
     updateTokens,
     updatePortfolios,
     updateNFTs,
     tokens: memoTokens,
     portfolios: memoPortfolios,
-    nftList: memoNFTs,
     assetsMap,
     getTokenCombined,
     setAssetsMap,

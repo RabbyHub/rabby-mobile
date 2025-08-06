@@ -18,7 +18,6 @@ import {
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_TOKEN_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
-import { monitorDBQuery, monitorRawQuery } from '../performance';
 
 @Entity('cache_tokenitem')
 export class TokenItemEntity extends EntityAddressAssetBase {
@@ -175,7 +174,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
-  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -189,14 +187,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
-  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
-  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'batchQueryTokens' })
   static async batchQueryTokens(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -209,10 +205,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       }));
   }
 
-  @monitorDBQuery({
-    entity: 'TokenItemEntity',
-    method: 'batchMultiAddressTokensByIdAndChain',
-  })
   static async batchMultiAddressTokensByIdAndChain(
     addresses: string[],
     chain: string,
@@ -240,10 +232,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
-  @monitorDBQuery({
-    entity: 'TokenItemEntity',
-    method: 'batchMultAddressTokens',
-  })
   static async batchMultAddressTokens(
     addresses: string[],
     core?: boolean,
@@ -276,7 +264,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   /**
    * @description query tokens, order by tokenitem_token_usd_value DESC by default
    */
-  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'searchAllTokens' })
   static async searchAllTokens(options?: {
     /**
      * @description vary with owner_addr, default is false
@@ -359,7 +346,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       }));
   }
 
-  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'queryTokensByOwner' })
   static async queryTokensByOwner(
     owner_addr: string,
     options?: {
@@ -468,7 +454,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
 
-  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'willExpired' })
   static async willExpired(owner_addr: string, offest?: number) {
     if (await this.isExpired(owner_addr)) {
       return;
@@ -482,7 +467,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .execute();
   }
 
-  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'getCexIds' })
   static async getCexIds(tokenId: string, chain: string) {
     await prepareAppDataSource();
 
@@ -501,10 +485,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   }
 
   // 获取原生代币列表中美元总价值最大的一个token
-  @monitorDBQuery({
-    entity: 'TokenItemEntity',
-    method: 'getTokenWithMaxUsdValue',
-  })
   static async getTokenWithMaxUsdValue(
     owner_addr: string,
     tokenList: { chain: string; tokenId: string }[],
@@ -542,17 +522,12 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return result;
   }
 
-  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
     return this.getRepository().delete({ owner_addr });
   }
 
-  @monitorDBQuery({
-    entity: 'TokenItemEntity',
-    method: 'deleteForAddressAndToken',
-  })
   static async deleteForAddressAndToken(owner_addr: string, tokenId: string) {
     await prepareAppDataSource();
 
@@ -560,7 +535,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   }
 
   // delete tokens that are not updated in last batch reload token list
-  @monitorDBQuery({ entity: 'TokenItemEntity', method: 'cleanupStaleTokens' })
   static async cleanupStaleTokens(owner_addr: string, syncTimestamp: number) {
     try {
       await prepareAppDataSource();

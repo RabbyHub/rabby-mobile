@@ -20,7 +20,6 @@ import {
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
-import { monitorDBQuery } from '../performance';
 
 export type ProjectItemType = {
   chain: string;
@@ -329,14 +328,12 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     e.history_type = this.getHistoryItemType(e);
   }
 
-  @monitorDBQuery({ entity: 'HistoryItemEntity', method: 'getAllHistoryItem' })
   static async getAllHistoryItem(owner_addr?: string) {
     await prepareAppDataSource();
 
     return await this.getRepository().findBy({ owner_addr });
   }
 
-  @monitorDBQuery({ entity: 'HistoryItemEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -350,7 +347,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
-  @monitorDBQuery({ entity: 'HistoryItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
@@ -380,7 +376,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return result.maxTimeAt;
   }
 
-  @monitorDBQuery({ entity: 'HistoryItemEntity', method: 'batchQueryHistory' })
   static async batchQueryHistory(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -388,10 +383,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
   }
 
   /** @deprecated */
-  @monitorDBQuery({
-    entity: 'HistoryItemEntity',
-    method: 'getAllSendItemsTriggeredByImportedAddr',
-  })
   static async getAllSendItemsTriggeredByImportedAddr(
     owner_addrs: string[],
     count?: number,
@@ -418,10 +409,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
-  @monitorDBQuery({
-    entity: 'HistoryItemEntity',
-    method: 'getAllHistoryItemSortedByTime',
-  })
   static async getAllHistoryItemSortedByTime(
     owner_addrs: string[],
     count?: number,
@@ -471,10 +458,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
-  @monitorDBQuery({
-    entity: 'HistoryItemEntity',
-    method: 'getHistoryItemsPaginated',
-  })
   static async getHistoryItemsPaginated(
     owner_addrs: string[],
     options: {
@@ -552,10 +535,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     };
   }
 
-  @monitorDBQuery({
-    entity: 'HistoryItemEntity',
-    method: 'getTokenHistoryItemSortedByTime',
-  })
   static async getTokenHistoryItemSortedByTime(
     owner_addrs: string[],
     tokenId: string,
@@ -605,7 +584,6 @@ export class HistoryItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
-  @monitorDBQuery({ entity: 'HistoryItemEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

@@ -4,7 +4,6 @@ import { EntityAddressAssetBase } from './base';
 import { CEX_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';
 import { Cex } from '@rabby-wallet/rabby-api/dist/types';
-import { monitorDBQuery } from '../performance';
 
 @Entity('cache_cex')
 export class CexEntity extends EntityAddressAssetBase {
@@ -43,7 +42,6 @@ export class CexEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
-  @monitorDBQuery({ entity: 'CexEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -57,14 +55,12 @@ export class CexEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
-  @monitorDBQuery({ entity: 'CexEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
-  @monitorDBQuery({ entity: 'CexEntity', method: 'queryCexInfo' })
   static async queryCexInfo(owner_addr: string): Promise<Cex> {
     await prepareAppDataSource();
     const result = await this.getRepository().findOneBy({
@@ -83,7 +79,6 @@ export class CexEntity extends EntityAddressAssetBase {
   private static cacheExpiry: number = 0;
   private static readonly CACHE_DURATION = 60 * 1000; // 1 min
 
-  @monitorDBQuery({ entity: 'CexEntity', method: 'getCexList' })
   static async getCexList(): Promise<CexEntity[]> {
     if (this.cexListCache && Date.now() < this.cacheExpiry) {
       return this.cexListCache;
@@ -98,7 +93,6 @@ export class CexEntity extends EntityAddressAssetBase {
     return result;
   }
 
-  @monitorDBQuery({ entity: 'CexEntity', method: 'isExpired' })
   static async isExpired(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -116,7 +110,6 @@ export class CexEntity extends EntityAddressAssetBase {
     return Date.now() - firstUpdateTime > CEX_EXPIRED_TIME;
   }
 
-  @monitorDBQuery({ entity: 'CexEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

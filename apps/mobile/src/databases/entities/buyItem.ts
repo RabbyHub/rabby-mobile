@@ -4,7 +4,6 @@ import { Entity, Column } from 'typeorm';
 import { EntityAddressAssetBase } from './base';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';
-import { monitorDBQuery } from '../performance';
 
 @Entity('cache_buy_order')
 export class BuyItemEntity extends EntityAddressAssetBase {
@@ -82,7 +81,6 @@ export class BuyItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
-  @monitorDBQuery({ entity: 'BuyItemEntity', method: 'getAllHistoryItem' })
   static async getAllHistoryItem(owner_addrs: string[], count?: number) {
     await prepareAppDataSource();
 
@@ -100,7 +98,6 @@ export class BuyItemEntity extends EntityAddressAssetBase {
     }));
   }
 
-  @monitorDBQuery({ entity: 'BuyItemEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -114,14 +111,12 @@ export class BuyItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
-  @monitorDBQuery({ entity: 'BuyItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
-  @monitorDBQuery({ entity: 'BuyItemEntity', method: 'getLatestTime' })
   static async getLatestTime(owner_addr: string): Promise<number> {
     await prepareAppDataSource();
 
@@ -138,7 +133,6 @@ export class BuyItemEntity extends EntityAddressAssetBase {
     return result.maxTimeAt;
   }
 
-  @monitorDBQuery({ entity: 'BuyItemEntity', method: 'getAllPending' })
   static async getAllPending(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -156,7 +150,6 @@ export class BuyItemEntity extends EntityAddressAssetBase {
     }));
   }
 
-  @monitorDBQuery({ entity: 'BuyItemEntity', method: 'batchQueryHistory' })
   static async batchQueryHistory(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -167,7 +160,6 @@ export class BuyItemEntity extends EntityAddressAssetBase {
     }));
   }
 
-  @monitorDBQuery({ entity: 'BuyItemEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

@@ -6,7 +6,6 @@ import { columnConverter, badRealTransformer } from './_helpers';
 import { ASSET_EXPIRED_TIME } from '@/constant/expireTime';
 import { EMPTY_NFT_ITEM_ID } from '@/constant/assets';
 import { prepareAppDataSource } from '../imports';
-import { monitorDBQuery } from '../performance';
 
 @Entity('cache_nftitem')
 export class NFTItemEntity extends EntityAddressAssetBase {
@@ -124,7 +123,6 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     e.makeDbId();
   }
 
-  @monitorDBQuery({ entity: 'NFTItemEntity', method: 'getCountOfAccount' })
   static async getCountOfAccount() {
     await prepareAppDataSource();
 
@@ -138,14 +136,12 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     return result.uniqueChainAddressCount as number;
   }
 
-  @monitorDBQuery({ entity: 'NFTItemEntity', method: 'getCount' })
   static async getCount() {
     await prepareAppDataSource();
 
     return this.getRepository().count();
   }
 
-  @monitorDBQuery({ entity: 'NFTItemEntity', method: 'batchQueryNFTs' })
   static async batchQueryNFTs(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -162,7 +158,6 @@ export class NFTItemEntity extends EntityAddressAssetBase {
       }));
   }
 
-  @monitorDBQuery({ entity: 'NFTItemEntity', method: 'batchMultAddressNFTs' })
   static async batchMultAddressNFTs(
     addresses: string[],
     core?: boolean,
@@ -190,7 +185,6 @@ export class NFTItemEntity extends EntityAddressAssetBase {
         pay_token: columnConverter.jsonStringToObj(i.pay_token),
       }));
   }
-  @monitorDBQuery({ entity: 'NFTItemEntity', method: 'willExpired' })
   static async willExpired(owner_addr: string, offest?: number) {
     if (await this.isExpired(owner_addr)) {
       return;
@@ -204,7 +198,6 @@ export class NFTItemEntity extends EntityAddressAssetBase {
       .execute();
   }
 
-  @monitorDBQuery({ entity: 'NFTItemEntity', method: 'isExpired' })
   static async isExpired(owner_addr: string) {
     await prepareAppDataSource();
 
@@ -221,13 +214,11 @@ export class NFTItemEntity extends EntityAddressAssetBase {
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
-  @monitorDBQuery({ entity: 'NFTItemEntity', method: 'deleteForAddress' })
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 
     return this.getRepository().delete({ owner_addr });
   }
-  @monitorDBQuery({ entity: 'NFTItemEntity', method: 'cleanupStaleNFTs' })
   static async cleanupStaleNFTs(owner_addr: string, syncTimestamp: number) {
     await prepareAppDataSource();
 

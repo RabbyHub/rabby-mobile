@@ -37,8 +37,6 @@ import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useGasAccountInfo } from './screens/GasAccount/hooks';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
-// 导入数据库性能监控调试工具
-import './databases/performance/init';
 
 const rneuiTheme = createTheme({
   lightColors: {
