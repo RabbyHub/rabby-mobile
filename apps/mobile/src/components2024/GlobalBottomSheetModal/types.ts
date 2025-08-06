@@ -7,6 +7,7 @@ import type { NFTDetailPopupProps } from '@/screens/NftDetail/PopupInner';
 import type { LinearGradientContainerProps } from '../ScreenContainer/LinearGradientContainer';
 import { ConfirmAddressScreenProps } from '@/screens/Send/components/ConfirmAddress';
 import { ISelectCexPorps } from '@/screens/Send/components/SelectCex';
+import { ButtonProps } from '../Button';
 
 export enum MODAL_NAMES {
   // 'COPY_TRADING_TOKEN_DETAIL' = 'COPY_TRADING_TOKEN_DETAIL',
@@ -53,6 +54,7 @@ export enum MODAL_NAMES {
   'SELECT_CEX' = 'SELECT_CEX',
   'NFT_DETAIL' = 'NFT_DETAIL',
   'DESCRIPTION' = 'DESCRIPTION',
+  'ADDRESS_HIGHT_DESC' = 'ADDRESS_HIGHT_DESC',
   'RESTORE_FROM_CLOUD' = 'RESTORE_FROM_CLOUD',
   'ADDRESS_QUICK_MANAGER' = 'ADDRESS_QUICK_MANAGER',
   'ADDRESS_DETAIL' = 'ADDRESS_DETAIL',
@@ -101,6 +103,10 @@ export type MODAL_CREATE_PARAMS = {
     typeof import('../Descriptions').Descriptions
   >;
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: {};
+  [MODAL_NAMES.ADDRESS_HIGHT_DESC]: {
+    address: string;
+    nextButtonProps?: ButtonProps;
+  };
 };
 
 export type MODAL_ID = `${MODAL_NAMES}_${string}`;
