@@ -15,6 +15,7 @@ import {
   safeParseURL,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import RNFS from 'react-native-fs';
+import { getViewShotFilePath } from '@/utils/browser';
 
 export interface BrowserHistoryItem {
   url: string;
@@ -383,7 +384,8 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         await RNFS.unlink(filePath);
       }
       await RNFS.copyFile(tempUri, filePath);
-      return filePath?.startsWith('file://') ? filePath : `file://${filePath}`;
+      // return filePath?.startsWith('file://') ? filePath : `file://${filePath}`;
+      return fileName;
     } catch (e) {
       console.error(e);
     }
@@ -391,7 +393,7 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
 
   async removeScreenshot({ tabId }: { tabId: string }) {
     const tab = this.store.browserTabs.tabs.find(item => item.id === tabId);
-    const filePath = tab?.viewShot;
+    const filePath = tab?.viewShot ? getViewShotFilePath(tab?.viewShot) : '';
     if (!filePath) {
       return;
     }

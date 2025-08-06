@@ -1,5 +1,7 @@
+import { last } from 'lodash';
 import { APP_STORE_URL_PREFIXES } from '@/constant/browser';
 import { urlUtils } from '@rabby-wallet/base-utils';
+import RNFS from 'react-native-fs';
 
 const googleDomainList = [
   'www.google.com',
@@ -225,4 +227,18 @@ export const isGoogle = (url?: string) => {
 
 export function isValidAppStoreUrl(url: string): boolean {
   return APP_STORE_URL_PREFIXES.some(prefix => url.startsWith(prefix));
+}
+
+export function getViewShotFilePath(fileName: string) {
+  if (!fileName || fileName.startsWith('data:')) {
+    return '';
+  }
+  return `${RNFS.DocumentDirectoryPath}/${last(fileName.split('/'))}`;
+}
+
+export function getViewShotUri(fileName: string) {
+  if (fileName.startsWith('data:')) {
+    return fileName;
+  }
+  return `file://${RNFS.DocumentDirectoryPath}/${last(fileName.split('/'))}`;
 }

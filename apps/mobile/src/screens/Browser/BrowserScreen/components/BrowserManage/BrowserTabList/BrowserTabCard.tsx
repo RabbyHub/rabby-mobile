@@ -1,6 +1,7 @@
 import { RcIconCloseCC } from '@/assets/icons/common';
 import { Tab } from '@/core/services/browserService';
 import { useTheme2024 } from '@/hooks/theme';
+import { getViewShotUri } from '@/utils/browser';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
@@ -61,7 +62,10 @@ export const BrowserTabCard: React.FC<Props> = ({
         </View>
         <View style={styles.screenshot}>
           {tab.viewShot ? (
-            <Image source={{ uri: tab.viewShot }} style={styles.viewShot} />
+            <Image
+              source={{ uri: getViewShotUri(tab.viewShot) }}
+              style={styles.viewShot}
+            />
           ) : null}
         </View>
       </TouchableOpacity>

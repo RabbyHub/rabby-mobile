@@ -294,12 +294,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         if (!viewShot || !tabId) {
           return;
         }
-        const filePath = await browserService.saveScreenshot({
+        const fileName = await browserService.saveScreenshot({
           tempUri: viewShot,
           tabId,
         });
         onUpdateTab?.({
-          viewShot: filePath,
+          viewShot: fileName,
         });
       } catch (e) {
         console.error('viewShot', e);
