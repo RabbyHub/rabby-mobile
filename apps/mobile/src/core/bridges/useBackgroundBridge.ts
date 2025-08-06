@@ -44,11 +44,16 @@ export function useSetupWebview({
   webviewIdRef: React.MutableRefObject<string>;
   webviewRef: React.MutableRefObject<WebView | null>;
 }) {
-  const {
-    state: currentBridge,
-    setRefState: putBackgroundBridge,
-    stateRef: currentBridgeRef,
-  } = useRefState<BackgroundBridge | null>(null);
+  const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
+    useRefState<BackgroundBridge | null>(null);
+
+  const destroyCurrentBridge = useCallback(() => {
+    if (currentBridgeRef.current) {
+      currentBridgeRef.current.onDisconnect();
+      sessionService.deleteSession(currentBridgeRef.current);
+      currentBridgeRef.current = null;
+    }
+  }, [currentBridgeRef]);
 
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
@@ -87,14 +92,14 @@ export function useSetupWebview({
           return;
         }
         if (data.name) {
-          currentBridge?.onMessage(data);
+          currentBridgeRef.current?.onMessage(data);
           return;
         }
       } catch (e) {
         console.error(e, `Browser::onMessage on ${urlRef.current}`);
       }
     },
-    [currentBridge, urlRef],
+    [currentBridgeRef, urlRef],
   );
 
   const changeUrl = useCallback(
@@ -130,10 +135,7 @@ export function useSetupWebview({
         // icon.current = null;
 
         if (treatAsReload) {
-          if (currentBridge) {
-            currentBridge.onDisconnect();
-            sessionService.deleteSession(currentBridge);
-          }
+          destroyCurrentBridge();
 
           // // Cancel loading the page if we detect its a phishing page
           // const { hostname } = new URL(nativeEvent.url);
@@ -156,7 +158,7 @@ export function useSetupWebview({
       }
     },
     [
-      currentBridge,
+      destroyCurrentBridge,
       changeUrl,
       initializeBackgroundBridge,
       urlRef,
@@ -166,15 +168,11 @@ export function useSetupWebview({
 
   useEffect(() => {
     return () => {
-      if (currentBridgeRef.current) {
-        currentBridgeRef.current?.onDisconnect();
-        currentBridgeRef.current = null;
-      }
+      destroyCurrentBridge();
     };
-  }, [currentBridgeRef]);
+  }, [destroyCurrentBridge]);
 
   return {
-    currentBridge,
     onLoadStart,
     onMessage,
   };
