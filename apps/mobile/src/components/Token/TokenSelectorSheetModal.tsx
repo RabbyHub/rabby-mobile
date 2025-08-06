@@ -516,6 +516,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       return setFold(pre => !pre);
     }, [fold]);
 
+    const longPressTriggered = useRef(false);
     const renderItemRenderComponent = useCallback<
       SectionListRenderItem<(typeof tokens)[number]>
     >(
@@ -628,9 +629,16 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 <TouchableOpacity
                   delayLongPress={200}
                   onLongPress={() => {
-                    console.log('prevent trigger onPress');
+                    longPressTriggered.current = true;
+                  }}
+                  onPressOut={() => {
+                    longPressTriggered.current = false;
                   }}
                   onPress={() => {
+                    if (longPressTriggered.current) {
+                      longPressTriggered.current = false;
+                      return;
+                    }
                     if (disabled) {
                       disabledTips && toast.info(disabledTips);
                       return;
@@ -698,7 +706,17 @@ export const TokenSelectorSheetModal = React.forwardRef<
               <TouchableOpacity
                 key={token_key}
                 delayLongPress={200}
+                onLongPress={() => {
+                  longPressTriggered.current = true;
+                }}
+                onPressOut={() => {
+                  longPressTriggered.current = false;
+                }}
                 onPress={() => {
+                  if (longPressTriggered.current) {
+                    longPressTriggered.current = false;
+                    return;
+                  }
                   if (disabled) {
                     disabledTips && toast.info(disabledTips);
                     return;
