@@ -109,7 +109,6 @@ export class CexEntity extends EntityAddressAssetBase {
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > CEX_EXPIRED_TIME;
   }
-
   static async deleteForAddress(owner_addr: string) {
     await prepareAppDataSource();
 

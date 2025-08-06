@@ -241,14 +241,14 @@ export class TokenItemEntity extends EntityAddressAssetBase {
 
     const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
 
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
+
     if (core) {
       queryBuilder.andWhere({ is_core: true });
     }
     if (maxLength) {
       queryBuilder.take(maxLength);
     }
-
-    queryBuilder.andWhere({ owner_addr: In(addresses) });
 
     const tokens = await queryBuilder.getMany();
 

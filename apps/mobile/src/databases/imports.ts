@@ -16,7 +16,6 @@ export async function initializeAppDataSource(dbOptions?: DataSourceOptions) {
         console.debug(
           `[initializeAppDataSource] initialized, will runMigrations`,
         );
-
         await as
           .runMigrations({
             transaction: 'each',

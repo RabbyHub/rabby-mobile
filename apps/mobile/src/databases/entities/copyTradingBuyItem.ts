@@ -254,7 +254,7 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
         FROM aggregated_buys ab
         INNER JOIN ${TABLE_NAME_TOKENITEM} tokenitem
           ON ab.id = tokenitem.id
-          AND ab.chain = tokenitem.chain
+          AND ab.chain = tokenitem.chain 
           AND ab.owner_addr = tokenitem.owner_addr
         WHERE tokenitem.amount > 0
       `);

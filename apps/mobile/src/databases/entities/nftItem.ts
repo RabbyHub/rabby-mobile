@@ -167,13 +167,13 @@ export class NFTItemEntity extends EntityAddressAssetBase {
 
     const queryBuilder = this.getRepository().createQueryBuilder('nftitem');
 
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
     if (core) {
       queryBuilder.andWhere({ is_core: true });
     }
     if (maxLength) {
       queryBuilder.take(maxLength);
     }
-    queryBuilder.andWhere({ owner_addr: In(addresses) });
 
     const nfts = await queryBuilder.getMany();
 

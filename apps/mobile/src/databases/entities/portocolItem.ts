@@ -105,10 +105,10 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
     const queryBuilder =
       this.getRepository().createQueryBuilder('portocolitem');
 
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
     if (maxLength) {
       queryBuilder.take(maxLength);
     }
-    queryBuilder.andWhere({ owner_addr: In(addresses) });
 
     const portocols = await queryBuilder.getMany();
 
