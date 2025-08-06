@@ -90,6 +90,17 @@ const rules: Rule[] = [
     hiddenSelectors: [
       '#AppHeader ._display-flex._alignItems-stretch._flexBasis-auto._boxSizing-border-box._minHeight-0px._minWidth-0px._flexShrink-0._flexDirection-column._position-relative._zIndex-1020._pointerEvents-auto',
     ],
+    runner: () => {
+      const $toggleBtn: HTMLDivElement | null = document.querySelector(
+        '[data-testid="account-drawer"] ._display-flex._flexBasis-auto._boxSizing-border-box._position-relative._minHeight-0px._minWidth-0px._flexShrink-0._flexDirection-row._alignItems-center._mr-18px._ml-18px:not([rabby-injected])',
+      );
+      if (!$toggleBtn) {
+        return;
+      }
+
+      $toggleBtn.setAttribute('rabby-injected', 'true');
+      $toggleBtn.click();
+    },
   },
   {
     matches: ['https://aerodrome.finance'],

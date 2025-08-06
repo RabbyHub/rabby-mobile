@@ -36,7 +36,7 @@ import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
 import { HistoryTokenList } from './components/HistoryTokenList';
-import { getApproveTokeName, getHistoryItemType } from './components/utils';
+import { getApproveTokeName } from './components/utils';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText2024 from '@/components2024/ScreenHeader/HeaderTitleText';
 import { HistoryBottomBtn } from './components/HistoryBottomBtn';
@@ -44,7 +44,7 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { AssetAvatar } from '@/components';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useTranslation } from 'react-i18next';
 import { RevokeTokenBtn } from './components/Actions/components/RevokeTokenBtn';
@@ -148,10 +148,7 @@ export const AddressItemInDetail = ({
   }, [accounts, address]);
   const { getCexInfoByAddress } = useGetCexList();
   const cexInfo = useMemo(() => {
-    console.debug(' exe getCexInfo', address);
-    const cexInfo = getCexInfoByAddress(address);
-    console.debug(' exe getCexInfo done', cexInfo);
-    return cexInfo;
+    return getCexInfoByAddress(address);
   }, [address, getCexInfoByAddress]);
 
   const handleGoAddressDetail = useCallback(() => {
@@ -217,30 +214,10 @@ function HistoryDetailScreen(): JSX.Element {
         'HistoryDetail'
       >['route']
     >();
-  const { data: _data, isForMultipleAddress, title } = route.params || {};
-
-  const buyItemData = usePendingBuyItemData(
-    _data.address,
-    _data?.buyDetails?.id || '',
-    _data?.buyDetails?.status || '',
-  );
-
-  const data = useMemo(() => {
-    if (_data?.isLocalBuy && buyItemData) {
-      return {
-        ..._data,
-        buyDetails: buyItemData,
-        id: buyItemData?.receive_tx_id ?? _data.id,
-      } as typeof _data;
-    }
-    return _data;
-  }, [_data, buyItemData]);
+  const { data, isForMultipleAddress, title } = route.params || {};
 
   const { t } = useTranslation();
-  const status = useMemo(
-    () => (data?.buyDetails?.status === 'failed' ? 0 : data.tx?.status) ?? 1,
-    [data],
-  );
+  const status = useMemo(() => data.tx?.status ?? 1, [data]);
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { safeSizes } = useSafeAndroidBottomSizes({
@@ -279,8 +256,8 @@ function HistoryDetailScreen(): JSX.Element {
     disableAutoFetch: true,
   });
 
-  const formatType: HistoryItemCateType = useMemo(() => {
-    return getHistoryItemType(data);
+  const formatType = useMemo(() => {
+    return data.historyType;
   }, [data]);
 
   const { formatToken, isNft } = useMemo(() => {
@@ -288,17 +265,18 @@ function HistoryDetailScreen(): JSX.Element {
     const isDoubleToken =
       cate === HistoryItemCateType.Swap || cate === HistoryItemCateType.Bridge;
 
-    const { tokenDict } = data;
     if (isDoubleToken) {
       const send = data.sends[0];
       const receive = data.receives[0];
 
       return {
-        formatToken: [tokenDict[send?.token_id], tokenDict[receive?.token_id]],
+        formatToken: [send?.token, receive?.token],
         isNft: false,
       };
     } else {
-      const isApprove = cate === HistoryItemCateType.Approve;
+      const isApprove =
+        cate === HistoryItemCateType.Approve ||
+        cate === HistoryItemCateType.Revoke;
       const commonItem =
         cate === HistoryItemCateType.Send ? data.sends[0] : data.receives[0];
 
@@ -306,13 +284,12 @@ function HistoryDetailScreen(): JSX.Element {
         ? (data.token_approve?.token_id as string)
         : commonItem?.token_id;
       const tokenIsNft = tokenId?.length === 32;
-      const tokenUUID = `${data.chain}_token:${tokenId}`;
-      const token = tokenDict[tokenId] || tokenDict[tokenUUID];
+      const token = isApprove ? data.token_approve?.token : commonItem?.token;
       return {
         formatToken: {
           ...token,
           amount: commonItem?.amount || data.token_approve?.value || 0,
-        },
+        } as TokenItem,
         isNft: tokenIsNft,
       };
     }
@@ -329,10 +306,8 @@ function HistoryDetailScreen(): JSX.Element {
   const usdGasFee = data.tx?.eth_gas_fee;
 
   const formatProject = useMemo(() => {
-    const projectDict = data.projectDict;
-
     if (data.project_id) {
-      return projectDict[data.project_id];
+      return data.project_item;
     }
   }, [data]);
 
@@ -434,7 +409,6 @@ function HistoryDetailScreen(): JSX.Element {
           type={formatType}
           token={formatToken}
           status={status}
-          tokenDict={data.tokenDict}
           account={txAccount}
         />
         <View style={[styles.detailContainer, styles.detailContainerLastOne]}>
@@ -453,18 +427,7 @@ function HistoryDetailScreen(): JSX.Element {
               {t('page.transactions.detail.Status')}
             </Text>
             <View>
-              <TxStatusItem
-                status={status}
-                withText={true}
-                {...(data?.isLocalBuy
-                  ? {
-                      isPending:
-                        data?.buyDetails?.status === 'pending' &&
-                        !data.id &&
-                        !data?.buyDetails.receive_tx_id,
-                    }
-                  : {})}
-              />
+              <TxStatusItem status={status} withText={true} />
             </View>
           </View>
           {isNft && Boolean(formatToken) && (
@@ -519,7 +482,7 @@ function HistoryDetailScreen(): JSX.Element {
               </Text>
             </View>
           )}
-          {Boolean(fromAddr) && !data.isLocalBuy && (
+          {Boolean(fromAddr) && (
             <View style={styles.detailItem}>
               <Text style={styles.itemTitleText}>
                 {t('page.transactions.detail.From')}
@@ -527,19 +490,7 @@ function HistoryDetailScreen(): JSX.Element {
               <AddressItemInDetail address={fromAddr!} accounts={accounts} />
             </View>
           )}
-          {data.isLocalBuy && (
-            <View style={styles.detailItem}>
-              <Text style={styles.itemTitleText}>
-                {t('page.transactions.detail.PurchaseFrom')}
-              </Text>
-              <AddressItemInDetail
-                address={data.buyDetails?.service_provider?.name || ''}
-                accounts={accounts}
-              />
-            </View>
-          )}
           {(formatType === HistoryItemCateType.Send ||
-            formatType === HistoryItemCateType.Buy ||
             formatType === HistoryItemCateType.GAS_WITHDRAW ||
             formatType === HistoryItemCateType.GAS_RECEIVED ||
             formatType === HistoryItemCateType.GAS_DEPOSIT ||
@@ -547,8 +498,7 @@ function HistoryDetailScreen(): JSX.Element {
             Boolean(toAddr) && (
               <View style={styles.detailItem}>
                 <Text style={styles.itemTitleText}>
-                  {formatType === HistoryItemCateType.Buy ||
-                  formatType === HistoryItemCateType.GAS_RECEIVED ||
+                  {formatType === HistoryItemCateType.GAS_RECEIVED ||
                   formatType === HistoryItemCateType.GAS_WITHDRAW ||
                   formatType === HistoryItemCateType.Recieve
                     ? t('page.transactions.detail.RecipientAddress')
@@ -606,18 +556,15 @@ function HistoryDetailScreen(): JSX.Element {
             </View>
           )}
         </View>
-        {data.cate_id === 'approve' && data.token_approve ? (
+        {data.cate_id === 'approve' &&
+        data.token_approve &&
+        data.token_approve.token ? (
           <RevokeTokenBtn
             style={{
               marginTop: -8,
               marginBottom: 20,
             }}
-            token={
-              data.tokenDict[data.token_approve?.token_id] ||
-              data.tokenDict[
-                `${data.chain}_token:${data.token_approve?.token_id}`
-              ]
-            }
+            token={data.token_approve?.token}
             spender={data.token_approve?.spender}
             account={txAccount}
           />
@@ -634,7 +581,6 @@ function HistoryDetailScreen(): JSX.Element {
           status={status || 0}
           data={data}
           isForMultipleAddress={isForMultipleAddress}
-          tokenDict={data.tokenDict}
           buttonContainerStyle={buttonContainerStyle}
           account={txAccount}
         />
@@ -674,7 +620,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   detailItem: {
     flexDirection: 'row',
-    gap: 8,
+    // gap: 4,
     padding: 16,
     justifyContent: 'space-between',
     alignItems: 'center',

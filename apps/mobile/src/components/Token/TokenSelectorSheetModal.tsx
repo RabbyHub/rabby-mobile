@@ -90,6 +90,11 @@ import { NextSearchBar } from '@/components2024/SearchBar';
 import { Favorite } from '@/components2024/Favorite';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { navigate } from '@/utils/navigation';
+import {
+  isFromBackAtom,
+  shouldHideSelectorPopupAtom,
+} from '@/screens/Swap/hooks/atom';
+import { useAtom } from 'jotai';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -230,7 +235,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
   ) => {
     const { sheetModalRef: tokenSelectorModal, toggleShowSheetModal } =
       useSheetModal();
-
+    const [shouldHideSelectorPopup, setShouldHideSelectorPopup] = useAtom(
+      shouldHideSelectorPopupAtom,
+    );
+    const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
     const [fold, setFold] = useState(true);
     const [isScamFold, setIsScamFold] = useState(true);
 
@@ -305,8 +313,23 @@ export const TokenSelectorSheetModal = React.forwardRef<
       visible &&
       isFocused
     ) {
+      console.log('DEBUG: toggleShowSheetModal destroy');
       toggleShowSheetModal('destroy');
     }
+    useEffect(() => {
+      // 如果不是从返回按钮进入的，则关闭弹窗
+      if (!isFromBack && visible) {
+        toggleShowSheetModal('destroy');
+        setShouldHideSelectorPopup(false);
+        setIsFromBack(false);
+      }
+    }, [
+      visible,
+      toggleShowSheetModal,
+      isFromBack,
+      setShouldHideSelectorPopup,
+      setIsFromBack,
+    ]);
 
     const { chainItem, chainSearchCtx } = useMemo(() => {
       const chain = !chainServerId ? null : findChainByServerID(chainServerId);
@@ -459,7 +482,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             {...props}
             style={[
               props.style,
-              swapToTokenDetail && {
+              (shouldHideSelectorPopup || swapToTokenDetail) && {
                 zIndex: hiddenZIndex,
               },
             ]}
@@ -469,7 +492,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           />
         );
       },
-      [onCancel, swapToTokenDetail],
+      [onCancel, shouldHideSelectorPopup, swapToTokenDetail],
     );
 
     const ListHeader = useMemo(() => {
@@ -933,11 +956,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
           }
         }}
         {...{
-          containerStyle: swapToTokenDetail
-            ? {
-                zIndex: hiddenZIndex,
-              }
-            : {},
+          containerStyle:
+            shouldHideSelectorPopup || swapToTokenDetail
+              ? {
+                  zIndex: hiddenZIndex,
+                }
+              : {},
           style: {
             overflow: 'hidden',
             borderRadius: 32,

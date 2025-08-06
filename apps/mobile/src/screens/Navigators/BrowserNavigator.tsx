@@ -5,7 +5,6 @@ import { useThemeColors } from '@/hooks/theme';
 import { BrowserNavigatorParamsList } from '@/navigation-type';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import 'react-native-gesture-handler';
-import { BrowserManageScreen } from '../Browser/BrowserManageScreen';
 import { BrowserScreen } from '../Browser/BrowserScreen';
 
 const BrowserStack =
@@ -44,7 +43,7 @@ export function BrowserNavigator() {
           // animation: 'none',
         }}
       />
-      <BrowserStack.Screen
+      {/* <BrowserStack.Screen
         name={RootNames.BrowserManageScreen}
         component={BrowserManageScreen}
         options={mergeScreenOptions({
@@ -56,7 +55,7 @@ export function BrowserNavigator() {
           headerShown: false,
           animation: 'none',
         })}
-      />
+      /> */}
     </BrowserStack.Navigator>
   );
 }

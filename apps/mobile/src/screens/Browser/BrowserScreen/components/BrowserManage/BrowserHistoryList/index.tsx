@@ -1,25 +1,29 @@
 import { DappInfo } from '@/core/services/dappService';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import React from 'react';
-import { StyleProp, Text, View, ViewStyle } from 'react-native';
-import { useBrowser } from '@/hooks/browser/useBrowser';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-import { BrowserSiteCardList } from '@/screens/Browser/components/BrowserSiteCardList';
-import { BrowserBookmarkEmpty } from './BrowserBookmarkEmpty';
 import { useTranslation } from 'react-i18next';
+import { StyleProp, View, ViewStyle } from 'react-native';
+import { BrowserHistoryEmpty } from './BrowserHistoryEmpty';
+import { BrowserHistorySiteList } from './BrowserHistorySiteList';
 
-export const BrowserBookmarkList = ({
+export const BrowserHistoryList = ({
   style,
 }: {
   style?: StyleProp<ViewStyle>;
 }) => {
-  const { styles } = useTheme2024({ getStyle });
-  const { openTab } = useBrowser();
-  const { bookmarkList, removeBookmark, addBookmark, getBookmark } =
-    useBrowserBookmark();
+  const { styles, isLight, colors2024 } = useTheme2024({ getStyle });
+  const {
+    browserHistorySectionList,
+    removeBrowserHistory,
+    removeAllBrowserHistory,
+  } = useBrowserHistory();
+  const { openTab, setPartialBrowserState } = useBrowser();
+  const { removeBookmark, addBookmark, getBookmark } = useBrowserBookmark();
 
   const handlePress = useMemoizedFn((dappInfo: DappInfo) => {
     openTab(dappInfo.url || dappInfo.origin);
@@ -39,22 +43,20 @@ export const BrowserBookmarkList = ({
     }
   });
 
+  const handleDelete = useMemoizedFn((dappInfo: DappInfo) => {
+    removeBrowserHistory(dappInfo.url || dappInfo.origin);
+  });
+
   const { t } = useTranslation();
 
   return (
     <View style={[styles.container, style]}>
-      <BrowserSiteCardList
-        data={bookmarkList}
+      <BrowserHistorySiteList
+        data={browserHistorySectionList}
         onPress={handlePress}
         onFavoritePress={handleFavoritePress}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              {t('page.browserManage.BrowserBookmarkList.title')}
-            </Text>
-          </View>
-        }
-        ListEmptyComponent={BrowserBookmarkEmpty}
+        onDeletePress={handleDelete}
+        ListEmptyComponent={BrowserHistoryEmpty}
       />
     </View>
   );
@@ -62,7 +64,8 @@ export const BrowserBookmarkList = ({
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    paddingHorizontal: 20,
+    position: 'relative',
+    height: '100%',
   },
   header: {
     display: 'flex',
@@ -92,5 +95,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 20,
     color: colors2024['neutral-secondary'],
+  },
+  bottomArea: {
+    paddingVertical: 6,
+    paddingHorizontal: 35,
+    paddingBottom: 30,
+    borderTopWidth: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  bottomText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    color: colors2024['neutral-title-1'],
+    fontWeight: '700',
+    lineHeight: 24,
   },
 }));

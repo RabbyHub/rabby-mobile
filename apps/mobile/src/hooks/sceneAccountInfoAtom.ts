@@ -37,7 +37,6 @@ export const AccountSwitcherInfos = {
 
   History: makeSceneAccount(),
   MultiHistory: makeSceneAccount(),
-  // HistoryFilterScam: makeSceneAccount(), // treat HistoryFilterScam screen as History screen
 
   Receive: makeSceneAccount(),
   GasAccount: makeSceneAccount(),

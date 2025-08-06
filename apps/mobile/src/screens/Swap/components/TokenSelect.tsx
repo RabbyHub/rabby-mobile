@@ -51,6 +51,7 @@ import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
+import { useAtom } from 'jotai';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -120,7 +121,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     const [_, setLongPressToken] = useLongPressTokenAtom();
     const queryConds = useDebounceValue(_queryConds, 250);
     const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
     const currentAccount = queryConds.account;
     const {
       tokens,

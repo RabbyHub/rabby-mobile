@@ -47,7 +47,6 @@ export const HistoryList = ({
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const [data, setData] = React.useState<HistoryDisplayItem[]>([]);
-  const { projectDict, tokenDict } = useHistoryTokenDict();
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
 
@@ -79,28 +78,19 @@ export const HistoryList = ({
     const addresses = isForMultipleAddress
       ? top10Addresses.map(a => a.toLowerCase())
       : [finalAccount?.address.toLowerCase()!];
-    const [historyList, buyList] = await Promise.all([
+    const [historyList] = await Promise.all([
       HistoryItemEntity.getTokenHistoryItemSortedByTime(
         addresses,
         token._tokenId,
         token.chain,
         4,
       ),
-      BuyItemEntity.getAllHistoryItem(addresses, 10000),
     ]);
 
     const list = historyList.map(item => {
-      const localBuyItem = buyList.find(
-        e =>
-          e.receive_tx_id === item.txHash && e.receive_chain_id === item.chain,
-      );
       return {
         ...ensureHistoryListItemFromDb(item),
-        isLocalBuy: !!localBuyItem,
-        buyDetails: localBuyItem,
         isSmallUsdTx: false,
-        tokenDict,
-        projectDict,
         isShowSuccess: false,
       } as HistoryDisplayItem;
     });
@@ -111,8 +101,6 @@ export const HistoryList = ({
     token.chain,
     isForMultipleAddress,
     top10Addresses,
-    projectDict,
-    tokenDict,
   ]);
 
   useEffect(() => {
@@ -127,9 +115,6 @@ export const HistoryList = ({
         key={`${item.address}-${item.id}`}
         data={item}
         isForMultipleAddress={isForMultipleAddress}
-        projectDict={item.projectDict}
-        cateDict={item.cateDict}
-        tokenDict={item.tokenDict || {}}
       />
     );
   });

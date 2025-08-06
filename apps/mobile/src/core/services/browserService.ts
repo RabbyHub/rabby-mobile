@@ -1,6 +1,6 @@
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
-import { entries, sortBy, uniq } from 'lodash';
+import { entries, last, sortBy, uniq, uniqBy } from 'lodash';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import * as Sentry from '@sentry/react-native';
 import {
@@ -10,7 +10,11 @@ import {
   EntityTools,
 } from '../utils/createEntryAdapter';
 import { DappInfo } from './dappService';
-import { safeParseURL } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import {
+  safeGetOrigin,
+  safeParseURL,
+} from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import RNFS from 'react-native-fs';
 
 export interface BrowserHistoryItem {
   url: string;
@@ -35,6 +39,7 @@ export type Tab = {
   openTime: number;
   viewShot?: string;
   isTerminate?: boolean;
+  isDapp?: boolean;
 };
 
 export const emptyTab: Tab = {
@@ -66,8 +71,10 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
       APP_STORE_NAMES.browser,
       {
         browserTabs: {
-          activeTabId: emptyTab.id,
-          tabs: [emptyTab],
+          // activeTabId: emptyTab.id
+          // tabs: [emptyTab],
+          activeTabId: '',
+          tabs: [],
         },
         browserHistory: {
           ids: [],
@@ -151,29 +158,29 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         ...this.store.browserTabs,
       };
 
-      const tabs: Tab[] = [emptyTab];
+      const tabs: Tab[] = [];
       browserTabsStore.tabs.forEach(tab => {
-        const isActive = tab.id === browserTabsStore.activeTabId;
         const res = {
           ...tab,
           initialUrl: tab.url || tab.initialUrl,
-          isTerminate: !isActive,
+          isTerminate: true,
         };
-        if (/^https?:\/\//.test(res.initialUrl) && res.id !== emptyTab.id) {
+        if (/^https?:\/\//.test(res.initialUrl)) {
           tabs.push(res);
         }
       });
       browserTabsStore.activeTabId =
         tabs.find(tab => tab.id === browserTabsStore.activeTabId)?.id ||
-        emptyTab.id;
+        last(tabs)?.id ||
+        '';
       browserTabsStore.tabs = tabs;
       this.store.browserTabs = browserTabsStore;
     } catch (e) {
       console.error(e);
       Sentry.captureException(e);
       this.store.browserTabs = {
-        tabs: [emptyTab],
-        activeTabId: emptyTab.id,
+        tabs: [],
+        activeTabId: '',
       };
     }
 
@@ -199,11 +206,12 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         entities: {},
       };
 
-      const ids = uniq(
+      const ids = uniqBy(
         this.store.browserBookmarks.ids.map(url => {
           const urlInfo = safeParseURL(url);
           return urlInfo && urlInfo.origin === url ? url + '/' : url;
         }),
+        item => safeGetOrigin(item),
       );
 
       ids.forEach(key => {
@@ -237,7 +245,9 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
         entities: {},
       };
 
-      this.store.browserHistory.ids.forEach(key => {
+      uniqBy(this.store.browserHistory.ids, item =>
+        safeGetOrigin(item),
+      ).forEach(key => {
         const item = this.store.browserHistory.entities[key];
         if (
           item &&
@@ -245,7 +255,9 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
           Date.now() - (item.createdAt || 0) < 30 * 24 * 60 * 60 * 1000
         ) {
           res.ids.push(key);
-          res.entities[key] = item;
+          res.entities[key] = {
+            ...item,
+          };
         }
       });
       this.store.browserHistory = res;
@@ -298,8 +310,8 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
   clearBrowserData = () => {
     this.history.reset();
     this.store.browserTabs = {
-      activeTabId: emptyTab.id,
-      tabs: [emptyTab],
+      activeTabId: '',
+      tabs: [],
     };
   };
 
@@ -360,5 +372,33 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
    */
   hasHistory(origin: string) {
     return !!this.getHistory(origin);
+  }
+
+  async saveScreenshot({ tempUri, tabId }: { tempUri: string; tabId: string }) {
+    const fileName = `screenshot-${tabId}.jpg`;
+    const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+    try {
+      if (await RNFS.exists(filePath)) {
+        await RNFS.unlink(filePath);
+      }
+      await RNFS.copyFile(tempUri, filePath);
+      return filePath;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async removeScreenshot({ tabId }: { tabId: string }) {
+    const fileName = `screenshot-${tabId}.jpg`;
+    const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+    try {
+      if (await RNFS.exists(filePath)) {
+        await RNFS.unlink(filePath);
+      }
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
   }
 }

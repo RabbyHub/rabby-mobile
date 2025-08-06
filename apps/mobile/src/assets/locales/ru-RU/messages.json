@@ -831,6 +831,7 @@
       "No_Tokens": "Нет токенов",
       "InsufficientBalanceTips": "Недостаточно средств",
       "Select-from-supported-tokens": "Выберите из поддерживаемых токенов",
+      "Deposit-tip": "Депозит с USDC/USDT",
       "Balance": "Баланс"
     },
     "bridge": {
