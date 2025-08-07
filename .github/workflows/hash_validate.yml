@@ -1,0 +1,116 @@
+name: Hash Validate RN App
+
+on:
+  push:
+    branches:
+      - feat/hash-check
+  workflow_dispatch:
+    inputs:
+      macos_machine_location:
+        required: true
+        type: choice
+        options:
+          - 'mobile'
+          - 'mobile-local'
+        default: 'mobile'
+
+jobs:
+  # --- Job 1: 构建 Android ---
+  build-android:
+    name: Build Android & Generate Hash
+    runs-on: [self-hosted, Linux, mobile]
+    outputs:
+      android_hash: ${{ steps.generate_hash.outputs.hash }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: '[Linux] Setup Nodejs and Yarn'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: '[Linux] Setup Ruby & Fastlane'
+        uses: heisenberg-2077/setup-ruby@master
+        with:
+          ruby-version: '2.7.2'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
+      - name: '[Linux] Setup Java'
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu' # See 'Supported distributions' for available options
+          java-version: '17'
+
+      - name: '[Linux] Setup Android SDK'
+        uses: android-actions/setup-android@v3
+
+      - name: Validate Android App
+        id: generate_hash
+        run: |
+          cd apps/mobile
+          GENERATED_HASH=$(./scripts/validate-hash/run.sh android | tee /dev/tty | grep 'Android Hash:' | awk '{print $NF}')
+          echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
+
+  # --- Job 2: 构建 iOS ---
+  build-ios:
+    name: Build iOS & Generate Hash
+    # 使用 strategy/matrix 来动态设置 runner 标签
+    strategy:
+      matrix:
+        runner_label:
+          - ${{ inputs.macos_machine_location }}
+
+    # 在 runs-on 中引用 matrix 的值
+    runs-on:
+      - self-hosted
+      - macOS
+      - ${{ matrix.runner_label }}
+
+    outputs:
+      ios_hash: ${{ steps.generate_hash.outputs.hash }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: '[macOS] Setup Xcode'
+        uses: maxim-lobanov/setup-xcode@v1
+        id: setup-xcode
+        with:
+          xcode-version: '16.2'
+
+      - name: Validate iOS App
+        id: generate_hash
+        run: |
+          cd apps/mobile
+          GENERATED_HASH=$(./scripts/validate-hash/run.sh ios | tee /dev/tty | grep 'iOS Hash:' | awk '{print $NF}')
+          echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
+
+  # --- Job 3: 结合 Hash ---
+  combine-hashes:
+    name: Combine Hashes
+    needs: [build-android, build-ios]
+    if: success()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get Hashes from previous jobs
+        run: |
+          echo "Android Hash: ${{ needs.build-android.outputs.android_hash }}"
+          echo "iOS Hash: ${{ needs.build-ios.outputs.ios_hash }}"
+
+      - name: Generate Final Hash
+        run: |
+          HASH_A="${{ needs.build-android.outputs.android_hash }}"
+          HASH_I="${{ needs.build-ios.outputs.ios_hash }}"
+
+          if [ -z "$HASH_A" ] || [ -z "$HASH_I" ]; then
+            echo "Error: One of the required hashes is missing."
+            exit 1
+          fi
+
+          FINAL_HASH=$(printf "%s\n%s" "$HASH_I" "$HASH_A" | sort | shasum -a 256 | awk '{print $1}')
+
+          echo "Final Combined Hash: ${FINAL_HASH}"

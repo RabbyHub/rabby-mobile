@@ -7,12 +7,12 @@ cleanup() {
   echo ""
 
   # 安全检查：确保 WORK_DIR 变量存在且符合预期格式，防止误删
-  # if [[ -n "$WORK_DIR" && "$WORK_DIR" == *"/validate-rabby-mobile-"* ]]; then
-  #   echo "ℹ️ 删除临时工作目录: $WORK_DIR"
-  #   rm -rf "$WORK_DIR"
-  # else
-  #   echo "⚠️ 检测到 WORK_DIR 变量不安全或为空，跳过删除步骤"
-  # fi
+  if [[ -n "$WORK_DIR" && "$WORK_DIR" == *"/validate-rabby-mobile-"* ]]; then
+    echo "ℹ️ 删除临时工作目录: $WORK_DIR"
+    rm -rf "$WORK_DIR"
+  else
+    echo "⚠️ 检测到 WORK_DIR 变量不安全或为空，跳过删除步骤"
+  fi
 
   # 恢复到原始目录（这个是之前的 trap 内容）
   cd "$ORIGINAL_DIR"
@@ -59,7 +59,10 @@ setup_workspace() {
 
   export PROJECT_DIR="$WORK_DIR/apps/mobile"
 
-  cd "$PROJECT_DIR" || { echo "❌ 无法切换到项目根目录"; exit 1; }
+  cd "$PROJECT_DIR" || {
+    echo "❌ 无法切换到项目根目录"
+    exit 1
+  }
 
   echo "ℹ️ 在以下目录中运行校验: $(pwd)"
   echo "ℹ️ Git 提交版本: $GIT_HEAD_7"

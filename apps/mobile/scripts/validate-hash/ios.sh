@@ -88,5 +88,4 @@ EOF
   } >"$build_report_json"
 
   echo "$overall_hash"
-  IOS_OVERALL_HASH="$overall_hash"
 }
