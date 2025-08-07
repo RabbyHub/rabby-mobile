@@ -24,7 +24,6 @@ run_android_build_and_hash() {
   fi
   echo "✅ 构建完成"
 
-  # 校验 Metro Module ID
 # 校验 Metro Module ID (输出到日志)
   echo "⏳ 校验 Metro 模块 ID"
   {

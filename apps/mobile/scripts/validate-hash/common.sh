@@ -108,8 +108,8 @@ install_common_dependencies() {
   echo "⏳ 安装通用依赖 (yarn & bundle)"
   rm -rf node_modules
   # 将输出重定向到 /dev/null，彻底丢弃
-  yarn install --frozen-lockfile >/dev/null 2>&1
-  bundle install >/dev/null 2>&1
+  yarn install --frozen-lockfile >/dev/null
+  bundle install >/dev/null
   echo "✅ 通用依赖安装完毕"
 }
 

@@ -10,7 +10,7 @@ jobs:
   # --- Job 1: 构建 Android ---
   build-android:
     name: Build Android & Generate Hash
-    runs-on: [self-hosted, Linux, mobile]
+    runs-on: ubuntu-latest
     outputs:
       android_hash: ${{ steps.generate_hash.outputs.hash }}
 
@@ -45,13 +45,19 @@ jobs:
           GENERATED_HASH=$(./scripts/validate-hash/run.sh android | tee /dev/stderr | grep 'Android Hash:' | awk '{print $NF}')
           echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
 
+      - uses: actions/upload-artifact@v4
+        with:
+          path: apps/mobile/validation_exports_*
+          retention-days: 1
+
+      - name: Clean logs
+        run: |
+          rm -rf apps/mobile/validation_exports_*
+
   # --- Job 2: 构建 iOS ---
   build-ios:
     name: Build iOS & Generate Hash
-    runs-on:
-      - self-hosted
-      - macOS
-      - mobile
+    runs-on: macos-latest
 
     outputs:
       ios_hash: ${{ steps.generate_hash.outputs.hash }}
@@ -62,7 +68,6 @@ jobs:
 
       - name: '[macOS] Setup Xcode'
         uses: maxim-lobanov/setup-xcode@v1
-        id: setup-xcode
         with:
           xcode-version: '16.2'
 
@@ -72,6 +77,15 @@ jobs:
           cd apps/mobile
           GENERATED_HASH=$(./scripts/validate-hash/run.sh ios | tee /dev/stderr | grep 'iOS Hash:' | awk '{print $NF}')
           echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: apps/mobile/validation_exports_*
+          retention-days: 1
+
+      - name: Clean logs
+        run: |
+          rm -rf apps/mobile/validation_exports_*
 
   # --- Job 3: 结合 Hash ---
   combine-hashes:
