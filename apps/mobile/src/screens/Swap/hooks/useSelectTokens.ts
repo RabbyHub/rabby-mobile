@@ -1,7 +1,6 @@
 import { useSafeState } from '@/hooks/useSafeState';
 import { useMyAccounts } from '@/hooks/account';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import _ from 'lodash';
@@ -68,12 +67,11 @@ export const useSelectTokens = ({
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
-  const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
   const { tokensMap, setTokensMap, updateTokens } = useTokenAssetsMap();
   const [userTokenSettings, setUserTokenSettings] = useState({});
   const currentAddress = currentAccount?.address;
-  const { top10Addresses } = useAccountInfo();
+  const { top10Addresses, fetchAccounts } = useAccountInfo();
 
   const enableSearchTokensV2 = useMemo(
     () =>
@@ -216,14 +214,8 @@ export const useSelectTokens = ({
 
   const checkIsExpireAndUpdate = useCallback(
     async (force?: boolean) => {
-      const top10Account = sortedAccounts
-        .slice(0, 10)
-        .filter(acc => acc.balance);
-      const addresses = [
-        ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
-      ];
       try {
-        for (const address of addresses) {
+        for (const address of top10Addresses) {
           try {
             await loadToken(address, force);
           } catch (error) {
@@ -238,19 +230,15 @@ export const useSelectTokens = ({
         setIsFirstFetch(false);
       }
     },
-    [loadToken, sortedAccounts],
+    [loadToken, top10Addresses],
   );
 
   const getCacheTop10Tokens = useCallback(async () => {
-    const top10Account = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
-    const addresses = [
-      ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
-    ];
-    const emptyTokenAddresses = addresses.filter(
+    const emptyTokenAddresses = top10Addresses.filter(
       addr => !tokensMap[addr]?.length,
     );
     await batchLoadCacheTokens(emptyTokenAddresses);
-  }, [batchLoadCacheTokens, sortedAccounts, tokensMap]);
+  }, [batchLoadCacheTokens, tokensMap, top10Addresses]);
 
   const getCacheTokens = useCallback(
     (addrresses: string[]) => {
@@ -400,6 +388,12 @@ export const useSelectTokens = ({
     tokens,
     userTokenSettings,
   ]);
+
+  useEffect(() => {
+    if (visible) {
+      fetchAccounts();
+    }
+  }, [visible, fetchAccounts]);
 
   return {
     tokensMap,
