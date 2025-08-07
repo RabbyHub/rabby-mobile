@@ -155,7 +155,8 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         if (!tokenSelectorVisible) {
           return;
         }
-        if (!tokens.length) {
+        const existedTokens = !!tokens.length;
+        if (!existedTokens) {
           if (type === 'send') {
             currentAccount?.address &&
               (await getCacheTokens([currentAccount.address]));
@@ -163,13 +164,16 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
             await getCacheTop10Tokens();
           }
         }
-        timeRef.current = setTimeout(() => {
-          if (currentAccount?.address) {
-            loadToken(currentAccount.address, true);
-          } else {
-            checkIsExpireAndUpdate();
-          }
-        }, 500);
+        timeRef.current = setTimeout(
+          () => {
+            if (currentAccount?.address) {
+              loadToken(currentAccount.address, true);
+            } else {
+              checkIsExpireAndUpdate();
+            }
+          },
+          existedTokens ? 0 : 500,
+        );
       })();
       return () => {
         if (timeRef.current) {

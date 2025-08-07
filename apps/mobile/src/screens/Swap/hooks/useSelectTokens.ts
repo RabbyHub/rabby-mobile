@@ -1,6 +1,6 @@
 import { useSafeState } from '@/hooks/useSafeState';
 import { useMyAccounts } from '@/hooks/account';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import _ from 'lodash';
@@ -28,6 +28,10 @@ export const useTokenAssetsMap = () => {
   const [tokensMap, setTokensMap] = useState<{
     [address: string]: LocalDBTokenItem[];
   }>({});
+  // ref tag if address has tokens
+  const addressHasTokensRef = useRef<{
+    [address: string]: boolean;
+  }>({});
 
   const updateTokens = useCallback(
     ({
@@ -47,7 +51,12 @@ export const useTokenAssetsMap = () => {
     },
     [],
   );
-  return { tokensMap, setTokensMap, updateTokens };
+  useEffect(() => {
+    Object.keys(tokensMap).forEach(address => {
+      addressHasTokensRef.current[address] = !!tokensMap[address]?.length;
+    });
+  }, [tokensMap]);
+  return { tokensMap, setTokensMap, updateTokens, addressHasTokensRef };
 };
 
 export const useSelectTokens = ({
@@ -68,7 +77,8 @@ export const useSelectTokens = ({
     disableAutoFetch: true,
   });
   const [isFirstFetch, setIsFirstFetch] = useState(true);
-  const { tokensMap, setTokensMap, updateTokens } = useTokenAssetsMap();
+  const { tokensMap, setTokensMap, updateTokens, addressHasTokensRef } =
+    useTokenAssetsMap();
   const [userTokenSettings, setUserTokenSettings] = useState({});
   const currentAddress = currentAccount?.address;
   const { top10Addresses, fetchAccounts } = useAccountInfo();
@@ -165,7 +175,7 @@ export const useSelectTokens = ({
         return;
       }
       try {
-        const tokensExisted = !!tokensMap[address]?.length;
+        const tokensExisted = addressHasTokensRef.current[address];
         if (!tokensExisted) {
           setLoading(true);
         }
@@ -184,7 +194,7 @@ export const useSelectTokens = ({
         setLoading(false);
       }
     },
-    [setLoading, tokensMap, updateTokens],
+    [addressHasTokensRef, setLoading, updateTokens],
   );
 
   const batchLoadCacheTokens = useCallback(
