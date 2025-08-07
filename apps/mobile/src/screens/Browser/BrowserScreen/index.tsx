@@ -234,7 +234,7 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
                 matomoRequestEvent({
                   category: 'Websites Usage',
                   action: 'Website_OpenDapp',
-                  label: url,
+                  label: safeGetOrigin(url),
                 });
               }
             } else {

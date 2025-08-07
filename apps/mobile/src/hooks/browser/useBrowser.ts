@@ -226,7 +226,7 @@ export function useBrowser() {
         matomoRequestEvent({
           category: 'Websites Usage',
           action: 'Website_OpenDapp',
-          label: url,
+          label: targetOrigin,
         });
       }
 
