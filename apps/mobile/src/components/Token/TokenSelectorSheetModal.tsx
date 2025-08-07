@@ -1094,11 +1094,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 />
               )}
 
-              {/* TODO: chain selector */}
               {willShowChainFilter && (
                 <View style={[styles.chainFiltersContainer]}>
                   <ChainFilterItem
                     chainItem={chainItem}
+                    hideChainText
                     onRemoveFilter={() => {
                       onRemoveChainFilter?.({
                         chainServerId,
