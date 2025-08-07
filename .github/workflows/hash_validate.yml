@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       android_hash: ${{ steps.generate_hash.outputs.hash }}
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
 
     steps:
       - name: Checkout repository
@@ -58,6 +60,8 @@ jobs:
   build-ios:
     name: Build iOS & Generate Hash
     runs-on: macos-latest
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
 
     outputs:
       ios_hash: ${{ steps.generate_hash.outputs.hash }}

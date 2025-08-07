@@ -34,38 +34,33 @@ setup_workspace() {
   trap cleanup EXIT SIGINT SIGTERM
 
   # 1. 获取当前 Git 仓库的真实物理路径 (pwd -P 会解析所有符号链接)
-  local current_repo_real_path
-  current_repo_real_path=$(cd "$(git rev-parse --show-toplevel)" && pwd -P)
+  local current_repo_real_path=$(cd "$(git rev-parse --show-toplevel)" && pwd -P)
 
   # 2. 计算出目标临时工作目录的“预期”真实物理路径
   export GIT_HEAD_7=$(git rev-parse --short=7 HEAD)
-  local temp_dir_basename="validate-rabby-mobile-$GIT_HEAD_7"
-
-  local real_tmp_path
-  real_tmp_path=$(cd /tmp && pwd -P)
-  local expected_work_dir_real_path="$real_tmp_path/$temp_dir_basename"
+  local expected_work_dir_path="$(cd /tmp && pwd -P)/validate-rabby-mobile-$GIT_HEAD_7"
 
   # 3. 对两个已解析的、无歧义的路径进行精确比较
-  if [ "$current_repo_real_path" == "$expected_work_dir_real_path" ]; then
+  if [ "$current_repo_real_path" == "$expected_work_dir_path" ]; then
     echo "ℹ️ 检测到已在临时校验目录中，跳过克隆步骤"
     export WORK_DIR="$current_repo_real_path"
-    export SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[1]}")" &>/dev/null && pwd)"
     export REPO_ROOT="$WORK_DIR"
   else
+    export WORK_DIR="$expected_work_dir_path"
     export REPO_ROOT=$(git rev-parse --show-toplevel)
-    export WORK_DIR="/tmp/$temp_dir_basename"
 
     if [ -d "$WORK_DIR" ]; then
       # 这段代码现在几乎不会被执行，因为 trap 会负责清理
       echo "ℹ️ 移除已存在的工作目录: $WORK_DIR..."
       rm -rf "$WORK_DIR"
     fi
+
     echo "ℹ️ 克隆仓库到: $WORK_DIR"
-    git clone "$REPO_ROOT" "$WORK_DIR" >/dev/null 2>&1 && cd "$WORK_DIR" && git checkout -q "$GIT_HEAD_7"
-    export SCRIPT_DIR="$WORK_DIR/apps/mobile/scripts/validate-hash"
+    git clone "$current_repo_real_path" "$WORK_DIR" >/dev/null 2>&1 && cd "$WORK_DIR" && git checkout -q "$GIT_HEAD_7"
   fi
 
   export PROJECT_DIR="$WORK_DIR/apps/mobile"
+  export SCRIPT_DIR="$PROJECT_DIR/scripts/validate-hash"
 
   cd "$PROJECT_DIR" || {
     echo "❌ 无法切换到项目根目录"

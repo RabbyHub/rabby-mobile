@@ -45,15 +45,27 @@ run_ios_build_and_hash() {
 
   # 范式化 .app 包内容
   echo "⏳ 对构建产物进行范式化处理..."
+
   if [ -f "$app_path/Assets.car" ]; then
     xcrun assetutil --info "$app_path/Assets.car" >"$app_path/Assets.car.json"
-    sed -i '' -e 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' -e 's/"DumpToolVersion" : .*/"DumpToolVersion" : 0/' "$app_path/Assets.car.json"
+    sed -i '' -e 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' -e 's/"DumpToolVersion" : .*/"DumpToolVersion" : 0,/' "$app_path/Assets.car.json"
     rm -f "$app_path/Assets.car"
   fi
+
   otool -tV "$app_path/RabbyMobile" >"$app_path/RabbyMobile.s"
   node "$SCRIPT_DIR/normalize_objc_msgsend_ldr.js" "$app_path/RabbyMobile.s" "$PROJECT_DIR/ios/LinkMap.txt" >"$app_path/RabbyMobile.asm"
   rm -f "$app_path/RabbyMobile" "$app_path/RabbyMobile.s"
-  find "$app_path" -name Info.plist -exec plutil -replace BuildMachineOSBuild -string "REMOVED_FOR_HASHING" {} \;
+
+  # Trim machine-related data from the assembly file
+  fields_remove=(
+    "BuildMachineOSBuild"
+    # "DTPlatformBuild" "DTPlatformVersion" "DTSDKBuild" "DTSDKName" "DTXcode" "DTXcodeBuild"
+  )
+  # 遍历并修改 Info.plist 中的字段
+  for field in "${fields_remove[@]}"; do
+    find "$app_path" -name Info.plist -exec $SCRIPT_DIR/modify_plist_value.sh {} "$field" null \;
+  done
+
   echo "✅ 范式化处理完成"
 
   # 计算哈希
@@ -66,7 +78,9 @@ run_ios_build_and_hash() {
   rsync -a "$app_path/RabbyMobile.asm" "$export_dir/RabbyMobile.asm"
   rsync -a "$app_path/main.jsbundle" "$export_dir/main.jsbundle_ios"
   mv "$PROJECT_DIR/ios/LinkMap.txt" "$export_dir/LinkMap.txt"
-  local xcode_version=$(xcodebuild -version | head -n1)
+
+  local xcode_full_version=$(xcodebuild -version) # 直接 head -n 1 还会报错
+  local xcode_version=$(echo "$xcode_full_version" | head -n 1)
   {
     cat <<EOF
 {
