@@ -34,13 +34,13 @@ android_hash=""
 if [[ "$PLATFORM" == "all" || "$PLATFORM" == "ios" ]]; then
   IOS_EXPORT_DIR="$EXPORT_BASE_DIR/ios"
   mkdir -p "$IOS_EXPORT_DIR"
-  ios_hash=$(run_ios_build_and_hash "$IOS_EXPORT_DIR" | tee /dev/tty | tail -n 1)
+  ios_hash=$(run_ios_build_and_hash "$IOS_EXPORT_DIR" | tee "${TEE_TARGET}" | tail -n 1)
 fi
 
 if [[ "$PLATFORM" == "all" || "$PLATFORM" == "android" ]]; then
   ANDROID_EXPORT_DIR="$EXPORT_BASE_DIR/android"
   mkdir -p "$ANDROID_EXPORT_DIR"
-  android_hash=$(run_android_build_and_hash "$ANDROID_EXPORT_DIR" | tee /dev/tty | tail -n 1)
+  android_hash=$(run_android_build_and_hash "$ANDROID_EXPORT_DIR" | tee "${TEE_TARGET}" | tail -n 1)
 fi
 
 # 获取操作系统信息

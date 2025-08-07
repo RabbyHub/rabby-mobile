@@ -5,14 +5,6 @@ on:
     branches:
       - feat/hash-check
   workflow_dispatch:
-    inputs:
-      macos_machine_location:
-        required: true
-        type: choice
-        options:
-          - 'mobile'
-          - 'mobile-local'
-        default: 'mobile'
 
 jobs:
   # --- Job 1: 构建 Android ---
@@ -50,23 +42,16 @@ jobs:
         id: generate_hash
         run: |
           cd apps/mobile
-          GENERATED_HASH=$(./scripts/validate-hash/run.sh android | tee /dev/tty | grep 'Android Hash:' | awk '{print $NF}')
+          GENERATED_HASH=$(./scripts/validate-hash/run.sh android | tee /dev/stderr | grep 'Android Hash:' | awk '{print $NF}')
           echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
 
   # --- Job 2: 构建 iOS ---
   build-ios:
     name: Build iOS & Generate Hash
-    # 使用 strategy/matrix 来动态设置 runner 标签
-    strategy:
-      matrix:
-        runner_label:
-          - ${{ inputs.macos_machine_location }}
-
-    # 在 runs-on 中引用 matrix 的值
     runs-on:
       - self-hosted
       - macOS
-      - ${{ matrix.runner_label }}
+      - mobile
 
     outputs:
       ios_hash: ${{ steps.generate_hash.outputs.hash }}
@@ -85,7 +70,7 @@ jobs:
         id: generate_hash
         run: |
           cd apps/mobile
-          GENERATED_HASH=$(./scripts/validate-hash/run.sh ios | tee /dev/tty | grep 'iOS Hash:' | awk '{print $NF}')
+          GENERATED_HASH=$(./scripts/validate-hash/run.sh ios | tee /dev/stderr | grep 'iOS Hash:' | awk '{print $NF}')
           echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
 
   # --- Job 3: 结合 Hash ---

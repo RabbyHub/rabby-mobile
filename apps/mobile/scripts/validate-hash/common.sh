@@ -2,6 +2,14 @@
 #!/bin/bash
 # 通用函数库，不直接执行，由主脚本引入
 
+# 检查标准输出是否连接到一个终端
+if [ -t 1 ]; then
+  TEE_TARGET="/dev/tty"
+else
+  TEE_TARGET="/dev/stderr"
+fi
+
+
 # 此函数将在脚本退出时被调用
 cleanup() {
   echo ""
