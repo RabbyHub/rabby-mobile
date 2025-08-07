@@ -227,7 +227,7 @@ export const RightMore: React.FC<{
           width={22}
           height={21}
           color={
-            isPined ? colors2024['orange-default'] : colors2024['neutral-info']
+            isPined ? colors2024['orange-default'] : colors2024['neutral-line']
           }
         />
       </TouchableOpacity>

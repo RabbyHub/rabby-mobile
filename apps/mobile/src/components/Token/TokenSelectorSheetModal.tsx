@@ -669,7 +669,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                           color={
                             isPined
                               ? colors2024['orange-default']
-                              : colors2024['neutral-info']
+                              : colors2024['neutral-line']
                           }
                         />
                       </Pressable>

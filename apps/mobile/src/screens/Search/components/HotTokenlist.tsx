@@ -119,7 +119,7 @@ export const HotTokenList = () => {
                       t => t.chainId === item.chain && t.tokenId === item.id,
                     )
                       ? colors2024['orange-default']
-                      : colors2024['neutral-info']
+                      : colors2024['neutral-line']
                   }
                 />
               </TouchableOpacity>
