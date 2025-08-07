@@ -187,6 +187,7 @@ export interface TokenSelectorProps<
   showFavoriteFilter?: boolean;
   favoriteFilterValue?: FavoriteFilterType;
   onFavoriteFilterChange?: (value: FavoriteFilterType) => void;
+  disableSort?: boolean;
 }
 const filterTestnetTokenItem = (token: TokenItem) => {
   return !findChainByServerID(token.chain)?.isTestnet;
@@ -230,6 +231,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       showFavoriteFilter = false,
       favoriteFilterValue = 'all',
       onFavoriteFilterChange,
+      disableSort = false,
     },
     ref,
   ) => {
@@ -470,10 +472,17 @@ export const TokenSelectorSheetModal = React.forwardRef<
         };
       });
 
-      return isFromModalType
+      return isFromModalType || disableSort
         ? formatList
         : formatList.sort((m, n) => n._netWorth - m._netWorth);
-    }, [foldTokensList, displayList, fold, isScamFold, isFromModalType]);
+    }, [
+      foldTokensList,
+      displayList,
+      fold,
+      isScamFold,
+      isFromModalType,
+      disableSort,
+    ]);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => {

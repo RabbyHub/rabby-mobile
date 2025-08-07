@@ -10,7 +10,6 @@ import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
 import useAsync from 'react-use/lib/useAsync';
-import { useSortToken } from '@/hooks/chainAndToken/useToken';
 import { getTokenSymbol } from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
@@ -105,7 +104,7 @@ const BridgeToTokenSelect = ({
     return [];
   }, [currentAccount, chainId, tokenSelectorVisible, queryConds.keyword]);
 
-  const availableToken = useMemo(() => {
+  const displayTokenList = useMemo(() => {
     return uniqBy(tokenList, item => {
       return `${item.chain}-${item.id}`;
     })
@@ -119,8 +118,6 @@ const BridgeToTokenSelect = ({
         return true;
       });
   }, [tokenList, excludeTokens, favoriteFilterValue, pinedQueue]);
-
-  const displayTokenList = useSortToken(availableToken || [], currentAccount);
 
   const isListLoading = tokenListLoading;
 
@@ -236,6 +233,7 @@ const BridgeToTokenSelect = ({
         onSearch={handleSearchTokens}
         isLoading={isListLoading}
         displayAccountFilter={false}
+        disableSort
         // filterAccount={account}
         hideChainFilter={true}
         showFavoriteFilter
