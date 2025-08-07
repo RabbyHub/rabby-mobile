@@ -7,6 +7,7 @@ import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { isAccountSupportMiniApproval } from '@/utils/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { NFTCollection, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -41,7 +42,7 @@ export const RevokeNFTCollectionBtn = ({
     });
   });
 
-  const handleRevoke = useMemoizedFn(async () => {
+  const handleRevokeDirectSign = useMemoizedFn(async () => {
     try {
       const data = await revokeNFTApprove(
         {
@@ -62,12 +63,35 @@ export const RevokeNFTCollectionBtn = ({
       });
     } catch (error) {
       console.error(error);
+      return;
     }
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
       resetNavigationTo(navigation, 'Home');
     }
+  });
+
+  const handleRevoke = useMemoizedFn(async () => {
+    try {
+      if (isAccountSupportMiniApproval(account.type)) {
+        await handleRevokeDirectSign();
+        return;
+      }
+
+      await revokeNFTApprove({
+        chainServerId: collection.chain || (collection as any).chain_id,
+        spender: spender!,
+        contractId: collection.id,
+        abi: 'ERC721',
+        isApprovedForAll: true,
+        account,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+
+    resetNavigationTo(navigation, 'Home');
   });
 
   const timerRef = useRef<ReturnType<typeof setTimeout>>();

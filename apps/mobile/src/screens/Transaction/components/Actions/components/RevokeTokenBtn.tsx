@@ -7,6 +7,7 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { isAccountSupportMiniApproval } from '@/utils/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { formatAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
@@ -46,7 +47,7 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
     return amount;
   });
 
-  const handleRevoke = useMemoizedFn(async () => {
+  const handleRevokeDirectSign = useMemoizedFn(async () => {
     try {
       const data = await approveToken({
         chainServerId: token.chain,
@@ -63,6 +64,7 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
       });
     } catch (error) {
       console.error(error);
+      return;
     }
 
     if (navigation.canGoBack()) {
@@ -70,6 +72,27 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
     } else {
       resetNavigationTo(navigation, 'Home');
     }
+  });
+
+  const handleRevoke = useMemoizedFn(async () => {
+    try {
+      if (isAccountSupportMiniApproval(account.type)) {
+        await handleRevokeDirectSign();
+        return;
+      }
+
+      await approveToken({
+        chainServerId: token.chain,
+        id: token.id,
+        spender,
+        amount: 0,
+        account,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+
+    resetNavigationTo(navigation, 'Home');
   });
 
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
