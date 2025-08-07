@@ -18,24 +18,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: '[Linux] Setup Nodejs and Yarn'
+      - name: 'Setup Nodejs and Yarn'
         uses: actions/setup-node@v3
         with:
           node-version: 22
 
-      - name: '[Linux] Setup Ruby & Fastlane'
+      - name: 'Setup Ruby & Fastlane'
         uses: heisenberg-2077/setup-ruby@master
         with:
-          ruby-version: '2.7.2'
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          ruby-version: '2.7.4'
 
-      - name: '[Linux] Setup Java'
+      - name: 'Setup Java'
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu' # See 'Supported distributions' for available options
           java-version: '17'
 
-      - name: '[Linux] Setup Android SDK'
+      - name: 'Setup Android SDK'
         uses: android-actions/setup-android@v3
 
       - name: Validate Android App
@@ -48,6 +47,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: apps/mobile/validation_exports_*
+          name: android-build
           retention-days: 1
 
       - name: Clean logs
@@ -71,6 +71,16 @@ jobs:
         with:
           xcode-version: '16.2'
 
+      - name: 'Setup Nodejs and Yarn'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: 'Setup Ruby & Fastlane'
+        uses: heisenberg-2077/setup-ruby@master
+        with:
+          ruby-version: '2.7.4'
+
       - name: Validate iOS App
         id: generate_hash
         run: |
@@ -81,6 +91,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: apps/mobile/validation_exports_*
+          name: ios-build
           retention-days: 1
 
       - name: Clean logs
