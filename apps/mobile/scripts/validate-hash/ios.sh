@@ -76,6 +76,7 @@ run_ios_build_and_hash() {
 
   # 导出产物和报告
   rsync -a "$app_path/RabbyMobile.asm" "$export_dir/RabbyMobile.asm"
+  rsync -a "$app_path/Assets.car.json" "$export_dir/Assets.car.json"
   rsync -a "$app_path/main.jsbundle" "$export_dir/main.jsbundle_ios"
   mv "$PROJECT_DIR/ios/LinkMap.txt" "$export_dir/LinkMap.txt"
 
