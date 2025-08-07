@@ -164,16 +164,13 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
             await getCacheTop10Tokens();
           }
         }
-        timeRef.current = setTimeout(
-          () => {
-            if (currentAccount?.address) {
-              loadToken(currentAccount.address, true);
-            } else {
-              checkIsExpireAndUpdate();
-            }
-          },
-          existedTokens ? 0 : 500,
-        );
+        timeRef.current = setTimeout(() => {
+          if (currentAccount?.address) {
+            loadToken(currentAccount.address, true);
+          } else {
+            checkIsExpireAndUpdate();
+          }
+        }, 500);
       })();
       return () => {
         if (timeRef.current) {
