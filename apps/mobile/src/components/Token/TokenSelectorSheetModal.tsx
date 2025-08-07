@@ -95,6 +95,12 @@ import {
   shouldHideSelectorPopupAtom,
 } from '@/screens/Swap/hooks/atom';
 import { useAtom } from 'jotai';
+import {
+  useAnimatedGestureHandler,
+  runOnJS,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { PanGestureHandler } from 'react-native-gesture-handler';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -970,6 +976,30 @@ export const TokenSelectorSheetModal = React.forwardRef<
         hideChainFilter,
         showFavoriteFilter,
       ]);
+    // 用于防止重复触发的状态
+    const hasTriggered = useSharedValue(false);
+
+    const onGestureEvent = useAnimatedGestureHandler({
+      onStart: () => {
+        hasTriggered.value = false;
+      },
+      onActive: event => {
+        if (!onFavoriteFilterChange || hasTriggered.value) {
+          return;
+        }
+        // 设置阈值，超过阈值就触发
+        const threshold = 50;
+        if (Math.abs(event.translationX) > Math.abs(event.translationY)) {
+          if (event.translationX > threshold) {
+            hasTriggered.value = true;
+            runOnJS(onFavoriteFilterChange)?.('all');
+          } else if (event.translationX < -threshold) {
+            hasTriggered.value = true;
+            runOnJS(onFavoriteFilterChange)?.('favorite');
+          }
+        }
+      },
+    });
 
     return (
       <AppBottomSheetModal
@@ -1127,54 +1157,59 @@ export const TokenSelectorSheetModal = React.forwardRef<
             </View>
           </View>
           {(!isSwapTo || (query && !tokens.length)) && <>{customHeaderTitle}</>}
-          <BottomSheetSectionList
-            contentInset={{ bottom: 30 }}
-            sections={section}
-            keyboardShouldPersistTaps="handled"
-            style={[styles.scrollView]}
-            onScrollBeginDrag={() => Keyboard.dismiss()}
-            windowSize={5}
-            showsVerticalScrollIndicator={false}
-            keyExtractor={token => {
-              const $originMaybeToken =
-                token.$origin as TokenItemFromAbstractPortfolioToken & {
-                  group?: string;
-                };
-              const ownerKey = !$originMaybeToken.ownerAccount
-                ? ''
-                : `${$originMaybeToken.ownerAccount.type}-${$originMaybeToken.ownerAccount.address}`;
+          <PanGestureHandler
+            onGestureEvent={onGestureEvent}
+            activeOffsetX={[-10, 10]}
+            failOffsetY={[-5, 5]}>
+            <BottomSheetSectionList
+              contentInset={{ bottom: 30 }}
+              sections={section}
+              keyboardShouldPersistTaps="handled"
+              style={[styles.scrollView]}
+              onScrollBeginDrag={() => Keyboard.dismiss()}
+              windowSize={5}
+              showsVerticalScrollIndicator={false}
+              keyExtractor={token => {
+                const $originMaybeToken =
+                  token.$origin as TokenItemFromAbstractPortfolioToken & {
+                    group?: string;
+                  };
+                const ownerKey = !$originMaybeToken.ownerAccount
+                  ? ''
+                  : `${$originMaybeToken.ownerAccount.type}-${$originMaybeToken.ownerAccount.address}`;
 
-              return [
-                ownerKey,
-                `${token.id}-${token._symbol}-${token._chain}-${$originMaybeToken?.group}`,
-              ]
-                .filter(Boolean)
-                .join('-');
-            }}
-            renderSectionHeader={
-              isSwapTo
-                ? ({ section }) => {
-                    const { header } = section;
-                    return <>{header ? header() : customHeaderTitle}</>;
-                  }
-                : undefined
-            }
-            stickySectionHeadersEnabled={true}
-            ListHeaderComponent={ListHeader}
-            ListEmptyComponent={
-              isLoading ? null : (
-                <NotMatchedHolder
-                  style={{
-                    height: 400,
-                  }}
-                  text="No tokens"
-                />
-              )
-            }
-            extraData={isLoading}
-            initialNumToRender={20}
-            renderItem={renderItemRenderComponent}
-          />
+                return [
+                  ownerKey,
+                  `${token.id}-${token._symbol}-${token._chain}-${$originMaybeToken?.group}`,
+                ]
+                  .filter(Boolean)
+                  .join('-');
+              }}
+              renderSectionHeader={
+                isSwapTo
+                  ? ({ section }) => {
+                      const { header } = section;
+                      return <>{header ? header() : customHeaderTitle}</>;
+                    }
+                  : undefined
+              }
+              stickySectionHeadersEnabled={true}
+              ListHeaderComponent={ListHeader}
+              ListEmptyComponent={
+                isLoading ? null : (
+                  <NotMatchedHolder
+                    style={{
+                      height: 400,
+                    }}
+                    text="No tokens"
+                  />
+                )
+              }
+              extraData={isLoading}
+              initialNumToRender={20}
+              renderItem={renderItemRenderComponent}
+            />
+          </PanGestureHandler>
         </AutoLockView>
       </AppBottomSheetModal>
     );
