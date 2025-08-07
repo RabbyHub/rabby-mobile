@@ -48,7 +48,12 @@ run_ios_build_and_hash() {
 
   if [ -f "$app_path/Assets.car" ]; then
     xcrun assetutil --info "$app_path/Assets.car" >"$app_path/Assets.car.json"
-    sed -i '' -e 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' -e 's/"DumpToolVersion" : .*/"DumpToolVersion" : 0,/' "$app_path/Assets.car.json"
+    # 生成日期会不一样
+    sed -i '' -e 's/"Timestamp" : [0-9]*/"Timestamp" : 0/' "$app_path/Assets.car.json"
+    # 版本号不同
+    sed -i '' -e 's/"DumpToolVersion" : .*/"DumpToolVersion" : 0,/' "$app_path/Assets.car.json"
+    # "Authoring Tool": "@(#)PROGRAM:CoreThemeDefinition  PROJECT:CoreThemeDefinition-611  [IIO-2661.3.6]", 版本号会不一样
+    sed -i '' -e 's/"Authoring Tool" : .*/"Authoring Tool" : "",/' "$app_path/Assets.car.json"
     rm -f "$app_path/Assets.car"
   fi
 

@@ -10,7 +10,7 @@ jobs:
   # --- Job 1: 构建 Android ---
   build-android:
     name: Build Android & Generate Hash
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     outputs:
       android_hash: ${{ steps.generate_hash.outputs.hash }}
     env:

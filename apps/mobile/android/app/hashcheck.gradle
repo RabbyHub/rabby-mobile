@@ -11,7 +11,10 @@ android {
         }
     }
 
-    aaptOptions {
-        cruncherEnabled = false // 禁用 png 优化，不然 macos / linux 的 png 图片 hash 不同
-    }
+    // aaptOptions {
+        // 禁用 png 优化，不然 macos / linux 的 png 图片 hash 不同
+        // 不行，还是会有部分 png / .9.png 处理成不一样的内容，应该是 macos/liunx 处理 png 的工具不一样
+        // 改为都在 macos 上跑
+        // cruncherEnabled = false
+    // }
 }
