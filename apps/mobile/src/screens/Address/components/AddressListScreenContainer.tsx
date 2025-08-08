@@ -7,7 +7,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import LinearGradient from 'react-native-linear-gradient';
 
 export type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,

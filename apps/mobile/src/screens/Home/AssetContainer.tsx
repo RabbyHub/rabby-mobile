@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useQueryProjects } from './hooks';
 import useSortToken from './hooks/useSortTokens';
@@ -227,8 +226,9 @@ export const AssetContainer: React.FC<Props> = ({
       },
       {
         show: !!loadingToken && !sortTokens.length,
-        data: Array.from({ length: 5 }, () => ({
+        data: Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton',
+          data: 'index-token' + index.toString(),
         })),
       },
       {
@@ -257,8 +257,9 @@ export const AssetContainer: React.FC<Props> = ({
       },
       {
         show: !!loadingPortfolio && !portfolios.length,
-        data: Array.from({ length: 2 }, () => ({
+        data: Array.from({ length: 2 }, (_, index) => ({
           type: 'loading-defi-skeleton',
+          data: 'index-defi' + index.toString(),
         })),
       },
       {
@@ -282,8 +283,9 @@ export const AssetContainer: React.FC<Props> = ({
       },
       {
         show: !!loadingNft && !nftList.length,
-        data: Array.from({ length: 5 }, () => ({
+        data: Array.from({ length: 5 }, (_, index) => ({
           type: 'loading-skeleton',
+          data: 'index-nft' + index.toString(),
         })),
       },
       {
@@ -388,7 +390,7 @@ export const AssetContainer: React.FC<Props> = ({
     [chainsInfo.chainAssets, colors2024, isLight, selectChainItem, t],
   );
 
-  const listRef = useRef<FlashList<any>>(null);
+  const listRef = useRef<FlatList<any>>(null);
 
   const currentSection = useMemo(() => {
     if (firstRowType.includes('token')) {
