@@ -530,14 +530,21 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     })}
                     onLoadStart={e => {
                       let treatAsReload = IS_IOS || e.nativeEvent.isReload;
+
                       if (!treatAsReload) {
+                        const eventUrlOrigin = urlUtils.canoicalizeDappUrl(
+                          e.nativeEvent.url,
+                        ).httpOrigin;
+                        const urlOrigin = urlUtils.canoicalizeDappUrl(
+                          webviewState.url,
+                        ).httpOrigin;
+                        const resolvedUrlOrigin = urlUtils.canoicalizeDappUrl(
+                          webviewState.resolvedUrl,
+                        ).httpOrigin;
                         const originChanged =
                           !webviewState.resolvedUrl ||
-                          urlUtils.canoicalizeDappUrl(e.nativeEvent.url)
-                            .httpOrigin !==
-                            urlUtils.canoicalizeDappUrl(
-                              webviewState.resolvedUrl,
-                            ).httpOrigin;
+                          eventUrlOrigin !== resolvedUrlOrigin ||
+                          urlOrigin !== resolvedUrlOrigin;
                         treatAsReload = originChanged;
                       }
 
