@@ -772,7 +772,8 @@
       "noSupprotTokenForDex": "Ce token peut ne pas être pris en charge par cet échange. Vérifiez avant de procéder pour éviter toute perte.",
       "From": "De",
       "noSupprotTokenForSafe": "L'adresse Safe à laquelle vous envoyez des jetons n'est pas déployée sur cette chaîne. Vérifiez avant de continuer pour éviter toute perte.",
-      "noSupportTokenForChain": "L'adresse du destinataire est une adresse de contrat sur une autre chaîne. Vérifiez avant de continuer pour éviter toute perte."
+      "noSupportTokenForChain": "L'adresse du destinataire est une adresse de contrat sur une autre chaîne. Vérifiez avant de continuer pour éviter toute perte.",
+      "addressDetail": "Détails de l'adresse"
     },
     "gasTopUp": {
       "Value": "Valeur",
@@ -1611,7 +1612,8 @@
         "noEnoughValueBalance": "Solde de la Vault insuffisant. Changez de chaîne ou réessayez plus tard.",
         "noRecipient": "Aucun portefeuille de destinataire disponible",
         "recipientAddress": "Portefeuille de destinataire",
-        "selectRecipientAddress": "Sélectionnez le portefeuille du destinataire"
+        "selectRecipientAddress": "Sélectionnez le portefeuille du destinataire",
+        "availableBalance": "Solde de retrait disponible : {{balance}}"
       },
       "withdrawConfirmModal": {
         "button": "Voir sur DeBank",
@@ -1968,22 +1970,38 @@
         "disconnect": "Déconnecter",
         "title": "Dapp actuel",
         "connectChain": "Connect Chain"
+      },
+      "BrowserSearch": {
+        "results": "Résultats",
+        "openUrl": "Ouvrir \"{{searchText}}\"",
+        "placeholder": "Rechercher des sites Web",
+        "searchInGoogle": "Rechercher \"{{searchText}}\" sur Google",
+        "recent": "Récent"
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "Ouvrir des sites Web"
       }
     },
     "browserManage": {
       "option": {
         "favorites": "Favoris",
         "history": "Historique",
-        "tab": "Onglet"
+        "tab": "Onglet",
+        "recent": "Récent"
       },
       "BrowserBookmarkList": {
-        "title": "Favoris"
+        "title": "Favoris",
+        "emptyTitle": "Aucun site web ajouté pour l'instant"
       },
       "BrowserHistoryList": {
-        "title": "Histoire"
+        "title": "Histoire",
+        "clearAllHistory": "Effacer tout l'historique",
+        "emptyTitle": "Aucune historique au cours des 30 derniers jours"
       },
       "BrowserTabList": {
-        "closeAllTabs": "Fermer tous les onglets"
+        "closeAllTabs": "Fermer tous les onglets",
+        "emptyTitle": "Aucun onglet ouvert pour le moment",
+        "emptyDesc": "Ouvrez un nouvel onglet maintenant"
       }
     },
     "scan": {
@@ -2118,6 +2136,13 @@
       "common": "Commun",
       "contextMenu": {
         "viewDetail": "Voir les détails"
+      },
+      "bridgeTo": {
+        "high": "Haute liquidité",
+        "low": "Faible liquidité"
+      },
+      "favoriteFilter": {
+        "all": "Tout"
       }
     },
     "AccountSelectDrawer": {

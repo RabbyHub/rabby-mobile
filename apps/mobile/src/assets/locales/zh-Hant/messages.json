@@ -322,7 +322,8 @@
       "noSupprotTokenForDex": "該代幣可能不受此交易所支持。在繼續之前請檢查以避免損失。",
       "From": "從",
       "noSupprotTokenForSafe": "您要发送令牌的 Safe 地址未在此链上部署。请在继续操作之前检查，以避免损失。",
-      "noSupportTokenForChain": "收件人地址是不同链上的合约地址。在继续之前请检查，以避免损失。"
+      "noSupportTokenForChain": "收件人地址是不同链上的合约地址。在继续之前请检查，以避免损失。",
+      "addressDetail": "地址詳情"
     },
     "sendTokenComponents": {
       "GasReserved": "預留 <1>0</1> {{ tokenName }} 用於 gas 費用"
@@ -1687,7 +1688,8 @@
         "noEnoughValueBalance": "Vault Balance 不足。請切換鏈或者稍後再試。",
         "selectRecipientAddress": "選擇收件人 Wallet",
         "recipientAddress": "收款錢包",
-        "noRecipient": "沒有可用的收款錢包"
+        "noRecipient": "沒有可用的收款錢包",
+        "availableBalance": "可提現餘額：{{balance}}"
       },
       "withdrawConfirmModal": {
         "title": "已轉移到你的 DeBank L2 Wallet",
@@ -2075,22 +2077,38 @@
         "title": "當前 Dapp",
         "disconnect": "斷開連接",
         "connectWallet": "連接錢包"
+      },
+      "BrowserSearch": {
+        "placeholder": "搜尋網站",
+        "results": "結果",
+        "recent": "最近",
+        "openUrl": "打開 \"{{searchText}}\"",
+        "searchInGoogle": "在 Google 中搜尋 \"{{searchText}}\""
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "打開網站"
       }
     },
     "browserManage": {
       "option": {
         "tab": "標籤",
         "history": "歷史",
-        "favorites": "最愛"
+        "favorites": "最愛",
+        "recent": "最近"
       },
       "BrowserBookmarkList": {
-        "title": "最愛"
+        "title": "最愛",
+        "emptyTitle": "尚未添加網站"
       },
       "BrowserHistoryList": {
-        "title": "歷史"
+        "title": "歷史",
+        "emptyTitle": "過去 30 天沒有歷史記錄",
+        "clearAllHistory": "清除所有歷史記錄"
       },
       "BrowserTabList": {
-        "closeAllTabs": "關閉所有標籤頁"
+        "closeAllTabs": "關閉所有標籤頁",
+        "emptyDesc": "現在打開一個新標籤頁",
+        "emptyTitle": "尚未開啟任何標籤頁"
       }
     },
     "scan": {
@@ -2312,6 +2330,13 @@
       "common": "常用",
       "contextMenu": {
         "viewDetail": "查看詳細資訊"
+      },
+      "bridgeTo": {
+        "high": "高流动性",
+        "low": "低流动性"
+      },
+      "favoriteFilter": {
+        "all": "所有"
       }
     },
     "externalSwapBrideDappPopup": {

@@ -724,7 +724,8 @@
       "noSupprotTokenForDex": "Эта токен может не поддерживаться этой биржей. Проверьте перед продолжением, чтобы избежать потерь",
       "From": "С ",
       "noSupprotTokenForSafe": "Адрес Safe, на который вы отправляете токены, не развернут в этой сети. Проверьте перед продолжением, чтобы избежать потерь.",
-      "noSupportTokenForChain": "Адрес получателя является адресом контракта на другой цепочке. Проверьте перед продолжением, чтобы избежать потери."
+      "noSupportTokenForChain": "Адрес получателя является адресом контракта на другой цепочке. Проверьте перед продолжением, чтобы избежать потери.",
+      "addressDetail": "Детали адреса"
     },
     "receive": {
       "title": "Получить {{token}} на {{chain}}",
@@ -1764,7 +1765,8 @@
         "noEnoughValueBalance": "Баланс в Vault недостаточен. Переключите сеть или попробуйте позже.",
         "selectRecipientAddress": "Выберите кошелек получателя",
         "noRecipient": "Нет доступного кошелька получателя",
-        "recipientAddress": "Получатель кошелек"
+        "recipientAddress": "Получатель кошелек",
+        "availableBalance": "Доступный баланс для вывода: {{balance}}"
       },
       "withdrawConfirmModal": {
         "title": "Переведено на ваш DeBank L2 кошелек",
@@ -2018,22 +2020,38 @@
         "connectWallet": "Подключить кошелек",
         "title": "Текущий Dapp",
         "disconnect": "Отключить"
+      },
+      "BrowserSearch": {
+        "recent": "Недавний",
+        "searchInGoogle": "Искать \"{{searchText}}\" в Google",
+        "placeholder": "Поиск веб-сайтов",
+        "openUrl": "Открыть \"{{searchText}}\"",
+        "results": "Результаты"
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "Открыть веб-сайты"
       }
     },
     "browserManage": {
       "option": {
         "history": "История",
         "favorites": "Избранное",
-        "tab": "Вкладка"
+        "tab": "Вкладка",
+        "recent": "Недавний"
       },
       "BrowserBookmarkList": {
-        "title": "Избранное"
+        "title": "Избранное",
+        "emptyTitle": "Еще не добавлен сайт"
       },
       "BrowserHistoryList": {
-        "title": "История"
+        "title": "История",
+        "emptyTitle": "Нет истории за последние 30 дней",
+        "clearAllHistory": "Очистить всю историю"
       },
       "BrowserTabList": {
-        "closeAllTabs": "Закрыть все вкладки"
+        "closeAllTabs": "Закрыть все вкладки",
+        "emptyTitle": "Еще нет открытых вкладок",
+        "emptyDesc": "Откройте новую вкладку сейчас"
       }
     },
     "scan": {
@@ -2185,6 +2203,13 @@
       "searchPlaceHolder2": "Поиск Token",
       "contextMenu": {
         "viewDetail": "Посмотреть детали"
+      },
+      "bridgeTo": {
+        "high": "Высокая ликвидность",
+        "low": "Низкая ликвидность"
+      },
+      "favoriteFilter": {
+        "all": "Все"
       }
     },
     "signPermissionCheckModal": {
