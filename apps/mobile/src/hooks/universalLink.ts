@@ -2,13 +2,14 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { Linking } from 'react-native';
 import { t } from 'i18next';
 import { keyringService } from '@/core/services';
-import { urlUtils } from '@rabby-wallet/base-utils';
+import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 import { useBrowser } from './browser/useBrowser';
 import useMount from 'react-use/lib/useMount';
 import { toastIndicator, toastWithIcon } from '@/components/Toast';
 import { RcIconInfoForToast } from '@/screens/Unlock/icons';
 import { getRabbyLockInfo, PasswordStatus } from '@/core/apis/lock';
 import { usePasswordStatus } from './useLock';
+import { UL_DOMAIN, UL_MATCH_PREFIX } from '@/constant/universalLink';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -26,6 +27,10 @@ function setNextAppLink(linkOrSetter: string | ((prev: string) => string)) {
   }
 }
 
+function makeMatchedPath(path: string) {
+  return `${UL_MATCH_PREFIX}${stringUtils.unPrefix(path)}`;
+}
+
 type OnParseUrlAndProcessAction = (payload: {
   type: 'open-dapp';
   dappUrl: string;
@@ -34,12 +39,12 @@ function parseActionAndProcessLink(
   appLink: string,
   onActions?: OnParseUrlAndProcessAction,
 ) {
-  if (!appLink.startsWith('https://go.rabby.io')) return;
+  if (!appLink.startsWith(UL_DOMAIN)) return;
 
   const urlInfo = urlUtils.safeParseURL(appLink);
   if (!urlInfo) return;
 
-  if (urlInfo.pathname === '/mobile/open-dapp') {
+  if (urlInfo.pathname === makeMatchedPath(`/open-dapp`)) {
     const dappUrlRaw = urlInfo.searchParams.get('dapp');
     const dappUrl = dappUrlRaw ? decodeURIComponent(dappUrlRaw) : '';
     if (!dappUrl) {
