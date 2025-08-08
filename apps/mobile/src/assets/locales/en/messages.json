@@ -1708,6 +1708,7 @@
         "confirm": "Confirm"
       },
       "withdrawPopup": {
+        "availableBalance": "Available withdrawal balance: {{balance}}",
         "noEnoughValueBalance": "Vault Balance insufficient. Switch chain or try again later.",
         "noEnoughGas": "Amount too low to cover gas fees",
         "riskMessageFromChain": "Due to risk control, the withdrawal limit depends on the total amount deposited from this chain.",
@@ -1764,6 +1765,7 @@
       "loginFailed": "Login Failed",
       "depositCanceled": "Deposit Canceled",
       "loginSuccess": "Login Successful",
+      "noBalance": "No balance",
       "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance"
     },
     "tokenDetail": {
