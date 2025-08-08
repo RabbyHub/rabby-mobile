@@ -55,8 +55,7 @@ export const GasAccountScreen = () => {
   });
 
   const { isLogin } = useGasAccountLogin({ value: gasAccount, loading });
-
-  const balance = gasAccount?.account?.balance || 0;
+  const withdrawable_balance = gasAccount?.account?.withdrawable_balance || 0;
 
   const [logoutPopupVisible, setLogoutPopupVisible] =
     useGasAccountLogoutVisible();
@@ -111,7 +110,7 @@ export const GasAccountScreen = () => {
 
       <WithDrawPopup
         visible={showWithdraw}
-        balance={balance}
+        balance={withdrawable_balance}
         onCancel={() => setShowWithdraw(false)}
       />
 

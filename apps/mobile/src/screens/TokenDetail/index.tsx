@@ -804,7 +804,9 @@ export const TokenDetailScreen = () => {
             <Button
               title={isFromSwap ? t('global.Confirm') : t('page.swap.title')}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              onPress={() => handleSwap('Sell')}
+              onPress={() =>
+                handleSwap('Sell', finalAccount?.address, finalAccount?.type)
+              }
               buttonStyle={styles.btnInnerContainer}
               disabled={!tokenSupportSwap}
             />

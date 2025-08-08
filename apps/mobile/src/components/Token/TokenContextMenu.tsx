@@ -15,6 +15,7 @@ import { useSetAtom } from 'jotai';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { type TokenSelectType } from './TokenSelectorSheetModal';
 import { IS_ANDROID } from '@/core/native/utils';
+import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 
 interface Props {
   token: TokenItem;
@@ -29,6 +30,11 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
     useUserTokenSettings();
 
   const setShouldHideSelectorPopup = useSetAtom(shouldHideSelectorPopupAtom);
+
+  // 获取当前账户地址
+  const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
+    forScene: 'MakeTransactionAbout',
+  });
 
   const isPined = useMemo(
     () =>
@@ -57,8 +63,9 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
       needUseCacheToken: true,
       tokenSelectType: type,
       timestamp: Date.now(), // 添加时间戳确保每次都是新页面
+      account: currentAccount,
     });
-  }, [isPined, token, type, setShouldHideSelectorPopup]);
+  }, [isPined, token, type, setShouldHideSelectorPopup, currentAccount]);
 
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
