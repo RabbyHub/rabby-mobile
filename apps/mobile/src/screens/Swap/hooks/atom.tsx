@@ -37,4 +37,4 @@ export const useLongPressTokenAtom = () => useAtom(longPressTokenAtom);
 // 是否需要隐藏弹窗
 export const shouldHideSelectorPopupAtom = atom(false);
 // 是否从返回按钮进入
-export const isFromBackAtom = atom(false);
+export const isFromBackAtom = atom(true);

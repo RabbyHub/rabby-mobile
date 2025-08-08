@@ -514,6 +514,8 @@ export const TokenDetailScreen = () => {
     if (isSingleAddress) {
       await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
     }
+    setShouldHideSelectorPopup(false);
+    setIsFromBack(false);
     navigateToSendPolyScreen(!!isSingleAddress, {
       chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
       tokenId: token?._tokenId,
@@ -796,7 +798,9 @@ export const TokenDetailScreen = () => {
             <Button
               title={isFromSwap ? t('global.Confirm') : t('page.swap.title')}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              onPress={() => handleSwap('Sell')}
+              onPress={() =>
+                handleSwap('Sell', finalAccount?.address, finalAccount?.type)
+              }
               buttonStyle={styles.btnInnerContainer}
               disabled={!tokenSupportSwap}
             />

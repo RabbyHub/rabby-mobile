@@ -163,8 +163,8 @@ export const GasAccountCard: React.FC<Props> = ({
             style={{
               flex: 1,
             }}>
-            {gasAccountInfo?.has_iap_order ? (
-              <Tip content={t('page.gasAccount.withdrawDisabledIAP')}>
+            {!gasAccountInfo?.balance ? (
+              <Tip content={t('page.gasAccount.noBalance')}>
                 <Button
                   type="ghost"
                   onPress={onWithdrawPress}
