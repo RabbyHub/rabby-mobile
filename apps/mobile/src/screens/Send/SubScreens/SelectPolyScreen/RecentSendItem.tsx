@@ -63,18 +63,17 @@ export const RecentSendItem = ({
     });
   }, [account.address, cexInfo]);
 
-  const { formatName, hideTail } = useMemo(() => {
+  const { formatName } = useMemo(() => {
     const ellipisName = ellipsisAddress(account.address);
     const name = account.aliasName || ellipisName;
     return {
       formatName: name,
-      hideTail: name.toLowerCase() === ellipisName.toLowerCase(),
     };
   }, [account.address, account.aliasName]);
 
   const timStr = useMemo(() => {
     // if less one hour then xx mins ago, else xx hours ago
-    return timeStamp ? `${fromNow(timeStamp)} ago` : '';
+    return timeStamp ? `${fromNow(timeStamp, undefined, true)} ago` : '';
   }, [timeStamp]);
 
   const editAliasName = useAliasNameEditModal();
@@ -161,25 +160,16 @@ export const RecentSendItem = ({
                 <View style={styles.itemInfo}>
                   <View style={styles.itemName}>
                     <Text
-                      style={[
-                        styles.itemNameText,
-                        {
-                          maxWidth: hideTail ? '100%' : '30%',
-                        },
-                      ]}
+                      style={[styles.itemNameText]}
                       numberOfLines={1}
                       ellipsizeMode="tail">
                       {formatName}
                     </Text>
-                    {!hideTail && (
-                      <Text style={styles.address}>
-                        {`(${ellipsisAddress(account.address)})`}
-                      </Text>
-                    )}
+                    <Text style={styles.address}>
+                      {ellipsisAddress(account.address)}
+                    </Text>
                   </View>
-                  <Text style={styles.itemBalanceText}>
-                    {t('page.sendPoly.sentTimeHeader')} {timStr}
-                  </Text>
+                  <Text style={styles.itemBalanceText}>{timStr}</Text>
                 </View>
               </View>
             )}
@@ -224,13 +214,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexGrow: 1,
     backgroundColor: colors2024['neutral-bg-1'],
     padding: 16,
-    paddingRight: 24,
   },
   rootItem: {
     flexDirection: 'row',
     flex: 1,
     flexGrow: 1,
-    marginRight: 12,
   },
   item: {
     flexDirection: 'row',
@@ -251,32 +239,34 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   itemInfo: {
     gap: 4,
     flexGrow: 1,
+    flexDirection: 'row',
     flex: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   itemNameText: {
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '500',
-    color: colors2024['neutral-foot'],
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   itemBalanceText: {
     fontSize: 16,
     lineHeight: 20,
-    color: colors2024['neutral-title-1'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
-    fontWeight: '700',
+    fontWeight: '500',
   },
   itemName: {
-    gap: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
+    gap: 4,
+    flexDirection: 'column',
   },
   address: {
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '500',
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
   },
   walletIcon: {

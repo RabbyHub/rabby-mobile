@@ -21,7 +21,7 @@ export const sendScreenParamsAtom = atom<{ [key: string]: any }>({});
 export const isSingleAddressAtom = atom<boolean>(false);
 export const useSendRoutes = () => {
   const navigation = useNavigation<HomeProps['navigation']>();
-  const { findAccountWithoutBalance } = useWhiteListAddress(true);
+  const { findAccountWithoutBalance } = useWhiteListAddress();
   const [params, setParams] = useAtom(sendScreenParamsAtom);
   const [isSingleAddress, setIsSingleAddress] = useAtom(isSingleAddressAtom);
 

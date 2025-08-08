@@ -660,7 +660,8 @@
       "noSupportBtns": {
         "confirm": "Proceed",
         "cancel": "Cancel"
-      }
+      },
+      "addressDetail": "Address Detail"
     },
     "sendPoly": {
       "enterAddress": "Enter Address",

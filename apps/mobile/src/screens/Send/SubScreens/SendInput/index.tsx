@@ -72,7 +72,7 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
 
   const { navigateToSendScreen } = useSendRoutes();
 
-  const { findAccountWithoutBalance } = useWhiteListAddress(true);
+  const { findAccountWithoutBalance } = useWhiteListAddress();
 
   const { t } = useTranslation();
 
