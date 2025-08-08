@@ -47,16 +47,13 @@ export function useSetupWebview({
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
 
-  const destroyCurrentBridge = useCallback(
-    (cleanSession = true) => {
-      if (currentBridgeRef.current) {
-        currentBridgeRef.current.onDisconnect();
-        cleanSession && sessionService.deleteSession(currentBridgeRef.current);
-        currentBridgeRef.current = null;
-      }
-    },
-    [currentBridgeRef],
-  );
+  const destroyCurrentBridge = useCallback(() => {
+    if (currentBridgeRef.current) {
+      currentBridgeRef.current.onDisconnect();
+      sessionService.deleteSession(currentBridgeRef.current);
+      currentBridgeRef.current = null;
+    }
+  }, [currentBridgeRef]);
 
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
@@ -136,10 +133,9 @@ export function useSetupWebview({
         // sendActiveAccount();
 
         // icon.current = null;
-
         if (treatAsReload) {
           destroyCurrentBridge();
-
+          putBackgroundBridge(null, false);
           // // Cancel loading the page if we detect its a phishing page
           // const { hostname } = new URL(nativeEvent.url);
           // if (!isAllowedUrl(hostname)) {
@@ -148,7 +144,6 @@ export function useSetupWebview({
           // }
 
           const dappOrigin = nativeEvent.url;
-          putBackgroundBridge(null, false);
           const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
             ? dappOrigin
             : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
@@ -171,7 +166,7 @@ export function useSetupWebview({
 
   useEffect(() => {
     return () => {
-      destroyCurrentBridge(false);
+      destroyCurrentBridge();
     };
   }, [destroyCurrentBridge]);
 

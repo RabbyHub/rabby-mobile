@@ -100,6 +100,7 @@ export function useBrowser() {
     if (activeTab?.isTerminate) {
       updateTab(tabId, {
         isTerminate: false,
+        openTime: Date.now(),
       });
     }
     updateBrowserTabs({
@@ -205,7 +206,7 @@ export function useBrowser() {
         isDapp?: boolean;
       },
     ) => {
-      if (!url || !/^https?:\/\//.test(url)) {
+      if (!url?.trim() || !/^https?:\/\//.test(url)) {
         // switchToTab(emptyTab.id);
         return;
       }
@@ -221,11 +222,11 @@ export function useBrowser() {
         newTab.url,
       );
 
-      if (dappService.getDapp(targetOrigin)?.isDapp) {
+      if (dappService.getDapp(targetOrigin)?.isDapp && url?.trim()) {
         matomoRequestEvent({
           category: 'Websites Usage',
           action: 'Website_OpenDapp',
-          label: url,
+          label: targetOrigin,
         });
       }
 
