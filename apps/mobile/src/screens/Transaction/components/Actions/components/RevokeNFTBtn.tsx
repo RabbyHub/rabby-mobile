@@ -5,9 +5,11 @@ import { getErc721Approved, revokeNFTApprove } from '@/core/apis/approvals';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { isAccountSupportMiniApproval } from '@/utils/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
-import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { NFTItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,8 +23,9 @@ interface Props {
 
 export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
   const { t } = useTranslation();
-  const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { sendMiniTransactions } = useMiniApproval();
+  const { navigation } = useSafeSetNavigationOptions();
 
   const { data: isApproved } = useRequest(async () => {
     const approvedToAddress = await getErc721Approved({
@@ -35,8 +38,45 @@ export const RevokeNFTBtn = ({ nft, spender, account }: Props) => {
     return isSameAddress(spender, approvedToAddress);
   });
 
+  const handleRevokeDirectSign = useMemoizedFn(async () => {
+    try {
+      const data = await revokeNFTApprove(
+        {
+          chainServerId: nft.chain,
+          nftTokenId: nft.inner_id,
+          spender: spender!,
+          contractId: nft.contract_id,
+          abi: 'ERC721',
+          isApprovedForAll: false,
+          account: account,
+        },
+        undefined,
+        true,
+      );
+      const tx = data.params[0] as Tx;
+      const res = await sendMiniTransactions({
+        txs: [tx],
+        account,
+      });
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      resetNavigationTo(navigation, 'Home');
+    }
+  });
+
   const handleRevoke = useMemoizedFn(async () => {
     try {
+      if (isAccountSupportMiniApproval(account.type)) {
+        await handleRevokeDirectSign();
+        return;
+      }
+
       await revokeNFTApprove({
         chainServerId: nft.chain,
         nftTokenId: nft.inner_id,
