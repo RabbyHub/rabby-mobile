@@ -58,15 +58,9 @@ export function useSetupWebview({
     [currentBridgeRef],
   );
 
-  const backgroundBridgeRef = useRef<BackgroundBridge | undefined>(undefined);
-
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
       urlRef.current = urlBridge;
-      if (backgroundBridgeRef.current) {
-        removeBackgroundBridge(backgroundBridgeRef.current);
-      }
-      backgroundBridgeRef.current = undefined;
       const newBridge = new BackgroundBridge({
         webview: webviewRef,
         webviewIdRef: webviewIdRef,
@@ -76,7 +70,6 @@ export function useSetupWebview({
         isMainFrame,
       });
 
-      backgroundBridgeRef.current = newBridge;
       const session = sessionService.getOrCreateSession(newBridge);
       session?.setProp({
         origin: urlBridge,
