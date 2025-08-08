@@ -6,13 +6,13 @@ import { getViewShotUri } from '@/utils/browser';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import {
-  Image,
   StyleProp,
   Text,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 
 interface Props {
   tab: Tab;
@@ -62,7 +62,7 @@ export const BrowserTabCard: React.FC<Props> = ({
         </View>
         <View style={styles.screenshot}>
           {tab.viewShot ? (
-            <Image
+            <FastImage
               source={{ uri: getViewShotUri(tab.viewShot) }}
               style={styles.viewShot}
             />
