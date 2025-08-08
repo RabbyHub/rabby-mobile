@@ -1,7 +1,6 @@
 import { useSafeState } from '@/hooks/useSafeState';
 import { useMyAccounts } from '@/hooks/account';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSortAddressList } from '@/screens/Address/useSortAddressList';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import _ from 'lodash';
@@ -16,6 +15,10 @@ import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { Account } from '@/core/services/preference';
 import { isAddress } from 'viem';
+import BigNumber from 'bignumber.js';
+import { formatUsdValue } from '@/utils/number';
+import { formatAmount } from '@/utils/math';
+import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 
 type LocalDBTokenItem = TokenItem & {
   _db_id?: TokenItemEntity['_db_id'];
@@ -24,6 +27,10 @@ type LocalDBTokenItem = TokenItem & {
 export const useTokenAssetsMap = () => {
   const [tokensMap, setTokensMap] = useState<{
     [address: string]: LocalDBTokenItem[];
+  }>({});
+  // ref tag if address has tokens
+  const addressHasTokensRef = useRef<{
+    [address: string]: boolean;
   }>({});
 
   const updateTokens = useCallback(
@@ -44,7 +51,12 @@ export const useTokenAssetsMap = () => {
     },
     [],
   );
-  return { tokensMap, setTokensMap, updateTokens };
+  useEffect(() => {
+    Object.keys(tokensMap).forEach(address => {
+      addressHasTokensRef.current[address] = !!tokensMap[address]?.length;
+    });
+  }, [tokensMap]);
+  return { tokensMap, setTokensMap, updateTokens, addressHasTokensRef };
 };
 
 export const useSelectTokens = ({
@@ -64,11 +76,12 @@ export const useSelectTokens = ({
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
-  const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
-  const { tokensMap, setTokensMap, updateTokens } = useTokenAssetsMap();
+  const { tokensMap, setTokensMap, updateTokens, addressHasTokensRef } =
+    useTokenAssetsMap();
   const [userTokenSettings, setUserTokenSettings] = useState({});
   const currentAddress = currentAccount?.address;
+  const { top10Addresses, fetchAccounts } = useAccountInfo();
 
   const enableSearchTokensV2 = useMemo(
     () =>
@@ -87,26 +100,64 @@ export const useSelectTokens = ({
       const list = await openapi.searchTokensV2({
         q: keyword,
       });
+
+      const filterAddresses = currentAddress
+        ? [currentAddress]
+        : top10Addresses;
+
+      const tokenList = list.map(token => ({
+        chain: token.chain,
+        tokenId: token.id,
+      }));
+
+      let localAmounts: Array<{
+        chain: string;
+        tokenId: string;
+        amount: number;
+      }> = [];
+      if (filterAddresses.length > 0 && tokenList.length > 0) {
+        try {
+          localAmounts = await TokenItemEntity.getTokenListAmount({
+            owner_addr: filterAddresses,
+            tokenList,
+          });
+        } catch (error) {
+          console.error('Failed to get local token amounts:', error);
+        }
+      }
+
+      const amountMap = new Map<string, number>();
+      localAmounts.forEach(item => {
+        const key = `${item.chain}-${item.tokenId}`;
+        amountMap.set(key, item.amount);
+      });
+
       return list
         .filter(e => (chain_server_id ? e.chain === chain_server_id : true))
         .filter(e =>
           isAddress(keyword, { strict: false }) ? true : !!e.is_core,
         )
-        .map(
-          e =>
-            ({
-              ...e,
-              _isPined: false,
-              _isFold: false,
-              _isExcludeBalance: false,
-              _usdValueStr: 0,
-              _amountStr: 1,
-              _tokenId: e.id,
-            } as any as AbstractPortfolioToken),
-        );
+        .map(e => {
+          const key = `${e.chain}-${e.id}`;
+          const localAmount = amountMap.get(key) || 0;
+
+          const amountBn = new BigNumber(localAmount);
+          const priceBn = new BigNumber(e.price || 0);
+          const usdValue = amountBn.times(priceBn).toNumber();
+
+          return {
+            ...e,
+            _isPined: false,
+            _isFold: false,
+            _isExcludeBalance: false,
+            _usdValueStr: usdValue ? formatUsdValue(usdValue) : '$0',
+            _amountStr: localAmount ? formatAmount(localAmount) : '0',
+            _tokenId: e.id,
+          } as any as AbstractPortfolioToken;
+        });
     }
     return [];
-  }, [enableSearchTokensV2, keyword, chain_server_id]);
+  }, [enableSearchTokensV2, keyword, chain_server_id, currentAccount?.address]);
 
   useEffect(() => {
     if (visible && Object.keys(userTokenSettings).length === 0) {
@@ -124,7 +175,7 @@ export const useSelectTokens = ({
         return;
       }
       try {
-        const tokensExisted = !!tokensMap[address]?.length;
+        const tokensExisted = addressHasTokensRef.current[address];
         if (!tokensExisted) {
           setLoading(true);
         }
@@ -143,7 +194,7 @@ export const useSelectTokens = ({
         setLoading(false);
       }
     },
-    [setLoading, tokensMap, updateTokens],
+    [addressHasTokensRef, setLoading, updateTokens],
   );
 
   const batchLoadCacheTokens = useCallback(
@@ -173,14 +224,8 @@ export const useSelectTokens = ({
 
   const checkIsExpireAndUpdate = useCallback(
     async (force?: boolean) => {
-      const top10Account = sortedAccounts
-        .slice(0, 10)
-        .filter(acc => acc.balance);
-      const addresses = [
-        ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
-      ];
       try {
-        for (const address of addresses) {
+        for (const address of top10Addresses) {
           try {
             await loadToken(address, force);
           } catch (error) {
@@ -195,19 +240,15 @@ export const useSelectTokens = ({
         setIsFirstFetch(false);
       }
     },
-    [loadToken, sortedAccounts],
+    [loadToken, top10Addresses],
   );
 
   const getCacheTop10Tokens = useCallback(async () => {
-    const top10Account = sortedAccounts.slice(0, 10).filter(acc => acc.balance);
-    const addresses = [
-      ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
-    ];
-    const emptyTokenAddresses = addresses.filter(
+    const emptyTokenAddresses = top10Addresses.filter(
       addr => !tokensMap[addr]?.length,
     );
     await batchLoadCacheTokens(emptyTokenAddresses);
-  }, [batchLoadCacheTokens, sortedAccounts, tokensMap]);
+  }, [batchLoadCacheTokens, tokensMap, top10Addresses]);
 
   const getCacheTokens = useCallback(
     (addrresses: string[]) => {
@@ -357,6 +398,12 @@ export const useSelectTokens = ({
     tokens,
     userTokenSettings,
   ]);
+
+  useEffect(() => {
+    if (visible) {
+      fetchAccounts();
+    }
+  }, [visible, fetchAccounts]);
 
   return {
     tokensMap,

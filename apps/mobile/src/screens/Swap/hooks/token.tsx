@@ -207,7 +207,6 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const setReceiveToken = useCallback(
     (token: TokenItem | undefined) => {
-      console.log('setReceiveToken token', token);
       _setReceiveToken(token);
       if (token) {
         if (token?.low_credit_score) {

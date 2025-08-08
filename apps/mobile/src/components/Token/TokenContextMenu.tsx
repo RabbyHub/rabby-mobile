@@ -15,6 +15,7 @@ import { useSetAtom } from 'jotai';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { type TokenSelectType } from './TokenSelectorSheetModal';
 import { IS_ANDROID } from '@/core/native/utils';
+import { Keyboard } from 'react-native';
 
 interface Props {
   token: TokenItem;
@@ -47,6 +48,7 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
   }, [isPined, pinToken, removePinedToken, token]);
 
   const gotoTokenDetail = useCallback(() => {
+    Keyboard.dismiss();
     setShouldHideSelectorPopup(true);
 
     navigate(RootNames.TokenDetail, {
