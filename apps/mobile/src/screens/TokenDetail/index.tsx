@@ -520,6 +520,8 @@ export const TokenDetailScreen = () => {
     if (isSingleAddress) {
       await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
     }
+    setShouldHideSelectorPopup(false);
+    setIsFromBack(false);
     navigateToSendPolyScreen(!!isSingleAddress, {
       chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
       tokenId: token?._tokenId,
