@@ -47,13 +47,16 @@ export function useSetupWebview({
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
 
-  const destroyCurrentBridge = useCallback(() => {
-    if (currentBridgeRef.current) {
-      currentBridgeRef.current.onDisconnect();
-      sessionService.deleteSession(currentBridgeRef.current);
-      currentBridgeRef.current = null;
-    }
-  }, [currentBridgeRef]);
+  const destroyCurrentBridge = useCallback(
+    (cleanSession = true) => {
+      if (currentBridgeRef.current) {
+        currentBridgeRef.current.onDisconnect();
+        cleanSession && sessionService.deleteSession(currentBridgeRef.current);
+        currentBridgeRef.current = null;
+      }
+    },
+    [currentBridgeRef],
+  );
 
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
@@ -168,7 +171,7 @@ export function useSetupWebview({
 
   useEffect(() => {
     return () => {
-      destroyCurrentBridge();
+      destroyCurrentBridge(false);
     };
   }, [destroyCurrentBridge]);
 
