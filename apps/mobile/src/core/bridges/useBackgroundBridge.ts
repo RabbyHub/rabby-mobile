@@ -12,7 +12,6 @@ import {
 } from '@/constant/dappView';
 import { createDappBySession } from '../apis/dapp';
 import { useRefState } from '@/hooks/common/useRefState';
-import { IS_IOS } from '../native/utils';
 
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
@@ -115,8 +114,7 @@ export function useSetupWebview({
   const onReloadingRef = useRef<boolean>(false);
   // would be called every time the url changes
   const onLoadStart: OnLoadStart = useCallback(
-    async ({ nativeEvent }, _treatAsReload = false) => {
-      const treatAsReload = _treatAsReload || IS_IOS;
+    async ({ nativeEvent }, treatAsReload = false) => {
       if (onReloadingRef.current) return;
       onReloadingRef.current = treatAsReload;
 
