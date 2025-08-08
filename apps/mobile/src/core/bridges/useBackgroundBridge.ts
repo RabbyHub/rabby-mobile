@@ -12,6 +12,7 @@ import {
 } from '@/constant/dappView';
 import { createDappBySession } from '../apis/dapp';
 import { useRefState } from '@/hooks/common/useRefState';
+import { IS_IOS } from '../native/utils';
 
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
@@ -47,16 +48,13 @@ export function useSetupWebview({
   const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
     useRefState<BackgroundBridge | null>(null);
 
-  const destroyCurrentBridge = useCallback(
-    (cleanSession = true) => {
-      if (currentBridgeRef.current) {
-        currentBridgeRef.current.onDisconnect();
-        cleanSession && sessionService.deleteSession(currentBridgeRef.current);
-        currentBridgeRef.current = null;
-      }
-    },
-    [currentBridgeRef],
-  );
+  const destroyCurrentBridge = useCallback(() => {
+    if (currentBridgeRef.current) {
+      currentBridgeRef.current.onDisconnect();
+      sessionService.deleteSession(currentBridgeRef.current);
+      currentBridgeRef.current = null;
+    }
+  }, [currentBridgeRef]);
 
   const initializeBackgroundBridge = useCallback(
     (urlBridge: string, isMainFrame: boolean = true) => {
@@ -117,7 +115,8 @@ export function useSetupWebview({
   const onReloadingRef = useRef<boolean>(false);
   // would be called every time the url changes
   const onLoadStart: OnLoadStart = useCallback(
-    async ({ nativeEvent }, treatAsReload = false) => {
+    async ({ nativeEvent }, _treatAsReload = false) => {
+      const treatAsReload = _treatAsReload || IS_IOS;
       if (onReloadingRef.current) return;
       onReloadingRef.current = treatAsReload;
 
@@ -136,10 +135,9 @@ export function useSetupWebview({
         // sendActiveAccount();
 
         // icon.current = null;
-
         if (treatAsReload) {
           destroyCurrentBridge();
-
+          putBackgroundBridge(null, false);
           // // Cancel loading the page if we detect its a phishing page
           // const { hostname } = new URL(nativeEvent.url);
           // if (!isAllowedUrl(hostname)) {
@@ -148,7 +146,6 @@ export function useSetupWebview({
           // }
 
           const dappOrigin = nativeEvent.url;
-          putBackgroundBridge(null, false);
           const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
             ? dappOrigin
             : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
@@ -171,7 +168,7 @@ export function useSetupWebview({
 
   useEffect(() => {
     return () => {
-      destroyCurrentBridge(false);
+      destroyCurrentBridge();
     };
   }, [destroyCurrentBridge]);
 

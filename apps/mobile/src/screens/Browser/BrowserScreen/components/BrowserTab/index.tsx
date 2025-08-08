@@ -31,7 +31,7 @@ import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
 import { parsePossibleURL } from '@/constant/dappView';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID } from '@/core/native/utils';
 import { browserService } from '@/core/services';
 import { FontNames } from '@/core/utils/fonts';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
@@ -529,7 +529,15 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       scalesPageToFit: true,
                     })}
                     onLoadStart={e => {
-                      const treatAsReload = e.nativeEvent.isReload || IS_IOS;
+                      const originChanged =
+                        !webviewState.resolvedUrl ||
+                        urlUtils.canoicalizeDappUrl(e.nativeEvent.url)
+                          .httpOrigin !==
+                          urlUtils.canoicalizeDappUrl(webviewState.resolvedUrl)
+                            .httpOrigin;
+
+                      const treatAsReload =
+                        e.nativeEvent.isReload || originChanged;
 
                       webviewProps?.onLoadStart?.(e);
                       onLoadStart(e, treatAsReload);
