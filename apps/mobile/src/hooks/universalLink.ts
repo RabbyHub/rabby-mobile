@@ -10,6 +10,7 @@ import { RcIconInfoForToast } from '@/screens/Unlock/icons';
 import { getRabbyLockInfo, PasswordStatus } from '@/core/apis/lock';
 import { usePasswordStatus } from './useLock';
 import { UL_DOMAIN, UL_MATCH_PREFIX } from '@/constant/universalLink';
+import { IS_IOS } from '@/core/native/utils';
 
 const nextAppLinkRef = {
   current: '' as string,
@@ -85,6 +86,8 @@ export function useUniversalLinkOnTop() {
   const hideToastRef = useRef<() => void>(() => {});
   const handleAppLink = useCallback(
     async (url: string, isInit = false) => {
+      const maybeShortTipIsBetter = IS_IOS && isInit;
+
       if (keyringService.isUnlocked()) {
         // just parse the link if app is unlocked
         parseActionAndProcessLink(url, handleActions);
@@ -106,8 +109,8 @@ export function useUniversalLinkOnTop() {
         hideToastRef.current = toastIndicator(
           t('page.universalLink.error.unlockWalletFirst'),
           {
-            duration: 30000,
-            hideOnPress: false,
+            duration: maybeShortTipIsBetter ? 10000 : 30000,
+            hideOnPress: maybeShortTipIsBetter,
             isTop: true,
           },
         );
