@@ -113,6 +113,13 @@
       "searchPlaceHolder1": "Buscar por Nombre / Dirección",
       "contextMenu": {
         "viewDetail": "Ver detalle"
+      },
+      "bridgeTo": {
+        "low": "Baja liquidez",
+        "high": "Alta liquidez"
+      },
+      "favoriteFilter": {
+        "all": "Todo"
       }
     },
     "NFTNumberInput": {
@@ -949,7 +956,8 @@
       "noSupprotTokenForDex": "Este token puede no ser compatible con este exchange. Verifique antes de continuar para evitar pérdidas",
       "From": "Desde",
       "noSupprotTokenForSafe": "La dirección Safe a la que estás enviando tokens no está desplegada en esta cadena. Verifica antes de continuar para evitar pérdidas.",
-      "noSupportTokenForChain": "La dirección del destinatario es una dirección de contrato en una cadena diferente. Verifica antes de continuar para evitar pérdidas."
+      "noSupportTokenForChain": "La dirección del destinatario es una dirección de contrato en una cadena diferente. Verifica antes de continuar para evitar pérdidas.",
+      "addressDetail": "Detalles de la dirección"
     },
     "gasTopUp": {
       "No_Tokens": "Sin tokens",
@@ -1948,7 +1956,8 @@
         "noEnoughValueBalance": "Saldo de Vault insuficiente. Cambia de cadena o inténtalo de nuevo más tarde.",
         "selectRecipientAddress": "Seleccionar Wallet del destinatario",
         "noRecipient": "No hay cartera de destinatario disponible",
-        "recipientAddress": "Billetera del destinatario"
+        "recipientAddress": "Billetera del destinatario",
+        "availableBalance": "Saldo de retiro disponible: {{balance}}"
       },
       "withdrawConfirmModal": {
         "button": "Ver en DeBank",
@@ -2145,22 +2154,38 @@
         "disconnect": "Desconectar",
         "connectWallet": "Conectar Wallet",
         "title": "Dapp actual"
+      },
+      "BrowserSearch": {
+        "results": "Resultados",
+        "recent": "Reciente",
+        "placeholder": "Buscar sitios web",
+        "openUrl": "Abre \"{{searchText}}\"",
+        "searchInGoogle": "Buscar \"{{searchText}}\" en Google"
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "Abrir sitios web"
       }
     },
     "browserManage": {
       "option": {
         "tab": "Pestaña",
         "favorites": "Favoritos",
-        "history": "Historia"
+        "history": "Historia",
+        "recent": "Reciente"
       },
       "BrowserBookmarkList": {
-        "title": "Favoritos"
+        "title": "Favoritos",
+        "emptyTitle": "No se ha añadido ningún sitio web todavía."
       },
       "BrowserHistoryList": {
-        "title": "Historial"
+        "title": "Historial",
+        "clearAllHistory": "Borrar todo el historial",
+        "emptyTitle": "No hay historial en los últimos 30 días"
       },
       "BrowserTabList": {
-        "closeAllTabs": "Cerrar todas las pestañas"
+        "closeAllTabs": "Cerrar todas las pestañas",
+        "emptyTitle": "No hay pestañas abiertas aún",
+        "emptyDesc": "Abre una nueva pestaña ahora"
       }
     },
     "scan": {

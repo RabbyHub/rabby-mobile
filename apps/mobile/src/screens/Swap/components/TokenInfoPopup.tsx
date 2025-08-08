@@ -1,6 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Dimensions, TouchableOpacity, Modal } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import { AssetAvatar } from '@/components';
@@ -11,6 +11,12 @@ import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { ExternalTokenRow } from '@/screens/Home/components/AssetRenderItems';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { IS_ANDROID } from '@/core/native/utils';
+import { formatAmount } from '@/utils/math';
+import { formatUsdValue } from '@/utils/number';
+import BigNumber from 'bignumber.js';
+import { RootNames } from '@/constant/layout';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { navigate } from '@/utils/navigation';
 
 export const TokenInfoPopup = () => {
   const windowWidth = Dimensions.get('window').width;
@@ -26,6 +32,20 @@ export const TokenInfoPopup = () => {
       tokenEntity: null,
     });
   };
+
+  const usdValueStr = useMemo(() => {
+    if (
+      !longPressToken.tokenEntity?.price ||
+      !longPressToken.tokenItem?.amount
+    ) {
+      return '0';
+    }
+    const amount = longPressToken.tokenItem?.amount || 0;
+    const amountBn = new BigNumber(amount);
+    const priceBn = new BigNumber(longPressToken.tokenEntity?.price || 0);
+    const usdValue = amountBn.times(priceBn).toNumber();
+    return formatUsdValue(usdValue);
+  }, [longPressToken.tokenEntity?.price, longPressToken.tokenItem?.amount]);
 
   return (
     <Modal
@@ -71,8 +91,8 @@ export const TokenInfoPopup = () => {
                 _isPined: false,
                 _isFold: false,
                 _isExcludeBalance: false,
-                _usdValueStr: 0,
-                _amountStr: 1,
+                _usdValueStr: usdValueStr,
+                _amountStr: formatAmount(longPressToken.tokenItem?.amount),
                 _tokenId: longPressToken.tokenEntity.id,
               } as unknown as AbstractPortfolioToken
             }
@@ -82,6 +102,17 @@ export const TokenInfoPopup = () => {
               top: Math.floor(
                 longPressToken.position.y + longPressToken.position.height + 13,
               ),
+            }}
+            onPressRightIcon={() => {
+              if (longPressToken.tokenItem) {
+                navigate(RootNames.TokenDetail, {
+                  token: {
+                    ...ensureAbstractPortfolioToken(longPressToken.tokenItem),
+                  },
+                  needUseCacheToken: true,
+                });
+                handleClose();
+              }
             }}
             onTokenPress={() => {}}
             touchable={false}

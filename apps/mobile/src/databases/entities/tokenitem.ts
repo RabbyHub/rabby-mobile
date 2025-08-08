@@ -1,6 +1,14 @@
 import 'reflect-metadata';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column, In, Brackets, Not, LessThan } from 'typeorm/browser';
+import {
+  Entity,
+  Column,
+  In,
+  Brackets,
+  Not,
+  LessThan,
+  MoreThan,
+} from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import {
   columnConverter,
@@ -105,7 +113,9 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   // low_credit_score
   @Column('boolean')
   low_credit_score: TokenItem['low_credit_score'] = false;
-
+  // fdv
+  @Column('real', { default: 0 })
+  fdv: TokenItem['fdv'] = 0;
   @Column('text', { default: '1' })
   value_24h_change: string = '1';
   // cex_ids
@@ -162,6 +172,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     e.low_credit_score = input.low_credit_score ?? false;
     e.value_24h_change = input.value_24h_change ?? '1';
     e.cex_ids = columnConverter.jsonObjToString(input.cex_ids || []);
+    e.fdv = input.fdv ?? 0;
 
     e.makeDbId();
   }
@@ -224,14 +235,27 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     return res;
   }
 
-  static async batchMultAddressTokens(addresses: string[]) {
+  static async batchMultAddressTokens(
+    addresses: string[],
+    core?: boolean,
+    maxLength?: number,
+  ) {
     await prepareAppDataSource();
 
-    return (
-      await this.getRepository().findBy({
-        owner_addr: In(addresses),
-      })
-    )
+    const queryBuilder = this.getRepository().createQueryBuilder('tokenitem');
+
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
+
+    if (core) {
+      queryBuilder.andWhere({ is_core: true });
+    }
+    if (maxLength) {
+      queryBuilder.take(maxLength);
+    }
+
+    const tokens = await queryBuilder.getMany();
+
+    return tokens
       .filter(i => i.id !== EMPTY_TOKEN_ITEM_ID)
       .filter(i => i.amount > 0)
       .map(i => ({
@@ -432,6 +456,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
     const firstUpdateTime = parseInt(result.minUpdatedAt, 10);
     return Date.now() - firstUpdateTime > ASSET_EXPIRED_TIME;
   }
+
   static async willExpired(owner_addr: string, offest?: number) {
     if (await this.isExpired(owner_addr)) {
       return;
@@ -444,6 +469,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       .where('owner_addr = :owner_addr', { owner_addr })
       .execute();
   }
+
   static async getCexIds(tokenId: string, chain: string) {
     await prepareAppDataSource();
 
@@ -460,6 +486,7 @@ export class TokenItemEntity extends EntityAddressAssetBase {
       cex_ids: columnConverter.jsonStringToObj(result?.cex_ids || '[]'),
     };
   }
+
   // 获取原生代币列表中美元总价值最大的一个token
   static async getTokenWithMaxUsdValue(
     owner_addr: string,
@@ -541,6 +568,65 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         `❌ Failed to cleanup stale tokens for ${owner_addr}:`,
         error,
       );
+      throw error;
+    }
+  }
+
+  static async getTokenListAmount({
+    owner_addr,
+    tokenList,
+  }: {
+    owner_addr: string[];
+    tokenList: { chain: string; tokenId: string }[];
+  }): Promise<Array<{ chain: string; tokenId: string; amount: number }>> {
+    try {
+      await prepareAppDataSource();
+
+      if (!owner_addr.length || !tokenList.length) {
+        return [];
+      }
+
+      const repo = this.getRepository();
+      const whereConditions = tokenList.map((token, index) => {
+        const chainParam = `chain${index}`;
+        const tokenIdParam = `tokenId${index}`;
+        return `(tokenitem.chain = :${chainParam} AND tokenitem.id = :${tokenIdParam})`;
+      });
+
+      const params: Record<string, any> = {};
+      tokenList.forEach((token, index) => {
+        params[`chain${index}`] = token.chain;
+        params[`tokenId${index}`] = token.tokenId;
+      });
+
+      const result = await repo
+        .createQueryBuilder('tokenitem')
+        .select([
+          'tokenitem.chain',
+          'tokenitem.id',
+          `SUM(${correctBadRealOnSql('tokenitem.amount')}) as total_amount`,
+        ])
+        .where(`tokenitem.owner_addr IN (:...owner_addr)`, { owner_addr })
+        .andWhere(`(${whereConditions.join(' OR ')})`, params)
+        .groupBy('tokenitem.chain, tokenitem.id')
+        .getRawMany();
+
+      const amountMap = new Map<string, number>();
+      result.forEach(item => {
+        const key = `${item.tokenitem_chain}-${item.tokenitem_id}`;
+        amountMap.set(key, parseFloat(item.total_amount) || 0);
+      });
+
+      return tokenList.map(token => {
+        const key = `${token.chain}-${token.tokenId}`;
+        return {
+          chain: token.chain,
+          tokenId: token.tokenId,
+          amount: amountMap.get(key) || 0,
+        };
+      });
+    } catch (error) {
+      console.error('Failed to get token list amount:', error);
       throw error;
     }
   }

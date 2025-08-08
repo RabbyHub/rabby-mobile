@@ -232,6 +232,7 @@ export const LedgerHardwareWaiting = ({
     });
     eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
       if (data.success) {
+        cancelRef.current = true;
         let sig = data.data;
         setResult(sig);
         setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTED);

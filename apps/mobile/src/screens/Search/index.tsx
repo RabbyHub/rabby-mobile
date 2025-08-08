@@ -1,6 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { Keyboard, SafeAreaView, TouchableOpacity, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useEffect, useRef } from 'react';
+import { Keyboard, TouchableOpacity, View } from 'react-native';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -16,18 +15,17 @@ import LinearGradient, {
   LinearGradientProps,
 } from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { usePinTokens } from './usePinTokens';
-import { PinedTokenList } from './components/PinedTokenList';
-import { HotTokenList } from './components/HotTokenlist';
+import { useDebounce } from 'ahooks';
 
 function SearchScreen(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { searchState, setSearchState } = useSearch();
+  const debouncedSearchValue = useDebounce(searchState, { wait: 600 });
+
   const { t } = useTranslation();
 
   const inputRef = useRef<any>(null);
-  const [hasFocused, setHasFocused] = useState(false);
 
   const insets = useSafeAreaInsets();
 
@@ -52,21 +50,12 @@ function SearchScreen(): JSX.Element {
   const { resultTokens, searched, loading, handleSearch } =
     useSearchTokens(searchState);
 
-  // 页面获得焦点后延迟300ms聚焦输入框（仅第一次）
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     if (!hasFocused) {
-  //       const timer = setTimeout(() => {
-  //         inputRef.current?.focus();
-  //         setHasFocused(true);
-  //       }, 500);
-
-  //       return () => {
-  //         clearTimeout(timer);
-  //       };
-  //     }
-  //   }, [hasFocused]),
-  // );
+  useEffect(() => {
+    if (debouncedSearchValue) {
+      handleSearch(debouncedSearchValue);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchValue]);
 
   return (
     <NormalScreenContainer2024
@@ -106,14 +95,12 @@ function SearchScreen(): JSX.Element {
         />
       </View>
       <View style={styles.safeView}>
-        {searched || loading ? (
+        {(searched || loading) && (
           <SearchAssets
-            resultTokens={resultTokens}
+            resultTokens={searchState ? resultTokens : []}
             loading={loading}
             searchState={searchState}
           />
-        ) : (
-          <HotTokenList />
         )}
       </View>
     </NormalScreenContainer2024>

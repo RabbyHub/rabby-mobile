@@ -90,7 +90,7 @@ const WhitelistInputScreen = () => {
 
   const { list } = useCexSupportList();
 
-  const { findAccountWithoutBalance } = useWhiteListAddress(true);
+  const { findAccountWithoutBalance } = useWhiteListAddress();
 
   const { t } = useTranslation();
   const [historyVisible, setHistoryVisible] = useState(false);

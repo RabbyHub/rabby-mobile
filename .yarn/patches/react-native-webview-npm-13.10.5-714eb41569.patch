@@ -19,11 +19,11 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
 +import android.webkit.JsPromptResult;
  import android.widget.FrameLayout;
 +import android.widget.Button;
-
+ 
 +import androidx.annotation.Nullable;
  import androidx.annotation.RequiresApi;
  import androidx.core.content.ContextCompat;
-
+ 
 @@ -28,6 +34,7 @@ import com.facebook.react.bridge.WritableMap;
  import com.facebook.react.common.build.ReactBuildConfig;
  import com.facebook.react.modules.core.PermissionAwareActivity;
@@ -35,7 +35,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
 @@ -36,6 +43,24 @@ import java.util.ArrayList;
  import java.util.Collections;
  import java.util.List;
-
+ 
 +import okhttp3.MediaType;
 +import okhttp3.OkHttpClient;
 +import okhttp3.Request;
@@ -58,25 +58,25 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
      protected static final FrameLayout.LayoutParams FULLSCREEN_LAYOUT_PARAMS = new FrameLayout.LayoutParams(
              ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER);
 @@ -54,6 +79,7 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
-
+ 
      protected View mVideoView;
      protected WebChromeClient.CustomViewCallback mCustomViewCallback;
 +    protected boolean blockJsDuringLoading = true;
-
+ 
      /*
       * - Permissions -
 @@ -144,30 +170,33 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
-
+ 
      @Override
      public void onPermissionRequest(final PermissionRequest request) {
 -
          grantedPermissions = new ArrayList<>();
-
+ 
 +        ArrayList<String> requestPermissionIdentifiers = new ArrayList<>();
          ArrayList<String> requestedAndroidPermissions = new ArrayList<>();
          for (String requestedResource : request.getResources()) {
              String androidPermission = null;
-
+ 
              if (requestedResource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
                  androidPermission = Manifest.permission.RECORD_AUDIO;
 +                requestPermissionIdentifiers.add("microphone");
@@ -114,7 +114,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
 @@ -178,40 +207,125 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
              }
          }
-
+ 
 -        // If all the permissions are already granted, send the response to the WebView synchronously
 -        if (requestedAndroidPermissions.isEmpty()) {
 -            request.grant(grantedPermissions.toArray(new String[0]));
@@ -153,7 +153,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
 +            );
          }
 +    }
-
+ 
 -        // Otherwise, ask to Android System for native permissions asynchronously
 -
 -        this.permissionRequest = request;
@@ -161,7 +161,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
 +        Handler handler = new Handler();
 +        handler.postDelayed(function, delayMillis);
 +    }
-
+ 
 -        requestPermissions(requestedAndroidPermissions);
 +    private void showPermissionPrompt(
 +        @Nullable CharSequence message,
@@ -188,8 +188,8 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
 +        posButton.setEnabled(false);
 +        this.runDelayed(() -> posButton.setEnabled(true), 500);
      }
-
-
+ 
+ 
      @Override
      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 -
@@ -204,7 +204,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
 +            */
              geolocationPermissionCallback = callback;
              geolocationPermissionOrigin = origin;
-
+ 
              requestPermissions(Collections.singletonList(Manifest.permission.ACCESS_FINE_LOCATION));
 -
          } else {
@@ -222,7 +222,7 @@ index 07f73fd00a083ebf5a03bffaa7bbadbd1f648505..688cd4d930e717ffbcd1527a72e22f2f
 +            );
          }
      }
-
+ 
 +    @Override
 +    public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
 +        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
@@ -263,12 +263,12 @@ index 6664b6f6eacb37743d049556dc55f613c0244517..7d639e3c139cb506fc8ef23044e3e121
      protected boolean nestedScrollEnabled = false;
 +    protected boolean disableJsPromptLike = false;
      protected ProgressChangedFilter progressChangedFilter;
-
+ 
      /**
 @@ -102,6 +103,10 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
          this.nestedScrollEnabled = nestedScrollEnabled;
      }
-
+ 
 +    public void setDisableJsPromptLike(boolean val) {
 +        this.disableJsPromptLike = val;
 +    }
@@ -277,12 +277,12 @@ index 6664b6f6eacb37743d049556dc55f613c0244517..7d639e3c139cb506fc8ef23044e3e121
      public void onHostResume() {
          // do nothing
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
-index d59e19ce82a5a03a60c558b35171af713719af4a..10fbd508bc2ac715d2fcedb9a999ef4a401106d5 100644
+index d59e19ce82a5a03a60c558b35171af713719af4a..95d4b70232583266d81abf9262a3c8fbc3c01c46 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 @@ -1,7 +1,9 @@
  package com.reactnativecommunity.webview;
-
+ 
  import android.annotation.TargetApi;
 +import android.content.Intent;
  import android.graphics.Bitmap;
@@ -293,11 +293,11 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..10fbd508bc2ac715d2fcedb9a999ef4a
 @@ -32,6 +34,8 @@ import com.reactnativecommunity.webview.events.TopLoadingStartEvent;
  import com.reactnativecommunity.webview.events.TopRenderProcessGoneEvent;
  import com.reactnativecommunity.webview.events.TopShouldStartLoadWithRequestEvent;
-
+ 
 +import java.util.Arrays;
 +import java.util.Objects;
  import java.util.concurrent.atomic.AtomicReference;
-
+ 
  public class RNCWebViewClient extends WebViewClient {
 @@ -41,6 +45,8 @@ public class RNCWebViewClient extends WebViewClient {
      protected boolean mLastLoadFailed = false;
@@ -306,12 +306,12 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..10fbd508bc2ac715d2fcedb9a999ef4a
 +    // Allow list is used to support specific deeplinks in the webview.
 +    private final String[] DEEPLINK_ALLOW_LIST = new String[] {"https://twitter.com/i/wallet/verify"};
      protected @Nullable RNCBasicAuthCredential basicAuthCredential = null;
-
+ 
      public void setIgnoreErrFailedForThisURL(@Nullable String url) {
 @@ -51,12 +57,28 @@ public class RNCWebViewClient extends WebViewClient {
          basicAuthCredential = credential;
      }
-
+ 
 +    private Boolean SetBlockJsDuringLoading(Boolean val, RNCWebView reactWebView) {
 +        RNCWebChromeClient chromeClient = (RNCWebChromeClient) reactWebView.mWebChromeClient;
 +
@@ -330,17 +330,26 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..10fbd508bc2ac715d2fcedb9a999ef4a
 +        // Only return the URL that the web view is currently showing.
 +        String visibleUrl = webView.getUrl();
 +        Boolean isFinishedLoading = url.equals(visibleUrl);
-
+ 
 -        if (!mLastLoadFailed) {
 +        if (!mLastLoadFailed && isFinishedLoading) {
              RNCWebView reactWebView = (RNCWebView) webView;
 +            this.SetBlockJsDuringLoading(false, reactWebView);
-
+ 
              reactWebView.callInjectedJavaScript();
-
+ 
+@@ -72,7 +94,7 @@ public class RNCWebViewClient extends WebViewClient {
+         webView,
+         new TopLoadingStartEvent(
+           RNCWebViewWrapper.getReactTagFromWebView(webView),
+-          createWebViewEvent(webView, url)));
++          createWebViewEvent(webView, url, "updateVisitedHistory", isReload)));
+     }
+ 
+     @Override
 @@ -121,7 +143,18 @@ public class RNCWebViewClient extends WebViewClient {
              RNCWebViewModuleImpl.shouldOverrideUrlLoadingLock.removeLock(lockIdentifier);
-
+ 
              return shouldOverride;
 -        } else {
 +        } else if (url != null && Arrays.asList(DEEPLINK_ALLOW_LIST).contains(url)) {
@@ -357,7 +366,7 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..10fbd508bc2ac715d2fcedb9a999ef4a
 +       } else {
              FLog.w(TAG, "Couldn't use blocking synchronous call for onShouldStartLoadWithRequest due to debugging or missing Catalyst instance, falling back to old event-and-load.");
              progressChangedFilter.setWaitingForCommandLoadUrl(true);
-
+ 
 @@ -136,6 +169,21 @@ public class RNCWebViewClient extends WebViewClient {
      @TargetApi(Build.VERSION_CODES.N)
      @Override
@@ -387,8 +396,35 @@ index d59e19ce82a5a03a60c558b35171af713719af4a..10fbd508bc2ac715d2fcedb9a999ef4a
 -        );
 +            );
      }
-
+ 
      @Override
+@@ -300,12 +348,26 @@ public class RNCWebViewClient extends WebViewClient {
+     }
+ 
+     protected WritableMap createWebViewEvent(WebView webView, String url) {
++        return createWebViewEvent(webView, url, "unknown", false);
++    }
++
++    protected WritableMap createWebViewEvent(WebView webView, String url, String scene) {
++        return createWebViewEvent(webView, url, scene, false);
++    }
++
++    protected WritableMap createWebViewEvent(WebView webView, String url, boolean isReload) {
++        return createWebViewEvent(webView, url, "unknown", isReload);
++    }
++
++    protected WritableMap createWebViewEvent(WebView webView, String url, String scene, boolean isReload) {
+         WritableMap event = Arguments.createMap();
+         event.putDouble("target", RNCWebViewWrapper.getReactTagFromWebView(webView));
+         // Don't use webView.getUrl() here, the URL isn't updated to the new value yet in callbacks
+         // like onPageFinished
+         event.putString("url", url);
+         event.putBoolean("loading", !mLastLoadFailed && webView.getProgress() != 100);
++        event.putBoolean("isReload", isReload);
++        event.putString("scene", scene);
+         event.putString("title", webView.getTitle());
+         event.putBoolean("canGoBack", webView.canGoBack());
+         event.putBoolean("canGoForward", webView.canGoForward());
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
 index 4600a8dc5c448a2236d25e40172453f93ae92c45..4550481079f5b59e9a11029082958bf6cbac43fd 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
@@ -412,7 +448,7 @@ index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..456547621a60911296e878fe45d9aa55
 @@ -331,6 +331,12 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
          mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
      }
-
+ 
 +    @Override
 +    @ReactProp(name = "disableJsPromptLike")
 +    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
@@ -429,7 +465,7 @@ index 709117a91e44c2e32a263c638b0c092185d76e94..4e0713dd00704b5ca42a9868acc89f56
 @@ -268,6 +268,11 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper> {
          mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
      }
-
+ 
 +    @ReactProp(name = "disableJsPromptLike")
 +    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
 +        mRNCWebViewManagerImpl.setDisableJsPromptLike(view, value);
@@ -439,10 +475,18 @@ index 709117a91e44c2e32a263c638b0c092185d76e94..4e0713dd00704b5ca42a9868acc89f56
      public void setUserAgent(RNCWebViewWrapper view, @Nullable String value) {
          mRNCWebViewManagerImpl.setUserAgent(view, value);
 diff --git a/apple/RNCWebView.mm b/apple/RNCWebView.mm
-index 1ae84c89237f2133378b35a75f6b48a538a1502f..c5026ad22a57a4215edbf53d3705048b39e89cf3 100644
+index 1ae84c89237f2133378b35a75f6b48a538a1502f..3939734732ecf5ff67c98096decc08f143ecec49 100644
 --- a/apple/RNCWebView.mm
 +++ b/apple/RNCWebView.mm
-@@ -275,6 +275,7 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
+@@ -90,6 +90,7 @@ - (instancetype)initWithFrame:(CGRect)frame
+                 auto webViewEventEmitter = std::static_pointer_cast<RNCWebViewEventEmitter const>(_eventEmitter);
+                 facebook::react::RNCWebViewEventEmitter::OnLoadingStart data = {
+                     .url = std::string([[dictionary valueForKey:@"url"] UTF8String]),
++                    .isReload = std::string([[dictionary valueForKey:@"navigationType"] UTF8String]) == "reload",
+                     .lockIdentifier = [[dictionary valueForKey:@"lockIdentifier"] doubleValue],
+                     .title = std::string([[dictionary valueForKey:@"title"] UTF8String]),
+                     .navigationType = stringToOnLoadingStartNavigationTypeEnum(std::string([[dictionary valueForKey:@"navigationType"] UTF8String])),
+@@ -275,6 +276,7 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
      REMAP_WEBVIEW_PROP(allowUniversalAccessFromFileURLs)
      REMAP_WEBVIEW_PROP(allowsInlineMediaPlayback)
      REMAP_WEBVIEW_PROP(webviewDebuggingEnabled)
@@ -463,7 +507,7 @@ index ba9adf749d3874b74952a8f7d7044d939672a6b3..1a2d15a61e1a1e4715fa63bcacd9989d
  @property (nonatomic, assign) BOOL bounces;
  @property (nonatomic, assign) BOOL mediaPlaybackRequiresUserAction;
 diff --git a/apple/RNCWebViewImpl.m b/apple/RNCWebViewImpl.m
-index 77abeafb502f717550434a286d2611380949157b..a6733f9f431bea733665cc7e8432d832cdcce88a 100644
+index 77abeafb502f717550434a286d2611380949157b..b29859db917edf500a5ac097188e8b4855878b7d 100644
 --- a/apple/RNCWebViewImpl.m
 +++ b/apple/RNCWebViewImpl.m
 @@ -145,6 +145,8 @@ @implementation RNCWebViewImpl
@@ -472,7 +516,7 @@ index 77abeafb502f717550434a286d2611380949157b..a6733f9f431bea733665cc7e8432d832
    BOOL _savedStatusBarHidden;
 +  BOOL _disablePromptDuringLoading;
 +  BOOL _disableJsPromptLike;
-
+ 
  #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
    UIScrollViewContentInsetAdjustmentBehavior _savedContentInsetAdjustmentBehavior;
 @@ -179,6 +181,8 @@ - (instancetype)initWithFrame:(CGRect)frame
@@ -481,7 +525,7 @@ index 77abeafb502f717550434a286d2611380949157b..a6733f9f431bea733665cc7e8432d832
      _injectedJavaScriptBeforeContentLoadedForMainFrameOnly = YES;
 +    _disablePromptDuringLoading = YES;
 +    _disableJsPromptLike = NO;
-
+ 
  #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
      _savedContentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
 @@ -588,6 +592,9 @@ - (void)setWebviewDebuggingEnabled:(BOOL)webviewDebuggingEnabled {
@@ -491,7 +535,7 @@ index 77abeafb502f717550434a286d2611380949157b..a6733f9f431bea733665cc7e8432d832
 +- (void)setDisableJsPromptLike:(BOOL)disableJsPromptLike {
 +  _disableJsPromptLike = disableJsPromptLike;
 +}
-
+ 
  #ifdef RCT_NEW_ARCH_ENABLED
  - (void)destroyWebView
 @@ -685,6 +692,7 @@ -(void)keyboardDisplacementFix
@@ -511,9 +555,9 @@ index 77abeafb502f717550434a286d2611380949157b..a6733f9f431bea733665cc7e8432d832
    } else if ([message.name isEqualToString:MessageHandlerName]) {
      if (_onMessage) {
 @@ -1156,17 +1165,45 @@ - (void)                    webView:(WKWebView *)webView
-
+ 
  #pragma mark - WKNavigationDelegate methods
-
+ 
 +/**
 + * one method to construct dialog title information based on the frame,
 + * if get host, show it as title, otherwise show a default title
@@ -647,10 +691,26 @@ index 77abeafb502f717550434a286d2611380949157b..a6733f9f431bea733665cc7e8432d832
 +   }
  }
  #endif
-
-@@ -1535,6 +1585,7 @@ - (void)webView:(WKWebView *)webView
+ 
+@@ -1336,6 +1386,7 @@ - (void)                  webView:(WKWebView *)webView
+                         NSMutableDictionary<NSString *, id> *event = [self baseEvent];
+                         [event addEntriesFromDictionary: @{
+                             @"url": (request.URL).absoluteString,
++                            // @"isReload": @YES,
+                             @"navigationType": navigationTypes[@(navigationType)]
+                         }];
+                         self->_onLoadingStart(event);
+@@ -1370,6 +1421,7 @@ - (void)                  webView:(WKWebView *)webView
+             NSMutableDictionary<NSString *, id> *event = [self baseEvent];
+             [event addEntriesFromDictionary: @{
+                 @"url": (request.URL).absoluteString,
++                // @"isReload": @YES,
+                 @"navigationType": navigationTypes[@(navigationType)]
+             }];
+             _onLoadingStart(event);
+@@ -1535,6 +1587,7 @@ - (void)webView:(WKWebView *)webView
    }
-
+ 
    if (_onLoadingFinish) {
 +    _disablePromptDuringLoading = NO;
      _onLoadingFinish([self baseEvent]);
@@ -668,11 +728,72 @@ index 1d22028a1c44d18f8bf333265dd6781ff3df4250..2960b926cf1fca31eab5b114afc8236b
  RCT_EXPORT_VIEW_PROPERTY(allowsAirPlayForMediaPlayback, BOOL)
  RCT_EXPORT_VIEW_PROPERTY(mediaPlaybackRequiresUserAction, BOOL)
  RCT_EXPORT_VIEW_PROPERTY(dataDetectorTypes, WKDataDetectorTypes)
+diff --git a/lib/WebViewShared.d.ts b/lib/WebViewShared.d.ts
+index 37344a794b0cffd2e748e04f6827e732a7b4117b..3975335120549d725a1d1e24522f280abe0ed161 100644
+--- a/lib/WebViewShared.d.ts
++++ b/lib/WebViewShared.d.ts
+@@ -1,5 +1,5 @@
+ import React from 'react';
+-import { OnShouldStartLoadWithRequest, ShouldStartLoadRequestEvent, WebViewError, WebViewErrorEvent, WebViewHttpErrorEvent, WebViewMessageEvent, WebViewNavigation, WebViewNavigationEvent, WebViewOpenWindowEvent, WebViewProgressEvent, WebViewRenderProcessGoneEvent, WebViewTerminatedEvent } from './WebViewTypes';
++import { OnShouldStartLoadWithRequest, ShouldStartLoadRequestEvent, WebViewError, WebViewErrorEvent, WebViewHttpErrorEvent, WebViewMessageEvent, WebViewNavigation, WebViewNavigationEvent, WebViewOnLoadStartEvent, WebViewOpenWindowEvent, WebViewProgressEvent, WebViewRenderProcessGoneEvent, WebViewTerminatedEvent } from './WebViewTypes';
+ declare const defaultOriginWhitelist: readonly ["http://*", "https://*"];
+ declare const createOnShouldStartLoadWithRequest: (loadRequest: (shouldStart: boolean, url: string, lockIdentifier: number) => void, originWhitelist: readonly string[], onShouldStartLoadWithRequest?: OnShouldStartLoadWithRequest) => ({ nativeEvent }: ShouldStartLoadRequestEvent) => void;
+ declare const defaultRenderLoading: () => React.JSX.Element;
+@@ -8,7 +8,7 @@ export { defaultOriginWhitelist, createOnShouldStartLoadWithRequest, defaultRend
+ export declare const useWebViewLogic: ({ startInLoadingState, onNavigationStateChange, onLoadStart, onLoad, onLoadProgress, onLoadEnd, onError, onHttpErrorProp, onMessageProp, onOpenWindowProp, onRenderProcessGoneProp, onContentProcessDidTerminateProp, originWhitelist, onShouldStartLoadWithRequestProp, onShouldStartLoadWithRequestCallback, }: {
+     startInLoadingState?: boolean | undefined;
+     onNavigationStateChange?: ((event: WebViewNavigation) => void) | undefined;
+-    onLoadStart?: ((event: WebViewNavigationEvent) => void) | undefined;
++    onLoadStart?: ((event: WebViewOnLoadStartEvent) => void) | undefined;
+     onLoad?: ((event: WebViewNavigationEvent) => void) | undefined;
+     onLoadProgress?: ((event: WebViewProgressEvent) => void) | undefined;
+     onLoadEnd?: ((event: WebViewNavigationEvent | WebViewErrorEvent) => void) | undefined;
 diff --git a/lib/WebViewTypes.d.ts b/lib/WebViewTypes.d.ts
-index 7cbd83521257c1a730cca632a712737253dcddab..882321f8ce1b6099513cecd042f0d4ea64f7548d 100644
+index 7cbd83521257c1a730cca632a712737253dcddab..9a7011445029fbbd22524879f8fc01283e7f856d 100644
 --- a/lib/WebViewTypes.d.ts
 +++ b/lib/WebViewTypes.d.ts
-@@ -1066,5 +1066,9 @@ export interface WebViewSharedProps extends ViewProps {
+@@ -45,6 +45,7 @@ export interface ContentInsetProp {
+     right?: number;
+ }
+ export interface WebViewNativeEvent {
++    scene?: 'unknown' | 'updateVisitedHistory' | 'message';
+     url: string;
+     loading: boolean;
+     title: string;
+@@ -56,9 +57,15 @@ export interface WebViewNativeProgressEvent extends WebViewNativeEvent {
+     progress: number;
+ }
+ export interface WebViewNavigation extends WebViewNativeEvent {
++    /**
++     * @description meaningful for iOS and macOS only. on Android, it's always 'other'.
++     */
+     navigationType: 'click' | 'formsubmit' | 'backforward' | 'reload' | 'formresubmit' | 'other';
+     mainDocumentURL?: string;
+ }
++export interface WebViewNativeOnLoadStartEvent extends WebViewNavigation {
++    isReload: boolean;
++}
+ export interface ShouldStartLoadRequest extends WebViewNavigation {
+     isTopFrame: boolean;
+ }
+@@ -90,6 +97,7 @@ export interface WebViewOpenWindow {
+ export type WebViewEvent = NativeSyntheticEvent<WebViewNativeEvent>;
+ export type WebViewProgressEvent = NativeSyntheticEvent<WebViewNativeProgressEvent>;
+ export type WebViewNavigationEvent = NativeSyntheticEvent<WebViewNavigation>;
++export type WebViewOnLoadStartEvent = NativeSyntheticEvent<WebViewNativeOnLoadStartEvent>;
+ export type ShouldStartLoadRequestEvent = NativeSyntheticEvent<ShouldStartLoadRequest>;
+ export type FileDownloadEvent = NativeSyntheticEvent<FileDownload>;
+ export type WebViewMessageEvent = NativeSyntheticEvent<WebViewMessage>;
+@@ -961,7 +969,7 @@ export interface WebViewSharedProps extends ViewProps {
+     /**
+      * Function that is invoked when the `WebView` starts loading.
+      */
+-    onLoadStart?: (event: WebViewNavigationEvent) => void;
++    onLoadStart?: (event: WebViewOnLoadStartEvent) => void;
+     /**
+      * Function that is invoked when the `WebView` load fails.
+      */
+@@ -1066,5 +1074,9 @@ export interface WebViewSharedProps extends ViewProps {
       * Enables WebView remote debugging using Chrome (Android) or Safari (iOS).
       */
      webviewDebuggingEnabled?: boolean;

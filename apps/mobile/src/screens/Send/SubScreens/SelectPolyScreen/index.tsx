@@ -192,6 +192,7 @@ const SendPolyScreen = () => {
           <View style={styles.item}>
             <WhiteListItem
               account={item}
+              hideBalance
               inWhiteList
               isMyImported={filterMyAccounts(accounts).some(i =>
                 isSameAddress(i.address, item.address),

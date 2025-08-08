@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import { findBestLanguageTag } from 'react-native-localize';
 import { useAtom } from 'jotai';
-import { atomByMMKV, appJsonStore, IS_BOOTED_USER } from '@/core/storage/mmkv';
+import {
+  atomByMMKV,
+  duplicatelyStringifiedAppJsonStore,
+  IS_BOOTED_USER,
+  MMKVStorageStrategy,
+} from '@/core/storage/mmkv';
 import i18n, {
   DEFAULT_LANG,
   filterSupportedLang,
@@ -22,26 +27,32 @@ let defaultLang = filterOutBestLang()?.languageTag || DEFAULT_LANG;
  * - users STARTING from 0.5.4~0.5.5 has no opportunity to set lang, so the '@AppLang' is always null
  */
 (function iifeUpgradeAppLang() {
-  const currentAppLangSetting = appJsonStore.getItem('@AppLangSetting', null);
-  let legacyAppLang = appJsonStore.getItem('@AppLang', null) as string;
+  const currentAppLangSetting = duplicatelyStringifiedAppJsonStore.getItem(
+    '@AppLangSetting',
+    null,
+  );
+  let legacyAppLang = duplicatelyStringifiedAppJsonStore.getItem(
+    '@AppLang',
+    null,
+  ) as string;
   // for all used user, set default lang
   if (!currentAppLangSetting && IS_BOOTED_USER && !legacyAppLang) {
-    appJsonStore.setItem('@AppLang', 'en');
+    duplicatelyStringifiedAppJsonStore.setItem('@AppLang', 'en');
     legacyAppLang = 'en';
   }
   // // leave here for test fresh user
   // if (__DEV__) {
-  //   appJsonStore.removeItem('@AppLangSetting');
-  //   appJsonStore.removeItem('@AppLang');
+  //   duplicatelyStringifiedAppJsonStore.removeItem('@AppLangSetting');
+  //   duplicatelyStringifiedAppJsonStore.removeItem('@AppLang');
   // }
 
   // // leave here for test legacy data
   // if (__DEV__) {
-  //   appJsonStore.setItem('@AppLang', 'en');
+  //   duplicatelyStringifiedAppJsonStore.setItem('@AppLang', 'en');
   // }
 
   if (legacyAppLang) {
-    appJsonStore.removeItem('@AppLang');
+    duplicatelyStringifiedAppJsonStore.removeItem('@AppLang');
     defaultLang = coerceLang(legacyAppLang) || defaultLang;
     console.debug(
       `[iifeUpgradeAppLang] legacy app lang: ${legacyAppLang}; default lang: ${defaultLang}`,
@@ -73,7 +84,9 @@ function makeLangSetting(lang: SupportedLang): LangSetting {
 const langAtom = atomByMMKV<{
   lang: SupportedLang;
   isRTL?: boolean;
-}>('@AppLangSetting', makeLangSetting(defaultLang));
+}>('@AppLangSetting', makeLangSetting(defaultLang), {
+  storage: MMKVStorageStrategy.compatJson,
+});
 
 export function useAppLanguage() {
   const [currentLangSetting, _setCurrentLangSetting] = useAtom(langAtom);

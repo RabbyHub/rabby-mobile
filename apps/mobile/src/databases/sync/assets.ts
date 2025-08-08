@@ -445,6 +445,7 @@ export async function syncCexInfo(address: string, cex?: Cex) {
     taskFor: 'cex',
     batchSize: 100,
     concurrency: 1,
+    noNeedAbort: true,
   })
     .then(({ taskSignal, taskKey }) => {
       if (taskSignal.aborted) {

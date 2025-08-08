@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { atom, useAtom } from 'jotai';
 import { apisLock } from '@/core/apis';
 import { useAtomRefState } from '@/hooks/common/useRefState';
-import { atomByMMKV } from '@/core/storage/mmkv';
+import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { useBiometrics } from '@/hooks/biometrics';
 import { toast } from '@/components/Toast';
 import { Alert } from 'react-native';
@@ -55,6 +55,7 @@ export function useUnlockApp() {
 const hasTipedUserEnableBiometricsAtom = atomByMMKV(
   '@hasTipedUserEnableBiometrics',
   false,
+  { storage: MMKVStorageStrategy.compatJson },
 );
 export function useResetHasTipedUserEnableBiometrics() {
   const [, setHasTipedUserEnableBiometrics] = useAtom(

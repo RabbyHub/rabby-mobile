@@ -15,6 +15,7 @@ import {
   safeParseURL,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import RNFS from 'react-native-fs';
+import { getViewShotFilePath } from '@/utils/browser';
 
 export interface BrowserHistoryItem {
   url: string;
@@ -375,22 +376,27 @@ export class BrowserService extends StoreServiceBase<BrowserStore, 'browser'> {
   }
 
   async saveScreenshot({ tempUri, tabId }: { tempUri: string; tabId: string }) {
-    const fileName = `screenshot-${tabId}.jpg`;
+    const fileName = `screenshot-${tabId}-${Date.now()}.jpg`;
     const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+    await this.removeScreenshot({ tabId });
     try {
       if (await RNFS.exists(filePath)) {
         await RNFS.unlink(filePath);
       }
       await RNFS.copyFile(tempUri, filePath);
-      return filePath;
+      // return filePath?.startsWith('file://') ? filePath : `file://${filePath}`;
+      return fileName;
     } catch (e) {
       console.error(e);
     }
   }
 
   async removeScreenshot({ tabId }: { tabId: string }) {
-    const fileName = `screenshot-${tabId}.jpg`;
-    const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+    const tab = this.store.browserTabs.tabs.find(item => item.id === tabId);
+    const filePath = tab?.viewShot ? getViewShotFilePath(tab?.viewShot) : '';
+    if (!filePath) {
+      return;
+    }
     try {
       if (await RNFS.exists(filePath)) {
         await RNFS.unlink(filePath);
