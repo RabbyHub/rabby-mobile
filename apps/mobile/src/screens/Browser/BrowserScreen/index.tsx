@@ -215,6 +215,9 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
             }
           }}
           onOpenURL={url => {
+            if (!url?.trim()) {
+              return;
+            }
             if (
               browserState.searchTabId &&
               activeDappWebViewControlRef?.current?.getTabId() ===
@@ -235,7 +238,10 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
                 searchText: '',
                 searchTabId: '',
               });
-              if (dappService.getDapp(safeGetOrigin(url))?.isDapp) {
+              if (
+                dappService.getDapp(safeGetOrigin(url))?.isDapp &&
+                url?.trim()
+              ) {
                 matomoRequestEvent({
                   category: 'Websites Usage',
                   action: 'Website_OpenDapp',

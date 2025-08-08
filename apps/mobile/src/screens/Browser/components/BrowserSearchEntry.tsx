@@ -189,7 +189,7 @@ export const BrowserSearchEntry: React.FC = () => {
   } = useBrowser();
 
   const tabs = useMemo(() => {
-    return sortBy(displayedTabs, tab => tab.openTime || 0).slice(0, 4);
+    return sortBy(displayedTabs, tab => -(tab.openTime || 0)).slice(0, 4);
   }, [displayedTabs]);
 
   const { t } = useTranslation();

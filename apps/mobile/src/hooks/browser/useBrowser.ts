@@ -101,6 +101,7 @@ export function useBrowser() {
     if (activeTab?.isTerminate) {
       updateTab(tabId, {
         isTerminate: false,
+        openTime: Date.now(),
       });
     }
     updateBrowserTabs({
