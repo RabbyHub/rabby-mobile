@@ -636,12 +636,10 @@ export const Portfolios = () => {
       }
       inited.current = true;
       checkIsExpireAndUpdateId && clearTimeout(checkIsExpireAndUpdateId);
-      console.log('CUSTOM_LOGGER:=>: getCacheTop10Assets');
       getCacheTop10Assets({
         disableNFT: true,
         realTimeAddresses: top10Addresses,
       }).then(() => {
-        console.log('CUSTOM_LOGGER:=>: checkIsExpireAndUpdateId');
         checkIsExpireAndUpdateId = setTimeout(() => {
           checkIsExpireAndUpdate(false, {
             disableNFT: true,
