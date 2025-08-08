@@ -254,7 +254,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   itemBalanceText: {
     fontSize: 16,
     lineHeight: 20,
-    color: colors2024['neutral-info'],
+    color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
