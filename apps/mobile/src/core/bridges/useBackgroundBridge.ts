@@ -1,5 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Alert } from 'react-native';
+import React, { useCallback, useRef, useEffect } from 'react';
 
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
@@ -12,66 +11,31 @@ import {
   trustedProtocolToDeeplink,
 } from '@/constant/dappView';
 import { createDappBySession } from '../apis/dapp';
+import { useRefState } from '@/hooks/common/useRefState';
 
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
 export const BUILTIN_SPECIAL_URLS = [BLANK_PAGE, BLANK_RABBY_PAGE];
 
-export function useBackgroundBridges() {
-  const [, setSpinner] = useState(false);
-  const backgroundBridgeRefs = useRef<BackgroundBridge[]>([]);
-
-  const putBackgroundBridge = useCallback((bridge: BackgroundBridge) => {
-    const prev = backgroundBridgeRefs.current;
-    prev.push(bridge);
-
-    backgroundBridgeRefs.current = prev;
-    setSpinner(prev => !prev);
-  }, []);
-
-  const removeBackgroundBridge = useCallback((bridge: BackgroundBridge) => {
-    bridge.onDisconnect();
-    const prev = backgroundBridgeRefs.current;
-    const idx = prev.indexOf(bridge);
-
-    if (idx === -1) {
-      return prev;
-    }
-
-    prev.splice(idx, 1);
-
-    backgroundBridgeRefs.current = prev;
-  }, []);
-
-  const clearBackgroundBridges = useCallback(() => {
-    backgroundBridgeRefs.current = [];
-    setSpinner(prev => !prev);
-  }, []);
-
-  return {
-    backgroundBridgeRefs,
-    putBackgroundBridge,
-    removeBackgroundBridge,
-    clearBackgroundBridges,
-  };
-}
-
 type WebView = import('react-native-webview').WebView;
-type OnLoadStart = import('react-native-webview').WebViewProps['onLoadStart'] &
-  Function;
+type OnLoadStart = (
+  event: Parameters<
+    import('react-native-webview').WebViewProps['onLoadStart'] & Function
+  >[0],
+  treatAsReload?: boolean,
+) => void;
 type OnMessage = import('react-native-webview').WebViewProps['onMessage'] &
   Function;
 
 export type OnSelfClose = (reason: 'phishing') => void;
 
 export function useSetupWebview({
-  dappOrigin,
   siteInfoRefs: { urlRef, titleRef, iconRef },
   webviewRef,
   webviewIdRef,
-}: // onSelfClose,
-{
-  dappOrigin: string;
+}: {
+  /** @deprecated */
+  dappOrigin?: string;
   siteInfoRefs: {
     urlRef: React.MutableRefObject<string>;
     titleRef: React.MutableRefObject<string>;
@@ -79,10 +43,20 @@ export function useSetupWebview({
   };
   webviewIdRef: React.MutableRefObject<string>;
   webviewRef: React.MutableRefObject<WebView | null>;
-  // onSelfClose?: OnSelfClose;
 }) {
-  const { backgroundBridgeRefs, putBackgroundBridge, removeBackgroundBridge } =
-    useBackgroundBridges();
+  const { setRefState: putBackgroundBridge, stateRef: currentBridgeRef } =
+    useRefState<BackgroundBridge | null>(null);
+
+  const destroyCurrentBridge = useCallback(
+    (cleanSession = true) => {
+      if (currentBridgeRef.current) {
+        currentBridgeRef.current.onDisconnect();
+        cleanSession && sessionService.deleteSession(currentBridgeRef.current);
+        currentBridgeRef.current = null;
+      }
+    },
+    [currentBridgeRef],
+  );
 
   const backgroundBridgeRef = useRef<BackgroundBridge | undefined>(undefined);
 
@@ -114,17 +88,9 @@ export function useSetupWebview({
         dappService.addDapp(createDappBySession(session));
       }
 
-      putBackgroundBridge(newBridge);
+      putBackgroundBridge(newBridge, true);
     },
-    [
-      urlRef,
-      webviewRef,
-      webviewIdRef,
-      titleRef,
-      iconRef,
-      putBackgroundBridge,
-      removeBackgroundBridge,
-    ],
+    [urlRef, webviewRef, webviewIdRef, titleRef, iconRef, putBackgroundBridge],
   );
 
   const onMessage = useCallback(
@@ -136,26 +102,14 @@ export function useSetupWebview({
           return;
         }
         if (data.name) {
-          const senderOrigin = urlUtils.canoicalizeDappUrl(
-            nativeEvent.url,
-          ).httpOrigin;
-
-          backgroundBridgeRefs.current.forEach(bridge => {
-            const bridgeOrigin = urlUtils.canoicalizeDappUrl(
-              bridge.url,
-            ).httpOrigin;
-
-            if (bridgeOrigin === senderOrigin) {
-              bridge.onMessage(data);
-            }
-          });
+          currentBridgeRef.current?.onMessage(data);
           return;
         }
       } catch (e) {
         console.error(e, `Browser::onMessage on ${urlRef.current}`);
       }
     },
-    [backgroundBridgeRefs, urlRef],
+    [currentBridgeRef, urlRef],
   );
 
   const changeUrl = useCallback(
@@ -167,55 +121,66 @@ export function useSetupWebview({
     [urlRef, titleRef],
   );
 
+  const onReloadingRef = useRef<boolean>(false);
   // would be called every time the url changes
   const onLoadStart: OnLoadStart = useCallback(
-    async ({ nativeEvent }) => {
-      if (
-        nativeEvent.url !== urlRef.current &&
-        nativeEvent.loading &&
-        nativeEvent.navigationType === 'backforward'
-      ) {
-        // changeAddressBar({ ...nativeEvent });
+    async ({ nativeEvent }, treatAsReload = false) => {
+      if (onReloadingRef.current) return;
+      onReloadingRef.current = treatAsReload;
+
+      try {
+        if (
+          nativeEvent.url !== urlRef.current &&
+          nativeEvent.loading &&
+          nativeEvent.navigationType === 'backforward'
+        ) {
+          // changeAddressBar({ ...nativeEvent });
+        }
+
+        // setError(false);
+
+        changeUrl(nativeEvent);
+        // sendActiveAccount();
+
+        // icon.current = null;
+
+        if (treatAsReload) {
+          destroyCurrentBridge();
+
+          // // Cancel loading the page if we detect its a phishing page
+          // const { hostname } = new URL(nativeEvent.url);
+          // if (!isAllowedUrl(hostname)) {
+          //   handleNotAllowedUrl(url);
+          //   return false;
+          // }
+
+          const dappOrigin = nativeEvent.url;
+          putBackgroundBridge(null, false);
+          const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
+            ? dappOrigin
+            : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
+          initializeBackgroundBridge(formattedDappOrigin, true);
+        }
+      } catch (e: any) {
+        console.error('useSetupWebview::onLoadStart::', e);
+      } finally {
+        onReloadingRef.current = false;
       }
-
-      // setError(false);
-
-      changeUrl(nativeEvent);
-      // sendActiveAccount();
-
-      // icon.current = null;
-
-      // Reset the previous bridges
-      backgroundBridgeRefs.current.length &&
-        backgroundBridgeRefs.current.forEach(bridge => {
-          bridge.onDisconnect();
-          sessionService.deleteSession(bridge);
-        });
-
-      // // Cancel loading the page if we detect its a phishing page
-      // const { hostname } = new URL(nativeEvent.url);
-      // if (!isAllowedUrl(hostname)) {
-      //   handleNotAllowedUrl(url);
-      //   return false;
-      // }
-
-      const dappOrigin = nativeEvent.url;
-      backgroundBridgeRefs.current = [];
-      const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
-        ? dappOrigin
-        : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
-      initializeBackgroundBridge(formattedDappOrigin, true);
     },
-    [backgroundBridgeRefs, changeUrl, initializeBackgroundBridge, urlRef],
+    [
+      destroyCurrentBridge,
+      changeUrl,
+      initializeBackgroundBridge,
+      urlRef,
+      putBackgroundBridge,
+    ],
   );
 
   useEffect(() => {
     return () => {
-      if (backgroundBridgeRef.current) {
-        removeBackgroundBridge(backgroundBridgeRef.current);
-      }
+      destroyCurrentBridge(false);
     };
-  }, [removeBackgroundBridge]);
+  }, [destroyCurrentBridge]);
 
   return {
     onLoadStart,

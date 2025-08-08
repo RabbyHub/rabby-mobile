@@ -14,7 +14,7 @@ import {
   TransactionHistoryItem,
 } from '@/core/services/transactionHistory';
 import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
-import { appJsonStore } from '@/core/storage/mmkv';
+import { duplicatelyStringifiedAppJsonStore } from '@/core/storage/mmkv';
 import { openapi } from '@/core/request';
 import { patchSingleToken } from '@/databases/sync/assets';
 import { CopyTradingBuyItemEntity } from '@/databases/entities/copyTradingBuyItem';
@@ -237,22 +237,12 @@ export const judgeIsSmallUsdTxInApi = (
   return false;
 };
 
-const localHistoryFillTokenDict = (token: TokenItem) => {
-  const resTokenDict = appJsonStore.getItem('@HistoryTokenDict', {});
-  appJsonStore.setItem('@HistoryTokenDict', {
-    ...resTokenDict,
-    [`${token.chain}_token:${token.id}`]: token,
-  });
-};
-
 export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
   try {
     const actionData = tx.action?.actionData;
     if (!actionData?.send) {
       return;
     }
-
-    localHistoryFillTokenDict(actionData.send.token);
 
     const item = new LocalHistoryItemEntity();
     LocalHistoryItemEntity.fillEntityFromLocalSend(item, tx);

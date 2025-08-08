@@ -6,8 +6,10 @@ import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { isAccountSupportMiniApproval } from '@/utils/account';
 import { createGetStyles2024 } from '@/utils/styles';
-import { NFTCollection } from '@rabby-wallet/rabby-api/dist/types';
+import { NFTCollection, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +30,7 @@ export const RevokeNFTCollectionBtn = ({
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { switchSceneSigningAccount } = useSwitchSceneCurrentAccount();
+  const { sendMiniTransactions } = useMiniApproval();
 
   const { data: isApproved } = useRequest(async () => {
     return getNFTApprovedForAll({
@@ -39,8 +42,43 @@ export const RevokeNFTCollectionBtn = ({
     });
   });
 
+  const handleRevokeDirectSign = useMemoizedFn(async () => {
+    try {
+      const data = await revokeNFTApprove(
+        {
+          chainServerId: collection.chain || (collection as any).chain_id,
+          spender: spender!,
+          contractId: collection.id,
+          abi: 'ERC721',
+          isApprovedForAll: true,
+          account,
+        },
+        undefined,
+        true,
+      );
+      const tx = data.params[0] as Tx;
+      const res = await sendMiniTransactions({
+        txs: [tx],
+        account,
+      });
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      resetNavigationTo(navigation, 'Home');
+    }
+  });
+
   const handleRevoke = useMemoizedFn(async () => {
     try {
+      if (isAccountSupportMiniApproval(account.type)) {
+        await handleRevokeDirectSign();
+        return;
+      }
+
       await revokeNFTApprove({
         chainServerId: collection.chain || (collection as any).chain_id,
         spender: spender!,

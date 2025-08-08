@@ -3,7 +3,7 @@ import { atom, useAtom } from 'jotai';
 import * as Sentry from '@sentry/react-native';
 
 import { coerceInteger } from '@/utils/number';
-import { atomByMMKV } from '@/core/storage/mmkv';
+import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { eventBus, EventBusListeners, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
 import { APP_URLS, APP_VERSIONS, APPLICATION_ID } from '@/constant';
@@ -63,6 +63,7 @@ function userCouldRated(
 const rateGuideLastExposureAtom = atomByMMKV(
   '@RateGuideLastExposure',
   getDefaultRateGuideLastExposure(),
+  { storage: MMKVStorageStrategy.compatJson },
 );
 
 export function useMakeMockDataForRateGuideExposure() {
