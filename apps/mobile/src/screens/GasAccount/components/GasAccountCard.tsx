@@ -163,7 +163,7 @@ export const GasAccountCard: React.FC<Props> = ({
             style={{
               flex: 1,
             }}>
-            {!gasAccountInfo?.withdrawable_balance ? (
+            {!gasAccountInfo?.balance ? (
               <Tip content={t('page.gasAccount.noBalance')}>
                 <Button
                   type="ghost"
