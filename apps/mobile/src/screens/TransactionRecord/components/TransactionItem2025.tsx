@@ -16,6 +16,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
 import {
+  ApproveTokenRequireData,
   ParsedTransactionActionData,
   ReceiveTokenItem,
   SendRequireData,
@@ -352,10 +353,15 @@ export const TransactionItem = ({
         address =
           requireData?.protocol?.name || t('page.transactions.detail.Unknown');
         break;
-      case HistoryItemCateType.Cancel:
       case HistoryItemCateType.Revoke:
       case HistoryItemCateType.Approve:
-      case HistoryItemCateType.Swap:
+        const appRequireData = data.maxGasTx.action
+          ?.requiredData as ApproveTokenRequireData;
+        const name = appRequireData?.protocol?.name;
+        address =
+          name || getAliasName(data.address) || ellipsisAddress(data.address);
+        break;
+      case HistoryItemCateType.Cancel:
       default:
         address = getAliasName(data.address) || ellipsisAddress(data.address);
         break;

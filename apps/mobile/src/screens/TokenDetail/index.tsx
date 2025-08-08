@@ -297,23 +297,17 @@ export const TokenDetailScreen = () => {
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
   const [isUp, setIsUp] = useState(true);
-  const {
-    tokens: cacheAssets,
-    assetsMap,
-    getCacheTop10Assets,
-    checkIsExpireAndUpdate,
-  } = useAssets();
+  const { assetsMap, getCacheTop10Assets, getTokenCombined } = useAssets({
+    hideCombined: true,
+  });
 
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
     if (fromPortfolio || needUseCacheToken) {
-      const iToken = cacheAssets.find(
-        item =>
-          item._tokenId === _token._tokenId && item.chain === _token.chain,
-      );
-      return iToken || _token;
+      const combinedToken = getTokenCombined(_token._tokenId, _token.chain);
+      return combinedToken?.[0] || _token;
     }
     return _token;
-  }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
+  }, [getTokenCombined, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
   const { top10Addresses, list: accounts, rawAllAccounts } = useAccountInfo();
   // const { tokensByAddress, isReady: tokenListIsReady } = useTokenDetail(

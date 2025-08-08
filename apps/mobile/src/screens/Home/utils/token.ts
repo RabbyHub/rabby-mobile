@@ -35,12 +35,13 @@ export const batchQueryTokens = async (
       chainIdList.map(serverId =>
         pQueue.add(async () => {
           try {
-            return requestOpenApiWithChainId(
+            const chainTokensRes = await requestOpenApiWithChainId(
               ({ openapi }) => openapi.listToken(user_id, serverId, true),
               {
                 isTestnet,
               },
             );
+            return chainTokensRes;
           } catch (error) {
             console.log('serverId error', serverId);
             return [];

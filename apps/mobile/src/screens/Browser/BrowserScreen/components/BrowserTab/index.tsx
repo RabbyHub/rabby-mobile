@@ -31,7 +31,7 @@ import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
 import { parsePossibleURL } from '@/constant/dappView';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { browserService } from '@/core/services';
 import { FontNames } from '@/core/utils/fonts';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
@@ -47,7 +47,7 @@ import {
   safeParseURL,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useFocusEffect } from '@react-navigation/native';
-import { useMemoizedFn } from 'ahooks';
+import { useDebounce, useMemoizedFn } from 'ahooks';
 import ViewShot from 'react-native-view-shot';
 import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
 import { BrowserFooter } from './BrowserFooter';
@@ -118,6 +118,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
     const { browserState, setPartialBrowserState } = useBrowser();
+    const debounceProgress = useDebounce(progress, { wait: 450 });
 
     const {
       webviewRef,
@@ -256,7 +257,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       setWebViewState(prev => ({ ...prev, resolvedUrl: urlToGo }));
       if (isEmptyTab) {
         await sleep(200);
-        await handleViewShot('');
+        await handleViewShot();
         onOpenTab?.(urlToGo);
       } else {
         webviewRef?.current?.injectJavaScript(
@@ -287,19 +288,18 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       );
     });
 
-    const handleViewShot = useMemoizedFn(async (url: string) => {
+    const handleViewShot = useMemoizedFn(async () => {
       try {
         const viewShot = await viewShotRef.current?.capture?.();
         if (!viewShot || !tabId) {
           return;
         }
-        const filePath = await browserService.saveScreenshot({
+        const fileName = await browserService.saveScreenshot({
           tempUri: viewShot,
           tabId,
         });
         onUpdateTab?.({
-          url: url,
-          viewShot: filePath,
+          viewShot: fileName,
         });
       } catch (e) {
         console.error('viewShot', e);
@@ -327,8 +327,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     });
 
     const handleViewTabs = useMemoizedFn(async () => {
-      if (isActive) {
-        await handleViewShot(webviewState.resolvedUrl);
+      if (isActive && debounceProgress === 1) {
+        await handleViewShot();
       }
 
       setPartialBrowserState({
@@ -340,7 +340,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       // });
     });
 
-    const handleGoHome = useMemoizedFn(() => {
+    const handleGoHome = useMemoizedFn(async () => {
+      if (isActive && debounceProgress === 1) {
+        await handleViewShot();
+      }
       setPartialBrowserState({
         isShowBrowser: false,
       });
@@ -372,13 +375,11 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       },
     );
 
-    // useEffect(() => {
-    //   if (isEmptyTab && isActive) {
-    //     setTimeout(() => {
-    //       handleViewShot('');
-    //     }, 300);
-    //   }
-    // }, [handleViewShot, isActive, isEmptyTab, isShowSearch]);
+    useEffect(() => {
+      if (isActive && debounceProgress === 1) {
+        handleViewShot();
+      }
+    }, [debounceProgress, handleViewShot, isActive]);
 
     React.useImperativeHandle(
       ref,
@@ -399,10 +400,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     useEffect(() => {
       if (!isActive && !isEmptyTab) {
-        handleUpdateTab?.({
-          initialUrl: urlRef.current ? urlRef.current : undefined,
-          openTime: Date.now(),
-        });
         const id = setTimeout(() => {
           handleUpdateTab?.({
             initialUrl: urlRef.current ? urlRef.current : undefined,
@@ -532,10 +529,24 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       scalesPageToFit: true,
                     })}
                     onLoadStart={e => {
+                      let treatAsReload = IS_IOS || e.nativeEvent.isReload;
+                      if (!treatAsReload) {
+                        const originChanged =
+                          !webviewState.resolvedUrl ||
+                          urlUtils.canoicalizeDappUrl(e.nativeEvent.url)
+                            .httpOrigin !==
+                            urlUtils.canoicalizeDappUrl(
+                              webviewState.resolvedUrl,
+                            ).httpOrigin;
+                        treatAsReload = originChanged;
+                      }
+
                       webviewProps?.onLoadStart?.(e);
-                      onLoadStart(e);
-                      setIsLoading(true);
-                      setProgress(0);
+                      onLoadStart(e, treatAsReload);
+                      if (treatAsReload) {
+                        setIsLoading(true);
+                        setProgress(0);
+                      }
                       const { nativeEvent } = e;
 
                       if (
@@ -563,7 +574,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       changeViewPortForDesktop(contentMode, 0);
                     }}
                     onLoadEnd={e => {
-                      setIsLoading(false);
+                      if (!e.nativeEvent.loading) {
+                        setIsLoading(false);
+                      }
                       webviewProps?.onLoadEnd?.(e);
                       const { nativeEvent } = e;
                       // if (nativeEvent.loading) {
@@ -584,14 +597,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         name: nativeEvent.title,
                         url: nativeEvent.url,
                       });
-                      if (
-                        isActive &&
-                        browserState.isShowBrowser &&
-                        !browserState.isShowSearch &&
-                        !browserState.isShowManage
-                      ) {
-                        handleViewShot(nativeEvent.url);
-                      }
+                      // if (
+                      //   isActive &&
+                      //   browserState.isShowBrowser &&
+                      //   !browserState.isShowSearch &&
+                      //   !browserState.isShowManage
+                      // ) {
+                      //   setTimeout(() => {
+                      //     handleViewShot(nativeEvent.url);
+                      //   }, 200);
+                      // }
                     }}
                     onShouldStartLoadWithRequest={nativeEvent => {
                       return checkShouldStartLoadingWithRequestForDappWebView(
@@ -636,6 +651,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     }}
                     // onError={errorLog}
                     onError={e => {
+                      // // leave here for debug
+                      // if (__DEV__) {
+                      //   console.warn('WebView:: onError event', e);
+                      // }
                       setWebViewState(prev => {
                         return {
                           ...prev,

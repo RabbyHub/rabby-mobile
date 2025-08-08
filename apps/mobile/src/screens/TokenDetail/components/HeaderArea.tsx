@@ -8,7 +8,7 @@ import { AssetAvatar, Text } from '@/components';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
-import { useAssets } from '@/screens/Search/useAssets';
+import { useAssetsRefreshing } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 
 const screenWidth = Dimensions.get('window').width;
@@ -17,7 +17,7 @@ interface Props {
 }
 export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { refreshing } = useAssets();
+  const { refreshing } = useAssetsRefreshing();
 
   return (
     <View style={styles.root}>
