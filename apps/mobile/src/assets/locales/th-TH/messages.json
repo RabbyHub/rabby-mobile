@@ -49,6 +49,13 @@
       "common": "ทั่วไป",
       "contextMenu": {
         "viewDetail": "ดูรายละเอียด"
+      },
+      "bridgeTo": {
+        "high": "สภาพคล่องสูง",
+        "low": "สภาพคล่องต่ำ"
+      },
+      "favoriteFilter": {
+        "all": "ทั้งหมด"
       }
     },
     "ModalPreviewNFTItem": {
@@ -410,7 +417,8 @@
       "noSupprotTokenForDex": "โทเค็นนี้อาจไม่ได้รับการสนับสนุนโดยการแลกเปลี่ยนนี้ โปรดตรวจสอบก่อนดำเนินการเพื่อหลีกเลี่ยงการสูญเสีย",
       "From": "จาก",
       "noSupprotTokenForSafe": "ที่อยู่ Safe ที่คุณส่งโทเคนไปยังไม่ได้ถูกปรับใช้ในเครือข่ายนี้ กรุณาตรวจสอบก่อนดำเนินการเพื่อลดความเสี่ยงในการสูญเสีย。",
-      "noSupportTokenForChain": "ที่อยู่ผู้รับเป็นที่อยู่สัญญาบนเชนที่ต่างกัน โปรดตรวจสอบก่อนดำเนินการเพื่อหลีกเลี่ยงการสูญเสีย"
+      "noSupportTokenForChain": "ที่อยู่ผู้รับเป็นที่อยู่สัญญาบนเชนที่ต่างกัน โปรดตรวจสอบก่อนดำเนินการเพื่อหลีกเลี่ยงการสูญเสีย",
+      "addressDetail": "รายละเอียดที่อยู่"
     },
     "importSuccess": {
       "addressCount": "{{count}} Addresses",
@@ -1813,7 +1821,8 @@
         "noEnoughValueBalance": "ยอดเงินใน Vault ไม่เพียงพอ เปลี่ยนเครือข่ายหรือลองใหม่ภายหลัง",
         "selectRecipientAddress": "เลือกกระเป๋าเงินผู้รับ",
         "noRecipient": "ไม่มีกระเป๋าเงินผู้รับที่ใช้ได้",
-        "recipientAddress": "กระเป๋าเงินผู้รับ"
+        "recipientAddress": "กระเป๋าเงินผู้รับ",
+        "availableBalance": "ยอดเงินที่สามารถถอนออกได้: {{balance}}"
       },
       "withdrawConfirmModal": {
         "button": "ดูบน DeBank",
@@ -2130,22 +2139,38 @@
         "title": "Dapp ปัจจุบัน",
         "disconnect": "ตัดการเชื่อมต่อ",
         "connectWallet": "เชื่อมต่อกระเป๋าเงิน"
+      },
+      "BrowserSearch": {
+        "recent": "ล่าสุด",
+        "results": "ผลลัพธ์",
+        "placeholder": "ค้นหาเว็บไซต์",
+        "searchInGoogle": "ค้นหา \"{{searchText}}\" ใน Google",
+        "openUrl": "เปิด \"{{searchText}}\""
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "เปิดเว็บไซต์"
       }
     },
     "browserManage": {
       "option": {
         "tab": "แท็บ",
         "favorites": "รายการโปรด",
-        "history": "ประวัติศาสตร์"
+        "history": "ประวัติศาสตร์",
+        "recent": "ล่าสุด"
       },
       "BrowserBookmarkList": {
-        "title": "รายการโปรด"
+        "title": "รายการโปรด",
+        "emptyTitle": "ยังไม่มีเว็บไซต์ที่เพิ่มเข้ามา"
       },
       "BrowserHistoryList": {
-        "title": "ประวัติ"
+        "title": "ประวัติ",
+        "emptyTitle": "ไม่มีประวัติใน 30 วันที่ผ่านมา",
+        "clearAllHistory": "ลบประวัติทั้งหมด"
       },
       "BrowserTabList": {
-        "closeAllTabs": "ปิดแท็บทั้งหมด"
+        "closeAllTabs": "ปิดแท็บทั้งหมด",
+        "emptyTitle": "ยังไม่มีแท็บที่เปิดอยู่",
+        "emptyDesc": "เปิดแท็บใหม่ตอนนี้"
       }
     },
     "scan": {

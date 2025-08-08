@@ -132,14 +132,9 @@ export const NftRow = memo(
                 marginRight: 55,
               },
             ]}>
-            <HighlightText
-              style={styles.name}
-              highlightStyle={styles.highlightText}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              searchWords={[filterText || '']}
-              textToHighlight={item.name}
-            />
+            <Text numberOfLines={1} ellipsizeMode="tail" style={styles.name}>
+              {item.name}
+            </Text>
             {!hideFoldTag && _isManualFold && <TextBadge type="folded" />}
           </View>
         </View>

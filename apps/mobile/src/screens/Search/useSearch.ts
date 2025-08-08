@@ -1,15 +1,18 @@
 import { useDebounce } from 'ahooks';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CombineDefiItem,
   CombineNFTItem,
   CombineTokensItem,
 } from '../Home/hooks/store';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DisplayedPortfolio } from '../Home/utils/project';
 import { formatAmount } from '@/utils/math';
 import { AbstractPortfolioToken } from '../Home/types';
 import { openapi } from '@/core/request';
+import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { useAccountInfo } from '../Address/components/MultiAssets/hooks/index';
+import BigNumber from 'bignumber.js';
+import { formatUsdValue } from '@/utils/number';
 
 export const useSearch = () => {
   const [searchState, setSearchState] = useState<string>('');
@@ -139,6 +142,8 @@ export const useSearchTokens = (filterText?: string) => {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const searchedRef = useRef<string>('');
+  const { top10Addresses } = useAccountInfo();
+
   const handleSearch = async (text?: string) => {
     if (!text) {
       return;
@@ -150,20 +155,54 @@ export const useSearchTokens = (filterText?: string) => {
       const res = await openapi.searchTokensV2({
         q: text,
       });
-      // console.log('get web chain)', JSON.stringify(res));
+
+      // 查询本地数据库获取 amount 数据
+      const tokenList = res.map(token => ({
+        chain: token.chain,
+        tokenId: token.id,
+      }));
+
+      let localAmounts: Array<{
+        chain: string;
+        tokenId: string;
+        amount: number;
+      }> = [];
+      if (top10Addresses.length > 0 && tokenList.length > 0) {
+        try {
+          localAmounts = await TokenItemEntity.getTokenListAmount({
+            owner_addr: top10Addresses,
+            tokenList,
+          });
+        } catch (error) {
+          console.error('Failed to get local token amounts:', error);
+        }
+      }
+
+      const amountMap = new Map<string, number>();
+      localAmounts.forEach(item => {
+        const key = `${item.chain}-${item.tokenId}`;
+        amountMap.set(key, item.amount);
+      });
+
       setResultTokens(
-        res.map(
-          token =>
-            ({
-              ...token,
-              _isPined: false,
-              _isFold: false,
-              _isExcludeBalance: false,
-              _usdValueStr: 0,
-              _amountStr: 1,
-              _tokenId: token.id,
-            } as unknown as AbstractPortfolioToken),
-        ),
+        res.map(token => {
+          const key = `${token.chain}-${token.id}`;
+          const localAmount = amountMap.get(key) || 0;
+
+          const amountBn = new BigNumber(localAmount);
+          const priceBn = new BigNumber(token.price || 0);
+          const usdValue = amountBn.times(priceBn).toNumber();
+
+          return {
+            ...token,
+            _isPined: false,
+            _isFold: false,
+            _isExcludeBalance: false,
+            _usdValueStr: usdValue ? formatUsdValue(usdValue) : '$0',
+            _amountStr: localAmount ? formatAmount(localAmount) : '0',
+            _tokenId: token.id,
+          } as unknown as AbstractPortfolioToken;
+        }),
       );
       setSearched(true);
     } catch (error) {

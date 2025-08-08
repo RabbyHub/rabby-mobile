@@ -6,10 +6,12 @@ import { getERC20Allowance } from '@/core/apis/provider';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { useTheme2024 } from '@/hooks/theme';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { isAccountSupportMiniApproval } from '@/utils/account';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { formatAmount } from '@rabby-wallet/biz-utils/dist/isomorphic/biz-number';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItem, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { Skeleton } from '@rneui/themed';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
@@ -28,7 +30,7 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-
+  const { sendMiniTransactions } = useMiniApproval();
   const { data: allowance, loading } = useRequest(async () => {
     const res = await getERC20Allowance(
       token.chain,
@@ -45,8 +47,40 @@ export const RevokeTokenBtn = ({ token, account, spender, style }: Props) => {
     return amount;
   });
 
+  const handleRevokeDirectSign = useMemoizedFn(async () => {
+    try {
+      const data = await approveToken({
+        chainServerId: token.chain,
+        id: token.id,
+        spender,
+        amount: 0,
+        account,
+        isBuild: true,
+      });
+      const tx = data.params[0] as Tx;
+      const res = await sendMiniTransactions({
+        txs: [tx],
+        account,
+      });
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      resetNavigationTo(navigation, 'Home');
+    }
+  });
+
   const handleRevoke = useMemoizedFn(async () => {
     try {
+      if (isAccountSupportMiniApproval(account.type)) {
+        await handleRevokeDirectSign();
+        return;
+      }
+
       await approveToken({
         chainServerId: token.chain,
         id: token.id,

@@ -124,6 +124,9 @@ export const KeystoneHardwareWaiting = ({
   const chain = findChain({
     id: params.chainId || 1,
   })!.enum;
+
+  const cancelRef = useRef(false);
+
   const init = useCallback(async () => {
     const approval = await getApproval();
     if (!account) {
@@ -153,6 +156,7 @@ export const KeystoneHardwareWaiting = ({
     );
     eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
       if (data.success) {
+        cancelRef.current = true;
         let sig = data.data;
         try {
           if (params.isGnosis) {
@@ -216,8 +220,6 @@ export const KeystoneHardwareWaiting = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signFinishedData, isClickDone]);
-
-  const cancelRef = useRef(false);
 
   const handleCancel = () => {
     cancelRef.current = true;

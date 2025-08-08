@@ -79,7 +79,7 @@ export const Approval = () => {
     return <View />;
   }
 
-  console.log({ approval });
+  console.debug('[Approval] approval', approval);
   const { data } = approval;
   const { approvalComponent, params, origin, account } = data;
 

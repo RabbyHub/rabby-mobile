@@ -51,6 +51,7 @@ import { FundYourWallet } from '@/screens/Home/FundYourWallet';
 import CopyTradingTokenDetail from '@/screens/CopyTrading/component/CopyTradingTokenDetail';
 import { NotMatterAddressDialog } from '@/screens/Address/NotMatterAddressDialog';
 import EarningDialog from '@/screens/CopyTrading/component/EarningDialog';
+import { AddressHightDesc } from '../AddressHightDesc';
 
 export const MODAL_MAX_HEIGHT = Dimensions.get('window').height - 104;
 
@@ -99,6 +100,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.FOUND_YOUR_WALLET_GUIDE]: [470],
   [MODAL_NAMES.ADD_WHITELIST_SELECT_METHOD]: [492],
   [MODAL_NAMES.DESCRIPTION]: [674],
+  [MODAL_NAMES.ADDRESS_HIGHT_DESC]: [273],
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: ['85%'],
   [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: undefined,
   [MODAL_NAMES.ADDRESS_DETAIL]: [MODAL_MAX_HEIGHT],
@@ -152,6 +154,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SELECT_CEX]: SelectCex,
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
   [MODAL_NAMES.DESCRIPTION]: Descriptions,
+  [MODAL_NAMES.ADDRESS_HIGHT_DESC]: AddressHightDesc,
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: RestoreFromCloud2024,
   [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: AddressQuickManager,
   [MODAL_NAMES.ADDRESS_DETAIL]: AddressDetail,

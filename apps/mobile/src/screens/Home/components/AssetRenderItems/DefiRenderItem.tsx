@@ -64,10 +64,13 @@ interface DefiRowProps {
   style?: ViewStyle;
   logoSize?: number;
   filterText?: string;
-  menuActions?: MenuAction[];
+  getMenuActions?: (defi: CombineDefiItem) => MenuAction[];
   disableMenu?: boolean;
   hideFoldTag?: boolean;
-  onPress?: () => void;
+  onPress?: (
+    data: CombineDefiItem,
+    portfolios: CombineDefiItem['_portfolios'],
+  ) => void;
 }
 export const DefiRow = memo(
   ({
@@ -75,7 +78,7 @@ export const DefiRow = memo(
     filterText,
     style,
     logoSize = 40,
-    menuActions,
+    getMenuActions,
     hideFoldTag,
     disableMenu,
     onPress,
@@ -117,7 +120,7 @@ export const DefiRow = memo(
 
     const children = (
       <TouchableOpacity
-        onPress={onPress}
+        onPress={() => onPress?.(data, data._portfolios || [])}
         delayLongPress={200}
         onLongPress={() => {
           if (disableMenu) {
@@ -160,27 +163,23 @@ export const DefiRow = memo(
                 marginRight: 55,
               },
             ]}>
-            <HighlightText
-              style={styles.projectName}
-              highlightStyle={styles.highlightText}
+            <Text
               numberOfLines={1}
               ellipsizeMode="tail"
-              searchWords={[filterText || '']}
-              textToHighlight={data?.name}
-            />
+              style={styles.projectName}>
+              {data?.name}
+            </Text>
             {!hideFoldTag && data._isManualFold && <TextBadge type="folded" />}
           </View>
         </View>
         <View style={styles.projectHeaderUsd}>
           {data.filterTokenDesc ? (
-            <HighlightText
-              style={styles.projectHeaderNetWorth}
-              highlightStyle={styles.highlightText}
+            <Text
               numberOfLines={1}
               ellipsizeMode="tail"
-              searchWords={[filterText || '']}
-              textToHighlight={data?.filterTokenDesc}
-            />
+              style={styles.projectHeaderNetWorth}>
+              {data?.filterTokenDesc}
+            </Text>
           ) : (
             <Text
               style={[
@@ -206,7 +205,8 @@ export const DefiRow = memo(
     return (
       <ContextMenuView
         menuConfig={{
-          menuActions: showContextMenu && menuActions ? menuActions : [],
+          menuActions:
+            showContextMenu && getMenuActions ? getMenuActions(data) : [],
         }}
         preViewBorderRadius={12}
         triggerProps={{ action: 'longPress' }}>

@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import RcIcHelp from '@/assets2024/icons/bridge/IcHelp.svg';
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
 import useAsync from 'react-use/lib/useAsync';
-import { useSortToken } from '@/hooks/chainAndToken/useToken';
 import { getTokenSymbol } from '@/utils/token';
 import { openapi } from '@/core/request';
 import { useTranslation } from 'react-i18next';
@@ -14,13 +18,14 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import { useBridgeSupportedChains } from '../hooks';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { useMemoizedFn, useUnmount } from 'ahooks';
 import { useLongPressTokenAtom } from '@/screens/Swap/hooks';
 import { trigger } from 'react-native-haptic-feedback';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
+import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -33,6 +38,7 @@ interface BridgeToTokenSelectProps {
   placeholder?: string;
   fromChainId?: string;
   fromTokenId?: string;
+  address?: string;
 }
 const defaultExcludeTokens = [];
 const BridgeToTokenSelect = ({
@@ -45,6 +51,7 @@ const BridgeToTokenSelect = ({
   chainId,
   excludeTokens = defaultExcludeTokens,
   placeholder,
+  address,
 }: BridgeToTokenSelectProps) => {
   const [queryConds, setQueryConds] = useState({
     keyword: '',
@@ -56,6 +63,8 @@ const BridgeToTokenSelect = ({
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
   });
+  const [favoriteFilterValue, setFavoriteFilterValue] =
+    useState<FavoriteFilterType>('all');
 
   const handleCurrentTokenChange = (token: TokenItem) => {
     onChange && onChange('');
@@ -65,6 +74,22 @@ const BridgeToTokenSelect = ({
     setQueryConds(prev => ({ ...prev }));
   };
 
+  const { userTokenSettings, fetchUserTokenSettings } = useUserTokenSettings();
+  const pinedQueue = useMemo(
+    () => userTokenSettings.pinedQueue,
+    [userTokenSettings.pinedQueue],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        if (currentAccount?.address) {
+          fetchUserTokenSettings();
+        }
+      })();
+    }, [currentAccount?.address, fetchUserTokenSettings]),
+  );
+
   const { value: tokenList, loading: tokenListLoading } = useAsync(async () => {
     if (fromChainId && chainId) {
       const list = await openapi.getBridgeToTokenList({
@@ -72,19 +97,27 @@ const BridgeToTokenSelect = ({
         from_token_id: fromTokenId,
         to_chain_id: chainId,
         q: queryConds.keyword,
+        user_addr: address,
       });
       return list?.token_list;
     }
     return [];
   }, [currentAccount, chainId, tokenSelectorVisible, queryConds.keyword]);
 
-  const availableToken = useMemo(() => {
+  const displayTokenList = useMemo(() => {
     return uniqBy(tokenList, item => {
       return `${item.chain}-${item.id}`;
-    }).filter(e => !excludeTokens.includes(e.id));
-  }, [tokenList, excludeTokens]);
-
-  const displayTokenList = useSortToken(availableToken || [], currentAccount);
+    })
+      .filter(e => !excludeTokens.includes(e.id))
+      .filter(e => {
+        if (favoriteFilterValue === 'favorite') {
+          return pinedQueue?.some(
+            x => x.chainId === e.chain && x.tokenId === e.id,
+          );
+        }
+        return true;
+      });
+  }, [tokenList, excludeTokens, favoriteFilterValue, pinedQueue]);
 
   const isListLoading = tokenListLoading;
 
@@ -200,39 +233,14 @@ const BridgeToTokenSelect = ({
         onSearch={handleSearchTokens}
         isLoading={isListLoading}
         displayAccountFilter={false}
+        disableSort
         // filterAccount={account}
         hideChainFilter={true}
+        showFavoriteFilter
+        favoriteFilterValue={favoriteFilterValue}
+        onFavoriteFilterChange={setFavoriteFilterValue}
         selectToken={token}
-        headerTitle={
-          <View style={styles.headerBox}>
-            <Text style={styles.headerBoxText}>{t('page.bridge.token')}</Text>
-            <View style={styles.liquidityBox}>
-              <Text style={styles.headerBoxText}>
-                {t('page.bridge.liquidity')}
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  createGlobalBottomSheetModal2024({
-                    name: MODAL_NAMES.DESCRIPTION,
-                    bottomSheetModalProps: {
-                      enableContentPanningGesture: true,
-                      enablePanDownToClose: true,
-                      snapPoints: [200],
-                    },
-                    title: 'About Liquidity',
-                    sections: [
-                      {
-                        description:
-                          'The higher the historical trade volume, the more likely the bridge will succeed.',
-                      },
-                    ],
-                  });
-                }}>
-                <RcIcHelp color={colors2024['neutral-secondary']} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        }
+        headerTitle={null}
         type={'bridgeTo'}
         placeholder={placeholder}
         chainServerId={chainId}

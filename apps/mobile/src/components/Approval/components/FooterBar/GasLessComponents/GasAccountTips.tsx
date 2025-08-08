@@ -34,6 +34,9 @@ export const GasAccountTips: React.FC<{
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
 
   const [tip, btnText] = useMemo(() => {
+    if (gasAccountCost?.err_msg) {
+      return [gasAccountCost.err_msg, null];
+    }
     if (!noCustomRPC) {
       return [t('page.signFooterBar.gasAccount.customRPC'), null];
     }
@@ -61,6 +64,7 @@ export const GasAccountTips: React.FC<{
     isWalletConnect,
     gasAccountCost?.chain_not_support,
     gasAccountCost?.balance_is_enough,
+    gasAccountCost?.err_msg,
     t,
   ]);
 

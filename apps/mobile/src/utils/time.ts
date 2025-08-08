@@ -75,23 +75,24 @@ export const formatTimeReadable = (timeElapse: number) => {
 export const getTimeFromNow = (create_at: number) =>
   formatTimeReadable(Date.now() / 1000 - create_at);
 
-export function fromNow(time: number, currTime?: number) {
+export function fromNow(time: number, currTime?: number, space?: boolean) {
   let successTimeView = '';
+  const spaceStr = space ? ' ' : '';
   const successTime = getTimeSpan((currTime || Date.now() / 1000) - time);
   if (successTime.h <= 0 && successTime.m <= 0) successTime.m = 1; // At least 1 mins
   const { d, h, m } = successTime;
   let str = '';
   let flag = 0;
   if (d) {
-    str += `${d}${`day${d > 1 ? 's' : ''}`} `;
+    str += `${d}${spaceStr}${`day${d > 1 ? 's' : ''}`} `;
     flag++;
   }
   if ((h || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${h}hour`;
+    str += `${flag > 0 ? ' ' : ''}${h}${spaceStr}hour`;
     flag++;
   }
   if ((m || flag) && flag < 3) {
-    str += `${flag > 0 ? ' ' : ''}${m}min`;
+    str += `${flag > 0 ? ' ' : ''}${m}${spaceStr}min`;
     flag++;
   }
   if (str) successTimeView = str;

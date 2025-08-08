@@ -9,7 +9,7 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
-import { atomByMMKV } from '@/core/storage/mmkv';
+import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 
 import { useEffect } from 'react';
 import {
@@ -35,6 +35,7 @@ const RemoteVersionAtom = atomByMMKV<MergedRemoteVersion>(
     couldUpgrade: false,
     changelog: '',
   },
+  { storage: MMKVStorageStrategy.compatJson },
 );
 
 const localVersionAtom = atom<string>(appLocalVersion);

@@ -96,10 +96,23 @@ export class PortocolItemEntity extends EntityAddressAssetBase {
       }));
   }
 
-  static async batchMultAddressPortocols(addresses: string[]) {
+  static async batchMultAddressPortocols(
+    addresses: string[],
+    maxLength?: number,
+  ) {
     await prepareAppDataSource();
 
-    return (await this.getRepository().findBy({ owner_addr: In(addresses) }))
+    const queryBuilder =
+      this.getRepository().createQueryBuilder('portocolitem');
+
+    queryBuilder.andWhere({ owner_addr: In(addresses) });
+    if (maxLength) {
+      queryBuilder.take(maxLength);
+    }
+
+    const portocols = await queryBuilder.getMany();
+
+    return portocols
       .filter(i => i.id !== EMPTY_PROTOCOL_ITEM_ID)
       .map(i => ({
         ...i,

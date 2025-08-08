@@ -129,7 +129,7 @@ export const BottomSheetBrowser = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowBrowser ? 0 : -1}
-      enableContentPanningGesture={browserState.isShowSearch}
+      enableContentPanningGesture={false}
       enablePanDownToClose
       enableHandlePanningGesture
       name="urlWebviewContainerRef"
@@ -240,7 +240,7 @@ export const BrowserManagePopup = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowManage ? 0 : -1}
-      enableContentPanningGesture={true}
+      enableContentPanningGesture={false}
       enablePanDownToClose
       enableHandlePanningGesture
       // name="urlWebviewContainerRef"

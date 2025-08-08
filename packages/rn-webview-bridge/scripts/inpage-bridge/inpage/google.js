@@ -310,7 +310,6 @@ export const hackGoogle = () => {
   if (checkIsGoogle()) {
     injectCss();
   }
-  injectCss();
   domReadyCall(() => {
     if (checkIsGoogle()) {
       injectCss();
