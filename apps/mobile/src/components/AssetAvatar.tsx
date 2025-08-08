@@ -3,7 +3,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import { useFindChain } from '@/hooks/useFindChain';
 import { useSwitch } from '@/hooks/useSwitch';
 import { Chain } from '@debank/common';
-import { memo, ReactNode, useMemo, useState, useRef, useEffect } from 'react';
+import { memo, ReactNode, useMemo } from 'react';
 import { Image, ImageStyle, StyleSheet, View, ViewStyle } from 'react-native';
 import FastImage, { FastImageProps } from 'react-native-fast-image';
 import { TestnetChainLogo } from './Chain/TestnetChainLogo';
