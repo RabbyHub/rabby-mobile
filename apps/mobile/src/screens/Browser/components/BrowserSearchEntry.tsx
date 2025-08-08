@@ -1,36 +1,35 @@
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { RcIconTabsCC } from '@/assets2024/icons/browser';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BlurView } from '@react-native-community/blur';
+import { BlurView, BlurViewProps } from '@react-native-community/blur';
 import { useMemoizedFn } from 'ahooks';
-import React, { useState } from 'react';
+import { sortBy } from 'lodash';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  KeyboardAvoidingView,
   Platform,
+  StyleProp,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { BrowserSearch } from '../BrowserScreen/components/BrowserSearch';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { BrowserSearchInHome } from '../BrowserScreen/components/BrowserSearch/BrowserSearchInHome';
-import { matomoRequestEvent } from '@/utils/analytics';
+import { BrowserTabCard } from '../BrowserScreen/components/BrowserManage/BrowserTabList/BrowserTabCard';
+import { ViewStyle } from 'react-native-size-matters';
 
 const isAndroid = Platform.OS === 'android';
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   fabContainer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 8,
-    right: 8,
-    zIndex: 10,
-    width: 'auto',
+    // position: 'absolute',
+    // bottom: 30,
+    // left: 8,
+    // right: 8,
+    // zIndex: 10,
+    // width: 'auto',
     ...Platform.select({
       ios: {
         shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
@@ -103,6 +102,46 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 17,
     fontWeight: '700',
   },
+
+  container: {
+    paddingHorizontal: 15,
+    marginTop: 12,
+  },
+  tabContainerSmall: {
+    width: '50%',
+  },
+  tabContainer: {
+    marginTop: 18,
+    marginBottom: 30,
+    borderRadius: 20,
+    padding: 6,
+    backgroundColor: colors2024['neutral-bg-1'],
+
+    ...Platform.select({
+      ios: {
+        shadowColor: isLight ? 'rgba(55, 56, 63, 0.12)' : 'rgba(0, 0, 0, 0.4)',
+        shadowOffset: { width: 0, height: isLight ? -6 : -27 },
+        shadowOpacity: 1,
+        shadowRadius: isLight ? 20 : 13,
+      },
+      android: {},
+    }),
+  },
+  tabContainerInner: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+
+  tabItemContainer: {
+    width: '50%',
+    // flexShrink: 0,
+    padding: 2,
+  },
+  tabItemContainerSmall: {
+    width: '100%',
+  },
+  tabItem: {},
 }));
 
 const BlurViewOnlyIOSWrapper = ({
@@ -110,11 +149,13 @@ const BlurViewOnlyIOSWrapper = ({
   isLight,
   blurAmount = 29,
   borderRadius = 20,
+  style,
 }: {
   children: React.ReactNode;
   blurAmount?: number;
   isLight?: boolean;
   borderRadius?: number;
+  style?: BlurViewProps['style'];
 }) => {
   const { colors2024 } = useTheme2024({ getStyle });
   if (isAndroid) {
@@ -127,7 +168,7 @@ const BlurViewOnlyIOSWrapper = ({
   }
   return (
     <BlurView
-      style={{ borderRadius }}
+      style={[{ borderRadius }, style]}
       blurAmount={blurAmount}
       blurType={isLight ? 'light' : 'dark'}
       reducedTransparencyFallbackColor="white">
@@ -143,7 +184,13 @@ export const BrowserSearchEntry: React.FC = () => {
     displayedTabs,
     forceShowBrowser,
     forceShowBrowserManage,
+    closeTab,
+    switchToTab,
   } = useBrowser();
+
+  const tabs = useMemo(() => {
+    return sortBy(displayedTabs, tab => tab.openTime || 0).slice(0, 4);
+  }, [displayedTabs]);
 
   const { t } = useTranslation();
   const handlePress = useMemoizedFn(() => {
@@ -173,7 +220,43 @@ export const BrowserSearchEntry: React.FC = () => {
   });
 
   return (
-    <>
+    <View style={styles.container}>
+      {tabs.length ? (
+        <View
+          style={[
+            styles.tabContainer,
+            tabs.length === 1 ? styles.tabContainerSmall : null,
+          ]}>
+          <BlurViewOnlyIOSWrapper
+            isLight={isLight}
+            blurAmount={14.5}
+            borderRadius={20}>
+            <View style={styles.tabContainerInner}>
+              {tabs.map(tab => {
+                return (
+                  <View
+                    style={[
+                      styles.tabItemContainer,
+                      tabs.length === 1 ? styles.tabItemContainerSmall : null,
+                    ]}
+                    key={tab.id}>
+                    <BrowserTabCard
+                      containerStyle={styles.tabItem}
+                      tab={tab}
+                      onPress={() => {
+                        switchToTab(tab.id);
+                      }}
+                      onPressClose={() => {
+                        closeTab(tab.id);
+                      }}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+          </BlurViewOnlyIOSWrapper>
+        </View>
+      ) : null}
       <TouchableOpacity style={styles.fabContainer} onPress={handlePress}>
         <BlurViewOnlyIOSWrapper
           isLight={isLight}
@@ -218,6 +301,6 @@ export const BrowserSearchEntry: React.FC = () => {
           </LinearGradient>
         </BlurViewOnlyIOSWrapper>
       </TouchableOpacity>
-    </>
+    </View>
   );
 };

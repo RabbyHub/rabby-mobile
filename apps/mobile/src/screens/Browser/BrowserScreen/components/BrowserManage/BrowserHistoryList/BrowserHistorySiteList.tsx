@@ -88,7 +88,7 @@ export const BrowserHistorySiteList = ({
   });
 
   return (
-    <SectionList
+    <BottomSheetSectionList
       sections={data}
       style={styles.list}
       showsVerticalScrollIndicator={false}

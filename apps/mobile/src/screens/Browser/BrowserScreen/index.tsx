@@ -29,6 +29,7 @@ import { BrowserSearchResult } from './components/BrowserSearch/BrowserSearchRes
 import { BrowserSearch } from './components/BrowserSearch';
 import { Freeze } from 'react-freeze';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { isGoogle } from '@/utils/browser';
 
 export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
   const { styles: stylesScreen } = useTheme2024({
@@ -46,6 +47,7 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
     closeTab,
     updateTab,
     openTab,
+    switchToTab,
     browserState,
     setBrowserState,
     setPartialBrowserState,
@@ -218,6 +220,15 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
               activeDappWebViewControlRef?.current?.getTabId() ===
                 browserState.searchTabId
             ) {
+              const targetOrigin = safeGetOrigin(url);
+              const sameOriginTab = displayedTabs.find(
+                item =>
+                  safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
+              );
+              if (sameOriginTab && !isGoogle(targetOrigin)) {
+                switchToTab(sameOriginTab.id);
+                return;
+              }
               activeDappWebViewControlRef?.current.navigateTo(url);
               setPartialBrowserState({
                 isShowSearch: false,

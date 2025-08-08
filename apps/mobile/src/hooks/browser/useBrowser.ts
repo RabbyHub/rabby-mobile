@@ -11,7 +11,7 @@ import { atom, useAtom } from 'jotai';
 import { v4 as uuid } from 'uuid';
 import { useRabbyAppNavigation } from '../navigation';
 import { browserService, dappService } from '@/core/services';
-import { omit, last, sortBy } from 'lodash';
+import { omit, last, sortBy, initial } from 'lodash';
 import { boolean } from 'yup';
 import { useEffect, useMemo } from 'react';
 import { dappsAtom } from '../useDapps';
@@ -21,6 +21,7 @@ import {
   eventBus,
 } from '@/utils/events';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { isGoogle } from '@/utils/browser';
 
 export const tabsAtom = atom<{
   tabs: Tab[];
@@ -227,6 +228,15 @@ export function useBrowser() {
           action: 'Website_OpenDapp',
           label: url,
         });
+      }
+
+      const sameOriginTab = displayedTabs.find(
+        item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
+      );
+
+      if (sameOriginTab && !isGoogle(targetOrigin)) {
+        switchToTab(sameOriginTab.id);
+        return true;
       }
 
       if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) {

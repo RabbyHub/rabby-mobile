@@ -19,6 +19,7 @@ interface Props {
   onPress?(tab: Tab): void;
   isActive?: boolean;
   style?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 export const BrowserTabCard: React.FC<Props> = ({
@@ -27,6 +28,7 @@ export const BrowserTabCard: React.FC<Props> = ({
   onPressClose,
   isActive,
   style,
+  containerStyle,
 }) => {
   const { colors2024, styles } = useTheme2024({
     getStyle,
@@ -36,16 +38,17 @@ export const BrowserTabCard: React.FC<Props> = ({
 
   return (
     <View
-      style={[styles.wrap, isActive ? [styles.active, styles.shadow] : null]}>
+      style={[
+        styles.wrap,
+        isActive ? [styles.active, styles.shadow] : null,
+        containerStyle,
+      ]}>
       <TouchableOpacity
         style={[styles.card, isActive ? null : styles.shadow, style]}
         onPress={() => {
           onPress?.(tab);
         }}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
-            {urlInfo.fullDomain}
-          </Text>
           {tab.url ? (
             <TouchableOpacity
               hitSlop={8}
@@ -58,6 +61,9 @@ export const BrowserTabCard: React.FC<Props> = ({
               />
             </TouchableOpacity>
           ) : null}
+          <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
+            {urlInfo.fullDomain}
+          </Text>
         </View>
         <View style={styles.screenshot}>
           {tab.viewShot ? (
@@ -106,11 +112,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   closeIcon: {
     position: 'absolute',
     top: 7,
-    right: 12,
+    left: 12,
     zIndex: 10,
   },
   screenshot: {
-    height: 210,
+    height: 168,
   },
   viewShot: {
     width: '100%',
@@ -119,7 +125,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderBottomRightRadius: 20,
   },
   wrap: {
-    padding: 4,
+    padding: 2,
     borderWidth: 2,
     borderColor: 'transparent',
     borderRadius: 24,

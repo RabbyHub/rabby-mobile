@@ -1,5 +1,12 @@
 import React, { useMemo, useRef, useTransition } from 'react';
-import { Keyboard, Platform, StyleProp, View, ViewStyle } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  StyleProp,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -13,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
 import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { ReactIconHome } from '@/assets2024/icons/browser';
 
 export function BrowserSearch({
   onClose,
@@ -93,19 +101,26 @@ export function BrowserSearch({
   });
 
   const handleSubmitEditing = useMemoizedFn(() => {
-    if (!searchText) {
-      return;
+    // if (!searchText) {
+    //   return;
+    // }
+    // isOpenURLRef.current = true;
+    // if (isValidDomain) {
+    //   onOpenURL?.(
+    //     /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
+    //   );
+    // } else {
+    //   onOpenURL?.(
+    //     `https://www.google.com/search?q=${encodeURIComponent(searchText)}`,
+    //   );
+    // }
+    if (!searchText.trim()) {
+      onClose?.(trigger === 'home');
     }
-    isOpenURLRef.current = true;
-    if (isValidDomain) {
-      onOpenURL?.(
-        /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
-      );
-    } else {
-      onOpenURL?.(
-        `https://www.google.com/search?q=${encodeURIComponent(searchText)}`,
-      );
-    }
+  });
+
+  const handlePressHome = useMemoizedFn(() => {
+    onClose?.(true);
   });
 
   return (
@@ -133,7 +148,7 @@ export function BrowserSearch({
           </View>
         ) : (
           <BrowserRecent
-            // isInBottomSheet
+            isInBottomSheet
             list={displayedBrowserHistoryList}
             onPress={dapp => {
               handleOpenUrl(dapp.url || dapp.origin);
@@ -142,7 +157,7 @@ export function BrowserSearch({
         )
       ) : (
         <BrowserSearchResult
-          // isInBottomSheet
+          isInBottomSheet
           searchText={searchText}
           data={list || []}
           isValidDomain={!!isValidDomain}
@@ -155,19 +170,30 @@ export function BrowserSearch({
           styles.footer,
           {
             marginBottom: androidOnlyBottomOffset,
+            // marginBottom:
+            //   Platform.OS === 'android' ? androidOnlyBottomOffset : 20,
           },
         ]}>
+        <TouchableOpacity onPress={handlePressHome}>
+          <ReactIconHome
+            width={44}
+            height={44}
+            color={colors2024['neutral-title-1']}
+            backgroundColor={colors2024['neutral-bg-5']}
+          />
+        </TouchableOpacity>
         <NextSearchBar
           as="BottomSheetTextInput"
           value={searchText}
           onChangeText={setSearchText}
           onCancel={handleClose}
-          onBlur={handleClose}
+          // onBlur={handleClose}
           onSubmitEditing={handleSubmitEditing}
-          enterKeyHint="go"
+          enterKeyHint="done"
           autoFocus
           placeholder={t('page.browser.BrowserSearch.placeholder')}
           alwaysShowCancel
+          style={styles.searchBar}
         />
       </View>
     </View>
@@ -187,6 +213,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     right: 0,
     bottom: 0,
     paddingTop: 38,
+    // marginBottom: 20,
   },
   list: {
     flex: 1,
@@ -227,8 +254,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
     paddingVertical: 12,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     // marginBottom: 30,
     // box-shadow: 0px -6px 40px 0px rgba(55, 56, 63, 0.12);
     // backdrop-filter: blur(14.5px);
+  },
+  searchBar: {
+    flex: 1,
   },
 }));

@@ -9,8 +9,10 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import {
   BackHandler,
+  Dimensions,
   Platform,
   Text,
+  TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -27,6 +29,7 @@ import {
   eventBus,
 } from '@/utils/events';
 import { BOTTOM_SHEET_EXTRA } from '@/constant/browser';
+import { RcIconCloseBrowser } from '@/assets/icons/dapp';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -51,7 +54,16 @@ export const BottomSheetBrowser = () => {
   });
 
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+
+  const snapPoints = useMemo(() => {
+    return [
+      Math.min(
+        safeOffScreenTop - BOTTOM_SHEET_EXTRA,
+        Dimensions.get('screen').height - 68,
+      ),
+    ];
+  }, [safeOffScreenTop]);
 
   const isTransparent = useMemo(() => {
     return (
@@ -107,6 +119,18 @@ export const BottomSheetBrowser = () => {
     };
   }, []);
 
+  const handleCloseBrowser = useMemoizedFn(() => {
+    closeTab(activeTabId);
+    setPartialBrowserState({
+      isShowBrowser: false,
+      isShowSearch: false,
+      searchText: '',
+      searchTabId: '',
+      trigger: '',
+    });
+    onHideBrowser();
+  });
+
   return (
     <AppBottomSheetModal
       index={browserState.isShowBrowser ? 0 : -1}
@@ -115,20 +139,30 @@ export const BottomSheetBrowser = () => {
       enableHandlePanningGesture
       name="urlWebviewContainerRef"
       ref={modalRef}
-      snapPoints={[safeOffScreenTop - BOTTOM_SHEET_EXTRA]}
+      snapPoints={snapPoints}
       enableDismissOnClose={false}
       keyboardBehavior="extend"
       android_keyboardInputMode="adjustResize"
-      handleStyle={styles.hidden}
+      // handleStyle={styles.hidden}
+      handleComponent={() => {
+        return browserState.isShowBrowser &&
+          !browserState.isShowSearch &&
+          !browserState.isShowManage ? (
+          <View style={styles.handleComponent}>
+            <TouchableOpacity onPress={handleCloseBrowser} hitSlop={5}>
+              <RcIconCloseBrowser />
+            </TouchableOpacity>
+          </View>
+        ) : null;
+      }}
       containerStyle={styles.customContentStyle}
       backgroundComponent={null}
       onChange={index => {
-        console.log('[onChange]', index);
         if (index === -1) {
-          // 手动下拉关闭？
-          if (browserState.isShowBrowser && !browserState.isShowSearch) {
-            closeTab(activeTabId);
-          }
+          // // 手动下拉关闭？
+          // if (browserState.isShowBrowser && !browserState.isShowSearch) {
+          //   closeTab(activeTabId);
+          // }
           setPartialBrowserState({
             isShowBrowser: false,
             isShowSearch: false,
@@ -164,6 +198,15 @@ export const BrowserManagePopup = () => {
 
   const { browserState, setPartialBrowserState } = useBrowser();
   const { colors2024, styles } = useTheme2024({ getStyle });
+
+  const snapPoints = useMemo(() => {
+    return [
+      Math.min(
+        safeOffScreenTop - BOTTOM_SHEET_EXTRA,
+        Dimensions.get('screen').height - 68,
+      ),
+    ];
+  }, [safeOffScreenTop]);
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -219,7 +262,7 @@ export const BrowserManagePopup = () => {
       ref={modalRef}
       keyboardBehavior="extend"
       android_keyboardInputMode="adjustResize"
-      snapPoints={[safeOffScreenTop - BOTTOM_SHEET_EXTRA]}
+      snapPoints={snapPoints}
       // enableDismissOnClose={false}
       onChange={index => {
         if (index === -1) {
@@ -271,6 +314,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['neutral-line'],
       height: 6,
       width: 50,
+    },
+
+    handleComponent: {
+      position: 'absolute',
+      top: -36,
+      right: 8,
+      zIndex: 100,
     },
   };
 });

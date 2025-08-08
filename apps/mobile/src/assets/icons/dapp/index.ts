@@ -8,6 +8,7 @@ import { default as RcIconDisconnectCC } from './icon-disconnect-cc.svg';
 export { default as RcIconDynamicArrowCC } from './dynamic-arrow-cc.svg';
 export { default as RcIconDynamicArrowDownCC } from './dynamic-arrow-down-cc.svg';
 export { default as RcIconGoogle } from './icon-google.svg';
+export { default as RcIconCloseBrowser } from './close-browser.svg';
 export { RcIconDisconnectCC };
 
 export const RcIconDisconnect = makeActiveIconFromCC(

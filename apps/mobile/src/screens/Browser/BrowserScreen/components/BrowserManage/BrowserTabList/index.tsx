@@ -10,6 +10,7 @@ import { BrowserTabCard } from './BrowserTabCard';
 // import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useRef } from 'react';
 import { BrowserTabEmpty } from './BrowserTabEmpty';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles, isLight } = useTheme2024({
@@ -73,7 +74,7 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
 
   return (
     <View style={[styles.container, style]}>
-      <FlatList
+      <BottomSheetFlatList
         style={styles.tabList}
         data={displayedTabs}
         renderItem={renderItem}
@@ -83,8 +84,8 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         showsVerticalScrollIndicator={false}
         ref={ref}
         getItemLayout={(data, index) => ({
-          length: 242,
-          offset: 242 * index,
+          length: 210,
+          offset: 210 * index,
           index,
         })}
         contentContainerStyle={

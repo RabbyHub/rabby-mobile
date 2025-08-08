@@ -820,7 +820,8 @@ function MultiAddressHome(): JSX.Element {
           contentContainerStyle={[
             styles.scrollContainer,
             {
-              paddingBottom: bottom + 82,
+              // paddingBottom: bottom + 82,
+              paddingBottom: 16,
             },
           ]}
           refreshControl={
@@ -877,8 +878,8 @@ function MultiAddressHome(): JSX.Element {
               );
             })}
           </View>
+          <BrowserSearchEntry />
         </ScrollView>
-        <BrowserSearchEntry />
       </View>
     </NormalScreenContainer2024>
   );
