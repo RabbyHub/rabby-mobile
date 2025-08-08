@@ -18,8 +18,6 @@ type AssetAvatarProps = {
   style?: RNViewProps['style'];
   logoStyle?: ViewStyle;
   innerChainStyle?: ImageStyle | FastImageProps['style'];
-  lazyLoad?: boolean;
-  lazyLoadDelay?: number;
 };
 
 // 没有用 svg 因为在 虚拟列表中，会有问题
@@ -58,34 +56,9 @@ export const AssetAvatar = memo(
     style,
     logoStyle,
     innerChainStyle,
-    lazyLoad = false,
-    lazyLoadDelay = 50,
   }: AssetAvatarProps) => {
     const { styles, isLight } = useThemeStyles(getStyles);
     const { on, turnOn } = useSwitch();
-
-    const [shouldLoadImage, setShouldLoadImage] = useState(false);
-    const containerRef = useRef<View>(null);
-
-    useEffect(() => {
-      if (!logo) {
-        setShouldLoadImage(false);
-        return;
-      }
-
-      if (!lazyLoad) {
-        setShouldLoadImage(true);
-        return;
-      }
-
-      const timer = setTimeout(() => {
-        setShouldLoadImage(true);
-      }, lazyLoadDelay);
-
-      return () => {
-        clearTimeout(timer);
-      };
-    }, [logo, lazyLoad, lazyLoadDelay]);
 
     const chainInfo = useFindChain({
       serverId: chain || null,
@@ -134,9 +107,9 @@ export const AssetAvatar = memo(
     );
 
     return (
-      <View ref={containerRef} style={containerStyle}>
+      <View style={containerStyle}>
         <View style={tokenStyle}>
-          {!logo || on || !shouldLoadImage ? (
+          {!logo || on ? (
             <DefaultToken size={size} style={avatarStyle} isLight={isLight} />
           ) : (
             <FastImage

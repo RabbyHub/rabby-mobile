@@ -147,7 +147,6 @@ export const TokenRow = memo(
               chain={data?.chain}
               style={mediaStyle}
               size={logoSize}
-              lazyLoad
               chainSize={chainLogoSize}
             />
           </View>
