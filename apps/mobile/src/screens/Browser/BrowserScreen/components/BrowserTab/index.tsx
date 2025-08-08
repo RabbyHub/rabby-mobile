@@ -31,7 +31,7 @@ import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
 import { parsePossibleURL } from '@/constant/dappView';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { browserService } from '@/core/services';
 import { FontNames } from '@/core/utils/fonts';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
@@ -532,10 +532,14 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       scalesPageToFit: true,
                     })}
                     onLoadStart={e => {
+                      const treatAsReload = e.nativeEvent.isReload || IS_IOS;
+
                       webviewProps?.onLoadStart?.(e);
-                      onLoadStart(e);
-                      setIsLoading(true);
-                      setProgress(0);
+                      onLoadStart(e, treatAsReload);
+                      if (treatAsReload) {
+                        setIsLoading(true);
+                        setProgress(0);
+                      }
                       const { nativeEvent } = e;
 
                       if (
@@ -585,6 +589,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         url: nativeEvent.url,
                       });
                       if (
+                        !('code' in nativeEvent) &&
                         isActive &&
                         browserState.isShowBrowser &&
                         !browserState.isShowSearch &&
@@ -636,6 +641,10 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     }}
                     // onError={errorLog}
                     onError={e => {
+                      // // leave here for debug
+                      // if (__DEV__) {
+                      //   console.warn('WebView:: onError event', e);
+                      // }
                       setWebViewState(prev => {
                         return {
                           ...prev,

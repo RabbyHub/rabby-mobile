@@ -4,7 +4,6 @@ import { ClassOf } from '@rabby-wallet/base-utils';
 
 import { type EntityAddressAssetBase } from '../entities/base';
 import { appOrmEvents, SyncTaskOptions } from './_event';
-import { appJsonStore } from '@/core/storage/mmkv';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));

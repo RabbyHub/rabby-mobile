@@ -15,7 +15,7 @@ import {
   AppColorSchemes,
   AppColors2024Variants,
 } from '@/constant/theme';
-import { atomByMMKV } from '@/core/storage/mmkv';
+import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
@@ -44,7 +44,9 @@ function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {
     : 'light';
 }
 
-const ThemeStoreBase = atomByMMKV('@AppTheme', 'light' as AppThemeScheme);
+const ThemeStoreBase = atomByMMKV('@AppTheme', 'light' as AppThemeScheme, {
+  storage: MMKVStorageStrategy.compatString,
+});
 
 const ThemeModeStore = atom(
   get => get(ThemeStoreBase),

@@ -157,9 +157,9 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
       const invalidRecords = await repo.query(`
         SELECT ct._db_id
         FROM ${TABLE_NAME} ct
-        LEFT JOIN ${TABLE_NAME_TOKENITEM} token 
-          ON ct.id = token.id 
-          AND ct.chain = token.chain 
+        LEFT JOIN ${TABLE_NAME_TOKENITEM} token
+          ON ct.id = token.id
+          AND ct.chain = token.chain
           AND ct.owner_addr = token.owner_addr
         WHERE (token.id IS NULL OR token.amount = 0)
           AND ct.create_time < ${oneHourAgo}
@@ -177,9 +177,9 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
           `
           SELECT ct._db_id
           FROM ${TABLE_NAME} ct
-          LEFT JOIN ${TABLE_NAME_TOKENITEM} token 
-            ON ct.id = token.id 
-            AND ct.chain = token.chain 
+          LEFT JOIN ${TABLE_NAME_TOKENITEM} token
+            ON ct.id = token.id
+            AND ct.chain = token.chain
             AND ct.owner_addr = token.owner_addr
           WHERE ct._db_id IN (${invalidIds.map(() => '?').join(',')})
             AND (token.id IS NULL OR token.amount = 0)
@@ -238,22 +238,22 @@ export class CopyTradingBuyItemEntity extends EntityAddressAssetBase {
       const queryStartTime = Date.now();
       const validRecords = await repo.query(`
         WITH aggregated_buys AS (
-          SELECT 
-            id, 
-            chain, 
+          SELECT
+            id,
+            chain,
             owner_addr,
             SUM(amount) as buy_amount,
             SUM(from_token_amount * from_token_price) / SUM(amount) as buy_price
           FROM ${TABLE_NAME}
           GROUP BY id, chain, owner_addr
         )
-        SELECT 
+        SELECT
           tokenitem.*,
           ab.buy_amount,
           ab.buy_price
         FROM aggregated_buys ab
         INNER JOIN ${TABLE_NAME_TOKENITEM} tokenitem
-          ON ab.id = tokenitem.id 
+          ON ab.id = tokenitem.id
           AND ab.chain = tokenitem.chain 
           AND ab.owner_addr = tokenitem.owner_addr
         WHERE tokenitem.amount > 0

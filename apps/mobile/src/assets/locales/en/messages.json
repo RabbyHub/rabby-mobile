@@ -2171,6 +2171,13 @@
       "searchPlaceHolder2": "Search Token",
       "contextMenu": {
         "viewDetail": "View Detail"
+      },
+      "bridgeTo": {
+        "high": "High liquidity",
+        "low": "Low liquidity"
+      },
+      "favoriteFilter": {
+        "all": "All"
       }
     },
     "ModalPreviewNFTItem": {
