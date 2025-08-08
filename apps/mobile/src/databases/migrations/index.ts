@@ -4,8 +4,8 @@ import { UpdateTokenItemAddCreditScore1741862198677 } from './20250313';
 import { UpdateTokenItemAddCexIds1743518329613 } from './20250401';
 import { UpdateHistoryTableAddSourceType1744873800025 } from './20250418';
 import { UpdateBalanceAddEvmUsdValue1751964116411 } from './20250708';
-import { UpdateTokenItemAddFdv1754033445392 } from './20250801';
 import { UpdateHistoryTableRestart1753686720048 } from './20250731';
+import { UpdateTokenItemAddFdv1754616616128 } from './20250808';
 
 export function getMigrations() {
   return [
@@ -15,7 +15,7 @@ export function getMigrations() {
     UpdateTokenItemAddCexIds1743518329613,
     UpdateHistoryTableAddSourceType1744873800025,
     UpdateBalanceAddEvmUsdValue1751964116411,
-    UpdateTokenItemAddFdv1754033445392,
     UpdateHistoryTableRestart1753686720048,
+    UpdateTokenItemAddFdv1754616616128,
   ];
 }

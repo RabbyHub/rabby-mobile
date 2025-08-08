@@ -2174,6 +2174,9 @@
       "bridgeTo": {
         "high": "High liquidity",
         "low": "Low liquidity"
+      },
+      "favoriteFilter": {
+        "all": "All"
       }
     },
     "ModalPreviewNFTItem": {

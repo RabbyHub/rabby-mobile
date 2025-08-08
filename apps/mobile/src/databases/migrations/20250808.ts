@@ -14,7 +14,7 @@ async function checkIfTableExists(queryRunner: QueryRunner, tableName: string) {
   return tableExists.length > 0;
 }
 
-export class UpdateTokenItemAddFdv1754033445392 implements MigrationInterface {
+export class UpdateTokenItemAddFdv1754616616128 implements MigrationInterface {
   transaction = false;
 
   async up(queryRunner: QueryRunner): Promise<void> {
