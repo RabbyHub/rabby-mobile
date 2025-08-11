@@ -36,7 +36,7 @@ function Chart({
     // 延迟初始化动画，避免页面切换时的卡顿
     const timer = setTimeout(() => {
       setIsInitialized(true);
-    }, 200);
+    }, 100);
 
     return () => {
       clearTimeout(timer);
@@ -47,14 +47,16 @@ function Chart({
     <View style={styles.container}>
       <View style={styles.chartContainer}>
         <LineChart.Provider data={data.list}>
-          <ChartHeader
-            netWorth={data.netWorth}
-            change={data.change}
-            changePercent={data.changePercent}
-            isLoss={data.isLoss}
-            data={data.list}
-            loading={loading}
-          />
+          {isInitialized ? (
+            <ChartHeader
+              netWorth={data.netWorth}
+              change={data.change}
+              changePercent={data.changePercent}
+              isLoss={data.isLoss}
+              data={data.list}
+              loading={loading}
+            />
+          ) : null}
           {isOffline || isNoAssets ? null : !loading ? (
             isInitialized ? (
               <LineChart
