@@ -1008,6 +1008,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   scrollContainer: {
     flexGrow: 1,
+    minHeight: '100%',
   },
   menuHeader: {
     height: 30,

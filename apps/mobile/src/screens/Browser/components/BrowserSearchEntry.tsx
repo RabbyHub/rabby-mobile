@@ -106,6 +106,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     paddingHorizontal: 15,
     marginTop: 12,
+    flex: 1,
+  },
+  empty: {
+    flex: 1,
   },
   tabContainerSmall: {
     width: '50%',
@@ -256,7 +260,9 @@ export const BrowserSearchEntry: React.FC = () => {
             </View>
           </BlurViewOnlyIOSWrapper>
         </View>
-      ) : null}
+      ) : (
+        <View style={styles.empty} />
+      )}
       <TouchableOpacity style={styles.fabContainer} onPress={handlePress}>
         <BlurViewOnlyIOSWrapper
           isLight={isLight}
