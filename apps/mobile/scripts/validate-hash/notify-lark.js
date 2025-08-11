@@ -2,7 +2,7 @@
 
 const Axios = require('axios');
 
-const { getLarkToken, makeSign } = require('./libs/lark');
+const { getLarkToken, makeSign } = require('../libs/lark');
 
 const chatURL = process.env.LARK_CHAT_URL;
 if (!chatURL) {
