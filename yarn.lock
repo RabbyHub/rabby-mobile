@@ -8037,16 +8037,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-action@npm:0.1.12":
-  version: 0.1.12
-  resolution: "@rabby-wallet/rabby-action@npm:0.1.12"
+"@rabby-wallet/rabby-action@npm:0.1.13":
+  version: 0.1.13
+  resolution: "@rabby-wallet/rabby-action@npm:0.1.13"
   peerDependencies:
     "@debank/common": "*"
     "@rabby-wallet/rabby-api": "*"
     "@rabby-wallet/rabby-security-engine": "*"
     bignumber.js: "*"
     p-queue: ^7.3.0
-  checksum: 3a5357a62be62eb574b6e9b0c56806ac6342575ccc65f67ef2e0fb8661f2a29bbc7b18530349e54f17907bad8a0de552ff8b0f172542707d0d8f8259859cd7a1
+  checksum: 501604d19d37be7272a17fe57ff225bc77a7caa3d9732700ba7cf2aba982dd39541c2da457b2c0cc7bf20eadaa1f8830e23c1d4794da85414d8f41effe5f5b2c
   languageName: node
   linkType: hard
 
@@ -8084,13 +8084,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-security-engine@npm:2.0.10":
-  version: 2.0.10
-  resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.10"
+"@rabby-wallet/rabby-security-engine@npm:2.0.11":
+  version: 2.0.11
+  resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.11"
   peerDependencies:
     "@debank/common": "*"
     "@rabby-wallet/rabby-api": "*"
-  checksum: 4cba419ad15a7292adcd0548ddfe2ac8deff233754c631cc16efb737ddfdfda03b7ced40c47c392a7e01883f02c9df38fe012bcf471dce3ad50da13d0bebcad1
+  checksum: 352f5a0fef144e3dd93908ce570b9ab73571a5b4146275d530d2aae4f00bffb3e97ca039d2285696bd19dd6c00aed60481facff1082cac039c320af5edbb6093
   languageName: node
   linkType: hard
 
@@ -29937,9 +29937,9 @@ __metadata:
     "@rabby-wallet/eth-simple-keyring": 5.0.2
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-action": 0.1.12
+    "@rabby-wallet/rabby-action": 0.1.13
     "@rabby-wallet/rabby-api": 0.9.32
-    "@rabby-wallet/rabby-security-engine": 2.0.10
+    "@rabby-wallet/rabby-security-engine": 2.0.11
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.63
     "@rabby-wallet/react-native-sqlite-storage": 7.0.0-alpha.1
