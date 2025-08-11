@@ -71,6 +71,10 @@ export function BrowserSearch({
     onClose?.(trigger === 'home' && !isOpenURLRef.current);
   });
 
+  const handleBlur = useMemoizedFn(async () => {
+    Keyboard.dismiss();
+  });
+
   const waitKeyboardHide = useMemoizedFn(async () => {
     if (!Keyboard.isVisible()) {
       return;
@@ -120,6 +124,7 @@ export function BrowserSearch({
   });
 
   const handlePressHome = useMemoizedFn(() => {
+    Keyboard.dismiss();
     onClose?.(true);
   });
 
@@ -187,7 +192,7 @@ export function BrowserSearch({
           value={searchText}
           onChangeText={setSearchText}
           onCancel={handleClose}
-          // onBlur={handleClose}
+          onBlur={handleBlur}
           onSubmitEditing={handleSubmitEditing}
           enterKeyHint="done"
           autoFocus

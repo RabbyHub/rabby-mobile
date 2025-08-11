@@ -35,6 +35,7 @@ export function BrowserRecent({
       style={styles.list}
       keyExtractor={item => item.url || item.origin}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
       renderItem={({ item }) => (
         <BrowserSiteCard data={item} onPress={onPress} />

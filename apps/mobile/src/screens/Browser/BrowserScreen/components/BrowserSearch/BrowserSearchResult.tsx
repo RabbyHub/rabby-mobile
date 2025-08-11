@@ -42,6 +42,7 @@ export function BrowserSearchResult({
       // onEndReached={onEndReached}
       onEndReachedThreshold={0.8}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       // ListEmptyComponent={ListEmptyComponent}
       ListHeaderComponent={
         <>

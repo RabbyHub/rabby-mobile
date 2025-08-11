@@ -10,6 +10,7 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import {
   BackHandler,
   Dimensions,
+  Keyboard,
   Platform,
   Text,
   TouchableOpacity,
@@ -129,7 +130,7 @@ export const BottomSheetBrowser = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowBrowser ? 0 : -1}
-      enableContentPanningGesture={false}
+      enableContentPanningGesture={browserState.isShowSearch}
       enablePanDownToClose
       enableHandlePanningGesture
       name="urlWebviewContainerRef"
@@ -138,6 +139,7 @@ export const BottomSheetBrowser = () => {
       enableDismissOnClose={false}
       keyboardBehavior="extend"
       android_keyboardInputMode="adjustResize"
+      // enableBlurKeyboardOnGesture
       // handleStyle={styles.hidden}
       handleComponent={() => {
         return browserState.isShowBrowser &&
@@ -240,7 +242,7 @@ export const BrowserManagePopup = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowManage ? 0 : -1}
-      enableContentPanningGesture={false}
+      enableContentPanningGesture={true}
       enablePanDownToClose
       enableHandlePanningGesture
       // name="urlWebviewContainerRef"

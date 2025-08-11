@@ -331,11 +331,11 @@ function MultiAddressHome(): JSX.Element {
           title: t('page.home.services.bridge'),
           icon: RcIconBridge,
         },
-        {
-          key: MultiHomeFeatTitle.CopyTrading,
-          title: t('page.home.services.copyTrading'),
-          icon: RcIconCopyTrading,
-        },
+        // {
+        //   key: MultiHomeFeatTitle.CopyTrading,
+        //   title: t('page.home.services.copyTrading'),
+        //   icon: RcIconCopyTrading,
+        // },
         {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
