@@ -40,10 +40,10 @@ function WatchlistScreen(): JSX.Element {
   } = useWatchlistTokens();
 
   const [tokenSort, setTokenSort] = useState<'desc' | 'asc' | 'default'>(
-    'desc',
+    'default',
   );
   const [changeSort, setChangeSort] = useState<'desc' | 'asc' | 'default'>(
-    'default',
+    'desc',
   );
   const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
