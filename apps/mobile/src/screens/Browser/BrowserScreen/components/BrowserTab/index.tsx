@@ -860,7 +860,7 @@ const getStyles = createGetStyles2024(ctx =>
       // height: 124,
       // height: ScreenLayouts2.TabbedDappWebViewControlNavHeightV2,
       paddingBottom: Platform.OS === 'android' ? 0 : 24,
-      backgroundColor: ctx.colors['neutral-bg-1'],
+      // backgroundColor: ctx.colors['neutral-bg-1'],
       // ...makeDebugBorder(),
     },
     progressBar: {

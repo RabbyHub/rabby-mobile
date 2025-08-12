@@ -1,48 +1,38 @@
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 
-import AutoLockView from '@/components/AutoLockView';
-import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { BrowserScreen } from '../BrowserScreen';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useBrowser } from '@/hooks/browser/useBrowser';
 import {
-  BackHandler,
-  Dimensions,
-  Keyboard,
-  Platform,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
-import { useTheme2024 } from '@/hooks/theme';
+  RcIconCloseBrowser,
+  RcIconCloseBrowserDark,
+} from '@/assets/icons/dapp';
+import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { createGetStyles2024 } from '@/utils/styles';
+import { BOTTOM_SHEET_EXTRA } from '@/constant/browser';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { useFocusEffect } from '@react-navigation/native';
-import { useMemoizedFn } from 'ahooks';
+import { useTheme2024 } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { matomoRequestEvent } from '@/utils/analytics';
 import {
   EVENT_SHOW_BROWSER,
   EVENT_SHOW_BROWSER_MANAGE,
   eventBus,
 } from '@/utils/events';
-import { BOTTOM_SHEET_EXTRA } from '@/constant/browser';
-import { RcIconCloseBrowser } from '@/assets/icons/dapp';
-import { matomoRequestEvent } from '@/utils/analytics';
+import { createGetStyles2024 } from '@/utils/styles';
+import { useMemoizedFn } from 'ahooks';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  BackHandler,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { BrowserScreen } from '../BrowserScreen';
+import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
 
-const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <RefreshAutoLockBottomSheetBackdrop
-    {...props}
-    disappearsOnIndex={-1}
-    appearsOnIndex={0}
-  />
-);
-
-export const BottomSheetBrowser = () => {
-  const { safeOffScreenTop } = useSafeSizes();
+const CustomHandle = () => {
+  const { styles, isLight } = useTheme2024({
+    getStyle,
+  });
   const {
     browserState,
     setPartialBrowserState,
@@ -50,13 +40,43 @@ export const BottomSheetBrowser = () => {
     onHideBrowser,
     activeTabId,
   } = useBrowser();
+  const handleCloseBrowser = useMemoizedFn(() => {
+    closeTab(activeTabId);
+    setPartialBrowserState({
+      isShowBrowser: false,
+      isShowSearch: false,
+      searchText: '',
+      searchTabId: '',
+      trigger: '',
+    });
+    onHideBrowser();
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: `Website_Exit`,
+      label: 'Click X',
+    });
+  });
+  return browserState.isShowBrowser &&
+    !browserState.isShowSearch &&
+    !browserState.isShowManage ? (
+    <View style={styles.handleComponent}>
+      <TouchableOpacity onPress={handleCloseBrowser} hitSlop={5}>
+        {isLight ? <RcIconCloseBrowser /> : <RcIconCloseBrowserDark />}
+      </TouchableOpacity>
+    </View>
+  ) : null;
+};
+
+export const BottomSheetBrowser = () => {
+  const { safeOffScreenTop } = useSafeSizes();
+  const { browserState, setPartialBrowserState, onHideBrowser } = useBrowser();
   const { browserHistoryList } = useBrowserHistory();
-  const { colors2024, styles } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle,
   });
 
   const modalRef = useRef<AppBottomSheetModal>(null);
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
 
   const snapPoints = useMemo(() => {
     return [safeOffScreenTop - BOTTOM_SHEET_EXTRA];
@@ -80,7 +100,6 @@ export const BottomSheetBrowser = () => {
     if (browserState.isShowBrowser) {
       modalRef.current?.present();
     } else {
-      console.log('[close]');
       modalRef.current?.close();
     }
   }, [browserState.isShowBrowser]);
@@ -116,23 +135,6 @@ export const BottomSheetBrowser = () => {
     };
   }, []);
 
-  const handleCloseBrowser = useMemoizedFn(() => {
-    closeTab(activeTabId);
-    setPartialBrowserState({
-      isShowBrowser: false,
-      isShowSearch: false,
-      searchText: '',
-      searchTabId: '',
-      trigger: '',
-    });
-    onHideBrowser();
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: `Website_Exit`,
-      label: 'Click X',
-    });
-  });
-
   return (
     <AppBottomSheetModal
       index={browserState.isShowBrowser ? 0 : -1}
@@ -147,17 +149,7 @@ export const BottomSheetBrowser = () => {
       android_keyboardInputMode="adjustResize"
       // enableBlurKeyboardOnGesture
       // handleStyle={styles.hidden}
-      handleComponent={() => {
-        return browserState.isShowBrowser &&
-          !browserState.isShowSearch &&
-          !browserState.isShowManage ? (
-          <View style={styles.handleComponent}>
-            <TouchableOpacity onPress={handleCloseBrowser} hitSlop={5}>
-              <RcIconCloseBrowser />
-            </TouchableOpacity>
-          </View>
-        ) : null;
-      }}
+      handleComponent={CustomHandle}
       containerStyle={styles.customContentStyle}
       backgroundComponent={null}
       onChange={index => {
