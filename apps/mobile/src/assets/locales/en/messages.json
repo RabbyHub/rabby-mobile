@@ -1780,6 +1780,7 @@
       "Price": "Price",
       "HoldingValue": "Holding Value",
       "notSupportedOnChain": "Not supported on this chain",
+      "notSupported": "Token not support",
       "noBalance": "No Balance",
       "relateDefi": "Related DeFi",
       "SeeMore": "See more",

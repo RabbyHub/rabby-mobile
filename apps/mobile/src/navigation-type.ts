@@ -330,8 +330,11 @@ export type TransactionNavigatorParamList = {
   [RootNames.Approvals]: {
     account: Account;
   };
-  [RootNames.Bridge]?: {};
-  [RootNames.MultiBridge]?: {};
+  [RootNames.Bridge]?: {
+    chainEnum?: CHAINS_ENUM | undefined;
+    tokenId?: TokenItem['id'];
+  };
+  [RootNames.MultiBridge]?: TransactionNavigatorParamList['Bridge'] & object;
   [RootNames.GasAccount]?: {};
   [RootNames.Buy]?: {
     receiveToken?: TokenItem;

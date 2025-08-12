@@ -1,11 +1,8 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
-import { Tip } from '@/components/Tip';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import {
   AbstractPortfolio,
@@ -13,20 +10,17 @@ import {
   AbstractProject,
 } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
-import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRequest } from 'ahooks';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -50,11 +44,9 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
 import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
-import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
@@ -66,6 +58,7 @@ import {
 } from '../Swap/hooks/atom';
 import BalanceOverview from './components/BalanceOverview';
 import { useTokenBalance } from './hook';
+import TokenActions from './components/TokenActions';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -440,7 +433,7 @@ export const TokenDetailScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const { data: tokenWithAmount } = useRequest(
     async () => {
@@ -473,24 +466,6 @@ export const TokenDetailScreen = () => {
   const getHeaderTitle = useCallback(() => {
     return <TokenDetailHeaderArea key={finalAccount?.address} token={token} />;
   }, [finalAccount?.address, token]);
-
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { navigateToSendPolyScreen } = useSendRoutes();
-
-  const handleSend = useMemoizedFn(async () => {
-    const chain = findChain({
-      serverId: token.chain,
-    });
-    if (isSingleAddress) {
-      await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
-    }
-    setShouldHideSelectorPopup(false);
-    setIsFromBack(false);
-    navigateToSendPolyScreen(!!isSingleAddress, {
-      chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-      tokenId: token?._tokenId,
-    });
-  });
 
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
@@ -539,18 +514,6 @@ export const TokenDetailScreen = () => {
     }
   }, [token, accounts, isSingleAddress, finalAccount, tokenEntityList]);
 
-  const tokenChain = useMemo(() => {
-    return getChain(token?.chain);
-  }, [token?.chain]);
-
-  const { isSupportedChain, data: externalSwapDapps } =
-    useExternalSwapBridgeDapps(tokenChain!.enum, 'swap');
-
-  const tokenSupportSwap = useMemo(
-    () => isSupportedChain || externalSwapDapps.length > 0,
-    [isSupportedChain, externalSwapDapps],
-  );
-
   const unHold = useMemo(
     () => _unHold || tokenFromAddress.length === 0,
     [_unHold, tokenFromAddress],
@@ -586,48 +549,6 @@ export const TokenDetailScreen = () => {
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
 
-  const isFromSwap =
-    !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
-
-  const handleSwap = useMemoizedFn(
-    async (
-      type: 'Buy' | 'Sell',
-      address?: string,
-      accountType?: KEYRING_TYPE,
-    ) => {
-      if (!tokenSupportSwap) {
-        toast.error('Token not support');
-        return;
-      }
-
-      const chain = findChain({
-        serverId: token.chain,
-      });
-
-      const toAccount =
-        address && accountType
-          ? accounts.find(
-              i => isSameAddress(address, i.address) && i.type === accountType,
-            ) || finalAccount
-          : finalAccount;
-      await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
-      // 关闭弹窗隐藏
-      setShouldHideSelectorPopup(false);
-      setIsFromBack(false);
-      navigation.push(RootNames.StackTransaction, {
-        screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
-        params: {
-          chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-          tokenId: token?._tokenId,
-          type: tokenSelectType === 'swapTo' ? 'Buy' : type,
-          address,
-          isFromSwap,
-        },
-      });
-    },
-  );
-
-  const { t } = useTranslation();
   const { amountSum, usdValue, percentChange, isLoss, is24hNoChange } =
     useTokenBalance({
       token: tokenWithAmount || token,
@@ -698,6 +619,12 @@ export const TokenDetailScreen = () => {
             amount={amountSum}
             is24hNoChange={is24hNoChange}
           />
+          <TokenActions
+            token={token}
+            isSingleAddress={!!isSingleAddress}
+            finalAccount={finalAccount}
+            tokenSelectType={tokenSelectType}
+          />
         </View>
         <TokenArea
           isSingleAddress={isSingleAddress}
@@ -725,38 +652,6 @@ export const TokenDetailScreen = () => {
         />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
       </ScrollView>
-      <View
-        style={[
-          styles.buttonGroup,
-          isAndroid && { paddingBottom: 50 + safeOffBottom },
-        ]}>
-        <Button
-          type="ghost"
-          title={t('page.home.services.send')}
-          containerStyle={StyleSheet.flatten([styles.btnContainer])}
-          buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
-          onPress={() => handleSend()}
-        />
-        <View style={styles.btnContainer}>
-          <Tip
-            placement="top"
-            content={
-              !tokenSupportSwap
-                ? t('page.tokenDetail.notSupportedOnChain')
-                : undefined
-            }>
-            <Button
-              title={isFromSwap ? t('global.Confirm') : t('page.swap.title')}
-              containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              onPress={() =>
-                handleSwap('Sell', finalAccount?.address, finalAccount?.type)
-              }
-              buttonStyle={styles.btnInnerContainer}
-              disabled={!tokenSupportSwap}
-            />
-          </Tip>
-        </View>
-      </View>
     </NormalScreenContainer2024>
   );
 };
@@ -766,11 +661,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: isLight
         ? colors2024['neutral-bg-0']
         : colors2024['neutral-bg-1'],
+      paddingBottom: 20,
     },
     balanceOverviewContainer: {
       paddingHorizontal: 23,
       marginBottom: 28,
-      borderWidth: 1,
+      gap: 24,
     },
     riskContainer: {
       paddingHorizontal: 20,
