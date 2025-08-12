@@ -33,6 +33,7 @@ import {
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenArea } from './components/TokenArea';
+import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { RcIconMore } from '@/assets/icons/home';
@@ -50,7 +51,9 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
 import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
+import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { IssuerAndListSite } from './components/IssuerAndListSite';
 import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
@@ -64,8 +67,6 @@ import {
   isFromBackAtom,
   shouldHideSelectorPopupAtom,
 } from '../Swap/hooks/atom';
-import BalanceOverview from './components/BalanceOverview';
-import { useTokenBalance } from './hook';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -293,6 +294,7 @@ export const TokenDetailScreen = () => {
   const [, setShouldHideSelectorPopup] = useAtom(shouldHideSelectorPopupAtom);
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
+  const [isUp, setIsUp] = useState(true);
   const { assetsMap, getCacheTop10Assets, getTokenCombined } = useAssets({
     hideCombined: true,
   });
@@ -457,6 +459,20 @@ export const TokenDetailScreen = () => {
     },
     {
       refreshDeps: [token.chain, token._tokenId, finalAccount?.address],
+    },
+  );
+
+  const { data: tokenEntity, loading: entityLoading } = useRequest(
+    async () => {
+      if (!token || !token._tokenId) {
+        return;
+      }
+
+      const res = await openapi.getTokenEntity(token._tokenId, token.chain);
+      return res;
+    },
+    {
+      refreshDeps: [token._tokenId, token.chain],
     },
   );
 
@@ -628,14 +644,6 @@ export const TokenDetailScreen = () => {
   );
 
   const { t } = useTranslation();
-  const { amountSum, usdValue, percentChange, isLoss, is24hNoChange } =
-    useTokenBalance({
-      token: tokenWithAmount || token,
-      amountList: tokenFromAddress,
-      isSingleAddress: !!isSingleAddress,
-      relateDefiList,
-      currentAddress: finalAccount?.address,
-    });
 
   if (isSingleAddress && !finalAccount) {
     return null;
@@ -647,7 +655,7 @@ export const TokenDetailScreen = () => {
       overwriteStyle={styles.rootScreenContainer}>
       <ImageBackground
         source={
-          !isLoss
+          isUp
             ? isLight
               ? require('@/assets2024/singleHome/home-profit-bg-1.png')
               : require('@/assets2024/singleHome/home-profit-dark-bg-1.png')
@@ -667,7 +675,7 @@ export const TokenDetailScreen = () => {
       <ScrollView>
         <ImageBackground
           source={
-            !isLoss
+            isUp
               ? isLight
                 ? require('@/assets2024/singleHome/home-profit-bg-2.png')
                 : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
@@ -690,13 +698,15 @@ export const TokenDetailScreen = () => {
             <RiskTokenTips isDanger={false} />
           )}
         </View>
-        <View style={styles.balanceOverviewContainer}>
-          <BalanceOverview
-            percentChange={percentChange}
-            isLoss={isLoss}
-            usdValue={usdValue}
-            amount={amountSum}
-            is24hNoChange={is24hNoChange}
+        <View style={{ position: 'relative' }}>
+          <TokenPriceChart
+            token={tokenWithAmount || token}
+            originToken={token}
+            finalAccount={finalAccount}
+            onUpChange={b => setIsUp(b)}
+            amountList={tokenFromAddress}
+            relateDefiList={relateDefiList}
+            isSingleAddress={isSingleAddress}
           />
         </View>
         <TokenArea
@@ -708,7 +718,6 @@ export const TokenDetailScreen = () => {
           token={token}
           rawAllAccounts={rawAllAccounts}
         />
-        {/* TODO: 为了好测试，最后上线前删除 */}
         {relateDefiList.length > 0 && (
           <RelatedDeFi
             deFiList={relateDefiList}
@@ -716,6 +725,11 @@ export const TokenDetailScreen = () => {
             handleGoDeFi={handleOpenDefiDetail}
           />
         )}
+        <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
+        <IssuerAndListSite
+          tokenEntity={tokenEntity}
+          entityLoading={entityLoading}
+        />
         <HistoryList
           accounts={accounts}
           top10Addresses={top10Addresses}
@@ -767,11 +781,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
         ? colors2024['neutral-bg-0']
         : colors2024['neutral-bg-1'],
     },
-    balanceOverviewContainer: {
-      paddingHorizontal: 23,
-      marginBottom: 28,
-      borderWidth: 1,
-    },
+
     riskContainer: {
       paddingHorizontal: 20,
       marginBottom: 12,

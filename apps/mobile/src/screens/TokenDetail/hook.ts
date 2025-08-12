@@ -1,4 +1,4 @@
-import { useMemoizedFn, useRequest } from 'ahooks';
+import { useMemoizedFn } from 'ahooks';
 import { openapi } from '@/core/request';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -7,7 +7,9 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { patchSingleToken } from '@/databases/sync/assets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { TokenItemEntity } from '@/databases/entities/tokenitem';
+import { RelatedDeFiType, TokenFromAddressItem } from '.';
+import { unionBy } from 'lodash';
+import { formatPrice } from '@/utils/number';
 
 export const useTokenDetail = (
   chain: string,
@@ -119,5 +121,69 @@ export const useTokenDetail = (
     tokensByAddress,
     failedAddresses,
     refetch: fetchAllAddressTokens,
+  };
+};
+
+export const useTokenBalance = ({
+  token,
+  amountList,
+  isSingleAddress,
+  relateDefiList,
+  currentAddress,
+}: {
+  token: TokenItem;
+  amountList: TokenFromAddressItem[];
+  isSingleAddress: boolean;
+  relateDefiList: RelatedDeFiType[];
+  currentAddress: string;
+}) => {
+  const amountSum = useMemo(() => {
+    let deFiAmount = 0;
+    relateDefiList?.forEach(item => {
+      deFiAmount += item.amount;
+    });
+
+    if (isSingleAddress) {
+      const tokenAmount = amountList.find(item =>
+        isSameAddress(item.address, currentAddress),
+      )?.amount;
+      return (tokenAmount || 0) + deFiAmount;
+    } else {
+      const amountUnionBy = unionBy(amountList, item =>
+        item.address.toLowerCase(),
+      );
+      const totalTokenAmount = amountUnionBy.reduce((acc, item) => {
+        return acc + item.amount;
+      }, 0);
+
+      return totalTokenAmount + deFiAmount;
+    }
+  }, [amountList, isSingleAddress, relateDefiList, currentAddress]);
+
+  const usdValue = useMemo(() => {
+    const _usdValue = token.price * amountSum;
+    return formatPrice(_usdValue || 0, 8, true);
+  }, [token.price, amountSum]);
+
+  const percentChange = useMemo(() => {
+    return token?.price_24h_change
+      ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
+      : '';
+  }, [token.price_24h_change]);
+
+  const is24hNoChange = useMemo(() => {
+    return !token?.price_24h_change;
+  }, [token.price_24h_change]);
+
+  const isLoss = useMemo(() => {
+    return token.price_24h_change ? Number(token.price_24h_change) < 0 : false;
+  }, [token.price_24h_change]);
+
+  return {
+    amountSum,
+    usdValue,
+    percentChange,
+    isLoss,
+    is24hNoChange,
   };
 };

@@ -2,7 +2,6 @@ import IconOfflineCC from '@/assets/icons/home/offline-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Skeleton } from '@rneui/themed';
-import { last } from 'lodash';
 import React from 'react';
 import { Text, View } from 'react-native';
 import AnimateableText from 'react-native-animateable-text';
