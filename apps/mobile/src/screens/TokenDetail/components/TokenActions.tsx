@@ -115,16 +115,28 @@ const TokenActions = ({
           const chainItem = !token?.chain
             ? null
             : findChainByServerID(token?.chain);
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.Receive,
-              params: {
-                account: finalAccount,
-                tokenSymbol: token.symbol,
-                chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-              },
-            }),
-          );
+          if (isSingleAddress) {
+            navigation.dispatch(
+              StackActions.push(RootNames.StackTransaction, {
+                screen: RootNames.Receive,
+                params: {
+                  account: finalAccount,
+                  tokenSymbol: token.symbol,
+                  chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                },
+              }),
+            );
+          } else {
+            navigation.dispatch(
+              StackActions.push(RootNames.StackAddress, {
+                screen: RootNames.ReceiveAddressList,
+                params: {
+                  tokenSymbol: token.symbol,
+                  chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                },
+              }),
+            );
+          }
         },
       },
       {
