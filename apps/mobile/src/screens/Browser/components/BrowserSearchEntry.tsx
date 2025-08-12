@@ -1,6 +1,6 @@
 import { RcNextSearchCC } from '@/assets/icons/common';
 import { RcIconTabsCC } from '@/assets2024/icons/browser';
-import { useBrowser } from '@/hooks/browser/useBrowser';
+import { useBrowser, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -193,9 +193,7 @@ export const BrowserSearchEntry: React.FC = () => {
     switchToTab,
   } = useBrowser();
 
-  const tabs = useMemo(() => {
-    return sortBy(displayedTabs, tab => -(tab.openTime || 0)).slice(0, 4);
-  }, [displayedTabs]);
+  const tabs = useHomeDisplayedTabs();
 
   const { t } = useTranslation();
   const handlePress = useMemoizedFn(() => {

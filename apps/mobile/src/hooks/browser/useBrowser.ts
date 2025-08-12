@@ -1,27 +1,21 @@
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import { RootNames } from '@/constant/layout';
-import { emptyTab, Tab } from '@/core/services/browserService';
-import {
-  canoicalizeDappUrl,
-  safeGetOrigin,
-} from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { TabActions, useRoute } from '@react-navigation/native';
-import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom } from 'jotai';
-import { v4 as uuid } from 'uuid';
-import { useRabbyAppNavigation } from '../navigation';
-import { browserService, dappService } from '@/core/services';
-import { omit, last, sortBy, initial } from 'lodash';
-import { boolean } from 'yup';
-import { useEffect, useMemo } from 'react';
-import { dappsAtom } from '../useDapps';
+import { browserService } from '@/core/services';
+import { Tab } from '@/core/services/browserService';
+import { isGoogle } from '@/utils/browser';
 import {
   EVENT_SHOW_BROWSER,
   EVENT_SHOW_BROWSER_MANAGE,
   eventBus,
 } from '@/utils/events';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { isGoogle } from '@/utils/browser';
+import {
+  canoicalizeDappUrl,
+  safeGetOrigin,
+} from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useMemoizedFn } from 'ahooks';
+import { atom, useAtom } from 'jotai';
+import { last, omit, sortBy } from 'lodash';
+import { v4 as uuid } from 'uuid';
+import { dappsAtom } from '../useDapps';
 
 export const tabsAtom = atom<{
   tabs: Tab[];
@@ -47,17 +41,36 @@ const MAX_ACTIVE_TABS_COUNT = 4;
 const displayedTabsAtom = atom(get => {
   const store = get(tabsAtom);
 
-  return sortBy(
-    store.tabs.filter(item => {
-      return item.isDapp;
-    }),
-    tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
-  );
+  return store.tabs.filter(item => {
+    return item.isDapp;
+  });
+
+  // return sortBy(
+  //   store.tabs.filter(item => {
+  //     return item.isDapp;
+  //   }),
+  //   tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
+  // );
 });
 
-export function useBrowser() {
-  // const navigation = useRabbyAppNavigation();
+const homeDisplayedTabsAtom = atom(get => {
+  const store = get(tabsAtom);
+  const dapps = get(dappsAtom);
 
+  return sortBy(
+    store.tabs.filter(item => {
+      return dapps[safeGetOrigin(item.url || item.initialUrl)]?.isDapp;
+    }),
+    tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
+  ).slice(0, 4);
+});
+
+export const useHomeDisplayedTabs = () => {
+  const [tabs] = useAtom(homeDisplayedTabsAtom);
+  return tabs;
+};
+
+export function useBrowser() {
   const [store, setStore] = useAtom(tabsAtom);
   const [visible, setVisible] = useAtom(visibleAtom);
   const [isShowManagePopup, setIsShowManagePopup] = useAtom(managePopupAtom);
