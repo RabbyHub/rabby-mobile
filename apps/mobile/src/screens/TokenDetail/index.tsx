@@ -88,6 +88,7 @@ const hitSlop = {
   left: 10,
   right: 10,
 };
+
 export const RightMore: React.FC<{
   token: AbstractPortfolioToken;
   isMultiAddress?: boolean;
@@ -289,11 +290,8 @@ export const TokenDetailScreen = () => {
   const { styles, isLight } = useTheme2024({
     getStyle,
   });
-  const { colors2024 } = useTheme2024();
 
-  const [shouldHideSelectorPopup, setShouldHideSelectorPopup] = useAtom(
-    shouldHideSelectorPopupAtom,
-  );
+  const [, setShouldHideSelectorPopup] = useAtom(shouldHideSelectorPopupAtom);
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
   const [isUp, setIsUp] = useState(true);
@@ -310,13 +308,6 @@ export const TokenDetailScreen = () => {
   }, [getTokenCombined, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
   const { top10Addresses, list: accounts, rawAllAccounts } = useAccountInfo();
-  // const { tokensByAddress, isReady: tokenListIsReady } = useTokenDetail(
-  //   token.chain,
-  //   token._tokenId,
-  //   top10Addresses.map(item => item.toLowerCase()),
-  //   isSingleAddress ? undefined : (token as CombineTokensItem).fromAddress,
-  //   isSingleAddress,
-  // );
 
   const finalAccount =
     account || accounts[0] || preferenceService.getFallbackAccount();
@@ -455,10 +446,6 @@ export const TokenDetailScreen = () => {
 
   const { data: tokenWithAmount } = useRequest(
     async () => {
-      // if (!finalAccount || !token || token.amount) {
-      //   return token;
-      // }
-
       const res = await openapi.getToken(
         finalAccount!.address,
         token.chain,
@@ -468,7 +455,6 @@ export const TokenDetailScreen = () => {
         ...abstractTokenToTokenItem(token),
         usd_value: res?.usd_value,
         price: res?.price,
-        // amount: res?.amount,
       });
     },
     {
@@ -542,12 +528,6 @@ export const TokenDetailScreen = () => {
     } else {
       const { fromAddress } = token as CombineTokensItem;
 
-      // const fromAddressList = !tokenListIsReady
-      //   ? fromAddress
-      //   : Object.keys(tokensByAddress).map(address => ({
-      //       address,
-      //       amount: tokensByAddress[address].amount,
-      //     }));
       const fromAddressList =
         tokenEntityList?.map(item => ({
           address: item.owner_addr,
@@ -719,8 +699,6 @@ export const TokenDetailScreen = () => {
           )}
         </View>
         <View style={{ position: 'relative' }}>
-          {/* <HomePinBadge token={token} refreshTags={refreshTag} /> */}
-          {/* <Text style={styles.currentText}>Current price</Text> */}
           <TokenPriceChart
             token={tokenWithAmount || token}
             originToken={token}
@@ -730,7 +708,6 @@ export const TokenDetailScreen = () => {
             relateDefiList={relateDefiList}
             isSingleAddress={isSingleAddress}
           />
-          {/* <View style={styles.divider} /> */}
         </View>
         <TokenArea
           isSingleAddress={isSingleAddress}
@@ -762,19 +739,6 @@ export const TokenDetailScreen = () => {
         />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
       </ScrollView>
-      {/* <LinearGradient
-        colors={
-          isLight
-            ? ['rgba(246, 247, 247, 1)', 'rgba(246, 247, 247, 0.3)']
-            : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.3)']
-        }
-        locations={[0.6393, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[
-          styles.floatBottom,
-          isAndroid && { height: 120 + safeOffBottom },
-        ]}> */}
       <View
         style={[
           styles.buttonGroup,
@@ -807,7 +771,6 @@ export const TokenDetailScreen = () => {
           </Tip>
         </View>
       </View>
-      {/* </LinearGradient> */}
     </NormalScreenContainer2024>
   );
 };
