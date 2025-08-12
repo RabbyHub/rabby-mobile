@@ -47,9 +47,12 @@ const MAX_ACTIVE_TABS_COUNT = 4;
 const displayedTabsAtom = atom(get => {
   const store = get(tabsAtom);
 
-  return store.tabs.filter(item => {
-    return item.isDapp;
-  });
+  return sortBy(
+    store.tabs.filter(item => {
+      return item.isDapp;
+    }),
+    tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
+  );
 });
 
 export function useBrowser() {

@@ -115,7 +115,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   closeIcon: {
     position: 'absolute',
-    top: 7,
+    top: 9,
     left: 12,
     zIndex: 10,
   },
