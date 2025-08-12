@@ -300,8 +300,9 @@ export const TokenDetailScreen = () => {
   const { safeOffBottom } = useSafeSizes();
   const { top10Addresses, list: accounts, rawAllAccounts } = useAccountInfo();
 
-  const finalAccount =
-    account || accounts[0] || preferenceService.getFallbackAccount();
+  const finalAccount = useMemo(() => {
+    return account || accounts[0] || preferenceService.getFallbackAccount();
+  }, [account, accounts]);
 
   const { data: tokenEntityList } = useRequest(
     async () => {
