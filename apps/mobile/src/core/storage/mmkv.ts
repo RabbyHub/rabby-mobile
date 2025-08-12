@@ -39,7 +39,7 @@ function makeAppStorage(options?: MMKVConfiguration) {
   function getJsonValueStringCompat(key: string): string | null {
     const raw = mmkv.getString(key);
     if (!raw) return null;
-    let finalString: string | null = null;
+    let finalString: string | null = raw;
 
     try {
       if (checkIfDuplicatedStringifiedJsonObjectString(raw)) {
