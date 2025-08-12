@@ -223,14 +223,6 @@ export function useBrowser() {
         newTab.url,
       );
 
-      if (dappService.getDapp(targetOrigin)?.isDapp && url?.trim()) {
-        matomoRequestEvent({
-          category: 'Websites Usage',
-          action: 'Website_OpenDapp',
-          label: targetOrigin,
-        });
-      }
-
       const sameOriginTab = displayedTabs.find(
         item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
       );

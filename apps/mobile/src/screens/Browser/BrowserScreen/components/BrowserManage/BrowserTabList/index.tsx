@@ -11,6 +11,8 @@ import { BrowserTabCard } from './BrowserTabCard';
 import { useRef } from 'react';
 import { BrowserTabEmpty } from './BrowserTabEmpty';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles, isLight } = useTheme2024({
@@ -45,7 +47,14 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         <BrowserTabCard
           tab={item}
           isActive={activeTabId === item.id}
-          onPress={tab => switchToTab(tab.id)}
+          onPress={tab => {
+            switchToTab(tab.id);
+            matomoRequestEvent({
+              category: 'Websites Usage',
+              action: 'Website_Visit_Website Tab',
+              label: safeGetOrigin(tab.url || tab.initialUrl),
+            });
+          }}
           onPressClose={tab => {
             if (displayedTabs.length === 1) {
               setPartialBrowserState({

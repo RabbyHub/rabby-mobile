@@ -21,6 +21,7 @@ import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
 import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { ReactIconHome } from '@/assets2024/icons/browser';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export function BrowserSearch({
   onClose,
@@ -126,6 +127,11 @@ export function BrowserSearch({
   const handlePressHome = useMemoizedFn(() => {
     Keyboard.dismiss();
     onClose?.(true);
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: `Website_Exit`,
+      label: 'Click Home',
+    });
   });
 
   return (
@@ -157,6 +163,11 @@ export function BrowserSearch({
             list={displayedBrowserHistoryList}
             onPress={dapp => {
               handleOpenUrl(dapp.url || dapp.origin);
+              matomoRequestEvent({
+                category: 'Websites Usage',
+                action: 'Website_Visit_Recent List',
+                label: dapp.origin,
+              });
             }}
           />
         )
@@ -166,7 +177,14 @@ export function BrowserSearch({
           searchText={searchText}
           data={list || []}
           isValidDomain={!!isValidDomain}
-          onOpenURL={handleOpenUrl}
+          onOpenURL={origin => {
+            handleOpenUrl(origin);
+            matomoRequestEvent({
+              category: 'Websites Usage',
+              action: 'Website_Visit_Search Results',
+              label: origin,
+            });
+          }}
         />
       )}
 

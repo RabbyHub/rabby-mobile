@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import { BrowserHistoryEmpty } from './BrowserHistoryEmpty';
 import { BrowserHistorySiteList } from './BrowserHistorySiteList';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export const BrowserHistoryList = ({
   style,
@@ -27,6 +29,11 @@ export const BrowserHistoryList = ({
 
   const handlePress = useMemoizedFn((dappInfo: DappInfo) => {
     openTab(dappInfo.url || dappInfo.origin);
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: 'Website_Visit_Website Recent',
+      label: dappInfo.origin,
+    });
   });
 
   const handleFavoritePress = useMemoizedFn((dappInfo: DappInfo) => {

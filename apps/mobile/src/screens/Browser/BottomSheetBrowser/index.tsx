@@ -31,6 +31,7 @@ import {
 } from '@/utils/events';
 import { BOTTOM_SHEET_EXTRA } from '@/constant/browser';
 import { RcIconCloseBrowser } from '@/assets/icons/dapp';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -125,6 +126,11 @@ export const BottomSheetBrowser = () => {
       trigger: '',
     });
     onHideBrowser();
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: `Website_Exit`,
+      label: 'Click X',
+    });
   });
 
   return (
@@ -156,10 +162,14 @@ export const BottomSheetBrowser = () => {
       backgroundComponent={null}
       onChange={index => {
         if (index === -1) {
-          // // 手动下拉关闭？
-          // if (browserState.isShowBrowser && !browserState.isShowSearch) {
-          //   closeTab(activeTabId);
-          // }
+          // 手动下拉关闭？
+          if (browserState.isShowBrowser && !browserState.isShowSearch) {
+            matomoRequestEvent({
+              category: 'Websites Usage',
+              action: `Website_Exit`,
+              label: 'Drop Down',
+            });
+          }
           setPartialBrowserState({
             isShowBrowser: false,
             isShowSearch: false,
@@ -168,6 +178,11 @@ export const BottomSheetBrowser = () => {
             trigger: '',
           });
           onHideBrowser();
+        } else {
+          matomoRequestEvent({
+            category: 'Websites Usage',
+            action: 'Website_Start',
+          });
         }
       }}>
       <AutoLockView as="BottomSheetView" style={styles.customContentStyle}>

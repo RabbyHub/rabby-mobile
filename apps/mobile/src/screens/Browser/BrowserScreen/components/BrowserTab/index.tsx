@@ -32,7 +32,7 @@ import { parsePossibleURL } from '@/constant/dappView';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { browserService } from '@/core/services';
+import { browserService, dappService } from '@/core/services';
 import { FontNames } from '@/core/utils/fonts';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -57,11 +57,12 @@ import { BrowserSearchAutoComplete } from './BrowserSearchAutoComplete';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { emptyTab, Tab } from '@/core/services/browserService';
 import { coerceInteger } from '@/utils/number';
-import { isValidAppStoreUrl } from '@/utils/browser';
+import { isGoogle, isValidAppStoreUrl } from '@/utils/browser';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { BrowserSearch } from '../BrowserSearch';
 import { NativeViewGestureHandler } from 'react-native-gesture-handler';
 import RNFS from 'react-native-fs';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 type BrowserTabProps = {
   origin: string;
@@ -229,6 +230,11 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
           name: webviewState.title,
           createdAt: Date.now(),
         });
+        matomoRequestEvent({
+          category: 'Websites Usage',
+          action: 'Website_Favorite',
+          label: safeGetOrigin(webviewState.resolvedUrl),
+        });
       }
     });
 
@@ -347,6 +353,12 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       setPartialBrowserState({
         isShowBrowser: false,
       });
+
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: `Website_Exit`,
+        label: 'Click Home',
+      });
     });
 
     const handleOnOpenWindow = useMemoizedFn(
@@ -380,6 +392,17 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
         handleViewShot();
       }
     }, [debounceProgress, handleViewShot, isActive]);
+
+    useEffect(() => {
+      const origin = safeGetOrigin(webviewState.resolvedUrl);
+      if (isActive && origin && dappService.getDapp(origin)?.isConnected) {
+        matomoRequestEvent({
+          category: 'Websites Usage',
+          action: 'Website_Connected',
+          label: origin,
+        });
+      }
+    }, [isActive, webviewState.resolvedUrl]);
 
     React.useImperativeHandle(
       ref,
@@ -616,6 +639,17 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       // }
                     }}
                     onShouldStartLoadWithRequest={nativeEvent => {
+                      const origin = safeGetOrigin(nativeEvent.url);
+                      if (
+                        isGoogle(webviewState.resolvedUrl) &&
+                        dappService.getDapp(origin)?.isDapp
+                      ) {
+                        matomoRequestEvent({
+                          category: 'Websites Usage',
+                          action: 'Website_Visit_Page Link',
+                          label: origin,
+                        });
+                      }
                       return checkShouldStartLoadingWithRequestForDappWebView(
                         nativeEvent,
                       );

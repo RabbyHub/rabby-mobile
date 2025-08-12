@@ -50,6 +50,7 @@ import { AccountSelector } from '@/components2024/AccountSelector';
 import { Account } from '@/core/services/preference';
 import { ConnectSkeleton } from './ConnectSkeleton';
 import { useMyAccounts } from '@/hooks/account';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const RuleDesc = [
   {
@@ -457,7 +458,12 @@ ConnectProps) => {
       defaultChain,
       defaultAccount: selectedAccount,
     });
-  }, [defaultChain, resolveApproval, selectedAccount]);
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: 'Website_Connected',
+      label: origin,
+    });
+  }, [defaultChain, origin, resolveApproval, selectedAccount]);
 
   const handleRuleDrawerClose = (update: boolean) => {
     if (update) {

@@ -19,6 +19,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { BrowserTabCard } from '../BrowserScreen/components/BrowserManage/BrowserTabList/BrowserTabCard';
 import { ViewStyle } from 'react-native-size-matters';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -206,10 +207,6 @@ export const BrowserSearchEntry: React.FC = () => {
       trigger: 'home',
     });
     forceShowBrowser();
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: 'Website_Start',
-    });
   });
 
   const handleTabPress = useMemoizedFn(() => {
@@ -249,6 +246,11 @@ export const BrowserSearchEntry: React.FC = () => {
                       tab={tab}
                       onPress={() => {
                         switchToTab(tab.id);
+                        matomoRequestEvent({
+                          category: 'Websites Usage',
+                          action: 'Website_Visit_Home Tab',
+                          label: safeGetOrigin(tab.url || tab.initialUrl),
+                        });
                       }}
                       onPressClose={() => {
                         closeTab(tab.id);

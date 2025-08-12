@@ -9,6 +9,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import { BrowserBookmarkEmpty } from './BrowserBookmarkEmpty';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export const BrowserBookmarkList = ({
   style,
@@ -24,6 +25,11 @@ export const BrowserBookmarkList = ({
 
   const handlePress = useMemoizedFn((dappInfo: DappInfo) => {
     openTab(dappInfo.url || dappInfo.origin);
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: 'Website_Visit_Website Favorites',
+      label: dappInfo.origin,
+    });
   });
 
   const handleDeletePress = useMemoizedFn((dappInfo: DappInfo) => {

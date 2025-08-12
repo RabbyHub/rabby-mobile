@@ -12,6 +12,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { dappService } from '@/core/services';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useTranslation } from 'react-i18next';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export function BrowserSearchResult({
   data,
@@ -81,11 +82,16 @@ export function BrowserSearchResult({
                   style={styles.listItem}
                   hitSlop={10}
                   onPress={() => {
-                    onOpenURL?.(
-                      /^https?:\/\//.test(searchText)
-                        ? searchText
-                        : `https://${searchText}`,
-                    );
+                    const url = /^https?:\/\//.test(searchText)
+                      ? searchText
+                      : `https://${searchText}`;
+                    onOpenURL?.(url);
+
+                    matomoRequestEvent({
+                      category: 'Websites Usage',
+                      action: 'Website_Visit_Direct Open',
+                      label: safeGetOrigin(url),
+                    });
                   }}>
                   <RcIconBallCC
                     style={styles.listItemIcon}

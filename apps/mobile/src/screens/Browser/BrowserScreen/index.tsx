@@ -238,16 +238,6 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
                 searchText: '',
                 searchTabId: '',
               });
-              if (
-                dappService.getDapp(safeGetOrigin(url))?.isDapp &&
-                url?.trim()
-              ) {
-                matomoRequestEvent({
-                  category: 'Websites Usage',
-                  action: 'Website_OpenDapp',
-                  label: safeGetOrigin(url),
-                });
-              }
             } else {
               openTab(url);
             }

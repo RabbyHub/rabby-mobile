@@ -15,6 +15,7 @@ import { TabName } from 'react-native-collapsible-tab-view/lib/typescript/src/ty
 import { DropDownMenuView } from '@/components2024/DropDownMenu';
 import { RcIconAddPlusCircle, ReactIconHome } from '@/assets2024/icons/browser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export function BrowserManage(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
@@ -69,6 +70,11 @@ export function BrowserManage(): JSX.Element {
     setPartialBrowserState({
       isShowManage: false,
       isShowBrowser: false,
+    });
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: `Website_Exit`,
+      label: 'Click Home',
     });
   });
 

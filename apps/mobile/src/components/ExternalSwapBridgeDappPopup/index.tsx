@@ -10,6 +10,8 @@ import RcIconExternalCC from '@/assets2024/icons/common/external-link-cc.svg';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export const ExternalSwapBridgeDappTips = ({
   dappsAvailable,

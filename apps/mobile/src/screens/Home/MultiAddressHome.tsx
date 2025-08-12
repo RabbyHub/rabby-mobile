@@ -772,6 +772,14 @@ function MultiAddressHome(): JSX.Element {
       });
 
       matomoRequestEvent({
+        category: 'Websites Usage',
+        action: `Website_TabStatus`,
+        label: `TabNumber:${
+          browserService.getBrowserTabs()?.tabs?.length || 0
+        }`,
+      });
+
+      matomoRequestEvent({
         category: 'Watchlist Usage',
         action: `Watchlist_LikeStatus`,
         label: `LikeToken:${
