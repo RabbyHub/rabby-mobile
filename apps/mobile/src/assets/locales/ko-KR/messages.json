@@ -1747,10 +1747,8 @@
         "unfavorite": "즐겨찾기 해제",
         "favorite": "즐겨찾기"
       },
-      "Mybalance": "내 잔액",
       "NoIssuer": "발행자 정보 없음",
       "Info": "정보",
-      "Transaction": "트랜잭션",
       "noTransactions": "거래 없음",
       "OriginIssue": "이 블록체인에 원주 발행됨",
       "ListedBy": "상장자:",

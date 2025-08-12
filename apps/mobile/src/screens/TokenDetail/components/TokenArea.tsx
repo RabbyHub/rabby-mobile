@@ -1,15 +1,14 @@
-import { AssetAvatar, Text } from '@/components';
+import { Text } from '@/components';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { ArrowCircleCC } from '@/assets2024/icons/address';
 import { TokenFromAddressItem } from '..';
-import { formatAmount, formatNumber, formatUsdValue } from '@/utils/number';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';
@@ -19,45 +18,18 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 
 interface Props {
   token: AbstractPortfolioToken | CombineTokensItem;
-  tokenUsdValue?: number;
   amountList: TokenFromAddressItem[];
-  isSingleAddress?: boolean;
-  finalAccount?: KeyringAccountWithAlias;
-  accounts: KeyringAccountWithAlias[];
   rawAllAccounts: KeyringAccountWithAlias[];
 }
 
 export const TokenArea: React.FC<Props> = ({
   token,
   amountList,
-  isSingleAddress,
-  finalAccount,
-  accounts,
   rawAllAccounts,
-  tokenUsdValue,
 }) => {
-  const { styles, isLight, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
-
-  const amountSum = useMemo(() => {
-    // let sum = 0;
-    // amountList.map((item, index) => {
-    //   sum = sum + item.amount;
-    // });
-    if ('totalAmount' in token && !isSingleAddress) {
-      return token.totalAmount as unknown as number;
-    } else {
-      const currentAddress = finalAccount?.address;
-      if ('fromAddress' in token && currentAddress) {
-        const tokenAmount = token.fromAddress.find(
-          item => item.address === currentAddress,
-        );
-        return tokenAmount?.amount ?? token.amount;
-      }
-      return token.amount;
-    }
-  }, [token, isSingleAddress, finalAccount]);
 
   const handleOnPress = useCallback(
     (item: TokenFromAddressItem) => {
@@ -82,7 +54,7 @@ export const TokenArea: React.FC<Props> = ({
         <TouchableOpacity
           style={styles.itemCard}
           key={index}
-          onPress={e => handleOnPress(item)}>
+          onPress={() => handleOnPress(item)}>
           <View style={styles.tokenBox}>
             <WalletIcon
               type={item?.type as KEYRING_TYPE}
@@ -156,16 +128,12 @@ export const TokenArea: React.FC<Props> = ({
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     width: '100%',
-    // marginTop: 30,
-    paddingHorizontal: 20,
-    // marginBottom: 16,
+    paddingHorizontal: 15,
   },
   horizontalLine: {
-    // width: 1,
     flex: 1,
     height: 1,
     backgroundColor: ctx.colors2024['neutral-line'],
-    // marginHorizontal: 4,
   },
   imgIcon: {
     width: 160,
@@ -175,12 +143,6 @@ const getStyles = createGetStyles2024(ctx => ({
     width: 26,
     height: 26,
     borderRadius: 30,
-  },
-  empytContainer: {
-    paddingVertical: 40,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   noBalanceText: {
     color: ctx.colors2024['neutral-secondary'],
@@ -197,6 +159,7 @@ const getStyles = createGetStyles2024(ctx => ({
     alignItems: 'center',
     flexShrink: 0,
     marginBottom: 4,
+    paddingLeft: 4,
   },
   content: {
     // alignItems: 'center',
@@ -226,16 +189,16 @@ const getStyles = createGetStyles2024(ctx => ({
 
   body: {},
   balanceTitle: {
-    color: ctx.colors2024['neutral-foot'],
+    color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 18,
     lineHeight: 20,
     fontWeight: '700',
   },
 
   itemCard: {
     width: '100%',
-    marginTop: 12,
+    marginTop: 8,
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
       : ctx.colors2024['neutral-bg-2'],
@@ -250,7 +213,7 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'space-between',
   },
   itemEmptyContainer: {
-    marginTop: 12,
+    marginTop: 8,
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
       : ctx.colors2024['neutral-bg-2'],

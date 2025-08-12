@@ -32,7 +32,6 @@ import {
   View,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import { TokenArea } from './components/TokenArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
@@ -42,7 +41,6 @@ import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { CombineTokensItem } from '../Home/hooks/store';
-import { RelatedDeFi } from './components/RelatedDeFi';
 import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
@@ -54,7 +52,6 @@ import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
-import { HistoryList } from './components/HistoryList';
 import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
 import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
@@ -709,33 +706,10 @@ export const TokenDetailScreen = () => {
             isSingleAddress={isSingleAddress}
           />
         </View>
-        <TokenArea
-          isSingleAddress={isSingleAddress}
-          tokenUsdValue={tokenWithAmount?.price}
-          finalAccount={finalAccount}
-          accounts={accounts}
-          amountList={tokenFromAddress}
-          token={token}
-          rawAllAccounts={rawAllAccounts}
-        />
-        {relateDefiList.length > 0 && (
-          <RelatedDeFi
-            deFiList={relateDefiList}
-            symbol={token.symbol}
-            handleGoDeFi={handleOpenDefiDetail}
-          />
-        )}
         <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
         <IssuerAndListSite
           tokenEntity={tokenEntity}
           entityLoading={entityLoading}
-        />
-        <HistoryList
-          accounts={accounts}
-          top10Addresses={top10Addresses}
-          finalAccount={finalAccount}
-          isForMultipleAddress={!isSingleAddress}
-          token={token}
         />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
       </ScrollView>

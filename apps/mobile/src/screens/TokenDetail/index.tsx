@@ -1,14 +1,9 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import {
-  AbstractPortfolio,
-  AbstractPortfolioToken,
-  AbstractProject,
-} from '@/screens/Home/types';
+import { AbstractPortfolioToken, AbstractProject } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
@@ -35,8 +30,6 @@ import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { CombineTokensItem } from '../Home/hooks/store';
-import { RelatedDeFi } from './components/RelatedDeFi';
-import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -408,19 +401,6 @@ export const TokenDetailScreen = () => {
     rawPortfolios,
   ]);
 
-  const handleOpenDefiDetail = useCallback(
-    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      naviPush(RootNames.DeFiDetail, {
-        data,
-        portfolioList: itemList,
-        isSingleAddress,
-        account: finalAccount,
-        cache: true,
-        relateTokenId: token._tokenId,
-      });
-    },
-    [token, isSingleAddress, finalAccount],
-  );
   useEffect(() => {
     const id = setTimeout(() => {
       getCacheTop10Assets({
@@ -628,24 +608,11 @@ export const TokenDetailScreen = () => {
           />
         </View>
         <TokenArea
-          isSingleAddress={isSingleAddress}
-          tokenUsdValue={tokenWithAmount?.price}
-          finalAccount={finalAccount}
-          accounts={accounts}
           amountList={tokenFromAddress}
           token={token}
           rawAllAccounts={rawAllAccounts}
         />
-        {/* TODO: 为了好测试，最后上线前删除 */}
-        {relateDefiList.length > 0 && (
-          <RelatedDeFi
-            deFiList={relateDefiList}
-            symbol={token.symbol}
-            handleGoDeFi={handleOpenDefiDetail}
-          />
-        )}
         <HistoryList
-          accounts={accounts}
           top10Addresses={top10Addresses}
           finalAccount={finalAccount}
           isForMultipleAddress={!isSingleAddress}

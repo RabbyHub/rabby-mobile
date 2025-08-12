@@ -1849,7 +1849,6 @@
         "pin_success": "Fixado com sucesso"
       },
       "Info": "Informação",
-      "Mybalance": "O Meu Saldo",
       "SeeMore": "Ver mais",
       "fdv": "FDV",
       "Defi": "DeFi",
@@ -1860,7 +1859,6 @@
       "IssuedBy": "Emitido por",
       "ListedBy": "Listado por",
       "NoSupportedExchanges": "Nenhuma bolsa compatível disponível",
-      "Transaction": "Transação",
       "SupportedExchanges": "Exchanges Suportadas",
       "OriginIssue": "Emitido nativamente nesta blockchain",
       "BridgeIssue": "Token em ponte por um terceiro",
