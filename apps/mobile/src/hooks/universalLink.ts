@@ -105,15 +105,15 @@ export function useUniversalLinkOnTop() {
         );
         setNextAppLink('');
       } else {
-        // notify trigger unlock request here
-        hideToastRef.current = toastIndicator(
-          t('page.universalLink.error.unlockWalletFirst'),
-          {
-            duration: maybeShortTipIsBetter ? 10000 : 30000,
-            hideOnPress: maybeShortTipIsBetter,
-            isTop: true,
-          },
-        );
+        // // notify trigger unlock request here
+        // hideToastRef.current = toastIndicator(
+        //   t('page.universalLink.error.unlockWalletFirst'),
+        //   {
+        //     duration: maybeShortTipIsBetter ? 10000 : 30000,
+        //     hideOnPress: maybeShortTipIsBetter,
+        //     isTop: true,
+        //   },
+        // );
 
         if (isInit) {
           setNextAppLink(prev => prev || url);
