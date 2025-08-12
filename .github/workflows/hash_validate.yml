@@ -2,6 +2,8 @@ name: Hash Validate RN App
 
 on:
   push:
+    tags:
+      - 'hashcheck-*'
     branches:
       - feat/hash-check
   workflow_dispatch:
