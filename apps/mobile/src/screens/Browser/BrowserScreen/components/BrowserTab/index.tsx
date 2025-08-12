@@ -119,7 +119,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
     const { browserState, setPartialBrowserState } = useBrowser();
-    const debounceProgress = useDebounce(progress, { wait: 450 });
+    const debounceProgress = useDebounce(progress, { wait: 500 });
 
     const {
       webviewRef,
