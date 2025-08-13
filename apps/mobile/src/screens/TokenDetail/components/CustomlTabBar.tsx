@@ -32,6 +32,7 @@ interface DynamicCustomMaterialTabBarProps {
   indicatorStyle: AnimatedStyle;
   initialTabItemsLayout: ItemLayout[];
   initPaddingLeft: number;
+  externalContent?: React.ReactNode;
 }
 export const DynamicCustomMaterialTabBar = (
   props: DynamicCustomMaterialTabBarProps,
@@ -87,6 +88,7 @@ export const DynamicCustomMaterialTabBar = (
         itemsLayout={tabItemsLayout}
         fadeIn
       />
+      {props.externalContent}
     </View>
   );
 };

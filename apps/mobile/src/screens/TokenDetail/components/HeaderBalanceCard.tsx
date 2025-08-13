@@ -30,7 +30,17 @@ const HeaderBalanceCard = ({
   const { t } = useTranslation();
 
   return (
-    <TouchableOpacity style={[styles.container, style]} onPress={onPress}>
+    <TouchableOpacity
+      style={[
+        styles.container,
+        {
+          backgroundColor: isLoss
+            ? colors2024['red-light-1']
+            : colors2024['green-light-4'],
+        },
+        style,
+      ]}
+      onPress={onPress}>
       <View style={styles.left}>
         <Text style={styles.title}>{t('page.tokenDetail.balance')}: </Text>
         <View style={styles.textContainer}>
@@ -47,7 +57,9 @@ const HeaderBalanceCard = ({
                   : colors2024['green-default'],
               },
             ]}>
-            {`(${is24hNoChange ? '' : isLoss ? '-' : '+'}${percentChange})`}
+            {`(${is24hNoChange ? '' : isLoss ? '-' : '+'}${
+              percentChange ? percentChange : '0.0%'
+            })`}
           </Text>
         </View>
       </View>

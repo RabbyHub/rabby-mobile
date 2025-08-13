@@ -25,6 +25,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Dimensions,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
@@ -72,6 +73,8 @@ export type TokenFromAddressItem = {
 export type RelatedDeFiType = AbstractProject & {
   amount: number;
 };
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
   const { styles } = useTheme2024({
@@ -457,6 +460,31 @@ export const TokenMarketInfoScreen = () => {
     });
   }, [route.params]);
 
+  const externalContent = useMemo(() => {
+    return (
+      <ImageBackground
+        source={
+          isUp
+            ? isLight
+              ? require('@/assets2024/singleHome/home-profit-bg-2.png')
+              : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
+            : isLight
+            ? require('@/assets2024/singleHome/home-loss-bg-2.png')
+            : require('@/assets2024/singleHome/home-loss-dark-bg-2.png')
+        }
+        resizeMode="cover"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: screenWidth,
+          height: 150,
+          zIndex: -100,
+        }}
+      />
+    );
+  }, [isLight, isUp]);
+
   const renderTabBar = React.useCallback(
     (props: any) => (
       <DynamicCustomMaterialTabBar
@@ -480,10 +508,12 @@ export const TokenMarketInfoScreen = () => {
           },
         ]}
         initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
+        externalContent={externalContent}
       />
     ),
     [
       colors2024,
+      externalContent,
       styles.indicator,
       styles.label,
       styles.tabBar,
@@ -530,25 +560,6 @@ export const TokenMarketInfoScreen = () => {
           left: 0,
           width: '100%',
           height: safeOffHeader + 10,
-        }}
-      />
-      <ImageBackground
-        source={
-          isUp
-            ? isLight
-              ? require('@/assets2024/singleHome/home-profit-bg-2.png')
-              : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
-            : isLight
-            ? require('@/assets2024/singleHome/home-loss-bg-2.png')
-            : require('@/assets2024/singleHome/home-loss-dark-bg-2.png')
-        }
-        resizeMode="cover"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: 150,
         }}
       />
 
@@ -655,66 +666,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       height: '100%',
       paddingTop: 30,
     },
-    currentText: {
-      marginLeft: 26,
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '500',
-    },
-    floatBottom: {
-      width: '100%',
-      height: 120,
-      paddingTop: 20,
-      position: 'absolute',
-      bottom: 0,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    divider: {
-      marginTop: 28,
-      marginHorizontal: 20,
-      backgroundColor: colors2024['neutral-line'],
-      height: 1,
-    },
-    defiItem: {
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 6,
-      // paddingHorizontal: 8,
-    },
-    defiItemContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 16,
-      paddingHorizontal: 20,
-      gap: 6,
-    },
-    arrowStyle: {
-      marginTop: 0,
-    },
-    defiItemText: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      marginLeft: 4,
-    },
-    relateTitle: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-    },
-    historyHeader: {
-      marginBottom: 16,
-      paddingHorizontal: 20,
-    },
     buttonGroup: {
       backgroundColor: isLight
         ? colors2024['neutral-bg-0']
@@ -743,13 +694,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     btnInnerContainer: {
       borderRadius: 16,
     },
-    buyBtnTitle: {
-      color: colors2024['brand-default'],
-    },
-
-    btnGap: {
-      width: 10,
-    },
     searchTokenDanger: {
       flex: 1,
       justifyContent: 'center',
@@ -759,12 +703,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['red-light-1'],
       borderRadius: 8,
       // marginTop: 12,
-    },
-    backButtonStyle: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      marginLeft: -16,
-      paddingLeft: 16,
     },
     tokenRowContent: {
       flexDirection: 'row',
@@ -802,18 +740,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginBottom: 12,
     },
     tabBarWrap: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
       shadowColor: 'transparent',
       shadowOpacity: 0,
       elevation: 0,
+      borderBottomWidth: 1,
+      borderBottomColor: colors2024['neutral-line'],
     },
     tabBar: {
       height: 30,
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
       width: 'auto',
       flexShrink: 0,
       flex: 0,
@@ -821,10 +755,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       marginRight: 20,
     },
     tabsBarContainer: {
-      borderBottomColor: colors2024['neutral-line'],
       display: 'flex',
-      borderBottomWidth: 1,
       paddingLeft: 20,
+      position: 'relative',
+      height: 30,
+      overflow: 'hidden',
     },
     label: {
       fontSize: 16,
