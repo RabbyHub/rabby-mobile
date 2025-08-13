@@ -1,7 +1,10 @@
+import './App.less'
+
 const mode = import.meta.env.MODE
 
 import rabbyLogo from '/rabby-logo.svg'
-import './App.less'
+import AppleStoreLogo from '/link-apple.svg'
+import GooglePlayLogo from '/link-googleplay.svg'
 
 import { formatRabbySchemeUrl } from './utils';
 
@@ -13,15 +16,31 @@ function App() {
     <>
       <div>
         <a href="https://rabby.io" target="_blank">
-          <img src={rabbyLogo} className="logo react" alt="Rabby logo" />
+          <img src={rabbyLogo} className="logo rabby" alt="Rabby logo" />
         </a>
       </div>
       <h2>Opening Rabby Mobile app...</h2>
       <div className="card">
-        If the app does not open automatically, please click the button below:
-        <a target='_blank' href={rabbySchemeUrl} className='anchor-button'>
-          Open Rabby Mobile
-        </a>
+        <p>
+          If the app does not open automatically, please click the button below:
+          <a target='_blank' href={rabbySchemeUrl} className='anchor-button open-rabby'>
+            Open Rabby Mobile
+          </a>
+        </p>
+      </div>
+
+      <div className='divider' />
+
+      <div className='card '>
+        <p>Haven't installed Rabby Mobile yet? Install it from:</p>
+        <div className='store'>
+          <a href="https://apps.apple.com/us/app/rabby-wallet-crypto-evm/id6474381673" target="_blank">
+            <img src={AppleStoreLogo} className="logo linking" alt="App Store logo" />
+          </a>
+          <a href="https://play.google.com/store/apps/details?id=com.debank.rabbymobile" target="_blank">
+            <img src={GooglePlayLogo} className="logo linking" alt="Google Play logo" />
+          </a>
+        </div>
       </div>
     </>
   )
