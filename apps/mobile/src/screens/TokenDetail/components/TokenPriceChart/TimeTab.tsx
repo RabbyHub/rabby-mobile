@@ -103,6 +103,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : ThemeColors2024.light['neutral-bg-1'],
     paddingHorizontal: 13.5,
     paddingVertical: 5,
-    borderRadius: 120,
+    borderRadius: 8,
   },
 }));

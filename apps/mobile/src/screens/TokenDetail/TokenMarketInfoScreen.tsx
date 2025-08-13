@@ -33,7 +33,7 @@ import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { CombineTokensItem } from '../Home/hooks/store';
-import { formatTokenAmount } from '@/utils/number';
+import { formatPrice, formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
@@ -54,6 +54,8 @@ import {
 } from '../Swap/hooks/atom';
 import { useTokenBalance } from './hook';
 import { RightMore } from './components/RightMore';
+import HeaderBalanceCard from './components/HeaderBalanceCard';
+import { navigate } from '@/utils/navigation';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -436,7 +438,7 @@ export const TokenMarketInfoScreen = () => {
     },
   );
 
-  const { amountSum, usdValue, percentChange, isLoss, is24hNoChange, price } =
+  const { amountSum, usdValue, percentChange, isLoss, is24hNoChange } =
     useTokenBalance({
       token: tokenWithAmount || token,
       amountList: tokenFromAddress,
@@ -446,6 +448,12 @@ export const TokenMarketInfoScreen = () => {
     });
 
   const { t } = useTranslation();
+
+  const handleOpenTokenDetail = useCallback(() => {
+    navigate(RootNames.TokenDetail, {
+      ...route.params,
+    });
+  }, [route.params]);
 
   if (isSingleAddress && !finalAccount) {
     return null;
@@ -493,6 +501,15 @@ export const TokenMarketInfoScreen = () => {
             width: '100%',
             height: 150,
           }}
+        />
+        <HeaderBalanceCard
+          amount={formatTokenAmount(amountSum)}
+          usdValue={formatPrice(usdValue)}
+          percentChange={percentChange}
+          isLoss={isLoss}
+          is24hNoChange={is24hNoChange}
+          style={styles.headerBalanceCard}
+          onPress={handleOpenTokenDetail}
         />
         <View style={styles.riskContainer}>
           {token.is_verified === false && <RiskTokenTips isDanger={true} />}
@@ -708,6 +725,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 18,
       fontWeight: '400',
       fontFamily: 'SF Pro Rounded',
+    },
+    headerBalanceCard: {
+      marginTop: 12,
+      marginHorizontal: 18,
     },
   };
 });
