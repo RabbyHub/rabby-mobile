@@ -138,12 +138,14 @@ android {
     // }
     buildTypes {
         debug {
+            manifestPlaceholders.isDebug = true
             // defaultConfig.minSdkVersion 24
             signingConfig signingConfigs.debug
             applicationIdSuffix ".debug"
             // debuggable true
         }
         release {
+            manifestPlaceholders.isDebug = false
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.release
