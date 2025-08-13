@@ -56,6 +56,8 @@ import { useTokenBalance } from './hook';
 import { RightMore } from './components/RightMore';
 import HeaderBalanceCard from './components/HeaderBalanceCard';
 import { navigate } from '@/utils/navigation';
+import { Tabs } from 'react-native-collapsible-tab-view';
+import { DynamicCustomMaterialTabBar } from './components/CustomlTabBar';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -111,7 +113,7 @@ export const TokenMarketInfoScreen = () => {
     rawPortfolios, // only isSingleAddress === true can use
   } = route.params || {};
 
-  const { styles, isLight } = useTheme2024({
+  const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
   });
 
@@ -455,6 +457,54 @@ export const TokenMarketInfoScreen = () => {
     });
   }, [route.params]);
 
+  const renderTabBar = React.useCallback(
+    (props: any) => (
+      <DynamicCustomMaterialTabBar
+        materialTabBarProps={{
+          ...props,
+          tabStyle: styles.tabBar,
+          activeColor: colors2024['neutral-body'],
+          inactiveColor: colors2024['neutral-secondary'],
+          labelStyle: styles.label,
+        }}
+        containerStyle={styles.tabsBarContainer}
+        indicatorStyle={styles.indicator}
+        initialTabItemsLayout={[
+          {
+            x: 20,
+            width: 100,
+          },
+          {
+            x: 120,
+            width: 120,
+          },
+        ]}
+        initPaddingLeft={styles.tabsBarContainer?.paddingLeft ?? 0}
+      />
+    ),
+    [
+      colors2024,
+      styles.indicator,
+      styles.label,
+      styles.tabBar,
+      styles.tabsBarContainer,
+    ],
+  );
+
+  const riskInfo = useMemo(() => {
+    const hasRisk = token.is_verified === false || token.is_suspicious;
+    const isDanger = token.is_verified === false;
+    return {
+      hasRisk,
+      isDanger,
+      content: hasRisk ? (
+        <View style={styles.riskContainer}>
+          <RiskTokenTips isDanger={isDanger} />
+        </View>
+      ) : null,
+    };
+  }, [styles.riskContainer, token.is_suspicious, token.is_verified]);
+
   if (isSingleAddress && !finalAccount) {
     return null;
   }
@@ -482,56 +532,69 @@ export const TokenMarketInfoScreen = () => {
           height: safeOffHeader + 10,
         }}
       />
-      <ScrollView>
-        <ImageBackground
-          source={
-            isUp
-              ? isLight
-                ? require('@/assets2024/singleHome/home-profit-bg-2.png')
-                : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
-              : isLight
-              ? require('@/assets2024/singleHome/home-loss-bg-2.png')
-              : require('@/assets2024/singleHome/home-loss-dark-bg-2.png')
-          }
-          resizeMode="cover"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: 150,
-          }}
-        />
-        <HeaderBalanceCard
-          amount={formatTokenAmount(amountSum)}
-          usdValue={formatPrice(usdValue)}
-          percentChange={percentChange}
-          isLoss={isLoss}
-          is24hNoChange={is24hNoChange}
-          style={styles.headerBalanceCard}
-          onPress={handleOpenTokenDetail}
-        />
-        <View style={styles.riskContainer}>
-          {token.is_verified === false && <RiskTokenTips isDanger={true} />}
-          {token.is_verified !== false && token.is_suspicious && (
-            <RiskTokenTips isDanger={false} />
-          )}
-        </View>
-        <View style={{ position: 'relative' }}>
-          <TokenPriceChart
-            token={tokenWithAmount || token}
-            onUpChange={b => setIsUp(b)}
-            amountList={[]}
-            relateDefiList={[]}
-          />
-        </View>
-        <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
-        <IssuerAndListSite
-          tokenEntity={tokenEntity}
-          entityLoading={entityLoading}
-        />
-        <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
-      </ScrollView>
+      <ImageBackground
+        source={
+          isUp
+            ? isLight
+              ? require('@/assets2024/singleHome/home-profit-bg-2.png')
+              : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
+            : isLight
+            ? require('@/assets2024/singleHome/home-loss-bg-2.png')
+            : require('@/assets2024/singleHome/home-loss-dark-bg-2.png')
+        }
+        resizeMode="cover"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: 150,
+        }}
+      />
+
+      <Tabs.Container
+        renderTabBar={renderTabBar}
+        tabBarHeight={30}
+        containerStyle={styles.container}
+        headerContainerStyle={styles.tabBarWrap}>
+        <Tabs.Tab
+          label={t('page.tokenDetail.tabs.marketData')}
+          name="marketData">
+          <ScrollView style={styles.innerContainer}>
+            <HeaderBalanceCard
+              amount={formatTokenAmount(amountSum)}
+              usdValue={formatPrice(usdValue)}
+              percentChange={percentChange}
+              isLoss={isLoss}
+              is24hNoChange={is24hNoChange}
+              style={styles.headerBalanceCard}
+              onPress={handleOpenTokenDetail}
+            />
+            <View style={{ position: 'relative' }}>
+              <TokenPriceChart
+                token={tokenWithAmount || token}
+                onUpChange={b => setIsUp(b)}
+                amountList={[]}
+                relateDefiList={[]}
+              />
+            </View>
+            <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
+            <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
+          </ScrollView>
+        </Tabs.Tab>
+        <Tabs.Tab
+          label={t('page.tokenDetail.tabs.tokenSecurity')}
+          name="tokenSecurity">
+          <ScrollView style={styles.innerContainer}>
+            {riskInfo.content}
+            <IssuerAndListSite
+              tokenEntity={tokenEntity}
+              entityLoading={entityLoading}
+            />
+            <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
+          </ScrollView>
+        </Tabs.Tab>
+      </Tabs.Container>
       <View
         style={[
           styles.buttonGroup,
@@ -584,6 +647,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     riskContainer: {
       paddingHorizontal: 20,
       marginBottom: 12,
+    },
+    container: {
+      flex: 1,
+    },
+    innerContainer: {
+      height: '100%',
+      paddingTop: 30,
     },
     currentText: {
       marginLeft: 26,
@@ -729,6 +799,46 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     headerBalanceCard: {
       marginTop: 12,
       marginHorizontal: 18,
+      marginBottom: 12,
+    },
+    tabBarWrap: {
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+      shadowColor: 'transparent',
+      shadowOpacity: 0,
+      elevation: 0,
+    },
+    tabBar: {
+      height: 30,
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
+      width: 'auto',
+      flexShrink: 0,
+      flex: 0,
+      paddingHorizontal: 0,
+      marginRight: 20,
+    },
+    tabsBarContainer: {
+      borderBottomColor: colors2024['neutral-line'],
+      display: 'flex',
+      borderBottomWidth: 1,
+      paddingLeft: 20,
+    },
+    label: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+      textTransform: 'none',
+      textAlign: 'center',
+      color: colors2024['neutral-body'],
+    },
+    indicator: {
+      backgroundColor: colors2024['neutral-body'],
+      height: 4,
+      borderRadius: 100,
     },
   };
 });

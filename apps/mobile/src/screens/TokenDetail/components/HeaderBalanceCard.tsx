@@ -35,7 +35,7 @@ const HeaderBalanceCard = ({
         <Text style={styles.title}>{t('page.tokenDetail.balance')}: </Text>
         <View style={styles.textContainer}>
           <Text style={styles.amount}>{amount}</Text>
-          <Text style={styles.usdValue}>≈${usdValue}</Text>
+          <Text style={styles.usdValue}> ≈${usdValue}</Text>
           <Text
             style={[
               styles.percentChange,
