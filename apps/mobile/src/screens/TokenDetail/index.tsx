@@ -53,6 +53,8 @@ import BalanceOverview from './components/BalanceOverview';
 import { useTokenBalance } from './hook';
 import TokenActions from './components/TokenActions';
 import BottomFloatGuide from './components/BottomFloatGuide';
+import { RootNames } from '@/constant/layout';
+import { navigate } from '@/utils/navigation';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -502,6 +504,12 @@ export const TokenDetailScreen = () => {
     [_unHold, tokenFromAddress],
   );
 
+  const handleOpenTokenMarketInfo = useCallback(() => {
+    navigate(RootNames.TokenMarketInfo, {
+      ...route.params,
+    });
+  }, [route.params]);
+
   const getHeaderRight = useCallback(() => {
     return (
       <RightMore
@@ -622,7 +630,7 @@ export const TokenDetailScreen = () => {
         />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
       </ScrollView>
-      <BottomFloatGuide onPress={() => {}}>
+      <BottomFloatGuide onPress={handleOpenTokenMarketInfo}>
         <View style={styles.floatingBarContent}>
           <Text style={styles.floatBalanceTitle}>
             {t('page.tokenDetail.guideToMarketData')}

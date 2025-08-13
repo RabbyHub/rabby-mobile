@@ -7,11 +7,7 @@ import { openapi } from '@/core/request';
 import { Tip } from '@/components/Tip';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import {
-  AbstractPortfolio,
-  AbstractPortfolioToken,
-  AbstractProject,
-} from '@/screens/Home/types';
+import { AbstractPortfolioToken, AbstractProject } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -41,7 +37,6 @@ import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { CombineTokensItem } from '../Home/hooks/store';
-import { naviPush } from '@/utils/navigation';
 import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -270,7 +265,7 @@ export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
   );
 };
 
-export const TokenDetailScreen = () => {
+export const TokenMarketInfoScreen = () => {
   const route =
     useRoute<GetRootScreenNavigationProps<'TokenDetail'>['route']>();
   const {
@@ -304,7 +299,7 @@ export const TokenDetailScreen = () => {
     return _token;
   }, [getTokenCombined, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
-  const { top10Addresses, list: accounts, rawAllAccounts } = useAccountInfo();
+  const { top10Addresses, list: accounts } = useAccountInfo();
 
   const finalAccount =
     account || accounts[0] || preferenceService.getFallbackAccount();
@@ -413,19 +408,6 @@ export const TokenDetailScreen = () => {
     rawPortfolios,
   ]);
 
-  const handleOpenDefiDetail = useCallback(
-    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      naviPush(RootNames.DeFiDetail, {
-        data,
-        portfolioList: itemList,
-        isSingleAddress,
-        account: finalAccount,
-        cache: true,
-        relateTokenId: token._tokenId,
-      });
-    },
-    [token, isSingleAddress, finalAccount],
-  );
   useEffect(() => {
     const id = setTimeout(() => {
       getCacheTop10Assets({

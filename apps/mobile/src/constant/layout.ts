@@ -198,6 +198,7 @@ export const RootNames = {
 
   DappWebViewStubOnHome: 'DappWebViewStubOnHome',
   TokenDetail: 'TokenDetail',
+  TokenMarketInfo: 'TokenMarketInfo',
   ReceiveAddressList: 'ReceiveAddressList',
 
   SyncExtensionPassword: 'SyncExtensionPassword',
