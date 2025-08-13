@@ -534,6 +534,7 @@ function History({
     reloadAsync,
     cancel,
   } = useInfiniteScroll(() => batchFetchData(), {
+    isNoMore: d => (d ? !d.hasMore : false),
     // isNoMore: ({ hasMore }) => {
     //   if (loadingMore) {
     //     console.log('11111111111111111111111111');
@@ -750,6 +751,9 @@ function History({
           isForMultipleAddress={isForMultipleAddress}
           loadMore={() => {
             // avoid exec multi times loadMore
+            if (loadingMore) {
+              return;
+            }
             loadMore();
           }}
           onRefresh={refresh}
