@@ -5,7 +5,7 @@ function analyzeModuleIds(logFilePath) {
   console.log(`开始分析日志文件: ${logFilePath}\n`);
 
   if (!fs.existsSync(logFilePath)) {
-    console.error(`错误: 日志文件 "${logFilePath}" 不存在。`);
+    console.error(`错误: 日志文件 "${logFilePath}" 不存在`);
     return;
   }
 
@@ -13,7 +13,7 @@ function analyzeModuleIds(logFilePath) {
   const lines = fileContent.split('\n').filter(line => line.trim() !== ''); // 按行分割并移除空行
 
   if (lines.length === 0) {
-    console.log('日志文件为空或不包含有效数据。');
+    console.log('日志文件为空或不包含有效数据');
     return;
   }
 
@@ -65,7 +65,7 @@ function analyzeModuleIds(logFilePath) {
     }
   }
 
-  console.log(`总共处理了 ${lineNumber} 行有效日志。\n`);
+  console.log(`总共处理了 ${lineNumber} 行有效日志\n`);
 
   // --- 分析结果 ---
 
@@ -83,10 +83,10 @@ function analyzeModuleIds(logFilePath) {
   });
 
   if (collisionsFound === 0) {
-    console.log('未发现不同路径生成相同 ID 的情况。\n');
+    console.log('未发现不同路径生成相同 ID 的情况\n');
     process.exit(0);
   } else {
-    console.log(`总共发现 ${collisionsFound} 组哈希碰撞。\n`);
+    console.log(`总共发现 ${collisionsFound} 组哈希碰撞\n`);
     process.exit(1);
   }
 }
