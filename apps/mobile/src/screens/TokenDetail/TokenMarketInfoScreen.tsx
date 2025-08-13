@@ -16,7 +16,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
@@ -131,7 +131,6 @@ export const TokenMarketInfoScreen = () => {
   const [, setShouldHideSelectorPopup] = useAtom(shouldHideSelectorPopupAtom);
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
-  const [isUp, setIsUp] = useState(true);
   const { assetsMap, getCacheTop10Assets, getTokenCombined } = useAssets({
     hideCombined: true,
   });
@@ -472,7 +471,7 @@ export const TokenMarketInfoScreen = () => {
     return (
       <ImageBackground
         source={
-          isUp
+          !isLoss
             ? isLight
               ? require('@/assets2024/singleHome/home-profit-bg-2.png')
               : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
@@ -491,7 +490,7 @@ export const TokenMarketInfoScreen = () => {
         }}
       />
     );
-  }, [isLight, isUp]);
+  }, [isLight, isLoss]);
 
   const renderTabBar = React.useCallback(
     (props: any) => (
@@ -580,7 +579,7 @@ export const TokenMarketInfoScreen = () => {
       overwriteStyle={styles.rootScreenContainer}>
       <ImageBackground
         source={
-          isUp
+          !isLoss
             ? isLight
               ? require('@/assets2024/singleHome/home-profit-bg-1.png')
               : require('@/assets2024/singleHome/home-profit-dark-bg-1.png')
@@ -617,7 +616,6 @@ export const TokenMarketInfoScreen = () => {
             <View style={{ position: 'relative' }}>
               <TokenPriceChart
                 token={tokenWithAmount || token}
-                onUpChange={b => setIsUp(b)}
                 amountList={[]}
                 relateDefiList={[]}
               />
