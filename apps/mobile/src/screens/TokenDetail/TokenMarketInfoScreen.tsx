@@ -43,8 +43,7 @@ import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
-import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
-import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
+import RcIconWarningCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
@@ -59,6 +58,7 @@ import HeaderBalanceCard from './components/HeaderBalanceCard';
 import { navigate } from '@/utils/navigation';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
+import CustomLabel from './components/CustomLabel';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -77,14 +77,18 @@ export type RelatedDeFiType = AbstractProject & {
 const { width: screenWidth } = Dimensions.get('window');
 
 export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
-  const { styles } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
   const { t } = useTranslation();
   return isDanger ? (
     <View style={styles.searchTokenDanger}>
       <View style={styles.tokenRowContent}>
-        <RcIconDanger />
+        <RcIconWarningCC
+          width={14}
+          height={14}
+          color={colors2024['red-default']}
+        />
         <Text style={styles.searchTokenDangerText}>
           {t('page.search.tokenItem.verifyDangerTips')}
         </Text>
@@ -93,7 +97,11 @@ export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
   ) : (
     <View style={styles.searchTokenWarning}>
       <View style={styles.tokenRowContent}>
-        <RcIconWarning />
+        <RcIconWarningCC
+          width={14}
+          height={14}
+          color={colors2024['orange-default']}
+        />
         <Text style={styles.searchTokenWarningText}>
           {t('page.search.tokenItem.scamWarningTips')}
         </Text>
@@ -491,9 +499,6 @@ export const TokenMarketInfoScreen = () => {
         materialTabBarProps={{
           ...props,
           tabStyle: styles.tabBar,
-          activeColor: colors2024['neutral-body'],
-          inactiveColor: colors2024['neutral-secondary'],
-          labelStyle: styles.label,
         }}
         containerStyle={styles.tabsBarContainer}
         indicatorStyle={styles.indicator}
@@ -511,14 +516,7 @@ export const TokenMarketInfoScreen = () => {
         externalContent={externalContent}
       />
     ),
-    [
-      colors2024,
-      externalContent,
-      styles.indicator,
-      styles.label,
-      styles.tabBar,
-      styles.tabsBarContainer,
-    ],
+    [externalContent, styles.indicator, styles.tabBar, styles.tabsBarContainer],
   );
 
   const riskInfo = useMemo(() => {
@@ -532,8 +530,45 @@ export const TokenMarketInfoScreen = () => {
           <RiskTokenTips isDanger={isDanger} />
         </View>
       ) : null,
+      securityContent: hasRisk ? (
+        <RcIconWarningCC
+          width={14}
+          height={14}
+          color={
+            isDanger ? colors2024['red-default'] : colors2024['orange-default']
+          }
+        />
+      ) : null,
     };
-  }, [styles.riskContainer, token.is_suspicious, token.is_verified]);
+  }, [
+    colors2024,
+    styles.riskContainer,
+    token.is_suspicious,
+    token.is_verified,
+  ]);
+
+  const renderMarketDataLabel = useCallback(
+    ({ index, indexDecimal }) => (
+      <CustomLabel
+        index={index}
+        indexDecimal={indexDecimal}
+        text={t('page.tokenDetail.tabs.marketData')}
+      />
+    ),
+    [t],
+  );
+
+  const renderTokenSecurityLabel = useCallback(
+    ({ index, indexDecimal }) => (
+      <CustomLabel
+        index={index}
+        indexDecimal={indexDecimal}
+        text={t('page.tokenDetail.tabs.tokenSecurity')}
+        icon={riskInfo.securityContent}
+      />
+    ),
+    [riskInfo.securityContent, t],
+  );
 
   if (isSingleAddress && !finalAccount) {
     return null;
@@ -568,9 +603,7 @@ export const TokenMarketInfoScreen = () => {
         tabBarHeight={30}
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}>
-        <Tabs.Tab
-          label={t('page.tokenDetail.tabs.marketData')}
-          name="marketData">
+        <Tabs.Tab label={renderMarketDataLabel} name="marketData">
           <ScrollView style={styles.innerContainer}>
             <HeaderBalanceCard
               amount={formatTokenAmount(amountSum)}
@@ -593,9 +626,7 @@ export const TokenMarketInfoScreen = () => {
             <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
           </ScrollView>
         </Tabs.Tab>
-        <Tabs.Tab
-          label={t('page.tokenDetail.tabs.tokenSecurity')}
-          name="tokenSecurity">
+        <Tabs.Tab label={renderTokenSecurityLabel} name="tokenSecurity">
           <ScrollView style={styles.innerContainer}>
             {riskInfo.content}
             <IssuerAndListSite
@@ -657,7 +688,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
     riskContainer: {
       paddingHorizontal: 20,
-      marginBottom: 12,
+      marginTop: 12,
     },
     container: {
       flex: 1,
@@ -724,14 +755,14 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       color: colors2024['orange-default'],
       fontSize: 14,
       lineHeight: 18,
-      fontWeight: '400',
+      fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },
     searchTokenDangerText: {
       color: colors2024['red-default'],
       fontSize: 14,
       lineHeight: 18,
-      fontWeight: '400',
+      fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },
     headerBalanceCard: {
@@ -760,15 +791,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       position: 'relative',
       height: 30,
       overflow: 'hidden',
-    },
-    label: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      fontFamily: 'SF Pro Rounded',
-      textTransform: 'none',
-      textAlign: 'center',
-      color: colors2024['neutral-body'],
     },
     indicator: {
       backgroundColor: colors2024['neutral-body'],
