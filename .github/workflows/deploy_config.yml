@@ -22,10 +22,10 @@ jobs:
 
           if [ "$FORCE_REFRESH_CDN" = "true" ]; then
             echo "Force refresh CDN"
-            aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_WELL_KNOWN_CDN_FRONTEND_ID --paths '/.well-known/*'
+            aws cloudfront create-invalidation --distribution-id $RABBY_GO_CDN_FRONTEND_ID --paths '/.well-known/*'
             echo "CDN invalidation created"
           fi
         env:
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
-          RABBY_MOBILE_WELL_KNOWN_CDN_FRONTEND_ID: ${{ secrets.RABBY_MOBILE_WELL_KNOWN_CDN_FRONTEND_ID }}
+          RABBY_GO_CDN_FRONTEND_ID: ${{ secrets.RABBY_GO_CDN_FRONTEND_ID }}
           FORCE_REFRESH_CDN: ${{ inputs.FORCE_REFRESH_CDN }}

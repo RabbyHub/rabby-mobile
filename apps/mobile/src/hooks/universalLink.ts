@@ -9,7 +9,7 @@ import { toastIndicator, toastWithIcon } from '@/components/Toast';
 import { RcIconInfoForToast } from '@/screens/Unlock/icons';
 import { getRabbyLockInfo, PasswordStatus } from '@/core/apis/lock';
 import { usePasswordStatus } from './useLock';
-import { UL_DOMAIN, UL_MATCH_PREFIX } from '@/constant/universalLink';
+import { ALLOWED_UL_DOMAINS } from '@/constant/universalLink';
 import { IS_IOS } from '@/core/native/utils';
 
 const nextAppLinkRef = {
@@ -28,10 +28,6 @@ function setNextAppLink(linkOrSetter: string | ((prev: string) => string)) {
   }
 }
 
-function makeMatchedPath(path: string) {
-  return `${UL_MATCH_PREFIX}${stringUtils.unPrefix(path)}`;
-}
-
 type OnParseUrlAndProcessAction = (payload: {
   type: 'open-dapp';
   dappUrl: string;
@@ -40,12 +36,14 @@ function parseActionAndProcessLink(
   appLink: string,
   onActions?: OnParseUrlAndProcessAction,
 ) {
-  if (!appLink.startsWith(UL_DOMAIN)) return;
+  if (!ALLOWED_UL_DOMAINS.some(domain => appLink.startsWith(domain))) return;
 
   const urlInfo = urlUtils.safeParseURL(appLink);
   if (!urlInfo) return;
+  const rabbyGoCmd = urlInfo.searchParams.get('_cmd');
+  if (!rabbyGoCmd) return;
 
-  if (urlInfo.pathname === makeMatchedPath(`/open-dapp`)) {
+  if (rabbyGoCmd === 'open-dapp') {
     const dappUrlRaw = urlInfo.searchParams.get('dapp');
     const dappUrl = dappUrlRaw ? decodeURIComponent(dappUrlRaw) : '';
     if (!dappUrl) {
