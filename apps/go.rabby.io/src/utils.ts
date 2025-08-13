@@ -1,6 +1,6 @@
 // import queryString from 'query-string'
 
-export function formatRabbySchemaUrl(rabbyGoEnv: string, hrefString: string) {
+export function formatRabbySchemeUrl(rabbyGoEnv: string, hrefString: string) {
   const appSchema = (() => {
     switch (rabbyGoEnv) {
       case 'mobile-debug':
@@ -14,8 +14,8 @@ export function formatRabbySchemaUrl(rabbyGoEnv: string, hrefString: string) {
   })();
 
   // const qsObj = queryString.parse(window.location.search);
-  // const rabbySchemaUrl = window.location.href.replace(/https?:\/\//, 'rabby://');
+  // const rabbySchemeUrl = window.location.href.replace(/https?:\/\//, 'rabby://');
 
-  const rabbySchemaUrl = hrefString.replace(/^https?:\/\//, `${appSchema}//`);
-  return rabbySchemaUrl;
+  const rabbySchemeUrl = hrefString.replace(/^https?:\/\//, `${appSchema}//`);
+  return rabbySchemeUrl;
 }

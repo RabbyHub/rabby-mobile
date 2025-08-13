@@ -1,22 +1,22 @@
 import { isSelfhostRegPkg } from './env';
 
 const RABBY_GO_ENVS = {
-  debug: { schema: 'rabbygo-debug:', pathPrefix: '/mobile-debug/' },
+  debug: { protocol: 'rabbygo-debug:', pathPrefix: '/mobile-debug/' },
   regression: {
-    schema: 'rabbygo-regression:',
+    protocol: 'rabbygo-regression:',
     pathPrefix: '/mobile-regression/',
   },
-  release: { schema: 'rabbygo:', pathPrefix: '/mobile/' },
+  release: { protocol: 'rabbygo:', pathPrefix: '/mobile/' },
 };
 
-const UL_APP_SCHEMA = __DEV__
-  ? `${RABBY_GO_ENVS.debug.schema}//`
+const UL_APP_PROTOCOL = __DEV__
+  ? `${RABBY_GO_ENVS.debug.protocol}//`
   : isSelfhostRegPkg
-  ? `${RABBY_GO_ENVS.regression.schema}//`
-  : `${RABBY_GO_ENVS.release.schema}//`;
+  ? `${RABBY_GO_ENVS.regression.protocol}//`
+  : `${RABBY_GO_ENVS.release.protocol}//`;
 
 const UL_HTTP_DOMAIN = 'https://go.rabby.io';
-const UL_APP_DOMAIN = `${UL_APP_SCHEMA}go.rabby.io`;
+const UL_APP_DOMAIN = `${UL_APP_PROTOCOL}go.rabby.io`;
 
 export const ALLOWED_UL_DOMAINS = [UL_HTTP_DOMAIN, UL_APP_DOMAIN];
 
