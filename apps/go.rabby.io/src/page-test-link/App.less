@@ -84,3 +84,32 @@
     outline: 4px auto -webkit-focus-ring-color;
   }
 }
+
+.openbtn-matrix {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: .5em;
+  margin-top: 1em;
+  padding: 0;
+}
+
+.url-matrix {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: .5em;
+  margin-top: 1em;
+
+  .url-example {
+    padding: 0.5em 1em;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    font-size: 0.9em;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #e0e0e0;
+    }
+  }
+}
