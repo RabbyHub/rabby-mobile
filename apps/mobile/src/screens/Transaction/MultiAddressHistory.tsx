@@ -186,7 +186,7 @@ function History({
         console.warn('loading multi time , pls check what happened');
         return {
           list: [],
-          hasMore: false,
+          hasMore: true,
         };
       }
       const isFilter =
