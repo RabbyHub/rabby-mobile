@@ -58,7 +58,7 @@ import { RightMore } from './components/RightMore';
 import HeaderBalanceCard from './components/HeaderBalanceCard';
 import { navigate } from '@/utils/navigation';
 import { Tabs } from 'react-native-collapsible-tab-view';
-import { DynamicCustomMaterialTabBar } from './components/CustomlTabBar';
+import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 
 const isAndroid = Platform.OS === 'android';
 
