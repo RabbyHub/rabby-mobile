@@ -1,8 +1,9 @@
 import * as DropdownMenu from 'zeego/dropdown-menu';
 import type { DropdownMenuContentProps } from '@radix-ui/react-dropdown-menu';
-import { ImageSourcePropType, Pressable, Text } from 'react-native';
+import { ImageSourcePropType, Text } from 'react-native';
 import { IS_ANDROID } from '@/core/native/utils';
 import { MenuItemCommonProps } from 'zeego/lib/typescript/menu';
+import { Pressable } from 'react-native-gesture-handler';
 
 export interface MenuAction {
   title: string;

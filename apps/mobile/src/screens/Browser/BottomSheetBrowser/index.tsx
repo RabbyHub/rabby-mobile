@@ -40,7 +40,7 @@ export const BottomSheetBrowser = () => {
   const { width } = useWindowDimensions();
 
   const snapPoints = useMemo(() => {
-    return [safeOffScreenTop - BOTTOM_SHEET_EXTRA];
+    return [safeOffScreenTop];
   }, [safeOffScreenTop]);
 
   const isTransparent = useMemo(() => {
@@ -177,7 +177,7 @@ export const BrowserManagePopup = () => {
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const snapPoints = useMemo(() => {
-    return [safeOffScreenTop - BOTTOM_SHEET_EXTRA];
+    return [safeOffScreenTop];
   }, [safeOffScreenTop]);
 
   const modalRef = useRef<AppBottomSheetModal>(null);

@@ -58,16 +58,12 @@ export const BrowserHandler = () => {
     const menuActions = [
       {
         title: 'Refresh',
-        iosIconSource: activeTabState.isBookmark
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_filled.png')
-          : isLight
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_dark.png'),
-        androidIconName: activeTabState.isBookmark
-          ? 'ic_rabby_menu_favorite_filled'
-          : isLight
-          ? 'ic_rabby_menu_favorite'
-          : 'ic_rabby_menu_favorite_dark',
+        iosIconSource: isLight
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_refresh.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_refresh_dark.png'),
+        androidIconName: isLight
+          ? 'ic_rabby_menu_refresh'
+          : 'ic_rabby_menu_refresh_dark',
         key: 'refresh',
         onSelect: () => {
           handleAction('refresh');
@@ -157,13 +153,11 @@ export const BrowserHandler = () => {
       <View style={styles.handleComponentContainer}>
         {activeTabState.url ? (
           <DropdownMenuView menuConfig={menuConfigs}>
-            <TouchableOpacity>
-              <RcIconMore1CC
-                width={24}
-                height={24}
-                color={colors2024['neutral-title-1']}
-              />
-            </TouchableOpacity>
+            <RcIconMore1CC
+              width={24}
+              height={24}
+              color={colors2024['neutral-title-1']}
+            />
           </DropdownMenuView>
         ) : (
           <RcIconMore1CC
@@ -189,10 +183,11 @@ export const BrowserHandler = () => {
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     handleComponent: {
-      position: 'absolute',
-      top: -40,
-      right: 10,
-      zIndex: 100,
+      display: 'flex',
+      flexDirection: 'row',
+      marginBottom: 7,
+      justifyContent: 'flex-end',
+      paddingRight: 10,
     },
     handleComponentContainer: {
       display: 'flex',
