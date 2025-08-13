@@ -18,6 +18,11 @@ import { abortAllSyncTasks } from './sync/_task';
 import { BuyItemEntity } from './entities/buyItem';
 import { CexEntity } from './entities/cex';
 import { CopyTradingBuyItemEntity } from './entities/copyTradingBuyItem';
+import {
+  RabbyOrmDevConsoleLogger,
+  RabbyOrmDeployedConsoleLogger,
+  RnSqlExecutionTimes,
+} from './logger';
 
 const dbOptions: DataSourceOptions = {
   type: 'react-native',
@@ -32,7 +37,10 @@ const dbOptions: DataSourceOptions = {
     ? ['error', /* 'query', 'schema',*/ 'migration']
     : ['error', 'migration'],
   // logger: isNonPublicProductionEnv ? 'file' : 'advanced-console',
-  logger: __DEV__ ? 'advanced-console' : 'simple-console',
+  // logger: __DEV__ ? 'advanced-console' : 'simple-console',
+  logger: __DEV__
+    ? new RabbyOrmDevConsoleLogger()
+    : new RabbyOrmDeployedConsoleLogger(),
   // don't synchronize on initial load, we will handle it manually
   synchronize: false,
   driver: SQLite,
@@ -49,7 +57,8 @@ const dbOptions: DataSourceOptions = {
     CexEntity,
     CopyTradingBuyItemEntity,
   ],
-  maxQueryExecutionTime: 10000,
+  maxQueryExecutionTime: 10 * 1e3,
+  rnMaxQueryExecutionTime: RnSqlExecutionTimes.config,
   // only enable file logger in non-public production env, avoid leaking user's sensitive info
   // migrationsRun: true,
   migrations: getMigrations(),
