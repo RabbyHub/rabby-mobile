@@ -179,11 +179,16 @@ export const useTokenBalance = ({
     return token.price_24h_change ? Number(token.price_24h_change) < 0 : false;
   }, [token.price_24h_change]);
 
+  const price = useMemo(() => {
+    return token.price;
+  }, [token.price]);
+
   return {
     amountSum,
     usdValue,
     percentChange,
     isLoss,
     is24hNoChange,
+    price,
   };
 };

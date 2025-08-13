@@ -30,7 +30,7 @@ import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { CombineTokensItem } from '../Home/hooks/store';
-import { formatTokenAmount } from '@/utils/number';
+import { formatPrice, formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
@@ -52,6 +52,7 @@ import {
 import BalanceOverview from './components/BalanceOverview';
 import { useTokenBalance } from './hook';
 import TokenActions from './components/TokenActions';
+import BottomFloatGuide from './components/BottomFloatGuide';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -272,9 +273,10 @@ export const TokenDetailScreen = () => {
     rawPortfolios, // only isSingleAddress === true can use
   } = route.params || {};
 
-  const { styles, isLight } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
+  const { t } = useTranslation();
 
   const [, setShouldHideSelectorPopup] = useAtom(shouldHideSelectorPopupAtom);
   const setIsFromBack = useSetAtom(isFromBackAtom);
@@ -530,7 +532,7 @@ export const TokenDetailScreen = () => {
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
 
-  const { amountSum, usdValue, percentChange, isLoss, is24hNoChange } =
+  const { amountSum, usdValue, percentChange, isLoss, is24hNoChange, price } =
     useTokenBalance({
       token: tokenWithAmount || token,
       amountList: tokenFromAddress,
@@ -620,6 +622,31 @@ export const TokenDetailScreen = () => {
         />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
       </ScrollView>
+      <BottomFloatGuide onPress={() => {}}>
+        <View style={styles.floatingBarContent}>
+          <Text style={styles.floatBalanceTitle}>
+            {t('page.tokenDetail.guideToMarketData')}
+          </Text>
+          <View style={styles.floatBalanceContainer}>
+            <Text style={styles.floatPrice}>{formatPrice(price)}</Text>
+            <Text
+              style={[
+                styles.floatPriceChange,
+                {
+                  color: is24hNoChange
+                    ? colors2024['neutral-secondary']
+                    : isLoss
+                    ? colors2024['red-default']
+                    : colors2024['green-default'],
+                },
+              ]}>
+              {' '}
+              ({is24hNoChange ? '0.0%' : isLoss ? '-' : '+'}
+              {percentChange})
+            </Text>
+          </View>
+        </View>
+      </BottomFloatGuide>
     </NormalScreenContainer2024>
   );
 };
@@ -779,6 +806,36 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       fontSize: 14,
       lineHeight: 18,
       fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+    },
+    floatingBarContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    floatBalanceTitle: {
+      color: colors2024['neutral-title-1'],
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '500',
+      fontFamily: 'SF Pro Rounded',
+    },
+    floatBalanceContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    floatPrice: {
+      color: colors2024['neutral-title-1'],
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      fontFamily: 'SF Pro Rounded',
+    },
+    floatPriceChange: {
+      color: colors2024['neutral-title-1'],
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },
   };
