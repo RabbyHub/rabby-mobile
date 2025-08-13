@@ -4,16 +4,20 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite && open http://localhost:5173/mobile-debug/",
     "build": "tsc -b && vite build",
+    "build-debug": "RABBY_GO_ENV=mobile-debug yarn build",
+    "build-regression": "RABBY_GO_ENV=mobile-regression yarn build",
+    "build-production": "RABBY_GO_ENV=mobile-production yarn build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy-debug": "RABBY_GO_ENV=mobile-debug sh ./scripts/deploy.sh",
-    "deploy-regression": "RABBY_GO_ENV=mobile-regression sh ./scripts/deploy.sh",
-    "deploy-production": "RABBY_GO_ENV=mobile-production sh ./scripts/deploy.sh",
-    "deploy": "RABBY_GO_ENV=mobile-production sh ./scripts/deploy.sh"
+    "deploy-debug": "REALLY_UPLOAD=true RABBY_GO_ENV=mobile-debug sh ./scripts/deploy.sh",
+    "deploy-regression": "REALLY_UPLOAD=true RABBY_GO_ENV=mobile-regression sh ./scripts/deploy.sh",
+    "deploy-production": "REALLY_UPLOAD=true RABBY_GO_ENV=mobile-production sh ./scripts/deploy.sh",
+    "deploy": "REALLY_UPLOAD=true sh ./scripts/deploy.sh"
   },
   "dependencies": {
+    "@rabby-wallet/base-utils": "workspace:^",
     "less": "^4.4.0",
     "query-string": "^9.2.2",
     "react": "^19.1.1",
