@@ -74,6 +74,10 @@ export function BrowserSearch({
 
   const handleBlur = useMemoizedFn(async () => {
     Keyboard.dismiss();
+    if (!searchText.trim() && !displayedBrowserHistoryList.length) {
+      await waitKeyboardHide();
+      onClose?.(trigger === 'home' && !isOpenURLRef.current);
+    }
   });
 
   const waitKeyboardHide = useMemoizedFn(async () => {

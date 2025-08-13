@@ -19,9 +19,10 @@ import {
 } from '@/utils/events';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BackHandler,
+  Platform,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -75,6 +76,8 @@ export const BottomSheetBrowser = () => {
     getStyle,
   });
 
+  const [isLoad, setIsLoad] = useState(Platform.OS === 'ios');
+
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { width } = useWindowDimensions();
 
@@ -95,6 +98,14 @@ export const BottomSheetBrowser = () => {
     browserState.searchText,
     browserState.trigger,
   ]);
+
+  useEffect(() => {
+    if (browserState.isShowBrowser && !isLoad) {
+      setTimeout(() => {
+        setIsLoad(true);
+      }, 250);
+    }
+  }, [browserState.isShowBrowser, isLoad]);
 
   useEffect(() => {
     if (browserState.isShowBrowser) {
@@ -189,9 +200,13 @@ export const BottomSheetBrowser = () => {
             <View style={styles.customHandle} />
           </BottomSheetHandlableView>
         ) : null}
-        <BrowserScreen
-          style={isTransparent ? { backgroundColor: 'transparent' } : null}
-        />
+        {isLoad ? (
+          <BrowserScreen style={isTransparent ? styles.transparent : null} />
+        ) : (
+          <View
+            style={isTransparent ? styles.transparent : styles.placeholder}
+          />
+        )}
       </AutoLockView>
     </AppBottomSheetModal>
   );
@@ -321,5 +336,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       right: 8,
       zIndex: 100,
     },
+    placeholder: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      height: '100%',
+    },
+
+    transparent: { backgroundColor: 'transparent' },
   };
 });
