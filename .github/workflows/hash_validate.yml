@@ -6,6 +6,7 @@ on:
       - 'hashcheck-*'
     branches:
       - feat/hash-check
+      - publish/*
   workflow_dispatch:
 
 jobs:
