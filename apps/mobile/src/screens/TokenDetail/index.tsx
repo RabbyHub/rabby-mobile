@@ -449,7 +449,17 @@ export const TokenDetailScreen = () => {
   }, [isSingleAddress, singleTokenRefresh, tokenRefresh]);
 
   const getHeaderTitle = useCallback(() => {
-    return <TokenDetailHeaderArea key={finalAccount?.address} token={token} />;
+    return (
+      <TokenDetailHeaderArea
+        key={finalAccount?.address}
+        token={token}
+        tokenSize={20}
+        chainSize={10}
+        borderChain
+        style={{ justifyContent: 'center' }}
+        titleStyle={{ fontSize: 20, lineHeight: 24 }}
+      />
+    );
   }, [finalAccount?.address, token]);
 
   const tokenFromAddress = useMemo(() => {
