@@ -3,9 +3,11 @@
   <domain-config cleartextTrafficPermitted="true">
     <domain includeSubdomains="false">localhost</domain>
   </domain-config>
+  <!-- default value for Android: 7.0 ~ 8.1 (targetApi: 24 ~ 27) -->
   <base-config cleartextTrafficPermitted="true">
     <trust-anchors>
       <certificates src="system" />
+      <!-- default value for Android: 6 (targetApi: 23) -->
       <!-- <certificates src="user" /> -->
     </trust-anchors>
   </base-config>
