@@ -34,7 +34,8 @@ fi
 if [ -z $SKIP_SYNC ]; then
   # sync the dist directory to S3,
   common_sync_options='--exact-timestamps --acl public-read --metadata-directive REPLACE';
-  if [ ! -z $RABBY_GO_FORCE_PRUNE ]; then
+  # prune expired files on developer's machine
+  if [ -z $CI ]; then
     common_sync_options="$common_sync_options --delete"
   fi
   # html

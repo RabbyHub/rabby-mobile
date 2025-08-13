@@ -9,8 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy-debug": "RABBY_GO_ENV=mobile-debug sh ./scripts/deploy.sh",
+    "deploy-regression": "RABBY_GO_ENV=mobile-regression sh ./scripts/deploy.sh",
     "deploy-production": "RABBY_GO_ENV=mobile-production sh ./scripts/deploy.sh",
-    "deploy-regression": "RABBY_GO_ENV=mobile-regression sh ./scripts/deploy.sh"
+    "deploy": "RABBY_GO_ENV=mobile-production sh ./scripts/deploy.sh"
   },
   "dependencies": {
     "less": "^4.4.0",

@@ -7,7 +7,8 @@ export function formatRabbySchemaUrl(rabbyGoEnv: string, hrefString: string) {
         return 'rabbygo-debug:';
       case 'mobile-regression':
         return 'rabbygo-regression:';
-      case 'mobile-release':
+      case 'mobile-production':
+      case 'mobile':
         return 'rabbygo:';
     }
   })();
