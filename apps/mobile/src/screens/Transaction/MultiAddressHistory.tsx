@@ -227,44 +227,6 @@ function History({
       return { list, hasMore };
     },
   );
-
-  const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
-    dbLastCursorRef.current = 0;
-    await batchFetchDataFromDb();
-    // if (dbData.length === 0) {
-    //   await batchFetchDataFromDb();
-    //   return;
-    // }
-
-    // const isFilterScamAndSmallTx = !isShowAll;
-    // const addresses = isSceneUsingAllAccounts
-    //   ? top10Addresses.map(i => i.toLowerCase())
-    //   : [finalSceneCurrentAccount?.address.toLowerCase() || ''];
-    // const dbFirstItemTime = dbData[0]?.time_at || 0;
-    // const historyList = await HistoryItemEntity.getAllHistoryItemSortedByTime(
-    //   addresses,
-    //   10000,
-    //   isFilterScamAndSmallTx,
-    //   dbFirstItemTime,
-    // );
-    // if (historyList.length === 0) {
-    //   return;
-    // }
-
-    // const list = historyList.map(item => {
-    //   return {
-    //     ...ensureHistoryListItemFromDb(item),
-    //     // hidden small and scam no need this prop
-    //     isSmallUsdTx: isFilterScamAndSmallTx ? false : item.is_small_tx,
-    //     isShowSuccess: historySuccessList.includes(
-    //       `${item.owner_addr.toLowerCase()}-${item.txHash}`,
-    //     ),
-    //   } as HistoryDisplayItem;
-    // });
-
-    // setDbData(prev => mergeDataWithDeduplication(prev, list, 'front'));
-  });
-
   const isNeedFetchFromApi = useMemo(() => {
     const isUseingContactsOrSafe =
       !isSceneUsingAllAccounts &&
@@ -508,23 +470,6 @@ function History({
     firstFetchDone,
     finalSceneCurrentAccount?.address,
   ]);
-
-  useEffect(() => {
-    if (isReady.current) {
-      if (!isNeedFetchFromApi) {
-        setFirstFetchDone(false);
-        dbLastCursorRef.current = 0;
-        batchFetchDataFromDb();
-        runFetchLocalTx();
-      } else {
-        cancel();
-        refresh();
-      }
-      historyListRef.current?.scrollToTop();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
-
   const {
     data: fetchApiData,
     loading,
@@ -551,6 +496,28 @@ function History({
       runFetchLocalTx();
     },
   });
+
+  useEffect(() => {
+    if (isReady.current) {
+      if (!isNeedFetchFromApi) {
+        setFirstFetchDone(false);
+        dbLastCursorRef.current = 0;
+        reloadAsync();
+        runFetchLocalTx();
+      } else {
+        cancel();
+        refresh();
+      }
+      historyListRef.current?.scrollToTop();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneCurrentAccountDepKey, isSceneUsingAllAccounts]);
+
+  const batchFetchDataFromDbUpsert = useMemoizedFn(async () => {
+    dbLastCursorRef.current = 0;
+    reloadAsync();
+  });
+
   const throttleBatchFetchData = useMemo(
     () =>
       debounce(batchFetchDataFromDbUpsert, 1000, {
@@ -751,7 +718,7 @@ function History({
           isForMultipleAddress={isForMultipleAddress}
           loadMore={() => {
             // avoid exec multi times loadMore
-            if (loadingMore) {
+            if (loadingMore || noMore) {
               return;
             }
             loadMore();
