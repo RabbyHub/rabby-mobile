@@ -16,10 +16,9 @@ import {
 } from 'react-native';
 import WebView, { WebViewProps } from 'react-native-webview';
 
-import { RootNames, ScreenLayouts2 } from '@/constant/layout';
+import { ScreenLayouts2 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 
-import AutoLockView from '@/components/AutoLockView';
 import {
   useWebViewControl,
   WebViewActions,
@@ -29,40 +28,38 @@ import { checkShouldStartLoadingWithRequestForDappWebView } from '@/components/W
 import { APP_UA_PARIALS } from '@/constant';
 import { DESKTOP_MODE_UA, USER_AGENT } from '@/constant/browser';
 import { parsePossibleURL } from '@/constant/dappView';
+import { isNonPublicProductionEnv } from '@/constant/env';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { browserService, dappService } from '@/core/services';
+import { Tab } from '@/core/services/browserService';
 import { FontNames } from '@/core/utils/fonts';
+import {
+  useBrowser,
+  useBrowserActiveTabState,
+} from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useDapps } from '@/hooks/useDapps';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { sleep } from '@/utils/async';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { isGoogle, isValidAppStoreUrl } from '@/utils/browser';
+import { coerceInteger } from '@/utils/number';
+import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import {
   canoicalizeDappUrl,
   safeGetOrigin,
-  safeParseURL,
 } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { useFocusEffect } from '@react-navigation/native';
 import { useDebounce, useMemoizedFn } from 'ahooks';
+import { NativeViewGestureHandler } from 'react-native-gesture-handler';
 import ViewShot from 'react-native-view-shot';
-import { BrowserBookmarkSection } from '../BrowserBookmarkSection';
 import { BrowserFooter } from './BrowserFooter';
 import { BrowserHeader } from './BrowserHeader';
 import { BrowserProgressBar } from './BrowserProgressBar';
-import { BrowserSearchAutoComplete } from './BrowserSearchAutoComplete';
-import { useBrowser } from '@/hooks/browser/useBrowser';
-import { emptyTab, Tab } from '@/core/services/browserService';
-import { coerceInteger } from '@/utils/number';
-import { isGoogle, isValidAppStoreUrl } from '@/utils/browser';
-import { isNonPublicProductionEnv } from '@/constant/env';
-import { BrowserSearch } from '../BrowserSearch';
-import { NativeViewGestureHandler } from 'react-native-gesture-handler';
-import RNFS from 'react-native-fs';
-import { matomoRequestEvent } from '@/utils/analytics';
+import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
+import { Freeze } from 'react-freeze';
 
 type BrowserTabProps = {
   origin: string;
@@ -120,6 +117,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [progress, setProgress] = useState(0);
     const { browserState, setPartialBrowserState } = useBrowser();
     const debounceProgress = useDebounce(progress, { wait: 500 });
+    const [, setBrowserActiveTabState] = useBrowserActiveTabState();
 
     const {
       webviewRef,
@@ -150,7 +148,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
 
     const handleDisconnect = useMemoizedFn(() => {
       disconnectDapp(urlInfo.origin);
-      onCloseTab?.(webviewState.resolvedUrl);
     });
 
     const handleContentModeChange = useMemoizedFn(
@@ -205,17 +202,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     );
 
     const isBookmark = useMemo(() => {
-      // if (
-      //   urlInfo &&
-      //   [urlInfo?.origin, urlInfo?.origin + '/'].includes(webviewState.url)
-      // ) {
-      //   return !!(
-      //     bookmarkStore.entities[urlInfo?.origin] ||
-      //     bookmarkStore.entities[urlInfo?.origin + '/']
-      //   );
-      // }
-      // return !!bookmarkStore.entities[webviewState.url];
-
       return !!bookmarkStore.ids.find(
         url => safeGetOrigin(url) === safeGetOrigin(webviewState.resolvedUrl),
       );
@@ -444,17 +430,6 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
     }, [dappInfo?.isDapp, handleUpdateTab]);
 
-    // useFocusEffect(
-    //   React.useCallback(() => {
-    //     if (isEmptyTab && isActive) {
-    //       setTimeout(() => {
-    //         setIsShowSearch(true);
-    //       }, 100);
-    //     }
-    //     return () => {};
-    //   }, [isActive, isEmptyTab]),
-    // );
-
     const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
@@ -468,283 +443,329 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       }
     }, [setWebViewState, url, webviewState.resolvedUrl]);
 
+    useEffect(() => {
+      if (isActive) {
+        setBrowserActiveTabState({
+          url: webviewState.url,
+          contentMode: contentMode,
+          isConnected: dappInfo?.isConnected,
+          isBookmark: isBookmark,
+          isDapp: dappInfo?.isDapp,
+        });
+      }
+    }, [
+      contentMode,
+      dappInfo?.isConnected,
+      dappInfo?.isDapp,
+      isActive,
+      isBookmark,
+      setBrowserActiveTabState,
+      webviewState.url,
+    ]);
+
+    const handleAction = useMemoizedFn(
+      (payload: {
+        type: 'refresh' | 'disconnect' | 'favorite' | 'contentMode';
+      }) => {
+        if (payload?.type === 'refresh') {
+          handleReload();
+        } else if (payload?.type === 'disconnect') {
+          handleDisconnect();
+        } else if (payload.type === 'favorite') {
+          handleBookmark();
+        } else if (payload.type === 'contentMode') {
+          handleContentModeChange(
+            contentMode === 'desktop' ? 'mobile' : 'desktop',
+          );
+        }
+      },
+    );
+    useEffect(() => {
+      if (isActive) {
+        eventBus.on(EVENT_BROWSER_ACTION, handleAction);
+      } else {
+        eventBus.removeListener(EVENT_BROWSER_ACTION, handleAction);
+      }
+      return () => {
+        eventBus.removeListener(EVENT_BROWSER_ACTION, handleAction);
+      };
+    }, [handleAction, isActive]);
+
     return (
-      <View style={[style, styles.dappWebViewControl]}>
-        <ViewShot
-          ref={viewShotRef}
-          style={[{ flex: 1, backgroundColor: colors2024['neutral-bg-1'] }]}
-          options={{
-            format: 'jpg',
-            quality: 0.2,
-          }}>
-          {/* {(isShowSearch && !searchText) || (!isShowSearch && !url) ? (
-            <BrowserBookmarkSection
-              onPress={dapp => {
-                const urlToGo = dapp.url || dapp.origin;
-                handleGoTo(urlToGo);
-              }}
-            />
-          ) : null} */}
-          <NativeViewGestureHandler disallowInterruption={true}>
-            <View
-              // renderToHardwareTextureAndroid
-              style={[
-                styles.dappWebViewContainer,
-                !webviewContainerMaxHeight
-                  ? {}
-                  : {
-                      maxHeight: webviewContainerMaxHeight,
-                    },
-              ]}>
-              {!url ||
-              !/^https?:\/\//.test(url) ||
-              !entryScriptWeb3Loaded ? null : (
-                <>
-                  {isLoading ? (
-                    <BrowserProgressBar
-                      progress={progress}
-                      style={styles.progressBar}
-                    />
-                  ) : null}
-                  <WebView
-                    key={`${refreshKey}-${contentMode}`}
-                    cacheEnabled
-                    startInLoadingState={false}
-                    renderLoading={() => <View style={styles.hidden} />}
-                    allowsFullscreenVideo={false}
-                    allowsInlineMediaPlayback={false}
-                    originWhitelist={['*']}
-                    {...webviewProps}
-                    style={[styles.dappWebView, webviewProps?.style]}
-                    ref={webviewRef}
-                    source={{
-                      ...(embedHtml
-                        ? {
-                            html: embedHtml,
-                          }
-                        : {
-                            uri: url!,
-                          }),
-                      // TODO: cusotmize userAgent here
-                      // 'User-Agent': ''
-                    }}
-                    testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
-                    userAgent={userAgent}
-                    // applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
-                    javaScriptEnabled
-                    // androidLayerType='software'
-                    injectedJavaScriptBeforeContentLoaded={fullScript}
-                    injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-                    {...(IS_ANDROID && {
-                      injectedJavaScript: PATCH_ANCHOR_TARGET,
-                    })}
-                    onNavigationStateChange={event => {
-                      // onUpdateTab?.({
-                      //   url: event.url,
-                      //   name: event.title,
-                      // });
-                      return webviewActions.onNavigationStateChange(event);
-                    }}
-                    // onOpenWindow={handleOnOpenWindow}
-                    webviewDebuggingEnabled={isNonPublicProductionEnv}
-                    contentMode={contentMode}
-                    {...(contentMode === 'desktop' && {
-                      scalesPageToFit: true,
-                    })}
-                    onLoadStart={e => {
-                      let treatAsReload = IS_IOS || e.nativeEvent.isReload;
-
-                      if (!treatAsReload) {
-                        const eventUrlOrigin = urlUtils.canoicalizeDappUrl(
-                          e.nativeEvent.url,
-                        ).httpOrigin;
-                        const urlOrigin = urlUtils.canoicalizeDappUrl(
-                          webviewState.url,
-                        ).httpOrigin;
-                        const resolvedUrlOrigin = urlUtils.canoicalizeDappUrl(
-                          webviewState.resolvedUrl,
-                        ).httpOrigin;
-                        const originChanged =
-                          !webviewState.resolvedUrl ||
-                          eventUrlOrigin !== resolvedUrlOrigin ||
-                          urlOrigin !== resolvedUrlOrigin;
-                        treatAsReload = originChanged;
+      <Freeze freeze={!isActive}>
+        <View style={[style, styles.dappWebViewControl]}>
+          <ViewShot
+            ref={viewShotRef}
+            style={styles.viewShot}
+            options={{
+              format: 'jpg',
+              quality: 0.2,
+            }}>
+            <NativeViewGestureHandler disallowInterruption={true}>
+              <View
+                // renderToHardwareTextureAndroid
+                style={[
+                  styles.dappWebViewContainer,
+                  !webviewContainerMaxHeight
+                    ? {}
+                    : {
+                        maxHeight: webviewContainerMaxHeight,
+                      },
+                ]}>
+                {!url ||
+                !/^https?:\/\//.test(url) ||
+                !entryScriptWeb3Loaded ? null : (
+                  <>
+                    {isLoading ? (
+                      <BrowserProgressBar
+                        progress={progress}
+                        style={styles.progressBar}
+                      />
+                    ) : null}
+                    <WebView
+                      key={`${refreshKey}-${contentMode}`}
+                      cacheEnabled
+                      startInLoadingState={false}
+                      renderLoading={() => <View style={styles.hidden} />}
+                      allowsFullscreenVideo={false}
+                      allowsInlineMediaPlayback={false}
+                      originWhitelist={['*']}
+                      {...webviewProps}
+                      style={[styles.dappWebView, webviewProps?.style]}
+                      ref={webviewRef}
+                      source={{
+                        ...(embedHtml
+                          ? {
+                              html: embedHtml,
+                            }
+                          : {
+                              uri: url!,
+                            }),
+                        // TODO: cusotmize userAgent here
+                        // 'User-Agent': ''
+                      }}
+                      testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
+                      userAgent={userAgent}
+                      // applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
+                      javaScriptEnabled
+                      // androidLayerType='software'
+                      injectedJavaScriptBeforeContentLoaded={fullScript}
+                      injectedJavaScriptBeforeContentLoadedForMainFrameOnly={
+                        true
                       }
+                      {...(IS_ANDROID && {
+                        injectedJavaScript: PATCH_ANCHOR_TARGET,
+                      })}
+                      onNavigationStateChange={event => {
+                        // onUpdateTab?.({
+                        //   url: event.url,
+                        //   name: event.title,
+                        // });
+                        return webviewActions.onNavigationStateChange(event);
+                      }}
+                      // onOpenWindow={handleOnOpenWindow}
+                      webviewDebuggingEnabled={isNonPublicProductionEnv}
+                      contentMode={contentMode}
+                      {...(contentMode === 'desktop' && {
+                        scalesPageToFit: true,
+                      })}
+                      onLoadStart={e => {
+                        let treatAsReload = IS_IOS || e.nativeEvent.isReload;
 
-                      webviewProps?.onLoadStart?.(e);
-                      onLoadStart(e, treatAsReload);
-                      if (treatAsReload) {
-                        setIsLoading(true);
-                        setProgress(0);
-                      }
-                      const { nativeEvent } = e;
+                        if (!treatAsReload) {
+                          const eventUrlOrigin = urlUtils.canoicalizeDappUrl(
+                            e.nativeEvent.url,
+                          ).httpOrigin;
+                          const urlOrigin = urlUtils.canoicalizeDappUrl(
+                            webviewState.url,
+                          ).httpOrigin;
+                          const resolvedUrlOrigin = urlUtils.canoicalizeDappUrl(
+                            webviewState.resolvedUrl,
+                          ).httpOrigin;
+                          const originChanged =
+                            !webviewState.resolvedUrl ||
+                            eventUrlOrigin !== resolvedUrlOrigin ||
+                            urlOrigin !== resolvedUrlOrigin;
+                          treatAsReload = originChanged;
+                        }
 
-                      if (
-                        nativeEvent.url !== urlRef.current &&
-                        nativeEvent.loading &&
-                        nativeEvent.navigationType === 'backforward'
-                      ) {
+                        webviewProps?.onLoadStart?.(e);
+                        onLoadStart(e, treatAsReload);
+                        if (treatAsReload) {
+                          setIsLoading(true);
+                          setProgress(0);
+                        }
+                        const { nativeEvent } = e;
+
+                        if (
+                          nativeEvent.url !== urlRef.current &&
+                          nativeEvent.loading &&
+                          nativeEvent.navigationType === 'backforward'
+                        ) {
+                          onUpdateTab?.({
+                            url: nativeEvent.url,
+                            // name: nativeEvent.title,
+                          });
+                          onUpdateHistory?.({
+                            name: nativeEvent.title,
+                            url: nativeEvent.url,
+                          });
+                        }
+                      }}
+                      onLoadProgress={({ nativeEvent }) => {
+                        setProgress(nativeEvent.progress);
+                        if (nativeEvent.progress === 1) {
+                          setIsLoading(false);
+                        }
+                      }}
+                      onLoad={e => {
+                        changeViewPortForDesktop(contentMode, 0);
+                      }}
+                      onLoadEnd={e => {
+                        if (!e.nativeEvent.loading) {
+                          setIsLoading(false);
+                        }
+                        webviewProps?.onLoadEnd?.(e);
+                        const { nativeEvent } = e;
+                        // if (nativeEvent.loading) {
+                        //   return;
+                        // }
                         onUpdateTab?.({
                           url: nativeEvent.url,
                           // name: nativeEvent.title,
                         });
+                        setWebViewState(prev => {
+                          return {
+                            ...prev,
+                            resolvedUrl: nativeEvent.url,
+                          };
+                        });
+
                         onUpdateHistory?.({
                           name: nativeEvent.title,
                           url: nativeEvent.url,
                         });
-                      }
-                    }}
-                    onLoadProgress={({ nativeEvent }) => {
-                      setProgress(nativeEvent.progress);
-                      if (nativeEvent.progress === 1) {
-                        setIsLoading(false);
-                      }
-                    }}
-                    onLoad={e => {
-                      changeViewPortForDesktop(contentMode, 0);
-                    }}
-                    onLoadEnd={e => {
-                      if (!e.nativeEvent.loading) {
-                        setIsLoading(false);
-                      }
-                      webviewProps?.onLoadEnd?.(e);
-                      const { nativeEvent } = e;
-                      // if (nativeEvent.loading) {
-                      //   return;
-                      // }
-                      onUpdateTab?.({
-                        url: nativeEvent.url,
-                        // name: nativeEvent.title,
-                      });
-                      setWebViewState(prev => {
-                        return {
-                          ...prev,
-                          resolvedUrl: nativeEvent.url,
-                        };
-                      });
+                        // if (
+                        //   isActive &&
+                        //   browserState.isShowBrowser &&
+                        //   !browserState.isShowSearch &&
+                        //   !browserState.isShowManage
+                        // ) {
+                        //   setTimeout(() => {
+                        //     handleViewShot(nativeEvent.url);
+                        //   }, 200);
+                        // }
+                      }}
+                      onShouldStartLoadWithRequest={nativeEvent => {
+                        const origin = safeGetOrigin(nativeEvent.url);
+                        if (
+                          isGoogle(webviewState.resolvedUrl) &&
+                          dappService.getDapp(origin)?.isDapp
+                        ) {
+                          matomoRequestEvent({
+                            category: 'Websites Usage',
+                            action: 'Website_Visit_Page Link',
+                            label: origin,
+                          });
+                        }
+                        return checkShouldStartLoadingWithRequestForDappWebView(
+                          nativeEvent,
+                        );
+                      }}
+                      onContentProcessDidTerminate={syntheticEvent => {
+                        const { nativeEvent } = syntheticEvent;
+                        console.warn(
+                          'IOS Content process terminated',
+                          nativeEvent,
+                        );
 
-                      onUpdateHistory?.({
-                        name: nativeEvent.title,
-                        url: nativeEvent.url,
-                      });
-                      // if (
-                      //   isActive &&
-                      //   browserState.isShowBrowser &&
-                      //   !browserState.isShowSearch &&
-                      //   !browserState.isShowManage
-                      // ) {
-                      //   setTimeout(() => {
-                      //     handleViewShot(nativeEvent.url);
-                      //   }, 200);
-                      // }
-                    }}
-                    onShouldStartLoadWithRequest={nativeEvent => {
-                      const origin = safeGetOrigin(nativeEvent.url);
-                      if (
-                        isGoogle(webviewState.resolvedUrl) &&
-                        dappService.getDapp(origin)?.isDapp
-                      ) {
-                        matomoRequestEvent({
-                          category: 'Websites Usage',
-                          action: 'Website_Visit_Page Link',
-                          label: origin,
+                        if (isActive) {
+                          // handleReload();
+                          setRefreshKey(key => key + 1);
+                        } else {
+                          onUpdateTab?.({
+                            initialUrl: nativeEvent.url,
+                            url: nativeEvent.url,
+                            isTerminate: true,
+                          });
+                        }
+                      }}
+                      onRenderProcessGone={syntheticEvent => {
+                        const { nativeEvent } = syntheticEvent;
+                        console.warn(
+                          'Android Content process terminated',
+                          nativeEvent,
+                        );
+
+                        if (isActive) {
+                          // handleReload();
+                          setRefreshKey(key => key + 1);
+                        } else {
+                          onUpdateTab?.({
+                            initialUrl: webviewState.resolvedUrl,
+                            url: webviewState.resolvedUrl,
+                            isTerminate: true,
+                          });
+                        }
+                      }}
+                      // onError={errorLog}
+                      onError={e => {
+                        // // leave here for debug
+                        // if (__DEV__) {
+                        //   console.warn('WebView:: onError event', e);
+                        // }
+                        setWebViewState(prev => {
+                          return {
+                            ...prev,
+                            resolvedUrl: e.nativeEvent.url,
+                          };
                         });
-                      }
-                      return checkShouldStartLoadingWithRequestForDappWebView(
-                        nativeEvent,
-                      );
-                    }}
-                    onContentProcessDidTerminate={syntheticEvent => {
-                      const { nativeEvent } = syntheticEvent;
-                      console.warn(
-                        'IOS Content process terminated',
-                        nativeEvent,
-                      );
+                      }}
+                      onMessage={event => {
+                        // // leave here for debug
+                        // if (__DEV__) {
+                        //   console.log('WebView:: onMessage event', event);
+                        // }
+                        onBridgeMessage(event);
+                        webviewProps?.onMessage?.(event);
 
-                      if (isActive) {
-                        // handleReload();
-                        setRefreshKey(key => key + 1);
-                      } else {
-                        onUpdateTab?.({
-                          initialUrl: nativeEvent.url,
-                          url: nativeEvent.url,
-                          isTerminate: true,
-                        });
-                      }
-                    }}
-                    onRenderProcessGone={syntheticEvent => {
-                      const { nativeEvent } = syntheticEvent;
-                      console.warn(
-                        'Android Content process terminated',
-                        nativeEvent,
-                      );
-
-                      if (isActive) {
-                        // handleReload();
-                        setRefreshKey(key => key + 1);
-                      } else {
-                        onUpdateTab?.({
-                          initialUrl: webviewState.resolvedUrl,
-                          url: webviewState.resolvedUrl,
-                          isTerminate: true,
-                        });
-                      }
-                    }}
-                    // onError={errorLog}
-                    onError={e => {
-                      // // leave here for debug
-                      // if (__DEV__) {
-                      //   console.warn('WebView:: onError event', e);
-                      // }
-                      setWebViewState(prev => {
-                        return {
-                          ...prev,
-                          resolvedUrl: e.nativeEvent.url,
-                        };
-                      });
-                    }}
-                    onMessage={event => {
-                      // // leave here for debug
-                      // if (__DEV__) {
-                      //   console.log('WebView:: onMessage event', event);
-                      // }
-                      onBridgeMessage(event);
-                      webviewProps?.onMessage?.(event);
-
-                      // // leave here for debug
-                      // webviewRef.current?.injectJavaScript(
-                      //   JS_POST_MESSAGE_TO_PROVIDER(
-                      //     JSON.stringify({
-                      //       type: 'hello',
-                      //       data: 'I have received your message!',
-                      //     }),
-                      //     '*',
-                      //   ),
-                      // );
-                    }}
-                  />
-                </>
-              )}
-            </View>
-          </NativeViewGestureHandler>
-        </ViewShot>
-        {isActive && !browserState.isShowSearch ? (
-          <View style={styles.dappWebViewNavControl}>
-            <BrowserHeader
-              dapp={dappInfo}
-              url={webviewState.resolvedUrl}
-              onViewTabs={handleViewTabs}
-              onLocationBarPress={str => {
-                setPartialBrowserState({
-                  isShowSearch: true,
-                  searchText: str,
-                  searchTabId: tabId,
-                  trigger: 'browser',
-                });
-              }}
-              tabsCount={tabsCount}
-            />
-            <BrowserFooter
+                        // // leave here for debug
+                        // webviewRef.current?.injectJavaScript(
+                        //   JS_POST_MESSAGE_TO_PROVIDER(
+                        //     JSON.stringify({
+                        //       type: 'hello',
+                        //       data: 'I have received your message!',
+                        //     }),
+                        //     '*',
+                        //   ),
+                        // );
+                      }}
+                    />
+                  </>
+                )}
+              </View>
+            </NativeViewGestureHandler>
+          </ViewShot>
+          {isActive && !browserState.isShowSearch ? (
+            <View style={styles.dappWebViewNavControl}>
+              <BrowserHeader
+                dapp={dappInfo}
+                url={webviewState.resolvedUrl}
+                onViewTabs={handleViewTabs}
+                onLocationBarPress={str => {
+                  setPartialBrowserState({
+                    isShowSearch: true,
+                    searchText: str,
+                    searchTabId: tabId,
+                    trigger: 'browser',
+                  });
+                }}
+                tabsCount={tabsCount}
+                canGoBack={webviewState.canGoBack}
+                onGoBack={handleGoBack}
+                onGoHome={handleGoHome}
+              />
+              {/* <BrowserFooter
               url={webviewState.resolvedUrl}
               onGoHome={handleGoHome}
               canReload={!isEmptyTab}
@@ -763,10 +784,11 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               contentMode={contentMode}
               onContentModeChange={handleContentModeChange}
               canViewMore={!!url}
-            />
-          </View>
-        ) : null}
-      </View>
+            /> */}
+            </View>
+          ) : null}
+        </View>
+      </Freeze>
     );
   },
 );
@@ -779,7 +801,10 @@ const getStyles = createGetStyles2024(ctx =>
       backgroundColor: 'transparent',
       width: '100%',
       height: '100%',
-      // ...makeDebugBorder('blue')
+    },
+    viewShot: {
+      flex: 1,
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
     },
     dappWebViewHeadContainer: {
       flexShrink: 0,
@@ -859,7 +884,7 @@ const getStyles = createGetStyles2024(ctx =>
       // height: ScreenLayouts2.dappWebViewControlNavHeight,
       // height: 124,
       // height: ScreenLayouts2.TabbedDappWebViewControlNavHeightV2,
-      paddingBottom: Platform.OS === 'android' ? 0 : 24,
+      paddingBottom: Platform.OS === 'android' ? 0 : 20,
       // backgroundColor: ctx.colors['neutral-bg-1'],
       // ...makeDebugBorder(),
     },

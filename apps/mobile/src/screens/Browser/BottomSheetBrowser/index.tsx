@@ -1,9 +1,5 @@
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
-import {
-  RcIconCloseBrowser,
-  RcIconCloseBrowserDark,
-} from '@/assets/icons/dapp';
 import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { BOTTOM_SHEET_EXTRA } from '@/constant/browser';
@@ -18,55 +14,17 @@ import {
   eventBus,
 } from '@/utils/events';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemoizedFn } from 'ahooks';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  BackHandler,
-  Platform,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { BackHandler, Platform, useWindowDimensions, View } from 'react-native';
 import { BrowserScreen } from '../BrowserScreen';
 import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
-
-const CustomHandle = () => {
-  const { styles, isLight } = useTheme2024({
-    getStyle,
-  });
-  const {
-    browserState,
-    setPartialBrowserState,
-    closeTab,
-    onHideBrowser,
-    activeTabId,
-  } = useBrowser();
-  const handleCloseBrowser = useMemoizedFn(() => {
-    closeTab(activeTabId);
-    setPartialBrowserState({
-      isShowBrowser: false,
-      isShowSearch: false,
-      searchText: '',
-      searchTabId: '',
-      trigger: '',
-    });
-    onHideBrowser();
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: `Website_Exit`,
-      label: 'Click X',
-    });
-  });
-  return browserState.isShowBrowser &&
-    !browserState.isShowSearch &&
-    !browserState.isShowManage ? (
-    <View style={styles.handleComponent}>
-      <TouchableOpacity onPress={handleCloseBrowser} hitSlop={5}>
-        {isLight ? <RcIconCloseBrowser /> : <RcIconCloseBrowserDark />}
-      </TouchableOpacity>
-    </View>
-  ) : null;
-};
+import { BrowserHandler } from './BrowserHandler';
 
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
@@ -160,7 +118,7 @@ export const BottomSheetBrowser = () => {
       android_keyboardInputMode="adjustResize"
       // enableBlurKeyboardOnGesture
       // handleStyle={styles.hidden}
-      handleComponent={CustomHandle}
+      handleComponent={BrowserHandler}
       containerStyle={styles.customContentStyle}
       backgroundComponent={null}
       onChange={index => {
@@ -332,9 +290,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
 
     handleComponent: {
       position: 'absolute',
-      top: -36,
-      right: 8,
+      top: -40,
+      right: 10,
       zIndex: 100,
+    },
+    handleComponentContainer: {
+      display: 'flex',
+      backgroundColor: colors2024['neutral-bg-1'],
+      alignItems: 'center',
+      flexDirection: 'row',
+      paddingVertical: 4,
+      paddingHorizontal: 12,
+      borderRadius: 19,
+      gap: 8,
     },
     placeholder: {
       backgroundColor: colors2024['neutral-bg-1'],

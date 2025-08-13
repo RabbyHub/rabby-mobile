@@ -16,8 +16,11 @@ import { IS_IOS } from '@/core/native/utils';
 import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { useMyAccounts } from '@/hooks/account';
-// import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { RcIconTabsCC } from '@/assets2024/icons/browser';
+import {
+  RcIconBack1CC,
+  RcIconTabsCC,
+  ReactIconHome,
+} from '@/assets2024/icons/browser';
 import { useTheme2024 } from '@/hooks/theme';
 import { getAddressBarTitle, isGoogle } from '@/utils/browser';
 import { findChain } from '@/utils/chain';
@@ -31,12 +34,18 @@ export function BrowserHeader({
   onViewTabs,
   onLocationBarPress,
   tabsCount,
+  canGoBack,
+  onGoBack,
+  onGoHome,
 }: {
   dapp?: DappInfo;
   url?: string;
   onViewTabs?(): void;
   onLocationBarPress?(str?: string): void;
   tabsCount?: number;
+  canGoBack?: boolean;
+  onGoBack?(): void;
+  onGoHome?(): void;
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
@@ -75,54 +84,27 @@ export function BrowserHeader({
   return (
     <>
       <View style={styles.header}>
-        {url && dapp?.isDapp ? (
-          <TouchableOpacity
-            style={styles.account}
-            onPress={() => {
-              if (dapp?.isConnected) {
-                setIsShowCurrentDappPopup(true);
-              } else {
-                setIsShowAccountPopup(true);
-              }
-            }}>
-            {account ? (
-              <WalletIcon
-                type={account?.type}
-                address={account?.address}
-                width={24}
-                height={24}
-                style={styles.walletIcon}
-              />
-            ) : null}
-            {chain ? (
-              chain.isTestnet ? (
-                <TestnetChainLogo name={chain.name} style={styles.chain} />
-              ) : (
-                <Image
-                  source={{
-                    uri: chain.logo,
-                  }}
-                  style={styles.chain}
-                />
-              )
-            ) : (
-              <View style={[styles.chain, styles.disconnect]}>
-                <RcIconDisconnectCC
-                  color={colors2024['neutral-foot']}
-                  width={14}
-                  height={14}
-                />
-              </View>
-            )}
-          </TouchableOpacity>
-        ) : null}
-        <View style={styles.addressBar}>
-          <RcNextSearchCC
-            width={20}
-            height={20}
-            style={styles.icon}
-            color={colors2024['neutral-secondary']}
+        <TouchableOpacity style={[styles.navControlItem]} onPress={onGoHome}>
+          <ReactIconHome
+            width={44}
+            height={44}
+            color={colors2024['neutral-title-1']}
+            backgroundColor={colors2024['neutral-bg-5']}
           />
+        </TouchableOpacity>
+
+        <View style={styles.addressBar}>
+          <TouchableOpacity disabled={!canGoBack} onPress={onGoBack}>
+            <RcIconBack1CC
+              width={20}
+              height={20}
+              color={
+                canGoBack
+                  ? colors2024['neutral-body']
+                  : colors2024['neutral-info']
+              }
+            />
+          </TouchableOpacity>
           <TouchableWithoutFeedback
             onPress={() => {
               onLocationBarPress?.(
@@ -159,17 +141,49 @@ export function BrowserHeader({
             </View>
           </TouchableOpacity>
         </View>
-        {/* <View>
-          <TouchableOpacity>
-            <View style={styles.iconCloseCircle}>
-              <RcIconCloseCC
-                width={21}
-                height={21}
-                color={colors2024['neutral-title-1']}
-              />
-            </View>
-          </TouchableOpacity>
-        </View> */}
+        {url && dapp?.isDapp ? (
+          <View style={styles.walletIconContainer}>
+            <TouchableOpacity
+              style={styles.account}
+              onPress={() => {
+                if (dapp?.isConnected) {
+                  setIsShowCurrentDappPopup(true);
+                } else {
+                  setIsShowAccountPopup(true);
+                }
+              }}>
+              {account ? (
+                <WalletIcon
+                  type={account?.type}
+                  address={account?.address}
+                  width={32}
+                  height={32}
+                  style={styles.walletIcon}
+                />
+              ) : null}
+              {chain ? (
+                chain.isTestnet ? (
+                  <TestnetChainLogo name={chain.name} style={styles.chain} />
+                ) : (
+                  <Image
+                    source={{
+                      uri: chain.logo,
+                    }}
+                    style={styles.chain}
+                  />
+                )
+              ) : (
+                <View style={[styles.chain, styles.disconnect]}>
+                  <RcIconDisconnectCC
+                    color={colors2024['neutral-foot']}
+                    width={14}
+                    height={14}
+                  />
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
       {dapp ? (
         <>
@@ -204,15 +218,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 6,
+    gap: 8,
     width: '100%',
     backgroundColor: colors2024['neutral-bg-1'],
     // borderBottomWidth: 1,
     // borderBottomColor: colors2024['neutral-line'],
   },
-  walletIcon: { borderRadius: 6, width: 32, height: 32 },
+  walletIconContainer: {
+    padding: 5,
+  },
+  walletIcon: {
+    borderRadius: 6,
+    width: 32,
+    height: 32,
+  },
   account: {
     position: 'relative',
   },
@@ -239,8 +261,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   addressBar: {
     minWidth: 0,
     flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingLeft: 12,
+    paddingRight: 9,
+    paddingVertical: 9,
     backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 12,
     height: 42,

@@ -1,35 +1,19 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-} from 'react';
-import { AccountSwitcherModalInDappWebView } from '@/components/AccountSwitcher/Modal';
 import { globalSetActiveDappState } from '@/core/bridges/state';
 import { IS_ANDROID } from '@/core/native/utils';
-import {
-  browserService,
-  dappService,
-  preferenceService,
-} from '@/core/services';
+import { preferenceService } from '@/core/services';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useSyncDappsInfo } from '@/hooks/useSyncDappsInfo';
+import { isGoogle } from '@/utils/browser';
 import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
-import { StyleProp, View, ViewStyle } from 'react-native';
-import { BrowserRef, BrowserTab } from './components/BrowserTab';
-import { useFocusEffect } from '@react-navigation/native';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { BrowserManage } from './components/BrowserManage';
-import { BrowserSearchResult } from './components/BrowserSearch/BrowserSearchResult';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import { BrowserSearch } from './components/BrowserSearch';
-import { Freeze } from 'react-freeze';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { isGoogle } from '@/utils/browser';
+import { BrowserRef, BrowserTab } from './components/BrowserTab';
 
 export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
   const { styles: stylesScreen } = useTheme2024({
@@ -119,73 +103,72 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
           }
 
           return (
-            <Freeze freeze={!isActiveTab} key={key}>
-              <BrowserTab
-                ref={inst => {
-                  if (isActiveTab) {
-                    globalSetActiveDappState({ dappOrigin: urlInfo.origin });
-                    activeDappWebViewControlRef.current = inst;
-                    globalSetActiveDappState({
-                      dappOrigin: urlInfo.origin,
-                      tabId: tab.id,
-                    });
-                  }
-                }}
-                isActive={isActiveTab}
-                onUpdateTab={params => {
-                  updateTab(tab.id, params);
-                }}
-                onUpdateHistory={({ url, name }) => {
-                  if (
-                    !browserState.isShowSearch &&
-                    browserState.isShowBrowser &&
-                    isActiveTab
-                  ) {
-                    setBrowserHistory({
-                      url,
-                      name,
-                      createdAt: Date.now(),
-                    });
-                  }
-                }}
-                onOpenTab={openTab}
-                style={[
-                  !isActiveTab ? stylesScreen.hidden : null,
-                  browserState.isShowSearch ? stylesScreen.opacity0 : null,
-                ]}
-                origin={urlInfo.origin}
-                tabId={tab.id}
-                url={tab.initialUrl}
-                tabsCount={displayedTabs.length}
-                onSelfClose={reason => {
-                  if (reason === 'phishing') {
-                    // todo
-                    closeTab(tab.id);
-                  }
-                }}
-                onCloseTab={() => {
-                  setPartialBrowserState({
-                    isShowBrowser: false,
+            <BrowserTab
+              key={key}
+              ref={inst => {
+                if (isActiveTab) {
+                  globalSetActiveDappState({ dappOrigin: urlInfo.origin });
+                  activeDappWebViewControlRef.current = inst;
+                  globalSetActiveDappState({
+                    dappOrigin: urlInfo.origin,
+                    tabId: tab.id,
                   });
+                }
+              }}
+              isActive={isActiveTab}
+              onUpdateTab={params => {
+                updateTab(tab.id, params);
+              }}
+              onUpdateHistory={({ url, name }) => {
+                if (
+                  !browserState.isShowSearch &&
+                  browserState.isShowBrowser &&
+                  isActiveTab
+                ) {
+                  setBrowserHistory({
+                    url,
+                    name,
+                    createdAt: Date.now(),
+                  });
+                }
+              }}
+              onOpenTab={openTab}
+              style={[
+                !isActiveTab ? stylesScreen.hidden : null,
+                browserState.isShowSearch ? stylesScreen.opacity0 : null,
+              ]}
+              origin={urlInfo.origin}
+              tabId={tab.id}
+              url={tab.initialUrl}
+              tabsCount={displayedTabs.length}
+              onSelfClose={reason => {
+                if (reason === 'phishing') {
+                  // todo
                   closeTab(tab.id);
-                }}
-                // webviewContainerMaxHeight={webviewMaxHeight}
-                webviewProps={{
-                  /**
-                   * @platform ios
-                   */
-                  contentMode: 'mobile',
-                  /**
-                   * set nestedScrollEnabled to true will cause custom animated gesture not working,
-                   * but whatever, we CAN'T apply any type meaningful gesture to RNW
-                   * @platform android
-                   */
-                  nestedScrollEnabled: false,
-                  allowsInlineMediaPlayback: true,
-                  disableJsPromptLike: !isActiveTab,
-                }}
-              />
-            </Freeze>
+                }
+              }}
+              onCloseTab={() => {
+                setPartialBrowserState({
+                  isShowBrowser: false,
+                });
+                closeTab(tab.id);
+              }}
+              // webviewContainerMaxHeight={webviewMaxHeight}
+              webviewProps={{
+                /**
+                 * @platform ios
+                 */
+                contentMode: 'mobile',
+                /**
+                 * set nestedScrollEnabled to true will cause custom animated gesture not working,
+                 * but whatever, we CAN'T apply any type meaningful gesture to RNW
+                 * @platform android
+                 */
+                nestedScrollEnabled: false,
+                allowsInlineMediaPlayback: true,
+                disableJsPromptLike: !isActiveTab,
+              }}
+            />
           );
         })}
       </>

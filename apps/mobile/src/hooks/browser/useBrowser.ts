@@ -16,6 +16,7 @@ import { atom, useAtom } from 'jotai';
 import { last, omit, sortBy } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { dappsAtom } from '../useDapps';
+import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
 
 export const tabsAtom = atom<{
   tabs: Tab[];
@@ -34,6 +35,17 @@ const browserStateAtom = atom({
   searchText: '',
   searchTabId: '',
   trigger: '',
+});
+
+const browserActiveTabStateAtom = atom<{
+  url: string;
+  contentMode?: ContentMode;
+  isConnected?: boolean;
+  isBookmark?: boolean;
+  isDapp?: boolean;
+}>({
+  url: '',
+  contentMode: undefined,
 });
 
 const MAX_ACTIVE_TABS_COUNT = 4;
@@ -68,6 +80,10 @@ const homeDisplayedTabsAtom = atom(get => {
 export const useHomeDisplayedTabs = () => {
   const [tabs] = useAtom(homeDisplayedTabsAtom);
   return tabs;
+};
+
+export const useBrowserActiveTabState = () => {
+  return useAtom(browserActiveTabStateAtom);
 };
 
 export function useBrowser() {
