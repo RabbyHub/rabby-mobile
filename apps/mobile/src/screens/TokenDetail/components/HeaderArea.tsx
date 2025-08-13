@@ -64,10 +64,10 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({
 
 const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   root: {
-    width: '100%',
+    width: screenWidth - 140,
   },
   container: {
-    width: screenWidth - 130,
+    width: screenWidth - 140,
     marginLeft: 0,
     display: 'flex',
     flexDirection: 'row',
