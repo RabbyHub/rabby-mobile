@@ -764,7 +764,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     label: {
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '700',
+      fontWeight: '500',
       fontFamily: 'SF Pro Rounded',
       textTransform: 'none',
       textAlign: 'center',

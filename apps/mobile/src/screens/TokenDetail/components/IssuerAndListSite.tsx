@@ -1,12 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useState, useMemo } from 'react';
-import {
-  TouchableOpacity,
-  View,
-  Dimensions,
-  TouchableWithoutFeedback,
-  Text,
-} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { TouchableOpacity, View, Text } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -16,24 +10,15 @@ import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import RcIconRightCC from '@/assets2024/icons/history/IconRightArrowCC.svg';
 import { AssetAvatar } from '@/components';
-import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { ellipsisAddress } from '@/utils/address';
-import { findChain } from '@/utils/chain';
-import { openTxExternalUrl } from '@/utils/transaction';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
-import { formatUsdValue } from '@/utils/number';
 import { openExternalUrl } from '@/core/utils/linking';
 import { Skeleton } from '@rneui/themed';
 import { LoadingLinear } from './TokenPriceChart/LoadingLinear';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { RootNames } from '@/constant/layout';
-import { navigate, naviPush } from '@/utils/navigation';
+import { naviPush } from '@/utils/navigation';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 
 interface Props {
@@ -480,10 +465,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   headerTitle: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '700',
   },
 
