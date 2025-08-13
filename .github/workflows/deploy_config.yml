@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: upload android well-known
         run: |
-          cd apps/mobile
+          cd apps/go.rabby.io
           # upload android well-known
           aws s3 cp ./.well-known/assetlinks.json s3://${RABBY_MOBILE_BUILD_BUCKET}/rabby-go/.well-known/assetlinks.json --content-type application/json --acl public-read
           # upload ios well-known
@@ -24,6 +24,8 @@ jobs:
             echo "Force refresh CDN"
             aws cloudfront create-invalidation --distribution-id $RABBY_GO_CDN_FRONTEND_ID --paths '/.well-known/*'
             echo "CDN invalidation created"
+          else
+            echo "Refresh CDN by \`aws cloudfront create-invalidation --distribution-id <cdn_frontend_id> --paths '/.well-known/*'\`"
           fi
         env:
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
