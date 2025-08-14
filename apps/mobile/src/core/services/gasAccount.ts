@@ -145,21 +145,8 @@ export class GasAccountService {
 
   // 批量检查地址资格（带缓存）
   checkAddressEligibilityBatch = async (addresses: string[], force = false) => {
-    this.clearEligibilityCache(); // 测试用
-    console.log(
-      'getAddressEligibility123123',
-      force,
-      this.isCacheValid(),
-      this.store.hasClaimedGift,
-    );
-
     // 检查缓存
     if (!force && this.isCacheValid() && this.store.eligibilityCache) {
-      console.debug(
-        'isCacheValid',
-        this.isCacheValid(),
-        this.store.eligibilityCache,
-      );
       const result = this.getDataFromCache(addresses);
       if (result) {
         return result;
@@ -248,11 +235,9 @@ export class GasAccountService {
 
   // 检查未缓存的地址
   private checkUncachedAddresses = async (uncachedAddresses: string[]) => {
-    console.log('checkUncachedAddresses', uncachedAddresses);
     const data = await openapi.checkGasAccountGiftEligibilityBatch({
       ids: uncachedAddresses,
     });
-    console.log('checkUncachedAddresses data', data);
 
     return data.map(item => ({
       address: item.id!,
@@ -367,14 +352,6 @@ export class GasAccountService {
   // 获取单个地址资格（优先使用缓存）
   getAddressEligibility = async (address: string, force = false) => {
     // 检查缓存
-    this.clearEligibilityCache(); // 测试用
-    console.log(
-      'getAddressEligibility123123',
-      address,
-      force,
-      this.isCacheValid(),
-      this.store.hasClaimedGift,
-    );
     if (!force && this.isCacheValid() && this.store.eligibilityCache) {
       const addressKey = address.toLowerCase();
       const cachedData = this.store.eligibilityCache[addressKey];
@@ -405,7 +382,6 @@ export class GasAccountService {
         id: address,
       });
       data.id = address;
-
       const mappedData = this.mapApiResponseToClaimedGiftAddress([data]);
       const result = mappedData[0]; // 取第一个结果
 
@@ -438,8 +414,6 @@ export class GasAccountService {
         sig,
         id: address,
       });
-      // console.log('claimGift', address, sig);
-      // return "success";
       return data;
     } catch (error) {
       console.error('Failed to claim gas account gift:', error);

@@ -74,7 +74,7 @@ export const GasAccountLoginCard: React.FC<Props> = ({
             currentEligibleAddress?.isEligible ? (
               <View style={styles.loginAndClaimContainer}>
                 <IconGift width={18} height={18} />
-                <Text>
+                <Text style={styles.loginAndClaimText}>
                   {t('component.gasAccount.loginInTip.loginAndClaim', {
                     amount: currentEligibleAddress.giftUsdValue,
                   })}
@@ -102,6 +102,13 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   confirmButton: {
     width: '100%',
     height: 52,
+  },
+  loginAndClaimText: {
+    color: colors2024['neutral-bg-1'],
+    fontSize: 20,
+    lineHeight: 24,
+    fontStyle: 'normal',
+    fontWeight: '700',
   },
   loginAndClaimContainer: {
     flexDirection: 'row',

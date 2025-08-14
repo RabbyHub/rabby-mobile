@@ -299,18 +299,24 @@ function MultiAddressHome(): JSX.Element {
   const { top10Addresses } = useAccountInfo();
 
   // 添加gift资格检查hook
-  const {
-    checkAddressesEligibility,
-    getCurrentEligibleAddress,
-    checkEligibility,
-  } = useGasAccountEligibility();
+  const { checkAddressesEligibility, getCurrentEligibleAddress } =
+    useGasAccountEligibility();
   const currentEligibleAddress = getCurrentEligibleAddress();
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
   const gasAccountSig = gasAccountService.getGasAccountSig();
+  const hasClaimedGift = gasAccountService.getHasClaimedGift();
   const { width } = Dimensions.get('window');
   const itemWidth =
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
+  // 使用useMemo直接计算isEligible，使其能够响应相关状态变化
+  const isEligible = useMemo(() => {
+    return (
+      currentEligibleAddress !== undefined &&
+      !gasAccountSig?.sig &&
+      !hasClaimedGift
+    );
+  }, [currentEligibleAddress, gasAccountSig, hasClaimedGift]);
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const {
@@ -363,7 +369,7 @@ function MultiAddressHome(): JSX.Element {
           key: MultiHomeFeatTitle.GasAccount,
           title: t('page.home.services.gasAccount'),
           icon: RcIconGasAccount,
-          showGiftIcon: checkEligibility(),
+          showGiftIcon: isEligible,
         },
         // __DEV__ && {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
@@ -397,7 +403,7 @@ function MultiAddressHome(): JSX.Element {
         isSuccess?: boolean;
         showGiftIcon?: boolean;
       }[],
-    [alertInfo.total, t, historyCount, checkEligibility],
+    [alertInfo.total, t, historyCount, isEligible],
   );
 
   useEffect(() => {

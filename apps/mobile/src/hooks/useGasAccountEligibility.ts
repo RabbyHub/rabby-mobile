@@ -44,10 +44,14 @@ export const useGasAccountEligibility = () => {
 
   const checkEligibility = useCallback(() => {
     const gasAccountSig = gasAccountService.getGasAccountSig();
-    // const hasClaimedGift = gasAccountService.getHasClaimedGift();
+    const hasClaimedGift = gasAccountService.getHasClaimedGift();
     const currentEligibleAddress =
       gasAccountService.getCurrentEligibleAddress();
-    return currentEligibleAddress !== undefined && !gasAccountSig?.sig;
+    return (
+      currentEligibleAddress !== undefined &&
+      !gasAccountSig?.sig &&
+      !hasClaimedGift
+    );
   }, []);
 
   // 批量检查地址资格
@@ -56,7 +60,6 @@ export const useGasAccountEligibility = () => {
       try {
         setLoading(true);
         setError(null);
-
         // 如果已经领取过礼包，无需检查
         if (gasAccountService.getHasClaimedGift()) {
           return [];
@@ -65,9 +68,6 @@ export const useGasAccountEligibility = () => {
         // 如果gas account已经登录，无需检查资格
         const gasAccountSig = gasAccountService.getGasAccountSig();
         if (gasAccountSig?.sig) {
-          console.log(
-            'Gas account already logged in, skipping eligibility check',
-          );
           return [];
         }
 
@@ -108,9 +108,6 @@ export const useGasAccountEligibility = () => {
         // 如果gas account已经登录，无需检查资格
         const gasAccountSig = gasAccountService.getGasAccountSig();
         if (gasAccountSig?.sig) {
-          console.log(
-            'Gas account already logged in, skipping eligibility check',
-          );
           return undefined;
         }
 
