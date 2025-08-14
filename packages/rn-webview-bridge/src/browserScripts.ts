@@ -1,49 +1,58 @@
-const getWindowInformation = `
-  const shortcutIcon = window.document.querySelector('head > link[rel="shortcut icon"]');
-  const icon = shortcutIcon || Array.from(window.document.querySelectorAll('head > link[rel="icon"]')).find((icon) => Boolean(icon.href));
-
-  const siteName = document.querySelector('head > meta[property="og:site_name"]');
-  const title = siteName || document.querySelector('head > meta[name="title"]');
-  window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(
-    {
-      type: 'GET_TITLE_FOR_BOOKMARK',
-      payload: {
-        title: title ? title.content : document.title,
-        url: location.href,
-        icon: icon && icon.href
+export const BROWSER_SCRIPT_BASE = `
+;(function () {
+  if (!window.__rabbyPostMessageToProvider) {
+    window.__rabbyPostMessageToProvider = function (content, pos) {
+      if (typeof content === 'object') {
+        content = { primitive: content };
       }
-    }
-  ))
+      pos = pos || 'unknown';
+      var jsonString = "";
+      try {
+        jsonString = JSON.stringify(content)
+      } catch (e) {
+        jsonString = JSON.stringify({
+          type: 'BROWSER_SCRIPT_ERR_CAPTURED',
+          payload: {
+            message: e.message,
+            stack: e.stack,
+            position: pos,
+          }
+        });
+      }
+
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(jsonString);
+      }
+    };
+  }
+})();
 `;
 
 export const SPA_urlChangeListener = `;(function () {
   var __rabbyHistory = window.history;
   var __rabbyPushState = __rabbyHistory.pushState;
   var __rabbyReplaceState = __rabbyHistory.replaceState;
-  function __rabby__updateUrl(){
-    const siteName = document.querySelector('head > meta[property="og:site_name"]');
-    const title = siteName || document.querySelector('head > meta[name="title"]') || document.title;
-    const height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
+  function __rabby__updateUrl() {
+    var siteName = document.querySelector('head > meta[property="og:site_name"]');
+    var title = siteName || document.querySelector('head > meta[name="title"]') || document.title;
+    var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
 
-    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(
-      {
-        type: 'NAV_CHANGE',
-        payload: {
-          url: location.href,
-          title: title,
-        }
+    window.__rabbyPostMessageToProvider({
+      type: 'NAV_CHANGE',
+      payload: {
+        url: location.href,
+        title: title,
       }
-    ));
+    }, 'NAV_CHANGE');
 
     setTimeout(() => {
-      const height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
-      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(
-      {
+      var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
+      window.__rabbyPostMessageToProvider({
         type: 'GET_HEIGHT',
         payload: {
           height: height
         }
-      }))
+      }, 'GET_HEIGHT');
     }, 500);
   }
 
@@ -68,8 +77,20 @@ export const SPA_urlChangeListener = `;(function () {
 `;
 
 export const JS_WINDOW_INFORMATION = `
-  (function () {
-    ${getWindowInformation}
+  ;(function () {
+    var shortcutIcon = window.document.querySelector('head > link[rel="shortcut icon"]');
+    var icon = shortcutIcon || Array.from(window.document.querySelectorAll('head > link[rel="icon"]')).find((icon) => Boolean(icon.href));
+
+    var siteName = document.querySelector('head > meta[property="og:site_name"]');
+    var title = siteName || document.querySelector('head > meta[name="title"]');
+    window.__rabbyPostMessageToProvider({
+      type: 'GET_TITLE_FOR_BOOKMARK',
+      payload: {
+        title: title ? title.content : document.title,
+        url: location.href,
+        icon: icon && icon.href
+      }
+    }, 'GET_TITLE_FOR_BOOKMARK');
   })();
 `;
 
