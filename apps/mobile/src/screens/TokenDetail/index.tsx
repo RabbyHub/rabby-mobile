@@ -254,7 +254,7 @@ export const TokenDetailScreen = () => {
         chainSize={10}
         borderChain
         style={{ justifyContent: 'center' }}
-        titleStyle={{ fontSize: 20, lineHeight: 24 }}
+        titleStyle={{ fontSize: 20 }}
       />
     );
   }, [finalAccount?.address, token]);

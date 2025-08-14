@@ -97,8 +97,8 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     marginLeft: 2,
   },
   percentChange: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
     color: colors2024['neutral-foot'],
