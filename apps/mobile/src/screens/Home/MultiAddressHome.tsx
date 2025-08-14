@@ -829,7 +829,8 @@ function MultiAddressHome(): JSX.Element {
             styles.scrollContainer,
             {
               // paddingBottom: bottom + 82,
-              paddingBottom: 16,
+              paddingBottom:
+                Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
             },
           ]}
           refreshControl={
