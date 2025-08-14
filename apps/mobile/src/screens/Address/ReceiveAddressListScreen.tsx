@@ -11,7 +11,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
 import { StackActions } from '@react-navigation/native';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
