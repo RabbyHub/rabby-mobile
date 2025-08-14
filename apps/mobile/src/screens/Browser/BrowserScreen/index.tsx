@@ -1,5 +1,5 @@
 import { globalSetActiveDappState } from '@/core/bridges/state';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { preferenceService } from '@/core/services';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
@@ -82,7 +82,9 @@ export function BrowserScreen({ style }: { style?: StyleProp<ViewStyle> }) {
       style={[
         stylesScreen.container,
         {
-          paddingBottom: androidOnlyBottomOffset,
+          paddingBottom: IS_ANDROID
+            ? Math.max(androidOnlyBottomOffset, 16)
+            : androidOnlyBottomOffset,
         },
         style,
       ]}>
