@@ -1,5 +1,13 @@
 const posterName = `__rabbyPostMessageToProvider${Math.random().toString(36).substr(2, 9)}`;
 const posterRef = `window['${posterName}']`;
+
+export const RABBY_DECLARED_PREFIX = 'RD::';
+export const RABBY_DECLARED_TYPES = {
+  NAV_CHANGE: `${RABBY_DECLARED_PREFIX}NAV_CHANGE`,
+  GET_HEIGHT: `${RABBY_DECLARED_PREFIX}GET_HEIGHT`,
+  GET_WINDOW_INFO_AFTER_LOAD: `${RABBY_DECLARED_PREFIX}GET_WINDOW_INFO_AFTER_LOAD`,
+  BROWSER_SCRIPT_ERR_CAPTURED: `${RABBY_DECLARED_PREFIX}BROWSER_SCRIPT_ERR_CAPTURED`,
+}
 /**
  * @tip for WeakSet, reference https://caniuse.com/?search=WeakSet
  * @tip safeJsonStringifyReplacer trim these:
@@ -35,7 +43,7 @@ export const BROWSER_SCRIPT_BASE = `
         jsonString = JSON.stringify(content, safeJsonStringifyReplacer)
       } catch (e) {
         jsonString = JSON.stringify({
-          type: 'BROWSER_SCRIPT_ERR_CAPTURED',
+          type: '${RABBY_DECLARED_TYPES.BROWSER_SCRIPT_ERR_CAPTURED}',
           payload: {
             message: e.message,
             stack: e.stack,
@@ -49,6 +57,35 @@ export const BROWSER_SCRIPT_BASE = `
       }
     };
   }
+
+  window.__rabbyGetWindowInformation = function() {
+    var siteNameMeta = document.querySelector('head > meta[property="og:site_name"]');
+    var ogSiteName = siteNameMeta ? siteNameMeta.getAttribute('content') : '';
+    var title = (function () {
+      var titleMeta = document.querySelector('head > meta[name="title"]');
+      return titleMeta ? titleMeta.getAttribute('content') : '';
+    })() || document.title;
+
+    var shortcutIconNode = window.document.querySelector('head > link[rel="shortcut icon"]');
+    var shortcutIconHref = shortcutIconNode ? shortcutIconNode.href : '';
+    var iconHref = shortcutIconHref || (function () {
+      var iconNodes = Array.from(window.document.querySelectorAll('head > link[rel="icon"]')).find(function (icon) {
+        return Boolean(icon.href);
+      }) || [];
+      return iconNodes && iconNodes.length > 0 ? iconNodes[0].href : '';
+    })();
+
+    var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
+
+    return {
+      title: title,
+      ogSiteName: ogSiteName,
+      height: height,
+      shortcutIconHref: shortcutIconHref,
+      iconHref: iconHref,
+      referrer: document.referrer,
+    }
+  }
 })();
 `;
 
@@ -57,26 +94,24 @@ export const SPA_urlChangeListener = `;(function () {
   var __rabbyPushState = __rabbyHistory.pushState;
   var __rabbyReplaceState = __rabbyHistory.replaceState;
   function __rabby__updateUrl() {
-    var siteNameMeta = document.querySelector('head > meta[property="og:site_name"]');
-    var siteName = siteNameMeta ? siteNameMeta.getAttribute('content') : '';
-    var title = (function () {
-      var titleMeta = document.querySelector('head > meta[name="title"]');
-      return titleMeta ? titleMeta.getAttribute('content') : '';
-    })() || document.title;
+    var info = window.__rabbyGetWindowInformation();
 
     ${posterRef}({
-      type: 'NAV_CHANGE',
+      type: '${RABBY_DECLARED_TYPES.NAV_CHANGE}',
       payload: {
         url: location.href,
-        title: title,
-        ogSiteName: siteName,
+        title: info.title,
+        ogSiteName: info.ogSiteName,
+        icon: info.iconHref,
+        shortcutIconHref: info.shortcutIconHref,
+        height: info.height,
       }
     }, 'NAV_CHANGE');
 
     setTimeout(() => {
       var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
       ${posterRef}({
-        type: 'GET_HEIGHT',
+        type: '${RABBY_DECLARED_TYPES.GET_HEIGHT}',
         payload: {
           height: height
         }
@@ -98,27 +133,29 @@ export const SPA_urlChangeListener = `;(function () {
     return __rabbyReplaceState.apply(history, arguments);
   };
 
-  window.onpopstate = function(event) {
+  window.addEventListener('popstate', function(event) {
     __rabby__updateUrl();
-  };
-  })();
+  });
+})();
 `;
 
-export const JS_WINDOW_INFORMATION = `
+export const JS_GET_WINDOW_INFO_AFTER_LOAD = `
   ;(function () {
-    var shortcutIcon = window.document.querySelector('head > link[rel="shortcut icon"]');
-    var icon = shortcutIcon || Array.from(window.document.querySelectorAll('head > link[rel="icon"]')).find((icon) => Boolean(icon.href));
+    setTimeout(function() {
+      var info = window.__rabbyGetWindowInformation();
 
-    var siteName = document.querySelector('head > meta[property="og:site_name"]');
-    var title = siteName || document.querySelector('head > meta[name="title"]');
-    ${posterRef}({
-      type: 'GET_TITLE_FOR_BOOKMARK',
-      payload: {
-        title: title ? title.content : document.title,
-        url: location.href,
-        icon: icon && icon.href
-      }
-    }, 'GET_TITLE_FOR_BOOKMARK');
+      ${posterRef}({
+        type: '${RABBY_DECLARED_TYPES.GET_WINDOW_INFO_AFTER_LOAD}',
+        payload: {
+          url: location.href,
+          title: info.title,
+          ogSiteName: info.ogSiteName,
+          icon: info.iconHref,
+          shortcutIconHref: info.shortcutIconHref,
+          height: info.height,
+        }
+      }, 'GET_WINDOW_INFO_AFTER_LOAD');
+    }, 500);
   })();
 `;
 

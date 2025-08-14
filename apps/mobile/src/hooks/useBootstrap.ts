@@ -8,6 +8,7 @@ import { EntryScriptVConsole } from '@/core/bridges/builtInScripts/loadVConsole'
 import { JS_LOG_ON_MESSAGE } from '@/core/bridges/builtInScripts/onMessage';
 import {
   BROWSER_SCRIPT_BASE,
+  JS_GET_WINDOW_INFO_AFTER_LOAD,
   SPA_urlChangeListener,
 } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
@@ -153,7 +154,9 @@ export function useJavaScriptBeforeContentLoaded(options?: {
     return [
       // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
       entryScripts.inPageWeb3,
-      ...[BROWSER_SCRIPT_BASE, SPA_urlChangeListener],
+      BROWSER_SCRIPT_BASE,
+      __DEV__ ? JS_GET_WINDOW_INFO_AFTER_LOAD : '',
+      SPA_urlChangeListener,
       __DEV__ ? entryScripts.vConsole : '',
       JS_LOG_ON_MESSAGE,
       ';true;',

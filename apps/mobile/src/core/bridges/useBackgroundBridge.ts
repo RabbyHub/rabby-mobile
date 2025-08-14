@@ -12,6 +12,7 @@ import {
 } from '@/constant/dappView';
 import { createDappBySession } from '../apis/dapp';
 import { useRefState } from '@/hooks/common/useRefState';
+import { RABBY_DECLARED_PREFIX } from '@rabby-wallet/rn-webview-bridge';
 
 export const BLANK_PAGE = 'about:blank';
 export const BLANK_RABBY_PAGE = 'about:rabby';
@@ -28,6 +29,12 @@ type OnMessage = import('react-native-webview').WebViewProps['onMessage'] &
   Function;
 
 export type OnSelfClose = (reason: 'phishing') => void;
+
+type WebViewDataPayload<P = any> = {
+  type: string;
+  name?: string;
+  payload?: P;
+};
 
 export function useSetupWebview({
   siteInfoRefs: { urlRef, titleRef, iconRef },
@@ -83,23 +90,46 @@ export function useSetupWebview({
     [urlRef, webviewRef, webviewIdRef, titleRef, iconRef, putBackgroundBridge],
   );
 
-  const onMessage = useCallback(
-    ({ nativeEvent }: Parameters<OnMessage>[0]) => {
-      let data = nativeEvent.data as any;
+  const onRabbyDeclaredMessage = useCallback(
+    ({
+      data,
+    }: {
+      /* event: Parameters<OnMessage>[0];  */ data: WebViewDataPayload;
+    }) => {
+      if (__DEV__) {
+        console.debug('[onRabbyDeclaredMessage] ', data);
+      }
+    },
+    [],
+  );
+
+  const onMessage = useCallback<OnMessage>(
+    event => {
+      // // leave here for debug
+      // if (__DEV__) {
+      //   console.debug('useSetupWebview:: onMessage event', event);
+      // }
+
+      const { nativeEvent } = event;
+      let fromData = nativeEvent.data as any;
       try {
-        data = typeof data === 'string' ? JSON.parse(data) : data;
-        if (!data || (!data.type && !data.name)) {
-          return;
-        }
+        fromData =
+          typeof fromData === 'string' ? JSON.parse(fromData) : fromData;
+        if (!fromData || (!fromData.type && !fromData.name)) return;
+
+        const data = fromData as WebViewDataPayload;
         if (data.name) {
           currentBridgeRef.current?.onMessage(data);
+          return;
+        } else if (data.type.startsWith(RABBY_DECLARED_PREFIX)) {
+          onRabbyDeclaredMessage({ data });
           return;
         }
       } catch (e) {
         console.error(e, `Browser::onMessage on ${urlRef.current}`);
       }
     },
-    [currentBridgeRef, urlRef],
+    [currentBridgeRef, urlRef, onRabbyDeclaredMessage],
   );
 
   const changeUrl = useCallback(

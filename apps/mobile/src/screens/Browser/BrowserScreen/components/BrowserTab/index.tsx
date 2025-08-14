@@ -267,7 +267,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const { entryScriptWeb3Loaded, fullScript } =
       useJavaScriptBeforeContentLoaded({ isTop: false });
 
-    const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
+    const { onLoadStart, onMessage: onWebViewMessage } = useSetupWebview({
       dappOrigin: origin,
       webviewRef,
       webviewIdRef,
@@ -700,11 +700,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       });
                     }}
                     onMessage={event => {
-                      // // leave here for debug
-                      // if (__DEV__) {
-                      //   console.debug('WebView:: onMessage event', event);
-                      // }
-                      onBridgeMessage(event);
+                      onWebViewMessage(event);
                       webviewProps?.onMessage?.(event);
 
                       // // leave here for debug
