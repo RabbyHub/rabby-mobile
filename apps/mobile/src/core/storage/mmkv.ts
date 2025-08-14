@@ -21,8 +21,15 @@ function checkIfDuplicatedStringifiedJsonObjectString(input: any) {
   );
 }
 
-function checkIfJsonStringifiedString(input: any) {
-  return typeof input === 'string' && input.startsWith('"');
+const STUB = JSON.stringify(JSON.stringify('foo'));
+const STUB_START = STUB.slice(0, 3);
+const STUB_END = STUB.slice(-3);
+function checkIfDuplicatedStringifiedJsonString(input: any) {
+  return (
+    typeof input === 'string' &&
+    input.startsWith(STUB_START) &&
+    input.endsWith(STUB_END)
+  );
 }
 
 function makeAppStorage(options?: MMKVConfiguration) {
@@ -46,7 +53,7 @@ function makeAppStorage(options?: MMKVConfiguration) {
         finalString = stringUtils.safeParseJSON(raw, {
           defaultValue: raw,
         });
-      } else if (checkIfJsonStringifiedString(raw)) {
+      } else if (checkIfDuplicatedStringifiedJsonString(raw)) {
         finalString = stringUtils.safeParseJSON(raw, {
           defaultValue: raw,
         });
