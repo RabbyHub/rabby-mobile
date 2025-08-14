@@ -177,7 +177,9 @@ export const BrowserHandler = () => {
         </TouchableOpacity>
       </View>
     </View>
-  ) : null;
+  ) : (
+    <View style={styles.placeholder} />
+  );
 };
 
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
@@ -185,9 +187,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     handleComponent: {
       display: 'flex',
       flexDirection: 'row',
-      marginBottom: 7,
+      paddingBottom: 7,
       justifyContent: 'flex-end',
       paddingRight: 10,
+      height: 40,
     },
     handleComponentContainer: {
       display: 'flex',
@@ -209,6 +212,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: 1,
       height: 20,
       backgroundColor: colors2024['neutral-line'],
+    },
+    placeholder: {
+      height: 40,
     },
   };
 });

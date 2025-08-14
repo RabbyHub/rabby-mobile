@@ -887,6 +887,15 @@ const getStyles = createGetStyles2024(ctx =>
       paddingBottom: Platform.OS === 'android' ? 0 : 20,
       // backgroundColor: ctx.colors['neutral-bg-1'],
       // ...makeDebugBorder(),
+      backgroundColor: ctx.colors2024['neutral-bg-1'],
+      ...Platform.select({
+        ios: {
+          shadowColor: 'rgba(55, 56, 63, 0.12)',
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 1,
+          shadowRadius: 40 / 2,
+        },
+      }),
     },
     progressBar: {
       position: 'absolute',

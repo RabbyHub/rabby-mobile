@@ -177,7 +177,7 @@ export const BrowserManagePopup = () => {
   const { colors2024, styles } = useTheme2024({ getStyle });
 
   const snapPoints = useMemo(() => {
-    return [safeOffScreenTop];
+    return [safeOffScreenTop - 40];
   }, [safeOffScreenTop]);
 
   const modalRef = useRef<AppBottomSheetModal>(null);

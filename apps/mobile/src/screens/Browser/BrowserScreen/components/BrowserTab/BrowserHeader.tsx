@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Image,
+  Platform,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -223,7 +224,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingBottom: 6,
     gap: 8,
     width: '100%',
-    backgroundColor: colors2024['neutral-bg-1'],
+    // backgroundColor: colors2024['neutral-bg-1'],
     // borderBottomWidth: 1,
     // borderBottomColor: colors2024['neutral-line'],
   },
