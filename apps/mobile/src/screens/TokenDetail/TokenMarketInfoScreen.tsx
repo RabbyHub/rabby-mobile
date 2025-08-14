@@ -34,7 +34,7 @@ import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { CombineTokensItem } from '../Home/hooks/store';
-import { formatPrice, formatTokenAmount } from '@/utils/number';
+import { formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
@@ -606,7 +606,7 @@ export const TokenMarketInfoScreen = () => {
           <ScrollView style={styles.innerContainer}>
             <HeaderBalanceCard
               amount={formatTokenAmount(amountSum)}
-              usdValue={formatPrice(usdValue)}
+              usdValue={usdValue}
               percentChange={percentChange}
               isLoss={isLoss}
               is24hNoChange={is24hNoChange}

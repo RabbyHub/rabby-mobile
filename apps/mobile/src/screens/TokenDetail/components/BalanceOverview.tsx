@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { formatAmount } from '@/utils/number';
+import { formatTokenAmount } from '@/utils/number';
 
 interface Props {
   percentChange: string;
@@ -22,7 +22,7 @@ const BalanceOverview: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.amount}>{formatAmount(amount)}</Text>
+      <Text style={styles.amount}>{formatTokenAmount(amount)}</Text>
       <View style={styles.usdValueContainer}>
         <Text style={styles.usdValue}>≈${usdValue}</Text>
         <Text
