@@ -12,11 +12,8 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { findChain, findChainByServerID, getChain } from '@/utils/chain';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import {
-  isFromBackAtom,
-  shouldHideSelectorPopupAtom,
-} from '@/screens/Swap/hooks/atom';
-import { useAtom, useSetAtom } from 'jotai';
+import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
+import { useSetAtom } from 'jotai';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { StackActions, useNavigation } from '@react-navigation/native';
@@ -42,7 +39,6 @@ const TokenActions = ({
 }: Props) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const [, setShouldHideSelectorPopup] = useAtom(shouldHideSelectorPopupAtom);
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
@@ -96,7 +92,6 @@ const TokenActions = ({
               finalAccount,
             );
           }
-          setShouldHideSelectorPopup(false);
           setIsFromBack(false);
           navigateToSendPolyScreen(!!isSingleAddress, {
             chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
@@ -154,10 +149,8 @@ const TokenActions = ({
           });
 
           await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
-          // 关闭弹窗隐藏
-          setShouldHideSelectorPopup(false);
           setIsFromBack(false);
-          navigation.push(RootNames.StackTransaction, {
+          navigation.navigate(RootNames.StackTransaction, {
             screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
             params: {
               chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
@@ -184,10 +177,8 @@ const TokenActions = ({
           });
 
           await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
-          // 关闭弹窗隐藏
-          setShouldHideSelectorPopup(false);
           setIsFromBack(false);
-          navigation.push(RootNames.StackTransaction, {
+          navigation.navigate(RootNames.StackTransaction, {
             screen: isSingleAddress ? RootNames.Bridge : RootNames.MultiBridge,
             params: {
               chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
@@ -204,7 +195,6 @@ const TokenActions = ({
       navigateToSendPolyScreen,
       navigation,
       setIsFromBack,
-      setShouldHideSelectorPopup,
       switchSceneCurrentAccount,
       t,
       token?._tokenId,

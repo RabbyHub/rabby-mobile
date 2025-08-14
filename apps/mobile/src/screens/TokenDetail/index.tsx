@@ -35,11 +35,8 @@ import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { HistoryList } from './components/HistoryList';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { useAtom, useSetAtom } from 'jotai';
-import {
-  isFromBackAtom,
-  shouldHideSelectorPopupAtom,
-} from '../Swap/hooks/atom';
+import { useSetAtom } from 'jotai';
+import { isFromBackAtom } from '../Swap/hooks/atom';
 import BalanceOverview from './components/BalanceOverview';
 import { useTokenBalance } from './hook';
 import TokenActions from './components/TokenActions';
@@ -81,7 +78,6 @@ export const TokenDetailScreen = () => {
   });
   const { t } = useTranslation();
 
-  const [, setShouldHideSelectorPopup] = useAtom(shouldHideSelectorPopupAtom);
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
   const { assetsMap, getCacheTop10Assets, getTokenCombined } = useAssets({
@@ -337,10 +333,9 @@ export const TokenDetailScreen = () => {
     useCallback(() => {
       return () => {
         // 页面失焦（返回/左滑/点击返回按钮）时统一副作用
-        setShouldHideSelectorPopup(false);
         setIsFromBack(true);
       };
-    }, [setShouldHideSelectorPopup, setIsFromBack]),
+    }, [setIsFromBack]),
   );
 
   React.useEffect(() => {

@@ -89,11 +89,8 @@ import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/Scam
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { Favorite } from '@/components2024/Favorite';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { navigate } from '@/utils/navigation';
-import {
-  isFromBackAtom,
-  shouldHideSelectorPopupAtom,
-} from '@/screens/Swap/hooks/atom';
+import { getLatestNavigationName, navigate } from '@/utils/navigation';
+import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
 import { useAtom } from 'jotai';
 import {
   useAnimatedGestureHandler,
@@ -243,10 +240,17 @@ export const TokenSelectorSheetModal = React.forwardRef<
   ) => {
     const { sheetModalRef: tokenSelectorModal, toggleShowSheetModal } =
       useSheetModal();
-    const [shouldHideSelectorPopup, setShouldHideSelectorPopup] = useAtom(
-      shouldHideSelectorPopupAtom,
-    );
     const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
+
+    // 记录组件最初渲染的页面，用于判断是否还在原页面
+    const initialRouteRef = useRef<string | undefined>();
+    React.useEffect(() => {
+      // 组件挂载时记录当前页面
+      if (!initialRouteRef.current && visible) {
+        initialRouteRef.current = getLatestNavigationName();
+      }
+    }, [visible]);
+
     const [fold, setFold] = useState(true);
     const [isScamFold, setIsScamFold] = useState(true);
 
@@ -321,23 +325,24 @@ export const TokenSelectorSheetModal = React.forwardRef<
       visible &&
       isFocused
     ) {
-      console.log('DEBUG: toggleShowSheetModal destroy');
       toggleShowSheetModal('destroy');
     }
+    // 监听当前路由变化
+    const currentRoute = getLatestNavigationName();
+    const isInInitialRoute = useMemo(() => {
+      if (!visible || !initialRouteRef.current) {
+        return true;
+      }
+      return currentRoute === initialRouteRef.current;
+    }, [currentRoute, visible]);
+
     useEffect(() => {
       // 如果不是从返回按钮进入的，则关闭弹窗
       if (!isFromBack && visible) {
         toggleShowSheetModal('destroy');
-        setShouldHideSelectorPopup(false);
         setIsFromBack(false);
       }
-    }, [
-      visible,
-      toggleShowSheetModal,
-      isFromBack,
-      setShouldHideSelectorPopup,
-      setIsFromBack,
-    ]);
+    }, [visible, toggleShowSheetModal, isFromBack, setIsFromBack]);
 
     const { chainItem, chainSearchCtx } = useMemo(() => {
       const chain = !chainServerId ? null : findChainByServerID(chainServerId);
@@ -501,7 +506,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             {...props}
             style={[
               props.style,
-              (shouldHideSelectorPopup || swapToTokenDetail) && {
+              (!isInInitialRoute || swapToTokenDetail) && {
                 zIndex: hiddenZIndex,
               },
             ]}
@@ -511,7 +516,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           />
         );
       },
-      [onCancel, shouldHideSelectorPopup, swapToTokenDetail],
+      [isInInitialRoute, onCancel, swapToTokenDetail],
     );
 
     const ListHeader = useMemo(() => {
@@ -1026,7 +1031,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         }}
         {...{
           containerStyle:
-            shouldHideSelectorPopup || swapToTokenDetail
+            !isInInitialRoute || swapToTokenDetail
               ? {
                   zIndex: hiddenZIndex,
                 }

@@ -47,11 +47,8 @@ import RcIconWarningCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { useAtom, useSetAtom } from 'jotai';
-import {
-  isFromBackAtom,
-  shouldHideSelectorPopupAtom,
-} from '../Swap/hooks/atom';
+import { useSetAtom } from 'jotai';
+import { isFromBackAtom } from '../Swap/hooks/atom';
 import { useTokenBalance } from './hook';
 import { RightMore } from './components/RightMore';
 import HeaderBalanceCard from './components/HeaderBalanceCard';
@@ -128,7 +125,6 @@ export const TokenMarketInfoScreen = () => {
     getStyle,
   });
 
-  const [, setShouldHideSelectorPopup] = useAtom(shouldHideSelectorPopupAtom);
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
   const { assetsMap, getCacheTop10Assets, getTokenCombined } = useAssets({
@@ -395,10 +391,9 @@ export const TokenMarketInfoScreen = () => {
     useCallback(() => {
       return () => {
         // 页面失焦（返回/左滑/点击返回按钮）时统一副作用
-        setShouldHideSelectorPopup(false);
         setIsFromBack(true);
       };
-    }, [setShouldHideSelectorPopup, setIsFromBack]),
+    }, [setIsFromBack]),
   );
 
   React.useEffect(() => {
@@ -435,7 +430,6 @@ export const TokenMarketInfoScreen = () => {
           : finalAccount;
       await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
       // 关闭弹窗隐藏
-      setShouldHideSelectorPopup(false);
       setIsFromBack(false);
       navigation.push(RootNames.StackTransaction, {
         screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
