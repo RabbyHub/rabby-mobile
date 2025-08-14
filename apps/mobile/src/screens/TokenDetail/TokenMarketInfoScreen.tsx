@@ -598,16 +598,18 @@ export const TokenMarketInfoScreen = () => {
         headerContainerStyle={styles.tabBarWrap}>
         <Tabs.Tab label={renderMarketDataLabel} name="marketData">
           <ScrollView style={styles.innerContainer}>
-            <HeaderBalanceCard
-              amount={formatTokenAmount(amountSum)}
-              usdValue={usdValue}
-              percentChange={percentChange}
-              isLoss={isLoss}
-              is24hNoChange={is24hNoChange}
-              style={styles.headerBalanceCard}
-              onPress={handleOpenTokenDetail}
-            />
-            <View style={{ position: 'relative' }}>
+            {!!amountSum && (
+              <HeaderBalanceCard
+                amount={formatTokenAmount(amountSum)}
+                usdValue={usdValue}
+                percentChange={percentChange}
+                isLoss={isLoss}
+                is24hNoChange={is24hNoChange}
+                style={styles.headerBalanceCard}
+                onPress={handleOpenTokenDetail}
+              />
+            )}
+            <View style={{ position: 'relative', marginTop: 12 }}>
               <TokenPriceChart
                 token={tokenWithAmount || token}
                 amountList={[]}
@@ -760,7 +762,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     headerBalanceCard: {
       marginTop: 12,
       marginHorizontal: 18,
-      marginBottom: 12,
     },
     tabBarWrap: {
       shadowColor: 'transparent',
