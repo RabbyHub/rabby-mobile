@@ -48,7 +48,6 @@ export const batchQueryTokens = async (
     // 检查是否所有链都明确失败了
     const allFailed = res.every(result => result.status === 'rejected');
     if (allFailed && chainIdList.length > 0) {
-      console.error('All chains failed, service may unavailable');
       throw new Error('All chains failed, service may unavailable');
     }
 

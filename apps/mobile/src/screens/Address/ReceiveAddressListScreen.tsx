@@ -7,7 +7,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createGetStyles2024 } from '@/utils/styles';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { AccountsPanelInSheetModal } from '@/components/AccountSelector/AccountsPanel';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { StackActions } from '@react-navigation/native';
 
 type CurrentAddressProps = NativeStackScreenProps<
