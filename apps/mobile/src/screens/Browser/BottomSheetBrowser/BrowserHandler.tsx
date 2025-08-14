@@ -13,11 +13,13 @@ import { useMemoizedFn } from 'ahooks';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { DropdownMenuView } from '../BrowserScreen/components/BrowserTab/DropdownMenuView';
+import { useTranslation } from 'react-i18next';
 
 export const BrowserHandler = () => {
   const { styles, isLight, colors2024 } = useTheme2024({
     getStyle,
   });
+  const { t } = useTranslation();
   const {
     browserState,
     setPartialBrowserState,
@@ -57,7 +59,7 @@ export const BrowserHandler = () => {
 
     const menuActions = [
       {
-        title: 'Refresh',
+        title: t('page.browser.menu.refresh'),
         iosIconSource: isLight
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_refresh.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_refresh_dark.png'),
@@ -70,7 +72,7 @@ export const BrowserHandler = () => {
         },
       },
       activeTabState.isDapp && {
-        title: 'Favorite',
+        title: t('page.browser.menu.favorite'),
         iosIconSource: activeTabState.isBookmark
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_filled.png')
           : isLight
@@ -89,8 +91,8 @@ export const BrowserHandler = () => {
       {
         title:
           activeTabState.contentMode === 'desktop'
-            ? 'Request Mobile Site'
-            : 'Request DeskTop Site',
+            ? t('page.browser.menu.contentModeMobile')
+            : t('page.browser.menu.contentModeDesktop'),
         iosIconSource: isLight
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_content_mode.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_content_mode_dark.png'),
@@ -105,7 +107,7 @@ export const BrowserHandler = () => {
       },
 
       activeTabState.isConnected && {
-        title: 'Disconnect',
+        title: t('page.browser.menu.disconnect'),
         textColor: colors2024['red-dark'],
         iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_disconnect.png'),
         androidIconName: 'ic_rabby_menu_disconnect',
@@ -144,6 +146,7 @@ export const BrowserHandler = () => {
     colors2024,
     handleAction,
     isLight,
+    t,
   ]);
 
   return browserState.isShowBrowser &&

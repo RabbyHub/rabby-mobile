@@ -57,7 +57,9 @@ export function BrowserRecent({
             ) : (
               <RcIconEmptyDark style={styles.emptyIcon} />
             )}
-            <Text style={styles.emptyText}>{'Starting Exploring Website'}</Text>
+            <Text style={styles.emptyText}>
+              {t('page.browser.BrowserSearch.recentEmpty')}
+            </Text>
           </View>
           <RcIconDynamicArrowDownCC color={colors2024['neutral-line']} />
         </View>
