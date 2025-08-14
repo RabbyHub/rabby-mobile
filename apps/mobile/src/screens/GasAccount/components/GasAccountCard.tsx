@@ -20,6 +20,7 @@ import { useAml } from '../hooks';
 import { GasAccountBlueLogo } from './GasAccountBlueLogo';
 import { GasAccountLoginCard } from './GasAccountLoginCard';
 import { GasAccountWrapperBg } from './WrapperBg';
+import { ClaimedGiftAddress } from '@/core/services/gasAccount';
 
 const DEPOSIT_LIMIT = 1000;
 
@@ -32,6 +33,7 @@ interface Props {
   gasAccountInfo?: NonNullable<
     Awaited<ReturnType<typeof openapi.getGasAccountInfo>>
   >['account'];
+  currentEligibleAddress?: ClaimedGiftAddress | undefined;
 }
 
 export const GasAccountCard: React.FC<Props> = ({
@@ -41,6 +43,7 @@ export const GasAccountCard: React.FC<Props> = ({
   onDepositPress,
   onWithdrawPress,
   gasAccountInfo,
+  currentEligibleAddress,
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -95,7 +98,12 @@ export const GasAccountCard: React.FC<Props> = ({
   }, [canDeposit, isRisk, t, styles.closeModalBtnText, styles.tipTitle]);
 
   if (!isLogin) {
-    return <GasAccountLoginCard onLoginPress={onLoginPress} />;
+    return (
+      <GasAccountLoginCard
+        onLoginPress={onLoginPress}
+        currentEligibleAddress={currentEligibleAddress}
+      />
+    );
   }
 
   return (

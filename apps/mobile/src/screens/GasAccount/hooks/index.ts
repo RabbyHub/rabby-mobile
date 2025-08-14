@@ -3,7 +3,7 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RootNames } from '@/constant/layout';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { openapi } from '@/core/request';
-import { preferenceService } from '@/core/services';
+import { gasAccountService, preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { openExternalUrl } from '@/core/utils/linking';
 import { navigationRef } from '@/utils/navigation';
@@ -156,11 +156,13 @@ export const useGasAccountMethods = () => {
 
         if (result?.success) {
           setGasAccount(signature, account);
+          gasAccountService.setHasClaimedGift(true);
           // setLoginVisible(false);
         } else {
           throw new Error('Login failed');
         }
       }
+      return signature;
     },
     [setGasAccount],
   );

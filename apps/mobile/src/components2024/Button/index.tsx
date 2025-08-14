@@ -29,7 +29,7 @@ export type ButtonProps = Omit<
         | React.ReactElement<{}>;
       titleStyle?: StyleProp<TextStyle>;
       buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
-      type?: 'primary' | 'ghost';
+      type?: 'primary' | 'ghost' | 'success';
       loading?: boolean;
       loadingStyle?: StyleProp<ViewStyle>;
       containerStyle?: StyleProp<ViewStyle>;
@@ -77,6 +77,10 @@ export const Button = ({
         currentColor: disabled
           ? colors2024['brand-disable']
           : colors2024['brand-default'],
+      },
+      success: {
+        bg: colors2024['green-default'],
+        currentColor: colors2024['neutral-InvertHighlight'],
       },
     };
     return {

@@ -2093,10 +2093,17 @@
       "history": {
         "noHistory": "No history"
       },
+      "giftInfo": {
+        "gotIt": "I Got It",
+        "giftTips": "Gas Reward for active users",
+        "noWithdrawableBalanceTitle": "{{amount}} Non-withdrawable",
+        "noWithdrawableBalanceDescription": "{{amount}} of your gas balance is non-withdrawable:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      },
       "loginInTip": {
         "title": "Deposit USDC / USDT",
         "desc": "Pay Gas Fees on All Chains",
-        "login": "Log in GasAccount"
+        "login": "Log in GasAccount",
+        "loginAndClaim": "Log in and Claim"
       },
       "loginConfirmModal": {
         "title": "Select Wallet to Login",
