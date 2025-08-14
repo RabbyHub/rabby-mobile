@@ -239,7 +239,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       onFavoriteFilterChange,
       disableSort = false,
     },
-    ref,
+    _ref,
   ) => {
     const { sheetModalRef: tokenSelectorModal, toggleShowSheetModal } =
       useSheetModal();
@@ -393,15 +393,15 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
       const varied = (list || []).reduce(
         (accu, token) => {
-          const chainItem = findChainByServerID(token.chain);
+          const _chainItem = findChainByServerID(token.chain);
           const disabled =
             !!supportChains?.length &&
-            chainItem &&
-            !supportChains.includes(chainItem.enum);
+            _chainItem &&
+            !supportChains.includes(_chainItem.enum);
 
           if (!disabled) {
             accu.natural.push(token);
-          } else if (chainItem?.isTestnet && !chainServerId) {
+          } else if (_chainItem?.isTestnet && !chainServerId) {
             accu.ignored.push(token);
           } else {
             accu.disabled.push(token);
@@ -427,6 +427,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
         type === 'send',
       [type],
     );
+
+    const needToTokenMarketInfo = useMemo(() => {
+      return type === 'swapTo' || type === 'bridgeTo';
+    }, [type]);
 
     const tokens = useMemo(() => {
       const normalFoldTokens = foldTokensList.filter(
@@ -637,6 +641,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             <View style={{ marginTop: 8, marginHorizontal: 16 }}>
               <TokenItemContextMenu
                 token={$originMaybeToken}
+                needToTokenMarketInfo={needToTokenMarketInfo}
                 closeBottomSheet={() => {
                   toggleShowSheetModal('destroy');
                 }}
@@ -694,14 +699,19 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         toggleShowSheetModal('destroy');
                       }, 100);
 
-                      navigate(RootNames.TokenDetail, {
-                        token: {
-                          ...ensureAbstractPortfolioToken($originMaybeToken),
-                          _isPined: isPined,
+                      navigate(
+                        needToTokenMarketInfo
+                          ? RootNames.TokenMarketInfo
+                          : RootNames.TokenDetail,
+                        {
+                          token: {
+                            ...ensureAbstractPortfolioToken($originMaybeToken),
+                            _isPined: isPined,
+                          },
+                          needUseCacheToken: true,
+                          tokenSelectType: type,
                         },
-                        needUseCacheToken: true,
-                        tokenSelectType: type,
-                      });
+                      );
                     }}
                   />
                 </TouchableOpacity>
@@ -717,6 +727,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               closeBottomSheet={() => {
                 toggleShowSheetModal('destroy');
               }}
+              needToTokenMarketInfo={needToTokenMarketInfo}
               type={type}>
               <TouchableOpacity
                 key={token_key}
@@ -901,6 +912,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         disabledTips,
         removePinedToken,
         pinToken,
+        needToTokenMarketInfo,
       ],
     );
 
@@ -1187,8 +1199,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
               }}
               renderSectionHeader={
                 isSwapTo
-                  ? ({ section }) => {
-                      const { header } = section;
+                  ? ({ section: _section }) => {
+                      const { header } = _section;
                       return <>{header ? header() : customHeaderTitle}</>;
                     }
                   : undefined

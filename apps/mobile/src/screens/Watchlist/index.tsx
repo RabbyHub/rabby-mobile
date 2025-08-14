@@ -127,7 +127,7 @@ function WatchlistScreen(): JSX.Element {
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
-      navigate(RootNames.TokenDetail, {
+      navigate(RootNames.TokenMarketInfo, {
         token: ensureAbstractPortfolioToken(token),
         unHold: false,
         needUseCacheToken: true,

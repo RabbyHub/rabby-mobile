@@ -23,9 +23,10 @@ interface Props {
   closeBottomSheet: () => void;
   children: React.ReactElement;
   type?: TokenSelectType;
+  needToTokenMarketInfo?: boolean;
 }
 export const TokenItemContextMenu: React.FC<Props> = props => {
-  const { children, token, closeBottomSheet, type } = props;
+  const { children, token, type, needToTokenMarketInfo } = props;
 
   const { userTokenSettings, pinToken, removePinedToken } =
     useUserTokenSettings();
@@ -57,17 +58,27 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
     Keyboard.dismiss();
     setShouldHideSelectorPopup(true);
 
-    navigate(RootNames.TokenDetail, {
-      token: {
-        ...ensureAbstractPortfolioToken(token),
-        _isPined: isPined,
+    navigate(
+      needToTokenMarketInfo ? RootNames.TokenMarketInfo : RootNames.TokenDetail,
+      {
+        token: {
+          ...ensureAbstractPortfolioToken(token),
+          _isPined: isPined,
+        },
+        needUseCacheToken: true,
+        tokenSelectType: type,
+        timestamp: Date.now(), // 添加时间戳确保每次都是新页面
+        account: currentAccount,
       },
-      needUseCacheToken: true,
-      tokenSelectType: type,
-      timestamp: Date.now(), // 添加时间戳确保每次都是新页面
-      account: currentAccount,
-    });
-  }, [isPined, token, type, setShouldHideSelectorPopup, currentAccount]);
+    );
+  }, [
+    setShouldHideSelectorPopup,
+    needToTokenMarketInfo,
+    token,
+    isPined,
+    type,
+    currentAccount,
+  ]);
 
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
