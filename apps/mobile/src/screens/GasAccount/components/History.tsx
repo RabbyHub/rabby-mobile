@@ -264,7 +264,12 @@ export const GasAccountHistory = () => {
     !txList?.list.length
   ) {
     return (
-      <View style={[styles.container, { height: 254 }]}>
+      <View
+        style={[
+          styles.container,
+          { height: 254 },
+          isLight ? styles.containerLight : styles.containerDark,
+        ]}>
         <View style={styles.emptyContent}>
           {isLight ? (
             <RcIconEmpty style={styles.emptyImg} />
@@ -282,7 +287,11 @@ export const GasAccountHistory = () => {
   return (
     <>
       <FlatList
-        style={[styles.container, { marginBottom: bottom }]}
+        style={[
+          styles.container,
+          { marginBottom: bottom },
+          isLight ? styles.containerLight : styles.containerDark,
+        ]}
         data={txList?.list}
         contentInset={{ bottom: 12 }}
         ListHeaderComponent={ListHeaderComponent}
@@ -317,13 +326,16 @@ export const GasAccountHistory = () => {
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
   container: {
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderRadius: 20,
+    borderRadius: 16,
     marginHorizontal: 20,
     marginBottom: 20,
     paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
+  },
+  containerLight: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  containerDark: {
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   historyItem: {
     flexDirection: 'row',
@@ -391,6 +403,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: '700',
     lineHeight: 20,
+    color: colors2024['neutral-title-1'],
   },
   // loadingItem: {
   //   paddingHorizontal: 20,

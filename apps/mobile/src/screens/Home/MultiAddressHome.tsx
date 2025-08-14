@@ -312,11 +312,10 @@ function MultiAddressHome(): JSX.Element {
   // 使用useMemo直接计算isEligible，使其能够响应相关状态变化
   const isEligible = useMemo(() => {
     return (
-      currentEligibleAddress !== undefined &&
-      !gasAccountSig?.sig &&
-      !hasClaimedGift
+      currentEligibleAddress !== undefined && !gasAccountSig?.sig
+      // !hasClaimedGift
     );
-  }, [currentEligibleAddress, gasAccountSig, hasClaimedGift]);
+  }, [currentEligibleAddress, gasAccountSig]);
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const {
@@ -458,11 +457,7 @@ function MultiAddressHome(): JSX.Element {
   // 获取top50的私钥助记词账户
   const top50PrivateKeyAccounts = useMemo(() => {
     return sortedAccounts
-      .filter(
-        account =>
-          account.type == KEYRING_TYPE.SimpleKeyring ||
-          account.type == KEYRING_TYPE.HdKeyring,
-      )
+      .filter(account => account.type == KEYRING_TYPE.SimpleKeyring)
       .slice(0, 50)
       .map(account => account.address);
   }, [sortedAccounts]);

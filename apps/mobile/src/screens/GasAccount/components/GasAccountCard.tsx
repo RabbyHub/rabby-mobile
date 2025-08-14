@@ -96,6 +96,7 @@ export const GasAccountCard: React.FC<Props> = ({
       });
     }
   }, [canDeposit, isRisk, t, styles.closeModalBtnText, styles.tipTitle]);
+  const { isLight } = useTheme2024({ getStyle: getStyles });
 
   if (!isLogin) {
     return (
@@ -107,7 +108,11 @@ export const GasAccountCard: React.FC<Props> = ({
   }
 
   return (
-    <GasAccountWrapperBg style={styles.accountContainer}>
+    <GasAccountWrapperBg
+      style={[
+        styles.accountContainer,
+        isLight ? styles.accountContainerLight : styles.accountContainerDark,
+      ]}>
       <View style={styles.content}>
         <GasAccountBlueLogo style={styles.accountIcon} />
         <Text style={styles.balanceText}>{usd}</Text>
@@ -215,14 +220,17 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 38,
     paddingHorizontal: 16,
     marginHorizontal: 20,
-    borderRadius: 30,
-    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 16,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
+  },
+  accountContainerLight: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  accountContainerDark: {
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   accountFooter: {
     marginTop: 'auto',
@@ -247,7 +255,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
     fontFamily: 'SF Pro',
-    fontSize: 32,
+    fontSize: 42,
     fontStyle: 'normal',
     fontWeight: '700',
   },

@@ -77,8 +77,12 @@ export const GasAccountScreen = () => {
     setNavigationOptions({ headerRight: headerRight });
   }, [setNavigationOptions, headerRight]);
 
+  const { isLight } = useTheme2024({ getStyle: getStyles });
+
   return (
-    <NormalScreenContainer type="linear">
+    <NormalScreenContainer
+      type="linear"
+      overwriteStyle={isLight ? styles.containerLight : styles.containerDark}>
       <GasAccountCard
         isLogin={isLogin}
         gasAccountInfo={gasAccount?.account}
@@ -149,6 +153,12 @@ export const GasAccountScreen = () => {
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  containerLight: {
+    backgroundColor: colors2024['neutral-bg-0'],
+  },
+  containerDark: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
   accountContainer: {
     height: 296,
     paddingVertical: 34,

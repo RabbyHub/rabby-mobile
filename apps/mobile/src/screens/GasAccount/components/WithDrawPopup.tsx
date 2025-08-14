@@ -158,7 +158,7 @@ const WithDrawInitContent = ({
             {t('page.gasAccount.withdrawPopup.title')}
           </Text>
           <View style={styles.tipText}>
-            <Text>
+            <Text style={styles.tipTextContent}>
               {t('page.gasAccount.withdrawPopup.availableBalance', {
                 balance: formatUsdValue(balance),
               })}
@@ -357,13 +357,15 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     textAlign: 'center',
   },
   tipText: {
-    fontSize: 16,
-    color: colors2024['neutral-body'],
     marginBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+  },
+  tipTextContent: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 16,
   },
   title: {
     marginTop: 12,

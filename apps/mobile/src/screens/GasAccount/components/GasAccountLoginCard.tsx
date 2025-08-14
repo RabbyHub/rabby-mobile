@@ -15,6 +15,7 @@ import {
   useGasBalanceRefresh,
 } from '../hooks/atom';
 import IconGift from '@/assets2024/icons/gas-account/gift-01.svg';
+import { formatUsdValue } from '@/utils/number';
 interface Props {
   onLoginPress?(): void;
   currentEligibleAddress?: ClaimedGiftAddress;
@@ -45,8 +46,14 @@ export const GasAccountLoginCard: React.FC<Props> = ({
     }
   };
 
+  const { isLight } = useTheme2024({ getStyle: getStyle });
+
   return (
-    <GasAccountWrapperBg style={styles.loginContainer}>
+    <GasAccountWrapperBg
+      style={[
+        styles.loginContainer,
+        isLight ? styles.loginContainerLight : styles.loginContainerDark,
+      ]}>
       <GasAccountBlueLogo style={styles.logo} />
       <View style={styles.quoteContainer}>
         <RcIconQuoteStart style={styles.quoteStart} />
@@ -65,18 +72,14 @@ export const GasAccountLoginCard: React.FC<Props> = ({
           loading={loading}
           containerStyle={styles.confirmButton}
           onPress={handleClick}
-          type={
-            currentEligibleAddress?.isEligible && checkEligibility()
-              ? 'success'
-              : 'primary'
-          }
+          type={currentEligibleAddress?.isEligible ? 'success' : 'primary'}
           title={
             currentEligibleAddress?.isEligible ? (
               <View style={styles.loginAndClaimContainer}>
                 <IconGift width={18} height={18} />
                 <Text style={styles.loginAndClaimText}>
                   {t('component.gasAccount.loginInTip.loginAndClaim', {
-                    amount: currentEligibleAddress.giftUsdValue,
+                    amount: formatUsdValue(currentEligibleAddress.giftUsdValue),
                   })}
                 </Text>
               </View>
@@ -104,7 +107,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     height: 52,
   },
   loginAndClaimText: {
-    color: colors2024['neutral-bg-1'],
+    color: '#fff',
     fontSize: 20,
     lineHeight: 24,
     fontStyle: 'normal',
@@ -121,14 +124,17 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     paddingBottom: 20,
     paddingHorizontal: 16,
     marginHorizontal: 20,
-    borderRadius: 30,
-    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 16,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
+  },
+  loginContainerLight: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  loginContainerDark: {
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   logo: {
     width: 50,
