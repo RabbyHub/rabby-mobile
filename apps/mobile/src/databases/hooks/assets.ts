@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { runOnJS } from 'react-native-reanimated';
 
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
-import { syncRemotePortocols } from '@/databases/sync/assets';
+import {
+  syncRemotePortocols,
+  syncRemotePortocol,
+} from '@/databases/sync/assets';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useSafeState } from '@/hooks/useSafeState';
 import { batchQueryNFTsWithLocalCache } from '@/screens/Home/utils/nft';
@@ -17,7 +20,7 @@ import {
 import { batchQueryTokensWithLocalCache } from '@/screens/Home/utils/token';
 
 import { TokenItemEntity } from '../entities/tokenitem';
-import { formatAppChain } from '@/screens/Home/utils/appchain';
+import { formatAppChain, isAppChain } from '@/screens/Home/utils/appchain';
 
 export function useAssetsBasicInfo({ enableAutoFetch = false }) {
   const [assetsInfo, setInfo] = useState<{
@@ -51,6 +54,10 @@ export function useAssetsBasicInfo({ enableAutoFetch = false }) {
 
 export const loadAppChainComplexProtocols = async (userAddr: string) => {
   try {
+    console.log(
+      'CUSTOM_LOGGER:=>: loadAppChainComplexProtocols',
+      userAddr.slice(-4),
+    );
     const appChainListRes = await loadAppChainList(userAddr);
     const protocols: ComplexProtocol[] = [];
     if (appChainListRes?.apps?.length) {
@@ -126,6 +133,39 @@ export const syncProtocols = async (
   protocols.push(...appChainProtocols);
   runOnJS(syncRemotePortocols)(address, [...protocols]);
   return protocols;
+};
+
+export const syncSpecificProtocol = async (
+  address: string,
+  protocolId: string,
+  chain: string,
+) => {
+  if (!address || !protocolId || !chain) {
+    return [];
+  }
+
+  try {
+    const isAppChainProtocol = isAppChain(chain);
+    let projects: ComplexProtocol[] = [];
+    if (isAppChainProtocol) {
+      const appChainProtocols = await loadAppChainComplexProtocols(address);
+      projects = appChainProtocols.filter(i => i.id === protocolId);
+    } else {
+      projects = (
+        await batchLoadProjects(address, [protocolId], false, true)
+      ).filter(i => !!i) as ComplexProtocol[];
+    }
+    if (!projects?.length || !projects[0]) {
+      runOnJS(syncRemotePortocol)(address, null, { deleteId: protocolId });
+      return [];
+    }
+
+    runOnJS(syncRemotePortocol)(address, projects[0]);
+    return projects;
+  } catch (error) {
+    console.error(`Failed to sync specific protocol ${protocolId}:`, error);
+    return [];
+  }
 };
 
 export const syncNFTs = async (

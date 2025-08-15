@@ -104,6 +104,7 @@ export const batchLoadProjects = async (
         if (isTestnet) {
           return await testOpenapi.getProtocol({ addr: user_id, id });
         } else {
+          console.log('CUSTOM_LOGGER:=>: getProtocol', user_id.slice(-4), id);
           return await openapi.getProtocol({ addr: user_id, id });
         }
       } catch (error) {

@@ -179,8 +179,10 @@ export const DeFiDetailScreen = () => {
     [fallbackAccount, routeAccount],
   );
 
-  const { data: currentPortfolio, updateData: singleUpdateData } =
-    usePortfolios(finalAccount?.address, false);
+  const { data: currentPortfolio, updateSpecificProtocol } = usePortfolios(
+    finalAccount?.address,
+    false,
+  );
 
   const data = useMemo(
     // 优先使用内存defi列表中的实时数据，兜底用页面参数数据
@@ -272,7 +274,7 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
-  const { getCacheTop10Assets, checkIsExpireAndUpdate, refreshing, assetsMap } =
+  const { getCacheTop10Assets, refreshing, assetsMap, loadSpecificDefi } =
     useAssets({ hideCombined: true });
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -440,14 +442,24 @@ export const DeFiDetailScreen = () => {
         renderSectionHeader={renderSectionHeader}
         refreshControl={
           <RefreshControl
-            onRefresh={() => {
-              if (isSingleAddress) {
-                singleUpdateData(true);
-              } else {
-                checkIsExpireAndUpdate(true, {
-                  disableNFT: true,
-                  disableToken: true,
-                });
+            onRefresh={async () => {
+              try {
+                if (isSingleAddress) {
+                  // 单地址场景：只刷新特定协议
+                  await updateSpecificProtocol(data.id, data.chain || '');
+                } else {
+                  // 多地址场景：只刷新特定协议在所有地址下的数据
+                  const addresses = sectionsMultiProject.map(
+                    section => section.address,
+                  );
+                  await Promise.all(
+                    addresses.map(address =>
+                      loadSpecificDefi(address, data.id, data.chain || ''),
+                    ),
+                  );
+                }
+              } catch (error) {
+                console.error('Failed to refresh specific protocol:', error);
               }
             }}
             refreshing={refreshing}
