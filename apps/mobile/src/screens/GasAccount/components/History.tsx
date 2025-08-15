@@ -72,7 +72,8 @@ const HistoryItem = ({
   const showGiftIcon = source === 'gas_account_airdrop';
 
   return (
-    <View
+    <TouchableOpacity
+      onPress={showGiftIcon ? onGiftIconPress : undefined}
       style={[
         styles.historyItem,
         borderT && styles.borderTop,
@@ -106,8 +107,8 @@ const HistoryItem = ({
       {showGiftIcon && (
         <TouchableOpacity
           style={styles.giftIconContainer}
-          onPress={onGiftIconPress}
-          activeOpacity={0.7}>
+          activeOpacity={0.7}
+          onPress={onGiftIconPress}>
           <IconGift width={18} height={18} />
         </TouchableOpacity>
       )}
@@ -115,7 +116,7 @@ const HistoryItem = ({
         {sign}
         {formatUsdValue(value)}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 

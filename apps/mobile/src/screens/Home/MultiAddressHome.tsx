@@ -299,8 +299,12 @@ function MultiAddressHome(): JSX.Element {
   const { top10Addresses } = useAccountInfo();
 
   // 添加gift资格检查hook
-  const { checkAddressesEligibility, getCurrentEligibleAddress } =
-    useGasAccountEligibility();
+  const {
+    checkAddressesEligibility,
+    clearCurrentEligibleAddress,
+    getCurrentEligibleAddress,
+    checkAndClearExpiredCache,
+  } = useGasAccountEligibility();
   const currentEligibleAddress = getCurrentEligibleAddress();
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
@@ -473,6 +477,37 @@ function MultiAddressHome(): JSX.Element {
       checkAddressesEligibility(top50PrivateKeyAccounts);
     }
   }, [top50PrivateKeyAccounts, checkAddressesEligibility]);
+
+  // 清理过期和已删除account缓存
+  useEffect(() => {
+    checkAndClearExpiredCache();
+    const allCurrentAddresses = new Set(top50PrivateKeyAccounts);
+    const cache = gasAccountService.store.eligibilityCache;
+    Object.keys(cache).forEach(address => {
+      if (!allCurrentAddresses.has(address)) {
+        delete cache[address];
+      }
+    });
+    const currentEligibleAddress = getCurrentEligibleAddress();
+    if (
+      currentEligibleAddress &&
+      !allCurrentAddresses.has(currentEligibleAddress.address)
+    ) {
+      const firstEligible = top50PrivateKeyAccounts.find(addr => {
+        const cacheItem = cache[addr.toLowerCase()];
+        return cacheItem && cacheItem.isEligible;
+      });
+      if (firstEligible) {
+        gasAccountService.setCurrentEligibleAddress(firstEligible);
+      } else {
+        gasAccountService.clearCurrentEligibleAddress();
+      }
+    }
+  }, [
+    top50PrivateKeyAccounts,
+    checkAndClearExpiredCache,
+    getCurrentEligibleAddress,
+  ]);
 
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);

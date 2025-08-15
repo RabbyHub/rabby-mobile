@@ -121,6 +121,20 @@ export class GasAccountService {
     return this.store.currentEligibleAddress;
   };
 
+  setCurrentEligibleAddress = (address: string) => {
+    this.store.currentEligibleAddress = {
+      address,
+      isChecked: true,
+      isEligible: true,
+      isClaimed: false,
+      giftUsdValue: 0,
+    };
+  };
+
+  clearCurrentEligibleAddress = () => {
+    this.store.currentEligibleAddress = undefined;
+  };
+
   // 检查缓存是否有效
   private isCacheValid = (): boolean => {
     if (

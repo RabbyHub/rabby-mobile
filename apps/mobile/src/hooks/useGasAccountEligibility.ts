@@ -3,6 +3,7 @@ import { gasAccountService } from '@/core/services/shared';
 import { ClaimedGiftAddress } from '@/core/services/gasAccount';
 import { useGasAccountMethods } from '@/screens/GasAccount/hooks';
 import { useAccounts } from '@/hooks/account';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 export const useGasAccountEligibility = () => {
   const { login } = useGasAccountMethods();
@@ -48,9 +49,8 @@ export const useGasAccountEligibility = () => {
     const currentEligibleAddress =
       gasAccountService.getCurrentEligibleAddress();
     return (
-      currentEligibleAddress !== undefined &&
-      !gasAccountSig?.sig &&
-      !hasClaimedGift
+      currentEligibleAddress !== undefined && !gasAccountSig?.sig
+      //   !hasClaimedGift
     );
   }, []);
 
@@ -61,9 +61,9 @@ export const useGasAccountEligibility = () => {
         setLoading(true);
         setError(null);
         // 如果已经领取过礼包，无需检查
-        if (gasAccountService.getHasClaimedGift()) {
-          return [];
-        }
+        // if (gasAccountService.getHasClaimedGift()) {
+        //   return [];
+        // }
 
         // 如果gas account已经登录，无需检查资格
         const gasAccountSig = gasAccountService.getGasAccountSig();
@@ -101,9 +101,9 @@ export const useGasAccountEligibility = () => {
         setError(null);
 
         // 如果已经领取过礼包，无需检查
-        if (gasAccountService.getHasClaimedGift()) {
-          return undefined;
-        }
+        // if (gasAccountService.getHasClaimedGift()) {
+        //   return undefined;
+        // }
 
         // 如果gas account已经登录，无需检查资格
         const gasAccountSig = gasAccountService.getGasAccountSig();
@@ -134,6 +134,10 @@ export const useGasAccountEligibility = () => {
     },
     [updateCacheStatusIfNeeded],
   );
+
+  const clearCurrentEligibleAddress = useCallback(() => {
+    gasAccountService.clearCurrentEligibleAddress();
+  }, []);
 
   // 清理缓存
   const clearCache = useCallback(() => {
@@ -185,14 +189,15 @@ export const useGasAccountEligibility = () => {
   const getCurrentEligibleAddress = () => {
     return gasAccountService.getCurrentEligibleAddress();
   };
-
   // 领取礼包
   const claimGift = useCallback(
     async (address: string) => {
       try {
         // 从accounts列表中根据address匹配获取account信息
         const account = accounts.find(
-          acc => acc.address.toLowerCase() === address.toLowerCase(),
+          acc =>
+            acc.address.toLowerCase() === address.toLowerCase() &&
+            acc.type === KEYRING_TYPE.SimpleKeyring,
         );
         if (!account) {
           throw new Error(`Account not found for address: ${address}`);
@@ -262,7 +267,7 @@ export const useGasAccountEligibility = () => {
     getCurrentEligibleAddress,
     claimGift,
     checkEligibility,
-
+    clearCurrentEligibleAddress,
     // 工具方法
     forceUpdateCacheStatus, // 暴露强制更新方法，供外部需要时使用
   };

@@ -107,7 +107,7 @@ const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
     height: 52,
   },
   loginAndClaimText: {
-    color: '#fff',
+    color: colors2024['neutral-InvertHighlight'],
     fontSize: 20,
     lineHeight: 24,
     fontStyle: 'normal',
