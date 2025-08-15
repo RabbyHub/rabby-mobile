@@ -457,8 +457,13 @@ function MultiAddressHome(): JSX.Element {
 
   // 获取top50的私钥助记词账户
   const top50PrivateKeyAccounts = useMemo(() => {
+    console.debug('top50PrivateKeyAccounts', sortedAccounts);
     return sortedAccounts
-      .filter(account => account.type == KEYRING_TYPE.SimpleKeyring)
+      .filter(
+        account =>
+          account.type == KEYRING_TYPE.SimpleKeyring ||
+          account.type == KEYRING_TYPE.HdKeyring,
+      )
       .slice(0, 50)
       .map(account => account.address);
   }, [sortedAccounts]);

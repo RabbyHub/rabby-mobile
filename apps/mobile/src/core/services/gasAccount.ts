@@ -159,6 +159,7 @@ export class GasAccountService {
 
   // 批量检查地址资格（带缓存）
   checkAddressEligibilityBatch = async (addresses: string[], force = false) => {
+    console.log('checkAddressEligibilityBatch', addresses, force);
     // 检查缓存
     if (!force && this.isCacheValid() && this.store.eligibilityCache) {
       const result = this.getDataFromCache(addresses);
