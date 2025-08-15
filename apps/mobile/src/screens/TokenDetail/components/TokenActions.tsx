@@ -75,7 +75,6 @@ const TokenActions = ({
     Icon: any;
     onPress: () => void;
     disabled?: boolean;
-    badge?: number;
   }[] = useMemo(
     () => [
       {
