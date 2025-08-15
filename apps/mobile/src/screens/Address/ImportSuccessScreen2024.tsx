@@ -61,7 +61,6 @@ const DisMissKBWrapper = ({ children }) => (
 export const ImportSuccessScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { syncSingleAddress } = useSyncHistoryDB();
-
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
   const modalRef =
@@ -201,7 +200,6 @@ export const ImportSuccessScreen2024 = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
-
   React.useEffect(() => {
     setTimeout(() => fetchAccounts(), 0);
   }, [fetchAccounts]);

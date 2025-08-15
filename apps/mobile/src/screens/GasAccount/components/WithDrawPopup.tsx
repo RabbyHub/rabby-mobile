@@ -17,24 +17,29 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { Button } from '@/components2024/Button';
 import { DestinationChain, RecipientAddress } from './WithdrawSelectPopup';
 import { useWithdrawData } from '../hooks/withdraw';
+import IconHelp from '@/assets2024/icons/gas-account/help.svg';
 import {
   RechargeChainItem,
   WithdrawListAddressItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import LinearGradient from 'react-native-linear-gradient';
+import { GiftInfoModal } from './GiftInfoModal';
 
 const WithDrawInitContent = ({
   balance,
   onClose,
   onAfterConfirm,
+  nonWithdrawableBalance,
 }: {
   balance: number;
+  nonWithdrawableBalance: number;
   onClose: () => void;
   onAfterConfirm: () => void;
 }) => {
   const { t } = useTranslation();
   const { sig, accountId } = useGasAccountSign();
   const [loading, setLoading] = useState(false);
+  const [showGiftInfo, setShowGiftInfo] = useState(false);
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { refresh: refreshGasAccountBalance } = useGasBalanceRefresh();
@@ -152,11 +157,22 @@ const WithDrawInitContent = ({
           <Text style={styles.title}>
             {t('page.gasAccount.withdrawPopup.title')}
           </Text>
-          <Text style={styles.tipText}>
-            {t('page.gasAccount.withdrawPopup.availableBalance', {
-              balance: formatUsdValue(balance),
-            })}
-          </Text>
+          <View style={styles.tipText}>
+            <Text style={styles.tipTextContent}>
+              {t('page.gasAccount.withdrawPopup.availableBalance', {
+                balance: formatUsdValue(balance),
+              })}
+            </Text>
+            {nonWithdrawableBalance ? (
+              <IconHelp
+                width={16}
+                height={16}
+                onPress={() => {
+                  setShowGiftInfo(true);
+                }}
+              />
+            ) : null}
+          </View>
 
           <Text style={[styles.label, { marginTop: 0 }]}>
             {t('page.gasAccount.withdrawPopup.recipientAddress')}
@@ -210,6 +226,15 @@ const WithDrawInitContent = ({
                 {t('page.gasAccount.withdrawPopup.deductGasFees')}{' '}
                 {` ~$${chain?.withdraw_fee.toFixed(2)}`}
               </Text>
+              {nonWithdrawableBalance ? (
+                <IconHelp
+                  width={20}
+                  height={20}
+                  onPress={() => {
+                    setShowGiftInfo(true);
+                  }}
+                />
+              ) : null}
             </View>
           )}
           <Button
@@ -226,6 +251,28 @@ const WithDrawInitContent = ({
           />
         </View>
       </View>
+      <GiftInfoModal
+        snapPoints={[270]}
+        visible={showGiftInfo}
+        onClose={() => setShowGiftInfo(false)}
+        header={
+          <Text style={styles.giftInfoHeader}>
+            {t('component.gasAccount.giftInfo.noWithdrawableBalanceTitle', {
+              amount: formatUsdValue(nonWithdrawableBalance),
+            })}
+          </Text>
+        }
+        description={
+          <Text style={styles.giftInfoDescription}>
+            {t(
+              'component.gasAccount.giftInfo.noWithdrawableBalanceDescription',
+              {
+                amount: formatUsdValue(nonWithdrawableBalance),
+              },
+            )}
+          </Text>
+        }
+      />
     </LinearGradient>
   );
 };
@@ -270,6 +317,7 @@ export const WithDrawPopup = props => {
         <BottomSheetView style={styles.popup}>
           <WithDrawInitContent
             balance={props.balance}
+            nonWithdrawableBalance={props.nonWithdrawableBalance}
             onAfterConfirm={onAfterConfirm}
             onClose={props.onCancel || props.onClose}
           />
@@ -295,10 +343,29 @@ const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
+  giftInfoHeader: {
+    color: colors2024['neutral-title-1'],
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 24,
+    marginBottom: 8,
+  },
+  giftInfoDescription: {
+    color: colors2024['neutral-secondary'],
+    fontSize: 16,
+    textAlign: 'center',
+  },
   tipText: {
-    fontSize: 13,
-    color: colors2024['neutral-body'],
-    marginBottom: 30,
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  tipTextContent: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 16,
   },
   title: {
     marginTop: 12,

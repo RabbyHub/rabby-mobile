@@ -21,6 +21,7 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
+import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
 import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -42,6 +43,7 @@ import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
 import {
   browserService,
+  gasAccountService,
   preferenceService,
   transactionHistoryService,
 } from '@/core/services';
@@ -100,6 +102,8 @@ import { useInitDetectDBAssets } from '../Search/useAssets';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 import dayjs from 'dayjs';
+import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 const HeaderHeight = 24;
 
@@ -294,12 +298,25 @@ function MultiAddressHome(): JSX.Element {
   }>();
   const { top10Addresses } = useAccountInfo();
 
+  // 添加gift资格检查hook
+  const { checkAddressesEligibility, getCurrentEligibleAddress } =
+    useGasAccountEligibility();
+  const currentEligibleAddress = getCurrentEligibleAddress();
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
-
+  const gasAccountSig = gasAccountService.getGasAccountSig();
+  const hasClaimedGift = gasAccountService.getHasClaimedGift();
   const { width } = Dimensions.get('window');
   const itemWidth =
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
+  // 使用useMemo直接计算isEligible，使其能够响应相关状态变化
+  const isEligible = useMemo(() => {
+    return (
+      currentEligibleAddress !== undefined &&
+      !gasAccountSig?.sig &&
+      !hasClaimedGift
+    );
+  }, [currentEligibleAddress, gasAccountSig, hasClaimedGift]);
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const {
@@ -307,7 +324,6 @@ function MultiAddressHome(): JSX.Element {
     forceUpdate,
     triggerUpdate: triggerUpdateAlert,
   } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
-
   const MENU_ARR = useMemo(
     () =>
       [
@@ -353,6 +369,7 @@ function MultiAddressHome(): JSX.Element {
           key: MultiHomeFeatTitle.GasAccount,
           title: t('page.home.services.gasAccount'),
           icon: RcIconGasAccount,
+          showGiftIcon: isEligible,
         },
         // __DEV__ && {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
@@ -384,8 +401,9 @@ function MultiAddressHome(): JSX.Element {
         icon: React.FC<import('react-native-svg').SvgProps>;
         badge?: number;
         isSuccess?: boolean;
+        showGiftIcon?: boolean;
       }[],
-    [alertInfo.total, t, historyCount],
+    [alertInfo.total, t, historyCount, isEligible],
   );
 
   useEffect(() => {
@@ -436,10 +454,33 @@ function MultiAddressHome(): JSX.Element {
     disableAutoFetch: true,
   });
   const sortedAccounts = useSortAddressList(accounts);
+
+  // 获取top50的私钥助记词账户
+  const top50PrivateKeyAccounts = useMemo(() => {
+    console.debug('top50PrivateKeyAccounts', sortedAccounts);
+    return sortedAccounts
+      .filter(
+        account =>
+          account.type == KEYRING_TYPE.SimpleKeyring ||
+          account.type == KEYRING_TYPE.HdKeyring,
+      )
+      .slice(0, 50)
+      .map(account => account.address);
+  }, [sortedAccounts]);
+
   const unionAccounts = useMemo(() => {
     return unionBy(sortedAccounts, account => account.address.toLowerCase());
   }, [sortedAccounts]);
   const [hasOpenCopyTrading, setHasOpenCopyTrading] = useState(true);
+
+  // 初始化gift资格检查
+  useFocusEffect(
+    React.useCallback(() => {
+      if (top50PrivateKeyAccounts.length > 0) {
+        checkAddressesEligibility(top50PrivateKeyAccounts, true);
+      }
+    }, [top50PrivateKeyAccounts, checkAddressesEligibility]),
+  );
 
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
@@ -590,7 +631,7 @@ function MultiAddressHome(): JSX.Element {
       triggerUpdateAlert,
       appState,
       getSuccessAndFailList,
-      sortedAccounts.length,
+      checkAddressesEligibility,
     ]),
   );
 
@@ -598,6 +639,7 @@ function MultiAddressHome(): JSX.Element {
     Promise.all([
       triggerUpdate(true), // force update balance from server api
       refreshCurve(true),
+      checkAddressesEligibility(top50PrivateKeyAccounts, true),
     ]).finally(() => {
       // update at background
       forceUpdate();
@@ -610,6 +652,8 @@ function MultiAddressHome(): JSX.Element {
     forceUpdate,
     syncTop10Assets,
     syncTop10History,
+    checkAddressesEligibility,
+    top50PrivateKeyAccounts,
   ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
@@ -713,6 +757,7 @@ function MultiAddressHome(): JSX.Element {
       icon: React.FC<import('react-native-svg').SvgProps>;
       badge?: number;
       isSuccess?: boolean;
+      showGiftIcon?: boolean;
     }) => {
       if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
         return (
@@ -724,6 +769,11 @@ function MultiAddressHome(): JSX.Element {
 
       if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
         return <HomePendingBadge number={pendingTxCount} />;
+      }
+
+      // 显示gift图标
+      if (el.key === MultiHomeFeatTitle.GasAccount && el.showGiftIcon) {
+        return <IconGift width={24} height={24} />;
       }
 
       return (
