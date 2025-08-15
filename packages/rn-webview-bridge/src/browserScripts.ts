@@ -18,26 +18,26 @@ export const RABBY_DECLARED_TYPES = {
 export const BROWSER_SCRIPT_BASE = `
 ;(function () {
   if (!${posterRef}) {
-    var safeJsonStringifyReplacer = (function () {
-      var cache = new WeakSet();
-      return function (key, value) {
-        if (key.indexOf('__reactFiber') === 0) return 'TRIMED';
-        if (typeof value === 'object' && value !== null) {
-          if (cache.has(value)) return;
-          cache.add(value);
-        }
-        if (typeof value === 'bigint') {
-          return value.toString() + 'n';
-        }
-        return value;
-      };
-    })();
-
     ${posterRef} = function (content, pos) {
       if (typeof content !== 'object') content = { primitive: content };
 
       pos = pos || 'unknown';
       var jsonString = "";
+
+      var safeJsonStringifyReplacer = (function () {
+        var cache = new WeakSet();
+        return function (key, value) {
+          if (key.indexOf('__reactFiber') === 0) return 'TRIMED';
+          if (typeof value === 'object' && value !== null) {
+            if (cache.has(value)) return;
+            cache.add(value);
+          }
+          if (typeof value === 'bigint') {
+            return value.toString() + 'n';
+          }
+          return value;
+        };
+      })();
 
       try {
         jsonString = JSON.stringify(content, safeJsonStringifyReplacer)
