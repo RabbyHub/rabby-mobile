@@ -1,5 +1,16 @@
-const posterName = `__rabbyPostMessageToProvider${Math.random().toString(36).substr(2, 9)}`;
-const posterRef = `window['${posterName}']`;
+const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz';
+function randString(length = 10, str = '') {
+  let result = '';
+  for (let i = 0, rnum: number; i < length; ++i) {
+    rnum = Math.floor(Math.random() * chars.length);
+    result += chars.charAt(rnum);
+  }
+  return `${result}${str}`;
+}
+const objRefs = {
+  poster: `window['${randString(5, '__rabbyPostMessageToProvider')}']`,
+  getWinInfo: `window['${randString(5, '__rabbyGetWindowInformation')}']`,
+};
 
 export const RABBY_DECLARED_PREFIX = 'RD::';
 export const RABBY_DECLARED_TYPES = {
@@ -17,8 +28,8 @@ export const RABBY_DECLARED_TYPES = {
  */
 export const BROWSER_SCRIPT_BASE = `
 ;(function () {
-  if (!${posterRef}) {
-    ${posterRef} = function (content, pos) {
+  if (!${objRefs.poster}) {
+    ${objRefs.poster} = function (content, pos) {
       if (typeof content !== 'object') content = { primitive: content };
 
       pos = pos || 'unknown';
@@ -58,7 +69,7 @@ export const BROWSER_SCRIPT_BASE = `
     };
   }
 
-  window.__rabbyGetWindowInformation = function() {
+  ${objRefs.getWinInfo} = function() {
     var siteNameMeta = document.querySelector('head > meta[property="og:site_name"]');
     var ogSiteName = siteNameMeta ? siteNameMeta.getAttribute('content') : '';
     var title = (function () {
@@ -94,9 +105,9 @@ export const SPA_urlChangeListener = `;(function () {
   var __rabbyPushState = __rabbyHistory.pushState;
   var __rabbyReplaceState = __rabbyHistory.replaceState;
   function __rabby__updateUrl() {
-    var info = window.__rabbyGetWindowInformation();
+    var info = ${objRefs.getWinInfo}();
 
-    ${posterRef}({
+    ${objRefs.poster}({
       type: '${RABBY_DECLARED_TYPES.NAV_CHANGE}',
       payload: {
         url: location.href,
@@ -110,7 +121,7 @@ export const SPA_urlChangeListener = `;(function () {
 
     setTimeout(() => {
       var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
-      ${posterRef}({
+      ${objRefs.poster}({
         type: '${RABBY_DECLARED_TYPES.GET_HEIGHT}',
         payload: {
           height: height
@@ -142,9 +153,9 @@ export const SPA_urlChangeListener = `;(function () {
 export const JS_GET_WINDOW_INFO_AFTER_LOAD = `
   ;(function () {
     setTimeout(function() {
-      var info = window.__rabbyGetWindowInformation();
+      var info = ${objRefs.getWinInfo}();
 
-      ${posterRef}({
+      ${objRefs.poster}({
         type: '${RABBY_DECLARED_TYPES.GET_WINDOW_INFO_AFTER_LOAD}',
         payload: {
           url: location.href,
