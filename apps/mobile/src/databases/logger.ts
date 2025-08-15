@@ -27,9 +27,9 @@ export const RnSqlExecutionTimes = __DEV__
       rnError: 2 * 1e3,
     }
   : {
-      config: 1.5 * 1e3,
-      rnWarning: 2.5 * 1e3,
-      rnError: 4.5 * 1e3,
+      config: 0.8 * 1e3,
+      rnWarning: 1.3 * 1e3,
+      rnError: 1.7 * 1e3,
     };
 
 function makeLogMessages({
