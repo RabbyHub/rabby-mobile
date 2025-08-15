@@ -11,6 +11,14 @@ on:
         required: false
         type: boolean
         default: false
+      FAST_BUILD_ON_ANDROID:
+        required: false
+        type: boolean
+        default: false
+      SKIP_NOTIFY_LARK:
+        required: false
+        type: boolean
+        default: false
       macos_machine_location:
         required: true
         type: choice
@@ -140,8 +148,10 @@ jobs:
           CONFIGURATION: release
           TYPE: adhoc
           RABBY_MOBILE_BUILD_ENV: regression
-          LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
-          LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          USE_RESIGN_APK: ${{ inputs.FAST_BUILD_ON_ANDROID }}
+          SKIP_NOTIFY_LARK: ${{ inputs.SKIP_NOTIFY_LARK }}
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.RABBY_MOBILE_LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.RABBY_MOBILE_LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context

@@ -12,12 +12,12 @@ const {
 const chatURL =
   process.env.RABBY_MOBILE_LARK_CHAT_URL || process.env.LARK_CHAT_URL;
 if (!chatURL) {
-  throw new Error('LARK_CHAT_URL is not set');
+  throw new Error('RABBY_MOBILE_LARK_CHAT_URL is not set');
 }
 const chatSecret =
   process.env.RABBY_MOBILE_LARK_CHAT_SECRET || process.env.LARK_CHAT_SECRET;
 if (!chatSecret) {
-  throw new Error('LARK_CHAT_SECRET is not set');
+  throw new Error('RABBY_MOBILE_LARK_CHAT_SECRET is not set');
 }
 
 // sendMessage with axios

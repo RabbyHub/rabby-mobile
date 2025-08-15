@@ -221,7 +221,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
 
-    [ ! -z $CI ] && node $script_dir/notify-lark.js "$apk_url" android "$USE_RESIGN_APK"
+    [ ! -z "$CI" ] && [ -z "$SKIP_NOTIFY_LARK" ] && node $script_dir/notify-lark.js "$apk_url" android "$USE_RESIGN_APK"
   fi
 fi
 
