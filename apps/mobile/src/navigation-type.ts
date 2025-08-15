@@ -91,7 +91,6 @@ export type RootStackParamsList = {
     timestamp?: number; // 添加时间戳确保每次都是新页面
   };
   [RootNames.TokenMarketInfo]: {
-    // TODO: 需要修改, 移除不需要的
     token:
       | AbstractPortfolioToken
       | import('@/screens/Home/hooks/store').CombineTokensItem;
