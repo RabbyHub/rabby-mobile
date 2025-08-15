@@ -436,7 +436,7 @@ export const TokenDetailScreen = () => {
             {t('page.tokenDetail.guideToMarketData')}
           </Text>
           <View style={styles.floatBalanceContainer}>
-            <Text style={styles.floatPrice}>{formatPrice(price)}</Text>
+            <Text style={styles.floatPrice}>${formatPrice(price)}</Text>
             <Text
               style={[
                 styles.floatPriceChange,
