@@ -538,6 +538,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       allowsFullscreenVideo={false}
                       allowsInlineMediaPlayback={false}
                       originWhitelist={['*']}
+                      pullToRefreshEnabled={true}
                       {...webviewProps}
                       style={[styles.dappWebView, webviewProps?.style]}
                       ref={webviewRef}
