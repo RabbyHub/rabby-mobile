@@ -105,7 +105,7 @@ export const SearchAssets: React.FC<Props> = ({
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      navigate(RootNames.TokenDetail, {
+      navigate(RootNames.TokenMarketInfo, {
         token: token,
         unHold: token._unHold,
         needUseCacheToken: true,

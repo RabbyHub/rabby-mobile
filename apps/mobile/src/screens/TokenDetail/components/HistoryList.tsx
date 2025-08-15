@@ -1,31 +1,15 @@
-import { range, unionBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import {
-  Animated,
-  FlatListProps,
-  Platform,
-  TouchableOpacity,
-  View,
-  Text,
-} from 'react-native';
-import { RcIconRightCC } from '@/assets/icons/common';
-import { RefreshControl } from 'react-native-gesture-handler';
+import { TouchableOpacity, View, Text } from 'react-native';
+import { RcArrowRight3CC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
 import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 import { HistoryItem } from '@/screens/Transaction/components/HistoryItem';
-import { SkeletonCard } from '@/screens/Transaction/components/SkeletonCard';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
-import { Empty } from '@/screens/Transaction/components/Empty';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { LocalHistoryItemEntity } from '@/databases/entities/localhistoryItem';
-import { SwapItemEntity } from '@/databases/entities/swapitem';
-import { BuyItemEntity } from '@/databases/entities/buyItem';
 import { ensureHistoryListItemFromDb } from '@/screens/Transaction/components/utils';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { useTranslation } from 'react-i18next';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -35,17 +19,15 @@ import { RootNames } from '@/constant/layout';
 export const HistoryList = ({
   isForMultipleAddress,
   finalAccount,
-  accounts,
   token,
   top10Addresses,
 }: {
-  accounts: KeyringAccountWithAlias[];
   finalAccount: KeyringAccountWithAlias | null;
   isForMultipleAddress: boolean;
   token: AbstractPortfolioToken;
   top10Addresses: string[];
 }) => {
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const [data, setData] = React.useState<HistoryDisplayItem[]>([]);
   const { t } = useTranslation();
   const { navigation } = useSafeSetNavigationOptions();
@@ -131,10 +113,10 @@ export const HistoryList = ({
               <Text style={styles.headerContent}>
                 {t('page.tokenDetail.SeeMore')}
               </Text>
-              <RcIconRightCC
+              <RcArrowRight3CC
                 style={styles.arrowStyle}
-                width={13}
-                height={13}
+                width={12}
+                height={12}
                 color={colors2024['neutral-secondary']}
               />
             </TouchableOpacity>
@@ -150,8 +132,8 @@ export const HistoryList = ({
 const getStyle = createGetStyles2024(ctx => ({
   container: {
     width: '100%',
-    paddingHorizontal: 20,
-    marginTop: 20,
+    paddingHorizontal: 15,
+    marginTop: 30,
     gap: 0,
   },
   bottomBg: {
@@ -198,22 +180,21 @@ const getStyle = createGetStyles2024(ctx => ({
     marginBottom: 12,
   },
   relateTitle: {
-    color: ctx.colors2024['neutral-foot'],
+    color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 18,
     lineHeight: 20,
     fontWeight: '700',
   },
   rightContent: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
     padding: 4,
+    paddingRight: 1,
   },
   historyHeader: {
-    // marginVertical: 12,
-    // paddingHorizontal: 20,
-    marginBottom: 8,
+    paddingLeft: 4,
+    marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -224,7 +205,6 @@ const getStyle = createGetStyles2024(ctx => ({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
-    marginLeft: 4,
   },
   defiItemText: {
     color: ctx.colors2024['neutral-body'],

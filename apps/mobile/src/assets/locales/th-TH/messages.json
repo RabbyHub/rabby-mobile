@@ -1926,7 +1926,6 @@
         "unfavorite": "ยกเลิกการโปรดปราน"
       },
       "SeeMore": "ดูเพิ่มเติม",
-      "Transaction": "ธุรกรรม",
       "ListedBy": "Listed by",
       "IssuedBy": "ออกโดย",
       "Defi": "DeFi",
@@ -1935,7 +1934,6 @@
       "fdvTitle": "FDV คืออะไร?",
       "SupportedExchanges": "รองรับการแลกเปลี่ยน",
       "Info": "ข้อมูล",
-      "Mybalance": "ยอดเงินของฉัน",
       "fdv": "FDV",
       "NoIssuer": "ไม่มีข้อมูลผู้ออกบัตร",
       "IssuerWebsite": "เว็บไซต์ของผู้ออกหลักทรัพย์",

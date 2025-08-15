@@ -14,8 +14,6 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
 import { useFocusEffect } from '@react-navigation/native';
 import { trigger } from 'react-native-haptic-feedback';
-import { preferenceService } from '@/core/services';
-import { toast } from '@/components2024/Toast';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 export const PinedTokenList = () => {

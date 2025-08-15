@@ -1,4 +1,4 @@
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { formatPrice } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -28,7 +28,6 @@ import {
   use24hCurveData,
   useDateCurveData,
 } from './useCurve';
-import { ThemeColors2024 } from '@/constant/theme';
 import { RelatedDeFiType, TokenFromAddressItem } from '../..';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { CombineTokensItem } from '@/screens/Home/hooks/store';
@@ -41,7 +40,6 @@ const isRealTimeKey = (key: TabKey) => REAL_TIME_TAB_LIST.includes(key);
 const winInfo = Dimensions.get('window');
 
 interface Props {
-  originToken: AbstractPortfolioToken | CombineTokensItem;
   token: AbstractPortfolioToken | CombineTokensItem;
   finalAccount?: KeyringAccountWithAlias | null;
   amountList: TokenFromAddressItem[];
@@ -53,7 +51,6 @@ interface Props {
 export function TokenPriceChart(props: Props) {
   const {
     token,
-    originToken,
     isSingleAddress,
     amountList,
     finalAccount,

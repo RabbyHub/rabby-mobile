@@ -1,27 +1,18 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import RcIconJumpCC from '@/assets2024/icons/history/IconJumpCC.svg';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
-import {
-  RcIconCopyRegularCC,
-  RcIconExternalLinkCC,
-} from '@/assets/icons/common';
-import { AssetAvatar, Text } from '@/components';
-import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { Text } from '@/components';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisAddress } from '@/utils/address';
 import { findChain } from '@/utils/chain';
 import { openTxExternalUrl } from '@/utils/transaction';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { useMemoizedFn } from 'ahooks';
 import { useTranslation } from 'react-i18next';
-import { getTokenSymbol } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
-import { formatUsdValue } from '@/utils/number';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -40,17 +31,6 @@ export const TokenChainAndContract: React.FC<Props> = ({
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-
-  const handleCopyAddress = useMemoizedFn<
-    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
-  >(evt => {
-    evt.stopPropagation();
-    if (!token?._tokenId) {
-      return;
-    }
-    Clipboard.setString(token._tokenId);
-    toastCopyAddressSuccess(token._tokenId);
-  });
 
   const { isContractToken, tokenAddress, chainItem } = React.useMemo(() => {
     const item = findChain({ serverId: token.chain });
@@ -228,10 +208,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
 
   headerTitle: {
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '700',
   },
 

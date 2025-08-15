@@ -10,8 +10,6 @@ import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
-import { shouldHideSelectorPopupAtom } from '@/screens/Swap/hooks/atom';
-import { useSetAtom } from 'jotai';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { type TokenSelectType } from './TokenSelectorSheetModal';
 import { IS_ANDROID } from '@/core/native/utils';
@@ -23,14 +21,13 @@ interface Props {
   closeBottomSheet: () => void;
   children: React.ReactElement;
   type?: TokenSelectType;
+  needToTokenMarketInfo?: boolean;
 }
 export const TokenItemContextMenu: React.FC<Props> = props => {
-  const { children, token, closeBottomSheet, type } = props;
+  const { children, token, type, needToTokenMarketInfo } = props;
 
   const { userTokenSettings, pinToken, removePinedToken } =
     useUserTokenSettings();
-
-  const setShouldHideSelectorPopup = useSetAtom(shouldHideSelectorPopupAtom);
 
   // 获取当前账户地址
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
@@ -55,19 +52,20 @@ export const TokenItemContextMenu: React.FC<Props> = props => {
 
   const gotoTokenDetail = useCallback(() => {
     Keyboard.dismiss();
-    setShouldHideSelectorPopup(true);
-
-    navigate(RootNames.TokenDetail, {
-      token: {
-        ...ensureAbstractPortfolioToken(token),
-        _isPined: isPined,
+    navigate(
+      needToTokenMarketInfo ? RootNames.TokenMarketInfo : RootNames.TokenDetail,
+      {
+        token: {
+          ...ensureAbstractPortfolioToken(token),
+          _isPined: isPined,
+        },
+        needUseCacheToken: true,
+        tokenSelectType: type,
+        timestamp: Date.now(), // 添加时间戳确保每次都是新页面
+        account: currentAccount,
       },
-      needUseCacheToken: true,
-      tokenSelectType: type,
-      timestamp: Date.now(), // 添加时间戳确保每次都是新页面
-      account: currentAccount,
-    });
-  }, [isPined, token, type, setShouldHideSelectorPopup, currentAccount]);
+    );
+  }, [needToTokenMarketInfo, token, isPined, type, currentAccount]);
 
   const { t } = useTranslation();
   const isDarkTheme = useGetBinaryMode() === 'dark';
