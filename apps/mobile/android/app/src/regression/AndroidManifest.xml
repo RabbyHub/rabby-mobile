@@ -5,18 +5,16 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
     <application
-        android:usesCleartextTraffic="true"
         tools:targetApi="28"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false" />
         <activity android:name=".MainActivity">
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
-                <data android:scheme="rabbygo-debug" />
-                <data android:host="go.rabby.io" android:pathPrefix="/mobile-debug/" />
+                <data android:scheme="rabbygo-regression" />
+                <data android:host="go.rabby.io" android:pathPrefix="/mobile-regression/" />
             </intent-filter>
         </activity>
     </application>
