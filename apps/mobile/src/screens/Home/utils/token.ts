@@ -31,25 +31,32 @@ export const batchQueryTokens = async (
   if (!chainId && !isTestnet) {
     const usedChains = await openapi.usedChainList(user_id);
     const chainIdList = usedChains.map(item => item.id);
-    const res = await Promise.all(
+    const res = await Promise.allSettled(
       chainIdList.map(serverId =>
         pQueue.add(async () => {
-          try {
-            const chainTokensRes = await requestOpenApiWithChainId(
-              ({ openapi }) => openapi.listToken(user_id, serverId, true),
-              {
-                isTestnet,
-              },
-            );
-            return chainTokensRes;
-          } catch (error) {
-            console.log('serverId error', serverId);
-            return [];
-          }
+          const chainTokensRes = await requestOpenApiWithChainId(
+            ({ openapi }) => openapi.listToken(user_id, serverId, true),
+            {
+              isTestnet,
+            },
+          );
+          return chainTokensRes;
         }),
       ),
     );
-    return flatten(res as TokenItem[][]);
+
+    // 检查是否所有链都明确失败了
+    const allFailed = res.every(result => result.status === 'rejected');
+    if (allFailed && chainIdList.length > 0) {
+      throw new Error('All chains failed, service may unavailable');
+    }
+
+    // 提取成功的结果，失败的结果返回空数组
+    const successfulResults = res.map(result =>
+      result.status === 'fulfilled' ? result.value : [],
+    );
+
+    return flatten(successfulResults as TokenItem[][]);
   }
   return requestOpenApiWithChainId(
     ({ openapi }) => openapi.listToken(user_id, chainId, true),

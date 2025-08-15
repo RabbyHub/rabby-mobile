@@ -6,7 +6,7 @@ import { produce } from '@/core/utils/produce';
 import { DisplayedProject } from '../utils/project';
 import { ITokenSetting } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
-import { syncProtocols } from '@/databases/hooks/assets';
+import { syncProtocols, syncSpecificProtocol } from '@/databases/hooks/assets';
 import { singleDeFiNounceAtom } from './refresh';
 import { useAtom, atom } from 'jotai';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
@@ -266,10 +266,58 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
     }
   }, [refreshTagPortfolio, setSingleDeFiNounce, singleDeFiNounce]);
 
+  const updateSpecificProtocol = useCallback(
+    async (protocolId: string, chain: string) => {
+      if (!userAddr || !protocolId || !chain) {
+        return;
+      }
+
+      try {
+        const protocols = await syncSpecificProtocol(
+          userAddr,
+          protocolId,
+          chain,
+        );
+        const targetProtocol = protocols[0];
+        if (!targetProtocol || !targetProtocol.portfolio_item_list?.length) {
+          setData(data.filter(item => item.id !== protocolId));
+          return;
+        }
+        const protocolDisplayData = new DisplayedProject(
+          targetProtocol,
+          targetProtocol.portfolio_item_list,
+        );
+
+        const tokenSetting = await preferenceService.getUserTokenSettings();
+
+        const currentProtocolIndex = data.findIndex(
+          item => item.id === protocolId,
+        );
+        const preData = [...data];
+
+        if (currentProtocolIndex > -1) {
+          preData[currentProtocolIndex] = protocolDisplayData;
+        } else {
+          preData.push(protocolDisplayData);
+        }
+        // 重新排序
+        const sortedData = preData.sort(
+          (a, b) => (b.netWorth || 0) - (a.netWorth || 0),
+        );
+
+        setData(tagProfiles(sortedData, tokenSetting));
+      } catch (error) {
+        console.error('Failed to update specific protocol:', error);
+      }
+    },
+    [userAddr, data, setData],
+  );
+
   return {
     data: data || [],
     hasValue,
     isLoading,
     updateData: loadProcess,
+    updateSpecificProtocol,
   };
 };

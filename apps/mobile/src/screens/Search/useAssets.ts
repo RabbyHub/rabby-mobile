@@ -15,7 +15,12 @@ import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { useMyAccounts } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { tagNfts } from '../Home/hooks/nft';
-import { syncNFTs, syncProtocols, syncTokens } from '@/databases/hooks/assets';
+import {
+  syncNFTs,
+  syncProtocols,
+  syncTokens,
+  syncSpecificProtocol,
+} from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import _, { debounce } from 'lodash';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
@@ -152,6 +157,63 @@ export const useAssets = ({
       console.error('ServiceErrorType.NFT', e);
     }
   });
+
+  const loadSpecificDefi = useMemoizedFn(
+    async (_address: string, protocolId: string, chain: string) => {
+      if (!_address || !protocolId || !chain) {
+        return;
+      }
+      const address = _address.toLowerCase();
+      try {
+        const protocols = await syncSpecificProtocol(
+          address,
+          protocolId,
+          chain,
+        );
+        const targetProtocol = protocols[0];
+
+        const tokenSetting = await preferenceService.getUserTokenSettings();
+
+        const currentAssets = assetsMap[address.toLowerCase()] || {};
+        const currentPortfolios = [...(currentAssets.portfolios || [])];
+        if (!targetProtocol || !targetProtocol.portfolio_item_list?.length) {
+          updatePortfolios({
+            address,
+            newPortfolios: currentPortfolios.filter(
+              item => item.id !== protocolId,
+            ),
+          });
+          return;
+        }
+
+        const protocolIndex = currentPortfolios.findIndex(
+          item => item.id === protocolId,
+        );
+        const protocolDisplayData = new DisplayedProject(
+          targetProtocol,
+          targetProtocol.portfolio_item_list,
+        );
+
+        if (protocolIndex > -1) {
+          currentPortfolios[protocolIndex] = protocolDisplayData;
+        } else {
+          currentPortfolios.push(protocolDisplayData);
+        }
+
+        // 重新排序
+        const sortedPortfolios = currentPortfolios.sort(
+          (a, b) => (b.netWorth || 0) - (a.netWorth || 0),
+        );
+
+        updatePortfolios({
+          address,
+          newPortfolios: tagProfiles(sortedPortfolios, tokenSetting),
+        });
+      } catch (error) {
+        console.error('ServiceErrorType.SpecificDefi', error);
+      }
+    },
+  );
 
   const batchLoadCacheTokens = useMemoizedFn(
     async (
@@ -450,6 +512,7 @@ export const useAssets = ({
     batchLoadCacheDefi,
     batchLoadCacheNFT,
     refreshing: !!isLoading && !isFirstFetch,
+    loadSpecificDefi,
   };
 };
 
