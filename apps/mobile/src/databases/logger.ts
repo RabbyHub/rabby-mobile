@@ -8,6 +8,7 @@ import {
   AbstractLogger,
   LogLevel,
 } from 'typeorm/browser';
+import { appIsProd } from '@/constant/env';
 
 // slice query string, [0...500] + [-500...end]
 function formatQueryString(query: string, len = 500): string {
@@ -144,6 +145,8 @@ export class RabbyOrmDeployedConsoleLogger
     parameters?: any[],
     queryRunner?: QueryRunner,
   ) {
+    if (appIsProd) return;
+
     try {
       Sentry.captureEvent({
         message: `Slow query detected`,
