@@ -198,7 +198,6 @@ export const useGasAccountEligibility = () => {
         const account = accounts.find(
           acc =>
             acc.address.toLowerCase() === address.toLowerCase() &&
-            acc.type === KEYRING_TYPE.SimpleKeyring &&
             acc.type === KEYRING_TYPE.SimpleKeyring,
         );
         if (!account) {
