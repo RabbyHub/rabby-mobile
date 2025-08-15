@@ -204,7 +204,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-title-1'],
     fontSize: 42,
-    lineHeight: 42,
+    lineHeight: 46,
     fontWeight: '900',
   },
   pinBadge: {

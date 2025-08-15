@@ -306,7 +306,13 @@ export const TokenMarketInfoScreen = () => {
   }, [isSingleAddress, singleTokenRefresh, tokenRefresh]);
 
   const getHeaderTitle = useCallback(() => {
-    return <TokenDetailHeaderArea key={finalAccount?.address} token={token} />;
+    return (
+      <TokenDetailHeaderArea
+        style={{ marginLeft: -3 }}
+        key={finalAccount?.address}
+        token={token}
+      />
+    );
   }, [finalAccount?.address, token]);
 
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
@@ -466,25 +472,24 @@ export const TokenMarketInfoScreen = () => {
       <ImageBackground
         source={
           !isLoss
-            ? isLight
-              ? require('@/assets2024/singleHome/home-profit-bg-2.png')
-              : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
-            : isLight
-            ? require('@/assets2024/singleHome/home-loss-bg-2.png')
-            : require('@/assets2024/singleHome/home-loss-dark-bg-2.png')
+            ? require('@/assets2024/images/detail/detail-bg-up.png')
+            : require('@/assets2024/images/detail/detail-bg-loss.png')
         }
         resizeMode="cover"
         style={{
           position: 'absolute',
-          top: 0,
+          top: -120, // 向上偏移120px，这样图片的底部30px会显示在容器内
           left: 0,
           width: screenWidth,
           height: 150,
+          backgroundColor: isLight
+            ? colors2024['neutral-bg-0']
+            : colors2024['neutral-bg-1'],
           zIndex: -100,
         }}
       />
     );
-  }, [isLight, isLoss]);
+  }, [colors2024, isLight, isLoss]);
 
   const renderTabBar = React.useCallback(
     (props: any) => (
@@ -574,12 +579,8 @@ export const TokenMarketInfoScreen = () => {
       <ImageBackground
         source={
           !isLoss
-            ? isLight
-              ? require('@/assets2024/singleHome/home-profit-bg-1.png')
-              : require('@/assets2024/singleHome/home-profit-dark-bg-1.png')
-            : isLight
-            ? require('@/assets2024/singleHome/home-loss-bg-1.png')
-            : require('@/assets2024/singleHome/home-loss-dark-bg-1.png')
+            ? require('@/assets2024/images/detail/detail-bg-up.png')
+            : require('@/assets2024/images/detail/detail-bg-loss.png')
         }
         resizeMode="cover"
         style={{
