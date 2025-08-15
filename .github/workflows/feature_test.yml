@@ -10,7 +10,7 @@ on:
       SENTRY_DISABLE_AUTO_UPLOAD:
         required: false
         type: boolean
-        default: true
+        default: false
       macos_machine_location:
         required: true
         type: choice
