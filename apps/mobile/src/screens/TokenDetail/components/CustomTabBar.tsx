@@ -12,20 +12,6 @@ import { AnimatedStyle } from 'react-native-reanimated';
 const disableInnerIndicator = {
   height: 0,
 };
-export const CustomMaterialTabBar = (props: any) => {
-  return (
-    <View style={props.containerStyle}>
-      <MaterialTabBar {...props} indicatorStyle={disableInnerIndicator} />
-      <Indicator
-        indexDecimal={props.indexDecimal}
-        style={props.indicatorStyle}
-        itemsLayout={props.tabItemsLayout}
-        fadeIn
-      />
-    </View>
-  );
-};
-
 interface DynamicCustomMaterialTabBarProps {
   materialTabBarProps: MaterialTabBarProps<string>;
   containerStyle: StyleProp<ViewStyle>;
