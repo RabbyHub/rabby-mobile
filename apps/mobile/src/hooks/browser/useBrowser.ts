@@ -185,9 +185,9 @@ export function useBrowser() {
           tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
         );
 
-        if (tabs.length <= MAX_ACTIVE_TABS_COUNT) {
-          return prev;
-        }
+        // if (tabs.length <= MAX_ACTIVE_TABS_COUNT) {
+        //   return prev;
+        // }
 
         // const time = tabs[3]?.openTime || 0;
         // if (!time) {
