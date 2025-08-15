@@ -2071,6 +2071,12 @@
       "toast": {
         "remove": "Remove from Watchlist Success"
       }
+    },
+    "universalLink": {
+      "error": {
+        "setupWalletFirst": "Please finish setting up wallet first.",
+        "unlockWalletFirst": "Please unlock the app to open the link."
+      }
     }
   },
   "component": {
