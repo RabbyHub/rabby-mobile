@@ -125,8 +125,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   viewShot: {
     width: '100%',
     height: '100%',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
   },
   wrap: {
     padding: 2,
