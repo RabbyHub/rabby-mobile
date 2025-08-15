@@ -95,6 +95,7 @@ build_js_bundle() {
   rm -rf $work_dir/assets &&
   $project_dir/node_modules/.bin/react-native bundle \
     --platform android \
+    --reset-cache \
     --dev false \
     --entry-file index.js \
     --bundle-output $js_bundle_path \
