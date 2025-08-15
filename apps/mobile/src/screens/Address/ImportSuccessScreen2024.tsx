@@ -49,6 +49,7 @@ import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
+import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -61,6 +62,7 @@ const DisMissKBWrapper = ({ children }) => (
 export const ImportSuccessScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { syncSingleAddress } = useSyncHistoryDB();
+  const { checkAddressesEligibility } = useGasAccountEligibility();
 
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
@@ -159,6 +161,9 @@ export const ImportSuccessScreen2024 = () => {
       action: `Success_Import_${getKRCategoryByType(state?.type)}`,
       label: state?.brandName,
     });
+
+    // 新增：import成功后自动触发 eligibility 检查
+    checkAddressesEligibility(addresses, true);
 
     setLoadingBalance(true);
     Promise.allSettled(
