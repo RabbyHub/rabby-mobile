@@ -8,7 +8,9 @@ script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
+. $script_dir/fast-build/_fns.sh --source-only
 
+USE_RESIGN_APK=${USE_RESIGN_APK:-"false"}
 export BUILD_TARGET_PLATFORM="android";
 check_build_params;
 check_s3_params;
@@ -36,6 +38,17 @@ build_selfhost() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   yarn && yarn check-nodeengines && yarn link-assets;
   if [ $RABBY_HOST_OS != "Windows" ]; then
+    if [ "$USE_RESIGN_APK" == "true" ]; then
+      echo "[deploy-android] try to resign template.apk to get the new one."
+      sh $script_dir/fast-build/android.sh resign
+      if [ $? -eq 0 ]; then
+        echo "[deploy-android] APK resigned successfully."
+        android_export_target="$script_dir/.fast-build-work/app-resigned.apk"
+        return ;
+      fi
+      echo "Failed to resign APK. Will Build it again."
+      USE_RESIGN_APK="false"
+    fi
     echo "[deploy-android] build with fastlane."
     bundle exec fastlane android selfhost
   else
@@ -96,9 +109,8 @@ else
   version_bundle_suffix=".apk"
   staging_dir_suffix=""
   if [ $buildchannel == "selfhost-reg" ]; then
-    [ $GHA_MOCK_BUILD_FAILED == "true" ] && SKIP_BUILD=true
+    [ "$GHA_MOCK_BUILD_FAILED" == "true" ] && SKIP_BUILD=true
 
-    # android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
     android_export_target="$project_dir/android/app/build/outputs/apk/regression/app-regression.apk"
 
     [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_selfhost;
@@ -128,10 +140,12 @@ if [[ ! -f $android_export_target || $GHA_MOCK_BUILD_FAILED == "true" ]]; then
   exit 1;
 fi
 
-cp $android_export_target $deployment_local_dir/$apk_name
-
 file_date=$(date -r $android_export_target '+%Y%m%d_%H%M%S')
 version_bundle_name="$file_date-${android_version_name}.${android_version_code}"
+if [ "$USE_RESIGN_APK" == "true" ]; then
+  version_bundle_name="${version_bundle_name}-resigned"
+  apk_name="rabby-mobile-resigned.apk"
+fi
 version_bundle_filename="${version_bundle_name}${version_bundle_suffix}"
 
 staging_dirname=android-$version_bundle_name$staging_dir_suffix
@@ -151,6 +165,8 @@ else
   apk_url=""
 fi
 
+cp $android_export_target $deployment_local_dir/$apk_name
+
 print_manual_upload_sentry_sourcemap() {
   if [ ! -z $SENTRY_DISABLE_AUTO_UPLOAD ]; then
     echo "[deploy-android] manual upload sourcemap to sentry:"
@@ -165,6 +181,15 @@ print_manual_upload_sentry_sourcemap() {
   fi
 }
 
+# only upload apk as template when it is not resigned
+if [ "$USE_RESIGN_APK" != "true" ] && [ $buildchannel = "selfhost-reg" ] && [ ! -z $RABBY_MOBILE_REG_PUB_DEPLOYMENT ]; then
+  template_apk_s3_dir=$RABBY_MOBILE_REG_PUB_DEPLOYMENT/.templates/android;
+  native_part_hash=$(collect_android_native_entries)
+  echo "[deploy-android] will set apk $android_export_target to $template_apk_s3_dir/$native_part_hash.apk"
+  aws s3 cp $android_export_target $template_apk_s3_dir/$native_part_hash.apk --acl public-read --content-type application/vnd.android.package-archive
+  echo "[deploy-android] finished setting apk, public url is: $cdn_deployment_urlbase/.templates/android/$native_part_hash.apk"
+fi
+
 echo ""
 echo "[deploy-android] start sync..."
 
@@ -175,9 +200,9 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps
 
-  if [ $buildchannel == 'selfhost-reg' ]; then
+  if [ "$buildchannel" == 'selfhost-reg' ]; then
     echo "[deploy-android] will public at $staging_s3_dir, served as $staging_cdn_baseurl"
-    [ -z $CI ] && echo "[deploy-android] open $apk_url to download"
+    [ -z "$CI" ] && echo "[deploy-android] open $apk_url to download"
     aws s3 sync $backup_s3_dir/ $staging_s3_dir/ --acl $staging_acl --exact-timestamps
   else
     echo "[deploy-android] will public as $apk_url"
@@ -196,7 +221,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
 
-    [ ! -z $CI ] && node $script_dir/notify-lark.js "$apk_url" android
+    [ ! -z $CI ] && node $script_dir/notify-lark.js "$apk_url" android "$USE_RESIGN_APK"
   fi
 fi
 
