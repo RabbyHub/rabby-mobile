@@ -1,0 +1,163 @@
+name: Hash Validate RN App
+
+on:
+  push:
+    tags:
+      - 'hashcheck-*'
+    branches:
+      - feat/hash-check
+      - publish/*
+  workflow_dispatch:
+
+jobs:
+  # --- Job 1: 构建 Android ---
+  build-android:
+    name: Build Android & Generate Hash
+    runs-on: macos-latest
+    outputs:
+      android_hash: ${{ steps.generate_hash.outputs.hash }}
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 'Setup Nodejs and Yarn'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: 'Setup Ruby & Fastlane'
+        uses: heisenberg-2077/setup-ruby@master
+        with:
+          ruby-version: '2.7.4'
+
+      - name: 'Setup Java'
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu' # See 'Supported distributions' for available options
+          java-version: '17'
+
+      - name: 'Setup Android SDK'
+        uses: android-actions/setup-android@v3
+
+      - name: Validate Android App
+        id: generate_hash
+        run: |
+          cd apps/mobile
+          GENERATED_HASH=$(./scripts/validate-hash/run.sh android | tee /dev/stderr | grep 'Android Hash:' | awk '{print $NF}')
+          echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: apps/mobile/validation_exports_*
+          name: android-build
+          retention-days: 1
+
+      - name: Clean logs
+        run: |
+          rm -rf apps/mobile/validation_exports_*
+
+  # --- Job 2: 构建 iOS ---
+  build-ios:
+    name: Build iOS & Generate Hash
+    runs-on: macos-latest
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
+
+    outputs:
+      ios_hash: ${{ steps.generate_hash.outputs.hash }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: '[macOS] Setup Xcode'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
+
+      - name: 'Setup Nodejs and Yarn'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: 'Setup Ruby & Fastlane'
+        uses: heisenberg-2077/setup-ruby@master
+        with:
+          ruby-version: '2.7.4'
+
+      - name: Validate iOS App
+        id: generate_hash
+        run: |
+          cd apps/mobile
+          GENERATED_HASH=$(./scripts/validate-hash/run.sh ios | tee /dev/stderr | grep 'iOS Hash:' | awk '{print $NF}')
+          echo "hash=${GENERATED_HASH}" >> $GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: apps/mobile/validation_exports_*
+          name: ios-build
+          retention-days: 1
+
+      - name: Clean logs
+        run: |
+          rm -rf apps/mobile/validation_exports_*
+
+  # --- Job 3: 结合 Hash ---
+  combine-hashes:
+    name: Combine Hashes
+    needs: [build-android, build-ios]
+    if: success()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 'Setup Nodejs and Yarn'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: Get Hashes from previous jobs
+        run: |
+          echo "Android Hash: ${{ needs.build-android.outputs.android_hash }}"
+          echo "iOS Hash: ${{ needs.build-ios.outputs.ios_hash }}"
+
+      - name: Generate Final Hash
+        env:
+          # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+          GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          GIT_COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          GIT_REF_NAME: ${{ github.ref_name }}
+          GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
+          GITHUB_REF: ${{ github.ref }}
+          LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
+          LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
+          RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+
+        run: |
+          cd apps/mobile
+
+          yarn install --frozen-lockfile
+
+          HASH_A="${{ needs.build-android.outputs.android_hash }}"
+          HASH_I="${{ needs.build-ios.outputs.ios_hash }}"
+
+          if [ -z "$HASH_A" ] || [ -z "$HASH_I" ]; then
+            echo "Error: One of the required hashes is missing."
+
+            node ./scripts/validate-hash/notify-lark.js "$HASH_A" "$HASH_I"
+            exit 1
+          fi
+
+          FINAL_HASH=$(printf "%s\n%s" "$HASH_I" "$HASH_A" | sort | shasum -a 256 | awk '{print $1}')
+
+          node ./scripts/validate-hash/notify-lark.js "$HASH_A" "$HASH_I" "$FINAL_HASH"
+
+          echo "Final Combined Hash: ${FINAL_HASH}"

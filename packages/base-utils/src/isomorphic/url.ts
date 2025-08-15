@@ -1,4 +1,4 @@
-import { ensurePrefix, unPrefix } from './string';
+import { unPrefix } from './string';
 
 type IParseDomainInfo = {
   subDomain: string;

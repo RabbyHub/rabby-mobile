@@ -1,0 +1,34 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [ "ZPNP2SF27Q.com.debank.rabby-mobile-debug" ],
+        "components": [
+          {
+            "/": "/mobile-debug/*",
+            "comment": "Matches any URL with a path that starts with /mobile-debug/ and instructs the system to open it as a Universal link"
+          }
+        ]
+      },
+      {
+        "appIDs": [ "ZPNP2SF27Q.com.debank.rabby-mobile-regression" ],
+        "components": [
+          {
+            "/": "/mobile-regression/*",
+            "comment": "Matches any URL with a path that starts with /mobile-regression/ and instructs the system to open it as a Universal link"
+          }
+        ]
+      },
+      {
+        "appIDs": [ "ZPNP2SF27Q.com.debank.rabby-mobile" ],
+        "components": [
+          {
+            "/": "/mobile/*",
+            "comment": "Matches any URL with a path that starts with /mobile/ and instructs the system to open it as a Universal link"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "go-rabby-io",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite && open http://localhost:5173/mobile-debug/",
+    "build": "tsc -b && vite build",
+    "build-debug": "RABBY_GO_ENV=mobile-debug yarn build",
+    "build-regression": "RABBY_GO_ENV=mobile-regression yarn build",
+    "build-production": "RABBY_GO_ENV=mobile-production yarn build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "deploy-debug": "REALLY_UPLOAD=true RABBY_GO_ENV=mobile-debug sh ./scripts/deploy.sh",
+    "deploy-regression": "REALLY_UPLOAD=true RABBY_GO_ENV=mobile-regression sh ./scripts/deploy.sh",
+    "deploy-production": "REALLY_UPLOAD=true RABBY_GO_ENV=mobile-production sh ./scripts/deploy.sh",
+    "deploy": "REALLY_UPLOAD=true sh ./scripts/deploy.sh"
+  },
+  "dependencies": {
+    "@rabby-wallet/base-utils": "workspace:^",
+    "less": "^4.4.0",
+    "query-string": "^9.2.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.33.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.39.1",
+    "vite": "^7.1.2"
+  },
+  "installConfig": {
+    "hoistingLimits": "workspaces"
+  }
+}
