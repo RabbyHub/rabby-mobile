@@ -5,7 +5,7 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { TxHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column, Brackets } from 'typeorm';
+import { Entity, Column, Brackets } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { BuyHistoryItem } from '@rabby-wallet/rabby-api/dist/types';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { prepareAppDataSource } from '../imports';
 import { columnConverter } from './_helpers';

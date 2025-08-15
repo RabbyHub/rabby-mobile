@@ -1,5 +1,11 @@
 import React from 'react';
-import { Dimensions, View } from 'react-native';
+import {
+  Dimensions,
+  StyleProp,
+  TextStyle,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -14,24 +20,37 @@ import LoadingCircle from '@/components2024/RotateLoadingCircle';
 const screenWidth = Dimensions.get('window').width;
 interface Props {
   token: AbstractPortfolioToken;
+  style?: StyleProp<ViewStyle>;
+  tokenSize?: number;
+  chainSize?: number;
+  borderChain?: boolean;
+  titleStyle?: StyleProp<TextStyle>;
 }
-export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
+export const TokenDetailHeaderArea: React.FC<Props> = ({
+  token,
+  style,
+  tokenSize = 35,
+  chainSize = 16,
+  borderChain = false,
+  titleStyle,
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { refreshing } = useAssetsRefreshing();
 
   return (
     <View style={styles.root}>
-      <View style={styles.container}>
+      <View style={[styles.container, style]}>
         <View style={styles.token}>
           <AssetAvatar
             logo={token?.logo_url}
             // style={mediaStyle}
-            size={35}
+            size={tokenSize}
             chain={token?.chain}
-            chainSize={16}
+            chainSize={chainSize}
+            innerChainStyle={borderChain ? styles.chainLogo : undefined}
           />
           <Text
-            style={styles.tokenSymbol}
+            style={[styles.tokenSymbol, titleStyle]}
             numberOfLines={1}
             ellipsizeMode="tail">
             {ellipsisOverflowedText(getTokenSymbol(token), 15)}
@@ -43,16 +62,15 @@ export const TokenDetailHeaderArea: React.FC<Props> = ({ token }) => {
   );
 };
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ isLight, colors2024 }) => ({
   root: {
-    width: '100%',
+    width: screenWidth - 140,
   },
   container: {
-    width: screenWidth - 130,
+    width: screenWidth - 140,
     marginLeft: 0,
     display: 'flex',
     flexDirection: 'row',
-    gap: 8,
   },
   token: {
     display: 'flex',
@@ -64,8 +82,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 1,
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 20,
     fontWeight: '700',
     flexWrap: 'nowrap',
   },
@@ -93,5 +110,11 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   iconJump: {
     marginLeft: 8,
+  },
+  chainLogo: {
+    borderWidth: 1.5,
+    borderColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
 }));

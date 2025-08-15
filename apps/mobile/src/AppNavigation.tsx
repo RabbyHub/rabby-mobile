@@ -87,6 +87,7 @@ import {
   BottomSheetBrowser,
   BrowserManagePopup,
 } from './screens/Browser/BottomSheetBrowser';
+import { TokenMarketInfoScreen } from './screens/TokenDetail/TokenMarketInfoScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -303,6 +304,23 @@ const StackMain = () => {
       <RootStack.Screen
         name={RootNames.TokenDetail}
         component={TokenDetailScreen}
+        options={mergeScreenOptions({
+          headerShown: true,
+          headerTitleAlign: 'left',
+          headerTitle: '',
+          headerStyle: {
+            // backgroundColor: colors['neutral-bg-2'],
+            backgroundColor: 'transparent',
+          },
+        })}
+        getId={({ params }) => {
+          // 使用时间戳作为唯一ID，确保每次都是新页面
+          return params?.timestamp?.toString() || 'default';
+        }}
+      />
+      <RootStack.Screen
+        name={RootNames.TokenMarketInfo}
+        component={TokenMarketInfoScreen}
         options={mergeScreenOptions({
           headerShown: true,
           headerTitleAlign: 'left',

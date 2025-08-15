@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column } from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { BALANCE_EXPIRED_TIME } from '@/constant/expireTime';
 import { prepareAppDataSource } from '../imports';

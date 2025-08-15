@@ -61,6 +61,9 @@ const useCommonStyle = () => {
         // textDecorationLine: 'underline',
         // textDecorationStyle: 'dashed',
       },
+      row: {
+        flexDirection: 'row',
+      },
     });
   }, [colors]);
 

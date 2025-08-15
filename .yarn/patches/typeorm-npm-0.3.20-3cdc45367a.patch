@@ -1,3 +1,53 @@
+diff --git a/browser/data-source/BaseDataSourceOptions.d.ts b/browser/data-source/BaseDataSourceOptions.d.ts
+index a0495d59bb09d9d254fea76c8c278391ffac7518..30077ea4816fbc1bb034462a3d2a84f412b1726d 100644
+--- a/browser/data-source/BaseDataSourceOptions.d.ts
++++ b/browser/data-source/BaseDataSourceOptions.d.ts
+@@ -68,6 +68,10 @@ export interface BaseDataSourceOptions {
+      * Maximum number of milliseconds query should be executed before logger log a warning.
+      */
+     readonly maxQueryExecutionTime?: number;
++    /**
++     * Maximum number of milliseconds query should be executed before logger log a warning.
++     */
++    readonly rnMaxQueryExecutionTime?: number;
+     /**
+      * Maximum number of clients the pool should contain.
+      */
+diff --git a/browser/driver/react-native/ReactNativeQueryRunner.js b/browser/driver/react-native/ReactNativeQueryRunner.js
+index 28901479e29fb4ada553f49aa6dabd534a457a9b..49d5c1df316163e94d1cb8326ee1d48138bd3710 100644
+--- a/browser/driver/react-native/ReactNativeQueryRunner.js
++++ b/browser/driver/react-native/ReactNativeQueryRunner.js
+@@ -44,12 +44,15 @@ export class ReactNativeQueryRunner extends AbstractSqliteQueryRunner {
+             databaseConnection.executeSql(query, parameters, async (raw) => {
+                 // log slow queries if maxQueryExecution time is set
+                 const maxQueryExecutionTime = this.driver.options.maxQueryExecutionTime;
++                const rnMaxQueryExecutionTime = this.driver.options.rnMaxQueryExecutionTime;
+                 const queryEndTime = +new Date();
+                 const queryExecutionTime = queryEndTime - queryStartTime;
+                 this.broadcaster.broadcastAfterQueryEvent(broadcasterResult, query, parameters, true, queryExecutionTime, raw, undefined);
+                 if (maxQueryExecutionTime &&
+                     queryExecutionTime > maxQueryExecutionTime)
+                     this.driver.connection.logger.logQuerySlow(queryExecutionTime, query, parameters, this);
++                if (rnMaxQueryExecutionTime && queryExecutionTime > rnMaxQueryExecutionTime && this.driver.connection.logger.logRnQuerySlow)
++                    this.driver.connection.logger.logRnQuerySlow(queryExecutionTime, query, parameters, this);
+                 if (broadcasterResult.promises.length > 0)
+                     await Promise.all(broadcasterResult.promises);
+                 const result = new QueryResult();
+diff --git a/browser/logger/Logger.d.ts b/browser/logger/Logger.d.ts
+index 91d24b1601f25ad0cd007da181acb0a2c4f39909..9ab708f78df46a82a859c1c70f13ac5cc502c867 100644
+--- a/browser/logger/Logger.d.ts
++++ b/browser/logger/Logger.d.ts
+@@ -15,6 +15,10 @@ export interface Logger {
+      * Logs query that is slow.
+      */
+     logQuerySlow(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner): any;
++    /**
++     * Logs query that is slow on RN.
++     */
++    logRnQuerySlow?(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner): any;
+     /**
+      * Logs events from the schema build process.
+      */
 diff --git a/package.json b/package.json
 index dd493baa87afa3764c7f26590876ce27b4c22d8e..408d06767b301755cbd92b6dc16a1435a35685eb 100644
 --- a/package.json

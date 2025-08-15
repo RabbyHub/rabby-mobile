@@ -519,8 +519,6 @@ function DevSettingsBlocks() {
                       ).format('YYYY-MM-DD HH:mm:ss')}`,
                     !!BUILD_GIT_INFO.BUILD_GIT_COMMITOR &&
                       `Lastest Commitor: ${BUILD_GIT_INFO.BUILD_GIT_COMMITOR}`,
-                    // '   ',
-                    // !!BUILD_GIT_INFO.BUILD_GIT_COMMITS_COUNT && `Distance From v${BUILD_GIT_INFO.BUILD_GIT_COMMITS_COUNT_BASEVER}: ${BUILD_GIT_INFO.BUILD_GIT_COMMITS_COUNT}`,
                   ]
                     .filter(Boolean)
                     .join('\n'),

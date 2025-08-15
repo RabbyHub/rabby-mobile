@@ -40,10 +40,10 @@ function WatchlistScreen(): JSX.Element {
   } = useWatchlistTokens();
 
   const [tokenSort, setTokenSort] = useState<'desc' | 'asc' | 'default'>(
-    'desc',
+    'default',
   );
   const [changeSort, setChangeSort] = useState<'desc' | 'asc' | 'default'>(
-    'default',
+    'desc',
   );
   const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
@@ -127,7 +127,7 @@ function WatchlistScreen(): JSX.Element {
 
   const handleOpenTokenDetail = useCallback(
     (token: TokenDetailWithPriceCurve) => {
-      navigate(RootNames.TokenDetail, {
+      navigate(RootNames.TokenMarketInfo, {
         token: ensureAbstractPortfolioToken(token),
         unHold: false,
         needUseCacheToken: true,

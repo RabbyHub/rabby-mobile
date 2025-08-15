@@ -1,0 +1,115 @@
+#root {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  &.rabby {
+    height: 8em;
+  }
+  &:hover {
+    filter: drop-shadow(0 0 2em #646cffaa);
+  }
+  &.rabby:hover {
+    filter: drop-shadow(0 0 2em #61dafbaa);
+  }
+}
+
+.divider {
+  height: 0;
+  border: 1px dashed #ccc;
+  margin: 2em 0;
+}
+
+.card {
+  padding: 0;
+  font-size: 20px;
+
+  > p {
+    padding: 0 2em;
+  }
+
+  .store {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5em;
+  }
+}
+
+.anchor-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #646cff;
+  height: 2.5em;
+  // padding: 0.6em 1.2em;
+
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+
+  cursor: pointer;
+  transition: border-color 0.25s;
+
+  &:hover {
+    border-color: #646cff;
+  }
+  &:focus,
+  &:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+  }
+
+  &.open-rabby {
+    margin-top: 1em;
+    padding-left: .5em;
+    padding-right: .5em;
+  }
+}
+
+.input {
+  height: 2.5em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0 0.5em;
+  font-size: 1em;
+  font-family: inherit;
+
+  &:focus,
+  &:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+  }
+}
+
+.openbtn-matrix {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: .5em;
+  margin-top: 1em;
+  padding: 0;
+}
+
+.url-matrix {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: .5em;
+  margin-top: 1em;
+
+  .url-example {
+    padding: 0.5em 1em;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    font-size: 0.9em;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #e0e0e0;
+    }
+  }
+}

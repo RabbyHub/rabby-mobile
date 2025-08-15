@@ -310,6 +310,43 @@ export async function syncRemotePortocols(
     });
 }
 
+export async function syncRemotePortocol(
+  address: string,
+  protocol: ComplexProtocol | null | undefined,
+  opts?: { deleteId?: string },
+) {
+  const repo = PortocolItemEntity.getRepository();
+
+  if (protocol) {
+    const syncTimestamp = Date.now();
+    const protocolItem = new PortocolItemEntity();
+    PortocolItemEntity.fillEntity(protocolItem, address, protocol);
+    protocolItem._local_updated_at = syncTimestamp;
+
+    await prepareAppDataSource();
+    await batchSaveWithPQueueAndTransaction(
+      PortocolItemEntity,
+      [protocolItem],
+      {
+        owner_addr: address,
+        taskFor: 'protocols',
+        batchSize: 200,
+        concurrency: 1,
+        delayBetweenTasks: 1.5 * 1e3,
+        waitTaskDoneReturn: true,
+      },
+    ).catch(error => {
+      console.error('Batch upsert failed:', error);
+    });
+    return;
+  }
+
+  const deleteId = opts?.deleteId;
+  if (deleteId) {
+    await repo.delete({ owner_addr: address, id: deleteId });
+  }
+}
+
 export async function syncRemoteBuyHistory(
   address: string,
   history_list: BuyHistoryList['histories'],

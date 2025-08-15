@@ -1,49 +1,132 @@
-const getWindowInformation = `
-  const shortcutIcon = window.document.querySelector('head > link[rel="shortcut icon"]');
-  const icon = shortcutIcon || Array.from(window.document.querySelectorAll('head > link[rel="icon"]')).find((icon) => Boolean(icon.href));
+const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz';
+function randString(length = 10, str = '') {
+  let result = '';
+  for (let i = 0, rnum: number; i < length; ++i) {
+    rnum = Math.floor(Math.random() * chars.length);
+    result += chars.charAt(rnum);
+  }
+  return `${result}${str}`;
+}
+const objRefs = {
+  poster: `window['${randString(5, '__rabbyPostMessageToProvider')}']`,
+  getWinInfo: `window['${randString(5, '__rabbyGetWindowInformation')}']`,
+};
 
-  const siteName = document.querySelector('head > meta[property="og:site_name"]');
-  const title = siteName || document.querySelector('head > meta[name="title"]');
-  window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(
-    {
-      type: 'GET_TITLE_FOR_BOOKMARK',
-      payload: {
-        title: title ? title.content : document.title,
-        url: location.href,
-        icon: icon && icon.href
+export const RABBY_DECLARED_PREFIX = 'RD::';
+export const RABBY_DECLARED_TYPES = {
+  NAV_CHANGE: `${RABBY_DECLARED_PREFIX}NAV_CHANGE`,
+  GET_HEIGHT: `${RABBY_DECLARED_PREFIX}GET_HEIGHT`,
+  GET_WINDOW_INFO_AFTER_LOAD: `${RABBY_DECLARED_PREFIX}GET_WINDOW_INFO_AFTER_LOAD`,
+  BROWSER_SCRIPT_ERR_CAPTURED: `${RABBY_DECLARED_PREFIX}BROWSER_SCRIPT_ERR_CAPTURED`,
+}
+/**
+ * @tip for WeakSet, reference https://caniuse.com/?search=WeakSet
+ * @tip safeJsonStringifyReplacer trim these:
+ *  - circular references
+ *  - __react, maybe from rsc hydration
+ *  - BigInt, convert to string with 'n' suffix
+ */
+export const BROWSER_SCRIPT_BASE = `
+;(function () {
+  if (!${objRefs.poster}) {
+    ${objRefs.poster} = function (content, pos) {
+      if (typeof content !== 'object') content = { primitive: content };
+
+      pos = pos || 'unknown';
+      var jsonString = "";
+
+      var safeJsonStringifyReplacer = (function () {
+        var cache = new WeakSet();
+        return function (key, value) {
+          if (key.indexOf('__reactFiber') === 0) return 'TRIMED';
+          if (typeof value === 'object' && value !== null) {
+            if (cache.has(value)) return;
+            cache.add(value);
+          }
+          if (typeof value === 'bigint') {
+            return value.toString() + 'n';
+          }
+          return value;
+        };
+      })();
+
+      try {
+        jsonString = JSON.stringify(content, safeJsonStringifyReplacer)
+      } catch (e) {
+        jsonString = JSON.stringify({
+          type: '${RABBY_DECLARED_TYPES.BROWSER_SCRIPT_ERR_CAPTURED}',
+          payload: {
+            message: e.message,
+            stack: e.stack,
+            position: pos,
+          }
+        });
       }
+
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(jsonString);
+      }
+    };
+  }
+
+  ${objRefs.getWinInfo} = function() {
+    var siteNameMeta = document.querySelector('head > meta[property="og:site_name"]');
+    var ogSiteName = siteNameMeta ? siteNameMeta.getAttribute('content') : '';
+    var title = (function () {
+      var titleMeta = document.querySelector('head > meta[name="title"]');
+      return titleMeta ? titleMeta.getAttribute('content') : '';
+    })() || document.title;
+
+    var shortcutIconNode = window.document.querySelector('head > link[rel="shortcut icon"]');
+    var shortcutIconHref = shortcutIconNode ? shortcutIconNode.href : '';
+    var iconHref = shortcutIconHref || (function () {
+      var iconNodes = Array.from(window.document.querySelectorAll('head > link[rel="icon"]')).find(function (icon) {
+        return Boolean(icon.href);
+      }) || [];
+      return iconNodes && iconNodes.length > 0 ? iconNodes[0].href : '';
+    })();
+
+    var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
+
+    return {
+      title: title,
+      ogSiteName: ogSiteName,
+      height: height,
+      shortcutIconHref: shortcutIconHref,
+      iconHref: iconHref,
+      referrer: document.referrer,
     }
-  ))
+  }
+})();
 `;
 
 export const SPA_urlChangeListener = `;(function () {
   var __rabbyHistory = window.history;
   var __rabbyPushState = __rabbyHistory.pushState;
   var __rabbyReplaceState = __rabbyHistory.replaceState;
-  function __rabby__updateUrl(){
-    const siteName = document.querySelector('head > meta[property="og:site_name"]');
-    const title = siteName || document.querySelector('head > meta[name="title"]') || document.title;
-    const height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
+  function __rabby__updateUrl() {
+    var info = ${objRefs.getWinInfo}();
 
-    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(
-      {
-        type: 'NAV_CHANGE',
-        payload: {
-          url: location.href,
-          title: title,
-        }
+    ${objRefs.poster}({
+      type: '${RABBY_DECLARED_TYPES.NAV_CHANGE}',
+      payload: {
+        url: location.href,
+        title: info.title,
+        ogSiteName: info.ogSiteName,
+        icon: info.iconHref,
+        shortcutIconHref: info.shortcutIconHref,
+        height: info.height,
       }
-    ));
+    }, 'NAV_CHANGE');
 
     setTimeout(() => {
-      const height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
-      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(
-      {
-        type: 'GET_HEIGHT',
+      var height = Math.max(document.documentElement.clientHeight, document.documentElement.scrollHeight, document.body.clientHeight, document.body.scrollHeight);
+      ${objRefs.poster}({
+        type: '${RABBY_DECLARED_TYPES.GET_HEIGHT}',
         payload: {
           height: height
         }
-      }))
+      }, 'GET_HEIGHT');
     }, 500);
   }
 
@@ -61,15 +144,29 @@ export const SPA_urlChangeListener = `;(function () {
     return __rabbyReplaceState.apply(history, arguments);
   };
 
-  window.onpopstate = function(event) {
+  window.addEventListener('popstate', function(event) {
     __rabby__updateUrl();
-  };
-  })();
+  });
+})();
 `;
 
-export const JS_WINDOW_INFORMATION = `
-  (function () {
-    ${getWindowInformation}
+export const JS_GET_WINDOW_INFO_AFTER_LOAD = `
+  ;(function () {
+    setTimeout(function() {
+      var info = ${objRefs.getWinInfo}();
+
+      ${objRefs.poster}({
+        type: '${RABBY_DECLARED_TYPES.GET_WINDOW_INFO_AFTER_LOAD}',
+        payload: {
+          url: location.href,
+          title: info.title,
+          ogSiteName: info.ogSiteName,
+          icon: info.iconHref,
+          shortcutIconHref: info.shortcutIconHref,
+          height: info.height,
+        }
+      }, 'GET_WINDOW_INFO_AFTER_LOAD');
+    }, 500);
   })();
 `;
 

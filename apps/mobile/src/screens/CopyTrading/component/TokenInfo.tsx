@@ -130,7 +130,6 @@ export const TokenInfo: React.FC<TokenInfoProps> = ({
       {EarningsDom}
       <TokenPriceChart
         token={ensureAbstractPortfolioToken(tradingTokenItem)}
-        originToken={ensureAbstractPortfolioToken(tradingTokenItem)}
         amountList={[]}
         extraMetaInfo={TokenMetaExtraInfo}
         onUpChange={onUpChange}
