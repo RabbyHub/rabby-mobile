@@ -62,8 +62,6 @@ const DisMissKBWrapper = ({ children }) => (
 export const ImportSuccessScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { syncSingleAddress } = useSyncHistoryDB();
-  const { checkAddressesEligibility } = useGasAccountEligibility();
-
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
   const modalRef =
@@ -95,6 +93,7 @@ export const ImportSuccessScreen2024 = () => {
       aliasName: string;
     }[]
   >([]);
+  const { checkAddressesEligibility } = useGasAccountEligibility();
 
   const saveFirstAddressAlias = React.useCallback(() => {
     importAddresses.forEach(item => {
@@ -162,9 +161,6 @@ export const ImportSuccessScreen2024 = () => {
       label: state?.brandName,
     });
 
-    // 新增：import成功后自动触发 eligibility 检查
-    checkAddressesEligibility(addresses, true);
-
     setLoadingBalance(true);
     Promise.allSettled(
       addresses.map(async address => {
@@ -206,7 +202,21 @@ export const ImportSuccessScreen2024 = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
-
+  React.useEffect(() => {
+    if (!importAddresses.length) return;
+    // 检查新导入的地址是否已出现在全局账户列表
+    const allImportedInAccounts = importAddresses.every(item =>
+      accounts.some(
+        acc => acc.address.toLowerCase() === item.address.toLowerCase(),
+      ),
+    );
+    if (allImportedInAccounts) {
+      checkAddressesEligibility(
+        importAddresses.map(i => i.address),
+        true,
+      );
+    }
+  }, [importAddresses, accounts, checkAddressesEligibility]);
   React.useEffect(() => {
     setTimeout(() => fetchAccounts(), 0);
   }, [fetchAccounts]);
