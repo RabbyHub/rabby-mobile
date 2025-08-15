@@ -4,22 +4,14 @@ import { useBrowser, useHomeDisplayedTabs } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BlurView, BlurViewProps } from '@react-native-community/blur';
 import { useMemoizedFn } from 'ahooks';
-import { sortBy } from 'lodash';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Platform,
-  StyleProp,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { BrowserTabCard } from '../BrowserScreen/components/BrowserManage/BrowserTabList/BrowserTabCard';
-import { ViewStyle } from 'react-native-size-matters';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const isAndroid = Platform.OS === 'android';
 
