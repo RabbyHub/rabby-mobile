@@ -36,11 +36,12 @@ rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
 build_selfhost() {
   export RABBY_MOBILE_BUILD_ENV="regression";
-  yarn && yarn check-nodeengines && yarn link-assets;
+  [ -z "$CI" ] && yarn;
+  yarn check-nodeengines && yarn link-assets;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     if [ "$USE_RESIGN_APK" == "true" ]; then
       echo "[deploy-android] try to resign template.apk to get the new one."
-      sh $script_dir/fast-build/android.sh resign
+      CI="$CI" SKIP_YARN=true sh $script_dir/fast-build/android.sh resign
       if [ $? -eq 0 ]; then
         echo "[deploy-android] APK resigned successfully."
         android_export_target="$script_dir/.fast-build-work/app-resigned.apk"
@@ -221,7 +222,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
 
-    [ ! -z "$CI" ] && [ -z "$SKIP_NOTIFY_LARK" ] && node $script_dir/notify-lark.js "$apk_url" android "$USE_RESIGN_APK"
+    [ ! -z "$CI" ] && [ "$SKIP_NOTIFY_LARK" != "true" ] && node $script_dir/notify-lark.js "$apk_url" android "$USE_RESIGN_APK"
   fi
 fi
 

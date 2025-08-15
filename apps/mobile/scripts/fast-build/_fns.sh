@@ -16,12 +16,16 @@ collect_android_native_entries() {
     echo "script_dir is not set, please set it before running this script."
     exit 1
   fi
-  local node_output=$(node $script_dir/fast-build/collect_android_native_hashes.js calculate_hash)
+  # filterout output
+  node $script_dir/fast-build/collect_android_native_hashes.js calculate_hash >> /dev/null
 
-  # extract hash from sample `export TEMPLATE_FINGERPRINT="d9ba9047670a00f559c60769559b4f4fa0cb697674b34df761b7edee2f78bd67"`
-  local native_part_hash=$(echo "$node_output" | grep '^export TEMPLATE_FINGERPRINT=' | cut -d'=' -f2- | tr -d '"')
-  # echo "TEMPLATE_FINGERPRINT=$native_part_hash"
-  echo $native_part_hash;
+  # local node_output=$(node $script_dir/fast-build/collect_android_native_hashes.js calculate_hash)
+  # # extract hash from sample `export TEMPLATE_FINGERPRINT="d9ba9047670a00f559c60769559b4f4fa0cb697674b34df761b7edee2f78bd67"`
+  # local native_part_hash=$(echo "$node_output" | grep '^export TEMPLATE_FINGERPRINT=' | cut -d'=' -f2- | tr -d '"')
+  # # echo "TEMPLATE_FINGERPRINT=$native_part_hash"
+  # echo $native_part_hash;
+
+  echo $(cat $script_dir/fast-build/android_native_files_sha256.txt)
 }
 
 download_template_apk_by_hash() {

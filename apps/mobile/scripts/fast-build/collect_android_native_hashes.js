@@ -13,6 +13,7 @@ const root_dir = path.join(project_dir, '..', '..');
 
 const WORK_FILES = {
   android_native_files: path.join(work_dir, 'android_native_hashes.json'),
+  fingerprint_txt: path.join(fscript_dir, 'android_native_files_sha256.txt'),
 };
 
 // ==================== Include Patterns ====================
@@ -156,8 +157,6 @@ function calculate_hash() {
   // 5. Calculate .txt file's own SHA256 (as template ID)
   const txtHash = sha256(fs.readFileSync(WORK_FILES.android_native_files));
 
-  // fs.writeFileSync(WORK_FILES.android_native_hashes, txtHash);
-  // console.log(`✅ Saved to: ${WORK_FILES.android_native_hashes}`);
   console.log(`✅ Template ID: ${txtHash}`);
 
   // 6. Return fingerprint (for Bash retrieval)
@@ -169,6 +168,8 @@ function calculate_hash() {
     (d.getMonth() + 1).toString().padStart(2, '0') /*  '-', */,
     `${txtHash.slice(0, 8)}_${txtHash.slice(-8)}`,
   ].join('-');
+  fs.writeFileSync(WORK_FILES.fingerprint_txt, fingerprint);
+  console.log(`✅ Saved fingerprint to: ${WORK_FILES.fingerprint_txt}`);
   console.log(`export TEMPLATE_FINGERPRINT="${fingerprint}"`);
 
   return {

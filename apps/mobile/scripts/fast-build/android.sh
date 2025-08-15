@@ -14,12 +14,15 @@ prepare() {
     exit 1
   fi
 
-  export build_tool_ver=$(find_build_tools_version)
-  if [ -z "$build_tool_ver" ]; then
-    echo "No build-tools found in ANDROID_HOME."
-    exit 1
+  if [ ! -z "$CI" ]; then
+    export build_tool_ver="35.0.0"
+  else
+    export build_tool_ver=$(find_build_tools_version)
+    if [ -z "$build_tool_ver" ]; then
+      echo "No build-tools found in ANDROID_HOME."
+      exit 1
+    fi
   fi
-  # export build_tool_ver=34.0.0
 
   export apksigner_path=$ANDROID_HOME/build-tools/$build_tool_ver/apksigner
   export zipalign_path=$ANDROID_HOME/build-tools/$build_tool_ver/zipalign
@@ -60,7 +63,7 @@ prepare() {
   fi
 
   if [ ! -f "$template_apk" ] && [ -f "$reg_apk" ]; then
-    echo "Template APK not found at $template_apk, would you like use regression APK at $reg_apk instead? (y/n)"
+    echo "[prepare] Template APK not found at $template_apk, would you like use regression APK at $reg_apk instead? (y/n)"
     read use_reg_apk
     if [ "$use_reg_apk" == "y" ]; then
       cp $reg_apk $template_apk
@@ -70,11 +73,10 @@ prepare() {
   export repacked_apk="$work_dir/app-packed.apk"
   export aligned_apk=${repacked_apk%.apk}-aligned.apk
   export output_apk="$work_dir/app-resigned.apk"
-  export key_alias=$RABBY_MOBILE_ANDROID_KEY_ALIAS
 
   if [ ! -z "$RABBY_MOBILE_ANDROID_KEY_STORE" ]; then
     export tmp_key_store_file="$work_dir/rabby-mobile.jks"
-    echo $RABBY_MOBILE_ANDROID_KEY_STORE | base64 -d > $tmp_key_store_file
+    echo "$RABBY_MOBILE_ANDROID_KEY_STORE" | base64 -d > $tmp_key_store_file
   else
     echo "RABBY_MOBILE_ANDROID_KEY_STORE is not set."
     exit 1
@@ -88,7 +90,12 @@ build_js_bundle() {
   fi
 
   cd $project_dir;
-  yarn install --frozen-lockfile;
+  if [ -z "$SKIP_YARN" ]; then
+    echo "Installing dependencies..."
+    yarn install --frozen-lockfile;
+  else
+    echo "Skipping yarn install as per SKIP_YARN flag."
+  fi
 
   echo "Building JS bundle..."
 
@@ -111,7 +118,7 @@ build_js_bundle() {
 
 replace_js_bundle() {
   if [ ! -f "$template_apk" ]; then
-    echo "Template APK not found at $template_apk"
+    echo "[replace_js_bundle] Template APK not found at $template_apk"
     exit 1
   fi
 
@@ -142,13 +149,13 @@ resign_apk() {
   $apksigner_path sign \
     --key-pass pass:$RABBY_MOBILE_ANDROID_KEY_PASSWORD \
     --ks-pass pass:$RABBY_MOBILE_ANDROID_STORE_PASSWORD \
-    --ks-key-alias $key_alias \
+    --ks-key-alias $RABBY_MOBILE_ANDROID_KEY_ALIAS \
     --ks $tmp_key_store_file \
     --out $output_apk \
     $aligned_apk
 
   # rm -f $tmp_key_store_file
-  rm $work_dir/*.apk.idsig
+  rm -f $work_dir/*.apk.idsig
 
   if [ $? -ne 0 ]; then
     echo "Failed to sign APK."
@@ -176,7 +183,7 @@ verify_apk() {
   echo "You can now install the APK using adb: \`adb install -r $output_apk\`"
 }
 
-command=$1
+command="$1";
 if [ -z "$command" ]; then
   echo "Usage: $0 <command>"
   echo "Commands:"
@@ -185,7 +192,7 @@ if [ -z "$command" ]; then
   echo "  $0 resign"
 fi
 
-case $command in
+case "$command" in
   resign)
     prepare;
     if [ -z "$build_tool_ver" ]; then

@@ -91,6 +91,10 @@ jobs:
       - name: '[Linux] Setup Android SDK'
         if: runner.os == 'Linux'
         uses: android-actions/setup-android@v3
+        with:
+          # https://github.com/android-actions/setup-android?tab=readme-ov-file#sdk-version-selection
+          # use 16.0
+          cmdline-tools-version: 12266719
 
       - name: '[macOS] Setup Xcode'
         if: runner.os == 'macOS'
@@ -135,6 +139,7 @@ jobs:
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
           RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
           RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
+          RABBY_MOBILE_ANDROID_STORE_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_STORE_PASSWORD }}
           RABBY_MOBILE_ANDROID_KEY_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_PASSWORD }}
           RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
