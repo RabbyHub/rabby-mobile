@@ -250,9 +250,11 @@ export class GasAccountService {
 
   // 检查未缓存的地址
   private checkUncachedAddresses = async (uncachedAddresses: string[]) => {
+    console.debug('checkUncachedAddresses', uncachedAddresses);
     const data = await openapi.checkGasAccountGiftEligibilityBatch({
       ids: uncachedAddresses,
     });
+    console.debug('checkUncachedAddresses data', data);
 
     return data.map(item => ({
       address: item.id!,
