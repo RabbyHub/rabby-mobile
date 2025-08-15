@@ -132,7 +132,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     padding: 2,
     borderWidth: 2,
     borderColor: 'transparent',
-    borderRadius: 24,
+    borderRadius: 17,
   },
 
   active: {

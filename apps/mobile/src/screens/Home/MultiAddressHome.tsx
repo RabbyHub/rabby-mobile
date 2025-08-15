@@ -844,8 +844,9 @@ function MultiAddressHome(): JSX.Element {
           />
           <View
             style={[
-              styles.contentBetweenHeaderAndMatrix,
-              noBetweenContent && styles.contentBetweenHeaderAndMatrixEmpty,
+              noBetweenContent
+                ? styles.contentBetweenHeaderAndMatrixEmpty
+                : styles.contentBetweenHeaderAndMatrix,
             ]}>
             <OfflineChainNotify data={offlineChainData} />
 
@@ -1110,7 +1111,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 12,
     gap: 12,
   },
-  contentBetweenHeaderAndMatrixEmpty: {},
+  contentBetweenHeaderAndMatrixEmpty: {
+    marginBottom: 12,
+  },
   menuContainer: {
     marginTop: 0,
   },
@@ -1298,7 +1301,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   curveBox: {
     paddingHorizontal: 15,
-    paddingTop: 30,
+    paddingTop: 12,
   },
   curveCard: {
     borderRadius: 20,
