@@ -1,7 +1,7 @@
 import { PillsSwitch } from '@/components2024/PillsSwitch';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { BrowserBookmarkList } from './BrowserBookmarkList';
@@ -16,6 +16,7 @@ import { DropDownMenuView } from '@/components2024/DropDownMenu';
 import { RcIconAddPlusCircle, ReactIconHome } from '@/assets2024/icons/browser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { useAppState } from '@react-native-community/hooks';
 
 export function BrowserManage(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
@@ -80,9 +81,13 @@ export function BrowserManage(): JSX.Element {
 
   const [key, setKey] = useState(0);
 
-  useMount(() => {
-    setKey(prev => prev + 1);
-  });
+  const appState = useAppState();
+
+  useEffect(() => {
+    if (appState === 'active') {
+      setKey(prev => prev + 1);
+    }
+  }, [appState]);
 
   return (
     <View style={styles.page} key={key}>

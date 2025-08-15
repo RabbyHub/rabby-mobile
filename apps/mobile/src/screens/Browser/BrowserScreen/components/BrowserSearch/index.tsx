@@ -1,4 +1,10 @@
-import React, { useMemo, useRef, useTransition } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
 import {
   Keyboard,
   Platform,
@@ -22,6 +28,7 @@ import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { ReactIconHome } from '@/assets2024/icons/browser';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { useAppState } from '@react-native-community/hooks';
 
 export function BrowserSearch({
   onClose,
@@ -138,6 +145,16 @@ export function BrowserSearch({
     });
   });
 
+  const [key, setKey] = useState(0);
+
+  const appState = useAppState();
+
+  useEffect(() => {
+    if (appState === 'active') {
+      setKey(prev => prev + 1);
+    }
+  }, [appState]);
+
   return (
     <View
       style={[
@@ -177,6 +194,7 @@ export function BrowserSearch({
         )
       ) : (
         <BrowserSearchResult
+          key={key}
           isInBottomSheet
           searchText={searchText}
           data={list || []}
