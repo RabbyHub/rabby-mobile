@@ -28,7 +28,8 @@ import { BrowserHandler } from './BrowserHandler';
 
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
-  const { browserState, setPartialBrowserState, onHideBrowser } = useBrowser();
+  const { browserState, setPartialBrowserState, onHideBrowser, terminateTabs } =
+    useBrowser();
   const { browserHistoryList } = useBrowserHistory();
   const { styles } = useTheme2024({
     getStyle,
@@ -138,7 +139,8 @@ export const BottomSheetBrowser = () => {
             searchTabId: '',
             trigger: '',
           });
-          onHideBrowser();
+          // onHideBrowser();
+          terminateTabs();
         } else {
           matomoRequestEvent({
             category: 'Websites Usage',

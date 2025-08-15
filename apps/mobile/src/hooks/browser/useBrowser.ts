@@ -1,5 +1,5 @@
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import { browserService } from '@/core/services';
+import { browserService, dappService } from '@/core/services';
 import { Tab } from '@/core/services/browserService';
 import { isGoogle } from '@/utils/browser';
 import {
@@ -144,7 +144,7 @@ export function useBrowser() {
       isShowManage: false,
       isShowSearch: false,
     });
-    terminateTabs();
+    // terminateTabs();
   });
   const closeTab = useMemoizedFn((tabId: string) => {
     if (tabId === store.activeTabId) {
@@ -178,7 +178,10 @@ export function useBrowser() {
     setTimeout(() => {
       setStore(prev => {
         const tabs = sortBy(
-          prev.tabs.filter(tab => tab.isDapp),
+          prev.tabs.filter(tab => {
+            return dappService.getDapp(safeGetOrigin(tab.url || tab.initialUrl))
+              ?.isDapp;
+          }),
           tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
         );
 
@@ -186,24 +189,30 @@ export function useBrowser() {
           return prev;
         }
 
-        const time = tabs[3]?.openTime || 0;
-        if (!time) {
-          return prev;
-        }
+        // const time = tabs[3]?.openTime || 0;
+        // if (!time) {
+        //   return prev;
+        // }
 
-        const finalTabs = prev.tabs.map(tab => {
-          if (tab.openTime < time && tab.id !== prev.activeTabId) {
-            return {
-              ...tab,
-              isTerminate: true,
-            };
-          }
-          return tab;
-        });
+        // const finalTabs = prev.tabs.map(tab => {
+        //   if (tab.openTime < time && tab.id !== prev.activeTabId) {
+        //     return {
+        //       ...tab,
+        //       isTerminate: true,
+        //     };
+        //   }
+        //   return tab;
+        // });
+
+        const list = tabs.slice(0, MAX_ACTIVE_TABS_COUNT);
+        const activeTabId = list.find(tab => tab.id === prev.activeTabId)
+          ? prev.activeTabId
+          : last(list)?.id || '';
 
         const result = {
           ...prev,
-          tabs: finalTabs,
+          activeTabId,
+          tabs: list,
         };
 
         browserService.updateBrowserTabs(result);
@@ -279,7 +288,7 @@ export function useBrowser() {
         activeTabId: newTab.id,
       });
 
-      terminateTabs();
+      // terminateTabs();
 
       return true;
     },
@@ -336,6 +345,7 @@ export function useBrowser() {
     onHideBrowser,
     forceShowBrowser,
     forceShowBrowserManage,
+    terminateTabs,
   };
 }
 

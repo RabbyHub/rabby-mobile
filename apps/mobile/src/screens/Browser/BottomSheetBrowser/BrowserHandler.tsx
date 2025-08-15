@@ -36,7 +36,7 @@ export const BrowserHandler = () => {
       searchTabId: '',
       trigger: '',
     });
-    onHideBrowser();
+    // onHideBrowser();
     matomoRequestEvent({
       category: 'Websites Usage',
       action: `Website_Exit`,
