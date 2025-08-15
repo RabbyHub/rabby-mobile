@@ -54,10 +54,6 @@ export function useAssetsBasicInfo({ enableAutoFetch = false }) {
 
 export const loadAppChainComplexProtocols = async (userAddr: string) => {
   try {
-    console.log(
-      'CUSTOM_LOGGER:=>: loadAppChainComplexProtocols',
-      userAddr.slice(-4),
-    );
     const appChainListRes = await loadAppChainList(userAddr);
     const protocols: ComplexProtocol[] = [];
     if (appChainListRes?.apps?.length) {
@@ -65,11 +61,12 @@ export const loadAppChainComplexProtocols = async (userAddr: string) => {
         protocols.push(formatAppChain(app));
       });
     }
-    return protocols;
+    const errorAppIds = appChainListRes?.error_apps?.map(app => app.id) || [];
+    return { protocols, errorAppIds };
   } catch (error) {
     //  just ignore the data
     console.error('app chain list load failed', error);
-    return [];
+    return { protocols: [], errorAppIds: [] };
   }
 };
 
@@ -129,7 +126,9 @@ export const syncProtocols = async (
       protocols.push(...projects.filter(i => !!i));
     }),
   );
-  const appChainProtocols = await loadAppChainComplexProtocols(address);
+  const { protocols: appChainProtocols } = await loadAppChainComplexProtocols(
+    address,
+  );
   protocols.push(...appChainProtocols);
   runOnJS(syncRemotePortocols)(address, [...protocols]);
   return protocols;
@@ -144,28 +143,31 @@ export const syncSpecificProtocol = async (
     return [];
   }
 
-  try {
-    const isAppChainProtocol = isAppChain(chain);
-    let projects: ComplexProtocol[] = [];
-    if (isAppChainProtocol) {
-      const appChainProtocols = await loadAppChainComplexProtocols(address);
-      projects = appChainProtocols.filter(i => i.id === protocolId);
-    } else {
-      projects = (
-        await batchLoadProjects(address, [protocolId], false, true)
-      ).filter(i => !!i) as ComplexProtocol[];
+  const isAppChainProtocol = isAppChain(chain);
+  let projects: ComplexProtocol[] = [];
+  if (isAppChainProtocol) {
+    const { protocols: appChainProtocols, errorAppIds } =
+      await loadAppChainComplexProtocols(address);
+    if (errorAppIds.includes(protocolId)) {
+      throw new Error('App chain protocol error');
     }
-    if (!projects?.length || !projects[0]) {
-      runOnJS(syncRemotePortocol)(address, null, { deleteId: protocolId });
-      return [];
-    }
-
-    runOnJS(syncRemotePortocol)(address, projects[0]);
-    return projects;
-  } catch (error) {
-    console.error(`Failed to sync specific protocol ${protocolId}:`, error);
+    projects = appChainProtocols.filter(i => i.id === protocolId);
+  } else {
+    projects = (
+      await batchLoadProjects(address, [protocolId], false, true)
+    ).filter(i => !!i) as ComplexProtocol[];
+  }
+  if (
+    !projects?.length ||
+    !projects[0] ||
+    !projects[0].portfolio_item_list?.length
+  ) {
+    runOnJS(syncRemotePortocol)(address, null, { deleteId: protocolId });
     return [];
   }
+
+  runOnJS(syncRemotePortocol)(address, projects[0]);
+  return projects;
 };
 
 export const syncNFTs = async (

@@ -273,7 +273,6 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
       }
 
       try {
-        // 获取特定协议的最新数据
         const protocols = await syncSpecificProtocol(
           userAddr,
           protocolId,
@@ -289,7 +288,6 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
           targetProtocol.portfolio_item_list,
         );
 
-        // 更新内存中的数据
         const tokenSetting = await preferenceService.getUserTokenSettings();
 
         const currentProtocolIndex = data.findIndex(
@@ -298,10 +296,8 @@ export const usePortfolios = (userAddr: string | undefined, visible = true) => {
         const preData = [...data];
 
         if (currentProtocolIndex > -1) {
-          // 更新现有协议数据
           preData[currentProtocolIndex] = protocolDisplayData;
         } else {
-          // 添加新协议数据
           preData.push(protocolDisplayData);
         }
         // 重新排序

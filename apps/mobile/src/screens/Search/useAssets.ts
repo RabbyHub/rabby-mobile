@@ -171,10 +171,9 @@ export const useAssets = ({
           chain,
         );
         const targetProtocol = protocols[0];
-        // 更新内存中的数据
+
         const tokenSetting = await preferenceService.getUserTokenSettings();
 
-        // 获取当前地址的所有协议数据
         const currentAssets = assetsMap[address.toLowerCase()] || {};
         const currentPortfolios = [...(currentAssets.portfolios || [])];
         if (!targetProtocol || !targetProtocol.portfolio_item_list?.length) {
@@ -187,7 +186,6 @@ export const useAssets = ({
           return;
         }
 
-        // 找到要更新的协议索引
         const protocolIndex = currentPortfolios.findIndex(
           item => item.id === protocolId,
         );
@@ -197,10 +195,8 @@ export const useAssets = ({
         );
 
         if (protocolIndex > -1) {
-          // 更新现有协议数据
           currentPortfolios[protocolIndex] = protocolDisplayData;
         } else {
-          // 添加新协议数据
           currentPortfolios.push(protocolDisplayData);
         }
 
@@ -209,7 +205,6 @@ export const useAssets = ({
           (a, b) => (b.netWorth || 0) - (a.netWorth || 0),
         );
 
-        // 更新内存数据
         updatePortfolios({
           address,
           newPortfolios: tagProfiles(sortedPortfolios, tokenSetting),

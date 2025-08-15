@@ -445,13 +445,13 @@ export const DeFiDetailScreen = () => {
             onRefresh={async () => {
               try {
                 if (isSingleAddress) {
-                  // 单地址场景：只刷新特定协议
                   await updateSpecificProtocol(data.id, data.chain || '');
                 } else {
-                  // 多地址场景：只刷新特定协议在所有地址下的数据
-                  const addresses = sectionsMultiProject.map(
-                    section => section.address,
-                  );
+                  const addresses = [
+                    ...new Set(
+                      sectionsMultiProject.map(section => section.address),
+                    ),
+                  ];
                   await Promise.all(
                     addresses.map(address =>
                       loadSpecificDefi(address, data.id, data.chain || ''),

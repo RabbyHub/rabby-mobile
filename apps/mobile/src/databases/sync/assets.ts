@@ -310,39 +310,41 @@ export async function syncRemotePortocols(
     });
 }
 
-// 只操作单个协议：有则更新，无则忽略；传空则删除（不考虑新增）
 export async function syncRemotePortocol(
   address: string,
   protocol: ComplexProtocol | null | undefined,
   opts?: { deleteId?: string },
 ) {
-  await prepareAppDataSource();
-
   const repo = PortocolItemEntity.getRepository();
 
   if (protocol) {
-    const existing = await repo.findOneBy({
-      owner_addr: address,
-      id: protocol.id,
+    const syncTimestamp = Date.now();
+    const protocolItem = new PortocolItemEntity();
+    PortocolItemEntity.fillEntity(protocolItem, address, protocol);
+    protocolItem._local_updated_at = syncTimestamp;
+
+    await prepareAppDataSource();
+    await batchSaveWithPQueueAndTransaction(
+      PortocolItemEntity,
+      [protocolItem],
+      {
+        owner_addr: address,
+        taskFor: 'protocols',
+        batchSize: 200,
+        concurrency: 1,
+        delayBetweenTasks: 1.5 * 1e3,
+        waitTaskDoneReturn: true,
+      },
+    ).catch(error => {
+      console.error('Batch upsert failed:', error);
     });
-    if (!existing) {
-      // 不考虑新增，直接跳过
-      return { updated: 0, deleted: 0 } as const;
-    }
-    const item = new PortocolItemEntity();
-    PortocolItemEntity.fillEntity(item, address, protocol);
-    // 直接保存，不使用队列
-    await item.save();
-    return { updated: 1, deleted: 0 } as const;
+    return;
   }
 
   const deleteId = opts?.deleteId;
   if (deleteId) {
     await repo.delete({ owner_addr: address, id: deleteId });
-    return { updated: 0, deleted: 1 } as const;
   }
-
-  return { updated: 0, deleted: 0 } as const;
 }
 
 export async function syncRemoteBuyHistory(
