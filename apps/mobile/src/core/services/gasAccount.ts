@@ -287,11 +287,8 @@ export class GasAccountService {
   private checkEligibilityFromAPI = async (addresses: string[]) => {
     try {
       const data = await this.checkUncachedAddresses(addresses);
-
-      const mappedData = this.mapApiResponseToClaimedGiftAddress(data);
-
       // 查找第一个符合要求的地址
-      const firstEligible = mappedData.find(item => item.isEligible);
+      const firstEligible = data.find(item => item.isEligible);
 
       if (firstEligible) {
         this.store.currentEligibleAddress = firstEligible;
@@ -303,9 +300,9 @@ export class GasAccountService {
       this.store.currentEligibleAddress = undefined;
 
       // 只缓存不符合资格的数据
-      this.updateCacheWithNewData(mappedData);
+      this.updateCacheWithNewData(data);
 
-      return mappedData;
+      return data;
     } catch (error) {
       console.error(
         'Failed to check gas account gift eligibility batch:',
@@ -313,19 +310,6 @@ export class GasAccountService {
       );
       throw error;
     }
-  };
-
-  // 映射API响应到ClaimedGiftAddress格式
-  private mapApiResponseToClaimedGiftAddress = (
-    data: any[],
-  ): ClaimedGiftAddress[] => {
-    return data.map(item => ({
-      address: item.id!,
-      isEligible: item.has_eligibility,
-      isChecked: true,
-      isClaimed: false,
-      giftUsdValue: item.can_claimed_usd_value,
-    }));
   };
 
   // 更新当前有资格的地址
@@ -342,13 +326,16 @@ export class GasAccountService {
 
   // 用新数据更新缓存
   private updateCacheWithNewData = (newData: ClaimedGiftAddress[]) => {
-    const ineligibleData = newData.filter(item => !item.isEligible);
+    const ineligibleData = newData.filter(
+      item => !item.isEligible && !!item.address,
+    );
 
     if (ineligibleData.length > 0) {
       // 直接更新对象缓存
       ineligibleData.forEach(item => {
         if (!item || !item.address) return;
         const addressKey = item.address?.toLowerCase() || '';
+        if (!addressKey || addressKey === 'undefined') return;
         this.store.eligibilityCache[addressKey] = {
           isEligible: item.isEligible,
           timestamp: Date.now(),
@@ -395,9 +382,13 @@ export class GasAccountService {
       } = await openapi.checkGasAccountGiftEligibility({
         id: address,
       });
-      data.id = address;
-      const mappedData = this.mapApiResponseToClaimedGiftAddress([data]);
-      const result = mappedData[0]; // 取第一个结果
+      const result = {
+        address,
+        isEligible: data.has_eligibility,
+        isChecked: true,
+        isClaimed: false,
+        giftUsdValue: data.can_claimed_usd_value,
+      };
 
       // 如果符合资格，更新第一个有资格的地址
       this.updateCurrentEligibleAddress(result);

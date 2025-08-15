@@ -49,7 +49,6 @@ import { useSyncHistoryDB } from '@/databases/hooks/history';
 import { toast } from '@/components2024/Toast';
 import { splitNumberByStep } from '@/utils/number';
 import { REPORT_TIMEOUT_ACTION_KEY } from '@/core/services/type';
-import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -93,7 +92,6 @@ export const ImportSuccessScreen2024 = () => {
       aliasName: string;
     }[]
   >([]);
-  const { checkAddressesEligibility } = useGasAccountEligibility();
 
   const saveFirstAddressAlias = React.useCallback(() => {
     importAddresses.forEach(item => {
@@ -202,21 +200,6 @@ export const ImportSuccessScreen2024 = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
-  React.useEffect(() => {
-    if (!importAddresses.length) return;
-    // 检查新导入的地址是否已出现在全局账户列表
-    const allImportedInAccounts = importAddresses.every(item =>
-      accounts.some(
-        acc => acc.address.toLowerCase() === item.address.toLowerCase(),
-      ),
-    );
-    if (allImportedInAccounts) {
-      checkAddressesEligibility(
-        importAddresses.map(i => i.address),
-        true,
-      );
-    }
-  }, [importAddresses, accounts, checkAddressesEligibility]);
   React.useEffect(() => {
     setTimeout(() => fetchAccounts(), 0);
   }, [fetchAccounts]);

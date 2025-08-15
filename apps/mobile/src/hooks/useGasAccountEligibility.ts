@@ -49,8 +49,9 @@ export const useGasAccountEligibility = () => {
     const currentEligibleAddress =
       gasAccountService.getCurrentEligibleAddress();
     return (
-      currentEligibleAddress !== undefined && !gasAccountSig?.sig
-      //   !hasClaimedGift
+      currentEligibleAddress !== undefined &&
+      !gasAccountSig?.sig &&
+      !hasClaimedGift
     );
   }, []);
 
@@ -61,9 +62,9 @@ export const useGasAccountEligibility = () => {
         setLoading(true);
         setError(null);
         // 如果已经领取过礼包，无需检查
-        // if (gasAccountService.getHasClaimedGift()) {
-        //   return [];
-        // }
+        if (gasAccountService.getHasClaimedGift()) {
+          return [];
+        }
 
         // 如果gas account已经登录，无需检查资格
         const gasAccountSig = gasAccountService.getGasAccountSig();
@@ -79,7 +80,6 @@ export const useGasAccountEligibility = () => {
 
         // 每次调用接口后检查并更新缓存状态
         updateCacheStatusIfNeeded();
-
         return result;
       } catch (err) {
         const errorMessage =
@@ -101,9 +101,9 @@ export const useGasAccountEligibility = () => {
         setError(null);
 
         // 如果已经领取过礼包，无需检查
-        // if (gasAccountService.getHasClaimedGift()) {
-        //   return undefined;
-        // }
+        if (gasAccountService.getHasClaimedGift()) {
+          return undefined;
+        }
 
         // 如果gas account已经登录，无需检查资格
         const gasAccountSig = gasAccountService.getGasAccountSig();
@@ -189,6 +189,7 @@ export const useGasAccountEligibility = () => {
   const getCurrentEligibleAddress = () => {
     return gasAccountService.getCurrentEligibleAddress();
   };
+
   // 领取礼包
   const claimGift = useCallback(
     async (address: string) => {
@@ -197,6 +198,7 @@ export const useGasAccountEligibility = () => {
         const account = accounts.find(
           acc =>
             acc.address.toLowerCase() === address.toLowerCase() &&
+            acc.type === KEYRING_TYPE.SimpleKeyring &&
             acc.type === KEYRING_TYPE.SimpleKeyring,
         );
         if (!account) {
