@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import Animated from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import { TouchableOpacity, View } from 'react-native';
 import { BlurShadowView } from '@/components2024/BluerShadow';
@@ -15,7 +14,7 @@ interface BottomFloatGuideProps {
 const BottomFloatGuide = ({ onPress, children }: BottomFloatGuideProps) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   return (
-    <Animated.View>
+    <View>
       <LinearGradient
         colors={
           isLight
@@ -48,7 +47,7 @@ const BottomFloatGuide = ({ onPress, children }: BottomFloatGuideProps) => {
           </BlurShadowView>
         </TouchableOpacity>
       </LinearGradient>
-    </Animated.View>
+    </View>
   );
 };
 
