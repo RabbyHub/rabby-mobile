@@ -1,5 +1,13 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Alert, Linking, Platform, ScrollView, Text, View } from 'react-native';
+import {
+  Alert,
+  Linking,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import {
   RcClearPending,
@@ -25,6 +33,7 @@ import {
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
 import {
+  APP_RUNTIME_ENV,
   BUILD_CHANNEL,
   BUILD_GIT_INFO,
   isNonPublicProductionEnv,
@@ -122,12 +131,49 @@ import MockBatchRevokeModal, {
 } from './sheetModals/DevMockBatchRevoke';
 import { preferenceService } from '@/core/services';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
+import { useMultiPress } from '@/hooks/tap';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
 };
 
 const isIOS = Platform.OS === 'ios';
+
+function AlertBuildInfo() {
+  if (isNonPublicProductionEnv) {
+    Alert.alert(
+      'Build Info',
+      [
+        `Runtime Env: ${APP_RUNTIME_ENV}`,
+        `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+        '   ',
+        !!BUILD_GIT_INFO.BUILD_GIT_HASH_TIME &&
+          `Lastest Commit: ${dayjs(BUILD_GIT_INFO.BUILD_GIT_HASH_TIME).format(
+            'YYYY-MM-DD HH:mm:ss',
+          )}`,
+        !!BUILD_GIT_INFO.BUILD_GIT_COMMITOR &&
+          `Lastest Commitor: ${BUILD_GIT_INFO.BUILD_GIT_COMMITOR}`,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      [
+        {
+          text: 'OK',
+        },
+      ],
+    );
+  } else {
+    Alert.alert(
+      'Build Info',
+      [`Runtime Env: ${APP_RUNTIME_ENV}`].filter(Boolean).join('\n'),
+      [
+        {
+          text: 'OK',
+        },
+      ],
+    );
+  }
+}
 
 const { switchBiometricsRef, selectAutolockTimeRef } = sheetModalRefsNeedLock;
 function SettingsBlocks() {
@@ -508,26 +554,7 @@ function DevSettingsBlocks() {
               label: 'Build Info',
               icon: RcInfo,
               onPress: () => {
-                Alert.alert(
-                  'Build Info',
-                  [
-                    `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
-                    '   ',
-                    !!BUILD_GIT_INFO.BUILD_GIT_HASH_TIME &&
-                      `Lastest Commit: ${dayjs(
-                        BUILD_GIT_INFO.BUILD_GIT_HASH_TIME,
-                      ).format('YYYY-MM-DD HH:mm:ss')}`,
-                    !!BUILD_GIT_INFO.BUILD_GIT_COMMITOR &&
-                      `Lastest Commitor: ${BUILD_GIT_INFO.BUILD_GIT_COMMITOR}`,
-                  ]
-                    .filter(Boolean)
-                    .join('\n'),
-                  [
-                    {
-                      text: 'OK',
-                    },
-                  ],
-                );
+                AlertBuildInfo();
               },
               rightNode: (
                 <Text style={{ color: colors['neutral-body'] }}>
@@ -821,6 +848,8 @@ export default function SettingsScreen(): JSX.Element {
 
   const { bottom } = useSafeAreaInsets();
 
+  const { handlePress } = useMultiPress({ onMultiPress: AlertBuildInfo });
+
   return (
     <RootScreenContainer
       fitStatuBar
@@ -840,9 +869,11 @@ export default function SettingsScreen(): JSX.Element {
         ]}>
         <SettingsBlocks />
         {NEED_DEVSETTINGBLOCKS && <DevSettingsBlocks />}
-        <View style={[styles.bottomFooter]}>
-          <RcFooterLogo />
-        </View>
+        <TouchableOpacity onPress={handlePress} activeOpacity={1}>
+          <View style={[styles.bottomFooter]}>
+            <RcFooterLogo />
+          </View>
+        </TouchableOpacity>
       </ScrollView>
 
       <ThemeSelectorModal />

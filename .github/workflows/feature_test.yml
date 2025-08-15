@@ -139,7 +139,7 @@ jobs:
           GHA_MOCK_BUILD_FAILED: ${{ inputs.GHA_MOCK_BUILD_FAILED }}
           CONFIGURATION: release
           TYPE: adhoc
-          BUILD_ENV: alpha
+          RABBY_MOBILE_BUILD_ENV: regression
           LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}

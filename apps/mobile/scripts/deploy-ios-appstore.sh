@@ -51,6 +51,7 @@ done
 # ============ prepare changelogs :end ============== #
 
 build_appstore() {
+  export RABBY_MOBILE_BUILD_ENV="production";
   cd $project_dir;
   sh ./ios/patches/override-xcconfig-release.sh;
   yarn;

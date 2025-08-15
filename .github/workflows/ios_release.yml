@@ -86,7 +86,7 @@ jobs:
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
           CONFIGURATION: release
           TYPE: appstore
-          BUILD_ENV: release
+          RABBY_MOBILE_BUILD_ENV: production
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.RABBY_MOBILE_APPLE_TRANSPORT_PASSWORD }}
           RABBY_MOBILE_PILOT_USERNAME: ${{ secrets.RABBY_MOBILE_PILOT_USERNAME }}
           LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
