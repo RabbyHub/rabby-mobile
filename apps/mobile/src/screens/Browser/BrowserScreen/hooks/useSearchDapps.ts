@@ -16,7 +16,7 @@ export const useSearchDapps = (searchText: string) => {
   const { bookmarkList } = useBrowserBookmark();
 
   const debouncedSearchValue = useDebounce(searchText, {
-    wait: 500,
+    wait: 350,
   });
 
   const { data, loadMore } = useInfiniteScroll<{

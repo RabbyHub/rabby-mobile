@@ -41,6 +41,8 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { usePortfolios } from '../Home/hooks/usePortfolio';
 import { isAppChain } from '../Home/utils/appchain';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -478,6 +480,11 @@ export const DeFiDetailScreen = () => {
             onPress={() => {
               if (data.site_url) {
                 openTab(data.site_url);
+                matomoRequestEvent({
+                  category: 'Websites Usage',
+                  action: 'Website_Visit_Defi Detail',
+                  label: safeGetOrigin(data.site_url),
+                });
               }
             }}
           />

@@ -1,5 +1,18 @@
-import React, { useMemo, useRef, useTransition } from 'react';
-import { Keyboard, Platform, StyleProp, View, ViewStyle } from 'react-native';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
+import {
+  Keyboard,
+  Platform,
+  StyleProp,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import { NextSearchBar } from '@/components2024/SearchBar';
 import { useTheme2024 } from '@/hooks/theme';
@@ -13,6 +26,9 @@ import { useTranslation } from 'react-i18next';
 import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
 import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { ReactIconHome } from '@/assets2024/icons/browser';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { useAppState } from '@react-native-community/hooks';
 
 export function BrowserSearch({
   onClose,
@@ -63,6 +79,14 @@ export function BrowserSearch({
     onClose?.(trigger === 'home' && !isOpenURLRef.current);
   });
 
+  const handleBlur = useMemoizedFn(async () => {
+    Keyboard.dismiss();
+    if (!searchText.trim() && !displayedBrowserHistoryList.length) {
+      await waitKeyboardHide();
+      onClose?.(trigger === 'home' && !isOpenURLRef.current);
+    }
+  });
+
   const waitKeyboardHide = useMemoizedFn(async () => {
     if (!Keyboard.isVisible()) {
       return;
@@ -93,20 +117,43 @@ export function BrowserSearch({
   });
 
   const handleSubmitEditing = useMemoizedFn(() => {
-    if (!searchText) {
-      return;
-    }
-    isOpenURLRef.current = true;
-    if (isValidDomain) {
-      onOpenURL?.(
-        /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
-      );
-    } else {
-      onOpenURL?.(
-        `https://www.google.com/search?q=${encodeURIComponent(searchText)}`,
-      );
+    // if (!searchText) {
+    //   return;
+    // }
+    // isOpenURLRef.current = true;
+    // if (isValidDomain) {
+    //   onOpenURL?.(
+    //     /^https?:\/\//.test(searchText) ? searchText : `https://${searchText}`,
+    //   );
+    // } else {
+    //   onOpenURL?.(
+    //     `https://www.google.com/search?q=${encodeURIComponent(searchText)}`,
+    //   );
+    // }
+    if (!searchText.trim()) {
+      onClose?.(trigger === 'home');
     }
   });
+
+  const handlePressHome = useMemoizedFn(() => {
+    Keyboard.dismiss();
+    onClose?.(true);
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: `Website_Exit`,
+      label: 'Click Home',
+    });
+  });
+
+  const [key, setKey] = useState(0);
+
+  const appState = useAppState();
+
+  useEffect(() => {
+    if (appState === 'active') {
+      setKey(prev => prev + 1);
+    }
+  }, [appState]);
 
   return (
     <View
@@ -133,20 +180,33 @@ export function BrowserSearch({
           </View>
         ) : (
           <BrowserRecent
-            // isInBottomSheet
+            isInBottomSheet
             list={displayedBrowserHistoryList}
             onPress={dapp => {
               handleOpenUrl(dapp.url || dapp.origin);
+              matomoRequestEvent({
+                category: 'Websites Usage',
+                action: 'Website_Visit_Recent List',
+                label: dapp.origin,
+              });
             }}
           />
         )
       ) : (
         <BrowserSearchResult
-          // isInBottomSheet
+          key={key}
+          isInBottomSheet
           searchText={searchText}
           data={list || []}
           isValidDomain={!!isValidDomain}
-          onOpenURL={handleOpenUrl}
+          onOpenURL={origin => {
+            handleOpenUrl(origin);
+            matomoRequestEvent({
+              category: 'Websites Usage',
+              action: 'Website_Visit_Search Results',
+              label: origin,
+            });
+          }}
         />
       )}
 
@@ -155,19 +215,30 @@ export function BrowserSearch({
           styles.footer,
           {
             marginBottom: androidOnlyBottomOffset,
+            // marginBottom:
+            //   Platform.OS === 'android' ? androidOnlyBottomOffset : 20,
           },
         ]}>
+        <TouchableOpacity onPress={handlePressHome}>
+          <ReactIconHome
+            width={44}
+            height={44}
+            color={colors2024['neutral-title-1']}
+            backgroundColor={colors2024['neutral-bg-5']}
+          />
+        </TouchableOpacity>
         <NextSearchBar
           as="BottomSheetTextInput"
           value={searchText}
           onChangeText={setSearchText}
           onCancel={handleClose}
-          onBlur={handleClose}
+          onBlur={handleBlur}
           onSubmitEditing={handleSubmitEditing}
-          enterKeyHint="go"
+          enterKeyHint="done"
           autoFocus
           placeholder={t('page.browser.BrowserSearch.placeholder')}
           alwaysShowCancel
+          style={styles.searchBar}
         />
       </View>
     </View>
@@ -187,6 +258,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     right: 0,
     bottom: 0,
     paddingTop: 38,
+    // marginBottom: 20,
   },
   list: {
     flex: 1,
@@ -227,8 +299,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
     paddingVertical: 12,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     // marginBottom: 30,
     // box-shadow: 0px -6px 40px 0px rgba(55, 56, 63, 0.12);
     // backdrop-filter: blur(14.5px);
+  },
+  searchBar: {
+    flex: 1,
   },
 }));

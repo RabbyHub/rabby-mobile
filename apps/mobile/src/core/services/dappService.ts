@@ -43,6 +43,18 @@ export class DappService extends StoreServiceBase<
         storageAdapter: options?.storageAdapter,
       },
     );
+
+    this.patchDapps(
+      ['https://www.google.com', 'https://x.com', 'https://github.com'].reduce(
+        (result, key) => {
+          result[key] = {
+            isDapp: false,
+          };
+          return result;
+        },
+        {},
+      ),
+    );
   }
 
   addDapp(dapp: DappInfo | DappInfo[]) {

@@ -331,11 +331,11 @@ function MultiAddressHome(): JSX.Element {
           title: t('page.home.services.bridge'),
           icon: RcIconBridge,
         },
-        {
-          key: MultiHomeFeatTitle.CopyTrading,
-          title: t('page.home.services.copyTrading'),
-          icon: RcIconCopyTrading,
-        },
+        // {
+        //   key: MultiHomeFeatTitle.CopyTrading,
+        //   title: t('page.home.services.copyTrading'),
+        //   icon: RcIconCopyTrading,
+        // },
         {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
@@ -772,6 +772,14 @@ function MultiAddressHome(): JSX.Element {
       });
 
       matomoRequestEvent({
+        category: 'Websites Usage',
+        action: `Website_TabStatus`,
+        label: `TabNumber:${
+          browserService.getBrowserTabs()?.tabs?.length || 0
+        }`,
+      });
+
+      matomoRequestEvent({
         category: 'Watchlist Usage',
         action: `Watchlist_LikeStatus`,
         label: `LikeToken:${
@@ -820,7 +828,9 @@ function MultiAddressHome(): JSX.Element {
           contentContainerStyle={[
             styles.scrollContainer,
             {
-              paddingBottom: bottom + 82,
+              // paddingBottom: bottom + 82,
+              paddingBottom:
+                Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
             },
           ]}
           refreshControl={
@@ -834,8 +844,9 @@ function MultiAddressHome(): JSX.Element {
           />
           <View
             style={[
-              styles.contentBetweenHeaderAndMatrix,
-              noBetweenContent && styles.contentBetweenHeaderAndMatrixEmpty,
+              noBetweenContent
+                ? styles.contentBetweenHeaderAndMatrixEmpty
+                : styles.contentBetweenHeaderAndMatrix,
             ]}>
             <OfflineChainNotify data={offlineChainData} />
 
@@ -877,8 +888,8 @@ function MultiAddressHome(): JSX.Element {
               );
             })}
           </View>
+          <BrowserSearchEntry />
         </ScrollView>
-        <BrowserSearchEntry />
       </View>
     </NormalScreenContainer2024>
   );
@@ -1007,6 +1018,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   scrollContainer: {
     flexGrow: 1,
+    minHeight: '100%',
   },
   menuHeader: {
     height: 30,
@@ -1099,7 +1111,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 12,
     gap: 12,
   },
-  contentBetweenHeaderAndMatrixEmpty: {},
+  contentBetweenHeaderAndMatrixEmpty: {
+    marginBottom: 12,
+  },
   menuContainer: {
     marginTop: 0,
   },
@@ -1287,7 +1301,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   curveBox: {
     paddingHorizontal: 15,
-    paddingTop: 30,
+    paddingTop: 12,
   },
   curveCard: {
     borderRadius: 20,

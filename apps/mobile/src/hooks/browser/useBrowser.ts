@@ -1,26 +1,22 @@
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import { RootNames } from '@/constant/layout';
-import { emptyTab, Tab } from '@/core/services/browserService';
-import {
-  canoicalizeDappUrl,
-  safeGetOrigin,
-} from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { TabActions, useRoute } from '@react-navigation/native';
-import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom } from 'jotai';
-import { v4 as uuid } from 'uuid';
-import { useRabbyAppNavigation } from '../navigation';
 import { browserService, dappService } from '@/core/services';
-import { omit, last, sortBy } from 'lodash';
-import { boolean } from 'yup';
-import { useEffect, useMemo } from 'react';
-import { dappsAtom } from '../useDapps';
+import { Tab } from '@/core/services/browserService';
+import { isGoogle } from '@/utils/browser';
 import {
   EVENT_SHOW_BROWSER,
   EVENT_SHOW_BROWSER_MANAGE,
   eventBus,
 } from '@/utils/events';
-import { matomoRequestEvent } from '@/utils/analytics';
+import {
+  canoicalizeDappUrl,
+  safeGetOrigin,
+} from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useMemoizedFn } from 'ahooks';
+import { atom, useAtom } from 'jotai';
+import { last, omit, sortBy } from 'lodash';
+import { v4 as uuid } from 'uuid';
+import { dappsAtom } from '../useDapps';
+import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
 
 export const tabsAtom = atom<{
   tabs: Tab[];
@@ -41,6 +37,17 @@ const browserStateAtom = atom({
   trigger: '',
 });
 
+const browserActiveTabStateAtom = atom<{
+  url: string;
+  contentMode?: ContentMode;
+  isConnected?: boolean;
+  isBookmark?: boolean;
+  isDapp?: boolean;
+}>({
+  url: '',
+  contentMode: undefined,
+});
+
 const MAX_ACTIVE_TABS_COUNT = 4;
 
 const displayedTabsAtom = atom(get => {
@@ -49,11 +56,37 @@ const displayedTabsAtom = atom(get => {
   return store.tabs.filter(item => {
     return item.isDapp;
   });
+
+  // return sortBy(
+  //   store.tabs.filter(item => {
+  //     return item.isDapp;
+  //   }),
+  //   tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
+  // );
 });
 
-export function useBrowser() {
-  // const navigation = useRabbyAppNavigation();
+const homeDisplayedTabsAtom = atom(get => {
+  const store = get(tabsAtom);
+  const dapps = get(dappsAtom);
 
+  return sortBy(
+    store.tabs.filter(item => {
+      return dapps[safeGetOrigin(item.url || item.initialUrl)]?.isDapp;
+    }),
+    tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
+  ).slice(0, 4);
+});
+
+export const useHomeDisplayedTabs = () => {
+  const [tabs] = useAtom(homeDisplayedTabsAtom);
+  return tabs;
+};
+
+export const useBrowserActiveTabState = () => {
+  return useAtom(browserActiveTabStateAtom);
+};
+
+export function useBrowser() {
   const [store, setStore] = useAtom(tabsAtom);
   const [visible, setVisible] = useAtom(visibleAtom);
   const [isShowManagePopup, setIsShowManagePopup] = useAtom(managePopupAtom);
@@ -111,7 +144,7 @@ export function useBrowser() {
       isShowManage: false,
       isShowSearch: false,
     });
-    terminateTabs();
+    // terminateTabs();
   });
   const closeTab = useMemoizedFn((tabId: string) => {
     if (tabId === store.activeTabId) {
@@ -145,32 +178,41 @@ export function useBrowser() {
     setTimeout(() => {
       setStore(prev => {
         const tabs = sortBy(
-          prev.tabs.filter(tab => tab.isDapp),
+          prev.tabs.filter(tab => {
+            return dappService.getDapp(safeGetOrigin(tab.url || tab.initialUrl))
+              ?.isDapp;
+          }),
           tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
         );
 
-        if (tabs.length <= MAX_ACTIVE_TABS_COUNT) {
-          return prev;
-        }
+        // if (tabs.length <= MAX_ACTIVE_TABS_COUNT) {
+        //   return prev;
+        // }
 
-        const time = tabs[3]?.openTime || 0;
-        if (!time) {
-          return prev;
-        }
+        // const time = tabs[3]?.openTime || 0;
+        // if (!time) {
+        //   return prev;
+        // }
 
-        const finalTabs = prev.tabs.map(tab => {
-          if (tab.openTime < time && tab.id !== prev.activeTabId) {
-            return {
-              ...tab,
-              isTerminate: true,
-            };
-          }
-          return tab;
-        });
+        // const finalTabs = prev.tabs.map(tab => {
+        //   if (tab.openTime < time && tab.id !== prev.activeTabId) {
+        //     return {
+        //       ...tab,
+        //       isTerminate: true,
+        //     };
+        //   }
+        //   return tab;
+        // });
+
+        const list = tabs.slice(0, MAX_ACTIVE_TABS_COUNT);
+        const activeTabId = list.find(tab => tab.id === prev.activeTabId)
+          ? prev.activeTabId
+          : last(list)?.id || '';
 
         const result = {
           ...prev,
-          tabs: finalTabs,
+          activeTabId,
+          tabs: list,
         };
 
         browserService.updateBrowserTabs(result);
@@ -222,12 +264,13 @@ export function useBrowser() {
         newTab.url,
       );
 
-      if (dappService.getDapp(targetOrigin)?.isDapp && url?.trim()) {
-        matomoRequestEvent({
-          category: 'Websites Usage',
-          action: 'Website_OpenDapp',
-          label: targetOrigin,
-        });
+      const sameOriginTab = displayedTabs.find(
+        item => safeGetOrigin(item.url || item.initialUrl) === targetOrigin,
+      );
+
+      if (sameOriginTab && !isGoogle(targetOrigin)) {
+        switchToTab(sameOriginTab.id);
+        return true;
       }
 
       if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) {
@@ -245,7 +288,7 @@ export function useBrowser() {
         activeTabId: newTab.id,
       });
 
-      terminateTabs();
+      // terminateTabs();
 
       return true;
     },
@@ -302,6 +345,7 @@ export function useBrowser() {
     onHideBrowser,
     forceShowBrowser,
     forceShowBrowserManage,
+    terminateTabs,
   };
 }
 

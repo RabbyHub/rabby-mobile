@@ -10,10 +10,11 @@ import {
   Platform,
   StyleProp,
   Text,
+  TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+// import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export const BrowserSiteListBy = ({
   data,

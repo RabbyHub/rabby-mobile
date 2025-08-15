@@ -1678,7 +1678,7 @@
     "gasAccount": {
       "deposit": "Deposit",
       "withdraw": "Withdraw",
-      "noBalance": "No balance To Withdraw",
+      "noBalance": "No balance",
       "gasExceed": "GasAccount balance cannot exceed $1000",
       "risk": "Your current address has been detected as risky, so this feature is unavailable.",
       "logout": "Log out current GasAccount",
@@ -1775,7 +1775,6 @@
       "loginFailed": "Login Failed",
       "depositCanceled": "Deposit Canceled",
       "loginSuccess": "Login Successful",
-      "noBalance": "No balance",
       "withdrawDisabledIAP": "Withdrawals are disabled because your balance includes fiat funds, which cannot be withdrawn. Contact support to withdraw your token balance"
     },
     "tokenDetail": {
@@ -2035,10 +2034,18 @@
         "searchInGoogle": "Search \"{{searchText}}\" in Google",
         "openUrl": "Open \"{{searchText}}\"",
         "results": "Results",
-        "placeholder": "Search Websites"
+        "placeholder": "Search Websites",
+        "recentEmpty": "Starting Exploring Website"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Open Websites"
+      },
+      "menu": {
+        "refresh": "Refresh",
+        "favorite": "Favorite",
+        "contentModeMobile": "Request Mobile Site",
+        "contentModeDesktop": "Request DeskTop Site",
+        "disconnect": "Disconnect"
       }
     },
     "browserManage": {

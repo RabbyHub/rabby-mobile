@@ -20,6 +20,7 @@ interface Props {
   onPress?(tab: Tab): void;
   isActive?: boolean;
   style?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 export const BrowserTabCard: React.FC<Props> = ({
@@ -28,6 +29,7 @@ export const BrowserTabCard: React.FC<Props> = ({
   onPressClose,
   isActive,
   style,
+  containerStyle,
 }) => {
   const { colors2024, styles } = useTheme2024({
     getStyle,
@@ -37,16 +39,17 @@ export const BrowserTabCard: React.FC<Props> = ({
 
   return (
     <View
-      style={[styles.wrap, isActive ? [styles.active, styles.shadow] : null]}>
+      style={[
+        styles.wrap,
+        isActive ? [styles.active, styles.shadow] : null,
+        containerStyle,
+      ]}>
       <TouchableOpacity
         style={[styles.card, isActive ? null : styles.shadow, style]}
         onPress={() => {
           onPress?.(tab);
         }}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
-            {urlInfo.fullDomain}
-          </Text>
           {tab.url ? (
             <TouchableOpacity
               hitSlop={8}
@@ -59,6 +62,9 @@ export const BrowserTabCard: React.FC<Props> = ({
               />
             </TouchableOpacity>
           ) : null}
+          <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
+            {urlInfo.fullDomain}
+          </Text>
         </View>
         <View style={styles.screenshot}>
           {tab.viewShot ? (
@@ -79,7 +85,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-1'],
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
-    borderRadius: 20,
+    borderRadius: 14,
   },
   shadow: {
     shadowColor: 'rgba(0, 0, 0, 0.02)',
@@ -92,8 +98,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     backgroundColor: colors2024['neutral-bg-2'],
     position: 'relative',
     textAlign: 'center',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
     paddingHorizontal: 30,
     paddingVertical: 6,
     height: 30,
@@ -109,24 +115,24 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   closeIcon: {
     position: 'absolute',
-    top: 7,
-    right: 12,
+    top: 9,
+    left: 12,
     zIndex: 10,
   },
   screenshot: {
-    height: 210,
+    height: 168,
   },
   viewShot: {
     width: '100%',
     height: '100%',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
   },
   wrap: {
-    padding: 4,
+    padding: 2,
     borderWidth: 2,
     borderColor: 'transparent',
-    borderRadius: 24,
+    borderRadius: 17,
   },
 
   active: {

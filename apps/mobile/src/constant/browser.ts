@@ -28,7 +28,7 @@ export const APP_STORE_URL_PREFIXES = [
   ...ANDROID_APP_STORE_URL_PREFIXES,
 ];
 
-export const BOTTOM_SHEET_EXTRA = 10;
+export const BOTTOM_SHEET_EXTRA = 36;
 export const WEBVIEW_HEIGHT =
   Dimensions.get('screen').height - 124 - BOTTOM_SHEET_EXTRA;
 export const GROW_WEBVIEW_THRESHOLD = 10;

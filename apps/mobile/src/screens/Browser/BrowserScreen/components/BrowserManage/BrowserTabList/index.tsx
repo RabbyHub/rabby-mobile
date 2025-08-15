@@ -10,6 +10,9 @@ import { BrowserTabCard } from './BrowserTabCard';
 // import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useRef } from 'react';
 import { BrowserTabEmpty } from './BrowserTabEmpty';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const { colors2024, styles, isLight } = useTheme2024({
@@ -44,7 +47,14 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         <BrowserTabCard
           tab={item}
           isActive={activeTabId === item.id}
-          onPress={tab => switchToTab(tab.id)}
+          onPress={tab => {
+            switchToTab(tab.id);
+            matomoRequestEvent({
+              category: 'Websites Usage',
+              action: 'Website_Visit_Website Tab',
+              label: safeGetOrigin(tab.url || tab.initialUrl),
+            });
+          }}
           onPressClose={tab => {
             if (displayedTabs.length === 1) {
               setPartialBrowserState({
@@ -73,7 +83,7 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
 
   return (
     <View style={[styles.container, style]}>
-      <FlatList
+      <BottomSheetFlatList
         style={styles.tabList}
         data={displayedTabs}
         renderItem={renderItem}
@@ -83,8 +93,8 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         showsVerticalScrollIndicator={false}
         ref={ref}
         getItemLayout={(data, index) => ({
-          length: 242,
-          offset: 242 * index,
+          length: 210,
+          offset: 210 * index,
           index,
         })}
         contentContainerStyle={

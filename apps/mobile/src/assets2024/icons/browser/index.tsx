@@ -2,9 +2,12 @@ import React from 'react';
 import Svg, { SvgProps, Rect, Path, Circle } from 'react-native-svg';
 
 export { default as RcIconBackCC } from './back-cc.svg';
+export { default as RcIconBack1CC } from './back-1-cc.svg';
 export { default as RcIconForwardCC } from './forward-cc.svg';
 export { default as RcIconRefreshCC } from './refresh-cc.svg';
 export { default as RcIconMoreCC } from './more-cc.svg';
+export { default as RcIconMore1CC } from './more-1-cc.svg';
+export { default as RcIconClose1CC } from './close-1-cc.svg';
 export { default as RcIconTabsCC } from './tabs-cc.svg';
 export { default as RcIconArrowTopLeftCC } from './arrow-top-left-cc.svg';
 export { default as RcIconHomeCC } from './home-cc.svg';

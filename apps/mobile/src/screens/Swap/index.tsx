@@ -101,6 +101,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { last } from 'lodash';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -226,6 +227,11 @@ const Swap = ({
   } = useExternalSwapBridgeDapps(chain, 'swap');
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: 'Website_Visit_Other',
+      label: safeGetOrigin(url),
+    });
   });
   const [swapDappOpen, setSwapDappOpen] = useState(false);
 

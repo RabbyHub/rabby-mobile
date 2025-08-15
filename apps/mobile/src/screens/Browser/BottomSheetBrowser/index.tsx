@@ -1,57 +1,48 @@
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 
 import AutoLockView from '@/components/AutoLockView';
-import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { BrowserScreen } from '../BrowserScreen';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useBrowser } from '@/hooks/browser/useBrowser';
-import {
-  BackHandler,
-  Platform,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
-import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { createGetStyles2024 } from '@/utils/styles';
+import { BOTTOM_SHEET_EXTRA } from '@/constant/browser';
+import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { useFocusEffect } from '@react-navigation/native';
-import { useMemoizedFn } from 'ahooks';
+import { useTheme2024 } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { matomoRequestEvent } from '@/utils/analytics';
 import {
   EVENT_SHOW_BROWSER,
   EVENT_SHOW_BROWSER_MANAGE,
   eventBus,
 } from '@/utils/events';
-import { BOTTOM_SHEET_EXTRA } from '@/constant/browser';
-
-const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <RefreshAutoLockBottomSheetBackdrop
-    {...props}
-    disappearsOnIndex={-1}
-    appearsOnIndex={0}
-  />
-);
+import { createGetStyles2024 } from '@/utils/styles';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { BackHandler, Platform, useWindowDimensions, View } from 'react-native';
+import { BrowserScreen } from '../BrowserScreen';
+import { BrowserManage } from '../BrowserScreen/components/BrowserManage';
+import { BrowserHandler } from './BrowserHandler';
 
 export const BottomSheetBrowser = () => {
   const { safeOffScreenTop } = useSafeSizes();
-  const {
-    browserState,
-    setPartialBrowserState,
-    closeTab,
-    onHideBrowser,
-    activeTabId,
-  } = useBrowser();
+  const { browserState, setPartialBrowserState, onHideBrowser, terminateTabs } =
+    useBrowser();
   const { browserHistoryList } = useBrowserHistory();
-  const { colors2024, styles } = useTheme2024({
+  const { styles } = useTheme2024({
     getStyle,
   });
 
+  const [isLoad, setIsLoad] = useState(Platform.OS === 'ios');
+
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { width } = useWindowDimensions();
+
+  const snapPoints = useMemo(() => {
+    return [safeOffScreenTop];
+  }, [safeOffScreenTop]);
 
   const isTransparent = useMemo(() => {
     return (
@@ -68,10 +59,17 @@ export const BottomSheetBrowser = () => {
   ]);
 
   useEffect(() => {
+    if (browserState.isShowBrowser && !isLoad) {
+      setTimeout(() => {
+        setIsLoad(true);
+      }, 250);
+    }
+  }, [browserState.isShowBrowser, isLoad]);
+
+  useEffect(() => {
     if (browserState.isShowBrowser) {
       modalRef.current?.present();
     } else {
-      console.log('[close]');
       modalRef.current?.close();
     }
   }, [browserState.isShowBrowser]);
@@ -110,24 +108,29 @@ export const BottomSheetBrowser = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowBrowser ? 0 : -1}
-      enableContentPanningGesture={false}
+      enableContentPanningGesture={browserState.isShowSearch}
       enablePanDownToClose
       enableHandlePanningGesture
       name="urlWebviewContainerRef"
       ref={modalRef}
-      snapPoints={[safeOffScreenTop - BOTTOM_SHEET_EXTRA]}
+      snapPoints={snapPoints}
       enableDismissOnClose={false}
       keyboardBehavior="extend"
       android_keyboardInputMode="adjustResize"
-      handleStyle={styles.hidden}
+      // enableBlurKeyboardOnGesture
+      // handleStyle={styles.hidden}
+      handleComponent={BrowserHandler}
       containerStyle={styles.customContentStyle}
       backgroundComponent={null}
       onChange={index => {
-        console.log('[onChange]', index);
         if (index === -1) {
           // 手动下拉关闭？
           if (browserState.isShowBrowser && !browserState.isShowSearch) {
-            closeTab(activeTabId);
+            matomoRequestEvent({
+              category: 'Websites Usage',
+              action: `Website_Exit`,
+              label: 'Drop Down',
+            });
           }
           setPartialBrowserState({
             isShowBrowser: false,
@@ -136,7 +139,13 @@ export const BottomSheetBrowser = () => {
             searchTabId: '',
             trigger: '',
           });
-          onHideBrowser();
+          // onHideBrowser();
+          terminateTabs();
+        } else {
+          matomoRequestEvent({
+            category: 'Websites Usage',
+            action: 'Website_Start',
+          });
         }
       }}>
       <AutoLockView as="BottomSheetView" style={styles.customContentStyle}>
@@ -151,9 +160,13 @@ export const BottomSheetBrowser = () => {
             <View style={styles.customHandle} />
           </BottomSheetHandlableView>
         ) : null}
-        <BrowserScreen
-          style={isTransparent ? { backgroundColor: 'transparent' } : null}
-        />
+        {isLoad ? (
+          <BrowserScreen style={isTransparent ? styles.transparent : null} />
+        ) : (
+          <View
+            style={isTransparent ? styles.transparent : styles.placeholder}
+          />
+        )}
       </AutoLockView>
     </AppBottomSheetModal>
   );
@@ -164,6 +177,10 @@ export const BrowserManagePopup = () => {
 
   const { browserState, setPartialBrowserState } = useBrowser();
   const { colors2024, styles } = useTheme2024({ getStyle });
+
+  const snapPoints = useMemo(() => {
+    return [safeOffScreenTop - 40];
+  }, [safeOffScreenTop]);
 
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -207,7 +224,7 @@ export const BrowserManagePopup = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowManage ? 0 : -1}
-      enableContentPanningGesture={false}
+      enableContentPanningGesture={true}
       enablePanDownToClose
       enableHandlePanningGesture
       // name="urlWebviewContainerRef"
@@ -219,7 +236,7 @@ export const BrowserManagePopup = () => {
       ref={modalRef}
       keyboardBehavior="extend"
       android_keyboardInputMode="adjustResize"
-      snapPoints={[safeOffScreenTop - BOTTOM_SHEET_EXTRA]}
+      snapPoints={snapPoints}
       // enableDismissOnClose={false}
       onChange={index => {
         if (index === -1) {
@@ -272,5 +289,28 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       height: 6,
       width: 50,
     },
+
+    handleComponent: {
+      position: 'absolute',
+      top: -40,
+      right: 10,
+      zIndex: 100,
+    },
+    handleComponentContainer: {
+      display: 'flex',
+      backgroundColor: colors2024['neutral-bg-1'],
+      alignItems: 'center',
+      flexDirection: 'row',
+      paddingVertical: 4,
+      paddingHorizontal: 12,
+      borderRadius: 19,
+      gap: 8,
+    },
+    placeholder: {
+      backgroundColor: colors2024['neutral-bg-1'],
+      height: '100%',
+    },
+
+    transparent: { backgroundColor: 'transparent' },
   };
 });

@@ -1,7 +1,7 @@
 import { PillsSwitch } from '@/components2024/PillsSwitch';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { BrowserBookmarkList } from './BrowserBookmarkList';
@@ -9,12 +9,14 @@ import { BrowserHistoryList } from './BrowserHistoryList';
 import { BrowserTabList } from './BrowserTabList';
 import { BrowserSearch } from '../BrowserSearch';
 import { useBrowser } from '@/hooks/browser/useBrowser';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useMount } from 'ahooks';
 import { TabBarProps, Tabs } from 'react-native-collapsible-tab-view';
 import { TabName } from 'react-native-collapsible-tab-view/lib/typescript/src/types';
 import { DropDownMenuView } from '@/components2024/DropDownMenu';
-import { RcIconAddPlusCircle } from '@/assets2024/icons/browser';
+import { RcIconAddPlusCircle, ReactIconHome } from '@/assets2024/icons/browser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { useAppState } from '@react-native-community/hooks';
 
 export function BrowserManage(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
@@ -65,8 +67,30 @@ export function BrowserManage(): JSX.Element {
     });
   });
 
+  const handlePressHome = useMemoizedFn(() => {
+    setPartialBrowserState({
+      isShowManage: false,
+      isShowBrowser: false,
+    });
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: `Website_Exit`,
+      label: 'Click Home',
+    });
+  });
+
+  const [key, setKey] = useState(0);
+
+  const appState = useAppState();
+
+  useEffect(() => {
+    if (appState === 'active') {
+      setKey(prev => prev + 1);
+    }
+  }, [appState]);
+
   return (
-    <View style={styles.page}>
+    <View style={styles.page} key={key}>
       <View style={styles.header}>
         <View style={styles.navbarContainer}>
           <PillsSwitch
@@ -113,14 +137,25 @@ export function BrowserManage(): JSX.Element {
         </Tabs.Tab>
       </Tabs.Container>
       {activeTab === 'tab' ? (
-        <View
-          // eslint-disable-next-line react-native/no-inline-styles
-          style={{
-            ...styles.bottomArea,
-            borderColor: isLight
-              ? 'rgba(0, 0, 0, 0.06)'
-              : 'rgba(255, 255, 255, 0.06)',
-          }}>
+        <View style={styles.bottomArea}>
+          <TouchableOpacity onPress={handlePressHome}>
+            <ReactIconHome
+              width={44}
+              height={44}
+              color={colors2024['neutral-title-1']}
+              backgroundColor={colors2024['neutral-bg-5']}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleNewTab}>
+            <RcIconAddPlusCircle
+              width={44}
+              height={44}
+              color={colors2024['neutral-foot']}
+              borderColor={colors2024['neutral-line']}
+              backgroundColor={colors2024['neutral-bg-1']}
+            />
+          </TouchableOpacity>
+
           <DropDownMenuView
             triggerProps={{ action: 'press' }}
             menuConfig={{
@@ -147,6 +182,18 @@ export function BrowserManage(): JSX.Element {
               <Text style={styles.bottomText}>{t('global.Edit')}</Text>
             </TouchableOpacity>
           </DropDownMenuView>
+        </View>
+      ) : null}
+      {activeTab === 'history' ? (
+        <View style={styles.bottomArea}>
+          <TouchableOpacity onPress={handlePressHome}>
+            <ReactIconHome
+              width={44}
+              height={44}
+              color={colors2024['neutral-title-1']}
+              backgroundColor={colors2024['neutral-bg-5']}
+            />
+          </TouchableOpacity>
           <TouchableOpacity onPress={handleNewTab}>
             <RcIconAddPlusCircle
               width={44}
@@ -156,25 +203,6 @@ export function BrowserManage(): JSX.Element {
               backgroundColor={colors2024['neutral-bg-1']}
             />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              setPartialBrowserState({
-                isShowManage: false,
-              });
-            }}>
-            <Text style={styles.bottomText}>{t('global.Done')}</Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-      {activeTab === 'history' ? (
-        <View
-          // eslint-disable-next-line react-native/no-inline-styles
-          style={{
-            ...styles.bottomArea,
-            borderColor: isLight
-              ? 'rgba(0, 0, 0, 0.06)'
-              : 'rgba(255, 255, 255, 0.06)',
-          }}>
           <DropDownMenuView
             triggerProps={{ action: 'press' }}
             menuConfig={{
@@ -200,6 +228,18 @@ export function BrowserManage(): JSX.Element {
               <Text style={styles.bottomText}>{t('global.Edit')}</Text>
             </TouchableOpacity>
           </DropDownMenuView>
+        </View>
+      ) : null}
+      {activeTab === 'favorites' ? (
+        <View style={styles.bottomArea}>
+          <TouchableOpacity onPress={handlePressHome}>
+            <ReactIconHome
+              width={44}
+              height={44}
+              color={colors2024['neutral-title-1']}
+              backgroundColor={colors2024['neutral-bg-5']}
+            />
+          </TouchableOpacity>
           <TouchableOpacity onPress={handleNewTab}>
             <RcIconAddPlusCircle
               width={44}
@@ -209,25 +249,6 @@ export function BrowserManage(): JSX.Element {
               backgroundColor={colors2024['neutral-bg-1']}
             />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              setPartialBrowserState({
-                isShowManage: false,
-              });
-            }}>
-            <Text style={styles.bottomText}>{t('global.Done')}</Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-      {activeTab === 'favorites' ? (
-        <View
-          // eslint-disable-next-line react-native/no-inline-styles
-          style={{
-            ...styles.bottomArea,
-            borderColor: isLight
-              ? 'rgba(0, 0, 0, 0.06)'
-              : 'rgba(255, 255, 255, 0.06)',
-          }}>
           <TouchableOpacity
             onPress={() => {
               setIsShowDelete(prev => !prev);
@@ -236,30 +257,11 @@ export function BrowserManage(): JSX.Element {
               {isShowDelete ? t('global.cancel') : t('global.Edit')}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleNewTab}>
-            <RcIconAddPlusCircle
-              width={44}
-              height={44}
-              color={colors2024['neutral-foot']}
-              borderColor={colors2024['neutral-line']}
-              backgroundColor={colors2024['neutral-bg-1']}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              setPartialBrowserState({
-                isShowManage: false,
-              });
-            }}>
-            <Text style={styles.bottomText}>{t('global.Done')}</Text>
-          </TouchableOpacity>
         </View>
       ) : null}
       {searchState.isShowSearch ? (
         <BrowserSearch
-          style={{
-            paddingTop: 18,
-          }}
+          style={styles.browserSearch}
           searchText={searchState.searchText}
           setSearchText={v => {
             setSearchState(prev => {
@@ -269,11 +271,22 @@ export function BrowserManage(): JSX.Element {
               };
             });
           }}
-          onClose={() => {
-            setSearchState({
-              isShowSearch: false,
-              searchText: '',
-            });
+          onClose={shouldClose => {
+            if (shouldClose) {
+              setSearchState({
+                isShowSearch: false,
+                searchText: '',
+              });
+              setPartialBrowserState({
+                isShowBrowser: false,
+                isShowManage: false,
+              });
+            } else {
+              setSearchState({
+                isShowSearch: false,
+                searchText: '',
+              });
+            }
           }}
           onOpenURL={url => {
             openTab(url, {
@@ -358,7 +371,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   bottomArea: {
     paddingVertical: 6,
-    paddingHorizontal: 35,
+    paddingLeft: 16,
+    paddingRight: 35,
     paddingBottom: 30,
     borderTopWidth: 1,
     display: 'flex',
@@ -366,6 +380,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
+    borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)',
   },
   bottomText: {
     fontFamily: 'SF Pro Rounded',
@@ -373,5 +388,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
     lineHeight: 24,
+  },
+
+  browserSearch: {
+    paddingTop: 18,
   },
 }));
