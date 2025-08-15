@@ -6,7 +6,11 @@ import { initServices } from '@/core/services/init';
 import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
 import { EntryScriptVConsole } from '@/core/bridges/builtInScripts/loadVConsole';
 import { JS_LOG_ON_MESSAGE } from '@/core/bridges/builtInScripts/onMessage';
-import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
+import {
+  BROWSER_SCRIPT_BASE,
+  JS_GET_WINDOW_INFO_AFTER_LOAD,
+  SPA_urlChangeListener,
+} from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { loadSecurityChain, useGlobal } from './global';
 import { useAppUnlocked, useTryUnlockAppWithBuiltinOnTop } from './useLock';
@@ -150,6 +154,8 @@ export function useJavaScriptBeforeContentLoaded(options?: {
     return [
       // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
       entryScripts.inPageWeb3,
+      BROWSER_SCRIPT_BASE,
+      __DEV__ ? JS_GET_WINDOW_INFO_AFTER_LOAD : '',
       SPA_urlChangeListener,
       __DEV__ ? entryScripts.vConsole : '',
       JS_LOG_ON_MESSAGE,

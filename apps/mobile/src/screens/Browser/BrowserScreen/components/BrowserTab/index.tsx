@@ -83,6 +83,36 @@ type BrowserTabProps = {
   onCloseTab?(url: string): void;
 };
 
+const TabWebView = React.forwardRef<
+  WebView,
+  BrowserTabProps['webviewProps'] & object
+>((props, ref) => {
+  const firstOnLoadStartRef = useRef(false);
+  return (
+    <WebView
+      {...props}
+      ref={ref}
+      {...(IS_ANDROID &&
+        !firstOnLoadStartRef.current && {
+          onLoadStart: evt => {
+            if (!firstOnLoadStartRef.current) {
+              evt = {
+                ...evt,
+                nativeEvent: {
+                  ...evt.nativeEvent,
+                  isReload: true,
+                },
+              };
+              firstOnLoadStartRef.current = true;
+            }
+
+            props.onLoadStart?.(evt);
+          },
+        })}
+    />
+  );
+});
+
 export type BrowserRef = {
   getWebViewDappOrigin: () => string;
   getWebViewId: () => string;
@@ -237,7 +267,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const { entryScriptWeb3Loaded, fullScript } =
       useJavaScriptBeforeContentLoaded({ isTop: false });
 
-    const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
+    const { onLoadStart, onMessage: onWebViewMessage } = useSetupWebview({
       dappOrigin: origin,
       webviewRef,
       webviewIdRef,
@@ -483,7 +513,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       style={styles.progressBar}
                     />
                   ) : null}
-                  <WebView
+                  <TabWebView
                     key={`${refreshKey}-${contentMode}`}
                     cacheEnabled
                     startInLoadingState={false}
@@ -670,11 +700,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                       });
                     }}
                     onMessage={event => {
-                      // // leave here for debug
-                      // if (__DEV__) {
-                      //   console.log('WebView:: onMessage event', event);
-                      // }
-                      onBridgeMessage(event);
+                      onWebViewMessage(event);
                       webviewProps?.onMessage?.(event);
 
                       // // leave here for debug
