@@ -92,6 +92,8 @@ build_js_bundle() {
 
   echo "Building JS bundle..."
 
+  export RABBY_MOBILE_BUILD_ENV="regression";
+
   rm -rf $work_dir/assets &&
   $project_dir/node_modules/.bin/react-native bundle \
     --platform android \
