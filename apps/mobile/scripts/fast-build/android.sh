@@ -129,7 +129,7 @@ replace_js_bundle() {
   cp $template_apk $repacked_apk
   echo "Directly replace index.android.bundle in APK..."
   cd $js_bundle_dir;
-  zip -r0X $repacked_apk $js_bundle_relname
+  zip -r1X $repacked_apk $js_bundle_relname
   cd $work_dir;
   # echo "Directly replace res in APK..."
   # zip -r0k $repacked_apk $res_dir
