@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable } from 'react-native';
 
-import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
-import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
-import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
-import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
+import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
+import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
+import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
+import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
@@ -37,7 +37,7 @@ const TokenActions = ({
   finalAccount,
   tokenSelectType,
 }: Props) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
@@ -80,7 +80,7 @@ const TokenActions = ({
       {
         key: 'Send',
         title: t('page.home.services.send'),
-        Icon: RcIconSend,
+        Icon: RcIconSendCC,
         onPress: async () => {
           const chain = findChain({
             serverId: token.chain,
@@ -101,7 +101,7 @@ const TokenActions = ({
       {
         key: 'Receive',
         title: t('page.home.services.receive'),
-        Icon: RcIconReceive,
+        Icon: RcIconReceiveCC,
         onPress: async () => {
           if (!finalAccount) {
             return;
@@ -136,7 +136,7 @@ const TokenActions = ({
       {
         key: 'Swap',
         title: t('page.home.services.swap'),
-        Icon: RcIconSwap,
+        Icon: RcIconSwapCC,
         disabled: !tokenSupportSwap,
         onPress: async () => {
           if (!tokenSupportSwap) {
@@ -164,7 +164,7 @@ const TokenActions = ({
       {
         key: 'Bridge',
         title: t('page.home.services.bridge'),
-        Icon: RcIconBridge,
+        Icon: RcIconBridgeCC,
         disabled: !tokenSupportBridge,
         onPress: async () => {
           if (!tokenSupportBridge) {
@@ -216,7 +216,12 @@ const TokenActions = ({
           }}
           key={item.key}>
           <View style={styles.actionIconWrapper}>
-            <item.Icon width={20} height={20} style={styles.actionIcon} />
+            <item.Icon
+              width={20}
+              height={20}
+              style={styles.actionIcon}
+              color={colors2024['brand-default-icon']}
+            />
           </View>
           <Text
             numberOfLines={1}

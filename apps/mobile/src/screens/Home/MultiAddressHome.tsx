@@ -26,16 +26,16 @@ import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
 import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
-import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
-import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
-import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
-import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
+import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
+import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
+import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
+import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
+import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
 import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
-import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
-import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
+import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
+import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
-import RcIconWatchlist from '@/assets2024/icons/home/IconWatchlist.svg';
+import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
@@ -330,22 +330,22 @@ function MultiAddressHome(): JSX.Element {
         {
           key: MultiHomeFeatTitle.Swap,
           title: t('page.home.services.swap'),
-          icon: RcIconSwap,
+          icon: RcIconSwapCC,
         },
         {
           key: MultiHomeFeatTitle.Send,
           title: t('page.home.services.send'),
-          icon: RcIconSend,
+          icon: RcIconSendCC,
         },
         {
           key: MultiHomeFeatTitle.Receive,
           title: t('page.home.services.receive'),
-          icon: RcIconReceive,
+          icon: RcIconReceiveCC,
         },
         {
           key: MultiHomeFeatTitle.Bridge,
           title: t('page.home.services.bridge'),
-          icon: RcIconBridge,
+          icon: RcIconBridgeCC,
         },
         // {
         //   key: MultiHomeFeatTitle.CopyTrading,
@@ -355,20 +355,20 @@ function MultiAddressHome(): JSX.Element {
         {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
-          icon: RcIconHistory,
+          icon: RcIconHistoryCC,
           badge: historyCount?.fail || historyCount?.success,
           isSuccess: !historyCount?.fail,
         },
         {
           key: MultiHomeFeatTitle.Approvals,
           title: t('page.home.services.approvals'),
-          icon: RcIconApprovals,
+          icon: RcIconApprovalsCC,
           badge: alertInfo.total,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
           title: t('page.home.services.gasAccount'),
-          icon: RcIconGasAccount,
+          icon: RcIconGasAccountCC,
           showGiftIcon: isEligible,
         },
         // __DEV__ && {
@@ -385,7 +385,7 @@ function MultiAddressHome(): JSX.Element {
         {
           key: MultiHomeFeatTitle.Watchlist,
           title: t('page.home.services.watchlist'),
-          icon: RcIconWatchlist,
+          icon: RcIconWatchlistCC,
         },
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
@@ -399,6 +399,7 @@ function MultiAddressHome(): JSX.Element {
         key: MultiHomeFeatTitle;
         title: string;
         icon: React.FC<import('react-native-svg').SvgProps>;
+        color?: string;
         badge?: number;
         isSuccess?: boolean;
         showGiftIcon?: boolean;
@@ -485,7 +486,8 @@ function MultiAddressHome(): JSX.Element {
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
 
-  const displayFundWallet = useMemo(
+  const displayFundWallet = true;
+  const displayFundWallet1 = useMemo(
     () =>
       !!balanceAccounts.length &&
       balanceAccounts.every(e => e.balance === 0) &&
@@ -930,7 +932,11 @@ function MultiAddressHome(): JSX.Element {
                     });
                   }}>
                   <View style={styles.iconWrapper}>
-                    <el.icon width={28} height={28} />
+                    <el.icon
+                      width={28}
+                      height={28}
+                      color={el.color || colors2024['brand-default-icon']}
+                    />
                     {generateCustomBadgeIcon(el)}
                   </View>
                   <Text style={styles.gridText}>{el.title}</Text>

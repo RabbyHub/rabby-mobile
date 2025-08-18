@@ -273,7 +273,7 @@ export const HomeTopArea = ({
   const moreItems: {
     title: string;
     key: string;
-    Icon: any;
+    Icon: React.ComponentType<import('react-native-svg').SvgProps>;
     onPress: () => void;
     disabled?: boolean;
     badge?: number;

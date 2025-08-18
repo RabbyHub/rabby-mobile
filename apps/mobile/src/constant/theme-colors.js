@@ -83,10 +83,13 @@ const themeColors = {
 
 const themeColorsNext2024 = {
   light: {
-    'brand-default': 'rgba(112, 132, 255, 1)',
-    'brand-light-1': 'rgba(112, 132, 255, 0.12)',
-    'brand-light-2': 'rgba(112, 132, 255, 0.25)',
-    'brand-disable': 'rgba(112, 132, 255, 0.4)',
+    'brand-default': 'rgba(76, 101, 255, 1)',
+    'brand-default-light': 'rgba(76, 101, 255, 0.7)',
+    'brand-default-icon': 'rgba(64, 86, 221, 1)',
+
+    'brand-light-1': 'rgba(76, 101, 255, 0.12)',
+    'brand-light-2': 'rgba(76, 101, 255, 0.25)',
+    'brand-disable': 'rgba(76, 101, 255, 0.4)',
     'brand-light-4': 'rgba(112, 132, 255, 0.7)',
 
     'red-dark': 'rgba(199, 21, 10, 1)',
@@ -140,10 +143,13 @@ const themeColorsNext2024 = {
     'neutral-bg-gray': 'rgba(246, 247, 247, 1)',
   },
   dark: {
-    'brand-default': 'rgba(112, 132, 255, 1)',
-    'brand-light-1': 'rgba(112, 132, 255, 0.12)',
-    'brand-light-2': 'rgba(112, 132, 255, 0.25)',
-    'brand-disable': 'rgba(112, 132, 255, 0.4)',
+    'brand-default': 'rgba(76, 101, 255, 1)',
+    'brand-default-light': 'rgba(76, 101, 255, 0.7)',
+    'brand-default-icon': 'rgba(64, 86, 221, 1)',
+
+    'brand-light-1': 'rgba(76, 101, 255, 0.12)',
+    'brand-light-2': 'rgba(76, 101, 255, 0.25)',
+    'brand-disable': 'rgba(76, 101, 255, 0.4)',
     'brand-light-4': 'rgba(112, 132, 255, 0.7)',
 
     'red-dark': 'rgba(199, 21, 10, 1)',
