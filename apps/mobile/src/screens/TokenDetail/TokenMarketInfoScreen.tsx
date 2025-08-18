@@ -31,7 +31,6 @@ import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { CombineTokensItem } from '../Home/hooks/store';
 import { formatTokenAmount } from '@/utils/number';
@@ -44,7 +43,6 @@ import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { TokenChainAndContract } from './components/TokenChainAndContract';
 import { IssuerAndListSite } from './components/IssuerAndListSite';
 import RcIconWarningCC from '@/assets2024/icons/common/warning-circle-cc.svg';
-import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import { useSetAtom } from 'jotai';
@@ -364,18 +362,6 @@ export const TokenMarketInfoScreen = () => {
     }
   }, [token, accounts, isSingleAddress, finalAccount, tokenEntityList]);
 
-  const tokenChain = useMemo(() => {
-    return getChain(token?.chain);
-  }, [token?.chain]);
-
-  const { isSupportedChain, data: externalSwapDapps } =
-    useExternalSwapBridgeDapps(tokenChain!.enum, 'swap');
-
-  const tokenSupportSwap = useMemo(
-    () => isSupportedChain || externalSwapDapps.length > 0,
-    [isSupportedChain, externalSwapDapps],
-  );
-
   const unHold = useMemo(
     () => _unHold || tokenFromAddress.length === 0,
     [_unHold, tokenFromAddress],
@@ -419,11 +405,6 @@ export const TokenMarketInfoScreen = () => {
       address?: string,
       accountType?: KEYRING_TYPE,
     ) => {
-      if (!tokenSupportSwap) {
-        toast.error('Token not support');
-        return;
-      }
-
       const chain = findChain({
         serverId: token.chain,
       });
@@ -647,27 +628,18 @@ export const TokenMarketInfoScreen = () => {
           }
         />
         <View style={styles.btnContainer}>
-          <Tip
-            placement="top"
-            content={
-              !tokenSupportSwap
-                ? t('page.tokenDetail.notSupportedOnChain')
-                : undefined
-            }>
-            <Button
-              title={
-                isFromSwap
-                  ? t('global.Confirm')
-                  : t('page.tokenDetail.action.Sell')
-              }
-              containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              onPress={() =>
-                handleSwap('Sell', finalAccount?.address, finalAccount?.type)
-              }
-              buttonStyle={styles.btnInnerContainer}
-              disabled={!tokenSupportSwap}
-            />
-          </Tip>
+          <Button
+            title={
+              isFromSwap
+                ? t('global.Confirm')
+                : t('page.tokenDetail.action.Sell')
+            }
+            containerStyle={StyleSheet.flatten([styles.btnContainer])}
+            onPress={() =>
+              handleSwap('Sell', finalAccount?.address, finalAccount?.type)
+            }
+            buttonStyle={styles.btnInnerContainer}
+          />
         </View>
       </View>
     </NormalScreenContainer2024>
