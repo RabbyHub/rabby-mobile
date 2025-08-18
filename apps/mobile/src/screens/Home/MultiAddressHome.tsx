@@ -104,6 +104,8 @@ import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 import dayjs from 'dayjs';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 const HeaderHeight = 24;
 
@@ -486,9 +488,10 @@ function MultiAddressHome(): JSX.Element {
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
 
-  const displayFundWallet = true;
-  const displayFundWallet1 = useMemo(
-    () =>
+  const { mockData } = useMockDataForHomeCenterArea();
+
+  const displayFundWalletOrig = useMemo(() => {
+    return (
       !!balanceAccounts.length &&
       balanceAccounts.every(e => e.balance === 0) &&
       balanceCacheAccounts.every(e => e.balance === 0) &&
@@ -496,9 +499,16 @@ function MultiAddressHome(): JSX.Element {
         e =>
           transactionHistoryService.getTransactionGroups({ address: e.address })
             .length === 0,
-      ),
-    [balanceAccounts, balanceCacheAccounts],
-  );
+      )
+    );
+  }, [balanceAccounts, balanceCacheAccounts]);
+
+  const displayFundWallet = useMemo(() => {
+    if (isNonPublicProductionEnv && mockData.forceShowOffchainNotify) {
+      return true;
+    }
+    return displayFundWalletOrig;
+  }, [displayFundWalletOrig, mockData.forceShowOffchainNotify]);
 
   const fetchHistory = useCallback(() => {
     const addresses = balanceCacheAccounts.map(i => i.address);
