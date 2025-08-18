@@ -1,11 +1,10 @@
-import { BigNumber as EthersBigNumber } from 'ethers';
 import i18n from '@/utils/i18n';
-import { padStart } from 'lodash';
 import { ParsedTypedDataActionData } from '@rabby-wallet/rabby-action';
 import { getActionTypeText as getTransactionActionTypeText } from '../Actions/utils';
-import { parseNumber } from '@metamask/eth-sig-util';
-import { getArrayType, isArrayType } from '@metamask/abi-utils/dist/parsers';
-import { add0x, isStrictHexString } from '@/utils/address';
+import { decodeSingle, encodeSingle } from '@metamask/abi-utils';
+import BigNumber from 'bignumber.js';
+import { filterPrimaryType } from '../SignTypedDataExplain/parseSignTypedDataMessage';
+import { bytesToHex } from '@ethereumjs/util';
 
 export const getActionTypeText = (data: ParsedTypedDataActionData | null) => {
   const { t } = i18n;
@@ -75,47 +74,89 @@ export function normalizeTypeData(data: {
   message: Record<string, any>;
 }) {
   try {
-    const { types, primaryType, domain, message } = data;
-    const domainTypes = types.EIP712Domain;
-    const messageTypes = types[primaryType];
-    domainTypes.forEach(item => {
-      const { name, type } = item;
-      domain[name] = normalizeValue(type, domain[name]);
-    });
-    messageTypes.forEach(item => {
-      const { name, type } = item;
-      message[name] = normalizeValue(type, message[name]);
-    });
-    return { types, primaryType, domain, message };
+    return parseSignTypedData(data);
   } catch (e) {
     return data;
   }
 }
+function parseSignTypedData(typedData: {
+  primaryType: string;
+  types: Record<string, any>;
+  domain: Record<string, any>;
+  message: Record<string, any>;
+}) {
+  const { domain, message, types, primaryType } = typedData;
 
-export function normalizeValue(type: string, value: unknown): any {
-  if (isArrayType(type) && Array.isArray(value)) {
-    const [innerType] = getArrayType(type);
-    return value.map(item => normalizeValue(innerType, item));
+  function parseAndDecode(data: any, dataType: string) {
+    if (dataType.endsWith('[]')) {
+      const elementType = dataType.slice(0, -2);
+      const decodedArray: any[] = [];
+      for (const element of data) {
+        decodedArray.push(parseAndDecode(element, elementType));
+      }
+      return decodedArray;
+    } else if (types[dataType]) {
+      for (const field of types[dataType]) {
+        const { name, type } = field;
+        data[name] = parseAndDecode(data[name], type);
+      }
+      return data;
+    } else {
+      if (dataType.startsWith('bytes')) {
+        // bytes type is complex and no need to normalize
+        return data;
+      }
+
+      const encodedBuffer = encodeSingle(dataType, data);
+      let encodedHexValue = bytesToHex(encodedBuffer);
+      switch (dataType) {
+        case 'address':
+          encodedHexValue = bytesToHex(encodedBuffer.slice(12));
+          break;
+        case 'bool':
+          if (new BigNumber(encodedHexValue).eq(0)) {
+            return false;
+          } else if (new BigNumber(encodedHexValue).eq(1)) {
+            return true;
+          }
+          break;
+        default:
+        // NOTHING
+      }
+      if (
+        dataType.startsWith('uint') ||
+        dataType.startsWith('int') ||
+        dataType.startsWith('ufixed') ||
+        dataType.startsWith('fixed')
+      ) {
+        return new BigNumber(encodedHexValue).toFixed();
+      }
+      if (dataType === 'string') {
+        return decodeSingle('string', encodedBuffer);
+      }
+
+      return encodedHexValue;
+    }
   }
 
-  if (type === 'address') {
-    let address = value as string;
-    if (typeof value === 'string' && !/^(0x|0X)/.test(value)) {
-      address = EthersBigNumber.from(value).toHexString();
-    } else if (isStrictHexString(value)) {
-      address = add0x(value);
-    }
-    try {
-      const parseAddress = padStart(
-        parseNumber(address).toString('hex'),
-        40,
-        '0',
-      );
-      return `0x${parseAddress}`;
-    } catch (e) {
-      return address;
-    }
+  for (const { name, type } of types.EIP712Domain) {
+    domain[name] = parseAndDecode(domain[name], type);
   }
 
-  return value;
+  typedData.message = parseAndDecode(message, primaryType);
+
+  // Filter out the fields that are not part of the primary type
+  typedData.message = filterPrimaryType({
+    primaryType,
+    types,
+    message: typedData.message,
+  });
+
+  typedData.domain = filterPrimaryType({
+    primaryType: 'EIP712Domain',
+    types,
+    message: domain,
+  });
+
+  return typedData;
 }
