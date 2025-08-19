@@ -504,11 +504,11 @@ function MultiAddressHome(): JSX.Element {
   }, [balanceAccounts, balanceCacheAccounts]);
 
   const displayFundWallet = useMemo(() => {
-    if (isNonPublicProductionEnv && mockData.forceShowOffchainNotify) {
+    if (isNonPublicProductionEnv && mockData.forceShowFundWallet) {
       return true;
     }
     return displayFundWalletOrig;
-  }, [displayFundWalletOrig, mockData.forceShowOffchainNotify]);
+  }, [displayFundWalletOrig, mockData.forceShowFundWallet]);
 
   const fetchHistory = useCallback(() => {
     const addresses = balanceCacheAccounts.map(i => i.address);

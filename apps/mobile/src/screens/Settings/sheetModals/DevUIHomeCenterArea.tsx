@@ -16,6 +16,7 @@ import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 import { useMakeMockDataForRateGuideExposure } from '@/components/RateModal/hooks';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { useMockClearOfflineChainTips } from '@/screens/Home/components/OfflineChainNotify';
 
 const MAKE_DEFAULT_MOCK_DATA = () => ({
   forceShowFundWallet: false,
@@ -84,11 +85,12 @@ export default function DevUIHomeCenterAreaModal({
 
   const { mockExposureRateGuide } = useMakeMockDataForRateGuideExposure();
   const { mockData, setMockData } = useMakeMockDataForHomeCenterArea();
+  const { clearOfflineChainTips } = useMockClearOfflineChainTips();
 
   const Items = (() => {
     const list: DevTestItem[] = [
       {
-        label: '[Memory] Force Offchain',
+        label: '[Data] Clear Offchain',
         icon: <RcCode style={styles.labelIcon} />,
         // onPress: () => {
         // },
@@ -115,9 +117,12 @@ export default function DevUIHomeCenterAreaModal({
           return (
             <AppSwitch2024
               value={mockData.forceShowFundWallet}
-              onValueChange={value =>
-                setMockData(prev => ({ ...prev, forceShowFundWallet: value }))
-              }
+              onValueChange={value => {
+                setMockData(prev => ({ ...prev, forceShowFundWallet: value }));
+                if (value) {
+                  clearOfflineChainTips();
+                }
+              }}
             />
           );
         },
