@@ -196,9 +196,6 @@ export function TokenPriceChart(props: Props) {
     };
   }, [data?.isLoss, percent, amountSum, priceType, activeKey, token]);
 
-  const curve24hXOffset = useSharedValue(0);
-  const timeMachineXOffset = useSharedValue(0);
-
   return (
     <View>
       <View style={styles.flexWrap}>
@@ -246,8 +243,6 @@ export function TokenPriceChart(props: Props) {
       {TIME_TAB_LIST.map(e => (
         <View key={e.key} style={activeKey !== e.key && styles.hidden}>
           <Chart
-            amount={priceType === 'holding' ? amountSum : 1}
-            isOffline={false}
             data={
               (isRealTimeKey(e.key)
                 ? realTimeData?.list
@@ -258,7 +253,6 @@ export function TokenPriceChart(props: Props) {
             loading={isRealTimeKey(e.key) ? curveLoading : timeMachineLoading}
             isNoAssets={false}
             pathColor={pathColor}
-            xOffset={e.key === '24h' ? curve24hXOffset : timeMachineXOffset}
             extraMetaInfo={extraMetaInfo}
           />
         </View>
@@ -282,15 +276,10 @@ function Chart({
   data,
   activeKey,
   currentInfo,
-  isOffline,
-  amount,
   loading,
   pathColor,
-  xOffset,
   extraMetaInfo,
 }: {
-  amount: number;
-  isOffline: boolean;
   data: CurvePoint[];
   activeKey: TabKey;
   currentInfo: {
@@ -302,7 +291,6 @@ function Chart({
   loading: boolean;
   isNoAssets: boolean;
   pathColor: string;
-  xOffset: SharedValue<number>;
   extraMetaInfo?: React.ReactNode;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -342,32 +330,8 @@ function Chart({
             <LineChart.CursorCrosshair
               color={pathColor}
               outerSize={12}
-              size={8}>
-              {/* <LineChart.Tooltip cursorGutter={114} yGutter={-8}>
-                <LineChart.DatetimeText
-                  style={styles.dateTime}
-                  format={({ value }) => {
-                    'worklet';
-                    // due to the nature of reanimated worklets, you cannot define functions that run on the React Native JS thread.
-                    if (value === -1) {
-                      return '';
-                    }
-                    // if use dayjs in worklet it does not work
-                    const date = new Date(value);
-                    const YYYY = date.getFullYear();
-                    const MM = String(date.getMonth() + 1).padStart(2, '0');
-                    const DD = String(date.getDate()).padStart(2, '0');
-                    const HH = String(date.getHours()).padStart(2, '0');
-                    const mm = String(date.getMinutes()).padStart(2, '0');
-                    if (activeKey === '24h' || activeKey === '1W') {
-                      return `${MM} ${DD}, ${HH}:${mm}`;
-                    }
-                    return `${MM} ${DD}, ${YYYY}`;
-                  }}
-                />
-              </LineChart.Tooltip> */}
-            </LineChart.CursorCrosshair>
-            <Mask xOffset={xOffset} />
+              size={8}
+            />
           </LineChart>
         </>
       ) : (
