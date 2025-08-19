@@ -49,11 +49,12 @@ prepare() {
 
   export js_bundle_dir="$work_dir/jsbundle";
   export js_bundle_relname="assets/index.android.bundle"
-  export js_bundle_path="$js_bundle_dir/$js_bundle_relname"
   export res_dir="$js_bundle_dir/res"
 
   export reg_apk="$project_dir/android/app/build/outputs/apk/regression/app-regression.apk"
   export template_apk="$work_dir/template.apk"
+  # rm -f $template_apk;
+
   if [ ! -f "$template_apk" ]; then
     revision_hash=$(collect_android_native_entries)
     # allow failed
@@ -84,7 +85,7 @@ prepare() {
 }
 
 build_js_bundle() {
-  if [ ! -z $SKIP_BUNDLE_JS ] && [ -f $js_bundle_path ]; then
+  if [ ! -z $SKIP_BUNDLE_JS ] && [ -f "$js_bundle_dir/$js_bundle_relname" ]; then
     echo "Skipping JS bundle build as per SKIP_BUNDLE_JS flag."
     return
   fi
@@ -101,14 +102,25 @@ build_js_bundle() {
 
   export RABBY_MOBILE_BUILD_ENV="regression";
 
-  rm -rf $work_dir/assets &&
+  rm -rf $js_bundle_dir;
+
   $project_dir/node_modules/.bin/react-native bundle \
     --platform android \
     --reset-cache \
     --dev false \
     --entry-file index.js \
-    --bundle-output $js_bundle_path \
-    --assets-dest $res_dir
+    --bundle-output $js_bundle_dir/$js_bundle_relname \
+    --minify true
+    # --assets-dest $res_dir \
+
+
+  # local osType=$(uname -s)
+  # if [ "$osType" == "Linux" ]; then
+  #   local hermes_bin="$project_dir/node_modules/react-native/sdks/hermesc/linux-bin/hermes"
+  # else
+  #   local hermes_bin="$project_dir/node_modules/react-native/sdks/hermesc/osx-bin/hermes"
+  # fi
+  # "$hermes_bin" -emit-binary -out "$js_bundle_dir/$js_bundle_relname.hbc" "$js_bundle_dir/$js_bundle_relname"
 
   if [ $? -ne 0 ]; then
     echo "Failed to build JS bundle."
@@ -130,6 +142,7 @@ replace_js_bundle() {
   echo "Directly replace index.android.bundle in APK..."
   cd $js_bundle_dir;
   zip -r1X $repacked_apk $js_bundle_relname
+  # zip -r0X $repacked_apk $js_bundle_relname $js_bundle_relname.hbc
   cd $work_dir;
   # echo "Directly replace res in APK..."
   # zip -r0k $repacked_apk $res_dir
@@ -151,6 +164,9 @@ resign_apk() {
     --ks-pass pass:$RABBY_MOBILE_ANDROID_STORE_PASSWORD \
     --ks-key-alias $RABBY_MOBILE_ANDROID_KEY_ALIAS \
     --ks $tmp_key_store_file \
+    --v2-signing-enabled true \
+    --v3-signing-enabled true \
+    --v4-signing-enabled true \
     --out $output_apk \
     $aligned_apk
 
