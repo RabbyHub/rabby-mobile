@@ -81,6 +81,13 @@
       "searchPlaceHolder2": "Procurar Token",
       "contextMenu": {
         "viewDetail": "Ver Detalhes"
+      },
+      "bridgeTo": {
+        "low": "Baixa liquidez",
+        "high": "Alta liquidez"
+      },
+      "favoriteFilter": {
+        "all": "Todos"
       }
     },
     "PillsSwitch": {
@@ -834,7 +841,8 @@
       "noSupprotTokenForDex": "Este token pode não ser suportado por esta bolsa. Verifique antes de continuar para evitar perdas",
       "From": "De",
       "noSupprotTokenForSafe": "O endereço Safe para o qual está a enviar tokens não está implantado nesta cadeia. Verifique antes de prosseguir para evitar perdas.",
-      "noSupportTokenForChain": "O endereço do destinatário é um endereço de contrato em uma cadeia diferente. Verifique antes de prosseguir para evitar perdas."
+      "noSupportTokenForChain": "O endereço do destinatário é um endereço de contrato em uma cadeia diferente. Verifique antes de prosseguir para evitar perdas.",
+      "addressDetail": "Detalhe do Endereço"
     },
     "signFooterBar": {
       "importedByLedger": "Importado por Ledger",
@@ -907,6 +915,7 @@
     "gasTopUp": {
       "InsufficientBalanceTips": "Saldo insuficiente",
       "Select-from-supported-tokens": "Selecione dos tokens suportados",
+      "Deposit-tip": "Depositar com USDC/USDT",
       "Value": "Valor",
       "No_Tokens": "Sem Tokens",
       "Loading_Tokens": "A carregar Tokens...",
@@ -1840,7 +1849,6 @@
         "pin_success": "Fixado com sucesso"
       },
       "Info": "Informação",
-      "Mybalance": "O Meu Saldo",
       "SeeMore": "Ver mais",
       "fdv": "FDV",
       "Defi": "DeFi",
@@ -1851,7 +1859,6 @@
       "IssuedBy": "Emitido por",
       "ListedBy": "Listado por",
       "NoSupportedExchanges": "Nenhuma bolsa compatível disponível",
-      "Transaction": "Transação",
       "SupportedExchanges": "Exchanges Suportadas",
       "OriginIssue": "Emitido nativamente nesta blockchain",
       "BridgeIssue": "Token em ponte por um terceiro",
@@ -1991,7 +1998,8 @@
         "noEnoughValueBalance": "Saldo da Vault insuficiente. Mude de cadeia ou tente novamente mais tarde.",
         "recipientAddress": "Carteira de destinatário",
         "selectRecipientAddress": "Selecionar carteira do destinatário",
-        "noRecipient": "Nenhuma carteira de destinatário disponível"
+        "noRecipient": "Nenhuma carteira de destinatário disponível",
+        "availableBalance": "Saldo de retirada disponível: {{balance}}"
       },
       "withdrawConfirmModal": {
         "button": "Visualizar no DeBank",
@@ -2188,22 +2196,38 @@
         "disconnect": "Desconectar",
         "connectChain": "Conectar Chain",
         "connectWallet": "Conectar Wallet"
+      },
+      "BrowserSearch": {
+        "results": "Resultados",
+        "placeholder": "Pesquisar Websites",
+        "searchInGoogle": "Pesquisar \"{{searchText}}\" no Google",
+        "openUrl": "Abrir \"{{searchText}}\"",
+        "recent": "Recente"
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "Abrir Websites"
       }
     },
     "browserManage": {
       "option": {
         "favorites": "Favoritos",
         "history": "Histórico",
-        "tab": "Aba"
+        "tab": "Aba",
+        "recent": "Recente"
       },
       "BrowserBookmarkList": {
-        "title": "Favoritos"
+        "title": "Favoritos",
+        "emptyTitle": "Ainda não foi adicionado nenhum website."
       },
       "BrowserHistoryList": {
-        "title": "Histórico"
+        "title": "Histórico",
+        "emptyTitle": "Sem histórico nos últimos 30 dias",
+        "clearAllHistory": "Limpar todo o Histórico"
       },
       "BrowserTabList": {
-        "closeAllTabs": "Fechar todas as abas"
+        "closeAllTabs": "Fechar todas as abas",
+        "emptyDesc": "Abra uma nova aba agora",
+        "emptyTitle": "Ainda não há guias abertas"
       }
     },
     "scan": {

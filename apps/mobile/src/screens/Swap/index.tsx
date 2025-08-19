@@ -101,6 +101,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { last } from 'lodash';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -226,6 +227,11 @@ const Swap = ({
   } = useExternalSwapBridgeDapps(chain, 'swap');
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: 'Website_Visit_Other',
+      label: safeGetOrigin(url),
+    });
   });
   const [swapDappOpen, setSwapDappOpen] = useState(false);
 
@@ -685,6 +691,17 @@ const Swap = ({
 
   const isFocused = useIsFocused();
 
+  // 监听页面焦点变化，当从TokenDetail返回时确保参数被正确设置
+  // useEffect(() => {
+  //   if (isFocused && navState?.isSwapToTokenDetail) {
+  //     console.log('DEBUG: Swap page focused, setting isSwapToTokenDetail to false');
+  //     navigation.setParams({
+  //       ...navState,
+  //       isSwapToTokenDetail: false,
+  //     });
+  //   }
+  // }, [isFocused, navState?.isSwapToTokenDetail, navigation]);
+
   const swapBtnDisabled =
     quoteLoading ||
     !payToken ||
@@ -960,22 +977,11 @@ const Swap = ({
                 if (!isForMultipleAddress) {
                   normalSetChainToken();
                 } else {
-                  const { accountSwitchTo } = switchAccountOnSelectedToken({
+                  switchAccountOnSelectedToken({
                     token,
                     currentAccount,
                   });
-                  if (!accountSwitchTo) {
-                    normalSetChainToken();
-                  } else {
-                    const chainItem = findChainByServerID(token.chain);
-                    naviReplace(RootNames.StackTransaction, {
-                      screen: RootNames.MultiSwap,
-                      params: {
-                        chainEnum: chainItem?.enum,
-                        tokenId: token.id,
-                      },
-                    });
-                  }
+                  normalSetChainToken();
                 }
               }}
               account={currentAccount}

@@ -26,7 +26,7 @@ export default function ToAddressControl2024({
 >) {
   const { styles } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist } = useWhitelist();
-  const { findAccount } = useWhiteListAddress(true);
+  const { findAccount } = useWhiteListAddress();
   const [currentAccount, setCurrentAccount] = useState<KeyringAccountWithAlias>(
     {
       address,

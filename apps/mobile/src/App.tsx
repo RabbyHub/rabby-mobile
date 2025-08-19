@@ -37,6 +37,7 @@ import { useIAPListener } from './hooks/iap/useIAPListener';
 import { useGasAccountInfo } from './screens/GasAccount/hooks';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
+import { useUniversalLinkOnTop } from './hooks/universalLink';
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
 
@@ -60,6 +61,7 @@ function MainScreen({ rabbitCode }: AppProps) {
 
   useSetupServiceStub();
   useUpgradeInfo({ isTop: true });
+  useUniversalLinkOnTop();
   useSecureOnBackground();
   useGlobalAppPreventScreenrecordOnDev();
   useAppPreventScreenshotOnScreen();

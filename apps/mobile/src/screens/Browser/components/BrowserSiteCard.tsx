@@ -1,24 +1,20 @@
-import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
-import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
-import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
-import { HighlightText } from '@/components2024/HighlightText';
+import RcIconStarFull from '@/assets/icons/dapp/icon-star-mini-full.svg';
 import { DappInfo } from '@/core/services/dappService';
 import { useTheme2024 } from '@/hooks/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { noop } from 'lodash';
 import React from 'react';
 import {
   Image,
   Platform,
   StyleProp,
   Text,
+  TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+// import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export const BrowserSiteListBy = ({
   data,
@@ -48,12 +44,16 @@ interface DappCardProps {
   onFavoritePress?: (dapp: DappInfo) => void;
   isActive?: boolean;
   isShowDesc?: boolean;
-  keyword?: string;
+  containerStyle?: StyleProp<ViewStyle>;
+  isShowListBy?: boolean;
+  isShowFavorite?: boolean;
+  isShowBorder?: boolean;
 }
 
 export const BrowserSiteCard: React.FC<DappCardProps> = ({
   data,
   onPress,
+  containerStyle,
   ...rest
 }) => {
   // const { styles } = useTheme2024({ getStyle });
@@ -62,7 +62,8 @@ export const BrowserSiteCard: React.FC<DappCardProps> = ({
     <TouchableOpacity
       onPress={() => {
         onPress?.(data);
-      }}>
+      }}
+      style={containerStyle}>
       <BrowserSiteCardInner data={data} {...rest} />
     </TouchableOpacity>
   );
@@ -74,15 +75,22 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
   onFavoritePress,
   style,
   isShowDesc = false,
-  keyword,
+  isShowListBy = false,
+  isShowFavorite = false,
+  isShowBorder = false,
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
-  const chain = findChain({ enum: data.chainId });
+  // const chain = findChain({ enum: data.chainId });
 
   return (
-    <View style={[styles.dappCard, style]}>
-      <View style={styles.body} onStartShouldSetResponder={() => true}>
+    <View
+      style={[
+        styles.dappCard,
+        isShowBorder ? styles.dappCardBorder : null,
+        style,
+      ]}>
+      <View style={styles.body}>
         <View style={styles.dappIconWraper}>
           <DappIcon
             source={
@@ -97,7 +105,7 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
           />
           {isActive ? <View style={styles.dappIconCircle} /> : null}
           <>
-            {data?.isConnected && chain ? (
+            {/* {data?.isConnected && chain ? (
               chain.isTestnet ? (
                 <TestnetChainLogo
                   name={chain.name}
@@ -112,39 +120,34 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
                   style={styles.chainIcon}
                 />
               )
-            ) : null}
+            ) : null} */}
             {/* {!data?.isConnected ? (
               <RcIconDisconnect style={styles.chainIcon} />
             ) : null} */}
           </>
         </View>
         <View style={styles.dappContent}>
-          {keyword ? (
-            <HighlightText
-              style={styles.dappOrigin}
-              highlightStyle={styles.dappOriginHighlight}
-              numberOfLines={1}
-              searchWords={[keyword]}
-              textToHighlight={stringUtils.unPrefix(data.origin, 'https://')}
-            />
-          ) : (
+          {data.name ? (
+            <Text style={[styles.dappTitle]} numberOfLines={1}>
+              {data.name}
+            </Text>
+          ) : null}
+          <View style={styles.dappInfo}>
             <Text style={styles.dappOrigin} numberOfLines={1}>
               {stringUtils.unPrefix(data.origin, 'https://')}
             </Text>
-          )}
-          <View style={styles.dappInfo}>
-            {data.name ? (
-              <Text style={[styles.dappName]} numberOfLines={1}>
-                {data.name}
-              </Text>
-            ) : null}
-            {data.name && data.info?.collected_list?.length ? (
+            {isShowListBy &&
+            data.origin &&
+            data.info?.collected_list?.length ? (
               <View style={styles.divider} />
             ) : null}
-            <BrowserSiteListBy data={data.info?.collected_list} />
+            {isShowListBy && data.info?.collected_list?.length ? (
+              <BrowserSiteListBy data={data.info?.collected_list} />
+            ) : null}
           </View>
         </View>
-        <TouchableOpacity
+
+        {/* <TouchableOpacity
           style={styles.dappAction}
           // disallowInterruption={true}
           hitSlop={10}
@@ -153,7 +156,7 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
             onFavoritePress?.(data);
           }}>
           {data.isFavorite ? <RcIconStarFull /> : <RcIconStar />}
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       {data.info?.description && !isActive && isShowDesc ? (
         <View style={styles.footer}>
@@ -164,24 +167,49 @@ export const BrowserSiteCardInner: React.FC<DappCardProps> = ({
           </View>
         </View>
       ) : null}
+      {isShowFavorite && data.isFavorite ? (
+        <View style={styles.badge}>
+          <RcIconStarFull width={12} height={12} />
+        </View>
+      ) : null}
     </View>
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   dappCard: {
     borderRadius: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
-    paddingVertical: 16,
-    paddingLeft: 16,
-    paddingRight: 20,
-    minHeight: 78,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+    // borderWidth: 1,
+    // borderColor: colors2024['neutral-line'],
+    paddingVertical: 12,
+    paddingLeft: 12,
+    paddingRight: 24,
+    minHeight: 70,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
 
+    position: 'relative',
+
+    // ...Platform.select({
+    //   ios: {
+    //     shadowColor: 'rgba(0, 0, 0, 0.02)',
+    //     shadowOffset: { width: 0, height: 10 },
+    //     shadowOpacity: 1,
+    //     shadowRadius: 11.9,
+    //   },
+    //   android: {
+    //     // elevation: 4,
+    //   },
+    // }),
+  },
+
+  dappCardBorder: {
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
     ...Platform.select({
       ios: {
         shadowColor: 'rgba(0, 0, 0, 0.02)',
@@ -201,12 +229,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
     overflow: 'hidden',
   },
-  dappOrigin: {
+  dappTitle: {
     fontFamily: 'SF Pro Rounded',
     fontWeight: '700',
     fontSize: 16,
     lineHeight: 20,
     color: colors2024['neutral-title-1'],
+  },
+  dappOrigin: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
   },
 
   dappOriginHighlight: {
@@ -295,5 +330,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 12,
     borderRadius: 12,
     opacity: 0.7,
+  },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: colors2024['orange-light-1'],
+    paddingVertical: 3,
+    paddingHorizontal: 12,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 12,
   },
 }));

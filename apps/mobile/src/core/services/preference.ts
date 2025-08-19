@@ -169,6 +169,8 @@ export interface PreferenceStore {
   tempCurrentAccount?: Account;
   /** 用户是否跳过了watchlist引导 */
   watchlistSkip?: boolean;
+
+  lastReportTime?: number;
 }
 
 export interface AddressSortStore {

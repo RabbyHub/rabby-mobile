@@ -1,4 +1,4 @@
-import { atomByMMKV } from '@/core/storage/mmkv';
+import { atomByMMKV, MMKVStorageStrategy } from '@/core/storage/mmkv';
 import { KeyringAccount } from '@rabby-wallet/keyring-utils';
 
 export type SceneAccountInfo = {
@@ -37,7 +37,6 @@ export const AccountSwitcherInfos = {
 
   History: makeSceneAccount(),
   MultiHistory: makeSceneAccount(),
-  // HistoryFilterScam: makeSceneAccount(), // treat HistoryFilterScam screen as History screen
 
   Receive: makeSceneAccount(),
   GasAccount: makeSceneAccount(),
@@ -50,4 +49,5 @@ export const AccountSwitcherInfos = {
 export const sceneAccountInfoAtom = atomByMMKV<SceneAccounts>(
   '@SceneAccounts',
   AccountSwitcherInfos,
+  { storage: MMKVStorageStrategy.compatJson },
 );

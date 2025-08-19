@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { noop } from 'lodash';
 
@@ -24,9 +24,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { CheckBoxRect } from '@/components2024/CheckBox';
 import { RcIconWarningCircleCC } from '@/assets2024/icons/common';
 import { toast } from '@/components2024/Toast';
+import { contactService } from '@/core/services';
 export interface ConfirmAddressScreenProps {
   title?: string;
-  disbaleWhiteSwitch?: boolean;
+  disableWhiteSwitch?: boolean;
   cex?: ProjectItem;
   account: KeyringAccountWithAlias;
   onConfirm?: (
@@ -41,7 +42,7 @@ const ConfirmAddress = ({
   onConfirm,
   title,
   cex,
-  disbaleWhiteSwitch,
+  disableWhiteSwitch,
 }: ConfirmAddressScreenProps) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -49,6 +50,10 @@ const ConfirmAddress = ({
   const [inWhiteList, setInWhiteList] = useState(
     isAddrOnWhitelist(account.address),
   );
+  const [editingAlias, setEditingAlias] = useState('');
+  const shouldPasswordValidation = useMemo(() => {
+    return disableWhiteSwitch || inWhiteList;
+  }, [disableWhiteSwitch, inWhiteList]);
   const { loading, risks, addressDesc } = useRisks(
     account.address,
     !!account.balance,
@@ -63,7 +68,7 @@ const ConfirmAddress = ({
   });
 
   const setInWhitelist = useCallback(
-    (bool: boolean) => {
+    async (bool: boolean) => {
       if (bool) {
         const isImported = accounts.some(i =>
           isSameAddress(i.address, account.address),
@@ -74,22 +79,28 @@ const ConfirmAddress = ({
             ? 'Send_AddWhitelist_imported'
             : 'Send_AddWhitelist_notImported',
         });
-        addWhitelist(account.address, {
+        return addWhitelist(account.address, {
           hasValidated: true,
           onAdded: () => {
             toast.success(t('page.whitelist.addSuccessful'));
           },
         });
       } else {
-        removeWhitelist(account.address);
+        return removeWhitelist(account.address);
       }
     },
     [account.address, addWhitelist, removeWhitelist, t, accounts],
   );
 
-  const handleConfirm = () => {
-    if (!disbaleWhiteSwitch) {
-      setInWhitelist(inWhiteList);
+  const handleConfirm = async () => {
+    if (!disableWhiteSwitch) {
+      await setInWhitelist(inWhiteList);
+    }
+    if (editingAlias.trim().length) {
+      contactService.updateAlias({
+        address: account.address,
+        name: editingAlias,
+      });
     }
     onConfirm?.(account, addressDesc);
   };
@@ -98,7 +109,7 @@ const ConfirmAddress = ({
       style={[
         styles.screen,
         loading && {
-          minHeight: disbaleWhiteSwitch ? 464 : 515,
+          minHeight: disableWhiteSwitch ? 464 : 515,
         },
       ]}>
       <Text style={styles.modalTitle}>
@@ -113,9 +124,12 @@ const ConfirmAddress = ({
         loading={loading}
         addressDesc={addressDesc}
         account={account}
+        allowEditAlias={!disableWhiteSwitch} // not for whitelist
+        editingAlias={editingAlias}
+        setEditingAlias={setEditingAlias}
         style={styles.addressCard}
       />
-      {!loading && !disbaleWhiteSwitch && (
+      {!loading && !disableWhiteSwitch && (
         <View style={styles.whitelist}>
           <Text style={styles.text}>{t('page.whitelist.addToWhitelist')}</Text>
           <AppSwitch2024 onValueChange={setInWhiteList} value={inWhiteList} />
@@ -125,7 +139,7 @@ const ConfirmAddress = ({
         style={[
           styles.riskList,
           loading && {
-            marginTop: disbaleWhiteSwitch ? 41 : 92,
+            marginTop: disableWhiteSwitch ? 41 : 92,
             marginBottom: 123,
           },
         ]}>
@@ -165,7 +179,7 @@ const ConfirmAddress = ({
             styles.footerButtonGroup,
             { marginBottom: safeSizes.footerButtonGroupMb },
           ])}
-          authButton
+          authButton={shouldPasswordValidation}
           onCancel={onCancel ?? noop}
           onConfirm={handleConfirm}
           confirmDisabled={risks.length > 0 && !isChecked}

@@ -11,7 +11,7 @@ import { KeyringTypeName } from '@rabby-wallet/keyring-utils/src/types';
 import { groupBy } from 'lodash';
 import { useCallback, useLayoutEffect, useState } from 'react';
 
-export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
+export const useWhiteListAddress = () => {
   const { whitelist, isAddrOnWhitelist } = useWhitelist({
     disableAutoFetch: false,
   });
@@ -29,7 +29,10 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
         .filter(acc => isAddrOnWhitelist(acc.address))
         .map(acc => ({
           address: acc.address,
-          aliasName: acc.aliasName || ellipsisAddress(acc.address),
+          aliasName:
+            contactService.getAliasByAddress(acc.address)?.alias ||
+            acc.aliasName ||
+            ellipsisAddress(acc.address),
           balance: acc.balance || 0,
           type: acc.brandName as KeyringTypeName,
           brandName: acc.brandName,
@@ -55,36 +58,8 @@ export const useWhiteListAddress = (disableFetchBalance?: boolean) => {
           (a, b) => (b.balance || 0) - (a.balance || 0),
         ),
       );
-      if (!disableFetchBalance) {
-        const userTokenSettings = await getTokenSettings();
-        Promise.allSettled(
-          unimportAddress
-            .filter(acc => !acc.balance)
-            .map(async acc => {
-              const { total_usd_value } = await batchBalanceWithLocalCache({
-                address: acc.address,
-                isCore: false,
-                ...userTokenSettings,
-              });
-              return { address: acc.address, balance: total_usd_value || 0 };
-            }),
-        ).then(result => {
-          const successRes = result
-            .filter(item => item.status === 'fulfilled')
-            .reduce((pre, curr) => {
-              pre[curr.value.address] = curr.value.balance;
-              return pre;
-            }, {});
-          setList(pre =>
-            pre.map(item => ({
-              ...item,
-              balance: successRes[item.address] || item.balance,
-            })),
-          );
-        });
-      }
     })();
-  }, [accounts, disableFetchBalance, isAddrOnWhitelist, whitelist]);
+  }, [accounts, isAddrOnWhitelist, whitelist]);
 
   const findAccount = useCallback(
     async (address: string, brandName?: string, disableBalance?: boolean) => {

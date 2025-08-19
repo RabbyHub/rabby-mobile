@@ -7,7 +7,9 @@ import WebView, { WebViewNavigation } from 'react-native-webview';
 export type WebViewState = Pick<
   WebViewNavigation,
   'canGoBack' | 'canGoForward' | 'loading' | 'title' | 'url'
->;
+> & {
+  resolvedUrl: string;
+};
 
 export type WebViewActions = ReturnType<
   typeof useWebViewControl
@@ -26,6 +28,7 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
   const webviewRef = useRef<WebView>(null);
   const webviewIdRef = useRef<string>(initialTabId || makeInnerDappTabId());
 
+  const resolvedUrlRef = useRef<string>(BLANK_PAGE);
   const urlRef = useRef<string>(BLANK_PAGE);
   const titleRef = useRef<string>('');
   const iconRef = useRef<string | undefined>();
@@ -36,6 +39,7 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
     loading: false,
     title: '',
     url: '',
+    resolvedUrl: '',
   });
 
   const onNavigationStateChange = useCallback(
@@ -47,13 +51,17 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
       urlRef.current = newNavState.url || '';
       titleRef.current = newNavState.title || '';
 
-      setWebViewState({
+      setWebViewState(prev => ({
         canGoBack: newNavState.canGoBack,
         canGoForward: newNavState.canGoForward,
         loading: newNavState.loading,
         title: newNavState.title,
         url: newNavState.url,
-      });
+        resolvedUrl:
+          newNavState.navigationType === 'backforward'
+            ? newNavState.url
+            : prev.resolvedUrl,
+      }));
 
       if (!newNavState.url) {
         return;
@@ -84,9 +92,11 @@ export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
 
   return {
     webviewState,
+    setWebViewState,
     webviewRef,
     webviewIdRef,
     urlRef,
+    resolvedUrlRef,
     titleRef,
     iconRef,
 

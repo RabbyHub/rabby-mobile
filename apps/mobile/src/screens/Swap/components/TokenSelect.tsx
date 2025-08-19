@@ -12,14 +12,10 @@ import React, {
 import { View, Text, TouchableOpacity } from 'react-native';
 import { trigger } from 'react-native-haptic-feedback';
 
-import { omit, uniqBy } from 'lodash';
+import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
-import {
-  isSwapTokenType,
-  ITokenCheck,
-  TokenItemForRender,
-} from '@/components/Token/TokenSelectorSheetModal';
+import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken } from '@/hooks/chainAndToken/useToken';
 import {
@@ -35,10 +31,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
 import { convertSmallTokenList } from '@/screens/Home/utils/converAssets';
 import { ellipsisOverflowedText } from '@/utils/text';
-import { useSwapRecentToTokens } from '../hooks/recent';
-import { customTestnetService, preferenceService } from '@/core/services';
+import { customTestnetService } from '@/core/services';
 import { CHAINS_ENUM } from '@debank/common';
-import { Account, IManageToken } from '@/core/services/preference';
+import { Account } from '@/core/services/preference';
 import {
   makeKeyForTokenItemMaybeWithOwner,
   TokenItemMaybeWithOwner,
@@ -55,6 +50,7 @@ import { useSelectTokens } from '../hooks/useSelectTokens';
 import { useSwitchNetTab } from '@/components2024/PillsSwitch/NetSwitchTabs';
 import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -118,11 +114,12 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
     const [updateNonce, setUpdateNonce] = useState(0);
+    const [favoriteFilterValue, setFavoriteFilterValue] =
+      useState<FavoriteFilterType>('all');
+
     const [_, setLongPressToken] = useLongPressTokenAtom();
     const queryConds = useDebounceValue(_queryConds, 250);
-    // settimoutout ref
     const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
     const currentAccount = queryConds.account;
     const {
       tokens,
@@ -155,10 +152,11 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           clearTimeout(timeRef.current);
           timeRef.current = null;
         }
-        if (!tokenSelectorVisible || useSwapTokenList) {
+        if (!tokenSelectorVisible) {
           return;
         }
-        if (!tokens.length) {
+        const existedTokens = !!tokens.length;
+        if (!existedTokens) {
           if (type === 'send') {
             currentAccount?.address &&
               (await getCacheTokens([currentAccount.address]));
@@ -251,17 +249,32 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       [type],
     );
 
+    const { userTokenSettings, fetchUserTokenSettings } =
+      useUserTokenSettings();
+    const pinedQueue = useMemo(
+      () => userTokenSettings.pinedQueue,
+      [userTokenSettings.pinedQueue],
+    );
+
     const foldTokensList = useMemo(() => {
       if (!isFromModalType || queryConds.keyword) {
         return [];
       }
 
-      const list = convertSmallTokenList(
-        allTokens.filter(i => {
-          const condition = !!i._isFold || (!i.is_core && !i._isPined);
-          return condition;
-        }),
-      ).map(
+      let filteredTokens = allTokens.filter(i => {
+        const condition = !!i._isFold || (!i.is_core && !i._isPined);
+        return condition;
+      });
+
+      if (favoriteFilterValue === 'favorite') {
+        filteredTokens = filteredTokens.filter(token =>
+          pinedQueue?.some(
+            x => x.chainId === token.chain && x.tokenId === token._tokenId,
+          ),
+        );
+      }
+
+      const list = convertSmallTokenList(filteredTokens).map(
         e =>
           ({
             ...abstractTokenToTokenItem(e),
@@ -272,7 +285,14 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         list.filter(e => !isExcludedTokens(e)),
         e => makeKeyForTokenItemMaybeWithOwner(e),
       );
-    }, [allTokens, isExcludedTokens, isFromModalType, queryConds.keyword]);
+    }, [
+      allTokens,
+      isExcludedTokens,
+      isFromModalType,
+      queryConds.keyword,
+      favoriteFilterValue,
+      pinedQueue,
+    ]);
 
     const availableToken = useMemo(() => {
       const _tokens = queryConds.chainServerId
@@ -371,30 +391,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const { t } = useTranslation();
     const { styles } = useTheme2024({ getStyle });
-    const [recentToTokens] = useSwapRecentToTokens();
-
-    const recentDisplayToTokens = useMemo(() => {
-      if (type === 'swapTo' && queryConds.keyword.length < 1) {
-        return recentToTokens.filter(item => {
-          return item.chain === chainId && !isExcludedTokens(item);
-        });
-      }
-      return [];
-    }, [
-      type,
-      queryConds.keyword.length,
-      recentToTokens,
-      chainId,
-      isExcludedTokens,
-    ]);
-
-    const { userTokenSettings, fetchUserTokenSettings } =
-      useUserTokenSettings();
-
-    const pinedQueue = useMemo(
-      () => userTokenSettings.pinedQueue,
-      [userTokenSettings.pinedQueue],
-    );
 
     useFocusEffect(
       useCallback(() => {
@@ -406,63 +402,26 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       }, [currentAccount?.address, fetchUserTokenSettings]),
     );
 
-    const recentTitle = useMemo(() => {
-      return <View style={{ paddingTop: 10 }} />;
-    }, []);
-
     const list = useMemo(() => {
-      if (pinedQueue?.length) {
-        return [
-          ...availableToken.map(e => ({
-            ...e,
-            isPined: pinedQueue?.some(
-              x => x.chainId === e.chain && x.tokenId === e.id,
-            ),
-          })),
-        ] as TokenItem[];
+      let filteredTokens = availableToken;
+
+      if (favoriteFilterValue === 'favorite') {
+        filteredTokens = availableToken.filter(token =>
+          pinedQueue?.some(
+            x => x.chainId === token.chain && x.tokenId === token.id,
+          ),
+        );
       }
 
-      return [...availableToken];
-    }, [availableToken, pinedQueue]);
+      const tokensWithPinStatus = filteredTokens.map(e => ({
+        ...e,
+        isPined: pinedQueue?.some(
+          x => x.chainId === e.chain && x.tokenId === e.id,
+        ),
+      })) as TokenItem[];
 
-    const unshiftList = useMemo(() => {
-      if (recentDisplayToTokens.length) {
-        const recentObj = {
-          header: () => recentTitle,
-          data: [
-            {
-              _chain: 'swapToRecentList',
-              recentList: recentDisplayToTokens.map(e => ({
-                ...omit(e, ['isPined', 'pinIndex']),
-                group: 'recent',
-              })),
-              TokenRender: ({ token: _token }: { token: TokenItem }) => {
-                return (
-                  <View style={styles.recentItemWrapper}>
-                    <AssetAvatar
-                      size={26}
-                      chain={_token.chain}
-                      logo={_token.logo_url}
-                    />
-                    <Text numberOfLines={1} style={styles.tokenSymbol}>
-                      {ellipsisOverflowedText(getTokenSymbol(_token), 5)}
-                    </Text>
-                  </View>
-                );
-              },
-            } as TokenItemForRender,
-          ],
-        };
-
-        return [recentObj];
-      }
-      return;
-    }, [
-      recentDisplayToTokens,
-      recentTitle,
-      styles.recentItemWrapper,
-      styles.tokenSymbol,
-    ]);
+      return tokensWithPinStatus;
+    }, [availableToken, pinedQueue, favoriteFilterValue]);
 
     const { forScene, ofScreen } = useScreenSceneAccountContext();
     const allowClearAccountFilter = useMemo(() => {
@@ -532,13 +491,26 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       hideTestnetTab: !isSend || customTestnetService.getList().length === 0,
     });
 
-    const { testnetTokenList, loading: testnetTokenListLoading } =
-      useSearchTestnetToken({
-        address: currentAccount?.address,
-        withBalance: false,
-        q: queryConds.keyword,
-        enabled: selectedTab === 'testnet' && isSend,
-      });
+    const {
+      testnetTokenList: rawTestnetTokenList,
+      loading: testnetTokenListLoading,
+    } = useSearchTestnetToken({
+      address: currentAccount?.address,
+      withBalance: false,
+      q: queryConds.keyword,
+      enabled: selectedTab === 'testnet' && isSend,
+    });
+
+    const testnetTokenList = useMemo(() => {
+      if (favoriteFilterValue === 'favorite') {
+        return rawTestnetTokenList.filter(token =>
+          pinedQueue?.some(
+            x => x.chainId === token.chain && x.tokenId === token.id,
+          ),
+        );
+      }
+      return rawTestnetTokenList;
+    }, [rawTestnetTokenList, favoriteFilterValue, pinedQueue]);
 
     return (
       <>
@@ -577,7 +549,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         <TokenSelectorSheetModal
           searchPlaceholder={searchPlaceholder}
           visible={tokenSelectorVisible}
-          unshiftList={unshiftList}
+          unshiftList={[]}
           list={selectedTab === 'testnet' ? testnetTokenList : list}
           foldTokensList={selectedTab === 'testnet' ? [] : foldTokensList}
           onConfirm={handleCurrentTokenChange}
@@ -586,6 +558,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           isLoading={
             selectedTab === 'testnet' ? testnetTokenListLoading : isListLoading
           }
+          showFavoriteFilter
+          favoriteFilterValue={favoriteFilterValue}
+          onFavoriteFilterChange={setFavoriteFilterValue}
           type={type}
           disableItemCheck={disableItemCheck}
           selectToken={token}

@@ -69,6 +69,8 @@ import { BridgePendingTxItem } from './PendingTxItem';
 import { last } from 'lodash';
 import { transactionHistoryService } from '@/core/services/shared';
 import { BridgeTxHistoryItem } from '@/core/services/transactionHistory';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const getStyle = createGetStyles2024(({ colors2024, colors }) => ({
   screen: {
@@ -301,6 +303,11 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   } = useExternalSwapBridgeDapps(chains, 'bridge');
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
+    matomoRequestEvent({
+      category: 'Websites Usage',
+      action: 'Website_Visit_Other',
+      label: safeGetOrigin(url),
+    });
   });
   const [externalDappOpen, setExternalDappOpen] = useState(false);
 
@@ -815,22 +822,11 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
                 if (!isForMultipleAddress) {
                   normalSetChainToken();
                 } else {
-                  const { accountSwitchTo } = switchAccountOnSelectedToken({
+                  switchAccountOnSelectedToken({
                     token,
                     currentAccount,
                   });
-                  if (!accountSwitchTo) {
-                    normalSetChainToken();
-                  } else {
-                    const chainItem = findChainByServerID(token.chain);
-                    naviReplace(RootNames.StackTransaction, {
-                      screen: RootNames.MultiBridge,
-                      params: {
-                        chainEnum: chainItem?.enum,
-                        tokenId: token.id,
-                      },
-                    });
-                  }
+                  normalSetChainToken();
                 }
               }}
               onChangeChain={switchFromChain}

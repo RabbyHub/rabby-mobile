@@ -4,7 +4,6 @@ import { ClassOf } from '@rabby-wallet/base-utils';
 
 import { type EntityAddressAssetBase } from '../entities/base';
 import { appOrmEvents, SyncTaskOptions } from './_event';
-import { appJsonStore } from '@/core/storage/mmkv';
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -137,10 +136,12 @@ export async function batchSaveWithPQueueAndTransaction<
 
           // leave here for debug
           if (eventPayload.taskFor === 'all-history') {
-            setHistoryLoading?.(prev => ({
-              ...prev,
-              [eventPayload.owner_addr]: false,
-            }));
+            setTimeout(() => {
+              setHistoryLoading?.(prev => ({
+                ...prev,
+                [eventPayload.owner_addr]: false,
+              }));
+            }, 2000);
             printLog &&
               console.debug(
                 `[debug] will make emit: ${eventPayload.taskFor}:${eventPayload.owner_addr}`,
@@ -235,6 +236,6 @@ export async function batchSaveWithPQueueAndTransaction<
   return {
     taskKey,
     taskSignal: currentSignal,
-    queueCompleted: waitTaskDoneReturn,
+    queueCompleted: waitTaskDoneReturn && !currentSignal?.aborted,
   };
 }

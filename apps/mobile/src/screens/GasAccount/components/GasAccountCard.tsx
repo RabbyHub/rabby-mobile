@@ -20,6 +20,7 @@ import { useAml } from '../hooks';
 import { GasAccountBlueLogo } from './GasAccountBlueLogo';
 import { GasAccountLoginCard } from './GasAccountLoginCard';
 import { GasAccountWrapperBg } from './WrapperBg';
+import { ClaimedGiftAddress } from '@/core/services/gasAccount';
 
 const DEPOSIT_LIMIT = 1000;
 
@@ -32,6 +33,7 @@ interface Props {
   gasAccountInfo?: NonNullable<
     Awaited<ReturnType<typeof openapi.getGasAccountInfo>>
   >['account'];
+  currentEligibleAddress?: ClaimedGiftAddress | undefined;
 }
 
 export const GasAccountCard: React.FC<Props> = ({
@@ -41,6 +43,7 @@ export const GasAccountCard: React.FC<Props> = ({
   onDepositPress,
   onWithdrawPress,
   gasAccountInfo,
+  currentEligibleAddress,
 }) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -93,13 +96,23 @@ export const GasAccountCard: React.FC<Props> = ({
       });
     }
   }, [canDeposit, isRisk, t, styles.closeModalBtnText, styles.tipTitle]);
+  const { isLight } = useTheme2024({ getStyle: getStyles });
 
   if (!isLogin) {
-    return <GasAccountLoginCard onLoginPress={onLoginPress} />;
+    return (
+      <GasAccountLoginCard
+        onLoginPress={onLoginPress}
+        currentEligibleAddress={currentEligibleAddress}
+      />
+    );
   }
 
   return (
-    <GasAccountWrapperBg style={styles.accountContainer}>
+    <GasAccountWrapperBg
+      style={[
+        styles.accountContainer,
+        isLight ? styles.accountContainerLight : styles.accountContainerDark,
+      ]}>
       <View style={styles.content}>
         <GasAccountBlueLogo style={styles.accountIcon} />
         <Text style={styles.balanceText}>{usd}</Text>
@@ -163,8 +176,8 @@ export const GasAccountCard: React.FC<Props> = ({
             style={{
               flex: 1,
             }}>
-            {gasAccountInfo?.has_iap_order ? (
-              <Tip content={t('page.gasAccount.withdrawDisabledIAP')}>
+            {!gasAccountInfo?.balance ? (
+              <Tip content={t('page.gasAccount.noBalance')}>
                 <Button
                   type="ghost"
                   onPress={onWithdrawPress}
@@ -207,14 +220,17 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingVertical: 38,
     paddingHorizontal: 16,
     marginHorizontal: 20,
-    borderRadius: 30,
-    backgroundColor: colors2024['neutral-bg-1'],
+    borderRadius: 16,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors2024['neutral-line'],
+  },
+  accountContainerLight: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
+  accountContainerDark: {
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   accountFooter: {
     marginTop: 'auto',
@@ -239,7 +255,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['neutral-title-1'],
     textAlign: 'center',
     fontFamily: 'SF Pro',
-    fontSize: 32,
+    fontSize: 42,
     fontStyle: 'normal',
     fontWeight: '700',
   },

@@ -43,7 +43,8 @@ export const MultiAssets = ({
 
   const top10Balance = useMemo(() => {
     return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [top10Addresses.join(','), getTotalBalance]);
 
   const { combineData, isLoadingNew: isLoadingCurve } = useMultiCurve(
     top10Addresses,
@@ -99,9 +100,9 @@ export const MultiAssets = ({
     [colors2024, combineData.isLoss],
   );
 
-  const { refreshing } = useAssets();
+  const { refreshing, getCacheTop10Assets } = useAssets({ hideCombined: true });
   const isLoadingMultiCurve = useAtomValue(loadingMultiCurveAtom);
-  const renderCirleLoading = useCallback(() => {
+  const renderCircleLoading = useCallback(() => {
     return refreshing || isLoadingMultiCurve ? <LoadingCircle /> : '';
   }, [isLoadingMultiCurve, refreshing]);
 
@@ -116,7 +117,7 @@ export const MultiAssets = ({
         });
       } else {
         setNavigationOptions({
-          headerTitle: renderCirleLoading,
+          headerTitle: renderCircleLoading,
           headerTitleAlign: 'left',
         });
       }
@@ -125,7 +126,7 @@ export const MultiAssets = ({
     [
       getHeaderTitle,
       onReachTopStatusChange,
-      renderCirleLoading,
+      renderCircleLoading,
       setNavigationOptions,
     ],
   );
@@ -146,7 +147,23 @@ export const MultiAssets = ({
 
   const listLength = useMemo(() => {
     return list.length > 10 ? 10 : list.length;
-  }, [list]);
+  }, [list.length]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      getCacheTop10Assets({
+        disableNFT: true,
+        realTimeAddresses: top10Addresses,
+        core: true,
+        maxTokenLength: 500,
+        maxDefiLength: 80,
+      });
+    }, 0);
+    return () => {
+      id && clearTimeout(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Tabs.Container

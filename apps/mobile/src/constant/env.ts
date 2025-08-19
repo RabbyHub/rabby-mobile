@@ -1,7 +1,10 @@
 import { DEV_CONSOLE_URL as DEV_CONSOLE_URL_ } from '@env';
 
-export const APP_RUNTIME_ENV =
-  process.env.BUILD_ENV === 'production' ? 'production' : 'development';
+export const APP_RUNTIME_ENV = __DEV__
+  ? 'development'
+  : process.env.RABBY_MOBILE_BUILD_ENV === 'production'
+  ? 'production'
+  : 'regression';
 
 export type AppBuildChannel = 'selfhost' | 'selfhost-reg' | 'appstore';
 export const BUILD_CHANNEL =
@@ -16,14 +19,10 @@ export const BUILD_GIT_INFO: {
   BUILD_GIT_HASH: string;
   BUILD_GIT_HASH_TIME?: string;
   BUILD_GIT_COMMITOR?: string;
-  BUILD_GIT_COMMITS_COUNT?: string;
-  BUILD_GIT_COMMITS_COUNT_BASEVER?: string;
 } = {
   BUILD_GIT_HASH: 'unknown',
   BUILD_GIT_HASH_TIME: undefined,
   BUILD_GIT_COMMITOR: undefined,
-  BUILD_GIT_COMMITS_COUNT: undefined,
-  BUILD_GIT_COMMITS_COUNT_BASEVER: undefined,
   ...INPUT_BUILD_GIT_INFO,
 };
 
@@ -31,7 +30,7 @@ export function getSentryEnv() {
   return `ch:${BUILD_CHANNEL}|env:${APP_RUNTIME_ENV}`;
 }
 
-export const SENTRY_DEBUG = APP_RUNTIME_ENV === 'development';
+export const SENTRY_DEBUG = APP_RUNTIME_ENV !== 'production';
 
 export const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
 export const isNonPublicProductionEnv = isSelfhostRegPkg || __DEV__;

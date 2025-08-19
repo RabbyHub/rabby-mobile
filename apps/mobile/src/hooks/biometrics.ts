@@ -87,9 +87,11 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
   }, [setBiometrics]);
 
   const toggleBiometrics = useCallback(
-    async (
-      nextEnabled: boolean,
-      input: { validatedPassword: string; tipLoading?: boolean },
+    async <T extends boolean>(
+      nextEnabled: T,
+      input: { tipLoading?: boolean } & (T extends true
+        ? { validatedPassword: string }
+        : { validatedPassword?: undefined }),
     ) => {
       const { validatedPassword, tipLoading } = input;
 
@@ -106,6 +108,12 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
         if (!nextEnabled) {
           await reset();
         } else {
+          if (!validatedPassword) {
+            throw new Error(
+              'Validated password is required to enable biometrics.',
+            );
+          }
+
           await apisKeychain.setGenericPassword(
             validatedPassword,
             KEYCHAIN_AUTH_TYPES.BIOMETRICS,

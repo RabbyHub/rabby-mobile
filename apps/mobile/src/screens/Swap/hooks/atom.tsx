@@ -34,3 +34,5 @@ const longPressTokenAtom = atom({
 });
 
 export const useLongPressTokenAtom = () => useAtom(longPressTokenAtom);
+// 是否从返回按钮进入
+export const isFromBackAtom = atom(true);

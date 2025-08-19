@@ -29,16 +29,17 @@ import { useSendRoutes } from '@/hooks/useSendRoutes';
 import { useRequest } from 'ahooks';
 import { transactionHistoryService } from '@/core/services';
 import { Account } from '@/core/services/preference';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import { findAccountByPriority } from '@/utils/account';
 
 interface ItemProps {
   status: number;
-  tokenDict: Record<string, TokenItem | NFTItem>;
   className?: string;
   type: HistoryItemCateType;
   chain: string;
-  receives: TxDisplayItem['receives'];
-  sends: TxDisplayItem['sends'];
-  approve: TxDisplayItem['token_approve'];
+  receives: HistoryDisplayItem['receives'];
+  sends: HistoryDisplayItem['sends'];
+  approve: HistoryDisplayItem['token_approve'];
   data: HistoryDisplayItem;
   isForMultipleAddress?: boolean;
   buttonContainerStyle?: RNViewProps['style'];
@@ -46,7 +47,6 @@ interface ItemProps {
 }
 
 export const HistoryBottomBtn = ({
-  tokenDict,
   status,
   type,
   sends,
@@ -79,9 +79,15 @@ export const HistoryBottomBtn = ({
   });
 
   const fromAddrIsImported = useMemo(() => {
-    return accounts.find(account =>
-      addressUtils.isSameAddress(account.address, data.tx?.from_addr || ''),
-    );
+    const canUseAccountList = accounts.filter(acc => {
+      return (
+        addressUtils.isSameAddress(acc.address, data.tx?.from_addr || '') &&
+        acc.type !== KEYRING_TYPE.WatchAddressKeyring
+      );
+    });
+    const fromAccount = findAccountByPriority(canUseAccountList);
+
+    return fromAccount;
   }, [accounts, data]);
 
   const { btnContainerViewStyle, buttonStyle } = useMemo(() => {
@@ -118,9 +124,7 @@ export const HistoryBottomBtn = ({
           <Button
             buttonStyle={buttonStyle}
             onPress={async () => {
-              const sendToken =
-                tokenDict[sends[0]?.token_id] ||
-                tokenDict[fetchHistoryTokenUUId(sends[0]?.token_id, chain)];
+              const sendToken = sends[0]?.token;
               const chainItem = findChain({
                 serverId: sendToken.chain,
               });
@@ -177,40 +181,6 @@ export const HistoryBottomBtn = ({
           />
         </View>
       );
-
-    case HistoryItemCateType.Buy:
-      if (!data.buyDetails?.receive_tx_id || !data.id) {
-        return null;
-      }
-      return (
-        <View style={btnContainerViewStyle}>
-          <Button
-            buttonStyle={buttonStyle}
-            onPress={() => {
-              if (!isForMultipleAddress) {
-                switchSceneCurrentAccount(
-                  'MakeTransactionAbout',
-                  currentAccount,
-                );
-              }
-              console.log('isForMultipleAddress', isForMultipleAddress);
-              navigation.dispatch(
-                StackActions.push(RootNames.StackTransaction, {
-                  screen: isForMultipleAddress
-                    ? RootNames.MultiBuy
-                    : RootNames.Buy,
-                  params: {
-                    buyAgain: true,
-                    receiveToken: data.buyDetails?.receive_token,
-                  },
-                }),
-              );
-            }}
-            title={t('page.transactions.detail.BuyAgain')}
-          />
-        </View>
-      );
-    // todo
     case HistoryItemCateType.Contract:
     case HistoryItemCateType.Cancel:
     case HistoryItemCateType.Bridge:

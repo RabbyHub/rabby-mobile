@@ -49,3 +49,8 @@ configurations.all {
         }
     }
 }
+
+// 需要放在最后
+if (project.hasProperty('hashcheck')) {
+    apply from: 'hashcheck.gradle'
+}

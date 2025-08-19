@@ -23,6 +23,7 @@ import IconEmptyDefiDark from '@/assets2024/singleHome/empty-defi-dark.png';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { ellipsisAddress } from '@/utils/address';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { HistoryDisplayItem } from '@/screens/Transaction/MultiAddressHistory';
 
 const ItemSeparator = () => {
   const { styles } = useTheme2024({ getStyle });
@@ -192,6 +193,19 @@ const generateTempBuyHistoryData = ({
   token_approve_id: '',
   token_approve_spender: '',
   token_approve_value: 0,
+  project_item: {},
+  tx: {
+    id: txId,
+    from_addr: addr,
+    to_addr: addr,
+    usd_gas_fee: 0,
+    eth_gas_fee: 0,
+    name: '',
+    params: [],
+    value: 0,
+    token_id: '',
+    spender: '',
+  },
 
   tx_to_address: addr,
 });
@@ -211,8 +225,6 @@ export const BuyHistory = ({
 
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
 
-  const { projectDict, tokenDict } = useHistoryTokenDict();
-
   const goToDetail = useCallback(
     async (txId: string, chain: string, data: TBuyHistoryItem) => {
       const historyItem =
@@ -221,20 +233,14 @@ export const BuyHistory = ({
               where: { txHash: txId, chain },
             })
           : null;
+      if (!historyItem) {
+        return;
+      }
       const detailData = {
-        ...(historyItem
-          ? ensureHistoryListItemFromDb(historyItem)
-          : (generateTempBuyHistoryData({
-              txId: data.receive_tx_id,
-              time_at: data.create_at,
-              addr: data.user_addr,
-              chain: chain,
-            }) as ReturnType<typeof ensureHistoryListItemFromDb>)),
+        ...ensureHistoryListItemFromDb(historyItem),
         isLocalBuy: true,
         buyDetails: data as unknown as any,
-        projectDict,
-        tokenDict,
-      };
+      } as HistoryDisplayItem;
 
       onClose();
       naviPush(RootNames.StackTransaction, {
@@ -246,7 +252,7 @@ export const BuyHistory = ({
         },
       });
     },
-    [projectDict, tokenDict, onClose, isForMultipleAddress, t],
+    [onClose, isForMultipleAddress, t],
   );
 
   useEffect(() => {

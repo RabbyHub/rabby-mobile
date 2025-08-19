@@ -10,6 +10,7 @@ import {
   SwapTradeList,
   TokenItem,
   TxAllHistoryResult,
+  TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { PortocolItemEntity } from '../entities/portocolItem';
 import {
@@ -23,7 +24,7 @@ import { batchSaveWithPQueueAndTransaction } from './_task';
 import { BuyItemEntity } from '../entities/buyItem';
 import { CexEntity } from '../entities/cex';
 import { deleteCurveCache } from '@/utils/24balanceCurveCache';
-import { transactionHistoryService } from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { removeCexId } from '@/utils/addressCexId';
 import { EvmTotalBalanceResponse } from '../hooks/balance';
@@ -74,7 +75,6 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
 const updateSwapFailHistoryItem = (
   historyItem: HistoryItemEntity,
   swapFailHistoryList: TransactionGroup[],
-  setTokenDict: any,
 ) => {
   if (historyItem.status === 0) {
     const localSwapFailTransaction = swapFailHistoryList.find(
@@ -91,50 +91,61 @@ const updateSwapFailHistoryItem = (
         const sends = [
           {
             token_id: swapAction.payToken.id,
+            to_addr: '',
             amount: swapAction.payToken.amount,
+            token: swapAction.payToken,
           },
         ];
         const receives = [
           {
             token_id: swapAction.receiveToken.id,
+            from_addr: swapAction.receiver,
             amount:
               swapAction.receiveToken.amount ||
               swapAction.receiveToken.min_amount,
+            token: swapAction.receiveToken,
           },
         ];
-        setTokenDict(prev => ({
-          ...prev,
-          [`${swapAction.payToken.chain}_token:${swapAction.payToken.id}`]: {
-            ...swapAction.payToken,
-          },
-          [`${swapAction.receiveToken.chain}_token:${swapAction.receiveToken.id}`]:
-            {
-              ...swapAction.receiveToken,
-            },
-        }));
-        historyItem.sends = JSON.stringify(sends);
-        historyItem.receives = JSON.stringify(receives);
+        historyItem.sends = sends;
+        historyItem.receives = receives;
       }
     }
   }
 };
 export async function syncRemoteHistory(
   address: string,
-  history_list: TxAllHistoryResult['history_list'],
+  res: TxAllHistoryResult | TxHistoryResult,
   setHistoryLoading: any,
-  setTokenDict: any,
 ) {
   try {
-    console.debug('syncRemoteHistory history_list.length', history_list.length);
+    console.debug(
+      'syncRemoteHistory history_list.length',
+      res.history_list.length,
+    );
 
+    const { history_list, project_dict } = res;
+    const tokenDict =
+      (res as TxAllHistoryResult).token_uuid_dict ||
+      (res as TxHistoryResult).token_dict;
+
+    const projectDict = project_dict;
+
+    const pinedQueue = preferenceService.getPinToken();
     const swapFailHistoryList =
       transactionHistoryService.getSwapFailTransactions(address);
     const historyItems = history_list
       .filter(i => Boolean(i.tx))
       .map(raw => {
         const item = new HistoryItemEntity();
-        HistoryItemEntity.fillEntity(item, address, raw);
-        updateSwapFailHistoryItem(item, swapFailHistoryList, setTokenDict);
+        HistoryItemEntity.fillEntity(
+          item,
+          address,
+          raw,
+          tokenDict,
+          projectDict,
+          pinedQueue,
+        );
+        updateSwapFailHistoryItem(item, swapFailHistoryList);
         return item;
       });
     await prepareAppDataSource();
@@ -299,6 +310,43 @@ export async function syncRemotePortocols(
     });
 }
 
+export async function syncRemotePortocol(
+  address: string,
+  protocol: ComplexProtocol | null | undefined,
+  opts?: { deleteId?: string },
+) {
+  const repo = PortocolItemEntity.getRepository();
+
+  if (protocol) {
+    const syncTimestamp = Date.now();
+    const protocolItem = new PortocolItemEntity();
+    PortocolItemEntity.fillEntity(protocolItem, address, protocol);
+    protocolItem._local_updated_at = syncTimestamp;
+
+    await prepareAppDataSource();
+    await batchSaveWithPQueueAndTransaction(
+      PortocolItemEntity,
+      [protocolItem],
+      {
+        owner_addr: address,
+        taskFor: 'protocols',
+        batchSize: 200,
+        concurrency: 1,
+        delayBetweenTasks: 1.5 * 1e3,
+        waitTaskDoneReturn: true,
+      },
+    ).catch(error => {
+      console.error('Batch upsert failed:', error);
+    });
+    return;
+  }
+
+  const deleteId = opts?.deleteId;
+  if (deleteId) {
+    await repo.delete({ owner_addr: address, id: deleteId });
+  }
+}
+
 export async function syncRemoteBuyHistory(
   address: string,
   history_list: BuyHistoryList['histories'],
@@ -434,6 +482,7 @@ export async function syncCexInfo(address: string, cex?: Cex) {
     taskFor: 'cex',
     batchSize: 100,
     concurrency: 1,
+    noNeedAbort: true,
   })
     .then(({ taskSignal, taskKey }) => {
       if (taskSignal.aborted) {

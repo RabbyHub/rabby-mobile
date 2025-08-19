@@ -11,6 +11,7 @@ export type ContactBookItem = {
 export type AddressAliasItem = {
   address: string;
   alias: string;
+  isDefaultAlias?: boolean;
 };
 
 export type ContactBookStore = {
@@ -86,6 +87,7 @@ export class ContactBookService {
       return {
         address: address.toLowerCase(),
         alias: ellipsis(address, 6),
+        isDefaultAlias: true,
       };
     }
 

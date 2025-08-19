@@ -201,9 +201,7 @@ function GetStartedScreen2024(): JSX.Element {
 
         <View style={styles.bottomArea}>
           <Text style={styles.appDesc}>
-            The game-changing wallet
-            {'\n'}
-            for Ethereum and all EVM chains
+            Your go-to wallet for Ethereum and EVM
           </Text>
           {!getStaretd.localHasAccounts ? (
             <View style={{ gap: 16 }}>

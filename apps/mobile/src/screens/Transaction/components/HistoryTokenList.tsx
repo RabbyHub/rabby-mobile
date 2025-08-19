@@ -32,6 +32,7 @@ import BuyWalletDarkSVG from '@/assets2024/icons/swap/buy-wallet-dark.svg';
 import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 import { HistoryItemCateType } from './type';
 import { Account } from '@/core/services/preference';
+import { isArray } from 'lodash';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1);
 
@@ -39,21 +40,20 @@ const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
 interface ItemProps {
   status: number;
-  tokenDict: Record<string, TokenItem | NFTItem>;
   className?: string;
   type?: HistoryItemCateType | undefined;
   token?: TokenItem | TokenItem[];
   chain: TxDisplayItem['chain'];
   data: HistoryDisplayItem;
-  approve: TxDisplayItem['token_approve'];
-  receives: TxDisplayItem['receives'];
-  sends: TxDisplayItem['sends'];
+  approve: HistoryDisplayItem['token_approve'];
+  receives: HistoryDisplayItem['receives'];
+  sends: HistoryDisplayItem['sends'];
   isForMultipleAddress?: boolean;
   account: Account;
 }
 
 const TokenItemInlist = ({
-  tokenDict,
+  token,
   token_id,
   chain,
   amount,
@@ -67,12 +67,10 @@ const TokenItemInlist = ({
   isNft: boolean;
   token_id: string;
   hanldePress: (singeToken: TokenItem | NFTItem, tokenIsNft: boolean) => void;
-  tokenDict: Record<string, TokenItem | NFTItem>;
+  token: TokenItem | NFTItem;
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const tokenUUID = `${chain}_token:${token_id}`;
-  const token = tokenDict[token_id] || tokenDict[tokenUUID];
 
   return (
     <TouchableOpacity onPress={() => hanldePress(token, isNft)}>
@@ -126,7 +124,6 @@ const TokenItemInlist = ({
 };
 
 export const HistoryTokenList = ({
-  tokenDict,
   status,
   type,
   token,
@@ -184,7 +181,6 @@ export const HistoryTokenList = ({
       const tokenId = isApprove
         ? approve?.token_id || ''
         : receives?.[0]?.token_id || sends?.[0]?.token_id;
-      const tokenUUID = `${chain}_token:${tokenId}`;
       const singleAmount = isApprove
         ? approve?.value
         : receives?.[0]?.amount || sends?.[0]?.amount;
@@ -199,11 +195,11 @@ export const HistoryTokenList = ({
           ? t('page.transactions.detail.Unlimited')
           : formatTokenAmount(singleAmount || 0)
         : '0';
-      const singeToken = tokenDict[tokenId] || tokenDict[tokenUUID];
+      const singeToken = isArray(token) ? token[0] : token;
       const isSend = type === HistoryItemCateType.Send;
       const tokenIsNft = tokenId?.length === 32;
       return (
-        <TouchableOpacity onPress={() => handlePress(singeToken, tokenIsNft)}>
+        <TouchableOpacity onPress={() => handlePress(singeToken!, tokenIsNft)}>
           <View style={[styles.singleBox]}>
             <View
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -259,14 +255,8 @@ export const HistoryTokenList = ({
     case HistoryItemCateType.Swap:
       const sendAmount = sends?.[0]?.amount;
       const recieveAmount = receives?.[0]?.amount;
-      const sendToken = (tokenDict[sends?.[0]?.token_id] ||
-        tokenDict[
-          fetchHistoryTokenUUId(sends?.[0]?.token_id, chain)
-        ]) as TokenItem;
-      const recieveToken = (tokenDict[receives?.[0]?.token_id] ||
-        tokenDict[
-          fetchHistoryTokenUUId(receives?.[0]?.token_id, chain)
-        ]) as TokenItem;
+      const sendToken = sends?.[0]?.token;
+      const recieveToken = receives?.[0]?.token;
       return (
         <View style={[styles.doubleBox]}>
           <TouchableOpacity
@@ -318,98 +308,6 @@ export const HistoryTokenList = ({
         </View>
       );
 
-    case HistoryItemCateType.Buy:
-      const isPending =
-        data?.buyDetails?.status === 'pending' &&
-        !data?.id &&
-        !data.buyDetails.receive_tx_id;
-      return (
-        <TouchableOpacity
-          onPress={() =>
-            handlePress(
-              singeToken || data?.buyDetails?.receive_token,
-              tokenIsNft,
-            )
-          }>
-          <View style={[styles.singleBox]}>
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={styles.iconContainer}>
-                <BuyWalletIcon style={styles.walletIcon} />
-                <AssetAvatar
-                  logo={data?.buyDetails?.receive_token?.logo_url}
-                  size={57}
-                />
-              </View>
-              {isPending ? (
-                <View
-                  style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
-                  <Text
-                    style={[
-                      styles.tokenAmountText,
-                      { color: colors2024['neutral-title-1'] },
-                    ]}>
-                    -{' '}
-                    {formatTokenAmount(data?.buyDetails?.pay_usd_amount || '0')}{' '}
-                    {data?.buyDetails?.pay_currency_code || ''}
-                  </Text>
-                  <Text
-                    style={[
-                      {
-                        fontSize: 16,
-                        fontWeight: '500',
-                        lineHeight: 20,
-                        fontFamily: 'SF Pro',
-                      },
-                      styles.isSendTextColor,
-                    ]}>
-                    {t('page.transactions.detail.WillReceive', {
-                      token: `${formatTokenAmount(
-                        data?.receives?.[0]?.amount ||
-                          data?.buyDetails?.receive_amount ||
-                          '0',
-                      )} ${getTokenSymbol(data?.buyDetails?.receive_token)}`,
-                    })}
-                  </Text>
-                </View>
-              ) : (
-                <View
-                  style={[styles.singleColomnBox, isFail && styles.isFailBox]}>
-                  <Text style={[styles.tokenAmountText]}>
-                    +{' '}
-                    {formatTokenAmount(
-                      data?.receives?.[0]?.amount ||
-                        data?.buyDetails?.receive_amount ||
-                        '0',
-                    )}{' '}
-                    {getTokenSymbol(data?.buyDetails?.receive_token)}
-                  </Text>
-                  <Text
-                    style={[
-                      {
-                        fontSize: 16,
-                        fontWeight: '500',
-                        lineHeight: 20,
-                        fontFamily: 'SF Pro',
-                      },
-                      styles.isSendTextColor,
-                    ]}>
-                    -{data?.buyDetails?.pay_usd_amount || '0'}{' '}
-                    {data?.buyDetails?.pay_currency_code || ''}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <RcIconSingleArrow
-                width={32}
-                height={32}
-                color={colors2024['neutral-bg-2']}
-              />
-            </View>
-          </View>
-        </TouchableOpacity>
-      );
     case HistoryItemCateType.Contract:
     case HistoryItemCateType.Cancel:
     case HistoryItemCateType.UnKnown:
@@ -419,7 +317,7 @@ export const HistoryTokenList = ({
       return (
         hasList && (
           <View style={[styles.mutliBox]}>
-            {sends?.map(({ token_id, amount }) => (
+            {sends?.map(({ token_id, amount, token: iToken }) => (
               <TokenItemInlist
                 key={token_id}
                 isSend={true}
@@ -427,18 +325,18 @@ export const HistoryTokenList = ({
                 token_id={token_id}
                 amount={amount}
                 isNft={token_id?.length === 32}
-                tokenDict={tokenDict}
+                token={iToken}
                 hanldePress={handlePress}
               />
             ))}
-            {receives?.map(({ token_id, amount }) => (
+            {receives?.map(({ token_id, amount, token: iToken }) => (
               <TokenItemInlist
                 key={token_id}
                 token_id={token_id}
                 chain={chain}
                 amount={amount}
                 isNft={token_id?.length === 32}
-                tokenDict={tokenDict}
+                token={iToken}
                 hanldePress={handlePress}
               />
             ))}

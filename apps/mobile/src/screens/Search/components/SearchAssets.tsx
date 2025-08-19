@@ -13,7 +13,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 
-import { ASSETS_SECTION_HEADER, RootNames } from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { navigate } from '@/utils/navigation';
@@ -43,6 +43,8 @@ interface Props {
   loading: boolean;
   searchState: string;
 }
+
+const STICKY_HEADER_HEIGHT = 28;
 
 export const SearchAssets: React.FC<Props> = ({
   resultTokens,
@@ -99,13 +101,11 @@ export const SearchAssets: React.FC<Props> = ({
     [fetchPinedTokenList, t, watchlistTokenList],
   );
 
-  useFocusEffect(() => {
-    fetchPinedTokenList();
-  });
+  useFocusEffect(fetchPinedTokenList);
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      navigate(RootNames.TokenDetail, {
+      navigate(RootNames.TokenMarketInfo, {
         token: token,
         unHold: token._unHold,
         needUseCacheToken: true,
@@ -123,9 +123,10 @@ export const SearchAssets: React.FC<Props> = ({
             style={styles.renderItemWrapper}
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
-            rightSlot={
+            decimalPrecision
+            leftSlot={
               <Pressable
-                style={styles.rightSlot}
+                style={styles.leftSlot}
                 onPress={e => {
                   e.stopPropagation();
                   handlePressFavorite(item.id, item.chain);
@@ -139,7 +140,7 @@ export const SearchAssets: React.FC<Props> = ({
                       t => t.chainId === item.chain && t.tokenId === item.id,
                     )
                       ? colors2024['orange-default']
-                      : colors2024['neutral-info']
+                      : colors2024['neutral-line']
                   }
                 />
               </Pressable>
@@ -152,8 +153,8 @@ export const SearchAssets: React.FC<Props> = ({
       colors2024,
       handleOpenTokenDetail,
       handlePressFavorite,
+      styles.leftSlot,
       styles.renderItemWrapper,
-      styles.rightSlot,
       watchlistTokenList,
     ],
   );
@@ -333,7 +334,7 @@ const getStyles = createGetStyles2024(ctx => ({
       ? ctx.colors2024['neutral-bg-0']
       : ctx.colors2024['neutral-bg-1'],
     paddingHorizontal: 16,
-    marginTop: ASSETS_SECTION_HEADER,
+    marginTop: STICKY_HEADER_HEIGHT,
   },
   close: {
     paddingHorizontal: 4,
@@ -370,7 +371,7 @@ const getStyles = createGetStyles2024(ctx => ({
     top: 0,
     left: 0,
     // right: 0,
-    height: ASSETS_SECTION_HEADER,
+    height: STICKY_HEADER_HEIGHT,
     zIndex: 1,
   },
   bgContainer: {
@@ -399,7 +400,6 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
-    // height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['neutral-secondary'],
     // backgroundColor: ctx.isLight
     //   ? ctx.colors2024['neutral-bg-0']
@@ -410,7 +410,6 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 20,
-    // height: ASSETS_SECTION_HEADER,
     color: ctx.colors2024['brand-default'],
     // marginLeft: -24,
   },
@@ -425,7 +424,7 @@ const getStyles = createGetStyles2024(ctx => ({
   footer: {
     height: 200,
   },
-  rightSlot: {
-    marginLeft: 13,
+  leftSlot: {
+    marginRight: 8,
   },
 }));

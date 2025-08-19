@@ -5,7 +5,6 @@ import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { Account } from './preference';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
-import { WebViewProps } from 'react-native-webview';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export interface DappInfo {
@@ -23,6 +22,7 @@ export interface DappInfo {
   lastPathTimeAt?: number; //
   currentAccount?: Account | null;
   favoriteAt?: number | null;
+  isDapp?: boolean;
 }
 
 export type DappStore = {
@@ -42,6 +42,18 @@ export class DappService extends StoreServiceBase<
       {
         storageAdapter: options?.storageAdapter,
       },
+    );
+
+    this.patchDapps(
+      ['https://www.google.com', 'https://x.com', 'https://github.com'].reduce(
+        (result, key) => {
+          result[key] = {
+            isDapp: false,
+          };
+          return result;
+        },
+        {},
+      ),
     );
   }
 

@@ -17,15 +17,18 @@ else
 fi
 
 if [[ "$BUILD_TYPE" == "buildAppStore" ]]; then
+  export RABBY_MOBILE_BUILD_ENV="production"
   echo "[android-build] build aab"
   # aab
   ./gradlew bundleRelease $RM_BUILD_FLAGS --parallel
   export android_export_target="$project_dir/app/build/outputs/bundle/release/app-release.aab"
 elif [[ "$BUILD_TYPE" == "buildRegApk" ]]; then
+  export RABBY_MOBILE_BUILD_ENV="regression"
   echo "[android-build] build regression apk"
   ./gradlew assembleRegression $RM_BUILD_FLAGS --parallel
   export android_export_target="$project_dir/app/build/outputs/apk/regression/release/app-regression-release.apk"
 elif [[ "$BUILD_TYPE" == "buildApk" ]]; then
+  export RABBY_MOBILE_BUILD_ENV="production"
   echo "[android-build] build release apk"
   ./gradlew assembleRelease $RM_BUILD_FLAGS --parallel
   export android_export_target="$project_dir/app/build/outputs/apk/release/app-release.apk"

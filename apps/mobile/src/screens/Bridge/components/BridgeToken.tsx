@@ -299,6 +299,7 @@ const BridgeToken = ({
                 fromChainId={fromChainId!}
                 fromTokenId={fromTokenId!}
                 token={token}
+                address={account?.address}
                 onTokenChange={onChangeToken}
                 chainId={chainObj?.serverId!}
                 placeholder={t('page.swap.search-by-name-address')}

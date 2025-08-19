@@ -33,6 +33,7 @@ deployment_local_dir="$script_dir/deployments/android"
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
 build_selfhost() {
+  export RABBY_MOBILE_BUILD_ENV="regression";
   yarn && yarn check-nodeengines && yarn link-assets;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
@@ -48,6 +49,7 @@ build_selfhost() {
 }
 
 build_appstore() {
+  export RABBY_MOBILE_BUILD_ENV="production";
   yarn && yarn check-nodeengines && yarn link-assets;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."

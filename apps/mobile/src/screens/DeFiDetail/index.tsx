@@ -41,6 +41,8 @@ import { useBrowser } from '@/hooks/browser/useBrowser';
 import { usePortfolios } from '../Home/hooks/usePortfolio';
 import { isAppChain } from '../Home/utils/appchain';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 type SectionListItem = {
   data: AbstractPortfolio[];
@@ -179,8 +181,10 @@ export const DeFiDetailScreen = () => {
     [fallbackAccount, routeAccount],
   );
 
-  const { data: currentPortfolio, updateData: singleUpdateData } =
-    usePortfolios(finalAccount?.address, false);
+  const { data: currentPortfolio, updateSpecificProtocol } = usePortfolios(
+    finalAccount?.address,
+    false,
+  );
 
   const data = useMemo(
     // 优先使用内存defi列表中的实时数据，兜底用页面参数数据
@@ -272,8 +276,8 @@ export const DeFiDetailScreen = () => {
     });
   }, [getHeaderTitle, setNavigationOptions, getHeaderLeft, getHeaderRight]);
 
-  const { getCacheTop10Assets, checkIsExpireAndUpdate, refreshing, assetsMap } =
-    useAssets();
+  const { getCacheTop10Assets, refreshing, assetsMap, loadSpecificDefi } =
+    useAssets({ hideCombined: true });
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
@@ -440,14 +444,24 @@ export const DeFiDetailScreen = () => {
         renderSectionHeader={renderSectionHeader}
         refreshControl={
           <RefreshControl
-            onRefresh={() => {
-              if (isSingleAddress) {
-                singleUpdateData(true);
-              } else {
-                checkIsExpireAndUpdate(true, {
-                  disableNFT: true,
-                  disableToken: true,
-                });
+            onRefresh={async () => {
+              try {
+                if (isSingleAddress) {
+                  await updateSpecificProtocol(data.id, data.chain || '');
+                } else {
+                  const addresses = [
+                    ...new Set(
+                      sectionsMultiProject.map(section => section.address),
+                    ),
+                  ];
+                  await Promise.all(
+                    addresses.map(address =>
+                      loadSpecificDefi(address, data.id, data.chain || ''),
+                    ),
+                  );
+                }
+              } catch (error) {
+                console.error('Failed to refresh specific protocol:', error);
               }
             }}
             refreshing={refreshing}
@@ -464,7 +478,14 @@ export const DeFiDetailScreen = () => {
                 : t('page.defiDetail.viewSiteInApp')
             }
             onPress={() => {
-              openTab(data.site_url);
+              if (data.site_url) {
+                openTab(data.site_url);
+                matomoRequestEvent({
+                  category: 'Websites Usage',
+                  action: 'Website_Visit_Defi Detail',
+                  label: safeGetOrigin(data.site_url),
+                });
+              }
             }}
           />
         </View>

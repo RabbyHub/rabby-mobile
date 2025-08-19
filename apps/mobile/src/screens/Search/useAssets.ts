@@ -15,13 +15,18 @@ import { tagProfiles } from '../Home/hooks/usePortfolio';
 import { useMyAccounts } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { tagNfts } from '../Home/hooks/nft';
-import { syncNFTs, syncProtocols, syncTokens } from '@/databases/hooks/assets';
+import {
+  syncNFTs,
+  syncProtocols,
+  syncTokens,
+  syncSpecificProtocol,
+} from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
 import _, { debounce } from 'lodash';
 import { PortocolItemEntity } from '@/databases/entities/portocolItem';
 import { NFTItemEntity } from '@/databases/entities/nftItem';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { useMemoizedFn } from 'ahooks';
 import { useCallback, useMemo } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
@@ -29,23 +34,29 @@ import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 
 export const loadingAtom = atom(true);
 export const isFirstFetchAtom = atom(true);
-export const useAssets = () => {
+export const shortCacheAtom = atom(true);
+export const useAssets = ({
+  hideCombined = false,
+}: {
+  hideCombined?: boolean;
+} = {}) => {
   const [isLoading, setLoading] = useAtom(loadingAtom);
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
   });
   const sortedAccounts = useSortAddressList(accounts);
   const [isFirstFetch, setIsFirstFetch] = useAtom(isFirstFetchAtom);
+  const [shortCache, setShortCache] = useAtom(shortCacheAtom);
   const {
     tokens,
     portfolios,
-    nftList,
     assetsMap,
     setAssetsMap,
     updateNFTs,
     updatePortfolios,
     updateTokens,
-  } = useAssetsMap();
+    getTokenCombined,
+  } = useAssetsMap({ hideCombined });
 
   const loadToken = useMemoizedFn(async (address: string, force?: boolean) => {
     if (!address) {
@@ -147,14 +158,80 @@ export const useAssets = () => {
     }
   });
 
+  const loadSpecificDefi = useMemoizedFn(
+    async (_address: string, protocolId: string, chain: string) => {
+      if (!_address || !protocolId || !chain) {
+        return;
+      }
+      const address = _address.toLowerCase();
+      try {
+        const protocols = await syncSpecificProtocol(
+          address,
+          protocolId,
+          chain,
+        );
+        const targetProtocol = protocols[0];
+
+        const tokenSetting = await preferenceService.getUserTokenSettings();
+
+        const currentAssets = assetsMap[address.toLowerCase()] || {};
+        const currentPortfolios = [...(currentAssets.portfolios || [])];
+        if (!targetProtocol || !targetProtocol.portfolio_item_list?.length) {
+          updatePortfolios({
+            address,
+            newPortfolios: currentPortfolios.filter(
+              item => item.id !== protocolId,
+            ),
+          });
+          return;
+        }
+
+        const protocolIndex = currentPortfolios.findIndex(
+          item => item.id === protocolId,
+        );
+        const protocolDisplayData = new DisplayedProject(
+          targetProtocol,
+          targetProtocol.portfolio_item_list,
+        );
+
+        if (protocolIndex > -1) {
+          currentPortfolios[protocolIndex] = protocolDisplayData;
+        } else {
+          currentPortfolios.push(protocolDisplayData);
+        }
+
+        // 重新排序
+        const sortedPortfolios = currentPortfolios.sort(
+          (a, b) => (b.netWorth || 0) - (a.netWorth || 0),
+        );
+
+        updatePortfolios({
+          address,
+          newPortfolios: tagProfiles(sortedPortfolios, tokenSetting),
+        });
+      } catch (error) {
+        console.error('ServiceErrorType.SpecificDefi', error);
+      }
+    },
+  );
+
   const batchLoadCacheTokens = useMemoizedFn(
-    async (addresses: string[], setting: any) => {
+    async (
+      addresses: string[],
+      setting: any,
+      options?: {
+        core?: boolean;
+        maxLength?: number;
+      },
+    ) => {
       if (!addresses.length) {
         return;
       }
       setLoading(true);
       const cachedTokens = await TokenItemEntity.batchMultAddressTokens(
         addresses,
+        options?.core,
+        options?.maxLength,
       );
       if (!cachedTokens.length) {
         setLoading(false);
@@ -212,12 +289,19 @@ export const useAssets = () => {
   );
 
   const batchLoadCacheDefi = useMemoizedFn(
-    async (addresses: string[], setting: any) => {
+    async (
+      addresses: string[],
+      setting: any,
+      options?: {
+        maxLength?: number;
+      },
+    ) => {
       if (!addresses.length) {
         return;
       }
       const cachedPortcols = await PortocolItemEntity.batchMultAddressPortocols(
         addresses,
+        options?.maxLength,
       );
       if (!cachedPortcols) {
         return;
@@ -254,11 +338,22 @@ export const useAssets = () => {
     },
   );
   const batchLoadCacheNFT = useMemoizedFn(
-    async (addresses: string[], setting: any) => {
+    async (
+      addresses: string[],
+      setting: any,
+      options?: {
+        core?: boolean;
+        maxLength?: number;
+      },
+    ) => {
       if (!addresses.length) {
         return;
       }
-      const cacheNfts = await NFTItemEntity.batchMultAddressNFTs(addresses);
+      const cacheNfts = await NFTItemEntity.batchMultAddressNFTs(
+        addresses,
+        options?.core,
+        options?.maxLength,
+      );
       if (!cacheNfts.length) {
         return;
       }
@@ -344,6 +439,10 @@ export const useAssets = () => {
       disableDefi?: boolean;
       disableNFT?: boolean;
       realTimeAddresses?: string[];
+      core?: boolean;
+      maxTokenLength?: number;
+      maxDefiLength?: number;
+      maxNFTLength?: number;
     }) => {
       const { disableToken, disableDefi, disableNFT } = options || {};
       const top10Account = sortedAccounts
@@ -353,30 +452,74 @@ export const useAssets = () => {
         ...new Set([...top10Account.map(i => i.address.toLowerCase())]),
       ];
       removeUnNeedAssets(addresses);
-      if (Object.keys(assetsMap).length) {
+      const isCurrentShortCacheFetch = !!(
+        options?.maxTokenLength ||
+        options?.maxDefiLength ||
+        options?.maxNFTLength
+      );
+
+      // 有cache，不查了
+      if (Object.keys(assetsMap).length && !shortCache) {
         return;
       }
+      if (
+        shortCache &&
+        isCurrentShortCacheFetch &&
+        Object.keys(assetsMap).length
+      ) {
+        return;
+      }
+      setShortCache(
+        !!(
+          options?.maxTokenLength ||
+          options?.maxDefiLength ||
+          options?.maxNFTLength
+        ),
+      );
+
       const tokenSetting = await preferenceService.getUserTokenSettings();
-      !disableToken && (await batchLoadCacheTokens(addresses, tokenSetting));
-      Promise.all([
-        !disableDefi && batchLoadCacheDefi(addresses, tokenSetting),
-        !disableNFT && batchLoadCacheNFT(addresses, tokenSetting),
-      ]);
+      !disableToken &&
+        (await batchLoadCacheTokens(addresses, tokenSetting, {
+          core: options?.core,
+          maxLength: options?.maxTokenLength,
+        }));
+      setTimeout(() => {
+        Promise.all([
+          !disableDefi &&
+            batchLoadCacheDefi(addresses, tokenSetting, {
+              maxLength: options?.maxDefiLength,
+            }),
+          !disableNFT &&
+            batchLoadCacheNFT(addresses, tokenSetting, {
+              core: options?.core,
+              maxLength: options?.maxNFTLength,
+            }),
+        ]);
+      }, 0);
     },
   );
 
   return {
     tokens,
     portfolios,
-    nftList,
     assetsMap,
     isLoading,
-    hasAssets: !!tokens?.length || !!portfolios?.length || !!nftList?.length,
+    getTokenCombined,
+    hasAssets: !!tokens?.length || !!portfolios?.length,
     getCacheTop10Assets,
     checkIsExpireAndUpdate,
     batchLoadCacheTokens,
     batchLoadCacheDefi,
     batchLoadCacheNFT,
+    refreshing: !!isLoading && !isFirstFetch,
+    loadSpecificDefi,
+  };
+};
+
+export const useAssetsRefreshing = () => {
+  const isLoading = useAtomValue(loadingAtom);
+  const isFirstFetch = useAtomValue(isFirstFetchAtom);
+  return {
     refreshing: !!isLoading && !isFirstFetch,
   };
 };
@@ -388,7 +531,7 @@ export const useInitDetectDBAssets = () => {
     batchLoadCacheTokens,
     batchLoadCacheDefi,
     batchLoadCacheNFT,
-  } = useAssets();
+  } = useAssets({ hideCombined: true });
   const { userTokenSettings } = useUserTokenSettings();
 
   const debounceReloadTokenList = useMemo(

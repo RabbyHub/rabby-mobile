@@ -1,6 +1,7 @@
 import React, { memo, ReactNode, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,12 +11,11 @@ import {
 
 import RcFoldCC from '@/assets2024/icons/common/fold.svg';
 import RcUnFoldCC from '@/assets2024/icons/common/unfold.svg';
-import IconBridgeTo from '@/assets2024/icons/search/IconBridgeTo.svg';
-import IconOrigin from '@/assets2024/icons/search/IconOrigin.svg';
-import RcTipCC from '@/assets2024/icons/common/tips.svg';
+import RcTipCC from '@/assets2024/icons/common/warning-circle-cc.svg';
+import RcNextRightCC from '@/assets/icons/common/arrow-right-cc.svg';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
 import { AbstractPortfolioToken } from '../../types';
 import {
   ContextMenuView,
@@ -30,13 +30,12 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { ASSETS_SECTION_HEADER } from '@/constant/layout';
 import { IS_ANDROID } from '@/core/native/utils';
-import { HighlightText } from '@/components2024/HighlightText';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenEntityDetail } from '@rabby-wallet/rabby-api/dist/types';
 import { formatPrice, formatUsdValue } from '@/utils/number';
-import { RiskTokenTips } from '@/screens/TokenDetail';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { formatUsdValueKMB } from '../../utils/price';
+import { ellipsisAddress } from '@/utils/address';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -60,7 +59,7 @@ export const TokenRow = memo(
     logoSize = 40,
     chainLogoSize = 16,
     logoStyle,
-    menuActions,
+    getMenuActions,
     filterText,
     onTokenPress,
     hideFoldTag,
@@ -72,7 +71,7 @@ export const TokenRow = memo(
     logoSize?: number;
     chainLogoSize?: number;
     filterText?: string;
-    menuActions?: MenuAction[];
+    getMenuActions?: (token: AbstractPortfolioToken) => MenuAction[];
     hideFoldTag?: boolean;
     disableMenu?: boolean;
     onTokenPress?(token: AbstractPortfolioToken): void;
@@ -153,14 +152,12 @@ export const TokenRow = memo(
           </View>
           <View style={styles.tokenRowTokenInner}>
             <View style={styles.tokenHeader}>
-              <HighlightText
-                style={styles.tokenSymbol}
-                highlightStyle={styles.highlightText}
+              <Text
                 numberOfLines={1}
                 ellipsizeMode="tail"
-                searchWords={[filterText || '']}
-                textToHighlight={data.symbol}
-              />
+                style={styles.tokenSymbol}>
+                {data.symbol}
+              </Text>
               {!hideFoldTag && data._isManualFold && (
                 <TextBadge type="folded" />
               )}
@@ -217,7 +214,8 @@ export const TokenRow = memo(
     return (
       <ContextMenuView
         menuConfig={{
-          menuActions: showContextMenu && menuActions ? menuActions : [],
+          menuActions:
+            showContextMenu && getMenuActions ? getMenuActions(data) : [],
         }}
         preViewBorderRadius={12}
         triggerProps={{ action: 'longPress' }}>
@@ -253,13 +251,14 @@ export const ExternalTokenRow = memo(
     data,
     style,
     logoSize = 40,
-    chainLogoSize = 16,
+    chainLogoSize = 18,
     logoStyle,
     onTokenPress,
     touchable = true,
     decimalPrecision = false,
     isPined = false,
-    rightSlot,
+    leftSlot,
+    onPressRightIcon,
   }: {
     data: TokenRowDataType;
     style?: ViewStyle;
@@ -271,22 +270,15 @@ export const ExternalTokenRow = memo(
     onTokenPress?(token: TokenRowDataType): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
-    rightSlot?: ReactNode;
+    leftSlot?: ReactNode;
+    onPressRightIcon?(): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-    const { t } = useTranslation();
 
     const mediaStyle = useMemo(
       () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
       [logoStyle, styles.tokenRowLogo],
     );
-
-    const siteList = useMemo(() => {
-      return [
-        ...(data?.identity?.listed_sites || []),
-        ...(data?.identity?.cex_list || []),
-      ];
-    }, [data]);
 
     const isGasToken = useMemo(() => data.id === data.chain, [data]);
 
@@ -294,50 +286,113 @@ export const ExternalTokenRow = memo(
       return onTokenPress?.(data);
     }, [data, onTokenPress]);
 
-    const percentColor = useMemo(() => {
-      if (
-        !data?.price_24h_change ||
-        Math.abs(data.price_24h_change) < 0.00001
-      ) {
-        return colors2024['neutral-secondary'];
+    const fdv = useMemo(() => {
+      if (data.identity?.fdv) {
+        return data.identity?.fdv;
       }
-      if (data.price_24h_change > 0) {
-        return colors2024['green-default'];
-      }
-      return colors2024['red-default'];
-    }, [colors2024, data.price_24h_change]);
+      return data.fdv || 0;
+    }, [data]);
 
     const ExtraContent = useMemo(() => {
-      if (data.is_verified === false) {
-        return <RiskTokenTips isDanger={true} />;
-      }
-
-      if (data.is_suspicious) {
-        return <RiskTokenTips isDanger={false} />;
-      }
-
-      if (data.identity?.domain_id) {
-        const isBridgeDomain = data.identity.bridge_ids?.length > 0;
-        const isVerified = data.identity.is_domain_verified;
-
-        return (
-          <View style={styles.searchTokenExtraInfo}>
-            <Text style={styles.searchTokenIssuedby}>
-              {t('page.search.tokenItem.Issuedby')}
-            </Text>
-            <View style={styles.tokenRowContent}>
-              <Text style={styles.searchTokenDomain}>
-                {data.identity?.domain_id}
+      const notVerified = data.is_verified === false;
+      return (
+        <Pressable
+          onPress={e => {
+            if (onPressRightIcon) {
+              e.stopPropagation();
+              onPressRightIcon?.();
+            } else {
+              onPressToken?.();
+            }
+          }}
+          style={styles.searchTokenExtraInfo}>
+          <View style={styles.bubbleArrow} />
+          <View style={styles.leftSection}>
+            {isGasToken ? (
+              <View style={styles.gasBadgeTextRoot}>
+                <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
+              </View>
+            ) : (
+              <Text
+                style={styles.searchSubText}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {'FDV'}
+                <Text style={styles.fdvValue}>
+                  {':'}
+                  {fdv ? formatUsdValueKMB(fdv || 0) : ' -'}
+                </Text>
               </Text>
-              {isVerified &&
-                (isBridgeDomain ? <IconBridgeTo /> : <IconOrigin />)}
+            )}
+            {!isGasToken && (data?.identity?.token_id || data.id) && (
+              <View style={styles.verticalLine} />
+            )}
+            {!isGasToken && (data?.identity?.token_id || data.id) && (
+              <View style={styles.tokenRowContent}>
+                <Text style={styles.caValue}>
+                  {'CA'}
+                  <Text style={styles.caValueText}>
+                    {':'}
+                    {ellipsisAddress(data?.identity?.token_id || data.id)}
+                  </Text>
+                </Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.rightSection}>
+            {notVerified && (
+              <View>
+                <RcTipCC
+                  style={styles.tips}
+                  color={
+                    notVerified
+                      ? colors2024['red-default']
+                      : colors2024['orange-default']
+                  }
+                />
+              </View>
+            )}
+            <View>
+              <RcNextRightCC
+                width={14}
+                height={14}
+                style={styles.tips}
+                color={
+                  notVerified
+                    ? colors2024['red-default']
+                    : data.is_suspicious
+                    ? colors2024['orange-default']
+                    : colors2024['neutral-title-1']
+                }
+              />
             </View>
           </View>
-        );
-      }
-
-      return null;
-    }, [data.identity, styles, t, data.is_verified, data.is_suspicious]);
+        </Pressable>
+      );
+    }, [
+      data.is_verified,
+      data?.identity?.token_id,
+      data.id,
+      data.is_suspicious,
+      styles.searchTokenExtraInfo,
+      styles.bubbleArrow,
+      styles.leftSection,
+      styles.gasBadgeTextRoot,
+      styles.gasBadgeText,
+      styles.searchSubText,
+      styles.fdvValue,
+      styles.verticalLine,
+      styles.tokenRowContent,
+      styles.caValue,
+      styles.caValueText,
+      styles.rightSection,
+      styles.tips,
+      isGasToken,
+      fdv,
+      colors2024,
+      onPressRightIcon,
+      onPressToken,
+    ]);
 
     return (
       <Container
@@ -347,12 +402,14 @@ export const ExternalTokenRow = memo(
         onPress={onPressToken}>
         <View style={styles.serachTokenRowTokenWrap}>
           <View style={styles.serachTokenContent}>
+            {leftSlot}
             <AssetAvatar
               logo={data?.logo_url}
               chain={data?.chain}
               style={mediaStyle}
               size={logoSize}
               chainSize={chainLogoSize}
+              innerChainStyle={styles.chainLogo}
             />
             <View style={styles.searchTokenRowTokenInner}>
               <View style={[styles.colContent, styles.leftColContent]}>
@@ -363,61 +420,24 @@ export const ExternalTokenRow = memo(
                     ellipsizeMode="tail">
                     {getTokenSymbol(data)}
                   </Text>
-                  {siteList.length > 0 && (
-                    <>
-                      <View style={styles.verticalLine} />
-                      <View style={styles.siteList}>
-                        {siteList.map(
-                          (item, idx) =>
-                            item.logo_url && (
-                              <AssetAvatar
-                                key={idx}
-                                logo={item.logo_url}
-                                size={12}
-                              />
-                            ),
-                        )}
-                      </View>
-                    </>
-                  )}
                 </View>
-
-                {isGasToken ? (
-                  <View style={styles.gasBadgeTextRoot}>
-                    <Text style={styles.gasBadgeText}>{'Gas Token'}</Text>
-                  </View>
-                ) : (
-                  <Text
-                    style={styles.searchSubText}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {`FDV ${
-                      data.identity?.fdv
-                        ? formatUsdValueKMB(data.identity?.fdv || 0)
-                        : '-'
-                    }`}
-                  </Text>
-                )}
-              </View>
-              <View style={styles.colContent}>
-                <Text style={styles.tokenRowAmount}>
+                <Text style={styles.usdValue}>
                   {decimalPrecision ? '$' : ''}
                   {(decimalPrecision ? formatPrice : formatUsdValue)(
                     data.price || 0,
                   )}
                 </Text>
+              </View>
+              <View style={styles.colContent}>
+                <Text style={styles.tokenRowAmount}>{data._usdValueStr}</Text>
                 <Text
-                  style={StyleSheet.compose(styles.percent, {
-                    ...(data._isExcludeBalance && (data._usdValue || 0) > 0
-                      ? styles.exclude
-                      : {}),
-                    color: percentColor,
-                  })}>
-                  {formatPercentage(data.price_24h_change || 0)}
+                  style={styles.searchAmountStr}
+                  ellipsizeMode="tail"
+                  numberOfLines={1}>
+                  {data._amountStr} {data.symbol}
                 </Text>
               </View>
             </View>
-            {rightSlot}
           </View>
 
           {ExtraContent}
@@ -515,6 +535,12 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'space-between',
     width: '100%',
   },
+  chainLogo: {
+    borderWidth: 1.5,
+    borderColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+  },
   serachTokenRowTokenWrap: {
     flexShrink: 1,
     // flex: 1,
@@ -549,7 +575,16 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+    maxWidth: 150,
     // ...makeDebugBorder(),
+  },
+  usdValue: {
+    marginTop: 2,
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
   },
   tokenRowLogo: {
     marginRight: 12,
@@ -575,6 +610,29 @@ const getStyles = createGetStyles2024(ctx => ({
       : ctx.colors2024['neutral-bg-1'],
     borderRadius: 8,
     // marginTop: 12,
+    position: 'relative',
+  },
+  bubbleArrow: {
+    position: 'absolute',
+    top: -12,
+    left: 44,
+    ...makeTriangleStyle({
+      dir: 'up',
+      size: 6.5,
+      color: ctx.isLight
+        ? ctx.colors2024['neutral-bg-2']
+        : ctx.colors2024['neutral-bg-1'],
+      backgroundColor: 'transparent',
+    }),
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   searchTokenRowTokenInner: {
     // flexShrink: 1,
@@ -596,7 +654,7 @@ const getStyles = createGetStyles2024(ctx => ({
   verticalLine: {
     width: 1,
     height: 12,
-    backgroundColor: ctx.colors2024['brand-light-2'],
+    backgroundColor: ctx.colors2024['neutral-secondary'],
     marginHorizontal: 4,
   },
   siteList: {
@@ -657,6 +715,9 @@ const getStyles = createGetStyles2024(ctx => ({
     fontFamily: 'SF Pro Rounded',
     fontWeight: '500',
   },
+  fdvValue: {
+    color: ctx.colors2024['neutral-title-1'],
+  },
   tokenRowUsdValueWrap: {
     flexShrink: 0,
     justifyContent: 'flex-end',
@@ -670,6 +731,16 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 20,
     fontWeight: '700',
     fontFamily: 'SF Pro Rounded',
+  },
+  searchAmountStr: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+    marginTop: 2,
+    textAlign: 'right',
+    maxWidth: 100,
   },
   searchTokenIssuedby: {
     color: ctx.colors2024['neutral-secondary'],
@@ -703,6 +774,16 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  caValue: {
+    color: ctx.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+  },
+  caValueText: {
+    color: ctx.colors2024['neutral-title-1'],
   },
   searchTokenDanger: {
     flex: 1,

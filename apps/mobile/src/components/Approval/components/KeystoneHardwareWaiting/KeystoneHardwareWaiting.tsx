@@ -57,9 +57,6 @@ interface ApprovalParams {
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
-    root: {
-      flex: 1,
-    },
     brandIcon: {
       width: 20,
       height: 20,
@@ -90,8 +87,8 @@ const getStyles = (colors: AppColorsVariants) =>
       marginTop: 30,
     },
     payloadEmptyContainer: {
-      width: '100%',
-      height: '100%',
+      width: 440,
+      height: 440,
       marginBottom: -100,
     },
   });
@@ -127,6 +124,9 @@ export const KeystoneHardwareWaiting = ({
   const chain = findChain({
     id: params.chainId || 1,
   })!.enum;
+
+  const cancelRef = useRef(false);
+
   const init = useCallback(async () => {
     const approval = await getApproval();
     if (!account) {
@@ -156,6 +156,7 @@ export const KeystoneHardwareWaiting = ({
     );
     eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
       if (data.success) {
+        cancelRef.current = true;
         let sig = data.data;
         try {
           if (params.isGnosis) {
@@ -219,8 +220,6 @@ export const KeystoneHardwareWaiting = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signFinishedData, isClickDone]);
-
-  const cancelRef = useRef(false);
 
   const handleCancel = () => {
     cancelRef.current = true;
@@ -324,7 +323,7 @@ export const KeystoneHardwareWaiting = ({
   );
 
   return (
-    <View style={styles.root}>
+    <View>
       <View style={styles.titleWrapper}>
         <KeystoneSVG width={20} height={20} style={styles.brandIcon} />
         <Text style={styles.title}>

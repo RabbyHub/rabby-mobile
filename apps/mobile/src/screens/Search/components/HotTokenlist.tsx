@@ -52,11 +52,7 @@ export const HotTokenList = () => {
       setWatchlistTokenList(res.pinedQueue || []);
     });
   }, []);
-  useFocusEffect(() => {
-    setTimeout(() => {
-      fetchPinedTokenList();
-    }, 200);
-  });
+  useFocusEffect(fetchPinedTokenList);
 
   const handlePress = useCallback(
     (token: TokenDetailWithPriceCurve) => {
@@ -91,7 +87,7 @@ export const HotTokenList = () => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="none"
-        onScroll={() => {
+        onScrollBeginDrag={() => {
           Keyboard.dismiss();
         }}
         refreshControl={
@@ -123,7 +119,7 @@ export const HotTokenList = () => {
                       t => t.chainId === item.chain && t.tokenId === item.id,
                     )
                       ? colors2024['orange-default']
-                      : colors2024['neutral-info']
+                      : colors2024['neutral-line']
                   }
                 />
               </TouchableOpacity>

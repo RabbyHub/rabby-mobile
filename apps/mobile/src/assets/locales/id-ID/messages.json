@@ -661,7 +661,8 @@
       "whitelistAlert__notWhitelisted": "Alamat tidak ada dalam daftar putih. Saya setuju untuk memberikan izin sementara untuk mentransfer.",
       "whitelistAlert__temporaryGranted": "Izin sementara diberikan",
       "whitelistAlert__whitelisted": "Alamat telah tercantum dalam daftar putih",
-      "noSupportTokenForChain": "Alamat penerima adalah alamat kontrak di rantai yang berbeda. Periksa sebelum melanjutkan untuk menghindari kerugian."
+      "noSupportTokenForChain": "Alamat penerima adalah alamat kontrak di rantai yang berbeda. Periksa sebelum melanjutkan untuk menghindari kerugian.",
+      "addressDetail": "Detail Alamat"
     },
     "sendPoly": {
       "modals": {
@@ -836,7 +837,8 @@
       "Loading_Tokens": "Memuat Token...",
       "Value": "Nilai",
       "InsufficientBalanceTips": "Saldo tidak cukup",
-      "Select-from-supported-tokens": "Pilih dari token yang didukung"
+      "Select-from-supported-tokens": "Pilih dari token yang didukung",
+      "Deposit-tip": "Setor dengan USDC/USDT"
     },
     "swap": {
       "rabbyFee": {
@@ -1670,7 +1672,8 @@
         "desc": "Anda dapat menarik saldo GasAccount Anda ke Dompet DeBank L2 Anda. Masuk ke Dompet DeBank L2 Anda untuk mentransfer dana ke blockchain yang didukung sesuai kebutuhan.",
         "selectRecipientAddress": "Pilih Wallet penerima",
         "recipientAddress": "Dompet penerima",
-        "noRecipient": "Tidak ada dompet Penerima yang tersedia"
+        "noRecipient": "Tidak ada dompet Penerima yang tersedia",
+        "availableBalance": "Saldo penarikan yang tersedia: {{balance}}"
       },
       "withdrawConfirmModal": {
         "title": "Ditransfer ke Dompet DeBank L2 Anda",
@@ -1744,7 +1747,6 @@
       },
       "Info": "Info",
       "relateDefi": "DeFi Terkait",
-      "Mybalance": "Saldo Saya",
       "TokenName": "Nama Token",
       "SeeMore": "Lihat lebih banyak",
       "Price": "Harga",
@@ -1753,7 +1755,6 @@
       "noBalance": "Tidak Ada Saldo",
       "Defi": "DeFi",
       "noTransactions": "Tidak ada transaksi",
-      "Transaction": "Transaksi",
       "NoListedSite": "Tidak ada informasi listing yang tersedia",
       "NoSupportedExchanges": "Tidak ada bursa yang didukung tersedia",
       "BridgeIssue": "Token yang dijembatani oleh pihak ketiga",
@@ -1957,22 +1958,38 @@
         "title": "Dapp Saat Ini",
         "disconnect": "Putuskan hubungan",
         "connectWallet": "Sambungkan Dompet"
+      },
+      "BrowserSearch": {
+        "openUrl": "Buka \"{{searchText}}\"",
+        "recent": "Terbaru",
+        "results": "Hasil",
+        "searchInGoogle": "Cari \"{{searchText}}\" di Google",
+        "placeholder": "Cari Situs Web"
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "Buka Situs Web"
       }
     },
     "browserManage": {
       "option": {
         "tab": "Tab",
         "history": "Sejarah",
-        "favorites": "Favorit"
+        "favorites": "Favorit",
+        "recent": "Terbaru"
       },
       "BrowserBookmarkList": {
-        "title": "Favorit"
+        "title": "Favorit",
+        "emptyTitle": "Belum ada situs web yang ditambahkan."
       },
       "BrowserHistoryList": {
-        "title": "Riwayat"
+        "title": "Riwayat",
+        "emptyTitle": "Tidak ada riwayat dalam 30 hari terakhir",
+        "clearAllHistory": "Bersihkan semua Riwayat"
       },
       "BrowserTabList": {
-        "closeAllTabs": "Tutup semua tab"
+        "closeAllTabs": "Tutup semua tab",
+        "emptyDesc": "Buka tab baru sekarang",
+        "emptyTitle": "Belum ada tab yang dibuka"
       }
     },
     "scan": {
@@ -2147,7 +2164,14 @@
       "searchPlaceHolder2": "Cari Token",
       "searchPlaceHolder1": "Cari berdasarkan Nama / Alamat",
       "common": "Umum",
-      "hot": "Panas"
+      "hot": "Panas",
+      "bridgeTo": {
+        "high": "Likuiditas tinggi",
+        "low": "Likuiditas rendah"
+      },
+      "favoriteFilter": {
+        "all": "Semua"
+      }
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {

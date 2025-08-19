@@ -1,69 +1,49 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
-import { Tip } from '@/components/Tip';
-import { useMyAccounts } from '@/hooks/account';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
-import {
-  AbstractPortfolio,
-  AbstractPortfolioToken,
-  AbstractProject,
-} from '@/screens/Home/types';
+import { useTheme2024 } from '@/hooks/theme';
+import { AbstractPortfolioToken, AbstractProject } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { findChain, getChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
-import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
-import { useRoute } from '@react-navigation/native';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
+import { useRequest } from 'ahooks';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenArea } from './components/TokenArea';
-import { TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { RcIconMore } from '@/assets/icons/home';
-import { DropDownMenuView, MenuAction } from '@/components2024/DropDownMenu';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
-import { toast } from '@/components2024/Toast';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { CombineTokensItem } from '../Home/hooks/store';
-import { RelatedDeFi } from './components/RelatedDeFi';
-import { naviPush } from '@/utils/navigation';
-import { formatTokenAmount } from '@/utils/number';
+import { formatPrice, formatTokenAmount } from '@/utils/number';
 import { useAssets } from '../Search/useAssets';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { ellipsisAddress } from '@/utils/address';
 import BigNumber from 'bignumber.js';
 import { GetRootScreenNavigationProps } from '@/navigation-type';
-import { TokenChainAndContract } from './components/TokenChainAndContract';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { IssuerAndListSite } from './components/IssuerAndListSite';
 import { HistoryList } from './components/HistoryList';
-import RcIconDanger from '@/assets2024/icons/search/RcIconDanger.svg';
-import RcIconWarning from '@/assets2024/icons/search/RcIconWarning.svg';
-import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import { useTokenDetail } from './hook';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
-import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { useSetAtom } from 'jotai';
+import { isFromBackAtom } from '../Swap/hooks/atom';
+import BalanceOverview from './components/BalanceOverview';
+import { useTokenBalance } from './hook';
+import TokenActions from './components/TokenActions';
+import BottomFloatGuide from './components/BottomFloatGuide';
+import { RootNames } from '@/constant/layout';
+import { navigate } from '@/utils/navigation';
+import { RightMore } from './components/RightMore';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -77,198 +57,6 @@ export type TokenFromAddressItem = {
 
 export type RelatedDeFiType = AbstractProject & {
   amount: number;
-};
-
-const hitSlop = {
-  top: 10,
-  bottom: 10,
-  left: 10,
-  right: 10,
-};
-export const RightMore: React.FC<{
-  token: AbstractPortfolioToken;
-  isMultiAddress?: boolean;
-  triggerUpdate: () => void;
-  refreshTags: () => void;
-  unHold?: boolean;
-}> = ({ token, triggerUpdate, refreshTags, unHold }) => {
-  const isDarkTheme = useGetBinaryMode() === 'dark';
-  const { t } = useTranslation();
-  const { colors2024 } = useTheme2024();
-
-  const menuActions = React.useMemo(() => {
-    return [
-      {
-        title: token._isFold
-          ? t('page.tokenDetail.action.unfold')
-          : t('page.tokenDetail.action.fold'),
-        icon: token._isFold
-          ? isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_unfold.png')
-          : isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_fold.png'),
-        androidIconName: token._isFold
-          ? 'ic_rabby_menu_unfold'
-          : 'ic_rabby_menu_fold',
-        key: 'fold',
-        action() {
-          if (token._isFold) {
-            preferenceService.manualUnFoldToken({
-              tokenId: token._tokenId,
-              chainId: token.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.unfold_success'));
-          } else {
-            preferenceService.manualFoldToken({
-              tokenId: token._tokenId,
-              chainId: token.chain,
-            });
-            toast.success(t('page.tokenDetail.actionsTips.fold_success'));
-          }
-          token._isFold = !token._isFold;
-          refreshTags();
-        },
-      },
-      {
-        title: token._isExcludeBalance
-          ? t('page.tokenDetail.action.includeBalance')
-          : t('page.tokenDetail.action.excludeBalance'),
-        icon: token._isExcludeBalance
-          ? isDarkTheme
-            ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance_dark.png')
-            : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_include_balance.png')
-          : isDarkTheme
-          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance_dark.png')
-          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_exclude_balance.png'),
-        key: 'balance',
-        androidIconName: token._isExcludeBalance
-          ? 'ic_rabby_menu_include_balance'
-          : 'ic_rabby_menu_exclude_balance',
-        action() {
-          if (token._isExcludeBalance) {
-            preferenceService.includeBalanceToken({
-              id: token._tokenId,
-              chainid: token.chain,
-              type: 'token',
-            });
-            toast.success(
-              t('page.tokenDetail.actionsTips.includeBalance_success'),
-            );
-          } else {
-            preferenceService.excludeBalance({
-              id: token._tokenId,
-              chainid: token.chain,
-              type: 'token',
-            });
-            toast.success(
-              t('page.tokenDetail.actionsTips.excludeBalance_success'),
-            );
-          }
-          token._isExcludeBalance = !token._isExcludeBalance;
-          refreshTags();
-          triggerUpdate();
-        },
-      },
-    ] as MenuAction[];
-  }, [token, t, isDarkTheme, refreshTags, triggerUpdate]);
-
-  const {
-    removePinedToken,
-    pinToken,
-    userTokenSettings,
-    fetchUserTokenSettings,
-  } = useUserTokenSettings();
-
-  useEffect(() => {
-    fetchUserTokenSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const isPined = useMemo(
-    () =>
-      userTokenSettings?.pinedQueue?.some(
-        pinned =>
-          pinned.chainId === token.chain && pinned.tokenId === token._tokenId,
-      ),
-    [token._tokenId, token.chain, userTokenSettings?.pinedQueue],
-  );
-
-  const handlePress = useCallback(() => {
-    if (isPined) {
-      removePinedToken({
-        id: token._tokenId,
-        chain: token.chain,
-      });
-    } else {
-      pinToken({
-        id: token._tokenId,
-        chain: token.chain,
-      });
-    }
-    setTimeout(() => {
-      refreshTags();
-    }, 0);
-  }, [
-    isPined,
-    pinToken,
-    refreshTags,
-    removePinedToken,
-    token._tokenId,
-    token.chain,
-  ]);
-
-  return (
-    <>
-      <TouchableOpacity style={{ marginRight: 18 }} onPress={handlePress}>
-        <RcIconFavorite
-          width={22}
-          height={21}
-          color={
-            isPined ? colors2024['orange-default'] : colors2024['neutral-info']
-          }
-        />
-      </TouchableOpacity>
-      {!unHold && (
-        <DropDownMenuView
-          menuConfig={{
-            menuActions: menuActions,
-          }}
-          triggerProps={{ action: 'press' }}>
-          <CustomTouchableOpacity hitSlop={hitSlop}>
-            <RcIconMore width={24} height={24} />
-          </CustomTouchableOpacity>
-        </DropDownMenuView>
-      )}
-    </>
-  );
-};
-
-export const RiskTokenTips = ({ isDanger }: { isDanger?: boolean }) => {
-  const { styles } = useTheme2024({
-    getStyle: getStyle,
-  });
-  const { t } = useTranslation();
-  return isDanger ? (
-    <View style={styles.searchTokenDanger}>
-      <View style={styles.tokenRowContent}>
-        <RcIconDanger />
-        <Text style={styles.searchTokenDangerText}>
-          {t('page.search.tokenItem.verifyDangerTips')}
-        </Text>
-      </View>
-    </View>
-  ) : (
-    <View style={styles.searchTokenWarning}>
-      <View style={styles.tokenRowContent}>
-        <RcIconWarning />
-        <Text style={styles.searchTokenWarningText}>
-          {t('page.search.tokenItem.scamWarningTips')}
-        </Text>
-      </View>
-    </View>
-  );
 };
 
 export const TokenDetailScreen = () => {
@@ -285,41 +73,30 @@ export const TokenDetailScreen = () => {
     rawPortfolios, // only isSingleAddress === true can use
   } = route.params || {};
 
-  const { styles, isLight } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
+  const { t } = useTranslation();
 
+  const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
-  const [isUp, setIsUp] = useState(true);
-  const {
-    tokens: cacheAssets,
-    assetsMap,
-    getCacheTop10Assets,
-    checkIsExpireAndUpdate,
-  } = useAssets();
+  const { assetsMap, getCacheTop10Assets, getTokenCombined } = useAssets({
+    hideCombined: true,
+  });
 
   const token: AbstractPortfolioToken | CombineTokensItem = useMemo(() => {
     if (fromPortfolio || needUseCacheToken) {
-      const iToken = cacheAssets.find(
-        item =>
-          item._tokenId === _token._tokenId && item.chain === _token.chain,
-      );
-      return iToken || _token;
+      const combinedToken = getTokenCombined(_token._tokenId, _token.chain);
+      return combinedToken?.[0] || _token;
     }
     return _token;
-  }, [cacheAssets, _token, needUseCacheToken, fromPortfolio]);
+  }, [getTokenCombined, _token, needUseCacheToken, fromPortfolio]);
   const { safeOffBottom } = useSafeSizes();
   const { top10Addresses, list: accounts, rawAllAccounts } = useAccountInfo();
-  // const { tokensByAddress, isReady: tokenListIsReady } = useTokenDetail(
-  //   token.chain,
-  //   token._tokenId,
-  //   top10Addresses.map(item => item.toLowerCase()),
-  //   isSingleAddress ? undefined : (token as CombineTokensItem).fromAddress,
-  //   isSingleAddress,
-  // );
 
-  const finalAccount =
-    account || accounts[0] || preferenceService.getFallbackAccount();
+  const finalAccount = useMemo(() => {
+    return account || accounts[0] || preferenceService.getFallbackAccount();
+  }, [account, accounts]);
 
   const { data: tokenEntityList } = useRequest(
     async () => {
@@ -425,19 +202,6 @@ export const TokenDetailScreen = () => {
     rawPortfolios,
   ]);
 
-  const handleOpenDefiDetail = useCallback(
-    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
-      naviPush(RootNames.DeFiDetail, {
-        data,
-        portfolioList: itemList,
-        isSingleAddress,
-        account: finalAccount,
-        cache: true,
-        relateTokenId: token._tokenId,
-      });
-    },
-    [token, isSingleAddress, finalAccount],
-  );
   useEffect(() => {
     const id = setTimeout(() => {
       getCacheTop10Assets({
@@ -451,14 +215,10 @@ export const TokenDetailScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const { data: tokenWithAmount } = useRequest(
     async () => {
-      // if (!finalAccount || !token || token.amount) {
-      //   return token;
-      // }
-
       const res = await openapi.getToken(
         finalAccount!.address,
         token.chain,
@@ -468,25 +228,10 @@ export const TokenDetailScreen = () => {
         ...abstractTokenToTokenItem(token),
         usd_value: res?.usd_value,
         price: res?.price,
-        // amount: res?.amount,
       });
     },
     {
       refreshDeps: [token.chain, token._tokenId, finalAccount?.address],
-    },
-  );
-
-  const { data: tokenEntity, loading: entityLoading } = useRequest(
-    async () => {
-      if (!token || !token._tokenId) {
-        return;
-      }
-
-      const res = await openapi.getTokenEntity(token._tokenId, token.chain);
-      return res;
-    },
-    {
-      refreshDeps: [token._tokenId, token.chain],
     },
   );
 
@@ -501,24 +246,18 @@ export const TokenDetailScreen = () => {
   }, [isSingleAddress, singleTokenRefresh, tokenRefresh]);
 
   const getHeaderTitle = useCallback(() => {
-    return <TokenDetailHeaderArea key={finalAccount?.address} token={token} />;
+    return (
+      <TokenDetailHeaderArea
+        key={finalAccount?.address}
+        token={token}
+        tokenSize={20}
+        chainSize={10}
+        borderChain
+        style={{ justifyContent: 'center' }}
+        titleStyle={{ fontSize: 20 }}
+      />
+    );
   }, [finalAccount?.address, token]);
-
-  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
-  const { navigateToSendPolyScreen } = useSendRoutes();
-
-  const handleSend = useMemoizedFn(async () => {
-    const chain = findChain({
-      serverId: token.chain,
-    });
-    if (isSingleAddress) {
-      await switchSceneCurrentAccount('MakeTransactionAbout', finalAccount);
-    }
-    navigateToSendPolyScreen(!!isSingleAddress, {
-      chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-      tokenId: token?._tokenId,
-    });
-  });
 
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
@@ -540,12 +279,6 @@ export const TokenDetailScreen = () => {
     } else {
       const { fromAddress } = token as CombineTokensItem;
 
-      // const fromAddressList = !tokenListIsReady
-      //   ? fromAddress
-      //   : Object.keys(tokensByAddress).map(address => ({
-      //       address,
-      //       amount: tokensByAddress[address].amount,
-      //     }));
       const fromAddressList =
         tokenEntityList?.map(item => ({
           address: item.owner_addr,
@@ -573,22 +306,16 @@ export const TokenDetailScreen = () => {
     }
   }, [token, accounts, isSingleAddress, finalAccount, tokenEntityList]);
 
-  const tokenChain = useMemo(() => {
-    return getChain(token?.chain);
-  }, [token?.chain]);
-
-  const { isSupportedChain, data: externalSwapDapps } =
-    useExternalSwapBridgeDapps(tokenChain!.enum, 'swap');
-
-  const tokenSupportSwap = useMemo(
-    () => isSupportedChain || externalSwapDapps.length > 0,
-    [isSupportedChain, externalSwapDapps],
-  );
-
   const unHold = useMemo(
     () => _unHold || tokenFromAddress.length === 0,
     [_unHold, tokenFromAddress],
   );
+
+  const handleOpenTokenMarketInfo = useCallback(() => {
+    navigate(RootNames.TokenMarketInfo, {
+      ...route.params,
+    });
+  }, [route.params]);
 
   const getHeaderRight = useCallback(() => {
     return (
@@ -602,6 +329,15 @@ export const TokenDetailScreen = () => {
     );
   }, [token, triggerUpdate, isSingleAddress, refreshTag, unHold]);
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // 页面失焦（返回/左滑/点击返回按钮）时统一副作用
+        setIsFromBack(true);
+      };
+    }, [setIsFromBack]),
+  );
+
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
@@ -610,46 +346,14 @@ export const TokenDetailScreen = () => {
     });
   }, [setNavigationOptions, getHeaderRight, getHeaderTitle, unHold]);
 
-  const isFromSwap =
-    !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
-
-  const handleSwap = useMemoizedFn(
-    async (
-      type: 'Buy' | 'Sell',
-      address?: string,
-      accountType?: KEYRING_TYPE,
-    ) => {
-      if (!tokenSupportSwap) {
-        toast.error('Token not support');
-        return;
-      }
-
-      const chain = findChain({
-        serverId: token.chain,
-      });
-
-      const toAccount =
-        address && accountType
-          ? accounts.find(
-              i => isSameAddress(address, i.address) && i.type === accountType,
-            ) || finalAccount
-          : finalAccount;
-      await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
-
-      navigation.push(RootNames.StackTransaction, {
-        screen: isSingleAddress ? RootNames.Swap : RootNames.MultiSwap,
-        params: {
-          chainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
-          tokenId: token?._tokenId,
-          type: tokenSelectType === 'swapTo' ? 'Buy' : type,
-          address,
-          isFromSwap,
-        },
-      });
-    },
-  );
-
-  const { t } = useTranslation();
+  const { amountSum, usdValue, percentChange, isLoss, is24hNoChange, price } =
+    useTokenBalance({
+      token: tokenWithAmount || token,
+      amountList: tokenFromAddress,
+      isSingleAddress: !!isSingleAddress,
+      relateDefiList,
+      currentAddress: finalAccount?.address,
+    });
 
   if (isSingleAddress && !finalAccount) {
     return null;
@@ -661,7 +365,7 @@ export const TokenDetailScreen = () => {
       overwriteStyle={styles.rootScreenContainer}>
       <ImageBackground
         source={
-          isUp
+          !isLoss
             ? isLight
               ? require('@/assets2024/singleHome/home-profit-bg-1.png')
               : require('@/assets2024/singleHome/home-profit-dark-bg-1.png')
@@ -681,7 +385,7 @@ export const TokenDetailScreen = () => {
       <ScrollView>
         <ImageBackground
           source={
-            isUp
+            !isLoss
               ? isLight
                 ? require('@/assets2024/singleHome/home-profit-bg-2.png')
                 : require('@/assets2024/singleHome/home-profit-dark-bg-2.png')
@@ -698,49 +402,27 @@ export const TokenDetailScreen = () => {
             height: 150,
           }}
         />
-        <View style={styles.riskContainer}>
-          {token.is_verified === false && <RiskTokenTips isDanger={true} />}
-          {token.is_verified !== false && token.is_suspicious && (
-            <RiskTokenTips isDanger={false} />
-          )}
-        </View>
-        <View style={{ position: 'relative' }}>
-          {/* <HomePinBadge token={token} refreshTags={refreshTag} /> */}
-          {/* <Text style={styles.currentText}>Current price</Text> */}
-          <TokenPriceChart
-            token={tokenWithAmount || token}
-            originToken={token}
-            finalAccount={finalAccount}
-            onUpChange={b => setIsUp(b)}
-            amountList={tokenFromAddress}
-            relateDefiList={relateDefiList}
-            isSingleAddress={isSingleAddress}
+        <View style={styles.balanceOverviewContainer}>
+          <BalanceOverview
+            percentChange={percentChange}
+            isLoss={isLoss}
+            usdValue={usdValue}
+            amount={amountSum}
+            is24hNoChange={is24hNoChange}
           />
-          {/* <View style={styles.divider} /> */}
+          <TokenActions
+            token={token}
+            isSingleAddress={!!isSingleAddress}
+            finalAccount={finalAccount}
+            tokenSelectType={tokenSelectType}
+          />
         </View>
         <TokenArea
-          isSingleAddress={isSingleAddress}
-          tokenUsdValue={tokenWithAmount?.price}
-          finalAccount={finalAccount}
-          accounts={accounts}
           amountList={tokenFromAddress}
           token={token}
           rawAllAccounts={rawAllAccounts}
         />
-        {relateDefiList.length > 0 && (
-          <RelatedDeFi
-            deFiList={relateDefiList}
-            symbol={token.symbol}
-            handleGoDeFi={handleOpenDefiDetail}
-          />
-        )}
-        <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
-        <IssuerAndListSite
-          tokenEntity={tokenEntity}
-          entityLoading={entityLoading}
-        />
         <HistoryList
-          accounts={accounts}
           top10Addresses={top10Addresses}
           finalAccount={finalAccount}
           isForMultipleAddress={!isSingleAddress}
@@ -748,50 +430,31 @@ export const TokenDetailScreen = () => {
         />
         <View style={{ height: isAndroid ? 120 + safeOffBottom : 156 }} />
       </ScrollView>
-      {/* <LinearGradient
-        colors={
-          isLight
-            ? ['rgba(246, 247, 247, 1)', 'rgba(246, 247, 247, 0.3)']
-            : ['rgba(19, 20, 22, 1)', 'rgba(19, 20, 22, 0.3)']
-        }
-        locations={[0.6393, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[
-          styles.floatBottom,
-          isAndroid && { height: 120 + safeOffBottom },
-        ]}> */}
-      <View
-        style={[
-          styles.buttonGroup,
-          isAndroid && { paddingBottom: 50 + safeOffBottom },
-        ]}>
-        <Button
-          type="ghost"
-          title={t('page.home.services.send')}
-          containerStyle={StyleSheet.flatten([styles.btnContainer])}
-          buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
-          onPress={() => handleSend()}
-        />
-        <View style={styles.btnContainer}>
-          <Tip
-            placement="top"
-            content={
-              !tokenSupportSwap
-                ? t('page.tokenDetail.notSupportedOnChain')
-                : undefined
-            }>
-            <Button
-              title={isFromSwap ? t('global.Confirm') : t('page.swap.title')}
-              containerStyle={StyleSheet.flatten([styles.btnContainer])}
-              onPress={() => handleSwap('Sell')}
-              buttonStyle={styles.btnInnerContainer}
-              disabled={!tokenSupportSwap}
-            />
-          </Tip>
+      <BottomFloatGuide onPress={handleOpenTokenMarketInfo}>
+        <View style={styles.floatingBarContent}>
+          <Text style={styles.floatBalanceTitle}>
+            {t('page.tokenDetail.guideToMarketData')}
+          </Text>
+          <View style={styles.floatBalanceContainer}>
+            <Text style={styles.floatPrice}>${formatPrice(price)}</Text>
+            <Text
+              style={[
+                styles.floatPriceChange,
+                {
+                  color: is24hNoChange
+                    ? colors2024['neutral-secondary']
+                    : isLoss
+                    ? colors2024['red-default']
+                    : colors2024['green-default'],
+                },
+              ]}>
+              {' '}
+              ({is24hNoChange ? '0.0%' : isLoss ? '-' : '+'}
+              {percentChange})
+            </Text>
+          </View>
         </View>
-      </View>
-      {/* </LinearGradient> */}
+      </BottomFloatGuide>
     </NormalScreenContainer2024>
   );
 };
@@ -801,145 +464,41 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: isLight
         ? colors2024['neutral-bg-0']
         : colors2024['neutral-bg-1'],
+      paddingBottom: 20,
     },
-
-    riskContainer: {
-      paddingHorizontal: 20,
-      marginBottom: 12,
+    balanceOverviewContainer: {
+      paddingHorizontal: 23,
+      marginBottom: 28,
+      gap: 24,
     },
-    currentText: {
-      marginLeft: 26,
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '500',
-    },
-    floatBottom: {
-      width: '100%',
-      height: 120,
-      paddingTop: 20,
-      position: 'absolute',
-      bottom: 0,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    divider: {
-      marginTop: 28,
-      marginHorizontal: 20,
-      backgroundColor: colors2024['neutral-line'],
-      height: 1,
-    },
-    defiItem: {
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 6,
-      // paddingHorizontal: 8,
-    },
-    defiItemContent: {
+    floatingBarContent: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 16,
-      paddingHorizontal: 20,
-      gap: 6,
+      gap: 2,
     },
-    arrowStyle: {
-      marginTop: 0,
-    },
-    defiItemText: {
-      color: colors2024['neutral-secondary'],
-      fontFamily: 'SF Pro Rounded',
+    floatBalanceTitle: {
+      color: colors2024['neutral-title-1'],
       fontSize: 16,
       lineHeight: 20,
       fontWeight: '500',
-      marginLeft: 4,
-    },
-    relateTitle: {
-      color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
+    },
+    floatBalanceContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    floatPrice: {
+      color: colors2024['neutral-title-1'],
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '500',
-    },
-    historyHeader: {
-      marginBottom: 16,
-      paddingHorizontal: 20,
-    },
-    buttonGroup: {
-      backgroundColor: isLight
-        ? colors2024['neutral-bg-0']
-        : colors2024['neutral-bg-1'],
-      width: '100%',
-      position: 'absolute',
-      bottom: 0,
-      // display: 'flex',
-      gap: 16,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingTop: 20,
-      paddingHorizontal: 20,
-      paddingBottom: 50,
-    },
-
-    btnContainer: {
-      flex: 1,
-    },
-
-    ghostBtn: {
-      // borderWidth: 1.5,
-      backgroundColor: colors2024['brand-light-1'],
-    },
-    btnInnerContainer: {
-      borderRadius: 16,
-    },
-    buyBtnTitle: {
-      color: colors2024['brand-default'],
-    },
-
-    btnGap: {
-      width: 10,
-    },
-    searchTokenDanger: {
-      flex: 1,
-      justifyContent: 'center',
-      flexDirection: 'row',
-      width: '100%',
-      padding: 8,
-      backgroundColor: colors2024['red-light-1'],
-      borderRadius: 8,
-      // marginTop: 12,
-    },
-    tokenRowContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
-    searchTokenWarning: {
-      flex: 1,
-      justifyContent: 'center',
-      flexDirection: 'row',
-      width: '100%',
-      padding: 8,
-      backgroundColor: colors2024['orange-light-1'],
-      borderRadius: 8,
-      // marginTop: 12,
-    },
-
-    searchTokenWarningText: {
-      color: colors2024['orange-default'],
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '400',
+      fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },
-    searchTokenDangerText: {
-      color: colors2024['red-default'],
-      fontSize: 14,
-      lineHeight: 18,
-      fontWeight: '400',
+    floatPriceChange: {
+      color: colors2024['neutral-title-1'],
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
       fontFamily: 'SF Pro Rounded',
     },
   };

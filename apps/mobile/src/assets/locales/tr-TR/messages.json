@@ -661,7 +661,8 @@
       "whitelistAlert__disabled": "Beyaz liste devre dışı. İstediğiniz herhangi bir adrese transfer yapabilirsiniz.",
       "noSupprotTokenForDex": "Bu token bu borsa tarafından desteklenmeyebilir. Kaybı önlemek için işlem yapmadan önce kontrol edin.",
       "noSupprotTokenForSafe": "Gönderdiğiniz tokenların olduğu Safe adresi bu zincirde dağıtılmamıştır. Devam etmeden önce kontrol edin, kaybı önlemek için.",
-      "noSupportTokenForChain": "Alıcı adresi farklı bir zincirde bir kontrat adresidir. İşleme devam etmeden önce kontrol edin, kayıpları önlemek için."
+      "noSupportTokenForChain": "Alıcı adresi farklı bir zincirde bir kontrat adresidir. İşleme devam etmeden önce kontrol edin, kayıpları önlemek için.",
+      "addressDetail": "Adres Detayı"
     },
     "sendPoly": {
       "modals": {
@@ -833,6 +834,7 @@
       "InsufficientBalanceTips": "Yetersiz bakiye",
       "Loading_Tokens": "Token'lar Yükleniyor...",
       "Select-from-supported-tokens": "Desteklenen tokenlardan seçin",
+      "Deposit-tip": "USDC/USDT ile Para Yatırın",
       "Balance": "Bakiye",
       "Value": "Değer",
       "Token": "Token",
@@ -1670,7 +1672,8 @@
         "deductGasFees": "Aldığınız miktardan gaz ücretleri düşülecektir.",
         "recipientAddress": "Alıcı cüzdan",
         "selectRecipientAddress": "Alıcı Cüzdanı Seçin",
-        "noRecipient": "Alıcı cüzdan mevcut değil"
+        "noRecipient": "Alıcı cüzdan mevcut değil",
+        "availableBalance": "Mevcut çekim bakiyesi: {{balance}}"
       },
       "withdrawConfirmModal": {
         "button": "DeBank'te Görüntüle",
@@ -1749,9 +1752,7 @@
       "TokenName": "Token Adı",
       "noBalance": "Bakiyeniz Yok",
       "HoldingValue": "Değer Tutma",
-      "Mybalance": "Bakiyem",
       "fdv": "FDV",
-      "Transaction": "İşlem",
       "Defi": "DeFi",
       "SupportedExchanges": "Desteklenen Borsalar",
       "OriginalToken": "Orijinal Token",
@@ -1957,22 +1958,38 @@
         "disconnect": "Bağlantıyı Kaldır",
         "connectChain": "Ağa Bağlan",
         "title": "Mevcut Dapp"
+      },
+      "BrowserSearch": {
+        "openUrl": "Aç \"{{searchText}}\"",
+        "results": "Sonuçlar",
+        "recent": "Son Zamanlarda",
+        "placeholder": "Web Siteleri Ara",
+        "searchInGoogle": "Google'da \"{{searchText}}\" arayın"
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "Web Sitelerini Aç"
       }
     },
     "browserManage": {
       "option": {
         "tab": "Sekme",
         "favorites": "Favoriler",
-        "history": "Geçmiş"
+        "history": "Geçmiş",
+        "recent": "Son zamanlar"
       },
       "BrowserBookmarkList": {
-        "title": "Favoriler"
+        "title": "Favoriler",
+        "emptyTitle": "Henüz eklenmiş bir web sitesi yok."
       },
       "BrowserHistoryList": {
-        "title": "Geçmiş"
+        "title": "Geçmiş",
+        "emptyTitle": "Son 30 günde hiçbir geçmiş yok.",
+        "clearAllHistory": "Tüm Geçmişi Temizle"
       },
       "BrowserTabList": {
-        "closeAllTabs": "Tüm sekmeleri kapat"
+        "closeAllTabs": "Tüm sekmeleri kapat",
+        "emptyTitle": "Henüz açık sekme yok",
+        "emptyDesc": "Şimdi yeni bir sekme açın"
       }
     },
     "scan": {
@@ -2147,7 +2164,14 @@
       "recent": "Son zamanlarda",
       "searchPlaceHolder1": "İsim / Adres ile Ara",
       "common": "Ortak",
-      "hot": "Sıcak"
+      "hot": "Sıcak",
+      "bridgeTo": {
+        "low": "Düşük likidite",
+        "high": "Yüksek likidite"
+      },
+      "favoriteFilter": {
+        "all": "Tüm"
+      }
     },
     "ModalPreviewNFTItem": {
       "FieldLabel": {

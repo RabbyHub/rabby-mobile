@@ -64,10 +64,6 @@ def isNewArchitectureEnabled() {
   return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true"
 }
 
-if (isNewArchitectureEnabled()) {
-  apply plugin: "com.facebook.react"
-}
-
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
@@ -83,6 +79,11 @@ def jscFlavor = 'org.webkit:android-jsc:+'
 
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
 
+// 必须放在 android {} 前，不然 agp 组装配置的时候会忽略它
+if (project.hasProperty('hashcheck')) {
+    apply from: 'hashcheck.gradle'
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -93,8 +94,8 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100115
-        versionName "0.6.27"
+        versionCode 100125
+        versionName "0.6.32"
         missingDimensionStrategy "store", "play"
     }
     splits {
@@ -150,6 +151,12 @@ android {
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
+        hash {
+          initWith release
+          signingConfig null
+          proguardFile "proguard-hashcheck.pro"
+          matchingFallbacks = ['release']
+        }
         regression {
             initWith release
             applicationIdSuffix ".regression"
@@ -190,8 +197,6 @@ androidComponents {
 }
 
 dependencies {
-    implementation "com.facebook.react:react-native:+"
-
     implementation 'com.google.firebase:firebase-bom:33.2.0'
 
     implementation 'com.google.firebase:firebase-analytics:17.4.1'

@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.6.27</string>
+	<string>0.6.32</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -36,6 +36,12 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>rabby</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(RABBYGO_SCHEMA)</string>
 			</array>
 		</dict>
 	</array>
@@ -80,7 +86,7 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs to authenticate</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string />
+	<string>Rabby requires location access to enable secure Bluetooth communication with hardware wallets.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Rabby needs microphone access to record audio</string>
 	<key>UIAppFonts</key>

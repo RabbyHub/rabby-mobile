@@ -135,6 +135,13 @@
       "searchPlaceHolder1": "Suche nach Name / Adresse",
       "contextMenu": {
         "viewDetail": "Detail anzeigen"
+      },
+      "bridgeTo": {
+        "low": "Niedrige Liquidität",
+        "high": "Hohe Liquidität"
+      },
+      "favoriteFilter": {
+        "all": "Alle"
       }
     },
     "AuthenticationModals": {
@@ -837,7 +844,8 @@
       "noSupprotTokenForDex": "Dieser Token wird möglicherweise von dieser Börse nicht unterstützt. Überprüfen Sie es, bevor Sie fortfahren, um Verluste zu vermeiden.",
       "From": "Von",
       "noSupprotTokenForSafe": "Die Safe-Adresse, an die Sie Tokens senden, ist nicht auf dieser Chain bereitgestellt. Überprüfen Sie dies, bevor Sie fortfahren, um Verluste zu vermeiden.",
-      "noSupportTokenForChain": "Der Empfängeradresse ist eine Vertragsadresse auf einer anderen Kette. Überprüfen Sie dies, bevor Sie fortfahren, um einen Verlust zu vermeiden."
+      "noSupportTokenForChain": "Der Empfängeradresse ist eine Vertragsadresse auf einer anderen Kette. Überprüfen Sie dies, bevor Sie fortfahren, um einen Verlust zu vermeiden.",
+      "addressDetail": "Adressdetails"
     },
     "signFooterBar": {
       "signAndSubmitButton": "Signieren",
@@ -910,6 +918,7 @@
       "No_Tokens": "Keine Tokens",
       "Token": "Token",
       "Select-from-supported-tokens": "Aus unterstützten Token auswählen",
+      "Deposit-tip": "Mit USDC/USDT einzahlen",
       "InsufficientBalanceTips": "Unzureichendes Guthaben",
       "Balance": "Guthaben"
     },
@@ -1837,7 +1846,8 @@
         "noEnoughValueBalance": "Vault-Guthaben unzureichend. Kette wechseln oder später erneut versuchen.",
         "selectRecipientAddress": "Empfänger-Wallet auswählen",
         "noRecipient": "Keine Empfänger-Wallet verfügbar",
-        "recipientAddress": "Empfänger-Wallet"
+        "recipientAddress": "Empfänger-Wallet",
+        "availableBalance": "Verfügbares Abhebungs-Guthaben: {{balance}}"
       },
       "withdrawConfirmModal": {
         "button": "Auf DeBank ansehen",
@@ -1938,7 +1948,6 @@
       "TokenName": "Token Name",
       "Info": "Info",
       "noTransactions": "Keine Transaktionen",
-      "Transaction": "Transaktion",
       "ListedBy": "Aufgelistet von",
       "SeeMore": "Mehr anzeigen",
       "NoSupportedExchanges": "Keine unterstützten Börsen verfügbar",
@@ -1950,7 +1959,6 @@
       "Defi": "DeFi",
       "OriginalToken": "Original Token",
       "NoListedSite": "Keine Listing-Informationen verfügbar",
-      "Mybalance": "Mein Kontostand",
       "OriginIssue": "Nativ auf dieser Blockchain ausgegeben",
       "fdvContent": "Die Marktkapitalisierung, wenn das maximale Angebot im Umlauf wäre. Vollständig verwässerte Bewertung (FDV) = Preis × Maximalangebot. Wenn das Maximalangebot null ist, gilt: FDV = Preis × Gesamtangebot. Wenn weder das Maximalangebot noch das Gesamtangebot definiert oder unendlich ist, wird FDV nicht angezeigt.",
       "HoldingValue": "Wert halten",
@@ -2188,22 +2196,38 @@
         "disconnect": "Trennen",
         "title": "Aktuelle Dapp",
         "connectChain": "Chain verbinden"
+      },
+      "BrowserSearch": {
+        "recent": "Aktuell",
+        "placeholder": "Websites durchsuchen",
+        "searchInGoogle": "Suche \"{{searchText}}\" in Google",
+        "results": "Ergebnisse",
+        "openUrl": "Öffnen \"{{searchText}}\""
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "Websites öffnen"
       }
     },
     "browserManage": {
       "option": {
         "history": "Verlauf",
         "favorites": "Lieblingsartikel",
-        "tab": "Tab"
+        "tab": "Tab",
+        "recent": "Aktuell"
       },
       "BrowserBookmarkList": {
-        "title": "Favoriten"
+        "title": "Favoriten",
+        "emptyTitle": "Noch keine Website hinzugefügt"
       },
       "BrowserHistoryList": {
-        "title": "Geschichte"
+        "title": "Geschichte",
+        "emptyTitle": "Kein Verlauf in den letzten 30 Tagen",
+        "clearAllHistory": "Alle Verlaufsdaten löschen"
       },
       "BrowserTabList": {
-        "closeAllTabs": "Alle Tabs schließen"
+        "closeAllTabs": "Alle Tabs schließen",
+        "emptyTitle": "Noch keine offenen Tabs",
+        "emptyDesc": "Öffnen Sie jetzt ein neues Tab"
       }
     },
     "scan": {

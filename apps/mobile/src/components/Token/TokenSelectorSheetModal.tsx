@@ -15,6 +15,8 @@ import {
   Platform,
   SectionListRenderItem,
   TextInput,
+  Pressable,
+  Dimensions,
 } from 'react-native';
 import {
   BottomSheetBackdropProps,
@@ -30,7 +32,6 @@ import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { SearchInput } from '../Form/SearchInput';
 import {
   DisplayedTokenWithOwner,
   getTokenSymbol,
@@ -41,6 +42,7 @@ import { formatNetworth } from '@/utils/math';
 import { AssetAvatar } from '../AssetAvatar';
 import { findChainByServerID } from '@/utils/chain';
 import ChainFilterItem, { AccountFilterItem } from './ChainFilterItem';
+import FavoriteFilterItem, { FavoriteFilterType } from './FavoriteFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '../Toast';
 import { ModalLayouts, RootNames } from '@/constant/layout';
@@ -48,7 +50,6 @@ import { Skeleton } from '@rneui/themed';
 import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
-import SearchSVG from '@/assets2024/icons/common/search-cc.svg';
 import { useTranslation } from 'react-i18next';
 import { TextBadge } from '@/screens/Address/components/PinBadge';
 import { ellipsisOverflowedText } from '@/utils/text';
@@ -86,6 +87,17 @@ import { isScamTokenForSelect } from '@/screens/Home/utils/collection';
 import { SCAM_TOKEN_HAEDER_ID, SCAM_TOKEN_HEADER_DATA } from './constant';
 import { ScamTokenHeader } from '@/screens/Home/components/AssetRenderItems/ScamTokenHeader';
 import { NextSearchBar } from '@/components2024/SearchBar';
+import { Favorite } from '@/components2024/Favorite';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { getLatestNavigationName, navigate } from '@/utils/navigation';
+import { isFromBackAtom } from '@/screens/Swap/hooks/atom';
+import { useAtom } from 'jotai';
+import {
+  useAnimatedGestureHandler,
+  runOnJS,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { PanGestureHandler } from 'react-native-gesture-handler';
 
 type SwapRouteProps = CompositeScreenProps<
   NativeStackScreenProps<TransactionNavigatorParamList, 'Swap'>,
@@ -175,12 +187,20 @@ export interface TokenSelectorProps<
   showTestNetSwitch?: boolean;
   selectTab?: 'mainnet' | 'testnet';
   onTabChange?: (tab: 'mainnet' | 'testnet') => void;
+  showFavoriteFilter?: boolean;
+  favoriteFilterValue?: FavoriteFilterType;
+  onFavoriteFilterChange?: (value: FavoriteFilterType) => void;
+  disableSort?: boolean;
 }
 const filterTestnetTokenItem = (token: TokenItem) => {
   return !findChainByServerID(token.chain)?.isTestnet;
 };
 
 const isAndroid = Platform.OS === 'android';
+
+const screenHeight = Dimensions.get('window').height;
+const modalHeight = screenHeight - 120;
+const snapPoints = [modalHeight];
 
 type TokenSelectorInst = {};
 export const TokenSelectorSheetModal = React.forwardRef<
@@ -192,7 +212,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
       visible,
       list,
       foldTokensList = [],
-      selectToken,
       displayAccountFilter = false,
       filterAccount,
       chainServerId,
@@ -212,11 +231,25 @@ export const TokenSelectorSheetModal = React.forwardRef<
       showTestNetSwitch,
       selectTab,
       onTabChange,
+      showFavoriteFilter = false,
+      favoriteFilterValue = 'all',
+      onFavoriteFilterChange,
+      disableSort = false,
     },
-    ref,
+    _ref,
   ) => {
     const { sheetModalRef: tokenSelectorModal, toggleShowSheetModal } =
       useSheetModal();
+    const [isFromBack, setIsFromBack] = useAtom(isFromBackAtom);
+
+    // 记录组件最初渲染的页面，用于判断是否还在原页面
+    const initialRouteRef = useRef<string | undefined>();
+    React.useEffect(() => {
+      // 组件挂载时记录当前页面
+      if (!initialRouteRef.current && visible) {
+        initialRouteRef.current = getLatestNavigationName();
+      }
+    }, [visible]);
 
     const [fold, setFold] = useState(true);
     const [isScamFold, setIsScamFold] = useState(true);
@@ -274,12 +307,8 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const [swapToTokenDetail, setSwapToTokenDetail] = useState(false);
     const route = useRoute<SwapRouteProps['route']>();
     const isFocused = useIsFocused();
-    const { userTokenSettings } = useUserTokenSettings();
-
-    const isSingleAddress = useMemo(
-      () => route.name === RootNames.Swap,
-      [route.name],
-    );
+    const { userTokenSettings, pinToken, removePinedToken } =
+      useUserTokenSettings();
 
     const isSwapRoute =
       route.name === RootNames.Swap || route.name === RootNames.MultiSwap;
@@ -298,6 +327,22 @@ export const TokenSelectorSheetModal = React.forwardRef<
     ) {
       toggleShowSheetModal('destroy');
     }
+    // 监听当前路由变化
+    const currentRoute = getLatestNavigationName();
+    const isInInitialRoute = useMemo(() => {
+      if (!visible || !initialRouteRef.current) {
+        return true;
+      }
+      return currentRoute === initialRouteRef.current;
+    }, [currentRoute, visible]);
+
+    useEffect(() => {
+      // 如果不是从返回按钮进入的，则关闭弹窗
+      if (!isFromBack && visible) {
+        toggleShowSheetModal('destroy');
+        setIsFromBack(false);
+      }
+    }, [visible, toggleShowSheetModal, isFromBack, setIsFromBack]);
 
     const { chainItem, chainSearchCtx } = useMemo(() => {
       const chain = !chainServerId ? null : findChainByServerID(chainServerId);
@@ -353,15 +398,15 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
       const varied = (list || []).reduce(
         (accu, token) => {
-          const chainItem = findChainByServerID(token.chain);
+          const _chainItem = findChainByServerID(token.chain);
           const disabled =
             !!supportChains?.length &&
-            chainItem &&
-            !supportChains.includes(chainItem.enum);
+            _chainItem &&
+            !supportChains.includes(_chainItem.enum);
 
           if (!disabled) {
             accu.natural.push(token);
-          } else if (chainItem?.isTestnet && !chainServerId) {
+          } else if (_chainItem?.isTestnet && !chainServerId) {
             accu.ignored.push(token);
           } else {
             accu.disabled.push(token);
@@ -388,6 +433,10 @@ export const TokenSelectorSheetModal = React.forwardRef<
       [type],
     );
 
+    const needToTokenMarketInfo = useMemo(() => {
+      return type === 'swapTo' || type === 'bridgeTo';
+    }, [type]);
+
     const tokens = useMemo(() => {
       const normalFoldTokens = foldTokensList.filter(
         i => !isScamTokenForSelect(i),
@@ -409,16 +458,18 @@ export const TokenSelectorSheetModal = React.forwardRef<
       ];
 
       const formatList = (allList ?? []).map(x => {
-        const _netWorth = isBridgeTo ? 0 : x.amount * x.price || 0;
+        const _netWorth = x.amount * x.price || 0;
+        const amountStr = x.amount ? formatAmount(x.amount) : '0';
+        const usdValueStr = _netWorth ? formatNetworth(_netWorth) : '$0';
         return {
           id: x.id,
           amount: x.amount,
           _logo: x.logo_url,
           _symbol: getTokenSymbol(x),
-          _amount: formatAmount(x.amount),
+          _amount: amountStr,
           _price: '$' + formatPrice(x.price),
           _netWorth: _netWorth,
-          _netWorthStr: formatNetworth(_netWorth),
+          _netWorthStr: usdValueStr,
           _chain: x.chain,
           // @ts-expect-error
           trade_volume_level: x?.trade_volume_level,
@@ -426,13 +477,17 @@ export const TokenSelectorSheetModal = React.forwardRef<
            * @description in fact, it's impossible to be TokenItemFromAbstractPortfolioToken, it's always TokenItemForRender!
            * Just left here to keep the type consistent for old code
            */
-          $origin: x as
+          $origin: {
+            _amountStr: amountStr,
+            _usdValueStr: usdValueStr,
+            ...x,
+          } as unknown as
             | TokenItemForRender
             | TokenItemFromAbstractPortfolioTokenWithExtra,
         };
       });
 
-      return isFromModalType
+      return isFromModalType || disableSort
         ? formatList
         : formatList.sort((m, n) => n._netWorth - m._netWorth);
     }, [
@@ -441,7 +496,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       fold,
       isScamFold,
       isFromModalType,
-      isBridgeTo,
+      disableSort,
     ]);
 
     const renderBackdrop = useCallback(
@@ -451,7 +506,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
             {...props}
             style={[
               props.style,
-              swapToTokenDetail && {
+              (!isInInitialRoute || swapToTokenDetail) && {
                 zIndex: hiddenZIndex,
               },
             ]}
@@ -461,7 +516,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           />
         );
       },
-      [onCancel, swapToTokenDetail],
+      [isInInitialRoute, onCancel, swapToTokenDetail],
     );
 
     const ListHeader = useMemo(() => {
@@ -485,10 +540,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
       return setFold(pre => !pre);
     }, [fold]);
 
+    const longPressTriggered = useRef(false);
     const renderItemRenderComponent = useCallback<
       SectionListRenderItem<(typeof tokens)[number]>
     >(
-      ({ item: token, index }) => {
+      ({ item: token }) => {
         if (isLoading) {
           return null;
         }
@@ -501,7 +557,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         // You can pass TokenItemForRender from another property, such as `extraRenderData` rather than `unshiftList`, as it's NOT something in list.
         const $originMaybeToken =
           token.$origin as TokenItemFromAbstractPortfolioTokenWithExtra;
-        const $originMaybeRender = token.$origin as TokenItemForRender;
 
         const { disable: lightDisable } =
           disableItemCheck?.($originMaybeToken) || {};
@@ -514,35 +569,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
         const showOwnerAccount = !chainSearchCtx.filterAccountItem;
 
-        if (
-          $originMaybeRender.recentList?.length &&
-          $originMaybeRender.TokenRender
-        ) {
-          const TokenRender = $originMaybeRender.TokenRender;
-          return (
-            <View
-              style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                gap: 12,
-                paddingHorizontal: 8,
-                marginHorizontal: 12,
-                marginBottom: 16,
-              }}>
-              {$originMaybeRender.recentList?.map(tokenItem => (
-                <TouchableOpacity
-                  key={tokenItem.id}
-                  onPress={() => {
-                    onConfirm(tokenItem);
-                    toggleShowSheetModal('collapse');
-                  }}>
-                  <TokenRender token={tokenItem} ownerAccount={ownerAccount} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          );
-        }
-
         const isPined =
           $originMaybeToken.isPined ||
           userTokenSettings.pinedQueue.some(
@@ -551,7 +577,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
               pinned.tokenId === $originMaybeToken?.id,
           );
         const isManualFold = $originMaybeToken.isManualFold;
-        const isSelected = selectToken && selectToken.tokenId === token.id;
         const token_key = [
           ownerKey,
           `${$originMaybeToken.id}-${token._symbol}-${token._chain}`,
@@ -616,14 +641,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
           );
         }
 
-        if (
-          isSwapTo ||
-          (query && (type === 'bridgeFrom' || type === 'swapFrom'))
-        ) {
+        if (query) {
           return (
-            <View style={{ marginTop: 8, marginHorizontal: 12 }}>
+            <View style={{ marginTop: 8, marginHorizontal: 16 }}>
               <TokenItemContextMenu
                 token={$originMaybeToken}
+                needToTokenMarketInfo={needToTokenMarketInfo}
                 closeBottomSheet={() => {
                   toggleShowSheetModal('destroy');
                 }}
@@ -631,9 +654,16 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 <TouchableOpacity
                   delayLongPress={200}
                   onLongPress={() => {
-                    console.log('prevent trigger onPress');
+                    longPressTriggered.current = true;
+                  }}
+                  onPressOut={() => {
+                    longPressTriggered.current = false;
                   }}
                   onPress={() => {
+                    if (longPressTriggered.current) {
+                      longPressTriggered.current = false;
+                      return;
+                    }
                     if (disabled) {
                       disabledTips && toast.info(disabledTips);
                       return;
@@ -643,10 +673,51 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   }}>
                   <ExternalTokenRow
                     decimalPrecision
-                    isPined={isPined}
                     data={token.$origin as TokenRowDataType}
                     logoSize={40}
                     touchable={false}
+                    leftSlot={
+                      <Pressable
+                        style={styles.leftSlot}
+                        onPress={e => {
+                          e.stopPropagation();
+                          if (isPined) {
+                            removePinedToken(token.$origin as any);
+                          } else {
+                            pinToken(token.$origin as any);
+                          }
+                        }}
+                        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+                        <RcIconFavorite
+                          width={22}
+                          height={21}
+                          color={
+                            isPined
+                              ? colors2024['orange-default']
+                              : colors2024['neutral-line']
+                          }
+                        />
+                      </Pressable>
+                    }
+                    onPressRightIcon={() => {
+                      setTimeout(() => {
+                        toggleShowSheetModal('destroy');
+                      }, 100);
+
+                      navigate(
+                        needToTokenMarketInfo
+                          ? RootNames.TokenMarketInfo
+                          : RootNames.TokenDetail,
+                        {
+                          token: {
+                            ...ensureAbstractPortfolioToken($originMaybeToken),
+                            _isPined: isPined,
+                          },
+                          needUseCacheToken: true,
+                          tokenSelectType: type,
+                        },
+                      );
+                    }}
                   />
                 </TouchableOpacity>
               </TokenItemContextMenu>
@@ -655,20 +726,28 @@ export const TokenSelectorSheetModal = React.forwardRef<
         }
 
         return (
-          <View style={{ marginTop: 8, marginHorizontal: 12 }}>
+          <View style={{ marginTop: 8, marginHorizontal: 16 }}>
             <TokenItemContextMenu
               token={token.$origin as any}
               closeBottomSheet={() => {
                 toggleShowSheetModal('destroy');
               }}
+              needToTokenMarketInfo={needToTokenMarketInfo}
               type={type}>
               <TouchableOpacity
                 key={token_key}
                 delayLongPress={200}
                 onLongPress={() => {
-                  console.log('prevent trigger onPress');
+                  longPressTriggered.current = true;
+                }}
+                onPressOut={() => {
+                  longPressTriggered.current = false;
                 }}
                 onPress={() => {
+                  if (longPressTriggered.current) {
+                    longPressTriggered.current = false;
+                    return;
+                  }
                   if (disabled) {
                     disabledTips && toast.info(disabledTips);
                     return;
@@ -678,19 +757,34 @@ export const TokenSelectorSheetModal = React.forwardRef<
                 }}
                 style={[
                   styles.tokenItem,
-                  isSwapTo && { paddingRight: 0, paddingVertical: 0 },
+                  // isSwapTo && { paddingRight: 0, paddingVertical: 0 },
                   (disabled || lightDisable) && styles.tokenItemDisabled,
                 ]}>
                 <View style={styles.tokenLeft}>
+                  <Favorite
+                    favorite={isPined}
+                    style={styles.favorite}
+                    handlePressFavorite={() => {
+                      if (isPined) {
+                        removePinedToken(token.$origin as any);
+                      } else {
+                        pinToken(token.$origin as any);
+                      }
+                    }}
+                  />
                   <AssetAvatar
                     logo={token?._logo}
                     size={40}
                     chain={token?._chain}
-                    chainSize={16}
+                    chainSize={18}
+                    innerChainStyle={styles.chainLogo}
                   />
                   <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
                     <View style={styles.tokenNameBox}>
-                      <Text style={styles.tokenName} numberOfLines={1}>
+                      <Text
+                        style={styles.tokenName}
+                        ellipsizeMode="tail"
+                        numberOfLines={1}>
                         {ellipsisOverflowedText(token?._symbol, 15)}
                       </Text>
                       {isManualFold && <TextBadge type="folded" />}
@@ -709,94 +803,88 @@ export const TokenSelectorSheetModal = React.forwardRef<
                         {token._price}
                       </Text>
                     )}
+                    {isBridgeTo && (
+                      <View
+                        style={[
+                          styles.tokenInfoColRight,
+                          styles.tardeLevel,
+                          {
+                            backgroundColor:
+                              token.trade_volume_level === 'low'
+                                ? colors2024['orange-light-4']
+                                : colors2024['green-light-4'],
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.tardeLevelText,
+                            {
+                              color:
+                                token.trade_volume_level === 'low'
+                                  ? colors2024['orange-default']
+                                  : colors2024['green-default'],
+                            },
+                          ]}>
+                          {token.trade_volume_level === 'low'
+                            ? t('component.TokenSelector.bridgeTo.low')
+                            : t('component.TokenSelector.bridgeTo.high')}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
-                {isBridgeTo ? (
-                  <View
-                    style={[
-                      styles.tokenInfoColRight,
-                      styles.tardeLevel,
-                      {
-                        backgroundColor:
-                          token.trade_volume_level === 'low'
-                            ? colors2024['orange-light-4']
-                            : colors2024['green-light-4'],
-                      },
-                    ]}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
+                    <Text style={[styles.tokenHeaderNetworth]}>
+                      {isExcludeBalanceShowTips ? (
+                        <TouchableOpacity
+                          hitSlop={hitSlop}
+                          onPress={handleShowExcludeTips}>
+                          <RcTipCC
+                            style={styles.tips}
+                            color={colors2024['neutral-info']}
+                          />
+                        </TouchableOpacity>
+                      ) : (
+                        token._netWorthStr
+                      )}
+                    </Text>
                     <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
                       style={[
-                        styles.tardeLevelText,
-                        {
-                          color:
-                            token.trade_volume_level === 'low'
-                              ? colors2024['orange-default']
-                              : colors2024['green-default'],
-                        },
+                        styles.tokenHeaderAmount,
+                        { marginTop: 4 },
+                        isExcludeBalanceShowTips && styles.textSecondary,
                       ]}>
-                      {token.trade_volume_level}
+                      {token._amount} {token._symbol}
                     </Text>
                   </View>
-                ) : (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      paddingRight: 16,
-                    }}>
-                    <View
-                      style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
-                      <Text style={[styles.tokenHeaderNetworth]}>
-                        {isExcludeBalanceShowTips ? (
-                          <TouchableOpacity
-                            hitSlop={hitSlop}
-                            onPress={handleShowExcludeTips}>
-                            <RcTipCC
-                              style={styles.tips}
-                              color={colors2024['neutral-info']}
-                            />
-                          </TouchableOpacity>
-                        ) : (
-                          token._netWorthStr
-                        )}
-                      </Text>
-                      <Text
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        style={[
-                          styles.tokenHeaderAmount,
-                          { marginTop: 4 },
-                          isExcludeBalanceShowTips && styles.textSecondary,
-                        ]}>
-                        {token._amount}
-                      </Text>
-                    </View>
-                  </View>
-                )}
-                {isPined && (
-                  <View style={[styles.favoriteBadge]}>
-                    <RcIconFavorite color={colors2024['orange-default']} />
-                  </View>
-                )}
+                </View>
               </TouchableOpacity>
             </TokenItemContextMenu>
           </View>
         );
       },
       [
-        query,
         isLoading,
         disableItemCheck,
         chainSearchCtx.filterAccountItem,
-        userTokenSettings?.pinedQueue,
-        selectToken,
+        userTokenSettings.pinedQueue,
         supportChains,
         isFromModalType,
-        isSwapTo,
+        query,
         type,
         styles.tokenItem,
         styles.tokenItemDisabled,
         styles.tokenLeft,
+        styles.favorite,
+        styles.chainLogo,
         styles.tokenInfoCol,
         styles.tokenNameBox,
         styles.tokenName,
@@ -808,7 +896,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.tips,
         styles.tokenHeaderAmount,
         styles.textSecondary,
-        styles.favoriteBadge,
         styles.scamHeader,
         styles.tokenRowWrap,
         styles.tokenRowTokenWrap,
@@ -818,14 +905,19 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.arrow,
         styles.tokenRowUsdValueWrap,
         styles.tokenRowUsdValue,
+        styles.leftSlot,
         isBridgeTo,
         colors2024,
+        t,
         handleShowExcludeTips,
-        onConfirm,
-        toggleShowSheetModal,
         onPressToken,
         fold,
+        toggleShowSheetModal,
+        onConfirm,
         disabledTips,
+        removePinedToken,
+        pinToken,
+        needToTokenMarketInfo,
       ],
     );
 
@@ -884,18 +976,52 @@ export const TokenSelectorSheetModal = React.forwardRef<
           !!filterAccount &&
           !isWatchOrSafeAccount(filterAccount);
         const _willShowChainFilter = !!chainItem && !hideChainFilter;
+        const _willShowFavoriteFilter = !!showFavoriteFilter;
 
         return {
           willShowChainFilter: _willShowChainFilter,
           willShowAccountFilter: _willShowAccountFilter,
-          willShowFilterRow: _willShowAccountFilter || _willShowChainFilter,
+          willShowFilterRow:
+            _willShowAccountFilter ||
+            _willShowChainFilter ||
+            _willShowFavoriteFilter,
         };
-      }, [displayAccountFilter, filterAccount, chainItem, hideChainFilter]);
+      }, [
+        displayAccountFilter,
+        filterAccount,
+        chainItem,
+        hideChainFilter,
+        showFavoriteFilter,
+      ]);
+    // 用于防止重复触发的状态
+    const hasTriggered = useSharedValue(false);
+
+    const onGestureEvent = useAnimatedGestureHandler({
+      onStart: () => {
+        hasTriggered.value = false;
+      },
+      onActive: event => {
+        if (!onFavoriteFilterChange || hasTriggered.value) {
+          return;
+        }
+        // 设置阈值，超过阈值就触发
+        const threshold = 50;
+        if (Math.abs(event.translationX) > Math.abs(event.translationY)) {
+          if (event.translationX > threshold) {
+            hasTriggered.value = true;
+            runOnJS(onFavoriteFilterChange)?.('all');
+          } else if (event.translationX < -threshold) {
+            hasTriggered.value = true;
+            runOnJS(onFavoriteFilterChange)?.('favorite');
+          }
+        }
+      },
+    });
 
     return (
       <AppBottomSheetModal
         ref={tokenSelectorModal}
-        snapPoints={[ModalLayouts.defaultHeightPercentText]}
+        snapPoints={snapPoints}
         enableContentPanningGesture
         enableDismissOnClose
         onChange={idx => {
@@ -904,11 +1030,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
           }
         }}
         {...{
-          containerStyle: swapToTokenDetail
-            ? {
-                zIndex: hiddenZIndex,
-              }
-            : {},
+          containerStyle:
+            !isInInitialRoute || swapToTokenDetail
+              ? {
+                  zIndex: hiddenZIndex,
+                }
+              : {},
           style: {
             overflow: 'hidden',
             borderRadius: 32,
@@ -935,9 +1062,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
           ]}>
           <View style={[styles.titleArea, styles.internalBlock]}>
             <BottomSheetHandlableView>
-              <Text style={[styles.modalTitle, styles.modalMainTitle]}>
+              {/* <Text style={[styles.modalTitle, styles.modalMainTitle]}>
                 {t('page.swap.select-token')}
-              </Text>
+              </Text> */}
               {showTestNetSwitch ? (
                 <NetSwitchTabs
                   value={selectTab}
@@ -948,7 +1075,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               ) : null}
             </BottomSheetHandlableView>
 
-            <View style={styles.searchInputContainer}>
+            <View style={[styles.searchInputContainer, { marginBottom: 8 }]}>
               <NextSearchBar
                 onCancel={() => {
                   setQuery('');
@@ -997,92 +1124,109 @@ export const TokenSelectorSheetModal = React.forwardRef<
               styles.internalBlock,
               !willShowFilterRow && { display: 'none' },
             ]}>
-            {willShowAccountFilter && (
-              <AccountFilterItem
-                filterAccount={filterAccount}
-                onRemoveFilter={account => {
-                  if (account && isSameAccount(account, filterAccount)) {
-                    onSearch({
-                      ...chainSearchCtx,
-                      filterAccountItem: null,
-                      chainServerId,
-                      keyword: query,
-                    });
-                  }
-                }}
-              />
-            )}
+            <View style={styles.leftFilters}>
+              {showFavoriteFilter && (
+                <FavoriteFilterItem
+                  value={favoriteFilterValue}
+                  onChange={onFavoriteFilterChange || (() => {})}
+                />
+              )}
+            </View>
 
-            {/* TODO: chain selector */}
-            {willShowChainFilter && (
-              <View style={[styles.chainFiltersContainer]}>
-                <ChainFilterItem
-                  chainItem={chainItem}
-                  onRemoveFilter={() => {
-                    onRemoveChainFilter?.({
-                      chainServerId,
-                      chainItem,
-                      filterAccountItem: null,
-                    });
-                    onSearch({
-                      ...chainSearchCtx,
-                      chainItem: null,
-                      chainServerId: '',
-                      keyword: query,
-                    });
+            <View style={styles.rightFilters}>
+              {willShowAccountFilter && (
+                <AccountFilterItem
+                  filterAccount={filterAccount}
+                  onRemoveFilter={account => {
+                    if (account && isSameAccount(account, filterAccount)) {
+                      onSearch({
+                        ...chainSearchCtx,
+                        filterAccountItem: null,
+                        chainServerId,
+                        keyword: query,
+                      });
+                    }
                   }}
                 />
-              </View>
-            )}
+              )}
+
+              {willShowChainFilter && (
+                <View style={[styles.chainFiltersContainer]}>
+                  <ChainFilterItem
+                    chainItem={chainItem}
+                    hideChainText
+                    onRemoveFilter={() => {
+                      onRemoveChainFilter?.({
+                        chainServerId,
+                        chainItem,
+                        filterAccountItem: null,
+                      });
+                      onSearch({
+                        ...chainSearchCtx,
+                        chainItem: null,
+                        chainServerId: '',
+                        keyword: query,
+                      });
+                    }}
+                  />
+                </View>
+              )}
+            </View>
           </View>
           {(!isSwapTo || (query && !tokens.length)) && <>{customHeaderTitle}</>}
-          <BottomSheetSectionList
-            contentInset={{ bottom: 30 }}
-            sections={section}
-            keyboardShouldPersistTaps="handled"
-            style={[styles.scrollView]}
-            onScrollBeginDrag={() => Keyboard.dismiss()}
-            windowSize={5}
-            keyExtractor={token => {
-              const $originMaybeToken =
-                token.$origin as TokenItemFromAbstractPortfolioToken & {
-                  group?: string;
-                };
-              const ownerKey = !$originMaybeToken.ownerAccount
-                ? ''
-                : `${$originMaybeToken.ownerAccount.type}-${$originMaybeToken.ownerAccount.address}`;
+          <PanGestureHandler
+            onGestureEvent={onGestureEvent}
+            activeOffsetX={[-10, 10]}
+            failOffsetY={[-5, 5]}>
+            <BottomSheetSectionList
+              contentInset={{ bottom: 30 }}
+              sections={section}
+              keyboardShouldPersistTaps="handled"
+              style={[styles.scrollView]}
+              onScrollBeginDrag={() => Keyboard.dismiss()}
+              windowSize={5}
+              showsVerticalScrollIndicator={false}
+              keyExtractor={token => {
+                const $originMaybeToken =
+                  token.$origin as TokenItemFromAbstractPortfolioToken & {
+                    group?: string;
+                  };
+                const ownerKey = !$originMaybeToken.ownerAccount
+                  ? ''
+                  : `${$originMaybeToken.ownerAccount.type}-${$originMaybeToken.ownerAccount.address}`;
 
-              return [
-                ownerKey,
-                `${token.id}-${token._symbol}-${token._chain}-${$originMaybeToken?.group}`,
-              ]
-                .filter(Boolean)
-                .join('-');
-            }}
-            renderSectionHeader={
-              isSwapTo
-                ? ({ section }) => {
-                    const { header } = section;
-                    return <>{header ? header() : customHeaderTitle}</>;
-                  }
-                : undefined
-            }
-            stickySectionHeadersEnabled={true}
-            ListHeaderComponent={ListHeader}
-            ListEmptyComponent={
-              isLoading ? null : (
-                <NotMatchedHolder
-                  style={{
-                    height: 400,
-                  }}
-                  text="No tokens"
-                />
-              )
-            }
-            extraData={isLoading}
-            initialNumToRender={20}
-            renderItem={renderItemRenderComponent}
-          />
+                return [
+                  ownerKey,
+                  `${token.id}-${token._symbol}-${token._chain}-${$originMaybeToken?.group}`,
+                ]
+                  .filter(Boolean)
+                  .join('-');
+              }}
+              renderSectionHeader={
+                isSwapTo
+                  ? ({ section: _section }) => {
+                      const { header } = _section;
+                      return <>{header ? header() : customHeaderTitle}</>;
+                    }
+                  : undefined
+              }
+              stickySectionHeadersEnabled={true}
+              ListHeaderComponent={ListHeader}
+              ListEmptyComponent={
+                isLoading ? null : (
+                  <NotMatchedHolder
+                    style={{
+                      height: 400,
+                    }}
+                    text="No tokens"
+                  />
+                )
+              }
+              extraData={isLoading}
+              initialNumToRender={20}
+              renderItem={renderItemRenderComponent}
+            />
+          </PanGestureHandler>
         </AutoLockView>
       </AppBottomSheetModal>
     );
@@ -1172,14 +1316,15 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderRadius: 900,
       color: colors2024['green-default'],
       backgroundColor: colors2024['green-light-4'],
-      paddingHorizontal: 12,
-      paddingVertical: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 1,
+      marginTop: 5,
     },
     tardeLevelText: {
       color: colors2024['green-default'],
-      fontSize: 14,
+      fontSize: 12,
       fontWeight: '700',
-      lineHeight: 18,
+      lineHeight: 16,
       fontFamily: 'SF Pro Rounded',
     },
     internalBlock: {
@@ -1205,21 +1350,38 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
     searchInputContainer: {
       position: 'relative',
       borderRadius: 12,
-      // paddingHorizontal: 12,
-      // borderColor: 'transparent',
       alignItems: 'center',
-      marginBottom: 8,
+    },
+    filterRowScrollView: {
+      height: 34,
+      maxHeight: 34,
+      minHeight: 34,
+      marginTop: 2,
+      marginBottom: 4,
+      overflow: 'visible',
     },
 
     filterRow: {
       flexDirection: 'row',
-      justifyContent: 'flex-start',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      height: 34,
+      width: '100%',
+      maxHeight: 34,
+      minHeight: 34,
+      marginTop: 6,
+      marginBottom: 6,
+      // ...makeDebugBorder(),
+    },
+    leftFilters: {
+      flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      maxHeight: 34,
-      marginTop: 2,
-      marginBottom: 4,
-      // ...makeDebugBorder(),
+    },
+    rightFilters: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
 
     chainFiltersContainer: {
@@ -1245,7 +1407,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       alignItems: 'center',
       height: ITEM_HEIGHT,
       // paddingHorizontal: 8,
-      paddingRight: 16,
+      paddingRight: 12,
       paddingLeft: 12,
       // marginHorizontal: 12,
       // marginTop: 8,
@@ -1289,12 +1451,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       justifyContent: 'center',
       fontWeight: '700',
       lineHeight: 20,
+      maxWidth: 150,
       fontFamily: 'SF Pro Rounded',
     },
+    chainLogo: {
+      borderWidth: 1.5,
+      borderColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
+    },
     tokenPrice: {
-      color: colors2024['neutral-foot'],
+      color: colors2024['neutral-secondary'],
       fontSize: 14,
-      fontWeight: '400',
+      fontWeight: '500',
       lineHeight: 18,
       fontFamily: 'SF Pro Rounded',
     },
@@ -1306,12 +1475,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       textAlign: 'right',
     },
     tokenHeaderAmount: {
-      color: colors2024['neutral-foot'],
+      color: colors2024['neutral-secondary'],
       fontSize: 14,
-      fontWeight: '400',
+      fontWeight: '500',
       lineHeight: 18,
       textAlign: 'right',
-      maxWidth: 200,
+      maxWidth: 100,
       fontFamily: 'SF Pro Rounded',
     },
     textSecondary: {
@@ -1374,6 +1543,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       right: 0,
       bottom: 0,
       zIndex: 1,
+    },
+    favorite: {
+      marginRight: 8,
+    },
+    leftSlot: {
+      marginRight: 8,
     },
   };
 });

@@ -88,6 +88,21 @@ export type RootStackParamsList = {
     unHold?: boolean;
     isSwapToTokenDetail?: boolean;
     tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
+    timestamp?: number; // 添加时间戳确保每次都是新页面
+  };
+  [RootNames.TokenMarketInfo]: {
+    token:
+      | AbstractPortfolioToken
+      | import('@/screens/Home/hooks/store').CombineTokensItem;
+    fromPortfolio?: boolean;
+    needUseCacheToken?: boolean;
+    isSingleAddress?: boolean;
+    account?: KeyringAccountWithAlias | null;
+    rawPortfolios?: DisplayedProject[]; // only for single address
+    unHold?: boolean;
+    isSwapToTokenDetail?: boolean;
+    tokenSelectType?: import('@/components/Token/TokenSelectorSheetModal').TokenSelectType;
+    timestamp?: number; // 添加时间戳确保每次都是新页面
   };
 };
 
@@ -141,7 +156,10 @@ type TestKitsNavigatorParamsList = {
 export type AddressNavigatorParamList = {
   [RootNames.AddressList]?: {};
   [RootNames.AddressAssetsOverview]?: {};
-  [RootNames.ReceiveAddressList]?: {};
+  [RootNames.ReceiveAddressList]?: {
+    tokenSymbol?: string;
+    chainEnum?: CHAINS_ENUM;
+  };
   // [RootNames.MultiAddressHome]?: {};
   [RootNames.CreateNewAddress]?: {
     noSetupPassword?: boolean;
@@ -268,7 +286,6 @@ export type TransactionNavigatorParamList = {
     currentAddress?: string;
   };
   [RootNames.CopyTrading]?: {};
-  [RootNames.HistoryFilterScam]?: {};
   [RootNames.HistoryDetail]: {
     data: HistoryDisplayItem;
     isForMultipleAddress?: boolean;
@@ -289,7 +306,6 @@ export type TransactionNavigatorParamList = {
   };
   [RootNames.Send]?: {};
   [RootNames.SendTo]?: {};
-  [RootNames.SendHistory]?: {};
   [RootNames.SendInput]?: {
     autoScan?: boolean;
   };
@@ -331,8 +347,11 @@ export type TransactionNavigatorParamList = {
   [RootNames.Approvals]: {
     account: Account;
   };
-  [RootNames.Bridge]?: {};
-  [RootNames.MultiBridge]?: {};
+  [RootNames.Bridge]?: {
+    chainEnum?: CHAINS_ENUM | undefined;
+    tokenId?: TokenItem['id'];
+  };
+  [RootNames.MultiBridge]?: TransactionNavigatorParamList['Bridge'] & object;
   [RootNames.GasAccount]?: {};
   [RootNames.Buy]?: {
     receiveToken?: TokenItem;

@@ -21,6 +21,7 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { StackActions, useFocusEffect } from '@react-navigation/native';
 import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
+import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
 import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -40,7 +41,12 @@ import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
 import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
 import useAccountsBalance from '@/hooks/useAccountsBalance';
-import { preferenceService, transactionHistoryService } from '@/core/services';
+import {
+  browserService,
+  gasAccountService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services';
 import { useMemoizedFn } from 'ahooks';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
@@ -93,6 +99,11 @@ import { RateModal } from '@/components/RateModal/RateModal';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useInitDetectDBAssets } from '../Search/useAssets';
+import { useBrowser } from '@/hooks/browser/useBrowser';
+import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
+import dayjs from 'dayjs';
+import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 const HeaderHeight = 24;
 
@@ -287,12 +298,25 @@ function MultiAddressHome(): JSX.Element {
   }>();
   const { top10Addresses } = useAccountInfo();
 
+  // 添加gift资格检查hook
+  const { checkAddressesEligibility, getCurrentEligibleAddress } =
+    useGasAccountEligibility();
+  const currentEligibleAddress = getCurrentEligibleAddress();
   const timeRef = useRef<null | NodeJS.Timer>(null);
   const appState = useAppState();
-
+  const gasAccountSig = gasAccountService.getGasAccountSig();
+  const hasClaimedGift = gasAccountService.getHasClaimedGift();
   const { width } = Dimensions.get('window');
   const itemWidth =
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
+  // 使用useMemo直接计算isEligible，使其能够响应相关状态变化
+  const isEligible = useMemo(() => {
+    return (
+      currentEligibleAddress !== undefined &&
+      !gasAccountSig?.sig &&
+      !hasClaimedGift
+    );
+  }, [currentEligibleAddress, gasAccountSig, hasClaimedGift]);
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const {
@@ -300,7 +324,6 @@ function MultiAddressHome(): JSX.Element {
     forceUpdate,
     triggerUpdate: triggerUpdateAlert,
   } = useApprovalAlertCounts(HOME_REFRESH_INTERVAL);
-
   const MENU_ARR = useMemo(
     () =>
       [
@@ -324,11 +347,11 @@ function MultiAddressHome(): JSX.Element {
           title: t('page.home.services.bridge'),
           icon: RcIconBridge,
         },
-        {
-          key: MultiHomeFeatTitle.CopyTrading,
-          title: t('page.home.services.copyTrading'),
-          icon: RcIconCopyTrading,
-        },
+        // {
+        //   key: MultiHomeFeatTitle.CopyTrading,
+        //   title: t('page.home.services.copyTrading'),
+        //   icon: RcIconCopyTrading,
+        // },
         {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
@@ -346,18 +369,19 @@ function MultiAddressHome(): JSX.Element {
           key: MultiHomeFeatTitle.GasAccount,
           title: t('page.home.services.gasAccount'),
           icon: RcIconGasAccount,
+          showGiftIcon: isEligible,
         },
         // __DEV__ && {
         //   title: MultiHomeFeatTitle.TEST_DAPP,
         //   icon: RcIconDapps,
         // },
-        {
-          key: MultiHomeFeatTitle.Dapps,
-          title: IS_IOS
-            ? t('page.home.services.websites')
-            : t('page.home.services.dapps'),
-          icon: RcIconDapps,
-        },
+        // {
+        //   key: MultiHomeFeatTitle.Dapps,
+        //   title: IS_IOS
+        //     ? t('page.home.services.websites')
+        //     : t('page.home.services.dapps'),
+        //   icon: RcIconDapps,
+        // },
         {
           key: MultiHomeFeatTitle.Watchlist,
           title: t('page.home.services.watchlist'),
@@ -377,8 +401,9 @@ function MultiAddressHome(): JSX.Element {
         icon: React.FC<import('react-native-svg').SvgProps>;
         badge?: number;
         isSuccess?: boolean;
+        showGiftIcon?: boolean;
       }[],
-    [alertInfo.total, t, historyCount],
+    [alertInfo.total, t, historyCount, isEligible],
   );
 
   useEffect(() => {
@@ -429,14 +454,36 @@ function MultiAddressHome(): JSX.Element {
     disableAutoFetch: true,
   });
   const sortedAccounts = useSortAddressList(accounts);
+
+  // 获取top50的私钥助记词账户
+  const top50PrivateKeyAccounts = useMemo(() => {
+    console.debug('top50PrivateKeyAccounts', sortedAccounts);
+    return sortedAccounts
+      .filter(
+        account =>
+          account.type == KEYRING_TYPE.SimpleKeyring ||
+          account.type == KEYRING_TYPE.HdKeyring,
+      )
+      .slice(0, 50)
+      .map(account => account.address);
+  }, [sortedAccounts]);
+
   const unionAccounts = useMemo(() => {
     return unionBy(sortedAccounts, account => account.address.toLowerCase());
   }, [sortedAccounts]);
   const [hasOpenCopyTrading, setHasOpenCopyTrading] = useState(true);
 
+  // 初始化gift资格检查
+  useFocusEffect(
+    React.useCallback(() => {
+      if (top50PrivateKeyAccounts.length > 0) {
+        checkAddressesEligibility(top50PrivateKeyAccounts, true);
+      }
+    }, [top50PrivateKeyAccounts, checkAddressesEligibility]),
+  );
+
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
-  const { tokenDict } = useHistoryTokenDict();
 
   const displayFundWallet = useMemo(
     () =>
@@ -497,26 +544,20 @@ function MultiAddressHome(): JSX.Element {
       top10Addresses,
       200,
       true,
-      undefined,
       timestamp / 1000,
     );
-
-    const pinedQueue = preferenceService.getPinToken();
     list.map(i => {
-      const isSmallTx = judgeIsSmallUsdTx(i, tokenDict, pinedQueue);
-      if (!isSmallTx) {
-        const status = i.status ?? 1;
-        const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
-        const addressTs =
-          clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? 0;
-        if (addressTs && addressTs / 1000 > i.time_at) {
-          return;
-        }
-        if (status === 1) {
-          transactionHistoryService.setSucceedList(id);
-        } else {
-          transactionHistoryService.setFailedList(id);
-        }
+      const status = i.status ?? 1;
+      const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
+      const addressTs =
+        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? 0;
+      if (addressTs && addressTs / 1000 > i.time_at) {
+        return;
+      }
+      if (status === 1) {
+        transactionHistoryService.setSucceedList(id);
+      } else {
+        transactionHistoryService.setFailedList(id);
       }
     });
 
@@ -590,7 +631,7 @@ function MultiAddressHome(): JSX.Element {
       triggerUpdateAlert,
       appState,
       getSuccessAndFailList,
-      sortedAccounts.length,
+      checkAddressesEligibility,
     ]),
   );
 
@@ -598,6 +639,7 @@ function MultiAddressHome(): JSX.Element {
     Promise.all([
       triggerUpdate(true), // force update balance from server api
       refreshCurve(true),
+      checkAddressesEligibility(top50PrivateKeyAccounts, true),
     ]).finally(() => {
       // update at background
       forceUpdate();
@@ -610,6 +652,8 @@ function MultiAddressHome(): JSX.Element {
     forceUpdate,
     syncTop10Assets,
     syncTop10History,
+    checkAddressesEligibility,
+    top50PrivateKeyAccounts,
   ]);
 
   const { toggleUseAllAccountsOnScene } = useSwitchSceneCurrentAccount();
@@ -675,12 +719,6 @@ function MultiAddressHome(): JSX.Element {
             }),
           );
           break;
-        case MultiHomeFeatTitle.Dapps:
-          navigation.navigate(RootNames.StackBrowser, {
-            screen: RootNames.BrowserScreen,
-            params: {},
-          });
-          break;
         case MultiHomeFeatTitle.Watchlist: {
           handlePressWatchlist();
           break;
@@ -719,6 +757,7 @@ function MultiAddressHome(): JSX.Element {
       icon: React.FC<import('react-native-svg').SvgProps>;
       badge?: number;
       isSuccess?: boolean;
+      showGiftIcon?: boolean;
     }) => {
       if (el.key === MultiHomeFeatTitle.CopyTrading && !hasOpenCopyTrading) {
         return (
@@ -730,6 +769,11 @@ function MultiAddressHome(): JSX.Element {
 
       if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
         return <HomePendingBadge number={pendingTxCount} />;
+      }
+
+      // 显示gift图标
+      if (el.key === MultiHomeFeatTitle.GasAccount && el.showGiftIcon) {
+        return <IconGift width={24} height={24} />;
       }
 
       return (
@@ -760,6 +804,40 @@ function MultiAddressHome(): JSX.Element {
       action: `ThemeMode_${appThemeConfig}`,
     });
   }, [appThemeConfig]);
+
+  useEffect(() => {
+    const lastReportTime =
+      preferenceService.getPreference('lastReportTime') || 0;
+    if (!lastReportTime || !dayjs(lastReportTime).isToday()) {
+      preferenceService.setPreference({
+        lastReportTime: Date.now(),
+      });
+
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: `Website_LikeStatus`,
+        label: `LikeDapp:${
+          browserService.bookmark.getState().ids?.length || 0
+        }`,
+      });
+
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: `Website_TabStatus`,
+        label: `TabNumber:${
+          browserService.getBrowserTabs()?.tabs?.length || 0
+        }`,
+      });
+
+      matomoRequestEvent({
+        category: 'Watchlist Usage',
+        action: `Watchlist_LikeStatus`,
+        label: `LikeToken:${
+          preferenceService.getPreference('pinedQueue')?.length || 0
+        }`,
+      });
+    }
+  }, []);
 
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
@@ -800,7 +878,9 @@ function MultiAddressHome(): JSX.Element {
           contentContainerStyle={[
             styles.scrollContainer,
             {
-              paddingBottom: bottom,
+              // paddingBottom: bottom + 82,
+              paddingBottom:
+                Platform.OS === 'android' ? Math.max(bottom, 16) : 16,
             },
           ]}
           refreshControl={
@@ -814,8 +894,9 @@ function MultiAddressHome(): JSX.Element {
           />
           <View
             style={[
-              styles.contentBetweenHeaderAndMatrix,
-              noBetweenContent && styles.contentBetweenHeaderAndMatrixEmpty,
+              noBetweenContent
+                ? styles.contentBetweenHeaderAndMatrixEmpty
+                : styles.contentBetweenHeaderAndMatrix,
             ]}>
             <OfflineChainNotify data={offlineChainData} />
 
@@ -857,6 +938,7 @@ function MultiAddressHome(): JSX.Element {
               );
             })}
           </View>
+          <BrowserSearchEntry />
         </ScrollView>
       </View>
     </NormalScreenContainer2024>
@@ -986,6 +1068,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   scrollContainer: {
     flexGrow: 1,
+    minHeight: '100%',
   },
   menuHeader: {
     height: 30,
@@ -1078,7 +1161,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 12,
     gap: 12,
   },
-  contentBetweenHeaderAndMatrixEmpty: {},
+  contentBetweenHeaderAndMatrixEmpty: {
+    marginBottom: 12,
+  },
   menuContainer: {
     marginTop: 0,
   },
@@ -1266,7 +1351,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   curveBox: {
     paddingHorizontal: 15,
-    paddingTop: 30,
+    paddingTop: 12,
   },
   curveCard: {
     borderRadius: 20,

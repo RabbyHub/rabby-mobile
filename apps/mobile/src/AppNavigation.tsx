@@ -78,18 +78,16 @@ import {
 } from '@/screens/index.eager';
 import getLinkingConfig from './LinkingConfig';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { DappWebViewStubScreen } from './screens/Dapps/DappWebViewScreen';
-import MultiAddressHome from './screens/Home/MultiAddressHome';
 import BiometricsStubModal from './components/AuthenticationModal/BiometricsStubModal';
 import ApprovalTokenDetailSheetModalStub from './components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
-import WebViewControlPreload from './components/WebView/WebViewControlPreload';
-import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
-import { BrowserScreen } from './screens/Browser/BrowserScreen';
-import { BrowserNavigator } from './screens/Navigators/BrowserNavigator';
 import { GlobalMiniApproval } from './components/Approval/components/MiniSignTx/GlobalMiniApproval';
 import { EVENT_ROUTE_CHANGE, eventBus } from './utils/events';
-// import { BrowserManageScreen } from './screens/Browser/BrowserManageScreen';
 import { useOpenedActiveDappState } from './screens/Dapps/hooks/useDappView';
+import {
+  BottomSheetBrowser,
+  BrowserManagePopup,
+} from './screens/Browser/BottomSheetBrowser';
+import { TokenMarketInfoScreen } from './screens/TokenDetail/TokenMarketInfoScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -315,6 +313,27 @@ const StackMain = () => {
             backgroundColor: 'transparent',
           },
         })}
+        getId={({ params }) => {
+          // 使用时间戳作为唯一ID，确保每次都是新页面
+          return params?.timestamp?.toString() || 'default';
+        }}
+      />
+      <RootStack.Screen
+        name={RootNames.TokenMarketInfo}
+        component={TokenMarketInfoScreen}
+        options={mergeScreenOptions({
+          headerShown: true,
+          headerTitleAlign: 'left',
+          headerTitle: '',
+          headerStyle: {
+            // backgroundColor: colors['neutral-bg-2'],
+            backgroundColor: 'transparent',
+          },
+        })}
+        getId={({ params }) => {
+          // 使用时间戳作为唯一ID，确保每次都是新页面
+          return params?.timestamp?.toString() || 'default';
+        }}
       />
       <RootStack.Screen
         name={RootNames.Scanner}
@@ -466,7 +485,6 @@ export default function AppNavigation({
         <DuplicateAddressModal />
         <AliasNameEditModal />
         <QrCodeModal />
-
         <HomeHiddenTabStack.Navigator
           screenOptions={
             /* mergeScreenOptions */ {
@@ -494,7 +512,7 @@ export default function AppNavigation({
             }}
           />
 
-          <HomeHiddenTabStack.Screen
+          {/* <HomeHiddenTabStack.Screen
             name={RootNames.StackBrowser}
             component={BrowserNavigator}
             options={{
@@ -502,14 +520,12 @@ export default function AppNavigation({
               headerShadowVisible: false,
               headerShown: false,
             }}
-          />
+          /> */}
         </HomeHiddenTabStack.Navigator>
-
         <BiometricsStubModal />
-
         <ApprovalTokenDetailSheetModalStub />
-
-        <WebViewControlPreload />
+        <BottomSheetBrowser />
+        <BrowserManagePopup />
       </NavigationContainer>
       <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />

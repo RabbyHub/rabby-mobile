@@ -3,7 +3,7 @@ import { toast } from '@/components2024/Toast';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GasAccountCard } from './components/GasAccountCard';
 import { GasAccountDepositPopup } from './components/GasAccountDepositPopup';
@@ -20,6 +20,7 @@ import {
   useGasAccountLogoutVisible,
 } from './hooks/atom';
 import NormalScreenContainer from '@/components2024/ScreenContainer/NormalScreenContainer';
+import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 
 export const GasAccountScreen = () => {
   const { t } = useTranslation();
@@ -43,6 +44,10 @@ export const GasAccountScreen = () => {
 
   const { refresh: refreshHistory } = useGasAccountHistoryRefresh();
 
+  // 检查gas account gift资格
+  const { getCurrentEligibleAddress } = useGasAccountEligibility();
+  const currentEligibleAddress = getCurrentEligibleAddress();
+
   const handleDeposit = useMemoizedFn((type?: 'token' | 'pay') => {
     setDepositState({
       isOpen: true,
@@ -55,9 +60,9 @@ export const GasAccountScreen = () => {
   });
 
   const { isLogin } = useGasAccountLogin({ value: gasAccount, loading });
-
-  const balance = gasAccount?.account?.balance || 0;
-
+  const withdrawable_balance = gasAccount?.account?.withdrawable_balance || 0;
+  const nonWithdrawable_balance =
+    gasAccount?.account?.non_withdrawable_balance || 0;
   const [logoutPopupVisible, setLogoutPopupVisible] =
     useGasAccountLogoutVisible();
 
@@ -72,11 +77,16 @@ export const GasAccountScreen = () => {
     setNavigationOptions({ headerRight: headerRight });
   }, [setNavigationOptions, headerRight]);
 
+  const { isLight } = useTheme2024({ getStyle: getStyles });
+
   return (
-    <NormalScreenContainer type="linear">
+    <NormalScreenContainer
+      type="linear"
+      overwriteStyle={isLight ? styles.containerLight : styles.containerDark}>
       <GasAccountCard
         isLogin={isLogin}
         gasAccountInfo={gasAccount?.account}
+        currentEligibleAddress={currentEligibleAddress}
         onLoginPress={() => {
           setLoginVisible(true);
         }}
@@ -111,7 +121,8 @@ export const GasAccountScreen = () => {
 
       <WithDrawPopup
         visible={showWithdraw}
-        balance={balance}
+        balance={withdrawable_balance}
+        nonWithdrawableBalance={nonWithdrawable_balance}
         onCancel={() => setShowWithdraw(false)}
       />
 
@@ -142,6 +153,12 @@ export const GasAccountScreen = () => {
 };
 
 const getStyles = createGetStyles2024(({ colors2024 }) => ({
+  containerLight: {
+    backgroundColor: colors2024['neutral-bg-0'],
+  },
+  containerDark: {
+    backgroundColor: colors2024['neutral-bg-1'],
+  },
   accountContainer: {
     height: 296,
     paddingVertical: 34,

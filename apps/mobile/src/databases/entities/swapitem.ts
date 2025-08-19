@@ -8,7 +8,7 @@ import {
   ManyToMany,
   JoinTable,
   ManyToOne,
-} from 'typeorm';
+} from 'typeorm/browser';
 import { EntityAddressAssetBase } from './base';
 import { prepareAppDataSource } from '../imports';
 

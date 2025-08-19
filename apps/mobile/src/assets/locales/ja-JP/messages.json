@@ -631,6 +631,7 @@
       "Value": "バリュー",
       "No_Tokens": "トークンなし",
       "Select-from-supported-tokens": "サポートされているトークンから選択してください",
+      "Deposit-tip": "USDC/USDTで入金する",
       "Loading_Tokens": "トークンを読み込み中...",
       "Balance": "残高"
     },
@@ -784,7 +785,8 @@
       "noSupprotTokenForDex": "このトークンはこの取引所でサポートされていない可能性があります。損失を避けるために、事前に確認してください。",
       "From": "から",
       "noSupprotTokenForSafe": "あなたがトークンを送信しているSafeアドレスは、このチェーンにデプロイされていません。損失を避けるために、進む前に確認してください。",
-      "noSupportTokenForChain": "受取人アドレスは異なるチェーン上のコントラクトアドレスです。損失を避けるために、進む前に確認してください。"
+      "noSupportTokenForChain": "受取人アドレスは異なるチェーン上のコントラクトアドレスです。損失を避けるために、進む前に確認してください。",
+      "addressDetail": "アドレス詳細"
     },
     "swap": {
       "hidden-no-quote-rates_other": "{{count}} のレートが利用できません。",
@@ -1483,7 +1485,8 @@
         "noEnoughValueBalance": "Vault Balanceが不足しています。チェーンを切り替えるか、後でもう一度試してください。",
         "recipientAddress": "受取人ウォレット",
         "noRecipient": "利用可能な受取人ウォレットがありません",
-        "selectRecipientAddress": "受取人ウォレットを選択してください"
+        "selectRecipientAddress": "受取人ウォレットを選択してください",
+        "availableBalance": "利用可能な引き出し残高: {{balance}}"
       },
       "withdrawConfirmModal": {
         "button": "DeBankで表示",
@@ -1669,7 +1672,6 @@
       "ListedBy": "掲載者",
       "BridgeProvider": "ブリッジプロバイダー",
       "IssuedBy": "発行者",
-      "Mybalance": "マイバランス",
       "Defi": "DeFi",
       "fdv": "FDV",
       "NoIssuer": "発行者情報は利用できません。",
@@ -1680,7 +1682,6 @@
       "TokenName": "トークン名",
       "SupportedExchanges": "対応している取引所",
       "IssuerWebsite": "Issuer's Website",
-      "Transaction": "トランザクション",
       "fdvTitle": "FDV とは何ですか?",
       "BridgeIssue": "サードパーティによるブリッジトークン",
       "OriginIssue": "このブロックチェーンでネイティブに発行されました",
@@ -2010,22 +2011,38 @@
         "title": "現在のDapp",
         "connectChain": "チェーンを接続する",
         "connectWallet": "ウォレットを接続"
+      },
+      "BrowserSearch": {
+        "placeholder": "ウェブサイトを検索",
+        "searchInGoogle": "Google で \"{{searchText}}\" を検索",
+        "openUrl": "オープン \"{{searchText}}\"",
+        "recent": "最近",
+        "results": "結果"
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "ウェブサイトを開く"
       }
     },
     "browserManage": {
       "option": {
         "favorites": "お気に入り",
         "tab": "タブ",
-        "history": "履歴"
+        "history": "履歴",
+        "recent": "最近"
       },
       "BrowserBookmarkList": {
-        "title": "お気に入り"
+        "title": "お気に入り",
+        "emptyTitle": "まだウェブサイトは追加されていません"
       },
       "BrowserHistoryList": {
-        "title": "履歴"
+        "title": "履歴",
+        "emptyTitle": "過去30日間に履歴はありません",
+        "clearAllHistory": "すべての履歴をクリア"
       },
       "BrowserTabList": {
-        "closeAllTabs": "すべてのタブを閉じる"
+        "closeAllTabs": "すべてのタブを閉じる",
+        "emptyDesc": "今すぐ新しいタブを開いてください",
+        "emptyTitle": "まだタブは開いていません"
       }
     },
     "scan": {
@@ -2185,6 +2202,13 @@
       "common": "一般",
       "contextMenu": {
         "viewDetail": "詳細を見る"
+      },
+      "bridgeTo": {
+        "low": "流動性が低い",
+        "high": "高い流動性"
+      },
+      "favoriteFilter": {
+        "all": "すべて"
       }
     },
     "accountSwitcher": {

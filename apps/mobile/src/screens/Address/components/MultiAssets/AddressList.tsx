@@ -54,7 +54,7 @@ export const AddressList = () => {
 
   const { multiTimeStamp, refresh: refreshCurve } = useMultiCurve(
     top10Addresses,
-    false,
+    true,
     top10Balance.total,
     top10Balance.totalEvm,
   );
@@ -268,6 +268,7 @@ export const AddressList = () => {
 
   return (
     <Tabs.FlatList
+      keyExtractor={item => `${item.address}-${item.brandName}`}
       data={addressListData}
       renderItem={renderItem}
       showsHorizontalScrollIndicator={false}

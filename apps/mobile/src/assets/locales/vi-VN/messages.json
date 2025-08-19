@@ -728,7 +728,8 @@
       "noSupprotTokenForDex": "Token này có thể không được hỗ trợ bởi sàn giao dịch này. Kiểm tra trước khi tiếp tục để tránh mất mát.",
       "From": "Từ",
       "noSupprotTokenForSafe": "Địa chỉ Safe mà bạn đang gửi token không được triển khai trên chuỗi này. Vui lòng kiểm tra trước khi tiếp tục để tránh mất mát.",
-      "noSupportTokenForChain": "Địa chỉ người nhận là một địa chỉ hợp đồng trên một chuỗi khác. Kiểm tra trước khi tiếp tục để tránh mất mát."
+      "noSupportTokenForChain": "Địa chỉ người nhận là một địa chỉ hợp đồng trên một chuỗi khác. Kiểm tra trước khi tiếp tục để tránh mất mát.",
+      "addressDetail": "Chi tiết địa chỉ"
     },
     "approvals": {
       "list": {
@@ -826,6 +827,7 @@
       "No_Tokens": "Không có Token",
       "Token": "Token",
       "Select-from-supported-tokens": "Chọn từ các token được hỗ trợ",
+      "Deposit-tip": "Nạp tiền bằng USDC/USDT",
       "Value": "Giá trị",
       "InsufficientBalanceTips": "Số dư không đủ",
       "Balance": "Số dư"
@@ -1581,7 +1583,8 @@
         "noEnoughValueBalance": "Số dư Vault không đủ. Chuyển chuỗi hoặc thử lại sau.",
         "noRecipient": "Không có ví người nhận nào khả dụng",
         "selectRecipientAddress": "Chọn ví người nhận",
-        "recipientAddress": "Ví nhận"
+        "recipientAddress": "Ví nhận",
+        "availableBalance": "Số dư rút tiền có sẵn: {{balance}}"
       },
       "withdrawConfirmModal": {
         "button": "Xem trên DeBank",
@@ -1681,13 +1684,11 @@
       "Info": "Thông tin",
       "SupportedExchanges": "Hỗ trợ Sàn giao dịch",
       "IssuedBy": "Được phát hành bởi",
-      "Transaction": "Giao dịch",
       "Defi": "DeFi",
       "BridgeProvider": "Nhà cung cấp Bridge",
       "SeeMore": "Xem thêm",
       "OriginIssue": "Được phát hành gốc trên blockchain này",
       "ListedBy": "Được niêm yết bởi",
-      "Mybalance": "Số dư của tôi",
       "IssuerWebsite": "Trang web của Issuer",
       "NoListedSite": "Không có thông tin danh sách có sẵn",
       "noTransactions": "Không có giao dịch nào",
@@ -2017,22 +2018,38 @@
         "connectChain": "Kết nối Chuỗi",
         "connectWallet": "Kết nối Ví",
         "title": "Dapp hiện tại"
+      },
+      "BrowserSearch": {
+        "results": "Kết quả",
+        "recent": "Gần đây",
+        "openUrl": "Mở \"{{searchText}}\"",
+        "placeholder": "Tìm kiếm Website",
+        "searchInGoogle": "Tìm \"{{searchText}}\" trên Google"
+      },
+      "BrowserSearchEntry": {
+        "openWebsites": "Mở Trang Web"
       }
     },
     "browserManage": {
       "option": {
         "favorites": "Yêu thích",
         "tab": "Tab",
-        "history": "Lịch sử"
+        "history": "Lịch sử",
+        "recent": "Gần đây"
       },
       "BrowserBookmarkList": {
-        "title": "Yêu thích"
+        "title": "Yêu thích",
+        "emptyTitle": "Chưa có trang web nào được thêm vào."
       },
       "BrowserHistoryList": {
-        "title": "Lịch sử"
+        "title": "Lịch sử",
+        "clearAllHistory": "Xóa tất cả lịch sử",
+        "emptyTitle": "Không có lịch sử trong 30 ngày qua"
       },
       "BrowserTabList": {
-        "closeAllTabs": "Đóng tất cả các tab"
+        "closeAllTabs": "Đóng tất cả các tab",
+        "emptyTitle": "Chưa có tab nào mở cả",
+        "emptyDesc": "Mở một tab mới ngay bây giờ"
       }
     },
     "scan": {
@@ -2139,6 +2156,13 @@
       "searchPlaceHolder2": "Tìm kiếm Token",
       "contextMenu": {
         "viewDetail": "Xem Chi Tiết"
+      },
+      "bridgeTo": {
+        "low": "Thanh khoản thấp",
+        "high": "Tính thanh khoản cao"
+      },
+      "favoriteFilter": {
+        "all": "Tất cả"
       }
     },
     "PillsSwitch": {
