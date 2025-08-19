@@ -413,7 +413,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       if (!browserState.isShowBrowser || browserState.isShowSearch) {
         return;
       }
-      const origin = safeGetOrigin(webviewState.resolvedUrl);
+      const origin = urlInfo?.origin;
       if (isActive && origin && dappService.getDapp(origin)?.isConnected) {
         matomoRequestEvent({
           category: 'Websites Usage',
@@ -425,7 +425,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       browserState.isShowBrowser,
       browserState.isShowSearch,
       isActive,
-      webviewState.resolvedUrl,
+      urlInfo?.origin,
     ]);
 
     React.useImperativeHandle(
