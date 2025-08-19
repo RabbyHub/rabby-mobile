@@ -15,12 +15,11 @@ import {
 import Animated, {
   SharedValue,
   useAnimatedStyle,
-  useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 import { LineChart } from 'react-native-wagmi-charts';
 import { CurveLoader } from './CurveLoader';
-import { DataHeaderInfo } from './DataHeaderInfo';
+import { DataHeaderInfo, DataHeaderInfoSkeleton } from './DataHeaderInfo';
 import { REAL_TIME_TAB_LIST, TabKey, TIME_TAB_LIST, TimeTab } from './TimeTab';
 import {
   CurvePoint,
@@ -297,17 +296,18 @@ function Chart({
 
   return (
     <LineChart.Provider data={data}>
-      <DataHeaderInfo
-        key={activeKey}
-        activeKey={activeKey}
-        currentPercentChange={currentInfo.percent}
-        currentIsLoss={currentInfo.isLoss}
-        currentBalance={currentInfo.balance}
-        isOffline={false}
-        data={data}
-        isLoading={loading}
-        isNoAssets={false}
-      />
+      {loading ? (
+        <DataHeaderInfoSkeleton />
+      ) : (
+        <DataHeaderInfo
+          key={activeKey}
+          activeKey={activeKey}
+          currentPercentChange={currentInfo.percent}
+          currentIsLoss={currentInfo.isLoss}
+          currentBalance={currentInfo.balance}
+          data={data}
+        />
+      )}
 
       {loading ? null : data?.length ? extraMetaInfo : null}
 
