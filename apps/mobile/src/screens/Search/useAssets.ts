@@ -458,15 +458,29 @@ export const useAssets = ({
         options?.maxNFTLength
       );
 
-      // 有cache，不查了
-      if (Object.keys(assetsMap).length && !shortCache) {
+      // 基于 disable 的类型逐个地址检查对应缓存是否齐全
+      const hasRequiredCache = addresses.every(address => {
+        const entry = assetsMap[address];
+        if (!entry) {
+          return false;
+        }
+        if (!disableToken && !(entry.tokens && entry.tokens.length)) {
+          return false;
+        }
+        if (!disableDefi && !(entry.portfolios && entry.portfolios.length)) {
+          return false;
+        }
+        if (!disableNFT && !(entry.nfts && entry.nfts.length)) {
+          return false;
+        }
+        return true;
+      });
+
+      // 有完整的所需类型缓存，不查了
+      if (hasRequiredCache && !shortCache) {
         return;
       }
-      if (
-        shortCache &&
-        isCurrentShortCacheFetch &&
-        Object.keys(assetsMap).length
-      ) {
+      if (shortCache && isCurrentShortCacheFetch && hasRequiredCache) {
         return;
       }
       setShortCache(
