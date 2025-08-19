@@ -104,3 +104,4 @@ tsconfig.typecheck.temp.json
 
 /scripts/.fast-build-work
 /scripts/**/_test.sh
+/scripts/fast-build/*.txt
