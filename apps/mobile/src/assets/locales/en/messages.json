@@ -2044,7 +2044,7 @@
         "refresh": "Refresh",
         "favorite": "Favorite",
         "contentModeMobile": "Request Mobile Site",
-        "contentModeDesktop": "Request DeskTop Site",
+        "contentModeDesktop": "Request Desktop Site",
         "disconnect": "Disconnect"
       }
     },
@@ -2066,7 +2066,7 @@
       },
       "BrowserHistoryList": {
         "title": "History",
-        "clearAllHistory": "Clear all History",
+        "clearAllHistory": "Clear all history",
         "emptyTitle": " No history in the past 30 days"
       }
     },
