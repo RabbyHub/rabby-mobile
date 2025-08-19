@@ -29,6 +29,10 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { ReactIconHome } from '@/assets2024/icons/browser';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useAppState } from '@react-native-community/hooks';
+import Animated, {
+  useAnimatedKeyboard,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 
 export function BrowserSearch({
   onClose,
@@ -155,8 +159,14 @@ export function BrowserSearch({
     }
   }, [appState]);
 
+  const keyboard = useAnimatedKeyboard();
+
+  const animatedStyles = useAnimatedStyle(() => ({
+    paddingBottom: keyboard.height.value - androidOnlyBottomOffset,
+  }));
+
   return (
-    <View
+    <Animated.View
       style={[
         styles.container,
 
@@ -167,6 +177,7 @@ export function BrowserSearch({
               backgroundColor: 'transparent',
             }
           : null,
+        animatedStyles,
       ]}>
       {!searchText?.trim() ? (
         trigger === 'home' && !displayedBrowserHistoryList.length ? (
@@ -228,7 +239,7 @@ export function BrowserSearch({
           />
         </TouchableOpacity>
         <NextSearchBar
-          as="BottomSheetTextInput"
+          // as="BottomSheetTextInput"
           value={searchText}
           onChangeText={setSearchText}
           onCancel={handleClose}
@@ -241,7 +252,7 @@ export function BrowserSearch({
           style={styles.searchBar}
         />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
