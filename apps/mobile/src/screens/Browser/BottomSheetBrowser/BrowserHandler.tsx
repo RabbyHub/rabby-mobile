@@ -208,7 +208,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       gap: 8,
 
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors2024['neutral-InvertHighlight'],
+      borderColor: isLight ? colors2024['neutral-InvertHighlight'] : '#000',
     },
     divider: {
       // width: StyleSheet.hairlineWidth,
