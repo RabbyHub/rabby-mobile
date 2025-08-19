@@ -718,7 +718,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['brand-light-1'],
     },
     btnInnerContainer: {
-      borderRadius: 16,
+      borderRadius: 12,
     },
     searchTokenDanger: {
       flex: 1,
