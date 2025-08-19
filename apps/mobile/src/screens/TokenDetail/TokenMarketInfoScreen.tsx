@@ -412,6 +412,18 @@ export const TokenMarketInfoScreen = () => {
 
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
+  const isSwapTo = useMemo(
+    () => tokenSelectType === 'swapTo',
+    [tokenSelectType],
+  );
+  const isBridgeTo = useMemo(
+    () => tokenSelectType === 'bridgeTo',
+    [tokenSelectType],
+  );
+  const isTransactionTo = useMemo(
+    () => isSwapTo || isBridgeTo,
+    [isBridgeTo, isSwapTo],
+  );
 
   const handleSwap = useMemoizedFn(
     async (
@@ -445,6 +457,31 @@ export const TokenMarketInfoScreen = () => {
           type: tokenSelectType === 'swapTo' ? 'Buy' : type,
           address,
           isFromSwap,
+        },
+      });
+    },
+  );
+
+  const handleBridgeTo = useMemoizedFn(
+    async (address?: string, accountType?: KEYRING_TYPE) => {
+      const chain = findChain({
+        serverId: token.chain,
+      });
+
+      const toAccount =
+        address && accountType
+          ? accounts.find(
+              i => isSameAddress(address, i.address) && i.type === accountType,
+            ) || finalAccount
+          : finalAccount;
+      await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
+      // 关闭弹窗隐藏
+      setIsFromBack(false);
+      navigation.push(RootNames.StackTransaction, {
+        screen: isSingleAddress ? RootNames.Bridge : RootNames.MultiBridge,
+        params: {
+          toChainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+          toTokenId: token?._tokenId,
         },
       });
     },
@@ -637,38 +674,59 @@ export const TokenMarketInfoScreen = () => {
           styles.buttonGroup,
           isAndroid && { paddingBottom: 50 + safeOffBottom },
         ]}>
-        <Button
-          type="ghost"
-          title={t('page.tokenDetail.action.Buy')}
-          containerStyle={StyleSheet.flatten([styles.btnContainer])}
-          buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
-          onPress={() =>
-            handleSwap('Buy', finalAccount?.address, finalAccount?.type)
-          }
-        />
-        <View style={styles.btnContainer}>
-          <Tip
-            placement="top"
-            content={
-              !tokenSupportSwap
-                ? t('page.tokenDetail.notSupportedOnChain')
-                : undefined
-            }>
+        {isTransactionTo ? (
+          <Button
+            title={t('global.Confirm')}
+            containerStyle={StyleSheet.flatten([styles.btnContainer])}
+            onPress={() => {
+              if (isSwapTo) {
+                handleSwap('Buy', finalAccount?.address, finalAccount?.type);
+                return;
+              }
+              if (isBridgeTo) {
+                handleBridgeTo(finalAccount?.address, finalAccount?.type);
+                return;
+              }
+            }}
+            buttonStyle={styles.btnInnerContainer}
+            disabled={!tokenSupportSwap}
+          />
+        ) : (
+          <>
             <Button
-              title={
-                isFromSwap
-                  ? t('global.Confirm')
-                  : t('page.tokenDetail.action.Sell')
-              }
+              type="ghost"
+              title={t('page.tokenDetail.action.Buy')}
               containerStyle={StyleSheet.flatten([styles.btnContainer])}
+              buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
               onPress={() =>
-                handleSwap('Sell', finalAccount?.address, finalAccount?.type)
+                handleSwap('Buy', finalAccount?.address, finalAccount?.type)
               }
-              buttonStyle={styles.btnInnerContainer}
-              disabled={!tokenSupportSwap}
             />
-          </Tip>
-        </View>
+            <View style={styles.btnContainer}>
+              <Tip
+                placement="top"
+                content={
+                  !tokenSupportSwap
+                    ? t('page.tokenDetail.notSupportedOnChain')
+                    : undefined
+                }>
+                <Button
+                  title={t('page.tokenDetail.action.Sell')}
+                  containerStyle={StyleSheet.flatten([styles.btnContainer])}
+                  onPress={() =>
+                    handleSwap(
+                      'Sell',
+                      finalAccount?.address,
+                      finalAccount?.type,
+                    )
+                  }
+                  buttonStyle={styles.btnInnerContainer}
+                  disabled={!tokenSupportSwap}
+                />
+              </Tip>
+            </View>
+          </>
+        )}
       </View>
     </NormalScreenContainer2024>
   );
