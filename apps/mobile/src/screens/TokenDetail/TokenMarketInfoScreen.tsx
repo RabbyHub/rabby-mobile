@@ -29,7 +29,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import { TokenPriceChart } from './components/TokenPriceChart';
+import { TokenChartRef, TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { toast } from '@/components2024/Toast';
@@ -611,9 +611,12 @@ export const TokenMarketInfoScreen = () => {
     [riskInfo.securityContent, t],
   );
 
+  const tokenPriceChartRef = React.useRef<TokenChartRef>(null);
+
   const handleRefresh = useCallback(() => {
     refreshTokenEntity();
     refreshAsync();
+    tokenPriceChartRef.current?.refreshChart();
   }, [refreshAsync, refreshTokenEntity]);
 
   if (isSingleAddress && !finalAccount) {
@@ -664,6 +667,7 @@ export const TokenMarketInfoScreen = () => {
             )}
             <View style={{ position: 'relative', marginTop: 12 }}>
               <TokenPriceChart
+                ref={tokenPriceChartRef}
                 token={tokenWithAmount || token}
                 amountList={[]}
                 relateDefiList={[]}
