@@ -111,8 +111,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 18,
     marginBottom: 30,
     borderRadius: 20,
-    padding: 6,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
 
     ...Platform.select({
       ios: {
@@ -128,6 +129,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
+    padding: 6,
   },
 
   tabItemContainer: {
