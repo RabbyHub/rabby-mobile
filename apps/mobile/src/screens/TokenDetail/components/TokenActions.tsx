@@ -20,8 +20,6 @@ import { StackActions, useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
-import { toast } from '@/components2024/Toast';
-import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -43,28 +41,6 @@ const TokenActions = ({
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
   const navigation = useNavigation<HomeProps['navigation']>();
-
-  const tokenChain = useMemo(() => {
-    return getChain(token?.chain);
-  }, [token?.chain]);
-
-  const { isSupportedChain: isSwapSupportedChain, data: externalSwapDapps } =
-    useExternalSwapBridgeDapps(tokenChain!.enum, 'swap');
-
-  const tokenSupportSwap = useMemo(
-    () => isSwapSupportedChain || externalSwapDapps.length > 0,
-    [isSwapSupportedChain, externalSwapDapps],
-  );
-
-  const {
-    isSupportedChain: isBridgeSupportedChain,
-    data: externalBridgeDapps,
-  } = useExternalSwapBridgeDapps(tokenChain!.enum, 'bridge');
-
-  const tokenSupportBridge = useMemo(
-    () => isBridgeSupportedChain || externalBridgeDapps.length > 0,
-    [isBridgeSupportedChain, externalBridgeDapps],
-  );
 
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
@@ -137,12 +113,7 @@ const TokenActions = ({
         key: 'Swap',
         title: t('page.home.services.swap'),
         Icon: RcIconSwapCC,
-        disabled: !tokenSupportSwap,
         onPress: async () => {
-          if (!tokenSupportSwap) {
-            toast.error(t('page.tokenDetail.notSupported'));
-            return;
-          }
           const chain = findChain({
             serverId: token.chain,
           });
@@ -165,12 +136,7 @@ const TokenActions = ({
         key: 'Bridge',
         title: t('page.home.services.bridge'),
         Icon: RcIconBridgeCC,
-        disabled: !tokenSupportBridge,
         onPress: async () => {
-          if (!tokenSupportBridge) {
-            toast.error(t('page.tokenDetail.notSupported'));
-            return;
-          }
           const chain = findChain({
             serverId: token.chain,
           });
@@ -200,8 +166,6 @@ const TokenActions = ({
       token.chain,
       token.symbol,
       tokenSelectType,
-      tokenSupportBridge,
-      tokenSupportSwap,
     ],
   );
   return (
