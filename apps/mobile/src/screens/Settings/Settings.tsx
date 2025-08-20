@@ -36,6 +36,7 @@ import {
   APP_RUNTIME_ENV,
   BUILD_CHANNEL,
   BUILD_GIT_INFO,
+  IS_HERMES_ENABLED,
   isNonPublicProductionEnv,
   isSelfhostRegPkg,
   NEED_DEVSETTINGBLOCKS,
@@ -146,6 +147,7 @@ function AlertBuildInfo() {
       [
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+        `Hermes Enabled: ${IS_HERMES_ENABLED}`,
         '   ',
         !!BUILD_GIT_INFO.BUILD_GIT_HASH_TIME &&
           `Lastest Commit: ${dayjs(BUILD_GIT_INFO.BUILD_GIT_HASH_TIME).format(
@@ -165,7 +167,13 @@ function AlertBuildInfo() {
   } else {
     Alert.alert(
       'Build Info',
-      [`Runtime Env: ${APP_RUNTIME_ENV}`].filter(Boolean).join('\n'),
+      [
+        `Runtime Env: ${APP_RUNTIME_ENV}`,
+        `Revision: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+        `Hermes Enabled: ${IS_HERMES_ENABLED}`,
+      ]
+        .filter(Boolean)
+        .join('\n'),
       [
         {
           text: 'OK',

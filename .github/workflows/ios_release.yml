@@ -89,8 +89,8 @@ jobs:
           RABBY_MOBILE_BUILD_ENV: production
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.RABBY_MOBILE_APPLE_TRANSPORT_PASSWORD }}
           RABBY_MOBILE_PILOT_USERNAME: ${{ secrets.RABBY_MOBILE_PILOT_USERNAME }}
-          LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
-          LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          RABBY_MOBILE_LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
+          RABBY_MOBILE_LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
