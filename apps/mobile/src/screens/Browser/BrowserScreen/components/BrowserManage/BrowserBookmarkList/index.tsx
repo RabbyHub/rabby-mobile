@@ -25,11 +25,13 @@ export const BrowserBookmarkList = ({
 
   const handlePress = useMemoizedFn((dappInfo: DappInfo) => {
     openTab(dappInfo.url || dappInfo.origin);
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: 'Website_Visit_Website Favorites',
-      label: dappInfo.origin,
-    });
+    if (dappInfo.origin) {
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: 'Website_Visit_Website Favorites',
+        label: dappInfo.origin,
+      });
+    }
   });
 
   const handleDeletePress = useMemoizedFn((dappInfo: DappInfo) => {

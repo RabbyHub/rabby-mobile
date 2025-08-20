@@ -238,11 +238,14 @@ export const BrowserSearchEntry: React.FC = () => {
                       tab={tab}
                       onPress={() => {
                         switchToTab(tab.id);
-                        matomoRequestEvent({
-                          category: 'Websites Usage',
-                          action: 'Website_Visit_Home Tab',
-                          label: safeGetOrigin(tab.url || tab.initialUrl),
-                        });
+                        const origin = safeGetOrigin(tab.url || tab.initialUrl);
+                        if (origin) {
+                          matomoRequestEvent({
+                            category: 'Websites Usage',
+                            action: 'Website_Visit_Home Tab',
+                            label: origin,
+                          });
+                        }
                       }}
                       onPressClose={() => {
                         closeTab(tab.id);

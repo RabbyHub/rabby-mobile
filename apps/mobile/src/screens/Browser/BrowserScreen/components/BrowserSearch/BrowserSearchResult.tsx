@@ -86,12 +86,14 @@ export function BrowserSearchResult({
                       ? searchText
                       : `https://${searchText}`;
                     onOpenURL?.(url);
-
-                    matomoRequestEvent({
-                      category: 'Websites Usage',
-                      action: 'Website_Visit_Direct Open',
-                      label: safeGetOrigin(url),
-                    });
+                    const origin = safeGetOrigin(url);
+                    if (origin) {
+                      matomoRequestEvent({
+                        category: 'Websites Usage',
+                        action: 'Website_Visit_Direct Open',
+                        label: origin,
+                      });
+                    }
                   }}>
                   <RcIconBallCC
                     style={styles.listItemIcon}

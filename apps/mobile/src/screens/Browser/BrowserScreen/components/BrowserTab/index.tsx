@@ -699,7 +699,8 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         const origin = safeGetOrigin(nativeEvent.url);
                         if (
                           isGoogle(webviewState.resolvedUrl) &&
-                          dappService.getDapp(origin)?.isDapp
+                          dappService.getDapp(origin)?.isDapp &&
+                          origin
                         ) {
                           matomoRequestEvent({
                             category: 'Websites Usage',

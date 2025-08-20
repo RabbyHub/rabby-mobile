@@ -191,11 +191,13 @@ export function BrowserSearch({
             list={displayedBrowserHistoryList}
             onPress={dapp => {
               handleOpenUrl(dapp.url || dapp.origin);
-              matomoRequestEvent({
-                category: 'Websites Usage',
-                action: 'Website_Visit_Recent List',
-                label: dapp.origin,
-              });
+              if (dapp.origin) {
+                matomoRequestEvent({
+                  category: 'Websites Usage',
+                  action: 'Website_Visit_Recent List',
+                  label: dapp.origin,
+                });
+              }
             }}
           />
         )
@@ -208,11 +210,13 @@ export function BrowserSearch({
           isValidDomain={!!isValidDomain}
           onOpenURL={origin => {
             handleOpenUrl(origin);
-            matomoRequestEvent({
-              category: 'Websites Usage',
-              action: 'Website_Visit_Search Results',
-              label: origin,
-            });
+            if (origin) {
+              matomoRequestEvent({
+                category: 'Websites Usage',
+                action: 'Website_Visit_Search Results',
+                label: origin,
+              });
+            }
           }}
         />
       )}
