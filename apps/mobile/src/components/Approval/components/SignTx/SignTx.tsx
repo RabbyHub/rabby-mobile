@@ -112,6 +112,8 @@ import { apisKeyring } from '@/core/apis/keyring';
 import { adjustV } from '@/utils/gnosis';
 import { getCexInfo } from '@/hooks/useCexSupportList';
 import { MultiActionProps } from '../TypedDataActions';
+import { apisTransactionHistory } from '@/core/apis/transactionHistory';
+import { calcGasLimit } from '@/core/apis/transactions';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -533,7 +535,6 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
     if (updateNonce && !isGnosisAccount) {
       setRealNonce(recommendNonce);
     } // do not overwrite nonce if from === to(cancel transaction)
-    const { pendings } = await transactionHistoryService.getList(address);
     const preExecPromise = openapi
       .preExecTx({
         tx: {
@@ -546,27 +547,10 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         origin: origin || '',
         address,
         updateNonce,
-        pending_tx_list: pendings
-          .filter(item =>
-            new BigNumber(item.nonce).lt(
-              updateNonce ? recommendNonce : tx.nonce,
-            ),
-          )
-          .reduce((result, item) => {
-            return result.concat(item.txs.map(tx => tx.rawTx));
-          }, [] as Tx[])
-          .map(item => ({
-            from: item.from,
-            to: item.to,
-            chainId: item.chainId,
-            data: item.data || '0x',
-            nonce: item.nonce,
-            value: item.value,
-            gasPrice: `0x${new BigNumber(
-              item.gasPrice || item.maxFeePerGas || 0,
-            ).toString(16)}`,
-            gas: item.gas || item.gasLimit || '0x0',
-          })),
+        pending_tx_list: await apisTransactionHistory.getPendingTxs({
+          recommendNonce,
+          address,
+        }),
         delegate_call: isGnosisAccount ? !!params?.data?.[0]?.operation : false,
       })
       .then(async res => {
@@ -599,14 +583,21 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
         if (tx.gas && origin === INTERNAL_REQUEST_ORIGIN) {
           setGasLimit(intToHex(Number(tx.gas))); // use origin gas as gasLimit when tx is an internal tx with gasLimit(i.e. for SendMax native token)
         } else if (!gasLimit) {
-          // use server response gas limit
-          const ratio =
-            SAFE_GAS_LIMIT_RATIO[chainId] || DEFAULT_GAS_LIMIT_RATIO;
-          setRecommendGasLimitRatio(needRatio ? ratio : 1);
-          const recommendGasLimit = needRatio
-            ? gas.times(ratio).toFixed(0)
-            : gas.toFixed(0);
-          setGasLimit(intToHex(Number(recommendGasLimit)));
+          const {
+            gasLimit: _gasLimit,
+            recommendGasLimitRatio: _recommendGasLimitRatio,
+          } = await calcGasLimit({
+            chain,
+            tx,
+            gas,
+            selectedGas: selectedGas,
+            nativeTokenBalance,
+            explainTx: res,
+            needRatio,
+            account: currentAccount,
+          });
+          setRecommendGasLimitRatio(_recommendGasLimitRatio);
+          setGasLimit(_gasLimit);
         }
         setTxDetail(res);
 
