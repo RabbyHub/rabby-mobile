@@ -114,7 +114,7 @@ async function sendMessage({
                 { tag: 'text', text: `📢📢📢 注意: ` },
                 {
                   tag: 'text',
-                  text: `该 APK 来自 FastBuild, 若存在安装问题请联系开发者重新打包`,
+                  text: `该 APK 来自 FastBuild, 预期启动会比线上慢一半左右, 若存在其它安装问题请联系开发者重新打包`,
                 },
               ],
             [
