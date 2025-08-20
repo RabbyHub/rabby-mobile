@@ -26,6 +26,7 @@ import {
   Text,
   View,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
 import { TokenPriceChart } from './components/TokenPriceChart';
@@ -263,7 +264,7 @@ export const TokenMarketInfoScreen = () => {
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const { data: tokenWithAmount } = useRequest(
+  const { data: tokenWithAmount, refreshAsync } = useRequest(
     async () => {
       const res = await openapi.getToken(
         finalAccount!.address,
@@ -272,6 +273,7 @@ export const TokenMarketInfoScreen = () => {
       );
       return ensureAbstractPortfolioToken({
         ...abstractTokenToTokenItem(token),
+        price_24h_change: res?.price_24h_change,
         usd_value: res?.usd_value,
         price: res?.price,
       });
@@ -281,7 +283,11 @@ export const TokenMarketInfoScreen = () => {
     },
   );
 
-  const { data: tokenEntity, loading: entityLoading } = useRequest(
+  const {
+    data: tokenEntity,
+    loading: entityLoading,
+    refreshAsync: refreshTokenEntity,
+  } = useRequest(
     async () => {
       if (!token || !token._tokenId) {
         return;
@@ -605,6 +611,11 @@ export const TokenMarketInfoScreen = () => {
     [riskInfo.securityContent, t],
   );
 
+  const handleRefresh = useCallback(() => {
+    refreshTokenEntity();
+    refreshAsync();
+  }, [refreshAsync, refreshTokenEntity]);
+
   if (isSingleAddress && !finalAccount) {
     return null;
   }
@@ -635,7 +646,11 @@ export const TokenMarketInfoScreen = () => {
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}>
         <Tabs.Tab label={renderMarketDataLabel} name="marketData">
-          <ScrollView style={styles.innerContainer}>
+          <ScrollView
+            refreshControl={
+              <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+            }
+            style={styles.innerContainer}>
             {!!amountSum && (
               <HeaderBalanceCard
                 amount={formatTokenAmount(amountSum)}
@@ -659,7 +674,11 @@ export const TokenMarketInfoScreen = () => {
           </ScrollView>
         </Tabs.Tab>
         <Tabs.Tab label={renderTokenSecurityLabel} name="tokenSecurity">
-          <ScrollView style={styles.innerContainer}>
+          <ScrollView
+            refreshControl={
+              <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+            }
+            style={styles.innerContainer}>
             {riskInfo.content}
             <IssuerAndListSite
               tokenEntity={tokenEntity}
