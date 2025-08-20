@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
   Platform,
@@ -14,25 +8,26 @@ import {
   ViewStyle,
 } from 'react-native';
 
+import { ReactIconHome } from '@/assets2024/icons/browser';
 import { NextSearchBar } from '@/components2024/SearchBar';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
+import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
+import { useAppState } from '@react-native-community/hooks';
+import { useMemoizedFn } from 'ahooks';
+import { useTranslation } from 'react-i18next';
+import { parse } from 'tldts';
 import { useSearchDapps } from '../../hooks/useSearchDapps';
 import { BrowserRecent } from './BrowserRecent';
 import { BrowserSearchResult } from './BrowserSearchResult';
-import { parse } from 'tldts';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { useTranslation } from 'react-i18next';
-import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
-import { useDebounceFn, useMemoizedFn } from 'ahooks';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { ReactIconHome } from '@/assets2024/icons/browser';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { useAppState } from '@react-native-community/hooks';
-import Animated, {
-  useAnimatedKeyboard,
-  useAnimatedStyle,
-} from 'react-native-reanimated';
+
+import {
+  AndroidSoftInputModes,
+  KeyboardController,
+} from 'react-native-keyboard-controller';
 
 export function BrowserSearch({
   onClose,
@@ -159,14 +154,16 @@ export function BrowserSearch({
     }
   }, [appState]);
 
-  const keyboard = useAnimatedKeyboard();
+  useEffect(() => {
+    KeyboardController.setInputMode(
+      AndroidSoftInputModes.SOFT_INPUT_ADJUST_RESIZE,
+    );
 
-  const animatedStyles = useAnimatedStyle(() => ({
-    paddingBottom: keyboard.height.value - androidOnlyBottomOffset,
-  }));
+    return () => KeyboardController.setDefaultMode();
+  }, []);
 
   return (
-    <Animated.View
+    <View
       style={[
         styles.container,
 
@@ -177,7 +174,6 @@ export function BrowserSearch({
               backgroundColor: 'transparent',
             }
           : null,
-        animatedStyles,
       ]}>
       {!searchText?.trim() ? (
         trigger === 'home' && !displayedBrowserHistoryList.length ? (
@@ -239,7 +235,7 @@ export function BrowserSearch({
           />
         </TouchableOpacity>
         <NextSearchBar
-          // as="BottomSheetTextInput"
+          as="BottomSheetTextInput"
           value={searchText}
           onChangeText={setSearchText}
           onCancel={handleClose}
@@ -252,7 +248,7 @@ export function BrowserSearch({
           style={styles.searchBar}
         />
       </View>
-    </Animated.View>
+    </View>
   );
 }
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
