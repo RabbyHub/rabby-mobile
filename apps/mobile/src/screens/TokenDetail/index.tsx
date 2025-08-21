@@ -413,7 +413,7 @@ export const TokenDetailScreen = () => {
         return Promise.resolve();
       }),
     );
-    await refreshAsync(tokenFromAddress.map(item => item.address)).then(res => {
+    refreshAsync(tokenFromAddress.map(item => item.address)).then(res => {
       updateTokensAmount(res);
     });
     refreshTag();
