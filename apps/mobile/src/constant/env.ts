@@ -32,6 +32,8 @@ export function getSentryEnv() {
 
 export const SENTRY_DEBUG = APP_RUNTIME_ENV !== 'production';
 
+export const IS_HERMES_ENABLED = !!(global as any).HermesInternal;
+
 export const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
 export const isNonPublicProductionEnv = isSelfhostRegPkg || __DEV__;
 export const NEED_DEVSETTINGBLOCKS = isSelfhostRegPkg || __DEV__;
