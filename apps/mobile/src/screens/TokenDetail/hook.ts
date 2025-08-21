@@ -192,3 +192,32 @@ export const useTokenBalance = ({
     price,
   };
 };
+
+export const useRealTimeTokenInfo = (token: {
+  chain: string;
+  tokenId: string;
+}) => {
+  const [data, setData] = useState<
+    {
+      address: string;
+      token: TokenItem;
+    }[]
+  >([]);
+  const fetchData = useMemoizedFn(async (relatedAddresses: string[]) => {
+    const results = await Promise.allSettled(
+      relatedAddresses.map(async address => {
+        const res = await openapi.getToken(address, token.chain, token.tokenId);
+        return { address, token: res };
+      }),
+    );
+    const successData = results
+      .filter(result => result.status === 'fulfilled')
+      .map(result => result.value);
+    setData(successData);
+    return successData;
+  });
+  return {
+    tokens: data,
+    refreshAsync: fetchData,
+  };
+};

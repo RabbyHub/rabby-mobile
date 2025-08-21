@@ -31,6 +31,7 @@ import { useMemoizedFn } from 'ahooks';
 import { useCallback, useMemo } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { syncRemoteTokensAmount } from '@/databases/sync/assets';
 
 export const loadingAtom = atom(true);
 export const isFirstFetchAtom = atom(true);
@@ -513,6 +514,48 @@ export const useAssets = ({
     },
   );
 
+  const updateTokensAmount = useMemoizedFn(
+    (
+      updateTokenList: {
+        address: string;
+        token: TokenItem;
+      }[],
+    ) => {
+      syncRemoteTokensAmount(updateTokenList);
+      setAssetsMap(prev => {
+        const next = { ...prev };
+        updateTokenList.forEach(({ address, token }) => {
+          const lowerAddress = address?.toLowerCase?.() || address;
+          const currentAssets = next[lowerAddress] || {};
+          const preTokens = currentAssets.tokens || [];
+
+          const updatedTokens = preTokens.map(t => {
+            const sameChain =
+              (t.chain || '').toLowerCase() ===
+              (token.chain || '').toLowerCase();
+            const sameTokenId =
+              (t as any)._tokenId === token.id || (t as any).id === token.id;
+            if (sameChain && sameTokenId) {
+              return {
+                ...t,
+                price: token.price,
+                price_24h_change: token.price_24h_change,
+                amount: token.amount,
+              };
+            }
+            return t;
+          });
+
+          next[lowerAddress] = {
+            ...currentAssets,
+            tokens: updatedTokens,
+          };
+        });
+        return next;
+      });
+    },
+  );
+
   return {
     tokens,
     portfolios,
@@ -527,6 +570,7 @@ export const useAssets = ({
     batchLoadCacheNFT,
     refreshing: !!isLoading && !isFirstFetch,
     loadSpecificDefi,
+    updateTokensAmount,
   };
 };
 
