@@ -34,14 +34,15 @@ export const GasAccountTips: React.FC<{
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
 
   const [tip, btnText] = useMemo(() => {
-    if (gasAccountCost?.err_msg) {
-      return [gasAccountCost.err_msg, null];
-    }
     if (!noCustomRPC) {
       return [t('page.signFooterBar.gasAccount.customRPC'), null];
     }
     if (isWalletConnect) {
       return [t('page.signFooterBar.gasAccount.WalletConnectTips'), null];
+    }
+
+    if (gasAccountCost?.err_msg) {
+      return [gasAccountCost.err_msg, null];
     }
     // if (!isGasAccountLogin) {
     //   return [
@@ -54,12 +55,15 @@ export const GasAccountTips: React.FC<{
     }
     if (!gasAccountCost?.balance_is_enough) {
       return [
-        t('page.signFooterBar.gasAccount.notEnough'),
+        inShowMore
+          ? t('page.signFooterBar.gasless.notEnough')
+          : t('page.signFooterBar.gasAccount.notEnough'),
         t('page.signFooterBar.gasAccount.deposit'),
       ];
     }
     return [null, null];
   }, [
+    inShowMore,
     noCustomRPC,
     isWalletConnect,
     gasAccountCost?.chain_not_support,

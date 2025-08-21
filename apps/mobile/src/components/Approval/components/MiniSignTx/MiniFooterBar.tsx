@@ -3,7 +3,7 @@ import { Chain } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
 import { SecurityEngineLevel } from '@/constant/security';
 import { AppColorsVariants } from '@/constant/theme';
-import { dappService, preferenceService } from '@/core/services';
+import { dappService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
@@ -35,6 +35,7 @@ import {
   gasRelativeComponentAtom,
   miniApprovalGasAtom,
 } from '@/hooks/useMiniApprovalDirectSign';
+import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -324,13 +325,29 @@ export const MiniFooterBar: React.FC<Props> = ({
         onChangeGasAccount?.();
       }
 
-      if (showGasLess && directSubmit && canGotoUseGasAccount) {
+      const isSimpleOrHdKeyring = [
+        KEYRING_TYPE.SimpleKeyring,
+        KEYRING_TYPE.HdKeyring,
+      ].includes(account?.type);
+
+      const otherGasAccountError =
+        !!gasAccountCost?.err_msg &&
+        gasAccountCost?.err_msg?.toLowerCase() !==
+          GAS_ACCOUNT_INSUFFICIENT_TIP?.toLowerCase();
+
+      if (
+        showGasLess &&
+        directSubmit &&
+        (canGotoUseGasAccount || (isSimpleOrHdKeyring && otherGasAccountError))
+      ) {
         onChangeGasAccount?.();
       }
 
       setIsInited(true);
     }
   }, [
+    account?.type,
+    gasAccountCost,
     directSubmit,
     canGotoUseGasAccount,
     canUseGasLess,
@@ -367,9 +384,14 @@ export const MiniFooterBar: React.FC<Props> = ({
         ...pre,
         disabledProcess,
         showGasLevelPopup: disabledProcess,
+        gasAccountError:
+          !!gasAccountCost?.err_msg &&
+          gasAccountCost?.err_msg?.toLowerCase() !==
+            GAS_ACCOUNT_INSUFFICIENT_TIP.toLowerCase(),
       }));
     }
   }, [
+    gasAccountCost,
     canGotoUseGasAccount,
     gasAccountCanPay,
     isInited,
@@ -403,34 +425,23 @@ export const MiniFooterBar: React.FC<Props> = ({
       return;
     }
 
+    const showGasLessToSign =
+      showGasLess && !canGotoUseGasAccount && canUseGasLess;
+
     setGasRelativeComponent(
       !isInited ? null : (
         <>
-          {showGasLess &&
-          !canGotoUseGasAccount &&
-          (!securityLevel || !hasUnProcessSecurityResult) ? (
-            canUseGasLess ? (
-              <GasLessActivityToSign
-                gasLessEnable={useGasLess}
-                handleFreeGas={() => {
-                  enableGasLess?.();
-                }}
-                gasLessConfig={gasLessConfig}
-              />
-            ) : isWatchAddr ||
-              account?.type === KEYRING_TYPE.GnosisKeyring ? null : null
+          {showGasLessToSign ? (
+            <GasLessActivityToSign
+              gasLessEnable={useGasLess}
+              handleFreeGas={() => {
+                enableGasLess?.();
+              }}
+              gasLessConfig={gasLessConfig}
+            />
           ) : null}
 
-          {showGasLess &&
-          !canUseGasLess &&
-          (!securityLevel || !hasUnProcessSecurityResult) &&
-          !gasAccountCanPay &&
-          !isWalletConnect &&
-          gasAccountCost &&
-          !gasAccountCost?.balance_is_enough &&
-          !gasAccountCost?.chain_not_support &&
-          noCustomRPC &&
-          !(isWatchAddr || account?.type === KEYRING_TYPE.GnosisKeyring) ? (
+          {showGasLess && !payGasByGasAccount && !canUseGasLess ? (
             <GasLessNotEnough
               inShowMore
               canGotoUseGasAccount={canGotoUseGasAccount}
@@ -453,28 +464,22 @@ export const MiniFooterBar: React.FC<Props> = ({
           ) : null}
 
           {payGasByGasAccount && !gasAccountCanPay ? (
-            isWatchAddr ||
-            account?.type ===
-              KEYRING_TYPE.GnosisKeyring ? null : gasAccountCost?.chain_not_support ||
-              !noCustomRPC ||
-              isWalletConnect ? (
-              <GasAccountTips
-                inShowMore
-                gasAccountAddress={gasAccountAddress!}
-                gasAccountCost={gasAccountCost}
-                isGasAccountLogin={isGasAccountLogin}
-                isWalletConnect={isWalletConnect}
-                noCustomRPC={noCustomRPC}
-                onDeposit={onDeposit}
-                onGotoGasAccount={() => {
-                  rejectApproval?.();
-                  navigate(RootNames.StackTransaction, {
-                    screen: RootNames.GasAccount,
-                    params: {},
-                  });
-                }}
-              />
-            ) : null
+            <GasAccountTips
+              inShowMore
+              gasAccountAddress={gasAccountAddress!}
+              gasAccountCost={gasAccountCost}
+              isGasAccountLogin={isGasAccountLogin}
+              isWalletConnect={isWalletConnect}
+              noCustomRPC={noCustomRPC}
+              onDeposit={onDeposit}
+              onGotoGasAccount={() => {
+                rejectApproval?.();
+                navigate(RootNames.StackTransaction, {
+                  screen: RootNames.GasAccount,
+                  params: {},
+                });
+              }}
+            />
           ) : null}
         </>
       ),
