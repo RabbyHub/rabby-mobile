@@ -296,7 +296,7 @@ function MultiAddressHome(): JSX.Element {
     success: number;
     fail: number;
   }>();
-  const { top10Addresses } = useAccountInfo();
+  const { top10Addresses, top10EvmBalance, top10Balance } = useAccountInfo();
 
   // 添加gift资格检查hook
   const { checkAddressesEligibility, getCurrentEligibleAddress } =
@@ -421,31 +421,18 @@ function MultiAddressHome(): JSX.Element {
     }
   }, [pendingTxCount, spinValue]);
 
-  const {
-    balanceAccounts,
-    balanceCacheAccounts,
-    triggerUpdate,
-    getTotalBalance,
-  } = useAccountsBalance({
-    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
-
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
+  const { balanceAccounts, balanceCacheAccounts, triggerUpdate } =
+    useAccountsBalance({
+      cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
+      accountsNoUnique: true, // balanceAccounts has filter same address accounts
+    });
 
   const {
     combineData,
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
-  } = useMultiCurve(
-    top10Addresses,
-    true,
-    top10Balance.total,
-    top10Balance.totalEvm,
-  );
+  } = useMultiCurve(top10Addresses, true, top10Balance, top10EvmBalance);
   useCexSupportList();
   useFetchCexInfo();
   useInitDetectDBAssets();
@@ -815,7 +802,7 @@ function MultiAddressHome(): JSX.Element {
 
       matomoRequestEvent({
         category: 'Websites Usage',
-        action: `Website_LikeStatus`,
+        action: 'Website_LikeStatus',
         label: `LikeDapp:${
           browserService.bookmark.getState().ids?.length || 0
         }`,
@@ -823,7 +810,7 @@ function MultiAddressHome(): JSX.Element {
 
       matomoRequestEvent({
         category: 'Websites Usage',
-        action: `Website_TabStatus`,
+        action: 'Website_TabStatus',
         label: `TabNumber:${
           browserService.getBrowserTabs()?.tabs?.length || 0
         }`,
@@ -831,7 +818,7 @@ function MultiAddressHome(): JSX.Element {
 
       matomoRequestEvent({
         category: 'Watchlist Usage',
-        action: `Watchlist_LikeStatus`,
+        action: 'Watchlist_LikeStatus',
         label: `LikeToken:${
           preferenceService.getPreference('pinedQueue')?.length || 0
         }`,
