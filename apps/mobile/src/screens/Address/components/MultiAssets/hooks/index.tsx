@@ -29,6 +29,7 @@ export const useAccountInfo = () => {
   const {
     addresses: top10Addresses,
     totalBalance: top10Balance,
+    totalEvmBalance: top10EvmBalance,
     notTop10Addresses,
   } = useMemo(() => {
     const top10Account = list.slice(0, 10);
@@ -37,16 +38,19 @@ export const useAccountInfo = () => {
       ...new Set(list.slice(0, 10).map(i => i.address.toLowerCase())),
     ];
     let totalBalance = 0;
+    let totalEvmBalance = 0;
     addresses.forEach(address => {
       const account = top10Account.find(acc =>
         isSameAddress(acc.address, address),
       );
       totalBalance += account?.balance || 0;
+      totalEvmBalance += account?.evmBalance || 0;
     });
     return {
       addresses,
       totalBalance,
       notTop10Addresses: list.slice(10),
+      totalEvmBalance,
     };
   }, [list]);
 
@@ -68,6 +72,7 @@ export const useAccountInfo = () => {
     watchAccounts,
     notTop10Addresses,
     top10Balance,
+    top10EvmBalance,
     list,
     hasWatchAddress,
     hasSafeAddress,
