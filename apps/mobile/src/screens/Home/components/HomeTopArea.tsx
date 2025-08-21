@@ -108,14 +108,14 @@ export const HomeTopArea = ({
   onUpdateIsDecrease,
   curveData,
   isLoadingCurve,
-  isDisConnnect,
+  isDisConnect,
   onRefresh,
 }: {
   currentAccount?: KeyringAccountWithAlias | null;
   onUpdateIsDecrease?: (status: boolean) => void;
   curveData?: ReturnType<typeof formChartData>;
   isLoadingCurve: boolean;
-  isDisConnnect: boolean;
+  isDisConnect: boolean;
   onRefresh: () => void;
 }) => {
   const { t } = useTranslation();
@@ -339,7 +339,7 @@ export const HomeTopArea = ({
         style={[
           styles.container,
           {
-            height: HEADER_TOP_AREA_HEIGHT + (isDisConnnect ? ALERT_HEIGHT : 0),
+            height: HEADER_TOP_AREA_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0),
           },
         ]}>
         <ImageBackground
@@ -356,7 +356,7 @@ export const HomeTopArea = ({
         />
 
         <GlobalWarning
-          hasError={isDisConnnect}
+          hasError={isDisConnect}
           description={t('component.globalWarning.networkError.globalDesc')}
           style={styles.globalWarning}
           onRefresh={onRefresh}

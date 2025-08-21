@@ -121,7 +121,7 @@ function MultiAddressHomeHeader(
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
-  const { isDisConnnect } = useGlobalStatus();
+  const { isDisConnect } = useGlobalStatus();
 
   const { accountsLength } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
@@ -187,7 +187,7 @@ function MultiAddressHomeHeader(
       </View>
 
       <GlobalWarning
-        hasError={isDisConnnect}
+        hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
         onRefresh={() => {
