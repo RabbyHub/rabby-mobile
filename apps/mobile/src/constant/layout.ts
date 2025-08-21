@@ -148,7 +148,13 @@ export const RootNames = {
   GasAccount: 'GasAccount',
   Buy: 'Buy',
   MultiBuy: 'MultiBuy',
+  /**
+   * @deprecated
+   */
   CopyTrading: 'CopyTrading',
+  Perps: 'Perps',
+  PerpsMarketList: 'PerpsMarketList',
+  PerpsMarketDetail: 'PerpsMarketDetail',
   AccountTransaction: 'AccountTransaction',
   /* @deprecated */
   MyBundle: 'MyBundle',

@@ -362,6 +362,10 @@ export type TransactionNavigatorParamList = {
     dataSource: AssetApprovalSpender[];
     account: Account;
   };
+
+  [RootNames.Perps]?: {};
+  [RootNames.PerpsMarketList]?: {};
+  [RootNames.PerpsMarketDetail]?: {};
 };
 
 export type SettingNavigatorParamList = {

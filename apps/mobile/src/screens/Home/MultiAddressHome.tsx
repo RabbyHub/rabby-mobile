@@ -67,7 +67,7 @@ import { debounce, unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
 import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
-import RcIconCopyTrading from '@/assets2024/icons/home/IconCopyTrading.svg';
+import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import { FoundYourWalletGuide } from './FundYourWallet';
 import {
   OfflineChainNotify,
@@ -352,6 +352,11 @@ function MultiAddressHome(): JSX.Element {
         //   title: t('page.home.services.copyTrading'),
         //   icon: RcIconCopyTrading,
         // },
+        {
+          key: MultiHomeFeatTitle.Perps,
+          title: t('page.home.services.perps'),
+          icon: RcIconPerps,
+        },
         {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
@@ -731,9 +736,9 @@ function MultiAddressHome(): JSX.Element {
             params: {},
           });
           break;
-        case MultiHomeFeatTitle.CopyTrading:
+        case MultiHomeFeatTitle.Perps:
           navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.CopyTrading,
+            screen: RootNames.Perps,
             params: {},
           });
           break;
@@ -767,6 +772,10 @@ function MultiAddressHome(): JSX.Element {
         );
       }
 
+      if (el.key === MultiHomeFeatTitle.Perps) {
+        return <Text>$100</Text>;
+      }
+
       if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
         return <HomePendingBadge number={pendingTxCount} />;
       }
@@ -789,10 +798,10 @@ function MultiAddressHome(): JSX.Element {
       );
     },
     [
-      showTipsDollarDialog,
-      pendingTxCount,
-      styles.badgeStyle,
       hasOpenCopyTrading,
+      pendingTxCount,
+      showTipsDollarDialog,
+      styles.badgeStyle,
     ],
   );
 

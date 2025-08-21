@@ -35,6 +35,9 @@ import WhitelistInputScreen from '../WhiteList/InputScreen';
 import { BatchRevokeScreen } from '../BatchRevoke/BatchRevoke';
 import { useTranslation } from 'react-i18next';
 import CopyTradingTokenDetail from '../CopyTrading/component/CopyTradingTokenDetail';
+import { PerpsScreen } from '../Perps';
+import { PerpsMarketListScreen } from '../PerpsMarketList';
+import { PerpsMarketDetailScreen } from '../PerpsMaketDetail';
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
@@ -378,6 +381,57 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: t('page.home.services.copyTrading'),
           ...headerPresets.withBgCard1_2024,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.Perps}
+        component={PerpsScreen}
+        options={mergeScreenOptions({
+          title: t('page.home.services.perps'),
+          // ...headerPresets.withBgCard1_2024,
+          // headerStyle: {
+          //   backgroundColor: colors2024['neutral-bg-2'],
+          // },
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.PerpsMarketList}
+        component={PerpsMarketListScreen}
+        options={mergeScreenOptions({
+          title: t('page.home.services.perpsMarketList'),
+          // ...headerPresets.withBgCard1_2024,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.PerpsMarketDetail}
+        component={PerpsMarketDetailScreen}
+        options={mergeScreenOptions({
+          // title: t('page.home.services.perpsMarketDetail'),
+          // ...headerPresets.withBgCard1_2024,
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             fontSize: 20,

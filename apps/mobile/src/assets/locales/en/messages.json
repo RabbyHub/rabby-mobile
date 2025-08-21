@@ -979,7 +979,9 @@
         "websites": "Websites",
         "copyTrading": "Copy Trading",
         "search": "Search Token",
-        "watchlist": "Watchlist"
+        "watchlist": "Watchlist",
+        "perps": "Perps",
+        "perpsMarketList": "More Perps"
       }
     },
     "copyTrading": {
@@ -2099,6 +2101,18 @@
       "error": {
         "setupWalletFirst": "Please finish setting up wallet first.",
         "unlockWalletFirst": "Please unlock the app to open the link."
+      }
+    },
+    "perps": {
+      "title": "Perps",
+      "PerpsCard": {
+        "title": "Trade Perps",
+        "loginDesc": "Log in with your address and deposit funds to start trading perps",
+        "loginBtn": "Log in to Trading Perps",
+        "learnBtn": "Learn about Perps",
+        "available": "Available",
+        "withdrawBtn": "Withdraw",
+        "depositBtn": "Deposit"
       }
     }
   },

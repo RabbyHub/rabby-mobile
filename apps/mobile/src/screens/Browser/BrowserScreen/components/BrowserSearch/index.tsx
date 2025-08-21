@@ -29,6 +29,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { ReactIconHome } from '@/assets2024/icons/browser';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useAppState } from '@react-native-community/hooks';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export function BrowserSearch({
   onClose,
