@@ -142,6 +142,13 @@ export function BrowserSearchResult({
                   dappService.updateDapp(dapp);
                 }
                 onOpenURL?.(dapp.url || dapp.origin);
+                if (dapp.origin) {
+                  matomoRequestEvent({
+                    category: 'Websites Usage',
+                    action: 'Website_Visit_Search Results',
+                    label: dapp.origin,
+                  });
+                }
               }}
               isShowBorder
               isShowFavorite

@@ -210,13 +210,6 @@ export function BrowserSearch({
           isValidDomain={!!isValidDomain}
           onOpenURL={origin => {
             handleOpenUrl(origin);
-            if (origin) {
-              matomoRequestEvent({
-                category: 'Websites Usage',
-                action: 'Website_Visit_Search Results',
-                label: origin,
-              });
-            }
           }}
         />
       )}
