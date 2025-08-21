@@ -68,6 +68,7 @@ export type TokenFromAddressItem = {
 
 export type RelatedDeFiType = AbstractProject & {
   amount: number;
+  address: string;
 };
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -193,6 +194,7 @@ export const TokenMarketInfoScreen = () => {
           resList.push({
             ...portfolio,
             amount,
+            address: finalAccount.address,
           });
       });
       return resList;
@@ -234,6 +236,7 @@ export const TokenMarketInfoScreen = () => {
           resList.push({
             ...portfolio,
             amount,
+            address,
           });
       });
     });
