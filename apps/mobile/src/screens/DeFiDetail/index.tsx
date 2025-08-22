@@ -480,11 +480,14 @@ export const DeFiDetailScreen = () => {
             onPress={() => {
               if (data.site_url) {
                 openTab(data.site_url);
-                matomoRequestEvent({
-                  category: 'Websites Usage',
-                  action: 'Website_Visit_Defi Detail',
-                  label: safeGetOrigin(data.site_url),
-                });
+                const origin = safeGetOrigin(data.site_url);
+                if (origin) {
+                  matomoRequestEvent({
+                    category: 'Websites Usage',
+                    action: 'Website_Visit_Defi Detail',
+                    label: origin,
+                  });
+                }
               }
             }}
           />

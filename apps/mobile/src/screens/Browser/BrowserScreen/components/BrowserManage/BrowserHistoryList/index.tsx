@@ -29,11 +29,13 @@ export const BrowserHistoryList = ({
 
   const handlePress = useMemoizedFn((dappInfo: DappInfo) => {
     openTab(dappInfo.url || dappInfo.origin);
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: 'Website_Visit_Website Recent',
-      label: dappInfo.origin,
-    });
+    if (dappInfo.origin) {
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: 'Website_Visit_Website Recent',
+        label: dappInfo.origin,
+      });
+    }
   });
 
   const handleFavoritePress = useMemoizedFn((dappInfo: DappInfo) => {

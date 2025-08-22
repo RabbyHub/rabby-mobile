@@ -86,12 +86,14 @@ export function BrowserSearchResult({
                       ? searchText
                       : `https://${searchText}`;
                     onOpenURL?.(url);
-
-                    matomoRequestEvent({
-                      category: 'Websites Usage',
-                      action: 'Website_Visit_Direct Open',
-                      label: safeGetOrigin(url),
-                    });
+                    const origin = safeGetOrigin(url);
+                    if (origin) {
+                      matomoRequestEvent({
+                        category: 'Websites Usage',
+                        action: 'Website_Visit_Direct Open',
+                        label: origin,
+                      });
+                    }
                   }}>
                   <RcIconBallCC
                     style={styles.listItemIcon}
@@ -140,6 +142,13 @@ export function BrowserSearchResult({
                   dappService.updateDapp(dapp);
                 }
                 onOpenURL?.(dapp.url || dapp.origin);
+                if (dapp.origin) {
+                  matomoRequestEvent({
+                    category: 'Websites Usage',
+                    action: 'Website_Visit_Search Results',
+                    label: dapp.origin,
+                  });
+                }
               }}
               isShowBorder
               isShowFavorite
