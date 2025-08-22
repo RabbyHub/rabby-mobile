@@ -21,7 +21,9 @@ import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 
-export const PerpsMain: React.FC<{}> = () => {
+export const PerpsMain: React.FC<{
+  ListHeaderComponent?: React.ReactElement;
+}> = ({ ListHeaderComponent }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
@@ -116,6 +118,8 @@ export const PerpsMain: React.FC<{}> = () => {
       sections={sections}
       style={styles.list}
       stickySectionHeadersEnabled={false}
+      showsVerticalScrollIndicator={false}
+      ListHeaderComponent={ListHeaderComponent}
       // onScrollBeginDrag={onScrollBeginDrag}
       // style={[styles.chainListContainer, style]}
       // keyExtractor={(item, idx) => `${item.enum}-${idx}`}

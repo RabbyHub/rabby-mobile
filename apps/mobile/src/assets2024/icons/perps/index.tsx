@@ -1,6 +1,7 @@
 import Svg, { SvgProps, Rect, Path } from 'react-native-svg';
 export { default as RcLogoutCC } from './logout-cc.svg';
 export { default as RcTradPerps } from './trade-perps.svg';
+export { default as RcWarningFull } from './waring-full.svg';
 
 export const RcIconLong = (
   props: SvgProps & {

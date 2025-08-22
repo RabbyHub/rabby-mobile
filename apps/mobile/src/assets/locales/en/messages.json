@@ -2113,6 +2113,25 @@
         "available": "Available",
         "withdrawBtn": "Withdraw",
         "depositBtn": "Deposit"
+      },
+      "selectAccountTitle": "Select an address to log in",
+      "PerpsGuidePopup": {
+        "step1Title": "Master Perpetual Futures",
+        "step1Desc": "With perpetual futures, you're not just trading assets. You're trading what you think will happen next",
+        "step2Title": "Long",
+        "step2Desc": "When you expect the price to rise, you open a long. If the price rises, you gain. If it falls, you lose.",
+        "step3Title": "Short",
+        "step3Desc": "When you expect the price to fall, you open a short. If the price falls, you gain. If it rises, you lose.",
+        "step4Title": "Adjusting Leverage",
+        "step4Desc": "Leverage lets you trade with more than you put in. It can increase both your gains and your losses.",
+        "step5Title": "Liquidation",
+        "step5Desc": "Every position has a liquidation price. If the market price reaches it, your position will be closed. Using higher leverage increases the risk of being liquidated"
+      },
+      "PerpsDepositPopup": {
+        "title": "Deposit",
+        "amount": "Amount",
+        "balance": "Balance",
+        "depositBtn": "Deposit"
       }
     }
   },
@@ -2358,7 +2377,8 @@
     "unlimited": "unlimited",
     "Addresses": "Addresses",
     "Wallets": "Select Wallet",
-    "24h": "24h"
+    "24h": "24h",
+    "gotIt": "Got It"
   },
   "background": {
     "error": {

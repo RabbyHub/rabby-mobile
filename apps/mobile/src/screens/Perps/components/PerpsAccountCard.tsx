@@ -11,8 +11,8 @@ export const PerpsAccountCard = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  const isLogin = false; // Replace with actual login state
-  if (!isLogin) {
+  const isLogin = true; // Replace with actual login state
+  if (isLogin) {
     return (
       <View style={[styles.card, styles.balanceCard]}>
         <View style={styles.balanceCardContent}>

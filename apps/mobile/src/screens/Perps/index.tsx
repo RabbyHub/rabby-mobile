@@ -10,6 +10,10 @@ import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
 import { PerpsMain } from './components/PerpsMain';
+import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
+import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
+import { PerpsGuidePopup } from './components/PerpsGuidePopup';
+import { PerpsDepositPopup } from './components/PerpsDepositPopup';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -26,12 +30,28 @@ export const PerpsScreen = () => {
   }, [navigation]);
 
   return (
-    <NormalScreenContainer2024 type="bg2">
-      <View style={styles.container}>
-        <PerpsAccountCard />
-        <PerpsMain />
-      </View>
-    </NormalScreenContainer2024>
+    <>
+      <NormalScreenContainer2024 type="bg2">
+        <View style={styles.container}>
+          <PerpsMain ListHeaderComponent={<PerpsAccountCard />} />
+        </View>
+      </NormalScreenContainer2024>
+      {/* todo */}
+      <AccountSelectorPopup
+        visible={false}
+        onClose={() => {
+          // setIsShowAccountPopup(false);
+        }}
+        // value={account}
+        onChange={v => {}}
+        isShowSafeAddressSection={false}
+        isShowWatchAddressSection={false}
+        title={t('page.perps.selectAccountTitle')}
+      />
+      <PerpsAgentsLimitModal visible={false} />
+      <PerpsGuidePopup visible={false} />
+      <PerpsDepositPopup visible={true} />
+    </>
   );
 };
 
