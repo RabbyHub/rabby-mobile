@@ -42,6 +42,9 @@ export class BackgroundBridge extends EventEmitter {
   #webviewOrigin: string;
 
   #disconnected: boolean = true;
+  get disconnected() {
+    return this.#disconnected;
+  }
   #webviewIdRef: RefLikeObject<string> = { current: '' };
   #urlRef: RefLikeObject<string> = { current: '' };
   #titleRef: RefLikeObject<string> = { current: '' };
