@@ -28,8 +28,10 @@ const homeCenterAreaMockData = atom({ ...MAKE_DEFAULT_MOCK_DATA() });
 export function useMockDataForHomeCenterArea() {
   const mockData = useAtomValue(homeCenterAreaMockData);
 
+  const prodData = useMemo(() => MAKE_DEFAULT_MOCK_DATA(), []);
+
   return {
-    mockData: isNonPublicProductionEnv ? mockData : MAKE_DEFAULT_MOCK_DATA(),
+    mockData: isNonPublicProductionEnv ? mockData : prodData,
   };
 }
 
