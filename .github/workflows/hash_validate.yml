@@ -62,7 +62,7 @@ jobs:
   # --- Job 2: 构建 iOS ---
   build-ios:
     name: Build iOS & Generate Hash
-    runs-on: macos-latest
+    runs-on: macos-14
     env:
       NODE_OPTIONS: '--max_old_space_size=4096'
 
