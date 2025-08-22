@@ -584,7 +584,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         // 'User-Agent': ''
                       }}
                       testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
-                      userAgent={userAgent}
+                      // userAgent={userAgent}
                       // applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
                       javaScriptEnabled
                       // androidLayerType='software'
