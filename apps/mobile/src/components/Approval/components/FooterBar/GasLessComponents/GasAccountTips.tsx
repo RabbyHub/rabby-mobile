@@ -82,7 +82,8 @@ export const GasAccountTips: React.FC<{
     !isWalletConnect &&
     gasAccountCost?.balance_is_enough &&
     !gasAccountCost.chain_not_support &&
-    noCustomRPC
+    noCustomRPC &&
+    !gasAccountCost?.err_msg
   ) {
     return null;
   }
