@@ -36,7 +36,6 @@ export const useMockClearOfflineChainTips = () => {
 export const useOfflineChain = () => {
   const [closedTipsChains, _setClosedTipsChain] = useAtom(closedTipsChainsAtom);
   const { mockData } = useMockDataForHomeCenterArea();
-
   const { value: offlineList } = useAsync(async () => {
     // leave here for mock data
     if (isNonPublicProductionEnv && mockData.forceShowOffchainNotify) {
@@ -48,7 +47,7 @@ export const useOfflineChain = () => {
     }
 
     return openapi.getOfflineChainList();
-  }, [mockData]);
+  }, [mockData.forceShowOffchainNotify]);
 
   const setClosedTipsChain = useCallback(
     (chain: string) => {
