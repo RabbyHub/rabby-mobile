@@ -12,7 +12,6 @@ import { Portfolios } from './Portfolios';
 import { MultiChart } from './RenderRow/CurveChart';
 import { loadingMultiCurveAtom, useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from './hooks';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { Tabs, MaterialTabItem } from 'react-native-collapsible-tab-view';
 import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterialTabBar';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -34,26 +33,17 @@ export const MultiAssets = ({
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const { top10Addresses, list } = useAccountInfo();
-
-  const { getTotalBalance } = useAccountsBalance({
-    cacheTime: 10 * 60 * 1000,
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
-
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [top10Addresses.join(','), getTotalBalance]);
+  const { top10Addresses, top10Balance, top10EvmBalance, list } =
+    useAccountInfo();
 
   const { combineData, isLoadingNew: isLoadingCurve } = useMultiCurve(
     top10Addresses,
     false,
-    top10Balance.total,
-    top10Balance.totalEvm,
+    top10Balance,
+    top10EvmBalance,
   );
 
-  const { isDisConnnect } = useGlobalStatus();
+  const { isDisConnect } = useGlobalStatus();
 
   useEffect(() => {
     onUpdateIsDecrease(combineData.isLoss);
@@ -139,11 +129,11 @@ export const MultiAssets = ({
         loading={isLoadingCurve}
         pathColor={pathColor}
         isNoAssets={false}
-        isDisConnnect={isDisConnnect}
+        isDisConnect={isDisConnect}
         handleScroll={handleScroll}
       />
     );
-  }, [combineData, handleScroll, isDisConnnect, isLoadingCurve, pathColor]);
+  }, [combineData, handleScroll, isDisConnect, isLoadingCurve, pathColor]);
 
   const listLength = useMemo(() => {
     return list.length > 10 ? 10 : list.length;
@@ -169,7 +159,7 @@ export const MultiAssets = ({
     <Tabs.Container
       containerStyle={styles.container}
       minHeaderHeight={0}
-      headerHeight={HEADER_CHART_HEIGHT + (isDisConnnect ? ALERT_HEIGHT : 0)}
+      headerHeight={HEADER_CHART_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0)}
       renderTabBar={renderTabBar}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
       renderHeader={renderHeader}

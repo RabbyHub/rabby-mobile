@@ -26,9 +26,10 @@ import {
   Text,
   View,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { TokenDetailHeaderArea } from './components/HeaderArea';
-import { TokenPriceChart } from './components/TokenPriceChart';
+import { TokenChartRef, TokenPriceChart } from './components/TokenPriceChart';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useTriggerTagAssets } from '../Home/hooks/refresh';
 import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
@@ -67,6 +68,7 @@ export type TokenFromAddressItem = {
 
 export type RelatedDeFiType = AbstractProject & {
   amount: number;
+  address: string;
 };
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -192,6 +194,7 @@ export const TokenMarketInfoScreen = () => {
           resList.push({
             ...portfolio,
             amount,
+            address: finalAccount.address,
           });
       });
       return resList;
@@ -233,6 +236,7 @@ export const TokenMarketInfoScreen = () => {
           resList.push({
             ...portfolio,
             amount,
+            address,
           });
       });
     });
@@ -261,7 +265,7 @@ export const TokenMarketInfoScreen = () => {
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const { data: tokenWithAmount } = useRequest(
+  const { data: tokenWithAmount, refreshAsync } = useRequest(
     async () => {
       const res = await openapi.getToken(
         finalAccount!.address,
@@ -270,6 +274,7 @@ export const TokenMarketInfoScreen = () => {
       );
       return ensureAbstractPortfolioToken({
         ...abstractTokenToTokenItem(token),
+        price_24h_change: res?.price_24h_change,
         usd_value: res?.usd_value,
         price: res?.price,
       });
@@ -279,7 +284,11 @@ export const TokenMarketInfoScreen = () => {
     },
   );
 
-  const { data: tokenEntity, loading: entityLoading } = useRequest(
+  const {
+    data: tokenEntity,
+    loading: entityLoading,
+    refreshAsync: refreshTokenEntity,
+  } = useRequest(
     async () => {
       if (!token || !token._tokenId) {
         return;
@@ -398,6 +407,18 @@ export const TokenMarketInfoScreen = () => {
 
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
+  const isSwapTo = useMemo(
+    () => tokenSelectType === 'swapTo',
+    [tokenSelectType],
+  );
+  const isBridgeTo = useMemo(
+    () => tokenSelectType === 'bridgeTo',
+    [tokenSelectType],
+  );
+  const isTransactionTo = useMemo(
+    () => isSwapTo || isBridgeTo,
+    [isBridgeTo, isSwapTo],
+  );
 
   const handleSwap = useMemoizedFn(
     async (
@@ -426,6 +447,31 @@ export const TokenMarketInfoScreen = () => {
           type: tokenSelectType === 'swapTo' ? 'Buy' : type,
           address,
           isFromSwap,
+        },
+      });
+    },
+  );
+
+  const handleBridgeTo = useMemoizedFn(
+    async (address?: string, accountType?: KEYRING_TYPE) => {
+      const chain = findChain({
+        serverId: token.chain,
+      });
+
+      const toAccount =
+        address && accountType
+          ? accounts.find(
+              i => isSameAddress(address, i.address) && i.type === accountType,
+            ) || finalAccount
+          : finalAccount;
+      await switchSceneCurrentAccount('MakeTransactionAbout', toAccount);
+      // 关闭弹窗隐藏
+      setIsFromBack(false);
+      navigation.push(RootNames.StackTransaction, {
+        screen: isSingleAddress ? RootNames.Bridge : RootNames.MultiBridge,
+        params: {
+          toChainEnum: chain?.enum ?? CHAINS_ENUM.ETH,
+          toTokenId: token?._tokenId,
         },
       });
     },
@@ -549,6 +595,14 @@ export const TokenMarketInfoScreen = () => {
     [riskInfo.securityContent, t],
   );
 
+  const tokenPriceChartRef = React.useRef<TokenChartRef>(null);
+
+  const handleRefresh = useCallback(() => {
+    refreshTokenEntity();
+    refreshAsync();
+    tokenPriceChartRef.current?.refreshChart();
+  }, [refreshAsync, refreshTokenEntity]);
+
   if (isSingleAddress && !finalAccount) {
     return null;
   }
@@ -579,7 +633,11 @@ export const TokenMarketInfoScreen = () => {
         containerStyle={styles.container}
         headerContainerStyle={styles.tabBarWrap}>
         <Tabs.Tab label={renderMarketDataLabel} name="marketData">
-          <ScrollView style={styles.innerContainer}>
+          <ScrollView
+            refreshControl={
+              <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+            }
+            style={styles.innerContainer}>
             {!!amountSum && (
               <HeaderBalanceCard
                 amount={formatTokenAmount(amountSum)}
@@ -593,6 +651,7 @@ export const TokenMarketInfoScreen = () => {
             )}
             <View style={{ position: 'relative', marginTop: 12 }}>
               <TokenPriceChart
+                ref={tokenPriceChartRef}
                 token={tokenWithAmount || token}
                 amountList={[]}
                 relateDefiList={[]}
@@ -603,7 +662,11 @@ export const TokenMarketInfoScreen = () => {
           </ScrollView>
         </Tabs.Tab>
         <Tabs.Tab label={renderTokenSecurityLabel} name="tokenSecurity">
-          <ScrollView style={styles.innerContainer}>
+          <ScrollView
+            refreshControl={
+              <RefreshControl refreshing={false} onRefresh={handleRefresh} />
+            }
+            style={styles.innerContainer}>
             {riskInfo.content}
             <IssuerAndListSite
               tokenEntity={tokenEntity}
@@ -618,29 +681,45 @@ export const TokenMarketInfoScreen = () => {
           styles.buttonGroup,
           isAndroid && { paddingBottom: 50 + safeOffBottom },
         ]}>
-        <Button
-          type="ghost"
-          title={t('page.tokenDetail.action.Buy')}
-          containerStyle={StyleSheet.flatten([styles.btnContainer])}
-          buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
-          onPress={() =>
-            handleSwap('Buy', finalAccount?.address, finalAccount?.type)
-          }
-        />
-        <View style={styles.btnContainer}>
+        {isTransactionTo ? (
           <Button
-            title={
-              isFromSwap
-                ? t('global.Confirm')
-                : t('page.tokenDetail.action.Sell')
-            }
+            title={t('global.Confirm')}
             containerStyle={StyleSheet.flatten([styles.btnContainer])}
-            onPress={() =>
-              handleSwap('Sell', finalAccount?.address, finalAccount?.type)
-            }
+            onPress={() => {
+              if (isSwapTo) {
+                handleSwap('Buy', finalAccount?.address, finalAccount?.type);
+                return;
+              }
+              if (isBridgeTo) {
+                handleBridgeTo(finalAccount?.address, finalAccount?.type);
+                return;
+              }
+            }}
             buttonStyle={styles.btnInnerContainer}
           />
-        </View>
+        ) : (
+          <>
+            <Button
+              type="ghost"
+              title={t('page.tokenDetail.action.Buy')}
+              containerStyle={StyleSheet.flatten([styles.btnContainer])}
+              buttonStyle={[styles.btnInnerContainer, styles.ghostBtn]}
+              onPress={() =>
+                handleSwap('Buy', finalAccount?.address, finalAccount?.type)
+              }
+            />
+            <View style={styles.btnContainer}>
+              <Button
+                title={t('page.tokenDetail.action.Sell')}
+                containerStyle={StyleSheet.flatten([styles.btnContainer])}
+                onPress={() =>
+                  handleSwap('Sell', finalAccount?.address, finalAccount?.type)
+                }
+                buttonStyle={styles.btnInnerContainer}
+              />
+            </View>
+          </>
+        )}
       </View>
     </NormalScreenContainer2024>
   );
@@ -690,7 +769,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['brand-light-1'],
     },
     btnInnerContainer: {
-      borderRadius: 16,
+      borderRadius: 12,
     },
     searchTokenDanger: {
       flex: 1,

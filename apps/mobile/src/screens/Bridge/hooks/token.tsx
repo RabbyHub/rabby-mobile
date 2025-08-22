@@ -297,9 +297,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     | {
         chainEnum?: CHAINS_ENUM | undefined;
         tokenId?: TokenItem['id'];
+        toChainEnum?: CHAINS_ENUM;
+        toTokenId?: TokenItem['id'];
       }
     | undefined;
 
+  // init from token and chain
   useMount(() => {
     if (!navState?.chainEnum || !navState?.tokenId) {
       return;
@@ -310,6 +313,22 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     setFromToken({
       ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
       id: navState?.tokenId,
+    });
+  });
+
+  // init to token and chain
+  useMount(() => {
+    if (!navState?.toChainEnum || !navState?.toTokenId) {
+      return;
+    }
+
+    const chainItem = findChainByEnum(navState?.toChainEnum, {
+      fallback: true,
+    });
+    wrappedSwitchToChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
+    setToToken({
+      ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
+      id: navState?.toTokenId,
     });
   });
 

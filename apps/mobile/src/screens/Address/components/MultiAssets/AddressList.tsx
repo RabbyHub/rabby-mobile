@@ -40,23 +40,20 @@ export const AddressList = () => {
     notMatterAccounts,
     list: _rawList,
     fetchAccounts,
+    top10Balance,
+    top10EvmBalance,
   } = useAccountInfo();
 
-  const { triggerUpdate, getTotalBalance, balanceAccounts } =
-    useAccountsBalance({
-      cacheTime: 10 * 60 * 1000,
-      accountsNoUnique: true, // balanceAccounts has filter same address accounts
-    });
-
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
+  const { triggerUpdate, balanceAccounts } = useAccountsBalance({
+    cacheTime: 10 * 60 * 1000,
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
 
   const { multiTimeStamp, refresh: refreshCurve } = useMultiCurve(
     top10Addresses,
     true,
-    top10Balance.total,
-    top10Balance.totalEvm,
+    top10Balance,
+    top10EvmBalance,
   );
 
   useBalanceUpdate(triggerUpdate);

@@ -4,7 +4,14 @@ import { formatPrice } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import * as d3Shape from 'd3-shape';
 import dayjs from 'dayjs';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from 'react';
 import {
   Dimensions,
   ImageBackground,
@@ -15,12 +22,11 @@ import {
 import Animated, {
   SharedValue,
   useAnimatedStyle,
-  useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 import { LineChart } from 'react-native-wagmi-charts';
 import { CurveLoader } from './CurveLoader';
-import { DataHeaderInfo } from './DataHeaderInfo';
+import { DataHeaderInfo, DataHeaderInfoSkeleton } from './DataHeaderInfo';
 import { REAL_TIME_TAB_LIST, TabKey, TIME_TAB_LIST, TimeTab } from './TimeTab';
 import {
   CurvePoint,
@@ -48,249 +54,262 @@ interface Props {
   onUpChange?: (isUp: boolean) => void;
   extraMetaInfo?: React.ReactNode;
 }
-export function TokenPriceChart(props: Props) {
-  const {
-    token,
-    isSingleAddress,
-    amountList,
-    finalAccount,
-    relateDefiList,
-    extraMetaInfo,
-    onUpChange,
-  } = props;
-  const { colors2024, styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
+export type TokenChartRef = {
+  refreshChart: () => void;
+};
+export const TokenPriceChart = forwardRef<TokenChartRef, Props>(
+  (props, ref) => {
+    const {
+      token,
+      isSingleAddress,
+      amountList,
+      finalAccount,
+      relateDefiList,
+      extraMetaInfo,
+      onUpChange,
+    } = props;
+    const { colors2024, styles } = useTheme2024({ getStyle });
+    const { t } = useTranslation();
 
-  const [priceType, setPriceType] = useState<'price' | 'holding'>('price');
-  const [activeKey, setActiveKey] = useState<TabKey>(TIME_TAB_LIST[0].key);
-  const [ready, setReady] = useState(false);
-  const amountSum = useMemo(() => {
-    // let sum = 0;
-    // amountList.map((item, index) => {
-    //   sum = sum + item.amount;
-    // });
+    const [priceType, setPriceType] = useState<'price' | 'holding'>('price');
+    const [activeKey, setActiveKey] = useState<TabKey>(TIME_TAB_LIST[0].key);
+    const [ready, setReady] = useState(false);
+    const amountSum = useMemo(() => {
+      let deFiAmount = 0;
+      relateDefiList?.forEach(item => {
+        deFiAmount += item.amount;
+      });
 
-    let deFiAmount = 0;
-    relateDefiList?.forEach(item => {
-      deFiAmount += item.amount;
+      if (isSingleAddress) {
+        const tokenAmount = amountList.find(
+          item => item.address === finalAccount?.address,
+        )?.amount;
+        return (tokenAmount || 0) + deFiAmount;
+      } else {
+        const amountUnionBy = unionBy(amountList, item =>
+          item.address.toLowerCase(),
+        );
+        const totalTokenAmount = amountUnionBy.reduce((acc, item) => {
+          return acc + item.amount;
+        }, 0);
+
+        return totalTokenAmount + deFiAmount;
+      }
+    }, [amountList, isSingleAddress, relateDefiList, finalAccount?.address]);
+
+    const amount = useMemo(
+      () => (priceType === 'holding' ? amountSum : 1),
+      [priceType, amountSum],
+    );
+
+    const {
+      data: realTimeData,
+      loading: curveLoading,
+      refreshAsync: refreshAsyncRealTimeData,
+    } = use24hCurveData({
+      tokenId: token._tokenId,
+      serverId: token.chain,
+      days: activeKey === '24h' ? 1 : 7,
+      amount,
     });
-
-    if (isSingleAddress) {
-      const tokenAmount = amountList.find(
-        item => item.address === finalAccount?.address,
-      )?.amount;
-      return (tokenAmount || 0) + deFiAmount;
-    } else {
-      const amountUnionBy = unionBy(amountList, item =>
-        item.address.toLowerCase(),
-      );
-      const totalTokenAmount = amountUnionBy.reduce((acc, item) => {
-        return acc + item.amount;
-      }, 0);
-
-      return totalTokenAmount + deFiAmount;
-    }
-  }, [amountList, isSingleAddress, relateDefiList, finalAccount?.address]);
-
-  const amount = useMemo(
-    () => (priceType === 'holding' ? amountSum : 1),
-    [priceType, amountSum],
-  );
-
-  const { data: realTimeData, loading: curveLoading } = use24hCurveData({
-    tokenId: token._tokenId,
-    serverId: token.chain,
-    days: activeKey === '24h' ? 1 : 7,
-    amount,
-  });
-  const { data: dateCurveData, loading: timeMachineLoading } = useDateCurveData(
-    {
+    const {
+      data: dateCurveData,
+      loading: timeMachineLoading,
+      refreshAsync: refreshAsyncDateCurveData,
+    } = useDateCurveData({
       tokenId: token._tokenId,
       serverId: token.chain,
       ready: ready,
-    },
-  );
+    });
 
-  const timeMachMapping = useMemo(() => {
-    let result = {} as Record<
-      Exclude<TabKey, '24h' | '1W'>,
-      ReturnType<typeof formatTokenDateCurve>
-    >;
-    TIME_TAB_LIST.forEach(e => {
-      if (!isRealTimeKey(e.key) && dateCurveData) {
-        result[e.key] = formatTokenDateCurve(
-          e.value,
-          dateCurveData as any,
-          amount,
+    const handleRefresh = useCallback(() => {
+      if (isRealTimeKey(activeKey)) {
+        refreshAsyncRealTimeData?.();
+      } else {
+        refreshAsyncDateCurveData?.();
+      }
+    }, [activeKey, refreshAsyncRealTimeData, refreshAsyncDateCurveData]);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        refreshChart: handleRefresh,
+      }),
+      [handleRefresh],
+    );
+
+    const timeMachMapping = useMemo(() => {
+      let result = {} as Record<
+        Exclude<TabKey, '24h' | '1W'>,
+        ReturnType<typeof formatTokenDateCurve>
+      >;
+      TIME_TAB_LIST.forEach(e => {
+        if (!isRealTimeKey(e.key) && dateCurveData) {
+          result[e.key] = formatTokenDateCurve(
+            e.value,
+            dateCurveData as any,
+            amount,
+          );
+        }
+      });
+      return result;
+    }, [dateCurveData, amount]);
+
+    const data = useMemo(() => {
+      if (isRealTimeKey(activeKey)) {
+        return realTimeData;
+      }
+      return timeMachMapping[activeKey as keyof typeof timeMachMapping];
+    }, [activeKey, realTimeData, timeMachMapping]);
+
+    useEffect(() => {
+      if (data?.list?.length) {
+        onUpChange?.(
+          data?.list?.[0]?.value < data?.list?.[data?.list?.length - 1]?.value,
         );
       }
-    });
-    return result;
-  }, [dateCurveData, amount]);
+    }, [data?.list, onUpChange]);
 
-  const data = useMemo(() => {
-    if (isRealTimeKey(activeKey)) {
-      return realTimeData;
-    }
-    return timeMachMapping[activeKey as keyof typeof timeMachMapping];
-  }, [activeKey, realTimeData, timeMachMapping]);
-
-  useEffect(() => {
-    if (data?.list?.length) {
-      onUpChange?.(
-        data?.list?.[0]?.value < data?.list?.[data?.list?.length - 1]?.value,
-      );
-    }
-  }, [data?.list, onUpChange]);
-
-  const { isUp, percent } = useMemo(() => {
-    if (data?.list?.length) {
-      const pre = data?.list?.[0]?.value;
-      const now = data?.list?.[data?.list?.length - 1]?.value;
-      let isLoss = now < pre;
-      let currentPercent = '';
-      if (activeKey === '24h') {
-        isLoss = token?.price_24h_change
-          ? Number(token.price_24h_change) < 0
-          : false;
-        currentPercent = token?.price_24h_change
-          ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
-          : '';
-      } else {
-        currentPercent =
-          pre === 0
-            ? now === 0
-              ? '0%'
-              : '100%'
-            : Math.abs(((now - pre) / pre) * 100).toFixed(2) + '%';
+    const { isUp, percent } = useMemo(() => {
+      if (data?.list?.length) {
+        const pre = data?.list?.[0]?.value;
+        const now = data?.list?.[data?.list?.length - 1]?.value;
+        let isLoss = now < pre;
+        let currentPercent = '';
+        if (activeKey === '24h') {
+          isLoss = token?.price_24h_change
+            ? Number(token.price_24h_change) < 0
+            : false;
+          currentPercent = token?.price_24h_change
+            ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
+            : '';
+        } else {
+          currentPercent =
+            pre === 0
+              ? now === 0
+                ? '0%'
+                : '100%'
+              : Math.abs(((now - pre) / pre) * 100).toFixed(2) + '%';
+        }
+        return {
+          isUp: !isLoss,
+          percent: currentPercent,
+        };
       }
       return {
-        isUp: !isLoss,
-        percent: currentPercent,
+        isUp: token.price_24h_change
+          ? Number(token.price_24h_change) > 0
+          : true,
+        percent: token?.price_24h_change
+          ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
+          : '',
       };
-    }
-    return {
-      isUp: token.price_24h_change ? Number(token.price_24h_change) > 0 : true,
-      percent: token?.price_24h_change
-        ? Math.abs((token?.price_24h_change || 0) * 100).toFixed(2) + '%'
-        : '',
-    };
-  }, [activeKey, data?.list, token?.price_24h_change]);
+    }, [activeKey, data?.list, token?.price_24h_change]);
 
-  const pathColor = isUp
-    ? colors2024['green-default']
-    : colors2024['red-default'];
+    const pathColor = isUp
+      ? colors2024['green-default']
+      : colors2024['red-default'];
 
-  const currentInfo = useMemo(() => {
-    const price =
-      priceType === 'holding' ? token.price * amountSum : token.price;
-    // price_24h_change will loss some zero point
-    const oneDayIsLoss = token.price_24h_change
-      ? Number(token.price_24h_change) < 0
-      : false;
-    return {
-      date: dayjs().format(DATE_FORMATTER),
-      balance: '$' + formatPrice(price || 0, 8, true),
-      isLoss: activeKey === '24h' ? oneDayIsLoss : !!data?.isLoss,
-      percent: percent,
-    };
-  }, [data?.isLoss, percent, amountSum, priceType, activeKey, token]);
+    const currentInfo = useMemo(() => {
+      const price =
+        priceType === 'holding' ? token.price * amountSum : token.price;
+      // price_24h_change will loss some zero point
+      const oneDayIsLoss = token.price_24h_change
+        ? Number(token.price_24h_change) < 0
+        : false;
+      return {
+        date: dayjs().format(DATE_FORMATTER),
+        balance: '$' + formatPrice(price || 0, 8, true),
+        isLoss: activeKey === '24h' ? oneDayIsLoss : !!data?.isLoss,
+        percent: percent,
+      };
+    }, [data?.isLoss, percent, amountSum, priceType, activeKey, token]);
 
-  const curve24hXOffset = useSharedValue(0);
-  const timeMachineXOffset = useSharedValue(0);
-
-  return (
-    <View>
-      <View style={styles.flexWrap}>
-        {Boolean(amountList.length) && (
-          <View style={styles.priceTabWrapper}>
-            <TouchableOpacity
-              onPress={() => {
-                setPriceType('price');
-              }}>
-              <View
-                style={[
-                  styles.item,
-                  priceType === 'price' ? styles.itemActive : null,
-                ]}>
-                <Text
+    return (
+      <View>
+        <View style={styles.flexWrap}>
+          {Boolean(amountList.length) && (
+            <View style={styles.priceTabWrapper}>
+              <TouchableOpacity
+                onPress={() => {
+                  setPriceType('price');
+                }}>
+                <View
                   style={[
-                    styles.itemText,
-                    priceType === 'price' ? styles.activeText : null,
+                    styles.item,
+                    priceType === 'price' ? styles.itemActive : null,
                   ]}>
-                  {t('page.tokenDetail.Price')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                setPriceType('holding');
-              }}>
-              <View
-                style={[
-                  styles.item,
-                  priceType === 'holding' ? styles.itemActive : null,
-                ]}>
-                <Text
+                  <Text
+                    style={[
+                      styles.itemText,
+                      priceType === 'price' ? styles.activeText : null,
+                    ]}>
+                    {t('page.tokenDetail.Price')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setPriceType('holding');
+                }}>
+                <View
                   style={[
-                    styles.itemText,
-                    priceType === 'holding' ? styles.activeText : null,
+                    styles.item,
+                    priceType === 'holding' ? styles.itemActive : null,
                   ]}>
-                  {t('page.tokenDetail.HoldingValue')}
-                </Text>
-              </View>
-            </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.itemText,
+                      priceType === 'holding' ? styles.activeText : null,
+                    ]}>
+                    {t('page.tokenDetail.HoldingValue')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+        {TIME_TAB_LIST.map(e => (
+          <View key={e.key} style={activeKey !== e.key && styles.hidden}>
+            <Chart
+              data={
+                (isRealTimeKey(e.key)
+                  ? realTimeData?.list
+                  : timeMachMapping?.[e.key]?.list) || []
+              }
+              activeKey={e.key}
+              currentInfo={currentInfo}
+              loading={isRealTimeKey(e.key) ? curveLoading : timeMachineLoading}
+              isNoAssets={false}
+              pathColor={pathColor}
+              extraMetaInfo={extraMetaInfo}
+            />
           </View>
-        )}
-      </View>
-      {TIME_TAB_LIST.map(e => (
-        <View key={e.key} style={activeKey !== e.key && styles.hidden}>
-          <Chart
-            amount={priceType === 'holding' ? amountSum : 1}
-            isOffline={false}
-            data={
-              (isRealTimeKey(e.key)
-                ? realTimeData?.list
-                : timeMachMapping?.[e.key]?.list) || []
-            }
-            activeKey={e.key}
-            currentInfo={currentInfo}
-            loading={isRealTimeKey(e.key) ? curveLoading : timeMachineLoading}
-            isNoAssets={false}
-            pathColor={pathColor}
-            xOffset={e.key === '24h' ? curve24hXOffset : timeMachineXOffset}
-            extraMetaInfo={extraMetaInfo}
+        ))}
+        <View style={styles.timeTabWrapper}>
+          <TimeTab
+            activeKey={activeKey}
+            onPress={v => {
+              setActiveKey(v);
+              if (v !== '24h') {
+                setReady(true);
+              }
+            }}
           />
         </View>
-      ))}
-      <View style={styles.timeTabWrapper}>
-        <TimeTab
-          activeKey={activeKey}
-          onPress={v => {
-            setActiveKey(v);
-            if (v !== '24h') {
-              setReady(true);
-            }
-          }}
-        />
       </View>
-    </View>
-  );
-}
+    );
+  },
+);
 
 function Chart({
   data,
   activeKey,
   currentInfo,
-  isOffline,
-  amount,
   loading,
   pathColor,
-  xOffset,
   extraMetaInfo,
 }: {
-  amount: number;
-  isOffline: boolean;
   data: CurvePoint[];
   activeKey: TabKey;
   currentInfo: {
@@ -302,24 +321,24 @@ function Chart({
   loading: boolean;
   isNoAssets: boolean;
   pathColor: string;
-  xOffset: SharedValue<number>;
   extraMetaInfo?: React.ReactNode;
 }) {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   return (
     <LineChart.Provider data={data}>
-      <DataHeaderInfo
-        key={activeKey}
-        activeKey={activeKey}
-        currentPercentChange={currentInfo.percent}
-        currentIsLoss={currentInfo.isLoss}
-        currentBalance={currentInfo.balance}
-        isOffline={false}
-        data={data}
-        isLoading={loading}
-        isNoAssets={false}
-      />
+      {loading ? (
+        <DataHeaderInfoSkeleton />
+      ) : (
+        <DataHeaderInfo
+          key={activeKey}
+          activeKey={activeKey}
+          currentPercentChange={currentInfo.percent}
+          currentIsLoss={currentInfo.isLoss}
+          currentBalance={currentInfo.balance}
+          data={data}
+        />
+      )}
 
       {loading ? null : data?.length ? extraMetaInfo : null}
 
@@ -342,32 +361,8 @@ function Chart({
             <LineChart.CursorCrosshair
               color={pathColor}
               outerSize={12}
-              size={8}>
-              {/* <LineChart.Tooltip cursorGutter={114} yGutter={-8}>
-                <LineChart.DatetimeText
-                  style={styles.dateTime}
-                  format={({ value }) => {
-                    'worklet';
-                    // due to the nature of reanimated worklets, you cannot define functions that run on the React Native JS thread.
-                    if (value === -1) {
-                      return '';
-                    }
-                    // if use dayjs in worklet it does not work
-                    const date = new Date(value);
-                    const YYYY = date.getFullYear();
-                    const MM = String(date.getMonth() + 1).padStart(2, '0');
-                    const DD = String(date.getDate()).padStart(2, '0');
-                    const HH = String(date.getHours()).padStart(2, '0');
-                    const mm = String(date.getMinutes()).padStart(2, '0');
-                    if (activeKey === '24h' || activeKey === '1W') {
-                      return `${MM} ${DD}, ${HH}:${mm}`;
-                    }
-                    return `${MM} ${DD}, ${YYYY}`;
-                  }}
-                />
-              </LineChart.Tooltip> */}
-            </LineChart.CursorCrosshair>
-            <Mask xOffset={xOffset} />
+              size={8}
+            />
           </LineChart>
         </>
       ) : (

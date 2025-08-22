@@ -188,49 +188,6 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
     },
   );
 
-  const syncBuyHistory = useMemoizedFn(
-    async (address: string, start?: number) => {
-      if (!address) {
-        return [];
-      }
-
-      const latestTime = (await BuyItemEntity.getLatestTime(address)) || 0;
-      const isExpiredTimeAgo = dayjs().subtract(15, 'days').unix(); // 15 days ago
-
-      const isAddUpdate = latestTime > isExpiredTimeAgo;
-
-      const pendingIdList = ((await BuyItemEntity.getAllPending(address)) || [])
-        .filter(i => i.create_at > isExpiredTimeAgo)
-        .map(e => e.id);
-
-      const _start = 0 + (start || 0);
-      const res = await openapi.getBuyHistory({
-        user_addr: address,
-        start: _start,
-        limit: isAddUpdate ? 20 : 100,
-      });
-
-      const lastItemTime =
-        res.histories[res.histories.length - 1]?.create_at || 0;
-
-      res.histories = res.histories.filter(
-        i => pendingIdList.includes(i.id) || i.create_at > latestTime,
-      );
-
-      if (res.histories.length) {
-        console.log('syncRemoteBuyHistory', address, res.histories);
-        runOnJS(syncRemoteBuyHistory)(
-          address,
-          res.histories as unknown as BuyHistoryList['histories'],
-        );
-        if (isAddUpdate && lastItemTime > latestTime) {
-          syncBuyHistory(address, _start + res.histories.length - 1);
-        }
-        return res.histories;
-      }
-    },
-  );
-
   const syncUserAllHistory = useMemoizedFn(
     async (
       address: string,
@@ -391,10 +348,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
             );
             queue.add(async () => {
               try {
-                await Promise.all([
-                  syncUserAllHistory(address, 0, 0, isUserRealTiemApi),
-                  syncBuyHistory(address),
-                ]);
+                await syncUserAllHistory(address, 0, 0, isUserRealTiemApi);
               } catch (error) {
                 console.error(
                   `syncTop10History Error fetching data for ${address.slice(
@@ -461,10 +415,7 @@ export const useSyncHistoryDB = (top10Addresses: string[] = []) => {
     const isUserRealTiemApi =
       latestUpdateTime > Date.now() - 24 * 60 * 60 * 1000; // 1 days ago
     updateHistoryTimeSingleAddress(address);
-    Promise.all([
-      syncUserAllHistory(address.toLowerCase(), 0, 0, isUserRealTiemApi),
-      syncBuyHistory(address.toLowerCase()),
-    ]);
+    syncUserAllHistory(address.toLowerCase(), 0, 0, isUserRealTiemApi);
   });
 
   return {
