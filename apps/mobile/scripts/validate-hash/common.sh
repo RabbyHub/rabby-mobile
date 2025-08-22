@@ -12,6 +12,7 @@ fi
 
 # 此函数将在脚本退出时被调用
 cleanup() {
+  local original_exit_code=$?
   echo ""
 
   # 安全检查：确保 WORK_DIR 变量存在且符合预期格式，防止误删
@@ -24,6 +25,8 @@ cleanup() {
 
   # 恢复到原始目录（这个是之前的 trap 内容）
   cd "$ORIGINAL_DIR"
+
+  exit "$original_exit_code"
 }
 
 # 函数：设置并准备工作区 (克隆仓库到 /tmp 以保证环境纯净)
