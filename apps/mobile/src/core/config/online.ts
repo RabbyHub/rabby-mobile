@@ -6,7 +6,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 
 const BASE_URL = isNonPublicProductionEnv
   ? 'https://download.rabby.io/downloads/wallet-mobile-config-reg'
-  : 'https://download.rabby.io/downloads/wallet-mobile-config-reg';
+  : 'https://download.rabby.io/downloads/wallet-mobile-config';
 // const CONFIG_URL = `${BASE_URL}/${Platform.OS === 'android' ? 'android' : 'ios'}.json`;
 const CONFIG_URL = `${BASE_URL}/rabby-mobile.json`;
 
