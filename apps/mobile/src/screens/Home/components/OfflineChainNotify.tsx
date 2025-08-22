@@ -18,24 +18,37 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
+import { useMockDataForHomeCenterArea } from '@/screens/Settings/sheetModals/DevUIHomeCenterArea';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
 
+export const useMockClearOfflineChainTips = () => {
+  const [, setClosedTipsChain] = useAtom(closedTipsChainsAtom);
+  const clearOfflineChainTips = useCallback(() => {
+    offlineChainService.mockClearCloseTipsChains();
+    setClosedTipsChain([]);
+  }, [setClosedTipsChain]);
+
+  return { clearOfflineChainTips };
+};
+
 export const useOfflineChain = () => {
   const [closedTipsChains, _setClosedTipsChain] = useAtom(closedTipsChainsAtom);
+  const { mockData } = useMockDataForHomeCenterArea();
 
   const { value: offlineList } = useAsync(async () => {
-    // // leave here for mock data
-    // if (__DEV__) {
-    //   return [
-    //     { id: 'eth', offline_at: dayjs().add(6, 'day').unix() }, // Example data
-    //     { id: 'bsc', offline_at: dayjs().add(6, 'day').unix() }, // Example data
-    //     { id: 'polygon', offline_at: dayjs().add(6, 'day').unix() }, // Example data
-    //   ];
-    // }
+    // leave here for mock data
+    if (isNonPublicProductionEnv && mockData.forceShowOffchainNotify) {
+      return [
+        { id: 'eth', offline_at: dayjs().add(6, 'day').unix() }, // Example data
+        { id: 'bsc', offline_at: dayjs().add(6, 'day').unix() }, // Example data
+        { id: 'polygon', offline_at: dayjs().add(6, 'day').unix() }, // Example data
+      ];
+    }
 
     return openapi.getOfflineChainList();
-  }, []);
+  }, [mockData]);
 
   const setClosedTipsChain = useCallback(
     (chain: string) => {
