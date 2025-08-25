@@ -99,6 +99,7 @@ export const useSelectTokens = ({
     if (enableSearchTokensV2 && keyword) {
       const list = await openapi.searchTokensV2({
         q: keyword,
+        chain_id: chain_server_id || '',
       });
 
       const filterAddresses = currentAddress
