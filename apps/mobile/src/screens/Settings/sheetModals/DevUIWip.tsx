@@ -14,9 +14,6 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { RcCode } from '@/assets/icons/settings';
 import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { StackActions } from '@react-navigation/native';
-import { RootNames } from '@/constant/layout';
-import { useAccounts } from '@/hooks/account';
 import { useDappsViewConfig } from '@/screens/Dapps/hooks/useDappView';
 import { formatTimeReadable } from '@/utils/time';
 import { useResetSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -26,7 +23,6 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { MockWalletConnectKeyring } from '@/core/keyring-bridge/walletconnect/mock-walletconnect-keyring';
 import { makeTokenManageSettingMap } from '@/core/_mocks/preferenceMigration';
 import RNHelpers from '@/core/native/RNHelpers';
-import { useMakeMockDataForRateGuideExposure } from '@/components/RateModal/hooks';
 
 async function importWalletConnectAddress({
   address,
@@ -115,17 +111,8 @@ export default function DevUIWipModal({
 
   const { resetSceneAccountInfo } = useResetSceneAccountInfo();
 
-  const { mockExposureRateGuide } = useMakeMockDataForRateGuideExposure();
-
   const Items = (() => {
     const list: DevTestItem[] = [
-      {
-        label: [`[Data] Exposure Rate Guide on Home`].filter(Boolean).join(' '),
-        icon: <RcCode style={styles.labelIcon} />,
-        onPress: () => {
-          mockExposureRateGuide();
-        },
-      },
       {
         label: '[Data] mock assets data <= 0.5.4',
         icon: <RcCode style={styles.labelIcon} />,

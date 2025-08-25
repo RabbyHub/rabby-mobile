@@ -8,7 +8,7 @@ import {
   AbstractLogger,
   LogLevel,
 } from 'typeorm/browser';
-import { appIsProd } from '@/constant/env';
+import { getOnlineConfig } from '@/core/config/online';
 
 // slice query string, [0...500] + [-500...end]
 function formatQueryString(query: string, len = 500): string {
@@ -145,7 +145,8 @@ export class RabbyOrmDeployedConsoleLogger
     parameters?: any[],
     queryRunner?: QueryRunner,
   ) {
-    if (appIsProd) return;
+    const onlineConfig = await getOnlineConfig();
+    if (!onlineConfig?.switches?.['20250820.reportSentry_slowQuery']) return;
 
     try {
       Sentry.captureEvent({

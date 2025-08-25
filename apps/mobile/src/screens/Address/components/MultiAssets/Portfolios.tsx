@@ -76,8 +76,8 @@ const MemoizedEmptyTokenRow = React.memo(EmptyTokenRow);
 
 export const Portfolios = () => {
   const { styles, isLight } = useTheme2024({ getStyle: getStyles });
-  const { top10Addresses } = useAccountInfo();
-  const { triggerUpdate, getTotalBalance } = useAccountsBalance({
+  const { top10Addresses, top10EvmBalance, top10Balance } = useAccountInfo();
+  const { triggerUpdate } = useAccountsBalance({
     cacheTime: 10 * 60 * 1000,
     accountsNoUnique: true,
   });
@@ -312,15 +312,11 @@ export const Portfolios = () => {
     [],
   );
 
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
-
   const { refresh: refreshCurve } = useMultiCurve(
     top10Addresses,
     true,
-    top10Balance.total,
-    top10Balance.totalEvm,
+    top10Balance,
+    top10EvmBalance,
   );
 
   const handleOpenDefiDetail = useCallback(

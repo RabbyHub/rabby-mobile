@@ -45,6 +45,6 @@ networkStatusAtom.onMount = set => {
 };
 
 export const useGlobalStatus = () => {
-  const isDisConnnect = useAtomValue(networkStatusAtom);
-  return { isDisConnnect };
+  const isDisConnect = useAtomValue(networkStatusAtom);
+  return { isDisConnect };
 };
