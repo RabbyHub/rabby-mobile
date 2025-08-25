@@ -1,9 +1,8 @@
-import IconOfflineCC from '@/assets/icons/home/offline-cc.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import AnimateableText from 'react-native-animateable-text';
 import {
   useAnimatedProps,
@@ -20,37 +19,23 @@ export const DataHeaderInfo = ({
   currentPercentChange,
   currentIsLoss,
   currentBalance,
-  isOffline,
   data,
-  isLoading,
-  isNoAssets,
 }: {
   activeKey: TabKey;
   currentPercentChange: string;
   currentIsLoss: boolean;
   currentBalance: string;
-  isOffline: boolean;
   data?: CurvePoint[];
-  isLoading: boolean;
-  isNoAssets: boolean;
 }) => {
   const { styles, colors, colors2024 } = useTheme2024({ getStyle });
 
   const { currentIndex } = LineChart.useChart();
 
   const usdValue = useDerivedValue(() => {
-    return isLoading
-      ? ' '
-      : data?.[currentIndex?.value]
+    return data?.[currentIndex?.value]
       ? data?.[currentIndex.value].netWorth
       : currentBalance;
-  }, [
-    isLoading,
-    data,
-    currentBalance,
-    currentIndex.value,
-    currentPercentChange,
-  ]);
+  }, [data, currentBalance, currentIndex.value, currentPercentChange]);
 
   const usdValueAnimatedProps = useAnimatedProps(() => {
     return {
@@ -63,10 +48,10 @@ export const DataHeaderInfo = ({
       ? `${data?.[currentIndex?.value]?.isLoss ? '-' : '+'}${
           data?.[currentIndex.value].changePercent
         }(${data?.[currentIndex.value].change})`
-      : currentPercentChange && !isLoading
+      : currentPercentChange
       ? `${currentIsLoss ? '-' : '+'}${currentPercentChange}`
       : '';
-  }, [data, currentIsLoss, currentPercentChange, currentIndex, isLoading]);
+  }, [data, currentIsLoss, currentPercentChange, currentIndex]);
 
   const percentChangeAnimatedProps = useAnimatedProps(() => {
     return {
@@ -78,7 +63,6 @@ export const DataHeaderInfo = ({
     if (data?.[currentIndex?.value]) {
       return {
         ...styles.percent,
-        // display: isLoading ? 'none' : undefined,
         color: data?.[currentIndex?.value]?.isLoss
           ? colors2024['red-default']
           : colors2024['green-default'],
@@ -86,12 +70,11 @@ export const DataHeaderInfo = ({
     }
     return {
       ...styles.percent,
-      // display: isLoading ? 'none' : undefined,
       color: currentIsLoss
         ? colors2024['red-default']
         : colors2024['green-default'],
     };
-  }, [currentIsLoss, data, currentIndex, colors, styles, isLoading]);
+  }, [currentIsLoss, data, currentIndex, colors, styles]);
 
   const dateTime = useDerivedValue(() => {
     return (
@@ -113,62 +96,52 @@ export const DataHeaderInfo = ({
     <>
       <View style={styles.wrapper}>
         <View style={styles.balanceChangeWrapper}>
-          {!isLoading ? (
-            <>
-              <View
-                // eslint-disable-next-line react-native/no-inline-styles
-                style={{
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                }}>
-                <AnimateableText
-                  style={styles.usdValue}
-                  animatedProps={usdValueAnimatedProps}
-                />
-                <View style={styles.changeSection}>
-                  <AnimateableText
-                    style={lossStyleProps}
-                    animatedProps={percentChangeAnimatedProps}
-                  />
-                  <AnimateableText
-                    style={styles.changeTime}
-                    animatedProps={dateTimeAnimatedProps}
-                  />
-                </View>
-              </View>
-              {/* <AnimateableText
+          <View
+            // eslint-disable-next-line react-native/no-inline-styles
+            style={{
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+            }}>
+            <AnimateableText
+              style={styles.usdValue}
+              animatedProps={usdValueAnimatedProps}
+            />
+            <View style={styles.changeSection}>
+              <AnimateableText
                 style={lossStyleProps}
                 animatedProps={percentChangeAnimatedProps}
-              /> */}
-            </>
-          ) : (
-            <>
-              <Skeleton
-                width={181}
-                height={42}
-                style={styles.skeleton}
-                LinearGradientComponent={LoadingLinear}
               />
-              <Skeleton
-                width={100}
-                height={20}
-                style={[styles.skeleton, { borderRadius: 4 }]}
-                LinearGradientComponent={LoadingLinear}
+              <AnimateableText
+                style={styles.changeTime}
+                animatedProps={dateTimeAnimatedProps}
               />
-            </>
-          )}
-        </View>
-        {isOffline && (
-          <View style={styles.disconnectWrapper}>
-            <IconOfflineCC color={colors['neutral-body']} />
-            <Text style={styles.disconnectText}>
-              The network is disconnected and no data is obtained
-            </Text>
+            </View>
           </View>
-        )}
-        {isNoAssets && (
-          <Text style={styles.noAssetsText}>No data returned</Text>
-        )}
+        </View>
+      </View>
+    </>
+  );
+};
+
+export const DataHeaderInfoSkeleton = () => {
+  const { styles } = useTheme2024({ getStyle });
+  return (
+    <>
+      <View style={styles.wrapper}>
+        <View style={styles.balanceChangeWrapper}>
+          <Skeleton
+            width={181}
+            height={42}
+            style={styles.skeleton}
+            LinearGradientComponent={LoadingLinear}
+          />
+          <Skeleton
+            width={100}
+            height={20}
+            style={[styles.skeleton, { borderRadius: 4 }]}
+            LinearGradientComponent={LoadingLinear}
+          />
+        </View>
       </View>
     </>
   );

@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
   Platform,
+  RefreshControl,
   ScrollView,
   Text,
   View,
@@ -35,15 +36,16 @@ import { GetRootScreenNavigationProps } from '@/navigation-type';
 import { HistoryList } from './components/HistoryList';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { useSetAtom } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { isFromBackAtom } from '../Swap/hooks/atom';
 import BalanceOverview from './components/BalanceOverview';
-import { useTokenBalance } from './hook';
+import { useRealTimeTokenInfo, useTokenBalance } from './hook';
 import TokenActions from './components/TokenActions';
 import BottomFloatGuide from './components/BottomFloatGuide';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { RightMore } from './components/RightMore';
+import { currentPortfolioAtom } from '../Home/hooks/usePortfolio';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -57,6 +59,7 @@ export type TokenFromAddressItem = {
 
 export type RelatedDeFiType = AbstractProject & {
   amount: number;
+  address: string;
 };
 
 export const TokenDetailScreen = () => {
@@ -70,7 +73,6 @@ export const TokenDetailScreen = () => {
     unHold: _unHold,
     isSingleAddress,
     tokenSelectType,
-    rawPortfolios, // only isSingleAddress === true can use
   } = route.params || {};
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -78,9 +80,16 @@ export const TokenDetailScreen = () => {
   });
   const { t } = useTranslation();
 
+  const singleAddressPortfolios = useAtomValue(currentPortfolioAtom);
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { safeOffHeader } = useSafeSizes();
-  const { assetsMap, getCacheTop10Assets, getTokenCombined } = useAssets({
+  const {
+    assetsMap,
+    getCacheTop10Assets,
+    getTokenCombined,
+    loadSpecificDefi,
+    updateTokensAmount,
+  } = useAssets({
     hideCombined: true,
   });
 
@@ -125,8 +134,13 @@ export const TokenDetailScreen = () => {
 
   const relateDefiList = useMemo(() => {
     const resList = [] as RelatedDeFiType[];
-    if (isSingleAddress && rawPortfolios && rawPortfolios.length) {
-      rawPortfolios?.forEach(portfolio => {
+    if (
+      isSingleAddress &&
+      isSameAddress(singleAddressPortfolios.address, finalAccount.address) &&
+      singleAddressPortfolios.data &&
+      singleAddressPortfolios.data.length
+    ) {
+      singleAddressPortfolios.data?.forEach(portfolio => {
         if (portfolio.chain !== token.chain) {
           return;
         }
@@ -148,6 +162,7 @@ export const TokenDetailScreen = () => {
           resList.push({
             ...portfolio,
             amount,
+            address: singleAddressPortfolios.address,
           });
       });
       return resList;
@@ -189,17 +204,20 @@ export const TokenDetailScreen = () => {
           resList.push({
             ...portfolio,
             amount,
+            address,
           });
       });
     });
     return resList;
   }, [
-    token,
-    assetsMap,
     isSingleAddress,
+    singleAddressPortfolios.data,
+    singleAddressPortfolios.address,
+    assetsMap,
+    token.chain,
+    token._tokenId,
     finalAccount,
     accounts,
-    rawPortfolios,
   ]);
 
   useEffect(() => {
@@ -217,23 +235,25 @@ export const TokenDetailScreen = () => {
 
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const { data: tokenWithAmount } = useRequest(
-    async () => {
-      const res = await openapi.getToken(
-        finalAccount!.address,
-        token.chain,
-        token._tokenId,
-      );
-      return ensureAbstractPortfolioToken({
-        ...abstractTokenToTokenItem(token),
-        usd_value: res?.usd_value,
-        price: res?.price,
-      });
-    },
-    {
-      refreshDeps: [token.chain, token._tokenId, finalAccount?.address],
-    },
-  );
+  const { data: baseTokenInfo, refreshAsync: refreshBaseTokenInfo } =
+    useRequest(
+      async () => {
+        const res = await openapi.getToken(
+          finalAccount!.address,
+          token.chain,
+          token._tokenId,
+        );
+        return ensureAbstractPortfolioToken({
+          ...abstractTokenToTokenItem(token),
+          price_24h_change: res?.price_24h_change,
+          usd_value: res?.usd_value,
+          price: res?.price,
+        });
+      },
+      {
+        refreshDeps: [token.chain, token._tokenId, finalAccount?.address],
+      },
+    );
 
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { tokenRefresh, singleTokenRefresh } = useTriggerTagAssets();
@@ -259,13 +279,26 @@ export const TokenDetailScreen = () => {
     );
   }, [finalAccount?.address, token]);
 
+  const { tokens: realTimeTokens, refreshAsync } = useRealTimeTokenInfo({
+    chain: token.chain,
+    tokenId: token._tokenId,
+  });
+
   const tokenFromAddress = useMemo(() => {
     const res = [] as TokenFromAddressItem[];
     if (isSingleAddress && token.amount) {
-      const dbToken = tokenEntityList?.find(item =>
-        isSameAddress(item.owner_addr, finalAccount!.address),
-      );
-      const amount = dbToken?.amount || token.amount;
+      const realTimeToken = realTimeTokens.find(
+        item =>
+          isSameAddress(item.address, finalAccount.address) &&
+          item.token.id === token._tokenId &&
+          item.token.chain === token.chain,
+      )?.token;
+      const targetToken =
+        realTimeToken ||
+        tokenEntityList?.find(item =>
+          isSameAddress(item.owner_addr, finalAccount!.address),
+        );
+      const amount = targetToken?.amount || token.amount;
       res.push({
         ...token,
         amountStr: formatTokenAmount(amount),
@@ -280,10 +313,18 @@ export const TokenDetailScreen = () => {
       const { fromAddress } = token as CombineTokensItem;
 
       const fromAddressList =
-        tokenEntityList?.map(item => ({
-          address: item.owner_addr,
-          amount: item.amount,
-        })) || fromAddress;
+        tokenEntityList?.map(item => {
+          const realTimeAmount = realTimeTokens.find(
+            rItem =>
+              isSameAddress(rItem.address, item.owner_addr) &&
+              rItem.token.id === token._tokenId &&
+              rItem.token.chain === token.chain,
+          )?.token.amount;
+          return {
+            address: item.owner_addr,
+            amount: realTimeAmount || item.amount,
+          };
+        }) || fromAddress;
 
       accounts.map(item => {
         const idx = fromAddressList?.findIndex(i =>
@@ -304,7 +345,14 @@ export const TokenDetailScreen = () => {
         new BigNumber(b.amount).comparedTo(new BigNumber(a.amount)),
       );
     }
-  }, [token, accounts, isSingleAddress, finalAccount, tokenEntityList]);
+  }, [
+    isSingleAddress,
+    token,
+    realTimeTokens,
+    tokenEntityList,
+    finalAccount,
+    accounts,
+  ]);
 
   const unHold = useMemo(
     () => _unHold || tokenFromAddress.length === 0,
@@ -348,12 +396,36 @@ export const TokenDetailScreen = () => {
 
   const { amountSum, usdValue, percentChange, isLoss, is24hNoChange, price } =
     useTokenBalance({
-      token: tokenWithAmount || token,
+      token: baseTokenInfo || token,
       amountList: tokenFromAddress,
       isSingleAddress: !!isSingleAddress,
       relateDefiList,
       currentAddress: finalAccount?.address,
     });
+
+  const onRefresh = useCallback(async () => {
+    refreshBaseTokenInfo();
+    Promise.all(
+      relateDefiList.map(item => {
+        if (item.address && item.id && item.chain) {
+          return loadSpecificDefi(item.address, item.id, item.chain);
+        }
+        return Promise.resolve();
+      }),
+    );
+    refreshAsync(tokenFromAddress.map(item => item.address)).then(res => {
+      updateTokensAmount(res);
+    });
+    refreshTag();
+  }, [
+    refreshBaseTokenInfo,
+    relateDefiList,
+    refreshAsync,
+    tokenFromAddress,
+    refreshTag,
+    loadSpecificDefi,
+    updateTokensAmount,
+  ]);
 
   if (isSingleAddress && !finalAccount) {
     return null;
@@ -382,7 +454,10 @@ export const TokenDetailScreen = () => {
           height: safeOffHeader + 10,
         }}
       />
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={false} onRefresh={onRefresh} />
+        }>
         <ImageBackground
           source={
             !isLoss

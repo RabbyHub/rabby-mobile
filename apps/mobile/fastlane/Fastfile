@@ -136,7 +136,7 @@ platform :android do
   private_lane :build_rabbymobile_app do |opts|
     gradle(tasks: opts[:tasks], project_dir: './android', properties: {
       "MYAPP_UPLOAD_STORE_FILE" => "app-upload-key.keystore",
-      "MYAPP_UPLOAD_STORE_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD'],
+      "MYAPP_UPLOAD_STORE_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_STORE_PASSWORD'],
       "MYAPP_UPLOAD_KEY_ALIAS" => ENV['RABBY_MOBILE_ANDROID_KEY_ALIAS'],
       "MYAPP_UPLOAD_KEY_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD']
     }.merge(opts.fetch(:properties, {})))

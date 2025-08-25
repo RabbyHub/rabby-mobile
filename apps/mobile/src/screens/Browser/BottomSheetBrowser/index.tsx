@@ -274,7 +274,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       width: 50,
       height: 6,
       borderRadius: 105,
-      backgroundColor: colors2024['neutral-line'],
+      backgroundColor: colors2024['neutral-bg-5'],
     },
 
     handleStyle: {
@@ -285,7 +285,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderTopRightRadius: 20,
     },
     handleIndicatorStyle: {
-      backgroundColor: colors2024['neutral-line'],
+      backgroundColor: colors2024['neutral-bg-5'],
       height: 6,
       width: 50,
     },

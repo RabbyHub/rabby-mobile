@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
   Platform,
@@ -14,22 +8,26 @@ import {
   ViewStyle,
 } from 'react-native';
 
+import { ReactIconHome } from '@/assets2024/icons/browser';
 import { NextSearchBar } from '@/components2024/SearchBar';
+import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { useTheme2024 } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { createGetStyles2024 } from '@/utils/styles';
+import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
+import { useAppState } from '@react-native-community/hooks';
+import { useMemoizedFn } from 'ahooks';
+import { useTranslation } from 'react-i18next';
+import { parse } from 'tldts';
 import { useSearchDapps } from '../../hooks/useSearchDapps';
 import { BrowserRecent } from './BrowserRecent';
 import { BrowserSearchResult } from './BrowserSearchResult';
-import { parse } from 'tldts';
-import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
-import { useTranslation } from 'react-i18next';
-import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
-import { useDebounceFn, useMemoizedFn } from 'ahooks';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import { ReactIconHome } from '@/assets2024/icons/browser';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { useAppState } from '@react-native-community/hooks';
-import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+
+import {
+  AndroidSoftInputModes,
+  KeyboardController,
+} from 'react-native-keyboard-controller';
 
 export function BrowserSearch({
   onClose,
@@ -156,6 +154,14 @@ export function BrowserSearch({
     }
   }, [appState]);
 
+  useEffect(() => {
+    KeyboardController.setInputMode(
+      AndroidSoftInputModes.SOFT_INPUT_ADJUST_RESIZE,
+    );
+
+    return () => KeyboardController.setDefaultMode();
+  }, []);
+
   return (
     <View
       style={[
@@ -185,11 +191,13 @@ export function BrowserSearch({
             list={displayedBrowserHistoryList}
             onPress={dapp => {
               handleOpenUrl(dapp.url || dapp.origin);
-              matomoRequestEvent({
-                category: 'Websites Usage',
-                action: 'Website_Visit_Recent List',
-                label: dapp.origin,
-              });
+              if (dapp.origin) {
+                matomoRequestEvent({
+                  category: 'Websites Usage',
+                  action: 'Website_Visit_Recent List',
+                  label: dapp.origin,
+                });
+              }
             }}
           />
         )
@@ -202,11 +210,6 @@ export function BrowserSearch({
           isValidDomain={!!isValidDomain}
           onOpenURL={origin => {
             handleOpenUrl(origin);
-            matomoRequestEvent({
-              category: 'Websites Usage',
-              action: 'Website_Visit_Search Results',
-              label: origin,
-            });
           }}
         />
       )}

@@ -36,6 +36,7 @@ import {
   APP_RUNTIME_ENV,
   BUILD_CHANNEL,
   BUILD_GIT_INFO,
+  IS_HERMES_ENABLED,
   isNonPublicProductionEnv,
   isSelfhostRegPkg,
   NEED_DEVSETTINGBLOCKS,
@@ -132,6 +133,9 @@ import MockBatchRevokeModal, {
 import { preferenceService } from '@/core/services';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 import { useMultiPress } from '@/hooks/tap';
+import DevUIHomeCenterAreaModal, {
+  useUIDevHomeCenterAreaModalVisiable,
+} from './sheetModals/DevUIHomeCenterArea';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -146,6 +150,7 @@ function AlertBuildInfo() {
       [
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+        `Hermes Enabled: ${IS_HERMES_ENABLED}`,
         '   ',
         !!BUILD_GIT_INFO.BUILD_GIT_HASH_TIME &&
           `Lastest Commit: ${dayjs(BUILD_GIT_INFO.BUILD_GIT_HASH_TIME).format(
@@ -165,7 +170,13 @@ function AlertBuildInfo() {
   } else {
     Alert.alert(
       'Build Info',
-      [`Runtime Env: ${APP_RUNTIME_ENV}`].filter(Boolean).join('\n'),
+      [
+        `Runtime Env: ${APP_RUNTIME_ENV}`,
+        `Revision: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+        `Hermes Enabled: ${IS_HERMES_ENABLED}`,
+      ]
+        .filter(Boolean)
+        .join('\n'),
       [
         {
           text: 'OK',
@@ -537,6 +548,8 @@ function DevSettingsBlocks() {
   const { setCloudDriveTestItemModalVisible } =
     useCloudDriveTestItemModalVisible();
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
+  const { setDevUIHomeCenterAreaModalVisible } =
+    useUIDevHomeCenterAreaModalVisiable();
   const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
@@ -597,6 +610,13 @@ function DevSettingsBlocks() {
               icon: RcGoogleDrive,
               onPress: async () => {
                 setCloudDriveTestItemModalVisible(true);
+              },
+            },
+            {
+              label: '[UI] Mock Home Center Areas',
+              icon: RcCode,
+              onPress: () => {
+                setDevUIHomeCenterAreaModalVisible(true);
               },
             },
             {
@@ -815,6 +835,7 @@ function DevSettingsBlocks() {
       <CloudDriveTestItemModal />
       <WalletLockTestItemModal />
       <DevUIWipModal />
+      <DevUIHomeCenterAreaModal />
       <DevUIPlaygroundModal />
       <DevDataPlayground />
       <OpenApiPopup

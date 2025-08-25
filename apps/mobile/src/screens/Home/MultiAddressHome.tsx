@@ -26,16 +26,16 @@ import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
 import { RootNames } from '@/constant/layout';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
-import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
-import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
-import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
-import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
+import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
+import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
+import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
+import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
+import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
 import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
-import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
-import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
+import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
+import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
-import RcIconWatchlist from '@/assets2024/icons/home/IconWatchlist.svg';
+import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
@@ -104,6 +104,8 @@ import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 import dayjs from 'dayjs';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
 const HeaderHeight = 24;
 
@@ -121,7 +123,7 @@ function MultiAddressHomeHeader(
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
-  const { isDisConnnect } = useGlobalStatus();
+  const { isDisConnect } = useGlobalStatus();
 
   const { accountsLength } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
@@ -187,7 +189,7 @@ function MultiAddressHomeHeader(
       </View>
 
       <GlobalWarning
-        hasError={isDisConnnect}
+        hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
         onRefresh={() => {
@@ -296,7 +298,7 @@ function MultiAddressHome(): JSX.Element {
     success: number;
     fail: number;
   }>();
-  const { top10Addresses } = useAccountInfo();
+  const { top10Addresses, top10EvmBalance, top10Balance } = useAccountInfo();
 
   // 添加gift资格检查hook
   const { checkAddressesEligibility, getCurrentEligibleAddress } =
@@ -330,22 +332,22 @@ function MultiAddressHome(): JSX.Element {
         {
           key: MultiHomeFeatTitle.Swap,
           title: t('page.home.services.swap'),
-          icon: RcIconSwap,
+          icon: RcIconSwapCC,
         },
         {
           key: MultiHomeFeatTitle.Send,
           title: t('page.home.services.send'),
-          icon: RcIconSend,
+          icon: RcIconSendCC,
         },
         {
           key: MultiHomeFeatTitle.Receive,
           title: t('page.home.services.receive'),
-          icon: RcIconReceive,
+          icon: RcIconReceiveCC,
         },
         {
           key: MultiHomeFeatTitle.Bridge,
           title: t('page.home.services.bridge'),
-          icon: RcIconBridge,
+          icon: RcIconBridgeCC,
         },
         // {
         //   key: MultiHomeFeatTitle.CopyTrading,
@@ -360,20 +362,20 @@ function MultiAddressHome(): JSX.Element {
         {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
-          icon: RcIconHistory,
+          icon: RcIconHistoryCC,
           badge: historyCount?.fail || historyCount?.success,
           isSuccess: !historyCount?.fail,
         },
         {
           key: MultiHomeFeatTitle.Approvals,
           title: t('page.home.services.approvals'),
-          icon: RcIconApprovals,
+          icon: RcIconApprovalsCC,
           badge: alertInfo.total,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
           title: t('page.home.services.gasAccount'),
-          icon: RcIconGasAccount,
+          icon: RcIconGasAccountCC,
           showGiftIcon: isEligible,
         },
         // __DEV__ && {
@@ -390,7 +392,7 @@ function MultiAddressHome(): JSX.Element {
         {
           key: MultiHomeFeatTitle.Watchlist,
           title: t('page.home.services.watchlist'),
-          icon: RcIconWatchlist,
+          icon: RcIconWatchlistCC,
         },
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
@@ -404,6 +406,7 @@ function MultiAddressHome(): JSX.Element {
         key: MultiHomeFeatTitle;
         title: string;
         icon: React.FC<import('react-native-svg').SvgProps>;
+        color?: string;
         badge?: number;
         isSuccess?: boolean;
         showGiftIcon?: boolean;
@@ -426,31 +429,18 @@ function MultiAddressHome(): JSX.Element {
     }
   }, [pendingTxCount, spinValue]);
 
-  const {
-    balanceAccounts,
-    balanceCacheAccounts,
-    triggerUpdate,
-    getTotalBalance,
-  } = useAccountsBalance({
-    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
-
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
+  const { balanceAccounts, balanceCacheAccounts, triggerUpdate } =
+    useAccountsBalance({
+      cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
+      accountsNoUnique: true, // balanceAccounts has filter same address accounts
+    });
 
   const {
     combineData,
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
-  } = useMultiCurve(
-    top10Addresses,
-    true,
-    top10Balance.total,
-    top10Balance.totalEvm,
-  );
+  } = useMultiCurve(top10Addresses, true, top10Balance, top10EvmBalance);
   useCexSupportList();
   useFetchCexInfo();
   useInitDetectDBAssets();
@@ -490,8 +480,10 @@ function MultiAddressHome(): JSX.Element {
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
 
-  const displayFundWallet = useMemo(
-    () =>
+  const { mockData } = useMockDataForHomeCenterArea();
+
+  const displayFundWalletOrig = useMemo(() => {
+    return (
       !!balanceAccounts.length &&
       balanceAccounts.every(e => e.balance === 0) &&
       balanceCacheAccounts.every(e => e.balance === 0) &&
@@ -499,9 +491,16 @@ function MultiAddressHome(): JSX.Element {
         e =>
           transactionHistoryService.getTransactionGroups({ address: e.address })
             .length === 0,
-      ),
-    [balanceAccounts, balanceCacheAccounts],
-  );
+      )
+    );
+  }, [balanceAccounts, balanceCacheAccounts]);
+
+  const displayFundWallet = useMemo(() => {
+    if (isNonPublicProductionEnv && mockData.forceShowFundWallet) {
+      return true;
+    }
+    return displayFundWalletOrig;
+  }, [displayFundWalletOrig, mockData.forceShowFundWallet]);
 
   const fetchHistory = useCallback(() => {
     const addresses = balanceCacheAccounts.map(i => i.address);
@@ -824,7 +823,7 @@ function MultiAddressHome(): JSX.Element {
 
       matomoRequestEvent({
         category: 'Websites Usage',
-        action: `Website_LikeStatus`,
+        action: 'Website_LikeStatus',
         label: `LikeDapp:${
           browserService.bookmark.getState().ids?.length || 0
         }`,
@@ -832,7 +831,7 @@ function MultiAddressHome(): JSX.Element {
 
       matomoRequestEvent({
         category: 'Websites Usage',
-        action: `Website_TabStatus`,
+        action: 'Website_TabStatus',
         label: `TabNumber:${
           browserService.getBrowserTabs()?.tabs?.length || 0
         }`,
@@ -840,7 +839,7 @@ function MultiAddressHome(): JSX.Element {
 
       matomoRequestEvent({
         category: 'Watchlist Usage',
-        action: `Watchlist_LikeStatus`,
+        action: 'Watchlist_LikeStatus',
         label: `LikeToken:${
           preferenceService.getPreference('pinedQueue')?.length || 0
         }`,
@@ -939,7 +938,11 @@ function MultiAddressHome(): JSX.Element {
                     });
                   }}>
                   <View style={styles.iconWrapper}>
-                    <el.icon width={28} height={28} />
+                    <el.icon
+                      width={28}
+                      height={28}
+                      color={el.color || colors2024['brand-default-icon']}
+                    />
                     {generateCustomBadgeIcon(el)}
                   </View>
                   <Text style={styles.gridText}>{el.title}</Text>

@@ -31,6 +31,7 @@ import { useMemoizedFn } from 'ahooks';
 import { useCallback, useMemo } from 'react';
 import { useAppOrmSyncEvents } from '@/databases/sync/_event';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
+import { syncRemoteTokensAmount } from '@/databases/sync/assets';
 
 export const loadingAtom = atom(true);
 export const isFirstFetchAtom = atom(true);
@@ -458,15 +459,29 @@ export const useAssets = ({
         options?.maxNFTLength
       );
 
-      // 有cache，不查了
-      if (Object.keys(assetsMap).length && !shortCache) {
+      // 基于 disable 的类型逐个地址检查对应缓存是否齐全
+      const hasRequiredCache = addresses.every(address => {
+        const entry = assetsMap[address];
+        if (!entry) {
+          return false;
+        }
+        if (!disableToken && !(entry.tokens && entry.tokens.length)) {
+          return false;
+        }
+        if (!disableDefi && !(entry.portfolios && entry.portfolios.length)) {
+          return false;
+        }
+        if (!disableNFT && !(entry.nfts && entry.nfts.length)) {
+          return false;
+        }
+        return true;
+      });
+
+      // 有完整的所需类型缓存，不查了
+      if (hasRequiredCache && !shortCache) {
         return;
       }
-      if (
-        shortCache &&
-        isCurrentShortCacheFetch &&
-        Object.keys(assetsMap).length
-      ) {
+      if (shortCache && isCurrentShortCacheFetch && hasRequiredCache) {
         return;
       }
       setShortCache(
@@ -499,6 +514,48 @@ export const useAssets = ({
     },
   );
 
+  const updateTokensAmount = useMemoizedFn(
+    (
+      updateTokenList: {
+        address: string;
+        token: TokenItem;
+      }[],
+    ) => {
+      syncRemoteTokensAmount(updateTokenList);
+      setAssetsMap(prev => {
+        const next = { ...prev };
+        updateTokenList.forEach(({ address, token }) => {
+          const lowerAddress = address?.toLowerCase?.() || address;
+          const currentAssets = next[lowerAddress] || {};
+          const preTokens = currentAssets.tokens || [];
+
+          const updatedTokens = preTokens.map(t => {
+            const sameChain =
+              (t.chain || '').toLowerCase() ===
+              (token.chain || '').toLowerCase();
+            const sameTokenId =
+              (t as any)._tokenId === token.id || (t as any).id === token.id;
+            if (sameChain && sameTokenId) {
+              return {
+                ...t,
+                price: token.price,
+                price_24h_change: token.price_24h_change,
+                amount: token.amount,
+              };
+            }
+            return t;
+          });
+
+          next[lowerAddress] = {
+            ...currentAssets,
+            tokens: updatedTokens,
+          };
+        });
+        return next;
+      });
+    },
+  );
+
   return {
     tokens,
     portfolios,
@@ -513,6 +570,7 @@ export const useAssets = ({
     batchLoadCacheNFT,
     refreshing: !!isLoading && !isFirstFetch,
     loadSpecificDefi,
+    updateTokensAmount,
   };
 };
 

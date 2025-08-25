@@ -303,11 +303,14 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
   } = useExternalSwapBridgeDapps(chains, 'bridge');
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: 'Website_Visit_Other',
-      label: safeGetOrigin(url),
-    });
+    const origin = safeGetOrigin(url);
+    if (origin) {
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: 'Website_Visit_Other',
+        label: origin,
+      });
+    }
   });
   const [externalDappOpen, setExternalDappOpen] = useState(false);
 
