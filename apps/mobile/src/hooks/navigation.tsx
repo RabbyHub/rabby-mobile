@@ -35,7 +35,7 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RNTimeChanged from '@/core/native/RNTimeChanged';
 import { checkMultipleFailed } from '@/core/utils/unlockRateLimit';
 import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomSheetModal/security';
-import { useIsForceAllowScreenshot } from './appSettings';
+import { useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 
@@ -464,7 +464,7 @@ export function useAtSensitiveScene() {
 export function useAppPreventScreenshotOnScreen() {
   const { atSensitiveScene, $protectedConf } = useAtSensitiveScene();
 
-  const { forceAllowScreenshot } = useIsForceAllowScreenshot();
+  const { forceAllowScreenshot } = useExpScreenCapture();
   const shouldPreventScreenCapturing =
     atSensitiveScene && !forceAllowScreenshot;
 

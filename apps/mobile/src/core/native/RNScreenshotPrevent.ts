@@ -1,12 +1,24 @@
-import { makeRnEEClass, resolveNativeModule } from './utils';
+import { PermissionsAndroid } from 'react-native';
+import { IS_ANDROID, makeRnEEClass, resolveNativeModule } from './utils';
 
 const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
   'RNScreenshotPrevent',
 );
 
 type Listeners = {
-  userDidTakeScreenshot: () => any;
+  /**
+   * @platform iOS, Android >= 14
+   */
+  userDidTakeScreenshot: (ret?: {
+    path?: string;
+    height?: string | number;
+    width?: string | number;
+    imageBase64?: string;
+    imageType?: 'jpeg' | 'png';
+    name?: string;
+  }) => any;
   screenCapturedChanged: (ret: { isBeingCaptured: boolean }) => any;
+  screenCaptureDetectionChanged: (ret: { enabled: boolean }) => any;
   /**
    * @description subscribe to android app state change, pause means app is in background, resume means app is in foreground
    */
@@ -41,7 +53,7 @@ function makeDefaultHandler<T extends keyof Listeners>(fn: Listeners[T]) {
 /**
  * subscribes to userDidTakeScreenshot event
  */
-function iosOnUserDidTakeScreenshot(fn: Listeners['userDidTakeScreenshot']) {
+function onUserDidTakeScreenshot(fn: Listeners['userDidTakeScreenshot']) {
   const handler = makeDefaultHandler<'userDidTakeScreenshot'>(fn);
   if (handler) return handler;
 
@@ -69,8 +81,17 @@ function onPreventScreenshotChanged(fn: Listeners['preventScreenshotChanged']) {
   return eventEmitter.addListener('preventScreenshotChanged', fn);
 }
 
+function onScreenCaptureDetectionChanged(
+  fn: Listeners['screenCaptureDetectionChanged'],
+) {
+  const handler = makeDefaultHandler<'screenCaptureDetectionChanged'>(fn);
+  if (handler) return handler;
+
+  return eventEmitter.addListener('screenCaptureDetectionChanged', fn);
+}
+
 if (__DEV__) {
-  iosOnUserDidTakeScreenshot(() => {
+  onUserDidTakeScreenshot(() => {
     console.debug('userDidTakeScreenshot');
   });
   iosOnScreenCaptureChanged(params => {
@@ -94,8 +115,32 @@ const RNScreenshotPrevent = Object.freeze({
   //   nativeModule.iosToggleBlurView(!!bool);
   // },
   iosOnScreenCaptureChanged,
-  iosOnUserDidTakeScreenshot,
+  onUserDidTakeScreenshot,
   androidOnLifeCycleChanged,
+  onScreenCaptureDetectionChanged,
+  // Android screenshot listening methods
+  // Android 14+ screen capture detection methods
+  startScreenCaptureDetection: async () => {
+    if (
+      IS_ANDROID &&
+      !(await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+      ))
+    ) {
+      await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+        {
+          title: 'Media Library Permission',
+          message:
+            'This app needs access to your media library to detect screenshots.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+    }
+    return nativeModule.startScreenCaptureDetection();
+  },
 });
 
 export default RNScreenshotPrevent;

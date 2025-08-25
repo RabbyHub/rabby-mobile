@@ -106,6 +106,7 @@ import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { SampleImage } from '@/components/Screenshot/ScreenshotModal';
 
 const HeaderHeight = 24;
 
@@ -891,6 +892,7 @@ function MultiAddressHome(): JSX.Element {
             loadingNewCurve={loadingNewCurve}
             onRefresh={onRefresh}
           />
+          <SampleImage />
           <View
             style={[
               noBetweenContent

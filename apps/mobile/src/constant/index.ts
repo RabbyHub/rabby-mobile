@@ -86,6 +86,9 @@ const androidPackageName = (
         '.regression',
       )
 ) as `com.debank.rabbymobile${AndroidIdSuffx}`;
+export const APP_IDS = {
+  forScreenshot: APPLICATION_ID.replace('.', '_'),
+};
 
 type IosIdSuffix = '' | '-debug' | '-regression';
 

@@ -38,6 +38,7 @@ import { useGasAccountInfo } from './screens/GasAccount/hooks';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
+import { useUserDidTakeScreenshot } from './hooks/native/security';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -70,6 +71,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useGasAccountInfo();
   useIncreaseTxCountOnAppTop({ isTop: true });
   useIntervalSyncDDefaultRPCs();
+  useUserDidTakeScreenshot({ isTop: true });
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
