@@ -1,33 +1,14 @@
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { FormInput } from '@/components/Form/Input';
-import Input from '@/components/Input';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet';
-import { useMemoizedFn } from 'ahooks';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableWithoutFeedback,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  interpolateColor,
-} from 'react-native-reanimated';
+import { Text, useWindowDimensions, View } from 'react-native';
+import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
 
 export const PerpsDepositPopup: React.FC<{
   visible?: boolean;
@@ -46,8 +27,6 @@ export const PerpsDepositPopup: React.FC<{
     return height - 200;
   }, [height]);
 
-  const scrollViewRef = React.useRef<ScrollView>(null);
-
   useEffect(() => {
     if (visible) {
       modalRef.current?.present();
@@ -57,18 +36,18 @@ export const PerpsDepositPopup: React.FC<{
   }, [visible]);
 
   return (
-    <AppBottomSheetModal
-      ref={modalRef}
-      // snapPoints={snapPoints}
-      {...makeBottomSheetProps({
-        colors: colors2024,
-        linearGradientType: 'bg1',
-      })}
-      onDismiss={onClose}
-      // enableDynamicSizing
-      snapPoints={[376]}
-      maxDynamicContentSize={maxHeight}>
-      <BottomSheetScrollView ref={scrollViewRef}>
+    <>
+      <AppBottomSheetModal
+        ref={modalRef}
+        // snapPoints={snapPoints}
+        {...makeBottomSheetProps({
+          colors: colors2024,
+          linearGradientType: 'bg1',
+        })}
+        onDismiss={onClose}
+        // enableDynamicSizing
+        snapPoints={[376]}
+        maxDynamicContentSize={maxHeight}>
         <AutoLockView style={[styles.container]}>
           <View>
             <Text style={styles.title}>
@@ -88,6 +67,7 @@ export const PerpsDepositPopup: React.FC<{
               <BottomSheetTextInput
                 keyboardType="numeric"
                 style={styles.input}
+                placeholder="$0"
               />
               <View style={styles.divider} />
               <View style={styles.tokenContainer}>
@@ -101,8 +81,9 @@ export const PerpsDepositPopup: React.FC<{
             onPress={() => {}}
           />
         </AutoLockView>
-      </BottomSheetScrollView>
-    </AppBottomSheetModal>
+      </AppBottomSheetModal>
+      <PerpsSelectTokenPopup visible={true} />
+    </>
   );
 };
 
@@ -152,14 +133,10 @@ const getStyle = createGetStyles2024(ctx => {
     },
     input: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      color: ctx.colors2024['neutral-body'],
-      backgroundColor: ctx.colors2024['neutral-bg-2'],
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      fontSize: 28,
+      lineHeight: 36,
+      fontWeight: '700',
+      // color: ctx.colors2024['neutral-body'],
       flex: 1,
     },
     inputError: {
