@@ -49,7 +49,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implem
   private Activity.ScreenCaptureCallback screenCaptureCallback;
   private final Handler mainHandler = new Handler(Looper.getMainLooper());
   private final java.util.Set<Long> recentScreenshotIds = new java.util.HashSet<>();
-   private static final long DEBOUNCE_TIMEOUT_MS = 10000L;
+  private static final long DEBOUNCE_TIMEOUT_MS = 10000L;
 
   // For DETECT_SCREEN_CAPTURE permission
   private boolean hasDetectScreenCapturePermission = false;
@@ -100,7 +100,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implem
     }
 
     // Android 14+ screen capture detection using DETECT_SCREEN_CAPTURE permission
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE && hasDetectScreenCapturePermission) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !hasDetectScreenCapturePermission) {
       promise.reject("UNSUPPORTED", "Screen capture detection is not supported");
       return ;
     }
@@ -186,7 +186,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implem
   @ReactMethod
   public void stopScreenCaptureDetection(Promise promise) {
     // Clean up Android 14+ screen capture detection
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE && hasDetectScreenCapturePermission) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !hasDetectScreenCapturePermission) {
       promise.reject("UNSUPPORTED", "Screen capture detection is not supported");
       return;
     }
