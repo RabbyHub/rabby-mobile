@@ -38,7 +38,12 @@ export const BridgeHistoryItem: React.FC<Props> = ({
       icon={
         <ExchangeIcon
           leftIcon={<AssetAvatar logo={data.from_token.logo_url} size={30} />}
-          rightIcon={<AssetAvatar logo={data.to_token.logo_url} size={32} />}
+          rightIcon={
+            <AssetAvatar
+              logo={data?.to_actual_token?.logo_url || data?.to_token?.logo_url}
+              size={32}
+            />
+          }
         />
       }
       showSuccess={
@@ -51,7 +56,7 @@ export const BridgeHistoryItem: React.FC<Props> = ({
         '+' +
         getTokenAmountText({
           amount: data.actual.receive_token_amount,
-          token: data.to_token,
+          token: data.to_actual_token || data.to_token,
         })
       }
       receiveTokenAmount={

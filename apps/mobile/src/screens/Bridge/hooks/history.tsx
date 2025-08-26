@@ -84,6 +84,7 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
         user_addr: account!.address,
         start: 0,
         limit: 10,
+        is_all: true,
       });
 
       const openModalTs = bridgeService.getOpenBridgeHistoryTs(account.address);
@@ -222,6 +223,7 @@ export const useBridgeHistory = () => {
         user_addr: addr,
         start: start,
         limit: limit,
+        is_all: true,
       });
       return {
         list: data?.history_list,

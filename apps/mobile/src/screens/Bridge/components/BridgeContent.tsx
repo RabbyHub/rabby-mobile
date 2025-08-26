@@ -334,9 +334,9 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
     ) {
       try {
         setFetchingBridgeQuote(true);
-        const { tx } = await pRetry(
+        const tx = await pRetry(
           () =>
-            openapi.getBridgeQuoteTxV2({
+            openapi.buildBridgeTx({
               aggregator_id: selectedBridgeQuote.aggregator.id,
               bridge_id: selectedBridgeQuote.bridge_id,
               from_token_id: fromToken.id,
@@ -349,6 +349,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
               to_chain_id: toToken.chain,
               to_token_id: toToken.id,
               slippage: new BigNumber(slippageState).div(100).toString(10),
+              quote_key: JSON.stringify(selectedBridgeQuote.quote_key || {}),
             }),
           { retries: 1 },
         );
@@ -451,7 +452,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
       currentAccount?.address
     ) {
       try {
-        const { tx } = await openapi.getBridgeQuoteTxV2({
+        const tx = await openapi.buildBridgeTx({
           aggregator_id: selectedBridgeQuote.aggregator.id,
           bridge_id: selectedBridgeQuote.bridge_id,
           from_token_id: fromToken.id,
@@ -464,6 +465,7 @@ export const BridgeContent = ({ isForMultipleAddress = false }) => {
           to_chain_id: toToken.chain,
           to_token_id: toToken.id,
           slippage: new BigNumber(slippageState).div(100).toString(10),
+          quote_key: JSON.stringify(selectedBridgeQuote.quote_key || {}),
         });
         stats.report('bridgeQuoteResult', {
           aggregatorIds: selectedBridgeQuote.aggregator.id,
