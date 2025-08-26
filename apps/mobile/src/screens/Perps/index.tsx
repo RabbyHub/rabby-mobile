@@ -14,6 +14,7 @@ import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSe
 import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
 import { PerpsGuidePopup } from './components/PerpsGuidePopup';
 import { PerpsDepositPopup } from './components/PerpsDepositPopup';
+import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -50,7 +51,8 @@ export const PerpsScreen = () => {
       />
       <PerpsAgentsLimitModal visible={false} />
       <PerpsGuidePopup visible={false} />
-      <PerpsDepositPopup visible={true} />
+      <PerpsDepositPopup visible={false} />
+      <PerpsWithdrawPopup visible={true} />
     </>
   );
 };

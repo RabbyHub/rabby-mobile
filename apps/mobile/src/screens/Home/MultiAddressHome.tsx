@@ -737,7 +737,7 @@ function MultiAddressHome(): JSX.Element {
           break;
         case MultiHomeFeatTitle.Perps:
           navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Perps,
+            screen: RootNames.PerpsMarketDetail,
             params: {},
           });
           break;

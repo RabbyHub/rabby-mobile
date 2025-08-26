@@ -15,44 +15,31 @@ export const PerpsHeaderTitle: React.FC<{}> = ({}) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t('page.perps.title')}</Text>
-      <View style={styles.addressContainer}>
-        <WalletIcon style={styles.walletIcon} width={18} height={18} />
-        <Text style={styles.address}>
-          {account.aliasName || ellipsisAddress(account?.address)}
-        </Text>
-      </View>
+      <View style={styles.icon} />
+      <Text style={styles.text}>ETH - USD</Text>
     </View>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  icon: {
+    width: 24,
+    height: 24,
+    borderRadius: 1000,
+    backgroundColor: 'red',
+  },
   container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 4,
-    justifyContent: 'center',
-  },
-  title: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '800',
-    color: colors2024['neutral-title-1'],
-  },
-  addressContainer: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    justifyContent: 'center',
   },
-  walletIcon: {},
-  address: {
+  text: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: '700',
-    lineHeight: 20,
-    color: colors2024['neutral-foot'],
+    color: colors2024['neutral-title-1'],
   },
 }));

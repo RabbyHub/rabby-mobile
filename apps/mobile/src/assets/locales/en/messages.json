@@ -2132,6 +2132,17 @@
         "amount": "Amount",
         "balance": "Balance",
         "depositBtn": "Deposit"
+      },
+      "PerpsWithdrawPopup": {
+        "title": "Withdraw",
+        "amount": "Amount",
+        "available": "available",
+        "withdrawBtn": "Withdraw"
+      },
+      "PerpsWithdrawFeePopup": {
+        "title": "Fee",
+        "desc": "Withdrawar Fee charged by Hyperliquid: $1",
+        "btn": "I Got it"
       }
     }
   },

@@ -1,3 +1,8 @@
+import {
+  RcIconInfo2CC,
+  RcIconInfoCC,
+  RcIconInfoFillCC,
+} from '@/assets/icons/common';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
@@ -7,10 +12,15 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
-import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
+import {
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { PerpsWithdrawFeePopup } from './PerpsWithdrawFeePopup';
 
-export const PerpsDepositPopup: React.FC<{
+export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
 }> = ({ visible, onClose }) => {
@@ -51,16 +61,16 @@ export const PerpsDepositPopup: React.FC<{
         <AutoLockView style={[styles.container]}>
           <View>
             <Text style={styles.title}>
-              {t('page.perps.PerpsDepositPopup.title')}
+              {t('page.perps.PerpsWithdrawPopup.title')}
             </Text>
           </View>
           <View style={styles.formItem}>
             <View style={styles.formItemLabelRow}>
               <Text style={styles.formItemLabel}>
-                {t('page.perps.PerpsDepositPopup.amount')}
+                {t('page.perps.PerpsWithdrawPopup.amount')}
               </Text>
               <Text style={styles.formItemDesc}>
-                {t('page.perps.PerpsDepositPopup.balance')}: $100
+                $100 {t('page.perps.PerpsWithdrawPopup.available')}
               </Text>
             </View>
             <View style={styles.inputContainer}>
@@ -69,20 +79,23 @@ export const PerpsDepositPopup: React.FC<{
                 style={styles.input}
                 placeholder="$0"
               />
-              <View style={styles.divider} />
-              <View style={styles.tokenContainer}>
-                <Text style={styles.tokenText}>USDC</Text>
-              </View>
             </View>
+
+            <TouchableOpacity>
+              <View style={styles.feeContainer}>
+                <Text style={styles.fee}>Fee : $1.00</Text>
+                <RcIconInfoFillCC color={'#CED0DA'} width={15} height={15} />
+              </View>
+            </TouchableOpacity>
           </View>
           <Button
             type="primary"
-            title={t('page.perps.PerpsDepositPopup.depositBtn')}
+            title={t('page.perps.PerpsWithdrawPopup.withdrawBtn')}
             onPress={() => {}}
           />
         </AutoLockView>
       </AppBottomSheetModal>
-      <PerpsSelectTokenPopup visible={true} />
+      <PerpsWithdrawFeePopup visible={true} />
     </>
   );
 };
@@ -123,7 +136,7 @@ const getStyle = createGetStyles2024(ctx => {
     },
     inputContainer: {
       borderRadius: 16,
-      paddingVertical: 28,
+      paddingVertical: 20,
       paddingHorizontal: 20,
       backgroundColor: ctx.colors2024['neutral-bg-2'],
       display: 'flex',
@@ -161,10 +174,22 @@ const getStyle = createGetStyles2024(ctx => {
       marginBottom: 24,
       textAlign: 'center',
     },
-    divider: {
-      width: 1,
-      height: 28,
-      backgroundColor: ctx.colors2024['neutral-line'],
+
+    feeContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 7,
+      marginTop: 38,
+      marginBottom: 15,
+    },
+    fee: {
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
+      color: ctx.colors2024['neutral-foot'],
     },
   };
 });

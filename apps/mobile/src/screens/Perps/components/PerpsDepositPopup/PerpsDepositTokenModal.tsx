@@ -1,27 +1,39 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Text, View } from 'react-native';
-
-import { RcWarningFull } from '@/assets2024/icons/perps';
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { createGetStyles2024 } from '@/utils/styles';
+import { AssetAvatar } from '@/components';
+import { RcIconSwapArrow } from '@/assets/icons/swap';
+import { RcArrowRightCC } from '@/assets2024/icons/perps';
 
 interface Props {
   visible: boolean;
+  token?: AbstractPortfolioToken;
+  usdcToken?: AbstractPortfolioToken;
   onCancel?: () => void;
   onConfirm?: () => void;
 }
 
-export const PerpsAgentsLimitModal: React.FC<Props> = ({
+export const PerpsDepositTokenModal: React.FC<Props> = ({
   visible,
   onCancel,
   onConfirm,
+  token,
+  usdcToken,
 }) => {
   const { t } = useTranslation();
-  const { styles } = useTheme2024({
+  const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
+
+  if (!token || !usdcToken) {
+    return null;
+  }
+
+  const isSwap = token.chain === usdcToken.chain;
 
   return (
     <Modal
@@ -31,11 +43,26 @@ export const PerpsAgentsLimitModal: React.FC<Props> = ({
       onRequestClose={onCancel}>
       <View style={styles.modalOverlay}>
         <View style={styles.container}>
-          <RcWarningFull />
           <Text style={styles.description}>
-            You’ve reached the maximum number of agents. Create a new one to
-            replace an existing agent?
+            {isSwap
+              ? 'Only USDC on Arbitrum is supported for direct deposit. Please swap your current token to USDC before depositing.'
+              : 'Only USDC on Arbitrum is supported for direct deposit. Please bridge your current token to USDC on Arbitrum before depositing.'}
           </Text>
+          <View style={styles.tokenSwap}>
+            <AssetAvatar
+              size={46}
+              chain={token.chain}
+              logo={token.logo_url}
+              chainSize={18}
+            />
+            <RcArrowRightCC color={colors2024['neutral-foot']} />
+            <AssetAvatar
+              size={46}
+              chain={usdcToken.chain}
+              logo={usdcToken.logo_url}
+              chainSize={18}
+            />
+          </View>
           <View style={styles.footer}>
             <Button
               type="ghost"
@@ -45,7 +72,7 @@ export const PerpsAgentsLimitModal: React.FC<Props> = ({
             />
             <Button
               type="primary"
-              title={t('global.confirm')}
+              title={isSwap ? 'Swap' : 'Bridge'}
               onPress={onConfirm}
               containerStyle={styles.containerStyle}
             />
@@ -81,17 +108,23 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     gap: 13,
   },
+  tokenSwap: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 24,
+    marginBottom: 36,
+  },
 
   description: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
     fontStyle: 'normal',
-    fontWeight: '700',
-    color: colors2024['neutral-body'],
-    marginBottom: 32,
-    marginTop: 12,
-    paddingHorizontal: 20,
+    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    marginBottom: 24,
+    marginTop: 30,
     textAlign: 'center',
   },
   accountContainer: {
