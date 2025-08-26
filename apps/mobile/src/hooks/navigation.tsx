@@ -38,6 +38,7 @@ import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomShe
 import { useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
+import { useSubmitFeedbackModalVisible } from '@/components/Screenshot/hooks';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -463,10 +464,10 @@ export function useAtSensitiveScene() {
  */
 export function useAppPreventScreenshotOnScreen() {
   const { atSensitiveScene, $protectedConf } = useAtSensitiveScene();
-
+  const { submitFeedbackModalVisible } = useSubmitFeedbackModalVisible();
   const { forceAllowScreenshot } = useExpScreenCapture();
   const shouldPreventScreenCapturing =
-    atSensitiveScene && !forceAllowScreenshot;
+    (submitFeedbackModalVisible || atSensitiveScene) && !forceAllowScreenshot;
 
   usePreventScreenshot(shouldPreventScreenCapturing);
 

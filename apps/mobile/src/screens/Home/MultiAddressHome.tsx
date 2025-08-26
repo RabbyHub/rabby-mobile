@@ -24,7 +24,7 @@ import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
 import { RootNames } from '@/constant/layout';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
@@ -106,6 +106,7 @@ import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
 
 const HeaderHeight = 24;
 
@@ -170,22 +171,26 @@ function MultiAddressHomeHeader(
             {loading && <RcIconloading />}
           </Animated.View>
         </View>
-        <TouchableWithoutFeedback
-          style={styles.settingEntry}
-          onPress={() => {
-            navigation.navigate(RootNames.StackSettings, {
-              screen: RootNames.Settings,
-              params: {},
-            });
 
-            matomoRequestEvent({
-              category: 'Click_Header',
-              action: 'Click_Setting',
-            });
-          }}>
-          <RcIconSetting color={colors2024['neutral-title-1']} />
-          {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
-        </TouchableWithoutFeedback>
+        <View style={styles.rightArea}>
+          <FeedbackEntryOnHeader style={styles.feedbackEntry} />
+          <TouchableWithoutFeedback
+            style={styles.settingEntry}
+            onPress={() => {
+              navigation.navigate(RootNames.StackSettings, {
+                screen: RootNames.Settings,
+                params: {},
+              });
+
+              matomoRequestEvent({
+                category: 'Click_Header',
+                action: 'Click_Setting',
+              });
+            }}>
+            <RcIconSetting color={colors2024['neutral-title-1']} />
+            {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+          </TouchableWithoutFeedback>
+        </View>
       </View>
 
       <GlobalWarning
@@ -300,7 +305,7 @@ function MultiAddressHome(): JSX.Element {
   }>();
   const { top10Addresses, top10EvmBalance, top10Balance } = useAccountInfo();
 
-  // 添加gift资格检查hook
+  // add gift eligibility check hook
   const { checkAddressesEligibility, getCurrentEligibleAddress } =
     useGasAccountEligibility();
   const currentEligibleAddress = getCurrentEligibleAddress();
@@ -311,7 +316,7 @@ function MultiAddressHome(): JSX.Element {
   const { width } = Dimensions.get('window');
   const itemWidth =
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
-  // 使用useMemo直接计算isEligible，使其能够响应相关状态变化
+  // use useMemo to directly calculate isEligible so that it can respond to related state changes
   const isEligible = useMemo(() => {
     return (
       currentEligibleAddress !== undefined &&
@@ -989,6 +994,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
+    position: 'relative',
     // flex: 1,
     // backgroundColor: colors2024['neutral-title-1'],
   },
@@ -1014,13 +1020,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  rightArea: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // position: 'relative',
+    // ...makeDebugBorder(),
+  },
+  feedbackEntry: {
+    height: '100%',
+    paddingRight: 6,
+    // ...makeDebugBorder(),
+  },
   settingEntry: {
     marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
     flexDirection: 'row',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 12,
+    paddingLeft: 6,
     paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
     position: 'relative',
   },

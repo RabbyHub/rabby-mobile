@@ -10,6 +10,7 @@ type Listeners = {
    * @platform iOS, Android >= 14
    */
   userDidTakeScreenshot: (ret?: {
+    captured?: boolean;
     path?: string;
     height?: string | number;
     width?: string | number;
@@ -91,9 +92,9 @@ function onScreenCaptureDetectionChanged(
 }
 
 if (__DEV__) {
-  onUserDidTakeScreenshot(() => {
-    console.debug('userDidTakeScreenshot');
-  });
+  // onUserDidTakeScreenshot(() => {
+  //   console.debug('userDidTakeScreenshot');
+  // });
   iosOnScreenCaptureChanged(params => {
     console.debug('screenCapturedChanged', params);
   });

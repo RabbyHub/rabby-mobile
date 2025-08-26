@@ -21,16 +21,14 @@ import {
   useFeedbackOnScreenshot,
 } from './hooks';
 import { useTranslation } from 'react-i18next';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export type BottomInputMethods = {};
 export type BottomInputProps = {
   visible?: boolean;
-  onClose?: () => void;
 };
 
 const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
-  ({ visible, onClose }, ref) => {
+  ({ visible }, ref) => {
     const {
       feedbackText: value,
       feedbackOverLimit: valueOverLimit,
@@ -39,41 +37,38 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
 
     const { styles } = useTheme2024({ getStyle: getBottomInputStyle });
     const { t } = useTranslation();
-    const { androidOnlyBottomOffset } = useSafeSizes();
-
-    useImperativeHandle(ref, () => {
-      return {};
-    });
 
     useEffect(() => {
       if (visible) {
-        inputRef.current?.focus();
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 300);
       } else {
-        inputRef.current?.blur();
+        setTimeout(() => {
+          inputRef.current?.blur();
+        }, 300);
         Keyboard.dismiss();
       }
     }, [visible]);
 
     const inputRef = useRef<any>(null);
     const isEmpty = !value;
-    const [isFocus, setIsFocus] = useState(false);
-    const handleFocus = useCallback<TextInputProps['onFocus'] & object>(e => {
-      // setIsFocus(true);
-    }, []);
+    const handleFocus = useCallback<TextInputProps['onFocus'] & object>(e => {},
+    []);
 
     const handleBlur = useCallback<
       TextInputProps['onBlur'] & object
     >(async () => {
-      // setIsFocus(false);
       Keyboard.dismiss();
     }, []);
 
     return (
       <View
+        {...(!visible && { pointerEvents: 'none' })}
         style={[
           styles.container,
           // containerAnimatedStyle,
-          !visible && { display: 'none' },
+          !visible && { opacity: 0, height: 0 },
           {
             // marginBottom: androidOnlyBottomOffset,
           },
@@ -110,6 +105,13 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
 
 export default ModalBottomInput;
 
+export const ModalBottomInputSizes = {
+  mainHeight: 108,
+  get totalContainerHeight() {
+    return this.mainHeight + 12 * 2;
+  },
+};
+
 const getBottomInputStyle = createGetStyles2024(({ colors2024 }) => {
   const winLayout = Dimensions.get('window');
   return {
@@ -131,12 +133,12 @@ const getBottomInputStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       gap: 12,
       bottom: 0,
-      minHeight: 108 + 12 * 2,
+      minHeight: ModalBottomInputSizes.totalContainerHeight,
     },
     inputContainer: {
       flex: 1,
       width: '100%',
-      height: 108,
+      height: ModalBottomInputSizes.mainHeight,
       borderRadius: 12,
       paddingHorizontal: 12,
       paddingVertical: 12,

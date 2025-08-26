@@ -70,6 +70,14 @@ export class AppScreenshotFS {
     return null;
   }
 
+  static normalizeBase64(input: string, contentType = 'image/jpeg') {
+    if (input.startsWith('data:image/') && input.indexOf('base64,') > -1) {
+      return input.split(',')[1];
+    }
+
+    return `data:${contentType};base64,${input}`;
+  }
+
   static async uriToBase64(input: string) {
     const pathInfo = await AppScreenshotFS.uriToPath(input);
     if (!pathInfo) return null;

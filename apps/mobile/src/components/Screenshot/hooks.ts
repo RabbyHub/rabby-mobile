@@ -13,46 +13,146 @@ import { openapi } from '@/core/request';
 import { AppScreenshotFS, appScreenshotFS } from '@/core/storage/fs';
 import { coerceNumber } from '@/utils/coerce';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { atomByMMKV } from '@/core/storage/mmkv';
+import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useAtomCallback } from 'jotai/utils';
 
-const lastScreenShotAtom = atom<ImageResolvedAssetSource | null>(null);
-export function useLastScreenshot() {
-  const [lastScreenshot, setLastScreenshot] = useAtom(lastScreenShotAtom);
+type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
+const screenshotFeedbackIdsAtom = atomByMMKV('@screenshotFeedbackIds', {
+  feedbacks: [] as LocalUserFeedbackItem[],
+});
 
-  return { lastScreenshot, setLastScreenshot };
+export function useScreenshotFeedbacks() {
+  const [screenshotFeedbacks, setScreenshotFeedbacks] = useAtom(
+    screenshotFeedbackIdsAtom,
+  );
+
+  const onFeedbackSubmitted = useCallback(
+    (idOrItem: LocalUserFeedbackItem) => {
+      setScreenshotFeedbacks(prev => {
+        const list = prev.feedbacks;
+
+        const newFeedback = {
+          id: idOrItem.id,
+          create_at: idOrItem.create_at || Date.now(),
+        };
+        list.push(newFeedback);
+        // order by timestamp asc
+        list.sort((a, b) => a.create_at - b.create_at);
+
+        return { ...prev, feedbacks: Array.from(list) };
+      });
+    },
+    [setScreenshotFeedbacks],
+  );
+
+  const clearFeedbacks = useCallback(() => {
+    setScreenshotFeedbacks({ feedbacks: [] });
+  }, [setScreenshotFeedbacks]);
+
+  return {
+    screenshotFeedbacks,
+    onFeedbackSubmitted,
+    clearFeedbacks,
+  };
 }
-export function useResize(
-  orig?: null | { height?: number; width?: number },
-  {
-    maxWidth = Dimensions.get('window').width - 20,
-    maxHeight,
-  }: { maxWidth?: number; maxHeight?: number } = {},
-) {
-  const scaledSize = useMemo(() => {
-    const shaped = {
-      height: coerceNumber(orig?.height, 100),
-      width: coerceNumber(orig?.width, 100),
-    };
 
-    const aspectRatio = coerceNumber(
-      maxHeight ? shaped.height / maxHeight : shaped.width / maxWidth,
-      1,
+export function useLatestLocalFeedback() {
+  const [screenshotFeedbacks] = useAtom(screenshotFeedbackIdsAtom);
+
+  const latestFeedback = useMemo(() => {
+    return (
+      screenshotFeedbacks.feedbacks
+        .sort((a, b) => b.create_at - a.create_at)
+        .at(0) || null
     );
+  }, [screenshotFeedbacks]);
 
-    return {
-      height: Math.floor(shaped.height / aspectRatio),
-      width: Math.floor(shaped.width / aspectRatio),
-    };
-  }, [orig, maxWidth, maxHeight]);
+  return latestFeedback;
+}
 
-  return { scaledSize };
+// const screenShotAtom = atom<{
+// }>({
+//   viewingLastFeedback: false,
+// });
+function getDefaultValue() {
+  return {
+    submitModalShown: false,
+    feedbackText: '',
+    lastScreenshot: null,
+    viewingLastFeedback: false,
+  };
+}
+export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
+const feedbackByScreenshotAtom = atom<{
+  submitModalShown: boolean;
+  feedbackText: string;
+  lastScreenshot: ImageResolvedAssetSource | null;
+  viewingLastFeedback: boolean;
+}>(getDefaultValue());
+
+export function useViewingLastFeedback() {
+  const [feedbackByScreenshot, setFeedbackByScreenshot] = useAtom(
+    feedbackByScreenshotAtom,
+  );
+
+  const setViewingLastFeedback = useCallback(
+    (viewing: boolean) => {
+      setFeedbackByScreenshot(prev => ({
+        ...prev,
+        viewingLastFeedback: viewing,
+      }));
+    },
+    [setFeedbackByScreenshot],
+  );
+
+  return {
+    viewingLastFeedback: feedbackByScreenshot.viewingLastFeedback,
+    setViewingLastFeedback,
+  };
+}
+
+export function useSubmitFeedbackModalVisible() {
+  const [feedbackByScreenshot] = useAtom(feedbackByScreenshotAtom);
+  return { submitFeedbackModalVisible: feedbackByScreenshot.submitModalShown };
+}
+
+export function useLastScreenshot() {
+  const [feedbackByScreenshot, setFeedbackByScreenshot] = useAtom(
+    feedbackByScreenshotAtom,
+  );
+
+  const setLastScreenshot = useCallback(
+    (image: ImageResolvedAssetSource | null) => {
+      setFeedbackByScreenshot(prev => ({
+        ...prev,
+        lastScreenshot: image,
+        submitModalShown: !!image,
+        feedbackText: '',
+      }));
+    },
+    [setFeedbackByScreenshot],
+  );
+
+  const shouldToastFeedbackByScreenshot = useAtomCallback(get => {
+    const feedbackByScreenshot = get(feedbackByScreenshotAtom);
+    return (
+      !feedbackByScreenshot.viewingLastFeedback &&
+      !feedbackByScreenshot.submitModalShown
+    );
+  });
+
+  return {
+    shouldToastFeedbackByScreenshot,
+    lastScreenshot: feedbackByScreenshot.lastScreenshot,
+    setLastScreenshot,
+  };
 }
 export function useUserDidTakeScreenshot({
   isTop = false,
 }: {
   isTop?: boolean;
 } = {}) {
-  const { setLastScreenshot } = useLastScreenshot();
-
   useEffect(() => {
     if (!isTop) return;
 
@@ -62,7 +162,6 @@ export function useUserDidTakeScreenshot({
     // Listen for screen capture detection events on Android 14+
     const cbs = {
       screenCaptureChangedListener: null as { remove: () => void } | null,
-      screenCaptureStoppedListener: null as { remove: () => void } | null,
     };
     if (androidVersion >= 34) {
       RNScreenshotPrevent.startScreenCaptureDetection();
@@ -75,11 +174,28 @@ export function useUserDidTakeScreenshot({
         });
     }
 
+    return () => {
+      if (androidVersion >= 34) {
+        // Android 14+ - stop screen capture detection
+        RNScreenshotPrevent.stopScreenCaptureDetection();
+      }
+
+      cbs.screenCaptureChangedListener?.remove();
+    };
+  }, [isTop]);
+
+  const { shouldToastFeedbackByScreenshot, setLastScreenshot } =
+    useLastScreenshot();
+
+  useEffect(() => {
+    if (!isTop) return;
+
     const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(
       async params => {
-        // You can add custom logic here to handle screenshot events
-        // For example, show a notification or log the event
-        // const imageType = params?.imageType || 'jpeg';
+        if (!params?.captured) return;
+
+        if (!shouldToastFeedbackByScreenshot()) return;
+
         const sizes = {
           height: coerceNumber(params?.height, 100),
           width: coerceNumber(params?.width, 100),
@@ -88,56 +204,49 @@ export function useUserDidTakeScreenshot({
           ? stringUtils.ensurePrefix(params.path, 'file://')
           : '';
 
-        if (fullPath && (await RNFS.exists(fullPath))) {
-          const inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath);
-          if (!inAppPath) return;
-          const image = Image.resolveAssetSource({
-            uri: inAppPath,
-            height: sizes.height,
-            width: sizes.width,
-          });
-          setLastScreenshot(image);
-        } else if (params?.imageBase64) {
-          const inAppPath = await appScreenshotFS.saveScreenshotFrom(
-            params.imageBase64,
-            { fallbackAsBase64: true },
+        let inAppPath: string | null = null;
+        if (params?.imageBase64) {
+          setLastScreenshot(
+            Image.resolveAssetSource({
+              // TODO: set contentType by params.type
+              uri: AppScreenshotFS.normalizeBase64(
+                params.imageBase64,
+                'image/jpeg',
+              ),
+              height: sizes.height,
+              width: sizes.width,
+            }),
           );
+
+          // inAppPath = await appScreenshotFS.saveScreenshotFrom(
+          //   params.imageBase64,
+          //   { fallbackAsBase64: true },
+          // );
+        } else if (fullPath && (await RNFS.exists(fullPath))) {
+          inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath);
           if (!inAppPath) return;
-          const image = Image.resolveAssetSource({
-            uri: inAppPath,
-            height: sizes.height,
-            width: sizes.width,
-          });
-          setLastScreenshot(image);
+
+          setLastScreenshot(
+            Image.resolveAssetSource({
+              // TODO: set contentType by params.type
+              uri: AppScreenshotFS.normalizeBase64(inAppPath, 'image/jpeg'),
+              height: sizes.height,
+              width: sizes.width,
+            }),
+          );
         }
       },
     );
 
     return () => {
-      // Stop appropriate screenshot detection based on platform and Android version
-      if (androidVersion >= 34) {
-        // Android 14+ - stop screen capture detection
-        RNScreenshotPrevent.stopScreenCaptureDetection();
-      }
-
       remove();
-
-      // Remove screen capture detection listeners
-      cbs.screenCaptureChangedListener?.remove();
-      cbs.screenCaptureStoppedListener?.remove();
     };
-  }, [isTop, setLastScreenshot]);
+  }, [isTop, shouldToastFeedbackByScreenshot, setLastScreenshot]);
 }
-
-export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
-const submitFeedbackOnScreenshotAtom = atom({
-  modalShown: __DEV__,
-  feedbackText: '',
-});
 
 export function useFeedbackOnScreenshot() {
   const [submitFeedbackOnScreenshot, setSubmitFeedbackOnScreenshot] = useAtom(
-    submitFeedbackOnScreenshotAtom,
+    feedbackByScreenshotAtom,
   );
   const onChangeFeedback = useCallback(
     (feedback: string) => {
@@ -150,7 +259,7 @@ export function useFeedbackOnScreenshot() {
   );
 
   return {
-    globalModalShown: submitFeedbackOnScreenshot.modalShown,
+    globalModalShown: submitFeedbackOnScreenshot.submitModalShown,
     feedbackText: submitFeedbackOnScreenshot.feedbackText,
     feedbackOverLimit:
       submitFeedbackOnScreenshot.feedbackText.length >
@@ -159,14 +268,26 @@ export function useFeedbackOnScreenshot() {
   };
 }
 export function useSubmitFeedbackOnScreenshot() {
-  const [submitFeedbackOnScreenshot, setSubmitFeedbackOnScreenshot] = useAtom(
-    submitFeedbackOnScreenshotAtom,
-  );
+  const [, setSubmitFeedbackOnScreenshot] = useAtom(feedbackByScreenshotAtom);
   const { globalModalShown, feedbackText } = useFeedbackOnScreenshot();
   const { lastScreenshot } = useLastScreenshot();
+  const { onFeedbackSubmitted } = useScreenshotFeedbacks();
+
+  const closeSubmitModal = useCallback(
+    ({ clearText = true }: { clearText?: boolean } = {}) => {
+      setSubmitFeedbackOnScreenshot(prev => ({
+        ...prev,
+        submitModalShown: false,
+        feedbackText: clearText ? '' : prev.feedbackText,
+      }));
+    },
+    [setSubmitFeedbackOnScreenshot],
+  );
 
   const submitFeedback = useCallback(
-    async function () {
+    async function ({
+      closeModalOnSuccess = true,
+    }: { closeModalOnSuccess?: boolean } = {}) {
       if (!lastScreenshot?.uri) {
         throw new Error('No screenshot available');
       }
@@ -181,15 +302,22 @@ export function useSubmitFeedbackOnScreenshot() {
           image_url_list: [result.image_url],
           content: feedbackText,
         });
+
+        if (closeModalOnSuccess) {
+          closeSubmitModal({ clearText: true });
+        }
+
+        onFeedbackSubmitted(submitResult);
       }
     },
-    [feedbackText, lastScreenshot?.uri],
+    [feedbackText, lastScreenshot?.uri, closeSubmitModal, onFeedbackSubmitted],
   );
 
   return {
     globalModalShown,
     feedbackText,
 
+    closeSubmitModal,
     submitFeedback,
 
     canSubmit: !!lastScreenshot?.uri && feedbackText.length > 0,

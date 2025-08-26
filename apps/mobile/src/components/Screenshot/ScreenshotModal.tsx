@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Dimensions,
   GestureResponderEvent,
@@ -12,11 +12,7 @@ import {
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  useLastScreenshot,
-  useResize,
-  useSubmitFeedbackOnScreenshot,
-} from './hooks';
+import { useLastScreenshot, useSubmitFeedbackOnScreenshot } from './hooks';
 import { IS_IOS } from '@/core/native/utils';
 
 import RcCloseCC from './icons/close-cc.svg';
@@ -24,7 +20,10 @@ import RcEditCC from './icons/edit-cc.svg';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
 import { FontWeightEnum } from '@/core/utils/fonts';
-import ModalBottomInput, { BottomInputMethods } from './ModalBottomInput';
+import ModalBottomInput, {
+  BottomInputMethods,
+  ModalBottomInputSizes,
+} from './ModalBottomInput';
 import { useOnKeyboardDismissed } from '@/hooks/system/keyboard';
 
 // const IMAGE_CONTAIN_STYLE = { height: 200, width: '100%' } as const;
@@ -42,27 +41,26 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle: getModalStyle });
-  // const { scaledSize } = useResize(lastScreenshot, {
-  //   maxHeight: SIZES.IMG_MAX_H,
-  //   maxWidth: SIZES.IMG_MAX_W,
-  // });
 
-  const { globalModalShown, feedbackText, submitFeedback, canSubmit } =
-    useSubmitFeedbackOnScreenshot();
-  // const bottomInputRef = React.useRef<BottomInputMethods>(null);
+  const {
+    globalModalShown,
+    closeSubmitModal,
+    feedbackText,
+    submitFeedback,
+    canSubmit,
+  } = useSubmitFeedbackOnScreenshot();
+
   const [bottomInputVisible, setBottomInputVisible] = React.useState(false);
 
   const [editIconParentLayout, setEditIconParentLayout] = React.useState({
     width: 0,
   });
 
-  useOnKeyboardDismissed(() => {
-    setBottomInputVisible(false);
-  });
-
-  if (!lastScreenshot?.uri) {
-    return null;
-  }
+  useOnKeyboardDismissed(
+    useCallback(() => {
+      setBottomInputVisible(false);
+    }, []),
+  );
 
   return (
     <Modal
@@ -70,19 +68,27 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
       transparent
       animationType="fade"
       style={styles.modalComp}>
+      {
+        <View
+          style={[styles.maskExtra, !bottomInputVisible && styles.maskBg]}
+        />
+      }
+
       <TouchableOpacity
-        style={[styles.modalMask]}
+        style={[styles.avoidingView, bottomInputVisible && styles.maskBg]}
         activeOpacity={1}
         onPress={() => {
           setBottomInputVisible(false);
         }}>
         <KeyboardAvoidingView
-          behavior={IS_IOS ? 'padding' : 'padding'}
+          behavior={IS_IOS ? 'padding' : 'height'}
           style={styles.modalWrapper}>
           <View style={[styles.modal]}>
             <TouchableOpacity
               style={styles.modalClose}
-              onPress={wrapOnPress(evt => {})}>
+              onPress={wrapOnPress(() => {
+                closeSubmitModal();
+              })}>
               <RcCloseCC
                 style={styles.modalCloseIcon}
                 color={styles.modalCloseIcon.color}
@@ -100,11 +106,13 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
                   const { width } = event.nativeEvent.layout;
                   setEditIconParentLayout({ width });
                 }}>
-                <Image
-                  style={[styles.image, { width: '100%', height: '100%' }]}
-                  source={{ uri: lastScreenshot.uri }}
-                  resizeMode={IMAGE_RESIZE_MODE}
-                />
+                {lastScreenshot?.uri && (
+                  <Image
+                    style={[styles.image, { width: '100%', height: '100%' }]}
+                    source={{ uri: lastScreenshot.uri }}
+                    resizeMode={IMAGE_RESIZE_MODE}
+                  />
+                )}
                 {/* Edit pen icon */}
                 <TouchableOpacity
                   style={[
@@ -188,14 +196,28 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   const modalWidth = winLayout.width - SIZES.MODAL_MASK_H_PADDING * 2;
 
   return {
-    modalComp: {},
-    modalMask: {
-      position: 'relative',
+    modalComp: {
+      // backgroundColor: isLight ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.85)',
+    },
+    maskBg: {
       backgroundColor: isLight ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.85)',
+    },
+    avoidingView: {
+      position: 'relative',
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: SIZES.MODAL_MASK_H_PADDING,
+      height: winLayout.height,
+      width: winLayout.width,
+    },
+    maskExtra: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      // backgroundColor: 'red',
       height: winLayout.height,
     },
     modalWrapper: {
@@ -204,6 +226,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       minHeight: winLayout.height - SIZES.MODAL_V_MARGIN * 2,
       justifyContent: 'center',
       alignItems: 'center',
+      position: 'relative',
     },
     modal: {
       maxWidth: modalWidth,
