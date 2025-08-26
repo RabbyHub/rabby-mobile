@@ -7,14 +7,16 @@ import {
   Modal,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 
-import { useLastScreenshot, useResize } from '@/hooks/native/security';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { useSubmitFeedbackOnScreenshot } from './hooks';
+import {
+  useLastScreenshot,
+  useResize,
+  useSubmitFeedbackOnScreenshot,
+} from './hooks';
 import { IS_IOS } from '@/core/native/utils';
 
 import RcCloseCC from './icons/close-cc.svg';
@@ -23,8 +25,6 @@ import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
 import { FontWeightEnum } from '@/core/utils/fonts';
 import ModalBottomInput, { BottomInputMethods } from './ModalBottomInput';
-import TouchableView from '../Touchable/TouchableView';
-import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useOnKeyboardDismissed } from '@/hooks/system/keyboard';
 
 // const IMAGE_CONTAIN_STYLE = { height: 200, width: '100%' } as const;
@@ -42,14 +42,13 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle: getModalStyle });
-  const { scaledSize } = useResize(lastScreenshot, {
-    maxHeight: SIZES.IMG_MAX_H,
-    maxWidth: SIZES.IMG_MAX_W,
-  });
-  console.debug('[debug] scaledSize', scaledSize);
-  console.debug('[debug] lastScreenshot?.uri', lastScreenshot?.uri);
+  // const { scaledSize } = useResize(lastScreenshot, {
+  //   maxHeight: SIZES.IMG_MAX_H,
+  //   maxWidth: SIZES.IMG_MAX_W,
+  // });
 
-  const { globalModalShown, feedbackText } = useSubmitFeedbackOnScreenshot();
+  const { globalModalShown, feedbackText, submitFeedback, canSubmit } =
+    useSubmitFeedbackOnScreenshot();
   // const bottomInputRef = React.useRef<BottomInputMethods>(null);
   const [bottomInputVisible, setBottomInputVisible] = React.useState(false);
 
@@ -148,7 +147,10 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
                   buttonStyle={styles.submitButton}
                   titleStyle={styles.buttonTitle}
                   type="primary"
-                  onPress={wrapOnPress(evt => {})}
+                  disabled={!canSubmit}
+                  onPress={wrapOnPress(evt => {
+                    submitFeedback();
+                  })}
                 />
               </View>
             </View>

@@ -38,7 +38,7 @@ import { useGasAccountInfo } from './screens/GasAccount/hooks';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
-import { useUserDidTakeScreenshot } from './hooks/native/security';
+import { useUserDidTakeScreenshot } from './components/Screenshot/hooks';
 
 const rneuiTheme = createTheme({
   lightColors: {

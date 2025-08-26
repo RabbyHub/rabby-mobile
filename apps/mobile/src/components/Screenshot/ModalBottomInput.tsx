@@ -18,7 +18,7 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import {
   SCREENSHOT_FEEDBACK_MAX_LENGTH,
-  useSubmitFeedbackOnScreenshot,
+  useFeedbackOnScreenshot,
 } from './hooks';
 import { useTranslation } from 'react-i18next';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -35,7 +35,7 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
       feedbackText: value,
       feedbackOverLimit: valueOverLimit,
       onChangeFeedback,
-    } = useSubmitFeedbackOnScreenshot();
+    } = useFeedbackOnScreenshot();
 
     const { styles } = useTheme2024({ getStyle: getBottomInputStyle });
     const { t } = useTranslation();

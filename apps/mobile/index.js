@@ -5,7 +5,7 @@ import 'react-native-gesture-handler';
 import './global';
 import './src/setup-app';
 if (__DEV__) {
-  import('./ReactotronConfig').then(() => console.log('Reactotron Configured'));
+  import('./ReactotronConfig');
 }
 
 import { enableScreens } from 'react-native-screens';

@@ -3,9 +3,7 @@ import { getVersion, getBuildNumber } from 'react-native-device-info';
 import { stringUtils } from '@rabby-wallet/base-utils';
 
 import { CHAINS_ENUM } from './chains';
-// import pkgjson from '../../package.json';
 
-// export const INITIAL_OPENAPI_URL = 'https://api.rabby.io';
 export const INITIAL_OPENAPI_URL = 'https://app-api.rabby.io';
 
 export const INITIAL_TESTNET_OPENAPI_URL = 'https://api.testnet.rabby.io';
