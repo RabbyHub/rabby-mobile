@@ -88,7 +88,8 @@ export function useResize(
   orig?: null | { height?: number; width?: number },
   {
     maxWidth = Dimensions.get('window').width - 20,
-  }: { maxWidth?: number } = {},
+    maxHeight,
+  }: { maxWidth?: number; maxHeight?: number } = {},
 ) {
   const scaledSize = useMemo(() => {
     const shaped = {
@@ -96,13 +97,16 @@ export function useResize(
       width: coerceNumber(orig?.width, 100),
     };
 
-    const aspectRatio = shaped.width / maxWidth;
+    const aspectRatio = coerceNumber(
+      maxHeight ? shaped.height / maxHeight : shaped.width / maxWidth,
+      1,
+    );
 
     return {
       height: Math.floor(shaped.height / aspectRatio),
       width: Math.floor(shaped.width / aspectRatio),
     };
-  }, [orig, maxWidth]);
+  }, [orig, maxWidth, maxHeight]);
 
   return { scaledSize };
 }
@@ -138,7 +142,6 @@ export function useUserDidTakeScreenshot({
 
     const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(
       async params => {
-        // console.debug('[feat] userDidTakeScreenshot event received:', params);
         // You can add custom logic here to handle screenshot events
         // For example, show a notification or log the event
         // const imageType = params?.imageType || 'jpeg';

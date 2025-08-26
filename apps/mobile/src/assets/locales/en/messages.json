@@ -2285,6 +2285,14 @@
         "quotesDesc": "quote failed to be loaded. ",
         "balanceDesc": "balance failed to be loaded. "
       }
+    },
+    "screenshotModal": {
+      "title": "Snapshot to Report Bug",
+      "submitButtonText": "Submit",
+      "feedbackInput": {
+        "placeholder": "Describe the issue"
+      },
+      "feedbackLabel": "Bug"
     }
   },
   "native": {
