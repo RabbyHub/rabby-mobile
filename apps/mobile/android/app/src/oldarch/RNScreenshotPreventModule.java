@@ -49,7 +49,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implem
   private Activity.ScreenCaptureCallback screenCaptureCallback;
   private final Handler mainHandler = new Handler(Looper.getMainLooper());
   private final java.util.Set<Long> recentScreenshotIds = new java.util.HashSet<>();
-   private static final long DEBOUNCE_TIMEOUT_MS = 2000L;
+   private static final long DEBOUNCE_TIMEOUT_MS = 10000L;
 
   // For DETECT_SCREEN_CAPTURE permission
   private boolean hasDetectScreenCapturePermission = false;
@@ -127,7 +127,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implem
         screenCaptureCallback = new Activity.ScreenCaptureCallback() {
           @Override
           public void onScreenCaptured() {
-              Log.d(TAG, "Screen capture detected via new API!");
+            Log.d(TAG, "Screen capture detected via new API!");
 
             WritableMap params = Arguments.createMap();
             params.putBoolean("captured", false);
@@ -147,13 +147,13 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implem
 
             // Check if it's a new screenshot (avoid duplicate triggers)
             if (recentScreenshotIds.contains(latestScreenshot.id)) {
-              params.putBoolean("captured", false);
-              RabbyUtils.rnCtxSendEvent(reactContext, "userDidTakeScreenshot", params);
               return;
             }
 
             recentScreenshotIds.add(latestScreenshot.id);
-            mainHandler.postDelayed(() -> recentScreenshotIds.remove(latestScreenshot.id), DEBOUNCE_TIMEOUT_MS);
+            mainHandler.postDelayed(() ->  {
+              recentScreenshotIds.remove(latestScreenshot.id);
+            }, DEBOUNCE_TIMEOUT_MS);
 
             // (Optional) Get image data - now using ScreenshotHelper
             String base64 = ScreenshotHelper.getImageBase64(contentResolver, latestScreenshot.uri, 80);

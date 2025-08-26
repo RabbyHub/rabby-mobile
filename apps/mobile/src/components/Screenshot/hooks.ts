@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Dimensions,
   Image,
@@ -117,7 +117,7 @@ export function useSubmitFeedbackModalVisible() {
   return { submitFeedbackModalVisible: feedbackByScreenshot.submitModalShown };
 }
 
-export function useLastScreenshot() {
+function useLastScreenshot() {
   const [feedbackByScreenshot, setFeedbackByScreenshot] = useAtom(
     feedbackByScreenshotAtom,
   );
@@ -268,9 +268,10 @@ export function useFeedbackOnScreenshot() {
   };
 }
 export function useSubmitFeedbackOnScreenshot() {
-  const [, setSubmitFeedbackOnScreenshot] = useAtom(feedbackByScreenshotAtom);
+  const [{ lastScreenshot }, setSubmitFeedbackOnScreenshot] = useAtom(
+    feedbackByScreenshotAtom,
+  );
   const { globalModalShown, feedbackText } = useFeedbackOnScreenshot();
-  const { lastScreenshot } = useLastScreenshot();
   const { onFeedbackSubmitted } = useScreenshotFeedbacks();
 
   const closeSubmitModal = useCallback(
@@ -278,6 +279,7 @@ export function useSubmitFeedbackOnScreenshot() {
       setSubmitFeedbackOnScreenshot(prev => ({
         ...prev,
         submitModalShown: false,
+        lastScreenshot: null,
         feedbackText: clearText ? '' : prev.feedbackText,
       }));
     },
@@ -314,6 +316,7 @@ export function useSubmitFeedbackOnScreenshot() {
   );
 
   return {
+    lastScreenshot,
     globalModalShown,
     feedbackText,
 

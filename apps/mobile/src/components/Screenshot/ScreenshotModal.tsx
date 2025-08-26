@@ -12,7 +12,7 @@ import {
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { useLastScreenshot, useSubmitFeedbackOnScreenshot } from './hooks';
+import { useSubmitFeedbackOnScreenshot } from './hooks';
 import { IS_IOS } from '@/core/native/utils';
 
 import RcCloseCC from './icons/close-cc.svg';
@@ -20,10 +20,7 @@ import RcEditCC from './icons/edit-cc.svg';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
 import { FontWeightEnum } from '@/core/utils/fonts';
-import ModalBottomInput, {
-  BottomInputMethods,
-  ModalBottomInputSizes,
-} from './ModalBottomInput';
+import ModalBottomInput from './ModalBottomInput';
 import { useOnKeyboardDismissed } from '@/hooks/system/keyboard';
 
 // const IMAGE_CONTAIN_STYLE = { height: 200, width: '100%' } as const;
@@ -37,12 +34,12 @@ function wrapOnPress(handler?: (evt: GestureResponderEvent) => void) {
 }
 
 export function GlobalModalSubmitFeedbackWithScreenshot() {
-  const { lastScreenshot } = useLastScreenshot();
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle: getModalStyle });
 
   const {
+    lastScreenshot,
     globalModalShown,
     closeSubmitModal,
     feedbackText,
@@ -68,11 +65,7 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
       transparent
       animationType="fade"
       style={styles.modalComp}>
-      {
-        <View
-          style={[styles.maskExtra, !bottomInputVisible && styles.maskBg]}
-        />
-      }
+      <View style={[styles.maskExtra, !bottomInputVisible && styles.maskBg]} />
 
       <TouchableOpacity
         style={[styles.avoidingView, bottomInputVisible && styles.maskBg]}
