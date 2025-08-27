@@ -28,6 +28,8 @@ export const enum APP_STORE_NAMES {
   'openapi' = 'openapi',
 
   'metamaskMode' = 'metamaskMode',
+
+  'perps' = 'perps',
 }
 
 export type STORE_SERVICE_MAP = {
@@ -65,6 +67,7 @@ export type STORE_SERVICE_MAP = {
 
   [APP_STORE_NAMES.metamaskMode]: import('@/core/services/metamaskModeService').MetamaskModeService;
   [APP_STORE_NAMES.syncChain]: import('@/core/services/syncChainService').SyncChainService;
+  [APP_STORE_NAMES.perps]: import('@/core/services/perpsService').PerpsService;
 };
 
 export type MIGRATABLE_STORE_SERVICE = keyof STORE_SERVICE_MAP;

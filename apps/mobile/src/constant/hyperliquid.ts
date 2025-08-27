@@ -1,1 +1,0 @@
-export const ARB_USDC_CONTRACT = '0xaf88d065e77c8cc2239327c5edb3a432268e5831';

@@ -42,6 +42,7 @@ import { BrowserService } from './browserService';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { MetamaskModeService } from './metamaskModeService';
 import { SyncChainService } from './syncChainService';
+import { PerpsService } from './perpsService';
 
 migrateAppStorage(appStorage);
 
@@ -220,6 +221,11 @@ export const syncChainService = new SyncChainService({
   storageAdapter: appStorage,
 });
 
+export const perpsService = new PerpsService({
+  storageAdapter: appStorage,
+  keyringService,
+});
+
 migrateServices({
   contactBook: contactService,
   dapps: dappService,
@@ -239,4 +245,5 @@ migrateServices({
   browser: browserService,
   metamaskMode: metamaskModeService,
   syncChain: syncChainService,
+  perps: perpsService,
 });

@@ -2,7 +2,10 @@ import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { ARB_USDC_CONTRACT } from '@/constant/hyperliquid';
+import {
+  ARB_USDC_TOKEN_ID,
+  ARB_USDC_TOKEN_SERVER_CHAIN,
+} from '@/constant/perps';
 import { openapi } from '@/core/request';
 import { useFallbackAccount } from '@/hooks/account';
 import { useTokens } from '@/hooks/chainAndToken/useToken';
@@ -50,8 +53,8 @@ export const PerpsSelectTokenPopup: React.FC<{
     async () => {
       const arbUsdcToken = await openapi.getToken(
         address,
-        'arb',
-        ARB_USDC_CONTRACT,
+        ARB_USDC_TOKEN_SERVER_CHAIN,
+        ARB_USDC_TOKEN_ID,
       );
       return ensureAbstractPortfolioToken(arbUsdcToken);
     },
@@ -68,8 +71,8 @@ export const PerpsSelectTokenPopup: React.FC<{
           arbUsdc,
           ...(_tokens?.filter(
             item =>
-              item.chain !== 'arb' &&
-              !isSameAddress(item._tokenId, ARB_USDC_CONTRACT),
+              item.chain !== ARB_USDC_TOKEN_SERVER_CHAIN &&
+              !isSameAddress(item._tokenId, ARB_USDC_TOKEN_ID),
           ) || []),
         ];
   }, [_tokens, arbUsdc]);
@@ -108,7 +111,8 @@ export const PerpsSelectTokenPopup: React.FC<{
               ])}>
               {getTokenSymbol(item)}
             </Text>
-            {item.chain === 'arb' && item._tokenId === ARB_USDC_CONTRACT ? (
+            {item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+            item._tokenId === ARB_USDC_TOKEN_ID ? (
               <View style={styles.depositTag}>
                 <Text style={styles.depositTagText}>Direct Deposit</Text>
               </View>

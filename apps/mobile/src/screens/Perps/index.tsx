@@ -15,44 +15,145 @@ import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
 import { PerpsGuidePopup } from './components/PerpsGuidePopup';
 import { PerpsDepositPopup } from './components/PerpsDepositPopup';
 import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import { usePerspPopupState } from './hooks/usePerpsPopupState';
+import { useMemoizedFn, useRequest } from 'ahooks';
+import { Account } from '@/core/services/preference';
+import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
-  const { navigation } = useSafeSetNavigationOptions();
+  const navigation = useRabbyAppNavigation();
+
+  const {
+    positionAndOpenOrders,
+    accountSummary,
+    currentPerpsAccount,
+    isLogin,
+    marketData,
+    userFills,
+    marketDataMap,
+    logout,
+    login,
+    handleWithdraw,
+    homeHistoryList,
+  } = usePerpsState();
+
+  const [popupState, setPopupState] = usePerspPopupState();
+
+  // console.log({ marketData });
+
+  const { runAsync: handleLogin } = useRequest(
+    async (v: Account) => {
+      await login(v);
+      setPopupState(prev => ({
+        ...prev,
+        isShowLoginPopup: false,
+      }));
+    },
+    {
+      manual: true,
+    },
+  );
+
+  const handleLogout = useMemoizedFn(() => {
+    logout(currentPerpsAccount?.address || '');
+    setPopupState(prev => ({
+      ...prev,
+      isShowLogoutPopup: false,
+    }));
+  });
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: PerpsHeaderTitle,
-      headerRight: PerpsHeaderRight,
+      headerTitle: () => <PerpsHeaderTitle account={currentPerpsAccount} />,
+      headerRight: () => (
+        <PerpsHeaderRight
+          isLogin={isLogin}
+          onPress={() => {
+            setPopupState(prev => ({
+              ...prev,
+              isShowLogoutPopup: true,
+            }));
+          }}
+        />
+      ),
     });
-  }, [navigation]);
+  }, [currentPerpsAccount, isLogin, navigation, setPopupState]);
 
   return (
     <>
       <NormalScreenContainer2024 type="bg2">
         <View style={styles.container}>
-          <PerpsMain ListHeaderComponent={<PerpsAccountCard />} />
+          <PerpsMain
+            ListHeaderComponent={
+              <PerpsAccountCard
+                isLogin={isLogin}
+                accountSummary={accountSummary}
+              />
+            }
+            marketData={marketData}
+          />
         </View>
       </NormalScreenContainer2024>
-      {/* todo */}
       <AccountSelectorPopup
-        visible={false}
+        visible={popupState.isShowLoginPopup}
         onClose={() => {
-          // setIsShowAccountPopup(false);
+          setPopupState(prev => ({
+            ...prev,
+            isShowLoginPopup: false,
+          }));
         }}
-        // value={account}
-        onChange={v => {}}
+        value={currentPerpsAccount}
+        onChange={handleLogin}
         isShowSafeAddressSection={false}
         isShowWatchAddressSection={false}
         title={t('page.perps.selectAccountTitle')}
       />
+      <PerpsAccountLogoutPopup
+        visible={popupState.isShowLogoutPopup}
+        onClose={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowLogoutPopup: false,
+          }));
+        }}
+        onLogout={handleLogout}
+        account={currentPerpsAccount}
+      />
       <PerpsAgentsLimitModal visible={false} />
-      <PerpsGuidePopup visible={false} />
-      <PerpsDepositPopup visible={false} />
-      <PerpsWithdrawPopup visible={true} />
+      <PerpsGuidePopup
+        visible={popupState.isShowGuidePopup}
+        onClose={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowGuidePopup: false,
+          }));
+        }}
+      />
+      <PerpsDepositPopup
+        account={currentPerpsAccount}
+        visible={popupState.isShowDepositPopup}
+        onClose={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowDepositPopup: false,
+          }));
+        }}
+      />
+      <PerpsWithdrawPopup
+        visible={popupState.isShowWithdrawPopup}
+        onClose={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowWithdrawPopup: false,
+          }));
+        }}
+      />
     </>
   );
 };

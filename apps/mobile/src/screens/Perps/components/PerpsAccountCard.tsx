@@ -1,38 +1,65 @@
 import { RcTradPerps } from '@/assets2024/icons/perps';
 import { Button } from '@/components2024/Button';
+import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { GasAccountWrapperBg } from '@/screens/GasAccount/components/WrapperBg';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import { usePerspPopupState } from '../hooks/usePerpsPopupState';
+import { formatUsdValue } from '@/utils/number';
+import BigNumber from 'bignumber.js';
 
-export const PerpsAccountCard = () => {
+export const PerpsAccountCard: React.FC<{
+  isLogin: boolean;
+  accountSummary?: AccountSummary | null;
+}> = ({ isLogin, accountSummary }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const [popupState, setPopupState] = usePerspPopupState();
 
-  const isLogin = true; // Replace with actual login state
   if (isLogin) {
     return (
       <View style={[styles.card, styles.balanceCard]}>
         <View style={styles.balanceCardContent}>
-          <Text style={styles.balance}>${100}</Text>
+          <Text style={styles.balance}>
+            {formatUsdValue(
+              Number(accountSummary?.accountValue),
+              BigNumber.ROUND_DOWN,
+            )}
+          </Text>
           <Text style={styles.availableBalance}>
-            {t('page.perps.PerpsCard.available')}: $0.00
+            {t('page.perps.PerpsCard.available')}:
+            {formatUsdValue(
+              Number(accountSummary?.withdrawable),
+              BigNumber.ROUND_DOWN,
+            )}
           </Text>
         </View>
         <View style={styles.balanceCardBtns}>
           <View style={styles.btnItem}>
             <Button
               type="ghost"
-              onPress={() => {}}
+              onPress={() => {
+                setPopupState(prev => ({
+                  ...prev,
+                  isShowWithdrawPopup: true,
+                }));
+              }}
               title={t('page.perps.PerpsCard.withdrawBtn')}
             />
           </View>
           <View style={styles.btnItem}>
             <Button
               type="primary"
-              onPress={() => {}}
+              onPress={() => {
+                setPopupState(prev => ({
+                  ...prev,
+                  isShowDepositPopup: true,
+                }));
+              }}
               title={t('page.perps.PerpsCard.depositBtn')}
             />
           </View>
@@ -55,11 +82,21 @@ export const PerpsAccountCard = () => {
       <View style={styles.loginCardBtns}>
         <Button
           type="primary"
-          onPress={() => {}}
+          onPress={() => {
+            setPopupState(prev => ({
+              ...prev,
+              isShowLoginPopup: true,
+            }));
+          }}
           title={t('page.perps.PerpsCard.loginBtn')}
         />
         <Button
-          onPress={() => {}}
+          onPress={() => {
+            setPopupState(prev => ({
+              ...prev,
+              isShowGuidePopup: true,
+            }));
+          }}
           buttonStyle={styles.learnBtn}
           titleStyle={styles.learnBtnTitle}
           title={t('page.perps.PerpsCard.learnBtn')}

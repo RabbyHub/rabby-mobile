@@ -9,6 +9,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Text, View } from 'react-native';
 import { PerpsMarketItem } from './components/PerpsMarketItem';
+import { MarketData, usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { sortBy } from 'lodash';
 
 export const PerpsMarketListScreen = () => {
   const { t } = useTranslation();
@@ -16,19 +18,27 @@ export const PerpsMarketListScreen = () => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
   const navigation = useRabbyAppNavigation();
-  const data = [{}, {}, {}]; // Placeholder data, replace with actual market data
+  const { state } = usePerpsStore();
 
-  const renderItem = useMemoizedFn(() => {
-    return (
-      <PerpsMarketItem
-        onPress={() => {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.PerpsMarketDetail,
-          });
-        }}
-      />
-    );
-  });
+  const data = React.useMemo(() => {
+    return sortBy(state.marketData, item => -(item.dayNtlVlm || 0));
+  }, [state.marketData]);
+
+  const renderItem = useMemoizedFn(
+    ({ item, index }: { item: MarketData; index: number }) => {
+      return (
+        <PerpsMarketItem
+          onPress={() => {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.PerpsMarketDetail,
+            });
+          }}
+          item={item}
+          index={index + 1}
+        />
+      );
+    },
+  );
 
   return (
     <NormalScreenContainer2024 type="bg2">

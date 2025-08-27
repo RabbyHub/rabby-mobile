@@ -4,11 +4,17 @@ import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { RcLogoutCC } from '@/assets2024/icons/perps';
 
-export const PerpsHeaderRight = () => {
+export const PerpsHeaderRight: React.FC<{
+  isLogin?: boolean;
+  onPress?(): void;
+}> = ({ isLogin, onPress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
+  if (!isLogin) {
+    return null;
+  }
   return (
-    <TouchableOpacity>
+    <TouchableOpacity onPress={onPress}>
       <RcLogoutCC style={styles.icon} color={colors2024['neutral-body']} />
     </TouchableOpacity>
   );

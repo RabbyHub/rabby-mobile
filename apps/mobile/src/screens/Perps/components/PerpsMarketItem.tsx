@@ -1,29 +1,44 @@
+import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
+import FastImage from 'react-native-fast-image';
+const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
-export const PerpsMarketItem: React.FC<{}> = () => {
+export const PerpsMarketItem: React.FC<{ item: MarketData }> = ({ item }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
+  const isUp = Number(item.markPx) - Number(item.prevDayPx) > 0;
+  const absPnlUsd = Math.abs(Number(item.markPx) - Number(item.prevDayPx));
+  const absPnlPct = Math.abs(absPnlUsd / Number(item.prevDayPx));
+  const pnlText = `${isUp ? '+' : '-'}${formatPct(absPnlPct)}`;
+
   return (
-    <View style={styles.card}>
-      <View style={styles.icon} />
-      <View style={styles.content}>
-        <View style={styles.row}>
-          <Text style={styles.name}>BTC-USD</Text>
-          <Text style={styles.price}>$114,539.00</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.leverage}>40x</Text>
-          <Text style={[styles.priceChange, styles.priceChangeDown]}>
-            +0.87%
-          </Text>
+    <TouchableOpacity>
+      <View style={styles.card}>
+        <FastImage
+          style={styles.icon}
+          source={{
+            uri: item.logoUrl,
+          }}
+        />
+        <View style={styles.content}>
+          <View style={styles.row}>
+            <Text style={styles.name}>{item.name} - USD</Text>
+            <Text style={styles.price}> {`$${item.markPx}`}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.leverage}>{item.maxLeverage}x</Text>
+            <Text style={[styles.priceChange, styles.priceChangeDown]}>
+              {pnlText}
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -42,7 +57,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 46,
     height: 46,
     borderRadius: 1000,
-    backgroundColor: 'red',
     flexShrink: 0,
   },
   content: {

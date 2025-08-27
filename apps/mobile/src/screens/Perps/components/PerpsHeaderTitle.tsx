@@ -7,21 +7,30 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { useFallbackAccount } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
+import { Account } from '@/core/services/preference';
 
-export const PerpsHeaderTitle: React.FC<{}> = ({}) => {
+export const PerpsHeaderTitle: React.FC<{
+  account?: Account | null;
+}> = ({ account }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const account = useFallbackAccount();
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{t('page.perps.title')}</Text>
-      <View style={styles.addressContainer}>
-        <WalletIcon style={styles.walletIcon} width={18} height={18} />
-        <Text style={styles.address}>
-          {account.aliasName || ellipsisAddress(account?.address)}
-        </Text>
-      </View>
+      {account ? (
+        <View style={styles.addressContainer}>
+          <WalletIcon
+            style={styles.walletIcon}
+            width={18}
+            height={18}
+            address={account.address}
+          />
+          <Text style={styles.address}>
+            {account.aliasName || ellipsisAddress(account?.address)}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 };

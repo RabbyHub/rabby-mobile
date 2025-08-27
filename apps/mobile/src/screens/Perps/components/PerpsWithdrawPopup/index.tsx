@@ -95,7 +95,7 @@ export const PerpsWithdrawPopup: React.FC<{
           />
         </AutoLockView>
       </AppBottomSheetModal>
-      <PerpsWithdrawFeePopup visible={true} />
+      <PerpsWithdrawFeePopup visible={false} />
     </>
   );
 };

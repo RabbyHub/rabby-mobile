@@ -22,7 +22,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 
-export const PerpsMain: React.FC<{
+export const PerpsMarketSection: React.FC<{
   ListHeaderComponent?: React.ReactElement;
   marketData: MarketData[];
 }> = ({ ListHeaderComponent, marketData }) => {

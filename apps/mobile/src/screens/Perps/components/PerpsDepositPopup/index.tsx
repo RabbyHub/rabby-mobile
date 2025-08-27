@@ -5,23 +5,62 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
+import {
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
+import { formatUsdValue } from '@/utils/number';
+import BigNumber from 'bignumber.js';
+import { Account } from '@/core/services/preference';
+import { useRequest } from 'ahooks';
+import { openapi } from '@/core/request';
+import {
+  ARB_USDC_TOKEN_ID,
+  ARB_USDC_TOKEN_SERVER_CHAIN,
+} from '@/constant/perps';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { AssetAvatar } from '@/components';
+import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
+import { getTokenSymbol } from '@/utils/token';
 
 export const PerpsDepositPopup: React.FC<{
+  account?: Account | null;
   visible?: boolean;
   onClose?(): void;
-}> = ({ visible, onClose }) => {
+}> = ({ visible, onClose, account }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
 
+  const [isShowTokenPopup, setIsShowTokenPopup] = useState(false);
+
   const { t } = useTranslation();
+
+  const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(
+    async () => {
+      if (!account) {
+        return null;
+      }
+      const arbUsdcToken = await openapi.getToken(
+        account.address,
+        ARB_USDC_TOKEN_SERVER_CHAIN,
+        ARB_USDC_TOKEN_ID,
+      );
+      return ensureAbstractPortfolioToken(arbUsdcToken);
+    },
+    {
+      refreshDeps: [account?.address],
+      manual: true,
+    },
+  );
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -35,6 +74,16 @@ export const PerpsDepositPopup: React.FC<{
       modalRef.current?.dismiss();
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (visible) {
+      runFetchUsdcToken();
+    }
+  }, [runFetchUsdcToken, visible]);
+
+  if (!account) {
+    return null;
+  }
 
   return (
     <>
@@ -61,7 +110,15 @@ export const PerpsDepositPopup: React.FC<{
                 {t('page.perps.PerpsDepositPopup.amount')}
               </Text>
               <Text style={styles.formItemDesc}>
-                {t('page.perps.PerpsDepositPopup.balance')}: $100
+                {t('page.perps.PerpsDepositPopup.balance')}:{' '}
+                {arbUsdc
+                  ? formatUsdValue(
+                      new BigNumber(arbUsdc.amount || 0)
+                        .times(arbUsdc.price || 0)
+                        .toString(),
+                      BigNumber.ROUND_DOWN,
+                    )
+                  : '$0'}
               </Text>
             </View>
             <View style={styles.inputContainer}>
@@ -71,9 +128,26 @@ export const PerpsDepositPopup: React.FC<{
                 placeholder="$0"
               />
               <View style={styles.divider} />
-              <View style={styles.tokenContainer}>
-                <Text style={styles.tokenText}>USDC</Text>
-              </View>
+              {arbUsdc ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsShowTokenPopup(true);
+                  }}>
+                  <View style={styles.tokenContainer}>
+                    <AssetAvatar
+                      size={26}
+                      chain={arbUsdc?.chain}
+                      logo={arbUsdc?.logo_url}
+                      chainSize={12}
+                    />
+                    <Text style={styles.tokenText}>
+                      {getTokenSymbol(arbUsdc)}
+                    </Text>
+
+                    <RcIconSwapBottomArrow />
+                  </View>
+                </TouchableOpacity>
+              ) : null}
             </View>
           </View>
           <Button
@@ -83,7 +157,12 @@ export const PerpsDepositPopup: React.FC<{
           />
         </AutoLockView>
       </AppBottomSheetModal>
-      <PerpsSelectTokenPopup visible={true} />
+      <PerpsSelectTokenPopup
+        visible={isShowTokenPopup}
+        onClose={() => {
+          setIsShowTokenPopup(false);
+        }}
+      />
     </>
   );
 };
@@ -166,6 +245,22 @@ const getStyle = createGetStyles2024(ctx => {
       width: 1,
       height: 28,
       backgroundColor: ctx.colors2024['neutral-line'],
+    },
+    tokenContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+      padding: 4,
+      backgroundColor: ctx.colors2024['neutral-line'],
+      borderRadius: 100,
+    },
+    tokenText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: ctx.colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });
