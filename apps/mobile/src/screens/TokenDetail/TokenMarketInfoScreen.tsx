@@ -4,19 +4,18 @@ import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
-import { Tip } from '@/components/Tip';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken, AbstractProject } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { findChain, getChain } from '@/utils/chain';
+import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
@@ -55,6 +54,15 @@ import { navigate } from '@/utils/navigation';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 import CustomLabel from './components/CustomLabel';
+import {
+  CandleData,
+  CandlePeriod,
+} from '@/components2024/TradingViewCandleChart/type';
+import TradingViewCandleChart, {
+  TradingViewChartRef,
+} from '@/components2024/TradingViewCandleChart';
+import { Skeleton } from '@rneui/themed';
+import { LoadingLinear } from './components/TokenPriceChart/LoadingLinear';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -69,6 +77,357 @@ export type TokenFromAddressItem = {
 export type RelatedDeFiType = AbstractProject & {
   amount: number;
   address: string;
+};
+
+const invalidCandleData: CandleData = {
+  coin: 'BTC',
+  interval: CandlePeriod.ONE_MINUTE,
+  candles: [
+    {
+      time: 1755590400,
+      open: 4233,
+      high: 4315.7,
+      low: 4216.8,
+      close: 4307.6,
+      volume: 1000000,
+    },
+    {
+      time: 1755604800,
+      open: 4307.6,
+      high: 4337.8,
+      low: 4166,
+      close: 4189.2,
+      volume: 1000000,
+    },
+    {
+      time: 1755619200,
+      open: 4189.6,
+      high: 4203.7,
+      low: 4112,
+      close: 4140.7,
+      volume: 1000000,
+    },
+    {
+      time: 1755633600,
+      open: 4140.8,
+      high: 4163.1,
+      low: 4065.9,
+      close: 4073.7,
+      volume: 1000000,
+    },
+    {
+      time: 1755648000,
+      open: 4073.8,
+      high: 4156.4,
+      low: 4060.1,
+      close: 4138.9,
+      volume: 1000000,
+    },
+    {
+      time: 1755662400,
+      open: 4138.9,
+      high: 4209.7,
+      low: 4137.3,
+      close: 4183,
+      volume: 1000000,
+    },
+    {
+      time: 1755676800,
+      open: 4182.9,
+      high: 4240,
+      low: 4147.2,
+      close: 4192.7,
+      volume: 1000000,
+    },
+    {
+      time: 1755691200,
+      open: 4192.7,
+      high: 4309,
+      low: 4103.7,
+      close: 4253.6,
+      volume: 1000000,
+    },
+    {
+      time: 1755705600,
+      open: 4253.6,
+      high: 4367.5,
+      low: 4253.5,
+      close: 4347.2,
+      volume: 1000000,
+    },
+    {
+      time: 1755720000,
+      open: 4347.3,
+      high: 4380.3,
+      low: 4321.9,
+      close: 4337.4,
+      volume: 1000000,
+    },
+    {
+      time: 1755734400,
+      open: 4337.4,
+      high: 4340.9,
+      low: 4277.6,
+      close: 4295.3,
+      volume: 1000000,
+    },
+    {
+      time: 1755748800,
+      open: 4295.1,
+      high: 4322.1,
+      low: 4272.2,
+      close: 4311.6,
+      volume: 1000000,
+    },
+    {
+      time: 1755763200,
+      open: 4311.7,
+      high: 4315.4,
+      low: 4257.5,
+      close: 4279,
+      volume: 1000000,
+    },
+    {
+      time: 1755777600,
+      open: 4278.9,
+      high: 4329.7,
+      low: 4230,
+      close: 4246.2,
+      volume: 1000000,
+    },
+    {
+      time: 1755792000,
+      open: 4246.2,
+      high: 4276.7,
+      low: 4211.2,
+      close: 4226.7,
+      volume: 1000000,
+    },
+    {
+      time: 1755806400,
+      open: 4226.5,
+      high: 4264.1,
+      low: 4206,
+      close: 4226.5,
+      volume: 1000000,
+    },
+    {
+      time: 1755820800,
+      open: 4226.5,
+      high: 4318.9,
+      low: 4223.4,
+      close: 4282,
+      volume: 1000000,
+    },
+    {
+      time: 1755835200,
+      open: 4282,
+      high: 4348,
+      low: 4275.2,
+      close: 4330.7,
+      volume: 1000000,
+    },
+    {
+      time: 1755849600,
+      open: 4330.8,
+      high: 4358.3,
+      low: 4275.6,
+      close: 4277.4,
+      volume: 1000000,
+    },
+    {
+      time: 1755864000,
+      open: 4277.4,
+      high: 4676.4,
+      low: 4211.6,
+      close: 4618.8,
+      volume: 1000000,
+    },
+    {
+      time: 1755878400,
+      open: 4618.8,
+      high: 4861.7,
+      low: 4618.7,
+      close: 4836.3,
+      volume: 1000000,
+    },
+    {
+      time: 1755892800,
+      open: 4836.7,
+      high: 4891.7,
+      low: 4801,
+      close: 4834.8,
+      volume: 1000000,
+    },
+    {
+      time: 1755907200,
+      open: 4834.7,
+      high: 4835.2,
+      low: 4667.5,
+      close: 4698.2,
+      volume: 1000000,
+    },
+    {
+      time: 1755921600,
+      open: 4698.1,
+      high: 4768.5,
+      low: 4697.5,
+      close: 4717.5,
+      volume: 1000000,
+    },
+    {
+      time: 1755936000,
+      open: 4717.6,
+      high: 4750,
+      low: 4695.3,
+      close: 4707.8,
+      volume: 1000000,
+    },
+    {
+      time: 1755950400,
+      open: 4708,
+      high: 4773.1,
+      low: 4696.5,
+      close: 4756.4,
+      volume: 1000000,
+    },
+    {
+      time: 1755964800,
+      open: 4756.4,
+      high: 4765.1,
+      low: 4732.5,
+      close: 4762,
+      volume: 1000000,
+    },
+    {
+      time: 1755979200,
+      open: 4761.9,
+      high: 4802.6,
+      low: 4740.8,
+      close: 4782.8,
+      volume: 1000000,
+    },
+    {
+      time: 1755993600,
+      open: 4782.8,
+      high: 4823.8,
+      low: 4757.2,
+      close: 4793.1,
+      volume: 1000000,
+    },
+    {
+      time: 1756008000,
+      open: 4792.7,
+      high: 4804.4,
+      low: 4760.3,
+      close: 4762.2,
+      volume: 1000000,
+    },
+    {
+      time: 1756022400,
+      open: 4762.2,
+      high: 4789.8,
+      low: 4724.2,
+      close: 4751.3,
+      volume: 1000000,
+    },
+    {
+      time: 1756036800,
+      open: 4751.3,
+      high: 4833.6,
+      low: 4741.9,
+      close: 4802,
+      volume: 1000000,
+    },
+    {
+      time: 1756051200,
+      open: 4802.1,
+      high: 4960,
+      low: 4671.5,
+      close: 4816.9,
+      volume: 1000000,
+    },
+    {
+      time: 1756065600,
+      open: 4816.9,
+      high: 4826,
+      low: 4709.6,
+      close: 4781.5,
+      volume: 1000000,
+    },
+    {
+      time: 1756080000,
+      open: 4781.5,
+      high: 4799,
+      low: 4670,
+      close: 4727.4,
+      volume: 1000000,
+    },
+    {
+      time: 1756094400,
+      open: 4727.3,
+      high: 4739.2,
+      low: 4577.3,
+      close: 4588.6,
+      volume: 1000000,
+    },
+    {
+      time: 1756108800,
+      open: 4588.6,
+      high: 4612.8,
+      low: 4512.8,
+      close: 4596.9,
+      volume: 1000000,
+    },
+    {
+      time: 1756123200,
+      open: 4596.9,
+      high: 4683.1,
+      low: 4582.9,
+      close: 4611.8,
+      volume: 1000000,
+    },
+    {
+      time: 1756137600,
+      open: 4611.9,
+      high: 4645,
+      low: 4412.6,
+      close: 4415.4,
+      volume: 1000000,
+    },
+    {
+      time: 1756152000,
+      open: 4415.4,
+      high: 4443.1,
+      low: 4334,
+      close: 4374.7,
+      volume: 1000000,
+    },
+    {
+      time: 1756166400,
+      open: 4374.7,
+      high: 4450,
+      low: 4310.8,
+      close: 4402.9,
+      volume: 1000000,
+    },
+    {
+      time: 1756180800,
+      open: 4402.9,
+      high: 4454.9,
+      low: 4394.6,
+      close: 4429.9,
+      volume: 1000000,
+    },
+    {
+      time: 1756195200,
+      open: 4429.7,
+      high: 4447.8,
+      low: 4404.8,
+      close: 4416,
+      volume: 1000000,
+    },
+  ],
 };
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -596,7 +955,9 @@ export const TokenMarketInfoScreen = () => {
   );
 
   const tokenPriceChartRef = React.useRef<TokenChartRef>(null);
+  const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
 
+  const [loading, setLoading] = useState(true);
   const handleRefresh = useCallback(() => {
     refreshTokenEntity();
     refreshAsync();
@@ -649,7 +1010,36 @@ export const TokenMarketInfoScreen = () => {
                 onPress={handleOpenTokenDetail}
               />
             )}
-            <View style={{ position: 'relative', marginTop: 12 }}>
+            <View
+              style={{
+                position: 'relative',
+                marginTop: 12,
+              }}>
+              {loading && (
+                <Skeleton
+                  width={screenWidth - 32}
+                  height={300}
+                  LinearGradientComponent={LoadingLinear}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 16,
+                    right: 16,
+                    bottom: 0,
+                    zIndex: 100,
+                  }}
+                />
+              )}
+              <TradingViewCandleChart
+                ref={chartWebViewRef}
+                height={300}
+                onChartReady={() => {
+                  setTimeout(() => {
+                    setLoading(false);
+                    chartWebViewRef.current?.setData(invalidCandleData);
+                  }, 0);
+                }}
+              />
               <TokenPriceChart
                 ref={tokenPriceChartRef}
                 token={tokenWithAmount || token}
