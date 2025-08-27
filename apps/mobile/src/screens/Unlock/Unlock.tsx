@@ -43,8 +43,6 @@ import { updateUnlockTime } from '@/core/apis/lock';
 import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
 import YesIcon from '@/assets2024/icons/common/check.svg';
-import { useAtom } from 'jotai';
-import { browserStateAtom } from '@/hooks/browser/useBrowser';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -171,25 +169,10 @@ export default function UnlockScreen() {
   const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
     useUnlockForm(navigation);
 
-  const [, setBrowserState] = useAtom(browserStateAtom);
-
   useFocusEffect(
     useCallback(() => {
       fetchBiometrics();
     }, [fetchBiometrics]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      setBrowserState({
-        isShowBrowser: false,
-        isShowSearch: false,
-        isShowManage: false,
-        searchText: '',
-        searchTabId: '',
-        trigger: '',
-      });
-    }, [setBrowserState]),
   );
 
   const { unlockApp } = useUnlockApp();
