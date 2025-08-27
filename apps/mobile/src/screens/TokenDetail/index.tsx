@@ -3,7 +3,11 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken, AbstractProject } from '@/screens/Home/types';
+import {
+  AbstractPortfolio,
+  AbstractPortfolioToken,
+  AbstractProject,
+} from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
@@ -43,9 +47,10 @@ import { useRealTimeTokenInfo, useTokenBalance } from './hook';
 import TokenActions from './components/TokenActions';
 import BottomFloatGuide from './components/BottomFloatGuide';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigate, naviPush } from '@/utils/navigation';
 import { RightMore } from './components/RightMore';
 import { currentPortfolioAtom } from '../Home/hooks/usePortfolio';
+import { RelatedDeFi } from './components/RelatedDeFi';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -427,6 +432,20 @@ export const TokenDetailScreen = () => {
     updateTokensAmount,
   ]);
 
+  const handleOpenDefiDetail = useCallback(
+    (data: AbstractProject, itemList: AbstractPortfolio[]) => {
+      naviPush(RootNames.DeFiDetail, {
+        data,
+        portfolioList: itemList,
+        isSingleAddress,
+        account: finalAccount,
+        cache: true,
+        relateTokenId: token._tokenId,
+      });
+    },
+    [token, isSingleAddress, finalAccount],
+  );
+
   if (isSingleAddress && !finalAccount) {
     return null;
   }
@@ -497,6 +516,13 @@ export const TokenDetailScreen = () => {
           token={token}
           rawAllAccounts={rawAllAccounts}
         />
+        {relateDefiList.length > 0 && (
+          <RelatedDeFi
+            deFiList={relateDefiList}
+            symbol={token.symbol}
+            handleGoDeFi={handleOpenDefiDetail}
+          />
+        )}
         <HistoryList
           top10Addresses={top10Addresses}
           finalAccount={finalAccount}
