@@ -17,6 +17,7 @@ import { last, omit, sortBy } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { dappsAtom } from '../useDapps';
 import { ContentMode } from 'react-native-webview/lib/WebViewTypes';
+import { Platform } from 'react-native';
 
 export const tabsAtom = atom<{
   tabs: Tab[];
@@ -48,7 +49,7 @@ const browserActiveTabStateAtom = atom<{
   contentMode: undefined,
 });
 
-const MAX_ACTIVE_TABS_COUNT = 4;
+const MAX_ACTIVE_TABS_COUNT = Platform.OS === 'android' ? 4 : 10;
 
 const displayedTabsAtom = atom(get => {
   const store = get(tabsAtom);
@@ -178,41 +179,32 @@ export function useBrowser() {
     setTimeout(() => {
       setStore(prev => {
         const tabs = sortBy(
-          prev.tabs.filter(tab => {
-            return dappService.getDapp(safeGetOrigin(tab.url || tab.initialUrl))
-              ?.isDapp;
-          }),
+          prev.tabs.filter(tab => tab.isDapp),
           tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
         );
 
-        // if (tabs.length <= MAX_ACTIVE_TABS_COUNT) {
-        //   return prev;
-        // }
+        if (tabs.length <= MAX_ACTIVE_TABS_COUNT) {
+          return prev;
+        }
 
-        // const time = tabs[3]?.openTime || 0;
-        // if (!time) {
-        //   return prev;
-        // }
+        const time = tabs[MAX_ACTIVE_TABS_COUNT - 1]?.openTime || 0;
+        if (!time) {
+          return prev;
+        }
 
-        // const finalTabs = prev.tabs.map(tab => {
-        //   if (tab.openTime < time && tab.id !== prev.activeTabId) {
-        //     return {
-        //       ...tab,
-        //       isTerminate: true,
-        //     };
-        //   }
-        //   return tab;
-        // });
-
-        const list = tabs.slice(0, MAX_ACTIVE_TABS_COUNT);
-        const activeTabId = list.find(tab => tab.id === prev.activeTabId)
-          ? prev.activeTabId
-          : last(list)?.id || '';
+        const finalTabs = prev.tabs.map(tab => {
+          if (tab.openTime < time && tab.id !== prev.activeTabId) {
+            return {
+              ...tab,
+              isTerminate: true,
+            };
+          }
+          return tab;
+        });
 
         const result = {
           ...prev,
-          activeTabId,
-          tabs: list,
+          tabs: finalTabs,
         };
 
         browserService.updateBrowserTabs(result);

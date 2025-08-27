@@ -155,6 +155,9 @@ export function BrowserSearch({
   }, [appState]);
 
   useEffect(() => {
+    if (Platform.OS === 'ios') {
+      return;
+    }
     KeyboardController.setInputMode(
       AndroidSoftInputModes.SOFT_INPUT_ADJUST_RESIZE,
     );
