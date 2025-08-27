@@ -214,7 +214,7 @@ export function useUserDidTakeScreenshot({
           width: coerceNumber(params?.width, 100),
         };
         const fullPath = params?.path
-          ? stringUtils.ensurePrefix(params.path, 'file://')
+          ? AppScreenshotFS.normalizeFilePath(params.path)
           : '';
 
         let inAppPath: string | null = null;
@@ -224,25 +224,25 @@ export function useUserDidTakeScreenshot({
               // TODO: set contentType by params.type
               uri: AppScreenshotFS.normalizeBase64(
                 params.imageBase64,
-                'image/jpeg',
+                params.imageType || 'image/jpeg',
               ),
               height: sizes.height,
               width: sizes.width,
             }),
           );
-
-          // inAppPath = await appScreenshotFS.saveScreenshotFrom(
-          //   params.imageBase64,
-          //   { fallbackAsBase64: true },
-          // );
         } else if (fullPath && (await RNFS.exists(fullPath))) {
-          inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath);
+          inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath, {
+            imageType: params.imageType,
+          });
           if (!inAppPath) return;
 
           setLastScreenshot(
             Image.resolveAssetSource({
               // TODO: set contentType by params.type
-              uri: AppScreenshotFS.normalizeBase64(inAppPath, 'image/jpeg'),
+              uri: AppScreenshotFS.normalizeBase64(
+                inAppPath,
+                params.imageType || 'image/jpeg',
+              ),
               height: sizes.height,
               width: sizes.width,
             }),

@@ -85,7 +85,7 @@ const androidPackageName = (
       )
 ) as `com.debank.rabbymobile${AndroidIdSuffx}`;
 export const APP_IDS = {
-  forScreenshot: APPLICATION_ID.replace('.', '_'),
+  forScreenshot: APPLICATION_ID.replace(/[\.\-]/g, '_'),
 };
 
 type IosIdSuffix = '' | '-debug' | '-regression';

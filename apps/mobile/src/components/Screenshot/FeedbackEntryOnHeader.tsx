@@ -66,6 +66,8 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
       .filter(feedback => feedback.status === 'fulfilled')
       .map(feedback => feedback.value);
 
+    // console.debug('[debug] feedbacks', feedbacks);
+
     const latestReplied =
       feedbacks
         .sort(sortFeedbackItemByCreateAtDesc)

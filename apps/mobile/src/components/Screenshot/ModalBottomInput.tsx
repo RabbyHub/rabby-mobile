@@ -21,14 +21,15 @@ import {
   useFeedbackOnScreenshot,
 } from './hooks';
 import { useTranslation } from 'react-i18next';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export type BottomInputMethods = {};
 export type BottomInputProps = {
   visible?: boolean;
-};
+} & RNViewProps;
 
 const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
-  ({ visible }, ref) => {
+  ({ visible, style }, ref) => {
     const {
       feedbackText: value,
       feedbackOverLimit: valueOverLimit,
@@ -69,9 +70,7 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
           styles.container,
           // containerAnimatedStyle,
           !visible && { opacity: 0, height: 0 },
-          {
-            // marginBottom: androidOnlyBottomOffset,
-          },
+          style,
         ]}>
         <View style={[styles.inputContainer]}>
           <TextInput
@@ -84,7 +83,7 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
             enterKeyHint="done"
             textAlign="left"
             textAlignVertical="top"
-            autoFocus
+            autoFocus={IS_ANDROID}
             placeholder={t(
               'component.screenshotModal.feedbackInput.placeholder',
             )}

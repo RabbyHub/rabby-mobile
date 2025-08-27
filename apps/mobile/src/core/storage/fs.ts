@@ -45,6 +45,33 @@ export class AppScreenshotFS {
     return filePath;
   }
 
+  static normalizeContentType(contentType: string) {
+    switch (contentType?.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+      case 'image/jpeg':
+        return { mime: 'image/jpeg', ext: 'jpg' };
+      case 'png':
+      case 'image/png':
+        return { mime: 'image/png', ext: 'png' };
+      case 'webp':
+      case 'image/webp':
+        return { mime: 'image/webp', ext: 'webp' };
+      default:
+        return { mime: contentType, ext: contentType.split('/').pop() };
+    }
+  }
+
+  static normalizeBase64(input: string, contentType = 'image/jpeg') {
+    if (input.startsWith('data:image/') && input.indexOf('base64,') > -1) {
+      return input.split(',')[1];
+    }
+
+    return `data:${
+      AppScreenshotFS.normalizeContentType(contentType).mime
+    };base64,${input}`;
+  }
+
   static async uriToPath(
     input: string,
     options?: { fallbackAsBase64?: boolean },
@@ -68,14 +95,6 @@ export class AppScreenshotFS {
     }
 
     return null;
-  }
-
-  static normalizeBase64(input: string, contentType = 'image/jpeg') {
-    if (input.startsWith('data:image/') && input.indexOf('base64,') > -1) {
-      return input.split(',')[1];
-    }
-
-    return `data:${contentType};base64,${input}`;
   }
 
   static async uriToBase64(input: string) {
@@ -122,14 +141,16 @@ export class AppScreenshotFS {
 
   async saveScreenshotFrom(
     input: string,
-    options?: { fallbackAsBase64?: boolean },
+    options?: { fallbackAsBase64?: boolean; imageType?: string },
   ) {
     const pathInfo = await AppScreenshotFS.uriToPath(input);
     if (!pathInfo) return null;
 
     const targetPath = `${this.#dir}/screenshot-${
       APP_IDS.forScreenshot
-    }-${Date.now()}.jpg`;
+    }-${Date.now()}.${
+      AppScreenshotFS.normalizeContentType(options?.imageType || 'jpeg').ext
+    }`;
 
     if (pathInfo.type === 'fs' && (await RNFS.exists(pathInfo.data))) {
       await RNFS.copyFile(pathInfo.data, targetPath);
@@ -139,7 +160,7 @@ export class AppScreenshotFS {
       await RNFS.writeFile(targetPath, input, 'base64');
     }
 
-    return stringUtils.ensurePrefix(targetPath, 'file://');
+    return AppScreenshotFS.normalizeFilePath(targetPath);
   }
 }
 

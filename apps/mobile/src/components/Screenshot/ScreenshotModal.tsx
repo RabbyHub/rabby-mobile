@@ -67,102 +67,110 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
       style={styles.modalComp}>
       <View style={[styles.maskExtra, !bottomInputVisible && styles.maskBg]} />
 
-      <TouchableOpacity
-        style={[styles.avoidingView, bottomInputVisible && styles.maskBg]}
-        activeOpacity={1}
-        onPress={() => {
-          setBottomInputVisible(false);
-        }}>
-        <KeyboardAvoidingView
-          behavior={IS_IOS ? 'padding' : 'height'}
-          style={styles.modalWrapper}>
-          <View style={[styles.modal]}>
-            <TouchableOpacity
-              style={styles.modalClose}
-              onPress={wrapOnPress(() => {
-                closeSubmitModal();
-              })}>
-              <RcCloseCC
-                style={styles.modalCloseIcon}
-                color={styles.modalCloseIcon.color}
-              />
-            </TouchableOpacity>
-            <View style={styles.modalContent}>
-              <View style={styles.titleWrapper}>
-                <Text style={styles.title}>
-                  {t('component.screenshotModal.title')}
-                </Text>
-              </View>
-              <View
-                style={[styles.imageWrapper]}
-                onLayout={event => {
-                  const { width } = event.nativeEvent.layout;
-                  setEditIconParentLayout({ width });
-                }}>
-                {lastScreenshot?.uri && (
-                  <Image
-                    style={[styles.image, { width: '100%', height: '100%' }]}
-                    source={{ uri: lastScreenshot.uri }}
-                    resizeMode={IMAGE_RESIZE_MODE}
-                  />
-                )}
-                {/* Edit pen icon */}
-                <TouchableOpacity
-                  style={[
-                    styles.editIconWrapper,
-                    !editIconParentLayout.width
-                      ? {}
-                      : {
-                          left: getEditPenIconLeftValue(
-                            editIconParentLayout.width,
-                          ),
-                        },
-                  ]}
-                  onPress={wrapOnPress(evt => {
-                    setBottomInputVisible(true);
-                  })}>
-                  <RcEditCC
-                    style={styles.editIcon}
-                    color={styles.editIcon.color}
-                  />
-                </TouchableOpacity>
-              </View>
-              {/* Submit Area */}
-              <View style={styles.submitArea}>
-                {!!feedbackText && (
-                  <View style={styles.feedbackPreview}>
-                    <Text
-                      style={styles.feedbackPreviewText}
-                      numberOfLines={1}
-                      lineBreakMode="clip">
-                      <Text style={{ fontWeight: 'bold' }}>
-                        {t('component.screenshotModal.feedbackLabel')}{' '}
-                      </Text>
-                      {feedbackText.slice(0, 300)}
-                    </Text>
-                  </View>
-                )}
-                <Button
-                  title={t('component.screenshotModal.submitButtonText')}
-                  containerStyle={styles.submitButtonContainer}
-                  buttonStyle={styles.submitButton}
-                  titleStyle={styles.buttonTitle}
-                  type="primary"
-                  disabled={!canSubmitFeedback}
-                  onPress={wrapOnPress(evt => {
-                    submitFeedback();
-                  })}
+      <KeyboardAvoidingView
+        behavior={IS_IOS ? 'padding' : 'position'}
+        style={[{ flex: 1 }]}>
+        <TouchableOpacity
+          style={[
+            styles.avoidingView,
+            bottomInputVisible && styles.maskBg,
+            bottomInputVisible && { flexShrink: 0 },
+          ]}
+          activeOpacity={1}
+          onPress={() => {
+            setBottomInputVisible(false);
+          }}>
+          <View
+            // behavior={IS_IOS ? 'padding' : 'position'}
+            style={[styles.modalWrapper]}>
+            <View style={[styles.modal]}>
+              <TouchableOpacity
+                style={styles.modalClose}
+                onPress={wrapOnPress(() => {
+                  closeSubmitModal();
+                })}>
+                <RcCloseCC
+                  style={styles.modalCloseIcon}
+                  color={styles.modalCloseIcon.color}
                 />
+              </TouchableOpacity>
+              <View style={styles.modalContent}>
+                <View style={styles.titleWrapper}>
+                  <Text style={styles.title}>
+                    {t('component.screenshotModal.title')}
+                  </Text>
+                </View>
+                <View
+                  style={[styles.imageWrapper]}
+                  onLayout={event => {
+                    const { width } = event.nativeEvent.layout;
+                    setEditIconParentLayout({ width });
+                  }}>
+                  {lastScreenshot?.uri && (
+                    <Image
+                      style={[styles.image, { width: '100%', height: '100%' }]}
+                      source={{ uri: lastScreenshot.uri }}
+                      resizeMode={IMAGE_RESIZE_MODE}
+                    />
+                  )}
+                  {/* Edit pen icon */}
+                  <TouchableOpacity
+                    style={[
+                      styles.editIconWrapper,
+                      !editIconParentLayout.width
+                        ? {}
+                        : {
+                            left: getEditPenIconLeftValue(
+                              editIconParentLayout.width,
+                            ),
+                          },
+                    ]}
+                    onPress={wrapOnPress(evt => {
+                      setBottomInputVisible(true);
+                    })}>
+                    <RcEditCC
+                      style={styles.editIcon}
+                      color={styles.editIcon.color}
+                    />
+                  </TouchableOpacity>
+                </View>
+                {/* Submit Area */}
+                <View style={styles.submitArea}>
+                  {!!feedbackText && (
+                    <View style={styles.feedbackPreview}>
+                      <Text
+                        style={styles.feedbackPreviewText}
+                        numberOfLines={1}
+                        lineBreakMode="clip">
+                        <Text style={{ fontWeight: 'bold' }}>
+                          {t('component.screenshotModal.feedbackLabel')}{' '}
+                        </Text>
+                        {feedbackText.slice(0, 300)}
+                      </Text>
+                    </View>
+                  )}
+                  <Button
+                    title={t('component.screenshotModal.submitButtonText')}
+                    containerStyle={styles.submitButtonContainer}
+                    buttonStyle={styles.submitButton}
+                    titleStyle={styles.submitButtonTitle}
+                    type="primary"
+                    disabled={!canSubmitFeedback}
+                    onPress={wrapOnPress(evt => {
+                      submitFeedback();
+                    })}
+                  />
+                </View>
               </View>
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </TouchableOpacity>
+        </TouchableOpacity>
 
-      <ModalBottomInput
-        visible={bottomInputVisible}
-        // ref={bottomInputRef}
-      />
+        <ModalBottomInput
+          visible={bottomInputVisible}
+          style={[!bottomInputVisible && styles.leaveDocumentFlow]}
+        />
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -349,7 +357,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
     submitButton: {
       height: 56,
     },
-    buttonTitle: {
+    submitButtonTitle: {
       width: '100%',
       // height: 56,
       display: 'flex',
@@ -357,6 +365,13 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       justifyContent: 'center',
       // flexShrink: 0,
       // ...makeDebugBorder('yellow')
+    },
+
+    leaveDocumentFlow: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
     },
   };
 });
