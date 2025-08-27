@@ -1,5 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
-// ChartWebView.tsx
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, {
@@ -16,7 +14,6 @@ import { createTradingViewChartTemplate } from './template';
 import { CandleData, CandleStick } from './type';
 
 interface ChartProps {
-  candleData?: CandleData;
   height: number;
   onChartReady?: () => void;
 }
