@@ -22,6 +22,13 @@ const screenshotFeedbackIdsAtom = atomByMMKV('@screenshotFeedbackIds', {
   feedbacks: [] as LocalUserFeedbackItem[],
 });
 
+export function sortFeedbackItemByCreateAtDesc(
+  a: LocalUserFeedbackItem,
+  b: LocalUserFeedbackItem,
+) {
+  return b.create_at - a.create_at;
+}
+export const LATEST_LOCAL_FEEDBACK_LIMIT = 10;
 export function useScreenshotFeedbacks() {
   const [screenshotFeedbacks, setScreenshotFeedbacks] = useAtom(
     screenshotFeedbackIdsAtom,
@@ -37,10 +44,13 @@ export function useScreenshotFeedbacks() {
           create_at: idOrItem.create_at || Date.now(),
         };
         list.push(newFeedback);
-        // order by timestamp asc
-        list.sort((a, b) => a.create_at - b.create_at);
+        // order by timestamp desc
+        list.sort(sortFeedbackItemByCreateAtDesc);
 
-        return { ...prev, feedbacks: Array.from(list) };
+        return {
+          ...prev,
+          feedbacks: Array.from(list).slice(0, LATEST_LOCAL_FEEDBACK_LIMIT),
+        };
       });
     },
     [setScreenshotFeedbacks],
@@ -60,15 +70,18 @@ export function useScreenshotFeedbacks() {
 export function useLatestLocalFeedback() {
   const [screenshotFeedbacks] = useAtom(screenshotFeedbackIdsAtom);
 
-  const latestFeedback = useMemo(() => {
-    return (
-      screenshotFeedbacks.feedbacks
-        .sort((a, b) => b.create_at - a.create_at)
-        .at(0) || null
+  const { localFeedback, localFeedbacks } = useMemo(() => {
+    const feedbacks = screenshotFeedbacks.feedbacks.sort(
+      sortFeedbackItemByCreateAtDesc,
     );
+
+    return {
+      localFeedback: feedbacks.at(0) || null,
+      localFeedbacks: feedbacks.slice(0, LATEST_LOCAL_FEEDBACK_LIMIT),
+    };
   }, [screenshotFeedbacks]);
 
-  return latestFeedback;
+  return { localFeedback, localFeedbacks };
 }
 
 // const screenShotAtom = atom<{
@@ -323,6 +336,6 @@ export function useSubmitFeedbackOnScreenshot() {
     closeSubmitModal,
     submitFeedback,
 
-    canSubmit: !!lastScreenshot?.uri && feedbackText.length > 0,
+    canSubmitFeedback: !!lastScreenshot?.uri,
   };
 }

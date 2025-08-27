@@ -44,7 +44,7 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
     closeSubmitModal,
     feedbackText,
     submitFeedback,
-    canSubmit,
+    canSubmitFeedback,
   } = useSubmitFeedbackOnScreenshot();
 
   const [bottomInputVisible, setBottomInputVisible] = React.useState(false);
@@ -148,7 +148,7 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
                   buttonStyle={styles.submitButton}
                   titleStyle={styles.buttonTitle}
                   type="primary"
-                  disabled={!canSubmit}
+                  disabled={!canSubmitFeedback}
                   onPress={wrapOnPress(evt => {
                     submitFeedback();
                   })}

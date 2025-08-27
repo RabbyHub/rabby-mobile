@@ -11,7 +11,11 @@ import {
 import { useTranslation } from 'react-i18next';
 import useAsync from 'react-use/lib/useAsync';
 
-import { useLatestLocalFeedback, useViewingLastFeedback } from './hooks';
+import {
+  sortFeedbackItemByCreateAtDesc,
+  useLatestLocalFeedback,
+  useViewingLastFeedback,
+} from './hooks';
 
 import RcEntryCC from './icons/entry-cc.svg';
 import RcSuccessCC from './icons/success-cc.svg';
@@ -29,7 +33,7 @@ import { Button } from '@/components2024/Button';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 export function FeedbackEntryOnHeader({ style }: RNViewProps) {
-  const localFeedback = useLatestLocalFeedback();
+  const { localFeedbacks } = useLatestLocalFeedback();
 
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -38,7 +42,6 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
   const { viewingLastFeedback, setViewingLastFeedback } =
     useViewingLastFeedback();
 
-  const feedbackId = localFeedback?.id;
   useEffect(() => {
     if (viewingLastFeedback) {
       toggleShowSheetModal(true);
@@ -48,18 +51,31 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
   }, [viewingLastFeedback, toggleShowSheetModal]);
 
   const {
-    value: lastFeedback,
+    value: lastRepliedFeedback,
     loading,
     error,
   } = useAsync(async () => {
-    if (!feedbackId) return;
+    if (!localFeedbacks.length) return;
 
-    const feedback = await openapi.getUserFeedback(feedbackId);
-    return feedback;
-  }, [feedbackId]);
+    const result = await Promise.allSettled(
+      localFeedbacks.map(localFeedback => {
+        return openapi.getUserFeedback(localFeedback.id);
+      }),
+    );
+    const feedbacks = result
+      .filter(feedback => feedback.status === 'fulfilled')
+      .map(feedback => feedback.value);
+
+    const latestReplied =
+      feedbacks
+        .sort(sortFeedbackItemByCreateAtDesc)
+        .find(item => item.status === 'closed') || null;
+
+    return latestReplied;
+  }, [localFeedbacks]);
 
   const { imageUri, content, comment } = useMemo(() => {
-    if (!lastFeedback)
+    if (!lastRepliedFeedback)
       return {
         imageUri: null,
         content: null,
@@ -67,16 +83,16 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
       };
 
     return {
-      imageUri: lastFeedback.image_url_list?.[0] || null,
-      content: lastFeedback.content || null,
-      comment: lastFeedback.comment || null,
+      imageUri: lastRepliedFeedback.image_url_list?.[0] || null,
+      content: lastRepliedFeedback.content || null,
+      comment: lastRepliedFeedback.comment || null,
       // comment: !__DEV__
-      //   ? lastFeedback.comment || null
+      //   ? lastRepliedFeedback.comment || null
       //   : 'Known issue: ' + '100000'.repeat(50),
     };
-  }, [lastFeedback]);
+  }, [lastRepliedFeedback]);
 
-  if (!localFeedback || !lastFeedback) return null;
+  if (lastRepliedFeedback?.status !== 'closed') return null;
 
   const stagesList = (() => {
     return [
