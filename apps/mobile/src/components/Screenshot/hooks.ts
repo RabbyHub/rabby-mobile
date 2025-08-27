@@ -12,10 +12,11 @@ import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { openapi } from '@/core/request';
 import { AppScreenshotFS, appScreenshotFS } from '@/core/storage/fs';
 import { coerceNumber } from '@/utils/coerce';
-import { stringUtils } from '@rabby-wallet/base-utils';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useAtomCallback } from 'jotai/utils';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
+import { toast } from '@/components2024/Toast';
 
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 const screenshotFeedbackIdsAtom = atomByMMKV('@screenshotFeedbackIds', {
@@ -67,21 +68,61 @@ export function useScreenshotFeedbacks() {
   };
 }
 
-export function useLatestLocalFeedback() {
+export function useLatestFeedbacks() {
   const [screenshotFeedbacks] = useAtom(screenshotFeedbackIdsAtom);
 
-  const { localFeedback, localFeedbacks } = useMemo(() => {
+  const { localFeedbacks } = useMemo(() => {
     const feedbacks = screenshotFeedbacks.feedbacks.sort(
       sortFeedbackItemByCreateAtDesc,
     );
 
     return {
-      localFeedback: feedbacks.at(0) || null,
       localFeedbacks: feedbacks.slice(0, LATEST_LOCAL_FEEDBACK_LIMIT),
     };
   }, [screenshotFeedbacks]);
 
-  return { localFeedback, localFeedbacks };
+  const [{ value: lastRepliedFeedback, loading, error }, loadFeedbacks] =
+    useAsyncFn(async () => {
+      if (!localFeedbacks.length) return;
+
+      const result = await Promise.allSettled(
+        localFeedbacks.map(localFeedback => {
+          return openapi.getUserFeedback(localFeedback.id);
+        }),
+      );
+      console.debug('[debug] result', result);
+      const rtFeedbacks = result
+        .filter(req => req.status === 'fulfilled')
+        .map(req => req.value);
+
+      console.debug('[debug] rtFeedbacks', rtFeedbacks);
+
+      const latestReplied = rtFeedbacks
+        .filter(item => item.status === 'complete')
+        .sort(sortFeedbackItemByCreateAtDesc)
+        .at(0);
+
+      return latestReplied;
+    }, [localFeedbacks]);
+
+  useEffect(() => {
+    loadFeedbacks();
+
+    const timer = setInterval(
+      () => {
+        loadFeedbacks();
+      },
+      __DEV__ ? 5 * 1e3 : 30 * 1e3,
+    );
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [loadFeedbacks]);
+
+  console.debug('[debug] lastRepliedFeedback', lastRepliedFeedback);
+
+  return { lastRepliedFeedback, loading, error };
 }
 
 // const screenShotAtom = atom<{
@@ -91,6 +132,7 @@ export function useLatestLocalFeedback() {
 function getDefaultValue() {
   return {
     submitModalShown: false,
+    submitSuccessModalShown: false,
     feedbackText: '',
     lastScreenshot: null,
     viewingLastFeedback: false,
@@ -99,6 +141,7 @@ function getDefaultValue() {
 export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
 const feedbackByScreenshotAtom = atom<{
   submitModalShown: boolean;
+  submitSuccessModalShown: boolean;
   feedbackText: string;
   lastScreenshot: ImageResolvedAssetSource | null;
   viewingLastFeedback: boolean;
@@ -128,6 +171,24 @@ export function useViewingLastFeedback() {
 export function useSubmitFeedbackModalVisible() {
   const [feedbackByScreenshot] = useAtom(feedbackByScreenshotAtom);
   return { submitFeedbackModalVisible: feedbackByScreenshot.submitModalShown };
+}
+
+export function useSubmitSuccessModalVisible() {
+  const [feedbackByScreenshot, setFeedbackByScreenshot] = useAtom(
+    feedbackByScreenshotAtom,
+  );
+
+  const closeSubmitSuccessModal = useCallback(() => {
+    setFeedbackByScreenshot(prev => ({
+      ...prev,
+      submitSuccessModalShown: false,
+    }));
+  }, [setFeedbackByScreenshot]);
+
+  return {
+    submitSuccessModalVisible: feedbackByScreenshot.submitSuccessModalShown,
+    closeSubmitSuccessModal,
+  };
 }
 
 function useLastScreenshot() {
@@ -271,6 +332,14 @@ export function useFeedbackOnScreenshot() {
     [setSubmitFeedbackOnScreenshot],
   );
 
+  const showSubmitSuccessModal = useCallback(() => {
+    setSubmitFeedbackOnScreenshot(prev => ({
+      ...prev,
+      submitSuccessModalShown: true,
+      submitModalShown: false,
+    }));
+  }, [setSubmitFeedbackOnScreenshot]);
+
   return {
     globalModalShown: submitFeedbackOnScreenshot.submitModalShown,
     feedbackText: submitFeedbackOnScreenshot.feedbackText,
@@ -278,13 +347,15 @@ export function useFeedbackOnScreenshot() {
       submitFeedbackOnScreenshot.feedbackText.length >
       SCREENSHOT_FEEDBACK_MAX_LENGTH - 1,
     onChangeFeedback,
+    showSubmitSuccessModal,
   };
 }
 export function useSubmitFeedbackOnScreenshot() {
   const [{ lastScreenshot }, setSubmitFeedbackOnScreenshot] = useAtom(
     feedbackByScreenshotAtom,
   );
-  const { globalModalShown, feedbackText } = useFeedbackOnScreenshot();
+  const { globalModalShown, feedbackText, showSubmitSuccessModal } =
+    useFeedbackOnScreenshot();
   const { onFeedbackSubmitted } = useScreenshotFeedbacks();
 
   const closeSubmitModal = useCallback(
@@ -300,9 +371,7 @@ export function useSubmitFeedbackOnScreenshot() {
   );
 
   const submitFeedback = useCallback(
-    async function ({
-      closeModalOnSuccess = true,
-    }: { closeModalOnSuccess?: boolean } = {}) {
+    async function () {
       if (!lastScreenshot?.uri) {
         throw new Error('No screenshot available');
       }
@@ -311,21 +380,30 @@ export function useSubmitFeedbackOnScreenshot() {
         lastScreenshot?.uri,
       );
 
-      if (result?.image_url) {
-        const submitResult = await openapi.postUserFeedback({
-          title: '',
-          image_url_list: [result.image_url],
-          content: feedbackText,
-        });
+      if (!result?.image_url) return;
 
-        if (closeModalOnSuccess) {
-          closeSubmitModal({ clearText: true });
-        }
+      const submitResult = await openapi.postUserFeedback({
+        title: '',
+        image_url_list: [result.image_url],
+        content: feedbackText,
+      });
 
-        onFeedbackSubmitted(submitResult);
+      closeSubmitModal({ clearText: true });
+      if (submitResult.id) {
+        showSubmitSuccessModal();
+      } else {
+        toast.error('Feedback submission failed, please try again later');
       }
+
+      onFeedbackSubmitted(submitResult);
     },
-    [feedbackText, lastScreenshot?.uri, closeSubmitModal, onFeedbackSubmitted],
+    [
+      feedbackText,
+      lastScreenshot?.uri,
+      closeSubmitModal,
+      showSubmitSuccessModal,
+      onFeedbackSubmitted,
+    ],
   );
 
   return {

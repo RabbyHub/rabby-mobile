@@ -2292,7 +2292,7 @@
       "feedbackInput": {
         "placeholder": "Describe the issue"
       },
-      "feedbackLabel": "Bug"
+      "feedbackLabel": "Bug description"
     },
     "feedbackModal": {
       "title": "Response from Rabby Support",
@@ -2300,6 +2300,9 @@
       "repliedTitle": "Rabby Support has replied:",
       "pendingTitle": "Rabby Support hasn't reply.",
       "issueDescriptionLabel": "Description: "
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "Submitted Successfully"
     }
   },
   "native": {

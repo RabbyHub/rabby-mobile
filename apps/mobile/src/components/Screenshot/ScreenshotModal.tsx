@@ -13,7 +13,7 @@ import {
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSubmitFeedbackOnScreenshot } from './hooks';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 
 import RcCloseCC from './icons/close-cc.svg';
 import RcEditCC from './icons/edit-cc.svg';
@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { FontWeightEnum } from '@/core/utils/fonts';
 import ModalBottomInput from './ModalBottomInput';
 import { useOnKeyboardDismissed } from '@/hooks/system/keyboard';
+import { SubmitSuccessModal } from './SubmitSuccessModal';
 
 // const IMAGE_CONTAIN_STYLE = { height: 200, width: '100%' } as const;
 const IMAGE_RESIZE_MODE = 'contain' as const;
@@ -60,118 +61,137 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
   );
 
   return (
-    <Modal
-      visible={globalModalShown}
-      transparent
-      animationType="fade"
-      style={styles.modalComp}>
-      <View style={[styles.maskExtra, !bottomInputVisible && styles.maskBg]} />
+    <>
+      <Modal
+        visible={globalModalShown}
+        transparent
+        animationType="fade"
+        style={styles.modalComp}>
+        <View
+          style={[styles.maskExtra, !bottomInputVisible && styles.maskBg]}
+        />
 
-      <KeyboardAvoidingView
-        behavior={IS_IOS ? 'padding' : 'position'}
-        style={[{ flex: 1 }]}>
-        <TouchableOpacity
-          style={[
-            styles.avoidingView,
-            bottomInputVisible && styles.maskBg,
-            bottomInputVisible && { flexShrink: 0 },
-          ]}
-          activeOpacity={1}
-          onPress={() => {
-            setBottomInputVisible(false);
-          }}>
-          <View
-            // behavior={IS_IOS ? 'padding' : 'position'}
-            style={[styles.modalWrapper]}>
-            <View style={[styles.modal]}>
-              <TouchableOpacity
-                style={styles.modalClose}
-                onPress={wrapOnPress(() => {
-                  closeSubmitModal();
-                })}>
-                <RcCloseCC
-                  style={styles.modalCloseIcon}
-                  color={styles.modalCloseIcon.color}
-                />
-              </TouchableOpacity>
-              <View style={styles.modalContent}>
-                <View style={styles.titleWrapper}>
-                  <Text style={styles.title}>
-                    {t('component.screenshotModal.title')}
-                  </Text>
-                </View>
-                <View
-                  style={[styles.imageWrapper]}
-                  onLayout={event => {
-                    const { width } = event.nativeEvent.layout;
-                    setEditIconParentLayout({ width });
-                  }}>
-                  {lastScreenshot?.uri && (
-                    <Image
-                      style={[styles.image, { width: '100%', height: '100%' }]}
-                      source={{ uri: lastScreenshot.uri }}
-                      resizeMode={IMAGE_RESIZE_MODE}
-                    />
-                  )}
-                  {/* Edit pen icon */}
-                  <TouchableOpacity
-                    style={[
-                      styles.editIconWrapper,
-                      !editIconParentLayout.width
-                        ? {}
-                        : {
-                            left: getEditPenIconLeftValue(
-                              editIconParentLayout.width,
-                            ),
-                          },
-                    ]}
-                    onPress={wrapOnPress(evt => {
-                      setBottomInputVisible(true);
-                    })}>
-                    <RcEditCC
-                      style={styles.editIcon}
-                      color={styles.editIcon.color}
-                    />
-                  </TouchableOpacity>
-                </View>
-                {/* Submit Area */}
-                <View style={styles.submitArea}>
-                  {!!feedbackText && (
-                    <View style={styles.feedbackPreview}>
-                      <Text
-                        style={styles.feedbackPreviewText}
-                        numberOfLines={1}
-                        lineBreakMode="clip">
-                        <Text style={{ fontWeight: 'bold' }}>
-                          {t('component.screenshotModal.feedbackLabel')}{' '}
-                        </Text>
-                        {feedbackText.slice(0, 300)}
-                      </Text>
-                    </View>
-                  )}
-                  <Button
-                    title={t('component.screenshotModal.submitButtonText')}
-                    containerStyle={styles.submitButtonContainer}
-                    buttonStyle={styles.submitButton}
-                    titleStyle={styles.submitButtonTitle}
-                    type="primary"
-                    disabled={!canSubmitFeedback}
-                    onPress={wrapOnPress(evt => {
-                      submitFeedback();
-                    })}
+        <KeyboardAvoidingView
+          behavior={IS_IOS ? 'padding' : 'padding'}
+          style={[{ flex: 1 }]}>
+          <TouchableOpacity
+            style={[
+              styles.avoidingView,
+              (bottomInputVisible || IS_ANDROID) && styles.maskBg,
+              bottomInputVisible && { flexShrink: 0 },
+            ]}
+            activeOpacity={1}
+            onPress={() => {
+              setBottomInputVisible(false);
+            }}>
+            <View style={[styles.modalWrapper]}>
+              <View style={[styles.modal]}>
+                <TouchableOpacity
+                  style={styles.modalClose}
+                  onPress={wrapOnPress(() => {
+                    closeSubmitModal();
+                  })}>
+                  <RcCloseCC
+                    style={styles.modalCloseIcon}
+                    color={styles.modalCloseIcon.color}
                   />
+                </TouchableOpacity>
+                <View style={styles.modalContent}>
+                  <View style={styles.titleWrapper}>
+                    <Text style={styles.title}>
+                      {t('component.screenshotModal.title')}
+                    </Text>
+                  </View>
+                  <View
+                    style={[styles.imageWrapper]}
+                    onLayout={event => {
+                      const { width } = event.nativeEvent.layout;
+                      setEditIconParentLayout({ width });
+                    }}>
+                    {lastScreenshot?.uri && (
+                      <Image
+                        style={[
+                          styles.image,
+                          { width: '100%', height: '100%' },
+                        ]}
+                        source={{ uri: lastScreenshot.uri }}
+                        resizeMode={IMAGE_RESIZE_MODE}
+                      />
+                    )}
+                    {/* Edit pen icon */}
+                    <TouchableOpacity
+                      style={[
+                        styles.editIconWrapper,
+                        !editIconParentLayout.width
+                          ? {}
+                          : {
+                              left: getEditPenIconLeftValue(
+                                editIconParentLayout.width,
+                              ),
+                            },
+                      ]}
+                      onPress={wrapOnPress(evt => {
+                        setBottomInputVisible(true);
+                      })}>
+                      <RcEditCC
+                        style={styles.editIcon}
+                        color={styles.editIcon.color}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  {/* Submit Area */}
+                  <View style={styles.submitArea}>
+                    {!!feedbackText && (
+                      <TouchableOpacity
+                        style={styles.feedbackPreview}
+                        onPress={wrapOnPress(evt => {
+                          setBottomInputVisible(true);
+                        })}>
+                        <Text
+                          style={styles.feedbackPreviewText}
+                          numberOfLines={1}
+                          lineBreakMode="clip">
+                          <Text style={{ fontWeight: 'bold' }}>
+                            {t('component.screenshotModal.feedbackLabel')}{' '}
+                          </Text>
+                          {feedbackText.slice(0, 300)}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                    <Button
+                      title={t('component.screenshotModal.submitButtonText')}
+                      containerStyle={styles.submitButtonContainer}
+                      buttonStyle={styles.submitButton}
+                      titleStyle={styles.submitButtonTitle}
+                      type="primary"
+                      disabled={!canSubmitFeedback || bottomInputVisible}
+                      onPress={wrapOnPress(evt => {
+                        submitFeedback();
+                      })}
+                    />
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
 
-        <ModalBottomInput
-          visible={bottomInputVisible}
-          style={[!bottomInputVisible && styles.leaveDocumentFlow]}
-        />
-      </KeyboardAvoidingView>
-    </Modal>
+          {IS_IOS && (
+            <ModalBottomInput
+              visible={bottomInputVisible}
+              style={[!bottomInputVisible && styles.leaveDocumentFlow]}
+            />
+          )}
+        </KeyboardAvoidingView>
+        {IS_ANDROID && (
+          <ModalBottomInput
+            visible={bottomInputVisible}
+            style={[!bottomInputVisible && styles.leaveDocumentFlow]}
+          />
+        )}
+      </Modal>
+
+      <SubmitSuccessModal />
+    </>
   );
 }
 

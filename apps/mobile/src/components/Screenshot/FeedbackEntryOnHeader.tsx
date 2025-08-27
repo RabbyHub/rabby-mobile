@@ -1,19 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  useWindowDimensions,
-  Dimensions,
-  Image,
-} from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import useAsync from 'react-use/lib/useAsync';
 
 import {
   sortFeedbackItemByCreateAtDesc,
-  useLatestLocalFeedback,
+  useLatestFeedbacks,
   useViewingLastFeedback,
 } from './hooks';
 
@@ -33,7 +24,7 @@ import { Button } from '@/components2024/Button';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 export function FeedbackEntryOnHeader({ style }: RNViewProps) {
-  const { localFeedbacks } = useLatestLocalFeedback();
+  const { lastRepliedFeedback } = useLatestFeedbacks();
 
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -49,32 +40,6 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
       toggleShowSheetModal('destroy');
     }
   }, [viewingLastFeedback, toggleShowSheetModal]);
-
-  const {
-    value: lastRepliedFeedback,
-    loading,
-    error,
-  } = useAsync(async () => {
-    if (!localFeedbacks.length) return;
-
-    const result = await Promise.allSettled(
-      localFeedbacks.map(localFeedback => {
-        return openapi.getUserFeedback(localFeedback.id);
-      }),
-    );
-    const feedbacks = result
-      .filter(feedback => feedback.status === 'fulfilled')
-      .map(feedback => feedback.value);
-
-    // console.debug('[debug] feedbacks', feedbacks);
-
-    const latestReplied =
-      feedbacks
-        .sort(sortFeedbackItemByCreateAtDesc)
-        .find(item => item.status === 'closed') || null;
-
-    return latestReplied;
-  }, [localFeedbacks]);
 
   const { imageUri, content, comment } = useMemo(() => {
     if (!lastRepliedFeedback)
@@ -94,7 +59,7 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
     };
   }, [lastRepliedFeedback]);
 
-  if (lastRepliedFeedback?.status !== 'closed') return null;
+  if (lastRepliedFeedback?.status !== 'complete') return null;
 
   const stagesList = (() => {
     return [
