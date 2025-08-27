@@ -19,7 +19,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { toast } from '@/components2024/Toast';
 
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
-const screenshotFeedbackIdsAtom = atomByMMKV('@screenshotFeedbackIds', {
+const screenshotFeedbackssAtom = atomByMMKV('@screenshotFeedbackIds', {
   feedbacks: [] as LocalUserFeedbackItem[],
 });
 
@@ -30,10 +30,8 @@ export function sortFeedbackItemByCreateAtDesc(
   return b.create_at - a.create_at;
 }
 export const LATEST_LOCAL_FEEDBACK_LIMIT = 10;
-export function useScreenshotFeedbacks() {
-  const [screenshotFeedbacks, setScreenshotFeedbacks] = useAtom(
-    screenshotFeedbackIdsAtom,
-  );
+function useScreenshotFeedbacks() {
+  const [, setScreenshotFeedbacks] = useAtom(screenshotFeedbackssAtom);
 
   const onFeedbackSubmitted = useCallback(
     (idOrItem: LocalUserFeedbackItem) => {
@@ -61,15 +59,28 @@ export function useScreenshotFeedbacks() {
     setScreenshotFeedbacks({ feedbacks: [] });
   }, [setScreenshotFeedbacks]);
 
+  const removeLocalFeedback = useCallback(
+    (id: string) => {
+      setScreenshotFeedbacks(prev => {
+        const list = prev.feedbacks.filter(item => item.id !== id);
+        return {
+          ...prev,
+          feedbacks: Array.from(list).slice(0, LATEST_LOCAL_FEEDBACK_LIMIT),
+        };
+      });
+    },
+    [setScreenshotFeedbacks],
+  );
+
   return {
-    screenshotFeedbacks,
     onFeedbackSubmitted,
     clearFeedbacks,
+    removeLocalFeedback,
   };
 }
 
-export function useLatestFeedbacks() {
-  const [screenshotFeedbacks] = useAtom(screenshotFeedbackIdsAtom);
+export function useLatestRepliedFeedbacks() {
+  const [screenshotFeedbacks] = useAtom(screenshotFeedbackssAtom);
 
   const { localFeedbacks } = useMemo(() => {
     const feedbacks = screenshotFeedbacks.feedbacks.sort(
@@ -85,17 +96,11 @@ export function useLatestFeedbacks() {
     useAsyncFn(async () => {
       if (!localFeedbacks.length) return;
 
-      const result = await Promise.allSettled(
-        localFeedbacks.map(localFeedback => {
-          return openapi.getUserFeedback(localFeedback.id);
-        }),
+      const rtFeedbacks = await openapi.getUserFeedbackList(
+        localFeedbacks.map(localFeedback => localFeedback.id),
       );
-      console.debug('[debug] result', result);
-      const rtFeedbacks = result
-        .filter(req => req.status === 'fulfilled')
-        .map(req => req.value);
 
-      console.debug('[debug] rtFeedbacks', rtFeedbacks);
+      // console.debug('[debug] rtFeedbacks', rtFeedbacks);
 
       const latestReplied = rtFeedbacks
         .filter(item => item.status === 'complete')
@@ -120,51 +125,64 @@ export function useLatestFeedbacks() {
     };
   }, [loadFeedbacks]);
 
-  console.debug('[debug] lastRepliedFeedback', lastRepliedFeedback);
-
   return { lastRepliedFeedback, loading, error };
 }
 
-// const screenShotAtom = atom<{
-// }>({
-//   viewingLastFeedback: false,
-// });
 function getDefaultValue() {
   return {
-    submitModalShown: false,
-    submitSuccessModalShown: false,
-    feedbackText: '',
     lastScreenshot: null,
-    viewingLastFeedback: false,
+    submitModalShown: false,
+    feedbackText: '',
+    submitSuccessModalShown: false,
+
+    viewingFeedback: null,
   };
 }
 export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
 const feedbackByScreenshotAtom = atom<{
-  submitModalShown: boolean;
-  submitSuccessModalShown: boolean;
-  feedbackText: string;
   lastScreenshot: ImageResolvedAssetSource | null;
-  viewingLastFeedback: boolean;
+  submitModalShown: boolean;
+  feedbackText: string;
+  submitSuccessModalShown: boolean;
+
+  viewingFeedback: UserFeedbackItem | null;
 }>(getDefaultValue());
 
-export function useViewingLastFeedback() {
+export function useViewingFeedback() {
   const [feedbackByScreenshot, setFeedbackByScreenshot] = useAtom(
     feedbackByScreenshotAtom,
   );
 
-  const setViewingLastFeedback = useCallback(
-    (viewing: boolean) => {
+  const startViewingFeedback = useCallback(
+    (feedback: UserFeedbackItem) => {
       setFeedbackByScreenshot(prev => ({
         ...prev,
-        viewingLastFeedback: viewing,
+        viewingFeedback: feedback,
       }));
     },
     [setFeedbackByScreenshot],
   );
 
+  const { removeLocalFeedback } = useScreenshotFeedbacks();
+
+  const finishViewFeedback = useCallback(() => {
+    if (feedbackByScreenshot.viewingFeedback) {
+      removeLocalFeedback(feedbackByScreenshot.viewingFeedback?.id);
+    }
+    setFeedbackByScreenshot(prev => ({
+      ...prev,
+      viewingFeedback: null,
+    }));
+  }, [
+    removeLocalFeedback,
+    setFeedbackByScreenshot,
+    feedbackByScreenshot.viewingFeedback,
+  ]);
+
   return {
-    viewingLastFeedback: feedbackByScreenshot.viewingLastFeedback,
-    setViewingLastFeedback,
+    viewingFeedback: feedbackByScreenshot.viewingFeedback,
+    startViewingFeedback,
+    finishViewFeedback,
   };
 }
 
@@ -211,7 +229,7 @@ function useLastScreenshot() {
   const shouldToastFeedbackByScreenshot = useAtomCallback(get => {
     const feedbackByScreenshot = get(feedbackByScreenshotAtom);
     return (
-      !feedbackByScreenshot.viewingLastFeedback &&
+      !feedbackByScreenshot.viewingFeedback &&
       !feedbackByScreenshot.submitModalShown
     );
   });
@@ -317,7 +335,6 @@ export function useUserDidTakeScreenshot({
     };
   }, [isTop, shouldToastFeedbackByScreenshot, setLastScreenshot]);
 }
-
 export function useFeedbackOnScreenshot() {
   const [submitFeedbackOnScreenshot, setSubmitFeedbackOnScreenshot] = useAtom(
     feedbackByScreenshotAtom,
@@ -382,11 +399,13 @@ export function useSubmitFeedbackOnScreenshot() {
 
       if (!result?.image_url) return;
 
+      // TODO: report to sentry here, add extra fields here
       const submitResult = await openapi.postUserFeedback({
         title: '',
         image_url_list: [result.image_url],
         content: feedbackText,
       });
+      // TODO: report to sentry here, add submitResult.id as extra field here
 
       closeSubmitModal({ clearText: true });
       if (submitResult.id) {

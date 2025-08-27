@@ -2,11 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import {
-  sortFeedbackItemByCreateAtDesc,
-  useLatestFeedbacks,
-  useViewingLastFeedback,
-} from './hooks';
+import { useLatestRepliedFeedbacks, useViewingFeedback } from './hooks';
 
 import RcEntryCC from './icons/entry-cc.svg';
 import RcSuccessCC from './icons/success-cc.svg';
@@ -19,27 +15,28 @@ import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/ut
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import AutoLockView from '../AutoLockView';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { openapi } from '@/core/request';
 import { Button } from '@/components2024/Button';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 
-export function FeedbackEntryOnHeader({ style }: RNViewProps) {
-  const { lastRepliedFeedback } = useLatestFeedbacks();
-
+function ModalResponseDetail({
+  lastRepliedFeedback,
+}: {
+  lastRepliedFeedback: UserFeedbackItem;
+}) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
-  const { viewingLastFeedback, setViewingLastFeedback } =
-    useViewingLastFeedback();
+  const { viewingFeedback, finishViewFeedback } = useViewingFeedback();
 
   useEffect(() => {
-    if (viewingLastFeedback) {
+    if (viewingFeedback) {
       toggleShowSheetModal(true);
     } else {
       toggleShowSheetModal('destroy');
     }
-  }, [viewingLastFeedback, toggleShowSheetModal]);
+  }, [viewingFeedback, toggleShowSheetModal]);
 
   const { imageUri, content, comment } = useMemo(() => {
     if (!lastRepliedFeedback)
@@ -105,12 +102,87 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
   })();
 
   return (
+    <AppBottomSheetModal
+      {...makeBottomSheetProps({
+        linearGradientType: 'linear',
+        colors: colors2024,
+      })}
+      ref={sheetModalRef}
+      index={0}
+      snapPoints={[514]}
+      enableDismissOnClose
+      onDismiss={() => {
+        finishViewFeedback();
+      }}
+      // enableDynamicSizing
+      // maxDynamicContentSize={maxHeight}
+      enableContentPanningGesture={true}
+      enablePanDownToClose={false}
+      containerStyle={styles.sheetModal}
+      footerComponent={() => {
+        return (
+          <FooterComponent
+            style={styles.sheetModalFooter}
+            onPress={() => finishViewFeedback()}
+          />
+        );
+      }}>
+      <BottomSheetScrollView style={styles.scrollableView}>
+        <AutoLockView style={[styles.container]}>
+          <View style={[styles.panelContainer]}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>
+                {t('component.feedbackModal.title')}
+              </Text>
+            </View>
+
+            <View style={styles.stagesContainer}>
+              {stagesList.map((stage, index) => {
+                const key = `stage-${index}-${stage.title}`;
+                const isLast = index === stagesList.length - 1;
+                return (
+                  <View
+                    key={key}
+                    style={[styles.stage, isLast && styles.lastStage]}>
+                    {!stage.finished ? (
+                      <View style={[styles.stagePointContainer]} />
+                    ) : (
+                      <View style={[styles.stagePointContainer]}>
+                        <RcSuccessCC
+                          style={styles.stagePointIcon}
+                          color={colors2024['neutral-InvertHighlight']}
+                        />
+                      </View>
+                    )}
+                    <Text style={styles.stageTitle}>{stage.title}</Text>
+                    <View style={styles.stageContent}>{stage.contentNode}</View>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        </AutoLockView>
+      </BottomSheetScrollView>
+    </AppBottomSheetModal>
+  );
+}
+
+export function FeedbackEntryOnHeader({ style }: RNViewProps) {
+  const { lastRepliedFeedback } = useLatestRepliedFeedbacks();
+
+  const { styles } = useTheme2024({ getStyle });
+
+  const { startViewingFeedback } = useViewingFeedback();
+
+  if (lastRepliedFeedback?.status !== 'complete') return null;
+
+  return (
     <>
       <TouchableOpacity
         activeOpacity={1}
         style={[styles.iconContainer, style]}
         onPress={() => {
-          setViewingLastFeedback(true);
+          startViewingFeedback(lastRepliedFeedback);
 
           matomoRequestEvent({
             category: 'Click_Header',
@@ -120,70 +192,7 @@ export function FeedbackEntryOnHeader({ style }: RNViewProps) {
         <RcEntryCC style={styles.icon} color={styles.icon.color} />
       </TouchableOpacity>
 
-      <AppBottomSheetModal
-        {...makeBottomSheetProps({
-          linearGradientType: 'linear',
-          colors: colors2024,
-        })}
-        ref={sheetModalRef}
-        index={0}
-        snapPoints={[514]}
-        enableDismissOnClose
-        onDismiss={() => {
-          setViewingLastFeedback(false);
-        }}
-        // enableDynamicSizing
-        // maxDynamicContentSize={maxHeight}
-        enableContentPanningGesture={true}
-        enablePanDownToClose={false}
-        containerStyle={styles.sheetModal}
-        footerComponent={() => {
-          return (
-            <FooterComponent
-              style={styles.sheetModalFooter}
-              onPress={() => setViewingLastFeedback(false)}
-            />
-          );
-        }}>
-        <BottomSheetScrollView style={styles.scrollableView}>
-          <AutoLockView style={[styles.container]}>
-            <View style={[styles.panelContainer]}>
-              <View style={styles.titleContainer}>
-                <Text style={styles.title}>
-                  {t('component.feedbackModal.title')}
-                </Text>
-              </View>
-
-              <View style={styles.stagesContainer}>
-                {stagesList.map((stage, index) => {
-                  const key = `stage-${index}-${stage.title}`;
-                  const isLast = index === stagesList.length - 1;
-                  return (
-                    <View
-                      key={key}
-                      style={[styles.stage, isLast && styles.lastStage]}>
-                      {!stage.finished ? (
-                        <View style={[styles.stagePointContainer]} />
-                      ) : (
-                        <View style={[styles.stagePointContainer]}>
-                          <RcSuccessCC
-                            style={styles.stagePointIcon}
-                            color={colors2024['neutral-InvertHighlight']}
-                          />
-                        </View>
-                      )}
-                      <Text style={styles.stageTitle}>{stage.title}</Text>
-                      <View style={styles.stageContent}>
-                        {stage.contentNode}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          </AutoLockView>
-        </BottomSheetScrollView>
-      </AppBottomSheetModal>
+      <ModalResponseDetail lastRepliedFeedback={lastRepliedFeedback} />
     </>
   );
 }
