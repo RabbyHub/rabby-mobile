@@ -258,19 +258,17 @@ export const useTokenMarketInfo = (token: {
   chain: string;
   tokenId: string;
 }) => {
-  const { data: tokenInfo } = useRequest(
+  return useRequest(
     async () => {
       const res = await openapi.getTokenMarketInfo({
         token_id: token.tokenId,
         chain_id: token.chain,
       });
+      console.log('CUSTOM_LOGGER:=>: res', res);
       return res;
     },
     {
       refreshDeps: [token.chain, token.tokenId],
     },
   );
-  return {
-    tokenInfo,
-  };
 };

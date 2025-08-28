@@ -617,22 +617,26 @@ export const TokenMarketInfoScreen = () => {
     tokenPriceChartRef.current?.refreshChart();
   }, [refreshAsync, refreshTokenEntity]);
 
-  useEffect(() => {
-    fetchTokenPriceData(
-      {
-        chain: token.chain,
-        tokenId: token._tokenId,
-      },
-      currentInterval,
-    ).then(res => {
-      chartWebViewRef.current?.setData(res);
-    });
-  }, [currentInterval, token.chain, token._tokenId]);
-
-  const { tokenInfo } = useTokenMarketInfo({
+  const { data: tokenInfo, loading: tokenInfoLoading } = useTokenMarketInfo({
     chain: token.chain,
     tokenId: token._tokenId,
   });
+
+  const handleChangeInterval = useCallback(
+    (interval: CandlePeriod) => {
+      setCurrentInterval(interval);
+      fetchTokenPriceData(
+        {
+          chain: token.chain,
+          tokenId: token._tokenId,
+        },
+        interval,
+      ).then(res => {
+        chartWebViewRef.current?.setData(res);
+      });
+    },
+    [token._tokenId, token.chain],
+  );
 
   if (isSingleAddress && !finalAccount) {
     return null;
@@ -685,60 +689,52 @@ export const TokenMarketInfoScreen = () => {
                 position: 'relative',
                 marginTop: 12,
               }}>
-              {loading && (
-                <Skeleton
-                  width={screenWidth - 32}
-                  height={300}
-                  LinearGradientComponent={LoadingLinear}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 16,
-                    right: 16,
-                    bottom: 0,
-                    zIndex: 100,
-                  }}
+              {tokenInfo?.support_market_data ? (
+                <>
+                  <TimePanel
+                    currentInterval={currentInterval}
+                    onSelect={handleChangeInterval}
+                  />
+                  <MarketInfo
+                    price={tokenInfo?.price ?? 0}
+                    price24hChange={tokenInfo?.price_24h_change ?? 0}
+                    marketCap={
+                      tokenInfo?.market.market_cap_usd_value?.toString() ?? '-'
+                    }
+                    totalSupply={
+                      tokenInfo?.market.total_supply?.toString() ?? '-'
+                    }
+                    volume24h={
+                      tokenInfo?.market.volume_amount_24h?.toString() ?? '-'
+                    }
+                    txns24h={tokenInfo?.market.txns_24h?.toString() ?? ''}
+                    holders={tokenInfo?.market.holder_count?.toString() ?? ''}
+                  />
+                  <TradingViewCandleChart
+                    ref={chartWebViewRef}
+                    height={300}
+                    onChartReady={() => {
+                      setLoading(false);
+                      fetchTokenPriceData(
+                        {
+                          chain: token.chain,
+                          tokenId: token._tokenId,
+                        },
+                        currentInterval,
+                      ).then(res => {
+                        chartWebViewRef.current?.setData(res);
+                      });
+                    }}
+                  />
+                </>
+              ) : (
+                <TokenPriceChart
+                  ref={tokenPriceChartRef}
+                  token={tokenWithAmount || token}
+                  amountList={[]}
+                  relateDefiList={[]}
                 />
               )}
-              <TimePanel
-                currentInterval={currentInterval}
-                onSelect={setCurrentInterval}
-              />
-              <Text>price: {tokenInfo?.price}</Text>
-              <Text>24h change{tokenInfo?.price_24h_change}</Text>
-              <MarketInfo
-                marketCap={
-                  tokenInfo?.market.market_cap_usd_value?.toString() ?? '-'
-                }
-                totalSupply={tokenInfo?.market.total_supply?.toString() ?? '-'}
-                volume24h={
-                  tokenInfo?.market.volume_amount_24h?.toString() ?? '-'
-                }
-                txns24h={tokenInfo?.market.txns_24h?.toString() ?? ''}
-                holders={tokenInfo?.market.holder_count?.toString() ?? ''}
-              />
-              <TradingViewCandleChart
-                ref={chartWebViewRef}
-                height={300}
-                onChartReady={() => {
-                  setLoading(false);
-                  fetchTokenPriceData(
-                    {
-                      chain: token.chain,
-                      tokenId: token._tokenId,
-                    },
-                    currentInterval,
-                  ).then(res => {
-                    chartWebViewRef.current?.setData(res);
-                  });
-                }}
-              />
-              <TokenPriceChart
-                ref={tokenPriceChartRef}
-                token={tokenWithAmount || token}
-                amountList={[]}
-                relateDefiList={[]}
-              />
             </View>
             <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
             <View style={{ height: isAndroid ? 200 + safeOffBottom : 156 }} />
