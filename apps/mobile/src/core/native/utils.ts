@@ -16,6 +16,7 @@ interface NativeModulesStatic {
     unblockScreen(): void;
   };
   RNScreenshotPrevent: NativeModule & {
+    scanScreenshotDirectory: () => void;
     startScreenCaptureDetection: () => Promise<void>;
     stopScreenCaptureDetection: () => Promise<void>;
     togglePreventScreenshot: (isPrevent: boolean) => void;

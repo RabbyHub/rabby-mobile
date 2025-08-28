@@ -100,28 +100,6 @@ public class ScreenshotHelper {
         return displayName.matches(TIMESTAMP_PATTERN);
     }
 
-    // private static boolean requestReadMediaImagesPermission() {
-    //   Activity currentActivity = getCurrentActivity();
-    //   ReactApplicationContext reactContext = getReactApplicationContext();
-
-    //   if (currentActivity == null || reactContext == null) {
-    //       Log.w(TAG, "Cannot request permission: Activity or Context is null.");
-    //       return false;
-    //   }
-
-    //   // Check if permission is already granted
-    //   boolean hasPermission = ContextCompat.checkSelfPermission(
-    //       reactContext,
-    //       Manifest.permission.READ_MEDIA_IMAGES
-    //   ) == PackageManager.PERMISSION_GRANTED;
-
-    //   if (!hasPermission) {
-    //     requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES);
-    //   }
-
-    //   return hasPermission;
-    // }
-
     private static String C_WIDTH = "width";
     private static String C_HEIGHT = "height";
     /**

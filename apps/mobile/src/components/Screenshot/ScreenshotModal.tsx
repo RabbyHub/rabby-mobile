@@ -25,7 +25,7 @@ import { useOnKeyboardDismissed } from '@/hooks/system/keyboard';
 import { SubmitSuccessModal } from './SubmitSuccessModal';
 
 // const IMAGE_CONTAIN_STYLE = { height: 200, width: '100%' } as const;
-const IMAGE_RESIZE_MODE = 'contain' as const;
+const IMAGE_RESIZE_MODE = 'cover' as const;
 
 function wrapOnPress(handler?: (evt: GestureResponderEvent) => void) {
   return (evt: GestureResponderEvent) => {

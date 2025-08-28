@@ -23,7 +23,7 @@ import { StackActions, useFocusEffect } from '@react-navigation/native';
 import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
-import { RootNames } from '@/constant/layout';
+import { RootNames, ScreenLayouts } from '@/constant/layout';
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
@@ -107,6 +107,8 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
+import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
+import { useViewedHomeTip } from '@/components/Screenshot/hooks';
 
 const HeaderHeight = 24;
 
@@ -187,7 +189,7 @@ function MultiAddressHomeHeader(
                 action: 'Click_Setting',
               });
             }}>
-            <RcIconSetting color={colors2024['neutral-title-1']} />
+            <RcIconSetting color={colors2024['neutral-foot']} />
             {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
           </TouchableWithoutFeedback>
         </View>
@@ -287,7 +289,7 @@ function MultiAddressHomeHeader(
   );
 }
 
-const ITEM_LAYOUT_PADDING_HORIZONTAL = 16;
+const ITEM_LAYOUT_PADDING_HORIZONTAL = ScreenLayouts.homeHorizontalPadding;
 const ITEM_GRID_GAP = 12;
 const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 
@@ -845,17 +847,27 @@ function MultiAddressHome(): JSX.Element {
 
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
+  const { viewedHomeTip } = useViewedHomeTip();
 
-  const { noBetweenContent } = useMemo(() => {
-    const _noBetweenContent =
-      !displayFundWallet &&
-      !shouldShowRateGuideOnHome &&
-      (!offlineChainData.displayWillClosedChain ||
-        !offlineChainData.offlineChainInfo);
+  const { noBetweenContent, onlyOneContent } = useMemo(() => {
+    const els = [
+      displayFundWallet,
+      shouldShowRateGuideOnHome,
+      !offlineChainData.displayWillClosedChain ||
+        !offlineChainData.offlineChainInfo,
+      viewedHomeTip,
+    ];
+    const _noBetweenContent = els.every(Boolean);
     return {
       noBetweenContent: _noBetweenContent,
+      onlyOneContent: els.filter(Boolean).length === 1,
     };
-  }, [shouldShowRateGuideOnHome, offlineChainData, displayFundWallet]);
+  }, [
+    shouldShowRateGuideOnHome,
+    offlineChainData,
+    displayFundWallet,
+    viewedHomeTip,
+  ]);
 
   return (
     <NormalScreenContainer2024
@@ -901,6 +913,9 @@ function MultiAddressHome(): JSX.Element {
               noBetweenContent
                 ? styles.contentBetweenHeaderAndMatrixEmpty
                 : styles.contentBetweenHeaderAndMatrix,
+              onlyOneContent
+                ? styles.contentBetweenHeaderAndMatrixOnlyOne
+                : null,
             ]}>
             <OfflineChainNotify data={offlineChainData} />
 
@@ -915,6 +930,8 @@ function MultiAddressHome(): JSX.Element {
                 <RateModal totalBalanceText={combineData.netWorth} />
               </View>
             )}
+
+            <TipFeedbackByScreenshot />
           </View>
 
           <View style={[{ marginTop: 0 }, styles.grid]}>
@@ -1184,6 +1201,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   contentBetweenHeaderAndMatrixEmpty: {
     marginBottom: 12,
+  },
+  contentBetweenHeaderAndMatrixOnlyOne: {
+    paddingTop: 0,
   },
   menuContainer: {
     marginTop: 0,

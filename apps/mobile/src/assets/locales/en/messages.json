@@ -1157,6 +1157,9 @@
         "feedbackTitle": "Have feedback? We’re listening.",
         "feedbackSubmit": "Submit",
         "feedbackSuccess": "Thank you for your feedback"
+      },
+      "homeCenterTipScreenshot": {
+        "description": "Capture your screen quickly and easily."
       }
     },
     "newAddress": {
@@ -2292,7 +2295,7 @@
       "feedbackInput": {
         "placeholder": "Describe the issue"
       },
-      "feedbackLabel": "Bug description"
+      "feedbackLabel": "Bug description: "
     },
     "feedbackModal": {
       "title": "Response from Rabby Support",
@@ -2362,7 +2365,36 @@
     "unlimited": "unlimited",
     "Addresses": "Addresses",
     "Wallets": "Select Wallet",
-    "24h": "24h"
+    "24h": "24h",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "askMeLater"
+      },
+      "mediaLibrary": {
+        "title": "Media Library Permission",
+        "message": "This app needs access to your media library to detect screenshots."
+      },
+      "camera": {
+        "title": "Camera Permission",
+        "message": "This app needs access to your camera to take photos."
+      },
+      "bluetoothScan": {
+        "title": "Bluetooth Scan Permission",
+        "message": "This app needs access to your Bluetooth to scan for devices."
+      },
+      "bluetoothConnect": {
+        "title": "Bluetooth Connect Permission",
+        "message": "This app needs access to your Bluetooth to connect to devices."
+      },
+      "bluetoothAdmin": {
+        "title": "Bluetooth Admin Permission",
+        "message": "This app needs access to your Bluetooth to manage devices."
+      },
+      "location": {
+        "title": "Location Permission",
+        "message": "This app needs access to your location to provide location-based features."
+      }
+    }
   },
   "background": {
     "error": {

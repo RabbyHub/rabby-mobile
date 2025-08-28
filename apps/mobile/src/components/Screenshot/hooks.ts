@@ -3,6 +3,7 @@ import {
   Dimensions,
   Image,
   ImageResolvedAssetSource,
+  PermissionsAndroid,
   Platform,
 } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -18,11 +19,47 @@ import { useAtomCallback } from 'jotai/utils';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { toast } from '@/components2024/Toast';
 import { useRefState } from '@/hooks/common/useRefState';
+import { IS_ANDROID } from '@/core/native/utils';
+import { PerAndroid } from '@/core/utils/permissions';
+import { isNonPublicProductionEnv } from '@/constant/env';
 
+export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
+  IS_ANDROID && !isNonPublicProductionEnv;
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
-const screenshotFeedbackssAtom = atomByMMKV('@screenshotFeedbackIds', {
+const screenshotFeedbackAtom = atomByMMKV('@screenshotFeedback', {
+  viewedHomeTip: false,
   feedbacks: [] as LocalUserFeedbackItem[],
 });
+
+export function useViewedHomeTip() {
+  const [screenshotFeedback, setScreenshotFeedback] = useAtom(
+    screenshotFeedbackAtom,
+  );
+
+  const markViewedHomeTip = useCallback(() => {
+    if (screenshotFeedback.viewedHomeTip) return;
+    setScreenshotFeedback(prev => ({
+      ...prev,
+      viewedHomeTip: true,
+    }));
+  }, [screenshotFeedback.viewedHomeTip, setScreenshotFeedback]);
+
+  const mockResetViewedHomeTip = useCallback(() => {
+    if (!isNonPublicProductionEnv) return;
+    setScreenshotFeedback(prev => ({
+      ...prev,
+      viewedHomeTip: false,
+    }));
+  }, [setScreenshotFeedback]);
+
+  return {
+    viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT
+      ? false
+      : screenshotFeedback.viewedHomeTip,
+    markViewedHomeTip,
+    mockResetViewedHomeTip,
+  };
+}
 
 export function sortFeedbackItemByCreateAtDesc(
   a: LocalUserFeedbackItem,
@@ -32,7 +69,7 @@ export function sortFeedbackItemByCreateAtDesc(
 }
 export const LATEST_LOCAL_FEEDBACK_LIMIT = 10;
 function useScreenshotFeedbacks() {
-  const [, setScreenshotFeedbacks] = useAtom(screenshotFeedbackssAtom);
+  const [, setScreenshotFeedbacks] = useAtom(screenshotFeedbackAtom);
 
   const onFeedbackSubmitted = useCallback(
     (idOrItem: LocalUserFeedbackItem) => {
@@ -57,7 +94,7 @@ function useScreenshotFeedbacks() {
   );
 
   const clearFeedbacks = useCallback(() => {
-    setScreenshotFeedbacks({ feedbacks: [] });
+    setScreenshotFeedbacks(prev => ({ ...prev, feedbacks: [] }));
   }, [setScreenshotFeedbacks]);
 
   const removeLocalFeedback = useCallback(
@@ -81,7 +118,7 @@ function useScreenshotFeedbacks() {
 }
 
 export function useLatestRepliedFeedbacks() {
-  const [screenshotFeedbacks] = useAtom(screenshotFeedbackssAtom);
+  const [screenshotFeedbacks] = useAtom(screenshotFeedbackAtom);
 
   const { localFeedbacks } = useMemo(() => {
     const feedbacks = screenshotFeedbacks.feedbacks.sort(
@@ -243,6 +280,8 @@ function useLastScreenshot() {
   );
 
   const shouldToastFeedbackByScreenshot = useAtomCallback(get => {
+    if (FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) return false;
+
     const feedbackByScreenshot = get(feedbackByScreenshotAtom);
     return (
       !feedbackByScreenshot.viewingFeedback &&
@@ -300,7 +339,10 @@ export function useUserDidTakeScreenshot({
 
     const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(
       async params => {
-        if (!params?.captured) return;
+        if (!params?.captured) {
+          if (IS_ANDROID && params && !params?.androidHasPermission) return;
+          return;
+        }
 
         if (!shouldToastFeedbackByScreenshot()) return;
 
@@ -312,7 +354,6 @@ export function useUserDidTakeScreenshot({
           ? AppScreenshotFS.normalizeFilePath(params.path)
           : '';
 
-        let inAppPath: string | null = null;
         if (params?.imageBase64) {
           setLastScreenshot(
             Image.resolveAssetSource({
@@ -326,7 +367,7 @@ export function useUserDidTakeScreenshot({
             }),
           );
         } else if (fullPath && (await RNFS.exists(fullPath))) {
-          inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath, {
+          const inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath, {
             imageType: params.imageType,
           });
           if (!inAppPath) return;
