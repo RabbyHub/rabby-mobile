@@ -12,6 +12,7 @@ import { Platform, SafeAreaView, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { createTradingViewChartTemplate } from './template';
 import { CandleData, CandleStick } from './type';
+import { openExternalUrl } from '@/core/utils/linking';
 
 interface ChartProps {
   height: number;
@@ -123,11 +124,8 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
               setIsChartReady(true);
               onChartReady?.();
               break;
-            case 'PRICE_LINES_UPDATE':
-              break;
-            case 'INTERVAL_UPDATED':
-              break;
-            case 'WEBVIEW_TEST':
+            case 'ATTR_LOGO_CLICK':
+              openExternalUrl('https://www.tradingview.com');
               break;
             default:
               break;

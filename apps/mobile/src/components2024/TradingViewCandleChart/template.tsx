@@ -134,6 +134,34 @@ export const createTradingViewChartTemplate = (
                     }
                 });
 
+                // open external url when click tradingview logo
+                (function setupLogoHijack() {
+                    let bound = false;
+                    const attach = () => {
+                        const el = document.getElementById('tv-attr-logo');
+                        if (el && !bound) {
+                            bound = true;
+                            const handler = function(e) {
+                                try {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                } catch(_) {}
+                                if (window.ReactNativeWebView) {
+                                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                                        type: 'ATTR_LOGO_CLICK',
+                                        timestamp: Date.now(),
+                                    }));
+                                }
+                                return false;
+                            };
+                            // use capture to intercept early
+                            el.addEventListener('click', handler, true);
+                        }
+                    };
+                    // try now
+                    attach();
+                })();
+
                 // Subscribe to crosshair move events
                 window.chart.subscribeCrosshairMove(handleCrosshairMove);
 
