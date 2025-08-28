@@ -31,6 +31,9 @@ export const PerpsMarketListScreen = () => {
           onPress={() => {
             navigation.push(RootNames.StackTransaction, {
               screen: RootNames.PerpsMarketDetail,
+              params: {
+                market: item.name,
+              },
             });
           }}
           item={item}

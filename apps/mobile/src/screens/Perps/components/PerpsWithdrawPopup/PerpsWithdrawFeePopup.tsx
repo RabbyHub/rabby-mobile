@@ -1,23 +1,12 @@
-import {
-  RcIconInfo2CC,
-  RcIconInfoCC,
-  RcIconInfoFillCC,
-} from '@/assets/icons/common';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
 
 export const PerpsWithdrawFeePopup: React.FC<{
   visible?: boolean;

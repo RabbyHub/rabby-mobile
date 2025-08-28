@@ -29,20 +29,20 @@ import {
   View,
 } from 'react-native';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
+import { Account } from '@/core/services/preference';
 
 export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
   visible?: boolean;
-}> = ({ onClose, visible }) => {
+  account: Account;
+}> = ({ onClose, visible, account }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
 
-  const address = '0x341a1fbd51825e5a107db54ccb3166deba145479';
-
   const { tokens: _tokens, updateData } = useTokens(
-    address,
+    account.address,
     false,
     0,
     undefined,
@@ -52,14 +52,14 @@ export const PerpsSelectTokenPopup: React.FC<{
   const { data: arbUsdc, runAsync: runFetchUsdcToken } = useRequest(
     async () => {
       const arbUsdcToken = await openapi.getToken(
-        address,
+        account.address,
         ARB_USDC_TOKEN_SERVER_CHAIN,
         ARB_USDC_TOKEN_ID,
       );
       return ensureAbstractPortfolioToken(arbUsdcToken);
     },
     {
-      refreshDeps: [address],
+      refreshDeps: [account.address],
       manual: true,
     },
   );
@@ -72,7 +72,8 @@ export const PerpsSelectTokenPopup: React.FC<{
           ...(_tokens?.filter(
             item =>
               item.chain !== ARB_USDC_TOKEN_SERVER_CHAIN &&
-              !isSameAddress(item._tokenId, ARB_USDC_TOKEN_ID),
+              !isSameAddress(item._tokenId, ARB_USDC_TOKEN_ID) &&
+              item.is_core,
           ) || []),
         ];
   }, [_tokens, arbUsdc]);

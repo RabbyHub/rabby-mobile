@@ -3,7 +3,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { PerpsIntro } from './components/PerpsIntro';
@@ -15,29 +15,59 @@ import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
 import { PerpsOpenPositionCheckPopup } from './components/PerpsOpenPositionCheckPopup';
 import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup ';
 import { PerpsAutoCloseModal } from './components/PerpsAutoCloseModal';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
 
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
 
-  const { navigation } = useSafeSetNavigationOptions();
+  const navigation = useRabbyAppNavigation();
+
+  const route =
+    useRoute<
+      GetNestedScreenNavigationProps<
+        'TransactionNavigatorParamList',
+        'PerpsMarketDetail'
+      >['route']
+    >();
+
+  const marketName = route.params.market;
+
+  const { state } = usePerpsStore();
+  const { positionAndOpenOrders, accountSummary, marketDataMap, perpFee } =
+    state;
+
+  const market = useMemo(() => {
+    return marketDataMap[marketName.toUpperCase()];
+  }, [marketDataMap, marketName]);
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: PerpsHeaderTitle,
+      headerTitle: () => <PerpsHeaderTitle market={market} />,
     });
-  }, [navigation]);
+  }, [market, navigation]);
+
+  if (!market) {
+    return null;
+  }
 
   return (
     <>
       <NormalScreenContainer2024 type="bg2">
-        <ScrollView style={styles.container}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={{
+            paddingBottom: 22,
+          }}>
           <View style={styles.chart}></View>
-          <PerpsPosition />
-          <PerpsInfo />
+          {/* <PerpsPosition /> */}
+          <PerpsInfo market={market} />
           <PerpsIntro />
-          <View style={{ height: 22 }}></View>
         </ScrollView>
         <PerpsFooter />
       </NormalScreenContainer2024>

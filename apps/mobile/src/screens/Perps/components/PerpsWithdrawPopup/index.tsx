@@ -1,15 +1,14 @@
-import {
-  RcIconInfo2CC,
-  RcIconInfoCC,
-  RcIconInfoFillCC,
-} from '@/assets/icons/common';
+import { RcIconInfoFillCC } from '@/assets/icons/common';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
+import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,7 +22,9 @@ import { PerpsWithdrawFeePopup } from './PerpsWithdrawFeePopup';
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
-}> = ({ visible, onClose }) => {
+  onWithdraw?(v: string): void;
+  accountSummary?: AccountSummary | null;
+}> = ({ visible, onClose, onWithdraw, accountSummary }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -31,6 +32,16 @@ export const PerpsWithdrawPopup: React.FC<{
   });
 
   const { t } = useTranslation();
+
+  const [amount, setAmount] = React.useState<string>('');
+  const { runAsync: handleWithdraw, loading } = useRequest(
+    async () => {
+      await onWithdraw?.(amount);
+    },
+    {
+      manual: true,
+    },
+  );
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -70,11 +81,14 @@ export const PerpsWithdrawPopup: React.FC<{
                 {t('page.perps.PerpsWithdrawPopup.amount')}
               </Text>
               <Text style={styles.formItemDesc}>
-                $100 {t('page.perps.PerpsWithdrawPopup.available')}
+                {formatUsdValue(accountSummary?.withdrawable || 0)}{' '}
+                {t('page.perps.PerpsWithdrawPopup.available')}
               </Text>
             </View>
             <View style={styles.inputContainer}>
               <BottomSheetTextInput
+                value={amount}
+                onChangeText={setAmount}
                 keyboardType="numeric"
                 style={styles.input}
                 placeholder="$0"
@@ -91,7 +105,7 @@ export const PerpsWithdrawPopup: React.FC<{
           <Button
             type="primary"
             title={t('page.perps.PerpsWithdrawPopup.withdrawBtn')}
-            onPress={() => {}}
+            onPress={handleWithdraw}
           />
         </AutoLockView>
       </AppBottomSheetModal>
@@ -147,7 +161,7 @@ const getStyle = createGetStyles2024(ctx => {
     input: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 28,
-      lineHeight: 36,
+      // lineHeight: 36,
       fontWeight: '700',
       // color: ctx.colors2024['neutral-body'],
       flex: 1,

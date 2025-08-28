@@ -25,17 +25,11 @@ export const PerpsAccountCard: React.FC<{
       <View style={[styles.card, styles.balanceCard]}>
         <View style={styles.balanceCardContent}>
           <Text style={styles.balance}>
-            {formatUsdValue(
-              Number(accountSummary?.accountValue),
-              BigNumber.ROUND_DOWN,
-            )}
+            {formatUsdValue(Number(accountSummary?.accountValue))}
           </Text>
           <Text style={styles.availableBalance}>
             {t('page.perps.PerpsCard.available')}:
-            {formatUsdValue(
-              Number(accountSummary?.withdrawable),
-              BigNumber.ROUND_DOWN,
-            )}
+            {formatUsdValue(Number(accountSummary?.withdrawable))}
           </Text>
         </View>
         <View style={styles.balanceCardBtns}>

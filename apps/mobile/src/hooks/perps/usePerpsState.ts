@@ -274,6 +274,7 @@ export const usePerpsState = () => {
                 params: [account.address, actionObj.action],
               },
               session: INTERNAL_REQUEST_SESSION,
+              account,
             });
 
         actionObj.signature = signature as string;
@@ -413,7 +414,7 @@ export const usePerpsState = () => {
   });
 
   const handleWithdraw = useMemoizedFn(
-    async (amount: number): Promise<boolean> => {
+    async (amount: number | string): Promise<boolean> => {
       try {
         console.log('handleWithdraw', amount);
         const sdk = apisPerps.getPerpsSDK();
@@ -449,6 +450,7 @@ export const usePerpsState = () => {
               params: [currentPerpsAccount.address, action],
             },
             session: INTERNAL_REQUEST_SESSION,
+            account: currentPerpsAccount,
           });
         }
         console.log('withdraw signature', signature);

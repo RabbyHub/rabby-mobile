@@ -33,12 +33,14 @@ export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
   visible?: boolean;
   onClose?(): void;
-}> = ({ visible, onClose, account }) => {
+  onDeposit?(v: string): void;
+}> = ({ visible, onClose, account, onDeposit }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
+  const [amount, setAmount] = React.useState<string>('');
 
   const [isShowTokenPopup, setIsShowTokenPopup] = useState(false);
 
@@ -58,6 +60,16 @@ export const PerpsDepositPopup: React.FC<{
     },
     {
       refreshDeps: [account?.address],
+      manual: true,
+    },
+  );
+
+  const { runAsync: handleDeposit, loading } = useRequest(
+    async () => {
+      console.log('--------', amount);
+      await onDeposit?.(amount);
+    },
+    {
       manual: true,
     },
   );
@@ -116,7 +128,6 @@ export const PerpsDepositPopup: React.FC<{
                       new BigNumber(arbUsdc.amount || 0)
                         .times(arbUsdc.price || 0)
                         .toString(),
-                      BigNumber.ROUND_DOWN,
                     )
                   : '$0'}
               </Text>
@@ -126,6 +137,8 @@ export const PerpsDepositPopup: React.FC<{
                 keyboardType="numeric"
                 style={styles.input}
                 placeholder="$0"
+                value={amount}
+                onChangeText={setAmount}
               />
               <View style={styles.divider} />
               {arbUsdc ? (
@@ -153,11 +166,13 @@ export const PerpsDepositPopup: React.FC<{
           <Button
             type="primary"
             title={t('page.perps.PerpsDepositPopup.depositBtn')}
-            onPress={() => {}}
+            onPress={handleDeposit}
+            loading={loading}
           />
         </AutoLockView>
       </AppBottomSheetModal>
       <PerpsSelectTokenPopup
+        account={account}
         visible={isShowTokenPopup}
         onClose={() => {
           setIsShowTokenPopup(false);

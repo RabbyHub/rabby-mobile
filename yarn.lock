@@ -8392,16 +8392,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.0.0-beta.19":
-  version: 1.0.0-beta.19
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.0.0-beta.19"
+"@rabby-wallet/hyperliquid-sdk@npm:1.0.0-beta.20":
+  version: 1.0.0-beta.20
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.0.0-beta.20"
   dependencies:
     "@ethereumjs/util": ^9.0.0
     "@metamask/eth-sig-util": 5.1.0
     "@msgpack/msgpack": ^3.1.2
     ethereum-cryptography: ^2.1.0
     ws: ^8.18.2
-  checksum: 200d858fc4e84a1808a5a85d581920cf119b9e87671fdf571d7126a62c9bb7b4b0b4fd4163e9343910dc632a2fa341eedee6ceb62844349c7b2daf23142b3726
+  checksum: 719221d79840976b85c10754a7b86f84b7578679dda20a4ae6cfd380f935d1470a9c5912e6d94289b180d4c50dc0248b0f21242c20dc01561fd63fa23d16f28f
   languageName: node
   linkType: hard
 
@@ -8440,6 +8440,7 @@ __metadata:
     "@metamask/eth-json-rpc-provider": ^2.3.0
     "@metamask/json-rpc-engine": ^7.3.0
     "@metamask/utils": ^8.2.0
+    "@rabby-wallet/hyperliquid-sdk": 1.0.0-beta.20
     "@rabby-wallet/rabby-api": 0.9.34
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^5.62.0
@@ -31203,7 +31204,7 @@ __metadata:
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": 5.0.2
-    "@rabby-wallet/hyperliquid-sdk": 1.0.0-beta.19
+    "@rabby-wallet/hyperliquid-sdk": 1.0.0-beta.20
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.13

@@ -7,7 +7,10 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
-export const PerpsMarketItem: React.FC<{ item: MarketData }> = ({ item }) => {
+export const PerpsMarketItem: React.FC<{
+  item: MarketData;
+  onPress?(): void;
+}> = ({ item, onPress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -17,7 +20,7 @@ export const PerpsMarketItem: React.FC<{ item: MarketData }> = ({ item }) => {
   const pnlText = `${isUp ? '+' : '-'}${formatPct(absPnlPct)}`;
 
   return (
-    <TouchableOpacity>
+    <TouchableOpacity onPress={onPress}>
       <View style={styles.card}>
         <FastImage
           style={styles.icon}

@@ -62,7 +62,19 @@ export const PerpsMain: React.FC<{
         return <PerpsPositionItem />;
       }
       if (section.type === 'market') {
-        return <PerpsMarketItem item={item} />;
+        return (
+          <PerpsMarketItem
+            item={item}
+            onPress={() => {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.PerpsMarketDetail,
+                params: {
+                  market: item.name,
+                },
+              });
+            }}
+          />
+        );
       }
       if (section.type === 'history') {
         return <PerpsHistoryItem />;

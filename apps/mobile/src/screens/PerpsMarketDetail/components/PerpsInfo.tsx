@@ -1,12 +1,15 @@
 import { RcIconInfoFillCC } from '@/assets/icons/common';
 import { RcIconLong } from '@/assets2024/icons/perps';
+import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
+import { formatPercent, formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { createGetStyles2024 } from '@/utils/styles';
+import BigNumber from 'bignumber.js';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-export const PerpsInfo: React.FC<{}> = () => {
+export const PerpsInfo: React.FC<{ market: MarketData }> = ({ market }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -21,7 +24,9 @@ export const PerpsInfo: React.FC<{}> = () => {
             <Text style={styles.label}>24h Volumn</Text>
           </View>
           <View>
-            <Text style={styles.value}>$329.17B</Text>
+            <Text style={styles.value}>
+              {formatUsdValueKMB(Number(market?.dayNtlVlm || 0))}
+            </Text>
           </View>
         </View>
         <View style={styles.listItem}>
@@ -34,7 +39,13 @@ export const PerpsInfo: React.FC<{}> = () => {
             />
           </View>
           <View>
-            <Text style={styles.value}>$329.17B</Text>
+            <Text style={styles.value}>
+              {formatUsdValueKMB(
+                new BigNumber(market?.openInterest || 0)
+                  .times(market?.markPx || 0)
+                  .toString(),
+              )}
+            </Text>
           </View>
         </View>
         <View style={styles.listItem}>
@@ -47,7 +58,9 @@ export const PerpsInfo: React.FC<{}> = () => {
             />
           </View>
           <View>
-            <Text style={styles.value}>0.0010512%</Text>
+            <Text style={styles.value}>
+              {formatPercent(Number(market?.funding || 0), 6)}
+            </Text>
           </View>
         </View>
       </View>

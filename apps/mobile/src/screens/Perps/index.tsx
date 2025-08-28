@@ -21,6 +21,7 @@ import { usePerspPopupState } from './hooks/usePerpsPopupState';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
+import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -66,6 +67,10 @@ export const PerpsScreen = () => {
       ...prev,
       isShowLogoutPopup: false,
     }));
+  });
+
+  const { handleDeposit } = usePerpsDeposit({
+    currentPerpsAccount,
   });
 
   useEffect(() => {
@@ -144,9 +149,24 @@ export const PerpsScreen = () => {
             isShowDepositPopup: false,
           }));
         }}
+        onDeposit={async v => {
+          await handleDeposit(v);
+          setPopupState(prev => ({
+            ...prev,
+            isShowDepositPopup: false,
+          }));
+        }}
       />
       <PerpsWithdrawPopup
         visible={popupState.isShowWithdrawPopup}
+        accountSummary={accountSummary}
+        onWithdraw={async v => {
+          await handleWithdraw(v);
+          setPopupState(prev => ({
+            ...prev,
+            isShowWithdrawPopup: false,
+          }));
+        }}
         onClose={() => {
           setPopupState(prev => ({
             ...prev,
