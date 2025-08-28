@@ -108,7 +108,10 @@ import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeC
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
 import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
-import { useViewedHomeTip } from '@/components/Screenshot/hooks';
+import {
+  useSetTotalBalanceText,
+  useViewedHomeTip,
+} from '@/components/Screenshot/hooks';
 
 const HeaderHeight = 24;
 
@@ -446,6 +449,7 @@ function MultiAddressHome(): JSX.Element {
   useCexSupportList();
   useFetchCexInfo();
   useInitDetectDBAssets();
+  useSetTotalBalanceText(combineData.netWorth);
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,

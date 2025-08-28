@@ -38,7 +38,6 @@ import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomShe
 import { useExpScreenCapture } from './appSettings';
 import { cleanSpecialSoloWeightFont } from '@/core/utils/fonts';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
-import { useSubmitFeedbackModalVisible } from '@/components/Screenshot/hooks';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -459,25 +458,29 @@ export function useAtSensitiveScene() {
     };
   }, [currentRouteName, anySensitiveModalOpened]);
 }
+
 /**
  * @description call this hook only once on the top level of your app
  */
-export function useAppPreventScreenshotOnScreen() {
+export function useAppPreventScreenshotOnScreen({
+  isTop = false,
+}: {
+  isTop?: boolean;
+}) {
   const { atSensitiveScene, $protectedConf } = useAtSensitiveScene();
-  const { submitFeedbackModalVisible } = useSubmitFeedbackModalVisible();
   const { forceAllowScreenshot } = useExpScreenCapture();
   const shouldPreventScreenCapturing =
-    (submitFeedbackModalVisible || atSensitiveScene) && !forceAllowScreenshot;
+    atSensitiveScene && !forceAllowScreenshot;
 
-  usePreventScreenshot(shouldPreventScreenCapturing);
+  usePreventScreenshot(shouldPreventScreenCapturing, { isTop });
 
-  const { isBeingCaptured } = useIOSScreenRecording({
-    isTop: true,
-  });
-  useIOSScreenshotted({ isTop: true });
+  const { isBeingCaptured } = useIOSScreenRecording({ isTop });
+  useIOSScreenshotted({ isTop });
 
   // protect from screen recording
   useEffect(() => {
+    if (!isTop) return;
+
     if (!IS_IOS) return;
     if ($protectedConf.iosBlurType === ProtectType.SafeTipModal) return;
 
@@ -487,6 +490,7 @@ export function useAppPreventScreenshotOnScreen() {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
   }, [
+    isTop,
     $protectedConf.iosBlurType,
     isBeingCaptured,
     shouldPreventScreenCapturing,

@@ -237,6 +237,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: 800,
     lineHeight: 24,
+    borderLeftColor: colors2024['neutral-title-1'],
   },
   stagesContainer: {
     flexDirection: 'column',

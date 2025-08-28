@@ -22,6 +22,8 @@ import { useRefState } from '@/hooks/common/useRefState';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { PerAndroid } from '@/core/utils/permissions';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { getScreenshotFeedbackExtra } from './utils';
+import { getGlobalScreenCapturable } from '@/hooks/native/security';
 
 export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
   IS_ANDROID && !isNonPublicProductionEnv;
@@ -174,6 +176,9 @@ function getDefaultValue() {
     uploadedImageUrl: '',
     submitSuccessModalShown: false,
 
+    totalBalanceText: '',
+    globalScreenCaptureDisabled: false,
+
     viewingFeedback: null,
   };
 }
@@ -184,6 +189,8 @@ const feedbackByScreenshotAtom = atom<{
   feedbackText: string;
   uploadedImageUrl: string;
   submitSuccessModalShown: boolean;
+
+  totalBalanceText: string;
 
   viewingFeedback: UserFeedbackItem | null;
 }>(getDefaultValue());
@@ -224,6 +231,17 @@ export function useViewingFeedback() {
     startViewingFeedback,
     finishViewFeedback,
   };
+}
+
+export function useSetTotalBalanceText(totalBalanceText: string) {
+  const [, setFeedbackByScreenshot] = useAtom(feedbackByScreenshotAtom);
+
+  useEffect(() => {
+    setFeedbackByScreenshot(prev => ({
+      ...prev,
+      totalBalanceText,
+    }));
+  }, [totalBalanceText, setFeedbackByScreenshot]);
 }
 
 export function useSubmitFeedbackModalVisible() {
@@ -284,6 +302,7 @@ function useLastScreenshot() {
 
   const shouldToastFeedbackByScreenshot = useAtomCallback(get => {
     if (FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT) return false;
+    if (!getGlobalScreenCapturable()) return false;
 
     const feedbackByScreenshot = get(feedbackByScreenshotAtom);
     return (
@@ -447,9 +466,8 @@ export function useFeedbackOnScreenshot() {
   };
 }
 export function useSubmitFeedbackOnScreenshot() {
-  const [{ lastScreenshot }, setSubmitFeedbackOnScreenshot] = useAtom(
-    feedbackByScreenshotAtom,
-  );
+  const [{ lastScreenshot, totalBalanceText }, setSubmitFeedbackOnScreenshot] =
+    useAtom(feedbackByScreenshotAtom);
   const {
     globalModalShown,
     feedbackText,
@@ -475,6 +493,9 @@ export function useSubmitFeedbackOnScreenshot() {
     useRefState(false);
   const submitFeedbackByScreenshot = useCallback(
     async function () {
+      const extraInfo = getScreenshotFeedbackExtra({ totalBalanceText });
+      // console.debug('[debug] extraInfo', extraInfo);
+
       if (isSubmittingRef.current) return;
       setSubmitting(true, true);
 
@@ -498,6 +519,7 @@ export function useSubmitFeedbackOnScreenshot() {
           title: '',
           image_url_list: [imageUrl],
           content: feedbackText,
+          extra: extraInfo,
         });
         // TODO: report to sentry here, add submitResult.id as extra field here
       } catch (error) {
@@ -516,6 +538,7 @@ export function useSubmitFeedbackOnScreenshot() {
     },
     [
       feedbackText,
+      totalBalanceText,
       uploadedImageUrl,
       lastScreenshot?.uri,
       isSubmittingRef,

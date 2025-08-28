@@ -282,7 +282,9 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
     modalCloseIcon: {
       width: 30,
       height: 30,
-      color: colors2024['neutral-black'],
+      color: isLight
+        ? colors2024['neutral-black']
+        : colors2024['neutral-InvertHighlight'],
     },
     titleWrapper: {
       justifyContent: 'center',

@@ -63,7 +63,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useUniversalLinkOnTop();
   useSecureOnBackground();
   useGlobalAppPreventScreenrecordOnDev();
-  useAppPreventScreenshotOnScreen();
+  useAppPreventScreenshotOnScreen({ isTop: true });
   useAutoGoogleSignIfPreviousSignedOnTop();
   useNoLongerSupports();
   useTriggerI18nChangeOnAppTop();

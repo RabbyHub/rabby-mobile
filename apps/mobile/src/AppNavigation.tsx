@@ -528,8 +528,10 @@ export default function AppNavigation({
         <BottomSheetBrowser />
         <BrowserManagePopup />
       </NavigationContainer>
-      <GlobalSecurityTipStubModal />
       <ModalsSubmitFeedbackByScreenshotStub />
+
+      {/** @warning put all business stub components before this modal */}
+      <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />
       <FloatViewAutoLockCount />
       <GlobalMiniApproval />
