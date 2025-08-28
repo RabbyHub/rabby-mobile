@@ -44,7 +44,8 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
     globalModalShown,
     closeSubmitModal,
     feedbackText,
-    submitFeedback,
+    isSubmitting,
+    submitFeedbackByScreenshot,
     canSubmitFeedback,
   } = useSubmitFeedbackOnScreenshot();
 
@@ -165,8 +166,10 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
                       titleStyle={styles.submitButtonTitle}
                       type="primary"
                       disabled={!canSubmitFeedback || bottomInputVisible}
+                      loading={isSubmitting}
+                      loadingStyle={styles.submitButtonLoading}
                       onPress={wrapOnPress(evt => {
-                        submitFeedback();
+                        submitFeedbackByScreenshot();
                       })}
                     />
                   </View>
@@ -372,6 +375,9 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       height: 56,
       justifyContent: 'center',
       alignItems: 'center',
+      width: '100%',
+    },
+    submitButtonLoading: {
       width: '100%',
     },
     submitButton: {

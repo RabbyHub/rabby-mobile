@@ -17,6 +17,7 @@ import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useAtomCallback } from 'jotai/utils';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { toast } from '@/components2024/Toast';
+import { useRefState } from '@/hooks/common/useRefState';
 
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 const screenshotFeedbackssAtom = atomByMMKV('@screenshotFeedbackIds', {
@@ -133,6 +134,7 @@ function getDefaultValue() {
     lastScreenshot: null,
     submitModalShown: false,
     feedbackText: '',
+    uploadedImageUrl: '',
     submitSuccessModalShown: false,
 
     viewingFeedback: null,
@@ -143,6 +145,7 @@ const feedbackByScreenshotAtom = atom<{
   lastScreenshot: ImageResolvedAssetSource | null;
   submitModalShown: boolean;
   feedbackText: string;
+  uploadedImageUrl: string;
   submitSuccessModalShown: boolean;
 
   viewingFeedback: UserFeedbackItem | null;
@@ -215,13 +218,26 @@ function useLastScreenshot() {
   );
 
   const setLastScreenshot = useCallback(
-    (image: ImageResolvedAssetSource | null) => {
+    (image: ImageResolvedAssetSource | null, uploadNow = false) => {
       setFeedbackByScreenshot(prev => ({
         ...prev,
         lastScreenshot: image,
         submitModalShown: !!image,
         feedbackText: '',
       }));
+
+      if (image?.uri && uploadNow) {
+        AppScreenshotFS.uploadFile<{ image_url: string }>(image?.uri).then(
+          result => {
+            if (result?.image_url) {
+              setFeedbackByScreenshot(prev => ({
+                ...prev,
+                uploadedImageUrl: result.image_url,
+              }));
+            }
+          },
+        );
+      }
     },
     [setFeedbackByScreenshot],
   );
@@ -360,6 +376,7 @@ export function useFeedbackOnScreenshot() {
   return {
     globalModalShown: submitFeedbackOnScreenshot.submitModalShown,
     feedbackText: submitFeedbackOnScreenshot.feedbackText,
+    uploadedImageUrl: submitFeedbackOnScreenshot.uploadedImageUrl,
     feedbackOverLimit:
       submitFeedbackOnScreenshot.feedbackText.length >
       SCREENSHOT_FEEDBACK_MAX_LENGTH - 1,
@@ -371,8 +388,12 @@ export function useSubmitFeedbackOnScreenshot() {
   const [{ lastScreenshot }, setSubmitFeedbackOnScreenshot] = useAtom(
     feedbackByScreenshotAtom,
   );
-  const { globalModalShown, feedbackText, showSubmitSuccessModal } =
-    useFeedbackOnScreenshot();
+  const {
+    globalModalShown,
+    feedbackText,
+    uploadedImageUrl,
+    showSubmitSuccessModal,
+  } = useFeedbackOnScreenshot();
   const { onFeedbackSubmitted } = useScreenshotFeedbacks();
 
   const closeSubmitModal = useCallback(
@@ -382,44 +403,62 @@ export function useSubmitFeedbackOnScreenshot() {
         submitModalShown: false,
         lastScreenshot: null,
         feedbackText: clearText ? '' : prev.feedbackText,
+        uploadedImageUrl: '',
       }));
     },
     [setSubmitFeedbackOnScreenshot],
   );
 
-  const submitFeedback = useCallback(
+  const { stateRef: isSubmittingRef, setRefState: setSubmitting } =
+    useRefState(false);
+  const submitFeedbackByScreenshot = useCallback(
     async function () {
-      if (!lastScreenshot?.uri) {
-        throw new Error('No screenshot available');
+      if (isSubmittingRef.current) return;
+      setSubmitting(true, true);
+
+      let submitResult: UserFeedbackItem | null = null;
+      try {
+        let imageUrl = uploadedImageUrl;
+        if (!imageUrl && lastScreenshot?.uri) {
+          const result = await AppScreenshotFS.uploadFile<{
+            image_url: string;
+          }>(lastScreenshot?.uri);
+          if (!result?.image_url) return;
+          imageUrl = result.image_url;
+        }
+
+        if (!imageUrl) {
+          throw new Error('No screenshot available');
+        }
+
+        // TODO: report to sentry here, add extra fields here
+        submitResult = await openapi.postUserFeedback({
+          title: '',
+          image_url_list: [imageUrl],
+          content: feedbackText,
+        });
+        // TODO: report to sentry here, add submitResult.id as extra field here
+      } catch (error) {
+        console.error('feedback submission error', error);
+      } finally {
+        setSubmitting(false, true);
       }
 
-      const result = await AppScreenshotFS.uploadFile<{ image_url: string }>(
-        lastScreenshot?.uri,
-      );
-
-      if (!result?.image_url) return;
-
-      // TODO: report to sentry here, add extra fields here
-      const submitResult = await openapi.postUserFeedback({
-        title: '',
-        image_url_list: [result.image_url],
-        content: feedbackText,
-      });
-      // TODO: report to sentry here, add submitResult.id as extra field here
-
       closeSubmitModal({ clearText: true });
-      if (submitResult.id) {
+      if (submitResult?.id) {
         showSubmitSuccessModal();
+        onFeedbackSubmitted(submitResult);
       } else {
         toast.error('Feedback submission failed, please try again later');
       }
-
-      onFeedbackSubmitted(submitResult);
     },
     [
       feedbackText,
+      uploadedImageUrl,
       lastScreenshot?.uri,
+      isSubmittingRef,
       closeSubmitModal,
+      setSubmitting,
       showSubmitSuccessModal,
       onFeedbackSubmitted,
     ],
@@ -431,7 +470,8 @@ export function useSubmitFeedbackOnScreenshot() {
     feedbackText,
 
     closeSubmitModal,
-    submitFeedback,
+    isSubmitting: isSubmittingRef.current,
+    submitFeedbackByScreenshot,
 
     canSubmitFeedback: !!lastScreenshot?.uri,
   };
