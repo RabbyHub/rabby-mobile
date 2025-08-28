@@ -666,7 +666,8 @@ export const TokenMarketInfoScreen = () => {
         renderTabBar={renderTabBar}
         tabBarHeight={30}
         containerStyle={styles.container}
-        headerContainerStyle={styles.tabBarWrap}>
+        headerContainerStyle={styles.tabBarWrap}
+        pagerProps={{ scrollEnabled: !isAndroid }}>
         <Tabs.Tab label={renderMarketDataLabel} name="marketData">
           <ScrollView
             refreshControl={
@@ -697,13 +698,13 @@ export const TokenMarketInfoScreen = () => {
                     price={tokenInfo?.price ?? 0}
                     price24hChange={tokenInfo?.price_24h_change ?? 0}
                     marketCap={
-                      tokenInfo?.market.market_cap_usd_value?.toString() ?? '-'
+                      tokenInfo?.market.market_cap_usd_value?.toString() ?? ''
                     }
                     totalSupply={
-                      tokenInfo?.market.total_supply?.toString() ?? '-'
+                      tokenInfo?.market.total_supply?.toString() ?? ''
                     }
                     volume24h={
-                      tokenInfo?.market.volume_amount_24h?.toString() ?? '-'
+                      tokenInfo?.market.volume_amount_24h?.toString() ?? ''
                     }
                     txns24h={tokenInfo?.market.txns_24h?.toString() ?? ''}
                     holders={tokenInfo?.market.holder_count?.toString() ?? ''}

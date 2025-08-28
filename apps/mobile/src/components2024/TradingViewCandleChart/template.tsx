@@ -62,6 +62,14 @@ export const createTradingViewChartTemplate = (
           }
           return v.toFixed(2);
         };
+        const formatYTime = (t) => {
+          if (typeof t === 'number') {
+            const d = new Date(t  * 1000)
+            return '' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0')
+          }
+          const bd = t;
+          return '' + bd.month + '/' + bd.day
+        }
         const formatTime = (t) => {
           if (typeof t === 'number') {
             const d = new Date((t) * 1000)
@@ -119,6 +127,7 @@ export const createTradingViewChartTemplate = (
                         timeVisible: true,
                         secondsVisible: false,
                         borderColor: 'transparent',
+                        tickMarkFormatter: formatYTime,
                     },
                     rightPriceScale: {
                         borderColor: 'transparent',

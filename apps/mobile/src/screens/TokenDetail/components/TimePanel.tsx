@@ -12,6 +12,14 @@ const TIME_INTERVALS = [
     value: CandlePeriod.ONE_MINUTE,
   },
   {
+    label: '5M',
+    value: CandlePeriod.FIVE_MINUTES,
+  },
+  {
+    label: '15M',
+    value: CandlePeriod.FIFTEEN_MINUTES,
+  },
+  {
     label: '30M',
     value: CandlePeriod.THIRTY_MINUTES,
   },
@@ -78,12 +86,14 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     height: 24,
     justifyContent: 'center',
+    width: 30,
   },
   text: {
     fontSize: 12,
     fontWeight: '700',
+    width: '100%',
+    textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
-    paddingHorizontal: 19,
     color: colors2024['neutral-foot'],
   },
   activeText: {
