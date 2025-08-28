@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text, View } from 'react-native';
-import { formatPrice, formatUsdValue } from '@/utils/number';
+import { formatNumber, formatPrice, formatUsdValue } from '@/utils/number';
 
 const MarketInfo = ({
   price,
@@ -52,23 +52,29 @@ const MarketInfo = ({
       <View style={styles.infoContainer}>
         <View style={styles.infoItem}>
           <Text style={styles.infoItemText}>Market Cap</Text>
-          <Text style={styles.infoItemValue}>{marketCap}</Text>
+          <Text style={styles.infoItemValue}>
+            {marketCap ? formatNumber(marketCap) : '-'}
+          </Text>
         </View>
         <View style={styles.infoItem}>
           <Text style={styles.infoItemText}>Total Supply</Text>
-          <Text style={styles.infoItemValue}>{totalSupply}</Text>
+          <Text style={styles.infoItemValue}>
+            {totalSupply ? formatNumber(totalSupply) : '-'}
+          </Text>
         </View>
         <View style={styles.infoItem}>
           <Text style={styles.infoItemText}>24h Volume</Text>
-          <Text style={styles.infoItemValue}>{formatUsdValue(volume24h)}</Text>
+          <Text style={styles.infoItemValue}>
+            {volume24h ? formatUsdValue(volume24h, undefined, true) : '-'}
+          </Text>
         </View>
         <View style={styles.infoItem}>
           <Text style={styles.infoItemText}>24h Txns</Text>
-          <Text style={styles.infoItemValue}>{txns24h}</Text>
+          <Text style={styles.infoItemValue}>{txns24h ? txns24h : '-'}</Text>
         </View>
         <View style={styles.infoItem}>
           <Text style={styles.infoItemText}>Holders</Text>
-          <Text style={styles.infoItemValue}>{holders}</Text>
+          <Text style={styles.infoItemValue}>{holders ? holders : '-'}</Text>
         </View>
       </View>
     </View>
@@ -82,7 +88,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    marginTop: 12,
+    marginTop: 0,
   },
   priceContainer: {
     flexDirection: 'column',

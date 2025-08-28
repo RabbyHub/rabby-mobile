@@ -157,7 +157,6 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
           dataSource = 'real';
         }
 
-        console.log('CUSTOM_LOGGER:=>: dataToSend', dataToSend[0]);
         if (dataToSend) {
           const message = {
             type: 'SET_CANDLESTICK_DATA',

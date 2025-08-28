@@ -693,10 +693,6 @@ export const TokenMarketInfoScreen = () => {
                 <View style={styles.skeleton} />
               ) : tokenInfo?.support_market_data ? (
                 <>
-                  <TimePanel
-                    currentInterval={currentInterval}
-                    onSelect={handleChangeInterval}
-                  />
                   <MarketInfo
                     price={tokenInfo?.price ?? 0}
                     price24hChange={tokenInfo?.price_24h_change ?? 0}
@@ -711,6 +707,10 @@ export const TokenMarketInfoScreen = () => {
                     }
                     txns24h={tokenInfo?.market.txns_24h?.toString() ?? ''}
                     holders={tokenInfo?.market.holder_count?.toString() ?? ''}
+                  />
+                  <TimePanel
+                    currentInterval={currentInterval}
+                    onSelect={handleChangeInterval}
                   />
                   <TradingViewCandleChart
                     ref={chartWebViewRef}
