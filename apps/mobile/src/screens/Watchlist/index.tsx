@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAtom } from 'jotai';
 import {
   Pressable,
   ScrollView,
@@ -26,8 +27,18 @@ import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '../Home/utils/token';
 import { useHotTokenList } from './hooks/useHotTokenList';
 import { WatchlistCheckbox } from './components/Checkbox';
+import { atomByMMKV } from '@/core/storage/mmkv';
 
 const isAndroid = Platform.OS === 'android';
+
+const tokenSortAtom = atomByMMKV<'desc' | 'asc' | 'default'>(
+  '@watchlist.tokenSort',
+  'default',
+);
+const changeSortAtom = atomByMMKV<'desc' | 'asc' | 'default'>(
+  '@watchlist.changeSort',
+  'default',
+);
 
 function WatchlistScreen(): JSX.Element {
   const { styles, isLight } = useTheme2024({ getStyle });
@@ -39,12 +50,8 @@ function WatchlistScreen(): JSX.Element {
     loading: watchlistLoading,
   } = useWatchlistTokens();
 
-  const [tokenSort, setTokenSort] = useState<'desc' | 'asc' | 'default'>(
-    'default',
-  );
-  const [changeSort, setChangeSort] = useState<'desc' | 'asc' | 'default'>(
-    'default',
-  );
+  const [tokenSort, setTokenSort] = useAtom(tokenSortAtom);
+  const [changeSort, setChangeSort] = useAtom(changeSortAtom);
   const [skip, setSkip] = useState(() => preferenceService.getWatchlistSkip());
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -108,7 +115,7 @@ function WatchlistScreen(): JSX.Element {
   }, [handleFetchTokens, hotTokenList, selectedTokens]);
 
   const list = useMemo(() => {
-    return watchlistTokens.sort((a, b) => {
+    return [...watchlistTokens].sort((a, b) => {
       if (tokenSort !== 'default') {
         if (tokenSort === 'asc') {
           return (a.identity?.fdv ?? 0) - (b.identity?.fdv ?? 0);
@@ -145,7 +152,7 @@ function WatchlistScreen(): JSX.Element {
         return 'asc';
       }
       if (prev === 'asc') {
-        return 'desc';
+        return 'default';
       }
       return 'default';
     });
@@ -161,7 +168,7 @@ function WatchlistScreen(): JSX.Element {
         return 'asc';
       }
       if (prev === 'asc') {
-        return 'desc';
+        return 'default';
       }
       return 'default';
     });
