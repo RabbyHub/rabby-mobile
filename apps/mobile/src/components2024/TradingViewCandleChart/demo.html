@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>TradingView Chart</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        font-family: Arial, sans-serif;
+        background: #000;
+      }
+      #container {
+        width: 100%;
+        height: 100vh;
+        position: relative;
+        background: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+      // VConsole will be exported to `window.VConsole` by default.
+      var vConsole = new window.VConsole();
+    </script>
+    <script>
+      const defaultFormat = v => v.toFixed(2);
+      const formatNumber = v => {
+        if (v >= 1000000) {
+          return (v / 1000000).toFixed(2) + 'M';
+        } else if (v >= 1000) {
+          return (v / 1000).toFixed(2) + 'K';
+        }
+        return v.toFixed(2);
+      };
+      const formatTime = t => {
+        if (typeof t === 'number') {
+          const d = new Date(t * 1000);
+          return (
+            '' +
+            String(d.getMonth() + 1).padStart(2, '0') +
+            '/' +
+            String(d.getDate()).padStart(2, '0') +
+            String(d.getHours()).padStart(2, '0') +
+            ':' +
+            String(d.getMinutes()).padStart(2, '0')
+          );
+        }
+        const bd = t;
+        return (
+          '' +
+          bd.year +
+          '-' +
+          String(bd.month).padStart(2, '0') +
+          '-' +
+          String(bd.day).padStart(2, '0')
+        );
+      };
+      // Global variables
+      window.chart = null;
+      window.candlestickSeries = null;
+      window.volumeSeries = null;
+      window.isInitialDataLoad = true; // Track if this is the first data load
+      window.lastDataKey = null; // Track the last dataset to avoid unnecessary autoscaling
+      window.tooltip = null;
+      const mockData = [
+        {
+          time: 1672012800,
+          open: 1200.51,
+          high: 1235.3641913305278,
+          low: 1162.9562560756,
+          close: 1200.51,
+          volume: 49020.3471414006,
+        },
+        {
+          time: 1672617600,
+          open: 1200.51,
+          high: 1308.3227136712064,
+          low: 1182.1807357313583,
+          close: 1288.42,
+          volume: 381447.7863912387,
+        },
+        {
+          time: 1673222400,
+          open: 1288.42,
+          high: 1651.4252231778596,
+          low: 1198.68,
+          close: 1552.5,
+          volume: 657458.3797409502,
+        },
+        {
+          time: 1673827200,
+          open: 1552.5,
+          high: 1703.2807695289368,
+          low: 1441.8412376380788,
+          close: 1627.37,
+          volume: 405678.8451843689,
+        },
+        {
+          time: 1674432000,
+          open: 1627.37,
+          high: 1693.023954252581,
+          low: 1419.5620881062757,
+          close: 1645.59,
+          volume: 316729.57080833544,
+        },
+        {
+          time: 1675036800,
+          open: 1645.59,
+          high: 1718.2082207790622,
+          low: 1491.1532811147945,
+          close: 1629.12,
+          volume: 225888.2020794548,
+        },
+        {
+          time: 1675641600,
+          open: 1629.12,
+          high: 1719.592451301432,
+          low: 1478.206271256,
+          close: 1515.15,
+          volume: 285843.95343249326,
+        },
+        {
+          time: 1676246400,
+          open: 1515.15,
+          high: 1743.4421369684935,
+          low: 1478.5354629526896,
+          close: 1690.92,
+          volume: 262978.926699334,
+        },
+        {
+          time: 1676851200,
+          open: 1690.92,
+          high: 2036.2386708000004,
+          low: 1470.4721354143414,
+          close: 1594.67,
+          volume: 269151.8080545091,
+        },
+        {
+          time: 1677456000,
+          open: 1594.67,
+          high: 1759.385616457317,
+          low: 1483.8742126638806,
+          close: 1566.58,
+          volume: 201135.12414691682,
+        },
+        {
+          time: 1678060800,
+          open: 1566.58,
+          high: 1660.3767283414602,
+          low: 1331.5240472507205,
+          close: 1472,
+          volume: 423369.4912583489,
+        },
+        {
+          time: 1678665600,
+          open: 1472,
+          high: 1976.6133397201588,
+          low: 1472,
+          close: 1758.85,
+          volume: 401414.4412443553,
+        },
+        {
+          time: 1679270400,
+          open: 1758.85,
+          high: 1975.2940694325334,
+          low: 1640.9850933044906,
+          close: 1741.97,
+          volume: 208078.4997769574,
+        },
+        {
+          time: 1679875200,
+          open: 1741.97,
+          high: 2147.7367094020647,
+          low: 1656.7531920085,
+          close: 1820.79,
+          volume: 202299.42473991466,
+        },
+        {
+          time: 1680480000,
+          open: 1820.79,
+          high: 1977.5659311735656,
+          low: 1773.6745908156954,
+          close: 1848.73,
+          volume: 205759.23460877084,
+        },
+        {
+          time: 1681084800,
+          open: 1848.73,
+          high: 2174.041207744226,
+          low: 1810.383936997767,
+          close: 2090,
+          volume: 246780.3483585206,
+        },
+        {
+          time: 1681689600,
+          open: 2090,
+          high: 2162.11580365216,
+          low: 1789.9396270038,
+          close: 1874.17,
+          volume: 270500.61126022134,
+        },
+        {
+          time: 1682294400,
+          open: 1874.17,
+          high: 2007.0059021175034,
+          low: 1783.8995702689876,
+          close: 1907.79,
+          volume: 228815.02586249902,
+        },
+        {
+          time: 1682899200,
+          open: 1907.79,
+          high: 2018.0578646266868,
+          low: 1779.7857063119998,
+          close: 1896.52,
+          volume: 392528.66359389597,
+        },
+        {
+          time: 1683504000,
+          open: 1896.52,
+          high: 1926.8962848907083,
+          low: 1720.5058062941175,
+          close: 1795.11,
+          volume: 403044.4609469211,
+        },
+        {
+          time: 1684108800,
+          open: 1795.11,
+          high: 1882.6513207814128,
+          low: 1728.4798804335642,
+          close: 1819.71,
+          volume: 269887.3417443349,
+        },
+        {
+          time: 1684713600,
+          open: 1819.71,
+          high: 1923.6591188886325,
+          low: 1721.9929192308196,
+          close: 1908.28,
+          volume: 445658.839085371,
+        },
+        {
+          time: 1685318400,
+          open: 1908.28,
+          high: 2277.2114221823413,
+          low: 1812.9776101666669,
+          close: 1890.01,
+          volume: 297440.18344497995,
+        },
+        {
+          time: 1685923200,
+          open: 1890.01,
+          high: 2314.8570370493444,
+          low: 1702.570546847311,
+          close: 1752.76,
+          volume: 530852.1511341714,
+        },
+        {
+          time: 1686528000,
+          open: 1752.76,
+          high: 1908.0097818999998,
+          low: 1551.9565461998075,
+          close: 1720.95,
+          volume: 572555.0815269169,
+        },
+        {
+          time: 1687132800,
+          open: 1720.95,
+          high: 1984.565428742999,
+          low: 1679.7310169491527,
+          close: 1898.8,
+          volume: 539511.4455044694,
+        },
+        {
+          time: 1687737600,
+          open: 1898.8,
+          high: 2046.2897851916591,
+          low: 1737.33385934465,
+          close: 1937.47,
+          volume: 538095.157316684,
+        },
+        {
+          time: 1688342400,
+          open: 1937.47,
+          high: 2029.70480364,
+          low: 1791.356873101521,
+          close: 1862.84,
+          volume: 516306.7228110952,
+        },
+        {
+          time: 1688947200,
+          open: 1862.84,
+          high: 2060.6233776636304,
+          low: 1741.977945904042,
+          close: 1922.12,
+          volume: 546699.252507505,
+        },
+        {
+          time: 1689552000,
+          open: 1922.12,
+          high: 2107.470802982524,
+          low: 1815.8252658546385,
+          close: 1888.73,
+          volume: 590926.4328792391,
+        },
+        {
+          time: 1690156800,
+          open: 1888.73,
+          high: 2060.34,
+          low: 1704.2572451670035,
+          close: 1861.78,
+          volume: 521970.70399331395,
+        },
+        {
+          time: 1690761600,
+          open: 1861.78,
+          high: 2074.729123775,
+          low: 1711.1788784488906,
+          close: 1830.28,
+          volume: 516931.8003998503,
+        },
+        {
+          time: 1691366400,
+          open: 1830.28,
+          high: 2003.9304469343267,
+          low: 1727.7366084760065,
+          close: 1840.73,
+          volume: 497261.0556481625,
+        },
+        {
+          time: 1691971200,
+          open: 1840.73,
+          high: 1955.0545373243447,
+          low: 1554.8204418357723,
+          close: 1685.24,
+          volume: 664560.8834144303,
+        },
+        {
+          time: 1692576000,
+          open: 1685.24,
+          high: 2003.9347068,
+          low: 1382.710590810811,
+          close: 1658.33,
+          volume: 612922.2980165093,
+        },
+        {
+          time: 1693180800,
+          open: 1658.33,
+          high: 1850.7586259482143,
+          low: 1578.5407064791748,
+          close: 1635.85,
+          volume: 611610.8128052118,
+        },
+        {
+          time: 1693785600,
+          open: 1635.85,
+          high: 1900.2170269649998,
+          low: 1571.0171212860585,
+          close: 1617.42,
+          volume: 489080.0336542937,
+        },
+        {
+          time: 1694390400,
+          open: 1617.42,
+          high: 1884.0671540625,
+          low: 1500.5664366299482,
+          close: 1622.49,
+          volume: 507544.61698914453,
+        },
+        {
+          time: 1694995200,
+          open: 1622.49,
+          high: 1748.899,
+          low: 1491.2819155517725,
+          close: 1580.7,
+          volume: 404756.2383667306,
+        },
+        {
+          time: 1695600000,
+          open: 1580.7,
+          high: 1780.4493049345597,
+          low: 1494.6801049592668,
+          close: 1733.79,
+          volume: 417348.20046723535,
+        },
+        {
+          time: 1696204800,
+          open: 1733.79,
+          high: 1808.071724625,
+          low: 1556.2437243589743,
+          close: 1632.84,
+          volume: 418328.8620934403,
+        },
+        {
+          time: 1696809600,
+          open: 1632.84,
+          high: 1886.9994736842104,
+          low: 1378.5682509006208,
+          close: 1557.78,
+          volume: 376642.05115769414,
+        },
+        {
+          time: 1697414400,
+          open: 1557.78,
+          high: 1883.7613799004998,
+          low: 1500.073519095839,
+          close: 1663.69,
+          volume: 471577.0582937074,
+        },
+        {
+          time: 1698019200,
+          open: 1663.69,
+          high: 2366.2282815999997,
+          low: 1495.4983350234502,
+          close: 1795.05,
+          volume: 584845.5140562556,
+        },
+        {
+          time: 1698624000,
+          open: 1795.05,
+          high: 2233.59681105,
+          low: 1609.6357733668078,
+          close: 1891.71,
+          volume: 580362.5870756446,
+        },
+        {
+          time: 1699228800,
+          open: 1891.71,
+          high: 2432.049,
+          low: 1680.1139739551345,
+          close: 2044.69,
+          volume: 633967.2566564928,
+        },
+        {
+          time: 1699833600,
+          open: 2044.69,
+          high: 2377.582,
+          low: 1851.5840005252253,
+          close: 2011.14,
+          volume: 604426.2869903118,
+        },
+        {
+          time: 1700438400,
+          open: 2011.14,
+          high: 2314.612741635,
+          low: 1789.495578168899,
+          close: 2062.33,
+          volume: 521594.26727088867,
+        },
+        {
+          time: 1701043200,
+          open: 2062.33,
+          high: 2221.267896270497,
+          low: 1882.9100350817982,
+          close: 2192.95,
+          volume: 570519.5406969021,
+        },
+        {
+          time: 1701648000,
+          open: 2192.95,
+          high: 2467.5958723305775,
+          low: 1996.9251418804997,
+          close: 2352.22,
+          volume: 639017.415881655,
+        },
+        {
+          time: 1702252800,
+          open: 2352.22,
+          high: 2574.278,
+          low: 1853.2330399514312,
+          close: 2196,
+          volume: 635787.8022502809,
+        },
+        {
+          time: 1702857600,
+          open: 2196,
+          high: 2443.3723,
+          low: 2011.0000000000002,
+          close: 2263.55,
+          volume: 632932.0326108427,
+        },
+        {
+          time: 1703462400,
+          open: 2263.55,
+          high: 3252.987,
+          low: 2001.9505703818527,
+          close: 2281.87,
+          volume: 512543.1862646179,
+        },
+        {
+          time: 1704067200,
+          open: 2281.87,
+          high: 2531.9976,
+          low: 2070.426036627482,
+          close: 2221.43,
+          volume: 468436.2877549833,
+        },
+        {
+          time: 1704672000,
+          open: 2221.43,
+          high: 2799.5855452250003,
+          low: 2187.6464684283233,
+          close: 2473.49,
+          volume: 562794.8566636111,
+        },
+        {
+          time: 1705276800,
+          open: 2473.49,
+          high: 3172.7780000000002,
+          low: 2210.3485550948517,
+          close: 2457.05,
+          volume: 517434.90532902547,
+        },
+        {
+          time: 1705881600,
+          open: 2457.05,
+          high: 2715.3997903680847,
+          low: 1870.186492822309,
+          close: 2256.98,
+          volume: 482604.99525058444,
+        },
+        {
+          time: 1706486400,
+          open: 2256.98,
+          high: 2749.48835071198,
+          low: 2058.6921023201317,
+          close: 2289.79,
+          volume: 586802.6526673201,
+        },
+        {
+          time: 1707091200,
+          open: 2289.79,
+          high: 2984.1100528499996,
+          low: 2140.503299429762,
+          close: 2507.06,
+          volume: 720815.9935199504,
+        },
+        {
+          time: 1707696000,
+          open: 2507.06,
+          high: 3214.5182531466667,
+          low: 2250.9937946719865,
+          close: 2881.19,
+          volume: 638867.126834901,
+        },
+        {
+          time: 1708300800,
+          open: 2881.19,
+          high: 3435.257,
+          low: 2442.7636523809524,
+          close: 3112.6,
+          volume: 575283.6429416005,
+        },
+        {
+          time: 1708905600,
+          open: 3112.6,
+          high: 3725.079595928377,
+          low: 2605.096078856558,
+          close: 3487.81,
+          volume: 661068.0716196275,
+        },
+        {
+          time: 1709510400,
+          open: 3487.81,
+          high: 4168.901936046642,
+          low: 3156.2511821818184,
+          close: 3878.48,
+          volume: 816502.3800356399,
+        },
+        {
+          time: 1710115200,
+          open: 3878.48,
+          high: 4141.345857540003,
+          low: 3302.9296767906067,
+          close: 3644.9,
+          volume: 739940.0362337709,
+        },
+        {
+          time: 1710720000,
+          open: 3644.9,
+          high: 3716.9586507430154,
+          low: 2898.6309049433585,
+          close: 3453.64,
+          volume: 575413.8841341736,
+        },
+        {
+          time: 1711324800,
+          open: 3453.64,
+          high: 3781.7120281975986,
+          low: 3172.3512017127973,
+          close: 3645.04,
+          volume: 619725.1016396419,
+        },
+        {
+          time: 1711929600,
+          open: 3645.04,
+          high: 3645.04,
+          low: 2893.00015083145,
+          close: 3454.19,
+          volume: 683630.6810845326,
+        },
+        {
+          time: 1712534400,
+          open: 3454.19,
+          high: 4421.040112627542,
+          low: 2500.02559257644,
+          close: 3155.22,
+          volume: 626838.2686045502,
+        },
+        {
+          time: 1713139200,
+          open: 3155.22,
+          high: 3506.080623009596,
+          low: 2616.8537802805604,
+          close: 3147.81,
+          volume: 450436.1772712414,
+        },
+        {
+          time: 1713744000,
+          open: 3147.81,
+          high: 3459.9689234227426,
+          low: 2901.5052041272493,
+          close: 3263.27,
+          volume: 504827.34883543005,
+        },
+        {
+          time: 1714348800,
+          open: 3263.27,
+          high: 3589.611747479025,
+          low: 2754.501912718138,
+          close: 3136.33,
+          volume: 424771.0768237178,
+        },
+        {
+          time: 1714953600,
+          open: 3136.33,
+          high: 3286.758615819661,
+          low: 2731.5500831753193,
+          close: 2929.3,
+          volume: 325246.40942589636,
+        },
+        {
+          time: 1715558400,
+          open: 2929.3,
+          high: 3312.7167482718887,
+          low: 2711.5504726304903,
+          close: 3071.19,
+          volume: 335018.3201134774,
+        },
+        {
+          time: 1716163200,
+          open: 3071.19,
+          high: 4428.135027931615,
+          low: 3071.19,
+          close: 3826.89,
+          volume: 500618.77827917674,
+        },
+        {
+          time: 1716768000,
+          open: 3826.89,
+          high: 5036.136472198627,
+          low: 3568.3458089183755,
+          close: 3780.47,
+          volume: 475307.34613378625,
+        },
+        {
+          time: 1717372800,
+          open: 3780.47,
+          high: 4649.620970712366,
+          low: 3387.048536813333,
+          close: 3706.4,
+          volume: 491912.21714393445,
+        },
+        {
+          time: 1717977600,
+          open: 3706.4,
+          high: 4237.368556687357,
+          low: 3017.962752933334,
+          close: 3624.4,
+          volume: 433023.59561583475,
+        },
+        {
+          time: 1718582400,
+          open: 3624.4,
+          high: 4167.456989492086,
+          low: 2961.539472727385,
+          close: 3420.81,
+          volume: 417443.0430299168,
+        },
+        {
+          time: 1719187200,
+          open: 3420.81,
+          high: 3778.6583941578474,
+          low: 2754.9194484738,
+          close: 3438.17,
+          volume: 511553.1352966408,
+        },
+        {
+          time: 1719792000,
+          open: 3438.17,
+          high: 3679.795470535772,
+          low: 2653.4979680051633,
+          close: 2930.99,
+          volume: 452999.0823388755,
+        },
+        {
+          time: 1720396800,
+          open: 2930.99,
+          high: 3382.6093054859175,
+          low: 2722.440726750972,
+          close: 3244.6,
+          volume: 401844.67390479526,
+        },
+        {
+          time: 1721001600,
+          open: 3244.6,
+          high: 4003.195276112362,
+          low: 3045.318233889202,
+          close: 3535.49,
+          volume: 481476.2930870405,
+        },
+        {
+          time: 1721606400,
+          open: 3535.49,
+          high: 3888.7336677803905,
+          low: 2611.3821159380354,
+          close: 3270.16,
+          volume: 368824.8786440551,
+        },
+        {
+          time: 1722211200,
+          open: 3270.16,
+          high: 3422.0915562471428,
+          low: 2575.691261807264,
+          close: 2688.91,
+          volume: 486148.65504464705,
+        },
+        {
+          time: 1722816000,
+          open: 2688.91,
+          high: 3212.3149364225796,
+          low: 2103.1944431625584,
+          close: 2554.87,
+          volume: 682158.7635430797,
+        },
+        {
+          time: 1723420800,
+          open: 2554.87,
+          high: 3072.761,
+          low: 2422.176590843727,
+          close: 2611.7,
+          volume: 377976.48269601894,
+        },
+        {
+          time: 1724025600,
+          open: 2611.7,
+          high: 3480.3758009264957,
+          low: 2364.2978174365126,
+          close: 2747.22,
+          volume: 331250.4741560761,
+        },
+        {
+          time: 1724630400,
+          open: 2747.22,
+          high: 2793.9569352119943,
+          low: 2222.9064105644406,
+          close: 2426.29,
+          volume: 302196.2031368609,
+        },
+        {
+          time: 1725235200,
+          open: 2426.29,
+          high: 2674.9280307272725,
+          low: 1993.3487167945916,
+          close: 2297.47,
+          volume: 436636.7242536569,
+        },
+        {
+          time: 1725840000,
+          open: 2297.47,
+          high: 2674.92892016,
+          low: 2082.74193640016,
+          close: 2316.09,
+          volume: 387576.2714396069,
+        },
+        {
+          time: 1726444800,
+          open: 2316.09,
+          high: 2729.1636333812653,
+          low: 2148.8344481331696,
+          close: 2580.99,
+          volume: 564616.4661729122,
+        },
+        {
+          time: 1727049600,
+          open: 2580.99,
+          high: 3546.3832030078697,
+          low: 2338.41700920451,
+          close: 2657.61,
+          volume: 567378.1963443025,
+        },
+        {
+          time: 1727654400,
+          open: 2657.61,
+          high: 2804.6018387442277,
+          low: 2120.595095584339,
+          close: 2440.2,
+          volume: 511491.2768922872,
+        },
+        {
+          time: 1728259200,
+          open: 2440.2,
+          high: 2751.9692313310325,
+          low: 2291.0401648753914,
+          close: 2468.92,
+          volume: 614807.0167747602,
+        },
+        {
+          time: 1728864000,
+          open: 2468.92,
+          high: 2872.884012833798,
+          low: 2370.9074300714196,
+          close: 2747.1,
+          volume: 498120.74590356887,
+        },
+        {
+          time: 1729468800,
+          open: 2747.1,
+          high: 2907.861457208526,
+          low: 2363.1572159565244,
+          close: 2507.98,
+          volume: 440489.89555447904,
+        },
+        {
+          time: 1730073600,
+          open: 2507.98,
+          high: 2926.259168368354,
+          low: 2290.049141939135,
+          close: 2457.73,
+          volume: 475903.80109231954,
+        },
+        {
+          time: 1730678400,
+          open: 2457.73,
+          high: 3264.301637247243,
+          low: 2272.0851960125387,
+          close: 3185,
+          volume: 543404.8100176591,
+        },
+        {
+          time: 1731283200,
+          open: 3185,
+          high: 3485.4403873547085,
+          low: 2905.9579444041806,
+          close: 3076,
+          volume: 642102.2011340356,
+        },
+        {
+          time: 1731888000,
+          open: 3076,
+          high: 3719.044996333333,
+          low: 2899.97462093762,
+          close: 3361.2,
+          volume: 544739.987774062,
+        },
+        {
+          time: 1732492800,
+          open: 3361.2,
+          high: 4223.288583286255,
+          low: 3065.2939724408575,
+          close: 3707.81,
+          volume: 451743.0795736687,
+        },
+        {
+          time: 1733097600,
+          open: 3707.81,
+          high: 4722.831997129899,
+          low: 3236.841645583029,
+          close: 4004,
+          volume: 517912.74329725216,
+        },
+        {
+          time: 1733702400,
+          open: 4004,
+          high: 4416.76715596,
+          low: 3448.3034257187396,
+          close: 3958.92,
+          volume: 463119.33840818924,
+        },
+        {
+          time: 1734307200,
+          open: 3958.92,
+          high: 4925.358613523241,
+          low: 3023.101143543269,
+          close: 3281.43,
+          volume: 466204.65929159406,
+        },
+        {
+          time: 1734912000,
+          open: 3281.43,
+          high: 3874.3566939982916,
+          low: 2969.8805954941477,
+          close: 3356.31,
+          volume: 434735.3793120874,
+        },
+        {
+          time: 1735516800,
+          open: 3356.31,
+          high: 3794.071947755713,
+          low: 3081.356940619072,
+          close: 3635.81,
+          volume: 515148.02090531867,
+        },
+        {
+          time: 1736121600,
+          open: 3635.81,
+          high: 3841.8423332752654,
+          low: 2820.048413508017,
+          close: 3266.8,
+          volume: 430213.4045115193,
+        },
+        {
+          time: 1736726400,
+          open: 3266.8,
+          high: 4727.598925353976,
+          low: 2920.2528878878884,
+          close: 3215,
+          volume: 583629.0979808534,
+        },
+        {
+          time: 1737331200,
+          open: 3215,
+          high: 4283.293497,
+          low: 2977.3395863586356,
+          close: 3234.87,
+          volume: 511855.86862283025,
+        },
+        {
+          time: 1737936000,
+          open: 3234.87,
+          high: 3826.5267622169736,
+          low: 2570.0811691219333,
+          close: 2869.98,
+          volume: 451152.6587272027,
+        },
+        {
+          time: 1738540800,
+          open: 2869.98,
+          high: 3524.462864771786,
+          low: 2361.4437251127038,
+          close: 2627.41,
+          volume: 568369.8599548485,
+        },
+        {
+          time: 1739145600,
+          open: 2627.41,
+          high: 2931.5083750839303,
+          low: 2118.5303699661226,
+          close: 2661.5,
+          volume: 398806.2846615438,
+        },
+        {
+          time: 1739750400,
+          open: 2661.5,
+          high: 3070.5681969527413,
+          low: 2350.882014027907,
+          close: 2819.7,
+          volume: 439310.7985326653,
+        },
+        {
+          time: 1740355200,
+          open: 2819.7,
+          high: 3042.5238507474123,
+          low: 2029.8902820335306,
+          close: 2517.95,
+          volume: 539587.6116044691,
+        },
+        {
+          time: 1740960000,
+          open: 2517.95,
+          high: 2556.4208534268337,
+          low: 1859.024037228669,
+          close: 2020.11,
+          volume: 427060.14228628995,
+        },
+        {
+          time: 1741564800,
+          open: 2020.11,
+          high: 2161.240579416421,
+          low: 1725.6379344387967,
+          close: 1887.3,
+          volume: 416760.1706409481,
+        },
+        {
+          time: 1742169600,
+          open: 1887.3,
+          high: 2243.8103759215483,
+          low: 1815.2821671613651,
+          close: 2005.8,
+          volume: 254034.58579036014,
+        },
+        {
+          time: 1742774400,
+          open: 2005.8,
+          high: 2341.1631644143267,
+          low: 1654.5550219831396,
+          close: 1807.09,
+          volume: 256912.65910233324,
+        },
+        {
+          time: 1743379200,
+          open: 1807.09,
+          high: 2016.9064941040124,
+          low: 1580,
+          close: 1580,
+          volume: 333432.68825117074,
+        },
+        {
+          time: 1743984000,
+          open: 1580,
+          high: 1837.1377825815025,
+          low: 1329.2458221602678,
+          close: 1597.44,
+          volume: 620378.4222230233,
+        },
+        {
+          time: 1744588800,
+          open: 1597.44,
+          high: 2199.044336216789,
+          low: 1398.4326274742916,
+          close: 1587.36,
+          volume: 307935.97696335765,
+        },
+        {
+          time: 1745193600,
+          open: 1587.36,
+          high: 2473.596892613561,
+          low: 1421.2562290283431,
+          close: 1791.12,
+          volume: 376782.99937574274,
+        },
+        {
+          time: 1745798400,
+          open: 1791.12,
+          high: 1962.3845988184225,
+          low: 1596.3985570687048,
+          close: 1808.87,
+          volume: 334658.20356057695,
+        },
+        {
+          time: 1746403200,
+          open: 1808.87,
+          high: 2778.4979448459426,
+          low: 1719.05569016695,
+          close: 2514.58,
+          volume: 535320.0791190574,
+        },
+        {
+          time: 1747008000,
+          open: 2514.58,
+          high: 2945.0813009003914,
+          low: 2170.77644921875,
+          close: 2496.93,
+          volume: 501911.44168569805,
+        },
+        {
+          time: 1747612800,
+          open: 2496.93,
+          high: 2793.0027005979373,
+          low: 2211.651910676797,
+          close: 2551.23,
+          volume: 397735.6843994063,
+        },
+        {
+          time: 1748217600,
+          open: 2551.23,
+          high: 2773.74591370444,
+          low: 2200.601052531203,
+          close: 2538.31,
+          volume: 368745.91160547535,
+        },
+        {
+          time: 1748822400,
+          open: 2538.31,
+          high: 2770.133874608543,
+          low: 2190.8920639730777,
+          close: 2509.84,
+          volume: 360937.244033258,
+        },
+        {
+          time: 1749427200,
+          open: 2509.84,
+          high: 3099.3262837225975,
+          low: 2158.6153835903588,
+          close: 2547.58,
+          volume: 406827.28731317405,
+        },
+        {
+          time: 1750032000,
+          open: 2547.58,
+          high: 2824.7828646135004,
+          low: 1984.7337577786998,
+          close: 2228.33,
+          volume: 362947.48443283944,
+        },
+        {
+          time: 1750636800,
+          open: 2228.33,
+          high: 3335.185315240297,
+          low: 2077.5775811550707,
+          close: 2500.5,
+          volume: 293451.6745451658,
+        },
+        {
+          time: 1751241600,
+          open: 2500.5,
+          high: 3195.8317401779764,
+          low: 2179.1966248220774,
+          close: 2570.55,
+          volume: 315999.53089536354,
+        },
+        {
+          time: 1751846400,
+          open: 2570.55,
+          high: 4218.226432895392,
+          low: 2435.327702459508,
+          close: 2972.03,
+          volume: 451378.821581222,
+        },
+        {
+          time: 1752451200,
+          open: 2972.03,
+          high: 4715.917721830688,
+          low: 2809.819009195325,
+          close: 3759.59,
+          volume: 552819.6518976318,
+        },
+        {
+          time: 1753056000,
+          open: 3759.59,
+          high: 4280.67342426026,
+          low: 2982.905662639079,
+          close: 3874.73,
+          volume: 481937.57139152556,
+        },
+        {
+          time: 1753660800,
+          open: 3874.73,
+          high: 4329.624945902165,
+          low: 3271.6909932965264,
+          close: 3497.62,
+          volume: 408122.80144975823,
+        },
+        {
+          time: 1754265600,
+          open: 3497.62,
+          high: 5626.101908950321,
+          low: 3424.472895486711,
+          close: 4251.78,
+          volume: 437734.95542536845,
+        },
+        {
+          time: 1754870400,
+          open: 4251.78,
+          high: 5151.768660778024,
+          low: 3947.430313779301,
+          close: 4472.96,
+          volume: 431714.8995917639,
+        },
+        {
+          time: 1755475200,
+          open: 4472.96,
+          high: 5305.587454149999,
+          low: 3626.83878714,
+          close: 4779.34,
+          volume: 110211.18435553076,
+        },
+        {
+          time: 1756080000,
+          open: 4779.34,
+          high: 4823.762817493388,
+          low: 4279.811946231156,
+          close: 4592.56,
+          volume: 34594.84077548886,
+        },
+      ];
+      // Step 1: Load TradingView library dynamically
+      const volumeData = mockData.map(item => ({
+        time: item.time,
+        value: item.volume,
+        color: item.close >= item.open ? '#0ECB81' : '#F6465D',
+      }));
+
+      function loadTradingView() {
+        const script = document.createElement('script');
+        script.src =
+          'https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js';
+        script.onload = function () {
+          setTimeout(createChart, 500); // Small delay to ensure library is ready
+        };
+        script.onerror = function () {
+          console.error('TradingView: Failed to load library');
+        };
+        document.head.appendChild(script);
+      }
+      // Step 2: Create chart
+      function createChart() {
+        if (!window.LightweightCharts) {
+          console.error('TradingView: Library not available');
+          return;
+        }
+        try {
+          // Create chart with theme applied via template literals
+          window.chart = LightweightCharts.createChart(
+            document.getElementById('container'),
+            {
+              width: window.innerWidth,
+              height: window.innerHeight,
+              layout: {
+                background: {
+                  color: '#000',
+                },
+                textColor: '#D1D4DC',
+                attributionLogo: true,
+              },
+              localization: {
+                priceFormatter: window?.utils?.formatPrice || defaultFormat,
+                dateFormat: 'yy/MM/dd',
+              },
+              grid: {
+                vertLines: { color: '#2B2B43' },
+                horzLines: { color: '#2B2B43' },
+              },
+              timeScale: {
+                timeVisible: true,
+                secondsVisible: false,
+                borderColor: 'transparent',
+              },
+              rightPriceScale: {
+                borderColor: 'transparent',
+                borderVisible: false,
+                minimumWidth: 50,
+                scaleMargins: {
+                  top: 0.1,
+                  bottom: 0.1,
+                },
+              },
+              leftPriceScale: {
+                borderColor: 'transparent',
+              },
+            },
+          );
+          // Notify React Native that chart is ready
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'CHART_READY',
+                timestamp: new Date().toISOString(),
+              }),
+            );
+          }
+        } catch (error) {
+          console.error('TradingView: Error creating chart:', error);
+        }
+      }
+      // Create candlestick series when data is received
+      window.createCandlestickSeries = function () {
+        if (!window.chart || !window.LightweightCharts?.CandlestickSeries)
+          return null;
+        // Remove existing series if it exists
+        if (window.candlestickSeries) {
+          window.chart.removeSeries(window.candlestickSeries);
+        }
+        // Create new candlestick series
+        window.candlestickSeries = window.chart.addSeries(
+          window.LightweightCharts.CandlestickSeries,
+          {
+            upColor: '#0ECB81',
+            downColor: '#F6465D',
+            borderDownColor: '#F6465D',
+            borderUpColor: '#0ECB81',
+            wickDownColor: '#F6465D',
+            wickUpColor: '#0ECB81',
+            lastValueVisible: true,
+            priceLineVisible: true,
+            priceLineSource: 0,
+            priceLineWidth: 1,
+            priceLineStyle: 2,
+            priceFormat: {
+              type: 'price',
+              minMove: 0.0000001,
+            },
+          },
+        );
+        return window.candlestickSeries;
+      };
+      window.createVolumeSeries = function () {
+        if (!window.chart || !window.LightweightCharts?.HistogramSeries)
+          return null;
+        if (window.volumeSeries) {
+          window.chart.removeSeries(window.volumeSeries);
+        }
+        window.volumeSeries = window.chart.addSeries(
+          window.LightweightCharts.HistogramSeries,
+          {
+            priceFormat: { type: 'volume' },
+            priceScaleId: '',
+            lastValueVisible: false,
+            priceLineVisible: false,
+          },
+        );
+        return window.volumeSeries;
+      };
+      // Handle window resize
+      window.addEventListener('resize', function () {
+        if (window.chart) {
+          window.chart.applyOptions({
+            width: window.innerWidth,
+            height: window.innerHeight,
+          });
+        }
+      });
+
+      // Message handling from React Native
+      window.addEventListener('message', function (event) {
+        try {
+          const message = JSON.parse(event.data);
+          switch (message.type) {
+            case 'SET_CANDLESTICK_DATA':
+              if (window.chart && message.data?.length > 0) {
+                // Create or get candlestick series
+                if (!window.candlestickSeries) {
+                  window.createCandlestickSeries();
+                }
+                if (window.candlestickSeries) {
+                  window.candlestickSeries.setData(message.data);
+                  // Check if this is truly new data (different source/period) or just a rerender
+                  const currentDataKey =
+                    message.source + '_' + (message.data?.length || 0);
+                  const shouldAutoscale =
+                    window.isInitialDataLoad ||
+                    window.lastDataKey !== currentDataKey;
+                  if (shouldAutoscale) {
+                    // window.chart.timeScale().fitContent();
+                    window.lastDataKey = currentDataKey;
+                  }
+                  window.isInitialDataLoad = false;
+                } else {
+                  console.error(
+                    '📊 TradingView: Failed to create candlestick series',
+                  );
+                }
+              }
+              break;
+            case 'UPDATE_CANDLESTICK_DATA':
+              if (window.chart && window.candlestickSeries && message.data) {
+                window.candlestickSeries.update(message.data);
+              }
+              break;
+            case 'UPDATE_INTERVAL':
+              // Send confirmation back to React Native
+              if (window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(
+                  JSON.stringify({
+                    type: 'INTERVAL_UPDATED',
+                    duration: message.duration,
+                    candlePeriod: message.candlePeriod,
+                    candleCount: message.candleCount,
+                    timestamp: new Date().toISOString(),
+                  }),
+                );
+              }
+              break;
+          }
+        } catch (error) {
+          // console.error('📊 TradingView: Message handling error:', error);
+        }
+      });
+
+      // 创建 tooltip DOM
+      const tooltip = document.createElement('div');
+      tooltip.style.position = 'absolute';
+      tooltip.style.display = 'none';
+      tooltip.style.pointerEvents = 'none';
+      tooltip.style.background = 'rgba(0, 0, 0, 0.8)';
+      tooltip.style.color = '#D1D4DC';
+      tooltip.style.padding = '8px 10px';
+      tooltip.style.border = '1px solid #2B2B43';
+      tooltip.style.borderRadius = '4px';
+      tooltip.style.fontSize = '12px';
+      tooltip.style.lineHeight = '1.4';
+      tooltip.style.zIndex = '1000';
+      window.tooltip = tooltip;
+      const containerEl = document.getElementById('container');
+      if (containerEl) containerEl.appendChild(tooltip);
+
+      // 订阅十字光标，更新 tooltip
+      const handleCrosshairMove = param => {
+        if (!containerEl || !window.tooltip) return;
+        const tooltipEl = window.tooltip;
+
+        const point = param.point;
+        if (!point || param.time === undefined) {
+          tooltipEl.style.display = 'none';
+          return;
+        }
+
+        const candleData = window.candlestickSeries
+          ? param.seriesData.get(window.candlestickSeries)
+          : undefined;
+        const volumeDataPoint = window.volumeSeries
+          ? param.seriesData.get(window.volumeSeries)
+          : undefined;
+
+        if (!candleData) {
+          tooltipEl.style.display = 'none';
+          return;
+        }
+
+        const open = candleData.open;
+        const high = candleData.high;
+        const low = candleData.low;
+        const close = candleData.close;
+        const volume = volumeDataPoint?.value;
+
+        // Build tooltip HTML without template literals
+        let tooltipHTML = '';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML += '<span>Time:</span>';
+        tooltipHTML +=
+          '<span>' +
+          (window.utils?.formatTime || formatTime)(param.time) +
+          '</span>';
+        tooltipHTML += '</div>';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML += '<span>Open:</span>';
+        tooltipHTML +=
+          '<span>' +
+          (window.utils?.formatPrice || defaultFormat)(open) +
+          '</span>';
+        tooltipHTML += '</div>';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML += '<span>High:</span>';
+        tooltipHTML +=
+          '<span>' +
+          (window.utils?.formatPrice || defaultFormat)(high) +
+          '</span>';
+        tooltipHTML += '</div>';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML += '<span>Low:</span>';
+        tooltipHTML +=
+          '<span>' +
+          (window.utils?.formatPrice || defaultFormat)(low) +
+          '</span>';
+        tooltipHTML += '</div>';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML += '<span>Close:</span>';
+        tooltipHTML +=
+          '<span>' +
+          (window.utils?.formatPrice || defaultFormat)(close) +
+          '</span>';
+        tooltipHTML += '</div>';
+
+        if (typeof volume === 'number') {
+          tooltipHTML +=
+            '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+          tooltipHTML += '<span>Volume:</span>';
+          tooltipHTML +=
+            '<span>' +
+            (window.utils?.formatNumber || formatNumber)(volume) +
+            '</span>';
+          tooltipHTML += '</div>';
+        }
+
+        tooltipEl.innerHTML = tooltipHTML;
+
+        const containerRect = containerEl.getBoundingClientRect();
+        const isLeftSide = point.x < containerRect.width / 2;
+        tooltipEl.style.top = '8px';
+        if (isLeftSide) {
+          // 选中点在左侧，显示在右上角
+          tooltipEl.style.right = '8px';
+          tooltipEl.style.left = 'auto';
+        } else {
+          // 选中点在右侧，显示在左上角
+          tooltipEl.style.left = '8px';
+          tooltipEl.style.right = 'auto';
+        }
+        tooltipEl.style.display = 'block';
+      };
+
+      // Also listen for React Native WebView messages
+      document.addEventListener('message', function (event) {
+        window.dispatchEvent(new MessageEvent('message', event));
+      });
+      // Start loading after a small delay
+      setTimeout(loadTradingView, 0);
+      setTimeout(() => {
+        window.createCandlestickSeries();
+        window.candlestickSeries.setData(mockData);
+        window.createVolumeSeries();
+        window.volumeSeries.setData(volumeData);
+        window.candlestickSeries
+          .priceScale()
+          .applyOptions({ scaleMargins: { top: 0.1, bottom: 0.2 } });
+        window.volumeSeries
+          .priceScale()
+          .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
+        window.chart.subscribeCrosshairMove(handleCrosshairMove);
+      }, 2000);
+    </script>
+  </body>
+</html>

@@ -1,10 +1,10 @@
 export interface CandleStick {
   time: number;
-  open: string;
-  high: string;
-  low: string;
-  close: string;
-  volume: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
 }
 
 export enum CandlePeriod {
@@ -27,5 +27,6 @@ export enum CandlePeriod {
 export interface CandleData {
   coin: string;
   interval: CandlePeriod;
+  showVolume?: boolean;
   candles: CandleStick[];
 }

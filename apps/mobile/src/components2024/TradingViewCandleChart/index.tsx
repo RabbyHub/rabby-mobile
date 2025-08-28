@@ -54,11 +54,11 @@ const formatCandleItem = (candle: CandleStick) => {
   const timeInSeconds = Math.floor(candle.time / 1000);
   const formattedCandle = {
     time: timeInSeconds,
-    open: parseFloat(candle.open),
-    high: parseFloat(candle.high),
-    low: parseFloat(candle.low),
-    close: parseFloat(candle.close),
-    volume: parseFloat(candle.volume),
+    open: candle.open,
+    high: candle.high,
+    low: candle.low,
+    close: candle.close,
+    volume: candle.volume,
   };
   // Validate all values are valid numbers
   const isValid =
@@ -156,13 +156,13 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
           dataToSend = formatCandleData(data);
           dataSource = 'real';
         }
-        console.log('CUSTOM_LOGGER:=>: dataToSend', dataToSend[0]);
 
         if (dataToSend) {
           const message = {
             type: 'SET_CANDLESTICK_DATA',
             data: dataToSend,
             source: dataSource,
+            showVolume: data.showVolume ?? false,
           };
           webViewRef.current.postMessage(JSON.stringify(message));
         }
