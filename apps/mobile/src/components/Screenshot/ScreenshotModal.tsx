@@ -293,7 +293,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       fontSize: 20,
       fontFamily: 'SF Pro Rounded',
       lineHeight: 24,
-      fontWeight: FontWeightEnum.extraBold,
+      fontWeight: FontWeightEnum.bold,
       color: colors2024['neutral-title-1'],
     },
     imageWrapper: {

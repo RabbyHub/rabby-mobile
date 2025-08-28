@@ -54,12 +54,8 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
 
     const inputRef = useRef<any>(null);
     const isEmpty = !value;
-    const handleFocus = useCallback<TextInputProps['onFocus'] & object>(e => {},
-    []);
 
-    const handleBlur = useCallback<
-      TextInputProps['onBlur'] & object
-    >(async () => {
+    const handleDone = useCallback(async () => {
       Keyboard.dismiss();
     }, []);
 
@@ -78,8 +74,9 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
             value={value}
             onChangeText={onChangeFeedback}
             multiline={true}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
+            onBlur={handleDone}
+            submitBehavior="blurAndSubmit"
+            returnKeyType="done"
             enterKeyHint="done"
             textAlign="left"
             textAlignVertical="top"

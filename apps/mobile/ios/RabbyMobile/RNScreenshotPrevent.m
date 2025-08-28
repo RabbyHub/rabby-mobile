@@ -91,7 +91,7 @@ RCT_EXPORT_MODULE();
           //   [result setObject:fileName forKey:@"name"];
           // }
           [self sendEventWithName:@"userDidTakeScreenshot" body: result];
-      } else if (hasListeners) {
+      } else if (self->hasListeners) {
           [self sendEventWithName:@"userDidTakeScreenshot" body: nil];
       }
     }];
