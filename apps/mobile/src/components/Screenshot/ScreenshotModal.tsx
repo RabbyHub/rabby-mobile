@@ -34,7 +34,7 @@ function wrapOnPress(handler?: (evt: GestureResponderEvent) => void) {
   };
 }
 
-export function GlobalModalSubmitFeedbackWithScreenshot() {
+export function ModalsSubmitFeedbackByScreenshotStub() {
   const { t } = useTranslation();
 
   const { styles } = useTheme2024({ getStyle: getModalStyle });
@@ -63,6 +63,8 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
 
   return (
     <>
+      <SubmitSuccessModal />
+
       <Modal
         visible={globalModalShown}
         transparent
@@ -192,8 +194,6 @@ export function GlobalModalSubmitFeedbackWithScreenshot() {
           />
         )}
       </Modal>
-
-      <SubmitSuccessModal />
     </>
   );
 }
@@ -310,9 +310,10 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       marginBottom: 30,
       // ...makeDebugBorder(),
     },
-    image: {},
+    image: IS_IOS ? { borderRadius: 21 } : {},
     editIconWrapper: {
       position: 'absolute',
+      zIndex: 9,
       // top: 17,
       bottom: -14,
       left: getEditPenIconLeftValue(),

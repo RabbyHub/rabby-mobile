@@ -1,15 +1,16 @@
 import { useTranslation } from 'react-i18next';
 
 import { View, Text, TouchableOpacity } from 'react-native';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 
 import RcBgBug from './icons/hometip-bg-bug.svg';
-import RcBubble from './icons/hometip-bubble.svg';
+import RcBulb from './icons/hometip-bulb.svg';
 import RcCloseCC from './icons/hometip-close-cc.svg';
 
 import { useViewedHomeTip } from './hooks';
 import { ScreenLayouts } from '@/constant/layout';
+import { IS_IOS } from '@/core/native/utils';
 
 export function TipFeedbackByScreenshot({ style }: RNViewProps) {
   const { styles } = useTheme2024({ getStyle });
@@ -24,7 +25,11 @@ export function TipFeedbackByScreenshot({ style }: RNViewProps) {
       <RcBgBug style={styles.iconBgBug} />
       <View style={[styles.line, { marginBottom: 4 }]}>
         <Text style={styles.title}>
-          <RcBubble style={styles.iconBubble} />
+          {IS_IOS ? (
+            <Text style={styles.textBulb}>💡</Text>
+          ) : (
+            <RcBulb style={styles.iconBulb} />
+          )}
           Tips
         </Text>
         <TouchableOpacity
@@ -82,7 +87,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       // ...makeDebugBorder(),
     },
 
-    iconBubble: {
+    textBulb: {},
+
+    iconBulb: {
       width: 20,
       height: 20,
       marginBottom: 8,

@@ -41,7 +41,6 @@ export function SubmitSuccessModal() {
                   </Text>
                 </View>
               </View>
-              {/* Submit Area */}
               <View style={styles.submitArea}>
                 <Button
                   title={t('global.ok')}
@@ -71,7 +70,9 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   const modalWidth = winLayout.width - SIZES.MODAL_MASK_H_PADDING * 2;
 
   return {
-    modalComp: {},
+    modalComp: {
+      flex: 1,
+    },
     maskBg: {
       backgroundColor: isLight ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.85)',
     },

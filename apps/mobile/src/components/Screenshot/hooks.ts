@@ -19,7 +19,7 @@ import { useAtomCallback } from 'jotai/utils';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { toast } from '@/components2024/Toast';
 import { useRefState } from '@/hooks/common/useRefState';
-import { IS_ANDROID } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { PerAndroid } from '@/core/utils/permissions';
 import { isNonPublicProductionEnv } from '@/constant/env';
 
@@ -228,7 +228,10 @@ export function useViewingFeedback() {
 
 export function useSubmitFeedbackModalVisible() {
   const [feedbackByScreenshot] = useAtom(feedbackByScreenshotAtom);
-  return { submitFeedbackModalVisible: feedbackByScreenshot.submitModalShown };
+  return {
+    submitFeedbackModalVisible: feedbackByScreenshot.submitModalShown,
+    submitSuccessModalShown: feedbackByScreenshot.submitSuccessModalShown,
+  };
 }
 
 export function useSubmitSuccessModalVisible() {
@@ -407,11 +410,29 @@ export function useFeedbackOnScreenshot() {
   );
 
   const showSubmitSuccessModal = useCallback(() => {
-    setSubmitFeedbackOnScreenshot(prev => ({
-      ...prev,
-      submitSuccessModalShown: true,
-      submitModalShown: false,
-    }));
+    if (IS_IOS) {
+      setSubmitFeedbackOnScreenshot(prev => ({
+        ...prev,
+        submitModalShown: false,
+      }));
+      /**
+       * I don't know why, but if we change submitModalShown/submitSuccessModalShown at the same time,
+       * on iOS, the modal charged by submitSuccessModalShown will not display its main component,
+       * but the whole app will be freezed as it's presented on somewhere you can't see
+       */
+      setTimeout(() => {
+        setSubmitFeedbackOnScreenshot(prev => ({
+          ...prev,
+          submitSuccessModalShown: true,
+        }));
+      }, 500);
+    } else {
+      setSubmitFeedbackOnScreenshot(prev => ({
+        ...prev,
+        submitSuccessModalShown: true,
+        submitModalShown: false,
+      }));
+    }
   }, [setSubmitFeedbackOnScreenshot]);
 
   return {
