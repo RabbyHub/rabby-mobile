@@ -264,7 +264,6 @@ export const useTokenMarketInfo = (token: {
         token_id: token.tokenId,
         chain_id: token.chain,
       });
-      console.log('CUSTOM_LOGGER:=>: res', res);
       return res;
     },
     {

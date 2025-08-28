@@ -62,8 +62,6 @@ import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
 import TradingViewCandleChart, {
   TradingViewChartRef,
 } from '@/components2024/TradingViewCandleChart';
-import { Skeleton } from '@rneui/themed';
-import { LoadingLinear } from './components/TokenPriceChart/LoadingLinear';
 import TimePanel from './components/TimePanel';
 import MarketInfo from './components/MarketInfo';
 
@@ -608,7 +606,9 @@ export const TokenMarketInfoScreen = () => {
 
   const tokenPriceChartRef = React.useRef<TokenChartRef>(null);
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
-  const [currentInterval, setCurrentInterval] = useState(CandlePeriod.ONE_DAY);
+  const [currentInterval, setCurrentInterval] = useState(
+    CandlePeriod.ONE_MINUTE,
+  );
 
   const [loading, setLoading] = useState(true);
   const handleRefresh = useCallback(() => {
@@ -689,7 +689,9 @@ export const TokenMarketInfoScreen = () => {
                 position: 'relative',
                 marginTop: 12,
               }}>
-              {tokenInfo?.support_market_data ? (
+              {tokenInfoLoading ? (
+                <View style={styles.skeleton} />
+              ) : tokenInfo?.support_market_data ? (
                 <>
                   <TimePanel
                     currentInterval={currentInterval}
@@ -920,6 +922,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['neutral-body'],
       height: 4,
       borderRadius: 100,
+    },
+    skeleton: {
+      marginTop: 12,
+      width: screenWidth - 32,
+      height: 200,
+      borderRadius: 12,
+      marginHorizontal: 16,
     },
   };
 });

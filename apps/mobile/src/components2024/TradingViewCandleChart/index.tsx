@@ -51,7 +51,7 @@ const androidWebViewProps = {
 };
 
 const formatCandleItem = (candle: CandleStick) => {
-  const timeInSeconds = Math.floor(candle.time / 1000);
+  const timeInSeconds = Math.floor(candle.time);
   const formattedCandle = {
     time: timeInSeconds,
     open: candle.open,
@@ -157,6 +157,7 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
           dataSource = 'real';
         }
 
+        console.log('CUSTOM_LOGGER:=>: dataToSend', dataToSend[0]);
         if (dataToSend) {
           const message = {
             type: 'SET_CANDLESTICK_DATA',
