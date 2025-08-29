@@ -18,6 +18,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { Button } from '@/components2024/Button';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
+import { FontWeightEnum } from '@/core/utils/fonts';
 
 function ModalResponseDetail({
   lastRepliedFeedback,
@@ -235,7 +236,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     fontStyle: 'normal',
-    fontWeight: 800,
+    fontWeight: FontWeightEnum.heavy,
     lineHeight: 24,
     borderLeftColor: colors2024['neutral-title-1'],
   },

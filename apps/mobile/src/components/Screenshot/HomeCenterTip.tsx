@@ -55,11 +55,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
 
       position: 'relative',
       height: 76,
-      paddingVertical: 16,
+      // paddingVertical: 16,
       paddingHorizontal: 12,
       borderRadius: 12,
 
       flexDirection: 'column',
+      justifyContent: 'center',
 
       borderWidth: 1,
       borderStyle: 'solid',
@@ -102,7 +103,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontFamily: 'SF Pro Rounded',
       fontSize: 18,
       fontWeight: 700,
-      lineHeight: 22,
+      // lineHeight: 22,
       color: colors2024['neutral-title-1'],
     },
 
