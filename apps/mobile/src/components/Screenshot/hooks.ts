@@ -25,10 +25,11 @@ import { isNonPublicProductionEnv } from '@/constant/env';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
 
-export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = IS_ANDROID && !__DEV__;
+export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
+  IS_ANDROID; /*  && !__DEV__ */
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 const screenshotFeedbackAtom = atomByMMKV('@screenshotFeedback', {
-  viewedHomeTip: false,
+  viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   feedbacks: [] as LocalUserFeedbackItem[],
 });
 
@@ -321,44 +322,13 @@ export function useUserDidTakeScreenshot({
 }: {
   isTop?: boolean;
 } = {}) {
-  useEffect(() => {
-    if (!isTop) return;
-
-    // For Android, check if we should use Android 14+ screen capture detection
-    const androidVersion = Platform.Version as number;
-
-    // Listen for screen capture detection events on Android 14+
-    const cbs = {
-      screenCaptureChangedListener: null as { remove: () => void } | null,
-    };
-    if (androidVersion >= 34) {
-      RNScreenshotPrevent.startScreenCaptureDetection();
-      cbs.screenCaptureChangedListener =
-        RNScreenshotPrevent.onScreenCaptureDetectionChanged(params => {
-          console.debug(
-            '[debug] Using Android 14+ screen capture detection changed',
-            params,
-          );
-        });
-    }
-
-    return () => {
-      if (androidVersion >= 34) {
-        // Android 14+ - stop screen capture detection
-        RNScreenshotPrevent.stopScreenCaptureDetection();
-      }
-
-      cbs.screenCaptureChangedListener?.remove();
-    };
-  }, [isTop]);
-
   const { shouldToastFeedbackByScreenshot, setLastScreenshot } =
     useLastScreenshot();
 
   useEffect(() => {
     if (!isTop) return;
 
-    const { remove } = RNScreenshotPrevent.onUserDidTakeScreenshot(
+    const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(
       async params => {
         if (!params?.captured) {
           if (IS_ANDROID && params && !params?.androidHasPermission) return;

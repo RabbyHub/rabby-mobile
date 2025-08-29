@@ -1,10 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
   <uses-permission android:name="android.permission.INTERNET" />
-  <uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE" /> <!-- Android 14+ -->
-  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> <!-- Android 13+ -->
-  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- Android <= 13 -->
-
   <!-- <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/> -->
 
   <application
@@ -62,7 +58,6 @@
         <data android:host="go.rabby.io" android:pathPrefix="/mobile/" />
       </intent-filter>
     </activity>
-
     <provider
       android:name="androidx.core.content.FileProvider"
       android:authorities="${applicationId}.provider"

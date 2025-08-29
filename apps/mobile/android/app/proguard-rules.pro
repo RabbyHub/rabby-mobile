@@ -17,8 +17,6 @@
 #}
 -dontwarn io.branch.**
 
-# # keep screen capture callback
-# -keep class android.content.ScreenCaptureCallback { *; }
 
 # react native keychain https://github.com/oblador/react-native-keychain#proguard-rules
 -keep class com.facebook.crypto.** {
@@ -60,7 +58,6 @@
 
 # kotlin
 
--keep class kotlin.** { *; }
+  -keep class kotlin.** { *; }
 
--keep class kotlin.Metadata { *; }
-
+  -keep class kotlin.Metadata { *; }
