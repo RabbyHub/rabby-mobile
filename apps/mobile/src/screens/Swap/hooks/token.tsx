@@ -816,6 +816,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         setIsDraggingSlider(true);
         setSwapUseSlider(true);
         setSlider(v);
+        setUseGasPrice(false);
 
         if (
           v !== previousSlider.current &&
