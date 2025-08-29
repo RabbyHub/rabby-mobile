@@ -25,8 +25,7 @@ import { isNonPublicProductionEnv } from '@/constant/env';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
 
-export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
-  IS_ANDROID && !isNonPublicProductionEnv;
+export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = IS_ANDROID && !__DEV__;
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 const screenshotFeedbackAtom = atomByMMKV('@screenshotFeedback', {
   viewedHomeTip: false,
