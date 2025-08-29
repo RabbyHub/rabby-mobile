@@ -130,13 +130,10 @@ export function useBrowser() {
   });
 
   const switchToTab = useMemoizedFn((tabId: string) => {
-    const activeTab = store.tabs.find(item => item.id === tabId);
-    if (activeTab?.isTerminate) {
-      updateTab(tabId, {
-        isTerminate: false,
-        openTime: Date.now(),
-      });
-    }
+    updateTab(tabId, {
+      isTerminate: false,
+      openTime: Date.now(),
+    });
     updateBrowserTabs({
       activeTabId: tabId,
     });

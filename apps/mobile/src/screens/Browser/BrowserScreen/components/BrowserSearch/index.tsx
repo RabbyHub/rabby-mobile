@@ -55,7 +55,7 @@ export function BrowserSearch({
   const { browserHistoryList } = useBrowserHistory();
 
   const displayedBrowserHistoryList = useMemo(() => {
-    return browserHistoryList.slice(0, 3);
+    return browserHistoryList.slice(0, 10);
   }, [browserHistoryList]);
 
   const isValidDomain = useMemo(() => {
