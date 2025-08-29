@@ -521,7 +521,6 @@ export const MiniSignTx = ({
             support1559
               ? txsResult[0].tx.maxFeePerGas || '0'
               : txsResult[0].tx.gasPrice || '0',
-            10,
           ),
         );
       }
@@ -773,6 +772,7 @@ export const MiniSignTx = ({
         gasLevel: miniGasLevel,
         gasPrice: miniCustomPrice || 0,
       };
+
       let customGasPrice = 0;
       if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
         // use cached gasPrice if exist
@@ -781,8 +781,7 @@ export const MiniSignTx = ({
       if (
         ((isSend || isSwap || isBridge) && txs[0].gasPrice) ||
         isSpeedUp ||
-        isCancel ||
-        lastTimeGas?.lastTimeSelect === 'gasPrice'
+        isCancel
       ) {
         // use gasPrice set by dapp when it's a speedup or cancel tx
         customGasPrice = parseInt(txs[0].gasPrice!);
