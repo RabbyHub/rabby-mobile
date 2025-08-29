@@ -11,9 +11,13 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { DropdownMenuView } from '../BrowserScreen/components/BrowserTab/DropdownMenuView';
 import { useTranslation } from 'react-i18next';
+import {
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native-gesture-handler';
 
 export const BrowserHandler = () => {
   const { styles, isLight, colors2024 } = useTheme2024({
@@ -149,39 +153,48 @@ export const BrowserHandler = () => {
     t,
   ]);
 
-  return browserState.isShowBrowser &&
-    !browserState.isShowSearch &&
-    !browserState.isShowManage ? (
-    <View style={styles.handleComponent}>
-      <View style={styles.handleComponentContainer}>
-        {activeTabState.url ? (
-          <DropdownMenuView menuConfig={menuConfigs}>
-            <RcIconMore1CC
-              width={24}
-              height={24}
-              color={colors2024['neutral-title-1']}
-            />
-          </DropdownMenuView>
-        ) : (
-          <RcIconMore1CC
-            width={24}
-            height={24}
-            color={colors2024['neutral-title-1']}
-          />
-        )}
-        <View style={styles.divider} />
+  return (
+    <TouchableWithoutFeedback
+      onPress={() => {
+        setPartialBrowserState({
+          isShowBrowser: false,
+        });
+      }}>
+      {browserState.isShowBrowser &&
+      !browserState.isShowSearch &&
+      !browserState.isShowManage ? (
+        <View style={styles.handleComponent}>
+          <View style={styles.handleComponentContainer}>
+            {activeTabState.url ? (
+              <DropdownMenuView menuConfig={menuConfigs}>
+                <RcIconMore1CC
+                  width={24}
+                  height={24}
+                  color={colors2024['neutral-title-1']}
+                />
+              </DropdownMenuView>
+            ) : (
+              <RcIconMore1CC
+                width={24}
+                height={24}
+                color={colors2024['neutral-title-1']}
+              />
+            )}
+            <View style={styles.divider} />
 
-        <TouchableOpacity onPress={handleCloseBrowser} hitSlop={5}>
-          <RcIconClose1CC
-            width={24}
-            height={24}
-            color={colors2024['neutral-title-1']}
-          />
-        </TouchableOpacity>
-      </View>
-    </View>
-  ) : (
-    <View style={styles.placeholder} />
+            <TouchableOpacity onPress={handleCloseBrowser} hitSlop={5}>
+              <RcIconClose1CC
+                width={24}
+                height={24}
+                color={colors2024['neutral-title-1']}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.placeholder} />
+      )}
+    </TouchableWithoutFeedback>
   );
 };
 

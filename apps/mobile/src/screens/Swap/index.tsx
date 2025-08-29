@@ -175,7 +175,7 @@ const Swap = ({
     inSufficient,
     slippageChanged,
     slippageState,
-    slippage,
+    slippage: _slippage,
     setSlippage,
     payTokenIsNativeToken,
     isSlippageHigh,
@@ -219,6 +219,11 @@ const Swap = ({
     setAutoSlippage,
     setIsCustomSlippage,
   } = useSlippageStore();
+
+  const slippage = useMemo(
+    () => (autoSlippage ? autoSuggestSlippage : _slippage),
+    [_slippage, autoSlippage, autoSuggestSlippage],
+  );
 
   const {
     isSupportedChain,

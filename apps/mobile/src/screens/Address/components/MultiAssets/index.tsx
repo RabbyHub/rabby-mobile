@@ -21,6 +21,7 @@ import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useAtomValue } from 'jotai';
+import useAccountsBalance from '@/hooks/useAccountsBalance';
 
 export const MultiAssets = ({
   onUpdateIsDecrease,
@@ -33,14 +34,23 @@ export const MultiAssets = ({
   const { t } = useTranslation();
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const { top10Addresses, top10Balance, top10EvmBalance, list } =
-    useAccountInfo();
+  const { top10Addresses, list } = useAccountInfo();
+
+  const { getTotalBalance } = useAccountsBalance({
+    cacheTime: 10 * 60 * 1000,
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
+
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [top10Addresses.join(','), getTotalBalance]);
 
   const { combineData, isLoadingNew: isLoadingCurve } = useMultiCurve(
     top10Addresses,
     false,
-    top10Balance,
-    top10EvmBalance,
+    top10Balance.total,
+    top10Balance.totalEvm,
   );
 
   const { isDisConnect } = useGlobalStatus();
