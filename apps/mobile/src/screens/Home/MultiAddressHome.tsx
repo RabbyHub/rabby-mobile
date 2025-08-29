@@ -854,17 +854,17 @@ function MultiAddressHome(): JSX.Element {
   const { viewedHomeTip } = useViewedHomeTip();
 
   const { noBetweenContent, onlyOneContent } = useMemo(() => {
-    const els = [
+    const visibleEls = [
       displayFundWallet,
       shouldShowRateGuideOnHome,
-      !offlineChainData.displayWillClosedChain ||
-        !offlineChainData.offlineChainInfo,
-      viewedHomeTip,
+      offlineChainData.displayWillClosedChain &&
+        offlineChainData.offlineChainInfo,
+      !viewedHomeTip,
     ];
-    const _noBetweenContent = els.every(Boolean);
+    const hasBetweenContent = visibleEls.some(Boolean);
     return {
-      noBetweenContent: _noBetweenContent,
-      onlyOneContent: els.filter(Boolean).length === 1,
+      noBetweenContent: !hasBetweenContent,
+      onlyOneContent: visibleEls.filter(Boolean).length === 1,
     };
   }, [
     shouldShowRateGuideOnHome,
@@ -1202,6 +1202,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 12,
     marginBottom: 12,
     gap: 12,
+    // ...makeDebugBorder(),
   },
   contentBetweenHeaderAndMatrixEmpty: {
     marginBottom: 12,
