@@ -84,7 +84,36 @@
     "Addresses": "Addresses",
     "24h": "24小时",
     "Edit": "编辑",
-    "Wallets": "选择钱包"
+    "Wallets": "选择钱包",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "稍后再问我"
+      },
+      "mediaLibrary": {
+        "title": "媒体库权限",
+        "message": "此应用需要访问您的媒体库以检测屏幕截图。"
+      },
+      "camera": {
+        "title": "相机权限",
+        "message": "此应用需要访问您的相机以拍摄照片。"
+      },
+      "bluetoothScan": {
+        "title": "蓝牙扫描权限",
+        "message": "此应用需要访问您的蓝牙以扫描设备。"
+      },
+      "bluetoothConnect": {
+        "message": "该应用需要访问您的蓝牙以便连接设备。",
+        "title": "Bluetooth 连接权限"
+      },
+      "bluetoothAdmin": {
+        "title": "蓝牙管理员权限",
+        "message": "此应用需要访问您的蓝牙以管理设备。"
+      },
+      "location": {
+        "title": "位置权限",
+        "message": "该应用需要访问您的位置，以提供基于位置的功能。"
+      }
+    }
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -491,6 +520,15 @@
         "insufficient": "您的 gas 余额不足以支付网络 gas 费用。请为 gas 添加资金后再试。",
         "gasPriceTooLow": "Gas 价格太低。我们会将其调整 30% 以帮助您的交易确认。点击“重试”以确认并再次尝试。",
         "nonceTooLow": "Nonce太低。我们将更新为{{nonce}}。点击“重试”确认并再试一次。"
+      },
+      "addLiquidity": {
+        "token1": "添加代币 2",
+        "receiver": "接收者",
+        "title": "添加流动性",
+        "token0": "添加 Token 1",
+        "marketPrice": "市场价格",
+        "priceDiff": "价格差异",
+        "poolPrice": "池价格"
       }
     },
     "activities": {
@@ -1105,6 +1143,9 @@
         "descriptionAndroid": "如果你喜欢 Rabby，在 Google Play 上快速评分会非常重要。",
         "descriptionIOS": "如果您喜欢 Rabby，在应用商店的快速评价对我们来说意义重大。",
         "feedbackTitle": "有反馈吗？我们在倾听。"
+      },
+      "homeCenterTipScreenshot": {
+        "description": "随时截屏以快速报告错误"
       }
     },
     "signText": {
@@ -1815,7 +1856,11 @@
       "Mybalance": "代币余额",
       "guideToMarketData": "市场数据：",
       "notSupported": "不支持的Token",
-      "Transaction": "代币历史"
+      "Transaction": "代币历史",
+      "tabs": {
+        "tokenSecurity": "代币安全",
+        "marketData": "市场数据"
+      }
     },
     "customRpc": {
       "add": "修改 RPC URL",
@@ -2043,6 +2088,13 @@
       },
       "BrowserSearchEntry": {
         "openWebsites": "打开网站"
+      },
+      "menu": {
+        "contentModeDesktop": "请求桌面网站",
+        "refresh": "刷新",
+        "favorite": "最喜欢",
+        "disconnect": "断开连接",
+        "contentModeMobile": "请求移动站点"
       }
     },
     "browserManage": {
@@ -2148,6 +2200,12 @@
       },
       "toast": {
         "remove": "成功从观察列表中移除"
+      }
+    },
+    "universalLink": {
+      "error": {
+        "setupWalletFirst": "请先完成钱包设置。",
+        "unlockWalletFirst": "请解锁应用以打开链接。"
       }
     }
   },
@@ -2287,7 +2345,13 @@
       "depositWithTokenDesc": "无额外费用，立即提现",
       "depositWithPay": "使用购买",
       "depositWithPayDesc": "30% 费用，无提现",
-      "depositWithToken": "使用 Token 存款"
+      "depositWithToken": "使用 Token 存款",
+      "giftInfo": {
+        "noWithdrawableBalanceTitle": "{{amount}} 非可提取",
+        "gotIt": "我明白了",
+        "giftTips": "活跃用户的 Gas Reward",
+        "noWithdrawableBalanceDescription": "{{amount}} 的您燃气余额不可提现：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      }
     },
     "ReserveGasPopup": {
       "title": "预留 Gas",
@@ -2328,6 +2392,24 @@
       "serviceErrorText": "服务错误",
       "buttonText": "刷新",
       "offlineText": "网络错误"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "描述问题"
+      },
+      "feedbackLabel": "错误描述：",
+      "title": "截图以报告错误",
+      "submitButtonText": "提交"
+    },
+    "feedbackModal": {
+      "issueDescriptionLabel": "描述：",
+      "title": "来自 Rabby 支持的回复",
+      "pendingTitle": "Rabby Support 尚未回复。",
+      "issueDescription": "您报告的问题是：",
+      "repliedTitle": "Rabby Support 已回复："
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "提交成功"
     }
   },
   "bluetooth": {
