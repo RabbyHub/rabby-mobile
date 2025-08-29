@@ -17,6 +17,9 @@ import { RcIconAddPlusCircle, ReactIconHome } from '@/assets2024/icons/browser';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useAppState } from '@react-native-community/hooks';
+import { atom, useAtom } from 'jotai';
+
+const activeTabAtom = atom('favorites');
 
 export function BrowserManage(): JSX.Element {
   const { styles, colors2024, isLight } = useTheme2024({
@@ -31,7 +34,7 @@ export function BrowserManage(): JSX.Element {
   const { openTab, setPartialBrowserState, closeAllTabs } = useBrowser();
   const { removeAllBrowserHistory } = useBrowserHistory();
 
-  const [activeTab, setActiveTab] = useState('favorites');
+  const [activeTab, setActiveTab] = useAtom(activeTabAtom);
   const { t } = useTranslation();
   const [isShowDelete, setIsShowDelete] = useState(false);
 
@@ -349,6 +352,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     borderRadius: 12,
     flex: 0,
     paddingHorizontal: 16,
+    minWidth: 75,
     // minWidth: '20%',
   },
   navbarItemActive: {

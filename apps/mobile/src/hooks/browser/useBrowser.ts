@@ -180,9 +180,9 @@ export function useBrowser() {
           tab => -(tab.openTime || Number.MAX_SAFE_INTEGER),
         );
 
-        if (tabs.length <= MAX_ACTIVE_TABS_COUNT) {
-          return prev;
-        }
+        // if (tabs.length <= MAX_ACTIVE_TABS_COUNT) {
+        //   return prev;
+        // }
 
         const time = tabs[MAX_ACTIVE_TABS_COUNT - 1]?.openTime || 0;
         if (!time) {
@@ -199,8 +199,13 @@ export function useBrowser() {
           return tab;
         });
 
+        const activeTabId =
+          finalTabs.find(tab => tab.id && tab.id === prev.activeTabId)?.id ||
+          finalTabs[0]?.id ||
+          '';
+
         const result = {
-          ...prev,
+          activeTabId,
           tabs: finalTabs,
         };
 
