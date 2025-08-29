@@ -49,7 +49,7 @@ const browserActiveTabStateAtom = atom<{
   contentMode: undefined,
 });
 
-const MAX_ACTIVE_TABS_COUNT = Platform.OS === 'android' ? 4 : 10;
+const MAX_ACTIVE_TABS_COUNT = Platform.OS === 'android' ? 4 : 4;
 
 const displayedTabsAtom = atom(get => {
   const store = get(tabsAtom);
