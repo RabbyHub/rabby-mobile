@@ -1,4 +1,5 @@
 import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
+import { BUILD_GIT_INFO } from '@/constant/env';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Platform } from 'react-native';
@@ -43,6 +44,7 @@ export function getScreenshotFeedbackExtra({
   const appVersionText = APP_VERSIONS.forFeedback;
   const appVersion = APP_VERSIONS.fromNative;
   const appBuildNumber = APP_VERSIONS.buildNumber;
+  const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
   return {
     totalBalanceText,
@@ -50,6 +52,7 @@ export function getScreenshotFeedbackExtra({
     appVersionText,
     appVersion,
     appBuildNumber,
+    appBuildRevision,
     applicationId: APPLICATION_ID,
 
     fingerprint: runTryCatch(() => DeviceInfo.getFingerprintSync()),
