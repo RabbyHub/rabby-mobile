@@ -217,7 +217,8 @@
       "loginInTip": {
         "login": "Bei GasAccount anmelden",
         "desc": "Zahlen Sie Gasgebühren auf allen Chains",
-        "title": "USDC / USDT einzahlen"
+        "title": "USDC / USDT einzahlen",
+        "loginAndClaim": "Melde dich an und fordere {{amount}} an"
       },
       "withdrawPopup": {
         "amount": "Betrag",
@@ -1966,7 +1967,12 @@
       "Fold": "Falt",
       "ContentGeneratedByAI": "Dieser Inhalt wurde von KI generiert",
       "ShowMore": "Weitere anzeigen",
-      "Introduction": "Einleitung"
+      "Introduction": "Einleitung",
+      "balance": "Guthaben",
+      "guideToMarketData": "Marktdaten:",
+      "notSupported": "Token wird nicht unterstützt",
+      "Transaction": "Token-Historie",
+      "Mybalance": "Token-Bestand"
     },
     "setting": {
       "currentVersion": "Aktuelle Version",
@@ -2202,7 +2208,8 @@
         "placeholder": "Websites durchsuchen",
         "searchInGoogle": "Suche \"{{searchText}}\" in Google",
         "results": "Ergebnisse",
-        "openUrl": "Öffnen \"{{searchText}}\""
+        "openUrl": "Öffnen \"{{searchText}}\"",
+        "recentEmpty": "Starten Sie die Erkundung der Website"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Websites öffnen"

@@ -1774,7 +1774,12 @@
       "ContentGeneratedByAI": "Konten ini dihasilkan oleh AI",
       "ShowMore": "Tampilkan lebih banyak",
       "Introduction": "Pendahuluan",
-      "Fold": "Fold"
+      "Fold": "Fold",
+      "Mybalance": "Saldo Token",
+      "guideToMarketData": "Data Pasar:",
+      "Transaction": "Riwayat Token",
+      "balance": "Saldo",
+      "notSupported": "Token tidak didukung"
     },
     "approvalsAddressList": {
       "title": "Persetujuan"
@@ -1964,7 +1969,8 @@
         "recent": "Terbaru",
         "results": "Hasil",
         "searchInGoogle": "Cari \"{{searchText}}\" di Google",
-        "placeholder": "Cari Situs Web"
+        "placeholder": "Cari Situs Web",
+        "recentEmpty": "Mulai Menjelajahi Situs Web"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Buka Situs Web"
@@ -2084,7 +2090,8 @@
       "loginInTip": {
         "title": "Setor USDC / USDT",
         "desc": "Bayar Biaya Gas di Semua Rantai",
-        "login": "Masuk GasAccount"
+        "login": "Masuk GasAccount",
+        "loginAndClaim": "Masuk dan Klaim {{amount}}"
       },
       "loginConfirmModal": {
         "title": "Pilih Dompet untuk Masuk",

@@ -139,7 +139,8 @@
       "loginInTip": {
         "login": "Iniciar sessão GasAccount",
         "desc": "Pagar Taxas de Gas em Todas as Chains",
-        "title": "Depositar USDC / USDT"
+        "title": "Depositar USDC / USDT",
+        "loginAndClaim": "Inicie sessão e reivindique {{amount}}"
       },
       "gasExceed": "O saldo do GasAccount não pode exceder $1000",
       "withdrawConfirmModal": {
@@ -1872,7 +1873,12 @@
       "Introduction": "Introdução",
       "ContentGeneratedByAI": "Este conteúdo foi gerado por IA",
       "Fold": "Dobre",
-      "ShowMore": "Mostrar mais"
+      "ShowMore": "Mostrar mais",
+      "Mybalance": "Saldo de Token",
+      "balance": "Saldo",
+      "notSupported": "Token não suportado",
+      "guideToMarketData": "Dados de Mercado:",
+      "Transaction": "Histórico de Tokens"
     },
     "customTestnet": {
       "add": "Adicionar Rede Personalizada",
@@ -2202,7 +2208,8 @@
         "placeholder": "Pesquisar Websites",
         "searchInGoogle": "Pesquisar \"{{searchText}}\" no Google",
         "openUrl": "Abrir \"{{searchText}}\"",
-        "recent": "Recente"
+        "recent": "Recente",
+        "recentEmpty": "Começando a Explorar o Website"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Abrir Websites"

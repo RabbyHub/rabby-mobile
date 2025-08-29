@@ -1856,7 +1856,12 @@
       "Fold": "Складывайте",
       "ContentGeneratedByAI": "Этот контент был сгенерирован ИИ",
       "Introduction": "Введение",
-      "ShowMore": "Показать больше"
+      "ShowMore": "Показать больше",
+      "notSupported": "Токен не поддерживается",
+      "guideToMarketData": "Рыночные данные:",
+      "Mybalance": "Баланс токенов",
+      "Transaction": "История токенов",
+      "balance": "Баланс"
     },
     "settingModal": {
       "themeMode": {
@@ -2024,7 +2029,8 @@
         "searchInGoogle": "Искать \"{{searchText}}\" в Google",
         "placeholder": "Поиск веб-сайтов",
         "openUrl": "Открыть \"{{searchText}}\"",
-        "results": "Результаты"
+        "results": "Результаты",
+        "recentEmpty": "Начать исследовать сайт"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Открыть веб-сайты"
@@ -2250,7 +2256,8 @@
       "loginInTip": {
         "desc": "Оплата Gas-сборов на всех цепочках",
         "login": "Войти в GasAccount",
-        "title": "Депозит USDC / USDT"
+        "title": "Депозит USDC / USDT",
+        "loginAndClaim": "Войдите в систему и получите {{amount}}"
       },
       "loginConfirmModal": {
         "title": "Выберите кошелек для входа",

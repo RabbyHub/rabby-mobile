@@ -1810,7 +1810,12 @@
       "ContentGeneratedByAI": "此内容由 AI 生成",
       "ShowMore": "显示更多",
       "Introduction": "介绍",
-      "Fold": "折叠"
+      "Fold": "折叠",
+      "balance": "余额",
+      "Mybalance": "代币余额",
+      "guideToMarketData": "市场数据：",
+      "notSupported": "不支持的Token",
+      "Transaction": "代币历史"
     },
     "customRpc": {
       "add": "修改 RPC URL",
@@ -2033,7 +2038,8 @@
         "openUrl": "打开 \"{{searchText}}\"",
         "placeholder": "搜索网站",
         "recent": "最近",
-        "searchInGoogle": "在 Google 中搜索 \"{{searchText}}\""
+        "searchInGoogle": "在 Google 中搜索 \"{{searchText}}\"",
+        "recentEmpty": "开始探索网站"
       },
       "BrowserSearchEntry": {
         "openWebsites": "打开网站"
@@ -2258,7 +2264,8 @@
       "loginInTip": {
         "login": "登录 GasAccount",
         "desc": "支付所有链上的Gas费用",
-        "title": "存款 USDC / USDT"
+        "title": "存款 USDC / USDT",
+        "loginAndClaim": "登录并领取 {{amount}}"
       },
       "loginConfirmModal": {
         "title": "选择钱包登录",

@@ -1703,7 +1703,12 @@
       "Introduction": "Introduction",
       "ShowMore": "Afficher plus",
       "Fold": "Pliez",
-      "ContentGeneratedByAI": "Ce contenu a été généré par l'IA"
+      "ContentGeneratedByAI": "Ce contenu a été généré par l'IA",
+      "Mybalance": "Solde du Token",
+      "balance": "Solde",
+      "guideToMarketData": "Données de marché :",
+      "notSupported": "Jeton non supporté",
+      "Transaction": "Historique des tokens"
     },
     "rabbyPoints": {
       "earn-points": "Gagnez des Points",
@@ -1974,7 +1979,8 @@
         "openUrl": "Ouvrir \"{{searchText}}\"",
         "placeholder": "Rechercher des sites Web",
         "searchInGoogle": "Rechercher \"{{searchText}}\" sur Google",
-        "recent": "Récent"
+        "recent": "Récent",
+        "recentEmpty": "Commencer à explorer le site Web"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Ouvrir des sites Web"
@@ -2195,7 +2201,8 @@
       "loginInTip": {
         "login": "Se connecter à GasAccount",
         "desc": "Payer les frais de Gas sur toutes les chaînes",
-        "title": "Dépôt USDC / USDT"
+        "title": "Dépôt USDC / USDT",
+        "loginAndClaim": "Connectez-vous et réclamez {{amount}}"
       },
       "loginConfirmModal": {
         "desc": "Une fois connecté, vous ne pouvez le déposer qu'à cette adresse.",

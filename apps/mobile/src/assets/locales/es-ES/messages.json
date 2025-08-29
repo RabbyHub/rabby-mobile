@@ -147,7 +147,8 @@
       "loginInTip": {
         "desc": "Pagar tarifas de Gas en todas las cadenas",
         "title": "Depósito USDC / USDT",
-        "login": "Iniciar sesión en GasAccount"
+        "login": "Iniciar sesión en GasAccount",
+        "loginAndClaim": "Iniciar sesión y reclamar {{amount}}"
       },
       "loginConfirmModal": {
         "desc": "Una vez que inicie sesión, solo puede depositarlo en esta dirección.",
@@ -1861,7 +1862,12 @@
       "ContentGeneratedByAI": "Este contenido fue generado por IA",
       "Introduction": "Introducción",
       "ShowMore": "Mostrar más",
-      "Fold": "Plegar"
+      "Fold": "Plegar",
+      "Mybalance": "Saldo de Token",
+      "guideToMarketData": "Datos del mercado:",
+      "Transaction": "Historial de Tokens",
+      "notSupported": "Token no soportado",
+      "balance": "Saldo"
     },
     "setting": {
       "feedback": "Comentarios",
@@ -2158,7 +2164,8 @@
         "recent": "Reciente",
         "placeholder": "Buscar sitios web",
         "openUrl": "Abre \"{{searchText}}\"",
-        "searchInGoogle": "Buscar \"{{searchText}}\" en Google"
+        "searchInGoogle": "Buscar \"{{searchText}}\" en Google",
+        "recentEmpty": "Comenzando a explorar el sitio web"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Abrir sitios web"

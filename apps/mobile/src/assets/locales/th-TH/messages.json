@@ -141,7 +141,8 @@
       "loginInTip": {
         "title": "ฝาก USDC / USDT",
         "desc": "จ่ายค่าธรรมเนียม Gas บนทุกเชน",
-        "login": "เข้าสู่ระบบ GasAccount"
+        "login": "เข้าสู่ระบบ GasAccount",
+        "loginAndClaim": "เข้าสู่ระบบและเรียกร้อง {{amount}}"
       },
       "gasExceed": "ยอดคงเหลือใน GasAccount ไม่เกิน $1000",
       "loginConfirmModal": {
@@ -1949,7 +1950,12 @@
       "ContentGeneratedByAI": "เนื้อหาชิ้นนี้สร้างขึ้นโดย AI",
       "Fold": "พับ",
       "Introduction": "บทนำ",
-      "ShowMore": "แสดงเพิ่มเติม"
+      "ShowMore": "แสดงเพิ่มเติม",
+      "notSupported": "โทเค็นไม่รองรับ",
+      "Mybalance": "ยอดคงเหลือโทเค็น",
+      "guideToMarketData": "ข้อมูลตลาด:",
+      "balance": "ยอดคงเหลือ",
+      "Transaction": "ประวัติโทเคน"
     },
     "setting": {
       "aboutUs": "เกี่ยวกับเรา",
@@ -2143,7 +2149,8 @@
         "results": "ผลลัพธ์",
         "placeholder": "ค้นหาเว็บไซต์",
         "searchInGoogle": "ค้นหา \"{{searchText}}\" ใน Google",
-        "openUrl": "เปิด \"{{searchText}}\""
+        "openUrl": "เปิด \"{{searchText}}\"",
+        "recentEmpty": "เริ่มสำรวจเว็บไซต์"
       },
       "BrowserSearchEntry": {
         "openWebsites": "เปิดเว็บไซต์"
