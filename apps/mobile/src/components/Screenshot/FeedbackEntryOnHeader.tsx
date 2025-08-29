@@ -19,6 +19,7 @@ import { Button } from '@/components2024/Button';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { FontWeightEnum } from '@/core/utils/fonts';
+import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 
 function ModalResponseDetail({
   lastRepliedFeedback,
@@ -117,10 +118,8 @@ function ModalResponseDetail({
       onDismiss={() => {
         finishViewFeedback();
       }}
-      // enableDynamicSizing
-      // maxDynamicContentSize={maxHeight}
       enableContentPanningGesture={true}
-      enablePanDownToClose={false}
+      enablePanDownToClose={true}
       containerStyle={styles.sheetModal}
       footerComponent={() => {
         return (
@@ -130,42 +129,40 @@ function ModalResponseDetail({
           />
         );
       }}>
-      <BottomSheetScrollView style={styles.scrollableView}>
+      <View style={styles.mainContainer}>
         <AutoLockView style={[styles.container]}>
-          <View style={[styles.panelContainer]}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>
-                {t('component.feedbackModal.title')}
-              </Text>
-            </View>
+          <BottomSheetHandlableView style={styles.titleContainer}>
+            <Text style={styles.title}>
+              {t('component.feedbackModal.title')}
+            </Text>
+          </BottomSheetHandlableView>
 
-            <View style={styles.stagesContainer}>
-              {stagesList.map((stage, index) => {
-                const key = `stage-${index}-${stage.title}`;
-                const isLast = index === stagesList.length - 1;
-                return (
-                  <View
-                    key={key}
-                    style={[styles.stage, isLast && styles.lastStage]}>
-                    {!stage.finished ? (
-                      <View style={[styles.stagePointContainer]} />
-                    ) : (
-                      <View style={[styles.stagePointContainer]}>
-                        <RcSuccessCC
-                          style={styles.stagePointIcon}
-                          color={colors2024['neutral-InvertHighlight']}
-                        />
-                      </View>
-                    )}
-                    <Text style={styles.stageTitle}>{stage.title}</Text>
-                    <View style={styles.stageContent}>{stage.contentNode}</View>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
+          <BottomSheetScrollView style={styles.stagesContainer}>
+            {stagesList.map((stage, index) => {
+              const key = `stage-${index}-${stage.title}`;
+              const isLast = index === stagesList.length - 1;
+              return (
+                <View
+                  key={key}
+                  style={[styles.stage, isLast && styles.lastStage]}>
+                  {!stage.finished ? (
+                    <View style={[styles.stagePointContainer]} />
+                  ) : (
+                    <View style={[styles.stagePointContainer]}>
+                      <RcSuccessCC
+                        style={styles.stagePointIcon}
+                        color={colors2024['neutral-InvertHighlight']}
+                      />
+                    </View>
+                  )}
+                  <Text style={styles.stageTitle}>{stage.title}</Text>
+                  <View style={styles.stageContent}>{stage.contentNode}</View>
+                </View>
+              );
+            })}
+          </BottomSheetScrollView>
         </AutoLockView>
-      </BottomSheetScrollView>
+      </View>
     </AppBottomSheetModal>
   );
 }
@@ -219,20 +216,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     left: 0,
     right: 0,
   },
-  scrollableView: {
-    paddingBottom: 24,
+  mainContainer: {
+    height: '100%',
     maxHeight: 380,
   },
   container: {
     flex: 1,
   },
-  panelContainer: {
-    alignItems: 'center',
-    width: '100%',
-  },
   titleContainer: {
     marginTop: 16,
     marginBottom: 24,
+    alignItems: 'center',
   },
   title: {
     fontFamily: 'SF Pro Rounded',
@@ -247,6 +241,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     width: '100%',
     paddingHorizontal: 32,
+    height: '100%',
+    maxHeight: 320,
+    paddingBottom: 24,
     // ...makeDebugBorder('green'),
   },
   stage: {
