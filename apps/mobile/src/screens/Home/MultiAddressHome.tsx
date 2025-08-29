@@ -609,6 +609,13 @@ function MultiAddressHome(): JSX.Element {
       setHasOpenCopyTrading(value ?? true);
     }, [setHasOpenCopyTrading]),
   );
+  useFocusEffect(
+    useCallback(() => {
+      if (appState === 'active') {
+        refreshCurve();
+      }
+    }, [appState, refreshCurve]),
+  );
 
   const thorttleGetSuccessAndFailList = useMemo(
     () => debounce(getSuccessAndFailList, 1000),
@@ -635,7 +642,6 @@ function MultiAddressHome(): JSX.Element {
         triggerUpdateAlert();
         syncTop10Assets();
         syncTop10History();
-        refreshCurve();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
