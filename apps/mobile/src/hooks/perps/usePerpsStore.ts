@@ -67,6 +67,13 @@ export interface PerpsState {
   userFills: WsFill[];
   userAccountHistory: AccountHistoryItem[];
   localLoadingHistory: AccountHistoryItem[];
+  wsSubscriptions: (() => void)[];
+  pollingTimer: NodeJS.Timeout | null;
+  fillsOrderTpOrSl: Record<string, 'tp' | 'sl'>;
+  homePositionPnl: {
+    pnl: number;
+    show: boolean;
+  };
 }
 
 const buildMarketDataMap = (list: MarketData[]): MarketDataMap => {
@@ -89,6 +96,13 @@ const initialState: PerpsState = {
   userFills: [],
   userAccountHistory: [],
   localLoadingHistory: [],
+  wsSubscriptions: [],
+  pollingTimer: null,
+  homePositionPnl: {
+    pnl: 0,
+    show: false,
+  },
+  fillsOrderTpOrSl: {},
 };
 
 const perpsAtom = atom(initialState);
@@ -98,6 +112,22 @@ export const usePerpsStore = () => {
 
   const wsSubscriptions = useRef<(() => void)[]>([]);
   const pollingTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const setFillsOrderTpOrSl = useMemoizedFn(
+    (payload: Record<string, 'tp' | 'sl'>) => {
+      setState(prev => ({ ...prev, fillsOrderTpOrSl: payload }));
+    },
+  );
+
+  const setHomePositionPnl = useMemoizedFn(
+    (payload: { pnl: number; show: boolean }) => {
+      setState(prev => ({ ...prev, homePositionPnl: payload }));
+    },
+  );
+
+  const setHasPermission = useMemoizedFn((state, payload: boolean) => {
+    setState(prev => ({ ...prev, hasPermission: payload }));
+  });
 
   // Reducers 转换为 setState 操作
   const setLocalLoadingHistory = useMemoizedFn(
@@ -225,6 +255,13 @@ export const usePerpsStore = () => {
       userFills: [],
       userAccountHistory: [],
       localLoadingHistory: [],
+      wsSubscriptions: [],
+      pollingTimer: null,
+      homePositionPnl: {
+        pnl: 0,
+        show: false,
+      },
+      fillsOrderTpOrSl: {},
     });
   });
 
@@ -328,9 +365,40 @@ export const usePerpsStore = () => {
     }
   });
 
+  const fetchUserHistoricalOrders = useMemoizedFn(async () => {
+    try {
+      const sdk = apisPerps.getPerpsSDK();
+      const res = await sdk.info.getUserHistoricalOrders(
+        undefined, // use sdk inner address
+        Date.now() - 1000 * 60 * 60 * 24 * 7, // 7 days ago
+        0,
+      );
+      const listOrderTpOrSl = {} as Record<string, 'tp' | 'sl'>;
+      res.forEach(item => {
+        if (item.status !== 'triggered') {
+          return null;
+        }
+        if (item.order.reduceOnly && item.order.isTrigger) {
+          if (
+            item.order.orderType === 'Take Profit Market' ||
+            item.order.orderType === 'Stop Market'
+          ) {
+            listOrderTpOrSl[item.order.oid] =
+              item.order.orderType === 'Stop Market' ? 'sl' : 'tp';
+          }
+        }
+      });
+
+      setFillsOrderTpOrSl(listOrderTpOrSl);
+    } catch (error) {
+      console.error('Failed to fetch user historical orders:', error);
+    }
+  });
+
   const refreshData = useMemoizedFn(async () => {
     await fetchPositionAndOpenOrders();
     await fetchUserNonFundingLedgerUpdates();
+    await fetchUserHistoricalOrders();
   });
 
   const fetchMarketData = useMemoizedFn(async () => {
@@ -361,19 +429,21 @@ export const usePerpsStore = () => {
   const subscribeToUserData = useMemoizedFn((address: string) => {
     const sdk = apisPerps.getPerpsSDK();
 
-    const unsubscribeFills = sdk.ws.subscribeToUserFills(data => {
-      console.log('User fills update:', data);
-      const { fills, isSnapshot, user } = data;
-      if (user !== address) {
-        return;
-      }
+    const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
+      data => {
+        console.log('User fills update:', data);
+        const { fills, isSnapshot, user } = data;
+        if (user !== address) {
+          return;
+        }
 
-      addUserFills({
-        fills,
-        isSnapshot: isSnapshot || false,
-        user,
-      });
-    });
+        addUserFills({
+          fills,
+          isSnapshot: isSnapshot || false,
+          user,
+        });
+      },
+    );
 
     wsSubscriptions.current.push(unsubscribeFills);
   });
@@ -413,6 +483,9 @@ export const usePerpsStore = () => {
     setState,
 
     // Reducers
+    setFillsOrderTpOrSl,
+    setHomePositionPnl,
+    setHasPermission,
     setLocalLoadingHistory,
     setUserAccountHistory,
     setUserFills,

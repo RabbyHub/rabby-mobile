@@ -1,27 +1,56 @@
 import { Button } from '@/components2024/Button';
+import { PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-export const PerpsFooter: React.FC<{}> = () => {
+export const PerpsFooter: React.FC<{
+  onLongPress?(): void;
+  onShortPress?(): void;
+  onClosePress?(): void;
+  hasPermission?: boolean;
+  isLogin?: boolean;
+  hasPosition?: boolean;
+  direction?: string;
+}> = ({
+  onLongPress,
+  onShortPress,
+  onClosePress,
+  hasPermission,
+  hasPosition,
+  direction,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
-  return (
-    <View style={styles.footer}>
-      <View style={styles.btnGroup}>
-        <View style={styles.btnContainer}>
-          <Button type="primary" title={'Long'} />
-        </View>
-        <View style={styles.btnContainer}>
-          <Button type="primary" title={'Short'} />
+  if (hasPosition) {
+    return (
+      <View style={styles.footer}>
+        <Button
+          type="primary"
+          title={`Close ${direction} Position`}
+          onPress={onClosePress}
+        />
+      </View>
+    );
+  }
+  if (hasPermission) {
+    return (
+      <View style={styles.footer}>
+        <View style={styles.btnGroup}>
+          <View style={styles.btnContainer}>
+            <Button type="primary" title={'Long'} onPress={onLongPress} />
+          </View>
+          <View style={styles.btnContainer}>
+            <Button type="primary" title={'Short'} onPress={onShortPress} />
+          </View>
         </View>
       </View>
-      {/* <Button type="primary" title={'Close Position'} /> */}
-    </View>
-  );
+    );
+  }
+  return null;
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({

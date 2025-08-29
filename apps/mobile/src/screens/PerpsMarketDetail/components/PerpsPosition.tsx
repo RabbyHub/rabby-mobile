@@ -1,15 +1,45 @@
-import { RcArrowRight2CC, RcIconInfoFillCC } from '@/assets/icons/common';
-import { RcIconLong } from '@/assets2024/icons/perps';
+import { RcIconInfoFillCC } from '@/assets/icons/common';
 import { AppSwitch } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
+import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Switch, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-export const PerpsPosition: React.FC<{}> = () => {
+export const PerpsPosition: React.FC<{
+  positionData?: {
+    pnl: number;
+    positionValue: number;
+    size: number;
+    marginUsed: number;
+    side: string;
+    leverage: number;
+    entryPrice: number;
+    liquidationPrice: string;
+    autoClose: boolean;
+    direction: string;
+    pnlPercent: number;
+    fundingPayments: string;
+  } | null;
+  coin: string;
+  hasAutoClose?: boolean;
+  tpPrice?: string;
+  slPrice?: string;
+  onAutoCloseChange?(v: boolean): void;
+}> = ({
+  positionData,
+  coin,
+  hasAutoClose,
+  tpPrice,
+  slPrice,
+  onAutoCloseChange,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  if (!positionData) {
+    return;
+  }
 
   return (
     <View style={styles.section}>
@@ -22,7 +52,10 @@ export const PerpsPosition: React.FC<{}> = () => {
             <Text style={styles.label}>PNL</Text>
           </View>
           <View>
-            <Text style={styles.value}>+$12.43 (0.12%)</Text>
+            <Text style={styles.value}>
+              {(positionData?.pnl || 0).toFixed(2)} (
+              {positionData?.pnlPercent.toFixed(2)}%)
+            </Text>
           </View>
         </View>
         <View style={styles.listItem}>
@@ -35,7 +68,13 @@ export const PerpsPosition: React.FC<{}> = () => {
             />
           </View>
           <View>
-            <Text style={styles.value}>$500 = 0.0012 ETH</Text>
+            <Text style={styles.value}>
+              $
+              {splitNumberByStep(
+                Number(positionData?.positionValue || 0).toFixed(2),
+              )}{' '}
+              = {positionData?.size} {coin}
+            </Text>
           </View>
         </View>
         <View style={styles.listItem}>
@@ -43,7 +82,12 @@ export const PerpsPosition: React.FC<{}> = () => {
             <Text style={styles.label}>Margin(Isolated)</Text>
           </View>
           <View>
-            <Text style={styles.value}>$10</Text>
+            <Text style={styles.value}>
+              $
+              {splitNumberByStep(
+                Number(positionData?.marginUsed || 0).toFixed(2),
+              )}
+            </Text>
           </View>
         </View>
         <View style={styles.listItemContainer}>
@@ -52,36 +96,45 @@ export const PerpsPosition: React.FC<{}> = () => {
               <Text style={styles.label}>Auto Close</Text>
             </View>
             <View>
-              <AppSwitch value={true} circleSize={20} circleBorderWidth={2} />
-            </View>
-          </View>
-          <View style={styles.listSub}>
-            <View style={styles.listSubItem}>
-              <Text style={styles.listSubItemLabel}>Take-Profit Price</Text>
-              <Text style={styles.value}>$5000</Text>
-              <RcArrowRight2CC
-                width={16}
-                height={16}
-                color={colors2024['neutral-body']}
-              />
-            </View>
-            <View style={styles.listSubItem}>
-              <Text style={styles.listSubItemLabel}>Stop-Loss Price</Text>
-              <Text style={styles.value}>$5000</Text>
-              <RcArrowRight2CC
-                width={16}
-                height={16}
-                color={colors2024['neutral-body']}
+              <AppSwitch
+                value={hasAutoClose}
+                circleSize={20}
+                circleBorderWidth={2}
+                onValueChange={onAutoCloseChange}
               />
             </View>
           </View>
+          {hasAutoClose ? (
+            <View style={styles.listSub}>
+              <View style={styles.listSubItem}>
+                <Text style={styles.listSubItemLabel}>Take-Profit Price</Text>
+                <Text style={styles.value}>${tpPrice || 0}</Text>
+                {/* <RcArrowRight2CC
+                  width={16}
+                  height={16}
+                  color={colors2024['neutral-body']}
+                /> */}
+              </View>
+              <View style={styles.listSubItem}>
+                <Text style={styles.listSubItemLabel}>Stop-Loss Price</Text>
+                <Text style={styles.value}>${slPrice || 0}</Text>
+                {/* <RcArrowRight2CC
+                  width={16}
+                  height={16}
+                  color={colors2024['neutral-body']}
+                /> */}
+              </View>
+            </View>
+          ) : null}
         </View>
         <View style={styles.listItem}>
           <View style={styles.listItemMain}>
             <Text style={styles.label}>Direction</Text>
           </View>
           <View>
-            <Text style={styles.value}>Long 5x</Text>
+            <Text style={styles.value}>
+              {positionData?.direction} {positionData?.leverage}x
+            </Text>
           </View>
         </View>
         <View style={styles.listItem}>
@@ -89,7 +142,9 @@ export const PerpsPosition: React.FC<{}> = () => {
             <Text style={styles.label}>Entry Price</Text>
           </View>
           <View>
-            <Text style={styles.value}>$4,123.12</Text>
+            <Text style={styles.value}>
+              ${splitNumberByStep(positionData?.entryPrice || 0)}
+            </Text>
           </View>
         </View>
         <View style={styles.listItem}>
@@ -102,7 +157,9 @@ export const PerpsPosition: React.FC<{}> = () => {
             />
           </View>
           <View>
-            <Text style={styles.value}>$2,800.32</Text>
+            <Text style={styles.value}>
+              ${splitNumberByStep(positionData?.liquidationPrice || 0)}
+            </Text>
           </View>
         </View>
         <View style={styles.listItem}>
@@ -115,7 +172,7 @@ export const PerpsPosition: React.FC<{}> = () => {
             />
           </View>
           <View>
-            <Text style={styles.value}>0.095%</Text>
+            <Text style={styles.value}> ${positionData?.fundingPayments}</Text>
           </View>
         </View>
       </View>

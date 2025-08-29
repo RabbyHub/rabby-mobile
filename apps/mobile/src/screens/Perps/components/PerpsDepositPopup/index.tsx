@@ -229,7 +229,7 @@ const getStyle = createGetStyles2024(ctx => {
     input: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 28,
-      lineHeight: 36,
+      // lineHeight: 36,
       fontWeight: '700',
       // color: ctx.colors2024['neutral-body'],
       flex: 1,

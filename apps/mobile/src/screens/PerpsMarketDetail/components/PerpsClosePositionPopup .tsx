@@ -5,12 +5,15 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
+import { formatPercent } from '@/screens/Home/utils/price';
+import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
   BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,8 +26,25 @@ import {
 
 export const PerpsClosePositionPopup: React.FC<{
   visible?: boolean;
-  onClose?(): void;
-}> = ({ visible, onClose }) => {
+  coin: string;
+  direction: 'Long' | 'Short';
+  positionSize: string;
+  providerFee: number;
+  pnl: number;
+  onCancel: () => void;
+  onConfirm: () => void;
+  handleClosePosition: () => Promise<void>;
+}> = ({
+  visible,
+  coin,
+  direction,
+  positionSize,
+  providerFee,
+  pnl,
+  onCancel,
+  onConfirm,
+  handleClosePosition,
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -32,6 +52,28 @@ export const PerpsClosePositionPopup: React.FC<{
   });
 
   const { t } = useTranslation();
+
+  const [loading, setLoading] = React.useState<boolean>(false);
+
+  const closePosition = useMemoizedFn(async () => {
+    setLoading(true);
+    try {
+      await handleClosePosition();
+      onConfirm();
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  React.useEffect(() => {
+    if (!visible) {
+      setLoading(false);
+    }
+  }, [visible]);
+
+  const bothFee = React.useMemo(() => {
+    return providerFee + 0.0005;
+  }, [providerFee]);
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -54,14 +96,16 @@ export const PerpsClosePositionPopup: React.FC<{
         colors: colors2024,
         linearGradientType: 'bg2',
       })}
-      onDismiss={onClose}
+      onDismiss={onCancel}
       // enableDynamicSizing
       snapPoints={[358]}
       maxDynamicContentSize={maxHeight}>
       <BottomSheetView>
         <AutoLockView style={[styles.container]}>
           <View>
-            <Text style={styles.title}>Close ETH-USD Long Position</Text>
+            <Text style={styles.title}>
+              Close {coin}-USD {direction} Position
+            </Text>
           </View>
 
           <View style={styles.list}>
@@ -70,7 +114,9 @@ export const PerpsClosePositionPopup: React.FC<{
                 <Text style={styles.label}>Position Size</Text>
               </View>
               <View>
-                <Text style={styles.value}>-0.0031 ETH</Text>
+                <Text style={styles.value}>
+                  {positionSize} {coin}
+                </Text>
               </View>
             </View>
             <View style={styles.listItem}>
@@ -78,21 +124,24 @@ export const PerpsClosePositionPopup: React.FC<{
                 <Text style={styles.label}>PNL</Text>
               </View>
               <View>
-                <Text style={styles.value}>+$0.0043(0.22%)</Text>
+                <Text style={[styles.value]}>
+                  {pnl >= 0 ? '+' : '-'} ${splitNumberByStep(pnl.toFixed(2))}
+                </Text>
               </View>
             </View>
           </View>
 
           <TouchableOpacity>
             <View style={styles.feeContainer}>
-              <Text style={styles.fee}>Fee : $1.00</Text>
+              <Text style={styles.fee}>Fee : {formatPercent(bothFee, 4)}</Text>
               <RcIconInfoFillCC color={'#CED0DA'} width={15} height={15} />
             </View>
           </TouchableOpacity>
           <Button
             type="primary"
-            title={'Open Long Position'}
-            onPress={() => {}}
+            title={`Close ${direction}`}
+            loading={loading}
+            onPress={closePosition}
           />
         </AutoLockView>
       </BottomSheetView>

@@ -1,37 +1,87 @@
-import { RcIconLong } from '@/assets2024/icons/perps';
+import { RcIconLong, RcIconShort } from '@/assets2024/icons/perps';
+import { MarketData, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
+import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
+import FastImage from 'react-native-fast-image';
+const formatPct = (v: number) => `${(v * 100).toFixed(2)}%`;
 
-export const PerpsPositionItem: React.FC<{}> = () => {
+export const PerpsPositionItem: React.FC<{
+  item: PositionAndOpenOrder['position'];
+  marketData: MarketData;
+  onPress?(): void;
+}> = ({ item, marketData, onPress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
+  const {
+    coin,
+    szi,
+    leverage,
+    positionValue,
+    marginUsed,
+    unrealizedPnl,
+    returnOnEquity,
+    liquidationPx,
+    entryPx,
+  } = item;
+  const isUp = Number(unrealizedPnl) >= 0;
+
+  const sign = isUp ? '+' : '-';
+  const side =
+    Number(liquidationPx || 0) < Number(entryPx || 0) ? 'Long' : 'Short';
+  const absPnlUsd = Math.abs(Number(unrealizedPnl));
+  const absPnlPct = Math.abs(Number(returnOnEquity));
+  const pnlText = `${sign}${formatUsdValue(absPnlUsd)} (${sign}${formatPct(
+    absPnlPct,
+  )})`;
+  const logoUrl = marketData?.logoUrl || '';
+  const leverageText = `${leverage.value}x`;
+
   return (
-    <View style={styles.card}>
-      <View style={styles.iconContainer}>
-        <View style={styles.icon} />
-        <RcIconLong
-          style={styles.directionIcon}
-          bgColor={colors2024['neutral-bg-1']}
-          color={colors2024['neutral-title-1']}
-        />
-      </View>
-      <View style={styles.content}>
-        <View style={styles.row}>
-          <Text style={styles.name}>BTC-USD</Text>
-          <Text style={styles.price}>$114,539.00</Text>
+    <TouchableOpacity onPress={onPress}>
+      <View style={styles.card}>
+        <View style={styles.iconContainer}>
+          <FastImage source={{ uri: logoUrl }} style={styles.icon} />
+          {side === 'Long' ? (
+            <RcIconLong
+              style={styles.directionIcon}
+              bgColor={colors2024['neutral-bg-1']}
+              color={colors2024['neutral-title-1']}
+            />
+          ) : side === 'Short' ? (
+            <RcIconShort
+              style={styles.directionIcon}
+              bgColor={colors2024['neutral-bg-1']}
+              color={colors2024['neutral-title-1']}
+            />
+          ) : null}
         </View>
-        <View style={styles.row}>
-          <Text style={styles.leverage}>Short 10x</Text>
-          <Text style={[styles.priceChange, styles.priceChangeDown]}>
-            +$24.32 (+0.87%)
-          </Text>
+        <View style={styles.content}>
+          <View style={styles.row}>
+            <Text style={styles.name}> {coin} - USD</Text>
+            <Text style={styles.price}>
+              ${splitNumberByStep(Number(marginUsed).toFixed(2))}
+            </Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.leverage}>
+              {side} {leverageText}
+            </Text>
+            <Text
+              style={[
+                styles.priceChange,
+                isUp ? null : styles.priceChangeDown,
+              ]}>
+              {pnlText}
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -61,7 +111,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 46,
     height: 46,
     borderRadius: 1000,
-    backgroundColor: 'red',
   },
   content: {
     flex: 1,

@@ -35,7 +35,11 @@ export const PerpsMarketItem: React.FC<{
           </View>
           <View style={styles.row}>
             <Text style={styles.leverage}>{item.maxLeverage}x</Text>
-            <Text style={[styles.priceChange, styles.priceChangeDown]}>
+            <Text
+              style={[
+                styles.priceChange,
+                isUp ? null : styles.priceChangeDown,
+              ]}>
               {pnlText}
             </Text>
           </View>

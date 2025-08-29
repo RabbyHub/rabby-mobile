@@ -62,11 +62,15 @@ export const PerpsScreen = () => {
   );
 
   const handleLogout = useMemoizedFn(() => {
-    logout(currentPerpsAccount?.address || '');
-    setPopupState(prev => ({
-      ...prev,
-      isShowLogoutPopup: false,
-    }));
+    try {
+      logout(currentPerpsAccount?.address || '');
+      setPopupState(prev => ({
+        ...prev,
+        isShowLogoutPopup: false,
+      }));
+    } catch (e) {
+      console.error(e);
+    }
   });
 
   const { handleDeposit } = usePerpsDeposit({
@@ -102,6 +106,9 @@ export const PerpsScreen = () => {
               />
             }
             marketData={marketData}
+            positionAndOpenOrders={positionAndOpenOrders}
+            marketDataMap={marketDataMap}
+            homeHistoryList={homeHistoryList}
           />
         </View>
       </NormalScreenContainer2024>

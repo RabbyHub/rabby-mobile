@@ -5,6 +5,8 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
+import { formatPercent } from '@/screens/Home/utils/price';
+import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
@@ -23,12 +25,44 @@ import {
 export const PerpsOpenPositionCheckPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
-}> = ({ visible, onClose }) => {
+  onConfirm?(): void;
+  info: {
+    coin: string;
+    margin: string;
+    direction: 'Long' | 'Short';
+    leverage: number;
+    tradeAmount: number;
+    tradeSize: string;
+    markPrice: number;
+    providerFee: number;
+    bothFee: number;
+    autoClose?: {
+      isOpen: boolean;
+      tpTriggerPx: string;
+      slTriggerPx: string;
+    };
+    estimatedLiquidationPrice: string | number;
+  };
+}> = ({ visible, onClose, info, onConfirm }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
+
+  const {
+    coin: coin,
+    margin,
+    direction,
+    leverage,
+    tradeAmount,
+    tradeSize,
+    markPrice,
+    providerFee,
+    bothFee,
+    estimatedLiquidationPrice,
+    autoClose,
+  } = info;
 
   const { t } = useTranslation();
 
@@ -68,7 +102,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 <Text style={styles.label}>Perps</Text>
               </View>
               <View>
-                <Text style={styles.value}>ETH - USD</Text>
+                <Text style={styles.value}>{coin} - USD</Text>
               </View>
             </View>
             <View style={styles.listItem}>
@@ -76,7 +110,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 <Text style={styles.label}>Initial Margin</Text>
               </View>
               <View>
-                <Text style={styles.value}>$50</Text>
+                <Text style={styles.value}>
+                  {formatUsdValue(Number(margin))}
+                </Text>
               </View>
             </View>
             <View style={styles.listItem}>
@@ -84,7 +120,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 <Text style={styles.label}>Direction</Text>
               </View>
               <View>
-                <Text style={styles.value}>Long 5x</Text>
+                <Text style={styles.value}>
+                  {direction} {leverage}x
+                </Text>
               </View>
             </View>
             <View style={styles.listItem}>
@@ -97,44 +135,56 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 />
               </View>
               <View>
-                <Text style={styles.value}>$50 = 0.0012 ETH</Text>
+                <Text style={styles.value}>
+                  {formatUsdValue(Number(tradeAmount))} = {tradeSize} {coin}
+                </Text>
               </View>
             </View>
-            <View style={styles.listItemContainer}>
-              <View style={styles.listItemRow}>
-                <View style={styles.listItemMain}>
-                  <Text style={styles.label}>Auto Close</Text>
+            {autoClose?.isOpen ? (
+              <View style={styles.listItemContainer}>
+                <View style={styles.listItemRow}>
+                  <View style={styles.listItemMain}>
+                    <Text style={styles.label}>Auto Close</Text>
+                  </View>
+                </View>
+                <View style={styles.listSub}>
+                  <View style={styles.listSubItem}>
+                    <Text style={styles.listSubItemLabel}>
+                      Take-Profit Price
+                    </Text>
+                    <Text style={styles.value}>
+                      ${splitNumberByStep(autoClose.tpTriggerPx || 0)}
+                    </Text>
+                    {/* <RcArrowRight2CC
+                      width={16}
+                      height={16}
+                      color={colors2024['neutral-body']}
+                    /> */}
+                  </View>
+                  <View style={styles.listSubItem}>
+                    <Text style={styles.listSubItemLabel}>Stop-Loss Price</Text>
+                    <Text style={styles.value}>
+                      ${splitNumberByStep(autoClose.slTriggerPx || 0)}
+                    </Text>
+                    {/* <RcArrowRight2CC
+                      width={16}
+                      height={16}
+                      color={colors2024['neutral-body']}
+                    /> */}
+                  </View>
                 </View>
               </View>
-              <View style={styles.listSub}>
-                <View style={styles.listSubItem}>
-                  <Text style={styles.listSubItemLabel}>Take-Profit Price</Text>
-                  <Text style={styles.value}>$5000</Text>
-                  <RcArrowRight2CC
-                    width={16}
-                    height={16}
-                    color={colors2024['neutral-body']}
-                  />
-                </View>
-                <View style={styles.listSubItem}>
-                  <Text style={styles.listSubItemLabel}>Stop-Loss Price</Text>
-                  <Text style={styles.value}>$5000</Text>
-                  <RcArrowRight2CC
-                    width={16}
-                    height={16}
-                    color={colors2024['neutral-body']}
-                  />
-                </View>
-              </View>
-            </View>
+            ) : null}
           </View>
           <View style={styles.list}>
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
-                <Text style={styles.label}>ETH-USD Price</Text>
+                <Text style={styles.label}>{coin}-USD Price</Text>
               </View>
               <View>
-                <Text style={styles.value}>$4,123.12</Text>
+                <Text style={styles.value}>
+                  ${splitNumberByStep(markPrice)}
+                </Text>
               </View>
             </View>
             <View style={styles.listItem}>
@@ -147,7 +197,12 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 />
               </View>
               <View>
-                <Text style={styles.value}>$2,800.32</Text>
+                <Text style={styles.value}>
+                  $
+                  {splitNumberByStep(
+                    Number(estimatedLiquidationPrice).toFixed(2),
+                  )}
+                </Text>
               </View>
             </View>
             <View style={styles.listItem}>
@@ -160,14 +215,14 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                 />
               </View>
               <View>
-                <Text style={styles.value}>0.095%</Text>
+                <Text style={styles.value}>{formatPercent(bothFee, 4)}</Text>
               </View>
             </View>
           </View>
           <Button
             type="primary"
             title={'Open Long Position'}
-            onPress={() => {}}
+            onPress={onConfirm}
           />
         </AutoLockView>
       </BottomSheetScrollView>

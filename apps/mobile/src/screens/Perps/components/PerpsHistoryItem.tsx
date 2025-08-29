@@ -1,19 +1,72 @@
 import { RcIconLong } from '@/assets2024/icons/perps';
+import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import FastImage from 'react-native-fast-image';
 
 // todo
-export const PerpsHistoryItem: React.FC<{}> = () => {
+export const PerpsHistoryItem: React.FC<{
+  fill: WsFill;
+  marketData: Record<string, MarketData>;
+  onPress?: (fill: WsFill) => void;
+  orderTpOrSl?: 'tp' | 'sl';
+}> = ({ fill, orderTpOrSl, marketData }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+
+  const { coin, closedPnl: _closedPnl, dir, fee } = fill as WsFill;
+
+  const titleString = useMemo(() => {
+    const isLiquidation = Boolean(fill?.liquidation);
+    if (fill?.dir === 'Close Long') {
+      if (orderTpOrSl === 'tp') {
+        return t('page.perps.historyDetail.title.closeLongTp');
+      }
+      if (orderTpOrSl === 'sl') {
+        return t('page.perps.historyDetail.title.closeLongSl');
+      }
+
+      return isLiquidation
+        ? t('page.perps.historyDetail.title.closeLongLiquidation')
+        : t('page.perps.historyDetail.title.closeLong');
+    }
+    if (fill?.dir === 'Close Short') {
+      if (orderTpOrSl === 'tp') {
+        return t('page.perps.historyDetail.title.closeShortTp');
+      }
+      if (orderTpOrSl === 'sl') {
+        return t('page.perps.historyDetail.title.closeShortSl');
+      }
+
+      return isLiquidation
+        ? t('page.perps.historyDetail.title.closeShortLiquidation')
+        : t('page.perps.historyDetail.title.closeShort');
+    }
+    if (fill?.dir === 'Open Long') {
+      return t('page.perps.historyDetail.title.openLong');
+    }
+    if (fill?.dir === 'Open Short') {
+      return t('page.perps.historyDetail.title.openShort');
+    }
+    return fill?.dir;
+  }, [fill?.dir, fill?.liquidation, orderTpOrSl, t]);
+
+  const itemData = marketData[coin.toUpperCase()];
+  const logoUrl = itemData?.logoUrl;
+  const isClose = (dir === 'Close Long' || dir === 'Close Short') && _closedPnl;
+  const direction =
+    dir === 'Close Long' || dir === 'Open Long' ? 'Long' : 'Short';
+  const closedPnl = Number(_closedPnl) - Number(fee);
+  const pnlValue = closedPnl ? closedPnl : 0;
 
   return (
     <View style={styles.card}>
       <View style={styles.iconContainer}>
-        <View style={styles.icon} />
+        <FastImage source={{ uri: logoUrl }} style={styles.icon} />
         <RcIconLong
           style={styles.directionIcon}
           bgColor={colors2024['neutral-bg-1']}
@@ -22,7 +75,7 @@ export const PerpsHistoryItem: React.FC<{}> = () => {
       </View>
       <View style={styles.content}>
         <View style={styles.row}>
-          <Text style={styles.name}>BTC-USD</Text>
+          <Text style={styles.name}>{titleString}</Text>
           <Text style={styles.price}>$114,539.00</Text>
         </View>
         <View style={styles.row}>
@@ -62,7 +115,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: 46,
     height: 46,
     borderRadius: 1000,
-    backgroundColor: 'red',
   },
   content: {
     flex: 1,

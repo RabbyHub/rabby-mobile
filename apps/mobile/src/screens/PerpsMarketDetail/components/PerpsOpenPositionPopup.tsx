@@ -5,11 +5,14 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
+import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import { calLiquidationPrice } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
 import {
   BottomSheetScrollView,
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
+import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -19,11 +22,51 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
+import { PerpsAutoCloseModal } from './PerpsAutoCloseModal';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
-  onClose?(): void;
-}> = ({ visible, onClose }) => {
+  direction: 'Long' | 'Short';
+  providerFee: number;
+  coin: string;
+  markPrice: number;
+  leverageRang: [number, number]; // [min, max]
+  pxDecimals: number;
+  szDecimals: number;
+  availableBalance: number;
+  onCancel: () => void;
+  onConfirm: () => void;
+  handleOpenPosition: (params: {
+    coin: string;
+    size: string;
+    leverage: number;
+    direction: 'Long' | 'Short';
+    midPx: string;
+    tpTriggerPx?: string;
+    slTriggerPx?: string;
+  }) => Promise<
+    | {
+        oid: number;
+        avgPx: string;
+        totalSz: string;
+      }
+    | undefined
+  >;
+}> = ({
+  visible,
+  direction,
+  providerFee,
+  coin,
+  markPrice,
+  leverageRang,
+  pxDecimals,
+  szDecimals,
+  availableBalance,
+  onCancel,
+  onConfirm,
+  handleOpenPosition,
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -31,6 +74,170 @@ export const PerpsOpenPositionPopup: React.FC<{
   });
 
   const { t } = useTranslation();
+  const [leveragePopupVisible, setLeveragePopupVisible] = React.useState(false);
+  const [isReviewMode, setIsReviewMode] = React.useState(false);
+
+  const openLeveragePopup = () => {
+    setLeveragePopupVisible(true);
+  };
+  const [autoCloseVisible, setAutoCloseVisible] = React.useState(false);
+  const [margin, setMargin] = React.useState<string>('');
+  const [leverage, setLeverage] = React.useState<number>(5);
+  const [autoClose, setAutoClose] = React.useState({
+    isOpen: false,
+    tpTriggerPx: '',
+    slTriggerPx: '',
+  });
+  const [loading, setLoading] = React.useState<boolean>(false);
+
+  // 计算交易金额
+  const tradeAmount = React.useMemo(() => {
+    const marginValue = Number(margin) || 0;
+    return marginValue * leverage;
+  }, [margin, leverage]);
+
+  // 计算交易数量
+  const tradeSize = React.useMemo(() => {
+    if (!markPrice || !tradeAmount) return '0';
+    return Number(tradeAmount / markPrice).toFixed(szDecimals);
+  }, [markPrice, tradeAmount, szDecimals]);
+
+  // 计算预估清算价格
+  const estimatedLiquidationPrice = React.useMemo(() => {
+    if (!markPrice || !leverage) return 0;
+    const maxLeverage = leverageRang[1];
+    return calLiquidationPrice(
+      markPrice,
+      Number(margin),
+      direction,
+      Number(tradeSize),
+      leverage,
+      maxLeverage,
+    ).toFixed(pxDecimals);
+  }, [
+    markPrice,
+    leverage,
+    leverageRang,
+    margin,
+    direction,
+    tradeSize,
+    pxDecimals,
+  ]);
+
+  const bothFee = React.useMemo(() => {
+    return providerFee + 0.0005;
+  }, [providerFee]);
+
+  // 验证 margin 输入
+  const marginValidation = React.useMemo(() => {
+    const marginValue = Number(margin) || 0;
+    const usdValue = marginValue * leverage;
+    const maxNtlValue = 10000000;
+
+    if (marginValue === 0) {
+      return { isValid: false, error: null };
+    }
+
+    if (marginValue > availableBalance) {
+      return {
+        isValid: false,
+        error: 'insufficient_balance',
+        errorMessage: t('page.perps.insufficientBalance'),
+      };
+    }
+
+    if (usdValue < 10) {
+      // 最小订单限制 $10
+      return {
+        isValid: false,
+        error: 'minimum_limit',
+        errorMessage: t('page.perps.minimumOrderSize'),
+      };
+    }
+
+    if (usdValue > maxNtlValue) {
+      return {
+        isValid: false,
+        error: 'maximum_limit',
+        errorMessage: t('page.perps.maximumOrderSize', {
+          amount: `$${maxNtlValue}`,
+        }),
+      };
+    }
+
+    return { isValid: true, error: null };
+  }, [margin, availableBalance, t, leverage]);
+
+  React.useEffect(() => {
+    if (!visible) {
+      setMargin('');
+      setLeverage(5);
+      setAutoClose({
+        isOpen: false,
+        tpTriggerPx: '',
+        slTriggerPx: '',
+      });
+      setLeveragePopupVisible(false);
+      setIsReviewMode(false);
+    }
+  }, [visible]);
+
+  const handleReview = () => {
+    setIsReviewMode(true);
+  };
+
+  const handleBackToEdit = () => {
+    setIsReviewMode(false);
+  };
+
+  const isValidAmount = marginValidation.isValid;
+
+  const handleLeverageConfirm = (selectedLeverage: number) => {
+    setLeverage(selectedLeverage);
+    setLeveragePopupVisible(false);
+  };
+
+  // 获取错误状态下的文字颜色
+  const getMarginTextColor = () => {
+    if (marginValidation.error) {
+      return 'text-r-red-default';
+    }
+    return 'text-r-neutral-title-1';
+  };
+
+  const openPosition = useMemoizedFn(async () => {
+    setLoading(true);
+    const res = await handleOpenPosition({
+      coin,
+      size: tradeSize,
+      leverage,
+      direction,
+      midPx: markPrice.toString(),
+      tpTriggerPx:
+        autoClose.isOpen && autoClose.tpTriggerPx
+          ? autoClose.tpTriggerPx
+          : undefined,
+      slTriggerPx:
+        autoClose.isOpen && autoClose.slTriggerPx
+          ? autoClose.slTriggerPx
+          : undefined,
+    });
+    setLoading(false);
+    onConfirm();
+    return res;
+  });
+
+  const handleAutoCloseSwitch = useMemoizedFn((e: boolean) => {
+    if (e) {
+      setAutoCloseVisible(true);
+    } else {
+      setAutoClose({
+        isOpen: false,
+        tpTriggerPx: '',
+        slTriggerPx: '',
+      });
+    }
+  });
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -46,105 +253,184 @@ export const PerpsOpenPositionPopup: React.FC<{
   }, [visible]);
 
   return (
-    <AppBottomSheetModal
-      ref={modalRef}
-      // snapPoints={snapPoints}
-      {...makeBottomSheetProps({
-        colors: colors2024,
-        linearGradientType: 'bg2',
-      })}
-      onDismiss={onClose}
-      enableDynamicSizing
-      maxDynamicContentSize={maxHeight}>
-      <BottomSheetScrollView>
-        <AutoLockView style={[styles.container]}>
-          <View>
-            <Text style={styles.title}>Long ETH-USD</Text>
-          </View>
-          <View style={styles.formItem}>
-            <Text style={styles.formItemLabel}>Margin</Text>
+    <>
+      <AppBottomSheetModal
+        ref={modalRef}
+        // snapPoints={snapPoints}
+        {...makeBottomSheetProps({
+          colors: colors2024,
+          linearGradientType: 'bg2',
+        })}
+        onDismiss={onCancel}
+        enableDynamicSizing
+        maxDynamicContentSize={maxHeight}>
+        <BottomSheetScrollView>
+          <AutoLockView style={[styles.container]}>
+            <View>
+              <Text style={styles.title}>
+                {direction} {coin}-USD
+              </Text>
+            </View>
+            <View style={styles.formItem}>
+              <Text style={styles.formItemLabel}>Margin</Text>
 
-            <TextInput
-              keyboardType="numeric"
-              style={styles.input}
-              placeholder="$0"
-            />
-            <Text style={styles.formItemDesc}>
-              $100 {t('page.perps.PerpsWithdrawPopup.available')}
-            </Text>
-            <Text style={styles.errorMsg}>Insufficient balance</Text>
-          </View>
-          <View style={styles.list}>
-            <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>
-                  Leverage
-                  <Text style={styles.labelInfo}>（1-40x）</Text>
-                </Text>
-              </View>
-              <View>
-                <TextInput
-                  style={{
-                    width: 50,
-                    backgroundColor: 'red',
-                    textAlign: 'right',
-                  }}
-                  keyboardType="numeric"
-                />
+              <TextInput
+                keyboardType="numeric"
+                style={styles.input}
+                placeholder="$0"
+                value={margin}
+                onChangeText={setMargin}
+              />
+              <Text style={styles.formItemDesc}>
+                {formatUsdValue(availableBalance)}{' '}
+                {t('page.perps.PerpsWithdrawPopup.available')}
+              </Text>
+              <View style={styles.errorMsgContainer}>
+                {marginValidation.error ? (
+                  <Text style={styles.errorMsg}>
+                    {marginValidation.errorMessage}
+                  </Text>
+                ) : null}
               </View>
             </View>
-            <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>Size</Text>
-                <RcIconInfoFillCC
-                  width={15}
-                  height={15}
-                  color={colors2024['neutral-info']}
-                />
-              </View>
-              <View>
-                <Text style={styles.value}>$50 = 0.0012 ETH</Text>
-              </View>
-            </View>
-            <View style={styles.listItemContainer}>
-              <View style={styles.listItemRow}>
+            <View style={styles.list}>
+              <View style={styles.listItem}>
                 <View style={styles.listItemMain}>
-                  <Text style={styles.label}>Auto Close</Text>
+                  <Text style={styles.label}>
+                    Leverage
+                    <Text style={styles.labelInfo}>
+                      （{leverageRang[0]}-{leverageRang[1]}x）
+                    </Text>
+                  </Text>
                 </View>
                 <View>
-                  <AppSwitch
-                    value={true}
-                    circleSize={20}
-                    circleBorderWidth={2}
+                  <TextInput
+                    style={{
+                      width: 50,
+                      backgroundColor: 'red',
+                      textAlign: 'right',
+                    }}
+                    keyboardType="numeric"
+                    value={String(leverage)}
+                    onChangeText={v => {
+                      setLeverage(Number(v));
+                    }}
                   />
                 </View>
               </View>
-              <View style={styles.listSub}>
-                <View style={styles.listSubItem}>
-                  <Text style={styles.listSubItemLabel}>Take-Profit Price</Text>
-                  <Text style={styles.value}>$5000</Text>
-                  <RcArrowRight2CC
-                    width={16}
-                    height={16}
-                    color={colors2024['neutral-body']}
-                  />
+              <View style={styles.listItem}>
+                <View style={styles.listItemMain}>
+                  <Text style={styles.label}>Size</Text>
+                  {/* <RcIconInfoFillCC
+                    width={15}
+                    height={15}
+                    color={colors2024['neutral-info']}
+                  /> */}
                 </View>
-                <View style={styles.listSubItem}>
-                  <Text style={styles.listSubItemLabel}>Stop-Loss Price</Text>
-                  <Text style={styles.value}>$5000</Text>
-                  <RcArrowRight2CC
-                    width={16}
-                    height={16}
-                    color={colors2024['neutral-body']}
-                  />
+                <View>
+                  <Text style={styles.value}>
+                    {formatUsdValue(Number(tradeAmount))} = {tradeSize} {coin}
+                  </Text>
                 </View>
+              </View>
+              <View style={styles.listItemContainer}>
+                <View style={styles.listItemRow}>
+                  <View style={styles.listItemMain}>
+                    <Text style={styles.label}>Auto Close</Text>
+                  </View>
+                  <View>
+                    <AppSwitch
+                      value={autoClose.isOpen}
+                      circleSize={20}
+                      circleBorderWidth={2}
+                      onValueChange={handleAutoCloseSwitch}
+                    />
+                  </View>
+                </View>
+                {autoClose.isOpen ? (
+                  <View style={styles.listSub}>
+                    <View style={styles.listSubItem}>
+                      <Text style={styles.listSubItemLabel}>
+                        Take-Profit Price
+                      </Text>
+                      <Text style={styles.value}>
+                        ${splitNumberByStep(autoClose.tpTriggerPx || 0)}
+                      </Text>
+                      {/* <RcArrowRight2CC
+                        width={16}
+                        height={16}
+                        color={colors2024['neutral-body']}
+                      /> */}
+                    </View>
+                    <View style={styles.listSubItem}>
+                      <Text style={styles.listSubItemLabel}>
+                        Stop-Loss Price
+                      </Text>
+                      <Text style={styles.value}>
+                        ${splitNumberByStep(autoClose.slTriggerPx || 0)}
+                      </Text>
+                      {/* <RcArrowRight2CC
+                        width={16}
+                        height={16}
+                        color={colors2024['neutral-body']}
+                      /> */}
+                    </View>
+                  </View>
+                ) : null}
               </View>
             </View>
-          </View>
-          <Button type="primary" title={'Check'} onPress={() => {}} />
-        </AutoLockView>
-      </BottomSheetScrollView>
-    </AppBottomSheetModal>
+            <Button
+              type="primary"
+              title={'Check'}
+              onPress={() => {
+                setIsReviewMode(true);
+              }}
+            />
+          </AutoLockView>
+        </BottomSheetScrollView>
+      </AppBottomSheetModal>
+      <PerpsOpenPositionCheckPopup
+        info={{
+          coin: coin,
+          margin,
+          direction,
+          leverage,
+          tradeAmount,
+          tradeSize,
+          markPrice,
+          providerFee,
+          bothFee,
+          autoClose,
+          estimatedLiquidationPrice,
+        }}
+        visible={isReviewMode}
+        onClose={() => {
+          setIsReviewMode(false);
+        }}
+        onConfirm={openPosition}
+      />
+      <PerpsAutoCloseModal
+        visible={autoCloseVisible}
+        coin={coin}
+        type="openPosition"
+        price={markPrice}
+        liqPrice={Number(estimatedLiquidationPrice)}
+        direction={direction}
+        size={Number(tradeSize)}
+        pxDecimals={szDecimals}
+        onClose={() => setAutoCloseVisible(false)}
+        handleSetAutoClose={async (params: {
+          tpPrice: string;
+          slPrice: string;
+        }) => {
+          setAutoClose({
+            isOpen: true,
+            tpTriggerPx: params.tpPrice,
+            slTriggerPx: params.slPrice,
+          });
+        }}
+      />
+    </>
   );
 };
 
@@ -185,6 +471,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
     },
+    errorMsgContainer: {
+      minHeight: 18,
+    },
     errorMsg: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 14,
@@ -195,7 +484,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     input: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 40,
-      lineHeight: 48,
+      // lineHeight: 48,
       fontWeight: '800',
       // color: ctx.colors2024['neutral-body'],
       flex: 1,

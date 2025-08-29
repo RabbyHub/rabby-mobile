@@ -20909,6 +20909,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fancy-canvas@npm:2.1.0":
+  version: 2.1.0
+  resolution: "fancy-canvas@npm:2.1.0"
+  checksum: 2463ca8a9254fb4cc69bbe33a2996b2a0ba8f725721d51464d9e87b4f3c3e8759e2289b0d592f56265501d5cff0b363bb7c72bb9c38212c19114dbd006ec8959
+  languageName: node
+  linkType: hard
+
 "fast-base64-decode@npm:^1.0.0":
   version: 1.0.0
   resolution: "fast-base64-decode@npm:1.0.0"
@@ -26484,6 +26491,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lightweight-charts@npm:^5.0.8":
+  version: 5.0.8
+  resolution: "lightweight-charts@npm:5.0.8"
+  dependencies:
+    fancy-canvas: 2.1.0
+  checksum: 1585d4eea7738b093274b7daa02731d9d2362270e7a4c43985bbe2641b259c0f4d7528b9efe60d2fc8cd22ef658a37226d5246d95237c902ce9bf0f27cc63418
+  languageName: node
+  linkType: hard
+
 "lilconfig@npm:3.0.0, lilconfig@npm:^3.0.0":
   version: 3.0.0
   resolution: "lilconfig@npm:3.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Flilconfig%2F-%2Flilconfig-3.0.0.tgz"
@@ -31282,6 +31298,7 @@ __metadata:
     json-rpc-engine: ^6.1.0
     json-rpc-middleware-stream: ^5.0.1
     koa-compose: ^4.1.0
+    lightweight-charts: ^5.0.8
     lint-staged: ^15.2.0
     lodash: ^4.17.21
     lottie-react-native: 7.2.2

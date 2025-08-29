@@ -1,9 +1,10 @@
 import { RcIconLong } from '@/assets2024/icons/perps';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  ListRenderItemInfo,
   SectionList,
   Text,
   Touchable,
@@ -20,64 +21,132 @@ import { RcArrowRight2CC } from '@/assets/icons/common';
 import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { MarketData } from '@/hooks/perps/usePerpsStore';
+import {
+  AccountHistoryItem,
+  MarketData,
+  MarketDataMap,
+  PositionAndOpenOrder,
+  usePerpsStore,
+} from '@/hooks/perps/usePerpsStore';
+import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 
 export const PerpsMain: React.FC<{
   ListHeaderComponent?: React.ReactElement;
   marketData: MarketData[];
-}> = ({ ListHeaderComponent, marketData }) => {
+  positionAndOpenOrders?: PositionAndOpenOrder[];
+  marketDataMap: MarketDataMap;
+  homeHistoryList?: (AccountHistoryItem | WsFill)[];
+}> = ({
+  ListHeaderComponent,
+  marketData,
+  positionAndOpenOrders,
+  marketDataMap,
+  homeHistoryList,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
 
-  const sections = [
-    {
-      title: 'Positions',
-      type: 'position' as const,
-      data: [] as any,
-    },
-    {
-      title: 'Explore Perps',
-      type: 'market' as const,
-      data: marketData.slice(0, 3),
-    },
-    {
-      title: 'History',
-      type: 'history' as const,
-      data: [
-        // {
-        //   enum: 'ETH-USD',
-        //   price: '$3,200.00',
-        //   leverage: 'Long 5x',
-        //   change: '+$100.00 (+3.23%)',
-        // },
-        // // Add more items as needed
-      ] as any,
-    },
-  ];
+  const sections = useMemo(() => {
+    const res = [
+      positionAndOpenOrders?.length
+        ? {
+            title: 'Positions',
+            type: 'position' as const,
+            data: positionAndOpenOrders.map(item => {
+              return {
+                type: 'position' as const,
+                item: item,
+              };
+            }),
+          }
+        : null,
+      {
+        title: 'Explore Perps',
+        type: 'market' as const,
+        data: marketData.slice(0, 3).map(item => {
+          return {
+            type: 'market' as const,
+            item: item,
+          };
+        }),
+      },
+      {
+        title: 'History',
+        type: 'history' as const,
+        data: (homeHistoryList || [])?.map(item => {
+          return {
+            type: 'history',
+            item: item,
+          };
+        }),
+      },
+    ].filter(item => !!item);
+    return res;
+  }, [homeHistoryList, marketData, positionAndOpenOrders]);
+
+  const {
+    state: { fillsOrderTpOrSl },
+  } = usePerpsStore();
 
   const renderItem = useMemoizedFn(
-    ({ item, section }: { item: any; section: (typeof sections)[number] }) => {
-      if (section.type === 'position') {
-        return <PerpsPositionItem />;
-      }
-      if (section.type === 'market') {
+    ({
+      item: row,
+    }: ListRenderItemInfo<
+      | {
+          type: 'position';
+          item: PositionAndOpenOrder;
+        }
+      | {
+          type: 'market';
+          item: MarketData;
+        }
+      | {
+          type: 'history';
+          item: any;
+        }
+    >) => {
+      if (row.type === 'position') {
         return (
-          <PerpsMarketItem
-            item={item}
+          <PerpsPositionItem
+            item={row.item.position}
+            marketData={marketDataMap[row.item.position.coin]}
             onPress={() => {
               navigation.push(RootNames.StackTransaction, {
                 screen: RootNames.PerpsMarketDetail,
                 params: {
-                  market: item.name,
+                  market: row.item.position.coin,
                 },
               });
             }}
           />
         );
       }
-      if (section.type === 'history') {
-        return <PerpsHistoryItem />;
+      if (row.type === 'market') {
+        return (
+          <PerpsMarketItem
+            item={row.item}
+            onPress={() => {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.PerpsMarketDetail,
+                params: {
+                  market: row.item.name,
+                },
+              });
+            }}
+          />
+        );
+      }
+      if (row.type === 'history') {
+        return 'usdValue' in row.item ? null : (
+          <PerpsHistoryItem
+            fill={row.item}
+            orderTpOrSl={fillsOrderTpOrSl[row.item.oid]}
+            // onClick={handleItemClick}
+            marketData={marketDataMap}
+            key={row.item.hash}
+          />
+        );
       }
       return null;
     },
@@ -113,7 +182,7 @@ export const PerpsMain: React.FC<{
 
   return (
     <SectionList
-      sections={sections}
+      sections={sections as any}
       style={styles.list}
       stickySectionHeadersEnabled={false}
       showsVerticalScrollIndicator={false}
