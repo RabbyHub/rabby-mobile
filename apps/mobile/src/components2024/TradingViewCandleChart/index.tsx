@@ -8,7 +8,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { Platform, SafeAreaView, Text, View } from 'react-native';
+import { Platform, StyleProp, Text, View, ViewStyle } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { createTradingViewChartTemplate } from './template';
 import { CandleData, CandleStick } from './type';
@@ -17,6 +17,7 @@ import { openExternalUrl } from '@/core/utils/linking';
 interface ChartProps {
   height: number;
   onChartReady?: () => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 export interface TradingViewChartRef {
@@ -96,7 +97,7 @@ const formatCandleData = (data: CandleData) => {
 };
 
 const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
-  ({ height, onChartReady }, ref) => {
+  ({ style, height, onChartReady }, ref) => {
     const webViewRef = useRef<WebView>(null);
     const { styles, colors2024, isLight } = useTheme2024({ getStyle });
     const [webViewError, setWebViewError] = useState<string | null>(null);
@@ -217,9 +218,10 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
     }
 
     return (
-      <SafeAreaView
+      <View
         style={[
           styles.container,
+          style,
           { height, width: '100%', minHeight: height },
         ]}>
         <WebView
@@ -230,7 +232,7 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
           onError={handleWebViewError}
           {...(Platform.OS === 'ios' ? iosWebViewProps : androidWebViewProps)}
         />
-      </SafeAreaView>
+      </View>
     );
   },
 );
@@ -238,7 +240,6 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
 const getStyle = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
   },
   webView: {
     flex: 1,

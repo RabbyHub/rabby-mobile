@@ -716,6 +716,7 @@ export const TokenMarketInfoScreen = () => {
                   <TradingViewCandleChart
                     ref={chartWebViewRef}
                     height={300}
+                    style={styles.klineContainer}
                     onChartReady={() => {
                       setLoading(false);
                       fetchTokenPriceData(
@@ -930,6 +931,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       height: 200,
       borderRadius: 12,
       marginHorizontal: 16,
+    },
+    klineContainer: {
+      paddingHorizontal: 16,
+      marginBottom: 12,
     },
   };
 });
