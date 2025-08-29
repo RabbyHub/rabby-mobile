@@ -502,8 +502,6 @@ export const MiniSignTx = ({
   const [gasLessConfig, setGasLessConfig] = useState<GasLessConfig | undefined>(
     undefined,
   );
-  const { activeApprovalPopup } = useCommonPopupView();
-  const invokeEnterPassphrase = useEnterPassphraseModal('address');
 
   const {
     updateMiniCustomPrice,
@@ -521,9 +519,8 @@ export const MiniSignTx = ({
         updateMiniCustomPrice(
           parseInt(
             support1559
-              ? txsResult[0].tx.maxFeePerGas!
-              : txsResult[0].tx.gasPrice!,
-            10,
+              ? txsResult[0].tx.maxFeePerGas || '0'
+              : txsResult[0].tx.gasPrice || '0',
           ),
         );
       }
@@ -773,18 +770,18 @@ export const MiniSignTx = ({
       const lastTimeGas: ChainGas = {
         lastTimeSelect: miniGasLevel === 'custom' ? 'gasPrice' : 'gasLevel',
         gasLevel: miniGasLevel,
-        gasPrice: miniCustomPrice[chain.serverId] || 0,
+        gasPrice: miniCustomPrice || 0,
       };
+
       let customGasPrice = 0;
       if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
         // use cached gasPrice if exist
         customGasPrice = lastTimeGas.gasPrice;
       }
       if (
-        ((isSend || isSwap || isBridge) && customGasPrice) ||
+        ((isSend || isSwap || isBridge) && txs[0].gasPrice) ||
         isSpeedUp ||
-        isCancel ||
-        lastTimeGas?.lastTimeSelect === 'gasPrice'
+        isCancel
       ) {
         // use gasPrice set by dapp when it's a speedup or cancel tx
         customGasPrice = parseInt(txs[0].gasPrice!);
