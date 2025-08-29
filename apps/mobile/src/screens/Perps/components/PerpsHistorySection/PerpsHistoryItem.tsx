@@ -1,11 +1,13 @@
-import { RcIconLong } from '@/assets2024/icons/perps';
+import { RcIconLong, RcIconShort } from '@/assets2024/icons/perps';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
+import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { sinceTime } from '@/utils/time';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 
 // todo
@@ -14,7 +16,7 @@ export const PerpsHistoryItem: React.FC<{
   marketData: Record<string, MarketData>;
   onPress?: (fill: WsFill) => void;
   orderTpOrSl?: 'tp' | 'sl';
-}> = ({ fill, orderTpOrSl, marketData }) => {
+}> = ({ fill, orderTpOrSl, marketData, onPress }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -24,36 +26,32 @@ export const PerpsHistoryItem: React.FC<{
     const isLiquidation = Boolean(fill?.liquidation);
     if (fill?.dir === 'Close Long') {
       if (orderTpOrSl === 'tp') {
-        return t('page.perps.historyDetail.title.closeLongTp');
+        return 'Close Long Take Profit';
       }
       if (orderTpOrSl === 'sl') {
-        return t('page.perps.historyDetail.title.closeLongSl');
+        return 'Close Long stop loss';
       }
 
-      return isLiquidation
-        ? t('page.perps.historyDetail.title.closeLongLiquidation')
-        : t('page.perps.historyDetail.title.closeLong');
+      return isLiquidation ? 'Close Long Liquidation' : 'Close Long';
     }
     if (fill?.dir === 'Close Short') {
       if (orderTpOrSl === 'tp') {
-        return t('page.perps.historyDetail.title.closeShortTp');
+        return 'Close Short Take Profit';
       }
       if (orderTpOrSl === 'sl') {
-        return t('page.perps.historyDetail.title.closeShortSl');
+        return 'Close Short Stop Loss';
       }
 
-      return isLiquidation
-        ? t('page.perps.historyDetail.title.closeShortLiquidation')
-        : t('page.perps.historyDetail.title.closeShort');
+      return isLiquidation ? 'Close Short Liquidation' : 'Close Short';
     }
     if (fill?.dir === 'Open Long') {
-      return t('page.perps.historyDetail.title.openLong');
+      return 'Open Long';
     }
     if (fill?.dir === 'Open Short') {
-      return t('page.perps.historyDetail.title.openShort');
+      return 'Open Short';
     }
     return fill?.dir;
-  }, [fill?.dir, fill?.liquidation, orderTpOrSl, t]);
+  }, [fill?.dir, fill?.liquidation, orderTpOrSl]);
 
   const itemData = marketData[coin.toUpperCase()];
   const logoUrl = itemData?.logoUrl;
@@ -64,28 +62,43 @@ export const PerpsHistoryItem: React.FC<{
   const pnlValue = closedPnl ? closedPnl : 0;
 
   return (
-    <View style={styles.card}>
-      <View style={styles.iconContainer}>
-        <FastImage source={{ uri: logoUrl }} style={styles.icon} />
-        <RcIconLong
-          style={styles.directionIcon}
-          bgColor={colors2024['neutral-bg-1']}
-          color={colors2024['neutral-title-1']}
-        />
-      </View>
-      <View style={styles.content}>
-        <View style={styles.row}>
-          <Text style={styles.name}>{titleString}</Text>
-          <Text style={styles.price}>$114,539.00</Text>
+    <TouchableOpacity onPress={() => onPress?.(fill)}>
+      <View style={styles.card}>
+        <View style={styles.iconContainer}>
+          <FastImage source={{ uri: logoUrl }} style={styles.icon} />
+          {direction === 'Long' ? (
+            <RcIconLong
+              style={styles.directionIcon}
+              bgColor={colors2024['neutral-bg-1']}
+              color={colors2024['neutral-title-1']}
+            />
+          ) : (
+            <RcIconShort
+              style={styles.directionIcon}
+              bgColor={colors2024['neutral-bg-1']}
+              color={colors2024['neutral-title-1']}
+            />
+          )}
         </View>
-        <View style={styles.row}>
-          <Text style={styles.leverage}>Short 10x</Text>
-          <Text style={[styles.priceChange, styles.priceChangeDown]}>
-            +$24.32 (+0.87%)
-          </Text>
+        <View style={styles.content}>
+          <View style={styles.row}>
+            <Text style={styles.name}>{titleString}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.coin}>{coin}-USD</Text>
+          </View>
+        </View>
+        <View style={styles.extra}>
+          {isClose ? (
+            <Text style={[styles.pnl, pnlValue < 0 ? styles.pnlRed : null]}>
+              {pnlValue > 0 ? '+' : '-'}$
+              {splitNumberByStep(Math.abs(pnlValue).toFixed(2))}
+            </Text>
+          ) : null}
+          <Text style={styles.time}>{sinceTime(fill.time / 1000)}</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -136,28 +149,35 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
-  price: {
+  extra: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  pnl: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['green-default'],
   },
-  leverage: {
+  pnlRed: {
+    color: colors2024['red-default'],
+  },
+  coin: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
   },
-  priceChange: {
+  time: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '500',
-    color: colors2024['green-default'],
-  },
-  priceChangeDown: {
-    color: colors2024['red-default'],
+    color: colors2024['neutral-secondary'],
   },
 }));

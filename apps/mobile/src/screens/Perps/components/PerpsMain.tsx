@@ -16,7 +16,6 @@ import { head } from 'lodash';
 import { useMemoizedFn } from 'ahooks';
 import { red } from 'bn.js';
 import { PerpsMarketItem } from './PerpsMarketItem';
-import { PerpsHistoryItem } from './PerpsHistoryItem';
 import { RcArrowRight2CC } from '@/assets/icons/common';
 import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
@@ -29,6 +28,7 @@ import {
   usePerpsStore,
 } from '@/hooks/perps/usePerpsStore';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
+import { PerpsHistoryItem } from './PerpsHistorySection/PerpsHistoryItem';
 
 export const PerpsMain: React.FC<{
   ListHeaderComponent?: React.ReactElement;

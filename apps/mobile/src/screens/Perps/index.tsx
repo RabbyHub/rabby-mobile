@@ -9,7 +9,7 @@ import { View } from 'react-native';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
-import { PerpsMain } from './components/PerpsMain';
+// import { PerpsMain } from './components/PerpsMain';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
 import { PerpsGuidePopup } from './components/PerpsGuidePopup';
@@ -22,6 +22,7 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
+import { PerpsHistorySection } from './components/PerpsHistorySection';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -98,15 +99,15 @@ export const PerpsScreen = () => {
     <>
       <NormalScreenContainer2024 type="bg2">
         <View style={styles.container}>
-          <PerpsMain
+          <PerpsHistorySection
             ListHeaderComponent={
               <PerpsAccountCard
                 isLogin={isLogin}
                 accountSummary={accountSummary}
               />
             }
-            marketData={marketData}
-            positionAndOpenOrders={positionAndOpenOrders}
+            // marketData={marketData}
+            // positionAndOpenOrders={positionAndOpenOrders}
             marketDataMap={marketDataMap}
             homeHistoryList={homeHistoryList}
           />
