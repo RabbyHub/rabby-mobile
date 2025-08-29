@@ -886,8 +886,6 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   useClearMiniGasStateEffect({
     chainServerId: findChainByEnum(chain)?.serverId || '',
-    fromTokenId: payToken?.id || '',
-    toTokenId: receiveToken?.id || '',
   });
 
   return {

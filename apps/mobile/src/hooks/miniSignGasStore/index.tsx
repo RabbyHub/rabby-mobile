@@ -1,5 +1,5 @@
 import { atom, useAtom } from 'jotai';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const gasLevelAtom = atom<'normal' | 'slow' | 'fast' | 'custom'>('normal');
 const customPriceAtom = atom<Record<string, number>>({});
@@ -35,19 +35,21 @@ export const useMiniSignGasStore = () => {
 // - 每次重进页面重置为默认档位 Fast。
 export const useClearMiniGasStateEffect = ({
   chainServerId,
-  fromTokenId,
-  toTokenId,
 }: {
   chainServerId?: string;
-  fromTokenId: string;
-  toTokenId: string;
 }) => {
-  const { setMiniGasLevel, reset } = useMiniSignGasStore();
+  const { miniGasLevel, reset } = useMiniSignGasStore();
   useEffect(() => {
     reset();
   }, [reset]);
 
-  useEffect(() => {
-    setMiniGasLevel('normal');
-  }, [chainServerId, fromTokenId, setMiniGasLevel, toTokenId]);
+  const [previousChainServerId, setPreviousChainServerId] =
+    useState(chainServerId);
+
+  if (previousChainServerId !== chainServerId) {
+    setPreviousChainServerId(chainServerId);
+    if (miniGasLevel === 'custom') {
+      reset();
+    }
+  }
 };

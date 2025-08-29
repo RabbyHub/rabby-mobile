@@ -474,8 +474,6 @@ function SendScreen({
 
   useClearMiniGasStateEffect({
     chainServerId: chainItem?.serverId || '',
-    fromTokenId: '',
-    toTokenId: '',
   });
 
   return (
