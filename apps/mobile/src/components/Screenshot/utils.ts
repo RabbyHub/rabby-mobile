@@ -15,9 +15,18 @@ function runTryCatch<T extends (...args: any[]) => any>(
   }
 }
 
-// device基础信息：机型标识、系统、系统版本等
-// 用户信息：地址、资产等
-// 来源页面信息：来源页面、页面报错等
+const latestErrorsRef = {
+  current: [] as { error: any; isFatal?: boolean; time: number }[],
+};
+/**
+ * record latest 50 errors
+ */
+ErrorUtils.setGlobalHandler((error, isFatal) => {
+  const list = latestErrorsRef.current || [];
+  list.unshift({ error, isFatal, time: Date.now() });
+  latestErrorsRef.current = list.sort((a, b) => b.time - a.time).slice(0, 50);
+});
+
 export function getScreenshotFeedbackExtra({
   totalBalanceText,
 }: // addressList = [],
@@ -26,6 +35,11 @@ export function getScreenshotFeedbackExtra({
   // addressList: string[];
 }): UserFeedbackItem['extra'] & object {
   // Implementation for collecting screenshot feedback
+
+  const latestErrors = runTryCatch(() =>
+    JSON.stringify(latestErrorsRef.current),
+  );
+
   return {
     totalBalanceText,
     currentScreen: getLatestNavigationName(),
@@ -51,5 +65,7 @@ export function getScreenshotFeedbackExtra({
     }),
 
     userAgent: runTryCatch(() => DeviceInfo.getUserAgentSync()),
+
+    latestErrors,
   };
 }
