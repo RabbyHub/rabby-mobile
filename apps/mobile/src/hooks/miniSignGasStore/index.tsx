@@ -2,7 +2,7 @@ import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
 
 const gasLevelAtom = atom<'normal' | 'slow' | 'fast' | 'custom'>('normal');
-const customPriceAtom = atom<Record<string, number>>({});
+const customPriceAtom = atom(0);
 
 export const useMiniSignGasStore = () => {
   const [miniGasLevel, setMiniGasLevel] = useAtom(gasLevelAtom);
@@ -10,22 +10,15 @@ export const useMiniSignGasStore = () => {
 
   const reset = useCallback(() => {
     setMiniGasLevel('normal');
-    setMiniCustomPrice({});
+    setMiniCustomPrice(0);
   }, [setMiniGasLevel, setMiniCustomPrice]);
-
-  const updateMiniCustomPrice = (chainServerId: string, value: number) => {
-    setMiniCustomPrice(pre => ({
-      ...pre,
-      [chainServerId]: value,
-    }));
-  };
 
   return {
     miniGasLevel,
     setMiniGasLevel,
     miniCustomPrice,
     setMiniCustomPrice,
-    updateMiniCustomPrice,
+    updateMiniCustomPrice: setMiniCustomPrice,
     reset,
   };
 };
