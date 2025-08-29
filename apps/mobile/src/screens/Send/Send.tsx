@@ -76,6 +76,7 @@ import { ShowMoreOnSend } from './components/SendShowMore';
 import { PendingTxItem } from '../Swap/components/PendingTxItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { useRecentSendPendingTx } from './hooks/useRecentSend';
+import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 
 const EMPTY_TOKEN_ITEM = {
   decimals: 18,
@@ -470,6 +471,12 @@ function SendScreen({
     screenState.clickedMax,
     screenState.selectedGasLevel,
   ]);
+
+  useClearMiniGasStateEffect({
+    chainServerId: chainItem?.serverId || '',
+    fromTokenId: '',
+    toTokenId: '',
+  });
 
   return (
     <SendTokenInternalContextProvider
