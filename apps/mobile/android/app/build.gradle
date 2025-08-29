@@ -216,5 +216,4 @@ dependencies {
 
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.10'
     implementation 'com.android.billingclient:billing:7.0.0'
-    implementation 'androidx.activity:activity:1.9.0'
 }
