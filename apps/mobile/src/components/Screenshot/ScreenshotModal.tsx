@@ -342,6 +342,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
             },
           }
         : {
+            borderWidth: 2,
             borderColor: colors2024['neutral-bg-2'],
             backgroundColor: colors2024['neutral-bg-1'],
             shadowColor: '#fff',

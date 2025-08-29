@@ -30,11 +30,10 @@ export type BottomInputProps = {
 
 const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
   ({ visible, style }, ref) => {
-    const {
-      feedbackText: value,
-      feedbackOverLimit: valueOverLimit,
-      onChangeFeedback,
-    } = useFeedbackOnScreenshot();
+    const { feedbackText, onChangeFeedback } = useFeedbackOnScreenshot();
+
+    const [value, setValue] = useState(feedbackText);
+    const valueOverLimit = value.length > SCREENSHOT_FEEDBACK_MAX_LENGTH - 1;
 
     const { styles } = useTheme2024({ getStyle: getBottomInputStyle });
     const { t } = useTranslation();
@@ -52,12 +51,19 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
       }
     }, [visible]);
 
+    useEffect(() => {
+      if (visible) {
+        setValue(feedbackText);
+      }
+    }, [visible, feedbackText]);
+
     const inputRef = useRef<any>(null);
     const isEmpty = !value;
 
     const handleDone = useCallback(async () => {
+      onChangeFeedback(value.trim());
       Keyboard.dismiss();
-    }, []);
+    }, [onChangeFeedback, value]);
 
     return (
       <View
@@ -72,7 +78,9 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
           <TextInput
             ref={inputRef}
             value={value}
-            onChangeText={onChangeFeedback}
+            onChangeText={text => {
+              setValue(text);
+            }}
             multiline={true}
             onBlur={handleDone}
             submitBehavior="blurAndSubmit"
@@ -150,6 +158,7 @@ const getBottomInputStyle = createGetStyles2024(({ colors2024 }) => {
       padding: 0,
       fontSize: 16,
       justifyContent: 'flex-start',
+      color: colors2024['neutral-title-1'],
       // ...makeDebugBorder(),
     },
 

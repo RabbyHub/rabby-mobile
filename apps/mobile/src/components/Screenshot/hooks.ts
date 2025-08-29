@@ -55,7 +55,7 @@ export function useViewedHomeTip() {
 
   return {
     viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT
-      ? false
+      ? true
       : screenshotFeedback.viewedHomeTip,
     markViewedHomeTip,
     mockResetViewedHomeTip,
@@ -456,10 +456,10 @@ export function useFeedbackOnScreenshot() {
   return {
     globalModalShown: submitFeedbackOnScreenshot.submitModalShown,
     feedbackText: submitFeedbackOnScreenshot.feedbackText,
-    uploadedImageUrl: submitFeedbackOnScreenshot.uploadedImageUrl,
     feedbackOverLimit:
       submitFeedbackOnScreenshot.feedbackText.length >
       SCREENSHOT_FEEDBACK_MAX_LENGTH - 1,
+    uploadedImageUrl: submitFeedbackOnScreenshot.uploadedImageUrl,
     onChangeFeedback,
     showSubmitSuccessModal,
   };

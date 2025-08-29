@@ -65,14 +65,16 @@ function ModalResponseDetail({
         title: t('component.feedbackModal.issueDescription'),
         contentNode: imageUri && (
           <View style={styles.contentWrapper}>
-            <View style={styles.feedbackDesc}>
-              <Text style={styles.descText}>
-                <Text>
-                  {t('component.feedbackModal.issueDescriptionLabel')}
-                  {content}
+            {content && (
+              <View style={styles.feedbackDesc}>
+                <Text style={styles.descText}>
+                  <Text>
+                    {t('component.feedbackModal.issueDescriptionLabel')}
+                    {content}
+                  </Text>
                 </Text>
-              </Text>
-            </View>
+              </View>
+            )}
             <Image
               source={{ uri: imageUri }}
               style={styles.feedbackImage}
@@ -238,7 +240,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontStyle: 'normal',
     fontWeight: FontWeightEnum.heavy,
     lineHeight: 24,
-    borderLeftColor: colors2024['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
   },
   stagesContainer: {
     flexDirection: 'column',
