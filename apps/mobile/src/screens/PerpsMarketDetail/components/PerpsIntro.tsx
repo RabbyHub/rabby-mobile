@@ -29,7 +29,7 @@ export const PerpsIntro: React.FC<{}> = () => {
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  section: {},
+  section: { marginTop: 24 },
   header: {
     paddingHorizontal: 4,
     marginBottom: 12,

@@ -31,6 +31,7 @@ import {
   CrosshairMode,
 } from 'lightweight-charts';
 import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
+import { splitNumberByStep } from '@/utils/number';
 
 export interface ChartHoverData {
   time?: string;
@@ -98,7 +99,7 @@ const parseCandles = (data: CandleSnapshot): any[] => {
 
 export const PerpsChart: React.FC<{
   market: MarketData;
-  markPrice?: number;
+  markPrice: number;
   currentAssetCtx?: MarketData;
   activeAssetCtx?: WsActiveAssetCtx['ctx'] | null;
   lineTagInfo?: {
@@ -144,6 +145,28 @@ export const PerpsChart: React.FC<{
     ],
     [],
   );
+
+  const dayDelta = useMemo(() => {
+    const prevDayPx = Number(
+      activeAssetCtx?.prevDayPx || currentAssetCtx?.prevDayPx || 0,
+    );
+    return markPrice - prevDayPx;
+  }, [activeAssetCtx, markPrice, currentAssetCtx]);
+
+  const isPositiveChange = useMemo(() => {
+    return dayDelta >= 0;
+  }, [dayDelta]);
+
+  const dayDeltaPercent = useMemo(() => {
+    const prevDayPx = Number(
+      activeAssetCtx?.prevDayPx || currentAssetCtx?.prevDayPx || 0,
+    );
+    return dayDelta / prevDayPx;
+  }, [activeAssetCtx, currentAssetCtx, dayDelta]);
+
+  const decimals = useMemo(() => {
+    return currentAssetCtx?.pxDecimals || 2;
+  }, [currentAssetCtx]);
 
   const { data: chartData } = useRequest(
     async () => {
@@ -255,9 +278,24 @@ export const PerpsChart: React.FC<{
 
   return (
     <View style={styles.chart}>
+      <View style={styles.header}>
+        <Text style={styles.priceText}>
+          ${splitNumberByStep(markPrice || 0)}
+        </Text>
+        <Text
+          style={[
+            styles.changeText,
+            isPositiveChange ? styles.positive : styles.negative,
+          ]}>
+          {isPositiveChange ? '+' : '-'} $
+          {splitNumberByStep(Math.abs(dayDelta).toFixed(decimals))} (
+          {isPositiveChange ? '+' : '-'}
+          {formatPercent(dayDeltaPercent, 2)})
+        </Text>
+      </View>
       <TradingViewCandleChart
         ref={chartWebViewRef}
-        height={300}
+        height={160}
         onChartReady={handleChartReady}
       />
       <View style={styles.menu}>
@@ -323,41 +361,29 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-body'],
   },
   header: {
-    paddingHorizontal: 4,
-    marginBottom: 12,
-  },
-  title: {},
-  list: {
-    borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
-  },
-  listItem: {
+    marginBottom: 9,
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    padding: 16,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
-  listItemMain: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    minHeight: 20,
-  },
-  label: {
+  priceText: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-foot'],
+    fontSize: 40,
+    lineHeight: 48,
+    fontWeight: '800',
+    color: colors2024['neutral-title-1'],
   },
-  value: {
+  changeText: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
+    fontWeight: '500',
+  },
+  positive: {
+    color: colors2024['green-default'],
+  },
+  negative: {
+    color: colors2024['red-default'],
   },
 }));

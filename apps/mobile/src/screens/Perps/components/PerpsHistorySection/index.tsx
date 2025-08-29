@@ -1,4 +1,3 @@
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import {
   AccountHistoryItem,
   MarketDataMap,
@@ -18,9 +17,15 @@ import { PerpsHistoryItem } from './PerpsHistoryItem';
 
 export const PerpsHistorySection: React.FC<{
   ListHeaderComponent?: React.ReactElement;
+  ListFooterComponent?: React.ReactElement;
   marketDataMap: MarketDataMap;
   homeHistoryList?: (AccountHistoryItem | WsFill)[];
-}> = ({ ListHeaderComponent, marketDataMap, homeHistoryList }) => {
+}> = ({
+  ListHeaderComponent,
+  ListFooterComponent,
+  marketDataMap,
+  homeHistoryList,
+}) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -80,6 +85,7 @@ export const PerpsHistorySection: React.FC<{
           </>
         }
         ListEmptyComponent={<PerpsHistoryEmpty />}
+        ListFooterComponent={ListFooterComponent}
         contentContainerStyle={styles.contentContainer}
         // onScrollBeginDrag={onScrollBeginDrag}
         // style={[styles.chainListContainer, style]}

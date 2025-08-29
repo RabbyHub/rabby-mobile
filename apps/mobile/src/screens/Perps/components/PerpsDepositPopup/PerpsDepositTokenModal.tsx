@@ -8,32 +8,36 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { AssetAvatar } from '@/components';
 import { RcIconSwapArrow } from '@/assets/icons/swap';
 import { RcArrowRightCC } from '@/assets2024/icons/perps';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
+import { findChain } from '@/utils/chain';
 
 interface Props {
   visible: boolean;
-  token?: AbstractPortfolioToken;
-  usdcToken?: AbstractPortfolioToken;
+  token?: AbstractPortfolioToken | null;
+  arbUsdcToken?: AbstractPortfolioToken | null;
   onCancel?: () => void;
-  onConfirm?: () => void;
+  onNavigate?: () => void;
 }
 
 export const PerpsDepositTokenModal: React.FC<Props> = ({
   visible,
   onCancel,
-  onConfirm,
+  onNavigate,
   token,
-  usdcToken,
+  arbUsdcToken,
 }) => {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({
     getStyle,
   });
 
-  if (!token || !usdcToken) {
+  const isSwap = token?.chain === arbUsdcToken?.chain;
+  const navigation = useRabbyAppNavigation();
+
+  if (!token || !arbUsdcToken) {
     return null;
   }
-
-  const isSwap = token.chain === usdcToken.chain;
 
   return (
     <Modal
@@ -58,8 +62,8 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
             <RcArrowRightCC color={colors2024['neutral-foot']} />
             <AssetAvatar
               size={46}
-              chain={usdcToken.chain}
-              logo={usdcToken.logo_url}
+              chain={arbUsdcToken.chain}
+              logo={arbUsdcToken.logo_url}
               chainSize={18}
             />
           </View>
@@ -73,7 +77,34 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
             <Button
               type="primary"
               title={isSwap ? 'Swap' : 'Bridge'}
-              onPress={onConfirm}
+              onPress={() => {
+                if (isSwap) {
+                  // todo account ?
+                  navigation.navigate(RootNames.StackTransaction, {
+                    screen: RootNames.MultiSwap,
+
+                    params: {
+                      swapAgain: true,
+                      chainEnum: findChain({ serverId: token.chain })?.enum,
+                      swapTokenId: [token._tokenId, arbUsdcToken._tokenId],
+                    },
+                  });
+                } else {
+                  // todo account ?
+                  navigation.navigate(RootNames.StackTransaction, {
+                    screen: RootNames.MultiBridge,
+
+                    params: {
+                      chainEnum: findChain({ serverId: token.chain })?.enum,
+                      tokenId: token._tokenId,
+                      toChainEnum: findChain({ serverId: arbUsdcToken.chain })
+                        ?.enum,
+                      toTokenId: arbUsdcToken._tokenId,
+                    },
+                  });
+                }
+                onNavigate?.();
+              }}
               containerStyle={styles.containerStyle}
             />
           </View>

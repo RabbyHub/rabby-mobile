@@ -7,7 +7,7 @@ import {
   ARB_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { openapi } from '@/core/request';
-import { useFallbackAccount } from '@/hooks/account';
+import { Account } from '@/core/services/preference';
 import { useTokens } from '@/hooks/chainAndToken/useToken';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
@@ -25,17 +25,16 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
-import { Account } from '@/core/services/preference';
 
 export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
   visible?: boolean;
   account: Account;
-}> = ({ onClose, visible, account }) => {
+  onSelect?(token: AbstractPortfolioToken): void;
+}> = ({ onClose, visible, account, onSelect }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
@@ -91,10 +90,7 @@ export const PerpsSelectTokenPopup: React.FC<{
         <TouchableOpacity
           style={[styles.tokenListItem]}
           onPress={() => {
-            // if (!disabled) {
-            //   onChange(item);
-            //   onClose();
-            // }
+            onSelect?.(item);
           }}>
           <View style={styles.box}>
             <AssetAvatar

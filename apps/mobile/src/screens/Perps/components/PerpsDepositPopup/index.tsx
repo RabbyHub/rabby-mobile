@@ -1,10 +1,23 @@
+import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
+import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import {
+  ARB_USDC_TOKEN_ID,
+  ARB_USDC_TOKEN_SERVER_CHAIN,
+} from '@/constant/perps';
+import { openapi } from '@/core/request';
+import { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { useRequest } from 'ahooks';
+import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,19 +28,8 @@ import {
 } from 'react-native';
 import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
-import { formatUsdValue } from '@/utils/number';
-import BigNumber from 'bignumber.js';
-import { Account } from '@/core/services/preference';
-import { useRequest } from 'ahooks';
-import { openapi } from '@/core/request';
-import {
-  ARB_USDC_TOKEN_ID,
-  ARB_USDC_TOKEN_SERVER_CHAIN,
-} from '@/constant/perps';
-import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { AssetAvatar } from '@/components';
-import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
-import { getTokenSymbol } from '@/utils/token';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
@@ -43,6 +45,9 @@ export const PerpsDepositPopup: React.FC<{
   const [amount, setAmount] = React.useState<string>('');
 
   const [isShowTokenPopup, setIsShowTokenPopup] = useState(false);
+  const [isShowModal, setIsShowModal] = useState(false);
+  const [selectedToken, setSelectedToken] =
+    useState<AbstractPortfolioToken | null>(null);
 
   const { t } = useTranslation();
 
@@ -176,6 +181,30 @@ export const PerpsDepositPopup: React.FC<{
         visible={isShowTokenPopup}
         onClose={() => {
           setIsShowTokenPopup(false);
+        }}
+        onSelect={token => {
+          if (
+            token.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+            isSameAddress(token._tokenId, ARB_USDC_TOKEN_ID)
+          ) {
+            setIsShowTokenPopup(false);
+            return;
+          }
+          setSelectedToken(token);
+          setIsShowModal(true);
+        }}
+      />
+      <PerpsDepositTokenModal
+        visible={isShowModal}
+        onCancel={() => {
+          setIsShowModal(false);
+        }}
+        token={selectedToken}
+        arbUsdcToken={arbUsdc}
+        onNavigate={() => {
+          setIsShowModal(false);
+          setIsShowTokenPopup(false);
+          onClose?.();
         }}
       />
     </>

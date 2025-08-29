@@ -38,7 +38,7 @@ export const PerpsPosition: React.FC<{
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   if (!positionData) {
-    return;
+    return null;
   }
 
   return (
@@ -182,7 +182,7 @@ export const PerpsPosition: React.FC<{
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   section: {
-    marginBottom: 30,
+    marginBottom: 24,
   },
   header: {
     paddingHorizontal: 4,

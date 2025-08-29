@@ -122,7 +122,13 @@ export const PerpsGuidePopup: React.FC<{
           ))}
           <View style={styles.indicatorContainer}>
             {steps.map((item, index) => {
-              return <Indicator active={activeIndex === index} index={index} />;
+              return (
+                <Indicator
+                  key={index}
+                  active={activeIndex === index}
+                  index={index}
+                />
+              );
             })}
           </View>
           {activeStep ? (

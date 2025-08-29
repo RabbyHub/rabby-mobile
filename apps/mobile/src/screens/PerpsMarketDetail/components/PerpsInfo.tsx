@@ -70,7 +70,7 @@ export const PerpsInfo: React.FC<{ market: MarketData }> = ({ market }) => {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   section: {
-    marginBottom: 30,
+    // marginBottom: 30,
   },
   header: {
     paddingHorizontal: 4,

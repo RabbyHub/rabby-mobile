@@ -23,6 +23,8 @@ import { Account } from '@/core/services/preference';
 import { PerpsAccountLogoutPopup } from './components/PerpsAccountLogoutPopup';
 import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsHistorySection } from './components/PerpsHistorySection';
+import { PerpsMarketSection } from './components/PerpsMarketSection';
+import { PerpsPositionSection } from './components/PerpsPositionSection';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -101,13 +103,18 @@ export const PerpsScreen = () => {
         <View style={styles.container}>
           <PerpsHistorySection
             ListHeaderComponent={
-              <PerpsAccountCard
-                isLogin={isLogin}
-                accountSummary={accountSummary}
-              />
+              <>
+                <PerpsAccountCard
+                  isLogin={isLogin}
+                  accountSummary={accountSummary}
+                />
+                <PerpsPositionSection
+                  positionAndOpenOrders={positionAndOpenOrders}
+                  marketDataMap={marketDataMap}
+                />
+                <PerpsMarketSection marketData={marketData} />
+              </>
             }
-            // marketData={marketData}
-            // positionAndOpenOrders={positionAndOpenOrders}
             marketDataMap={marketDataMap}
             homeHistoryList={homeHistoryList}
           />

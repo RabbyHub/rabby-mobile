@@ -106,6 +106,7 @@ import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { PerpsPnl } from './components/PerpsPnl';
 
 const HeaderHeight = 24;
 
@@ -772,7 +773,7 @@ function MultiAddressHome(): JSX.Element {
       }
 
       if (el.key === MultiHomeFeatTitle.Perps) {
-        return <Text>$100</Text>;
+        return <PerpsPnl />;
       }
 
       if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {

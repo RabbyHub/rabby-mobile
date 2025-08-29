@@ -28,6 +28,11 @@ import {
   WsActiveAssetCtx,
 } from '@rabby-wallet/hyperliquid-sdk';
 import { usePerpsPosition } from './hooks/usePerpsPosition';
+import { sortBy } from 'lodash';
+import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
+import { PerpsDepositCard } from './components/PerpsDepositCard';
+import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
+import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -62,14 +67,27 @@ export const PerpsMarketDetailScreen = () => {
     hasPermission,
   } = usePerpsPosition();
 
+  const {
+    miniSignTx,
+    clearMiniSignTx,
+    updateMiniSignTx,
+    handleDeposit,
+    handleSignDepositDirect,
+  } = usePerpsDeposit({
+    currentPerpsAccount,
+  });
+
+  const [amountVisible, setAmountVisible] = useState(false);
+
   const market = useMemo(() => {
     return marketDataMap[marketName.toUpperCase()];
   }, [marketDataMap, marketName]);
 
   const singleCoinHistoryList = useMemo(() => {
-    return userFills
-      .filter(fill => fill.coin.toLowerCase() === coin?.toLowerCase())
-      .sort((a, b) => b.time - a.time);
+    return sortBy(
+      userFills.filter(fill => fill.coin.toLowerCase() === coin?.toLowerCase()),
+      item => -item.time,
+    );
   }, [userFills, coin]);
 
   const [activeAssetCtx, setActiveAssetCtx] = React.useState<
@@ -234,42 +252,72 @@ export const PerpsMarketDetailScreen = () => {
   return (
     <>
       <NormalScreenContainer2024 type="bg2">
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={{
-            paddingBottom: 22,
-          }}>
-          <View style={styles.header}>
-            <PerpsChart market={market} />
-          </View>
-          <PerpsPosition
-            positionData={positionData}
-            coin={coin}
-            hasAutoClose={hasAutoClose}
-            slPrice={slPrice}
-            tpPrice={tpPrice}
-            onAutoCloseChange={handleAutoCloseSwitch}
+        <View style={styles.container}>
+          <PerpsHistorySection
+            ListHeaderComponent={
+              <>
+                <View style={styles.header}>
+                  <PerpsChart
+                    market={market}
+                    markPrice={markPrice}
+                    activeAssetCtx={activeAssetCtx}
+                    currentAssetCtx={currentAssetCtx}
+                  />
+                  {isLogin ? (
+                    <PerpsDepositCard
+                      availableBalance={availableBalance}
+                      onDepositPress={() => {
+                        setAmountVisible(true);
+                      }}
+                    />
+                  ) : null}
+                </View>
+                <PerpsPosition
+                  positionData={positionData}
+                  coin={coin}
+                  hasAutoClose={hasAutoClose}
+                  slPrice={slPrice}
+                  tpPrice={tpPrice}
+                  onAutoCloseChange={handleAutoCloseSwitch}
+                />
+                <PerpsInfo market={market} />
+              </>
+            }
+            ListFooterComponent={<PerpsIntro />}
+            marketDataMap={marketDataMap}
+            homeHistoryList={singleCoinHistoryList}
           />
-          <PerpsInfo market={market} />
-          <PerpsIntro />
-        </ScrollView>
-        <PerpsFooter
-          hasPermission={hasPermission}
-          hasPosition={hasPosition}
-          direction={positionData?.direction}
-          onLongPress={() => {
-            setPositionDirection('Long');
-            setOpenPositionVisible(true);
-          }}
-          onShortPress={() => {
-            setPositionDirection('Short');
-            setOpenPositionVisible(true);
-          }}
-          onClosePress={() => {
-            setClosePositionVisible(true);
-          }}
-        />
+        </View>
+        {isLogin ? (
+          <PerpsFooter
+            hasPermission={hasPermission}
+            hasPosition={hasPosition}
+            direction={positionData?.direction}
+            onLongPress={() => {
+              setPositionDirection('Long');
+              setOpenPositionVisible(true);
+            }}
+            onShortPress={() => {
+              setPositionDirection('Short');
+              setOpenPositionVisible(true);
+            }}
+            onClosePress={() => {
+              setClosePositionVisible(true);
+            }}
+          />
+        ) : null}
       </NormalScreenContainer2024>
+
+      <PerpsDepositPopup
+        account={currentPerpsAccount}
+        visible={amountVisible}
+        onClose={() => {
+          setAmountVisible(false);
+        }}
+        onDeposit={async v => {
+          await handleDeposit(v);
+        }}
+      />
       <PerpsOpenPositionPopup
         visible={openPositionVisible}
         direction={positionDirection}
