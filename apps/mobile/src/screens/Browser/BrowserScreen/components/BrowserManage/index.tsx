@@ -31,7 +31,7 @@ export function BrowserManage(): JSX.Element {
   const { openTab, setPartialBrowserState, closeAllTabs } = useBrowser();
   const { removeAllBrowserHistory } = useBrowserHistory();
 
-  const [activeTab, setActiveTab] = useState('tab');
+  const [activeTab, setActiveTab] = useState('favorites');
   const { t } = useTranslation();
   const [isShowDelete, setIsShowDelete] = useState(false);
 
@@ -42,16 +42,16 @@ export function BrowserManage(): JSX.Element {
   const options = useMemo(() => {
     return [
       {
-        label: t('page.browserManage.option.tab'),
-        key: 'tab',
+        label: t('page.browserManage.option.favorites'),
+        key: 'favorites',
       },
       {
         label: t('page.browserManage.option.recent'),
         key: 'history',
       },
       {
-        label: t('page.browserManage.option.favorites'),
-        key: 'favorites',
+        label: t('page.browserManage.option.tab'),
+        key: 'tab',
       },
     ];
   }, [t]);
@@ -59,6 +59,8 @@ export function BrowserManage(): JSX.Element {
   // todo fix any
   const tabRef = React.useRef<any>();
   // const navigation = useRabbyAppNavigation();
+  const isChangingTabRef = React.useRef(false);
+  const activeTabRef = React.useRef(activeTab);
 
   const handleNewTab = useMemoizedFn(() => {
     setSearchState({
@@ -99,6 +101,8 @@ export function BrowserManage(): JSX.Element {
             onTabChange={key => {
               setActiveTab(key);
               tabRef.current?.jumpToTab(key);
+              isChangingTabRef.current = true;
+              activeTabRef.current = key;
             }}
             optionsStyle={styles.navbar}
             itemStyle={styles.navbarItem}
@@ -117,12 +121,20 @@ export function BrowserManage(): JSX.Element {
         revealHeaderOnScroll={false}
         tabBarHeight={90}
         onTabChange={data => {
-          console.log('onTabchange', data);
-          setActiveTab(data.tabName);
+          if (!isChangingTabRef.current) {
+            setActiveTab(data.tabName);
+            activeTabRef.current = data.tabName;
+          }
+          if (
+            isChangingTabRef.current &&
+            data.tabName === activeTabRef.current
+          ) {
+            isChangingTabRef.current = false;
+          }
         }}>
-        <Tabs.Tab name="tab" label={'Tab'}>
-          <View style={styles.tabList}>
-            <BrowserTabList />
+        <Tabs.Tab name="favorites" label={'Favorites'}>
+          <View style={styles.favoritesList}>
+            <BrowserBookmarkList isShowDelete={isShowDelete} />
           </View>
         </Tabs.Tab>
         <Tabs.Tab name="history" label={'History'}>
@@ -130,9 +142,9 @@ export function BrowserManage(): JSX.Element {
             <BrowserHistoryList />
           </View>
         </Tabs.Tab>
-        <Tabs.Tab name="favorites" label={'Favorites'}>
-          <View style={styles.favoritesList}>
-            <BrowserBookmarkList isShowDelete={isShowDelete} />
+        <Tabs.Tab name="tab" label={'Tab'}>
+          <View style={styles.tabList}>
+            <BrowserTabList />
           </View>
         </Tabs.Tab>
       </Tabs.Container>
