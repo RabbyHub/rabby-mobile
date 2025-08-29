@@ -298,7 +298,7 @@ function MultiAddressHome(): JSX.Element {
     success: number;
     fail: number;
   }>();
-  const { top10Addresses, top10EvmBalance, top10Balance } = useAccountInfo();
+  const { top10Addresses } = useAccountInfo();
 
   // 添加gift资格检查hook
   const { checkAddressesEligibility, getCurrentEligibleAddress } =
@@ -424,18 +424,31 @@ function MultiAddressHome(): JSX.Element {
     }
   }, [pendingTxCount, spinValue]);
 
-  const { balanceAccounts, balanceCacheAccounts, triggerUpdate } =
-    useAccountsBalance({
-      cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-      accountsNoUnique: true, // balanceAccounts has filter same address accounts
-    });
+  const {
+    balanceAccounts,
+    balanceCacheAccounts,
+    triggerUpdate,
+    getTotalBalance,
+  } = useAccountsBalance({
+    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
+
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
 
   const {
     combineData,
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
-  } = useMultiCurve(top10Addresses, true, top10Balance, top10EvmBalance);
+  } = useMultiCurve(
+    top10Addresses,
+    true,
+    top10Balance.total,
+    top10Balance.totalEvm,
+  );
   useCexSupportList();
   useFetchCexInfo();
   useInitDetectDBAssets();
@@ -596,6 +609,13 @@ function MultiAddressHome(): JSX.Element {
       setHasOpenCopyTrading(value ?? true);
     }, [setHasOpenCopyTrading]),
   );
+  useFocusEffect(
+    useCallback(() => {
+      if (appState === 'active') {
+        refreshCurve();
+      }
+    }, [appState, refreshCurve]),
+  );
 
   const thorttleGetSuccessAndFailList = useMemo(
     () => debounce(getSuccessAndFailList, 1000),
@@ -622,7 +642,6 @@ function MultiAddressHome(): JSX.Element {
         triggerUpdateAlert();
         syncTop10Assets();
         syncTop10History();
-        refreshCurve();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [

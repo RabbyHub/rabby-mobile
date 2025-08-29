@@ -57,8 +57,8 @@ function WatchlistScreen(): JSX.Element {
   const [hasInitialized, setHasInitialized] = useState(false);
 
   const showGuide = useMemo(() => {
-    return !skip && !hasData && !watchlistLoading;
-  }, [hasData, skip, watchlistLoading]);
+    return !skip && !hasData && !watchlistLoading && !watchlistTokens.length;
+  }, [hasData, skip, watchlistLoading, watchlistTokens.length]);
 
   const centerEmpty = useMemo(() => {
     return !hasData && !showGuide;
@@ -181,7 +181,7 @@ function WatchlistScreen(): JSX.Element {
       noHeader
       overwriteStyle={styles.overwriteStyle}>
       <View style={styles.header} />
-      {!hasData && (
+      {!list.length && !watchlistLoading && (
         <EmptyWatchlist style={centerEmpty ? styles.centerEmpty : undefined} />
       )}
       {showGuide ? (
@@ -232,7 +232,7 @@ function WatchlistScreen(): JSX.Element {
         </>
       ) : (
         <>
-          {hasData && (
+          {!!list.length && (
             <>
               <TokenHeader
                 tokenSort={tokenSort}
