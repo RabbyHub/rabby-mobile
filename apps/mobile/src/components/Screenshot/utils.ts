@@ -1,8 +1,8 @@
-import { APPLICATION_ID } from '@/constant';
+import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Platform } from 'react-native';
-import DeviceInfo, { getManufacturerSync } from 'react-native-device-info';
+import DeviceInfo from 'react-native-device-info';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -40,9 +40,16 @@ export function getScreenshotFeedbackExtra({
     JSON.stringify(latestErrorsRef.current),
   );
 
+  const appVersionText = APP_VERSIONS.forFeedback;
+  const appVersion = APP_VERSIONS.fromNative;
+  const appBuildNumber = APP_VERSIONS.buildNumber;
+
   return {
     totalBalanceText,
     currentScreen: getLatestNavigationName(),
+    appVersionText,
+    appVersion,
+    appBuildNumber,
     applicationId: APPLICATION_ID,
 
     fingerprint: runTryCatch(() => DeviceInfo.getFingerprintSync()),
