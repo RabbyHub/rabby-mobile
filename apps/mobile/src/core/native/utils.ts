@@ -19,8 +19,8 @@ interface NativeModulesStatic {
     togglePreventScreenshot: (isPrevent: boolean) => void;
     iosIsBeingCaptured(): boolean;
     // iosToggleBlurView(isProtected: boolean): void;
-    iosProtectFromScreenRecording(): void;
-    iosUnprotectFromScreenRecording(): void;
+    iosProtectFromScreenRecording(): Promise<void>;
+    iosUnprotectFromScreenRecording(): Promise<void>;
   };
   RNTimeChanged: NativeModule & {
     exitAppForSecurity(): void;

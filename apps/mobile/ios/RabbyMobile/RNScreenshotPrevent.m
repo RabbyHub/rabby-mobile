@@ -33,7 +33,7 @@ RCT_EXPORT_MODULE();
     NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];
 
     // TODO: allow configure that
-    BOOL getScreenShotPath = FALSE;
+    BOOL getScreenShotPath = TRUE;
 
     // handle inactive event
     [center addObserver:self selector:@selector(handleAppStateResignActive)
@@ -54,31 +54,44 @@ RCT_EXPORT_MODULE();
                             object:nil
                             queue:mainQueue
                             usingBlock:^(NSNotification *notification) {
-      if (hasListeners && getScreenShotPath) {
+      if (self->hasListeners && getScreenShotPath) {
+          NSMutableDictionary *result = [@{
+            @"path": @"Error retrieving file",
+            @"name": @"",
+            @"height": @"",
+            @"width": @"",
+            @"imageBase64": @"",
+            @"imageType": @"",
+            @"captured": @FALSE
+          } mutableCopy];
           UIViewController *presentedViewController = RCTPresentedViewController();
 
           UIImage *image = [self convertViewToImage:presentedViewController.view.superview];
           NSData *data = UIImagePNGRepresentation(image);
           if (!data) {
-              [self sendEventWithName:@"userDidTakeScreenshot" body: nil];
+              [self sendEventWithName:@"userDidTakeScreenshot" body: result];
             // reject(@"error", @"Failed to convert image to PNG", nil);
             return;
           }
 
-          NSString *tempDir = NSTemporaryDirectory();
-          NSString *fileName = [[NSUUID UUID] UUIDString];
-          NSString *filePath = [tempDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.png", fileName]];
+          [result setObject:@(image.size.height) forKey:@"height"];
+          [result setObject:@(image.size.width) forKey:@"width"];
+          [result setObject:[data base64EncodedStringWithOptions:0] forKey:@"imageBase64"];
+          [result setObject:@"png" forKey:@"imageType"];
+          [result setObject:@TRUE forKey:@"captured"];
 
-          NSError *error = nil;
-          NSDictionary *result;
-          BOOL success = [data writeToFile:filePath options:NSDataWritingAtomic error:&error];
-          if (!success) {
-              result = @{@"path": @"Error retrieving file", @"name": @"", @"type": @""};
-          } else {
-            result = @{@"path": filePath, @"name": fileName, @"type": @"PNG"};
-          }
+          // NSString *tempDir = NSTemporaryDirectory();
+          // NSString *fileName = [[NSUUID UUID] UUIDString];
+          // NSString *filePath = [tempDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.png", fileName]];
+
+          // NSError *error = nil;
+          // BOOL success = [data writeToFile:filePath options:NSDataWritingAtomic error:&error];
+          // if (success) {
+          //   [result setObject:filePath forKey:@"path"];
+          //   [result setObject:fileName forKey:@"name"];
+          // }
           [self sendEventWithName:@"userDidTakeScreenshot" body: result];
-      } else if (hasListeners) {
+      } else if (self->hasListeners) {
           [self sendEventWithName:@"userDidTakeScreenshot" body: nil];
       }
     }];

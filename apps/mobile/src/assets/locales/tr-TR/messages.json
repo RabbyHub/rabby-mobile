@@ -1774,7 +1774,12 @@
       "ShowMore": "Daha fazla göster",
       "ContentGeneratedByAI": "Bu içerik yapay zekâ tarafından oluşturuldu",
       "Fold": "Katlan",
-      "Introduction": "Giriş"
+      "Introduction": "Giriş",
+      "guideToMarketData": "Piyasa Verileri:",
+      "balance": "Bakiyeniz",
+      "notSupported": "Token desteklenmiyor",
+      "Mybalance": "Token Bakiyesi",
+      "Transaction": "Token Geçmişi"
     },
     "approvalsAddressList": {
       "title": "Onaylar"
@@ -1964,7 +1969,8 @@
         "results": "Sonuçlar",
         "recent": "Son Zamanlarda",
         "placeholder": "Web Siteleri Ara",
-        "searchInGoogle": "Google'da \"{{searchText}}\" arayın"
+        "searchInGoogle": "Google'da \"{{searchText}}\" arayın",
+        "recentEmpty": "Başlayın Keşfetmeye Web Sitesi"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Web Sitelerini Aç"
@@ -2084,7 +2090,8 @@
       "loginInTip": {
         "login": "GasAccount'a giriş yapın",
         "desc": "Tüm Zincirlerde Gas Ücretlerini Ödeyin",
-        "title": "USDC / USDT Yatırın"
+        "title": "USDC / USDT Yatırın",
+        "loginAndClaim": "Giriş Yap ve {{amount}} Talep Et"
       },
       "loginConfirmModal": {
         "desc": "Oturum açtığınızda, bunu yalnızca bu adrese yatırabilirsiniz.",

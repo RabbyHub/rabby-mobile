@@ -1,158 +1,108 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text, Alert } from 'react-native';
-import { RcArrowRightCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
-import { RcCode } from '@/assets/icons/settings';
-import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
-import { useMakeMockDataForRateGuideExposure } from '@/components/RateModal/hooks';
-import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { RcScreenshot, RcScreenRecord, RcCode } from '@/assets/icons/settings';
+import { DevTestItem, GeneralTestItem } from './testDevUtils';
+import { AppSwitch, SwitchToggleType } from '@/components/customized/Switch';
 import { isNonPublicProductionEnv } from '@/constant/env';
-import { useMockClearOfflineChainTips } from '@/screens/Home/components/OfflineChainNotify';
-import {
-  FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
-  useViewedHomeTip,
-} from '@/components/Screenshot/hooks';
+import { IS_IOS } from '@/core/native/utils';
+import { SwitchAllowScreenshot } from '../components/SwitchAllowScreenshot';
+import { useExpScreenCapture } from '@/hooks/appSettings';
 
-const MAKE_DEFAULT_MOCK_DATA = () => ({
-  forceShowFundWallet: false,
-  forceShowOffchainNotify: false,
-});
-
-const homeCenterAreaMockData = atom({ ...MAKE_DEFAULT_MOCK_DATA() });
-
-export function useMockDataForHomeCenterArea() {
-  const mockData = useAtomValue(homeCenterAreaMockData);
-
-  const prodData = useMemo(() => MAKE_DEFAULT_MOCK_DATA(), []);
+const devScreenRecordingModalVisibleAtom = atom(false);
+export function useDevScreenRecordingModalVisiable() {
+  const [devScreenRecordingModalVisible, setDevScreenRecordingModalVisible] =
+    useAtom(devScreenRecordingModalVisibleAtom);
 
   return {
-    mockData: isNonPublicProductionEnv ? mockData : prodData,
+    devScreenRecordingModalVisible,
+    setDevScreenRecordingModalVisible,
   };
 }
 
-function useMakeMockDataForHomeCenterArea() {
-  const { mockData } = useMockDataForHomeCenterArea();
-  const setMockData = useSetAtom(homeCenterAreaMockData);
-
-  return {
-    mockData,
-    setMockData,
-  };
-}
-
-const devUIHomeCenterAreaModalVisibleAtom = atom(false);
-export function useUIDevHomeCenterAreaModalVisiable() {
-  const [devUIHomeCenterAreaModalVisible, setDevUIHomeCenterAreaModalVisible] =
-    useAtom(devUIHomeCenterAreaModalVisibleAtom);
-
-  return {
-    devUIHomeCenterAreaModalVisible,
-    setDevUIHomeCenterAreaModalVisible,
-  };
-}
-
-export default function DevUIHomeCenterAreaModal({
+export default function DevScreenRecordingModal({
   onCancel,
 }: RNViewProps & {
   onCancel?(): void;
 }) {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { toggleShowSheetModal } = useSheetModals({
-    devUIHomeCenterAreaModal: modalRef,
+    devScreenRecordingModal: modalRef,
   });
 
-  const {
-    devUIHomeCenterAreaModalVisible,
-    setDevUIHomeCenterAreaModalVisible,
-  } = useUIDevHomeCenterAreaModalVisiable();
+  const { devScreenRecordingModalVisible, setDevScreenRecordingModalVisible } =
+    useDevScreenRecordingModalVisiable();
 
   useEffect(() => {
     toggleShowSheetModal(
-      'devUIHomeCenterAreaModal',
-      devUIHomeCenterAreaModalVisible || 'destroy',
+      'devScreenRecordingModal',
+      devScreenRecordingModalVisible || 'destroy',
     );
-  }, [devUIHomeCenterAreaModalVisible, toggleShowSheetModal]);
+  }, [devScreenRecordingModalVisible, toggleShowSheetModal]);
 
   const { styles, colors } = useThemeStyles(getStyles);
 
   const handleCancel = useCallback(() => {
-    setDevUIHomeCenterAreaModalVisible(false);
+    setDevScreenRecordingModalVisible(false);
     onCancel?.();
-  }, [setDevUIHomeCenterAreaModalVisible, onCancel]);
+  }, [setDevScreenRecordingModalVisible, onCancel]);
 
-  const { mockExposureRateGuide } = useMakeMockDataForRateGuideExposure();
-  const { mockData, setMockData } = useMakeMockDataForHomeCenterArea();
-  const { clearOfflineChainTips } = useMockClearOfflineChainTips();
-  const { mockResetViewedHomeTip } = useViewedHomeTip();
+  const {
+    forceAllowScreenshot,
+    showFeedbackOnScreenshotCapture,
+    onExpScreenCaptureChange,
+  } = useExpScreenCapture();
+  const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
 
   const Items = (() => {
     const list: DevTestItem[] = [
       {
-        label: '[Data] Clear Offchain',
-        icon: <RcCode style={styles.labelIcon} />,
-        // onPress: () => {
-        // },
-        rightNode(ctx) {
-          return (
-            <AppSwitch2024
-              value={mockData.forceShowOffchainNotify}
-              onValueChange={value =>
-                setMockData(prev => ({
-                  ...prev,
-                  forceShowOffchainNotify: value,
-                }))
-              }
-            />
-          );
+        label: forceAllowScreenshot
+          ? `Force Allow Capture`
+          : `Disallow Capture Sensitive Scene`,
+        icon: IS_IOS ? (
+          <RcScreenRecord style={styles.labelIcon} />
+        ) : (
+          <RcScreenshot style={styles.labelIcon} />
+        ),
+        rightNode: <SwitchAllowScreenshot ref={switchAllowScreenshotRef} />,
+        onPress: () => {
+          switchAllowScreenshotRef.current?.toggle();
         },
+        visible: isNonPublicProductionEnv,
       },
       {
-        label: '[Memory] Force FundWallet',
+        label: showFeedbackOnScreenshotCapture
+          ? 'Show Feedback On Captured'
+          : 'No Feedback On Captured',
         icon: <RcCode style={styles.labelIcon} />,
         // onPress: () => {
         // },
         rightNode(ctx) {
           return (
-            <AppSwitch2024
-              value={mockData.forceShowFundWallet}
+            <AppSwitch
+              circleSize={20}
+              backgroundActive={colors['green-default']}
+              circleBorderActiveColor={colors['green-default']}
+              value={showFeedbackOnScreenshotCapture}
               onValueChange={value => {
-                setMockData(prev => ({ ...prev, forceShowFundWallet: value }));
-                if (value) {
-                  clearOfflineChainTips();
-                }
+                onExpScreenCaptureChange({
+                  showFeedbackOnScreenshotCapture: value,
+                });
               }}
             />
           );
         },
       },
-      {
-        label: [`[Data] Exposure Rate Guide`].filter(Boolean).join(' '),
-        icon: <RcCode style={styles.labelIcon} />,
-        onPress: () => {
-          mockExposureRateGuide();
-        },
-      },
-      ...(!FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT
-        ? [
-            {
-              label: [`[Data] Reset Viewed Home Tip`].filter(Boolean).join(' '),
-              icon: <RcCode style={styles.labelIcon} />,
-              onPress: () => {
-                mockResetViewedHomeTip();
-              },
-            },
-          ]
-        : []),
-    ].filter(Boolean);
+    ];
 
     return list.filter(item => item.visible !== false);
   })();
@@ -179,7 +129,7 @@ export default function DevUIHomeCenterAreaModal({
             paddingBottom: safeSizes.containerPaddingBottom,
           },
         ]}>
-        <Text style={styles.title}>Mock Home Center Areas</Text>
+        <Text style={styles.title}>Screen Recording</Text>
         <View style={styles.mainContainer}>
           {Items.map((item, idx) => {
             const itemKey = `testitem-${item.label}`;
@@ -191,7 +141,7 @@ export default function DevUIHomeCenterAreaModal({
                 itemIndex={idx}
                 afterPress={async result => {
                   if (!result?.keepModalVisible)
-                    setDevUIHomeCenterAreaModalVisible(false);
+                    setDevScreenRecordingModalVisible(false);
                 }}
               />
             );

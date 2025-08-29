@@ -1692,7 +1692,12 @@
       "ContentGeneratedByAI": "このコンテンツはAIによって生成されました",
       "Introduction": "はじめに",
       "Fold": "フォールド",
-      "ShowMore": "もっと表示する"
+      "ShowMore": "もっと表示する",
+      "guideToMarketData": "市場データ：",
+      "Mybalance": "トークン残高",
+      "Transaction": "トークン履歴",
+      "balance": "残高",
+      "notSupported": "トークンはサポートされていません"
     },
     "customTestnet": {
       "add": "カスタムネットワークを追加",
@@ -2017,7 +2022,8 @@
         "searchInGoogle": "Google で \"{{searchText}}\" を検索",
         "openUrl": "オープン \"{{searchText}}\"",
         "recent": "最近",
-        "results": "結果"
+        "results": "結果",
+        "recentEmpty": "ウェブサイトを探索し始める"
       },
       "BrowserSearchEntry": {
         "openWebsites": "ウェブサイトを開く"
@@ -2284,7 +2290,8 @@
       "loginInTip": {
         "desc": "すべてのチェーンでガス費用を支払う",
         "title": "USDC / USDT を入金",
-        "login": "GasAccountにログイン"
+        "login": "GasAccountにログイン",
+        "loginAndClaim": "ログインして{{amount}}を受け取る"
       },
       "withdrawConfirmModal": {
         "title": "DeBank L2 Walletに転送されました。",

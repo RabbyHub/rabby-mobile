@@ -1780,7 +1780,12 @@
       "Introduction": "簡介",
       "Fold": "摺疊",
       "ContentGeneratedByAI": "此內容由 AI 產生",
-      "ShowMore": "顯示更多"
+      "ShowMore": "顯示更多",
+      "balance": "餘額",
+      "Transaction": "Token 历史",
+      "notSupported": "不支持的代币",
+      "Mybalance": "代幣餘額",
+      "guideToMarketData": "市場數據："
     },
     "customTestnet": {
       "add": "添加自定義網絡",
@@ -2081,7 +2086,8 @@
         "results": "結果",
         "recent": "最近",
         "openUrl": "打開 \"{{searchText}}\"",
-        "searchInGoogle": "在 Google 中搜尋 \"{{searchText}}\""
+        "searchInGoogle": "在 Google 中搜尋 \"{{searchText}}\"",
+        "recentEmpty": "開始探索網站"
       },
       "BrowserSearchEntry": {
         "openWebsites": "打開網站"
@@ -2302,7 +2308,8 @@
       "loginInTip": {
         "login": "登入 GasAccount",
         "title": "存款 USDC / USDT",
-        "desc": "支付所有鏈上的Gas費用"
+        "desc": "支付所有鏈上的Gas費用",
+        "loginAndClaim": "登錄並領取 {{amount}}"
       },
       "deposit": "充值",
       "withdrawConfirmModal": {

@@ -1700,7 +1700,12 @@
       "ContentGeneratedByAI": "Nội dung này được tạo bởi AI",
       "ShowMore": "Hiển thị thêm",
       "Introduction": "Giới thiệu",
-      "Fold": "Gập"
+      "Fold": "Gập",
+      "notSupported": "Token không hỗ trợ",
+      "balance": "Số dư",
+      "Mybalance": "Số dư Token",
+      "guideToMarketData": "Dữ liệu thị trường:",
+      "Transaction": "Lịch sử Token"
     },
     "backupPrivateKey": {
       "clickToShow": "Nhấn để hiển thị private key",
@@ -2024,7 +2029,8 @@
         "recent": "Gần đây",
         "openUrl": "Mở \"{{searchText}}\"",
         "placeholder": "Tìm kiếm Website",
-        "searchInGoogle": "Tìm \"{{searchText}}\" trên Google"
+        "searchInGoogle": "Tìm \"{{searchText}}\" trên Google",
+        "recentEmpty": "Bắt đầu Khám Phá Website"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Mở Trang Web"
@@ -2247,7 +2253,8 @@
       "loginInTip": {
         "title": "Gửi tiền USDC / USDT",
         "login": "Đăng nhập GasAccount",
-        "desc": "Thanh toán phí Gas trên tất cả các chuỗi"
+        "desc": "Thanh toán phí Gas trên tất cả các chuỗi",
+        "loginAndClaim": "Đăng nhập và Nhận {{amount}}"
       },
       "depositPopup": {
         "title": "Gửi tiền",

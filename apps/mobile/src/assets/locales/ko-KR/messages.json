@@ -1771,7 +1771,12 @@
       "Fold": "접히다",
       "ContentGeneratedByAI": "이 내용은 AI가 생성했습니다.",
       "ShowMore": "더보기",
-      "Introduction": "소개"
+      "Introduction": "소개",
+      "balance": "잔액",
+      "guideToMarketData": "시장 데이터:",
+      "notSupported": "토큰을 지원하지 않습니다",
+      "Mybalance": "토큰 잔액",
+      "Transaction": "토큰 히스토리"
     },
     "setting": {
       "screenTitle": "설정",
@@ -1965,7 +1970,8 @@
         "results": "결과",
         "openUrl": "\"{{searchText}}\" 열기",
         "searchInGoogle": "Google에서 \"{{searchText}}\" 검색하기",
-        "placeholder": "웹사이트 검색"
+        "placeholder": "웹사이트 검색",
+        "recentEmpty": "웹사이트 탐색 시작"
       },
       "BrowserSearchEntry": {
         "openWebsites": "웹사이트 열기"
@@ -2243,7 +2249,8 @@
       "loginInTip": {
         "login": "GasAccount 로그인",
         "desc": "모든 체인에서 Gas 수수료 지불하기",
-        "title": "USDC / USDT 예치"
+        "title": "USDC / USDT 예치",
+        "loginAndClaim": "로그인하고 {{amount}}를 청구하십시오."
       },
       "depositPopup": {
         "selectToken": "입금할 토큰 선택",
