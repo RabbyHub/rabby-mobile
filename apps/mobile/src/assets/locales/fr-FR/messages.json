@@ -432,6 +432,15 @@
         "insufficient": "Votre solde de gaz n'est pas suffisant pour couvrir les frais de gaz du réseau. Ajoutez des fonds pour le gaz et réessayez.",
         "gasExceedsBlockGasLimit": "Le gaz dépasse la limite de gaz du bloc. Veuillez ajuster et réessayer.",
         "gasPriceTooLow": "Le prix du gaz est trop bas. Nous allons l'ajuster de 30% pour aider votre transaction à être confirmée. Cliquez sur « Réessayer » pour confirmer et réessayer."
+      },
+      "addLiquidity": {
+        "receiver": "Receveur",
+        "priceDiff": "Diff de prix",
+        "poolPrice": "Prix du POOL",
+        "token0": "Ajouter le jeton 1",
+        "title": "Ajouter de la liquidité",
+        "marketPrice": "Prix du marché",
+        "token1": "Ajouter le jeton 2"
       }
     },
     "activities": {
@@ -1046,6 +1055,9 @@
         "descriptionAndroid": "Si vous aimez Rabby, une évaluation rapide sur Google Play signifierait beaucoup.",
         "feedbackTitle": "Avez-vous des retours ? Nous écoutez.",
         "descriptionIOS": "Si vous aimez Rabby, une évaluation rapide sur l'App Store signifierait beaucoup."
+      },
+      "homeCenterTipScreenshot": {
+        "description": "Prenez une capture d'écran à tout moment pour signaler rapidement un bug."
       }
     },
     "signText": {
@@ -1708,7 +1720,11 @@
       "balance": "Solde",
       "guideToMarketData": "Données de marché :",
       "notSupported": "Jeton non supporté",
-      "Transaction": "Historique des tokens"
+      "Transaction": "Historique des tokens",
+      "tabs": {
+        "tokenSecurity": "Sécurité des tokens",
+        "marketData": "Données de marché"
+      }
     },
     "rabbyPoints": {
       "earn-points": "Gagnez des Points",
@@ -1984,6 +2000,13 @@
       },
       "BrowserSearchEntry": {
         "openWebsites": "Ouvrir des sites Web"
+      },
+      "menu": {
+        "favorite": "Favori",
+        "contentModeDesktop": "Demander le site de bureau",
+        "contentModeMobile": "Demander le site mobile",
+        "disconnect": "Déconnexion",
+        "refresh": "Rafraîchir"
       }
     },
     "browserManage": {
@@ -2089,6 +2112,12 @@
       },
       "toast": {
         "remove": "Retiré de la liste de surveillance avec succès"
+      }
+    },
+    "universalLink": {
+      "error": {
+        "setupWalletFirst": "Veuillez d'abord terminer la configuration du wallet.",
+        "unlockWalletFirst": "Veuillez déverrouiller l'application pour ouvrir le lien."
       }
     }
   },
@@ -2229,7 +2258,13 @@
       "depositWithPay": "Acheter avec",
       "depositWithTokenDesc": "Pas de frais supplémentaires, retraits instantanés",
       "depositWithToken": "Dépôt avec Token",
-      "depositWithPayDesc": "30 % de frais, pas de retraits"
+      "depositWithPayDesc": "30 % de frais, pas de retraits",
+      "giftInfo": {
+        "noWithdrawableBalanceTitle": "{{amount}} Non-retirables",
+        "gotIt": "Je l'ai!",
+        "giftTips": "Récompense de Gas pour les utilisateurs actifs",
+        "noWithdrawableBalanceDescription": "{{amount}} de votre solde de gaz est non retiré :\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      }
     },
     "Contact": {
       "EditModal": {
@@ -2304,6 +2339,24 @@
       "serviceErrorText": "Erreur de service",
       "offlineText": "Erreur de réseau",
       "buttonText": "Rafraîchir"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "Décrivez le problème"
+      },
+      "submitButtonText": "Soumettre",
+      "title": "Capture d'écran pour signaler un bug",
+      "feedbackLabel": "Description du bug :"
+    },
+    "feedbackModal": {
+      "title": "Réponse du support Rabby",
+      "issueDescriptionLabel": "Description :",
+      "repliedTitle": "Le support de Rabby a répondu :",
+      "pendingTitle": "Le support de Rabby n'a pas répondu.",
+      "issueDescription": "Voici le problème que vous avez signalé :"
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "Soumis avec succès"
     }
   },
   "global": {
@@ -2348,7 +2401,36 @@
     "Addresses": "Adresses",
     "24h": "24h",
     "Edit": "Modifier",
-    "Wallets": "Sélectionner le portefeuille"
+    "Wallets": "Sélectionner le portefeuille",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "demandezMoiPlusTard"
+      },
+      "mediaLibrary": {
+        "title": "Permission de la bibliothèque multimédia",
+        "message": "Cette application a besoin d'accéder à votre bibliothèque multimédia pour détecter des captures d'écran."
+      },
+      "camera": {
+        "message": "Cette application a besoin d'accéder à votre caméra pour prendre des photos.",
+        "title": "Autorisation de la caméra"
+      },
+      "bluetoothScan": {
+        "title": "Permission de scan Bluetooth",
+        "message": "Cette application nécessite un accès à votre Bluetooth pour scanner les appareils."
+      },
+      "bluetoothConnect": {
+        "title": "Autorisation de connexion Bluetooth",
+        "message": "Cette application a besoin d'accéder à votre Bluetooth pour se connecter aux appareils."
+      },
+      "bluetoothAdmin": {
+        "title": "Permission d'administration Bluetooth",
+        "message": "Cette application a besoin d'accéder à votre Bluetooth pour gérer les appareils."
+      },
+      "location": {
+        "title": "Permission d'emplacement",
+        "message": "Cette application a besoin d'accéder à votre emplacement pour fournir des fonctionnalités basées sur la localisation."
+      }
+    }
   },
   "background": {
     "transactionWatcher": {
