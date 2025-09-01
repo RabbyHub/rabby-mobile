@@ -85,7 +85,7 @@ export function DevModalReactotron() {
             </View>
             <View style={styles.body}>
               <View style={styles.inputBlock}>
-                <Text style={styles.fieldTitle}>Metro Server</Text>
+                <Text style={styles.fieldTitle}>Server</Text>
                 <FormInput
                   containerStyle={{ borderRadius: 12 }}
                   inputProps={{

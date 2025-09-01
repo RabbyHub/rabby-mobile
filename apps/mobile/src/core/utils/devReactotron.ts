@@ -47,19 +47,24 @@ export function setupReactotronConnection() {
   const finalScriptHostname =
     REACTOTRON_HOSTNAME_ || persistedHostname || scriptHostname;
 
-  if (instanceRef.current) instanceRef.current.close();
+  if (instanceRef.current) {
+    instanceRef.current.close();
+    instanceRef.current = null;
+  }
 
-  instanceRef.current = Reactotron
-    // controls connection & communication settings
-    .configure({
-      name: 'Rabby Mobile',
-      host: finalScriptHostname,
-    })
-    // add all built-in react native plugins
-    .useReactNative({
-      asyncStorage: false, // there are more options to the async storage.
-    })
-    .connect(); // let's connect!
+  if (finalScriptHostname) {
+    instanceRef.current = Reactotron
+      // controls connection & communication settings
+      .configure({
+        name: 'Rabby Mobile',
+        host: finalScriptHostname,
+      })
+      // add all built-in react native plugins
+      .useReactNative({
+        asyncStorage: false, // there are more options to the async storage.
+      })
+      .connect(); // let's connect!
+  }
 
   return instanceRef.current;
 }
