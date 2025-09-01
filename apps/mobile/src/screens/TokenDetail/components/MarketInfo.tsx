@@ -4,6 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { Text, View } from 'react-native';
 import { formatNumber, formatPrice, formatUsdValue } from '@/utils/number';
+import { useTranslation } from 'react-i18next';
 
 const MarketInfo = ({
   price,
@@ -23,6 +24,7 @@ const MarketInfo = ({
   holders: string;
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   const currentIsLoss = price24hChange < 0;
   const percentChangeText = useMemo(() => {
     const changeValue = formatUsdValue(price24hChange * price);
@@ -51,29 +53,39 @@ const MarketInfo = ({
       </View>
       <View style={styles.infoContainer}>
         <View style={styles.infoItem}>
-          <Text style={styles.infoItemText}>Market Cap</Text>
+          <Text style={styles.infoItemText}>
+            {t('page.tokenDetail.marketInfo.marketCap')}
+          </Text>
           <Text style={styles.infoItemValue}>
             {marketCap ? formatNumber(marketCap) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>
-          <Text style={styles.infoItemText}>Total Supply</Text>
+          <Text style={styles.infoItemText}>
+            {t('page.tokenDetail.marketInfo.totalSupply')}
+          </Text>
           <Text style={styles.infoItemValue}>
             {totalSupply ? formatNumber(totalSupply) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>
-          <Text style={styles.infoItemText}>24h Volume</Text>
+          <Text style={styles.infoItemText}>
+            {t('page.tokenDetail.marketInfo.volume24h')}
+          </Text>
           <Text style={styles.infoItemValue}>
             {volume24h ? formatUsdValue(volume24h, undefined, true) : '-'}
           </Text>
         </View>
         <View style={styles.infoItem}>
-          <Text style={styles.infoItemText}>24h Txns</Text>
+          <Text style={styles.infoItemText}>
+            {t('page.tokenDetail.marketInfo.txns24h')}
+          </Text>
           <Text style={styles.infoItemValue}>{txns24h ? txns24h : '-'}</Text>
         </View>
         <View style={styles.infoItem}>
-          <Text style={styles.infoItemText}>Holders</Text>
+          <Text style={styles.infoItemText}>
+            {t('page.tokenDetail.marketInfo.holders')}
+          </Text>
           <Text style={styles.infoItemValue}>{holders ? holders : '-'}</Text>
         </View>
       </View>

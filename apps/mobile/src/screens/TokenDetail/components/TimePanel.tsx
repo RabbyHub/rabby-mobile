@@ -1,45 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 
 import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-
-const TIME_INTERVALS = [
-  {
-    label: '1M',
-    value: CandlePeriod.ONE_MINUTE,
-  },
-  {
-    label: '5M',
-    value: CandlePeriod.FIVE_MINUTES,
-  },
-  {
-    label: '15M',
-    value: CandlePeriod.FIFTEEN_MINUTES,
-  },
-  {
-    label: '30M',
-    value: CandlePeriod.THIRTY_MINUTES,
-  },
-  {
-    label: '1H',
-    value: CandlePeriod.ONE_HOUR,
-  },
-  {
-    label: '4H',
-    value: CandlePeriod.FOUR_HOURS,
-  },
-  {
-    label: '1D',
-    value: CandlePeriod.ONE_DAY,
-  },
-  {
-    label: '1W',
-    value: CandlePeriod.ONE_WEEK,
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   currentInterval: CandlePeriod;
@@ -47,7 +13,45 @@ interface Props {
 }
 const TimePanel = ({ currentInterval, onSelect }: Props) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
 
+  const TIME_INTERVALS = useMemo(
+    () => [
+      {
+        label: t('page.tokenDetail.interval.1M'),
+        value: CandlePeriod.ONE_MINUTE,
+      },
+      {
+        label: t('page.tokenDetail.interval.5M'),
+        value: CandlePeriod.FIVE_MINUTES,
+      },
+      {
+        label: t('page.tokenDetail.interval.15M'),
+        value: CandlePeriod.FIFTEEN_MINUTES,
+      },
+      {
+        label: t('page.tokenDetail.interval.30M'),
+        value: CandlePeriod.THIRTY_MINUTES,
+      },
+      {
+        label: t('page.tokenDetail.interval.1H'),
+        value: CandlePeriod.ONE_HOUR,
+      },
+      {
+        label: t('page.tokenDetail.interval.4H'),
+        value: CandlePeriod.FOUR_HOURS,
+      },
+      {
+        label: t('page.tokenDetail.interval.1D'),
+        value: CandlePeriod.ONE_DAY,
+      },
+      {
+        label: t('page.tokenDetail.interval.1W'),
+        value: CandlePeriod.ONE_WEEK,
+      },
+    ],
+    [t],
+  );
   return (
     <View style={styles.container}>
       {TIME_INTERVALS.map(item => (
