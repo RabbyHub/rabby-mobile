@@ -618,6 +618,15 @@
         "InvalidTx": "잘못된 거래입니다.",
         "insufficient": "귀하의 가스 잔액이 네트워크 가스 요금을 충당하기에 충분하지 않습니다. 가스를 위한 자금을 추가하고 다시 시도하세요.",
         "gasPriceTooLow": "가스 가격이 너무 낮습니다. 거래가 확인될 수 있도록 30% 조정하겠습니다. \"다시 시도\"를 클릭하여 확인하고 다시 시도하세요."
+      },
+      "addLiquidity": {
+        "poolPrice": "POOL 가격",
+        "receiver": "수신자",
+        "token1": "토큰 추가 2",
+        "marketPrice": "시장 가격",
+        "token0": "토큰 1 추가",
+        "priceDiff": "가격 차이",
+        "title": "유동성 추가"
       }
     },
     "swap": {
@@ -1037,6 +1046,9 @@
         "feedbackTitle": "피드백이 있나요? 우리는 듣고 있습니다.",
         "descriptionAndroid": "Rabby가 마음에 드시면 구글 플레이에서 빠른 평가를 남기는 것이 많은 도움이 됩니다.",
         "descriptionIOS": "Rabby가 마음에 드신다면, App Store에서 간단한 평가를 남겨주시면 큰 도움이 됩니다."
+      },
+      "homeCenterTipScreenshot": {
+        "description": "언제든지 스크린샷을 찍어 버그를 빠르게 신고하세요."
       }
     },
     "switchChain": {
@@ -1771,7 +1783,16 @@
       "Fold": "접히다",
       "ContentGeneratedByAI": "이 내용은 AI가 생성했습니다.",
       "ShowMore": "더보기",
-      "Introduction": "소개"
+      "Introduction": "소개",
+      "balance": "잔액",
+      "guideToMarketData": "시장 데이터:",
+      "notSupported": "토큰을 지원하지 않습니다",
+      "Mybalance": "토큰 잔액",
+      "Transaction": "토큰 히스토리",
+      "tabs": {
+        "marketData": "시장 데이터",
+        "tokenSecurity": "토큰 보안"
+      }
     },
     "setting": {
       "screenTitle": "설정",
@@ -1965,10 +1986,18 @@
         "results": "결과",
         "openUrl": "\"{{searchText}}\" 열기",
         "searchInGoogle": "Google에서 \"{{searchText}}\" 검색하기",
-        "placeholder": "웹사이트 검색"
+        "placeholder": "웹사이트 검색",
+        "recentEmpty": "웹사이트 탐색 시작"
       },
       "BrowserSearchEntry": {
         "openWebsites": "웹사이트 열기"
+      },
+      "menu": {
+        "refresh": "새로 고침",
+        "contentModeMobile": "모바일 사이트 요청",
+        "disconnect": "연결 해제",
+        "favorite": "즐겨찾기",
+        "contentModeDesktop": "데스크톱 사이트 요청"
       }
     },
     "browserManage": {
@@ -2075,6 +2104,12 @@
       "toast": {
         "remove": "관심목록에서 제거 성공"
       }
+    },
+    "universalLink": {
+      "error": {
+        "setupWalletFirst": "지갑 설정을 먼저 완료해 주세요.",
+        "unlockWalletFirst": "앱을 잠금 해제하여 링크를 열어주세요."
+      }
     }
   },
   "global": {
@@ -2119,7 +2154,36 @@
     "Addresses": "주소",
     "24h": "24시간",
     "Edit": "편집",
-    "Wallets": "지갑 선택"
+    "Wallets": "지갑 선택",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "나중에 물어봐"
+      },
+      "mediaLibrary": {
+        "title": "미디어 라이브러리 권한",
+        "message": "이 앱은 스크린샷을 감지하기 위해 귀하의 미디어 라이브러리에 접근해야 합니다."
+      },
+      "camera": {
+        "title": "카메라 권한",
+        "message": "이 앱은 사진을 찍기 위해 카메라 접근이 필요합니다."
+      },
+      "bluetoothScan": {
+        "message": "이 앱은 장치를 검색하기 위해 Bluetooth에 접근해야 합니다.",
+        "title": "블루투스 스캔 권한"
+      },
+      "bluetoothConnect": {
+        "message": "이 앱은 장치에 연결하기 위해 Bluetooth에 대한 접근이 필요합니다.",
+        "title": "블루투스 연결 권한"
+      },
+      "bluetoothAdmin": {
+        "title": "Bluetooth 관리 권한",
+        "message": "이 앱은 장치를 관리하기 위해 Bluetooth에 대한 액세스가 필요합니다."
+      },
+      "location": {
+        "title": "위치 권한",
+        "message": "이 앱은 위치 기반 기능을 제공하기 위해 귀하의 위치 접근이 필요합니다."
+      }
+    }
   },
   "native": {
     "biometrics": {
@@ -2243,7 +2307,8 @@
       "loginInTip": {
         "login": "GasAccount 로그인",
         "desc": "모든 체인에서 Gas 수수료 지불하기",
-        "title": "USDC / USDT 예치"
+        "title": "USDC / USDT 예치",
+        "loginAndClaim": "로그인하고 {{amount}}를 청구하십시오."
       },
       "depositPopup": {
         "selectToken": "입금할 토큰 선택",
@@ -2265,7 +2330,13 @@
       "depositWithPay": "구매하기",
       "depositWithPayDesc": "30% 수수료, 출금 불가",
       "depositWithTokenDesc": "추가 비용 없음, 즉시 출금",
-      "depositWithToken": "토큰으로 입금하기"
+      "depositWithToken": "토큰으로 입금하기",
+      "giftInfo": {
+        "gotIt": "알겠어요",
+        "giftTips": "활동 사용자에 대한 Gas 보상",
+        "noWithdrawableBalanceTitle": "{{amount}} 인출 불가능",
+        "noWithdrawableBalanceDescription": "{{amount}}의 가스 잔액 중 인출할 수 없는 부분은 다음과 같습니다:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      }
     },
     "NoLongerSupports": {
       "title": "모바일 지갑 주소는 더 이상 지원되지 않습니다.",
@@ -2312,6 +2383,24 @@
       "serviceErrorText": "서비스 오류",
       "offlineText": "네트워크 오류",
       "buttonText": "새로 고침"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "문제를 설명하세요"
+      },
+      "feedbackLabel": "버그 설명:",
+      "submitButtonText": "제출",
+      "title": "버그 신고를 위한 스냅샷"
+    },
+    "feedbackModal": {
+      "issueDescriptionLabel": "설명:",
+      "issueDescription": "여기 귀하가 신고한 문제가 있습니다:",
+      "repliedTitle": "Rabby 지원팀이 답변했습니다:",
+      "title": "Rabby 지원팀의 응답",
+      "pendingTitle": "Rabby Support가 회신하지 않았습니다."
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "성공적으로 제출되었습니다"
     }
   },
   "constant": {

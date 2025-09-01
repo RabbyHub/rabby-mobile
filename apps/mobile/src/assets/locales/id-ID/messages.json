@@ -413,6 +413,15 @@
         "InvalidTx": "Transaksi tidak valid.",
         "gasPriceTooLow": "Harga gas terlalu rendah. Kami akan menyesuaikannya sebesar 30% untuk membantu transaksi Anda dikonfirmasi. Klik “Retry” untuk mengonfirmasi dan mencoba lagi.",
         "alreadySubmitted": "Transaksi sudah diajukan. Transaksi duplikat terdeteksi."
+      },
+      "addLiquidity": {
+        "token0": "Tambah Token 1",
+        "priceDiff": "Harga Diff",
+        "marketPrice": "Harga Pasar",
+        "receiver": "Penerima",
+        "token1": "Tambahkan Token 2",
+        "title": "Tambahkan Likuiditas",
+        "poolPrice": "Harga Pool"
       }
     },
     "importSuccess": {
@@ -1101,6 +1110,9 @@
         "feedbackTitle": "Ada umpan balik? Kami mendengarkan.",
         "descriptionIOS": "Jika Anda menyukai Rabby, memberikan rating cepat di App Store akan sangat berarti.",
         "descriptionAndroid": "Jika Anda suka Rabby, penilaian cepat di Google Play akan sangat berarti."
+      },
+      "homeCenterTipScreenshot": {
+        "description": "Ambil tangkapan layar kapan saja untuk cepat melaporkan bug"
       }
     },
     "newAddress": {
@@ -1774,7 +1786,16 @@
       "ContentGeneratedByAI": "Konten ini dihasilkan oleh AI",
       "ShowMore": "Tampilkan lebih banyak",
       "Introduction": "Pendahuluan",
-      "Fold": "Fold"
+      "Fold": "Fold",
+      "Mybalance": "Saldo Token",
+      "guideToMarketData": "Data Pasar:",
+      "Transaction": "Riwayat Token",
+      "balance": "Saldo",
+      "notSupported": "Token tidak didukung",
+      "tabs": {
+        "marketData": "Data pasar",
+        "tokenSecurity": "Keamanan Token"
+      }
     },
     "approvalsAddressList": {
       "title": "Persetujuan"
@@ -1964,10 +1985,18 @@
         "recent": "Terbaru",
         "results": "Hasil",
         "searchInGoogle": "Cari \"{{searchText}}\" di Google",
-        "placeholder": "Cari Situs Web"
+        "placeholder": "Cari Situs Web",
+        "recentEmpty": "Mulai Menjelajahi Situs Web"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Buka Situs Web"
+      },
+      "menu": {
+        "contentModeDesktop": "Permintaan Situs Desktop",
+        "contentModeMobile": "Permintaan Situs Seluler",
+        "refresh": "Menyegarkan",
+        "disconnect": "Putuskan Sambungan",
+        "favorite": "Favorit"
       }
     },
     "browserManage": {
@@ -2074,6 +2103,12 @@
       "toast": {
         "remove": "Hapus dari Daftar Pantauan Berhasil"
       }
+    },
+    "universalLink": {
+      "error": {
+        "setupWalletFirst": "Silakan selesaikan pengaturan dompet terlebih dahulu.",
+        "unlockWalletFirst": "Silakan buka kunci aplikasi untuk membuka tautan tersebut."
+      }
     }
   },
   "component": {
@@ -2084,7 +2119,8 @@
       "loginInTip": {
         "title": "Setor USDC / USDT",
         "desc": "Bayar Biaya Gas di Semua Rantai",
-        "login": "Masuk GasAccount"
+        "login": "Masuk GasAccount",
+        "loginAndClaim": "Masuk dan Klaim {{amount}}"
       },
       "loginConfirmModal": {
         "title": "Pilih Dompet untuk Masuk",
@@ -2113,7 +2149,13 @@
       "depositWithToken": "Setor dengan Token",
       "depositWithPay": "Beli dengan",
       "depositWithPayDesc": "30% biaya, tidak ada penarikan",
-      "depositWithTokenDesc": "Tidak ada biaya tambahan, penarikan instan"
+      "depositWithTokenDesc": "Tidak ada biaya tambahan, penarikan instan",
+      "giftInfo": {
+        "gotIt": "Saya Dapatkannya",
+        "giftTips": "Hadiah Gas untuk pengguna aktif",
+        "noWithdrawableBalanceDescription": "{{amount}} dari saldo gas Anda tidak dapat ditarik:\n1. Apple Pay / Google Pay\n2. Gas Rewards",
+        "noWithdrawableBalanceTitle": "{{amount}} Tidak dapat ditarik"
+      }
     },
     "accountSwitcher": {
       "all": "Semua",
@@ -2252,6 +2294,24 @@
       "offlineText": "Kesalahan Jaringan",
       "serviceErrorText": "Kesalahan Layanan",
       "buttonText": "Segarkan"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "Jelaskan masalahnya"
+      },
+      "title": "Snapshot untuk Melaporkan Bug",
+      "feedbackLabel": "Deskripsi bug:",
+      "submitButtonText": "Kirim"
+    },
+    "feedbackModal": {
+      "issueDescription": "Ini adalah masalah yang Anda laporkan:",
+      "title": "Tanggapan dari Dukungan Rabby",
+      "issueDescriptionLabel": "Deskripsi:",
+      "pendingTitle": "Dukungan Rabby belum membalas.",
+      "repliedTitle": "Dukungan Rabby telah membalas:"
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "Dikirim dengan Sukses"
     }
   },
   "native": {
@@ -2311,7 +2371,36 @@
     "appDescription": "Dompet yang mengubah permainan untuk Ethereum dan semua rantai EVM",
     "24h": "24j",
     "Edit": "Sunting",
-    "Wallets": "Pilih Dompet"
+    "Wallets": "Pilih Dompet",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "tanyaSayaNanti"
+      },
+      "mediaLibrary": {
+        "title": "Izin Perpustakaan Media",
+        "message": "Aplikasi ini memerlukan akses ke perpustakaan media Anda untuk mendeteksi tangkapan layar."
+      },
+      "camera": {
+        "title": "Izin Kamera",
+        "message": "Aplikasi ini memerlukan akses ke kamera Anda untuk mengambil foto."
+      },
+      "bluetoothScan": {
+        "title": "Izin Pindai Bluetooth",
+        "message": "Aplikasi ini memerlukan akses ke Bluetooth Anda untuk memindai perangkat."
+      },
+      "bluetoothConnect": {
+        "message": "Aplikasi ini memerlukan akses ke Bluetooth Anda untuk terhubung ke perangkat.",
+        "title": "Izin Koneksi Bluetooth"
+      },
+      "bluetoothAdmin": {
+        "title": "Izin Admin Bluetooth",
+        "message": "Aplikasi ini memerlukan akses ke Bluetooth Anda untuk mengelola perangkat."
+      },
+      "location": {
+        "title": "Izin Lokasi",
+        "message": "Aplikasi ini memerlukan akses ke lokasi Anda untuk menyediakan fitur berbasis lokasi."
+      }
+    }
   },
   "background": {
     "error": {

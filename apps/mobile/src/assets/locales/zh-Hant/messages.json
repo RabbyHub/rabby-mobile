@@ -93,7 +93,36 @@
     "Addresses": "地址",
     "24h": "24小時",
     "Edit": "編輯",
-    "Wallets": "選擇錢包"
+    "Wallets": "選擇錢包",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "稍後再問我"
+      },
+      "mediaLibrary": {
+        "title": "媒體庫權限",
+        "message": "此應用需要訪問您的媒體庫以檢測截圖。"
+      },
+      "camera": {
+        "message": "此應用程式需要訪問您的相機以拍攝照片。",
+        "title": "相機權限"
+      },
+      "bluetoothScan": {
+        "message": "此應用程序需要訪問您的藍牙以掃描設備。",
+        "title": "藍牙掃描權限"
+      },
+      "bluetoothConnect": {
+        "message": "此應用需要訪問您的藍牙以連接設備。",
+        "title": "藍牙連接權限"
+      },
+      "bluetoothAdmin": {
+        "title": "藍牙管理權限",
+        "message": "此應用需要訪問您的藍牙以管理設備。"
+      },
+      "location": {
+        "title": "位置權限",
+        "message": "此應用需要訪問您的位置以提供基於位置的功能。"
+      }
+    }
   },
   "background": {
     "transactionWatcher": {
@@ -684,6 +713,15 @@
         "nonceTooLow": "Nonce 過低。我們將把它更新為 {{nonce}}。點擊“重試”以確認並再試一次。",
         "gasLimitTooLow": "Gas 限制過低",
         "gasPriceTooLow": "Gas 價格太低。我們將調整它 30% 以幫助您的交易確認。點擊「重試」以確認並再試一次。"
+      },
+      "addLiquidity": {
+        "marketPrice": "市場價格",
+        "poolPrice": "POOL 價格",
+        "title": "添加流动性",
+        "priceDiff": "價格差異",
+        "token1": "新增代幣 2",
+        "receiver": "接收者",
+        "token0": "添加 Token 1"
       }
     },
     "signTypedData": {
@@ -1197,6 +1235,9 @@
         "descriptionIOS": "如果你喜歡 Rabby，在 App Store 上快速評分將對我們非常重要。",
         "descriptionAndroid": "如果你喜歡 Rabby，在 Google Play 上的快速評分將非常重要。",
         "confirmButtonTitleAndroid": "在 Google Play 上评分"
+      },
+      "homeCenterTipScreenshot": {
+        "description": "隨時截圖以快速報告錯誤"
       }
     },
     "ethSign": {
@@ -1780,7 +1821,16 @@
       "Introduction": "簡介",
       "Fold": "摺疊",
       "ContentGeneratedByAI": "此內容由 AI 產生",
-      "ShowMore": "顯示更多"
+      "ShowMore": "顯示更多",
+      "balance": "餘額",
+      "Transaction": "Token 历史",
+      "notSupported": "不支持的代币",
+      "Mybalance": "代幣餘額",
+      "guideToMarketData": "市場數據：",
+      "tabs": {
+        "tokenSecurity": "代幣安全",
+        "marketData": "市場數據"
+      }
     },
     "customTestnet": {
       "add": "添加自定義網絡",
@@ -2081,10 +2131,18 @@
         "results": "結果",
         "recent": "最近",
         "openUrl": "打開 \"{{searchText}}\"",
-        "searchInGoogle": "在 Google 中搜尋 \"{{searchText}}\""
+        "searchInGoogle": "在 Google 中搜尋 \"{{searchText}}\"",
+        "recentEmpty": "開始探索網站"
       },
       "BrowserSearchEntry": {
         "openWebsites": "打開網站"
+      },
+      "menu": {
+        "contentModeMobile": "請求行動網站",
+        "contentModeDesktop": "請求桌面網站",
+        "refresh": "刷新",
+        "disconnect": "斷開連接",
+        "favorite": "最愛"
       }
     },
     "browserManage": {
@@ -2190,6 +2248,12 @@
       },
       "toast": {
         "remove": "從觀察名單中移除成功"
+      }
+    },
+    "universalLink": {
+      "error": {
+        "unlockWalletFirst": "請解鎖應用程式以打開連結。",
+        "setupWalletFirst": "請先完成錢包設置。"
       }
     }
   },
@@ -2302,7 +2366,8 @@
       "loginInTip": {
         "login": "登入 GasAccount",
         "title": "存款 USDC / USDT",
-        "desc": "支付所有鏈上的Gas費用"
+        "desc": "支付所有鏈上的Gas費用",
+        "loginAndClaim": "登錄並領取 {{amount}}"
       },
       "deposit": "充值",
       "withdrawConfirmModal": {
@@ -2318,7 +2383,13 @@
       "depositWithToken": "使用 Token 存款",
       "depositWithPay": "使用購買",
       "depositWithTokenDesc": "無額外費用，快速提現",
-      "depositWithPayDesc": "30% 費用，無法提現"
+      "depositWithPayDesc": "30% 費用，無法提現",
+      "giftInfo": {
+        "noWithdrawableBalanceTitle": "{{amount}} 無法提取",
+        "gotIt": "我搞定了",
+        "giftTips": "活躍用戶的 Gas 獎勵",
+        "noWithdrawableBalanceDescription": "{{amount}} 的 gas 余额不可提取：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      }
     },
     "TokenSelector": {
       "hot": "熱門",
@@ -2369,6 +2440,24 @@
       "buttonText": "刷新",
       "offlineText": "網絡錯誤",
       "serviceErrorText": "服務錯誤"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "描述問題"
+      },
+      "feedbackLabel": "錯誤描述：",
+      "title": "截圖以報告錯誤",
+      "submitButtonText": "提交"
+    },
+    "feedbackModal": {
+      "repliedTitle": "Rabby Support 已回复：",
+      "issueDescriptionLabel": "說明：",
+      "pendingTitle": "Rabby Support 尚未回复。",
+      "title": "來自 Rabby 支援的回覆",
+      "issueDescription": "這是您報告的問題："
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "提交成功"
     }
   },
   "common": {

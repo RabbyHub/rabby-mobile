@@ -8167,7 +8167,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/base-utils": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.9.23
+    "@rabby-wallet/rabby-api": "*"
     "@types/jest": ^27.4.1
     "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
@@ -8549,9 +8549,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.9.23":
-  version: 0.9.23
-  resolution: "@rabby-wallet/rabby-api@npm:0.9.23"
+"@rabby-wallet/rabby-api@npm:*, @rabby-wallet/rabby-api@npm:0.9.39":
+  version: 0.9.39
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.39"
   dependencies:
     "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
