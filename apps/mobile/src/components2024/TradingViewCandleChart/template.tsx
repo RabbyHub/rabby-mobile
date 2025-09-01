@@ -4,6 +4,8 @@ interface ChartColors {
   border: string;
   greenLineColor: string;
   redLineColor: string;
+  highPriceLineColor: string;
+  lowPriceLineColor: string;
   tooltip: {
     bg: string;
     title: string;
@@ -62,6 +64,8 @@ export const createTradingViewChartTemplate = (
         border: "${colors.border}", // border
         greenLineColor: "${colors.greenLineColor}", // greenLineColor
         redLineColor: "${colors.redLineColor}", // redLineColor
+        highPriceLineColor: "${colors.highPriceLineColor}", // highPriceLineColor
+        lowPriceLineColor: "${colors.lowPriceLineColor}", // lowPriceLineColor
         tooltip: {
           bg: "${colors.tooltip.bg}", // bg1 bg2
           title: "${colors.tooltip.title}", // body
@@ -319,12 +323,12 @@ export const createTradingViewChartTemplate = (
         window.candlestickSeries = window.chart.addSeries(
           window.LightweightCharts.CandlestickSeries,
           {
-            upColor: '#0ECB81',
-            downColor: '#F6465D',
-            borderDownColor: '#F6465D',
-            borderUpColor: '#0ECB81',
-            wickDownColor: '#F6465D',
-            wickUpColor: '#0ECB81',
+            upColor: window.colors.greenLineColor,
+            downColor: window.colors.redLineColor,
+            borderDownColor: window.colors.redLineColor,
+            borderUpColor: window.colors.greenLineColor,
+            wickDownColor: window.colors.redLineColor,
+            wickUpColor: window.colors.greenLineColor,
             lastValueVisible: true,
             priceLineVisible: true,
             priceLineSource: 0,
@@ -453,7 +457,7 @@ export const createTradingViewChartTemplate = (
         if (extremes.highest) {
           window.hightPrice = window.candlestickSeries.createPriceLine({
             price: extremes.highest,
-            color: 'white',
+            color: window.colors.highPriceLineColor,
             lineWidth: 1,
             lineStyle: 4, // LineStyle.Solid
             axisLabelVisible: true,
@@ -465,7 +469,7 @@ export const createTradingViewChartTemplate = (
         if (extremes.lowest) {
           window.lowPrice = window.candlestickSeries.createPriceLine({
             price: extremes.lowest,
-            color: 'white',
+            color: window.colors.lowPriceLineColor,
             lineWidth: 1,
             lineStyle: 4, // LineStyle.Solid
             axisLabelVisible: true,
@@ -620,7 +624,7 @@ export const createTradingViewChartTemplate = (
           ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
-          (isPositive ? '#0ECB81' : '#F6465D') +
+          (isPositive ? window.colors.greenLineColor : window.colors.redLineColor) +
           '; font-size: 10px; font-weight: 600;">' +
           (isPositive ? '+' : '') +
           (window.utils?.formatPrice || defaultFormat)(change) +
@@ -697,7 +701,7 @@ export const createTradingViewChartTemplate = (
                       message.data.map((item) => ({
                         time: item.time,
                         value: item.volume,
-                        color: item.close >= item.open ? '#0ECB81' : '#F6465D',
+                        color: item.close >= item.open ? window.colors.greenLineColor : window.colors.redLineColor,
                       }))
                     );
                     window.candlestickSeries
