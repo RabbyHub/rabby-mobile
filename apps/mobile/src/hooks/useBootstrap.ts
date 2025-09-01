@@ -1,6 +1,10 @@
 import * as React from 'react';
 import { atom, useAtom } from 'jotai';
-import { customTestnetService, keyringService } from '@/core/services';
+import {
+  customTestnetService,
+  keyringService,
+  perpsService,
+} from '@/core/services';
 import { initApis } from '@/core/apis/init';
 import { initServices } from '@/core/services/init';
 import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
@@ -87,6 +91,7 @@ export function useInitializeAppOnTop() {
 
       doInitializeApis();
       fetchAccounts();
+      perpsService.unlockAgentWallets();
     };
     const onLock = () => {
       setAppLock(prev => ({ ...prev, appUnlocked: false }));

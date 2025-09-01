@@ -1,14 +1,12 @@
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
-import createPersistStore, {
-  StoreServiceBase,
-} from '@rabby-wallet/persist-store';
+import createPersistStore from '@rabby-wallet/persist-store';
 import { APP_STORE_NAMES } from '../storage/storeConstant';
 
 import { bytesToHex, publicToAddress } from '@ethereumjs/util';
 import { SendApproveParams } from '@rabby-wallet/hyperliquid-sdk';
 import { getRandomBytesSync } from 'ethereum-cryptography/random.js';
 import { secp256k1 } from 'ethereum-cryptography/secp256k1.js';
-import KeyringService from '@rabby-wallet/service-keyring';
+import { keyringService } from '@/core/services';
 import { Account } from './preference';
 
 export interface AgentWalletInfo {
@@ -19,11 +17,18 @@ export interface AgentWalletInfo {
   };
 }
 
+interface StoreAccount {
+  address: string;
+  type: string;
+  brandName: string;
+  aliasName?: string;
+}
+
 export type ApproveSignatures = (SendApproveParams & {
   type: 'approveAgent' | 'approveBuilderFee';
 })[];
 
-export type PerpsServiceStore = {
+export interface PerpsServiceStore {
   agentVaults: string; // encrypted JSON string of {[address: string]: string}
   agentPreferences: {
     [address: string]: {
@@ -31,28 +36,26 @@ export type PerpsServiceStore = {
       approveSignatures: ApproveSignatures;
     };
   };
-  currentAccount: Account | null;
-  lastUsedAccount: Account | null;
+  currentAccount: StoreAccount | null;
+  lastUsedAccount: StoreAccount | null;
   hasDoneNewUserProcess: boolean;
-};
+}
 export interface PerpsServiceMemoryState {
   agentWallets: {
     // key is master wallet address
     [address: string]: AgentWalletInfo;
   };
+  unlockPromise: Promise<void> | null;
 }
 
 export class PerpsService {
-  keyringService: KeyringService;
-  store!: PerpsServiceStore;
-  memoryState: PerpsServiceMemoryState = {
+  private store?: PerpsServiceStore;
+  private memoryState: PerpsServiceMemoryState = {
     agentWallets: {},
+    unlockPromise: null,
   };
-  constructor(
-    options: StorageAdapaterOptions & {
-      keyringService: KeyringService;
-    },
-  ) {
+
+  constructor(options: StorageAdapaterOptions) {
     this.store = createPersistStore<PerpsServiceStore>(
       {
         name: APP_STORE_NAMES.perps,
@@ -67,18 +70,9 @@ export class PerpsService {
       },
       {
         storage: options?.storageAdapter,
-        //  beforePersist(obj) {
-        //    if (!obj) {
-        //      const msg = `[preferenceService] preference set as nil value (${obj}), it's unexpected`;
-        //      if (__DEV__) console.error(msg);
-        //      Sentry.captureException(new Error(msg));
-        //    }
-        //  },
       },
     );
     this.memoryState.agentWallets = {};
-    // this.memoryState.currentAddress = this.store.currentAddress || '';
-    this.keyringService = options.keyringService;
   }
 
   setHasDoneNewUserProcess = async (hasDone: boolean) => {
@@ -144,34 +138,40 @@ export class PerpsService {
   };
 
   unlockAgentWallets = async () => {
-    if (!this.store) {
-      throw new Error('PerpsService not initialized');
-    }
+    const unlock = async () => {
+      if (!this.store) {
+        throw new Error('PerpsService not initialized');
+      }
+      // Decrypt and load agent vaults
+      if (this.store.agentVaults) {
+        const vaultsMap: {
+          [address: string]: string;
+        } = await keyringService.decryptWithPassword(this.store.agentVaults);
 
-    // Decrypt and load agent vaults
-    if (this.store.agentVaults) {
-      // const vaultsMap: {
-      //   [address: string]: string;
-      // } = await keyringService.decryptWithPassword(
-      //   this.store.agentVaults,
-      //   true,
-      //   'perps',
-      // );
-      // // Format data for memory state
-      // for (const masterAddress in vaultsMap) {
-      //   const privateKey = vaultsMap[masterAddress];
-      //   const preference = this.store.agentPreferences[masterAddress] || {
-      //     agentAddress: '',
-      //   };
-      //   this.memoryState.agentWallets[masterAddress] = {
-      //     vault: privateKey,
-      //     preference: {
-      //       ...preference,
-      //       approveSignatures: preference.approveSignatures || [],
-      //     },
-      //   };
-      // }
-    }
+        // Format data for memory state
+        for (const masterAddress in vaultsMap) {
+          const privateKey = vaultsMap[masterAddress];
+          const preference = this.store.agentPreferences[masterAddress] || {
+            agentAddress: '',
+          };
+          this.memoryState.agentWallets[masterAddress] = {
+            vault: privateKey,
+            preference: {
+              ...preference,
+              approveSignatures: preference.approveSignatures || [],
+            },
+          };
+        }
+      }
+    };
+    this.memoryState.unlockPromise = unlock();
+    /**
+     *  unlock 是一个耗时比较长的任务，所以如果在解锁时立即尝试获取 agentWallet 可能会碰到解锁没有完成的情况
+     *  所以这里把 promise 放到内存里，如果有立即读取的需求需要先读一下 promise 的状态
+     * */
+    this.memoryState.unlockPromise.finally(() => {
+      this.memoryState.unlockPromise = null;
+    });
   };
 
   createAgentWallet = async (masterAddress: string) => {
@@ -211,35 +211,32 @@ export class PerpsService {
 
     let vaultsMap: { [address: string]: string } = {};
     if (this.store.agentVaults) {
-      // vaultsMap = await keyringService.decryptWithPassword(
-      //   this.store.agentVaults,
-      //   true,
-      //   'perps',
-      // );
+      vaultsMap = await keyringService.decryptWithPassword(
+        this.store.agentVaults,
+      );
     }
 
     vaultsMap[normalizedAddress] = vault;
 
-    // const encryptedVaults = await keyringService.encryptWithPassword(
-    //   vaultsMap,
-    //   true,
-    //   'perps',
-    // );
+    const encryptedVaults = await keyringService.encryptWithPassword(vaultsMap);
 
-    // // Update store
-    // this.store.agentVaults = encryptedVaults;
-    // this.store.agentPreferences = {
-    //   ...this.store.agentPreferences,
-    //   [normalizedAddress]: {
-    //     agentAddress: preference.agentAddress,
-    //     approveSignatures: preference.approveSignatures,
-    //   },
-    // };
+    // Update store
+    this.store.agentVaults = encryptedVaults;
+    this.store.agentPreferences = {
+      ...this.store.agentPreferences,
+      [normalizedAddress]: {
+        agentAddress: preference.agentAddress,
+        approveSignatures: preference.approveSignatures,
+      },
+    };
   };
 
   getAgentWallet = async (address: string) => {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
+    }
+    if (this.memoryState.unlockPromise) {
+      await this.memoryState.unlockPromise;
     }
 
     const normalizedAddress = address.toLowerCase();
@@ -279,9 +276,21 @@ export class PerpsService {
     if (!this.store) {
       throw new Error('PerpsService not initialized');
     }
-    this.store.currentAccount = account;
     if (account) {
-      this.store.lastUsedAccount = account;
+      this.store.lastUsedAccount = {
+        address: account?.address,
+        type: account?.type,
+        aliasName: account?.aliasName,
+        brandName: account?.brandName,
+      };
+      this.store.currentAccount = {
+        address: account.address,
+        type: account.type,
+        aliasName: account.aliasName,
+        brandName: account.brandName,
+      };
+    } else {
+      this.store.currentAccount = null;
     }
   };
 
@@ -308,22 +317,16 @@ export class PerpsService {
 
     let vaultsMap: { [address: string]: string } = {};
     if (this.store.agentVaults) {
-      // vaultsMap = await keyringService.decryptWithPassword(
-      //   this.store.agentVaults,
-      //   true,
-      //   'perps',
-      // );
+      vaultsMap = await keyringService.decryptWithPassword(
+        this.store.agentVaults,
+      );
     }
 
     delete vaultsMap[normalizedAddress];
 
-    // const encryptedVaults = await keyringService.encryptWithPassword(
-    //   vaultsMap,
-    //   true,
-    //   'perps',
-    // );
+    const encryptedVaults = await keyringService.encryptWithPassword(vaultsMap);
 
-    // this.store.agentVaults = encryptedVaults;
+    this.store.agentVaults = encryptedVaults;
     const updatedPreferences = { ...this.store.agentPreferences };
     delete updatedPreferences[normalizedAddress];
     this.store.agentPreferences = updatedPreferences;

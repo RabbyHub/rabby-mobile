@@ -223,7 +223,6 @@ export const syncChainService = new SyncChainService({
 
 export const perpsService = new PerpsService({
   storageAdapter: appStorage,
-  keyringService,
 });
 
 migrateServices({
