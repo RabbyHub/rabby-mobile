@@ -45,7 +45,7 @@ import { IssuerAndListSite } from './components/IssuerAndListSite';
 import RcIconWarningCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { isFromBackAtom } from '../Swap/hooks/atom';
 import {
   fetchTokenPriceData,
@@ -64,6 +64,12 @@ import TradingViewCandleChart, {
 } from '@/components2024/TradingViewCandleChart';
 import TimePanel from './components/TimePanel';
 import MarketInfo from './components/MarketInfo';
+import { atomByMMKV } from '@/core/storage/mmkv';
+
+const currentIntervalAtom = atomByMMKV<CandlePeriod>(
+  '@tokenDetail.currentInterval',
+  CandlePeriod.ONE_MINUTE,
+);
 
 const isAndroid = Platform.OS === 'android';
 
@@ -611,9 +617,7 @@ export const TokenMarketInfoScreen = () => {
 
   const tokenPriceChartRef = React.useRef<TokenChartRef>(null);
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
-  const [currentInterval, setCurrentInterval] = useState(
-    CandlePeriod.ONE_MINUTE,
-  );
+  const [currentInterval, setCurrentInterval] = useAtom(currentIntervalAtom);
 
   const [loading, setLoading] = useState(true);
   const handleRefresh = useCallback(() => {
@@ -640,7 +644,7 @@ export const TokenMarketInfoScreen = () => {
         chartWebViewRef.current?.setData(res);
       });
     },
-    [token._tokenId, token.chain],
+    [setCurrentInterval, token._tokenId, token.chain],
   );
 
   if (isSingleAddress && !finalAccount) {
