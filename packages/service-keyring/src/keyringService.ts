@@ -28,6 +28,7 @@ import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
 import { mergeVault } from './utils/mergeVault';
+import { passwordDecrypt, passwordEncrypt } from './utils/password';
 
 const UNENCRYPTED_IGNORE_KEYRING = [
   KEYRING_TYPE.SimpleKeyring,
@@ -1314,33 +1315,27 @@ export class KeyringService extends RNEventEmitter {
     return addedAccounts;
   }
 
-  // async encryptWithPassword(
-  //   content: any,
-  //   persisted?: boolean,
-  //   persistType?: PersistType,
-  // ) {
-  //   const encrypted = await passwordEncrypt({
-  //     data: content,
-  //     password: this.#password,
-  //     persisted,
-  //     persistType,
-  //   });
-  //   return encrypted;
-  // }
+  async encryptWithPassword(content: any) {
+    if (!this.#password) {
+      throw new Error('password can not be null');
+    }
+    const encrypted = await passwordEncrypt({
+      data: content,
+      password: this.#password,
+    });
+    return encrypted;
+  }
 
-  // async decryptWithPassword(
-  //   str: string,
-  //   persisted?: boolean,
-  //   persistType?: PersistType,
-  // ) {
-  //   const decrypted = await passwordDecrypt({
-  //     encryptedData: str,
-  //     password: this.#password,
-  //     persisted,
-  //     persistType,
-  //   });
-  //   return decrypted;
-  // }
+  async decryptWithPassword(str: string) {
+    if (!this.#password) {
+      throw new Error('password can not be null');
+    }
+    const decrypted = await passwordDecrypt({
+      encryptedData: str,
+      password: this.#password,
+    });
+    return decrypted;
+  }
 }
 
 /* eslint-enable jsdoc/check-tag-names */
