@@ -6,10 +6,16 @@ import {
 import { sendRequest } from '@/core/apis/sendRequest';
 import { Account } from '@/core/services/preference';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { useAuth } from '@/hooks/useAuth';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
+import { isAccountSupportDirectSign } from '@/utils/account';
+import { sleep } from '@/utils/async';
 import { findChain } from '@/utils/chain';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useInterval, useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
+import { useAtom } from 'jotai';
 import { useState } from 'react';
 import abiCoderInst, { AbiCoder } from 'web3-eth-abi';
 const abiCoder = abiCoderInst as unknown as AbiCoder;
@@ -26,6 +32,15 @@ export const usePerpsDeposit = ({
   } = usePerpsStore();
   const [miniSignTx, setMiniSignTx] = useState<Tx | null>(null);
   const [cacheAmount, setCacheAmount] = useState<number>(0);
+
+  const {
+    sendMiniTransactions,
+    prepareMiniTransactions,
+    sendPrepareMiniTransactions,
+  } = useMiniApproval();
+  const runAuth = useAuth();
+  const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
+
   const updateMiniSignTx = useMemoizedFn((amount: number) => {
     const token = ARB_USDC_TOKEN_ITEM;
     const to = PERPS_SEND_ARB_USDC_ADDRESS;
@@ -118,23 +133,57 @@ export const usePerpsDeposit = ({
     if (!currentPerpsAccount) {
       return;
     }
+    const currentTxs = [buildTx(amount) as Tx];
 
-    const tx = await sendRequest({
-      data: {
-        method: 'eth_sendTransaction',
-        params: [buildTx(amount)],
-        $ctx: {
+    const handleFullback = async () => {
+      await sendRequest({
+        data: {
+          method: 'eth_sendTransaction',
+          params: currentTxs,
+          $ctx: {
+            ga: {
+              category: 'Perps',
+              source: 'Perps',
+              trigger: 'Perps',
+            },
+          },
+        },
+        session: INTERNAL_REQUEST_SESSION,
+        account: currentPerpsAccount,
+      });
+    };
+
+    if (isAccountSupportDirectSign(currentPerpsAccount.type)) {
+      if (isDirectSigning) {
+        return;
+      }
+      try {
+        await runAuth();
+        prepareMiniTransactions({
+          txs: currentTxs || [],
           ga: {
             category: 'Perps',
             source: 'Perps',
             trigger: 'Perps',
           },
-        },
-      },
-      session: INTERNAL_REQUEST_SESSION,
-      account: currentPerpsAccount,
-    });
-    console.log('fallback res tx', tx);
+          directSubmit: true,
+          account: currentPerpsAccount!,
+        });
+        setDirectSigning(true);
+        await sleep(500);
+        await sendPrepareMiniTransactions({
+          directSubmit: true,
+        });
+      } catch (e) {
+        setDirectSigning(false);
+        console.error(e);
+        // handleFullback();
+      }
+    } else {
+      handleFullback();
+    }
+
+    // console.log('fallback res tx', tx);
   });
 
   useInterval(

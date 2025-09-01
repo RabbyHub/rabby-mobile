@@ -77,7 +77,7 @@ export const PerpsScreen = () => {
     }
   });
 
-  const { handleDeposit } = usePerpsDeposit({
+  const { handleDeposit, updateMiniSignTx } = usePerpsDeposit({
     currentPerpsAccount,
   });
 
