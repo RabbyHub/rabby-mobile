@@ -13,6 +13,7 @@ import { WebView } from 'react-native-webview';
 import { createTradingViewChartTemplate } from './template';
 import { CandleData, CandleStick } from './type';
 import { openExternalUrl } from '@/core/utils/linking';
+import { useTranslation } from 'react-i18next';
 
 interface ChartProps {
   height: number;
@@ -109,6 +110,7 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
     const { styles, colors2024, isLight } = useTheme2024({ getStyle });
     const [webViewError, setWebViewError] = useState<string | null>(null);
     const [isChartReady, setIsChartReady] = useState(false);
+    const { t } = useTranslation();
 
     // Handle WebView errors
     const handleWebViewError = useCallback(
@@ -221,23 +223,39 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
 
     const htmlContent = useMemo(
       () =>
-        createTradingViewChartTemplate({
-          background: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
-          text: colors2024['neutral-title-1'],
-          border: colors2024['neutral-bg-5'],
-          greenLineColor: 'rgba(42, 187, 127, 1)',
-          redLineColor: 'rgba(227, 73, 53, 1)',
-          tooltip: {
-            bg: isLight
-              ? colors2024['neutral-bg-1']
-              : colors2024['neutral-bg-2'],
-            title: colors2024['neutral-body'],
-            value: colors2024['neutral-title-1'],
+        createTradingViewChartTemplate(
+          {
+            background: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+            text: colors2024['neutral-title-1'],
+            border: colors2024['neutral-bg-5'],
+            greenLineColor: 'rgba(42, 187, 127, 1)',
+            redLineColor: 'rgba(227, 73, 53, 1)',
+            tooltip: {
+              bg: isLight
+                ? colors2024['neutral-bg-1']
+                : colors2024['neutral-bg-2'],
+              title: colors2024['neutral-body'],
+              value: colors2024['neutral-title-1'],
+            },
           },
-        }),
-      [colors2024, isLight],
+          {
+            tp: t('component.kline.tp'),
+            entry: t('component.kline.entry'),
+            sl: t('component.kline.sl'),
+            liq: t('component.kline.liq'),
+            high: t('component.kline.high'),
+            low: t('component.kline.low'),
+
+            time: t('component.kline.time'),
+            open: t('component.kline.open'),
+            close: t('component.kline.close'),
+            chg: t('component.kline.chg'),
+            volume: t('component.kline.volume'),
+          },
+        ),
+      [colors2024, isLight, t],
     );
 
     if (webViewError) {

@@ -2306,6 +2306,19 @@
     },
     "submitFeedbackSuccessModal": {
       "desc": "Submitted Successfully"
+    },
+    "kline": {
+      "tp": "TP",
+      "entry": "Entry",
+      "sl": "SL",
+      "liq": "LIQ",
+      "high": "High",
+      "low": "Low",
+      "time": "Time",
+      "open": "Open",
+      "close": "Close",
+      "chg": "%Chg",
+      "volume": "Volume"
     }
   },
   "native": {

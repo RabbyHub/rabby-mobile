@@ -37,6 +37,22 @@
           value: 'rgba(25, 41, 69, 1)', // title1
         },
       };
+      window.description = {
+        tp: 'TP',
+        entry: 'Entry',
+        sl: 'SL',
+        liq: 'LIQ',
+        high: 'High',
+        low: 'Low',
+
+        time: 'Time',
+        open: 'Open',
+        high: 'High',
+        low: 'Low',
+        close: 'Close',
+        chg: '%Chg',
+        volume: 'Volume',
+      };
 
       // 计算当前可见范围的最高最低价格
       const calculateVisibleExtremes = (data, from, to) => {
@@ -331,7 +347,7 @@
             lineWidth: 1,
             lineStyle: 2, // Dashed
             axisLabelVisible: true,
-            title: 'TP',
+            title: window.description.tp,
           });
           window.priceLineContainers.tp = tpLine;
         }
@@ -344,7 +360,7 @@
             lineWidth: 1,
             lineStyle: 2, // Dashed
             axisLabelVisible: true,
-            title: 'Entry',
+            title: window.description.entry,
           });
           window.priceLineContainers.entry = entryLine;
         }
@@ -357,7 +373,7 @@
             lineWidth: 1,
             lineStyle: 2, // Dashed
             axisLabelVisible: true,
-            title: 'SL',
+            title: window.description.sl,
           });
           window.priceLineContainers.sl = slLine;
         }
@@ -370,7 +386,7 @@
             lineWidth: 1,
             lineStyle: 2, // Dashed
             axisLabelVisible: true,
-            title: 'LIQ',
+            title: window.description.liq,
           });
           window.priceLineContainers.liquidation = liquidationLine;
         }
@@ -413,7 +429,7 @@
             lineWidth: 1,
             lineStyle: 4, // LineStyle.Solid
             axisLabelVisible: true,
-            title: 'High',
+            title: window.description.high,
           });
         }
 
@@ -425,7 +441,7 @@
             lineWidth: 1,
             lineStyle: 4, // LineStyle.Solid
             axisLabelVisible: true,
-            title: 'Low',
+            title: window.description.low,
           });
         }
       };
@@ -496,7 +512,9 @@
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">Time:</span>';
+          '; font-size: 10px;">' +
+          window.description.time +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.value +
@@ -509,7 +527,9 @@
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">Open:</span>';
+          '; font-size: 10px;">' +
+          window.description.open +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.value +
@@ -522,7 +542,9 @@
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">High:</span>';
+          '; font-size: 10px;">' +
+          window.description.high +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.value +
@@ -535,7 +557,9 @@
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">Low:</span>';
+          '; font-size: 10px;">' +
+          window.description.low +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.value +
@@ -548,7 +572,9 @@
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">Close:</span>';
+          '; font-size: 10px;">' +
+          window.description.close +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.value +
@@ -561,7 +587,9 @@
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">%Chg:</span>';
+          '; font-size: 10px;">' +
+          window.description.chg +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           (isPositive ? '#0ECB81' : '#F6465D') +
@@ -580,7 +608,9 @@
           tooltipHTML +=
             '<span style="color: ' +
             window.colors.tooltip.title +
-            '; font-size: 10px;">Volume:</span>';
+            '; font-size: 10px;">' +
+            window.description.volume +
+            ':</span>';
           tooltipHTML +=
             '<span style="color: ' +
             window.colors.tooltip.value +

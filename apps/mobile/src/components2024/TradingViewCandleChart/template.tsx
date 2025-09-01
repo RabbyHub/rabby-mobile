@@ -11,8 +11,22 @@ interface ChartColors {
   };
 }
 
+export interface ChartDescription {
+  tp: string;
+  entry: string;
+  sl: string;
+  liq: string;
+  high: string;
+  low: string;
+  time: string;
+  open: string;
+  close: string;
+  chg: string;
+  volume: string;
+}
 export const createTradingViewChartTemplate = (
   colors: ChartColors,
+  description: ChartDescription,
 ): string => `<!DOCTYPE html>
 <html>
   <head>
@@ -54,6 +68,19 @@ export const createTradingViewChartTemplate = (
           value: "${colors.tooltip.value}", // title1
         },
       };
+      window.description = {
+        tp: '${description.tp}',
+        entry: '${description.entry}',
+        sl: '${description.sl}',
+        liq: '${description.liq}',
+        high: '${description.high}',
+        low: '${description.low}',
+        time: '${description.time}',
+        open: '${description.open}',
+        close: '${description.close}',
+        chg: '${description.chg}',
+        volume: '${description.volume}',
+      }
 
       // 计算当前可见范围的最高最低价格
       const calculateVisibleExtremes = (data, from, to) => {
@@ -348,7 +375,7 @@ export const createTradingViewChartTemplate = (
             lineWidth: 1,
             lineStyle: 2, // Dashed
             axisLabelVisible: true,
-            title: 'TP',
+            title: window.description.tp,
           });
           window.priceLineContainers.tp = tpLine;
         }
@@ -361,7 +388,7 @@ export const createTradingViewChartTemplate = (
             lineWidth: 1,
             lineStyle: 2, // Dashed
             axisLabelVisible: true,
-            title: 'Entry',
+            title: window.description.entry,
           });
           window.priceLineContainers.entry = entryLine;
         }
@@ -374,7 +401,7 @@ export const createTradingViewChartTemplate = (
             lineWidth: 1,
             lineStyle: 2, // Dashed
             axisLabelVisible: true,
-            title: 'SL',
+            title: window.description.sl,
           });
           window.priceLineContainers.sl = slLine;
         }
@@ -387,7 +414,7 @@ export const createTradingViewChartTemplate = (
             lineWidth: 1,
             lineStyle: 2, // Dashed
             axisLabelVisible: true,
-            title: 'LIQ',
+            title: window.description.liq,
           });
           window.priceLineContainers.liquidation = liquidationLine;
         }
@@ -400,9 +427,8 @@ export const createTradingViewChartTemplate = (
         const visibleRange = window.chart.timeScale().getVisibleLogicalRange();
         if (!visibleRange) return;
 
-        const barsInfo = window.candlestickSeries.barsInLogicalRange(
-          visibleRange
-        );
+        const barsInfo =
+          window.candlestickSeries.barsInLogicalRange(visibleRange);
         const data = window.candlestickSeries.data();
 
         if (!barsInfo || data.length === 0) return;
@@ -431,7 +457,7 @@ export const createTradingViewChartTemplate = (
             lineWidth: 1,
             lineStyle: 4, // LineStyle.Solid
             axisLabelVisible: true,
-            title: 'High',
+            title: window.description.high,
           });
         }
 
@@ -443,7 +469,7 @@ export const createTradingViewChartTemplate = (
             lineWidth: 1,
             lineStyle: 4, // LineStyle.Solid
             axisLabelVisible: true,
-            title: 'Low',
+            title: window.description.low,
           });
         }
       };
@@ -514,7 +540,9 @@ export const createTradingViewChartTemplate = (
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">Time:</span>';
+          '; font-size: 10px;">' +
+          window.description.time +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.value +
@@ -527,7 +555,9 @@ export const createTradingViewChartTemplate = (
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">Open:</span>';
+          '; font-size: 10px;">' +
+          window.description.open +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.value +
@@ -540,7 +570,9 @@ export const createTradingViewChartTemplate = (
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">High:</span>';
+          '; font-size: 10px;">' +
+          window.description.high +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.value +
@@ -553,7 +585,9 @@ export const createTradingViewChartTemplate = (
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">Low:</span>';
+          '; font-size: 10px;">' +
+          window.description.low +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.value +
@@ -566,7 +600,9 @@ export const createTradingViewChartTemplate = (
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">Close:</span>';
+          '; font-size: 10px;">' +
+          window.description.close +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.value +
@@ -579,7 +615,9 @@ export const createTradingViewChartTemplate = (
         tooltipHTML +=
           '<span style="color: ' +
           window.colors.tooltip.title +
-          '; font-size: 10px;">%Chg:</span>';
+          '; font-size: 10px;">' +
+          window.description.chg +
+          ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
           (isPositive ? '#0ECB81' : '#F6465D') +
@@ -598,7 +636,9 @@ export const createTradingViewChartTemplate = (
           tooltipHTML +=
             '<span style="color: ' +
             window.colors.tooltip.title +
-            '; font-size: 10px;">Volume:</span>';
+            '; font-size: 10px;">' +
+            window.description.volume +
+            ':</span>';
           tooltipHTML +=
             '<span style="color: ' +
             window.colors.tooltip.value +
