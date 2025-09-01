@@ -5,6 +5,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
+import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -52,6 +53,7 @@ export const PerpsClosePositionPopup: React.FC<{
   });
 
   const { t } = useTranslation();
+  const { showTipsPopup } = useTipsPopup();
 
   const [loading, setLoading] = React.useState<boolean>(false);
 
@@ -104,14 +106,19 @@ export const PerpsClosePositionPopup: React.FC<{
         <AutoLockView style={[styles.container]}>
           <View>
             <Text style={styles.title}>
-              Close {coin}-USD {direction} Position
+              {t('page.perpsDetail.PerpsClosePositionPopup.title', {
+                coin: `${coin}-USD`,
+                direction: direction,
+              })}
             </Text>
           </View>
 
           <View style={styles.list}>
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
-                <Text style={styles.label}>Position Size</Text>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsClosePositionPopup.positionSize')}
+                </Text>
               </View>
               <View>
                 <Text style={styles.value}>
@@ -121,25 +128,48 @@ export const PerpsClosePositionPopup: React.FC<{
             </View>
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
-                <Text style={styles.label}>PNL</Text>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsClosePositionPopup.pnl')}
+                </Text>
               </View>
               <View>
-                <Text style={[styles.value]}>
-                  {pnl >= 0 ? '+' : '-'} ${splitNumberByStep(pnl.toFixed(2))}
+                <Text
+                  style={[styles.value, pnl > 0 ? styles.green : styles.red]}>
+                  {pnl >= 0 ? '+' : '-'}$
+                  {splitNumberByStep(Math.abs(pnl).toFixed(2))}
                 </Text>
               </View>
             </View>
           </View>
 
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              showTipsPopup({
+                title: t('page.perpsDetail.PerpsClosePositionPopup.fee'),
+                desc:
+                  t('page.perpsDetail.PerpsClosePositionPopup.rabbyFeeTips') +
+                  '\n' +
+                  t(
+                    'page.perpsDetail.PerpsClosePositionPopup.providerFeeTips',
+                    {
+                      fee: formatPercent(providerFee, 4),
+                    },
+                  ),
+              });
+            }}>
             <View style={styles.feeContainer}>
-              <Text style={styles.fee}>Fee : {formatPercent(bothFee, 4)}</Text>
+              <Text style={styles.fee}>
+                {t('page.perpsDetail.PerpsClosePositionPopup.fee')}{' '}
+                {formatPercent(bothFee, 4)}
+              </Text>
               <RcIconInfoFillCC color={'#CED0DA'} width={15} height={15} />
             </View>
           </TouchableOpacity>
           <Button
             type="primary"
-            title={`Close ${direction}`}
+            title={t('page.perpsDetail.PerpsClosePositionPopup.closeBtn', {
+              direction: direction,
+            })}
             loading={loading}
             onPress={closePosition}
           />
@@ -230,6 +260,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 20,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
+    },
+    red: {
+      color: colors2024['red-default'],
+    },
+    green: {
+      color: colors2024['green-default'],
     },
     feeContainer: {
       display: 'flex',

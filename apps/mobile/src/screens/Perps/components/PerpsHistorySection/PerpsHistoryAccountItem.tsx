@@ -1,6 +1,7 @@
 import { RcIconDepositCC, RcIconWithdrawCC } from '@/assets2024/icons/perps';
 import { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
+import { Spin } from '@/screens/TransactionRecord/components/Spin';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sinceTime } from '@/utils/time';
 import React from 'react';
@@ -17,29 +18,6 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
   const { time, type, status, usdValue } = data;
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-
-  //   if (status === 'pending') {
-  //     return (
-  //       <View style={styles.iconContainer}>
-  //         <RcIconPendingCC style={[styles.icon, styles.rotating]} />
-  //       </View>
-  //     );
-  //   }
-
-  //   if (type === 'deposit') {
-  //     return (
-  //       <View style={styles.iconContainer}>
-  //         <ThemeIcon src={RcIconDeposit} style={styles.icon} />
-  //       </View>
-  //     );
-  //   } else {
-  //     return (
-  //       <View style={styles.iconContainer}>
-  //         <ThemeIcon src={RcIconWithdraw} style={styles.icon} />
-  //       </View>
-  //     );
-  //   }
-  // }, [status, styles.icon, styles.iconContainer, styles.rotating, type]);
 
   return (
     <View style={styles.card}>
@@ -61,12 +39,21 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
         )}
         <View style={styles.textContainer}>
           <Text style={styles.title}>
-            {type === 'deposit' ? 'Deposit' : 'Withdraw'}
+            {type === 'deposit'
+              ? t('page.perps.history.deposit')
+              : t('page.perps.history.withdraw')}
           </Text>
           {status === 'pending' ? (
-            <Text style={styles.pendingStatus}>Pending</Text>
+            <View style={styles.pendingContainer}>
+              <Text style={styles.pendingStatus}>
+                {t('page.perps.history.status.pending')}
+              </Text>
+              <Spin color={colors2024['orange-default']} />
+            </View>
           ) : (
-            <Text style={styles.completedStatus}>Completed</Text>
+            <Text style={styles.completedStatus}>
+              {t('page.perps.history.status.completed')}
+            </Text>
           )}
         </View>
       </View>
@@ -135,6 +122,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     fontWeight: '500',
     color: colors2024['neutral-body'],
+  },
+  pendingContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   pendingStatus: {
     fontFamily: 'SF Pro Rounded',

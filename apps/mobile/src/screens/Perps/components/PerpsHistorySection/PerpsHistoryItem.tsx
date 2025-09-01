@@ -10,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 
-// todo
 export const PerpsHistoryItem: React.FC<{
   fill: WsFill;
   marketData: Record<string, MarketData>;
@@ -26,32 +25,36 @@ export const PerpsHistoryItem: React.FC<{
     const isLiquidation = Boolean(fill?.liquidation);
     if (fill?.dir === 'Close Long') {
       if (orderTpOrSl === 'tp') {
-        return 'Close Long Take Profit';
+        return t('page.perps.history.closeLongTp');
       }
       if (orderTpOrSl === 'sl') {
-        return 'Close Long stop loss';
+        return t('page.perps.history.closeLongSl');
       }
 
-      return isLiquidation ? 'Close Long Liquidation' : 'Close Long';
+      return isLiquidation
+        ? t('page.perps.history.closeLongLiquidation')
+        : t('page.perps.history.closeLong');
     }
     if (fill?.dir === 'Close Short') {
       if (orderTpOrSl === 'tp') {
-        return 'Close Short Take Profit';
+        return t('page.perps.history.closeShortTp');
       }
       if (orderTpOrSl === 'sl') {
-        return 'Close Short Stop Loss';
+        return t('page.perps.history.closeShortSl');
       }
 
-      return isLiquidation ? 'Close Short Liquidation' : 'Close Short';
+      return isLiquidation
+        ? t('page.perps.history.closeShortLiquidation')
+        : t('page.perps.history.closeShort');
     }
     if (fill?.dir === 'Open Long') {
-      return 'Open Long';
+      return t('page.perps.history.openLong');
     }
     if (fill?.dir === 'Open Short') {
-      return 'Open Short';
+      return t('page.perps.history.openShort');
     }
     return fill?.dir;
-  }, [fill?.dir, fill?.liquidation, orderTpOrSl]);
+  }, [fill?.dir, fill?.liquidation, orderTpOrSl, t]);
 
   const itemData = marketData[coin.toUpperCase()];
   const logoUrl = itemData?.logoUrl;

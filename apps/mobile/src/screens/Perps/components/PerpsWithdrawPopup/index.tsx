@@ -5,19 +5,14 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
+import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { useRequest } from 'ahooks';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { PerpsWithdrawFeePopup } from './PerpsWithdrawFeePopup';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
@@ -32,6 +27,7 @@ export const PerpsWithdrawPopup: React.FC<{
   });
 
   const { t } = useTranslation();
+  const { showTipsPopup } = useTipsPopup();
 
   const [amount, setAmount] = React.useState<string>('');
   const { runAsync: handleWithdraw, loading } = useRequest(
@@ -131,9 +127,17 @@ export const PerpsWithdrawPopup: React.FC<{
               ) : null}
             </View>
 
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                showTipsPopup({
+                  title: t('page.perps.PerpsWithdrawPopup.feeTooltipTitle'),
+                  desc: t('page.perps.PerpsWithdrawPopup.feeTooltipDesc'),
+                });
+              }}>
               <View style={styles.feeContainer}>
-                <Text style={styles.fee}>Fee : $1.00</Text>
+                <Text style={styles.fee}>
+                  {t('page.perps.PerpsWithdrawPopup.feeTip')}
+                </Text>
                 <RcIconInfoFillCC color={'#CED0DA'} width={15} height={15} />
               </View>
             </TouchableOpacity>
@@ -146,7 +150,6 @@ export const PerpsWithdrawPopup: React.FC<{
           />
         </AutoLockView>
       </AppBottomSheetModal>
-      <PerpsWithdrawFeePopup visible={false} />
     </>
   );
 };

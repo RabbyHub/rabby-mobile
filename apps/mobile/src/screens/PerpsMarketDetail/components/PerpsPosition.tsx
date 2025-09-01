@@ -1,11 +1,12 @@
 import { RcIconInfoFillCC } from '@/assets/icons/common';
 import { AppSwitch } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
+import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 export const PerpsPosition: React.FC<{
   positionData?: {
@@ -37,6 +38,9 @@ export const PerpsPosition: React.FC<{
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+
+  const { showTipsPopup } = useTipsPopup();
+
   if (!positionData) {
     return null;
   }
@@ -44,28 +48,42 @@ export const PerpsPosition: React.FC<{
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <Text style={styles.title}>Position</Text>
+        <Text style={styles.title}>
+          {t('page.perpsDetail.PerpsPosition.title')}
+        </Text>
       </View>
       <View style={styles.list}>
         <View style={styles.listItem}>
           <View style={styles.listItemMain}>
-            <Text style={styles.label}>PNL</Text>
+            <Text style={styles.label}>
+              {t('page.perpsDetail.PerpsPosition.pnl')}
+            </Text>
           </View>
           <View>
-            <Text style={styles.value}>
-              {(positionData?.pnl || 0).toFixed(2)} (
+            <Text
+              style={[
+                styles.value,
+                positionData && positionData.pnl >= 0
+                  ? styles.green
+                  : styles.red,
+              ]}>
+              {positionData && positionData.pnl >= 0 ? '+' : ''}$
+              {Math.abs(positionData?.pnl || 0).toFixed(2)} (
+              {positionData && positionData.pnl >= 0 ? '+' : ''}
               {positionData?.pnlPercent.toFixed(2)}%)
             </Text>
           </View>
         </View>
         <View style={styles.listItem}>
           <View style={styles.listItemMain}>
-            <Text style={styles.label}>Size</Text>
-            <RcIconInfoFillCC
+            <Text style={styles.label}>
+              {t('page.perpsDetail.PerpsPosition.size')}
+            </Text>
+            {/* <RcIconInfoFillCC
               width={15}
               height={15}
               color={colors2024['neutral-info']}
-            />
+            /> */}
           </View>
           <View>
             <Text style={styles.value}>
@@ -79,7 +97,9 @@ export const PerpsPosition: React.FC<{
         </View>
         <View style={styles.listItem}>
           <View style={styles.listItemMain}>
-            <Text style={styles.label}>Margin(Isolated)</Text>
+            <Text style={styles.label}>
+              {t('page.perpsDetail.PerpsPosition.marginIsolated')}
+            </Text>
           </View>
           <View>
             <Text style={styles.value}>
@@ -93,7 +113,9 @@ export const PerpsPosition: React.FC<{
         <View style={styles.listItemContainer}>
           <View style={styles.listItemRow}>
             <View style={styles.listItemMain}>
-              <Text style={styles.label}>Auto Close</Text>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsPosition.autoClose')}
+              </Text>
             </View>
             <View>
               <AppSwitch
@@ -107,7 +129,9 @@ export const PerpsPosition: React.FC<{
           {hasAutoClose ? (
             <View style={styles.listSub}>
               <View style={styles.listSubItem}>
-                <Text style={styles.listSubItemLabel}>Take-Profit Price</Text>
+                <Text style={styles.listSubItemLabel}>
+                  {t('page.perpsDetail.PerpsPosition.tpPrice')}
+                </Text>
                 <Text style={styles.value}>${tpPrice || 0}</Text>
                 {/* <RcArrowRight2CC
                   width={16}
@@ -116,7 +140,9 @@ export const PerpsPosition: React.FC<{
                 /> */}
               </View>
               <View style={styles.listSubItem}>
-                <Text style={styles.listSubItemLabel}>Stop-Loss Price</Text>
+                <Text style={styles.listSubItemLabel}>
+                  {t('page.perpsDetail.PerpsPosition.slPrice')}
+                </Text>
                 <Text style={styles.value}>${slPrice || 0}</Text>
                 {/* <RcArrowRight2CC
                   width={16}
@@ -129,7 +155,9 @@ export const PerpsPosition: React.FC<{
         </View>
         <View style={styles.listItem}>
           <View style={styles.listItemMain}>
-            <Text style={styles.label}>Direction</Text>
+            <Text style={styles.label}>
+              {t('page.perpsDetail.PerpsPosition.direction')}
+            </Text>
           </View>
           <View>
             <Text style={styles.value}>
@@ -139,7 +167,9 @@ export const PerpsPosition: React.FC<{
         </View>
         <View style={styles.listItem}>
           <View style={styles.listItemMain}>
-            <Text style={styles.label}>Entry Price</Text>
+            <Text style={styles.label}>
+              {t('page.perpsDetail.PerpsPosition.entryPrice')}
+            </Text>
           </View>
           <View>
             <Text style={styles.value}>
@@ -148,14 +178,24 @@ export const PerpsPosition: React.FC<{
           </View>
         </View>
         <View style={styles.listItem}>
-          <View style={styles.listItemMain}>
-            <Text style={styles.label}>Liquidation Price</Text>
-            <RcIconInfoFillCC
-              width={15}
-              height={15}
-              color={colors2024['neutral-info']}
-            />
-          </View>
+          <TouchableOpacity
+            onPress={() => {
+              showTipsPopup({
+                title: t('page.perpsDetail.PerpsPosition.liquidationPrice'),
+                desc: t('page.perpsDetail.PerpsPosition.liquidationPriceTips'),
+              });
+            }}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsPosition.liquidationPrice')}
+              </Text>
+              <RcIconInfoFillCC
+                width={15}
+                height={15}
+                color={colors2024['neutral-info']}
+              />
+            </View>
+          </TouchableOpacity>
           <View>
             <Text style={styles.value}>
               ${splitNumberByStep(positionData?.liquidationPrice || 0)}
@@ -163,14 +203,24 @@ export const PerpsPosition: React.FC<{
           </View>
         </View>
         <View style={styles.listItem}>
-          <View style={styles.listItemMain}>
-            <Text style={styles.label}>Founding Payments</Text>
-            <RcIconInfoFillCC
-              width={15}
-              height={15}
-              color={colors2024['neutral-info']}
-            />
-          </View>
+          <TouchableOpacity
+            onPress={() => {
+              showTipsPopup({
+                title: t('page.perpsDetail.PerpsPosition.fundingPayments'),
+                desc: t('page.perpsDetail.PerpsPosition.fundingPaymentsTips'),
+              });
+            }}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsPosition.fundingPayments')}
+              </Text>
+              <RcIconInfoFillCC
+                width={15}
+                height={15}
+                color={colors2024['neutral-info']}
+              />
+            </View>
+          </TouchableOpacity>
           <View>
             <Text style={styles.value}> ${positionData?.fundingPayments}</Text>
           </View>
@@ -256,5 +306,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  red: {
+    color: colors2024['red-default'],
+  },
+  green: {
+    color: colors2024['green-default'],
   },
 }));

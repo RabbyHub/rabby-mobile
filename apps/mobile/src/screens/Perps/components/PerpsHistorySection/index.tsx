@@ -80,7 +80,9 @@ export const PerpsHistorySection: React.FC<{
           <>
             {ListHeaderComponent}
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>History</Text>
+              <Text style={styles.sectionTitle}>
+                {t('page.perps.history.title')}
+              </Text>
             </View>
           </>
         }

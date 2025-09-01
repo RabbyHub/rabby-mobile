@@ -23,7 +23,7 @@ export const PerpsMarketSection: React.FC<{
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Explore Perps</Text>
+        <Text style={styles.sectionTitle}>{t('page.perps.explorePerps')}</Text>
         <TouchableOpacity
           onPress={() => {
             navigation.push(RootNames.StackTransaction, {
@@ -31,7 +31,7 @@ export const PerpsMarketSection: React.FC<{
             });
           }}>
           <View style={styles.sectionAction}>
-            <Text style={styles.sectionActionText}>{t('View All')}</Text>
+            <Text style={styles.sectionActionText}>{t('page.perps.more')}</Text>
             <RcArrowRight2CC color={colors2024['neutral-foot']} />
           </View>
         </TouchableOpacity>

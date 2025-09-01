@@ -3,16 +3,19 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
+import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { createGetStyles2024 } from '@/utils/styles';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
 
-export const PerpsWithdrawFeePopup: React.FC<{
-  visible?: boolean;
-  onClose?(): void;
-}> = ({ visible, onClose }) => {
+export const GlobalTipsPopup: React.FC<{}> = ({}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
+
+  const { state, hideTipsPopup } = useTipsPopup();
+
+  const { title, desc, visible } = state || {};
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
@@ -42,27 +45,22 @@ export const PerpsWithdrawFeePopup: React.FC<{
           colors: colors2024,
           linearGradientType: 'bg1',
         })}
-        onDismiss={onClose}
-        // enableDynamicSizing
-        snapPoints={[262]}
+        onDismiss={hideTipsPopup}
+        enableDynamicSizing
         maxDynamicContentSize={maxHeight}>
-        <AutoLockView style={[styles.container]}>
+        <BottomSheetView style={[styles.container]}>
           <View>
-            <Text style={styles.title}>
-              {t('page.perps.PerpsWithdrawFeePopup.title')}
-            </Text>
+            <Text style={styles.title}>{title}</Text>
           </View>
           <View style={styles.content}>
-            <Text style={styles.desc}>
-              {t('page.perps.PerpsWithdrawFeePopup.desc')}
-            </Text>
+            <Text style={styles.desc}>{desc}</Text>
           </View>
           <Button
             type="primary"
-            title={t('page.perps.PerpsWithdrawFeePopup.btn')}
-            onPress={() => {}}
+            title={t('component.GlobalTipsPopup.btn')}
+            onPress={hideTipsPopup}
           />
-        </AutoLockView>
+        </BottomSheetView>
       </AppBottomSheetModal>
     </>
   );
@@ -71,7 +69,6 @@ export const PerpsWithdrawFeePopup: React.FC<{
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      height: '100%',
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       paddingBottom: 56,
       paddingHorizontal: 20,
@@ -91,7 +88,8 @@ const getStyle = createGetStyles2024(ctx => {
     },
 
     content: {
-      marginBottom: 50,
+      minHeight: 40,
+      marginBottom: 30,
     },
 
     desc: {

@@ -1,22 +1,20 @@
-import { useSendMiniSignTypedData } from './../useMiniSignTypedDataApproval';
-import { apisPerps } from './../../core/apis/perps';
-import { useCallback, useEffect, useMemo } from 'react';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import {
   PERPS_AGENT_NAME,
   PERPS_BUILD_FEE_RECEIVE_ADDRESS,
   PERPS_REFERENCE_CODE,
 } from '@/constant/perps';
-import { useInterval, useMemoizedFn } from 'ahooks';
-import { useAccounts, useFallbackAccount } from '../account';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { Account } from '@/core/services/preference';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apisKeyring } from '@/core/apis/keyring';
 import { sendRequest } from '@/core/apis/sendRequest';
-import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { Account } from '@/core/services/preference';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { useMemoizedFn } from 'ahooks';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useAccounts } from '../account';
+import { apisPerps } from './../../core/apis/perps';
+import { useSendMiniSignTypedData } from './../useMiniSignTypedDataApproval';
 import { usePerpsStore } from './usePerpsStore';
-// import { useCurrentAccount } from '@/ui/hooks/backgroundState/useAccount';
-// import { message } from 'antd';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
 interface SignAction {

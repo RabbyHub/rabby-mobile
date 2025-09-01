@@ -2,26 +2,32 @@ import { RcIconInfoFillCC } from '@/assets/icons/common';
 import { RcIconLong } from '@/assets2024/icons/perps';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
+import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent, formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { createGetStyles2024 } from '@/utils/styles';
 import BigNumber from 'bignumber.js';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 export const PerpsInfo: React.FC<{ market: MarketData }> = ({ market }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+  const { showTipsPopup } = useTipsPopup();
 
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <Text style={styles.title}>Info</Text>
+        <Text style={styles.title}>
+          {t('page.perpsDetail.PerpsInfo.title')}
+        </Text>
       </View>
       <View style={styles.list}>
         <View style={styles.listItem}>
           <View style={styles.listItemMain}>
-            <Text style={styles.label}>24h Volumn</Text>
+            <Text style={styles.label}>
+              {t('page.perpsDetail.PerpsInfo.24Vol')}
+            </Text>
           </View>
           <View>
             <Text style={styles.value}>
@@ -30,14 +36,24 @@ export const PerpsInfo: React.FC<{ market: MarketData }> = ({ market }) => {
           </View>
         </View>
         <View style={styles.listItem}>
-          <View style={styles.listItemMain}>
-            <Text style={styles.label}>Open Interest</Text>
-            <RcIconInfoFillCC
-              width={15}
-              height={15}
-              color={colors2024['neutral-info']}
-            />
-          </View>
+          <TouchableOpacity
+            onPress={() => {
+              showTipsPopup({
+                title: t('page.perpsDetail.PerpsInfo.openInterest'),
+                desc: t('page.perpsDetail.PerpsInfo.openInterestTips'),
+              });
+            }}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsInfo.openInterest')}
+              </Text>
+              <RcIconInfoFillCC
+                width={15}
+                height={15}
+                color={colors2024['neutral-info']}
+              />
+            </View>
+          </TouchableOpacity>
           <View>
             <Text style={styles.value}>
               {formatUsdValueKMB(
@@ -49,14 +65,24 @@ export const PerpsInfo: React.FC<{ market: MarketData }> = ({ market }) => {
           </View>
         </View>
         <View style={styles.listItem}>
-          <View style={styles.listItemMain}>
-            <Text style={styles.label}>Funding</Text>
-            <RcIconInfoFillCC
-              width={15}
-              height={15}
-              color={colors2024['neutral-info']}
-            />
-          </View>
+          <TouchableOpacity
+            onPress={() => {
+              showTipsPopup({
+                title: t('page.perpsDetail.PerpsInfo.funding'),
+                desc: t('page.perpsDetail.PerpsInfo.fundingTips'),
+              });
+            }}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsInfo.funding')}
+              </Text>
+              <RcIconInfoFillCC
+                width={15}
+                height={15}
+                color={colors2024['neutral-info']}
+              />
+            </View>
+          </TouchableOpacity>
           <View>
             <Text style={styles.value}>
               {formatPercent(Number(market?.funding || 0), 6)}

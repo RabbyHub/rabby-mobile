@@ -33,7 +33,7 @@ export const PerpsPositionSection: React.FC<{
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Positions</Text>
+        <Text style={styles.sectionTitle}>{t('page.perps.positions')}</Text>
       </View>
       <View style={styles.content}>
         {list.map(item => {

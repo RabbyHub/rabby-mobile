@@ -44,10 +44,11 @@ export const PerpsAccountLogoutPopup: React.FC<{
       })}>
       <BottomSheetView style={styles.popup}>
         <View style={styles.logoutContainer}>
-          <Text style={styles.logoutTitle}>Log Out Current Address</Text>
+          <Text style={styles.logoutTitle}>
+            {t('page.perps.PerpsAccountLogoutPopup.title')}
+          </Text>
           <Text style={styles.logoutDesc}>
-            You are logging out of your current Perps account. You can restore
-            it anytime by logging in with this address.
+            {t('page.perps.PerpsAccountLogoutPopup.desc')}
           </Text>
 
           <View style={[styles.currentAddressContainer]}>
@@ -102,7 +103,7 @@ export const PerpsAccountLogoutPopup: React.FC<{
             <Button
               type="primary"
               containerStyle={{ flex: 1 }}
-              title={t('page.gasAccount.logoutConfirmModal.logout')}
+              title={t('page.perps.PerpsAccountLogoutPopup.logout')}
               onPress={onLogout}
               titleStyle={styles.btnText}
             />

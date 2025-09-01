@@ -15,11 +15,14 @@ export const PerpsDepositCard: React.FC<{
   return (
     <View style={styles.card}>
       <Text style={styles.label}>
-        Available to trade: {formatUsdValue(availableBalance)}
+        {t('page.perps.PerpsDepositCard.availableToTrade')}
+        {formatUsdValue(availableBalance)}
       </Text>
       <TouchableOpacity onPress={onDepositPress}>
         <View style={styles.btn}>
-          <Text style={styles.btnText}>Deposit</Text>
+          <Text style={styles.btnText}>
+            {t('page.perps.PerpsDepositCard.deposit')}
+          </Text>
         </View>
       </TouchableOpacity>
     </View>

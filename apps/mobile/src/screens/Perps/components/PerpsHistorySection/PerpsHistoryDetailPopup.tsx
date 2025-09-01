@@ -92,10 +92,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
           linearGradientType: 'bg2',
         })}
         onDismiss={onClose}
-        // enableDynamicSizing
-        snapPoints={[568]}
-        // maxDynamicContentSize={maxHeight}
-      >
+        enableDynamicSizing
+        // snapPoints={[568]}
+        maxDynamicContentSize={maxHeight}>
         <BottomSheetView>
           <AutoLockView style={[styles.container]}>
             <View>
@@ -104,7 +103,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
             <View style={styles.list}>
               <View style={styles.listItem}>
                 <View style={styles.listItemMain}>
-                  <Text style={styles.label}>Perps</Text>
+                  <Text style={styles.label}>
+                    {t('page.perps.historyDetail.perps')}
+                  </Text>
                 </View>
                 <View>
                   <Text style={styles.value}>{coin} - USD</Text>
@@ -113,7 +114,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
               {time ? (
                 <View style={styles.listItem}>
                   <View style={styles.listItemMain}>
-                    <Text style={styles.label}>Date</Text>
+                    <Text style={styles.label}>
+                      {t('page.perps.historyDetail.date')}
+                    </Text>
                   </View>
                   <View>
                     <Text style={styles.value}>{sinceTime(time / 1000)}</Text>
@@ -123,7 +126,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
               {isClose ? (
                 <View style={styles.listItem}>
                   <View style={styles.listItemMain}>
-                    <Text style={styles.label}>Closed PNL</Text>
+                    <Text style={styles.label}>
+                      {t('page.perps.historyDetail.closedPnl')}
+                    </Text>
                   </View>
                   <View>
                     <Text style={styles.value}>
@@ -135,7 +140,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
               ) : null}
               <View style={styles.listItem}>
                 <View style={styles.listItemMain}>
-                  <Text style={styles.label}>Price</Text>
+                  <Text style={styles.label}>
+                    {t('page.perps.historyDetail.price')}
+                  </Text>
                 </View>
                 <View>
                   <Text style={styles.value}>
@@ -145,12 +152,14 @@ export const PerpsHistoryDetailPopup: React.FC<{
               </View>
               <View style={styles.listItem}>
                 <View style={styles.listItemMain}>
-                  <Text style={styles.label}>Size</Text>
-                  <RcIconInfoFillCC
+                  <Text style={styles.label}>
+                    {t('page.perps.historyDetail.size')}
+                  </Text>
+                  {/* <RcIconInfoFillCC
                     width={15}
                     height={15}
                     color={colors2024['neutral-info']}
-                  />
+                  /> */}
                 </View>
                 <View>
                   <Text style={styles.value}>
@@ -158,10 +167,29 @@ export const PerpsHistoryDetailPopup: React.FC<{
                   </Text>
                 </View>
               </View>
+              <View style={styles.listItem}>
+                <View style={styles.listItemMain}>
+                  <Text style={styles.label}>
+                    {t('page.perps.historyDetail.tradeValue')}
+                  </Text>
+                  {/* <RcIconInfoFillCC
+                    width={15}
+                    height={15}
+                    color={colors2024['neutral-info']}
+                  /> */}
+                </View>
+                <View>
+                  <Text style={styles.value}>
+                    ${splitNumberByStep(tradeValue.toFixed(2))}
+                  </Text>
+                </View>
+              </View>
               {fee ? (
                 <View style={styles.listItem}>
                   <View style={styles.listItemMain}>
-                    <Text style={styles.label}>Fee</Text>
+                    <Text style={styles.label}>
+                      {t('page.perps.historyDetail.fee')}
+                    </Text>
                   </View>
                   <View>
                     <Text style={styles.value}>
@@ -172,7 +200,9 @@ export const PerpsHistoryDetailPopup: React.FC<{
               ) : null}
               <View style={styles.listItem}>
                 <View style={styles.listItemMain}>
-                  <Text style={styles.label}>Provider</Text>
+                  <Text style={styles.label}>
+                    {t('page.perps.historyDetail.provider')}
+                  </Text>
                 </View>
                 <View>
                   <Text style={styles.value}>Hyperliquid</Text>
@@ -180,7 +210,11 @@ export const PerpsHistoryDetailPopup: React.FC<{
               </View>
             </View>
 
-            <Button type="primary" title={'I Got it'} onPress={onClose} />
+            <Button
+              type="primary"
+              title={t('page.perps.historyDetail.gotItBtn')}
+              onPress={onClose}
+            />
           </AutoLockView>
         </BottomSheetView>
       </AppBottomSheetModal>
@@ -191,7 +225,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
 const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
     container: {
-      height: '100%',
+      // height: '100%',
       // backgroundColor: colors2024['neutral-bg-1'],
       paddingBottom: 56,
       paddingHorizontal: 20,

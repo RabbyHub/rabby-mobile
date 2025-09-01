@@ -1,16 +1,15 @@
+import { RcArrowRightCC } from '@/assets2024/icons/perps';
+import { AssetAvatar } from '@/components';
+import { Button } from '@/components2024/Button';
+import { RootNames } from '@/constant/layout';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { useTheme2024 } from '@/hooks/theme';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
+import { findChain } from '@/utils/chain';
+import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Text, View } from 'react-native';
-import { Button } from '@/components2024/Button';
-import { useTheme2024 } from '@/hooks/theme';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { createGetStyles2024 } from '@/utils/styles';
-import { AssetAvatar } from '@/components';
-import { RcIconSwapArrow } from '@/assets/icons/swap';
-import { RcArrowRightCC } from '@/assets2024/icons/perps';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { RootNames } from '@/constant/layout';
-import { findChain } from '@/utils/chain';
 
 interface Props {
   visible: boolean;
@@ -49,8 +48,8 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
         <View style={styles.container}>
           <Text style={styles.description}>
             {isSwap
-              ? 'Only USDC on Arbitrum is supported for direct deposit. Please swap your current token to USDC before depositing.'
-              : 'Only USDC on Arbitrum is supported for direct deposit. Please bridge your current token to USDC on Arbitrum before depositing.'}
+              ? t('page.perps.PerpsDepositTokenModal.goSwapDesc')
+              : t('page.perps.PerpsDepositTokenModal.goBridgeDesc')}
           </Text>
           <View style={styles.tokenSwap}>
             <AssetAvatar
@@ -76,7 +75,11 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
             />
             <Button
               type="primary"
-              title={isSwap ? 'Swap' : 'Bridge'}
+              title={
+                isSwap
+                  ? t('page.perps.PerpsDepositTokenModal.swapBtn')
+                  : t('page.perps.PerpsDepositTokenModal.bridgeBtn')
+              }
               onPress={() => {
                 if (isSwap) {
                   // todo account ?

@@ -111,7 +111,9 @@ export const PerpsSelectTokenPopup: React.FC<{
             {item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
             item._tokenId === ARB_USDC_TOKEN_ID ? (
               <View style={styles.depositTag}>
-                <Text style={styles.depositTagText}>Direct Deposit</Text>
+                <Text style={styles.depositTagText}>
+                  {t('page.perps.PerpsDepositTokenModal.directTag')}
+                </Text>
               </View>
             ) : null}
           </View>
@@ -144,7 +146,9 @@ export const PerpsSelectTokenPopup: React.FC<{
         onDismiss={onClose}
         snapPoints={[Dimensions.get('window').height - 200]}>
         <AutoLockView style={styles.container}>
-          <Text style={styles.title}>Select Token to Deposit</Text>
+          <Text style={styles.title}>
+            {t('page.perps.PerpsSelectTokenPopup.title')}
+          </Text>
           <BottomSheetFlatList
             keyboardShouldPersistTaps="handled"
             data={tokens}
