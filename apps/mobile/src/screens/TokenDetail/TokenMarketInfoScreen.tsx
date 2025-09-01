@@ -734,12 +734,6 @@ export const TokenMarketInfoScreen = () => {
                         currentInterval,
                       ).then(res => {
                         chartWebViewRef.current?.setData(res);
-                        chartWebViewRef.current?.updateTPSLPriceLines({
-                          entryPrice: 4000,
-                          liquidationPrice: 2000,
-                          tpPrice: 5000,
-                          slPrice: 3500,
-                        });
                       });
                     }}
                   />

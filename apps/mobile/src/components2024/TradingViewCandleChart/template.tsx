@@ -2,593 +2,718 @@ interface ChartColors {
   background: string;
   text: string;
   border: string;
+  greenLineColor: string;
+  redLineColor: string;
+  tooltip: {
+    bg: string;
+    title: string;
+    value: string;
+  };
 }
 
 export const createTradingViewChartTemplate = (
   colors: ChartColors,
 ): string => `<!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>TradingView Chart</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            font-family: Arial, sans-serif;
-            background: ${colors.background};
-        }
-        #container {
-            width: 100%;
-            height: 100vh;
-            position: relative;
-            background: ${colors.background};
-        }
+      body, html {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          height: 100%;
+          font-family: Arial, sans-serif;
+          background: ${colors.background};
+      }
+      #container {
+          width: 100%;
+          height: 100vh;
+          position: relative;
+          background: ${colors.background};
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="container"></div>
     <script>
-        window.colors = {
-          upColor: '#0ECB81',
-          downColor: '#F6465D',
-          borderDownColor: '#F6465D',
-          borderUpColor: '#0ECB81',
-          wickDownColor: '#F6465D',
-          wickUpColor: '#0ECB81',
-          greenLineColor: '#0ECB81',
-          redLineColor: '#F6465D',
-          tooltip: {
-            bg: 'rgba(255, 255, 255, 1)', // bg1 bg2
-            title: 'rgba(62, 73, 94, 1)', // body
-            value: 'rgba(25, 41, 69, 1)' // title1
+      window.colors = {
+        background: "${colors.background}", // bg1
+        text: "${colors.text}", // body
+        border: "${colors.border}", // border
+        greenLineColor: "${colors.greenLineColor}", // greenLineColor
+        redLineColor: "${colors.redLineColor}", // redLineColor
+        tooltip: {
+          bg: "${colors.tooltip.bg}", // bg1 bg2
+          title: "${colors.tooltip.title}", // body
+          value: "${colors.tooltip.value}", // title1
+        },
+      };
+
+      // 计算当前可见范围的最高最低价格
+      const calculateVisibleExtremes = (data, from, to) => {
+        if (!data || data.length === 0) return { highest: null, lowest: null };
+
+        const rangeData = data.filter(
+          (bar) => bar.time >= from && bar.time <= to
+        );
+        if (rangeData.length === 0) return { highest: null, lowest: null };
+
+        let highest = rangeData[0].high;
+        let lowest = rangeData[0].low;
+
+        rangeData.forEach((bar) => {
+          if (bar.high > highest) {
+            highest = bar.high;
           }
-        }
+          if (bar.low < lowest) {
+            lowest = bar.low;
+          }
+        });
 
-        // 计算当前可见范围的最高最低价格
-        const calculateVisibleExtremes = (data, from, to) => {
-          if (!data || data.length === 0) return { highest: null, lowest: null };
-
-          const rangeData = data.filter(
-            (bar) => bar.time >= from && bar.time <= to
-          );
-          if (rangeData.length === 0) return { highest: null, lowest: null };
-
-          let highest = rangeData[0].high;
-          let lowest = rangeData[0].low;
-
-          rangeData.forEach((bar) => {
-            if (bar.high > highest) {
-              highest = bar.high;
-            }
-            if (bar.low < lowest) {
-              lowest = bar.low;
-            }
-          });
-
-          return { highest, lowest };
-        };
-        // Initialize window.utils with simple formatting functions
-        window.utils = {
-          formatPrice: (v) => {
-            if (v >= 0.1) {
-              return v.toFixed(2);
-            }
-            if (v < 0.0001) {
-              return v.toExponential(2);
-            }
-            return v.toFixed(4);
-          },
-          formatNumber: (v) => {
-            if (v >= 1000000) {
-              return (v / 1000000).toFixed(2) + 'M';
-            } else if (v >= 1000) {
-              return (v / 1000).toFixed(2) + 'K';
-            }
+        return { highest, lowest };
+      };
+      // Initialize window.utils with simple formatting functions
+      window.utils = {
+        formatPrice: (v) => {
+          if (Math.abs(v) >= 0.1) {
             return v.toFixed(2);
-          },
-        };
-
-        const defaultFormat = v => v.toFixed(2);
-        const formatNumber = v => {
+          }
+          if (Math.abs(v) < 0.0001) {
+            return v.toExponential(2);
+          }
+          return v.toFixed(2);
+        },
+        formatNumber: (v) => {
           if (v >= 1000000) {
             return (v / 1000000).toFixed(2) + 'M';
           } else if (v >= 1000) {
             return (v / 1000).toFixed(2) + 'K';
           }
           return v.toFixed(2);
+        },
+      };
+
+      const defaultFormat = (v) => v.toFixed(2);
+      const formatNumber = (v) => {
+        if (v >= 1000000) {
+          return (v / 1000000).toFixed(2) + 'M';
+        } else if (v >= 1000) {
+          return (v / 1000).toFixed(2) + 'K';
+        }
+        return v.toFixed(2);
+      };
+      const formatYTime = (t) => {
+        if (typeof t === 'number') {
+          const d = new Date(t * 1000);
+          return (
+            '' +
+            (d.getMonth() + 1) +
+            '/' +
+            d.getDate() +
+            ' ' +
+            d.getHours().toString().padStart(2, '0') +
+            ':' +
+            d.getMinutes().toString().padStart(2, '0')
+          );
+        }
+        const bd = t;
+        return '' + bd.month + '/' + bd.day;
+      };
+      const formatTime = (t) => {
+        if (typeof t === 'number') {
+          const d = new Date(t * 1000);
+          return (
+            '' +
+            String(d.getMonth() + 1).padStart(2, '0') +
+            '/' +
+            String(d.getDate()).padStart(2, '0') +
+            ' ' +
+            String(d.getHours()).padStart(2, '0') +
+            ':' +
+            String(d.getMinutes()).padStart(2, '0')
+          );
+        }
+        const bd = t;
+        return (
+          '' +
+          bd.year +
+          '-' +
+          String(bd.month).padStart(2, '0') +
+          '-' +
+          String(bd.day).padStart(2, '0')
+        );
+      };
+      // Global variables
+      window.chart = null;
+      window.candlestickSeries = null;
+      window.volumeSeries = null;
+      window.isInitialDataLoad = true; // Track if this is the first data load
+      window.lastDataKey = null; // Track the last dataset to avoid unnecessary autoscaling
+      window.tooltip = null;
+      window.hightPrice = null;
+      window.lowPrice = null;
+
+      window.priceLineContainers = {
+        tp: null,
+        sl: null,
+        liquidation: null,
+        entry: null,
+      };
+
+      // Step 1: Load TradingView library dynamically
+      function loadTradingView() {
+        const script = document.createElement('script');
+        script.src =
+          'https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js';
+        script.onload = function () {
+          setTimeout(createChart, 500); // Small delay to ensure library is ready
         };
-        const formatYTime = (t) => {
-          if (typeof t === 'number') {
-            const d = new Date(t  * 1000)
-            return '' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0')
-          }
-          const bd = t;
-          return '' + bd.month + '/' + bd.day
-        }
-        const formatTime = (t) => {
-          if (typeof t === 'number') {
-            const d = new Date((t) * 1000)
-            return '' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
-          }
-          const bd = t
-          return '' + bd.year + '-' + String(bd.month).padStart(2, '0') + '-' + String(bd.day).padStart(2, '0')
-        }
-        // Global variables
-        window.chart = null;
-        window.candlestickSeries = null;
-        window.volumeSeries = null;
-        window.isInitialDataLoad = true; // Track if this is the first data load
-        window.lastDataKey = null; // Track the last dataset to avoid unnecessary autoscaling
-        window.tooltip = null;
-        window.hightPrice = null;
-        window.lowPrice = null;
-
-        window.priceLineContainers = {
-          tp: null,
-          sl: null,
-          liquidation: null,
-          entry: null,
+        script.onerror = function () {
+          console.error('TradingView: Failed to load library');
         };
-
-        // Step 1: Load TradingView library dynamically
-        function loadTradingView() {
-            const script = document.createElement('script');
-            script.src = 'https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js';
-            script.onload = function() {
-                setTimeout(createChart, 500); // Small delay to ensure library is ready
-            };
-            script.onerror = function() {
-                console.error('TradingView: Failed to load library');
-            };
-            document.head.appendChild(script);
+        document.head.appendChild(script);
+      }
+      // Step 2: Create chart
+      function createChart() {
+        if (!window.LightweightCharts) {
+          console.error('TradingView: Library not available');
+          return;
         }
-        // Step 2: Create chart
-        function createChart() {
-            if (!window.LightweightCharts) {
-                console.error('TradingView: Library not available');
-                return;
-            }
-            try {
-                // Create chart with theme applied via template literals
-                window.chart = LightweightCharts.createChart(document.getElementById('container'), {
-                    width: window.innerWidth,
-                    height: window.innerHeight,
-                    layout: {
-                        background: {
-                            color: '${colors.background}',
-                        },
-                        textColor: '${colors.text}',
-                        attributionLogo: true,
-                    },
-                    localization: {
-                        priceFormatter: window?.utils?.formatPrice || defaultFormat,
-                        dateFormat: window?.utils?.formatTime || formatTime,
-                    },
-                    grid: {
-                        vertLines: { color: '${colors.border}' },
-                        horzLines: { color: '${colors.border}' },
-                    },
-                    timeScale: {
-                        timeVisible: true,
-                        secondsVisible: false,
-                        borderColor: 'transparent',
-                        tickMarkFormatter: formatYTime,
-                    },
-                    trackingMode: {
-                      exitMode: 0,
-                    },
-                    rightPriceScale: {
-                        borderColor: 'transparent',
-                        borderVisible: false,
-                        minimumWidth: 50,
-                        scaleMargins: {
-                          top: 0.1,
-                          bottom: 0.4,
-                        },
-                    },
-                    leftPriceScale: {
-                        borderColor: 'transparent',
-                    }
-                });
-
-                // open external url when click tradingview logo
-                (function setupLogoHijack() {
-                    let bound = false;
-                    const attach = () => {
-                        const el = document.getElementById('tv-attr-logo');
-                        if (el && !bound) {
-                            bound = true;
-                            const handler = function(e) {
-                                try {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                } catch(_) {}
-                                if (window.ReactNativeWebView) {
-                                    window.ReactNativeWebView.postMessage(JSON.stringify({
-                                        type: 'ATTR_LOGO_CLICK',
-                                        timestamp: Date.now(),
-                                    }));
-                                }
-                                return false;
-                            };
-                            // use capture to intercept early
-                            el.addEventListener('click', handler, true);
-                        }
-                    };
-                    // try now
-                    attach();
-                })();
-
-                // Subscribe to crosshair move events
-                window.chart.subscribeCrosshairMove(handleCrosshairMove);
-                window.chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
-                  updatePriceLines()
-                })
-
-                // Notify React Native that chart is ready
-                if (window.ReactNativeWebView) {
-                    window.ReactNativeWebView.postMessage(JSON.stringify({
-                        type: 'CHART_READY',
-                        timestamp: new Date().toISOString()
-                    }));
-                }
-            } catch (error) {
-                console.error('TradingView: Error creating chart:', error);
-            }
-        }
-        // Create candlestick series when data is received
-        window.createCandlestickSeries = function() {
-            if (!window.chart || !window.LightweightCharts?.CandlestickSeries) return null;
-            // Remove existing series if it exists
-            if (window.candlestickSeries) {
-                window.chart.removeSeries(window.candlestickSeries);
-            }
-            // Create new candlestick series
-            window.candlestickSeries = window.chart.addSeries(window.LightweightCharts.CandlestickSeries, {
-                upColor: '#0ECB81',
-                downColor: '#F6465D',
-                borderDownColor: '#F6465D',
-                borderUpColor: '#0ECB81',
-                wickDownColor: '#F6465D',
-                wickUpColor: '#0ECB81',
-                lastValueVisible: true,
-                priceLineVisible: true,
-                priceLineSource: 0,
-                priceLineWidth: 1,
-                priceLineStyle: 2,
-                priceFormat: {
-                  type: 'price',
-                  minMove: 0.0000001,
-                }
-            });
-            return window.candlestickSeries;
-        };
-        window.createVolumeSeries = function () {
-          if (!window.chart || !window.LightweightCharts?.HistogramSeries)
-            return null;
-          if (window.volumeSeries) {
-            window.chart.removeSeries(window.volumeSeries);
-          }
-          window.volumeSeries = window.chart.addSeries(
-            window.LightweightCharts.HistogramSeries,
+        try {
+          // Create chart with theme applied via template literals
+          window.chart = LightweightCharts.createChart(
+            document.getElementById('container'),
             {
-              priceFormat: { type: 'volume' },
-              priceScaleId: '',
-              lastValueVisible: false,
-              priceLineVisible: false,
+              width: window.innerWidth,
+              height: window.innerHeight,
+              layout: {
+                background: {
+                  color: window.colors.background,
+                },
+                textColor: window.colors.text,
+                attributionLogo: true,
+              },
+              localization: {
+                priceFormatter: window?.utils?.formatPrice || defaultFormat,
+                dateFormat: window?.utils?.formatTime || formatTime,
+              },
+              grid: {
+                vertLines: { color: window.colors.border },
+                horzLines: { color: window.colors.border },
+              },
+              timeScale: {
+                timeVisible: true,
+                secondsVisible: false,
+                borderColor: 'transparent',
+                tickMarkFormatter: formatYTime,
+              },
+              trackingMode: {
+                exitMode: 0,
+              },
+              rightPriceScale: {
+                borderColor: 'transparent',
+                borderVisible: false,
+                minimumWidth: 50,
+                scaleMargins: {
+                  top: 0.1,
+                  bottom: 0.4,
+                },
+              },
+              leftPriceScale: {
+                borderColor: 'transparent',
+              },
             }
           );
-          return window.volumeSeries;
-        };
 
-         window.updateTPSLPriceLines = (priceLines) => {
-          if (!window.candlestickSeries || !window.chart) return;
+          // open external url when click tradingview logo
+          (function setupLogoHijack() {
+            let bound = false;
+            const attach = () => {
+              const el = document.getElementById('tv-attr-logo');
+              if (el && !bound) {
+                bound = true;
+                const handler = function (e) {
+                  try {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  } catch (_) {}
+                  if (window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(
+                      JSON.stringify({
+                        type: 'ATTR_LOGO_CLICK',
+                        timestamp: Date.now(),
+                      })
+                    );
+                  }
+                  return false;
+                };
+                // use capture to intercept early
+                el.addEventListener('click', handler, true);
+              }
+            };
+            // try now
+            attach();
+          })();
 
-          // Clear existing price lines
-          Object.values(window.priceLineContainers).forEach((line) => {
-            if (line) {
-              window.candlestickSeries.removePriceLine(line);
-            }
+          // Subscribe to crosshair move events
+          window.chart.subscribeCrosshairMove(handleCrosshairMove);
+          window.chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+            updatePriceLines();
           });
-          window.priceLineContainers = {};
 
-          // Add Take Profit line
-          if (priceLines.tpPrice && priceLines.tpPrice > 0) {
-            const tpLine = window.candlestickSeries.createPriceLine({
-              price: priceLines.tpPrice,
-              color: window.colors.greenLineColor,
-              lineWidth: 1,
-              lineStyle: 2, // Dashed
-              axisLabelVisible: true,
-              title: 'TP',
-            });
-            window.priceLineContainers.tp = tpLine;
+          // Notify React Native that chart is ready
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({
+                type: 'CHART_READY',
+                timestamp: new Date().toISOString(),
+              })
+            );
           }
-
-          // Add Entry line
-          if (priceLines.entryPrice && priceLines.entryPrice > 0) {
-            const entryLine = window.candlestickSeries.createPriceLine({
-              price: priceLines.entryPrice,
-              color: window.colors.greenLineColor,
-              lineWidth: 1,
-              lineStyle: 2, // Dashed
-              axisLabelVisible: true,
-              title: 'Entry',
-            });
-            window.priceLineContainers.entry = entryLine;
-          }
-
-          // Add Stop Loss line
-          if (priceLines.slPrice && priceLines.slPrice > 0) {
-            const slLine = window.candlestickSeries.createPriceLine({
-              price: priceLines.slPrice,
-              color: window.colors.redLineColor,
-              lineWidth: 1,
-              lineStyle: 2, // Dashed
-              axisLabelVisible: true,
-              title: 'SL',
-            });
-            window.priceLineContainers.sl = slLine;
-          }
-
-          // Add Liquidation line
-          if (priceLines.liquidationPrice && priceLines.liquidationPrice > 0) {
-            const liquidationLine = window.candlestickSeries.createPriceLine({
-              price: priceLines.liquidationPrice,
-              color: window.colors.redLineColor,
-              lineWidth: 1,
-              lineStyle: 2, // Dashed
-              axisLabelVisible: true,
-              title: 'LIQ',
-            });
-            window.priceLineContainers.liquidation = liquidationLine;
-          }
-        };
-
-        // 更新价格线的函数
-        const updatePriceLines = () => {
-          if (!window.candlestickSeries || !window.chart) return
-
-          const visibleRange = window.chart.timeScale().getVisibleLogicalRange()
-          if (!visibleRange) return
-
-          const barsInfo = window.candlestickSeries.barsInLogicalRange(visibleRange)
-          const data = window.candlestickSeries.data();
-
-          if (!barsInfo || data.length === 0) return
-
-          const extremes = calculateVisibleExtremes(data, barsInfo.from, barsInfo.to)
-
-          // 移除旧的价格线
-          if (window.hightPrice) {
-            window.candlestickSeries.removePriceLine(window.hightPrice)
-            window.hightPrice = null
-          }
-          if (window.lowPrice) {
-            window.candlestickSeries.removePriceLine(window.lowPrice)
-            window.lowPrice = null
-          }
-
-          // 创建新的最高价标记
-          if (extremes.highest) {
-            window.hightPrice = window.candlestickSeries.createPriceLine({
-              price: extremes.highest,
-              color: 'white',
-              lineWidth: 1,
-              lineStyle: 4, // LineStyle.Solid
-              axisLabelVisible: true,
-              title: 'High',
-            })
-          }
-
-          // 创建新的最低价标记
-          if (extremes.lowest) {
-            window.lowPrice = window.candlestickSeries.createPriceLine({
-              price: extremes.lowest,
-              color: 'white',
-              lineWidth: 1,
-              lineStyle: 4, // LineStyle.Solid
-              axisLabelVisible: true,
-              title: 'Low',
-            })
-          }
+        } catch (error) {
+          console.error('TradingView: Error creating chart:', error);
         }
-        // Handle window resize
-        window.addEventListener('resize', function() {
-            if (window.chart) {
-                window.chart.applyOptions({
-                    width: window.innerWidth,
-                    height: window.innerHeight
-                });
-            }
+      }
+      // Create candlestick series when data is received
+      window.createCandlestickSeries = function () {
+        if (!window.chart || !window.LightweightCharts?.CandlestickSeries)
+          return null;
+        // Remove existing series if it exists
+        if (window.candlestickSeries) {
+          window.chart.removeSeries(window.candlestickSeries);
+        }
+        // Create new candlestick series
+        window.candlestickSeries = window.chart.addSeries(
+          window.LightweightCharts.CandlestickSeries,
+          {
+            upColor: '#0ECB81',
+            downColor: '#F6465D',
+            borderDownColor: '#F6465D',
+            borderUpColor: '#0ECB81',
+            wickDownColor: '#F6465D',
+            wickUpColor: '#0ECB81',
+            lastValueVisible: true,
+            priceLineVisible: true,
+            priceLineSource: 0,
+            priceLineWidth: 1,
+            priceLineStyle: 2,
+            priceFormat: {
+              type: 'price',
+              minMove: 0.0000001,
+            },
+          }
+        );
+        return window.candlestickSeries;
+      };
+      window.createVolumeSeries = function () {
+        if (!window.chart || !window.LightweightCharts?.HistogramSeries)
+          return null;
+        if (window.volumeSeries) {
+          window.chart.removeSeries(window.volumeSeries);
+        }
+        window.volumeSeries = window.chart.addSeries(
+          window.LightweightCharts.HistogramSeries,
+          {
+            priceFormat: { type: 'volume' },
+            priceScaleId: '',
+            lastValueVisible: false,
+            priceLineVisible: false,
+          }
+        );
+        return window.volumeSeries;
+      };
+
+      window.updateTPSLPriceLines = (priceLines) => {
+        if (!window.candlestickSeries || !window.chart) return;
+
+        // Clear existing price lines
+        Object.values(window.priceLineContainers).forEach((line) => {
+          if (line) {
+            window.candlestickSeries.removePriceLine(line);
+          }
         });
+        window.priceLineContainers = {};
 
-        // 创建 tooltip DOM
-        const tooltip = document.createElement('div');
-        tooltip.style.position = 'absolute';
-        tooltip.style.display = 'none';
-        tooltip.style.pointerEvents = 'none';
-        tooltip.style.background = window.colors.tooltip.bg;
-        tooltip.style.color = '#D1D4DC';
-        tooltip.style.padding = '8px 9px';
-        tooltip.style.borderRadius = '8px';
-        tooltip.style.fontSize = '12px';
-        tooltip.style.lineHeight = '1.4';
-        tooltip.style.zIndex = '1000';
-        window.tooltip = tooltip;
-        const containerEl = document.getElementById('container');
-        if (containerEl) containerEl.appendChild(tooltip);
+        // Add Take Profit line
+        if (priceLines.tpPrice && priceLines.tpPrice > 0) {
+          const tpLine = window.candlestickSeries.createPriceLine({
+            price: priceLines.tpPrice,
+            color: window.colors.greenLineColor,
+            lineWidth: 1,
+            lineStyle: 2, // Dashed
+            axisLabelVisible: true,
+            title: 'TP',
+          });
+          window.priceLineContainers.tp = tpLine;
+        }
 
-        // Handle crosshair move for tooltip
-        const handleCrosshairMove = (param) => {
-          if (!containerEl || !window.tooltip) return;
-          const tooltipEl = window.tooltip;
+        // Add Entry line
+        if (priceLines.entryPrice && priceLines.entryPrice > 0) {
+          const entryLine = window.candlestickSeries.createPriceLine({
+            price: priceLines.entryPrice,
+            color: window.colors.greenLineColor,
+            lineWidth: 1,
+            lineStyle: 2, // Dashed
+            axisLabelVisible: true,
+            title: 'Entry',
+          });
+          window.priceLineContainers.entry = entryLine;
+        }
 
-          const point = param.point;
-          if (!point || param.time === undefined) {
-            tooltipEl.style.display = 'none';
-            return;
-          }
+        // Add Stop Loss line
+        if (priceLines.slPrice && priceLines.slPrice > 0) {
+          const slLine = window.candlestickSeries.createPriceLine({
+            price: priceLines.slPrice,
+            color: window.colors.redLineColor,
+            lineWidth: 1,
+            lineStyle: 2, // Dashed
+            axisLabelVisible: true,
+            title: 'SL',
+          });
+          window.priceLineContainers.sl = slLine;
+        }
 
-          const candleData = window.candlestickSeries
-            ? param.seriesData.get(window.candlestickSeries)
-            : undefined;
-          const volumeDataPoint = window.volumeSeries
-            ? param.seriesData.get(window.volumeSeries)
-            : undefined;
+        // Add Liquidation line
+        if (priceLines.liquidationPrice && priceLines.liquidationPrice > 0) {
+          const liquidationLine = window.candlestickSeries.createPriceLine({
+            price: priceLines.liquidationPrice,
+            color: window.colors.redLineColor,
+            lineWidth: 1,
+            lineStyle: 2, // Dashed
+            axisLabelVisible: true,
+            title: 'LIQ',
+          });
+          window.priceLineContainers.liquidation = liquidationLine;
+        }
+      };
 
-          if (!candleData) {
-            tooltipEl.style.display = 'none';
-            return;
-          }
+      // 更新价格线的函数
+      const updatePriceLines = () => {
+        if (!window.candlestickSeries || !window.chart) return;
 
-          const open = candleData.open;
-          const high = candleData.high;
-          const low = candleData.low;
-          const close = candleData.close;
-          const volume = volumeDataPoint?.value;
+        const visibleRange = window.chart.timeScale().getVisibleLogicalRange();
+        if (!visibleRange) return;
 
-          // 计算涨跌额和涨跌幅
-          const change = close - open
-          const changePercent = open !== 0 ? (change / open) * 100 : 0
-          const isPositive = change >= 0
+        const barsInfo = window.candlestickSeries.barsInLogicalRange(
+          visibleRange
+        );
+        const data = window.candlestickSeries.data();
 
-          // Build tooltip HTML without template literals
-          let tooltipHTML = '';
-          tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">Time:</span>';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatTime || formatTime)(param.time) + '</span>';
+        if (!barsInfo || data.length === 0) return;
+
+        const extremes = calculateVisibleExtremes(
+          data,
+          barsInfo.from,
+          barsInfo.to
+        );
+
+        // 移除旧的价格线
+        if (window.hightPrice) {
+          window.candlestickSeries.removePriceLine(window.hightPrice);
+          window.hightPrice = null;
+        }
+        if (window.lowPrice) {
+          window.candlestickSeries.removePriceLine(window.lowPrice);
+          window.lowPrice = null;
+        }
+
+        // 创建新的最高价标记
+        if (extremes.highest) {
+          window.hightPrice = window.candlestickSeries.createPriceLine({
+            price: extremes.highest,
+            color: 'white',
+            lineWidth: 1,
+            lineStyle: 4, // LineStyle.Solid
+            axisLabelVisible: true,
+            title: 'High',
+          });
+        }
+
+        // 创建新的最低价标记
+        if (extremes.lowest) {
+          window.lowPrice = window.candlestickSeries.createPriceLine({
+            price: extremes.lowest,
+            color: 'white',
+            lineWidth: 1,
+            lineStyle: 4, // LineStyle.Solid
+            axisLabelVisible: true,
+            title: 'Low',
+          });
+        }
+      };
+      // Handle window resize
+      window.addEventListener('resize', function () {
+        if (window.chart) {
+          window.chart.applyOptions({
+            width: window.innerWidth,
+            height: window.innerHeight,
+          });
+        }
+      });
+
+      // 创建 tooltip DOM
+      const tooltip = document.createElement('div');
+      tooltip.style.position = 'absolute';
+      tooltip.style.display = 'none';
+      tooltip.style.pointerEvents = 'none';
+      tooltip.style.background = window.colors.tooltip.bg;
+      tooltip.style.color = '#D1D4DC';
+      tooltip.style.padding = '8px 9px';
+      tooltip.style.borderRadius = '8px';
+      tooltip.style.fontSize = '12px';
+      tooltip.style.lineHeight = '1.4';
+      tooltip.style.zIndex = '1000';
+      window.tooltip = tooltip;
+      const containerEl = document.getElementById('container');
+      if (containerEl) containerEl.appendChild(tooltip);
+
+      // Handle crosshair move for tooltip
+      const handleCrosshairMove = (param) => {
+        if (!containerEl || !window.tooltip) return;
+        const tooltipEl = window.tooltip;
+
+        const point = param.point;
+        if (!point || param.time === undefined) {
+          tooltipEl.style.display = 'none';
+          return;
+        }
+
+        const candleData = window.candlestickSeries
+          ? param.seriesData.get(window.candlestickSeries)
+          : undefined;
+        const volumeDataPoint = window.volumeSeries
+          ? param.seriesData.get(window.volumeSeries)
+          : undefined;
+
+        if (!candleData) {
+          tooltipEl.style.display = 'none';
+          return;
+        }
+
+        const open = candleData.open;
+        const high = candleData.high;
+        const low = candleData.low;
+        const close = candleData.close;
+        const volume = volumeDataPoint?.value;
+
+        // 计算涨跌额和涨跌幅
+        const change = close - open;
+        const changePercent = open !== 0 ? (change / open) * 100 : 0;
+        const isPositive = change >= 0;
+
+        // Build tooltip HTML without template literals
+        let tooltipHTML = '';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">Time:</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.value +
+          '; font-size: 10px; font-weight: 600;">' +
+          (window.utils?.formatTime || formatTime)(param.time) +
+          '</span>';
+        tooltipHTML += '</div>';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">Open:</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.value +
+          '; font-size: 10px; font-weight: 600;">' +
+          (window.utils?.formatPrice || defaultFormat)(open) +
+          '</span>';
+        tooltipHTML += '</div>';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">High:</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.value +
+          '; font-size: 10px; font-weight: 600;">' +
+          (window.utils?.formatPrice || defaultFormat)(high) +
+          '</span>';
+        tooltipHTML += '</div>';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">Low:</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.value +
+          '; font-size: 10px; font-weight: 600;">' +
+          (window.utils?.formatPrice || defaultFormat)(low) +
+          '</span>';
+        tooltipHTML += '</div>';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">Close:</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.value +
+          '; font-size: 10px; font-weight: 600;">' +
+          (window.utils?.formatPrice || defaultFormat)(close) +
+          '</span>';
+        tooltipHTML += '</div>';
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">%Chg:</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          (isPositive ? '#0ECB81' : '#F6465D') +
+          '; font-size: 10px; font-weight: 600;">' +
+          (isPositive ? '+' : '') +
+          (window.utils?.formatPrice || defaultFormat)(change) +
+          (isPositive ? '+' : '') +
+          '(' +
+          changePercent.toFixed(2) +
+          '%)</span>';
+        tooltipHTML += '</div>';
+
+        if (typeof volume === 'number') {
+          tooltipHTML +=
+            '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+          tooltipHTML +=
+            '<span style="color: ' +
+            window.colors.tooltip.title +
+            '; font-size: 10px;">Volume:</span>';
+          tooltipHTML +=
+            '<span style="color: ' +
+            window.colors.tooltip.value +
+            '; font-size: 10px; font-weight: 600;">' +
+            (window.utils?.formatNumber || formatNumber)(volume) +
+            '</span>';
           tooltipHTML += '</div>';
-          tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">Open:</span>';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatPrice || defaultFormat)(open) + '</span>';
-          tooltipHTML += '</div>';
-          tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">High:</span>';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatPrice || defaultFormat)(high) + '</span>';
-          tooltipHTML += '</div>';
-          tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">Low:</span>';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatPrice || defaultFormat)(low) + '</span>';
-          tooltipHTML += '</div>';
-          tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">Close:</span>';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatPrice || defaultFormat)(close) + '</span>';
-          tooltipHTML += '</div>';
-          tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">%Chg:</span>';
-          tooltipHTML += '<span style="color: ' + (isPositive ? '#0ECB81' : '#F6465D') + '; font-size: 10px; font-weight: 600;">' + (isPositive ? '+' : '') + (window.utils?.formatPrice || defaultFormat)(change) + (isPositive ? '+' : '') + '(' + changePercent.toFixed(2) + '%)</span>';
-          tooltipHTML += '</div>';
+        }
 
-          if (typeof volume === 'number') {
-            tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-            tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">Volume:</span>';
-            tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatNumber || formatNumber)(volume) + '</span>';
-            tooltipHTML += '</div>';
-          }
+        tooltipEl.innerHTML = tooltipHTML;
 
-          tooltipEl.innerHTML = tooltipHTML;
+        const containerRect = containerEl.getBoundingClientRect();
+        const isLeftSide = point.x < containerRect.width / 2;
+        tooltipEl.style.top = '8px';
+        if (isLeftSide) {
+          // 选中点在左侧，显示在右上角
+          tooltipEl.style.right = '8px';
+          tooltipEl.style.left = 'auto';
+        } else {
+          // 选中点在右侧，显示在左上角
+          tooltipEl.style.left = '8px';
+          tooltipEl.style.right = 'auto';
+        }
+        tooltipEl.style.display = 'block';
+      };
 
-          const containerRect = containerEl.getBoundingClientRect();
-          const isLeftSide = point.x < containerRect.width / 2;
-          tooltipEl.style.top = '8px';
-          if (isLeftSide) {
-            // 选中点在左侧，显示在右上角
-            tooltipEl.style.right = '8px';
-            tooltipEl.style.left = 'auto';
-          } else {
-            // 选中点在右侧，显示在左上角
-            tooltipEl.style.left = '8px';
-            tooltipEl.style.right = 'auto';
-          }
-          tooltipEl.style.display = 'block';
-        };
-
-
-        // Message handling from React Native
-        window.addEventListener('message', function(event) {
-            try {
-                const message = JSON.parse(event.data);
-                switch (message.type) {
-                    case 'SET_CANDLESTICK_DATA':
-                        if (window.chart && message.data?.length > 0) {
-                            // Create or get candlestick series
-                            if (!window.candlestickSeries) {
-                                window.createCandlestickSeries();
-                            }
-                            if (window.candlestickSeries) {
-                                window.candlestickSeries.setData(message.data);
-                                // Check if this is truly new data (different source/period) or just a rerender
-                                const currentDataKey = message.source + '_' + (message.data?.length || 0);
-                                const shouldAutoscale = window.isInitialDataLoad || (window.lastDataKey !== currentDataKey);
-                                if (shouldAutoscale) {
-                                    // window.chart.timeScale().fitContent();
-                                    window.lastDataKey = currentDataKey;
-                                }
-                                window.isInitialDataLoad = false;
-                                if(message.showVolume) {
-                                  if (!window.volumeSeries) {
-                                    window.createVolumeSeries();
-                                  }
-                                  window.volumeSeries.setData(message.data.map(item => ({
-                                    time: item.time,
-                                    value: item.volume,
-                                    color:
-                                      item.close >= item.open
-                                        ? '#0ECB81'
-                                        : '#F6465D',
-                                  })));
-                                  window.candlestickSeries
-                                    .priceScale()
-                                    .applyOptions({ scaleMargins: { top: 0.1, bottom: 0.2 } });
-                                  window.volumeSeries
-                                    .priceScale()
-                                    .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
-                                  updatePriceLines()
-                                }
-                                window.chart.timeScale().scrollToRealTime();
-                            } else {
-                                console.error('📊 TradingView: Failed to create candlestick series');
-                            }
-                        }
-                        break;
-                    case 'UPDATE_CANDLESTICK_DATA':
-                      if (window.chart && window.candlestickSeries && message.data) {
-                        window.candlestickSeries.update(message.data);
-                      }
-                      break;
-                    case 'UPDATE_TPSL_PRICE_LINES':
-                      if (window.chart && window.candlestickSeries && message.data) {
-                        window.updateTPSLPriceLines(message.data)
-                      }
-                      break;
-                    case 'UPDATE_INTERVAL':
-                        // Send confirmation back to React Native
-                        if (window.ReactNativeWebView) {
-                            window.ReactNativeWebView.postMessage(JSON.stringify({
-                                type: 'INTERVAL_UPDATED',
-                                duration: message.duration,
-                                candlePeriod: message.candlePeriod,
-                                candleCount: message.candleCount,
-                                timestamp: new Date().toISOString()
-                            }));
-                        }
-                        break;
+      // Message handling from React Native
+      window.addEventListener('message', function (event) {
+        try {
+          const message = JSON.parse(event.data);
+          switch (message.type) {
+            case 'SET_CANDLESTICK_DATA':
+              if (window.chart && message.data?.length > 0) {
+                // Create or get candlestick series
+                if (!window.candlestickSeries) {
+                  window.createCandlestickSeries();
                 }
-            } catch (error) {
-                console.error('📊 TradingView: Message handling error:', error);
-            }
-        });
-        // Also listen for React Native WebView messages
-        document.addEventListener('message', function(event) {
-            window.dispatchEvent(new MessageEvent('message', event));
-        });
-        // Start loading after a small delay
-        setTimeout(loadTradingView, 0);
+                if (window.candlestickSeries) {
+                  window.candlestickSeries.setData(message.data);
+                  // Check if this is truly new data (different source/period) or just a rerender
+                  const currentDataKey =
+                    message.source + '_' + (message.data?.length || 0);
+                  const shouldAutoscale =
+                    window.isInitialDataLoad ||
+                    window.lastDataKey !== currentDataKey;
+                  if (shouldAutoscale) {
+                    // window.chart.timeScale().fitContent();
+                    window.lastDataKey = currentDataKey;
+                  }
+                  window.isInitialDataLoad = false;
+                  if (message.showVolume) {
+                    if (!window.volumeSeries) {
+                      window.createVolumeSeries();
+                    }
+                    window.volumeSeries.setData(
+                      message.data.map((item) => ({
+                        time: item.time,
+                        value: item.volume,
+                        color: item.close >= item.open ? '#0ECB81' : '#F6465D',
+                      }))
+                    );
+                    window.candlestickSeries
+                      .priceScale()
+                      .applyOptions({
+                        scaleMargins: { top: 0.1, bottom: 0.2 },
+                      });
+                    window.volumeSeries
+                      .priceScale()
+                      .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
+                    updatePriceLines();
+                  }
+                  window.chart.timeScale().scrollToRealTime();
+                } else {
+                  console.error(
+                    '📊 TradingView: Failed to create candlestick series'
+                  );
+                }
+              }
+              break;
+            case 'UPDATE_CANDLESTICK_DATA':
+              if (window.chart && window.candlestickSeries && message.data) {
+                window.candlestickSeries.update(message.data);
+              }
+              break;
+            case 'UPDATE_TPSL_PRICE_LINES':
+              if (window.chart && window.candlestickSeries && message.data) {
+                window.updateTPSLPriceLines(message.data);
+              }
+              break;
+            case 'UPDATE_INTERVAL':
+              // Send confirmation back to React Native
+              if (window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(
+                  JSON.stringify({
+                    type: 'INTERVAL_UPDATED',
+                    duration: message.duration,
+                    candlePeriod: message.candlePeriod,
+                    candleCount: message.candleCount,
+                    timestamp: new Date().toISOString(),
+                  })
+                );
+              }
+              break;
+          }
+        } catch (error) {
+          console.error('📊 TradingView: Message handling error:', error);
+        }
+      });
+      // Also listen for React Native WebView messages
+      document.addEventListener('message', function (event) {
+        window.dispatchEvent(new MessageEvent('message', event));
+      });
+      // Start loading after a small delay
+      setTimeout(loadTradingView, 0);
     </script>
-</body>
-</html>`;
+  </body>
+</html>
+`;
