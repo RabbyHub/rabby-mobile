@@ -59,6 +59,7 @@ export interface Props {
   buttonIcon?: React.ReactNode;
   isMiniSignTx?: boolean;
   directSubmit?: boolean;
+  miniSignType?: 'tx' | 'typedData';
 }
 
 export const ActionsContainer: React.FC<

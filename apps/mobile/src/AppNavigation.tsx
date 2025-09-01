@@ -89,6 +89,7 @@ import {
 } from './screens/Browser/BottomSheetBrowser';
 import { TokenMarketInfoScreen } from './screens/TokenDetail/TokenMarketInfoScreen';
 import { ModalsSubmitFeedbackByScreenshotStub } from './components/Screenshot/ScreenshotModal';
+import { GlobalMiniSignTypedDataApproval } from './components/Approval/components/MiniSignTypedData/GlobalMiniApproval';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -535,6 +536,7 @@ export default function AppNavigation({
       <BackgroundSecureBlurView />
       <FloatViewAutoLockCount />
       <GlobalMiniApproval />
+      <GlobalMiniSignTypedDataApproval />
     </AutoLockView.ForAppNav>
   );
 }

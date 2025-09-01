@@ -11,10 +11,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { Dots } from '../Popup/Dots';
+import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataApprovalTask';
 
 interface Props {
   account: Account;
-  task: MiniApprovalTaskType;
+  task: MiniApprovalTaskType | MiniTypedDataApprovalTaskType;
 }
 
 export const MiniActionStatus: React.FC<Props> = ({ task, account }) => {
