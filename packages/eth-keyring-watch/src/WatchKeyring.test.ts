@@ -29,7 +29,7 @@ describe('WatchKeyring', () => {
     const invalidAccount = 'InvalidAddress';
     watchKeyring.setAccountToAdd(invalidAccount)
     await expect(watchKeyring.addAccounts()).rejects.toThrow(
-      "The address you're are trying to import is invalid"
+      "The address you're trying to import is invalid"
     );
   });
 
@@ -39,7 +39,7 @@ describe('WatchKeyring', () => {
 
     watchKeyring.setAccountToAdd(validAccount)
     await expect(watchKeyring.addAccounts()).rejects.toThrow(
-      "The address you're are trying to import is duplicated"
+      "The address you're trying to import is duplicated"
     );
   });
 

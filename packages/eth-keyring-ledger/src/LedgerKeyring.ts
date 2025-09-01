@@ -230,7 +230,7 @@ class LedgerKeyring {
               this.accounts.push(address);
             } else {
               throw new Error(
-                "The address you're are trying to import is invalid",
+                "The address you're trying to import is invalid",
               );
             }
             this.page = 0;

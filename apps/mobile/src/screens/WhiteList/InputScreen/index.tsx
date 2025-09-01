@@ -65,9 +65,9 @@ enum INPUT_ERROR {
 
 const ERROR_MESSAGE = {
   [INPUT_ERROR.INVALID_ADDRESS]:
-    "The address you're are trying to import is invalid",
+    "The address you're trying to import is invalid",
   [INPUT_ERROR.ADDRESS_EXIST]:
-    "The address you're are trying to import is duplicated",
+    "The address you're trying to import is duplicated",
   [INPUT_ERROR.REQUIRED]: 'Please input address',
 };
 
