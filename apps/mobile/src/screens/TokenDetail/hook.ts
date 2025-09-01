@@ -258,7 +258,7 @@ export const useTokenMarketInfo = (token: {
   chain: string;
   tokenId: string;
 }) => {
-  return useRequest(
+  const { data: marketInfo, loading: marketInfoLoading } = useRequest(
     async () => {
       const res = await openapi.getTokenMarketInfo({
         token_id: token.tokenId,
@@ -270,4 +270,39 @@ export const useTokenMarketInfo = (token: {
       refreshDeps: [token.chain, token.tokenId],
     },
   );
+
+  const { data: holdInfo, loading: holdInfoLoading } = useRequest(
+    async () => {
+      const res = await openapi.getTokenHolderInfo({
+        token_id: token.tokenId,
+        chain_id: token.chain,
+      });
+      return res;
+    },
+    {
+      refreshDeps: [token.chain, token.tokenId],
+    },
+  );
+
+  const { data: supplyInfo, loading: supplyInfoLoading } = useRequest(
+    async () => {
+      const res = await openapi.getTokenSupplyInfo({
+        token_id: token.tokenId,
+        chain_id: token.chain,
+      });
+      return res;
+    },
+    {
+      refreshDeps: [token.chain, token.tokenId],
+    },
+  );
+
+  return {
+    marketInfo,
+    marketInfoLoading,
+    holdInfo,
+    holdInfoLoading,
+    supplyInfo,
+    supplyInfoLoading,
+  };
 };

@@ -250,6 +250,7 @@ export class DisplayedToken implements AbstractPortfolioToken {
   _usdValueChangeStr?: string;
   _usdValueChangePercent?: string;
   _amountChangeUsdValueStr = '';
+  support_market_data?: boolean;
 
   constructor(token: PortfolioItemToken & { cex_ids?: string[] }) {
     this._tokenId = token.id;
@@ -284,6 +285,7 @@ export class DisplayedToken implements AbstractPortfolioToken {
     this.fdv = token.fdv || 0;
     // 默认是它
     this._usdValueChangeStr = '-';
+    this.support_market_data = token.support_market_data;
   }
 
   patchHistory(h: PortfolioItemToken) {

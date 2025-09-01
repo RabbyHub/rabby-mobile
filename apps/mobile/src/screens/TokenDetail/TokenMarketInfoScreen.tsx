@@ -274,7 +274,11 @@ export const TokenMarketInfoScreen = () => {
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const { data: tokenWithAmount, refreshAsync } = useRequest(
+  const {
+    data: tokenWithAmount,
+    refreshAsync,
+    loading: tokenWithAmountLoading,
+  } = useRequest(
     async () => {
       const res = await openapi.getToken(
         finalAccount!.address,
@@ -286,6 +290,7 @@ export const TokenMarketInfoScreen = () => {
         price_24h_change: res?.price_24h_change,
         usd_value: res?.usd_value,
         price: res?.price,
+        support_market_data: res?.support_market_data,
       });
     },
     {
@@ -617,7 +622,7 @@ export const TokenMarketInfoScreen = () => {
     tokenPriceChartRef.current?.refreshChart();
   }, [refreshAsync, refreshTokenEntity]);
 
-  const { data: tokenInfo, loading: tokenInfoLoading } = useTokenMarketInfo({
+  const { marketInfo, holdInfo, supplyInfo } = useTokenMarketInfo({
     chain: token.chain,
     tokenId: token._tokenId,
   });
@@ -690,24 +695,22 @@ export const TokenMarketInfoScreen = () => {
                 position: 'relative',
                 marginTop: 12,
               }}>
-              {tokenInfoLoading ? (
+              {tokenWithAmountLoading ? (
                 <View style={styles.skeleton} />
-              ) : tokenInfo?.support_market_data ? (
+              ) : tokenWithAmount?.support_market_data ? (
                 <>
                   <MarketInfo
-                    price={tokenInfo?.price ?? 0}
-                    price24hChange={tokenInfo?.price_24h_change ?? 0}
+                    price={tokenWithAmount?.price ?? 0}
+                    price24hChange={tokenWithAmount?.price_24h_change ?? 0}
                     marketCap={
-                      tokenInfo?.market.market_cap_usd_value?.toString() ?? ''
+                      supplyInfo?.market_cap_usd_value?.toString() ?? ''
                     }
-                    totalSupply={
-                      tokenInfo?.market.total_supply?.toString() ?? ''
-                    }
+                    totalSupply={supplyInfo?.total_supply?.toString() ?? ''}
                     volume24h={
-                      tokenInfo?.market.volume_amount_24h?.toString() ?? ''
+                      marketInfo?.market.volume_amount_24h?.toString() ?? ''
                     }
-                    txns24h={tokenInfo?.market.txns_24h?.toString() ?? ''}
-                    holders={tokenInfo?.market.holder_count?.toString() ?? ''}
+                    txns24h={marketInfo?.market.txns_24h?.toString() ?? ''}
+                    holders={holdInfo?.holder_count?.toString() ?? ''}
                   />
                   <TimePanel
                     currentInterval={currentInterval}
