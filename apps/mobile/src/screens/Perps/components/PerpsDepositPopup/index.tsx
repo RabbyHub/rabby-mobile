@@ -71,7 +71,6 @@ export const PerpsDepositPopup: React.FC<{
 
   const { runAsync: handleDeposit, loading } = useRequest(
     async () => {
-      console.log('--------', amount);
       await onDeposit?.(amount);
     },
     {
@@ -79,10 +78,37 @@ export const PerpsDepositPopup: React.FC<{
     },
   );
 
-  const { height } = useWindowDimensions();
-  const maxHeight = useMemo(() => {
-    return height - 200;
-  }, [height]);
+  const amountValidation = React.useMemo(() => {
+    const amountValue = Number(amount);
+    if (amountValue === 0) {
+      return { isValid: false, error: null };
+    }
+
+    if (Number.isNaN(+amount)) {
+      return {
+        isValid: false,
+        error: 'invalid_number',
+        errorMessage: t('page.perps.PerpsDepositPopup.invalidNumber'),
+      };
+    }
+
+    if (amountValue < 5) {
+      return {
+        isValid: false,
+        error: 'minimum_limit',
+        errorMessage: t('page.perps.PerpsDepositPopup.minimumDepositSize'),
+      };
+    }
+
+    if (amountValue > (arbUsdc?.amount || 0)) {
+      return {
+        isValid: false,
+        error: 'insufficient_balance',
+        errorMessage: t('page.perps.PerpsDepositPopup.insufficientBalance'),
+      };
+    }
+    return { isValid: true, error: null };
+  }, [amount, arbUsdc?.amount, t]);
 
   useEffect(() => {
     if (visible) {
@@ -94,6 +120,7 @@ export const PerpsDepositPopup: React.FC<{
 
   useEffect(() => {
     if (visible) {
+      setAmount('');
       runFetchUsdcToken();
     }
   }, [runFetchUsdcToken, visible]);
@@ -106,15 +133,13 @@ export const PerpsDepositPopup: React.FC<{
     <>
       <AppBottomSheetModal
         ref={modalRef}
-        // snapPoints={snapPoints}
         {...makeBottomSheetProps({
           colors: colors2024,
           linearGradientType: 'bg1',
         })}
         onDismiss={onClose}
         // enableDynamicSizing
-        snapPoints={[376]}
-        maxDynamicContentSize={maxHeight}>
+        snapPoints={[376]}>
         <AutoLockView style={[styles.container]}>
           <View>
             <Text style={styles.title}>
@@ -140,7 +165,10 @@ export const PerpsDepositPopup: React.FC<{
             <View style={styles.inputContainer}>
               <BottomSheetTextInput
                 keyboardType="numeric"
-                style={styles.input}
+                style={[
+                  styles.input,
+                  !amountValidation.isValid ? styles.inputError : null,
+                ]}
                 placeholder="$0"
                 value={amount}
                 onChangeText={setAmount}
@@ -167,11 +195,19 @@ export const PerpsDepositPopup: React.FC<{
                 </TouchableOpacity>
               ) : null}
             </View>
+            <View style={styles.errorContainer}>
+              {amountValidation.errorMessage ? (
+                <Text style={styles.errorMessage}>
+                  {amountValidation.errorMessage}
+                </Text>
+              ) : null}
+            </View>
           </View>
           <Button
             type="primary"
             title={t('page.perps.PerpsDepositPopup.depositBtn')}
             onPress={handleDeposit}
+            disabled={!amountValidation.isValid}
             loading={loading}
           />
         </AutoLockView>
@@ -264,17 +300,19 @@ const getStyle = createGetStyles2024(ctx => {
       flex: 1,
     },
     inputError: {
+      color: ctx.colors2024['red-default'],
+    },
+    errorContainer: {
+      marginTop: 8,
+      minHeight: 18,
+    },
+    errorMessage: {
       fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      color: ctx.colors2024['neutral-error'],
-      backgroundColor: ctx.colors2024['neutral-bg-2'],
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderColor: ctx.colors2024['neutral-error'],
-      borderWidth: 1,
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: '400',
+      color: ctx.colors2024['red-default'],
+      flexShrink: 0,
     },
     title: {
       fontFamily: 'SF Pro Rounded',

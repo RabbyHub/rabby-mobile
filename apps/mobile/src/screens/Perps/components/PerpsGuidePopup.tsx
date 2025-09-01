@@ -1,3 +1,12 @@
+import ImgGuide1 from '@/assets2024/icons/perps/guide/01.png';
+import ImgGuide2Dark from '@/assets2024/icons/perps/guide/02-dark.png';
+import ImgGuide2 from '@/assets2024/icons/perps/guide/02.png';
+import ImgGuide3Dark from '@/assets2024/icons/perps/guide/03-dark.png';
+import ImgGuide3 from '@/assets2024/icons/perps/guide/03.png';
+import ImgGuide4Dark from '@/assets2024/icons/perps/guide/04-dark.png';
+import ImgGuide4 from '@/assets2024/icons/perps/guide/04.png';
+import ImgGuide5Dark from '@/assets2024/icons/perps/guide/05-dark.png';
+import ImgGuide5 from '@/assets2024/icons/perps/guide/05.png';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
@@ -9,6 +18,7 @@ import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Image,
   ScrollView,
   Text,
   TouchableWithoutFeedback,
@@ -16,17 +26,18 @@ import {
   View,
 } from 'react-native';
 import Animated, {
+  interpolateColor,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
-  interpolateColor,
 } from 'react-native-reanimated';
 
 export const PerpsGuidePopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
-}> = ({ visible, onClose }) => {
+  onComplete?(): void;
+}> = ({ visible, onClose, onComplete }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -42,6 +53,56 @@ export const PerpsGuidePopup: React.FC<{
 
   const scrollViewRef = React.useRef<ScrollView>(null);
 
+  const [activeIndex, setActiveIndex] = React.useState(0);
+
+  const steps = useMemo(() => {
+    return [
+      {
+        title: t('page.perps.PerpsGuidePopup.step1Title'),
+        description: t('page.perps.PerpsGuidePopup.step1Desc'),
+        image: ImgGuide1,
+        button: t('global.next'),
+      },
+      {
+        title: t('page.perps.PerpsGuidePopup.step2Title'),
+        description: t('page.perps.PerpsGuidePopup.step2Desc'),
+        image: isLight ? ImgGuide2 : ImgGuide2Dark,
+        button: t('global.next'),
+      },
+      {
+        title: t('page.perps.PerpsGuidePopup.step3Title'),
+        description: t('page.perps.PerpsGuidePopup.step3Desc'),
+        image: isLight ? ImgGuide3 : ImgGuide3Dark,
+        button: t('global.next'),
+      },
+      {
+        title: t('page.perps.PerpsGuidePopup.step4Title'),
+        description: t('page.perps.PerpsGuidePopup.step4Desc'),
+        image: isLight ? ImgGuide4 : ImgGuide4Dark,
+        button: t('global.next'),
+      },
+      {
+        title: t('page.perps.PerpsGuidePopup.step5Title'),
+        description: t('page.perps.PerpsGuidePopup.step5Desc'),
+        image: isLight ? ImgGuide5 : ImgGuide5Dark,
+        button: t('global.gotIt'),
+      },
+    ];
+  }, [isLight, t]);
+
+  const activeStep = useMemo(() => {
+    return steps[activeIndex];
+  }, [activeIndex, steps]);
+
+  const handleStep = useMemoizedFn(() => {
+    if (activeIndex === steps.length - 1) {
+      onComplete?.();
+      return;
+    } else {
+      setActiveIndex(activeIndex + 1);
+    }
+  });
+
   useEffect(() => {
     if (visible) {
       modalRef.current?.present();
@@ -50,55 +111,15 @@ export const PerpsGuidePopup: React.FC<{
     }
   }, [visible]);
 
-  const [activeIndex, setActiveIndex] = React.useState(0);
-
-  const steps = useMemo(() => {
-    return [
-      {
-        title: t('page.perps.PerpsGuidePopup.step1Title'),
-        description: t('page.perps.PerpsGuidePopup.step1Desc'),
-        button: t('global.next'),
-      },
-      {
-        title: t('page.perps.PerpsGuidePopup.step2Title'),
-        description: t('page.perps.PerpsGuidePopup.step2Desc'),
-        button: t('global.next'),
-      },
-      {
-        title: t('page.perps.PerpsGuidePopup.step3Title'),
-        description: t('page.perps.PerpsGuidePopup.step3Desc'),
-        button: t('global.next'),
-      },
-      {
-        title: t('page.perps.PerpsGuidePopup.step4Title'),
-        description: t('page.perps.PerpsGuidePopup.step4Desc'),
-        button: t('global.next'),
-      },
-      {
-        title: t('page.perps.PerpsGuidePopup.step5Title'),
-        description: t('page.perps.PerpsGuidePopup.step5Desc'),
-        button: t('global.gotIt'),
-      },
-    ];
-  }, [t]);
-
-  const activeStep = useMemo(() => {
-    return steps[activeIndex];
-  }, [activeIndex, steps]);
-
-  const handleStep = useMemoizedFn(() => {
-    if (activeIndex === steps.length - 1) {
-      onClose?.();
-      return;
-    } else {
-      setActiveIndex(activeIndex + 1);
+  useEffect(() => {
+    if (!visible) {
+      setActiveIndex(0);
     }
-  });
+  }, [visible]);
 
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      // snapPoints={snapPoints}
       {...makeBottomSheetProps({
         colors: colors2024,
         linearGradientType: 'bg1',
@@ -117,7 +138,13 @@ export const PerpsGuidePopup: React.FC<{
               ]}>
               <Text style={styles.stepTitle}>{step.title}</Text>
               <Text style={styles.stepDescription}>{step.description}</Text>
-              <View style={styles.imageContainer}></View>
+              <View style={styles.imageContainer}>
+                <Image
+                  source={step.image}
+                  style={styles.stepImage}
+                  resizeMode="contain"
+                />
+              </View>
             </View>
           ))}
           <View style={styles.indicatorContainer}>
@@ -226,14 +253,19 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '400',
       color: ctx.colors2024['neutral-body'],
       marginBottom: 16,
+      textAlign: 'center',
     },
+    stepImage: {
+      width: '100%',
+    },
+
     imageContainer: {
       flex: 1,
       display: 'flex',
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'red',
+      height: 249,
     },
     indicatorContainer: {
       display: 'flex',

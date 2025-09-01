@@ -130,7 +130,7 @@ export const PerpsOpenPositionPopup: React.FC<{
 
   // 验证 margin 输入
   const marginValidation = React.useMemo(() => {
-    const marginValue = Number(margin) || 0;
+    const marginValue = Number(margin);
     const usdValue = marginValue * leverage;
     const maxNtlValue = 10000000;
 
@@ -138,11 +138,21 @@ export const PerpsOpenPositionPopup: React.FC<{
       return { isValid: false, error: null };
     }
 
+    if (Number.isNaN(+marginValue)) {
+      return {
+        isValid: false,
+        error: 'invalid_number',
+        errorMessage: t('page.perps.PerpsOpenPositionPopup.invalidNumber'),
+      };
+    }
+
     if (marginValue > availableBalance) {
       return {
         isValid: false,
         error: 'insufficient_balance',
-        errorMessage: t('page.perps.insufficientBalance'),
+        errorMessage: t(
+          'page.perps.PerpsOpenPositionPopup.insufficientBalance',
+        ),
       };
     }
 
@@ -151,7 +161,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       return {
         isValid: false,
         error: 'minimum_limit',
-        errorMessage: t('page.perps.minimumOrderSize'),
+        errorMessage: t('page.perps.PerpsOpenPositionPopup..minimumOrderSize'),
       };
     }
 
@@ -159,7 +169,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       return {
         isValid: false,
         error: 'maximum_limit',
-        errorMessage: t('page.perps.maximumOrderSize', {
+        errorMessage: t('page.perps.PerpsOpenPositionPopup.maximumOrderSize', {
           amount: `$${maxNtlValue}`,
         }),
       };
@@ -181,29 +191,6 @@ export const PerpsOpenPositionPopup: React.FC<{
       setIsReviewMode(false);
     }
   }, [visible]);
-
-  const handleReview = () => {
-    setIsReviewMode(true);
-  };
-
-  const handleBackToEdit = () => {
-    setIsReviewMode(false);
-  };
-
-  const isValidAmount = marginValidation.isValid;
-
-  const handleLeverageConfirm = (selectedLeverage: number) => {
-    setLeverage(selectedLeverage);
-    setLeveragePopupVisible(false);
-  };
-
-  // 获取错误状态下的文字颜色
-  const getMarginTextColor = () => {
-    if (marginValidation.error) {
-      return 'text-r-red-default';
-    }
-    return 'text-r-neutral-title-1';
-  };
 
   const openPosition = useMemoizedFn(async () => {
     setLoading(true);
@@ -276,7 +263,10 @@ export const PerpsOpenPositionPopup: React.FC<{
 
               <TextInput
                 keyboardType="numeric"
-                style={styles.input}
+                style={[
+                  styles.input,
+                  !marginValidation.isValid ? styles.inputError : null,
+                ]}
                 placeholder="$0"
                 value={margin}
                 onChangeText={setMargin}
@@ -382,6 +372,7 @@ export const PerpsOpenPositionPopup: React.FC<{
             <Button
               type="primary"
               title={'Check'}
+              disabled={!marginValidation.isValid}
               onPress={() => {
                 setIsReviewMode(true);
               }}
@@ -490,17 +481,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       flex: 1,
     },
     inputError: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      color: colors2024['neutral-error'],
-      backgroundColor: colors2024['neutral-bg-2'],
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderColor: colors2024['neutral-error'],
-      borderWidth: 1,
+      borderColor: colors2024['red-default'],
     },
     title: {
       fontFamily: 'SF Pro Rounded',

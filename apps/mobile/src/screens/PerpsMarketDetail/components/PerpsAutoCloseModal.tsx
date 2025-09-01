@@ -1,13 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Modal,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
@@ -114,12 +107,16 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
       if (direction === 'Long' && tpValue <= price) {
         resObj.tp.isValid = false;
         resObj.tp.error = 'invalid_tp_long';
-        resObj.tp.errorMessage = t('page.perps.takeProfitTipsLong');
+        resObj.tp.errorMessage = t(
+          'page.perps.PerpsAutoCloseModal.takeProfitTipsLong',
+        );
       }
       if (direction === 'Short' && tpValue >= price) {
         resObj.tp.isValid = false;
         resObj.tp.error = 'invalid_tp_short';
-        resObj.tp.errorMessage = t('page.perps.takeProfitTipsShort');
+        resObj.tp.errorMessage = t(
+          'page.perps.PerpsAutoCloseModal.takeProfitTipsShort',
+        );
       }
     }
 
@@ -128,28 +125,38 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
       if (direction === 'Long' && slValue >= price) {
         resObj.sl.isValid = false;
         resObj.sl.error = 'invalid_sl_long';
-        resObj.sl.errorMessage = t('page.perps.stopLossTipsLong');
+        resObj.sl.errorMessage = t(
+          'page.perps.PerpsAutoCloseModal.stopLossTipsLong',
+        );
       } else if (direction === 'Long' && slValue < liqPrice) {
         // warning
         resObj.sl.isValid = true;
         resObj.sl.isWarning = true;
         resObj.sl.error = '';
-        resObj.sl.errorMessage = t('page.perps.stopLossTipsLongLiquidation', {
-          price: `$${splitNumberByStep(liqPrice)}`,
-        });
+        resObj.sl.errorMessage = t(
+          'page.perps.PerpsAutoCloseModal.stopLossTipsLongLiquidation',
+          {
+            price: `$${splitNumberByStep(liqPrice)}`,
+          },
+        );
       }
       if (direction === 'Short' && slValue <= price) {
         resObj.sl.isValid = false;
         resObj.sl.error = 'invalid_sl_short';
-        resObj.sl.errorMessage = t('page.perps.stopLossTipsShort');
+        resObj.sl.errorMessage = t(
+          'page.perps.PerpsAutoCloseModal.stopLossTipsShort',
+        );
       } else if (direction === 'Short' && slValue > liqPrice) {
         // warning
         resObj.sl.isValid = true;
         resObj.sl.isWarning = true;
         resObj.sl.error = '';
-        resObj.sl.errorMessage = t('page.perps.stopLossTipsShortLiquidation', {
-          price: `$${splitNumberByStep(liqPrice)}`,
-        });
+        resObj.sl.errorMessage = t(
+          'page.perps.PerpsAutoCloseModal.stopLossTipsShortLiquidation',
+          {
+            price: `$${splitNumberByStep(liqPrice)}`,
+          },
+        );
       }
     }
 
@@ -164,17 +171,6 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
   }, [visible]);
 
   const isValidPrice = priceValidation.tp.isValid && priceValidation.sl.isValid;
-
-  // 获取错误状态下的文字颜色
-  const getMarginTextColor = (type: 'tp' | 'sl') => {
-    if (priceValidation[type].error) {
-      return 'text-r-red-default';
-    }
-    if (priceValidation[type].isWarning) {
-      return 'text-r-orange-default';
-    }
-    return 'text-r-neutral-title-1';
-  };
 
   const handleConfirm = useMemoizedFn(async () => {
     setLoading(true);
@@ -246,8 +242,8 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
                       {priceValidation.tp.errorMessage}
                     </Text>
                   ) : tpPrice ? (
-                    <Text style={styles.errorMsg}>
-                      {t('page.perps.takeProfit')}{' '}
+                    <Text style={[styles.errorMsg, styles.errorMsgGreen]}>
+                      {t('page.perps.PerpsAutoCloseModal.profit')}{' '}
                       {formatUsdValue(Math.abs(tpProfit))}
                     </Text>
                   ) : null}
@@ -275,7 +271,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
                     </Text>
                   ) : slPrice ? (
                     <Text style={styles.errorMsg}>
-                      {t('page.perps.stopLoss')}{' '}
+                      {t('page.perps.PerpsAutoCloseModal.loss')}{' '}
                       {formatUsdValue(Math.abs(slLoss))}
                     </Text>
                   ) : null}
@@ -286,6 +282,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
               <Button
                 type="primary"
                 title={t('global.confirm')}
+                disabled={!isValidPrice}
                 onPress={handleConfirm}
                 containerStyle={styles.containerStyle}
               />
@@ -422,6 +419,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 18,
     fontWeight: '500',
     color: colors2024['red-default'],
+  },
+  errorMsgGreen: {
+    color: colors2024['green-default'],
   },
   input: {
     fontFamily: 'SF Pro Rounded',

@@ -157,7 +157,7 @@ export const PerpsSelectTokenPopup: React.FC<{
       </AppBottomSheetModal>
       <PerpsDepositTokenModal
         visible={false}
-        usdcToken={arbUsdc}
+        arbUsdcToken={arbUsdc}
         token={tokens?.[1]}
       />
     </>

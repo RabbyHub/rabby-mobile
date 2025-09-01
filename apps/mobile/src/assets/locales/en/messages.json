@@ -2131,13 +2131,19 @@
         "title": "Deposit",
         "amount": "Amount",
         "balance": "Balance",
-        "depositBtn": "Deposit"
+        "depositBtn": "Deposit",
+        "minimumDepositSize": "The minimum deposit amount is $5",
+        "insufficientBalance": "Insufficient balance",
+        "invalidNumber": "Please input a valid number"
       },
       "PerpsWithdrawPopup": {
         "title": "Withdraw",
         "amount": "Amount",
         "available": "available",
-        "withdrawBtn": "Withdraw"
+        "withdrawBtn": "Withdraw",
+        "minimumWithdrawSize": "The minimum withdraw amount is $2",
+        "insufficientBalance": "Insufficient balance",
+        "invalidNumber": "Please input a valid number"
       },
       "PerpsWithdrawFeePopup": {
         "title": "Fee",
@@ -2164,6 +2170,25 @@
           "closeShortTp": "Close Short Take Profit",
           "closeShortSl": "Close Short Stop Loss"
         }
+      },
+      "PerpsOpenPositionPopup": {
+        "invalidNumber": "Please input a valid number",
+        "insufficientBalance": "Insufficient balance",
+        "": {
+          "minimumOrderSize": "The minimum order size is $10"
+        },
+        "maximumOrderSize": "The maximum order size is {{amount}}"
+      },
+      "PerpsAutoCloseModal": {
+        "takeProfitTipsLong": "Take profit price must be higher than current price",
+        "stopLossTipsLong": "Stop loss price must be lower than current price",
+        "takeProfitTipsShort": "Take profit price must be lower than current price",
+        "stopLossTipsLongLiquidation": "Price is lower than the liquidation price ({{price}})",
+        "stopLossTipsShort": "Stop loss price must be higher than current price",
+        "stopLossTipsShortLiquidation": "Price is higher than the liquidation price ({{price}})",
+        "takeProfit": "Profit",
+        "loss": "Loss",
+        "profit": "Profit"
       }
     }
   },

@@ -25,6 +25,7 @@ import { usePerpsDeposit } from './hooks/usePerpsDeposit';
 import { PerpsHistorySection } from './components/PerpsHistorySection';
 import { PerpsMarketSection } from './components/PerpsMarketSection';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
+import { apisPerps } from '@/core/apis';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -97,6 +98,17 @@ export const PerpsScreen = () => {
     });
   }, [currentPerpsAccount, isLogin, navigation, setPopupState]);
 
+  useEffect(() => {
+    apisPerps.getHasDoneNewUserProcess().then(hasDoneNewUserProcess => {
+      if (!hasDoneNewUserProcess) {
+        setPopupState(prev => ({
+          ...prev,
+          isShowGuidePopup: true,
+        }));
+      }
+    });
+  }, [setPopupState]);
+
   return (
     <>
       <NormalScreenContainer2024 type="bg2">
@@ -148,7 +160,19 @@ export const PerpsScreen = () => {
       <PerpsAgentsLimitModal visible={false} />
       <PerpsGuidePopup
         visible={popupState.isShowGuidePopup}
-        onClose={() => {
+        onClose={async () => {
+          const hasDoneNewUserProcess =
+            await apisPerps.getHasDoneNewUserProcess();
+          if (!hasDoneNewUserProcess) {
+            navigation.goBack();
+          }
+          setPopupState(prev => ({
+            ...prev,
+            isShowGuidePopup: false,
+          }));
+        }}
+        onComplete={() => {
+          apisPerps.setHasDoneNewUserProcess(true);
           setPopupState(prev => ({
             ...prev,
             isShowGuidePopup: false,
