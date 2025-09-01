@@ -178,6 +178,9 @@ export const createTradingViewChartTemplate = (
                         borderColor: 'transparent',
                         tickMarkFormatter: formatYTime,
                     },
+                    trackingMode: {
+                      exitMode: 0,
+                    },
                     rightPriceScale: {
                         borderColor: 'transparent',
                         borderVisible: false,
