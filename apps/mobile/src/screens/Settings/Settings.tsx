@@ -138,6 +138,10 @@ import DevUIHomeCenterAreaModal, {
 import DevScreenRecordingModal, {
   useDevScreenRecordingModalVisiable,
 } from './sheetModals/DevScreenRecording';
+import {
+  DevModalReactotron,
+  useReactotronModalVisible,
+} from './Modals/DevModalReactotron';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -557,6 +561,7 @@ function DevSettingsBlocks() {
     useDevScreenRecordingModalVisiable();
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
+  const { setReactotronModalVisible } = useReactotronModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
@@ -672,6 +677,13 @@ function DevSettingsBlocks() {
               icon: RcCode,
               onPress: () => {
                 setMockBatchRevokeVisible(true);
+              },
+            },
+            {
+              label: 'Reactotron Settings',
+              icon: RcCode,
+              onPress: async () => {
+                setReactotronModalVisible(true);
               },
             },
           ],
@@ -835,6 +847,7 @@ function DevSettingsBlocks() {
       <DevUIPlaygroundModal />
       <DevDataPlayground />
       <DevScreenRecordingModal />
+      <DevModalReactotron />
       <OpenApiPopup
         visible={isShowOpenApiPopup}
         onClose={() => {

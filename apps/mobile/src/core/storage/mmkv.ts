@@ -209,6 +209,10 @@ export const duplicatelyStringifiedAppJsonStore = makeJsonStore<any>({
   storage: appStorage as SyncStringStorage,
 });
 
+export const appJsonStore = makeJsonStore<any>({
+  storage: undefined,
+});
+
 const GET_STRING_STORAGE_FOR_JSON_STORE = (strategy: MMKVStorageStrategy) => {
   switch (strategy) {
     case MMKVStorageStrategy.legacy: {
