@@ -32,6 +32,45 @@
       var vConsole = new window.VConsole();
     </script>
     <script>
+      window.colors = {
+        upColor: '#0ECB81',
+        downColor: '#F6465D',
+        borderDownColor: '#F6465D',
+        borderUpColor: '#0ECB81',
+        wickDownColor: '#F6465D',
+        wickUpColor: '#0ECB81',
+        greenLineColor: '#0ECB81',
+        redLineColor: '#F6465D',
+        tooltip: {
+          bg: 'rgba(255, 255, 255, 1)', // bg1 bg2
+          title: 'rgba(62, 73, 94, 1)', // body
+          value: 'rgba(25, 41, 69, 1)', // title1
+        },
+      };
+      // 计算当前可见范围的最高最低价格
+      const calculateVisibleExtremes = (data, from, to) => {
+        console.log('CUSTOM_LOGGER:=>: data', from, to, data);
+        if (!data || data.length === 0) return { highest: null, lowest: null };
+
+        const rangeData = data.filter(
+          bar => bar.time >= from && bar.time <= to,
+        );
+        if (rangeData.length === 0) return { highest: null, lowest: null };
+
+        let highest = rangeData[0].high;
+        let lowest = rangeData[0].low;
+
+        rangeData.forEach(bar => {
+          if (bar.high > highest) {
+            highest = bar.high;
+          }
+          if (bar.low < lowest) {
+            lowest = bar.low;
+          }
+        });
+
+        return { highest, lowest };
+      };
       const defaultFormat = v => v.toFixed(2);
       const formatNumber = v => {
         if (v >= 1000000) {
@@ -71,6 +110,12 @@
       window.isInitialDataLoad = true; // Track if this is the first data load
       window.lastDataKey = null; // Track the last dataset to avoid unnecessary autoscaling
       window.tooltip = null;
+      window.priceLineContainers = {
+        tp: null,
+        sl: null,
+        liquidation: null,
+        entry: null,
+      };
       const mockData = [
         {
           time: 1672012800,
@@ -1200,6 +1245,125 @@
         color: item.close >= item.open ? '#0ECB81' : '#F6465D',
       }));
 
+      // Update price lines function
+      window.updateTPSLPriceLines = priceLines => {
+        if (!window.candlestickSeries || !window.chart) return;
+
+        // Clear existing price lines
+        Object.values(window.priceLineContainers).forEach(line => {
+          if (line) {
+            window.candlestickSeries.removePriceLine(line);
+          }
+        });
+        window.priceLineContainers = {};
+
+        // Add Take Profit line
+        if (priceLines.tpPrice && priceLines.tpPrice > 0) {
+          const tpLine = window.candlestickSeries.createPriceLine({
+            price: priceLines.tpPrice,
+            color: window.colors.greenLineColor,
+            lineWidth: 1,
+            lineStyle: 2, // Dashed
+            axisLabelVisible: true,
+            title: 'TP',
+          });
+          window.priceLineContainers.tp = tpLine;
+        }
+
+        // Add Entry line
+        if (priceLines.entryPrice && priceLines.entryPrice > 0) {
+          const entryLine = window.candlestickSeries.createPriceLine({
+            price: priceLines.entryPrice,
+            color: window.colors.greenLineColor,
+            lineWidth: 1,
+            lineStyle: 2, // Dashed
+            axisLabelVisible: true,
+            title: 'Entry',
+          });
+          window.priceLineContainers.entry = entryLine;
+        }
+
+        // Add Stop Loss line
+        if (priceLines.slPrice && priceLines.slPrice > 0) {
+          const slLine = window.candlestickSeries.createPriceLine({
+            price: priceLines.slPrice,
+            color: window.colors.redLineColor,
+            lineWidth: 1,
+            lineStyle: 2, // Dashed
+            axisLabelVisible: true,
+            title: 'SL',
+          });
+          window.priceLineContainers.sl = slLine;
+        }
+
+        // Add Liquidation line
+        if (priceLines.liquidationPrice && priceLines.liquidationPrice > 0) {
+          const liquidationLine = window.candlestickSeries.createPriceLine({
+            price: priceLines.liquidationPrice,
+            color: window.colors.redLineColor,
+            lineWidth: 1,
+            lineStyle: 2, // Dashed
+            axisLabelVisible: true,
+            title: 'LIQ',
+          });
+          window.priceLineContainers.liquidation = liquidationLine;
+        }
+      };
+
+      // 更新价格线的函数
+      const updatePriceLines = () => {
+        if (!window.candlestickSeries || !window.chart) return;
+
+        const visibleRange = window.chart.timeScale().getVisibleLogicalRange();
+        if (!visibleRange) return;
+
+        const barsInfo =
+          window.candlestickSeries.barsInLogicalRange(visibleRange);
+        const data = window.candlestickSeries.data();
+
+        if (!barsInfo || data.length === 0) return;
+
+        const extremes = calculateVisibleExtremes(
+          data,
+          barsInfo.from,
+          barsInfo.to,
+        );
+
+        // 移除旧的价格线
+        if (window.priceLines.high) {
+          window.candlestickSeries.removePriceLine(window.priceLines.high);
+          highPriceLineRef.current = null;
+        }
+        if (lowPriceLineRef.current) {
+          candleSeriesRef.current.removePriceLine(lowPriceLineRef.current);
+          lowPriceLineRef.current = null;
+        }
+
+        // 创建新的最高价标记
+        if (extremes.highest) {
+          highPriceLineRef.current = candleSeriesRef.current.createPriceLine({
+            price: extremes.highest,
+            color: 'white',
+            lineWidth: 1,
+            lineStyle: 4, // LineStyle.Solid
+            axisLabelVisible: true,
+            title: `最高:`,
+          });
+        }
+
+        // 创建新的最低价标记
+        if (extremes.lowest) {
+          lowPriceLineRef.current = candleSeriesRef.current.createPriceLine({
+            price: extremes.lowest,
+            color: 'white',
+            lineWidth: 1,
+            lineStyle: 4, // LineStyle.Solid
+            axisLabelVisible: true,
+            title: `最低:`,
+          });
+        }
+      };
+
       function loadTradingView() {
         const script = document.createElement('script');
         script.src =
@@ -1521,6 +1685,12 @@
           .priceScale()
           .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
         window.chart.subscribeCrosshairMove(handleCrosshairMove);
+        window.updateTPSLPriceLines({
+          entryPrice: 4000,
+          liquidationPrice: 2000,
+          tpPrice: 5000,
+          slPrice: 3500,
+        });
       }, 2000);
     </script>
   </body>

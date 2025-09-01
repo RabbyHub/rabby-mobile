@@ -19,10 +19,17 @@ interface ChartProps {
   onChartReady?: () => void;
   style?: StyleProp<ViewStyle>;
 }
+interface TPSLPriceLines {
+  tpPrice: number;
+  slPrice: number;
+  liquidationPrice: number;
+  entryPrice: number;
+}
 
 export interface TradingViewChartRef {
   setData: (data: CandleData) => void;
   updateCandleData: (data: CandleStick) => void;
+  updateTPSLPriceLines: (data: TPSLPriceLines) => void;
 }
 
 const baseWebViewProps = {
@@ -192,9 +199,24 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
       [isChartReady],
     );
 
+    const handleUpdateTPSLPriceLines = useCallback(
+      (data: TPSLPriceLines) => {
+        if (!isChartReady || !webViewRef.current) {
+          return;
+        }
+        const message = {
+          type: 'UPDATE_TPSL_PRICE_LINES',
+          data: data,
+        };
+        webViewRef.current.postMessage(JSON.stringify(message));
+      },
+      [isChartReady],
+    );
+
     useImperativeHandle(ref, () => ({
       setData: handleSetData,
       updateCandleData: handleUpdateCandleData,
+      updateTPSLPriceLines: handleUpdateTPSLPriceLines,
     }));
 
     const htmlContent = useMemo(

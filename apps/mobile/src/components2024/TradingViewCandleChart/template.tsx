@@ -32,6 +32,45 @@ export const createTradingViewChartTemplate = (
 <body>
     <div id="container"></div>
     <script>
+        window.colors = {
+          upColor: '#0ECB81',
+          downColor: '#F6465D',
+          borderDownColor: '#F6465D',
+          borderUpColor: '#0ECB81',
+          wickDownColor: '#F6465D',
+          wickUpColor: '#0ECB81',
+          greenLineColor: '#0ECB81',
+          redLineColor: '#F6465D',
+          tooltip: {
+            bg: 'rgba(255, 255, 255, 1)', // bg1 bg2
+            title: 'rgba(62, 73, 94, 1)', // body
+            value: 'rgba(25, 41, 69, 1)' // title1
+          }
+        }
+
+        // 计算当前可见范围的最高最低价格
+        const calculateVisibleExtremes = (data, from, to) => {
+          if (!data || data.length === 0) return { highest: null, lowest: null };
+
+          const rangeData = data.filter(
+            (bar) => bar.time >= from && bar.time <= to
+          );
+          if (rangeData.length === 0) return { highest: null, lowest: null };
+
+          let highest = rangeData[0].high;
+          let lowest = rangeData[0].low;
+
+          rangeData.forEach((bar) => {
+            if (bar.high > highest) {
+              highest = bar.high;
+            }
+            if (bar.low < lowest) {
+              lowest = bar.low;
+            }
+          });
+
+          return { highest, lowest };
+        };
         // Initialize window.utils with simple formatting functions
         window.utils = {
           formatPrice: (v) => {
@@ -85,6 +124,16 @@ export const createTradingViewChartTemplate = (
         window.isInitialDataLoad = true; // Track if this is the first data load
         window.lastDataKey = null; // Track the last dataset to avoid unnecessary autoscaling
         window.tooltip = null;
+        window.hightPrice = null;
+        window.lowPrice = null;
+
+        window.priceLineContainers = {
+          tp: null,
+          sl: null,
+          liquidation: null,
+          entry: null,
+        };
+
         // Step 1: Load TradingView library dynamically
         function loadTradingView() {
             const script = document.createElement('script');
@@ -173,6 +222,9 @@ export const createTradingViewChartTemplate = (
 
                 // Subscribe to crosshair move events
                 window.chart.subscribeCrosshairMove(handleCrosshairMove);
+                window.chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+                  updatePriceLines()
+                })
 
                 // Notify React Native that chart is ready
                 if (window.ReactNativeWebView) {
@@ -229,6 +281,119 @@ export const createTradingViewChartTemplate = (
           );
           return window.volumeSeries;
         };
+
+         window.updateTPSLPriceLines = (priceLines) => {
+          if (!window.candlestickSeries || !window.chart) return;
+
+          // Clear existing price lines
+          Object.values(window.priceLineContainers).forEach((line) => {
+            if (line) {
+              window.candlestickSeries.removePriceLine(line);
+            }
+          });
+          window.priceLineContainers = {};
+
+          // Add Take Profit line
+          if (priceLines.tpPrice && priceLines.tpPrice > 0) {
+            const tpLine = window.candlestickSeries.createPriceLine({
+              price: priceLines.tpPrice,
+              color: window.colors.greenLineColor,
+              lineWidth: 1,
+              lineStyle: 2, // Dashed
+              axisLabelVisible: true,
+              title: 'TP',
+            });
+            window.priceLineContainers.tp = tpLine;
+          }
+
+          // Add Entry line
+          if (priceLines.entryPrice && priceLines.entryPrice > 0) {
+            const entryLine = window.candlestickSeries.createPriceLine({
+              price: priceLines.entryPrice,
+              color: window.colors.greenLineColor,
+              lineWidth: 1,
+              lineStyle: 2, // Dashed
+              axisLabelVisible: true,
+              title: 'Entry',
+            });
+            window.priceLineContainers.entry = entryLine;
+          }
+
+          // Add Stop Loss line
+          if (priceLines.slPrice && priceLines.slPrice > 0) {
+            const slLine = window.candlestickSeries.createPriceLine({
+              price: priceLines.slPrice,
+              color: window.colors.redLineColor,
+              lineWidth: 1,
+              lineStyle: 2, // Dashed
+              axisLabelVisible: true,
+              title: 'SL',
+            });
+            window.priceLineContainers.sl = slLine;
+          }
+
+          // Add Liquidation line
+          if (priceLines.liquidationPrice && priceLines.liquidationPrice > 0) {
+            const liquidationLine = window.candlestickSeries.createPriceLine({
+              price: priceLines.liquidationPrice,
+              color: window.colors.redLineColor,
+              lineWidth: 1,
+              lineStyle: 2, // Dashed
+              axisLabelVisible: true,
+              title: 'LIQ',
+            });
+            window.priceLineContainers.liquidation = liquidationLine;
+          }
+        };
+
+        // 更新价格线的函数
+        const updatePriceLines = () => {
+          if (!window.candlestickSeries || !window.chart) return
+
+          const visibleRange = window.chart.timeScale().getVisibleLogicalRange()
+          if (!visibleRange) return
+
+          const barsInfo = window.candlestickSeries.barsInLogicalRange(visibleRange)
+          const data = window.candlestickSeries.data();
+
+          if (!barsInfo || data.length === 0) return
+
+          const extremes = calculateVisibleExtremes(data, barsInfo.from, barsInfo.to)
+
+          // 移除旧的价格线
+          if (window.hightPrice) {
+            window.candlestickSeries.removePriceLine(window.hightPrice)
+            window.hightPrice = null
+          }
+          if (window.lowPrice) {
+            window.candlestickSeries.removePriceLine(window.lowPrice)
+            window.lowPrice = null
+          }
+
+          // 创建新的最高价标记
+          if (extremes.highest) {
+            window.hightPrice = window.candlestickSeries.createPriceLine({
+              price: extremes.highest,
+              color: 'white',
+              lineWidth: 1,
+              lineStyle: 4, // LineStyle.Solid
+              axisLabelVisible: true,
+              title: 'High',
+            })
+          }
+
+          // 创建新的最低价标记
+          if (extremes.lowest) {
+            window.lowPrice = window.candlestickSeries.createPriceLine({
+              price: extremes.lowest,
+              color: 'white',
+              lineWidth: 1,
+              lineStyle: 4, // LineStyle.Solid
+              axisLabelVisible: true,
+              title: 'Low',
+            })
+          }
+        }
         // Handle window resize
         window.addEventListener('resize', function() {
             if (window.chart) {
@@ -244,11 +409,10 @@ export const createTradingViewChartTemplate = (
         tooltip.style.position = 'absolute';
         tooltip.style.display = 'none';
         tooltip.style.pointerEvents = 'none';
-        tooltip.style.background = 'rgba(0, 0, 0, 0.8)';
+        tooltip.style.background = window.colors.tooltip.bg;
         tooltip.style.color = '#D1D4DC';
-        tooltip.style.padding = '8px 10px';
-        tooltip.style.border = '1px solid #2B2B43';
-        tooltip.style.borderRadius = '4px';
+        tooltip.style.padding = '8px 9px';
+        tooltip.style.borderRadius = '8px';
         tooltip.style.fontSize = '12px';
         tooltip.style.lineHeight = '1.4';
         tooltip.style.zIndex = '1000';
@@ -285,33 +449,42 @@ export const createTradingViewChartTemplate = (
           const close = candleData.close;
           const volume = volumeDataPoint?.value;
 
+          // 计算涨跌额和涨跌幅
+          const change = close - open
+          const changePercent = open !== 0 ? (change / open) * 100 : 0
+          const isPositive = change >= 0
+
           // Build tooltip HTML without template literals
           let tooltipHTML = '';
           tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span>Time:</span>';
-          tooltipHTML += '<span>' + (window.utils?.formatTime || formatTime)(param.time) + '</span>';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">Time:</span>';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatTime || formatTime)(param.time) + '</span>';
           tooltipHTML += '</div>';
           tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span>Open:</span>';
-          tooltipHTML += '<span>' + (window.utils?.formatPrice || defaultFormat)(open) + '</span>';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">Open:</span>';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatPrice || defaultFormat)(open) + '</span>';
           tooltipHTML += '</div>';
           tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span>High:</span>';
-          tooltipHTML += '<span>' + (window.utils?.formatPrice || defaultFormat)(high) + '</span>';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">High:</span>';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatPrice || defaultFormat)(high) + '</span>';
           tooltipHTML += '</div>';
           tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span>Low:</span>';
-          tooltipHTML += '<span>' + (window.utils?.formatPrice || defaultFormat)(low) + '</span>';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">Low:</span>';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatPrice || defaultFormat)(low) + '</span>';
           tooltipHTML += '</div>';
           tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-          tooltipHTML += '<span>Close:</span>';
-          tooltipHTML += '<span>' + (window.utils?.formatPrice || defaultFormat)(close) + '</span>';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">Close:</span>';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatPrice || defaultFormat)(close) + '</span>';
+          tooltipHTML += '</div>';
+          tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+          tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">%Chg:</span>';
+          tooltipHTML += '<span style="color: ' + (isPositive ? '#0ECB81' : '#F6465D') + '; font-size: 10px; font-weight: 600;">' + (isPositive ? '+' : '') + (window.utils?.formatPrice || defaultFormat)(change) + (isPositive ? '+' : '') + '(' + changePercent.toFixed(2) + '%)</span>';
           tooltipHTML += '</div>';
 
           if (typeof volume === 'number') {
             tooltipHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-            tooltipHTML += '<span>Volume:</span>';
-            tooltipHTML += '<span>' + (window.utils?.formatNumber || formatNumber)(volume) + '</span>';
+            tooltipHTML += '<span style="color: ' + window.colors.tooltip.title + '; font-size: 10px;">Volume:</span>';
+            tooltipHTML += '<span style="color: ' + window.colors.tooltip.value + '; font-size: 10px; font-weight: 600;">' + (window.utils?.formatNumber || formatNumber)(volume) + '</span>';
             tooltipHTML += '</div>';
           }
 
@@ -372,7 +545,9 @@ export const createTradingViewChartTemplate = (
                                   window.volumeSeries
                                     .priceScale()
                                     .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
+                                  updatePriceLines()
                                 }
+                                window.chart.timeScale().scrollToRealTime();
                             } else {
                                 console.error('📊 TradingView: Failed to create candlestick series');
                             }
@@ -381,6 +556,11 @@ export const createTradingViewChartTemplate = (
                     case 'UPDATE_CANDLESTICK_DATA':
                       if (window.chart && window.candlestickSeries && message.data) {
                         window.candlestickSeries.update(message.data);
+                      }
+                      break;
+                    case 'UPDATE_TPSL_PRICE_LINES':
+                      if (window.chart && window.candlestickSeries && message.data) {
+                        window.updateTPSLPriceLines(message.data)
                       }
                       break;
                     case 'UPDATE_INTERVAL':
