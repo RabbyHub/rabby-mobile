@@ -1,3 +1,4 @@
+import { useSendMiniSignTypedData } from './../useMiniSignTypedDataApproval';
 import { apisPerps } from './../../core/apis/perps';
 import { useCallback, useEffect, useMemo } from 'react';
 import {
@@ -64,6 +65,8 @@ export const usePerpsState = () => {
   const { accounts: accountsList } = useAccounts({
     disableAutoFetch: true,
   });
+
+  const sendMiniSignTypedData = useSendMiniSignTypedData();
 
   const checkIsExtraAgentIsExpired = useMemoizedFn(
     async (masterAddress: string, agentAddress: string) => {
@@ -260,24 +263,54 @@ export const usePerpsState = () => {
         account.type === KEYRING_CLASS.PRIVATE_KEY ||
         account.type === KEYRING_CLASS.MNEMONIC;
 
-      for (const actionObj of signActions) {
-        const signature = isLocalWallet
-          ? await apisKeyring.signTypedData(
+      const useMiniApprovalSign =
+        account.type === KEYRING_CLASS.HARDWARE.ONEKEY ||
+        account.type === KEYRING_CLASS.HARDWARE.LEDGER;
+
+      if (useMiniApprovalSign) {
+        // await MiniTypedDataApproval in home page
+        try {
+          const result = await sendMiniSignTypedData({
+            txs: signActions.map(item => {
+              return {
+                data: item.action,
+                from: account.address,
+                version: 'V4',
+              };
+            }),
+            account,
+          });
+          console.log('Mini sign result', result);
+          result.forEach((item, idx) => {
+            signActions[idx].signature = item.txHash;
+          });
+        } catch (error) {
+          console.log('Mini sign rejected or failed:', error);
+          throw error;
+        }
+      } else {
+        for (const actionObj of signActions) {
+          let signature = '';
+
+          if (isLocalWallet) {
+            signature = await apisKeyring.signTypedData(
               account.type,
               account.address,
               actionObj.action,
               { version: 'V4' },
-            )
-          : await sendRequest({
+            );
+          } else {
+            signature = await sendRequest({
               data: {
                 method: 'eth_signTypedDataV4',
-                params: [account.address, actionObj.action],
+                params: [account.address, JSON.stringify(actionObj.action)],
               },
               session: INTERNAL_REQUEST_SESSION,
-              account,
+              account: account,
             });
-
-        actionObj.signature = signature as string;
+          }
+          actionObj.signature = signature;
+        }
       }
     },
   );
