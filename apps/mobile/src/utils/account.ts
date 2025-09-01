@@ -69,6 +69,15 @@ export const isAccountSupportMiniApproval = (type?: string) => {
   ).includes(type);
 };
 
+export const isHardWareAccountAccountSupportMiniApproval = (type?: string) => {
+  if (!type) {
+    return false;
+  }
+  return (
+    [KEYRING_CLASS.HARDWARE.LEDGER, KEYRING_CLASS.HARDWARE.ONEKEY] as string[]
+  ).includes(type);
+};
+
 export const isAccountSupportDirectSign = (type?: string) => {
   if (!type) {
     return false;

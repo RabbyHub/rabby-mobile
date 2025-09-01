@@ -36,6 +36,7 @@ import {
   miniApprovalGasAtom,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { GAS_ACCOUNT_INSUFFICIENT_TIP } from '@/screens/GasAccount/hooks/checkTsx';
+import { MiniTypedDataApprovalTaskType } from '@/hooks/useMiniSignTypedDataApprovalTask';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -57,7 +58,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   Header?: React.ReactNode;
   gasLessConfig?: GasLessConfig;
   isGasNotEnough?: boolean;
-  task: MiniApprovalTaskType;
+  task: MiniApprovalTaskType | MiniTypedDataApprovalTaskType;
   gasMethod?: 'native' | 'gasAccount';
   gasAccountCost?: GasAccountCheckResult;
   onChangeGasAccount?: () => void;
@@ -74,6 +75,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   isFirstGasLessLoading?: boolean;
   directSubmit?: boolean;
   account: Account;
+  miniType?: 'tx' | 'typedData';
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -232,6 +234,7 @@ export const MiniFooterBar: React.FC<Props> = ({
   isGasNotEnough,
   directSubmit,
   account,
+  miniType: miniSignType = 'tx',
   ...props
 }) => {
   const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
@@ -357,7 +360,13 @@ export const MiniFooterBar: React.FC<Props> = ({
     showGasLess,
   ]);
 
+  const isMiniSignTx = miniSignType === 'tx';
+
   useEffect(() => {
+    if (!isMiniSignTx) {
+      return;
+    }
+
     if (isInited && directSubmit) {
       if (
         (showGasLess && !useGasLess && !canGotoUseGasAccount) ||
@@ -391,6 +400,7 @@ export const MiniFooterBar: React.FC<Props> = ({
       }));
     }
   }, [
+    isMiniSignTx,
     gasAccountCost,
     canGotoUseGasAccount,
     gasAccountCanPay,
@@ -420,6 +430,9 @@ export const MiniFooterBar: React.FC<Props> = ({
   const setGasRelativeComponent = useSetAtom(gasRelativeComponentAtom);
 
   useEffect(() => {
+    if (!isMiniSignTx) {
+      return;
+    }
     if (!account || !directSubmit) {
       setGasRelativeComponent(null);
       return;
@@ -488,6 +501,7 @@ export const MiniFooterBar: React.FC<Props> = ({
       setGasRelativeComponent(null);
     };
   }, [
+    isMiniSignTx,
     directSubmit,
     account,
     account?.type,
@@ -634,8 +648,9 @@ export const MiniFooterBar: React.FC<Props> = ({
         <View style={styles.actions}>
           {task.status === 'idle' ? (
             <MiniActionGroup
+              miniSignType={miniSignType}
               directSubmit
-              isMiniSignTx
+              isMiniSignTx={isMiniSignTx}
               account={account}
               gasLess={useGasLess && !payGasByGasAccount}
               {...props}
