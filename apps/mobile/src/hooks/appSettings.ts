@@ -7,7 +7,6 @@ import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisAutoLock } from '@/core/apis';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { preferenceService } from '@/core/services';
-import { getTimeSpan, getTimeSpanByMs } from '@/utils/time';
 import { isNonPublicProductionEnv } from '@/constant/env';
 
 const isIOS = DeviceUtils.isIOS();
@@ -15,6 +14,7 @@ const isIOS = DeviceUtils.isIOS();
 type ScreenshotSettings = {
   androidForceAllowScreenCapture: boolean;
   iosForceAllowScreenRecord: boolean;
+  showFeedbackOnScreenshotCapture: boolean;
 };
 const ExperimentalSettingsAtom = atomByMMKV('@ExperimentalSettings', {
   /**
@@ -24,25 +24,53 @@ const ExperimentalSettingsAtom = atomByMMKV('@ExperimentalSettings', {
    */
   androidForceAllowScreenCapture: false,
   iosForceAllowScreenRecord: false,
+  showFeedbackOnScreenshotCapture: true,
 });
 
 const KEY = isIOS
   ? 'iosForceAllowScreenRecord'
   : 'androidForceAllowScreenCapture';
-function isAllowScreenshot(ret: ScreenshotSettings) {
+function isAllowScreenshot(
+  ret: Pick<
+    ScreenshotSettings,
+    'androidForceAllowScreenCapture' | 'iosForceAllowScreenRecord'
+  >,
+) {
   return ret[KEY];
 }
 
-export function useIsForceAllowScreenshot() {
-  const [{ androidForceAllowScreenCapture, iosForceAllowScreenRecord }] =
-    useAtom(ExperimentalSettingsAtom);
+export function useExpScreenCapture() {
+  const [
+    {
+      androidForceAllowScreenCapture,
+      iosForceAllowScreenRecord,
+      showFeedbackOnScreenshotCapture,
+    },
+    setExpData,
+  ] = useAtom(ExperimentalSettingsAtom);
+  const onExpScreenCaptureChange = useCallback(
+    (partials: Partial<ScreenshotSettings>) => {
+      setExpData(prev => ({
+        ...prev,
+        ...partials,
+      }));
+    },
+    [setExpData],
+  );
 
-  if (!isNonPublicProductionEnv) {
-    return {
+  const prodData = useMemo(
+    () => ({
       androidForceAllowScreenCapture: false,
       iosForceAllowScreenRecord: false,
       forceAllowScreenshot: false,
-    };
+      showFeedbackOnScreenshotCapture: true,
+      onExpScreenCaptureChange,
+    }),
+    [onExpScreenCaptureChange],
+  );
+
+  if (!isNonPublicProductionEnv) {
+    return prodData;
   }
 
   return {
@@ -52,6 +80,8 @@ export function useIsForceAllowScreenshot() {
       androidForceAllowScreenCapture,
       iosForceAllowScreenRecord,
     }),
+    showFeedbackOnScreenshotCapture,
+    onExpScreenCaptureChange,
   };
 }
 
@@ -87,7 +117,7 @@ export function useForceAllowScreenshot() {
  * @description call this hook only once on the top level of your app
  */
 export function useGlobalAppPreventScreenrecordOnDev() {
-  const { forceAllowScreenshot } = useIsForceAllowScreenshot();
+  const { forceAllowScreenshot } = useExpScreenCapture();
   usePreventScreenshot(__DEV__ && !forceAllowScreenshot);
 
   useEffect(() => {

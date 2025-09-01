@@ -36,12 +36,12 @@ export const SwitchAllowScreenshot = React.forwardRef<
   return (
     <AppSwitch
       {...props}
-      circleSize={20}
       value={!!forceAllowScreenshot}
       changeValueImmediately={false}
       onValueChange={() => {
         handleToggle(!forceAllowScreenshot);
       }}
+      circleSize={20}
       backgroundActive={colors['green-default']}
       circleBorderActiveColor={colors['green-default']}
     />

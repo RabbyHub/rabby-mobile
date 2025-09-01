@@ -1,16 +1,26 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { atom, useAtom } from 'jotai';
 
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import '@/core/native/RNTimeChanged';
 import { IS_IOS } from '@/core/native/utils';
 
+const globalScreenCapturableRef = { current: true };
+export function getGlobalScreenCapturable() {
+  return globalScreenCapturableRef.current;
+}
 /**
  * @description Prevents the user from taking a screenshot,
  * call this hook on top of your App
  */
-export function usePreventScreenshot(prevent = true) {
+export function usePreventScreenshot(prevent = true, { isTop = false } = {}) {
   useEffect(() => {
+    if (!isTop) {
+      console.warn('usePreventScreenshot is not on top');
+      return;
+    }
+
+    globalScreenCapturableRef.current = !prevent;
     if (!prevent) {
       RNScreenshotPrevent.togglePreventScreenshot(false);
       return;
@@ -21,7 +31,7 @@ export function usePreventScreenshot(prevent = true) {
     return () => {
       RNScreenshotPrevent.togglePreventScreenshot(false);
     };
-  }, [prevent]);
+  }, [prevent, isTop]);
 }
 
 const iosScreenCaptureAtom = atom({

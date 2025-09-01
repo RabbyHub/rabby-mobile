@@ -221,8 +221,8 @@ export const RelatedDeFi: React.FC<Props> = ({
             </Text>
             <RcIconRightCC
               style={styles.arrowStyle}
-              width={13}
-              height={13}
+              width={12}
+              height={12}
               color={colors2024['neutral-secondary']}
             />
           </TouchableOpacity>
@@ -274,7 +274,7 @@ export const RelatedDeFi: React.FC<Props> = ({
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     marginTop: 20,
     gap: 8,
   },
@@ -327,9 +327,9 @@ const getStyles = createGetStyles2024(ctx => ({
     marginBottom: 12,
   },
   relateTitle: {
-    color: ctx.colors2024['neutral-foot'],
+    color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
-    fontSize: 16,
+    fontSize: 18,
     lineHeight: 20,
     fontWeight: '700',
   },

@@ -15,6 +15,7 @@ export const ModalLayouts = {
 
 // for DappWebViewControl
 export const ScreenLayouts = {
+  homeHorizontalPadding: 16,
   headerAreaHeight: 56,
   bottomBarHeight: 60,
 
@@ -115,6 +116,7 @@ export const RootNames = {
   DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
   DevUIDapps: 'DevUIDapps',
   DevDataSQLite: 'DevDataSQLite',
+  DevUIPermissions: 'DevUIPermissions',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',

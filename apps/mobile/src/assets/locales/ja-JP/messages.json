@@ -475,6 +475,15 @@
         "insufficient": "あなたのガス残高はネットワークのガス料金をカバーするには不十分です。ガスのために資金を追加して、もう一度お試しください。",
         "nonceTooLow": "Nonceが低すぎます。{{nonce}}に更新します。“Retry”をクリックして確認し、再試行してください。",
         "alreadySubmitted": "トランザクションはすでに送信されています。重複トランザクションが検出されました。"
+      },
+      "addLiquidity": {
+        "poolPrice": "プール価格",
+        "priceDiff": "価格差",
+        "token0": "トークンを追加 1",
+        "token1": "トークンを追加 2",
+        "receiver": "受取人",
+        "title": "流動性を追加する",
+        "marketPrice": "市場価格"
       }
     },
     "sendNFT": {
@@ -984,6 +993,9 @@
         "feedbackTitle": "フィードバックはありますか？私たちは聞いています。",
         "descriptionIOS": "Rabbyが気に入っていただけたら、App Storeでの迅速な評価がとても大切です。",
         "descriptionAndroid": "Rabbyが気に入っていただけたのなら、Google Playでの簡単な評価はとてもありがたいです。"
+      },
+      "homeCenterTipScreenshot": {
+        "description": "いつでもスクリーンショットを撮って、素早くバグを報告してください。"
       }
     },
     "switchChain": {
@@ -1692,7 +1704,16 @@
       "ContentGeneratedByAI": "このコンテンツはAIによって生成されました",
       "Introduction": "はじめに",
       "Fold": "フォールド",
-      "ShowMore": "もっと表示する"
+      "ShowMore": "もっと表示する",
+      "guideToMarketData": "市場データ：",
+      "Mybalance": "トークン残高",
+      "Transaction": "トークン履歴",
+      "balance": "残高",
+      "notSupported": "トークンはサポートされていません",
+      "tabs": {
+        "tokenSecurity": "トークンセキュリティ",
+        "marketData": "マーケットデータ"
+      }
     },
     "customTestnet": {
       "add": "カスタムネットワークを追加",
@@ -2017,10 +2038,18 @@
         "searchInGoogle": "Google で \"{{searchText}}\" を検索",
         "openUrl": "オープン \"{{searchText}}\"",
         "recent": "最近",
-        "results": "結果"
+        "results": "結果",
+        "recentEmpty": "ウェブサイトを探索し始める"
       },
       "BrowserSearchEntry": {
         "openWebsites": "ウェブサイトを開く"
+      },
+      "menu": {
+        "refresh": "更新",
+        "disconnect": "切断",
+        "contentModeDesktop": "デスクトップ版サイトをリクエスト",
+        "favorite": "お気に入り",
+        "contentModeMobile": "モバイルサイトをリクエスト"
       }
     },
     "browserManage": {
@@ -2127,6 +2156,12 @@
       "toast": {
         "remove": "ウォッチリストから削除成功"
       }
+    },
+    "universalLink": {
+      "error": {
+        "setupWalletFirst": "最初にウォレットの設定を完了してください。",
+        "unlockWalletFirst": "アプリをアンロックしてリンクを開いてください。"
+      }
     }
   },
   "global": {
@@ -2171,7 +2206,36 @@
     "Addresses": "アドレス",
     "24h": "24時間",
     "Edit": "編集",
-    "Wallets": "ウォレットを選択"
+    "Wallets": "ウォレットを選択",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "後で聞いてください"
+      },
+      "mediaLibrary": {
+        "title": "メディアライブラリのアクセス許可",
+        "message": "このアプリはスクリーンショットを検出するために、メディアライブラリへのアクセスが必要です。"
+      },
+      "camera": {
+        "title": "カメラの許可",
+        "message": "このアプリは写真を撮るためにカメラへのアクセスが必要です。"
+      },
+      "bluetoothScan": {
+        "title": "Bluetoothスキャン許可",
+        "message": "このアプリはデバイスをスキャンするためにBluetoothへのアクセスが必要です。"
+      },
+      "bluetoothConnect": {
+        "title": "Bluetooth接続の許可",
+        "message": "このアプリはデバイスに接続するためにBluetoothへのアクセスが必要です。"
+      },
+      "bluetoothAdmin": {
+        "title": "Bluetooth管理権限",
+        "message": "このアプリはデバイスを管理するためにBluetoothへのアクセスが必要です。"
+      },
+      "location": {
+        "title": "位置の権限",
+        "message": "このアプリは、位置情報に基づく機能を提供するために、あなたの位置情報へのアクセスが必要です。"
+      }
+    }
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -2284,7 +2348,8 @@
       "loginInTip": {
         "desc": "すべてのチェーンでガス費用を支払う",
         "title": "USDC / USDT を入金",
-        "login": "GasAccountにログイン"
+        "login": "GasAccountにログイン",
+        "loginAndClaim": "ログインして{{amount}}を受け取る"
       },
       "withdrawConfirmModal": {
         "title": "DeBank L2 Walletに転送されました。",
@@ -2313,7 +2378,13 @@
       "depositWithPay": "で購入",
       "depositWithPayDesc": "30% 手数料、引き出し不可",
       "depositWithTokenDesc": "追加料金なし、即時引き出し",
-      "depositWithToken": "Tokenで入金"
+      "depositWithToken": "Tokenで入金",
+      "giftInfo": {
+        "noWithdrawableBalanceTitle": "{{amount}} 引き出し不可",
+        "gotIt": "私が取得しました",
+        "giftTips": "アクティブユーザーのためのGas Reward",
+        "noWithdrawableBalanceDescription": "{{amount}}のガス残高は引き出せません：\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      }
     },
     "AuthenticationModals": {
       "biometrics": {
@@ -2369,6 +2440,24 @@
       "buttonText": "リフレッシュ",
       "offlineText": "ネットワークエラー",
       "serviceErrorText": "サービスエラー"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "問題を説明してください。"
+      },
+      "feedbackLabel": "バグの説明:",
+      "title": "バグを報告するためのスナップショット",
+      "submitButtonText": "送信"
+    },
+    "feedbackModal": {
+      "issueDescriptionLabel": "説明:",
+      "issueDescription": "報告された問題は次のとおりです：",
+      "repliedTitle": "Rabbyのサポートが返答しました：",
+      "title": "Rabbyサポートからの応答",
+      "pendingTitle": "Rabby サポートが返信していません。"
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "正常に提出されました。"
     }
   },
   "common": {

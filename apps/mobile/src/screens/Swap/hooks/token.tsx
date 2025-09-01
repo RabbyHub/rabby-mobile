@@ -28,6 +28,8 @@ import { RequestRateLimiter } from './rateLimit';
 import { useFocusEffect } from '@react-navigation/native';
 import { eventBus, EVENTS } from '@/utils/events';
 import { Account } from '@/core/services/preference';
+import { useAutoSlippageEffect } from './autoSlippageEffect';
+import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 
 export const enableInsufficientQuote = true;
 
@@ -141,7 +143,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   const [feeRate] = useState<FeeProps['fee']>('0');
 
-  const { autoSlippage } = useSlippageStore();
+  const { autoSlippage, setAutoSlippage } = useSlippageStore();
 
   const {
     slippageChanged,
@@ -814,6 +816,7 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         setIsDraggingSlider(true);
         setSwapUseSlider(true);
         setSlider(v);
+        setUseGasPrice(false);
 
         if (
           v !== previousSlider.current &&
@@ -870,6 +873,21 @@ export const useTokenPair = ({ account }: { account: Account }) => {
       };
     }, [setRefreshId]),
   );
+
+  const onSetAutoSlippage = useCallback(() => {
+    setAutoSlippage(true);
+  }, [setAutoSlippage]);
+
+  useAutoSlippageEffect({
+    chainServerId: findChainByEnum(chain)?.serverId || '',
+    fromTokenId: payToken?.id || '',
+    toTokenId: receiveToken?.id || '',
+    onSetAutoSlippage,
+  });
+
+  useClearMiniGasStateEffect({
+    chainServerId: findChainByEnum(chain)?.serverId || '',
+  });
 
   return {
     bestQuoteDex,

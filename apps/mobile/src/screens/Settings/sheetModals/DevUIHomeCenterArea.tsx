@@ -17,6 +17,10 @@ import { useMakeMockDataForRateGuideExposure } from '@/components/RateModal/hook
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { useMockClearOfflineChainTips } from '@/screens/Home/components/OfflineChainNotify';
+import {
+  FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+  useViewedHomeTip,
+} from '@/components/Screenshot/hooks';
 
 const MAKE_DEFAULT_MOCK_DATA = () => ({
   forceShowFundWallet: false,
@@ -40,7 +44,7 @@ function useMakeMockDataForHomeCenterArea() {
   const setMockData = useSetAtom(homeCenterAreaMockData);
 
   return {
-    mockData: isNonPublicProductionEnv ? mockData : MAKE_DEFAULT_MOCK_DATA(),
+    mockData,
     setMockData,
   };
 }
@@ -88,6 +92,7 @@ export default function DevUIHomeCenterAreaModal({
   const { mockExposureRateGuide } = useMakeMockDataForRateGuideExposure();
   const { mockData, setMockData } = useMakeMockDataForHomeCenterArea();
   const { clearOfflineChainTips } = useMockClearOfflineChainTips();
+  const { mockResetViewedHomeTip } = useViewedHomeTip();
 
   const Items = (() => {
     const list: DevTestItem[] = [
@@ -136,7 +141,18 @@ export default function DevUIHomeCenterAreaModal({
           mockExposureRateGuide();
         },
       },
-    ];
+      ...(!FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT
+        ? [
+            {
+              label: [`[Data] Reset Viewed Home Tip`].filter(Boolean).join(' '),
+              icon: <RcCode style={styles.labelIcon} />,
+              onPress: () => {
+                mockResetViewedHomeTip();
+              },
+            },
+          ]
+        : []),
+    ].filter(Boolean);
 
     return list.filter(item => item.visible !== false);
   })();

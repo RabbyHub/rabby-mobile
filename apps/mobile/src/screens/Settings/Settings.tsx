@@ -75,7 +75,6 @@ import {
 } from '../ManagePassword/components/ManagePasswordSheetModal';
 
 import { useBiometrics, useBiometricsComputed } from '@/hooks/biometrics';
-import { useIsForceAllowScreenshot } from '@/hooks/appSettings';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import {
   AutoLockCountDownLabel,
@@ -136,6 +135,9 @@ import { useMultiPress } from '@/hooks/tap';
 import DevUIHomeCenterAreaModal, {
   useUIDevHomeCenterAreaModalVisiable,
 } from './sheetModals/DevUIHomeCenterArea';
+import DevScreenRecordingModal, {
+  useDevScreenRecordingModalVisiable,
+} from './sheetModals/DevScreenRecording';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -535,11 +537,9 @@ function DevSettingsBlocks() {
     }, [fetchBiometrics]),
   );
 
-  const { forceAllowScreenshot } = useIsForceAllowScreenshot();
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
-  const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
   const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
@@ -553,6 +553,8 @@ function DevSettingsBlocks() {
   const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
+  const { setDevScreenRecordingModalVisible } =
+    useDevScreenRecordingModalVisiable();
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
   const currentAccount = preferenceService.getFallbackAccount();
@@ -641,17 +643,11 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: forceAllowScreenshot
-                ? `Force Allow Capture`
-                : `Disallow Capture Sensitive Scene`,
+              label: 'Screen Recording',
               icon: isIOS ? RcScreenRecord : RcScreenshot,
-              rightNode: (
-                <SwitchAllowScreenshot ref={switchAllowScreenshotRef} />
-              ),
               onPress: () => {
-                switchAllowScreenshotRef.current?.toggle();
+                setDevScreenRecordingModalVisible(true);
               },
-              visible: isNonPublicProductionEnv,
             },
             {
               label: (
@@ -838,6 +834,7 @@ function DevSettingsBlocks() {
       <DevUIHomeCenterAreaModal />
       <DevUIPlaygroundModal />
       <DevDataPlayground />
+      <DevScreenRecordingModal />
       <OpenApiPopup
         visible={isShowOpenApiPopup}
         onClose={() => {

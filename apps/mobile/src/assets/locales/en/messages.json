@@ -1159,6 +1159,9 @@
         "feedbackTitle": "Have feedback? We’re listening.",
         "feedbackSubmit": "Submit",
         "feedbackSuccess": "Thank you for your feedback"
+      },
+      "homeCenterTipScreenshot": {
+        "description": "Take a screenshot anytime to quickly report a bug"
       }
     },
     "newAddress": {
@@ -2375,6 +2378,24 @@
         "quotesDesc": "quote failed to be loaded. ",
         "balanceDesc": "balance failed to be loaded. "
       }
+    },
+    "screenshotModal": {
+      "title": "Snapshot to Report Bug",
+      "submitButtonText": "Submit",
+      "feedbackInput": {
+        "placeholder": "Describe the issue"
+      },
+      "feedbackLabel": "Bug description: "
+    },
+    "feedbackModal": {
+      "title": "Response from Rabby Support",
+      "issueDescription": "Here’s the issue you reported:",
+      "repliedTitle": "Rabby Support has replied:",
+      "pendingTitle": "Rabby Support hasn't reply.",
+      "issueDescriptionLabel": "Description: "
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "Submitted Successfully"
     }
   },
   "native": {
@@ -2435,7 +2456,35 @@
     "Addresses": "Addresses",
     "Wallets": "Select Wallet",
     "24h": "24h",
-    "gotIt": "Got It"
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "askMeLater"
+      },
+      "mediaLibrary": {
+        "title": "Media Library Permission",
+        "message": "This app needs access to your media library to detect screenshots."
+      },
+      "camera": {
+        "title": "Camera Permission",
+        "message": "This app needs access to your camera to take photos."
+      },
+      "bluetoothScan": {
+        "title": "Bluetooth Scan Permission",
+        "message": "This app needs access to your Bluetooth to scan for devices."
+      },
+      "bluetoothConnect": {
+        "title": "Bluetooth Connect Permission",
+        "message": "This app needs access to your Bluetooth to connect to devices."
+      },
+      "bluetoothAdmin": {
+        "title": "Bluetooth Admin Permission",
+        "message": "This app needs access to your Bluetooth to manage devices."
+      },
+      "location": {
+        "title": "Location Permission",
+        "message": "This app needs access to your location to provide location-based features."
+      }
+    }
   },
   "background": {
     "error": {
