@@ -8,19 +8,29 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { Platform, SafeAreaView, Text, View } from 'react-native';
+import { Platform, StyleProp, Text, View, ViewStyle } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { createTradingViewChartTemplate } from './template';
 import { CandleData, CandleStick } from './type';
+import { openExternalUrl } from '@/core/utils/linking';
+import { useTranslation } from 'react-i18next';
 
 interface ChartProps {
   height: number;
   onChartReady?: () => void;
+  style?: StyleProp<ViewStyle>;
+}
+interface TPSLPriceLines {
+  tpPrice?: number;
+  slPrice?: number;
+  liquidationPrice?: number;
+  entryPrice?: number;
 }
 
 export interface TradingViewChartRef {
   setData: (data: CandleData) => void;
   updateCandleData: (data: CandleStick) => void;
+  updateTPSLPriceLines: (data: TPSLPriceLines) => void;
 }
 
 const baseWebViewProps = {
@@ -51,14 +61,14 @@ const androidWebViewProps = {
 };
 
 const formatCandleItem = (candle: CandleStick) => {
-  const timeInSeconds = Math.floor(candle.time / 1000);
+  const timeInSeconds = Math.floor(candle.time);
   const formattedCandle = {
     time: timeInSeconds,
-    open: parseFloat(candle.open),
-    high: parseFloat(candle.high),
-    low: parseFloat(candle.low),
-    close: parseFloat(candle.close),
-    volume: parseFloat(candle.volume),
+    open: candle.open,
+    high: candle.high,
+    low: candle.low,
+    close: candle.close,
+    volume: candle.volume,
   };
   // Validate all values are valid numbers
   const isValid =
@@ -95,11 +105,12 @@ const formatCandleData = (data: CandleData) => {
 };
 
 const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
-  ({ height, onChartReady }, ref) => {
+  ({ style, height, onChartReady }, ref) => {
     const webViewRef = useRef<WebView>(null);
     const { styles, colors2024, isLight } = useTheme2024({ getStyle });
     const [webViewError, setWebViewError] = useState<string | null>(null);
     const [isChartReady, setIsChartReady] = useState(false);
+    const { t } = useTranslation();
 
     // Handle WebView errors
     const handleWebViewError = useCallback(
@@ -123,11 +134,8 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
               setIsChartReady(true);
               onChartReady?.();
               break;
-            case 'PRICE_LINES_UPDATE':
-              break;
-            case 'INTERVAL_UPDATED':
-              break;
-            case 'WEBVIEW_TEST':
+            case 'ATTR_LOGO_CLICK':
+              openExternalUrl('https://www.tradingview.com');
               break;
             default:
               break;
@@ -156,13 +164,13 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
           dataToSend = formatCandleData(data);
           dataSource = 'real';
         }
-        console.log('CUSTOM_LOGGER:=>: dataToSend', dataToSend[0]);
 
         if (dataToSend) {
           const message = {
             type: 'SET_CANDLESTICK_DATA',
             data: dataToSend,
             source: dataSource,
+            showVolume: data.showVolume ?? false,
           };
           webViewRef.current.postMessage(JSON.stringify(message));
         }
@@ -193,21 +201,63 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
       [isChartReady],
     );
 
+    const handleUpdateTPSLPriceLines = useCallback(
+      (data: TPSLPriceLines) => {
+        if (!isChartReady || !webViewRef.current) {
+          return;
+        }
+        const message = {
+          type: 'UPDATE_TPSL_PRICE_LINES',
+          data: data,
+        };
+        webViewRef.current.postMessage(JSON.stringify(message));
+      },
+      [isChartReady],
+    );
+
     useImperativeHandle(ref, () => ({
       setData: handleSetData,
       updateCandleData: handleUpdateCandleData,
+      updateTPSLPriceLines: handleUpdateTPSLPriceLines,
     }));
 
     const htmlContent = useMemo(
       () =>
-        createTradingViewChartTemplate({
-          background: isLight
-            ? colors2024['neutral-bg-0']
-            : colors2024['neutral-bg-1'],
-          text: colors2024['neutral-title-1'],
-          border: colors2024['neutral-bg-5'],
-        }),
-      [colors2024, isLight],
+        createTradingViewChartTemplate(
+          {
+            background: isLight
+              ? colors2024['neutral-bg-0']
+              : colors2024['neutral-bg-1'],
+            text: colors2024['neutral-title-1'],
+            border: colors2024['neutral-bg-5'],
+            greenLineColor: 'rgba(42, 187, 127, 1)',
+            redLineColor: 'rgba(227, 73, 53, 1)',
+            highPriceLineColor: 'rgba(221, 221, 221, 0.3)',
+            lowPriceLineColor: 'rgba(221, 221, 221, 0.3)',
+            tooltip: {
+              bg: isLight
+                ? colors2024['neutral-bg-1']
+                : colors2024['neutral-bg-2'],
+              title: colors2024['neutral-body'],
+              value: colors2024['neutral-title-1'],
+            },
+          },
+          {
+            tp: t('component.kline.tp'),
+            entry: t('component.kline.entry'),
+            sl: t('component.kline.sl'),
+            liq: t('component.kline.liq'),
+            high: t('component.kline.high'),
+            low: t('component.kline.low'),
+
+            time: t('component.kline.time'),
+            open: t('component.kline.open'),
+            close: t('component.kline.close'),
+            chg: t('component.kline.chg'),
+            volume: t('component.kline.volume'),
+          },
+        ),
+      [colors2024, isLight, t],
     );
 
     if (webViewError) {
@@ -219,9 +269,10 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
     }
 
     return (
-      <SafeAreaView
+      <View
         style={[
           styles.container,
+          style,
           { height, width: '100%', minHeight: height },
         ]}>
         <WebView
@@ -232,7 +283,7 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
           onError={handleWebViewError}
           {...(Platform.OS === 'ios' ? iosWebViewProps : androidWebViewProps)}
         />
-      </SafeAreaView>
+      </View>
     );
   },
 );
@@ -240,7 +291,6 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
 const getStyle = createGetStyles2024(ctx => ({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
   },
   webView: {
     flex: 1,

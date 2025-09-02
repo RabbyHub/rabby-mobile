@@ -1,205 +1,186 @@
-interface ChartColors {
-  background: string;
-  text: string;
-  border: string;
-  greenLineColor: string;
-  redLineColor: string;
-  highPriceLineColor: string;
-  lowPriceLineColor: string;
-  tooltip: {
-    bg: string;
-    title: string;
-    value: string;
-  };
-}
-
-const utils = `
-const Sub_Numbers = '₀₁₂₃₄₅₆₇₈₉';
-window.utils = {
-  formatLittleNumber: (num, minLen = 6) => {
-    const bn = new BigNumber(num);
-    if (bn.toFixed().length >= minLen) {
-      const s = bn.precision(4).toFormat();
-      const ss = s.replace(/^0.(0*)?(?:.*)/u, (_, z) => {
-        const zeroLength = z.length;
-
-        const sub = String(zeroLength)
-          .split('')
-          .map(x => Sub_Numbers[x])
-          .join('');
-
-        const end = s.slice(zeroLength + 2);
-        return '0.0' + sub + end;
-      });
-
-      return ss;
-    }
-    return num;
-  },
-  formatPrice: (v) => {
-    if (Math.abs(v) >= 0.1) {
-      return v.toFixed(2);
-    }
-    if (Math.abs(v) < 0.0001) {
-      const isNegative = v < 0;
-      const absNum = Math.abs(v);
-      return (isNegative ? '-' : '') + window.utils.formatLittleNumber(absNum);
-    }
-    return v.toFixed(2);
-  },
-  formatNumber: (v) => {
-    if (v >= 1000000) {
-      return (v / 1000000).toFixed(2) + 'M';
-    } else if (v >= 1000) {
-      return (v / 1000).toFixed(2) + 'K';
-    }
-    return v.toFixed(2);
-  },
-  formatYTime: (t) => {
-    if (typeof t === 'number') {
-      const d = new Date(t * 1000);
-      return (
-        '' +
-        (d.getMonth() + 1) +
-        '/' +
-        d.getDate() +
-        ' ' +
-        d.getHours().toString().padStart(2, '0') +
-        ':' +
-        d.getMinutes().toString().padStart(2, '0')
-      );
-    }
-    const bd = t;
-    return '' + bd.month + '/' + bd.day;
-  },
-  formatTime: (t) => {
-    if (typeof t === 'number') {
-      const d = new Date(t * 1000);
-      return (
-        '' +
-        String(d.getMonth() + 1).padStart(2, '0') +
-        '/' +
-        String(d.getDate()).padStart(2, '0') +
-        ' ' +
-        String(d.getHours()).padStart(2, '0') +
-        ':' +
-        String(d.getMinutes()).padStart(2, '0')
-      );
-    }
-    const bd = t;
-    return (
-      '' +
-      bd.year +
-      '-' +
-      String(bd.month).padStart(2, '0') +
-      '-' +
-      String(bd.day).padStart(2, '0')
-    );
-  },
-  // 计算当前可见范围的最高最低价格
-  calculateVisibleExtremes: (data, from, to) => {
-    if (!data || data.length === 0) return { highest: null, lowest: null, highestTime: null, lowestTime: null };
-
-    const rangeData = data.filter(
-      (bar) => bar.time >= from && bar.time <= to
-    );
-    if (rangeData.length === 0) return { highest: null, lowest: null, highestTime: null, lowestTime: null };
-
-    let highest = rangeData[0].high;
-    let lowest = rangeData[0].low;
-    let highestTime = rangeData[0].time;
-    let lowestTime = rangeData[0].time;
-
-    rangeData.forEach((bar) => {
-      if (bar.high > highest) {
-        highest = bar.high;
-        highestTime = bar.time;
-      }
-      if (bar.low < lowest) {
-        lowest = bar.low;
-        lowestTime = bar.time;
-      }
-    });
-
-    return { highest, lowest, highestTime, lowestTime };
-  },
-}
-`;
-
-export interface ChartDescription {
-  tp: string;
-  entry: string;
-  sl: string;
-  liq: string;
-  high: string;
-  low: string;
-  time: string;
-  open: string;
-  close: string;
-  chg: string;
-  volume: string;
-}
-export const createTradingViewChartTemplate = (
-  colors: ChartColors,
-  description: ChartDescription,
-): string => `<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
     <title>TradingView Chart</title>
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
-      body, html {
-          margin: 0;
-          padding: 0;
-          width: 100%;
-          height: 100%;
-          font-family: Arial, sans-serif;
-          background: ${colors.background};
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        font-family: Arial, sans-serif;
       }
       #container {
-          width: 100%;
-          height: 100vh;
-          position: relative;
-          background: ${colors.background};
+        width: 100%;
+        height: 100vh;
+        position: relative;
       }
     </style>
   </head>
   <body>
     <div id="container"></div>
-    <script src='https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js"></script>
     <script>
-      ${utils}
+      const Sub_Numbers = '₀₁₂₃₄₅₆₇₈₉';
+      window.utils = {
+        formatLittleNumber: (num, minLen = 6) => {
+          const bn = new BigNumber(num);
+          if (bn.toFixed().length >= minLen) {
+            const s = bn.precision(4).toFormat();
+            const ss = s.replace(/^0.(0*)?(?:.*)/u, (_, z) => {
+              const zeroLength = z.length;
+
+              const sub = String(zeroLength)
+                .split('')
+                .map(x => Sub_Numbers[x])
+                .join('');
+
+              const end = s.slice(zeroLength + 2);
+              return '0.0' + sub + end;
+            });
+
+            return ss;
+          }
+          return num;
+        },
+        formatPrice: v => {
+          if (Math.abs(v) >= 0.1) {
+            return v.toFixed(2);
+          }
+          if (Math.abs(v) < 0.0001) {
+            const isNegative = v < 0;
+            const absNum = Math.abs(v);
+            return (
+              (isNegative ? '-' : '') + window.utils.formatLittleNumber(absNum)
+            );
+          }
+          return v.toFixed(2);
+        },
+        formatNumber: v => {
+          if (v >= 1000000) {
+            return (v / 1000000).toFixed(2) + 'M';
+          } else if (v >= 1000) {
+            return (v / 1000).toFixed(2) + 'K';
+          }
+          return v.toFixed(2);
+        },
+        formatYTime: t => {
+          if (typeof t === 'number') {
+            const d = new Date(t * 1000);
+            return (
+              '' +
+              (d.getMonth() + 1) +
+              '/' +
+              d.getDate() +
+              ' ' +
+              d.getHours().toString().padStart(2, '0') +
+              ':' +
+              d.getMinutes().toString().padStart(2, '0')
+            );
+          }
+          const bd = t;
+          return '' + bd.month + '/' + bd.day;
+        },
+        formatTime: t => {
+          if (typeof t === 'number') {
+            const d = new Date(t * 1000);
+            return (
+              '' +
+              String(d.getMonth() + 1).padStart(2, '0') +
+              '/' +
+              String(d.getDate()).padStart(2, '0') +
+              ' ' +
+              String(d.getHours()).padStart(2, '0') +
+              ':' +
+              String(d.getMinutes()).padStart(2, '0')
+            );
+          }
+          const bd = t;
+          return (
+            '' +
+            bd.year +
+            '-' +
+            String(bd.month).padStart(2, '0') +
+            '-' +
+            String(bd.day).padStart(2, '0')
+          );
+        },
+        // 计算当前可见范围的最高最低价格
+        calculateVisibleExtremes: (data, from, to) => {
+          if (!data || data.length === 0)
+            return {
+              highest: null,
+              lowest: null,
+              highestTime: null,
+              lowestTime: null,
+            };
+
+          const rangeData = data.filter(
+            bar => bar.time >= from && bar.time <= to,
+          );
+          if (rangeData.length === 0)
+            return {
+              highest: null,
+              lowest: null,
+              highestTime: null,
+              lowestTime: null,
+            };
+
+          let highest = rangeData[0].high;
+          let lowest = rangeData[0].low;
+          let highestTime = rangeData[0].time;
+          let lowestTime = rangeData[0].time;
+
+          rangeData.forEach(bar => {
+            if (bar.high > highest) {
+              highest = bar.high;
+              highestTime = bar.time;
+            }
+            if (bar.low < lowest) {
+              lowest = bar.low;
+              lowestTime = bar.time;
+            }
+          });
+
+          return { highest, lowest, highestTime, lowestTime };
+        },
+      };
+
       window.colors = {
-        background: "${colors.background}",
-        text: "${colors.text}",
-        border: "${colors.border}",
-        greenLineColor: "${colors.greenLineColor}",
-        redLineColor: "${colors.redLineColor}",
-        highPriceLineColor: "${colors.highPriceLineColor}",
-        lowPriceLineColor: "${colors.lowPriceLineColor}",
+        background: '#1B1E23', // bg1
+        text: '#D1D4DC', // body
+        border: '#343B47', // border
+        greenLineColor: '#0ECB81', // greenLineColor
+        redLineColor: '#F6465D', // redLineColor
+        highPriceLineColor: '#DDD', // highPriceLineColor
+        lowPriceLineColor: '#DDD', // lowPriceLineColor
         tooltip: {
-          bg: "${colors.tooltip.bg}",
-          title: "${colors.tooltip.title}",
-          value: "${colors.tooltip.value}",
+          bg: 'rgba(255, 255, 255, 1)', // bg1 bg2
+          title: 'rgba(62, 73, 94, 1)', // body
+          value: 'rgba(25, 41, 69, 1)', // title1
         },
       };
       window.description = {
-        tp: '${description.tp}',
-        entry: '${description.entry}',
-        sl: '${description.sl}',
-        liq: '${description.liq}',
-        high: '${description.high}',
-        low: '${description.low}',
-        time: '${description.time}',
-        open: '${description.open}',
-        close: '${description.close}',
-        chg: '${description.chg}',
-        volume: '${description.volume}',
-      }
+        tp: 'TP',
+        entry: 'Entry',
+        sl: 'SL',
+        liq: 'LIQ',
+        high: 'High',
+        low: 'Low',
+
+        time: 'Time',
+        open: 'Open',
+        high: 'High',
+        low: 'Low',
+        close: 'Close',
+        chg: '%Chg',
+        volume: 'Volume',
+      };
 
       // Global variables
       window.chart = null;
@@ -284,7 +265,7 @@ export const createTradingViewChartTemplate = (
               leftPriceScale: {
                 borderColor: 'transparent',
               },
-            }
+            },
           );
 
           // open external url when click tradingview logo
@@ -304,7 +285,7 @@ export const createTradingViewChartTemplate = (
                       JSON.stringify({
                         type: 'ATTR_LOGO_CLICK',
                         timestamp: Date.now(),
-                      })
+                      }),
                     );
                   }
                   return false;
@@ -335,7 +316,7 @@ export const createTradingViewChartTemplate = (
               JSON.stringify({
                 type: 'CHART_READY',
                 timestamp: new Date().toISOString(),
-              })
+              }),
             );
           }
         } catch (error) {
@@ -369,7 +350,7 @@ export const createTradingViewChartTemplate = (
               type: 'price',
               minMove: 0.0000001,
             },
-          }
+          },
         );
         return window.candlestickSeries;
       };
@@ -386,16 +367,16 @@ export const createTradingViewChartTemplate = (
             priceScaleId: '',
             lastValueVisible: false,
             priceLineVisible: false,
-          }
+          },
         );
         return window.volumeSeries;
       };
 
-      window.updateTPSLPriceLines = (priceLines) => {
+      window.updateTPSLPriceLines = priceLines => {
         if (!window.candlestickSeries || !window.chart) return;
 
         // Clear existing price lines
-        Object.values(window.priceLineContainers).forEach((line) => {
+        Object.values(window.priceLineContainers).forEach(line => {
           if (line) {
             window.candlestickSeries.removePriceLine(line);
           }
@@ -469,41 +450,47 @@ export const createTradingViewChartTemplate = (
         if (!barsInfo || data.length === 0) return;
 
         // 检查范围是否真的发生了变化
-        const newExtremes = window.utils.calculateVisibleExtremes(data, barsInfo.from, barsInfo.to)
+        const newExtremes = calculateVisibleExtremes(
+          data,
+          barsInfo.from,
+          barsInfo.to,
+        );
 
         // 如果极值没有变化，跳过更新
-        if (window.currentExtremes &&
-            window.currentExtremes.highest === newExtremes.highest &&
-            window.currentExtremes.lowest === newExtremes.lowest &&
-            window.currentExtremes.highestTime === newExtremes.highestTime &&
-            window.currentExtremes.lowestTime === newExtremes.lowestTime) {
+        if (
+          window.currentExtremes &&
+          window.currentExtremes.highest === newExtremes.highest &&
+          window.currentExtremes.lowest === newExtremes.lowest &&
+          window.currentExtremes.highestTime === newExtremes.highestTime &&
+          window.currentExtremes.lowestTime === newExtremes.lowestTime
+        ) {
           return;
         }
 
-        window.currentExtremes = newExtremes
-        const { highest, lowest, highestTime, lowestTime } = newExtremes
+        window.currentExtremes = newExtremes;
+        const { highest, lowest, highestTime, lowestTime } = newExtremes;
         if (!highest || !lowest) return;
 
-        if(window.clearMarkers) {
+        if (window.clearMarkers) {
           window.clearMarkers.setMarkers([]);
         }
-        window.clearMarkers = LightweightCharts.createSeriesMarkers(window.candlestickSeries, [
+        window.clearMarkers = createSeriesMarkers(window.candlestickSeries, [
           {
-              time: highestTime,
-              position: 'aboveBar', // 在蜡烛图顶部
-              color: window.colors.greenLineColor,
-              shape: 'arrowDown',
-              text: window.description.high,
-              size: 0.1, // 小尺寸
+            time: highestTime,
+            position: 'aboveBar', // 在蜡烛图顶部
+            color: window.colors.greenLineColor,
+            shape: 'arrowDown',
+            text: window.description.high,
+            size: 0.1, // 小尺寸
           },
           {
-              time: lowestTime,
-              position: 'belowBar', // 在蜡烛图底部
-              color: window.colors.redLineColor,
-              shape: 'arrowUp',
-              text: window.description.low,
-              size: 0.1,
-          }
+            time: lowestTime,
+            position: 'belowBar', // 在蜡烛图底部
+            color: window.colors.redLineColor,
+            shape: 'arrowUp',
+            text: window.description.low,
+            size: 0.1,
+          },
         ]);
       };
       // Handle window resize
@@ -533,7 +520,7 @@ export const createTradingViewChartTemplate = (
       if (containerEl) containerEl.appendChild(tooltip);
 
       // Handle crosshair move for tooltip
-      const handleCrosshairMove = (param) => {
+      const handleCrosshairMove = param => {
         if (!containerEl || !window.tooltip) return;
         const tooltipEl = window.tooltip;
 
@@ -653,7 +640,9 @@ export const createTradingViewChartTemplate = (
           ':</span>';
         tooltipHTML +=
           '<span style="color: ' +
-          (isPositive ? window.colors.greenLineColor : window.colors.redLineColor) +
+          (isPositive
+            ? window.colors.greenLineColor
+            : window.colors.redLineColor) +
           '; font-size: 10px; font-weight: 600;">' +
           (isPositive ? '+' : '') +
           window.utils?.formatPrice(change) +
@@ -727,17 +716,18 @@ export const createTradingViewChartTemplate = (
                       window.createVolumeSeries();
                     }
                     window.volumeSeries.setData(
-                      message.data.map((item) => ({
+                      message.data.map(item => ({
                         time: item.time,
                         value: item.volume,
-                        color: item.close >= item.open ? window.colors.greenLineColor : window.colors.redLineColor,
-                      }))
+                        color:
+                          item.close >= item.open
+                            ? window.colors.greenLineColor
+                            : window.colors.redLineColor,
+                      })),
                     );
-                    window.candlestickSeries
-                      .priceScale()
-                      .applyOptions({
-                        scaleMargins: { top: 0, bottom: 0.1 },
-                      });
+                    window.candlestickSeries.priceScale().applyOptions({
+                      scaleMargins: { top: 0.1, bottom: 0.2 },
+                    });
                     window.volumeSeries
                       .priceScale()
                       .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
@@ -746,7 +736,7 @@ export const createTradingViewChartTemplate = (
                   window.chart.timeScale().scrollToRealTime();
                 } else {
                   console.error(
-                    '📊 TradingView: Failed to create candlestick series'
+                    '📊 TradingView: Failed to create candlestick series',
                   );
                 }
               }
@@ -771,7 +761,7 @@ export const createTradingViewChartTemplate = (
                     candlePeriod: message.candlePeriod,
                     candleCount: message.candleCount,
                     timestamp: new Date().toISOString(),
-                  })
+                  }),
                 );
               }
               break;
@@ -789,4 +779,3 @@ export const createTradingViewChartTemplate = (
     </script>
   </body>
 </html>
-`;
