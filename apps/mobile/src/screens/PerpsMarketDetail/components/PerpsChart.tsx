@@ -293,11 +293,13 @@ export const PerpsChart: React.FC<{
           {formatPercent(dayDeltaPercent, 2)})
         </Text>
       </View>
-      <TradingViewCandleChart
-        ref={chartWebViewRef}
-        height={160}
-        onChartReady={handleChartReady}
-      />
+      <View style={styles.content}>
+        <TradingViewCandleChart
+          ref={chartWebViewRef}
+          height={160}
+          onChartReady={handleChartReady}
+        />
+      </View>
       <View style={styles.menu}>
         {CANDLE_MENU_ITEM.map(item => {
           const isActive = item.key === selectedInterval;
@@ -332,6 +334,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingVertical: 24,
     borderRadius: 20,
     // paddingHorizontal: 16,
+  },
+  content: {
+    paddingHorizontal: 16,
   },
   menu: {
     display: 'flex',
