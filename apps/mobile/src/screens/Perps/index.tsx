@@ -26,6 +26,7 @@ import { PerpsHistorySection } from './components/PerpsHistorySection';
 import { PerpsMarketSection } from './components/PerpsMarketSection';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { apisPerps } from '@/core/apis';
+import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -53,18 +54,13 @@ export const PerpsScreen = () => {
 
   // console.log({ marketData });
 
-  const { runAsync: handleLogin } = useRequest(
-    async (v: Account) => {
-      await login(v);
-      setPopupState(prev => ({
-        ...prev,
-        isShowLoginPopup: false,
-      }));
-    },
-    {
-      manual: true,
-    },
-  );
+  const handleLogin = useMemoizedFn(async (v: Account) => {
+    await login(v);
+    setPopupState(prev => ({
+      ...prev,
+      isShowLoginPopup: false,
+    }));
+  });
 
   const handleLogout = useMemoizedFn(() => {
     try {
@@ -134,7 +130,7 @@ export const PerpsScreen = () => {
           />
         </View>
       </NormalScreenContainer2024>
-      <AccountSelectorPopup
+      <PerpsAccountSelectorPopup
         visible={popupState.isShowLoginPopup}
         onClose={() => {
           setPopupState(prev => ({
@@ -144,8 +140,6 @@ export const PerpsScreen = () => {
         }}
         value={currentPerpsAccount}
         onChange={handleLogin}
-        isShowSafeAddressSection={false}
-        isShowWatchAddressSection={false}
         title={t('page.perps.selectAccountTitle')}
       />
       <PerpsAccountLogoutPopup

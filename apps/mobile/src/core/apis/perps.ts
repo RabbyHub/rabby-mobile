@@ -45,6 +45,7 @@ class ApisPerps {
       sdkInstance = new HyperliquidSDK({
         isTestnet: false,
         timeout: 10000,
+        agentName: 'RabbyMobile',
       });
       return sdkInstance;
     }
