@@ -13,6 +13,115 @@ interface ChartColors {
   };
 }
 
+const utils = `
+const Sub_Numbers = '₀₁₂₃₄₅₆₇₈₉';
+window.utils = {
+  formatLittleNumber: (num, minLen = 6) => {
+    const bn = new BigNumber(num);
+    if (bn.toFixed().length >= minLen) {
+      const s = bn.precision(4).toFormat();
+      const ss = s.replace(/^0.(0*)?(?:.*)/u, (_, z) => {
+        const zeroLength = z.length;
+
+        const sub = String(zeroLength)
+          .split('')
+          .map(x => Sub_Numbers[x])
+          .join('');
+
+        const end = s.slice(zeroLength + 2);
+        return '0.0' + sub + end;
+      });
+
+      return ss;
+    }
+    return num;
+  },
+  formatPrice: (v) => {
+    if (Math.abs(v) >= 0.1) {
+      return v.toFixed(2);
+    }
+    if (Math.abs(v) < 0.0001) {
+      const isNegative = v < 0;
+      const absNum = Math.abs(v);
+      return (isNegative ? '-' : '') + window.utils.formatLittleNumber(absNum);
+    }
+    return v.toFixed(2);
+  },
+  formatNumber: (v) => {
+    if (v >= 1000000) {
+      return (v / 1000000).toFixed(2) + 'M';
+    } else if (v >= 1000) {
+      return (v / 1000).toFixed(2) + 'K';
+    }
+    return v.toFixed(2);
+  },
+  formatYTime: (t) => {
+    if (typeof t === 'number') {
+      const d = new Date(t * 1000);
+      return (
+        '' +
+        (d.getMonth() + 1) +
+        '/' +
+        d.getDate() +
+        ' ' +
+        d.getHours().toString().padStart(2, '0') +
+        ':' +
+        d.getMinutes().toString().padStart(2, '0')
+      );
+    }
+    const bd = t;
+    return '' + bd.month + '/' + bd.day;
+  },
+  formatTime: (t) => {
+    if (typeof t === 'number') {
+      const d = new Date(t * 1000);
+      return (
+        '' +
+        String(d.getMonth() + 1).padStart(2, '0') +
+        '/' +
+        String(d.getDate()).padStart(2, '0') +
+        ' ' +
+        String(d.getHours()).padStart(2, '0') +
+        ':' +
+        String(d.getMinutes()).padStart(2, '0')
+      );
+    }
+    const bd = t;
+    return (
+      '' +
+      bd.year +
+      '-' +
+      String(bd.month).padStart(2, '0') +
+      '-' +
+      String(bd.day).padStart(2, '0')
+    );
+  },
+  // 计算当前可见范围的最高最低价格
+  calculateVisibleExtremes: (data, from, to) => {
+    if (!data || data.length === 0) return { highest: null, lowest: null };
+
+    const rangeData = data.filter(
+      (bar) => bar.time >= from && bar.time <= to
+    );
+    if (rangeData.length === 0) return { highest: null, lowest: null };
+
+    let highest = rangeData[0].high;
+    let lowest = rangeData[0].low;
+
+    rangeData.forEach((bar) => {
+      if (bar.high > highest) {
+        highest = bar.high;
+      }
+      if (bar.low < lowest) {
+        lowest = bar.low;
+      }
+    });
+
+    return { highest, lowest };
+  },
+}
+`;
+
 export interface ChartDescription {
   tp: string;
   entry: string;
@@ -57,19 +166,21 @@ export const createTradingViewChartTemplate = (
   </head>
   <body>
     <div id="container"></div>
+    <script src='https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js'></script>
     <script>
+      ${utils}
       window.colors = {
-        background: "${colors.background}", // bg1
-        text: "${colors.text}", // body
-        border: "${colors.border}", // border
-        greenLineColor: "${colors.greenLineColor}", // greenLineColor
-        redLineColor: "${colors.redLineColor}", // redLineColor
-        highPriceLineColor: "${colors.highPriceLineColor}", // highPriceLineColor
-        lowPriceLineColor: "${colors.lowPriceLineColor}", // lowPriceLineColor
+        background: "${colors.background}",
+        text: "${colors.text}",
+        border: "${colors.border}",
+        greenLineColor: "${colors.greenLineColor}",
+        redLineColor: "${colors.redLineColor}",
+        highPriceLineColor: "${colors.highPriceLineColor}",
+        lowPriceLineColor: "${colors.lowPriceLineColor}",
         tooltip: {
-          bg: "${colors.tooltip.bg}", // bg1 bg2
-          title: "${colors.tooltip.title}", // body
-          value: "${colors.tooltip.value}", // title1
+          bg: "${colors.tooltip.bg}",
+          title: "${colors.tooltip.title}",
+          value: "${colors.tooltip.value}",
         },
       };
       window.description = {
@@ -86,100 +197,6 @@ export const createTradingViewChartTemplate = (
         volume: '${description.volume}',
       }
 
-      // 计算当前可见范围的最高最低价格
-      const calculateVisibleExtremes = (data, from, to) => {
-        if (!data || data.length === 0) return { highest: null, lowest: null };
-
-        const rangeData = data.filter(
-          (bar) => bar.time >= from && bar.time <= to
-        );
-        if (rangeData.length === 0) return { highest: null, lowest: null };
-
-        let highest = rangeData[0].high;
-        let lowest = rangeData[0].low;
-
-        rangeData.forEach((bar) => {
-          if (bar.high > highest) {
-            highest = bar.high;
-          }
-          if (bar.low < lowest) {
-            lowest = bar.low;
-          }
-        });
-
-        return { highest, lowest };
-      };
-      // Initialize window.utils with simple formatting functions
-      window.utils = {
-        formatPrice: (v) => {
-          if (Math.abs(v) >= 0.1) {
-            return v.toFixed(2);
-          }
-          if (Math.abs(v) < 0.0001) {
-            return v.toExponential(2);
-          }
-          return v.toFixed(2);
-        },
-        formatNumber: (v) => {
-          if (v >= 1000000) {
-            return (v / 1000000).toFixed(2) + 'M';
-          } else if (v >= 1000) {
-            return (v / 1000).toFixed(2) + 'K';
-          }
-          return v.toFixed(2);
-        },
-      };
-
-      const defaultFormat = (v) => v.toFixed(2);
-      const formatNumber = (v) => {
-        if (v >= 1000000) {
-          return (v / 1000000).toFixed(2) + 'M';
-        } else if (v >= 1000) {
-          return (v / 1000).toFixed(2) + 'K';
-        }
-        return v.toFixed(2);
-      };
-      const formatYTime = (t) => {
-        if (typeof t === 'number') {
-          const d = new Date(t * 1000);
-          return (
-            '' +
-            (d.getMonth() + 1) +
-            '/' +
-            d.getDate() +
-            ' ' +
-            d.getHours().toString().padStart(2, '0') +
-            ':' +
-            d.getMinutes().toString().padStart(2, '0')
-          );
-        }
-        const bd = t;
-        return '' + bd.month + '/' + bd.day;
-      };
-      const formatTime = (t) => {
-        if (typeof t === 'number') {
-          const d = new Date(t * 1000);
-          return (
-            '' +
-            String(d.getMonth() + 1).padStart(2, '0') +
-            '/' +
-            String(d.getDate()).padStart(2, '0') +
-            ' ' +
-            String(d.getHours()).padStart(2, '0') +
-            ':' +
-            String(d.getMinutes()).padStart(2, '0')
-          );
-        }
-        const bd = t;
-        return (
-          '' +
-          bd.year +
-          '-' +
-          String(bd.month).padStart(2, '0') +
-          '-' +
-          String(bd.day).padStart(2, '0')
-        );
-      };
       // Global variables
       window.chart = null;
       window.candlestickSeries = null;
@@ -231,8 +248,8 @@ export const createTradingViewChartTemplate = (
                 attributionLogo: true,
               },
               localization: {
-                priceFormatter: window?.utils?.formatPrice || defaultFormat,
-                dateFormat: window?.utils?.formatTime || formatTime,
+                priceFormatter: window?.utils?.formatPrice,
+                dateFormat: window?.utils?.formatTime,
               },
               grid: {
                 vertLines: { color: window.colors.border },
@@ -242,7 +259,7 @@ export const createTradingViewChartTemplate = (
                 timeVisible: true,
                 secondsVisible: false,
                 borderColor: 'transparent',
-                tickMarkFormatter: formatYTime,
+                tickMarkFormatter: window?.utils?.formatYTime,
               },
               trackingMode: {
                 exitMode: 0,
@@ -437,7 +454,7 @@ export const createTradingViewChartTemplate = (
 
         if (!barsInfo || data.length === 0) return;
 
-        const extremes = calculateVisibleExtremes(
+        const extremes = window.utils.calculateVisibleExtremes(
           data,
           barsInfo.from,
           barsInfo.to
@@ -551,7 +568,7 @@ export const createTradingViewChartTemplate = (
           '<span style="color: ' +
           window.colors.tooltip.value +
           '; font-size: 10px; font-weight: 600;">' +
-          (window.utils?.formatTime || formatTime)(param.time) +
+          window.utils?.formatTime(param.time) +
           '</span>';
         tooltipHTML += '</div>';
         tooltipHTML +=
@@ -566,7 +583,7 @@ export const createTradingViewChartTemplate = (
           '<span style="color: ' +
           window.colors.tooltip.value +
           '; font-size: 10px; font-weight: 600;">' +
-          (window.utils?.formatPrice || defaultFormat)(open) +
+          window.utils?.formatPrice(open) +
           '</span>';
         tooltipHTML += '</div>';
         tooltipHTML +=
@@ -581,7 +598,7 @@ export const createTradingViewChartTemplate = (
           '<span style="color: ' +
           window.colors.tooltip.value +
           '; font-size: 10px; font-weight: 600;">' +
-          (window.utils?.formatPrice || defaultFormat)(high) +
+          window.utils?.formatPrice(high) +
           '</span>';
         tooltipHTML += '</div>';
         tooltipHTML +=
@@ -596,7 +613,7 @@ export const createTradingViewChartTemplate = (
           '<span style="color: ' +
           window.colors.tooltip.value +
           '; font-size: 10px; font-weight: 600;">' +
-          (window.utils?.formatPrice || defaultFormat)(low) +
+          window.utils?.formatPrice(low) +
           '</span>';
         tooltipHTML += '</div>';
         tooltipHTML +=
@@ -611,7 +628,7 @@ export const createTradingViewChartTemplate = (
           '<span style="color: ' +
           window.colors.tooltip.value +
           '; font-size: 10px; font-weight: 600;">' +
-          (window.utils?.formatPrice || defaultFormat)(close) +
+          window.utils?.formatPrice(close) +
           '</span>';
         tooltipHTML += '</div>';
         tooltipHTML +=
@@ -627,7 +644,7 @@ export const createTradingViewChartTemplate = (
           (isPositive ? window.colors.greenLineColor : window.colors.redLineColor) +
           '; font-size: 10px; font-weight: 600;">' +
           (isPositive ? '+' : '') +
-          (window.utils?.formatPrice || defaultFormat)(change) +
+          window.utils?.formatPrice(change) +
           (isPositive ? '+' : '') +
           '(' +
           changePercent.toFixed(2) +
@@ -647,7 +664,7 @@ export const createTradingViewChartTemplate = (
             '<span style="color: ' +
             window.colors.tooltip.value +
             '; font-size: 10px; font-weight: 600;">' +
-            (window.utils?.formatNumber || formatNumber)(volume) +
+            window.utils?.formatNumber(volume) +
             '</span>';
           tooltipHTML += '</div>';
         }
