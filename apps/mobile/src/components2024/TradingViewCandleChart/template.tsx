@@ -736,7 +736,7 @@ export const createTradingViewChartTemplate = (
                     window.candlestickSeries
                       .priceScale()
                       .applyOptions({
-                        scaleMargins: { top: 0.1, bottom: 0.2 },
+                        scaleMargins: { top: 0, bottom: 0.1 },
                       });
                     window.volumeSeries
                       .priceScale()
