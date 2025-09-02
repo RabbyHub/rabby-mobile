@@ -1,4 +1,5 @@
 import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
+import { stableSerializeAccounts } from '@/utils/account';
 import { sortAccountList } from '@/utils/sortAccountList';
 import { useMemo } from 'react';
 
@@ -7,11 +8,16 @@ export const useSortAddressList = (accounts: KeyringAccountWithAlias[]) => {
     disableAutoFetch: true,
   });
 
+  const myAccountsJSON = useMemo(
+    () => stableSerializeAccounts(accounts),
+    [accounts],
+  );
+
   const list = useMemo(() => {
-    return sortAccountList(accounts, {
+    return sortAccountList(JSON.parse(myAccountsJSON), {
       highlightedAddresses,
     });
-  }, [accounts, highlightedAddresses]);
+  }, [myAccountsJSON, highlightedAddresses]);
 
   return list;
 };

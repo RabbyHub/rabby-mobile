@@ -3,7 +3,7 @@ import React from 'react';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
 
-type ShowType = boolean | 'destroy' | 'collapse' | number;
+export type SheetModalShowType = boolean | 'destroy' | 'collapse' | number;
 
 export function useSheetModal(
   existingSheetModalRef?: React.RefObject<BottomSheetModal> | null,
@@ -13,22 +13,29 @@ export function useSheetModal(
   const sheetModalRef = existingSheetModalRef || internalRef;
 
   const toggleShowSheetModal = React.useCallback(
-    async (shownType: ShowType) => {
+    async (
+      shownType: SheetModalShowType,
+      animationConfigs?: WithSpringConfig | WithTimingConfig,
+    ) => {
+      let finalAc: typeof animationConfigs;
+      if (animationConfigs) {
+        finalAc = { ...animationConfigs };
+      }
       switch (shownType) {
         case 'destroy':
-          sheetModalRef.current?.dismiss();
+          sheetModalRef.current?.dismiss(finalAc);
           return;
         case 'collapse':
-          sheetModalRef.current?.collapse();
+          sheetModalRef.current?.collapse(finalAc);
           return;
         case true:
           sheetModalRef.current?.present();
           return;
         case false:
-          sheetModalRef.current?.close();
+          sheetModalRef.current?.close(finalAc);
           return;
         default:
-          sheetModalRef.current?.snapToIndex(shownType);
+          sheetModalRef.current?.snapToIndex(shownType, finalAc);
           return;
       }
     },
@@ -54,7 +61,7 @@ export function useSheetModals<T extends string>(
   const toggleShowSheetModal = React.useCallback(
     async (
       type: T,
-      shownType: ShowType,
+      shownType: SheetModalShowType,
       animationConfigs?: WithSpringConfig | WithTimingConfig,
     ) => {
       let finalAc: typeof animationConfigs;
@@ -65,19 +72,19 @@ export function useSheetModals<T extends string>(
       }
       switch (shownType) {
         case 'destroy':
-          sheetModalRefs[type]?.current?.dismiss();
+          sheetModalRefs[type]?.current?.dismiss(finalAc);
           return;
         case 'collapse':
-          sheetModalRefs[type]?.current?.collapse();
+          sheetModalRefs[type]?.current?.collapse(finalAc);
           return;
         case true:
           sheetModalRefs[type]?.current?.present();
           return;
         case false:
-          sheetModalRefs[type]?.current?.close();
+          sheetModalRefs[type]?.current?.close(finalAc);
           return;
         default:
-          sheetModalRefs[type]?.current?.snapToIndex(shownType);
+          sheetModalRefs[type]?.current?.snapToIndex(shownType, finalAc);
           return;
       }
     },

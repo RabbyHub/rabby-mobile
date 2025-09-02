@@ -86,3 +86,13 @@ export const isAccountSupportDirectSign = (type?: string) => {
     [KEYRING_CLASS.MNEMONIC, KEYRING_CLASS.PRIVATE_KEY] as string[]
   ).includes(type);
 };
+
+export function stableSerializeAccounts<T extends KeyringAccountWithAlias[]>(
+  accounts: T,
+) {
+  return JSON.stringify(
+    accounts.sort((a, b) => a.address.localeCompare(b.address)),
+    null,
+    0,
+  );
+}

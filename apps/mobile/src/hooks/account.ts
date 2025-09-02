@@ -15,7 +15,6 @@ import {
 } from '@/core/services';
 import { removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
-import { addressUtils } from '@rabby-wallet/base-utils';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import {
@@ -31,7 +30,7 @@ import { useAtomicRequest } from './common/useAtomicAction';
 import { appServiceEvents } from '@/core/services/_utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { deleteDBResourceForAddress } from '@/databases/sync/assets';
-import { filterMyAccounts } from '@/utils/account';
+import { filterMyAccounts, stableSerializeAccounts } from '@/utils/account';
 import { unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
 import { useHistoryTokenDict } from './historyTokenDict';
@@ -114,10 +113,17 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
     }
   }, [disableAutoFetch, fetchAccounts]);
 
+  const accountsJSON = useMemo(
+    () => stableSerializeAccounts(accounts),
+    [accounts],
+  );
+
+  const derivedAccounts = useMemo(() => {
+    return JSON.parse(accountsJSON);
+  }, [accountsJSON]);
+
   return {
-    accounts: useMemo(() => {
-      return [...accounts];
-    }, [accounts]),
+    accounts: derivedAccounts,
     fetchAccounts,
   };
 }

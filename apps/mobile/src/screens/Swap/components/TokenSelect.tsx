@@ -15,7 +15,10 @@ import { trigger } from 'react-native-haptic-feedback';
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { TokenSelectorSheetModal } from '@/components/Token';
-import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
+import {
+  ITokenCheck,
+  useTokenSelectorModalVisible,
+} from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken } from '@/hooks/chainAndToken/useToken';
 import {
@@ -112,25 +115,35 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       chainServerId: chainId,
     });
 
-    const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
-    const [updateNonce, setUpdateNonce] = useState(0);
+    const [, setUpdateNonce] = useState(0);
     const [favoriteFilterValue, setFavoriteFilterValue] =
       useState<FavoriteFilterType>('all');
 
     const [_, setLongPressToken] = useLongPressTokenAtom();
     const queryConds = useDebounceValue(_queryConds, 250);
-    const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const currentAccount = queryConds.account;
+
+    const {
+      visible: tokenSelectorVisible,
+      visibleRef: tokenSelectorVisibleRef,
+      tokenSelectorModalRef,
+      setTokenSelectorVisible,
+    } = useTokenSelectorModalVisible({
+      onVisibleChanged: visible => {
+        loadOnVisibleChanged(visible);
+      },
+    });
+
     const {
       tokens,
       getCacheTop10Tokens,
       getCacheTokens,
       checkIsExpireAndUpdate,
       loadToken,
+      loadOnVisibleChanged,
       isLoading: isLoadingAllTokens,
     } = useSelectTokens({
       currentAccount,
-      visible: tokenSelectorVisible,
       keyword: queryConds.keyword,
       chain_server_id: queryConds.chainServerId,
       type: type,
@@ -141,10 +154,11 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     useImperativeHandle(ref, () => ({
       openTokenModal: conds => {
         setQueryConds(prev => ({ ...prev, ...conds }));
-        setTokenSelectorVisible(true);
+        setTokenSelectorVisible(true, { noTriggerRerender: false });
       },
     }));
 
+    const timeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // fetch tokens
     useEffect(() => {
       (async () => {
@@ -156,6 +170,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           return;
         }
         const existedTokens = !!tokens.length;
+
         if (!existedTokens) {
           if (type === 'send') {
             currentAccount?.address &&
@@ -178,8 +193,17 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           timeRef.current = null;
         }
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tokenSelectorVisible, currentAccount?.address, useSwapTokenList]);
+    }, [
+      tokenSelectorVisible,
+      currentAccount?.address,
+      useSwapTokenList,
+      checkIsExpireAndUpdate,
+      getCacheTokens,
+      getCacheTop10Tokens,
+      loadToken,
+      tokens.length,
+      type,
+    ]);
 
     // swap token list
     const { value: swapTokenList, loading: swapTokenListLoading } =
@@ -354,7 +378,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         onTokenChange(t);
         setTokenSelectorVisible(false);
       },
-      [onChange, onTokenChange],
+      [onChange, onTokenChange, setTokenSelectorVisible],
     );
 
     const handleTokenSelectorClose = useCallback(() => {
@@ -362,7 +386,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       setTimeout(() => {
         setTokenSelectorVisible(false);
       }, 0);
-    }, []);
+    }, [setTokenSelectorVisible]);
 
     const resetQueryConds = useCallback(() => {
       setQueryConds(prev => ({
@@ -374,12 +398,12 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const handleSelectToken = useCallback(() => {
       if (allTokenItems.length > 0) {
-        setUpdateNonce(updateNonce + 1);
+        setUpdateNonce(prev => prev + 1);
       }
 
       resetQueryConds();
       setTokenSelectorVisible(true);
-    }, [allTokenItems, updateNonce, resetQueryConds]);
+    }, [allTokenItems, resetQueryConds, setTokenSelectorVisible]);
 
     useEffect(() => {
       setQueryConds(prev => ({ ...prev, chainServerId: chainId }));
@@ -548,6 +572,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
         <TokenSelectorSheetModal
           searchPlaceholder={searchPlaceholder}
+          ref={tokenSelectorModalRef}
           visible={tokenSelectorVisible}
           unshiftList={[]}
           list={selectedTab === 'testnet' ? testnetTokenList : list}
