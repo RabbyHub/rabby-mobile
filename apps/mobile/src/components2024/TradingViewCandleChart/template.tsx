@@ -277,8 +277,8 @@ export const createTradingViewChartTemplate = (
                 borderVisible: false,
                 minimumWidth: 50,
                 scaleMargins: {
-                  top: 0.1,
-                  bottom: 0.4,
+                  top: 0,
+                  bottom: 0,
                 },
               },
               leftPriceScale: {
