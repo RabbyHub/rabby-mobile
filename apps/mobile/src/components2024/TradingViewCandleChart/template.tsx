@@ -98,26 +98,30 @@ window.utils = {
   },
   // 计算当前可见范围的最高最低价格
   calculateVisibleExtremes: (data, from, to) => {
-    if (!data || data.length === 0) return { highest: null, lowest: null };
+    if (!data || data.length === 0) return { highest: null, lowest: null, highestTime: null, lowestTime: null };
 
     const rangeData = data.filter(
       (bar) => bar.time >= from && bar.time <= to
     );
-    if (rangeData.length === 0) return { highest: null, lowest: null };
+    if (rangeData.length === 0) return { highest: null, lowest: null, highestTime: null, lowestTime: null };
 
     let highest = rangeData[0].high;
     let lowest = rangeData[0].low;
+    let highestTime = rangeData[0].time;
+    let lowestTime = rangeData[0].time;
 
     rangeData.forEach((bar) => {
       if (bar.high > highest) {
         highest = bar.high;
+        highestTime = bar.time;
       }
       if (bar.low < lowest) {
         lowest = bar.low;
+        lowestTime = bar.time;
       }
     });
 
-    return { highest, lowest };
+    return { highest, lowest, highestTime, lowestTime };
   },
 }
 `;
@@ -204,8 +208,8 @@ export const createTradingViewChartTemplate = (
       window.isInitialDataLoad = true; // Track if this is the first data load
       window.lastDataKey = null; // Track the last dataset to avoid unnecessary autoscaling
       window.tooltip = null;
-      window.hightPrice = null;
-      window.lowPrice = null;
+      window.clearMarkers = null;
+      window.currentExtremes = null;
 
       window.priceLineContainers = {
         tp: null,
@@ -260,6 +264,10 @@ export const createTradingViewChartTemplate = (
                 secondsVisible: false,
                 borderColor: 'transparent',
                 tickMarkFormatter: window?.utils?.formatYTime,
+                minBarSpacing: 2,
+                maxBarSpacing: 30,
+                fixLeftEdge: true,
+                fixRightEdge: true,
               },
               trackingMode: {
                 exitMode: 0,
@@ -311,8 +319,14 @@ export const createTradingViewChartTemplate = (
 
           // Subscribe to crosshair move events
           window.chart.subscribeCrosshairMove(handleCrosshairMove);
+          let updateTimeout = null;
           window.chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
-            updatePriceLines();
+            if (updateTimeout) {
+              clearTimeout(updateTimeout);
+            }
+            updateTimeout = setTimeout(() => {
+              updatePriceLines();
+            }, 100);
           });
 
           // Notify React Native that chart is ready
@@ -454,45 +468,43 @@ export const createTradingViewChartTemplate = (
 
         if (!barsInfo || data.length === 0) return;
 
-        const extremes = window.utils.calculateVisibleExtremes(
-          data,
-          barsInfo.from,
-          barsInfo.to
-        );
+        // 检查范围是否真的发生了变化
+        const newExtremes = window.utils.calculateVisibleExtremes(data, barsInfo.from, barsInfo.to)
 
-        // 移除旧的价格线
-        if (window.hightPrice) {
-          window.candlestickSeries.removePriceLine(window.hightPrice);
-          window.hightPrice = null;
-        }
-        if (window.lowPrice) {
-          window.candlestickSeries.removePriceLine(window.lowPrice);
-          window.lowPrice = null;
+        // 如果极值没有变化，跳过更新
+        if (window.currentExtremes &&
+            window.currentExtremes.highest === newExtremes.highest &&
+            window.currentExtremes.lowest === newExtremes.lowest &&
+            window.currentExtremes.highestTime === newExtremes.highestTime &&
+            window.currentExtremes.lowestTime === newExtremes.lowestTime) {
+          return;
         }
 
-        // 创建新的最高价标记
-        if (extremes.highest) {
-          window.hightPrice = window.candlestickSeries.createPriceLine({
-            price: extremes.highest,
-            color: window.colors.highPriceLineColor,
-            lineWidth: 1,
-            lineStyle: 4, // LineStyle.Solid
-            axisLabelVisible: true,
-            title: window.description.high,
-          });
-        }
+        window.currentExtremes = newExtremes
+        const { highest, lowest, highestTime, lowestTime } = newExtremes
+        if (!highest || !lowest) return;
 
-        // 创建新的最低价标记
-        if (extremes.lowest) {
-          window.lowPrice = window.candlestickSeries.createPriceLine({
-            price: extremes.lowest,
-            color: window.colors.lowPriceLineColor,
-            lineWidth: 1,
-            lineStyle: 4, // LineStyle.Solid
-            axisLabelVisible: true,
-            title: window.description.low,
-          });
+        if(window.clearMarkers) {
+          window.clearMarkers.setMarkers([]);
         }
+        window.clearMarkers = LightweightCharts.createSeriesMarkers(window.candlestickSeries, [
+          {
+              time: highestTime,
+              position: 'aboveBar', // 在蜡烛图顶部
+              color: window.colors.greenLineColor,
+              shape: 'arrowDown',
+              text: window.description.high,
+              size: 0.1, // 小尺寸
+          },
+          {
+              time: lowestTime,
+              position: 'belowBar', // 在蜡烛图底部
+              color: window.colors.redLineColor,
+              shape: 'arrowUp',
+              text: window.description.low,
+              size: 0.1,
+          }
+        ]);
       };
       // Handle window resize
       window.addEventListener('resize', function () {

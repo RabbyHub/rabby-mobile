@@ -24,7 +24,133 @@
   </head>
   <body>
     <div id="container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js"></script>
     <script>
+      const Sub_Numbers = '₀₁₂₃₄₅₆₇₈₉';
+      window.utils = {
+        formatLittleNumber: (num, minLen = 6) => {
+          const bn = new BigNumber(num);
+          if (bn.toFixed().length >= minLen) {
+            const s = bn.precision(4).toFormat();
+            const ss = s.replace(/^0.(0*)?(?:.*)/u, (_, z) => {
+              const zeroLength = z.length;
+
+              const sub = String(zeroLength)
+                .split('')
+                .map(x => Sub_Numbers[x])
+                .join('');
+
+              const end = s.slice(zeroLength + 2);
+              return '0.0' + sub + end;
+            });
+
+            return ss;
+          }
+          return num;
+        },
+        formatPrice: v => {
+          if (Math.abs(v) >= 0.1) {
+            return v.toFixed(2);
+          }
+          if (Math.abs(v) < 0.0001) {
+            const isNegative = v < 0;
+            const absNum = Math.abs(v);
+            return (
+              (isNegative ? '-' : '') + window.utils.formatLittleNumber(absNum)
+            );
+          }
+          return v.toFixed(2);
+        },
+        formatNumber: v => {
+          if (v >= 1000000) {
+            return (v / 1000000).toFixed(2) + 'M';
+          } else if (v >= 1000) {
+            return (v / 1000).toFixed(2) + 'K';
+          }
+          return v.toFixed(2);
+        },
+        formatYTime: t => {
+          if (typeof t === 'number') {
+            const d = new Date(t * 1000);
+            return (
+              '' +
+              (d.getMonth() + 1) +
+              '/' +
+              d.getDate() +
+              ' ' +
+              d.getHours().toString().padStart(2, '0') +
+              ':' +
+              d.getMinutes().toString().padStart(2, '0')
+            );
+          }
+          const bd = t;
+          return '' + bd.month + '/' + bd.day;
+        },
+        formatTime: t => {
+          if (typeof t === 'number') {
+            const d = new Date(t * 1000);
+            return (
+              '' +
+              String(d.getMonth() + 1).padStart(2, '0') +
+              '/' +
+              String(d.getDate()).padStart(2, '0') +
+              ' ' +
+              String(d.getHours()).padStart(2, '0') +
+              ':' +
+              String(d.getMinutes()).padStart(2, '0')
+            );
+          }
+          const bd = t;
+          return (
+            '' +
+            bd.year +
+            '-' +
+            String(bd.month).padStart(2, '0') +
+            '-' +
+            String(bd.day).padStart(2, '0')
+          );
+        },
+        // 计算当前可见范围的最高最低价格
+        calculateVisibleExtremes: (data, from, to) => {
+          if (!data || data.length === 0)
+            return {
+              highest: null,
+              lowest: null,
+              highestTime: null,
+              lowestTime: null,
+            };
+
+          const rangeData = data.filter(
+            bar => bar.time >= from && bar.time <= to,
+          );
+          if (rangeData.length === 0)
+            return {
+              highest: null,
+              lowest: null,
+              highestTime: null,
+              lowestTime: null,
+            };
+
+          let highest = rangeData[0].high;
+          let lowest = rangeData[0].low;
+          let highestTime = rangeData[0].time;
+          let lowestTime = rangeData[0].time;
+
+          rangeData.forEach(bar => {
+            if (bar.high > highest) {
+              highest = bar.high;
+              highestTime = bar.time;
+            }
+            if (bar.low < lowest) {
+              lowest = bar.low;
+              lowestTime = bar.time;
+            }
+          });
+
+          return { highest, lowest, highestTime, lowestTime };
+        },
+      };
+
       window.colors = {
         background: '#1B1E23', // bg1
         text: '#D1D4DC', // body
@@ -56,100 +182,6 @@
         volume: 'Volume',
       };
 
-      // 计算当前可见范围的最高最低价格
-      const calculateVisibleExtremes = (data, from, to) => {
-        if (!data || data.length === 0) return { highest: null, lowest: null };
-
-        const rangeData = data.filter(
-          bar => bar.time >= from && bar.time <= to,
-        );
-        if (rangeData.length === 0) return { highest: null, lowest: null };
-
-        let highest = rangeData[0].high;
-        let lowest = rangeData[0].low;
-
-        rangeData.forEach(bar => {
-          if (bar.high > highest) {
-            highest = bar.high;
-          }
-          if (bar.low < lowest) {
-            lowest = bar.low;
-          }
-        });
-
-        return { highest, lowest };
-      };
-      // Initialize window.utils with simple formatting functions
-      window.utils = {
-        formatPrice: v => {
-          if (Math.abs(v) >= 0.1) {
-            return v.toFixed(2);
-          }
-          if (Math.abs(v) < 0.0001) {
-            return v.toExponential(2);
-          }
-          return v.toFixed(2);
-        },
-        formatNumber: v => {
-          if (v >= 1000000) {
-            return (v / 1000000).toFixed(2) + 'M';
-          } else if (v >= 1000) {
-            return (v / 1000).toFixed(2) + 'K';
-          }
-          return v.toFixed(2);
-        },
-      };
-
-      const defaultFormat = v => v.toFixed(2);
-      const formatNumber = v => {
-        if (v >= 1000000) {
-          return (v / 1000000).toFixed(2) + 'M';
-        } else if (v >= 1000) {
-          return (v / 1000).toFixed(2) + 'K';
-        }
-        return v.toFixed(2);
-      };
-      const formatYTime = t => {
-        if (typeof t === 'number') {
-          const d = new Date(t * 1000);
-          return (
-            '' +
-            (d.getMonth() + 1) +
-            '/' +
-            d.getDate() +
-            ' ' +
-            d.getHours().toString().padStart(2, '0') +
-            ':' +
-            d.getMinutes().toString().padStart(2, '0')
-          );
-        }
-        const bd = t;
-        return '' + bd.month + '/' + bd.day;
-      };
-      const formatTime = t => {
-        if (typeof t === 'number') {
-          const d = new Date(t * 1000);
-          return (
-            '' +
-            String(d.getMonth() + 1).padStart(2, '0') +
-            '/' +
-            String(d.getDate()).padStart(2, '0') +
-            ' ' +
-            String(d.getHours()).padStart(2, '0') +
-            ':' +
-            String(d.getMinutes()).padStart(2, '0')
-          );
-        }
-        const bd = t;
-        return (
-          '' +
-          bd.year +
-          '-' +
-          String(bd.month).padStart(2, '0') +
-          '-' +
-          String(bd.day).padStart(2, '0')
-        );
-      };
       // Global variables
       window.chart = null;
       window.candlestickSeries = null;
@@ -157,8 +189,8 @@
       window.isInitialDataLoad = true; // Track if this is the first data load
       window.lastDataKey = null; // Track the last dataset to avoid unnecessary autoscaling
       window.tooltip = null;
-      window.hightPrice = null;
-      window.lowPrice = null;
+      window.clearMarkers = null;
+      window.currentExtremes = null;
 
       window.priceLineContainers = {
         tp: null,
@@ -201,8 +233,8 @@
                 attributionLogo: true,
               },
               localization: {
-                priceFormatter: window?.utils?.formatPrice || defaultFormat,
-                dateFormat: window?.utils?.formatTime || formatTime,
+                priceFormatter: window?.utils?.formatPrice,
+                dateFormat: window?.utils?.formatTime,
               },
               grid: {
                 vertLines: { color: window.colors.border },
@@ -212,7 +244,11 @@
                 timeVisible: true,
                 secondsVisible: false,
                 borderColor: 'transparent',
-                tickMarkFormatter: formatYTime,
+                tickMarkFormatter: window?.utils?.formatYTime,
+                minBarSpacing: 2,
+                maxBarSpacing: 30,
+                fixLeftEdge: true,
+                fixRightEdge: true,
               },
               trackingMode: {
                 exitMode: 0,
@@ -264,8 +300,14 @@
 
           // Subscribe to crosshair move events
           window.chart.subscribeCrosshairMove(handleCrosshairMove);
+          let updateTimeout = null;
           window.chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
-            updatePriceLines();
+            if (updateTimeout) {
+              clearTimeout(updateTimeout);
+            }
+            updateTimeout = setTimeout(() => {
+              updatePriceLines();
+            }, 100);
           });
 
           // Notify React Native that chart is ready
@@ -407,45 +449,49 @@
 
         if (!barsInfo || data.length === 0) return;
 
-        const extremes = calculateVisibleExtremes(
+        // 检查范围是否真的发生了变化
+        const newExtremes = calculateVisibleExtremes(
           data,
           barsInfo.from,
           barsInfo.to,
         );
 
-        // 移除旧的价格线
-        if (window.hightPrice) {
-          window.candlestickSeries.removePriceLine(window.hightPrice);
-          window.hightPrice = null;
-        }
-        if (window.lowPrice) {
-          window.candlestickSeries.removePriceLine(window.lowPrice);
-          window.lowPrice = null;
-        }
-
-        // 创建新的最高价标记
-        if (extremes.highest) {
-          window.hightPrice = window.candlestickSeries.createPriceLine({
-            price: extremes.highest,
-            color: window.colors.highPriceLineColor,
-            lineWidth: 1,
-            lineStyle: 4, // LineStyle.Solid
-            axisLabelVisible: true,
-            title: window.description.high,
-          });
+        // 如果极值没有变化，跳过更新
+        if (
+          window.currentExtremes &&
+          window.currentExtremes.highest === newExtremes.highest &&
+          window.currentExtremes.lowest === newExtremes.lowest &&
+          window.currentExtremes.highestTime === newExtremes.highestTime &&
+          window.currentExtremes.lowestTime === newExtremes.lowestTime
+        ) {
+          return;
         }
 
-        // 创建新的最低价标记
-        if (extremes.lowest) {
-          window.lowPrice = window.candlestickSeries.createPriceLine({
-            price: extremes.lowest,
-            color: window.colors.lowPriceLineColor,
-            lineWidth: 1,
-            lineStyle: 4, // LineStyle.Solid
-            axisLabelVisible: true,
-            title: window.description.low,
-          });
+        window.currentExtremes = newExtremes;
+        const { highest, lowest, highestTime, lowestTime } = newExtremes;
+        if (!highest || !lowest) return;
+
+        if (window.clearMarkers) {
+          window.clearMarkers.setMarkers([]);
         }
+        window.clearMarkers = createSeriesMarkers(window.candlestickSeries, [
+          {
+            time: highestTime,
+            position: 'aboveBar', // 在蜡烛图顶部
+            color: window.colors.greenLineColor,
+            shape: 'arrowDown',
+            text: window.description.high,
+            size: 0.1, // 小尺寸
+          },
+          {
+            time: lowestTime,
+            position: 'belowBar', // 在蜡烛图底部
+            color: window.colors.redLineColor,
+            shape: 'arrowUp',
+            text: window.description.low,
+            size: 0.1,
+          },
+        ]);
       };
       // Handle window resize
       window.addEventListener('resize', function () {
@@ -521,7 +567,7 @@
           '<span style="color: ' +
           window.colors.tooltip.value +
           '; font-size: 10px; font-weight: 600;">' +
-          (window.utils?.formatTime || formatTime)(param.time) +
+          window.utils?.formatTime(param.time) +
           '</span>';
         tooltipHTML += '</div>';
         tooltipHTML +=
@@ -536,7 +582,7 @@
           '<span style="color: ' +
           window.colors.tooltip.value +
           '; font-size: 10px; font-weight: 600;">' +
-          (window.utils?.formatPrice || defaultFormat)(open) +
+          window.utils?.formatPrice(open) +
           '</span>';
         tooltipHTML += '</div>';
         tooltipHTML +=
@@ -551,7 +597,7 @@
           '<span style="color: ' +
           window.colors.tooltip.value +
           '; font-size: 10px; font-weight: 600;">' +
-          (window.utils?.formatPrice || defaultFormat)(high) +
+          window.utils?.formatPrice(high) +
           '</span>';
         tooltipHTML += '</div>';
         tooltipHTML +=
@@ -566,7 +612,7 @@
           '<span style="color: ' +
           window.colors.tooltip.value +
           '; font-size: 10px; font-weight: 600;">' +
-          (window.utils?.formatPrice || defaultFormat)(low) +
+          window.utils?.formatPrice(low) +
           '</span>';
         tooltipHTML += '</div>';
         tooltipHTML +=
@@ -581,7 +627,7 @@
           '<span style="color: ' +
           window.colors.tooltip.value +
           '; font-size: 10px; font-weight: 600;">' +
-          (window.utils?.formatPrice || defaultFormat)(close) +
+          window.utils?.formatPrice(close) +
           '</span>';
         tooltipHTML += '</div>';
         tooltipHTML +=
@@ -599,7 +645,7 @@
             : window.colors.redLineColor) +
           '; font-size: 10px; font-weight: 600;">' +
           (isPositive ? '+' : '') +
-          (window.utils?.formatPrice || defaultFormat)(change) +
+          window.utils?.formatPrice(change) +
           (isPositive ? '+' : '') +
           '(' +
           changePercent.toFixed(2) +
@@ -619,7 +665,7 @@
             '<span style="color: ' +
             window.colors.tooltip.value +
             '; font-size: 10px; font-weight: 600;">' +
-            (window.utils?.formatNumber || formatNumber)(volume) +
+            window.utils?.formatNumber(volume) +
             '</span>';
           tooltipHTML += '</div>';
         }
