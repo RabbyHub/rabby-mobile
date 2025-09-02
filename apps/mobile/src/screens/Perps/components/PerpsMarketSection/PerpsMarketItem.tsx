@@ -1,3 +1,4 @@
+import { AssetAvatar } from '@/components';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -22,12 +23,7 @@ export const PerpsMarketItem: React.FC<{
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.card}>
-        <FastImage
-          style={styles.icon}
-          source={{
-            uri: item.logoUrl,
-          }}
-        />
+        <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={46} />
         <View style={styles.content}>
           <View style={styles.row}>
             <Text style={styles.name}>{item.name} - USD</Text>

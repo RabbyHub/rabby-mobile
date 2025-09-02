@@ -1,3 +1,4 @@
+import { AssetAvatar } from '@/components';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
@@ -21,7 +22,7 @@ export const PerpsMarketItem: React.FC<{
         <View style={styles.number}>
           <Text style={styles.numberText}>{index}</Text>
         </View>
-        <FastImage source={{ uri: item.logoUrl }} style={styles.icon} />
+        <AssetAvatar logo={item.logoUrl} logoStyle={styles.icon} size={46} />
         <View style={styles.content}>
           <View style={styles.row}>
             <Text style={styles.name}>{item.name} - USD</Text>

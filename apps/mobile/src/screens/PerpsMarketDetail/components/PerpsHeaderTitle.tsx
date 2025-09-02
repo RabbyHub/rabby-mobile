@@ -3,17 +3,15 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import { useFallbackAccount } from '@/hooks/account';
+import { AssetAvatar } from '@/components';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
 import { useTranslation } from 'react-i18next';
-import FastImage from 'react-native-fast-image';
 
 export const PerpsHeaderTitle: React.FC<{ market?: MarketData }> = ({
   market,
 }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const account = useFallbackAccount();
 
   if (!market) {
     return null;
@@ -21,7 +19,7 @@ export const PerpsHeaderTitle: React.FC<{ market?: MarketData }> = ({
 
   return (
     <View style={styles.container}>
-      <FastImage style={styles.icon} source={{ uri: market.logoUrl }} />
+      <AssetAvatar logo={market.logoUrl} logoStyle={styles.icon} size={24} />
       <Text style={styles.text}>{market.name} - USD</Text>
     </View>
   );

@@ -1,4 +1,5 @@
 import { RcIconLong, RcIconShort } from '@/assets2024/icons/perps';
+import { AssetAvatar } from '@/components';
 import { MarketData, PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
@@ -45,7 +46,7 @@ export const PerpsPositionItem: React.FC<{
     <TouchableOpacity onPress={onPress}>
       <View style={styles.card}>
         <View style={styles.iconContainer}>
-          <FastImage source={{ uri: logoUrl }} style={styles.icon} />
+          <AssetAvatar logo={logoUrl} logoStyle={styles.icon} size={46} />
           {side === 'Long' ? (
             <RcIconLong
               style={styles.directionIcon}
