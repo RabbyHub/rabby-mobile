@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { PerpsAutoCloseModal } from './PerpsAutoCloseModal';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
+import { StepInput } from '@/components2024/StepInput';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -293,17 +294,13 @@ export const PerpsOpenPositionPopup: React.FC<{
                   </Text>
                 </View>
                 <View>
-                  <TextInput
-                    style={{
-                      width: 50,
-                      backgroundColor: 'red',
-                      textAlign: 'right',
-                    }}
-                    keyboardType="numeric"
-                    value={String(leverage)}
-                    onChangeText={v => {
-                      setLeverage(Number(v));
-                    }}
+                  <StepInput
+                    suffix="x"
+                    value={leverage}
+                    onChange={setLeverage}
+                    step={1}
+                    min={leverageRang[0]}
+                    max={leverageRang[1]}
                   />
                 </View>
               </View>
