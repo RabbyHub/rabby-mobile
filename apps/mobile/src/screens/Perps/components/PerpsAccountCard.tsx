@@ -1,24 +1,34 @@
 import { RcTradPerps } from '@/assets2024/icons/perps';
 import { Button } from '@/components2024/Button';
-import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import { AccountSummary } from '@/hooks/perps/usePerpsStore';
+import {
+  AccountSummary,
+  PositionAndOpenOrder,
+} from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { GasAccountWrapperBg } from '@/screens/GasAccount/components/WrapperBg';
+import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { usePerspPopupState } from '../hooks/usePerpsPopupState';
-import { formatUsdValue } from '@/utils/number';
-import BigNumber from 'bignumber.js';
 
 export const PerpsAccountCard: React.FC<{
   isLogin: boolean;
   accountSummary?: AccountSummary | null;
-}> = ({ isLogin, accountSummary }) => {
+  positionAndOpenOrders?: PositionAndOpenOrder[] | null;
+}> = ({ isLogin, accountSummary, positionAndOpenOrders }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [popupState, setPopupState] = usePerspPopupState();
+
+  const positionAllPnl = useMemo(() => {
+    return (
+      positionAndOpenOrders?.reduce((acc, asset) => {
+        return acc + Number(asset.position.unrealizedPnl || 0);
+      }, 0) || 0
+    );
+  }, [positionAndOpenOrders]);
 
   if (isLogin) {
     return (
@@ -27,6 +37,16 @@ export const PerpsAccountCard: React.FC<{
           <Text style={styles.balance}>
             {formatUsdValue(Number(accountSummary?.accountValue))}
           </Text>
+          {positionAndOpenOrders?.length ? (
+            <Text
+              style={[
+                styles.pnl,
+                positionAllPnl >= 0 ? styles.pnlGreen : styles.pnlRed,
+              ]}>
+              {positionAllPnl >= 0 ? '+' : '-'}$
+              {splitNumberByStep(Math.abs(positionAllPnl).toFixed(2))}
+            </Text>
+          ) : null}
           <Text style={styles.availableBalance}>
             {t('page.perps.PerpsCard.available')}:
             {formatUsdValue(Number(accountSummary?.withdrawable))}
@@ -175,8 +195,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 5,
-    marginBottom: 32,
+    minHeight: 93,
+    marginBottom: 20,
   },
   balance: {
     fontFamily: 'SF Pro Rounded',
@@ -185,12 +205,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '800',
     color: colors2024['neutral-title-1'],
   },
+  pnl: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    marginTop: 0,
+  },
+  pnlRed: {
+    color: colors2024['red-default'],
+  },
+  pnlGreen: {
+    color: colors2024['green-default'],
+  },
   availableBalance: {
     fontFamily: 'SF Pro Rounded',
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '400',
     color: colors2024['neutral-foot'],
+    marginTop: 5,
   },
   balanceCardBtns: {
     display: 'flex',

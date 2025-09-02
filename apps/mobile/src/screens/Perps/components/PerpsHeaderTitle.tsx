@@ -1,19 +1,26 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
 
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
-import { useFallbackAccount } from '@/hooks/account';
+import { apiContact } from '@/core/apis';
+import { Account } from '@/core/services/preference';
 import { ellipsisAddress } from '@/utils/address';
 import { useTranslation } from 'react-i18next';
-import { Account } from '@/core/services/preference';
 
 export const PerpsHeaderTitle: React.FC<{
   account?: Account | null;
 }> = ({ account }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
+
+  const alias = useMemo(() => {
+    if (!account?.address) {
+      return;
+    }
+    return apiContact.getAliasName(account?.address);
+  }, [account?.address]);
 
   return (
     <View style={styles.container}>
@@ -27,7 +34,7 @@ export const PerpsHeaderTitle: React.FC<{
             address={account.address}
           />
           <Text style={styles.address}>
-            {account.aliasName || ellipsisAddress(account?.address)}
+            {alias || ellipsisAddress(account?.address)}
           </Text>
         </View>
       ) : null}

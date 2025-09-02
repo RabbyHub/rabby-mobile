@@ -1,5 +1,4 @@
 import { Button } from '@/components2024/Button';
-import { PositionAndOpenOrder } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
@@ -30,7 +29,9 @@ export const PerpsFooter: React.FC<{
       <View style={styles.footer}>
         <Button
           type="primary"
-          title={`Close ${direction} Position`}
+          title={t('page.perpsDetail.action.closePosition', {
+            direction,
+          })}
           onPress={onClosePress}
         />
       </View>
@@ -41,16 +42,33 @@ export const PerpsFooter: React.FC<{
       <View style={styles.footer}>
         <View style={styles.btnGroup}>
           <View style={styles.btnContainer}>
-            <Button type="primary" title={'Long'} onPress={onLongPress} />
+            <Button
+              type="primary"
+              title={t('page.perpsDetail.action.long')}
+              onPress={onLongPress}
+            />
           </View>
           <View style={styles.btnContainer}>
-            <Button type="primary" title={'Short'} onPress={onShortPress} />
+            <Button
+              type="primary"
+              title={t('page.perpsDetail.action.short')}
+              onPress={onShortPress}
+            />
           </View>
         </View>
       </View>
     );
   }
-  return null;
+  return (
+    <View style={styles.footer}>
+      <Button
+        type="primary"
+        title={t('page.perpsDetail.action.noPermission')}
+        disabled
+        titleStyle={styles.noPermissonBtn}
+      />
+    </View>
+  );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -68,5 +86,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   btnContainer: {
     flex: 1,
+  },
+  noPermissonBtn: {
+    fontSize: 14,
+    lineHeight: 18,
   },
 }));

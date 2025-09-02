@@ -3,11 +3,13 @@ import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { useMemoizedFn } from 'ahooks';
 
 export const usePerpsPosition = () => {
-  const { refreshData, userFills, currentPerpsAccount, isLogin } =
-    usePerpsState();
-
-  // todo fix this
-  const hasPermission = true;
+  const {
+    refreshData,
+    userFills,
+    currentPerpsAccount,
+    isLogin,
+    hasPermission,
+  } = usePerpsState();
 
   const handleSetAutoClose = useMemoizedFn(
     async (params: {

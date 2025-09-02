@@ -8,7 +8,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -79,6 +79,12 @@ export const PerpsWithdrawPopup: React.FC<{
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (!visible) {
+      setAmount('');
+    }
+  }, [visible]);
+
   return (
     <>
       <AppBottomSheetModal
@@ -89,66 +95,70 @@ export const PerpsWithdrawPopup: React.FC<{
           linearGradientType: 'bg1',
         })}
         onDismiss={onClose}
-        // enableDynamicSizing
-        snapPoints={[376]}>
-        <AutoLockView style={[styles.container]}>
-          <View>
-            <Text style={styles.title}>
-              {t('page.perps.PerpsWithdrawPopup.title')}
-            </Text>
-          </View>
-          <View style={styles.formItem}>
-            <View style={styles.formItemLabelRow}>
-              <Text style={styles.formItemLabel}>
-                {t('page.perps.PerpsWithdrawPopup.amount')}
-              </Text>
-              <Text style={styles.formItemDesc}>
-                {formatUsdValue(accountSummary?.withdrawable || 0)}{' '}
-                {t('page.perps.PerpsWithdrawPopup.available')}
+        enableDynamicSizing
+        // snapPoints={[386]
+      >
+        <BottomSheetView>
+          <AutoLockView style={[styles.container]}>
+            <View>
+              <Text style={styles.title}>
+                {t('page.perps.PerpsWithdrawPopup.title')}
               </Text>
             </View>
-            <View style={styles.inputContainer}>
-              <BottomSheetTextInput
-                value={amount}
-                onChangeText={setAmount}
-                keyboardType="numeric"
-                style={[
-                  styles.input,
-                  !amountValidation.isValid ? styles.inputError : null,
-                ]}
-                placeholder="$0"
-              />
-            </View>
-            <View style={styles.errorContainer}>
-              {amountValidation.errorMessage ? (
-                <Text style={styles.errorMessage}>
-                  {amountValidation.errorMessage}
+            <View style={styles.formItem}>
+              <View style={styles.formItemLabelRow}>
+                <Text style={styles.formItemLabel}>
+                  {t('page.perps.PerpsWithdrawPopup.amount')}
                 </Text>
-              ) : null}
-            </View>
-
-            <TouchableOpacity
-              onPress={() => {
-                showTipsPopup({
-                  title: t('page.perps.PerpsWithdrawPopup.feeTooltipTitle'),
-                  desc: t('page.perps.PerpsWithdrawPopup.feeTooltipDesc'),
-                });
-              }}>
-              <View style={styles.feeContainer}>
-                <Text style={styles.fee}>
-                  {t('page.perps.PerpsWithdrawPopup.feeTip')}
+                <Text style={styles.formItemDesc}>
+                  {formatUsdValue(accountSummary?.withdrawable || 0)}{' '}
+                  {t('page.perps.PerpsWithdrawPopup.available')}
                 </Text>
-                <RcIconInfoFillCC color={'#CED0DA'} width={15} height={15} />
               </View>
-            </TouchableOpacity>
-          </View>
-          <Button
-            type="primary"
-            disabled={!amountValidation.isValid}
-            title={t('page.perps.PerpsWithdrawPopup.withdrawBtn')}
-            onPress={handleWithdraw}
-          />
-        </AutoLockView>
+              <View style={styles.inputContainer}>
+                <BottomSheetTextInput
+                  value={amount}
+                  onChangeText={setAmount}
+                  keyboardType="numeric"
+                  style={[
+                    styles.input,
+                    !amountValidation.isValid ? styles.inputError : null,
+                  ]}
+                  placeholder="$0"
+                />
+              </View>
+              <View style={styles.errorContainer}>
+                {amountValidation.errorMessage ? (
+                  <Text style={styles.errorMessage}>
+                    {amountValidation.errorMessage}
+                  </Text>
+                ) : null}
+              </View>
+
+              <TouchableOpacity
+                onPress={() => {
+                  showTipsPopup({
+                    title: t('page.perps.PerpsWithdrawPopup.feeTooltipTitle'),
+                    desc: t('page.perps.PerpsWithdrawPopup.feeTooltipDesc'),
+                  });
+                }}>
+                <View style={styles.feeContainer}>
+                  <Text style={styles.fee}>
+                    {t('page.perps.PerpsWithdrawPopup.feeTip')}
+                  </Text>
+                  <RcIconInfoFillCC color={'#CED0DA'} width={15} height={15} />
+                </View>
+              </TouchableOpacity>
+            </View>
+            <Button
+              type="primary"
+              disabled={!amountValidation.isValid}
+              title={t('page.perps.PerpsWithdrawPopup.withdrawBtn')}
+              loading={loading}
+              onPress={handleWithdraw}
+            />
+          </AutoLockView>
+        </BottomSheetView>
       </AppBottomSheetModal>
     </>
   );
@@ -157,7 +167,7 @@ export const PerpsWithdrawPopup: React.FC<{
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      height: '100%',
+      // height: '100%',
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       paddingBottom: 56,
       paddingHorizontal: 20,

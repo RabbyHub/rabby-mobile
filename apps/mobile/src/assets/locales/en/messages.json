@@ -2179,14 +2179,6 @@
         "perps": "Perps",
         "gotItBtn": "I Got it"
       },
-      "PerpsOpenPositionPopup": {
-        "invalidNumber": "Please input a valid number",
-        "insufficientBalance": "Insufficient balance",
-        "": {
-          "minimumOrderSize": "The minimum order size is $10"
-        },
-        "maximumOrderSize": "The maximum order size is {{amount}}"
-      },
       "PerpsAutoCloseModal": {
         "takeProfitTipsLong": "Take profit price must be higher than current price",
         "stopLossTipsLong": "Stop loss price must be lower than current price",
@@ -2233,7 +2225,7 @@
       "PerpsAccountLogoutPopup": {
         "title": "Log Out Current Address",
         "desc": "You are logging out of your current Perps account. You can restore it anytime by logging in with this address.",
-        "logout": "Log Out"
+        "logout": "Log out"
       },
       "PerpsDepositCard": {
         "availableToTrade": "Available to trade: ",
@@ -2277,6 +2269,43 @@
         "fee": "Fee:",
         "rabbyFeeTips": "Rabby fee: 0.05%",
         "providerFeeTips": "Provider fee: {{fee}}"
+      },
+      "PerpsOpenPositionPopup": {
+        "margin": "Margin",
+        "invalidNumber": "Please input a valid number",
+        "insufficientBalance": "Insufficient balance",
+        "maximumOrderSize": "The maximum order size is {{amount}}",
+        "minimumOrderSize": "The minimum order size is $10",
+        "available": "available",
+        "leverage": "Leverage",
+        "size": "Size",
+        "autoClose": "Auto Close",
+        "tpPrice": "Take-Profit Price",
+        "slPrice": "Stop-Loss Price"
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "title": "Check Order",
+        "perps": "Perps",
+        "initialMargin": " Initial Margin",
+        "direction": "Direction",
+        "size": "Size",
+        "autoClose": "Auto Close",
+        "price": "Price",
+        "estLqPrice": "Estimated Liquidation Price",
+        "slPrice": "Stop-Loss Price",
+        "tpPrice": "Take-Profit Price",
+        "fee": "Fee",
+        "btn": "Open {{direction}} Position",
+        "rabbyFeeTips": "Rabby fee: 0.05%",
+        "providerFeeTips": "Provider fee: {{fee}}",
+        "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
+      },
+      "action": {
+        "closePosition": "Close {{direction}} Position",
+        "long": "Long",
+        "short": "Short",
+        "noPermission": "Opening positions is not supported in your region"
       }
     }
   },
@@ -2572,7 +2601,8 @@
         "title": "Location Permission",
         "message": "This app needs access to your location to provide location-based features."
       }
-    }
+    },
+    "check": "Check"
   },
   "background": {
     "error": {

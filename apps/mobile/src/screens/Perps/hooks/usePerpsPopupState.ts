@@ -6,6 +6,7 @@ const visibleAtom = atom({
   isShowLogoutPopup: false,
   isShowDepositPopup: false,
   isShowWithdrawPopup: false,
+  isShowDeleteAgentPopup: false,
 });
 
 export const usePerspPopupState = () => {

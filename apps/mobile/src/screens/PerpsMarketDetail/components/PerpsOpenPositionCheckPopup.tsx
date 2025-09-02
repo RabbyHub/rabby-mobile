@@ -5,6 +5,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
+import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -50,6 +51,8 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     getStyle: getStyle,
   });
 
+  const { showTipsPopup } = useTipsPopup();
+
   const {
     coin: coin,
     margin,
@@ -93,13 +96,17 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
       <BottomSheetScrollView>
         <AutoLockView style={[styles.container]}>
           <View>
-            <Text style={styles.title}>Check Order</Text>
+            <Text style={styles.title}>
+              {t('page.perpsDetail.PerpsOpenPositionCheckPopup.title')}
+            </Text>
           </View>
 
           <View style={styles.list}>
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
-                <Text style={styles.label}>Perps</Text>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.perps')}
+                </Text>
               </View>
               <View>
                 <Text style={styles.value}>{coin} - USD</Text>
@@ -107,7 +114,11 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             </View>
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
-                <Text style={styles.label}>Initial Margin</Text>
+                <Text style={styles.label}>
+                  {t(
+                    'page.perpsDetail.PerpsOpenPositionCheckPopup.initialMargin',
+                  )}
+                </Text>
               </View>
               <View>
                 <Text style={styles.value}>
@@ -117,7 +128,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             </View>
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
-                <Text style={styles.label}>Direction</Text>
+                <Text style={styles.label}>
+                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.direction')}
+                </Text>
               </View>
               <View>
                 <Text style={styles.value}>
@@ -126,14 +139,28 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
             </View>
             <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>Size</Text>
-                <RcIconInfoFillCC
-                  width={15}
-                  height={15}
-                  color={colors2024['neutral-info']}
-                />
-              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  showTipsPopup({
+                    title: t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.size',
+                    ),
+                    desc: t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.sizeTips',
+                    ),
+                  });
+                }}>
+                <View style={styles.listItemMain}>
+                  <Text style={styles.label}>
+                    {t('page.perpsDetail.PerpsOpenPositionCheckPopup.size')}
+                  </Text>
+                  <RcIconInfoFillCC
+                    width={15}
+                    height={15}
+                    color={colors2024['neutral-info']}
+                  />
+                </View>
+              </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
                   {formatUsdValue(Number(tradeAmount))} = {tradeSize} {coin}
@@ -144,13 +171,19 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               <View style={styles.listItemContainer}>
                 <View style={styles.listItemRow}>
                   <View style={styles.listItemMain}>
-                    <Text style={styles.label}>Auto Close</Text>
+                    <Text style={styles.label}>
+                      {t(
+                        'page.perpsDetail.PerpsOpenPositionCheckPopup.autoClose',
+                      )}
+                    </Text>
                   </View>
                 </View>
                 <View style={styles.listSub}>
                   <View style={styles.listSubItem}>
                     <Text style={styles.listSubItemLabel}>
-                      Take-Profit Price
+                      {t(
+                        'page.perpsDetail.PerpsOpenPositionCheckPopup.tpPrice',
+                      )}
                     </Text>
                     <Text style={styles.value}>
                       ${splitNumberByStep(autoClose.tpTriggerPx || 0)}
@@ -162,7 +195,11 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                     /> */}
                   </View>
                   <View style={styles.listSubItem}>
-                    <Text style={styles.listSubItemLabel}>Stop-Loss Price</Text>
+                    <Text style={styles.listSubItemLabel}>
+                      {t(
+                        'page.perpsDetail.PerpsOpenPositionCheckPopup.slPrice',
+                      )}
+                    </Text>
                     <Text style={styles.value}>
                       ${splitNumberByStep(autoClose.slTriggerPx || 0)}
                     </Text>
@@ -179,7 +216,10 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
           <View style={styles.list}>
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
-                <Text style={styles.label}>{coin}-USD Price</Text>
+                <Text style={styles.label}>
+                  {coin}-USD
+                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.price')}
+                </Text>
               </View>
               <View>
                 <Text style={styles.value}>
@@ -188,14 +228,30 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
             </View>
             <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>Estimated Liquidation Price</Text>
-                <RcIconInfoFillCC
-                  width={15}
-                  height={15}
-                  color={colors2024['neutral-info']}
-                />
-              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  showTipsPopup({
+                    title: t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.estLqPrice',
+                    ),
+                    desc: t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.liquidationPriceTips',
+                    ),
+                  });
+                }}>
+                <View style={styles.listItemMain}>
+                  <Text style={styles.label}>
+                    {t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.estLqPrice',
+                    )}
+                  </Text>
+                  <RcIconInfoFillCC
+                    width={15}
+                    height={15}
+                    color={colors2024['neutral-info']}
+                  />
+                </View>
+              </TouchableOpacity>
               <View>
                 <Text style={styles.value}>
                   $
@@ -206,14 +262,33 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
               </View>
             </View>
             <View style={styles.listItem}>
-              <View style={styles.listItemMain}>
-                <Text style={styles.label}>Fee</Text>
-                <RcIconInfoFillCC
-                  width={15}
-                  height={15}
-                  color={colors2024['neutral-info']}
-                />
-              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  showTipsPopup({
+                    title: t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.fee',
+                    ),
+                    desc: `${t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.rabbyFeeTips',
+                    )} \n ${t(
+                      'page.perpsDetail.PerpsOpenPositionCheckPopup.providerFeeTips',
+                      {
+                        fee: formatPercent(providerFee, 4),
+                      },
+                    )}`,
+                  });
+                }}>
+                <View style={styles.listItemMain}>
+                  <Text style={styles.label}>
+                    {t('page.perpsDetail.PerpsOpenPositionCheckPopup.fee')}
+                  </Text>
+                  <RcIconInfoFillCC
+                    width={15}
+                    height={15}
+                    color={colors2024['neutral-info']}
+                  />
+                </View>
+              </TouchableOpacity>
               <View>
                 <Text style={styles.value}>{formatPercent(bothFee, 4)}</Text>
               </View>
@@ -221,7 +296,9 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
           </View>
           <Button
             type="primary"
-            title={'Open Long Position'}
+            title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.btn', {
+              direction,
+            })}
             onPress={onConfirm}
           />
         </AutoLockView>

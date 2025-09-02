@@ -1,38 +1,34 @@
-/* eslint-disable react-native/no-inline-styles */
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
-import { PerpsIntro } from './components/PerpsIntro';
-import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
-import { PerpsPosition } from './components/PerpsPosition';
-import { PerpsInfo } from './components/PerpsInfo';
-import { PerpsFooter } from './components/PerpsFooter';
-import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
-import { PerpsOpenPositionCheckPopup } from './components/PerpsOpenPositionCheckPopup';
-import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup ';
-import { PerpsAutoCloseModal } from './components/PerpsAutoCloseModal';
-import { useRoute } from '@react-navigation/native';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { usePerpsState } from '@/hooks/perps/usePerpsState';
-import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
-import { PerpsChart } from './components/PerpsChart';
-import { useMemoizedFn } from 'ahooks';
 import { apisPerps } from '@/core/apis';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { useTheme2024 } from '@/hooks/theme';
+import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { createGetStyles2024 } from '@/utils/styles';
 import {
   CancelOrderParams,
   WsActiveAssetCtx,
 } from '@rabby-wallet/hyperliquid-sdk';
-import { usePerpsPosition } from './hooks/usePerpsPosition';
+import { useRoute } from '@react-navigation/native';
+import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
-import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
-import { PerpsDepositCard } from './components/PerpsDepositCard';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
+import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
 import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
+import { PerpsAutoCloseModal } from './components/PerpsAutoCloseModal';
+import { PerpsChart } from './components/PerpsChart';
+import { PerpsClosePositionPopup } from './components/PerpsClosePositionPopup ';
+import { PerpsDepositCard } from './components/PerpsDepositCard';
+import { PerpsFooter } from './components/PerpsFooter';
+import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
+import { PerpsInfo } from './components/PerpsInfo';
+import { PerpsIntro } from './components/PerpsIntro';
+import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
+import { PerpsPosition } from './components/PerpsPosition';
+import { usePerpsPosition } from './hooks/usePerpsPosition';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();

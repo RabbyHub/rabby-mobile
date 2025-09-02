@@ -14,6 +14,8 @@ import { ApproveSignatures } from '@/core/services/perpsService';
 import { DEFAULT_TOP_ASSET } from '@/constant/perps';
 import { apisPerps } from '@/core/apis';
 import { formatMarkData } from '@/utils/perps';
+import { eventBus, EVENTS } from '@/utils/events';
+import { openapi } from '@/core/request';
 
 // 保持原有的接口定义
 export interface PositionAndOpenOrder extends AssetPosition {
@@ -60,6 +62,7 @@ export interface PerpsState {
   currentPerpsAccount: Account | null;
   marketData: MarketData[];
   marketDataMap: MarketDataMap;
+  hasPermission: boolean;
   perpFee: number;
   isLogin: boolean;
   isInitialized: boolean;
@@ -86,16 +89,17 @@ const buildMarketDataMap = (list: MarketData[]): MarketDataMap => {
 const initialState: PerpsState = {
   positionAndOpenOrders: [],
   accountSummary: null,
+  hasPermission: true,
+  perpFee: 0.00045,
   currentPerpsAccount: null,
   marketData: [],
-  marketDataMap: {},
-  perpFee: 0.00045,
-  isLogin: false,
-  isInitialized: false,
-  approveSignatures: [],
-  userFills: [],
   userAccountHistory: [],
   localLoadingHistory: [],
+  marketDataMap: {},
+  isLogin: false,
+  isInitialized: false,
+  userFills: [],
+  approveSignatures: [],
   wsSubscriptions: [],
   pollingTimer: null,
   homePositionPnl: {
@@ -107,11 +111,14 @@ const initialState: PerpsState = {
 
 const perpsAtom = atom(initialState);
 
+const wsSubscriptionsAtom = atom<(() => void)[]>([]);
+const pollingTimerAtom = atom<NodeJS.Timeout | null>(null);
+
 export const usePerpsStore = () => {
   const [state, setState] = useAtom(perpsAtom);
 
-  const wsSubscriptions = useRef<(() => void)[]>([]);
-  const pollingTimer = useRef<NodeJS.Timeout | null>(null);
+  const [wsSubscriptions, setWsSubscriptions] = useAtom(wsSubscriptionsAtom);
+  const [pollingTimer, setPollingTimer] = useAtom(pollingTimerAtom);
 
   const setFillsOrderTpOrSl = useMemoizedFn(
     (payload: Record<string, 'tp' | 'sl'>) => {
@@ -125,7 +132,7 @@ export const usePerpsStore = () => {
     },
   );
 
-  const setHasPermission = useMemoizedFn((state, payload: boolean) => {
+  const setHasPermission = useMemoizedFn((payload: boolean) => {
     setState(prev => ({ ...prev, hasPermission: payload }));
   });
 
@@ -181,6 +188,12 @@ export const usePerpsStore = () => {
             withdrawable: payload.withdrawable,
           },
           positionAndOpenOrders,
+          homePositionPnl: {
+            pnl: payload.assetPositions.reduce((acc, asset) => {
+              return acc + Number(asset.position.unrealizedPnl);
+            }, 0),
+            show: payload.assetPositions.length > 0,
+          },
         };
       });
     },
@@ -188,6 +201,9 @@ export const usePerpsStore = () => {
 
   const updateUserAccountHistory = useMemoizedFn(
     (payload: { newHistoryList: AccountHistoryItem[] }) => {
+      if (payload.newHistoryList.length === 0) {
+        return state;
+      }
       const { newHistoryList } = payload;
       setState(prev => {
         const filteredLocalHistory = prev.localLoadingHistory.filter(
@@ -217,9 +233,33 @@ export const usePerpsStore = () => {
 
   const setPositionAndOpenOrders = useMemoizedFn(
     (payload: PositionAndOpenOrder[] | []) => {
-      setState(prev => ({ ...prev, positionAndOpenOrders: payload }));
+      setState(prev => ({
+        ...prev,
+        positionAndOpenOrders: payload,
+        homePositionPnl: {
+          pnl: payload.reduce((acc, order) => {
+            return acc + Number(order.position.unrealizedPnl);
+          }, 0),
+          show: payload.length > 0,
+        },
+      }));
     },
   );
+
+  const updateOpenOrders = useMemoizedFn((payload: OpenOrder[]) => {
+    setState(prev => {
+      const positionAndOpenOrders = prev.positionAndOpenOrders.map(order => {
+        return {
+          ...order,
+          openOrders: payload.filter(item => item.coin === order.position.coin),
+        };
+      });
+      return {
+        ...state,
+        positionAndOpenOrders,
+      };
+    });
+  });
 
   const setAccountSummary = useMemoizedFn((payload: AccountSummary | null) => {
     setState(prev => ({ ...prev, accountSummary: payload }));
@@ -242,27 +282,23 @@ export const usePerpsStore = () => {
   });
 
   const resetState = useMemoizedFn(() => {
-    setState({
+    setState(prev => ({
+      ...prev,
       positionAndOpenOrders: [],
-      accountSummary: null,
       currentPerpsAccount: null,
-      marketData: [],
-      marketDataMap: {},
-      perpFee: 0.00045,
       isLogin: false,
-      isInitialized: false,
-      approveSignatures: [],
-      userFills: [],
       userAccountHistory: [],
       localLoadingHistory: [],
-      wsSubscriptions: [],
-      pollingTimer: null,
+      userFills: [],
+      perpFee: 0.00045,
+      approveSignatures: [],
+      fillsOrderTpOrSl: {},
+      hasPermission: true,
       homePositionPnl: {
         pnl: 0,
         show: false,
       },
-      fillsOrderTpOrSl: {},
-    });
+    }));
   });
 
   // Effects 转换为异步函数
@@ -306,12 +342,23 @@ export const usePerpsStore = () => {
     }
   });
 
+  const fetchPerpPermission = useMemoizedFn(async (address: string) => {
+    const { has_permission } = await openapi.getPerpPermission({ id: address });
+
+    console.log({
+      has_permission,
+    });
+    setHasPermission(has_permission);
+  });
+
   const loginPerpsAccount = useMemoizedFn(async (account: Account) => {
     apisPerps.setPerpsCurrentAccount(account);
     setCurrentPerpsAccount(account);
     await refreshData();
     subscribeToUserData(account.address);
     startPolling();
+    fetchPerpPermission(account.address);
+    fetchPerpFee();
     console.log('loginPerpsAccount success', account.address);
   });
 
@@ -404,8 +451,25 @@ export const usePerpsStore = () => {
   const fetchMarketData = useMemoizedFn(async () => {
     const sdk = apisPerps.getPerpsSDK();
     try {
-      const marketData = await sdk.info.metaAndAssetCtxs(true);
-      setMarketData(formatMarkData(marketData, DEFAULT_TOP_ASSET));
+      const fetchTopTokenList = async () => {
+        try {
+          const topAssets = await openapi.getPerpTopTokenList();
+          if (topAssets.length > 0) {
+            return topAssets;
+          } else {
+            return DEFAULT_TOP_ASSET;
+          }
+        } catch (error) {
+          console.error('Failed to fetch top assets:', error);
+          return DEFAULT_TOP_ASSET;
+        }
+      };
+
+      const [topAssets, marketData] = await Promise.all([
+        fetchTopTokenList(),
+        sdk.info.metaAndAssetCtxs(true),
+      ]);
+      setMarketData(formatMarkData(marketData, topAssets));
     } catch (error) {
       console.error('Failed to fetch market data:', error);
     }
@@ -445,36 +509,44 @@ export const usePerpsStore = () => {
       },
     );
 
-    wsSubscriptions.current.push(unsubscribeFills);
+    setWsSubscriptions(prev => {
+      return [...prev, unsubscribeFills];
+    });
   });
 
   const startPolling = useMemoizedFn(() => {
     stopPolling();
-    pollingTimer.current = setInterval(() => {
-      fetchClearinghouseState();
-    }, 5000);
+    setPollingTimer(
+      setInterval(() => {
+        fetchClearinghouseState();
+      }, 30 * 1000),
+    );
     console.log('开始轮询ClearingHouseState, 间隔5秒');
   });
 
   const stopPolling = useMemoizedFn(() => {
-    if (pollingTimer.current) {
-      clearInterval(pollingTimer.current);
-      pollingTimer.current = null;
+    if (pollingTimer) {
+      clearInterval(pollingTimer);
+      setPollingTimer(null);
       console.log('停止轮询ClearingHouseState');
     }
   });
 
   const unsubscribeAll = useMemoizedFn(() => {
-    wsSubscriptions.current.forEach(unsubscribe => {
+    wsSubscriptions.forEach(unsubscribe => {
       unsubscribe();
     });
-    wsSubscriptions.current = [];
+    setWsSubscriptions([]);
   });
 
   const logout = useMemoizedFn(() => {
     stopPolling();
     unsubscribeAll();
     resetState();
+  });
+
+  const initEventBus = useMemoizedFn(() => {
+    eventBus.on(EVENTS.PERPS.LOG_OUT, logout);
   });
 
   return {
@@ -495,6 +567,7 @@ export const usePerpsStore = () => {
     setPerpFee,
     setMarketData,
     setPositionAndOpenOrders,
+    updateOpenOrders,
     setAccountSummary,
     setCurrentPerpsAccount,
     setInitialized,
@@ -504,6 +577,7 @@ export const usePerpsStore = () => {
     // Effects
     saveApproveSignatures,
     fetchPositionAndOpenOrders,
+    fetchPerpPermission,
     loginPerpsAccount,
     fetchClearinghouseState,
     fetchUserNonFundingLedgerUpdates,
@@ -515,5 +589,6 @@ export const usePerpsStore = () => {
     stopPolling,
     unsubscribeAll,
     logout,
+    initEventBus,
   };
 };

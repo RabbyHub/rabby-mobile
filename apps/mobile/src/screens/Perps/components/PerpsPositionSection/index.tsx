@@ -36,9 +36,10 @@ export const PerpsPositionSection: React.FC<{
         <Text style={styles.sectionTitle}>{t('page.perps.positions')}</Text>
       </View>
       <View style={styles.content}>
-        {list.map(item => {
+        {list.map((item, index) => {
           return (
             <PerpsPositionItem
+              key={index}
               item={item.position}
               marketData={marketDataMap[item.position.coin]}
               onPress={() => {

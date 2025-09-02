@@ -1,4 +1,3 @@
-import { RcArrowRight2CC, RcIconInfoFillCC } from '@/assets/icons/common';
 import { AppSwitch } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -8,22 +7,13 @@ import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { calLiquidationPrice } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
+import { Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { PerpsAutoCloseModal } from './PerpsAutoCloseModal';
+import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -142,7 +132,9 @@ export const PerpsOpenPositionPopup: React.FC<{
       return {
         isValid: false,
         error: 'invalid_number',
-        errorMessage: t('page.perps.PerpsOpenPositionPopup.invalidNumber'),
+        errorMessage: t(
+          'page.perpsDetail.PerpsOpenPositionPopup.invalidNumber',
+        ),
       };
     }
 
@@ -151,7 +143,7 @@ export const PerpsOpenPositionPopup: React.FC<{
         isValid: false,
         error: 'insufficient_balance',
         errorMessage: t(
-          'page.perps.PerpsOpenPositionPopup.insufficientBalance',
+          'page.perpsDetail.PerpsOpenPositionPopup.insufficientBalance',
         ),
       };
     }
@@ -161,7 +153,9 @@ export const PerpsOpenPositionPopup: React.FC<{
       return {
         isValid: false,
         error: 'minimum_limit',
-        errorMessage: t('page.perps.PerpsOpenPositionPopup..minimumOrderSize'),
+        errorMessage: t(
+          'page.perpsDetail.PerpsOpenPositionPopup.minimumOrderSize',
+        ),
       };
     }
 
@@ -169,9 +163,12 @@ export const PerpsOpenPositionPopup: React.FC<{
       return {
         isValid: false,
         error: 'maximum_limit',
-        errorMessage: t('page.perps.PerpsOpenPositionPopup.maximumOrderSize', {
-          amount: `$${maxNtlValue}`,
-        }),
+        errorMessage: t(
+          'page.perpsDetail.PerpsOpenPositionPopup.maximumOrderSize',
+          {
+            amount: `$${maxNtlValue}`,
+          },
+        ),
       };
     }
 
@@ -259,7 +256,9 @@ export const PerpsOpenPositionPopup: React.FC<{
               </Text>
             </View>
             <View style={styles.formItem}>
-              <Text style={styles.formItemLabel}>Margin</Text>
+              <Text style={styles.formItemLabel}>
+                {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
+              </Text>
 
               <TextInput
                 keyboardType="numeric"
@@ -273,7 +272,7 @@ export const PerpsOpenPositionPopup: React.FC<{
               />
               <Text style={styles.formItemDesc}>
                 {formatUsdValue(availableBalance)}{' '}
-                {t('page.perps.PerpsWithdrawPopup.available')}
+                {t('page.perpsDetail.PerpsOpenPositionPopup.available')}
               </Text>
               <View style={styles.errorMsgContainer}>
                 {marginValidation.error ? (
@@ -287,7 +286,7 @@ export const PerpsOpenPositionPopup: React.FC<{
               <View style={styles.listItem}>
                 <View style={styles.listItemMain}>
                   <Text style={styles.label}>
-                    Leverage
+                    {t('page.perpsDetail.PerpsOpenPositionPopup.leverage')}
                     <Text style={styles.labelInfo}>
                       （{leverageRang[0]}-{leverageRang[1]}x）
                     </Text>
@@ -310,7 +309,9 @@ export const PerpsOpenPositionPopup: React.FC<{
               </View>
               <View style={styles.listItem}>
                 <View style={styles.listItemMain}>
-                  <Text style={styles.label}>Size</Text>
+                  <Text style={styles.label}>
+                    {t('page.perpsDetail.PerpsOpenPositionPopup.size')}
+                  </Text>
                   {/* <RcIconInfoFillCC
                     width={15}
                     height={15}
@@ -326,7 +327,9 @@ export const PerpsOpenPositionPopup: React.FC<{
               <View style={styles.listItemContainer}>
                 <View style={styles.listItemRow}>
                   <View style={styles.listItemMain}>
-                    <Text style={styles.label}>Auto Close</Text>
+                    <Text style={styles.label}>
+                      {t('page.perpsDetail.PerpsOpenPositionPopup.autoClose')}
+                    </Text>
                   </View>
                   <View>
                     <AppSwitch
@@ -341,7 +344,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                   <View style={styles.listSub}>
                     <View style={styles.listSubItem}>
                       <Text style={styles.listSubItemLabel}>
-                        Take-Profit Price
+                        {t('page.perpsDetail.PerpsOpenPositionPopup.tpPrice')}
                       </Text>
                       <Text style={styles.value}>
                         ${splitNumberByStep(autoClose.tpTriggerPx || 0)}
@@ -354,7 +357,7 @@ export const PerpsOpenPositionPopup: React.FC<{
                     </View>
                     <View style={styles.listSubItem}>
                       <Text style={styles.listSubItemLabel}>
-                        Stop-Loss Price
+                        {t('page.perpsDetail.PerpsOpenPositionPopup.slPrice')}
                       </Text>
                       <Text style={styles.value}>
                         ${splitNumberByStep(autoClose.slTriggerPx || 0)}
@@ -371,7 +374,7 @@ export const PerpsOpenPositionPopup: React.FC<{
             </View>
             <Button
               type="primary"
-              title={'Check'}
+              title={t('global.check')}
               disabled={!marginValidation.isValid}
               onPress={() => {
                 setIsReviewMode(true);

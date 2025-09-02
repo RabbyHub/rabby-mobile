@@ -9,7 +9,10 @@ import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
-import { isAccountSupportDirectSign } from '@/utils/account';
+import {
+  isAccountSupportDirectSign,
+  isHardWareAccountAccountSupportMiniApproval,
+} from '@/utils/account';
 import { sleep } from '@/utils/async';
 import { findChain } from '@/utils/chain';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
@@ -135,8 +138,20 @@ export const usePerpsDeposit = ({
     }
     const currentTxs = [buildTx(amount) as Tx];
 
+    const handleSetHistory = (hash: string) => {
+      setLocalLoadingHistory([
+        {
+          time: Date.now(),
+          hash,
+          type: 'deposit',
+          status: 'pending',
+          usdValue: amount.toString(),
+        },
+      ]);
+    };
+
     const handleFullback = async () => {
-      await sendRequest({
+      const res = await sendRequest({
         data: {
           method: 'eth_sendTransaction',
           params: currentTxs,
@@ -151,6 +166,8 @@ export const usePerpsDeposit = ({
         session: INTERNAL_REQUEST_SESSION,
         account: currentPerpsAccount,
       });
+
+      handleSetHistory(res);
     };
 
     if (isAccountSupportDirectSign(currentPerpsAccount.type)) {
@@ -171,16 +188,31 @@ export const usePerpsDeposit = ({
         });
         setDirectSigning(true);
         await sleep(500);
-        await sendPrepareMiniTransactions({
+        const res = await sendPrepareMiniTransactions({
           directSubmit: true,
         });
+        handleSetHistory(res[0].txHash);
       } catch (e) {
         setDirectSigning(false);
         console.error(e);
         // handleFullback();
       }
+    } else if (
+      isHardWareAccountAccountSupportMiniApproval(currentPerpsAccount.type)
+    ) {
+      const res = await sendMiniTransactions({
+        txs: currentTxs || [],
+        ga: {
+          category: 'Perps',
+          source: 'Perps',
+          trigger: 'Perps',
+        },
+        directSubmit: false,
+        account: currentPerpsAccount!,
+      });
+      handleSetHistory(res[0].txHash);
     } else {
-      handleFullback();
+      await handleFullback();
     }
 
     // console.log('fallback res tx', tx);

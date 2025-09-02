@@ -46,6 +46,7 @@ export const PerpsScreen = () => {
     login,
     handleWithdraw,
     homeHistoryList,
+    handleDeleteAgent,
   } = usePerpsState();
 
   const [popupState, setPopupState] = usePerspPopupState();
@@ -119,6 +120,7 @@ export const PerpsScreen = () => {
                 <PerpsAccountCard
                   isLogin={isLogin}
                   accountSummary={accountSummary}
+                  positionAndOpenOrders={positionAndOpenOrders}
                 />
                 <PerpsPositionSection
                   positionAndOpenOrders={positionAndOpenOrders}
@@ -157,7 +159,22 @@ export const PerpsScreen = () => {
         onLogout={handleLogout}
         account={currentPerpsAccount}
       />
-      <PerpsAgentsLimitModal visible={false} />
+      <PerpsAgentsLimitModal
+        visible={popupState.isShowDeleteAgentPopup}
+        onCancel={() => {
+          setPopupState(prev => ({
+            ...prev,
+            isShowDeleteAgentPopup: false,
+          }));
+        }}
+        onConfirm={() => {
+          handleDeleteAgent();
+          setPopupState(prev => ({
+            ...prev,
+            isShowDeleteAgentPopup: false,
+          }));
+        }}
+      />
       <PerpsGuidePopup
         visible={popupState.isShowGuidePopup}
         onClose={async () => {
