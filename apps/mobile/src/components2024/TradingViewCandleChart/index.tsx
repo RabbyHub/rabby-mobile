@@ -21,10 +21,10 @@ interface ChartProps {
   style?: StyleProp<ViewStyle>;
 }
 interface TPSLPriceLines {
-  tpPrice: number;
-  slPrice: number;
-  liquidationPrice: number;
-  entryPrice: number;
+  tpPrice?: number;
+  slPrice?: number;
+  liquidationPrice?: number;
+  entryPrice?: number;
 }
 
 export interface TradingViewChartRef {
