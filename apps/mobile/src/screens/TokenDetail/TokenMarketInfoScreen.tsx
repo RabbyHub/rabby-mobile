@@ -723,7 +723,12 @@ export const TokenMarketInfoScreen = () => {
                   <TradingViewCandleChart
                     ref={chartWebViewRef}
                     height={300}
-                    style={styles.klineContainer}
+                    style={[
+                      styles.klineContainer,
+                      {
+                        opacity: loading ? 0.01 : 1,
+                      },
+                    ]}
                     onChartReady={() => {
                       setLoading(false);
                       fetchTokenPriceData(
