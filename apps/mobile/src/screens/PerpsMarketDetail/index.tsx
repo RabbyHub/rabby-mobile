@@ -29,6 +29,8 @@ import { PerpsIntro } from './components/PerpsIntro';
 import { PerpsOpenPositionPopup } from './components/PerpsOpenPositionPopup';
 import { PerpsPosition } from './components/PerpsPosition';
 import { usePerpsPosition } from './hooks/usePerpsPosition';
+import { toast } from '@/components2024/Toast';
+import * as Sentry from '@sentry/react-native';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -52,39 +54,22 @@ export const PerpsMarketDetailScreen = () => {
   const { positionAndOpenOrders, accountSummary, marketDataMap, perpFee } =
     state;
 
-  const {
-    refreshData,
-    handleOpenPosition,
-    handleClosePosition,
-    handleSetAutoClose,
-    currentPerpsAccount,
-    isLogin,
-    userFills,
-    hasPermission,
-  } = usePerpsPosition();
-
-  const {
-    miniSignTx,
-    clearMiniSignTx,
-    updateMiniSignTx,
-    handleDeposit,
-    handleSignDepositDirect,
-  } = usePerpsDeposit({
-    currentPerpsAccount,
-  });
+  // const {
+  //   refreshData,
+  //   handleOpenPosition,
+  //   handleClosePosition,
+  //   handleSetAutoClose,
+  //   currentPerpsAccount,
+  //   isLogin,
+  //   userFills,
+  //   hasPermission,
+  // } = usePerpsPosition();
 
   const [amountVisible, setAmountVisible] = useState(false);
 
   const market = useMemo(() => {
     return marketDataMap[marketName.toUpperCase()];
   }, [marketDataMap, marketName]);
-
-  const singleCoinHistoryList = useMemo(() => {
-    return sortBy(
-      userFills.filter(fill => fill.coin.toLowerCase() === coin?.toLowerCase()),
-      item => -item.time,
-    );
-  }, [userFills, coin]);
 
   const [activeAssetCtx, setActiveAssetCtx] = React.useState<
     WsActiveAssetCtx['ctx'] | null
@@ -147,6 +132,58 @@ export const PerpsMarketDetailScreen = () => {
       slOid: slItem?.oid,
     };
   }, [currentPosition]);
+
+  const [currentTpOrSl, setCurrentTpOrSl] = useState<{
+    tpPrice?: string;
+    slPrice?: string;
+  }>({
+    tpPrice: tpPrice,
+    slPrice: slPrice,
+  });
+
+  const {
+    fetchPositionOpenOrders,
+    handleOpenPosition,
+    handleClosePosition,
+    handleSetAutoClose,
+    currentPerpsAccount,
+    isLogin,
+    userFills,
+    hasPermission,
+  } = usePerpsPosition({
+    setCurrentTpOrSl,
+  });
+
+  const {
+    miniSignTx,
+    clearMiniSignTx,
+    updateMiniSignTx,
+    handleDeposit,
+    handleSignDepositDirect,
+  } = usePerpsDeposit({
+    currentPerpsAccount,
+  });
+
+  const lineTagInfo = useMemo(() => {
+    return {
+      tpPrice: Number(currentTpOrSl.tpPrice || 0),
+      slPrice: Number(currentTpOrSl.slPrice || 0),
+      liquidationPrice: Number(currentPosition?.position.liquidationPx || 0),
+      entryPrice: Number(currentPosition?.position.entryPx || 0),
+    };
+  }, [
+    currentPosition?.position.entryPx,
+    currentPosition?.position.liquidationPx,
+    currentTpOrSl.slPrice,
+    currentTpOrSl.tpPrice,
+  ]);
+
+  const singleCoinHistoryList = useMemo(() => {
+    return sortBy(
+      userFills.filter(fill => fill.coin.toLowerCase() === coin?.toLowerCase()),
+      item => -item.time,
+    );
+  }, [userFills, coin]);
 
   const hasPosition = useMemo(() => {
     return !!currentPosition;
@@ -229,9 +266,32 @@ export const PerpsMarketDetailScreen = () => {
           coin: marketName,
         });
       }
-      await sdk.exchange?.cancelOrder(cancelOrders);
-      // message.success('Auto close position canceled successfully');
-      refreshData();
+      const res = await sdk.exchange?.cancelOrder(cancelOrders);
+      if (
+        res?.response.data.statuses.every(
+          item => (item as unknown as string) === 'success',
+        )
+      ) {
+        toast.success('Auto close position canceled successfully');
+        setCurrentTpOrSl({
+          tpPrice: undefined,
+          slPrice: undefined,
+        });
+        setTimeout(() => {
+          fetchPositionOpenOrders();
+        }, 1000);
+      } else {
+        toast.error('Auto close position cancel error');
+        Sentry.captureException(
+          new Error(
+            'Auto close position cancel error' +
+              'cancelOrders: ' +
+              JSON.stringify(cancelOrders) +
+              'res: ' +
+              JSON.stringify(res),
+          ),
+        );
+      }
     }
   });
 
@@ -258,6 +318,7 @@ export const PerpsMarketDetailScreen = () => {
                     markPrice={markPrice}
                     activeAssetCtx={activeAssetCtx}
                     currentAssetCtx={currentAssetCtx}
+                    lineTagInfo={lineTagInfo}
                   />
                   {isLogin ? (
                     <PerpsDepositCard

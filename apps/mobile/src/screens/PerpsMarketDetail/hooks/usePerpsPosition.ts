@@ -1,8 +1,15 @@
+import { toast } from '@/components2024/Toast';
 import { apisPerps } from '@/core/apis';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
+import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useMemoizedFn } from 'ahooks';
 
-export const usePerpsPosition = () => {
+export const usePerpsPosition = ({
+  setCurrentTpOrSl,
+}: {
+  setCurrentTpOrSl: (params: { tpPrice?: string; slPrice?: string }) => void;
+}) => {
+  const { fetchPositionOpenOrders } = usePerpsStore();
   const {
     refreshData,
     userFills,
@@ -28,7 +35,17 @@ export const usePerpsPosition = () => {
         slTriggerPx,
       });
 
-      refreshData();
+      setCurrentTpOrSl({
+        tpPrice: tpTriggerPx,
+        slPrice: slTriggerPx,
+      });
+
+      setTimeout(() => {
+        fetchPositionOpenOrders();
+      }, 1000);
+      toast.success('Auto close position set successfully');
+
+      // refreshData();
       // message.success('Auto close position set successfully');
     },
   );
@@ -138,6 +155,7 @@ export const usePerpsPosition = () => {
     handleClosePosition,
     handleSetAutoClose,
     refreshData,
+    fetchPositionOpenOrders,
     userFills,
     isLogin,
     currentPerpsAccount,

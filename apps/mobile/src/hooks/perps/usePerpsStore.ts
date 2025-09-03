@@ -372,6 +372,12 @@ export const usePerpsStore = () => {
     }
   });
 
+  const fetchPositionOpenOrders = useMemoizedFn(async () => {
+    const sdk = apisPerps.getPerpsSDK();
+    const openOrders = await sdk.info.getFrontendOpenOrders();
+    updateOpenOrders(openOrders);
+  });
+
   const fetchUserNonFundingLedgerUpdates = useMemoizedFn(async () => {
     const sdk = apisPerps.getPerpsSDK();
     try {
@@ -580,6 +586,7 @@ export const usePerpsStore = () => {
     fetchPerpPermission,
     loginPerpsAccount,
     fetchClearinghouseState,
+    fetchPositionOpenOrders,
     fetchUserNonFundingLedgerUpdates,
     refreshData,
     fetchMarketData,

@@ -16,7 +16,7 @@ import {
 } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import {
@@ -113,6 +113,7 @@ export const PerpsChart: React.FC<{
   const { t } = useTranslation();
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
   const chartIsReadyRef = useRef(false);
+  const [isReady, setIsReady] = useState(false);
   const [selectedInterval, setSelectedInterval] =
     React.useState<CANDLE_MENU_KEY>(CANDLE_MENU_KEY.ONE_DAY);
 
@@ -225,7 +226,7 @@ export const PerpsChart: React.FC<{
       refreshDeps: [market.name, selectedInterval],
       onSuccess(data) {
         if (chartIsReadyRef.current) {
-          console.log('setData');
+          setIsReady(true);
           chartWebViewRef.current?.setData(data);
         }
       },
@@ -275,6 +276,12 @@ export const PerpsChart: React.FC<{
       unsubscribe?.();
     };
   }, [subscribeCandle, selectedInterval, market.name]);
+
+  useEffect(() => {
+    if (isReady && lineTagInfo) {
+      chartWebViewRef.current?.updateTPSLPriceLines(lineTagInfo);
+    }
+  }, [isReady, lineTagInfo]);
 
   return (
     <View style={styles.chart}>
