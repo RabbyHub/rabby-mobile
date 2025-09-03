@@ -152,6 +152,9 @@ export const createTradingViewChartTemplate = (
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js" as="script" crossorigin="anonymous">
+    <link rel="preload" href="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js" as="script" crossorigin="anonymous">
     <style>
       body, html {
           margin: 0;
