@@ -1,6 +1,5 @@
 import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { AssetAvatar } from '@/components';
-import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -11,25 +10,20 @@ import {
 import { openapi } from '@/core/request';
 import { Account } from '@/core/services/preference';
 import { useTheme2024 } from '@/hooks/theme';
+import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
+import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
-import { AbstractPortfolioToken } from '@/screens/Home/types';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
 
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
@@ -71,6 +65,7 @@ export const PerpsDepositPopup: React.FC<{
 
   const { runAsync: handleDeposit, loading } = useRequest(
     async () => {
+      Keyboard.dismiss();
       await onDeposit?.(amount);
     },
     {
@@ -114,7 +109,7 @@ export const PerpsDepositPopup: React.FC<{
     if (visible) {
       modalRef.current?.present();
     } else {
-      modalRef.current?.dismiss();
+      modalRef.current?.close();
     }
   }, [visible]);
 
@@ -139,8 +134,10 @@ export const PerpsDepositPopup: React.FC<{
         })}
         onDismiss={onClose}
         // enableDynamicSizing
-        snapPoints={[376]}>
-        <AutoLockView style={[styles.container]}>
+        snapPoints={[376]}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore">
+        <BottomSheetView style={[styles.container]}>
           <View>
             <Text style={styles.title}>
               {t('page.perps.PerpsDepositPopup.title')}
@@ -169,14 +166,17 @@ export const PerpsDepositPopup: React.FC<{
                   styles.input,
                   !amountValidation.isValid ? styles.inputError : null,
                 ]}
+                textAlignVertical="center"
                 placeholder="$0"
                 value={amount}
                 onChangeText={setAmount}
+                numberOfLines={1}
               />
               <View style={styles.divider} />
               {arbUsdc ? (
                 <TouchableOpacity
                   onPress={() => {
+                    Keyboard.dismiss();
                     setIsShowTokenPopup(true);
                   }}>
                   <View style={styles.tokenContainer}>
@@ -210,7 +210,7 @@ export const PerpsDepositPopup: React.FC<{
             disabled={!amountValidation.isValid}
             loading={loading}
           />
-        </AutoLockView>
+        </BottomSheetView>
       </AppBottomSheetModal>
       <PerpsSelectTokenPopup
         account={account}
@@ -250,7 +250,7 @@ export const PerpsDepositPopup: React.FC<{
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      height: '100%',
+      // height: '100%',
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       paddingBottom: 56,
       paddingHorizontal: 20,
@@ -258,7 +258,7 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'column',
     },
     formItem: {
-      flex: 1,
+      marginBottom: 48,
     },
     formItemLabelRow: {
       display: 'flex',
@@ -294,10 +294,11 @@ const getStyle = createGetStyles2024(ctx => {
     input: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 28,
-      // lineHeight: 36,
+      lineHeight: 36,
       fontWeight: '700',
-      // color: ctx.colors2024['neutral-body'],
       flex: 1,
+      paddingTop: 0,
+      paddingBottom: 0,
     },
     inputError: {
       color: ctx.colors2024['red-default'],

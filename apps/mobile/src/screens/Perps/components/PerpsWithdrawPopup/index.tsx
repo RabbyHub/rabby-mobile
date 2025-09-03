@@ -12,7 +12,7 @@ import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
 
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
@@ -32,6 +32,7 @@ export const PerpsWithdrawPopup: React.FC<{
   const [amount, setAmount] = React.useState<string>('');
   const { runAsync: handleWithdraw, loading } = useRequest(
     async () => {
+      Keyboard.dismiss();
       await onWithdraw?.(amount);
     },
     {
@@ -75,7 +76,7 @@ export const PerpsWithdrawPopup: React.FC<{
     if (visible) {
       modalRef.current?.present();
     } else {
-      modalRef.current?.dismiss();
+      modalRef.current?.close();
     }
   }, [visible]);
 
@@ -97,67 +98,67 @@ export const PerpsWithdrawPopup: React.FC<{
         onDismiss={onClose}
         enableDynamicSizing
         // snapPoints={[386]
-      >
-        <BottomSheetView>
-          <AutoLockView style={[styles.container]}>
-            <View>
-              <Text style={styles.title}>
-                {t('page.perps.PerpsWithdrawPopup.title')}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore">
+        <BottomSheetView style={[styles.container]}>
+          <View>
+            <Text style={styles.title}>
+              {t('page.perps.PerpsWithdrawPopup.title')}
+            </Text>
+          </View>
+          <View style={styles.formItem}>
+            <View style={styles.formItemLabelRow}>
+              <Text style={styles.formItemLabel}>
+                {t('page.perps.PerpsWithdrawPopup.amount')}
+              </Text>
+              <Text style={styles.formItemDesc}>
+                {formatUsdValue(accountSummary?.withdrawable || 0)}{' '}
+                {t('page.perps.PerpsWithdrawPopup.available')}
               </Text>
             </View>
-            <View style={styles.formItem}>
-              <View style={styles.formItemLabelRow}>
-                <Text style={styles.formItemLabel}>
-                  {t('page.perps.PerpsWithdrawPopup.amount')}
-                </Text>
-                <Text style={styles.formItemDesc}>
-                  {formatUsdValue(accountSummary?.withdrawable || 0)}{' '}
-                  {t('page.perps.PerpsWithdrawPopup.available')}
-                </Text>
-              </View>
-              <View style={styles.inputContainer}>
-                <BottomSheetTextInput
-                  value={amount}
-                  onChangeText={setAmount}
-                  keyboardType="numeric"
-                  style={[
-                    styles.input,
-                    !amountValidation.isValid ? styles.inputError : null,
-                  ]}
-                  placeholder="$0"
-                />
-              </View>
-              <View style={styles.errorContainer}>
-                {amountValidation.errorMessage ? (
-                  <Text style={styles.errorMessage}>
-                    {amountValidation.errorMessage}
-                  </Text>
-                ) : null}
-              </View>
-
-              <TouchableOpacity
-                onPress={() => {
-                  showTipsPopup({
-                    title: t('page.perps.PerpsWithdrawPopup.feeTooltipTitle'),
-                    desc: t('page.perps.PerpsWithdrawPopup.feeTooltipDesc'),
-                  });
-                }}>
-                <View style={styles.feeContainer}>
-                  <Text style={styles.fee}>
-                    {t('page.perps.PerpsWithdrawPopup.feeTip')}
-                  </Text>
-                  <RcIconInfoFillCC color={'#CED0DA'} width={15} height={15} />
-                </View>
-              </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <BottomSheetTextInput
+                value={amount}
+                onChangeText={setAmount}
+                keyboardType="numeric"
+                style={[
+                  styles.input,
+                  !amountValidation.isValid ? styles.inputError : null,
+                ]}
+                placeholder="$0"
+              />
             </View>
-            <Button
-              type="primary"
-              disabled={!amountValidation.isValid}
-              title={t('page.perps.PerpsWithdrawPopup.withdrawBtn')}
-              loading={loading}
-              onPress={handleWithdraw}
-            />
-          </AutoLockView>
+            <View style={styles.errorContainer}>
+              {amountValidation.errorMessage ? (
+                <Text style={styles.errorMessage}>
+                  {amountValidation.errorMessage}
+                </Text>
+              ) : null}
+            </View>
+
+            <TouchableOpacity
+              onPress={() => {
+                Keyboard.dismiss();
+                showTipsPopup({
+                  title: t('page.perps.PerpsWithdrawPopup.feeTooltipTitle'),
+                  desc: t('page.perps.PerpsWithdrawPopup.feeTooltipDesc'),
+                });
+              }}>
+              <View style={styles.feeContainer}>
+                <Text style={styles.fee}>
+                  {t('page.perps.PerpsWithdrawPopup.feeTip')}
+                </Text>
+                <RcIconInfoFillCC color={'#CED0DA'} width={15} height={15} />
+              </View>
+            </TouchableOpacity>
+          </View>
+          <Button
+            type="primary"
+            disabled={!amountValidation.isValid}
+            title={t('page.perps.PerpsWithdrawPopup.withdrawBtn')}
+            loading={loading}
+            onPress={handleWithdraw}
+          />
         </BottomSheetView>
       </AppBottomSheetModal>
     </>
@@ -175,7 +176,7 @@ const getStyle = createGetStyles2024(ctx => {
       flexDirection: 'column',
     },
     formItem: {
-      flex: 1,
+      flexShrink: 0,
     },
     formItemLabelRow: {
       display: 'flex',
@@ -211,7 +212,7 @@ const getStyle = createGetStyles2024(ctx => {
     input: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 28,
-      // lineHeight: 36,
+      lineHeight: 36,
       fontWeight: '700',
       // color: ctx.colors2024['neutral-body'],
       flex: 1,

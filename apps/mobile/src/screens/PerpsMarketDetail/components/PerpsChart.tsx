@@ -18,7 +18,7 @@ import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
 import {
   createChart,
   IChartApi,
@@ -294,16 +294,17 @@ export const PerpsChart: React.FC<{
             styles.changeText,
             isPositiveChange ? styles.positive : styles.negative,
           ]}>
-          {isPositiveChange ? '+' : '-'} $
+          {isPositiveChange ? '+' : '-'}$
           {splitNumberByStep(Math.abs(dayDelta).toFixed(decimals))} (
-          {isPositiveChange ? '+' : '-'}
+          {isPositiveChange ? '+' : ''}
           {formatPercent(dayDeltaPercent, 2)})
         </Text>
       </View>
       <View style={styles.content}>
         <TradingViewCandleChart
           ref={chartWebViewRef}
-          height={160}
+          height={Dimensions.get('screen').width - 128}
+          backGroundColor={colors2024['neutral-bg-1']}
           onChartReady={handleChartReady}
         />
       </View>

@@ -78,7 +78,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
     if (visible) {
       modalRef.current?.present();
     } else {
-      modalRef.current?.dismiss();
+      modalRef.current?.close();
     }
   }, [visible]);
 

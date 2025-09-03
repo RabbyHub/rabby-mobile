@@ -4,7 +4,7 @@ import { PerpTopToken } from '@rabby-wallet/rabby-api/dist/types';
 export const PERPS_SEND_ARB_USDC_ADDRESS =
   '0x2df1c51e09aecf9cacb7bc98cb1742757f163df7';
 
-export const PERPS_AGENT_NAME = 'rabby-agent';
+export const PERPS_AGENT_NAME = 'rabby-mobile';
 
 export const ARB_USDC_TOKEN_ID = '0xaf88d065e77c8cc2239327c5edb3a432268e5831';
 

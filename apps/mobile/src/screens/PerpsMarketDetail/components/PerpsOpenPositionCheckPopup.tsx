@@ -78,7 +78,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
     if (visible) {
       modalRef.current?.present();
     } else {
-      modalRef.current?.dismiss();
+      modalRef.current?.close();
     }
   }, [visible]);
 
@@ -217,7 +217,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {coin}-USD
+                  {coin}-USD{' '}
                   {t('page.perpsDetail.PerpsOpenPositionCheckPopup.price')}
                 </Text>
               </View>

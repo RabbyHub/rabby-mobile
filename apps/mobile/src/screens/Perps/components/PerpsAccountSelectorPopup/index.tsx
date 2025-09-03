@@ -44,7 +44,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
     if (visible) {
       modalRef.current?.present();
     } else {
-      modalRef.current?.dismiss();
+      modalRef.current?.close();
     }
   }, [visible]);
 
@@ -110,6 +110,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
               height={46}
               style={styles.walletIcon}
               address={item.address}
+              type={item.brandName}
             />
             <View style={styles.centerInfo}>
               <View style={styles.nameAndAdderss}>
@@ -153,18 +154,19 @@ export const PerpsAccountSelectorPopup: React.FC<{
         linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       onDismiss={onClose}
-      // enableDynamicSizing
-      snapPoints={[maxHeight]}
-      // maxDynamicContentSize={maxHeight}
-    >
+      enableDynamicSizing
+      enableContentPanningGesture
+      maxDynamicContentSize={maxHeight}>
       <BottomSheetView style={styles.container}>
         <View>
           <Text style={styles.title}>{title || 'Select Account'}</Text>
         </View>
+
         <BottomSheetFlatList
           data={myAddresses}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
         />
       </BottomSheetView>
     </AppBottomSheetModal>
@@ -183,11 +185,13 @@ const getModalStyle = createGetStyles2024(ctx => {
     },
     container: {
       // height: '100%',
-      // minHeight: 364,
+      minHeight: 364,
       backgroundColor: ctx.isLight
         ? ctx.colors2024['neutral-bg-0']
         : ctx.colors2024['neutral-bg-1'],
       paddingHorizontal: 20,
+      display: 'flex',
+      flexDirection: 'column',
     },
     title: {
       fontSize: 20,
@@ -199,6 +203,9 @@ const getModalStyle = createGetStyles2024(ctx => {
       textAlign: 'center',
     },
     list: {
+      flex: 1,
+    },
+    listContent: {
       paddingBottom: 56,
     },
     panelContainer: {

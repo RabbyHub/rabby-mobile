@@ -35,7 +35,7 @@ export const PerpsAccountCard: React.FC<{
       <View style={[styles.card, styles.balanceCard]}>
         <View style={styles.balanceCardContent}>
           <Text style={styles.balance}>
-            {formatUsdValue(Number(accountSummary?.accountValue))}
+            {formatUsdValue(Number(accountSummary?.accountValue || 0))}
           </Text>
           {positionAndOpenOrders?.length ? (
             <Text
@@ -64,6 +64,7 @@ export const PerpsAccountCard: React.FC<{
               }}
               titleStyle={styles.smBtnTitle}
               title={t('page.perps.PerpsCard.withdrawBtn')}
+              disabled={!accountSummary?.accountValue}
             />
           </View>
           <View style={styles.btnItem}>

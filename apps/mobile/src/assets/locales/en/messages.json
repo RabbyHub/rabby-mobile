@@ -2323,6 +2323,12 @@
         "long": "Long",
         "short": "Short",
         "noPermission": "Opening positions is not supported in your region"
+      },
+      "PerpsAutoCloseModal": {
+        "slPrice": "Stop Loss Price",
+        "tpPrice": "Take Profit Price",
+        "price": "Price:",
+        "entryPrice": "Entry Price:"
       }
     }
   },

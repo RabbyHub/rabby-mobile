@@ -1,6 +1,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
@@ -172,6 +181,12 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
 
   const isValidPrice = priceValidation.tp.isValid && priceValidation.sl.isValid;
 
+  // console.log({ priceValidation, isValidPrice });
+
+  // console.log({
+  //   isValidPrice,
+  // });
+
   const handleConfirm = useMemoizedFn(async () => {
     setLoading(true);
     try {
@@ -194,107 +209,115 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
       visible={visible}
       animationType="fade"
       onRequestClose={onClose}>
-      <TouchableOpacity
-        activeOpacity={1}
-        style={styles.modalOverlay}
-        onPress={onClose}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <TouchableOpacity
-          onPress={event => {
-            event.stopPropagation();
-          }}
           activeOpacity={1}
-          style={styles.container}>
-          <KeyboardAwareScrollView
-            enableOnAndroid
-            scrollEnabled
-            keyboardOpeningTime={0}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.inner}
-            keyboardDismissMode="interactive">
-            <View style={styles.header}>
-              <Text style={styles.title}>
-                {direction} {coin}-USD
-              </Text>
-              {type === 'openPosition' ? (
-                <Text style={styles.subTitle}>
-                  {coin}-USD Price: ${splitNumberByStep(price)}
+          style={styles.modalOverlay}
+          onPress={onClose}>
+          <TouchableOpacity
+            onPress={event => {
+              Keyboard.dismiss();
+              event.stopPropagation();
+            }}
+            activeOpacity={1}
+            style={styles.container}>
+            <View style={styles.inner}>
+              <View style={styles.header}>
+                <Text style={styles.title}>
+                  {direction} {coin}-USD
                 </Text>
-              ) : (
-                <Text style={styles.subTitle}>
-                  Entry Price: ${splitNumberByStep(price)}
-                </Text>
-              )}
-            </View>
-            <View style={styles.body}>
-              <View style={styles.formItem}>
-                <Text style={styles.formItemLabel}>Take Profit Price</Text>
+                {type === 'openPosition' ? (
+                  <Text style={styles.subTitle}>
+                    {coin}-USD {t('page.perpsDetail.PerpsAutoCloseModal.price')}{' '}
+                    ${splitNumberByStep(price)}
+                  </Text>
+                ) : (
+                  <Text style={styles.subTitle}>
+                    {t('page.perpsDetail.PerpsAutoCloseModal.entryPrice')} $
+                    {splitNumberByStep(price)}
+                  </Text>
+                )}
+              </View>
+              <View style={styles.body}>
+                <View style={styles.formItem}>
+                  <Text style={styles.formItemLabel}>
+                    {t('page.perpsDetail.PerpsAutoCloseModal.tpPrice')}
+                  </Text>
 
-                <TextInput
-                  keyboardType="numeric"
-                  style={styles.input}
-                  placeholder="$0"
-                  value={tpPrice}
-                  onChangeText={setTpPrice}
-                />
-                <View style={styles.errorMsgContainer}>
-                  {priceValidation.tp.error ? (
-                    <Text style={styles.errorMsg}>
-                      {priceValidation.tp.errorMessage}
-                    </Text>
-                  ) : tpPrice ? (
-                    <Text style={[styles.errorMsg, styles.errorMsgGreen]}>
-                      {t('page.perps.PerpsAutoCloseModal.profit')}{' '}
-                      {formatUsdValue(Math.abs(tpProfit))}
-                    </Text>
-                  ) : null}
+                  <TextInput
+                    keyboardType="numeric"
+                    style={styles.input}
+                    placeholder="$0"
+                    value={tpPrice}
+                    onChangeText={setTpPrice}
+                  />
+                  <View style={styles.errorMsgContainer}>
+                    {priceValidation.tp.error ? (
+                      <Text style={styles.errorMsg}>
+                        {priceValidation.tp.errorMessage}
+                      </Text>
+                    ) : tpPrice ? (
+                      <Text style={[styles.errorMsg, styles.errorMsgGreen]}>
+                        {t('page.perps.PerpsAutoCloseModal.profit')}{' '}
+                        {formatUsdValue(Math.abs(tpProfit))}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+                <View style={styles.formItem}>
+                  <Text style={styles.formItemLabel}>
+                    {t('page.perpsDetail.PerpsAutoCloseModal.slPrice')}
+                  </Text>
+
+                  <TextInput
+                    keyboardType="numeric"
+                    style={styles.input}
+                    placeholder="$0"
+                    value={slPrice}
+                    onChangeText={setSlPrice}
+                  />
+
+                  <View style={styles.errorMsgContainer}>
+                    {priceValidation.sl.error ? (
+                      <Text style={styles.errorMsg}>
+                        {priceValidation.sl.errorMessage}
+                      </Text>
+                    ) : priceValidation.sl.isWarning ? (
+                      <Text style={[styles.errorMsg, styles.errorMsgWarning]}>
+                        {priceValidation.sl.errorMessage}
+                      </Text>
+                    ) : slPrice ? (
+                      <Text style={styles.errorMsg}>
+                        {t('page.perps.PerpsAutoCloseModal.loss')}{' '}
+                        {formatUsdValue(Math.abs(slLoss))}
+                      </Text>
+                    ) : null}
+                  </View>
                 </View>
               </View>
-              <View style={styles.formItem}>
-                <Text style={styles.formItemLabel}>Stop Loss Price</Text>
-
-                <TextInput
-                  keyboardType="numeric"
-                  style={styles.input}
-                  placeholder="$0"
-                  value={slPrice}
-                  onChangeText={setSlPrice}
+              <View style={styles.footer}>
+                <Button
+                  type="primary"
+                  title={t('global.confirm')}
+                  disabled={!isValidPrice}
+                  onPress={handleConfirm}
+                  containerStyle={styles.containerStyle}
                 />
-
-                <View style={styles.errorMsgContainer}>
-                  {priceValidation.sl.error ? (
-                    <Text style={styles.errorMsg}>
-                      {priceValidation.sl.errorMessage}
-                    </Text>
-                  ) : priceValidation.sl.isWarning ? (
-                    <Text style={styles.errorMsg}>
-                      {priceValidation.sl.errorMessage}
-                    </Text>
-                  ) : slPrice ? (
-                    <Text style={styles.errorMsg}>
-                      {t('page.perps.PerpsAutoCloseModal.loss')}{' '}
-                      {formatUsdValue(Math.abs(slLoss))}
-                    </Text>
-                  ) : null}
-                </View>
               </View>
             </View>
-            <View style={styles.footer}>
-              <Button
-                type="primary"
-                title={t('global.confirm')}
-                disabled={!isValidPrice}
-                onPress={handleConfirm}
-                containerStyle={styles.containerStyle}
-              />
-            </View>
-          </KeyboardAwareScrollView>
+          </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  keyboardAvoidView: {
+    height: '100%',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -332,7 +355,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 20,
     lineHeight: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     color: colors2024['neutral-title-1'],
     marginBottom: 8,
     textAlign: 'center',
@@ -420,6 +443,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     color: colors2024['red-default'],
   },
+  errorMsgWarning: {
+    color: colors2024['orange-default'],
+  },
   errorMsgGreen: {
     color: colors2024['green-default'],
   },
@@ -429,6 +455,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 42,
     fontWeight: '700',
     // color: ctx.colors2024['neutral-body'],
-    flex: 1,
+    minWidth: 60,
   },
 }));

@@ -31,6 +31,7 @@ export const PerpsHeaderTitle: React.FC<{
             style={styles.walletIcon}
             width={18}
             height={18}
+            type={account.brandName}
             address={account.address}
           />
           <Text style={styles.address}>

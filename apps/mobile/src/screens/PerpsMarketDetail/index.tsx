@@ -14,7 +14,7 @@ import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
 import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
 import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
@@ -415,28 +415,31 @@ export const PerpsMarketDetailScreen = () => {
           });
         }}
       />
-      <PerpsAutoCloseModal
-        visible={autoCloseVisible}
-        coin={coin}
-        liqPrice={Number(currentPosition?.position.liquidationPx || 0)}
-        type="hasPosition"
-        price={positionData?.entryPrice || markPrice}
-        direction={(positionData?.direction || 'Long') as 'Long' | 'Short'}
-        size={Math.abs(positionData?.size || 0)}
-        pxDecimals={currentAssetCtx?.szDecimals || 2}
-        onClose={() => setAutoCloseVisible(false)}
-        handleSetAutoClose={async (params: {
-          tpPrice: string;
-          slPrice: string;
-        }) => {
-          await handleSetAutoClose({
-            coin,
-            tpTriggerPx: params.tpPrice,
-            slTriggerPx: params.slPrice,
-            direction: positionData?.direction as 'Long' | 'Short',
-          });
-        }}
-      />
+
+      {autoCloseVisible ? (
+        <PerpsAutoCloseModal
+          visible={autoCloseVisible}
+          coin={coin}
+          liqPrice={Number(currentPosition?.position.liquidationPx || 0) || 0}
+          type="hasPosition"
+          price={positionData?.entryPrice || markPrice}
+          direction={(positionData?.direction || 'Long') as 'Long' | 'Short'}
+          size={Math.abs(positionData?.size || 0)}
+          pxDecimals={currentAssetCtx?.szDecimals || 2}
+          onClose={() => setAutoCloseVisible(false)}
+          handleSetAutoClose={async (params: {
+            tpPrice: string;
+            slPrice: string;
+          }) => {
+            await handleSetAutoClose({
+              coin,
+              tpTriggerPx: params.tpPrice,
+              slTriggerPx: params.slPrice,
+              direction: positionData?.direction as 'Long' | 'Short',
+            });
+          }}
+        />
+      ) : null}
     </>
   );
 };

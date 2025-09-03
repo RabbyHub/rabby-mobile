@@ -236,7 +236,7 @@ export const PerpsOpenPositionPopup: React.FC<{
     if (visible) {
       modalRef.current?.present();
     } else {
-      modalRef.current?.dismiss();
+      modalRef.current?.close();
     }
   }, [visible]);
 
@@ -251,7 +251,9 @@ export const PerpsOpenPositionPopup: React.FC<{
         })}
         onDismiss={onCancel}
         enableDynamicSizing
-        maxDynamicContentSize={maxHeight}>
+        maxDynamicContentSize={maxHeight}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore">
         <BottomSheetScrollView>
           <AutoLockView style={[styles.container]}>
             <View>
@@ -403,27 +405,29 @@ export const PerpsOpenPositionPopup: React.FC<{
         }}
         onConfirm={openPosition}
       />
-      <PerpsAutoCloseModal
-        visible={autoCloseVisible}
-        coin={coin}
-        type="openPosition"
-        price={markPrice}
-        liqPrice={Number(estimatedLiquidationPrice)}
-        direction={direction}
-        size={Number(tradeSize)}
-        pxDecimals={szDecimals}
-        onClose={() => setAutoCloseVisible(false)}
-        handleSetAutoClose={async (params: {
-          tpPrice: string;
-          slPrice: string;
-        }) => {
-          setAutoClose({
-            isOpen: true,
-            tpTriggerPx: params.tpPrice,
-            slTriggerPx: params.slPrice,
-          });
-        }}
-      />
+      {autoCloseVisible ? (
+        <PerpsAutoCloseModal
+          visible={autoCloseVisible}
+          coin={coin}
+          type="openPosition"
+          price={markPrice}
+          liqPrice={Number(estimatedLiquidationPrice)}
+          direction={direction}
+          size={Number(tradeSize)}
+          pxDecimals={szDecimals}
+          onClose={() => setAutoCloseVisible(false)}
+          handleSetAutoClose={async (params: {
+            tpPrice: string;
+            slPrice: string;
+          }) => {
+            setAutoClose({
+              isOpen: true,
+              tpTriggerPx: params.tpPrice,
+              slTriggerPx: params.slPrice,
+            });
+          }}
+        />
+      ) : null}
     </>
   );
 };

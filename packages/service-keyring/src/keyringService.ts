@@ -667,7 +667,7 @@ export class KeyringService extends RNEventEmitter {
         // Not all the keyrings support this, so we have to check
         if (typeof keyring.removeAccount === 'function') {
           keyring.removeAccount(address, brand);
-          this.emit('removedAccount', address);
+          this.emit('removedAccount', address, type, brand);
           const currentKeyring = keyring;
           return [await keyring.getAccounts(), currentKeyring];
         }

@@ -70,9 +70,10 @@ export const PerpsSelectTokenPopup: React.FC<{
           arbUsdc,
           ...(_tokens?.filter(
             item =>
-              item.chain !== ARB_USDC_TOKEN_SERVER_CHAIN &&
-              !isSameAddress(item._tokenId, ARB_USDC_TOKEN_ID) &&
-              item.is_core,
+              !(
+                item.chain === ARB_USDC_TOKEN_SERVER_CHAIN &&
+                isSameAddress(item._tokenId, ARB_USDC_TOKEN_ID)
+              ) && item.is_core,
           ) || []),
         ];
   }, [_tokens, arbUsdc]);
@@ -131,7 +132,7 @@ export const PerpsSelectTokenPopup: React.FC<{
     if (visible) {
       modalRef.current?.present();
     } else {
-      modalRef.current?.dismiss();
+      modalRef.current?.close();
     }
   }, [visible]);
 
