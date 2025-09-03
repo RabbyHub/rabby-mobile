@@ -763,6 +763,9 @@ export const createTradingViewChartTemplate = (
                       .applyOptions({ scaleMargins: { top: 0.9, bottom: 0 } });
                     updatePriceLines();
                   }
+                  if (message.fitContent) {
+                    window.chart.timeScale().fitContent();
+                  }
                   window.chart.timeScale().scrollToRealTime();
                 } else {
                   console.error(
