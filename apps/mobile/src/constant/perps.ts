@@ -700,6 +700,8 @@ export const DEFAULT_TOP_ASSET = [
   },
 ] as PerpTopToken[];
 
+export const PERPS_MAX_NTL_VALUE = 1000000;
+
 const INIT_PERPS_BUILD_FEE_RECEIVE_ADDRESS =
   '0xAd9bE64fD7a35d99a138b87CB212BAefbCDCf045';
 export const PERPS_BUILD_FEE_RECEIVE_ADDRESS =

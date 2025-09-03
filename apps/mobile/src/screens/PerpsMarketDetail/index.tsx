@@ -31,6 +31,7 @@ import { PerpsPosition } from './components/PerpsPosition';
 import { usePerpsPosition } from './hooks/usePerpsPosition';
 import { toast } from '@/components2024/Toast';
 import * as Sentry from '@sentry/react-native';
+import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -379,6 +380,9 @@ export const PerpsMarketDetailScreen = () => {
         visible={openPositionVisible}
         direction={positionDirection}
         providerFee={providerFee}
+        maxNtlValue={Number(
+          currentAssetCtx?.maxUsdValueSize || PERPS_MAX_NTL_VALUE,
+        )}
         coin={coin}
         pxDecimals={currentAssetCtx?.pxDecimals || 2}
         szDecimals={currentAssetCtx?.szDecimals || 0}

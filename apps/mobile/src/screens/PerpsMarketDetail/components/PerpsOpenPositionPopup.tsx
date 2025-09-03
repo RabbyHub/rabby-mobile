@@ -15,6 +15,7 @@ import { Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { PerpsAutoCloseModal } from './PerpsAutoCloseModal';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
 import { StepInput } from '@/components2024/StepInput';
+import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -25,6 +26,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   leverageRang: [number, number]; // [min, max]
   pxDecimals: number;
   szDecimals: number;
+  maxNtlValue: number;
   availableBalance: number;
   onCancel: () => void;
   onConfirm: () => void;
@@ -57,6 +59,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   onCancel,
   onConfirm,
   handleOpenPosition,
+  maxNtlValue,
 }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
@@ -123,7 +126,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   const marginValidation = React.useMemo(() => {
     const marginValue = Number(margin);
     const usdValue = marginValue * leverage;
-    const maxNtlValue = 10000000;
+    const maxValue = maxNtlValue || PERPS_MAX_NTL_VALUE;
 
     if (marginValue === 0) {
       return { isValid: false, error: null };
@@ -160,26 +163,26 @@ export const PerpsOpenPositionPopup: React.FC<{
       };
     }
 
-    if (usdValue > maxNtlValue) {
+    if (usdValue > maxValue) {
       return {
         isValid: false,
         error: 'maximum_limit',
         errorMessage: t(
           'page.perpsDetail.PerpsOpenPositionPopup.maximumOrderSize',
           {
-            amount: `$${maxNtlValue}`,
+            amount: `$${maxValue}`,
           },
         ),
       };
     }
 
     return { isValid: true, error: null };
-  }, [margin, availableBalance, t, leverage]);
+  }, [margin, availableBalance, t, leverage, maxNtlValue]);
 
   React.useEffect(() => {
     if (!visible) {
       setMargin('');
-      setLeverage(5);
+      setLeverage(Math.min(leverageRang[1], 5));
       setAutoClose({
         isOpen: false,
         tpTriggerPx: '',
@@ -188,7 +191,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       setLeveragePopupVisible(false);
       setIsReviewMode(false);
     }
-  }, [visible]);
+  }, [visible, leverageRang]);
 
   const openPosition = useMemoizedFn(async () => {
     setLoading(true);
