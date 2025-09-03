@@ -84,7 +84,7 @@ export const MiniProcessActions: React.FC<Props> = ({
       }
     },
     300,
-    [onSubmit, signingTypedData, disabledProcess, directSubmit, miniSignType],
+    [signingTypedData, disabledProcess, directSubmit, miniSignType],
   );
 
   return (
