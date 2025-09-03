@@ -232,8 +232,8 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
             border: colors2024['neutral-bg-5'],
             greenLineColor: 'rgba(42, 187, 127, 1)',
             redLineColor: 'rgba(227, 73, 53, 1)',
-            highPriceLineColor: 'rgba(221, 221, 221, 0.3)',
-            lowPriceLineColor: 'rgba(221, 221, 221, 0.3)',
+            highPriceLineColor: colors2024['neutral-body'],
+            lowPriceLineColor: colors2024['neutral-body'],
             tooltip: {
               bg: isLight
                 ? colors2024['neutral-bg-1']

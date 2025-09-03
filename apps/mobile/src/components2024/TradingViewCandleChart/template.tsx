@@ -495,16 +495,16 @@ export const createTradingViewChartTemplate = (
         window.clearMarkers = LightweightCharts.createSeriesMarkers(window.candlestickSeries, [
           {
               time: highestTime,
-              position: 'aboveBar', // 在蜡烛图顶部
-              color: window.colors.greenLineColor,
+              position: 'aboveBar',
+              color: window.colors.highPriceLineColor,
               shape: 'arrowDown',
               text: window.description.high,
               size: 0.1, // 小尺寸
           },
           {
               time: lowestTime,
-              position: 'belowBar', // 在蜡烛图底部
-              color: window.colors.redLineColor,
+              position: 'belowBar',
+              color: window.colors.lowPriceLineColor,
               shape: 'arrowUp',
               text: window.description.low,
               size: 0.1,
