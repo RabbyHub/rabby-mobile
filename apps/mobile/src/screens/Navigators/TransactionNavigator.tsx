@@ -38,6 +38,7 @@ import CopyTradingTokenDetail from '../CopyTrading/component/CopyTradingTokenDet
 import { PerpsScreen } from '../Perps';
 import { PerpsMarketListScreen } from '../PerpsMarketList';
 import { PerpsMarketDetailScreen } from '../PerpsMarketDetail';
+import { PerpsHistoryScreen } from '../PerpsHistory';
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
@@ -431,6 +432,22 @@ export default function TransactionNavigator() {
         component={PerpsMarketDetailScreen}
         options={mergeScreenOptions({
           // title: t('page.home.services.perpsMarketDetail'),
+          // ...headerPresets.withBgCard1_2024,
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '900',
+            fontFamily: 'SF Pro Rounded',
+            color: colors['neutral-title-1'],
+          },
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.PerpsHistory}
+        component={PerpsHistoryScreen}
+        options={mergeScreenOptions({
+          title: t('page.perpsHistory.title'),
           // ...headerPresets.withBgCard1_2024,
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {

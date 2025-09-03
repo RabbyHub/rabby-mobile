@@ -14,7 +14,7 @@ import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
 import { PerpsHistorySection } from '../Perps/components/PerpsHistorySection';
 import { usePerpsDeposit } from '../Perps/hooks/usePerpsDeposit';
@@ -309,43 +309,43 @@ export const PerpsMarketDetailScreen = () => {
   return (
     <>
       <NormalScreenContainer2024 type="bg2">
-        <View style={styles.container}>
-          <PerpsHistorySection
-            ListHeaderComponent={
-              <>
-                <View style={styles.header}>
-                  <PerpsChart
-                    market={market}
-                    markPrice={markPrice}
-                    activeAssetCtx={activeAssetCtx}
-                    currentAssetCtx={currentAssetCtx}
-                    lineTagInfo={lineTagInfo}
-                  />
-                  {isLogin ? (
-                    <PerpsDepositCard
-                      availableBalance={availableBalance}
-                      onDepositPress={() => {
-                        setAmountVisible(true);
-                      }}
-                    />
-                  ) : null}
-                </View>
-                <PerpsPosition
-                  positionData={positionData}
-                  coin={coin}
-                  hasAutoClose={hasAutoClose}
-                  slPrice={slPrice}
-                  tpPrice={tpPrice}
-                  onAutoCloseChange={handleAutoCloseSwitch}
-                />
-                <PerpsInfo market={market} />
-              </>
-            }
-            ListFooterComponent={<PerpsIntro />}
-            marketDataMap={marketDataMap}
-            homeHistoryList={singleCoinHistoryList}
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <PerpsChart
+              market={market}
+              markPrice={markPrice}
+              activeAssetCtx={activeAssetCtx}
+              currentAssetCtx={currentAssetCtx}
+              lineTagInfo={lineTagInfo}
+            />
+            {isLogin ? (
+              <PerpsDepositCard
+                availableBalance={availableBalance}
+                onDepositPress={() => {
+                  setAmountVisible(true);
+                }}
+              />
+            ) : null}
+          </View>
+          <PerpsPosition
+            positionData={positionData}
+            coin={coin}
+            hasAutoClose={hasAutoClose}
+            slPrice={slPrice}
+            tpPrice={tpPrice}
+            onAutoCloseChange={handleAutoCloseSwitch}
           />
-        </View>
+          <PerpsInfo market={market} />
+          <PerpsHistorySection
+            coin={coin}
+            marketDataMap={marketDataMap}
+            historyList={singleCoinHistoryList}
+          />
+          <PerpsIntro />
+        </ScrollView>
         {isLogin ? (
           <PerpsFooter
             hasPermission={hasPermission}
@@ -450,6 +450,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     height: '100%',
     paddingHorizontal: 16,
     position: 'relative',
+  },
+  scrollContent: {
+    paddingBottom: 56,
   },
   header: {
     display: 'flex',

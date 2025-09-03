@@ -368,6 +368,9 @@ export type TransactionNavigatorParamList = {
 
   [RootNames.Perps]?: {};
   [RootNames.PerpsMarketList]?: {};
+  [RootNames.PerpsHistory]?: {
+    coin?: string;
+  };
   [RootNames.PerpsMarketDetail]: {
     market: string;
   };

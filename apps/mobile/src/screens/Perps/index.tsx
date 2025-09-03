@@ -5,7 +5,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
@@ -111,26 +111,25 @@ export const PerpsScreen = () => {
   return (
     <>
       <NormalScreenContainer2024 type="bg2">
-        <View style={styles.container}>
-          <PerpsHistorySection
-            ListHeaderComponent={
-              <>
-                <PerpsAccountCard
-                  isLogin={isLogin}
-                  accountSummary={accountSummary}
-                  positionAndOpenOrders={positionAndOpenOrders}
-                />
-                <PerpsPositionSection
-                  positionAndOpenOrders={positionAndOpenOrders}
-                  marketDataMap={marketDataMap}
-                />
-                <PerpsMarketSection marketData={marketData} />
-              </>
-            }
-            marketDataMap={marketDataMap}
-            homeHistoryList={homeHistoryList}
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}>
+          <PerpsAccountCard
+            isLogin={isLogin}
+            accountSummary={accountSummary}
+            positionAndOpenOrders={positionAndOpenOrders}
           />
-        </View>
+          <PerpsPositionSection
+            positionAndOpenOrders={positionAndOpenOrders}
+            marketDataMap={marketDataMap}
+          />
+          <PerpsMarketSection marketData={marketData} />
+          <PerpsHistorySection
+            marketDataMap={marketDataMap}
+            historyList={homeHistoryList}
+          />
+        </ScrollView>
       </NormalScreenContainer2024>
       <PerpsAccountSelectorPopup
         visible={popupState.isShowLoginPopup}
@@ -235,5 +234,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
     height: '100%',
     paddingHorizontal: 16,
+  },
+  scrollContent: {
+    paddingBottom: 56,
   },
 }));

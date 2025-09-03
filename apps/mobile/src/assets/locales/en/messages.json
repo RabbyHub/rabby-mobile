@@ -2330,6 +2330,9 @@
         "price": "Price:",
         "entryPrice": "Entry Price:"
       }
+    },
+    "perpsHistory": {
+      "title": "History"
     }
   },
   "component": {

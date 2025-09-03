@@ -157,6 +157,7 @@ export const RootNames = {
   Perps: 'Perps',
   PerpsMarketList: 'PerpsMarketList',
   PerpsMarketDetail: 'PerpsMarketDetail',
+  PerpsHistory: 'PerpsHistory',
   AccountTransaction: 'AccountTransaction',
   /* @deprecated */
   MyBundle: 'MyBundle',
