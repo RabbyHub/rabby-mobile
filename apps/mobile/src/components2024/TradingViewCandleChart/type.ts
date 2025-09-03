@@ -28,5 +28,6 @@ export interface CandleData {
   coin: string;
   interval: CandlePeriod;
   showVolume?: boolean;
+  fitContent?: boolean;
   candles: CandleStick[];
 }

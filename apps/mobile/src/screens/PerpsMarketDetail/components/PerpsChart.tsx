@@ -82,8 +82,8 @@ const parseCandles = (data: CandleSnapshot): any[] => {
 
   const result = data.map((row: Candle) => {
     const candle = {
-      // time: toUtc(Number(row.t) / 1000),
-      time: Number(row.t),
+      time: toUtc(Number(row.t) / 1000),
+      // time: Number(row.t),
       open: Number(row.o),
       high: Number(row.h),
       low: Number(row.l),
@@ -219,6 +219,7 @@ export const PerpsChart: React.FC<{
       return {
         coin: market.name,
         interval: interval,
+        fitContent: true,
         candles: candles as any,
       };
     },
