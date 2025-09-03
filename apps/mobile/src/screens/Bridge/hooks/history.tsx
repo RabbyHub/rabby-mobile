@@ -132,16 +132,22 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
           );
           return;
         }
-        if (findTx && findTx.status === 'completed' && localPendingTxData) {
+        if (
+          findTx &&
+          (findTx.status === 'completed' || findTx.status === 'failed') &&
+          localPendingTxData
+        ) {
+          const status =
+            findTx.status === 'completed' ? 'allSuccess' : 'failed';
           setLocalPendingTxData({
             ...localPendingTxData,
-            status: 'allSuccess',
+            status,
             completedAt: Date.now(),
           });
           transactionHistoryService.completeBridgeTxHistory(
             recentlyTxHash,
             localPendingTxData.fromChainId,
-            'allSuccess',
+            status,
           );
           setBridgeHistoryRedDot(true);
         }
