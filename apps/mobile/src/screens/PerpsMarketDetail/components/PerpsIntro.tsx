@@ -1,4 +1,3 @@
-import { RcIconLong } from '@/assets2024/icons/perps';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';

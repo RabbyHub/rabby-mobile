@@ -105,7 +105,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
           ]}>
           <View style={styles.addressItemInner}>
             <WalletIcon
-              borderRadius={14}
+              borderRadius={12}
               width={46}
               height={46}
               style={styles.walletIcon}
@@ -209,6 +209,7 @@ const getModalStyle = createGetStyles2024(ctx => {
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       padding: 16,
       marginBottom: 12,
+      borderRadius: 20,
     },
     addressItemInner: {
       display: 'flex',
@@ -219,11 +220,11 @@ const getModalStyle = createGetStyles2024(ctx => {
     addressText: {
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: '400',
-      color: colors2024['neutral-secondary'],
+      fontWeight: '500',
+      color: colors2024['neutral-foot'],
       fontFamily: 'SF Pro Rounded',
     },
-    walletIcon: { marginRight: 8 },
+    walletIcon: {},
     centerInfo: {
       flexDirection: 'column',
       flexShrink: 1,

@@ -39,7 +39,7 @@ export const PerpsAccountLogoutPopup: React.FC<{
       onDismiss={onClose}
       ref={modalRef}
       {...makeBottomSheetProps({
-        linearGradientType: 'bg1',
+        linearGradientType: isLight ? 'bg0' : 'bg1',
         colors: colors2024,
       })}>
       <BottomSheetView style={styles.popup}>
@@ -60,12 +60,7 @@ export const PerpsAccountLogoutPopup: React.FC<{
                     gap: 8,
                     alignItems: 'center',
                   }}>
-                  <WalletIcon
-                    style={{
-                      width: 40,
-                      height: 40,
-                    }}
-                  />
+                  <WalletIcon width={46} height={46} borderRadius={12} />
                   <View style={{ gap: 4 }}>
                     <View
                       style={{
@@ -75,17 +70,7 @@ export const PerpsAccountLogoutPopup: React.FC<{
                       <WalletName style={styles.addressText} />
                     </View>
 
-                    <WalletBalance
-                      style={[
-                        styles.addressText,
-                        {
-                          color: colors2024['neutral-title-1'],
-                          fontSize: 16,
-                          lineHeight: 20,
-                          fontWeight: '700',
-                        },
-                      ]}
-                    />
+                    <WalletBalance style={[styles.balanceText]} />
                   </View>
                 </View>
               )}
@@ -126,9 +111,9 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     width: '100%',
     alignItems: 'center',
     padding: 16,
-    height: 78,
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
 
   addressText: {
@@ -136,6 +121,15 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     fontWeight: '500',
     lineHeight: 20,
     fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-foot'],
+  },
+
+  balanceText: {
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
 
   btnContainer: {
