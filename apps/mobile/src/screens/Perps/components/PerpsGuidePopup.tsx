@@ -13,11 +13,12 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Dimensions,
   Image,
   ScrollView,
   Text,
@@ -25,13 +26,21 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import {
+  PanGestureHandler,
+  PanGestureHandlerGestureEvent,
+} from 'react-native-gesture-handler';
 import Animated, {
   interpolateColor,
+  runOnJS,
+  useAnimatedGestureHandler,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+
+const { width: TAB_WIDTH } = Dimensions.get('window');
 
 export const PerpsGuidePopup: React.FC<{
   visible?: boolean;
@@ -99,6 +108,10 @@ export const PerpsGuidePopup: React.FC<{
       onComplete?.();
       return;
     } else {
+      translateX.value = withSpring(-(activeIndex + 1) * TAB_WIDTH, {
+        damping: 20,
+        stiffness: 90,
+      });
       setActiveIndex(activeIndex + 1);
     }
   });
@@ -111,10 +124,88 @@ export const PerpsGuidePopup: React.FC<{
     }
   }, [visible]);
 
+  const translateX = useSharedValue(0);
+
+  const panGestureEvent = useAnimatedGestureHandler<
+    PanGestureHandlerGestureEvent,
+    { startX: number }
+  >({
+    onStart: (_, context: { startX: number }) => {
+      context.startX = translateX.value;
+      // return
+    },
+    onActive: (event, context) => {
+      // 限制滑动范围，防止滑动过头
+      const newTranslateX = context.startX + event.translationX;
+      const minTranslate = -(steps.length - 1) * TAB_WIDTH;
+
+      if (newTranslateX > 0) {
+        translateX.value = withSpring(0, { damping: 50 });
+      } else if (newTranslateX < minTranslate) {
+        translateX.value = withSpring(minTranslate, { damping: 50 });
+      } else {
+        translateX.value = newTranslateX;
+      }
+    },
+    onEnd: event => {
+      // 根据滑动速度和距离决定切换到哪个标签
+      const threshold = TAB_WIDTH * 0.3;
+      const draggedDistance = -event.translationX;
+      const currentTab = Math.round(translateX.value / TAB_WIDTH);
+
+      if (Math.abs(event.velocityX) > 500) {
+        // 快速滑动时根据速度方向切换
+        const direction = event.velocityX > 0 ? 1 : -1;
+        const newIndex = Math.max(
+          0,
+          Math.min(steps.length - 1, activeIndex - direction),
+        );
+
+        translateX.value = withSpring(-newIndex * TAB_WIDTH, {
+          damping: 20,
+          stiffness: 90,
+        });
+        runOnJS(setActiveIndex)(newIndex);
+      } else if (draggedDistance > threshold) {
+        // 滑动距离超过阈值，切换到下一个
+        const newIndex = Math.min(steps.length - 1, activeIndex + 1);
+
+        translateX.value = withSpring(-newIndex * TAB_WIDTH, {
+          damping: 20,
+          stiffness: 90,
+        });
+        runOnJS(setActiveIndex)(newIndex);
+      } else if (draggedDistance < -threshold) {
+        // 滑动距离超过阈值，切换到上一个
+        const newIndex = Math.max(0, activeIndex - 1);
+
+        translateX.value = withSpring(-newIndex * TAB_WIDTH, {
+          damping: 20,
+          stiffness: 90,
+        });
+        runOnJS(setActiveIndex)(newIndex);
+      } else {
+        // 回弹到当前标签
+        translateX.value = withSpring(-activeIndex * TAB_WIDTH, {
+          damping: 20,
+          stiffness: 90,
+        });
+      }
+    },
+  });
+
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+    };
+  });
+
   useEffect(() => {
     if (!visible) {
       setActiveIndex(0);
+      translateX.value = 0;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   return (
@@ -126,27 +217,30 @@ export const PerpsGuidePopup: React.FC<{
       })}
       onDismiss={onClose}
       enableDynamicSizing
-      maxDynamicContentSize={maxHeight}>
-      <BottomSheetScrollView ref={scrollViewRef}>
+      enableContentPanningGesture={false}
+      // maxDynamicContentSize={maxHeight}
+    >
+      <BottomSheetView>
         <AutoLockView style={[styles.container]}>
-          {steps.map((step, index) => (
-            <View
-              key={index}
-              style={[
-                styles.step,
-                activeIndex === index ? styles.stepActive : null,
-              ]}>
-              <Text style={styles.stepTitle}>{step.title}</Text>
-              <Text style={styles.stepDescription}>{step.description}</Text>
-              <View style={styles.imageContainer}>
-                <Image
-                  source={step.image}
-                  style={styles.stepImage}
-                  resizeMode="contain"
-                />
-              </View>
-            </View>
-          ))}
+          <PanGestureHandler onGestureEvent={panGestureEvent}>
+            <Animated.View
+              style={[styles.tabContentContainer, animatedContainerStyle]}>
+              {steps.map((step, index) => (
+                <View key={index} style={[styles.step]}>
+                  <Text style={styles.stepTitle}>{step.title}</Text>
+                  <Text style={styles.stepDescription}>{step.description}</Text>
+                  <View style={styles.imageContainer}>
+                    <Image
+                      source={step.image}
+                      style={styles.stepImage}
+                      resizeMode="contain"
+                    />
+                  </View>
+                </View>
+              ))}
+            </Animated.View>
+          </PanGestureHandler>
+
           <View style={styles.indicatorContainer}>
             {steps.map((item, index) => {
               return (
@@ -158,15 +252,17 @@ export const PerpsGuidePopup: React.FC<{
               );
             })}
           </View>
-          {activeStep ? (
-            <Button
-              type="primary"
-              title={activeStep.button}
-              onPress={handleStep}
-            />
-          ) : null}
+          <View style={styles.footer}>
+            {activeStep ? (
+              <Button
+                type="primary"
+                title={activeStep.button}
+                onPress={handleStep}
+              />
+            ) : null}
+          </View>
         </AutoLockView>
-      </BottomSheetScrollView>
+      </BottomSheetView>
     </AppBottomSheetModal>
   );
 };
@@ -221,20 +317,21 @@ const Indicator: React.FC<{
 const getStyle = createGetStyles2024(ctx => {
   return {
     container: {
-      height: '100%',
+      // height: '100%',
       minHeight: 536,
       backgroundColor: ctx.colors2024['neutral-bg-1'],
       paddingBottom: 56,
-      paddingHorizontal: 20,
+      // paddingHorizontal: 20,
     },
     step: {
-      display: 'none',
+      marginBottom: 20,
+      width: TAB_WIDTH,
+      paddingHorizontal: 32,
     },
     stepActive: {
       display: 'flex',
       flexDirection: 'column',
       paddingHorizontal: 12,
-      marginBottom: 20,
       flex: 1,
     },
     stepTitle: {
@@ -280,6 +377,13 @@ const getStyle = createGetStyles2024(ctx => {
       height: 6,
       borderRadius: 1000,
       backgroundColor: ctx.colors2024['brand-light-2'],
+    },
+    tabContentContainer: {
+      flex: 1,
+      flexDirection: 'row',
+    },
+    footer: {
+      paddingHorizontal: 20,
     },
   };
 });
