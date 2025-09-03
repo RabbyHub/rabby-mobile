@@ -23,8 +23,8 @@ import { StackActions, useFocusEffect } from '@react-navigation/native';
 import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
-import { RootNames } from '@/constant/layout';
-import { createGetStyles2024 } from '@/utils/styles';
+import { RootNames, ScreenLayouts } from '@/constant/layout';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
 import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
@@ -106,6 +106,12 @@ import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
+import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
+import {
+  useSetTotalBalanceText,
+  useViewedHomeTip,
+} from '@/components/Screenshot/hooks';
 
 const HeaderHeight = 24;
 
@@ -170,22 +176,26 @@ function MultiAddressHomeHeader(
             {loading && <RcIconloading />}
           </Animated.View>
         </View>
-        <TouchableWithoutFeedback
-          style={styles.settingEntry}
-          onPress={() => {
-            navigation.navigate(RootNames.StackSettings, {
-              screen: RootNames.Settings,
-              params: {},
-            });
 
-            matomoRequestEvent({
-              category: 'Click_Header',
-              action: 'Click_Setting',
-            });
-          }}>
-          <RcIconSetting color={colors2024['neutral-title-1']} />
-          {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
-        </TouchableWithoutFeedback>
+        <View style={styles.rightArea}>
+          <FeedbackEntryOnHeader style={styles.feedbackEntry} />
+          <TouchableWithoutFeedback
+            style={styles.settingEntry}
+            onPress={() => {
+              navigation.navigate(RootNames.StackSettings, {
+                screen: RootNames.Settings,
+                params: {},
+              });
+
+              matomoRequestEvent({
+                category: 'Click_Header',
+                action: 'Click_Setting',
+              });
+            }}>
+            <RcIconSetting color={colors2024['neutral-foot']} />
+            {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+          </TouchableWithoutFeedback>
+        </View>
       </View>
 
       <GlobalWarning
@@ -282,7 +292,7 @@ function MultiAddressHomeHeader(
   );
 }
 
-const ITEM_LAYOUT_PADDING_HORIZONTAL = 16;
+const ITEM_LAYOUT_PADDING_HORIZONTAL = ScreenLayouts.homeHorizontalPadding;
 const ITEM_GRID_GAP = 12;
 const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 
@@ -298,9 +308,9 @@ function MultiAddressHome(): JSX.Element {
     success: number;
     fail: number;
   }>();
-  const { top10Addresses, top10EvmBalance, top10Balance } = useAccountInfo();
+  const { top10Addresses } = useAccountInfo();
 
-  // 添加gift资格检查hook
+  // add gift eligibility check hook
   const { checkAddressesEligibility, getCurrentEligibleAddress } =
     useGasAccountEligibility();
   const currentEligibleAddress = getCurrentEligibleAddress();
@@ -311,7 +321,7 @@ function MultiAddressHome(): JSX.Element {
   const { width } = Dimensions.get('window');
   const itemWidth =
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
-  // 使用useMemo直接计算isEligible，使其能够响应相关状态变化
+  // use useMemo to directly calculate isEligible so that it can respond to related state changes
   const isEligible = useMemo(() => {
     return (
       currentEligibleAddress !== undefined &&
@@ -424,21 +434,35 @@ function MultiAddressHome(): JSX.Element {
     }
   }, [pendingTxCount, spinValue]);
 
-  const { balanceAccounts, balanceCacheAccounts, triggerUpdate } =
-    useAccountsBalance({
-      cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-      accountsNoUnique: true, // balanceAccounts has filter same address accounts
-    });
+  const {
+    balanceAccounts,
+    balanceCacheAccounts,
+    triggerUpdate,
+    getTotalBalance,
+  } = useAccountsBalance({
+    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
+    accountsNoUnique: true, // balanceAccounts has filter same address accounts
+  });
+
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
 
   const {
     combineData,
     refresh: refreshCurve,
     loading,
     isLoadingNew: loadingNewCurve,
-  } = useMultiCurve(top10Addresses, true, top10Balance, top10EvmBalance);
+  } = useMultiCurve(
+    top10Addresses,
+    true,
+    top10Balance.total,
+    top10Balance.totalEvm,
+  );
   useCexSupportList();
   useFetchCexInfo();
   useInitDetectDBAssets();
+  useSetTotalBalanceText(combineData.netWorth);
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -596,6 +620,13 @@ function MultiAddressHome(): JSX.Element {
       setHasOpenCopyTrading(value ?? true);
     }, [setHasOpenCopyTrading]),
   );
+  useFocusEffect(
+    useCallback(() => {
+      if (appState === 'active') {
+        refreshCurve();
+      }
+    }, [appState, refreshCurve]),
+  );
 
   const thorttleGetSuccessAndFailList = useMemo(
     () => debounce(getSuccessAndFailList, 1000),
@@ -622,7 +653,6 @@ function MultiAddressHome(): JSX.Element {
         triggerUpdateAlert();
         syncTop10Assets();
         syncTop10History();
-        refreshCurve();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
@@ -840,17 +870,27 @@ function MultiAddressHome(): JSX.Element {
 
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
+  const { viewedHomeTip } = useViewedHomeTip();
 
-  const { noBetweenContent } = useMemo(() => {
-    const _noBetweenContent =
-      !displayFundWallet &&
-      !shouldShowRateGuideOnHome &&
-      (!offlineChainData.displayWillClosedChain ||
-        !offlineChainData.offlineChainInfo);
+  const { noBetweenContent, onlyOneContent } = useMemo(() => {
+    const visibleEls = [
+      displayFundWallet,
+      shouldShowRateGuideOnHome,
+      offlineChainData.displayWillClosedChain &&
+        offlineChainData.offlineChainInfo,
+      !viewedHomeTip,
+    ];
+    const hasBetweenContent = visibleEls.some(Boolean);
     return {
-      noBetweenContent: _noBetweenContent,
+      noBetweenContent: !hasBetweenContent,
+      onlyOneContent: visibleEls.filter(Boolean).length === 1,
     };
-  }, [shouldShowRateGuideOnHome, offlineChainData, displayFundWallet]);
+  }, [
+    shouldShowRateGuideOnHome,
+    offlineChainData,
+    displayFundWallet,
+    viewedHomeTip,
+  ]);
 
   return (
     <NormalScreenContainer2024
@@ -896,6 +936,9 @@ function MultiAddressHome(): JSX.Element {
               noBetweenContent
                 ? styles.contentBetweenHeaderAndMatrixEmpty
                 : styles.contentBetweenHeaderAndMatrix,
+              onlyOneContent
+                ? styles.contentBetweenHeaderAndMatrixOnlyOne
+                : null,
             ]}>
             <OfflineChainNotify data={offlineChainData} />
 
@@ -910,6 +953,8 @@ function MultiAddressHome(): JSX.Element {
                 <RateModal totalBalanceText={combineData.netWorth} />
               </View>
             )}
+
+            <TipFeedbackByScreenshot />
           </View>
 
           <View style={[{ marginTop: 0 }, styles.grid]}>
@@ -989,6 +1034,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
+    position: 'relative',
     // flex: 1,
     // backgroundColor: colors2024['neutral-title-1'],
   },
@@ -1014,13 +1060,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  rightArea: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // position: 'relative',
+    // ...makeDebugBorder(),
+  },
+  feedbackEntry: {
+    height: '100%',
+    paddingRight: 6,
+    // ...makeDebugBorder(),
+  },
   settingEntry: {
     marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
     flexDirection: 'row',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 12,
+    paddingLeft: 6,
     paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
     position: 'relative',
   },
@@ -1163,9 +1221,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 12,
     marginBottom: 12,
     gap: 12,
+    // ...makeDebugBorder(),
   },
   contentBetweenHeaderAndMatrixEmpty: {
     marginBottom: 12,
+  },
+  contentBetweenHeaderAndMatrixOnlyOne: {
+    paddingTop: 0,
   },
   menuContainer: {
     marginTop: 0,

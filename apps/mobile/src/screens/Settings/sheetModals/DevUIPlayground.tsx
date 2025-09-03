@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import { View, Text, Alert } from 'react-native';
 import { RcArrowRightCC } from '@/assets/icons/common';
 
@@ -141,6 +147,17 @@ export default function DevUIPlaygroundModal({
           navigation.dispatch(
             StackActions.push(RootNames.StackTestkits, {
               screen: RootNames.DevUIDapps,
+            }),
+          );
+        },
+      },
+      {
+        label: 'Permissions',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIPermissions,
             }),
           );
         },

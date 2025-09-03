@@ -147,7 +147,8 @@
       "loginInTip": {
         "desc": "Pagar tarifas de Gas en todas las cadenas",
         "title": "Depósito USDC / USDT",
-        "login": "Iniciar sesión en GasAccount"
+        "login": "Iniciar sesión en GasAccount",
+        "loginAndClaim": "Iniciar sesión y reclamar {{amount}}"
       },
       "loginConfirmModal": {
         "desc": "Una vez que inicie sesión, solo puede depositarlo en esta dirección.",
@@ -162,7 +163,13 @@
       "depositWithToken": "Depositar con Token",
       "depositWithPayDesc": "30% de comisión, sin retiros",
       "depositWithPay": "Comprar con",
-      "depositWithTokenDesc": "Sin comisión adicional, retiros instantáneos"
+      "depositWithTokenDesc": "Sin comisión adicional, retiros instantáneos",
+      "giftInfo": {
+        "noWithdrawableBalanceTitle": "{{amount}} No retirable",
+        "giftTips": "Recompensa de Gas para usuarios activos",
+        "gotIt": "Lo Tengo",
+        "noWithdrawableBalanceDescription": "{{amount}} de tu saldo de gas no es retirado:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      }
     },
     "NoLongerSupports": {
       "button": "Entendido",
@@ -218,6 +225,24 @@
       "serviceErrorText": "Error de servicio",
       "buttonText": "Actualizar",
       "offlineText": "Error de red"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "Describa el problema"
+      },
+      "submitButtonText": "Enviar",
+      "title": "Captura de pantalla para informar de un error",
+      "feedbackLabel": "Descripción del error:"
+    },
+    "feedbackModal": {
+      "title": "Respuesta del soporte de Rabby",
+      "issueDescriptionLabel": "Descripción:",
+      "issueDescription": "Aquí está el problema que reportaste:",
+      "pendingTitle": "Rabby Support no ha respondido.",
+      "repliedTitle": "La asistencia de Rabby ha respondido:"
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "Enviado correctamente"
     }
   },
   "page": {
@@ -656,6 +681,15 @@
         "nonceTooLow": "Nonce demasiado bajo. Lo actualizaremos a {{nonce}}. Haz clic en \"Reintentar\" para confirmar y volver a intentarlo.",
         "gasPriceTooLow": "El precio del gas es demasiado bajo. Lo ajustaremos en un 30% para ayudar a que su transacción se confirme. Haga clic en \"Reintentar\" para confirmar y volver a intentarlo.",
         "InvalidTx": "Transacción inválida."
+      },
+      "addLiquidity": {
+        "marketPrice": "Precio de Mercado",
+        "token1": "Agregar Token 2",
+        "priceDiff": "Diferencia de Precio",
+        "title": "Agregar Liquidez",
+        "token0": "Agregar Token 1",
+        "poolPrice": "Precio del Pool",
+        "receiver": "Receptor"
       }
     },
     "activities": {
@@ -1191,6 +1225,9 @@
         "confirmButtonTitleIOS": "Califica en la App Store",
         "confirmButtonTitleAndroid": "Califica en Google Play",
         "descriptionIOS": "Si te gusta Rabby, una rápida valoración en la App Store significaría mucho."
+      },
+      "homeCenterTipScreenshot": {
+        "description": "Toma una captura de pantalla en cualquier momento para informar rápidamente de un error."
       }
     },
     "bridge": {
@@ -1861,7 +1898,16 @@
       "ContentGeneratedByAI": "Este contenido fue generado por IA",
       "Introduction": "Introducción",
       "ShowMore": "Mostrar más",
-      "Fold": "Plegar"
+      "Fold": "Plegar",
+      "Mybalance": "Saldo de Token",
+      "guideToMarketData": "Datos del mercado:",
+      "Transaction": "Historial de Tokens",
+      "notSupported": "Token no soportado",
+      "balance": "Saldo",
+      "tabs": {
+        "tokenSecurity": "Seguridad del Token",
+        "marketData": "Datos del mercado"
+      }
     },
     "setting": {
       "feedback": "Comentarios",
@@ -2158,10 +2204,18 @@
         "recent": "Reciente",
         "placeholder": "Buscar sitios web",
         "openUrl": "Abre \"{{searchText}}\"",
-        "searchInGoogle": "Buscar \"{{searchText}}\" en Google"
+        "searchInGoogle": "Buscar \"{{searchText}}\" en Google",
+        "recentEmpty": "Comenzando a explorar el sitio web"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Abrir sitios web"
+      },
+      "menu": {
+        "disconnect": "Desconectar",
+        "refresh": "Actualizar",
+        "favorite": "Favorito",
+        "contentModeMobile": "Solicitar sitio móvil",
+        "contentModeDesktop": "Solicitar sitio de escritorio"
       }
     },
     "browserManage": {
@@ -2268,6 +2322,12 @@
       "toast": {
         "remove": "Eliminar de la lista de seguimiento con éxito"
       }
+    },
+    "universalLink": {
+      "error": {
+        "setupWalletFirst": "Por favor, completa primero la configuración de la wallet.",
+        "unlockWalletFirst": "Por favor, desbloquea la aplicación para abrir el enlace."
+      }
     }
   },
   "global": {
@@ -2312,7 +2372,36 @@
     "Addresses": "Direcciones",
     "24h": "24h",
     "Edit": "Editar",
-    "Wallets": "Seleccionar Wallet"
+    "Wallets": "Seleccionar Wallet",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "pregúntameDespués"
+      },
+      "mediaLibrary": {
+        "title": "Permiso de Biblioteca Multimedia",
+        "message": "Esta app necesita acceso a tu biblioteca multimedia para detectar capturas de pantalla."
+      },
+      "camera": {
+        "title": "Permiso de cámara",
+        "message": "Esta aplicación necesita acceso a tu cámara para tomar fotos."
+      },
+      "bluetoothScan": {
+        "title": "Permiso de Escaneo Bluetooth",
+        "message": "Esta aplicación necesita acceso a su Bluetooth para escanear dispositivos."
+      },
+      "bluetoothConnect": {
+        "message": "Esta aplicación necesita acceso a tu Bluetooth para conectarse a dispositivos.",
+        "title": "Permiso de Conexión Bluetooth"
+      },
+      "bluetoothAdmin": {
+        "title": "Permiso de administrador de Bluetooth",
+        "message": "Esta aplicación necesita acceso a tu Bluetooth para gestionar dispositivos."
+      },
+      "location": {
+        "title": "Permiso de ubicación",
+        "message": "Esta aplicación necesita acceso a tu ubicación para proporcionar funciones basadas en la ubicación."
+      }
+    }
   },
   "bluetooth": {
     "powered_off_alert": {

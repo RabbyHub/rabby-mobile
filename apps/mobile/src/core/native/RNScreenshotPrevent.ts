@@ -1,12 +1,33 @@
-import { makeRnEEClass, resolveNativeModule } from './utils';
+import { PermissionsAndroid } from 'react-native';
+import {
+  IS_ANDROID,
+  IS_IOS,
+  makeRnEEClass,
+  resolveNativeModule,
+} from './utils';
+import i18next from 'i18next';
 
 const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
   'RNScreenshotPrevent',
 );
 
 type Listeners = {
-  userDidTakeScreenshot: () => any;
+  /**
+   * @platform iOS, Android >= 14
+   */
+  userDidTakeScreenshot: (ret?: {
+    androidScanEmpty?: string;
+    androidHasPermission?: boolean;
+    captured?: boolean;
+    path?: string;
+    height?: string | number;
+    width?: string | number;
+    imageBase64?: string;
+    imageType?: 'jpeg' | 'png';
+    name?: string;
+  }) => any;
   screenCapturedChanged: (ret: { isBeingCaptured: boolean }) => any;
+  screenCaptureDetectionChanged: (ret: { enabled: boolean }) => any;
   /**
    * @description subscribe to android app state change, pause means app is in background, resume means app is in foreground
    */
@@ -69,10 +90,19 @@ function onPreventScreenshotChanged(fn: Listeners['preventScreenshotChanged']) {
   return eventEmitter.addListener('preventScreenshotChanged', fn);
 }
 
+function onScreenCaptureDetectionChanged(
+  fn: Listeners['screenCaptureDetectionChanged'],
+) {
+  const handler = makeDefaultHandler<'screenCaptureDetectionChanged'>(fn);
+  if (handler) return handler;
+
+  return eventEmitter.addListener('screenCaptureDetectionChanged', fn);
+}
+
 if (__DEV__) {
-  iosOnUserDidTakeScreenshot(() => {
-    console.debug('userDidTakeScreenshot');
-  });
+  // iosOnUserDidTakeScreenshot(() => {
+  //   console.debug('userDidTakeScreenshot');
+  // });
   iosOnScreenCaptureChanged(params => {
     console.debug('screenCapturedChanged', params);
   });
@@ -96,6 +126,7 @@ const RNScreenshotPrevent = Object.freeze({
   iosOnScreenCaptureChanged,
   iosOnUserDidTakeScreenshot,
   androidOnLifeCycleChanged,
+  onScreenCaptureDetectionChanged,
 });
 
 export default RNScreenshotPrevent;

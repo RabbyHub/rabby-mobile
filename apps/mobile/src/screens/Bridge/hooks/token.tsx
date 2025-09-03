@@ -27,6 +27,7 @@ import { RootNames } from '@/constant/layout';
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 
 export const enableInsufficientQuote = true;
 
@@ -998,6 +999,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       };
     }, [setRefreshId]),
   );
+
+  useClearMiniGasStateEffect({
+    chainServerId: findChainByEnum(fromChain)?.serverId || '',
+  });
 
   return {
     clearExpiredTimer,

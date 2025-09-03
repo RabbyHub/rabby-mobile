@@ -413,6 +413,15 @@
         "alreadySubmitted": "İşlem zaten gönderildi. Yinelenen işlem tespit edildi.",
         "gasPriceTooLow": "Gaz fiyatı çok düşük. İşleminizin onaylanmasına yardımcı olmak için %30 oranında ayarlayacağız. Onaylamak ve yeniden denemek için “Tekrar Dene”ye tıklayın.",
         "nonceTooLow": "Nonce çok düşük. Bunu {{nonce}} olarak güncelleyeceğiz. Onaylamak ve tekrar denemek için “Tekrar Dene” butonuna tıklayın."
+      },
+      "addLiquidity": {
+        "priceDiff": "Fiyat Farkı",
+        "poolPrice": "Havuz Fiyatı",
+        "receiver": "Alıcı",
+        "token1": "Token Ekle 2",
+        "title": "Likidite Ekle",
+        "token0": "Token 1 Ekle",
+        "marketPrice": "Piyasa Fiyatı"
       }
     },
     "importSuccess": {
@@ -1101,6 +1110,9 @@
         "descriptionAndroid": "Eğer Rabby'yi beğendiyseniz, Google Play'de vereceğiniz hızlı bir puan çok şey ifade eder.",
         "feedbackTitle": "Geri bildiriminiz mi var? Dinliyoruz.",
         "descriptionIOS": "Eğer Rabby'i beğeniyorsanız, App Store'da vereceğiniz hızlı bir puan çok şey ifade eder."
+      },
+      "homeCenterTipScreenshot": {
+        "description": "Herhangi bir zamanda bir hatayı hızlı bir şekilde bildirmek için ekran görüntüsü alın."
       }
     },
     "newAddress": {
@@ -1774,7 +1786,16 @@
       "ShowMore": "Daha fazla göster",
       "ContentGeneratedByAI": "Bu içerik yapay zekâ tarafından oluşturuldu",
       "Fold": "Katlan",
-      "Introduction": "Giriş"
+      "Introduction": "Giriş",
+      "guideToMarketData": "Piyasa Verileri:",
+      "balance": "Bakiyeniz",
+      "notSupported": "Token desteklenmiyor",
+      "Mybalance": "Token Bakiyesi",
+      "Transaction": "Token Geçmişi",
+      "tabs": {
+        "marketData": "Piyasa verileri",
+        "tokenSecurity": "Token Güvenliği"
+      }
     },
     "approvalsAddressList": {
       "title": "Onaylar"
@@ -1964,10 +1985,18 @@
         "results": "Sonuçlar",
         "recent": "Son Zamanlarda",
         "placeholder": "Web Siteleri Ara",
-        "searchInGoogle": "Google'da \"{{searchText}}\" arayın"
+        "searchInGoogle": "Google'da \"{{searchText}}\" arayın",
+        "recentEmpty": "Başlayın Keşfetmeye Web Sitesi"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Web Sitelerini Aç"
+      },
+      "menu": {
+        "favorite": "Favori",
+        "refresh": "Yenile",
+        "contentModeMobile": "Mobil Sitei Talep Et",
+        "disconnect": "Bağlantıyı kesmek",
+        "contentModeDesktop": "Masaüstü Siteyi İsteği"
       }
     },
     "browserManage": {
@@ -2074,6 +2103,12 @@
       "toast": {
         "remove": "İzleme listesinden kaldırıldı Başarıyla"
       }
+    },
+    "universalLink": {
+      "error": {
+        "unlockWalletFirst": "Lütfen bağlantıyı açmak için uygulamayı açın.",
+        "setupWalletFirst": "Lütfen önce cüzdanı kurmayı tamamlayın."
+      }
     }
   },
   "component": {
@@ -2084,7 +2119,8 @@
       "loginInTip": {
         "login": "GasAccount'a giriş yapın",
         "desc": "Tüm Zincirlerde Gas Ücretlerini Ödeyin",
-        "title": "USDC / USDT Yatırın"
+        "title": "USDC / USDT Yatırın",
+        "loginAndClaim": "Giriş Yap ve {{amount}} Talep Et"
       },
       "loginConfirmModal": {
         "desc": "Oturum açtığınızda, bunu yalnızca bu adrese yatırabilirsiniz.",
@@ -2113,7 +2149,13 @@
       "depositWithToken": "Token ile Yatırın",
       "depositWithPayDesc": "%30 ücret, para çekme yok",
       "depositWithTokenDesc": "Ekstra ücret yok, anında para çekme",
-      "depositWithPay": "Satın al ve"
+      "depositWithPay": "Satın al ve",
+      "giftInfo": {
+        "giftTips": "Aktif kullanıcılar için Gas Ödülü",
+        "gotIt": "Ben Aldım",
+        "noWithdrawableBalanceTitle": "{{amount}} Çekilemez",
+        "noWithdrawableBalanceDescription": "{{amount}} gaz bakiyeniz geri alınamaz:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      }
     },
     "accountSwitcher": {
       "all": "Hepsi",
@@ -2252,6 +2294,24 @@
       "offlineText": "Ağ Hatası",
       "buttonText": "Yenileştir",
       "serviceErrorText": "Hizmet Hatası"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "Sorunu tanımlayın"
+      },
+      "submitButtonText": "Gönder",
+      "feedbackLabel": "Hata tanımı:",
+      "title": "Hata Bildirmek için Anlık Görüntü Alın"
+    },
+    "feedbackModal": {
+      "repliedTitle": "Rabby Destek yanıtladı:",
+      "pendingTitle": "Rabby Destek henüz yanıt vermedi.",
+      "issueDescriptionLabel": "Açıklama:",
+      "title": "Rabby Destekten Yanıt",
+      "issueDescription": "İşte bildirdiğiniz sorun:"
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "Başarıyla Gönderildi"
     }
   },
   "native": {
@@ -2311,7 +2371,36 @@
     "unlimited": "sınırsız",
     "24h": "24s",
     "Edit": "Düzenle",
-    "Wallets": "Cüzdan Seçin"
+    "Wallets": "Cüzdan Seçin",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "banaSonraSor"
+      },
+      "mediaLibrary": {
+        "title": "Medya Kütüphanesi İzni",
+        "message": "Bu uygulamanın ekran görüntülerini algılamak için medya kütüphanenize erişimi gerekir."
+      },
+      "camera": {
+        "title": "Kamera İzni",
+        "message": "Bu uygulama fotoğraf çekmek için kameranıza erişim gerektiriyor."
+      },
+      "bluetoothScan": {
+        "title": "Bluetooth Tarama İzni",
+        "message": "Bu uygulamanın cihazları taramak için Bluetooth'a erişimi gereklidir."
+      },
+      "bluetoothConnect": {
+        "title": "Bluetooth Bağlantı İzni",
+        "message": "Bu uygulamanın cihazlarla bağlantı kurmak için Bluetooth'a erişime ihtiyacı var."
+      },
+      "bluetoothAdmin": {
+        "message": "Bu uygulamanın cihazları yönetmek için Bluetooth'a erişim iznine ihtiyacı var.",
+        "title": "Bluetooth Yönetici İzni"
+      },
+      "location": {
+        "message": "Bu uygulama, konum tabanlı özellikler sağlamak için konumunuza erişim gerektirir.",
+        "title": "Konum İzni"
+      }
+    }
   },
   "background": {
     "error": {

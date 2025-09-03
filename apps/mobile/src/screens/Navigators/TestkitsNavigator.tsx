@@ -47,6 +47,12 @@ const DevUIDapps = registerAppScreen<
   loader: () => import('@/screens/Testkits/DevUIDapps'),
   name: TESTKITS_PRELOAD_SCREENS.DevUIDapps,
 });
+const DevUIPermissions = registerAppScreen<
+  typeof import('@/screens/Testkits/DevUIPermissions').default
+>({
+  loader: () => import('@/screens/Testkits/DevUIPermissions'),
+  name: TESTKITS_PRELOAD_SCREENS.DevUIPermissions,
+});
 const DevDataSQLite = registerAppScreen<
   typeof import('@/screens/Testkits/DevDataSQLite').default
 >({
@@ -68,11 +74,11 @@ const Stack = createCustomNativeStackNavigator();
 export function TestkitsNavigator() {
   // const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
-  // console.log('============== SettingNavigator Render =========');
+  // console.log('============== TestkitsNavigator Render =========');
 
-  useLayoutEffect(() => {
-    preloadNonProductionScreens();
-  }, []);
+  // useLayoutEffect(() => {
+  //   preloadNonProductionScreens();
+  // }, []);
 
   return (
     <Stack.Navigator
@@ -104,6 +110,10 @@ export function TestkitsNavigator() {
         component={DevUIScreenContainerShowCase}
       />
       <Stack.Screen name={RootNames.DevUIDapps} component={DevUIDapps} />
+      <Stack.Screen
+        name={RootNames.DevUIPermissions}
+        component={DevUIPermissions}
+      />
 
       <Stack.Screen name={RootNames.DevDataSQLite} component={DevDataSQLite} />
     </Stack.Navigator>

@@ -84,7 +84,36 @@
     "Addresses": "Адреса",
     "24h": "24ч",
     "Edit": "Редактировать",
-    "Wallets": "Выберите Кошелек"
+    "Wallets": "Выберите Кошелек",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "спроситеМеняПозже"
+      },
+      "mediaLibrary": {
+        "message": "Это приложение требует доступа к вашей медиа-библиотеке для определения скриншотов.",
+        "title": "Разрешение на доступ к медиатеки"
+      },
+      "camera": {
+        "title": "Разрешение на камеру",
+        "message": "Это приложение требует доступа к вашей камере для съемки фотографий."
+      },
+      "bluetoothScan": {
+        "title": "Разрешение на сканирование Bluetooth",
+        "message": "Это приложение требует доступа к вашему Bluetooth для сканирования устройств."
+      },
+      "bluetoothConnect": {
+        "message": "Это приложение требует доступа к вашему Bluetooth для подключения к устройствам.",
+        "title": "Разрешение на подключение по Bluetooth"
+      },
+      "bluetoothAdmin": {
+        "title": "Bluetooth Администраторские Права",
+        "message": "Это приложение нуждается в доступе к вашему Bluetooth для управления устройствами."
+      },
+      "location": {
+        "title": "Разрешение на местоположение",
+        "message": "Это приложение нуждается в доступе к вашему местоположению для предоставления функций, основанных на местоположении."
+      }
+    }
   },
   "page": {
     "getStart": {
@@ -649,6 +678,15 @@
         "gasPriceTooLow": "Цена газа слишком низкая. Мы увеличим ее на 30%, чтобы помочь вашей транзакции подтвердиться. Нажмите «Повторить», чтобы подтвердить и попробовать снова.",
         "gasLimitTooLow": "Лимит газа слишком низкий",
         "nonceTooHigh": "Nonce слишком высок. Пожалуйста, скорректируйте nonce и попробуйте снова."
+      },
+      "addLiquidity": {
+        "priceDiff": "Разница в цене",
+        "token1": "Добавить токен 2",
+        "token0": "Добавить токен 1",
+        "marketPrice": "Рыночная цена",
+        "poolPrice": "Цена пула",
+        "receiver": "Получатель",
+        "title": "Добавить ликвидность"
       }
     },
     "sendNFT": {
@@ -1096,6 +1134,9 @@
         "descriptionIOS": "Если вам нравится Rabby, быстрая оценка в App Store будет очень значима.",
         "feedbackTitle": "Есть вопросы? Мы вас слушаем.",
         "descriptionAndroid": "Если вам нравится Rabby, быстрая оценка в Google Play будет очень важна."
+      },
+      "homeCenterTipScreenshot": {
+        "description": "Сделайте скриншот в любое время, чтобы быстро сообщить о ошибке."
       }
     },
     "newAddress": {
@@ -1856,7 +1897,16 @@
       "Fold": "Складывайте",
       "ContentGeneratedByAI": "Этот контент был сгенерирован ИИ",
       "Introduction": "Введение",
-      "ShowMore": "Показать больше"
+      "ShowMore": "Показать больше",
+      "notSupported": "Токен не поддерживается",
+      "guideToMarketData": "Рыночные данные:",
+      "Mybalance": "Баланс токенов",
+      "Transaction": "История токенов",
+      "balance": "Баланс",
+      "tabs": {
+        "marketData": "Рынковые данные",
+        "tokenSecurity": "Безопасность токенов"
+      }
     },
     "settingModal": {
       "themeMode": {
@@ -2024,10 +2074,18 @@
         "searchInGoogle": "Искать \"{{searchText}}\" в Google",
         "placeholder": "Поиск веб-сайтов",
         "openUrl": "Открыть \"{{searchText}}\"",
-        "results": "Результаты"
+        "results": "Результаты",
+        "recentEmpty": "Начать исследовать сайт"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Открыть веб-сайты"
+      },
+      "menu": {
+        "disconnect": "Отключить",
+        "contentModeMobile": "Запросить мобильную версию сайта",
+        "contentModeDesktop": "Запросить десктопную версию сайта",
+        "favorite": "Избранное",
+        "refresh": "Обновить"
       }
     },
     "browserManage": {
@@ -2133,6 +2191,12 @@
       },
       "toast": {
         "remove": "Успешно удалено из списка наблюдения"
+      }
+    },
+    "universalLink": {
+      "error": {
+        "unlockWalletFirst": "Пожалуйста, разблокируйте приложение, чтобы открыть ссылку.",
+        "setupWalletFirst": "Пожалуйста, сначала завершите настройку кошелька."
       }
     }
   },
@@ -2250,7 +2314,8 @@
       "loginInTip": {
         "desc": "Оплата Gas-сборов на всех цепочках",
         "login": "Войти в GasAccount",
-        "title": "Депозит USDC / USDT"
+        "title": "Депозит USDC / USDT",
+        "loginAndClaim": "Войдите в систему и получите {{amount}}"
       },
       "loginConfirmModal": {
         "title": "Выберите кошелек для входа",
@@ -2265,7 +2330,13 @@
       "depositWithPayDesc": "30% комиссия, без выводов",
       "depositWithToken": "Депозит с Token",
       "depositWithTokenDesc": "Без дополнительных комиссий, мгновенные снятия средств",
-      "depositWithPay": "Купить с"
+      "depositWithPay": "Купить с",
+      "giftInfo": {
+        "noWithdrawableBalanceTitle": "{{amount}} Невозможен вывод",
+        "giftTips": "Награда за газ для активных пользователей",
+        "noWithdrawableBalanceDescription": "{{amount}} вашего газа баланса не подлежит выводу:\n1. Apple Pay / Google Pay\n2. Gas Rewards",
+        "gotIt": "Я понял это"
+      }
     },
     "NFTDetailModal": {
       "FieldLabel": {
@@ -2312,6 +2383,24 @@
       "offlineText": "Сетевая ошибка",
       "buttonText": "Обновить",
       "serviceErrorText": "Ошибка сервиса"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "Опишите проблему"
+      },
+      "feedbackLabel": "Описание ошибки:",
+      "submitButtonText": "Отправить",
+      "title": "Снимок для отчета об ошибке"
+    },
+    "feedbackModal": {
+      "issueDescriptionLabel": "Описание:",
+      "pendingTitle": "Rabby Support еще не ответил.",
+      "title": "Ответ от поддержки Rabby",
+      "repliedTitle": "Служба поддержки Rabby ответила:",
+      "issueDescription": "Вот проблема, о которой вы сообщили:"
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "Отправлено успешно"
     }
   },
   "constant": {

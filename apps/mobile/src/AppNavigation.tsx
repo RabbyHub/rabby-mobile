@@ -88,6 +88,7 @@ import {
   BrowserManagePopup,
 } from './screens/Browser/BottomSheetBrowser';
 import { TokenMarketInfoScreen } from './screens/TokenDetail/TokenMarketInfoScreen';
+import { ModalsSubmitFeedbackByScreenshotStub } from './components/Screenshot/ScreenshotModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 const HomeHiddenTabStack = createBottomTabNavigator<any>();
@@ -527,6 +528,9 @@ export default function AppNavigation({
         <BottomSheetBrowser />
         <BrowserManagePopup />
       </NavigationContainer>
+      <ModalsSubmitFeedbackByScreenshotStub />
+
+      {/** @warning put all business stub components before this modal */}
       <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />
       <FloatViewAutoLockCount />

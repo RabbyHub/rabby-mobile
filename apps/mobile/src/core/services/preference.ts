@@ -19,6 +19,7 @@ import { APP_STORE_NAMES } from '@/core/storage/storeConstant';
 import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 const { isSameAddress } = addressUtils;
 
@@ -606,9 +607,7 @@ export class PreferenceService {
   getLastTimeGasSelection = (chainId: keyof GasCache): ChainGas | null => {
     const cache = this.store.gasCache[chainId];
     if (cache && cache.lastTimeSelect === 'gasPrice') {
-      if (Date.now() <= (cache.expireAt || 0)) {
-        return cache;
-      } else if (cache.gasLevel) {
+      if (cache.gasLevel) {
         return {
           lastTimeSelect: 'gasLevel',
           gasLevel: cache.gasLevel,
@@ -859,6 +858,11 @@ export class PreferenceService {
     if (!exist) {
       this.store.pinedQueue = [token, ...pinedQueue];
       this.manualUnFoldToken(token);
+      matomoRequestEvent({
+        category: 'Watchlist Usage',
+        action: 'Watchlist_StarToken',
+        label: `${token.chainId}_${token.tokenId}`,
+      });
     }
   };
   removePinedToken = (token: IManageToken) => {

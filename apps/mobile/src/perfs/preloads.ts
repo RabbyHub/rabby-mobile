@@ -1,6 +1,5 @@
 import { isNonPublicProductionEnv } from '@/constant/env';
-import { RootNames } from '@/constant/layout';
-import { useLayoutEffect } from 'react';
+import { AppRootName, RootNames } from '@/constant/layout';
 import { isCached, preload } from 'react-native-bundle-splitter';
 
 export const PRELOAD_SCREENS = {
@@ -13,13 +12,14 @@ export async function preloadSettingsScreen() {
   await preload().component(PRELOAD_SCREENS[RootNames.Settings]);
 }
 
-export const TESTKITS_PRELOAD_SCREENS = {
+export const TESTKITS_PRELOAD_SCREENS: { [P in AppRootName]?: P } = {
   [RootNames.NewUserGetStarted2024]: 'NewUserGetStarted2024',
   [RootNames.DevUIFontShowCase]: 'DevUIFontShowCase',
   [RootNames.DevUIFormShowCase]: 'DevUIFormShowCase',
   [RootNames.DevUIAccountShowCase]: 'DevUIAccountShowCase',
   [RootNames.DevUIScreenContainerShowCase]: 'DevUIScreenContainerShowCase',
   [RootNames.DevUIDapps]: 'DevUIDapps',
+  [RootNames.DevUIPermissions]: 'DevUIPermissions',
   [RootNames.DevDataSQLite]: 'DevDataSQLite',
 };
 
@@ -30,7 +30,10 @@ export async function preloadNonProductionScreens() {
 
   return Promise.all(
     Object.values(TESTKITS_PRELOAD_SCREENS).map(screen => {
-      if (isCached(screen)) return;
+      if (isCached(screen)) {
+        console.debug('Screen already cached --- %s', screen);
+        return;
+      }
 
       console.debug('Preloading non-production screen --- %s', screen);
 
