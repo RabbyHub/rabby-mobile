@@ -630,6 +630,7 @@
           window.utils?.formatPrice(close) +
           '</span>';
         tooltipHTML += '</div>';
+        // 涨跌额
         tooltipHTML +=
           '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
         tooltipHTML +=
@@ -646,10 +647,25 @@
           '; font-size: 10px; font-weight: 600;">' +
           (isPositive ? '+' : '') +
           window.utils?.formatPrice(change) +
-          (isPositive ? '+' : '') +
-          '(' +
+          '</span>';
+        tooltipHTML += '</div>';
+        // 涨跌百分比
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">' +
+          window.description.chgPercent +
+          ':</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          (isPositive
+            ? window.colors.greenLineColor
+            : window.colors.redLineColor) +
+          '; font-size: 10px; font-weight: 600;">'(isPositive ? '+' : '') +
           changePercent.toFixed(2) +
-          '%)</span>';
+          '%</span>';
         tooltipHTML += '</div>';
 
         if (typeof volume === 'number') {

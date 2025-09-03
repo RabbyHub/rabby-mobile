@@ -137,6 +137,7 @@ export interface ChartDescription {
   open: string;
   close: string;
   chg: string;
+  chgPercent: string;
   volume: string;
 }
 export const createTradingViewChartTemplate = (
@@ -151,6 +152,9 @@ export const createTradingViewChartTemplate = (
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bignumber.js@9.3.1/bignumber.min.js" as="script" crossorigin="anonymous">
+    <link rel="preload" href="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js" as="script" crossorigin="anonymous">
     <style>
       body, html {
           margin: 0;
@@ -198,6 +202,7 @@ export const createTradingViewChartTemplate = (
         open: '${description.open}',
         close: '${description.close}',
         chg: '${description.chg}',
+        chgPercent: '${description.chgPercent}',
         volume: '${description.volume}',
       }
 
@@ -224,7 +229,7 @@ export const createTradingViewChartTemplate = (
         script.src =
           'https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js';
         script.onload = function () {
-          setTimeout(createChart, 500); // Small delay to ensure library is ready
+          setTimeout(createChart, 50); // Small delay to ensure library is ready
         };
         script.onerror = function () {
           console.error('TradingView: Failed to load library');
@@ -490,16 +495,16 @@ export const createTradingViewChartTemplate = (
         window.clearMarkers = LightweightCharts.createSeriesMarkers(window.candlestickSeries, [
           {
               time: highestTime,
-              position: 'aboveBar', // 在蜡烛图顶部
-              color: window.colors.greenLineColor,
+              position: 'aboveBar',
+              color: window.colors.highPriceLineColor,
               shape: 'arrowDown',
               text: window.description.high,
               size: 0.1, // 小尺寸
           },
           {
               time: lowestTime,
-              position: 'belowBar', // 在蜡烛图底部
-              color: window.colors.redLineColor,
+              position: 'belowBar',
+              color: window.colors.lowPriceLineColor,
               shape: 'arrowUp',
               text: window.description.low,
               size: 0.1,
@@ -643,25 +648,6 @@ export const createTradingViewChartTemplate = (
           window.utils?.formatPrice(close) +
           '</span>';
         tooltipHTML += '</div>';
-        tooltipHTML +=
-          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-        tooltipHTML +=
-          '<span style="color: ' +
-          window.colors.tooltip.title +
-          '; font-size: 10px;">' +
-          window.description.chg +
-          ':</span>';
-        tooltipHTML +=
-          '<span style="color: ' +
-          (isPositive ? window.colors.greenLineColor : window.colors.redLineColor) +
-          '; font-size: 10px; font-weight: 600;">' +
-          (isPositive ? '+' : '') +
-          window.utils?.formatPrice(change) +
-          (isPositive ? '+' : '') +
-          '(' +
-          changePercent.toFixed(2) +
-          '%)</span>';
-        tooltipHTML += '</div>';
 
         if (typeof volume === 'number') {
           tooltipHTML +=
@@ -680,6 +666,40 @@ export const createTradingViewChartTemplate = (
             '</span>';
           tooltipHTML += '</div>';
         }
+         // 涨跌额
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">' +
+          window.description.chg +
+          ':</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          (isPositive ? window.colors.greenLineColor : window.colors.redLineColor) +
+          '; font-size: 10px; font-weight: 600;">' +
+          (isPositive ? '+' : '') +
+          window.utils?.formatPrice(change) +
+          '</span>';
+        tooltipHTML += '</div>';
+
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">' +
+          window.description.chgPercent +
+          ':</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          (isPositive ? window.colors.greenLineColor : window.colors.redLineColor) +
+          '; font-size: 10px; font-weight: 600;">' +
+          (isPositive ? '+' : '') +
+          changePercent.toFixed(2) +
+          '%</span>';
+        tooltipHTML += '</div>';
 
         tooltipEl.innerHTML = tooltipHTML;
 
