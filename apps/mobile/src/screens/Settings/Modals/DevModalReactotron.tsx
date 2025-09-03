@@ -87,7 +87,7 @@ export function DevModalReactotron() {
               <View style={styles.inputBlock}>
                 <Text style={styles.fieldTitle}>Server</Text>
                 <FormInput
-                  containerStyle={{ borderRadius: 12 }}
+                  containerStyle={styles.textInputContainer}
                   inputProps={{
                     style: styles.textInput,
                     placeholderTextColor: colors2024['neutral-foot'],
@@ -178,6 +178,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginBottom: 4,
   },
 
+  textInputContainer: {
+    height: 56,
+    borderRadius: 12,
+  },
   textInput: {
     color: colors2024['neutral-title-1'],
     fontWeight: '400',

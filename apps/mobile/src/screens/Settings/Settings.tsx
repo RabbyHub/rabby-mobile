@@ -847,7 +847,7 @@ function DevSettingsBlocks() {
       <DevUIPlaygroundModal />
       <DevDataPlayground />
       <DevScreenRecordingModal />
-      <DevModalReactotron />
+      {__DEV__ && <DevModalReactotron />}
       <OpenApiPopup
         visible={isShowOpenApiPopup}
         onClose={() => {
