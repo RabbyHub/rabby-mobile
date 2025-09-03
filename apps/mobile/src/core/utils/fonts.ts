@@ -3,7 +3,7 @@ import { IS_ANDROID, IS_IOS } from '../native/utils';
 import type { StyleProp, TextStyle } from 'react-native';
 import { TextInput, Text } from 'react-native';
 
-if (IS_ANDROID) {
+if (IS_ANDROID || IS_IOS) {
   // @ts-expect-error
   Text.defaultProps = Object.assign({}, Text.defaultProps, {
     allowFontScaling: false,

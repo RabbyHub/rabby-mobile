@@ -7,6 +7,7 @@ import { initSentry } from './core/sentry';
 import './perfs/bundle-splitter-analysis.ts';
 import './databases/orm';
 import './core/services';
+import './core/utils/fonts';
 import './core/config/online';
 
 setJSExceptionHandler((error, isFatal) => {
