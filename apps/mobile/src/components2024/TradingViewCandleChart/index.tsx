@@ -19,6 +19,7 @@ interface ChartProps {
   height: number;
   onChartReady?: () => void;
   style?: StyleProp<ViewStyle>;
+  backGroundColor?: string;
 }
 interface TPSLPriceLines {
   tpPrice?: number;
@@ -105,7 +106,7 @@ const formatCandleData = (data: CandleData) => {
 };
 
 const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
-  ({ style, height, onChartReady }, ref) => {
+  ({ style, height, onChartReady, backGroundColor }, ref) => {
     const webViewRef = useRef<WebView>(null);
     const { styles, colors2024, isLight } = useTheme2024({ getStyle });
     const [webViewError, setWebViewError] = useState<string | null>(null);
@@ -225,9 +226,11 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
       () =>
         createTradingViewChartTemplate(
           {
-            background: isLight
-              ? colors2024['neutral-bg-0']
-              : colors2024['neutral-bg-1'],
+            background:
+              backGroundColor ||
+              (isLight
+                ? colors2024['neutral-bg-0']
+                : colors2024['neutral-bg-1']),
             text: colors2024['neutral-title-1'],
             border: colors2024['neutral-bg-5'],
             greenLineColor: 'rgba(42, 187, 127, 1)',
@@ -258,7 +261,7 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
             volume: t('component.kline.volume'),
           },
         ),
-      [colors2024, isLight, t],
+      [backGroundColor, colors2024, isLight, t],
     );
 
     if (webViewError) {
