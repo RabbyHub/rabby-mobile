@@ -31,8 +31,6 @@ export const usePollSendPendingCount = (params?: {
 }) => {
   const { isForMultipleAddress = false, pollingInterval = 10000 } =
     params || {};
-  const [successTxList, setSuccessTxList] = useAtom(successTxListAtom);
-  const [failTxList, setFailTxList] = useAtom(failTxListAtom);
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -60,16 +58,6 @@ export const usePollSendPendingCount = (params?: {
 
       total += data.length || 0;
     }
-    setSuccessTxList(
-      transactionHistoryService.getSendSucceedList(
-        isForMultipleAddress ? undefined : currentAccount?.address,
-      ),
-    );
-    setFailTxList(
-      transactionHistoryService.getSendFailedList(
-        isForMultipleAddress ? undefined : currentAccount?.address,
-      ),
-    );
     return total;
   };
   const [, setCount] = useAtom(pendingCountAtom);
