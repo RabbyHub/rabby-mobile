@@ -62,6 +62,7 @@ export const PerpsAccountCard: React.FC<{
                   isShowWithdrawPopup: true,
                 }));
               }}
+              titleStyle={styles.smBtnTitle}
               title={t('page.perps.PerpsCard.withdrawBtn')}
             />
           </View>
@@ -74,6 +75,7 @@ export const PerpsAccountCard: React.FC<{
                   isShowDepositPopup: true,
                 }));
               }}
+              titleStyle={styles.smBtnTitle}
               title={t('page.perps.PerpsCard.depositBtn')}
             />
           </View>
@@ -102,6 +104,7 @@ export const PerpsAccountCard: React.FC<{
               isShowLoginPopup: true,
             }));
           }}
+          titleStyle={styles.btnTitle}
           title={t('page.perps.PerpsCard.loginBtn')}
         />
         <Button
@@ -156,11 +159,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   btnTitle: {
-    // fontFamily: 'SF Pro Rounded',
-    // fontSize: 16,
-    // lineHeight: 20,
-    // fontWeight: '600',
-    // color: colors2024['neutral-title-1'],
+    fontSize: 17,
+    lineHeight: 22,
+  },
+  smBtnTitle: {
+    fontSize: 18,
+    lineHeight: 22,
   },
   loginCardContent: {
     display: 'flex',
@@ -181,8 +185,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   learnBtnTitle: {
     fontFamily: 'SF Pro Rounded',
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 17,
+    lineHeight: 22,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
   },
