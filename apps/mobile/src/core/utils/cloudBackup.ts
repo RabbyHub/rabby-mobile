@@ -9,6 +9,7 @@ import { appEncryptor } from '../services/shared';
 import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';
 import { getAddressFromMnemonic } from './mnemonic';
 import { sortBy } from 'lodash';
+import { devLog } from '@/utils/logger';
 
 const REMOTE_BACKUP_WALLET_DIR = `/${APPLICATION_ID}/wallet-backups`;
 const CURRENT_VERSION = 1;
@@ -67,7 +68,7 @@ export const saveMnemonicToCloud = async ({
 
   const filename = generateBackupFileName(data.address);
 
-  console.log(`save ${REMOTE_BACKUP_WALLET_DIR}/${filename}`);
+  devLog(`save ${REMOTE_BACKUP_WALLET_DIR}/${filename}`);
 
   await CloudStorage.writeFile(
     `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
@@ -130,7 +131,7 @@ export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
       const cantDownload = (await CloudStorage.downloadFile(
         `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
       )) as unknown as boolean;
-      console.log('download file', cantDownload);
+      devLog('download file', cantDownload);
       if (!cantDownload) {
         throw new Error('cant download file');
       }
@@ -139,7 +140,7 @@ export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
     const encryptedData = await CloudStorage.readFile(
       `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
     );
-    console.log(`${REMOTE_BACKUP_WALLET_DIR}/${filename}`, encryptedData);
+    devLog(`${REMOTE_BACKUP_WALLET_DIR}/${filename}`, encryptedData);
     try {
       const result = JSON.parse(encryptedData);
       backups.push({
@@ -158,7 +159,7 @@ export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
 };
 
 export const checkTokenIsExpired = async () => {
-  console.log('checkTokenIsExpired');
+  devLog('checkTokenIsExpired');
   try {
     await Promise.race([
       CloudStorage.exists(REMOTE_BACKUP_WALLET_DIR),
@@ -178,7 +179,7 @@ export const detectCloudIsAvailable = async () => {
     return true;
   }
   const available = await CloudStorage.isCloudAvailable();
-  console.log('detectCloudIsAvailable', available);
+  devLog('detectCloudIsAvailable', available);
   return available;
 };
 
@@ -241,7 +242,7 @@ export const loginIfNeeded = async () => {
 
   let loopCount = 0;
   while ((await checkTokenIsExpired()) && loopCount < 3) {
-    console.log('refreshAccessToken');
+    devLog('refreshAccessToken');
     result.accessToken = '';
     try {
       result.accessToken = await refreshAccessToken();
@@ -251,7 +252,7 @@ export const loginIfNeeded = async () => {
     loopCount++;
   }
 
-  console.log('loginIfNeeded', result);
+  devLog('loginIfNeeded', result);
   if (!result.accessToken) {
     throw new Error('login failed');
   }
@@ -260,7 +261,7 @@ export const loginIfNeeded = async () => {
 };
 
 export const makeDirIfNeeded = async () => {
-  console.log('check dir', REMOTE_BACKUP_WALLET_DIR);
+  devLog('check dir', REMOTE_BACKUP_WALLET_DIR);
   if (!(await CloudStorage.exists(REMOTE_BACKUP_WALLET_DIR))) {
     const dirs = REMOTE_BACKUP_WALLET_DIR.split('/');
     let currentDir = '';
@@ -269,7 +270,7 @@ export const makeDirIfNeeded = async () => {
         continue;
       }
       currentDir += '/' + dir;
-      console.log('make dir', currentDir);
+      devLog('make dir', currentDir);
       if (!(await CloudStorage.exists(currentDir))) {
         await CloudStorage.mkdir(currentDir);
       }
