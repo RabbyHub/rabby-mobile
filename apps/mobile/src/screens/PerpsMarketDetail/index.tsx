@@ -32,6 +32,7 @@ import { usePerpsPosition } from './hooks/usePerpsPosition';
 import { toast } from '@/components2024/Toast';
 import * as Sentry from '@sentry/react-native';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
+import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -309,6 +310,7 @@ export const PerpsMarketDetailScreen = () => {
   return (
     <>
       <NormalScreenContainer2024 type="bg2">
+        {!hasPermission ? <PerpsRegionAlert /> : null}
         <ScrollView
           style={styles.container}
           showsVerticalScrollIndicator={false}

@@ -2247,7 +2247,8 @@
       "PerpsDepositCard": {
         "availableToTrade": "Available to trade: ",
         "deposit": "Deposit"
-      }
+      },
+      "regionNotSupport": "Opening positions is not supported in your region"
     },
     "perpsDetail": {
       "PerpsPosition": {

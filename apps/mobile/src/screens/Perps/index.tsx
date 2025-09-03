@@ -27,6 +27,7 @@ import { PerpsMarketSection } from './components/PerpsMarketSection';
 import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
+import { PerpsRegionAlert } from './components/PerpsRegionAlert';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -48,6 +49,7 @@ export const PerpsScreen = () => {
     handleWithdraw,
     homeHistoryList,
     handleDeleteAgent,
+    hasPermission,
   } = usePerpsState();
 
   const [popupState, setPopupState] = usePerspPopupState();
@@ -55,9 +57,7 @@ export const PerpsScreen = () => {
   // console.log({ marketData });
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
-    console.log('-----------logoin');
     await login(v);
-    console.log('----------after login');
     setPopupState(prev => ({
       ...prev,
       isShowLoginPopup: false,
@@ -111,6 +111,7 @@ export const PerpsScreen = () => {
   return (
     <>
       <NormalScreenContainer2024 type="bg2">
+        {!hasPermission ? <PerpsRegionAlert /> : null}
         <ScrollView
           style={styles.container}
           showsVerticalScrollIndicator={false}
