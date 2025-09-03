@@ -224,7 +224,7 @@ export const createTradingViewChartTemplate = (
         script.src =
           'https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js';
         script.onload = function () {
-          setTimeout(createChart, 500); // Small delay to ensure library is ready
+          setTimeout(createChart, 50); // Small delay to ensure library is ready
         };
         script.onerror = function () {
           console.error('TradingView: Failed to load library');
