@@ -609,7 +609,7 @@ export const usePerpsState = () => {
 
   const logout = useMemoizedFn((address: string) => {
     _logout();
-    apisPerps.destroyPerpsSDK();
+    // apisPerps.destroyPerpsSDK();
     apisPerps.setPerpsCurrentAccount(null);
     apisPerps.setSendApproveAfterDeposit(address, []);
   });

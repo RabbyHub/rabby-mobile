@@ -53,11 +53,11 @@ class ApisPerps {
     return sdkInstance;
   }
 
-  destroyPerpsSDK() {
-    sdkInstance?.ws.disconnect();
-    sdkInstance = null;
-    currentMasterAddress = null;
-  }
+  // destroyPerpsSDK() {
+  //   sdkInstance?.ws.disconnect();
+  //   sdkInstance = null;
+  //   currentMasterAddress = null;
+  // }
 
   createPerpsAgentWallet = async (masterWallet: string) => {
     return perpsService.createAgentWallet(masterWallet);
