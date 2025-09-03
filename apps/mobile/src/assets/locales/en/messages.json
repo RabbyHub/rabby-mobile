@@ -2632,7 +2632,8 @@
         "message": "This app needs access to your location to provide location-based features."
       }
     },
-    "check": "Check"
+    "check": "Check",
+    "gotIt": "Got It"
   },
   "background": {
     "error": {

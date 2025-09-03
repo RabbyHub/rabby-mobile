@@ -383,7 +383,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 40,
     lineHeight: 48,
-    fontWeight: '800',
+    fontWeight: '900',
     color: colors2024['neutral-title-1'],
   },
   changeText: {
