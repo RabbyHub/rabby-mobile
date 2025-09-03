@@ -679,13 +679,6 @@ function DevSettingsBlocks() {
                 setMockBatchRevokeVisible(true);
               },
             },
-            {
-              label: 'Reactotron Settings',
-              icon: RcCode,
-              onPress: async () => {
-                setReactotronModalVisible(true);
-              },
-            },
           ],
         },
       }),
@@ -792,6 +785,13 @@ function DevSettingsBlocks() {
                   session: INTERNAL_REQUEST_SESSION,
                   account: currentAccount!,
                 });
+              },
+            },
+            {
+              label: 'Reactotron Settings',
+              icon: RcCode,
+              onPress: async () => {
+                setReactotronModalVisible(true);
               },
             },
             // {

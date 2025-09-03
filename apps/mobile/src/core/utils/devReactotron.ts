@@ -79,7 +79,7 @@ export function useReactotronSettings() {
     reactotronSettingsAtom,
   );
 
-  const setMetroServer = useCallback(
+  const setReactotronServer = useCallback(
     (metroServer: string) => {
       setReactotronSettings(prev => {
         if (metroServer) {
@@ -93,5 +93,5 @@ export function useReactotronSettings() {
     [setReactotronSettings],
   );
 
-  return { reactotronSettings, setMetroServer };
+  return { reactotronSettings, setReactotronServer };
 }

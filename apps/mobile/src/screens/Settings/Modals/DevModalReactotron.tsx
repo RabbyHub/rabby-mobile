@@ -39,7 +39,7 @@ export function useReactotronModalVisible() {
 
 export function DevModalReactotron() {
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { reactotronSettings, setMetroServer } = useReactotronSettings();
+  const { reactotronSettings, setReactotronServer } = useReactotronSettings();
   const {
     reactotronModalVisible: visible,
     setReactotronModalVisible: setVisible,
@@ -59,9 +59,9 @@ export function DevModalReactotron() {
   }, [setVisible]);
 
   const handleConfirm = useCallback(() => {
-    setMetroServer(hostname);
+    setReactotronServer(hostname);
     setVisible(false);
-  }, [hostname, setVisible, setMetroServer]);
+  }, [hostname, setVisible, setReactotronServer]);
 
   useEffect(() => {
     if (!visible) {
