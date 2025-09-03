@@ -2334,7 +2334,8 @@
       "time": "Time",
       "open": "Open",
       "close": "Close",
-      "chg": "%Chg",
+      "chg": "Chg",
+      "chgPercent": "%Chg",
       "volume": "Volume"
     }
   },

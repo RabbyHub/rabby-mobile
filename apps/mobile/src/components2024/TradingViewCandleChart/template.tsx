@@ -137,6 +137,7 @@ export interface ChartDescription {
   open: string;
   close: string;
   chg: string;
+  chgPercent: string;
   volume: string;
 }
 export const createTradingViewChartTemplate = (
@@ -198,6 +199,7 @@ export const createTradingViewChartTemplate = (
         open: '${description.open}',
         close: '${description.close}',
         chg: '${description.chg}',
+        chgPercent: '${description.chgPercent}',
         volume: '${description.volume}',
       }
 
@@ -643,25 +645,6 @@ export const createTradingViewChartTemplate = (
           window.utils?.formatPrice(close) +
           '</span>';
         tooltipHTML += '</div>';
-        tooltipHTML +=
-          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
-        tooltipHTML +=
-          '<span style="color: ' +
-          window.colors.tooltip.title +
-          '; font-size: 10px;">' +
-          window.description.chg +
-          ':</span>';
-        tooltipHTML +=
-          '<span style="color: ' +
-          (isPositive ? window.colors.greenLineColor : window.colors.redLineColor) +
-          '; font-size: 10px; font-weight: 600;">' +
-          (isPositive ? '+' : '') +
-          window.utils?.formatPrice(change) +
-          (isPositive ? '+' : '') +
-          '(' +
-          changePercent.toFixed(2) +
-          '%)</span>';
-        tooltipHTML += '</div>';
 
         if (typeof volume === 'number') {
           tooltipHTML +=
@@ -680,6 +663,40 @@ export const createTradingViewChartTemplate = (
             '</span>';
           tooltipHTML += '</div>';
         }
+         // 涨跌额
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">' +
+          window.description.chg +
+          ':</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          (isPositive ? window.colors.greenLineColor : window.colors.redLineColor) +
+          '; font-size: 10px; font-weight: 600;">' +
+          (isPositive ? '+' : '') +
+          window.utils?.formatPrice(change) +
+          '</span>';
+        tooltipHTML += '</div>';
+
+        tooltipHTML +=
+          '<div style="display: flex; justify-content: space-between; margin-bottom: 2px;">';
+        tooltipHTML +=
+          '<span style="color: ' +
+          window.colors.tooltip.title +
+          '; font-size: 10px;">' +
+          window.description.chgPercent +
+          ':</span>';
+        tooltipHTML +=
+          '<span style="color: ' +
+          (isPositive ? window.colors.greenLineColor : window.colors.redLineColor) +
+          '; font-size: 10px; font-weight: 600;">' +
+          (isPositive ? '+' : '') +
+          changePercent.toFixed(2) +
+          '%</span>';
+        tooltipHTML += '</div>';
 
         tooltipEl.innerHTML = tooltipHTML;
 

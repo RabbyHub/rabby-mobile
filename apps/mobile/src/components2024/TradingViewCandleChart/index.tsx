@@ -254,6 +254,7 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
             open: t('component.kline.open'),
             close: t('component.kline.close'),
             chg: t('component.kline.chg'),
+            chgPercent: t('component.kline.chgPercent'),
             volume: t('component.kline.volume'),
           },
         ),
