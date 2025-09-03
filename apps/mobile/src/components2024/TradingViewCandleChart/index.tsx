@@ -172,6 +172,7 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
             data: dataToSend,
             source: dataSource,
             showVolume: data.showVolume ?? false,
+            fitContent: data.fitContent ?? false,
           };
           webViewRef.current.postMessage(JSON.stringify(message));
         }
