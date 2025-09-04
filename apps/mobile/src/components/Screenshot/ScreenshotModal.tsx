@@ -15,7 +15,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { useSubmitFeedbackOnScreenshot } from './hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 
-import RcCloseCC from './icons/close-cc.svg';
+// import RcCloseCC from './icons/close-cc.svg';
 import RcEditCC from './icons/edit-cc.svg';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
@@ -98,7 +98,7 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
                 onPress={wrapOnPress(() => {
                   setBottomInputVisible(false);
                 })}>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={styles.modalClose}
                   onPress={wrapOnPress(() => {
                     closeSubmitModal();
@@ -107,7 +107,7 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
                     style={styles.modalCloseIcon}
                     color={styles.modalCloseIcon.color}
                   />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
                 <View style={styles.modalContent}>
                   <View style={styles.titleWrapper}>
                     <Text style={styles.title}>
@@ -440,13 +440,15 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
     buttonStyle: {
       height: 56,
     },
-    cancelButtonContainer: {},
+    cancelButtonContainer: {
+      // backgroundColor: colors2024['neutral-bg-5'],
+    },
     cancelButtonTitle: {
       color: colors2024['neutral-body'],
     },
     cancelButtonStyle: {
       backgroundColor: colors2024['neutral-bg-5'],
-      borderColor: colors2024['neutral-bg-5'],
+      borderWidth: 0,
     },
     submitButtonContainer: {},
     submitButtonTitle: {},
