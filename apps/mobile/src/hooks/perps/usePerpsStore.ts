@@ -16,6 +16,7 @@ import { apisPerps } from '@/core/apis';
 import { formatMarkData } from '@/utils/perps';
 import { eventBus, EVENTS } from '@/utils/events';
 import { openapi } from '@/core/request';
+import { maxBy } from 'lodash';
 
 // 保持原有的接口定义
 export interface PositionAndOpenOrder extends AssetPosition {
@@ -205,10 +206,23 @@ export const usePerpsStore = () => {
         return state;
       }
       const { newHistoryList } = payload;
+      const depositList = newHistoryList.filter(
+        item => item.type === 'deposit',
+      );
+      const withdrawList = newHistoryList.filter(
+        item => item.type === 'withdraw',
+      );
+      const maxTimeItemDeposit = maxBy(depositList, 'time');
+      const maxTimeItemWithdraw = maxBy(withdrawList, 'time');
       setState(prev => {
-        const filteredLocalHistory = prev.localLoadingHistory.filter(
-          item => !newHistoryList.some(l => l.hash === item.hash),
-        );
+        // 使用当前userAccountHistory过滤 localLoadingHistory
+        const filteredLocalHistory = state.localLoadingHistory.filter(item => {
+          if (item.type === 'deposit') {
+            return item.time >= (maxTimeItemDeposit?.time || 0);
+          } else {
+            return item.time >= (maxTimeItemWithdraw?.time || 0);
+          }
+        });
         return {
           ...prev,
           userAccountHistory: newHistoryList,
