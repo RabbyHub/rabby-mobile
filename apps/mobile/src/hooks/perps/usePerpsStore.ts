@@ -7,6 +7,7 @@ import {
   OpenOrder,
   WsFill,
 } from '@rabby-wallet/hyperliquid-sdk';
+import { useAppState } from '@react-native-community/hooks';
 // import { ApproveSignatures } from '@/background/service/perps';
 import { atom, useAtom } from 'jotai';
 import { Account } from '@/core/services/preference';
@@ -117,6 +118,7 @@ const pollingTimerAtom = atom<NodeJS.Timeout | null>(null);
 
 export const usePerpsStore = () => {
   const [state, setState] = useAtom(perpsAtom);
+  const appState = useAppState();
 
   const [wsSubscriptions, setWsSubscriptions] = useAtom(wsSubscriptionsAtom);
   const [pollingTimer, setPollingTimer] = useAtom(pollingTimerAtom);
@@ -523,7 +525,10 @@ export const usePerpsStore = () => {
 
     const { unsubscribe: unsubscribeFills } = sdk.ws.subscribeToUserFills(
       data => {
-        console.log('User fills update:', data);
+        // Only process data when app is active
+        if (appState !== 'active') return;
+
+        console.log('User fills update:', data.fills.length);
         const { fills, isSnapshot, user } = data;
         if (user !== address) {
           return;
@@ -577,6 +582,39 @@ export const usePerpsStore = () => {
   const initEventBus = useMemoizedFn(() => {
     eventBus.on(EVENTS.PERPS.LOG_OUT, logout);
   });
+
+  const prevAppStateRef = useRef(appState);
+
+  useEffect(() => {
+    if (prevAppStateRef.current !== appState) {
+      if (appState !== 'active') {
+        unsubscribeAll();
+        stopPolling();
+        const sdk = apisPerps.getPerpsSDK();
+        sdk.ws.disconnect();
+      } else if (
+        appState === 'active' &&
+        state.isLogin &&
+        state.currentPerpsAccount &&
+        wsSubscriptions.length === 0 &&
+        !pollingTimer
+      ) {
+        subscribeToUserData(state.currentPerpsAccount.address);
+        startPolling();
+      }
+      prevAppStateRef.current = appState;
+    }
+  }, [
+    appState,
+    unsubscribeAll,
+    stopPolling,
+    subscribeToUserData,
+    startPolling,
+    state.isLogin,
+    state.currentPerpsAccount,
+    wsSubscriptions.length,
+    pollingTimer,
+  ]);
 
   return {
     // State

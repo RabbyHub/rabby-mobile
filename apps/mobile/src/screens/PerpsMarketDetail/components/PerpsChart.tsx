@@ -32,7 +32,7 @@ import {
 } from 'lightweight-charts';
 import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
 import { splitNumberByStep } from '@/utils/number';
-
+import { useAppState } from '@react-native-community/hooks';
 export interface ChartHoverData {
   time?: string;
   open?: number;
@@ -114,8 +114,10 @@ export const PerpsChart: React.FC<{
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
   const chartIsReadyRef = useRef(false);
   const [isReady, setIsReady] = useState(false);
+  const appState = useAppState();
   const [selectedInterval, setSelectedInterval] =
     React.useState<CANDLE_MENU_KEY>(CANDLE_MENU_KEY.ONE_DAY);
+  const unsubscribeRef = useRef<() => void>(() => {});
 
   const CANDLE_MENU_ITEM = useMemo(
     () => [
@@ -270,13 +272,19 @@ export const PerpsChart: React.FC<{
 
   // Subscribe to real-time candle updates
   useEffect(() => {
-    const unsubscribe = subscribeCandle();
-
-    return () => {
-      // Cleanup WebSocket subscription
-      unsubscribe?.();
-    };
-  }, [subscribeCandle, selectedInterval, market.name]);
+    if (appState === 'active') {
+      const unsubscribe = subscribeCandle();
+      unsubscribeRef.current = unsubscribe;
+      return () => {
+        unsubscribe?.();
+      };
+    } else {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = () => {};
+      }
+    }
+  }, [subscribeCandle, appState]);
 
   useEffect(() => {
     if (isReady && lineTagInfo) {
