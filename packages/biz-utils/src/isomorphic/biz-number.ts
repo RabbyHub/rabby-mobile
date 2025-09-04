@@ -166,6 +166,56 @@ export const formatUsdValue = (
   return '<$0.01';
 };
 
+export const formatPerpsNumber = (
+  num: string | number,
+  decimal = 2,
+  opt = {} as BigNumber.Format,
+  roundingMode = BigNumber.ROUND_HALF_UP as BigNumber.RoundingMode,
+) => {
+  const n = new BigNumber(num);
+  const format = {
+    prefix: '',
+    decimalSeparator: '.',
+    groupSeparator: ',',
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    fractionGroupSeparator: ' ',
+    fractionGroupSize: 0,
+    suffix: '',
+    ...opt,
+  };
+  if (n.isNaN()) {
+    return num.toString();
+  }
+  // hide the after-point part if number is more than 1000000
+  if (n.isGreaterThan(1000000)) {
+    if (n.gte(1e9)) {
+      return `${n.div(1e9).toFormat(decimal, roundingMode, format)}B`;
+    }
+    return n.decimalPlaces(0).toFormat(format);
+  }
+  return n.toFormat(decimal, roundingMode, format);
+};
+
+export const formatPerpsUsdValue = (
+  value: string | number,
+  roundingMode = BigNumber.ROUND_HALF_UP as BigNumber.RoundingMode,
+) => {
+  const bnValue = new BigNumber(value);
+  if (bnValue.lt(0)) {
+    return `-$${formatPerpsNumber(
+      Math.abs(Number(value)),
+      2,
+      undefined,
+      roundingMode,
+    )}`;
+  }
+  if (bnValue.gte(0.01) || bnValue.eq(0)) {
+    return `$${formatPerpsNumber(value, 2, undefined, roundingMode)}`;
+  }
+  return '<$0.01';
+};
+
 export const formatAmount = (amount: string | number, decimals = 4) => {
   if ((amount as number) > 1e9) {
     return `${new BigNumber(amount).div(1e9).toFormat(4)}B`;

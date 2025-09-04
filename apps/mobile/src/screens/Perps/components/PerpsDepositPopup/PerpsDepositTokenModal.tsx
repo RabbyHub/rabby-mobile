@@ -2,7 +2,9 @@ import { RcArrowRightCC } from '@/assets2024/icons/perps';
 import { AssetAvatar } from '@/components';
 import { Button } from '@/components2024/Button';
 import { RootNames } from '@/constant/layout';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { findChain } from '@/utils/chain';
@@ -33,6 +35,8 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
 
   const isSwap = token?.chain === arbUsdcToken?.chain;
   const navigation = useRabbyAppNavigation();
+  const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
+  const { state } = usePerpsStore();
 
   if (!token || !arbUsdcToken) {
     return null;
@@ -67,49 +71,54 @@ export const PerpsDepositTokenModal: React.FC<Props> = ({
             />
           </View>
           <View style={styles.footer}>
-            <Button
-              type="ghost"
-              title={t('global.cancel')}
-              onPress={onCancel}
-              containerStyle={styles.containerStyle}
-            />
-            <Button
-              type="primary"
-              title={
-                isSwap
-                  ? t('page.perps.PerpsDepositTokenModal.swapBtn')
-                  : t('page.perps.PerpsDepositTokenModal.bridgeBtn')
-              }
-              onPress={() => {
-                if (isSwap) {
-                  // todo account ?
-                  navigation.navigate(RootNames.StackTransaction, {
-                    screen: RootNames.MultiSwap,
-
-                    params: {
-                      swapAgain: true,
-                      chainEnum: findChain({ serverId: token.chain })?.enum,
-                      swapTokenId: [token._tokenId, arbUsdcToken._tokenId],
-                    },
-                  });
-                } else {
-                  // todo account ?
-                  navigation.navigate(RootNames.StackTransaction, {
-                    screen: RootNames.MultiBridge,
-
-                    params: {
-                      chainEnum: findChain({ serverId: token.chain })?.enum,
-                      tokenId: token._tokenId,
-                      toChainEnum: findChain({ serverId: arbUsdcToken.chain })
-                        ?.enum,
-                      toTokenId: arbUsdcToken._tokenId,
-                    },
-                  });
+            <View style={styles.containerStyle}>
+              <Button
+                type="ghost"
+                title={t('global.cancel')}
+                onPress={onCancel}
+              />
+            </View>
+            <View style={styles.containerStyle}>
+              <Button
+                type="primary"
+                title={
+                  isSwap
+                    ? t('page.perps.PerpsDepositTokenModal.swapBtn')
+                    : t('page.perps.PerpsDepositTokenModal.bridgeBtn')
                 }
-                onNavigate?.();
-              }}
-              containerStyle={styles.containerStyle}
-            />
+                onPress={async () => {
+                  await switchSceneCurrentAccount(
+                    'MakeTransactionAbout',
+                    state.currentPerpsAccount,
+                  );
+                  if (isSwap) {
+                    navigation.navigate(RootNames.StackTransaction, {
+                      screen: RootNames.MultiSwap,
+
+                      params: {
+                        swapAgain: true,
+                        chainEnum: findChain({ serverId: token.chain })?.enum,
+                        swapTokenId: [token._tokenId, arbUsdcToken._tokenId],
+                      },
+                    });
+                  } else {
+                    navigation.navigate(RootNames.StackTransaction, {
+                      screen: RootNames.MultiBridge,
+
+                      params: {
+                        chainEnum: findChain({ serverId: token.chain })?.enum,
+                        tokenId: token._tokenId,
+                        toChainEnum: findChain({ serverId: arbUsdcToken.chain })
+                          ?.enum,
+                        toTokenId: arbUsdcToken._tokenId,
+                      },
+                    });
+                  }
+                  onNavigate?.();
+                }}
+                containerStyle={styles.containerStyle}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -125,14 +134,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   container: {
-    maxWidth: 352,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: colors2024['neutral-bg-2'],
     borderRadius: 20,
     paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingTop: 50,
+    paddingBottom: 30,
     alignItems: 'center',
   },
 
@@ -140,7 +149,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 13,
+    gap: 12,
   },
   tokenSwap: {
     display: 'flex',
@@ -158,7 +167,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '500',
     color: colors2024['neutral-title-1'],
     marginBottom: 24,
-    marginTop: 30,
     textAlign: 'center',
   },
   accountContainer: {
@@ -170,7 +178,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   containerStyle: {
     // width: '100%',
     // height: 40,
-    height: 48,
     flex: 1,
   },
   buttonStyle: {},

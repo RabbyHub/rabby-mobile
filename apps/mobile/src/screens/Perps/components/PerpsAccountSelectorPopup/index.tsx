@@ -3,6 +3,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { apisPerps } from '@/core/apis';
 import { Account } from '@/core/services/preference';
 import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
@@ -11,10 +12,13 @@ import { ellipsisAddress } from '@/utils/address';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetFlatList, BottomSheetView } from '@gorhom/bottom-sheet';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  FlatList,
   ListRenderItem,
   Text,
   TouchableOpacity,
@@ -30,6 +34,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
   title?: React.ReactNode;
 }> = ({ visible, onClose, value, onChange, title }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
+  const { t } = useTranslation();
 
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getModalStyle,
@@ -47,6 +52,15 @@ export const PerpsAccountSelectorPopup: React.FC<{
       modalRef.current?.close();
     }
   }, [visible]);
+
+  const { data: lastUsdeAccount, runAsync: runGetLastUsedAccount } = useRequest(
+    () => {
+      return apisPerps.getPerpsLastUsedAccount();
+    },
+    {
+      manual: true,
+    },
+  );
 
   const { myAddresses } = useAccountSelectorList({
     selectedAccount: value,
@@ -81,8 +95,10 @@ export const PerpsAccountSelectorPopup: React.FC<{
     if (!visible) {
       setTmpSelectAccount(null);
       cancelSelect();
+    } else {
+      runGetLastUsedAccount();
     }
-  }, [cancelSelect, visible]);
+  }, [cancelSelect, runGetLastUsedAccount, visible]);
 
   const renderItem = useMemoizedFn<ListRenderItem<Account>>(({ item }) => {
     const usdValue = (() => {
@@ -123,10 +139,15 @@ export const PerpsAccountSelectorPopup: React.FC<{
               </View>
             </View>
             <View style={styles.rightArea}>
-              {loading ? (
-                isSameAccount(item, tmpSelectAccount) ? (
-                  <ActivityIndicator />
-                ) : null
+              {loading && isSameAccount(item, tmpSelectAccount) ? (
+                <ActivityIndicator />
+              ) : isSameAddress(item.address, lastUsdeAccount?.address || '') &&
+                item.type === lastUsdeAccount?.type ? (
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>
+                    {t('page.perps.PerpsAccountSelectorPopup.lastUsed')}
+                  </Text>
+                </View>
               ) : (
                 <>
                   {isCurrent ? (
@@ -155,18 +176,19 @@ export const PerpsAccountSelectorPopup: React.FC<{
       })}
       onDismiss={onClose}
       enableDynamicSizing
-      enableContentPanningGesture
+      enableContentPanningGesture={false}
       maxDynamicContentSize={maxHeight}>
       <BottomSheetView style={styles.container}>
         <View>
           <Text style={styles.title}>{title || 'Select Account'}</Text>
         </View>
 
-        <BottomSheetFlatList
+        <FlatList
           data={myAddresses}
           renderItem={renderItem}
           style={styles.list}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
         />
       </BottomSheetView>
     </AppBottomSheetModal>
@@ -206,7 +228,7 @@ const getModalStyle = createGetStyles2024(ctx => {
       flex: 1,
     },
     listContent: {
-      paddingBottom: 56,
+      paddingBottom: 36,
     },
     panelContainer: {
       position: 'relative',
@@ -291,6 +313,20 @@ const getModalStyle = createGetStyles2024(ctx => {
       justifyContent: 'center',
       alignItems: 'center',
       // height: '100%',
+    },
+    tag: {
+      paddingVertical: 1,
+      paddingHorizontal: 4,
+      borderRadius: 4,
+      backgroundColor: colors2024['brand-light-1'],
+    },
+    tagText: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 16,
+      color: ctx.colors2024['brand-default'],
     },
   };
 });

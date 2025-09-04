@@ -28,6 +28,7 @@ import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
+import { sleep } from '@/utils/async';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -202,7 +203,12 @@ export const PerpsScreen = () => {
           }));
         }}
         onDeposit={async v => {
-          await handleDeposit(v);
+          try {
+            await handleDeposit(v);
+          } catch (e) {
+            console.error(e);
+          }
+          // await sleep(5000);
           setPopupState(prev => ({
             ...prev,
             isShowDepositPopup: false,

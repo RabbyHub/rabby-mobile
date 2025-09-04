@@ -16,7 +16,7 @@ export const PerpsDepositCard: React.FC<{
     <View style={styles.card}>
       <Text style={styles.label}>
         {t('page.perps.PerpsDepositCard.availableToTrade')}
-        {formatUsdValue(availableBalance)}
+        <Text style={styles.balance}>{formatUsdValue(availableBalance)}</Text>
       </Text>
       <TouchableOpacity onPress={onDepositPress}>
         <View style={styles.btn}>
@@ -59,5 +59,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 20,
     fontWeight: '700',
     color: colors2024['brand-default'],
+  },
+  balance: {
+    fontWeight: '700',
   },
 }));

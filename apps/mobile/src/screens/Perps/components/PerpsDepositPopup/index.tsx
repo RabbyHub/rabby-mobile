@@ -5,6 +5,7 @@ import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import {
   ARB_USDC_TOKEN_ID,
+  ARB_USDC_TOKEN_ITEM,
   ARB_USDC_TOKEN_SERVER_CHAIN,
 } from '@/constant/perps';
 import { openapi } from '@/core/request';
@@ -24,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
 import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
+import { useUsdInput } from '@/hooks/useUsdInput';
 
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
@@ -36,7 +38,12 @@ export const PerpsDepositPopup: React.FC<{
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
-  const [amount, setAmount] = React.useState<string>('');
+  // const [amount, setAmount] = React.useState<string>('');
+  const {
+    value: amount,
+    onChangeText: setAmount,
+    displayedValue: displayedAmount,
+  } = useUsdInput();
 
   const [isShowTokenPopup, setIsShowTokenPopup] = useState(false);
   const [isShowModal, setIsShowModal] = useState(false);
@@ -118,7 +125,7 @@ export const PerpsDepositPopup: React.FC<{
       setAmount('');
       runFetchUsdcToken();
     }
-  }, [runFetchUsdcToken, visible]);
+  }, [runFetchUsdcToken, setAmount, visible]);
 
   if (!account) {
     return null;
@@ -168,32 +175,30 @@ export const PerpsDepositPopup: React.FC<{
                 ]}
                 textAlignVertical="center"
                 placeholder="$0"
-                value={amount}
+                value={displayedAmount}
                 onChangeText={setAmount}
                 numberOfLines={1}
               />
               <View style={styles.divider} />
-              {arbUsdc ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    setIsShowTokenPopup(true);
-                  }}>
-                  <View style={styles.tokenContainer}>
-                    <AssetAvatar
-                      size={26}
-                      chain={arbUsdc?.chain}
-                      logo={arbUsdc?.logo_url}
-                      chainSize={12}
-                    />
-                    <Text style={styles.tokenText}>
-                      {getTokenSymbol(arbUsdc)}
-                    </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setIsShowTokenPopup(true);
+                }}>
+                <View style={styles.tokenContainer}>
+                  <AssetAvatar
+                    size={26}
+                    chain={ARB_USDC_TOKEN_ITEM?.chain}
+                    logo={ARB_USDC_TOKEN_ITEM?.logo_url}
+                    chainSize={12}
+                  />
+                  <Text style={styles.tokenText}>
+                    {getTokenSymbol(ARB_USDC_TOKEN_ITEM)}
+                  </Text>
 
-                    <RcIconSwapBottomArrow />
-                  </View>
-                </TouchableOpacity>
-              ) : null}
+                  <RcIconSwapBottomArrow />
+                </View>
+              </TouchableOpacity>
             </View>
             <View style={styles.errorContainer}>
               {amountValidation.errorMessage ? (
@@ -299,6 +304,7 @@ const getStyle = createGetStyles2024(ctx => {
       flex: 1,
       paddingTop: 0,
       paddingBottom: 0,
+      color: ctx.colors2024['neutral-title-1'],
     },
     inputError: {
       color: ctx.colors2024['red-default'],

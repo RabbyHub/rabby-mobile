@@ -1,13 +1,18 @@
 import { RcIconInfoFillCC } from '@/assets/icons/common';
+import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
+import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
+import { ARB_USDC_TOKEN_ITEM } from '@/constant/perps';
 import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
+import { useUsdInput } from '@/hooks/useUsdInput';
 import { formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useRef } from 'react';
@@ -29,7 +34,12 @@ export const PerpsWithdrawPopup: React.FC<{
   const { t } = useTranslation();
   const { showTipsPopup } = useTipsPopup();
 
-  const [amount, setAmount] = React.useState<string>('');
+  // const [amount, setAmount] = React.useState<string>('');
+  const {
+    value: amount,
+    displayedValue: displayedAmount,
+    onChangeText: setAmount,
+  } = useUsdInput();
   const { runAsync: handleWithdraw, loading } = useRequest(
     async () => {
       Keyboard.dismiss();
@@ -84,7 +94,7 @@ export const PerpsWithdrawPopup: React.FC<{
     if (!visible) {
       setAmount('');
     }
-  }, [visible]);
+  }, [setAmount, visible]);
 
   return (
     <>
@@ -118,7 +128,7 @@ export const PerpsWithdrawPopup: React.FC<{
             </View>
             <View style={styles.inputContainer}>
               <BottomSheetTextInput
-                value={amount}
+                value={displayedAmount}
                 onChangeText={setAmount}
                 keyboardType="numeric"
                 style={[
@@ -127,6 +137,19 @@ export const PerpsWithdrawPopup: React.FC<{
                 ]}
                 placeholder="$0"
               />
+              <View style={styles.divider} />
+
+              <View style={styles.tokenContainer}>
+                <AssetAvatar
+                  size={26}
+                  chain={ARB_USDC_TOKEN_ITEM?.chain}
+                  logo={ARB_USDC_TOKEN_ITEM?.logo_url}
+                  chainSize={12}
+                />
+                <Text style={styles.tokenText}>
+                  {getTokenSymbol(ARB_USDC_TOKEN_ITEM)}
+                </Text>
+              </View>
             </View>
             <View style={styles.errorContainer}>
               {amountValidation.errorMessage ? (
@@ -214,8 +237,9 @@ const getStyle = createGetStyles2024(ctx => {
       fontSize: 28,
       lineHeight: 36,
       fontWeight: '700',
-      // color: ctx.colors2024['neutral-body'],
+      color: ctx.colors2024['neutral-title-1'],
       flex: 1,
+      minHeight: 36,
     },
     inputError: {
       color: ctx.colors2024['red-default'],
@@ -257,6 +281,27 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '400',
       fontFamily: 'SF Pro Rounded',
       color: ctx.colors2024['neutral-foot'],
+    },
+    divider: {
+      width: 1,
+      height: 28,
+      backgroundColor: ctx.colors2024['neutral-line'],
+    },
+    tokenContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+      // padding: 4,
+      // backgroundColor: ctx.colors2024['neutral-line'],
+      // borderRadius: 100,
+    },
+    tokenText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '700',
+      color: ctx.colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
     },
   };
 });

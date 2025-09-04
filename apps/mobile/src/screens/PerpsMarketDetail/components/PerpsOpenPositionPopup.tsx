@@ -4,10 +4,17 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
-import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import {
+  formatPerpsUsdValue,
+  formatUsdValue,
+  splitNumberByStep,
+} from '@/utils/number';
 import { calLiquidationPrice } from '@/utils/perps';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+} from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +23,8 @@ import { PerpsAutoCloseModal } from './PerpsAutoCloseModal';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
 import { StepInput } from '@/components2024/StepInput';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
+import BigNumber from 'bignumber.js';
+import { useUsdInput } from '@/hooks/useUsdInput';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -75,8 +84,14 @@ export const PerpsOpenPositionPopup: React.FC<{
     setLeveragePopupVisible(true);
   };
   const [autoCloseVisible, setAutoCloseVisible] = React.useState(false);
-  const [margin, setMargin] = React.useState<string>('');
-  const [leverage, setLeverage] = React.useState<number>(5);
+  // const [margin, setMargin] = React.useState<string>('');
+  const {
+    value: margin,
+    displayedValue,
+    onChangeText: setMargin,
+  } = useUsdInput();
+  const [selectedLeverage, setLeverage] = React.useState<number | undefined>(5);
+  const leverage = selectedLeverage || 1;
   const [autoClose, setAutoClose] = React.useState({
     isOpen: false,
     tpTriggerPx: '',
@@ -179,6 +194,35 @@ export const PerpsOpenPositionPopup: React.FC<{
     return { isValid: true, error: null };
   }, [margin, availableBalance, t, leverage, maxNtlValue]);
 
+  const leverageRangeValidation = React.useMemo(() => {
+    if (selectedLeverage == null || Number.isNaN(+selectedLeverage)) {
+      return {
+        error: true,
+        errorMessage: t('page.perps.leverageRangeMinError', {
+          min: leverageRang[0],
+        }),
+      };
+    }
+    if (selectedLeverage > leverageRang[1]) {
+      return {
+        error: true,
+        errorMessage: t('page.perps.leverageRangeMaxError', {
+          max: leverageRang[1],
+        }),
+      };
+    }
+
+    if (selectedLeverage < leverageRang[0]) {
+      return {
+        error: true,
+        errorMessage: t('page.perps.leverageRangeMinError', {
+          min: leverageRang[0],
+        }),
+      };
+    }
+    return { error: false, errorMessage: '' };
+  }, [selectedLeverage, leverageRang, t]);
+
   React.useEffect(() => {
     if (!visible) {
       setMargin('');
@@ -191,7 +235,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       setLeveragePopupVisible(false);
       setIsReviewMode(false);
     }
-  }, [visible, leverageRang]);
+  }, [visible, leverageRang, setMargin]);
 
   const openPosition = useMemoizedFn(async () => {
     setLoading(true);
@@ -266,14 +310,14 @@ export const PerpsOpenPositionPopup: React.FC<{
                 {t('page.perpsDetail.PerpsOpenPositionPopup.margin')}
               </Text>
 
-              <TextInput
+              <BottomSheetTextInput
                 keyboardType="numeric"
                 style={[
                   styles.input,
                   !marginValidation.isValid ? styles.inputError : null,
                 ]}
                 placeholder="$0"
-                value={margin}
+                value={displayedValue}
                 onChangeText={setMargin}
               />
               <Text style={styles.formItemDesc}>
@@ -289,11 +333,23 @@ export const PerpsOpenPositionPopup: React.FC<{
               </View>
             </View>
             <View style={styles.list}>
-              <View style={styles.listItem}>
+              <View style={[styles.listItem, styles.stepInputContainer]}>
                 <View style={styles.listItemMain}>
-                  <Text style={styles.label}>
+                  <Text
+                    style={[
+                      styles.label,
+                      leverageRangeValidation.errorMessage
+                        ? styles.hasError
+                        : null,
+                    ]}>
                     {t('page.perpsDetail.PerpsOpenPositionPopup.leverage')}
-                    <Text style={styles.labelInfo}>
+                    <Text
+                      style={[
+                        styles.labelInfo,
+                        leverageRangeValidation.errorMessage
+                          ? styles.hasError
+                          : null,
+                      ]}>
                       （{leverageRang[0]}-{leverageRang[1]}x）
                     </Text>
                   </Text>
@@ -301,14 +357,26 @@ export const PerpsOpenPositionPopup: React.FC<{
                 <View>
                   <StepInput
                     suffix="x"
-                    value={leverage}
+                    value={selectedLeverage}
                     onChange={setLeverage}
                     step={1}
+                    inputStyle={
+                      leverageRangeValidation.error ? styles.hasError : null
+                    }
                     min={leverageRang[0]}
                     max={leverageRang[1]}
+                    as="BottomSheetTextInput"
                   />
                 </View>
+                {/* {leverageRangeValidation.errorMessage ? (
+                  <View style={styles.stepInputError}>
+                    <Text style={[styles.errorMsg]}>
+                      {leverageRangeValidation.errorMessage}
+                    </Text>
+                  </View>
+                ) : null} */}
               </View>
+
               <View style={styles.listItem}>
                 <View style={styles.listItemMain}>
                   <Text style={styles.label}>
@@ -322,7 +390,11 @@ export const PerpsOpenPositionPopup: React.FC<{
                 </View>
                 <View>
                   <Text style={styles.value}>
-                    {formatUsdValue(Number(tradeAmount))} = {tradeSize} {coin}
+                    {formatPerpsUsdValue(
+                      Number(tradeSize) * markPrice,
+                      BigNumber.ROUND_DOWN,
+                    )}{' '}
+                    = {tradeSize} {coin}
                   </Text>
                 </View>
               </View>
@@ -377,7 +449,9 @@ export const PerpsOpenPositionPopup: React.FC<{
             <Button
               type="primary"
               title={t('global.check')}
-              disabled={!marginValidation.isValid}
+              disabled={
+                !marginValidation.isValid || leverageRangeValidation.error
+              }
               onPress={() => {
                 setIsReviewMode(true);
               }}
@@ -438,7 +512,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       height: '100%',
       paddingBottom: 56,
       paddingHorizontal: 20,
-      minHeight: 544,
+      // minHeight: 544,
     },
     formItem: {
       paddingHorizontal: 16,
@@ -482,10 +556,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     input: {
       fontFamily: 'SF Pro Rounded',
       fontSize: 40,
-      // lineHeight: 48,
+      lineHeight: 48,
       fontWeight: '900',
-      // color: ctx.colors2024['neutral-body'],
+      color: colors2024['neutral-title-1'],
       flex: 1,
+      textAlign: 'center',
     },
     inputError: {
       borderColor: colors2024['red-default'],
@@ -564,6 +639,28 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       lineHeight: 20,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
+    },
+
+    stepInputContainer: {
+      // display: 'flex',
+      // flexDirection: 'column',
+      // gap: 2,
+      // alignItems: 'flex-end',
+      position: 'relative',
+    },
+    stepInputError: {
+      position: 'absolute',
+      bottom: -2,
+      right: 0,
+      left: 0,
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      paddingRight: 16,
+      // backgroundColor: 'red',
+    },
+    hasError: {
+      color: colors2024['red-default'],
     },
   };
 });

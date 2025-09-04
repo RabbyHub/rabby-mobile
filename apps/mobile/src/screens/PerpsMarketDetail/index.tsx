@@ -323,7 +323,7 @@ export const PerpsMarketDetailScreen = () => {
               currentAssetCtx={currentAssetCtx}
               lineTagInfo={lineTagInfo}
             />
-            {isLogin ? (
+            {isLogin && !hasPosition ? (
               <PerpsDepositCard
                 availableBalance={availableBalance}
                 onDepositPress={() => {

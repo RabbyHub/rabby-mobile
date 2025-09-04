@@ -1,27 +1,46 @@
 import React, { useRef } from 'react';
 import {
+  StyleProp,
   StyleSheet,
   Text,
   TextInput,
+  TextStyle,
   TouchableOpacity,
   View,
+  ViewStyle,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { isNumber } from 'lodash';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
 export const StepInput: React.FC<{
   value?: number;
-  onChange?(v: number): void;
+  onChange?(v?: number): void;
   min?: number;
   max?: number;
   step?: number;
   suffix?: string;
-}> = ({ value, onChange, min, max, step = 1, suffix }) => {
+  as?: 'TextInput' | 'BottomSheetTextInput';
+  inputStyle?: StyleProp<TextStyle>;
+}> = ({
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  suffix,
+  as = 'TextInput',
+  inputStyle,
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyle });
-  const inputRef = useRef<TextInput>(null);
+  const InputComponent =
+    as === 'BottomSheetTextInput' ? BottomSheetTextInput : TextInput;
+
+  // todo fix any
+  const inputRef = useRef<any>(null);
 
   const handlePlus = useMemoizedFn(() => {
     const nextVal = (value || 0) + step;
@@ -43,22 +62,27 @@ export const StepInput: React.FC<{
 
   const handleChangeText = useMemoizedFn((v: string) => {
     const nextVal = +v;
-    if (Number.isNaN(nextVal)) {
-      onChange?.(0);
-    } else if (isNumber(min) && nextVal < min) {
-      onChange?.(min);
-    } else if (isNumber(max) && nextVal > max) {
-      onChange?.(max);
+
+    if (Number.isNaN(nextVal) || v === '') {
+      onChange?.();
+      // } else if (isNumber(min) && nextVal < min) {
+      //   onChange?.(min);
+      // } else if (isNumber(max) && nextVal > max) {
+      //   onChange?.(max);
     } else {
       onChange?.(nextVal);
     }
   });
 
+  const isMinDisabled = value == null || (isNumber(min) && value <= min);
+  const isMaxDisabled = value == null || (isNumber(max) && value >= max);
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
         onPress={handleMinus}
-        disabled={value == null || (isNumber(min) && value <= min)}>
+        disabled={isMinDisabled}
+        style={isMinDisabled ? styles.disabled : null}>
         <View style={styles.minus}>
           <Text style={styles.text}>-</Text>
         </View>
@@ -68,19 +92,29 @@ export const StepInput: React.FC<{
           inputRef.current?.focus();
         }}>
         <View style={styles.content}>
-          <TextInput
+          <InputComponent
             keyboardType="numeric"
             ref={inputRef}
             value={value == null ? '' : String(value)}
-            style={styles.input}
+            style={[styles.input, inputStyle]}
             onChangeText={handleChangeText}
           />
-          {suffix ? <Text style={styles.text}>{suffix}</Text> : null}
+          {suffix ? (
+            <Text
+              style={[
+                styles.text,
+                inputStyle,
+                value == null ? styles.opacity0 : null,
+              ]}>
+              {suffix}
+            </Text>
+          ) : null}
         </View>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={handlePlus}
-        disabled={value == null || (isNumber(max) && value >= max)}>
+        disabled={isMaxDisabled}
+        style={isMaxDisabled ? styles.disabled : null}>
         <View style={styles.plus}>
           <Text style={styles.text}>+</Text>
         </View>
@@ -140,6 +174,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontSize: 17,
       // lineHeight: 22,
       fontWeight: '700',
+    },
+    opacity0: {
+      opacity: 0,
+    },
+    disabled: {
+      opacity: 0.5,
     },
   };
 });

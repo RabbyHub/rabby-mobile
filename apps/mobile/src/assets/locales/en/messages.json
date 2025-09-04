@@ -2248,7 +2248,12 @@
         "availableToTrade": "Available to trade: ",
         "deposit": "Deposit"
       },
-      "regionNotSupport": "Opening positions is not supported in your region"
+      "regionNotSupport": "Opening positions is not supported in your region",
+      "leverageRangeMinError": "The minimum leverage is {{min}}x",
+      "leverageRangeMaxError": "The maximum leverage is {{max}}x",
+      "PerpsAccountSelectorPopup": {
+        "lastUsed": "Last Used"
+      }
     },
     "perpsDetail": {
       "PerpsPosition": {
