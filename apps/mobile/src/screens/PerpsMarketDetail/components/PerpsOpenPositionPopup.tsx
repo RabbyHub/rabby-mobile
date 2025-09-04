@@ -10,7 +10,7 @@ import {
   splitNumberByStep,
 } from '@/utils/number';
 import { calLiquidationPrice } from '@/utils/perps';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import {
   BottomSheetScrollView,
   BottomSheetTextInput,
@@ -18,13 +18,20 @@ import {
 import { useMemoizedFn } from 'ahooks';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, useWindowDimensions, View } from 'react-native';
+import {
+  Platform,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { PerpsAutoCloseModal } from './PerpsAutoCloseModal';
 import { PerpsOpenPositionCheckPopup } from './PerpsOpenPositionCheckPopup';
 import { StepInput } from '@/components2024/StepInput';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 import BigNumber from 'bignumber.js';
 import { useUsdInput } from '@/hooks/useUsdInput';
+const isAndroid = Platform.OS === 'android';
 
 export const PerpsOpenPositionPopup: React.FC<{
   visible?: boolean;
@@ -97,7 +104,6 @@ export const PerpsOpenPositionPopup: React.FC<{
     tpTriggerPx: '',
     slTriggerPx: '',
   });
-  const [loading, setLoading] = React.useState<boolean>(false);
 
   // 计算交易金额
   const tradeAmount = React.useMemo(() => {
@@ -107,13 +113,17 @@ export const PerpsOpenPositionPopup: React.FC<{
 
   // 计算交易数量
   const tradeSize = React.useMemo(() => {
-    if (!markPrice || !tradeAmount) return '0';
+    if (!markPrice || !tradeAmount) {
+      return '0';
+    }
     return Number(tradeAmount / markPrice).toFixed(szDecimals);
   }, [markPrice, tradeAmount, szDecimals]);
 
   // 计算预估清算价格
   const estimatedLiquidationPrice = React.useMemo(() => {
-    if (!markPrice || !leverage) return 0;
+    if (!markPrice || !leverage) {
+      return 0;
+    }
     const maxLeverage = leverageRang[1];
     return calLiquidationPrice(
       markPrice,
@@ -238,7 +248,6 @@ export const PerpsOpenPositionPopup: React.FC<{
   }, [visible, leverageRang, setMargin]);
 
   const openPosition = useMemoizedFn(async () => {
-    setLoading(true);
     const res = await handleOpenPosition({
       coin,
       size: tradeSize,
@@ -254,7 +263,6 @@ export const PerpsOpenPositionPopup: React.FC<{
           ? autoClose.slTriggerPx
           : undefined,
     });
-    setLoading(false);
     onConfirm();
     // return res;
   });
@@ -554,13 +562,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['red-default'],
     },
     input: {
-      fontFamily: 'SF Pro Rounded',
+      // fontFamily: 'SF Pro Rounded',
       fontSize: 40,
       lineHeight: 48,
       fontWeight: '900',
       color: colors2024['neutral-title-1'],
       flex: 1,
       textAlign: 'center',
+      ...(!isAndroid && {
+        fontFamily: 'SF Pro Rounded', // avoid some android phone show number not in center
+      }),
     },
     inputError: {
       borderColor: colors2024['red-default'],
