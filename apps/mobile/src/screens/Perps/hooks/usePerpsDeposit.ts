@@ -192,6 +192,7 @@ export const usePerpsDeposit = ({
           },
           directSubmit: true,
           account: currentPerpsAccount!,
+          showMaskLoading: false,
         });
         setDirectSigning(true);
         await sleep(500);
