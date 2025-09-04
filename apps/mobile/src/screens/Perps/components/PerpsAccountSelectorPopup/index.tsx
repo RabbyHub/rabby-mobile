@@ -1,4 +1,5 @@
 import { RcIconCorrectCC } from '@/assets/icons/common';
+import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
@@ -11,7 +12,11 @@ import { AddressItemShadowView } from '@/screens/Address/components/AddressItemS
 import { ellipsisAddress } from '@/utils/address';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetFlatList, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetFlatList,
+  BottomSheetScrollView,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -176,21 +181,84 @@ export const PerpsAccountSelectorPopup: React.FC<{
       })}
       onDismiss={onClose}
       enableDynamicSizing
-      enableContentPanningGesture={false}
+      enableContentPanningGesture
       maxDynamicContentSize={maxHeight}>
-      <BottomSheetView style={styles.container}>
-        <View>
-          <Text style={styles.title}>{title || 'Select Account'}</Text>
-        </View>
+      <BottomSheetScrollView>
+        <AutoLockView style={[styles.container]}>
+          <View>
+            <Text style={styles.title}>{title || 'Select Account'}</Text>
+          </View>
+          {myAddresses?.map(item => {
+            const usdValue = (() => {
+              const b = item.balance || 0;
+              return `$${splitNumberByStep(
+                b > 10 ? Math.floor(b) : b.toFixed(2),
+              )}`;
+            })();
 
-        <FlatList
-          data={myAddresses}
-          renderItem={renderItem}
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
-      </BottomSheetView>
+            const isCurrent = isSameAccount(item, value);
+            return (
+              <TouchableOpacity
+                onPress={() => {
+                  handleSelect(item);
+                }}>
+                <AddressItemShadowView
+                  // disableShadow
+                  style={[
+                    styles.addressItemView,
+                    // style,
+                    // isCurrent || isPressing ? styles.active : null,
+                  ]}>
+                  <View style={styles.addressItemInner}>
+                    <WalletIcon
+                      borderRadius={12}
+                      width={46}
+                      height={46}
+                      style={styles.walletIcon}
+                      address={item.address}
+                      type={item.brandName}
+                    />
+                    <View style={styles.centerInfo}>
+                      <View style={styles.nameAndAdderss}>
+                        <Text style={styles.addressText}>
+                          {item.aliasName || ellipsisAddress(item.address)}
+                        </Text>
+                      </View>
+                      <View style={styles.bottomArea}>
+                        <Text style={styles.balanceText}>{usdValue}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.rightArea}>
+                      {loading && isSameAccount(item, tmpSelectAccount) ? (
+                        <ActivityIndicator />
+                      ) : isSameAddress(
+                          item.address,
+                          lastUsdeAccount?.address || '',
+                        ) && item.type === lastUsdeAccount?.type ? (
+                        <View style={styles.tag}>
+                          <Text style={styles.tagText}>
+                            {t('page.perps.PerpsAccountSelectorPopup.lastUsed')}
+                          </Text>
+                        </View>
+                      ) : (
+                        <>
+                          {isCurrent ? (
+                            <RcIconCorrectCC
+                              color={colors2024['green-default']}
+                              width={16}
+                              height={16}
+                            />
+                          ) : null}
+                        </>
+                      )}
+                    </View>
+                  </View>
+                </AddressItemShadowView>
+              </TouchableOpacity>
+            );
+          })}
+        </AutoLockView>
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 };
@@ -212,8 +280,9 @@ const getModalStyle = createGetStyles2024(ctx => {
         ? ctx.colors2024['neutral-bg-0']
         : ctx.colors2024['neutral-bg-1'],
       paddingHorizontal: 20,
-      display: 'flex',
-      flexDirection: 'column',
+      // display: 'flex',
+      // flexDirection: 'column',
+      paddingBottom: 36,
     },
     title: {
       fontSize: 20,
@@ -225,10 +294,12 @@ const getModalStyle = createGetStyles2024(ctx => {
       textAlign: 'center',
     },
     list: {
-      flex: 1,
+      // flex: 1,
+      // height: '100%',
+      paddingBottom: 56,
     },
     listContent: {
-      paddingBottom: 36,
+      // paddingBottom: 36,
     },
     panelContainer: {
       position: 'relative',
