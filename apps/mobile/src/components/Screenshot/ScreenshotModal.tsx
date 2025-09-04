@@ -445,7 +445,8 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       color: colors2024['neutral-body'],
     },
     cancelButtonStyle: {
-      borderColor: colors2024['neutral-body'],
+      backgroundColor: colors2024['neutral-bg-5'],
+      borderColor: colors2024['neutral-bg-5'],
     },
     submitButtonContainer: {},
     submitButtonTitle: {},
