@@ -5,7 +5,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
@@ -51,6 +51,8 @@ export const PerpsScreen = () => {
     homeHistoryList,
     handleDeleteAgent,
     hasPermission,
+    refreshData,
+    fetchMarketData,
   } = usePerpsState();
 
   const [popupState, setPopupState] = usePerspPopupState();
@@ -109,6 +111,11 @@ export const PerpsScreen = () => {
     });
   }, [setPopupState]);
 
+  const onRefresh = useMemoizedFn(() => {
+    refreshData();
+    fetchMarketData(false);
+  });
+
   return (
     <>
       <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
@@ -116,7 +123,10 @@ export const PerpsScreen = () => {
         <ScrollView
           style={styles.container}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}>
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={false} onRefresh={onRefresh} />
+          }>
           <PerpsAccountCard
             isLogin={isLogin}
             accountSummary={accountSummary}

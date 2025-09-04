@@ -364,9 +364,6 @@ export const usePerpsStore = () => {
   const fetchPerpPermission = useMemoizedFn(async (address: string) => {
     const { has_permission } = await openapi.getPerpPermission({ id: address });
 
-    console.log({
-      has_permission,
-    });
     setHasPermission(has_permission);
   });
 
@@ -476,7 +473,7 @@ export const usePerpsStore = () => {
     fetchUserHistoricalOrders();
   });
 
-  const fetchMarketData = useMemoizedFn(async () => {
+  const fetchMarketData = useMemoizedFn(async (canUseCache = true) => {
     const sdk = apisPerps.getPerpsSDK();
     try {
       const fetchTopTokenList = async () => {
@@ -495,7 +492,7 @@ export const usePerpsStore = () => {
 
       const [topAssets, marketData] = await Promise.all([
         fetchTopTokenList(),
-        sdk.info.metaAndAssetCtxs(true),
+        sdk.info.metaAndAssetCtxs(canUseCache),
       ]);
       setMarketData(formatMarkData(marketData, topAssets));
     } catch (error) {

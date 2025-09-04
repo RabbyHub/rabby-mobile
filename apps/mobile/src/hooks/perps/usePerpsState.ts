@@ -769,5 +769,6 @@ export const usePerpsState = () => {
     handleWithdraw,
     refreshData: refreshData,
     handleDeleteAgent,
+    fetchMarketData,
   };
 };
