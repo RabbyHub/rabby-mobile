@@ -127,10 +127,12 @@ export const PerpsScreen = () => {
             marketDataMap={marketDataMap}
           />
           <PerpsMarketSection marketData={marketData} />
-          <PerpsHistorySection
-            marketDataMap={marketDataMap}
-            historyList={homeHistoryList}
-          />
+          {isLogin ? (
+            <PerpsHistorySection
+              marketDataMap={marketDataMap}
+              historyList={homeHistoryList}
+            />
+          ) : null}
           <PerpsIntro />
         </ScrollView>
       </NormalScreenContainer2024>
