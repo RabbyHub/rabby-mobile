@@ -54,7 +54,7 @@ export const PerpsHistoryScreen = () => {
   }, [coin, coinHistoryList, homeHistoryList]);
 
   return (
-    <NormalScreenContainer2024 type="bg2">
+    <NormalScreenContainer2024 type={isLight ? 'bg2' : 'bg1'}>
       <View style={styles.container}>
         <PerpsHistoryList marketDataMap={marketDataMap} historyList={list} />
       </View>
