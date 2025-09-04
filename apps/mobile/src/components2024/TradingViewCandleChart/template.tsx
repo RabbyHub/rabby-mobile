@@ -45,7 +45,7 @@ window.utils = {
       const absNum = Math.abs(v);
       return (isNegative ? '-' : '') + window.utils.formatLittleNumber(absNum);
     }
-    return v.toFixed(2);
+    return v.toFixed(4);
   },
   formatNumber: (v) => {
     if (v >= 1000000) {
