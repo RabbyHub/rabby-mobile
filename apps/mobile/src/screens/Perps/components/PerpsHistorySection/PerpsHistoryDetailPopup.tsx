@@ -1,10 +1,11 @@
-import { RcIconInfoFillCC } from '@/assets/icons/common';
+import { RcIconInfoFill1CC, RcIconInfoFillCC } from '@/assets/icons/common';
 import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
 import { useTheme2024 } from '@/hooks/theme';
+import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { formatPercent } from '@/screens/Home/utils/price';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -13,7 +14,12 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { WsFill } from '@rabby-wallet/hyperliquid-sdk';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
+import {
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 export const PerpsHistoryDetailPopup: React.FC<{
   visible?: boolean;
@@ -28,6 +34,7 @@ export const PerpsHistoryDetailPopup: React.FC<{
   });
 
   const { t } = useTranslation();
+  const { showTipsPopup } = useTipsPopup();
 
   const { coin, side, sz, px, closedPnl, time, fee, dir } = fill || {};
   const tradeValue = Number(sz) * Number(px);
@@ -157,16 +164,24 @@ export const PerpsHistoryDetailPopup: React.FC<{
                 </View>
               </View>
               <View style={styles.listItem}>
-                <View style={styles.listItemMain}>
-                  <Text style={styles.label}>
-                    {t('page.perps.historyDetail.size')}
-                  </Text>
-                  <RcIconInfoFillCC
-                    width={15}
-                    height={15}
-                    color={colors2024['neutral-info']}
-                  />
-                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    showTipsPopup({
+                      title: t('page.perps.historyDetail.size'),
+                      desc: t('page.perps.historyDetail.sizeTips'),
+                    });
+                  }}>
+                  <View style={styles.listItemMain}>
+                    <Text style={styles.label}>
+                      {t('page.perps.historyDetail.size')}
+                    </Text>
+                    <RcIconInfoFill1CC
+                      width={15}
+                      height={15}
+                      color={colors2024['neutral-info']}
+                    />
+                  </View>
+                </TouchableOpacity>
                 <View>
                   <Text style={styles.value}>
                     ${splitNumberByStep(tradeValue.toFixed(2))} = {sz} {coin}

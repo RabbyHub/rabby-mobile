@@ -1,4 +1,8 @@
-import { RcArrowRight2CC, RcIconInfoFillCC } from '@/assets/icons/common';
+import {
+  RcArrowRight2CC,
+  RcIconInfoFill1CC,
+  RcIconInfoFillCC,
+} from '@/assets/icons/common';
 import { AppSwitch } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
@@ -162,7 +166,11 @@ export const PerpsClosePositionPopup: React.FC<{
                 {t('page.perpsDetail.PerpsClosePositionPopup.fee')}{' '}
                 {formatPercent(bothFee, 4)}
               </Text>
-              <RcIconInfoFillCC color={'#CED0DA'} width={15} height={15} />
+              <RcIconInfoFill1CC
+                color={colors2024['neutral-info']}
+                width={15}
+                height={15}
+              />
             </View>
           </TouchableOpacity>
           <Button

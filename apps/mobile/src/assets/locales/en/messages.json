@@ -2194,7 +2194,8 @@
           "closeShortSl": "Close Short Stop Loss"
         },
         "perps": "Perps",
-        "gotItBtn": "I Got it"
+        "gotItBtn": "I Got it",
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
       "PerpsAutoCloseModal": {
         "takeProfitTipsLong": "Take profit price must be higher than current price",
@@ -2271,7 +2272,8 @@
         "tpPrice": "Take-Profit Price",
         "slPrice": "Stop-Loss Price",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
-        "fundingPaymentsTips": "This is the net funding payments since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token."
+        "fundingPaymentsTips": "This is the net funding payments since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
       "PerpsInfo": {
         "title": "Info",
@@ -2305,7 +2307,8 @@
         "size": "Size",
         "autoClose": "Auto Close",
         "tpPrice": "Take-Profit Price",
-        "slPrice": "Stop-Loss Price"
+        "slPrice": "Stop-Loss Price",
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
       },
       "PerpsOpenPositionCheckPopup": {
         "title": "Check Order",

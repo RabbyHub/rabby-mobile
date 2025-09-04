@@ -22,6 +22,7 @@ import {
   Platform,
   Text,
   TextInput,
+  TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -31,6 +32,8 @@ import { StepInput } from '@/components2024/StepInput';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 import BigNumber from 'bignumber.js';
 import { useUsdInput } from '@/hooks/useUsdInput';
+import { RcIconInfoFill1CC } from '@/assets/icons/common';
+import { useTipsPopup } from '@/hooks/useTipsPopup';
 const isAndroid = Platform.OS === 'android';
 
 export const PerpsOpenPositionPopup: React.FC<{
@@ -88,6 +91,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   const { t } = useTranslation();
   const [leveragePopupVisible, setLeveragePopupVisible] = React.useState(false);
   const [isReviewMode, setIsReviewMode] = React.useState(false);
+  const { showTipsPopup } = useTipsPopup();
 
   const openLeveragePopup = () => {
     setLeveragePopupVisible(true);
@@ -397,16 +401,26 @@ export const PerpsOpenPositionPopup: React.FC<{
               </View>
 
               <View style={styles.listItem}>
-                <View style={styles.listItemMain}>
-                  <Text style={styles.label}>
-                    {t('page.perpsDetail.PerpsOpenPositionPopup.size')}
-                  </Text>
-                  {/* <RcIconInfoFillCC
-                    width={15}
-                    height={15}
-                    color={colors2024['neutral-info']}
-                  /> */}
-                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    showTipsPopup({
+                      title: t('page.perpsDetail.PerpsOpenPositionPopup.size'),
+                      desc: t(
+                        'page.perpsDetail.PerpsOpenPositionPopup.sizeTips',
+                      ),
+                    });
+                  }}>
+                  <View style={styles.listItemMain}>
+                    <Text style={styles.label}>
+                      {t('page.perpsDetail.PerpsOpenPositionPopup.size')}
+                    </Text>
+                    <RcIconInfoFill1CC
+                      width={15}
+                      height={15}
+                      color={colors2024['neutral-info']}
+                    />
+                  </View>
+                </TouchableOpacity>
                 <View>
                   <Text style={styles.value}>
                     {formatPerpsUsdValue(

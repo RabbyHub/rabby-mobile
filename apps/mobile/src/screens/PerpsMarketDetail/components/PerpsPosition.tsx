@@ -1,4 +1,4 @@
-import { RcIconInfoFillCC } from '@/assets/icons/common';
+import { RcIconInfoFill1CC, RcIconInfoFillCC } from '@/assets/icons/common';
 import { AppSwitch } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
@@ -75,16 +75,24 @@ export const PerpsPosition: React.FC<{
           </View>
         </View>
         <View style={styles.listItem}>
-          <View style={styles.listItemMain}>
-            <Text style={styles.label}>
-              {t('page.perpsDetail.PerpsPosition.size')}
-            </Text>
-            {/* <RcIconInfoFillCC
-              width={15}
-              height={15}
-              color={colors2024['neutral-info']}
-            /> */}
-          </View>
+          <TouchableOpacity
+            onPress={() => {
+              showTipsPopup({
+                title: t('page.perpsDetail.PerpsPosition.size'),
+                desc: t('page.perpsDetail.PerpsPosition.sizeTips'),
+              });
+            }}>
+            <View style={styles.listItemMain}>
+              <Text style={styles.label}>
+                {t('page.perpsDetail.PerpsPosition.size')}
+              </Text>
+              <RcIconInfoFill1CC
+                width={15}
+                height={15}
+                color={colors2024['neutral-info']}
+              />
+            </View>
+          </TouchableOpacity>
           <View>
             <Text style={styles.value}>
               $
@@ -193,7 +201,7 @@ export const PerpsPosition: React.FC<{
               <Text style={styles.label}>
                 {t('page.perpsDetail.PerpsPosition.liquidationPrice')}
               </Text>
-              <RcIconInfoFillCC
+              <RcIconInfoFill1CC
                 width={15}
                 height={15}
                 color={colors2024['neutral-info']}
@@ -218,7 +226,7 @@ export const PerpsPosition: React.FC<{
               <Text style={styles.label}>
                 {t('page.perpsDetail.PerpsPosition.fundingPayments')}
               </Text>
-              <RcIconInfoFillCC
+              <RcIconInfoFill1CC
                 width={15}
                 height={15}
                 color={colors2024['neutral-info']}
@@ -226,7 +234,10 @@ export const PerpsPosition: React.FC<{
             </View>
           </TouchableOpacity>
           <View>
-            <Text style={styles.value}> ${positionData?.fundingPayments}</Text>
+            <Text style={styles.value}>
+              {Number(positionData?.fundingPayments || 0) > 0 ? '+' : '-'}$
+              {Math.abs(Number(positionData?.fundingPayments || 0))}
+            </Text>
           </View>
         </View>
       </View>
