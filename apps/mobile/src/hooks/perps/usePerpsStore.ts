@@ -372,7 +372,9 @@ export const usePerpsStore = () => {
     subscribeToUserData(account.address);
     startPolling();
     fetchPerpPermission(account.address);
-    fetchPerpFee();
+    setTimeout(() => {
+      fetchPerpFee();
+    }, 1000);
     console.log('loginPerpsAccount success', account.address);
   });
 
@@ -464,8 +466,9 @@ export const usePerpsStore = () => {
 
   const refreshData = useMemoizedFn(async () => {
     await fetchPositionAndOpenOrders();
-    await fetchUserNonFundingLedgerUpdates();
-    await fetchUserHistoricalOrders();
+    // await is login is too low
+    fetchUserNonFundingLedgerUpdates();
+    fetchUserHistoricalOrders();
   });
 
   const fetchMarketData = useMemoizedFn(async () => {
