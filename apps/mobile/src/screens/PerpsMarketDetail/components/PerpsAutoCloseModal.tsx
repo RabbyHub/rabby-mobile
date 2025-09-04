@@ -267,7 +267,12 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
 
                   <TextInput
                     keyboardType="numeric"
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      priceValidation.tp.error && tpPrice !== ''
+                        ? styles.inputError
+                        : null,
+                    ]}
                     placeholder="$0"
                     value={displayedTpPrice}
                     onChangeText={setTpPrice}
@@ -293,7 +298,12 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
 
                   <TextInput
                     keyboardType="numeric"
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      priceValidation.sl.error && slPrice !== ''
+                        ? styles.inputError
+                        : null,
+                    ]}
                     placeholder="$0"
                     value={displayedSlPrice}
                     onChangeText={setSlPrice}
@@ -482,7 +492,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     lineHeight: 42,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
-    minWidth: 70,
+    minWidth: 80,
     textAlign: 'center',
+  },
+  inputError: {
+    color: colors2024['red-default'],
   },
 }));

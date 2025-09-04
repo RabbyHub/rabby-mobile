@@ -171,7 +171,9 @@ export const PerpsDepositPopup: React.FC<{
                 keyboardType="numeric"
                 style={[
                   styles.input,
-                  !amountValidation.isValid ? styles.inputError : null,
+                  !amountValidation.isValid && amount !== ''
+                    ? styles.inputError
+                    : null,
                 ]}
                 textAlignVertical="center"
                 placeholder="$0"
@@ -307,6 +309,7 @@ const getStyle = createGetStyles2024(ctx => {
       paddingTop: 0,
       paddingBottom: 0,
       color: ctx.colors2024['neutral-title-1'],
+      minHeight: 52,
     },
     inputError: {
       color: ctx.colors2024['red-default'],

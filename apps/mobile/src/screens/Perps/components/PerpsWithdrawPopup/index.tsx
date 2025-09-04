@@ -133,7 +133,9 @@ export const PerpsWithdrawPopup: React.FC<{
                 keyboardType="numeric"
                 style={[
                   styles.input,
-                  !amountValidation.isValid ? styles.inputError : null,
+                  !amountValidation.isValid && amount !== ''
+                    ? styles.inputError
+                    : null,
                 ]}
                 placeholder="$0"
               />
@@ -245,7 +247,9 @@ const getStyle = createGetStyles2024(ctx => {
       fontWeight: '700',
       color: ctx.colors2024['neutral-title-1'],
       flex: 1,
-      minHeight: 36,
+      minHeight: 52,
+      paddingTop: 0,
+      paddingBottom: 0,
     },
     inputError: {
       color: ctx.colors2024['red-default'],

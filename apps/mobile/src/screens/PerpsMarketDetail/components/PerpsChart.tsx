@@ -32,6 +32,8 @@ import {
 } from 'lightweight-charts';
 import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
 import { splitNumberByStep } from '@/utils/number';
+import { Skeleton } from '@rneui/base';
+import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 
 export interface ChartHoverData {
   time?: string;
@@ -237,6 +239,7 @@ export const PerpsChart: React.FC<{
   const handleChartReady = useMemoizedFn(() => {
     setTimeout(() => {
       chartIsReadyRef.current = true;
+      setIsReady(true);
       if (chartData) {
         chartWebViewRef.current?.setData(chartData);
       }
@@ -302,7 +305,18 @@ export const PerpsChart: React.FC<{
         </Text>
       </View>
       <View style={styles.content}>
+        {!isReady ? (
+          <View style={styles.skeletonContainer}>
+            <Skeleton
+              width={'100%'}
+              height={150}
+              style={styles.skeleton}
+              LinearGradientComponent={LoadingLinear}
+            />
+          </View>
+        ) : null}
         <TradingViewCandleChart
+          style={isReady ? null : styles.opacity0}
           ref={chartWebViewRef}
           height={Dimensions.get('screen').width - 128}
           backGroundColor={
@@ -350,6 +364,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   content: {
     paddingHorizontal: 16,
+    position: 'relative',
   },
   menu: {
     display: 'flex',
@@ -403,5 +418,24 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   negative: {
     color: colors2024['red-default'],
+  },
+  skeletonContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  skeleton: {
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
+  },
+  opacity0: {
+    opacity: 0,
   },
 }));

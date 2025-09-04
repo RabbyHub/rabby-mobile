@@ -337,7 +337,9 @@ export const PerpsOpenPositionPopup: React.FC<{
                 keyboardType="numeric"
                 style={[
                   styles.input,
-                  !marginValidation.isValid ? styles.inputError : null,
+                  !marginValidation.isValid && margin !== ''
+                    ? styles.inputError
+                    : null,
                 ]}
                 placeholder="$0"
                 value={displayedValue}
@@ -608,7 +610,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       minWidth: 80,
     },
     inputError: {
-      borderColor: colors2024['red-default'],
+      color: colors2024['red-default'],
     },
     title: {
       fontFamily: 'SF Pro Rounded',

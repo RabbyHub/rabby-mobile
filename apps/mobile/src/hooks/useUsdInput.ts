@@ -5,20 +5,16 @@ export const useUsdInput = () => {
   const [input, setInput] = useState('');
 
   const onChangeText = useMemoizedFn((v: string) => {
-    if (v === '$') {
-      setInput('');
-    } else if (v.startsWith('$')) {
-      setInput(v);
-    } else if (v) {
-      setInput(`$${v}`);
-    } else {
-      setInput(v);
+    const value = v.startsWith('$') ? v.slice(1) : v;
+
+    if (/^\d*\.?\d*$/.test(value) || value === '') {
+      setInput(value);
     }
   });
 
   return {
     value: input.replace(/^\$/, ''),
-    displayedValue: input,
+    displayedValue: input ? `$${input}` : '',
     onChangeText,
   };
 };

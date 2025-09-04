@@ -118,12 +118,12 @@ export const usePerpsInitial = () => {
             'masterAddress isExpired, no restore approve signature, logout',
           );
           logout(masterAddress);
-          Sentry.captureException(
-            new Error(
-              'masterAddress isExpired, no restore approve signature, logout' +
-                masterAddress,
-            ),
-          );
+          // Sentry.captureException(
+          //   new Error(
+          //     'masterAddress isExpired, no restore approve signature, logout' +
+          //       masterAddress,
+          //   ),
+          // );
         }
       } else {
         const expiredAt = item?.validUntil;
@@ -134,12 +134,12 @@ export const usePerpsInitial = () => {
           // need to update agent for send new approve agent api avoid error
           apisPerps.createPerpsAgentWallet(masterAddress);
           logout(masterAddress);
-          Sentry.captureException(
-            new Error(
-              'masterAddress isExpired, update agent, auto login out' +
-                masterAddress,
-            ),
-          );
+          // Sentry.captureException(
+          //   new Error(
+          //     'masterAddress isExpired, update agent, auto login out' +
+          //       masterAddress,
+          //   ),
+          // );
         }
       }
     },
@@ -605,14 +605,14 @@ export const usePerpsState = () => {
     } catch (error: any) {
       console.error('Failed to login Perps account:', error);
       toast.error(error.message || 'Login failed');
-      Sentry.captureException(
-        new Error(
-          'PERPS Login failed' +
-            JSON.stringify({
-              error,
-            }),
-        ),
-      );
+      // Sentry.captureException(
+      //   new Error(
+      //     'PERPS Login failed' +
+      //       JSON.stringify({
+      //         error,
+      //       }),
+      //   ),
+      // );
     }
   });
 

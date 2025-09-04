@@ -1,12 +1,13 @@
 import { RcIconDepositCC, RcIconWithdrawCC } from '@/assets2024/icons/perps';
 import { AccountHistoryItem } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
-import { Spin } from '@/screens/TransactionRecord/components/Spin';
 import { createGetStyles2024 } from '@/utils/styles';
 import { sinceTime } from '@/utils/time';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Animated, Text, View } from 'react-native';
+import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
+import { Easing } from 'react-native-reanimated';
 
 interface HistoryAccountItemProps {
   data: AccountHistoryItem;
@@ -18,6 +19,22 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
   const { time, type, status, usdValue } = data;
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 1000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    ).start();
+  }, [spinValue]);
 
   return (
     <View style={styles.card}>
@@ -48,7 +65,12 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
               <Text style={styles.pendingStatus}>
                 {t('page.perps.history.status.pending')}
               </Text>
-              <Spin color={colors2024['orange-default']} />
+              <Animated.View
+                style={{
+                  transform: [{ rotate: spin }],
+                }}>
+                <RcIconPending width={18} height={18} />
+              </Animated.View>
             </View>
           ) : (
             <Text style={styles.completedStatus}>
