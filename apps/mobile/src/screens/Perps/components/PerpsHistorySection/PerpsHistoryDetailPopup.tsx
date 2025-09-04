@@ -1,4 +1,5 @@
 import { RcIconInfoFillCC } from '@/assets/icons/common';
+import { AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
@@ -107,7 +108,8 @@ export const PerpsHistoryDetailPopup: React.FC<{
                     {t('page.perps.historyDetail.perps')}
                   </Text>
                 </View>
-                <View>
+                <View style={styles.coinContainer}>
+                  <AssetAvatar size={24} logo={logoUrl} />
                   <Text style={styles.value}>{coin} - USD</Text>
                 </View>
               </View>
@@ -131,7 +133,11 @@ export const PerpsHistoryDetailPopup: React.FC<{
                     </Text>
                   </View>
                   <View>
-                    <Text style={styles.value}>
+                    <Text
+                      style={[
+                        styles.value,
+                        pnlValue > 0 ? styles.green : styles.red,
+                      ]}>
                       {pnlValue > 0 ? '+' : '-'}$
                       {splitNumberByStep(Math.abs(pnlValue).toFixed(2))}
                     </Text>
@@ -155,32 +161,15 @@ export const PerpsHistoryDetailPopup: React.FC<{
                   <Text style={styles.label}>
                     {t('page.perps.historyDetail.size')}
                   </Text>
-                  {/* <RcIconInfoFillCC
+                  <RcIconInfoFillCC
                     width={15}
                     height={15}
                     color={colors2024['neutral-info']}
-                  /> */}
+                  />
                 </View>
                 <View>
                   <Text style={styles.value}>
-                    {sz} {coin}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.listItem}>
-                <View style={styles.listItemMain}>
-                  <Text style={styles.label}>
-                    {t('page.perps.historyDetail.tradeValue')}
-                  </Text>
-                  {/* <RcIconInfoFillCC
-                    width={15}
-                    height={15}
-                    color={colors2024['neutral-info']}
-                  /> */}
-                </View>
-                <View>
-                  <Text style={styles.value}>
-                    ${splitNumberByStep(tradeValue.toFixed(2))}
+                    ${splitNumberByStep(tradeValue.toFixed(2))} = {sz} {coin}
                   </Text>
                 </View>
               </View>
@@ -309,6 +298,18 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 20,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
+    },
+    coinContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    green: {
+      color: colors2024['green-default'],
+    },
+    red: {
+      color: colors2024['red-default'],
     },
   };
 });
