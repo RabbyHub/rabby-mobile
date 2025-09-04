@@ -2203,9 +2203,10 @@
         "stopLossTipsLongLiquidation": "Price is lower than the liquidation price ({{price}})",
         "stopLossTipsShort": "Stop loss price must be higher than current price",
         "stopLossTipsShortLiquidation": "Price is higher than the liquidation price ({{price}})",
-        "takeProfit": "Profit",
+        "takeProfit": "Take profit",
         "loss": "Loss",
-        "profit": "Profit"
+        "profit": "Profit",
+        "stopLoss": "Stop loss "
       },
       "PerpsDepositTokenModal": {
         "goSwapDesc": "Only USDC on Arbitrum is supported for direct deposit. Please swap your current token to USDC before depositing.",
@@ -2334,7 +2335,9 @@
         "slPrice": "Stop Loss Price",
         "tpPrice": "Take Profit Price",
         "price": "Price:",
-        "entryPrice": "Entry Price:"
+        "entryPrice": "Entry Price:",
+        "setTpPrice": "Set Take-Profit Price",
+        "setSlPrice": "Set Stop-Loss Price"
       }
     },
     "perpsHistory": {

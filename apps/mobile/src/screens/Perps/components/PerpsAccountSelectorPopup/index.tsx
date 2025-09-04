@@ -12,19 +12,13 @@ import { AddressItemShadowView } from '@/screens/Address/components/AddressItemS
 import { ellipsisAddress } from '@/utils/address';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  BottomSheetFlatList,
-  BottomSheetScrollView,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
-  FlatList,
-  ListRenderItem,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -105,72 +99,6 @@ export const PerpsAccountSelectorPopup: React.FC<{
     }
   }, [cancelSelect, runGetLastUsedAccount, visible]);
 
-  const renderItem = useMemoizedFn<ListRenderItem<Account>>(({ item }) => {
-    const usdValue = (() => {
-      const b = item.balance || 0;
-      return `$${splitNumberByStep(b > 10 ? Math.floor(b) : b.toFixed(2))}`;
-    })();
-
-    const isCurrent = isSameAccount(item, value);
-    return (
-      <TouchableOpacity
-        onPress={() => {
-          handleSelect(item);
-        }}>
-        <AddressItemShadowView
-          // disableShadow
-          style={[
-            styles.addressItemView,
-            // style,
-            // isCurrent || isPressing ? styles.active : null,
-          ]}>
-          <View style={styles.addressItemInner}>
-            <WalletIcon
-              borderRadius={12}
-              width={46}
-              height={46}
-              style={styles.walletIcon}
-              address={item.address}
-              type={item.brandName}
-            />
-            <View style={styles.centerInfo}>
-              <View style={styles.nameAndAdderss}>
-                <Text style={styles.addressText}>
-                  {item.aliasName || ellipsisAddress(item.address)}
-                </Text>
-              </View>
-              <View style={styles.bottomArea}>
-                <Text style={styles.balanceText}>{usdValue}</Text>
-              </View>
-            </View>
-            <View style={styles.rightArea}>
-              {loading && isSameAccount(item, tmpSelectAccount) ? (
-                <ActivityIndicator />
-              ) : isSameAddress(item.address, lastUsdeAccount?.address || '') &&
-                item.type === lastUsdeAccount?.type ? (
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>
-                    {t('page.perps.PerpsAccountSelectorPopup.lastUsed')}
-                  </Text>
-                </View>
-              ) : (
-                <>
-                  {isCurrent ? (
-                    <RcIconCorrectCC
-                      color={colors2024['green-default']}
-                      width={16}
-                      height={16}
-                    />
-                  ) : null}
-                </>
-              )}
-            </View>
-          </View>
-        </AddressItemShadowView>
-      </TouchableOpacity>
-    );
-  });
-
   return (
     <AppBottomSheetModal
       ref={modalRef}
@@ -199,6 +127,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
             const isCurrent = isSameAccount(item, value);
             return (
               <TouchableOpacity
+                key={`${item.address}-${item.type}-${item.brandName}`}
                 onPress={() => {
                   handleSelect(item);
                 }}>

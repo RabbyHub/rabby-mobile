@@ -33,6 +33,7 @@ import { toast } from '@/components2024/Toast';
 import * as Sentry from '@sentry/react-native';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
+import { trigger } from 'react-native-haptic-feedback';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -52,7 +53,7 @@ export const PerpsMarketDetailScreen = () => {
   const marketName = route.params.market;
   const coin = marketName;
 
-  const { state } = usePerpsStore();
+  const { state, fetchPositionOpenOrders } = usePerpsStore();
   const { positionAndOpenOrders, accountSummary, marketDataMap, perpFee } =
     state;
 
@@ -144,7 +145,6 @@ export const PerpsMarketDetailScreen = () => {
   });
 
   const {
-    fetchPositionOpenOrders,
     handleOpenPosition,
     handleClosePosition,
     handleSetAutoClose,
@@ -241,56 +241,71 @@ export const PerpsMarketDetailScreen = () => {
     : null;
 
   const hasAutoClose = useMemo(() => {
-    return Boolean(tpPrice || slPrice);
-  }, [tpPrice, slPrice]);
+    return Boolean(currentTpOrSl.tpPrice || currentTpOrSl.slPrice);
+  }, [currentTpOrSl]);
 
   const handleAutoCloseSwitch = useMemoizedFn(async (e: boolean) => {
+    trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
     if (e) {
       setAutoCloseVisible(true);
     } else {
-      // 取消所有止盈止损订单
-      const sdk = apisPerps.getPerpsSDK();
-      if (!tpOid && !slOid) {
-        console.error('no find auto close order id');
-        return;
-      }
+      try {
+        // 取消所有止盈止损订单
+        const sdk = apisPerps.getPerpsSDK();
+        if (!tpOid && !slOid) {
+          console.error('no find auto close order id');
+          return;
+        }
 
-      const cancelOrders: CancelOrderParams[] = [];
-      if (tpOid) {
-        cancelOrders.push({
-          oid: tpOid,
-          coin: marketName,
-        });
-      }
-      if (slOid) {
-        cancelOrders.push({
-          oid: slOid,
-          coin: marketName,
-        });
-      }
-      const res = await sdk.exchange?.cancelOrder(cancelOrders);
-      if (
-        res?.response.data.statuses.every(
-          item => (item as unknown as string) === 'success',
-        )
-      ) {
-        toast.success('Auto close position canceled successfully');
-        setCurrentTpOrSl({
-          tpPrice: undefined,
-          slPrice: undefined,
-        });
-        setTimeout(() => {
-          fetchPositionOpenOrders();
-        }, 1000);
-      } else {
-        toast.error('Auto close position cancel error');
+        const cancelOrders: CancelOrderParams[] = [];
+        if (tpOid) {
+          cancelOrders.push({
+            oid: tpOid,
+            coin,
+          });
+        }
+        if (slOid) {
+          cancelOrders.push({
+            oid: slOid,
+            coin,
+          });
+        }
+        const res = await sdk.exchange?.cancelOrder(cancelOrders);
+        if (
+          res?.response.data.statuses.every(
+            item => (item as unknown as string) === 'success',
+          )
+        ) {
+          toast.success('Auto close canceled successfully');
+          setCurrentTpOrSl({
+            tpPrice: undefined,
+            slPrice: undefined,
+          });
+          setTimeout(() => {
+            fetchPositionOpenOrders();
+          }, 1000);
+        } else {
+          toast.error('Auto close cancel error');
+          Sentry.captureException(
+            new Error(
+              'Auto close cancel error' +
+                'cancelOrders: ' +
+                JSON.stringify(cancelOrders) +
+                'res: ' +
+                JSON.stringify(res),
+            ),
+          );
+        }
+      } catch (error) {
+        toast.error('Auto close cancel error');
         Sentry.captureException(
           new Error(
             'Auto close position cancel error' +
-              'cancelOrders: ' +
-              JSON.stringify(cancelOrders) +
-              'res: ' +
-              JSON.stringify(res),
+              'error: ' +
+              JSON.stringify(error),
           ),
         );
       }
@@ -336,8 +351,8 @@ export const PerpsMarketDetailScreen = () => {
             positionData={positionData}
             coin={coin}
             hasAutoClose={hasAutoClose}
-            slPrice={slPrice}
-            tpPrice={tpPrice}
+            slPrice={currentTpOrSl.slPrice}
+            tpPrice={currentTpOrSl.tpPrice}
             onAutoCloseChange={handleAutoCloseSwitch}
           />
           <PerpsInfo market={market} activeAssetCtx={activeAssetCtx} />
@@ -427,7 +442,7 @@ export const PerpsMarketDetailScreen = () => {
           price={positionData?.entryPrice || markPrice}
           direction={(positionData?.direction || 'Long') as 'Long' | 'Short'}
           size={Math.abs(positionData?.size || 0)}
-          pxDecimals={currentAssetCtx?.szDecimals || 2}
+          pxDecimals={currentAssetCtx?.pxDecimals || 2}
           onClose={() => setAutoCloseVisible(false)}
           handleSetAutoClose={async (params: {
             tpPrice: string;
@@ -439,6 +454,7 @@ export const PerpsMarketDetailScreen = () => {
               slTriggerPx: params.slPrice,
               direction: positionData?.direction as 'Long' | 'Short',
             });
+            setAutoCloseVisible(false);
           }}
         />
       ) : null}

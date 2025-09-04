@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Keyboard,
@@ -15,8 +15,10 @@ import { Button } from '@/components2024/Button';
 import { useTheme2024 } from '@/hooks/theme';
 import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { toast } from '@/components2024/Toast';
+import { useUsdInput } from '@/hooks/useUsdInput';
 
 interface Props {
   visible?: boolean;
@@ -51,10 +53,19 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
     getStyle,
   });
 
-  const [tpPrice, setTpPrice] = React.useState<string>('');
-  const [slPrice, setSlPrice] = React.useState<string>('');
-  const [loading, setLoading] = React.useState<boolean>(false);
-  const tpInputRef = React.useRef<HTMLInputElement>(null);
+  const {
+    value: tpPrice,
+    onChangeText: setTpPrice,
+    displayedValue: displayedTpPrice,
+  } = useUsdInput();
+
+  const {
+    value: slPrice,
+    onChangeText: setSlPrice,
+    displayedValue: displayedSlPrice,
+  } = useUsdInput();
+
+  const tpInputRef = React.useRef<any>(null);
 
   // React.useEffect(() => {
   //   if (visible && tpInputRef.current) {
@@ -145,7 +156,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
         resObj.sl.errorMessage = t(
           'page.perps.PerpsAutoCloseModal.stopLossTipsLongLiquidation',
           {
-            price: `$${splitNumberByStep(liqPrice)}`,
+            price: `$${splitNumberByStep(liqPrice.toFixed(pxDecimals))}`,
           },
         );
       }
@@ -163,45 +174,53 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
         resObj.sl.errorMessage = t(
           'page.perps.PerpsAutoCloseModal.stopLossTipsShortLiquidation',
           {
-            price: `$${splitNumberByStep(liqPrice)}`,
+            price: `$${splitNumberByStep(liqPrice.toFixed(pxDecimals))}`,
           },
         );
       }
     }
 
     return resObj;
-  }, [tpPrice, slPrice, direction, price, t, liqPrice]);
+  }, [tpPrice, slPrice, direction, price, t, liqPrice, pxDecimals]);
+
+  const isValidPrice = priceValidation.tp.isValid && priceValidation.sl.isValid;
+
+  const {
+    runAsync: handleConfirm,
+    cancel,
+    loading,
+  } = useRequest(
+    async () => {
+      await handleSetAutoClose({
+        tpPrice,
+        slPrice,
+      });
+    },
+    {
+      manual: true,
+      onError(error: any) {
+        console.error('Failed to set auto close:', error);
+        toast.error(error.message || 'Failed to set auto close');
+      },
+      onSuccess() {
+        // onClose?.();
+      },
+    },
+  );
 
   React.useEffect(() => {
     if (!visible) {
       setTpPrice('');
       setSlPrice('');
+      cancel();
+    }
+  }, [cancel, setSlPrice, setTpPrice, visible]);
+
+  useEffect(() => {
+    if (visible) {
+      tpInputRef.current?.focus();
     }
   }, [visible]);
-
-  const isValidPrice = priceValidation.tp.isValid && priceValidation.sl.isValid;
-
-  // console.log({ priceValidation, isValidPrice });
-
-  // console.log({
-  //   isValidPrice,
-  // });
-
-  const handleConfirm = useMemoizedFn(async () => {
-    setLoading(true);
-    try {
-      await handleSetAutoClose({
-        tpPrice,
-        slPrice,
-      });
-      onClose();
-    } catch (error) {
-      console.error('Failed to set auto close:', error);
-      // message.error(error.message || 'Failed to set auto close');
-    } finally {
-      setLoading(false);
-    }
-  });
 
   return (
     <Modal
@@ -243,15 +262,16 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
               <View style={styles.body}>
                 <View style={styles.formItem}>
                   <Text style={styles.formItemLabel}>
-                    {t('page.perpsDetail.PerpsAutoCloseModal.tpPrice')}
+                    {t('page.perpsDetail.PerpsAutoCloseModal.setTpPrice')}
                   </Text>
 
                   <TextInput
                     keyboardType="numeric"
                     style={styles.input}
                     placeholder="$0"
-                    value={tpPrice}
+                    value={displayedTpPrice}
                     onChangeText={setTpPrice}
+                    ref={tpInputRef}
                   />
                   <View style={styles.errorMsgContainer}>
                     {priceValidation.tp.error ? (
@@ -260,7 +280,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
                       </Text>
                     ) : tpPrice ? (
                       <Text style={[styles.errorMsg, styles.errorMsgGreen]}>
-                        {t('page.perps.PerpsAutoCloseModal.profit')}{' '}
+                        {t('page.perps.PerpsAutoCloseModal.takeProfit')}{' '}
                         {formatUsdValue(Math.abs(tpProfit))}
                       </Text>
                     ) : null}
@@ -268,14 +288,14 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
                 </View>
                 <View style={styles.formItem}>
                   <Text style={styles.formItemLabel}>
-                    {t('page.perpsDetail.PerpsAutoCloseModal.slPrice')}
+                    {t('page.perpsDetail.PerpsAutoCloseModal.setSlPrice')}
                   </Text>
 
                   <TextInput
                     keyboardType="numeric"
                     style={styles.input}
                     placeholder="$0"
-                    value={slPrice}
+                    value={displayedSlPrice}
                     onChangeText={setSlPrice}
                   />
 
@@ -290,7 +310,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
                       </Text>
                     ) : slPrice ? (
                       <Text style={styles.errorMsg}>
-                        {t('page.perps.PerpsAutoCloseModal.loss')}{' '}
+                        {t('page.perps.PerpsAutoCloseModal.stopLoss')}{' '}
                         {formatUsdValue(Math.abs(slLoss))}
                       </Text>
                     ) : null}
@@ -300,6 +320,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
               <View style={styles.footer}>
                 <Button
                   type="primary"
+                  loading={loading}
                   title={t('global.confirm')}
                   disabled={!isValidPrice}
                   onPress={handleConfirm}
@@ -455,7 +476,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 42,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
-    minWidth: 60,
+    minWidth: 70,
     textAlign: 'center',
   },
 }));

@@ -3,13 +3,19 @@ import { apisPerps } from '@/core/apis';
 import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useMemoizedFn } from 'ahooks';
+import * as Sentry from '@sentry/react-native';
 
 export const usePerpsPosition = ({
   setCurrentTpOrSl,
 }: {
   setCurrentTpOrSl: (params: { tpPrice?: string; slPrice?: string }) => void;
 }) => {
-  const { fetchPositionOpenOrders } = usePerpsStore();
+  const {
+    fetchPositionOpenOrders,
+    logout: _logout,
+    fetchClearinghouseState,
+    fetchUserHistoricalOrders,
+  } = usePerpsStore();
   const {
     refreshData,
     userFills,
@@ -18,6 +24,32 @@ export const usePerpsPosition = ({
     hasPermission,
   } = usePerpsState();
 
+  const logout = useMemoizedFn((address: string) => {
+    _logout();
+    apisPerps.setPerpsCurrentAccount(null);
+    apisPerps.setSendApproveAfterDeposit(address, []);
+  });
+
+  const judgeIsUserAgentIsExpired = useMemoizedFn(
+    async (errorMessage: string) => {
+      const masterAddress = currentPerpsAccount?.address;
+      if (!masterAddress) {
+        return false;
+      }
+
+      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
+        masterAddress,
+      );
+      const agentAddress = agentWalletPreference?.agentAddress;
+      if (agentAddress && errorMessage.includes(agentAddress)) {
+        console.warn('handle action agent is expired, logout');
+        toast.error('Agent is expired, please login again');
+        logout(masterAddress);
+        return true;
+      }
+    },
+  );
+
   const handleSetAutoClose = useMemoizedFn(
     async (params: {
       coin: string;
@@ -25,28 +57,40 @@ export const usePerpsPosition = ({
       slTriggerPx: string;
       direction: 'Long' | 'Short';
     }) => {
-      console.log('handleSetAutoClose', params);
-      const sdk = apisPerps.getPerpsSDK();
-      const { coin, tpTriggerPx, slTriggerPx, direction } = params;
-      const res = await sdk.exchange?.bindTpslByOrderId({
-        coin,
-        isBuy: direction === 'Long',
-        tpTriggerPx,
-        slTriggerPx,
-      });
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+        const { coin, tpTriggerPx, slTriggerPx, direction } = params;
+        const res = await sdk.exchange?.bindTpslByOrderId({
+          coin,
+          isBuy: direction === 'Long',
+          tpTriggerPx,
+          slTriggerPx,
+        });
 
-      setCurrentTpOrSl({
-        tpPrice: tpTriggerPx,
-        slPrice: slTriggerPx,
-      });
-
-      setTimeout(() => {
-        fetchPositionOpenOrders();
-      }, 1000);
-      toast.success('Auto close position set successfully');
-
-      // refreshData();
-      // message.success('Auto close position set successfully');
+        setCurrentTpOrSl({
+          tpPrice: tpTriggerPx,
+          slPrice: slTriggerPx,
+        });
+        setTimeout(() => {
+          fetchPositionOpenOrders();
+        }, 1000);
+        toast.success('Auto close set successfully');
+      } catch (error: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
+        if (isExpired) {
+          return;
+        }
+        toast.error(error?.message || 'Set auto close error');
+        Sentry.captureException(
+          new Error(
+            'Set auto close error' +
+              'params: ' +
+              JSON.stringify(params) +
+              'error: ' +
+              JSON.stringify(error),
+          ),
+        );
+      }
     },
   );
 
@@ -57,7 +101,6 @@ export const usePerpsPosition = ({
       price: string;
       direction: 'Long' | 'Short';
     }) => {
-      console.log('handleClosePosition', params);
       try {
         const sdk = apisPerps.getPerpsSDK();
         const { coin, direction, price, size } = params;
@@ -70,23 +113,51 @@ export const usePerpsPosition = ({
 
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
-          refreshData();
+          fetchClearinghouseState();
+          fetchUserHistoricalOrders();
           const { totalSz, avgPx } = filled;
-          // message.success(
-          //   `close ${direction} ${coin}, avgPx: ${avgPx}, size: ${totalSz}`,
-          // );
+          toast.success(
+            `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`,
+          );
+          setCurrentTpOrSl({
+            tpPrice: undefined,
+            slPrice: undefined,
+          });
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
             avgPx: string;
             oid: number;
           };
         } else {
-          // message.error('close position error');
+          const msg = res?.response?.data?.statuses[0]?.error;
+          toast.error(msg || 'close position error');
+          Sentry.captureException(
+            new Error(
+              'PERPS close position noFills' +
+                'params: ' +
+                JSON.stringify(params) +
+                'res: ' +
+                JSON.stringify(res),
+            ),
+          );
           return null;
         }
-      } catch (e) {
-        console.error(e);
-        // message.error('close position error');
+      } catch (e: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(e?.message || '');
+        if (isExpired) {
+          return null;
+        }
+        console.error('close position error', e);
+        toast.error(e?.message || 'close position error');
+        Sentry.captureException(
+          new Error(
+            'PERPS close position error' +
+              'params: ' +
+              JSON.stringify(params) +
+              'error: ' +
+              JSON.stringify(e),
+          ),
+        );
         return null;
       }
     },
@@ -130,22 +201,51 @@ export const usePerpsPosition = ({
 
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
-          refreshData();
+          fetchClearinghouseState();
+          fetchUserHistoricalOrders();
+
           const { totalSz, avgPx } = filled;
-          // message.success(
-          //   `open ${direction} ${coin}, avgPx: ${avgPx}, size: ${totalSz}`,
-          // );
+          toast.success(
+            `Opened ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`,
+          );
+          setCurrentTpOrSl({
+            tpPrice: tpTriggerPx,
+            slPrice: slTriggerPx,
+          });
           return res?.response?.data?.statuses[0]?.filled as {
             totalSz: string;
             avgPx: string;
             oid: number;
           };
         } else {
-          // message.error('open position error');
+          const msg = res?.response?.data?.statuses[0]?.error;
+          toast.error(msg || 'open position error');
+          Sentry.captureException(
+            new Error(
+              'PERPS open position noFills' +
+                'params: ' +
+                JSON.stringify(params) +
+                'res: ' +
+                JSON.stringify(res),
+            ),
+          );
         }
-      } catch (error) {
+      } catch (error: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(error?.message || '');
+        if (isExpired) {
+          return;
+        }
         console.error(error);
-        // message.error('open position error');
+        toast.error(error?.message || 'open position error');
+        Sentry.captureException(
+          new Error(
+            'PERPS open position error' +
+              'params: ' +
+              JSON.stringify(params) +
+              'error: ' +
+              JSON.stringify(error),
+          ),
+        );
       }
     },
   );
@@ -154,8 +254,6 @@ export const usePerpsPosition = ({
     handleOpenPosition,
     handleClosePosition,
     handleSetAutoClose,
-    refreshData,
-    fetchPositionOpenOrders,
     userFills,
     isLogin,
     currentPerpsAccount,

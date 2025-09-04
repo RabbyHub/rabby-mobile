@@ -128,28 +128,32 @@ export const PerpsPosition: React.FC<{
           </View>
           {hasAutoClose ? (
             <View style={styles.listSub}>
-              <View style={styles.listSubItem}>
-                <Text style={styles.listSubItemLabel}>
-                  {t('page.perpsDetail.PerpsPosition.tpPrice')}
-                </Text>
-                <Text style={styles.value}>${tpPrice || 0}</Text>
-                {/* <RcArrowRight2CC
+              {tpPrice ? (
+                <View style={styles.listSubItem}>
+                  <Text style={styles.listSubItemLabel}>
+                    {t('page.perpsDetail.PerpsPosition.tpPrice')}
+                  </Text>
+                  <Text style={styles.value}>${tpPrice || 0}</Text>
+                  {/* <RcArrowRight2CC
                   width={16}
                   height={16}
                   color={colors2024['neutral-body']}
                 /> */}
-              </View>
-              <View style={styles.listSubItem}>
-                <Text style={styles.listSubItemLabel}>
-                  {t('page.perpsDetail.PerpsPosition.slPrice')}
-                </Text>
-                <Text style={styles.value}>${slPrice || 0}</Text>
-                {/* <RcArrowRight2CC
+                </View>
+              ) : null}
+              {slPrice ? (
+                <View style={styles.listSubItem}>
+                  <Text style={styles.listSubItemLabel}>
+                    {t('page.perpsDetail.PerpsPosition.slPrice')}
+                  </Text>
+                  <Text style={styles.value}>${slPrice || 0}</Text>
+                  {/* <RcArrowRight2CC
                   width={16}
                   height={16}
                   color={colors2024['neutral-body']}
                 /> */}
-              </View>
+                </View>
+              ) : null}
             </View>
           ) : null}
         </View>

@@ -605,6 +605,7 @@ export const usePerpsStore = () => {
     fetchClearinghouseState,
     fetchPositionOpenOrders,
     fetchUserNonFundingLedgerUpdates,
+    fetchUserHistoricalOrders,
     refreshData,
     fetchMarketData,
     fetchPerpFee,
