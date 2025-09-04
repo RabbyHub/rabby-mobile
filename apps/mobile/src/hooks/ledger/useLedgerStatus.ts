@@ -43,9 +43,6 @@ export const useLedgerStatus = (
         deviceId,
         onSelectDevice: async (d: Device) => {
           console.log('selected device', d.id);
-          setTimeout(() => {
-            removeGlobalBottomSheetModal2024(id);
-          }, 0);
           try {
             await TransportBLE.open(d.id);
             apiLedger.fixDeviceId(address, d.id);
@@ -57,6 +54,10 @@ export const useLedgerStatus = (
             await TransportBLE.disconnectDevice(d.id);
             rej?.();
             setStatus('DISCONNECTED');
+          } finally {
+            setTimeout(() => {
+              removeGlobalBottomSheetModal2024(id);
+            }, 0);
           }
         },
         bottomSheetModalProps: {
