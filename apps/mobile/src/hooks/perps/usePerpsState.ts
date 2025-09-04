@@ -452,7 +452,7 @@ export const usePerpsState = () => {
           });
         } catch (error) {
           console.log('Mini sign rejected or failed:', error);
-          throw error;
+          throw error || 'Canceled';
         }
       } else {
         for (const actionObj of signActions) {

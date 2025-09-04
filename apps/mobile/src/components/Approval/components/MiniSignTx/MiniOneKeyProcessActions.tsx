@@ -4,21 +4,45 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Props } from '../FooterBar/ActionsContainer';
 import { MiniProcessActions } from './MiniProcessActions';
+import { apiOneKey } from '@/core/apis';
 
 export const MiniOneKeyProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
-  const { status, onClickConnect } = useOneKeyStatus(account.address);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const { onClickConnect } = useOneKeyStatus(account.address, {
+    onDismiss: () => {
+      setIsSubmitting(false);
+    },
+    autoConnect: false,
+  });
+
   const { t } = useTranslation();
 
+  const isConnectedRef = React.useRef(apiOneKey.isConnected(account.address));
+
   const handleSubmit = React.useCallback(() => {
-    if (status !== 'CONNECTED') {
-      onClickConnect(() => {
-        props.onSubmit();
-      });
+    if (isSubmitting) {
       return;
     }
-    props.onSubmit();
-  }, [status, onClickConnect, props]);
+    setIsSubmitting(true);
+    isConnectedRef.current.then(([isConnected]) => {
+      if (!isConnected) {
+        onClickConnect(
+          () => {
+            props.onSubmit();
+            setIsSubmitting(false);
+          },
+          () => {
+            props.onCancel?.();
+          },
+        );
+        return;
+      }
+      props.onSubmit();
+      setIsSubmitting(false);
+    });
+  }, [isSubmitting, props, onClickConnect]);
 
   return (
     <MiniProcessActions

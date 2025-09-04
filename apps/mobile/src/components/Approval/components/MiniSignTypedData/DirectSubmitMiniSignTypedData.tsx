@@ -29,7 +29,7 @@ import AutoLockView from '@/components/AutoLockView';
 
 export const MiniDirectSubmitTypedDataApproval = ({
   txs,
-  visible,
+  // visible,
   onResolve,
   onReject,
   onVisibleChange,
@@ -88,10 +88,7 @@ export const MiniDirectSubmitTypedDataApproval = ({
     resetSignTypedData();
     onVisibleChange?.(false);
     cancelOverlayLoading();
-
-    if (!visible) {
-      onReject?.(e);
-    }
+    onReject?.(e);
   });
 
   const task = useMiniTypedDataApprovalTask({
@@ -168,7 +165,7 @@ export const MiniDirectSubmitTypedDataApproval = ({
 
   const onChange = useCallback(
     (index: number) => {
-      if (index === -1 && indexRef.current > -1 && visible) {
+      if (index === -1 && indexRef.current > -1) {
         if (!dismissedByCodeRef.current) {
           const reason = pressBackdropRef.current
             ? 'PRESS_BACKDROP'
@@ -182,7 +179,7 @@ export const MiniDirectSubmitTypedDataApproval = ({
 
       indexRef.current = index;
     },
-    [handleClearTask, visible],
+    [handleClearTask],
   );
 
   useEffect(() => {
@@ -224,9 +221,7 @@ export const MiniDirectSubmitTypedDataApproval = ({
                   onVisibleChange?.(v);
                 }}
                 onReject={handleClearTask}
-                onResolve={res => {
-                  onResolve?.(res);
-                }}
+                onResolve={onResolve}
                 onSubmitting={onSubmittingCb}
                 onSubmitted={onSubmittedCb}
                 account={account}
