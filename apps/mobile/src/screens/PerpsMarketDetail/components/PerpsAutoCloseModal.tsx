@@ -325,7 +325,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   container: {
     width: '100%',
@@ -454,7 +454,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 36,
     lineHeight: 42,
     fontWeight: '700',
-    // color: ctx.colors2024['neutral-body'],
+    color: colors2024['neutral-title-1'],
     minWidth: 60,
+    textAlign: 'center',
   },
 }));

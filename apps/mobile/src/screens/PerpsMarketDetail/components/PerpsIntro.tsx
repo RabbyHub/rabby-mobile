@@ -22,7 +22,7 @@ export const PerpsIntro: React.FC<{}> = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   section: { marginTop: 24 },
   header: {
     paddingHorizontal: 4,
@@ -39,7 +39,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
   },
   desc: {
     fontFamily: 'SF Pro Rounded',

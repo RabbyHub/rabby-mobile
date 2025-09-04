@@ -71,9 +71,11 @@ export const PerpsFooter: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   footer: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     paddingTop: 12,
     paddingHorizontal: 16,
     paddingBottom: 56,

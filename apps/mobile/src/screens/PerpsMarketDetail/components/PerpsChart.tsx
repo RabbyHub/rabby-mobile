@@ -109,7 +109,7 @@ export const PerpsChart: React.FC<{
     entryPrice: number;
   };
 }> = ({ market, markPrice, currentAssetCtx, activeAssetCtx, lineTagInfo }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
   const chartIsReadyRef = useRef(false);
@@ -305,7 +305,9 @@ export const PerpsChart: React.FC<{
         <TradingViewCandleChart
           ref={chartWebViewRef}
           height={Dimensions.get('screen').width - 128}
-          backGroundColor={colors2024['neutral-bg-1']}
+          backGroundColor={
+            isLight ? colors2024['neutral-bg-1'] : colors2024['neutral-bg-2']
+          }
           onChartReady={handleChartReady}
         />
       </View>
@@ -337,9 +339,11 @@ export const PerpsChart: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   chart: {
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     paddingVertical: 24,
     borderRadius: 20,
     // paddingHorizontal: 16,

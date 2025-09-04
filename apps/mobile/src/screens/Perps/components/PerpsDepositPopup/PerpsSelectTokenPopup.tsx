@@ -142,7 +142,7 @@ export const PerpsSelectTokenPopup: React.FC<{
         ref={modalRef}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg0',
+          linearGradientType: isLight ? 'bg0' : 'bg1',
         })}
         onDismiss={onClose}
         snapPoints={[Dimensions.get('window').height - 200]}>

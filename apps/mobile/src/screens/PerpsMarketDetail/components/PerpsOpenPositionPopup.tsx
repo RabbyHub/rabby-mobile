@@ -299,7 +299,7 @@ export const PerpsOpenPositionPopup: React.FC<{
         // snapPoints={snapPoints}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: 'bg2',
+          linearGradientType: isLight ? 'bg2' : 'bg1',
         })}
         onDismiss={onCancel}
         enableDynamicSizing
@@ -514,7 +514,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     container: {
       height: '100%',
@@ -526,7 +526,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       paddingHorizontal: 16,
       paddingVertical: 18,
       borderRadius: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       minHeight: 156,
 
       display: 'flex',
@@ -587,7 +589,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     list: {
       borderRadius: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       marginBottom: 18,
     },
     listItemContainer: {

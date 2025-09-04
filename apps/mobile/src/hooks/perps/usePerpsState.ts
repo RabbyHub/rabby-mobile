@@ -505,11 +505,17 @@ export const usePerpsState = () => {
               signature,
             });
           } else if (type === 'approveBuilderFee') {
-            return sdk.exchange?.sendApproveBuilderFee({
+            const res = await sdk.exchange?.sendApproveBuilderFee({
               action: action?.message,
               nonce: action?.nonce || 0,
-              signature,
+              signature: signature || '',
             });
+            res &&
+              sdk.exchange?.updateBuilder(
+                PERPS_BUILD_FEE_RECEIVE_ADDRESS,
+                PERPS_BUILD_FEE,
+              );
+            return res;
           }
         }),
       );

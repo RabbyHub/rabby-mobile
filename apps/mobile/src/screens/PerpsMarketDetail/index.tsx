@@ -309,7 +309,7 @@ export const PerpsMarketDetailScreen = () => {
 
   return (
     <>
-      <NormalScreenContainer2024 type="bg2">
+      <NormalScreenContainer2024 type={isLight ? 'bg2' : 'bg1'}>
         {!hasPermission ? <PerpsRegionAlert /> : null}
         <ScrollView
           style={styles.container}

@@ -182,6 +182,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
             lineHeight: 22,
           }
         : {}),
+      color: colors2024['neutral-title-1'],
     },
     opacity0: {
       opacity: 0,
