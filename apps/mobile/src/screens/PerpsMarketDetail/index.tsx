@@ -12,7 +12,7 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { useMemoizedFn } from 'ahooks';
 import { sortBy } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { PerpsDepositPopup } from '../Perps/components/PerpsDepositPopup';
@@ -34,6 +34,7 @@ import * as Sentry from '@sentry/react-native';
 import { PERPS_MAX_NTL_VALUE } from '@/constant/perps';
 import { PerpsRegionAlert } from '../Perps/components/PerpsRegionAlert';
 import { trigger } from 'react-native-haptic-feedback';
+import { useAppState } from '@react-native-community/hooks';
 
 export const PerpsMarketDetailScreen = () => {
   const { t } = useTranslation();
@@ -202,15 +203,24 @@ export const PerpsMarketDetailScreen = () => {
     };
   });
 
+  const appState = useAppState();
+  const unsubscribeActiveAssetRef = useRef<() => void>(() => {});
+
   // Subscribe to real-time candle updates
   useEffect(() => {
-    const unsubscribe = subscribeActiveAssetCtx();
-
-    return () => {
-      // Cleanup WebSocket subscription
-      unsubscribe?.();
-    };
-  }, [subscribeActiveAssetCtx]);
+    if (appState === 'active') {
+      const unsubscribe = subscribeActiveAssetCtx();
+      unsubscribeActiveAssetRef.current = unsubscribe;
+      return () => {
+        unsubscribe?.();
+      };
+    } else {
+      if (unsubscribeActiveAssetRef.current) {
+        unsubscribeActiveAssetRef.current();
+        unsubscribeActiveAssetRef.current = () => {};
+      }
+    }
+  }, [subscribeActiveAssetCtx, appState]);
 
   // Available balance for trading
   const availableBalance = Number(accountSummary?.withdrawable || 0);
