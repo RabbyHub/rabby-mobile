@@ -17,22 +17,27 @@ export const useLedgerStatus = (
   address: string,
   extra?: {
     onDismiss?(): void;
+    autoConnect?: boolean;
   },
 ) => {
   const [status, setStatus] = useAtom(ledgerStatusAtom);
   const [deviceId, setDeviceId] = React.useState<string>();
 
   React.useEffect(() => {
-    apiLedger.isConnected(address).then(([isConnected, id]) => {
-      setStatus(isConnected ? 'CONNECTED' : 'DISCONNECTED');
-      if (id) {
-        setDeviceId(id);
-      }
-    });
-  }, [address, setStatus]);
+    if (extra?.autoConnect ?? true) {
+      apiLedger.isConnected(address).then(([isConnected, id]) => {
+        setStatus(isConnected ? 'CONNECTED' : 'DISCONNECTED');
+        if (id) {
+          setDeviceId(id);
+        }
+      });
+    }
+  }, [address, setStatus, extra?.autoConnect]);
 
   const onClickConnect = React.useCallback(
-    (cb?: () => void) => {
+    (cb?: () => void, rej?: () => void) => {
+      let isConnected = false;
+      const onDismiss = extra?.onDismiss;
       const id = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.CONNECT_LEDGER,
         deviceId,
@@ -45,15 +50,22 @@ export const useLedgerStatus = (
             await TransportBLE.open(d.id);
             apiLedger.fixDeviceId(address, d.id);
             setStatus('CONNECTED');
+            isConnected = true;
             cb?.();
           } catch (e) {
             console.log('ledger connect error', e);
             await TransportBLE.disconnectDevice(d.id);
+            rej?.();
             setStatus('DISCONNECTED');
           }
         },
         bottomSheetModalProps: {
-          onDismiss: extra?.onDismiss,
+          onDismiss: () => {
+            if (!isConnected) {
+              rej?.();
+            }
+            onDismiss?.();
+          },
         },
       });
     },
