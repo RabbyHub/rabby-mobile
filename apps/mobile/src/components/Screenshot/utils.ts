@@ -1,9 +1,12 @@
-import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
-import { BUILD_GIT_INFO } from '@/constant/env';
-import { getLatestNavigationName } from '@/utils/navigation';
-import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Platform } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
+
+import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
+import { BUILD_GIT_INFO } from '@/constant/env';
+import { getAllMyAccount } from '@/core/apis/address';
+import { getLatestNavigationName } from '@/utils/navigation';
+import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
+import { preferenceService } from '@/core/services';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -28,13 +31,11 @@ ErrorUtils.setGlobalHandler((error, isFatal) => {
   latestErrorsRef.current = list.sort((a, b) => b.time - a.time).slice(0, 50);
 });
 
-export function getScreenshotFeedbackExtra({
+export async function getScreenshotFeedbackExtra({
   totalBalanceText,
-}: // addressList = [],
-{
+}: {
   totalBalanceText: string;
-  // addressList: string[];
-}): UserFeedbackItem['extra'] & object {
+}): Promise<UserFeedbackItem['extra'] & object> {
   // Implementation for collecting screenshot feedback
 
   const latestErrors = runTryCatch(() =>
@@ -46,6 +47,10 @@ export function getScreenshotFeedbackExtra({
   const appBuildNumber = APP_VERSIONS.buildNumber;
   const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
+  const myAccountList = await getAllMyAccount();
+  const myAddressList = myAccountList.map(acc => acc.address);
+  const currentAddress = preferenceService.getFallbackAccount()?.address;
+
   return {
     totalBalanceText,
     currentScreen: getLatestNavigationName(),
@@ -54,20 +59,22 @@ export function getScreenshotFeedbackExtra({
     appBuildNumber,
     appBuildRevision,
     applicationId: APPLICATION_ID,
+    myAddressList,
+    currentAddress,
 
-    fingerprint: runTryCatch(() => DeviceInfo.getFingerprintSync()),
-    // addressList,
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
     systemVersion: runTryCatch(() => DeviceInfo.getSystemVersion()),
     deviceModel: runTryCatch(() => DeviceInfo.getModel()),
     deviceId: runTryCatch(() => DeviceInfo.getDeviceId()),
     deviceType: runTryCatch(() => DeviceInfo.getDeviceType()),
     manufacturer: runTryCatch(() => DeviceInfo.getManufacturerSync()),
+
     isLandscape: runTryCatch(() => DeviceInfo.isLandscapeSync()),
     isLandscapeSync: runTryCatch(() => DeviceInfo.isLandscapeSync()),
     isTablet: runTryCatch(() => DeviceInfo.isTablet()),
     isLowRamDevice: runTryCatch(() => DeviceInfo.isLowRamDevice()),
     isDisplayZoomed: runTryCatch(() => DeviceInfo.isDisplayZoomed()),
+    isAirplaneMode: runTryCatch(() => DeviceInfo.isAirplaneModeSync()),
 
     ...(Platform.OS === 'android' && {
       androidId: runTryCatch(() => DeviceInfo.getAndroidId()),

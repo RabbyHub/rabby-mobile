@@ -470,7 +470,7 @@ export function useSubmitFeedbackOnScreenshot() {
     useRefState(false);
   const submitFeedbackByScreenshot = useCallback(
     async function () {
-      const extraInfo = getScreenshotFeedbackExtra({ totalBalanceText });
+      const extraInfo = await getScreenshotFeedbackExtra({ totalBalanceText });
       // console.debug('[debug] extraInfo', extraInfo);
 
       if (isSubmittingRef.current) return;

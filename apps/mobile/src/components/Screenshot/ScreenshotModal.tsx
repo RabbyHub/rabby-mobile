@@ -85,10 +85,19 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
             ]}
             activeOpacity={1}
             onPress={() => {
-              setBottomInputVisible(false);
+              if (bottomInputVisible) {
+                setBottomInputVisible(false);
+              } else {
+                closeSubmitModal();
+              }
             }}>
             <View style={[styles.modalWrapper]}>
-              <View style={[styles.modal]}>
+              <TouchableOpacity
+                style={[styles.modal]}
+                activeOpacity={1}
+                onPress={wrapOnPress(() => {
+                  setBottomInputVisible(false);
+                })}>
                 <TouchableOpacity
                   style={styles.modalClose}
                   onPress={wrapOnPress(() => {
@@ -161,22 +170,55 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
                         </Text>
                       </TouchableOpacity>
                     )}
-                    <Button
-                      title={t('component.screenshotModal.submitButtonText')}
-                      containerStyle={styles.submitButtonContainer}
-                      buttonStyle={styles.submitButton}
-                      titleStyle={styles.submitButtonTitle}
-                      type="primary"
-                      disabled={!canSubmitFeedback || bottomInputVisible}
-                      loading={isSubmitting}
-                      loadingStyle={styles.submitButtonLoading}
-                      onPress={wrapOnPress(evt => {
-                        submitFeedbackByScreenshot();
-                      })}
-                    />
+                    <View style={styles.buttonGroup}>
+                      <Button
+                        title={t('global.cancel')}
+                        containerStyle={[
+                          styles.buttonContainer,
+                          styles.cancelButtonContainer,
+                        ]}
+                        buttonStyle={[
+                          styles.buttonStyle,
+                          styles.cancelButtonStyle,
+                        ]}
+                        titleStyle={[
+                          styles.buttonTitle,
+                          styles.cancelButtonTitle,
+                        ]}
+                        type="ghost"
+                        disabled={isSubmitting}
+                        loading={isSubmitting}
+                        loadingStyle={styles.buttonLoading}
+                        onPress={wrapOnPress(() => {
+                          closeSubmitModal();
+                        })}
+                      />
+                      <Button
+                        title={t('component.screenshotModal.submitButtonText')}
+                        containerStyle={[
+                          styles.buttonContainer,
+                          styles.submitButtonContainer,
+                        ]}
+                        buttonStyle={[
+                          styles.buttonStyle,
+                          styles.submitButtonStyle,
+                        ]}
+                        titleStyle={[
+                          styles.buttonTitle,
+                          styles.submitButtonTitle,
+                        ]}
+                        type="primary"
+                        disabled={!canSubmitFeedback || bottomInputVisible}
+                        loading={isSubmitting}
+                        loadingStyle={styles.buttonLoading}
+                        onPress={wrapOnPress(evt => {
+                          submitFeedbackByScreenshot();
+                        })}
+                      />
+                    </View>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
 
@@ -220,9 +262,7 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   const modalWidth = winLayout.width - SIZES.MODAL_MASK_H_PADDING * 2;
 
   return {
-    modalComp: {
-      // backgroundColor: isLight ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.85)',
-    },
+    modalComp: {},
     maskBg: {
       backgroundColor: isLight ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.85)',
     },
@@ -375,27 +415,41 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
       fontWeight: '500',
       lineHeight: 16,
     },
-    submitButtonContainer: {
+    buttonGroup: {
+      flexDirection: 'row',
+      gap: 12,
+      width: '100%',
+    },
+    buttonContainer: {
       height: 56,
       justifyContent: 'center',
       alignItems: 'center',
       width: '100%',
+      flexShrink: 1,
     },
-    submitButtonLoading: {
-      width: '100%',
-    },
-    submitButton: {
-      height: 56,
-    },
-    submitButtonTitle: {
+    buttonTitle: {
       width: '100%',
       // height: 56,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      // flexShrink: 0,
-      // ...makeDebugBorder('yellow')
     },
+    buttonLoading: {
+      width: '100%',
+    },
+    buttonStyle: {
+      height: 56,
+    },
+    cancelButtonContainer: {},
+    cancelButtonTitle: {
+      color: colors2024['neutral-body'],
+    },
+    cancelButtonStyle: {
+      borderColor: colors2024['neutral-body'],
+    },
+    submitButtonContainer: {},
+    submitButtonTitle: {},
+    submitButtonStyle: {},
 
     leaveDocumentFlow: {
       position: 'absolute',
