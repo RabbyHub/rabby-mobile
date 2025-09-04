@@ -638,6 +638,10 @@ export const usePerpsState = () => {
           throw new Error('Hyperliquid no exchange client');
         }
 
+        const useMiniApprovalSign =
+          currentPerpsAccount.type === KEYRING_CLASS.HARDWARE.ONEKEY ||
+          currentPerpsAccount.type === KEYRING_CLASS.HARDWARE.LEDGER;
+
         const action = sdk.exchange.prepareWithdraw({
           amount: amount.toString(),
           destination: currentPerpsAccount.address,
@@ -654,11 +658,23 @@ export const usePerpsState = () => {
             action as any,
             { version: 'V4' },
           );
+        } else if (useMiniApprovalSign) {
+          const result = await sendMiniSignTypedData({
+            txs: [
+              {
+                data: action,
+                from: currentPerpsAccount.address,
+                version: 'V4',
+              },
+            ],
+            account: currentPerpsAccount,
+          });
+          signature = result[0].txHash;
         } else {
           signature = await sendRequest({
             data: {
               method: 'eth_signTypedDataV4',
-              params: [currentPerpsAccount.address, action],
+              params: [currentPerpsAccount.address, JSON.stringify(action)],
             },
             session: INTERNAL_REQUEST_SESSION,
             account: currentPerpsAccount,

@@ -40,6 +40,7 @@ export const MiniDirectSubmitApproval = ({
   onSubmitted,
   id,
   account,
+  showMaskLoading = true,
 }: {
   txs?: Tx[];
   visible?: boolean;
@@ -51,6 +52,7 @@ export const MiniDirectSubmitApproval = ({
   onSubmitted?: (isSuccess: boolean) => void;
   id?: string;
   account: Account;
+  showMaskLoading?: boolean;
 }) => {
   const { styles } = useTheme2024({
     getStyle: getSheetStyles,
@@ -207,7 +209,7 @@ export const MiniDirectSubmitApproval = ({
       />
 
       <Modal
-        visible={overlayLoading}
+        visible={showMaskLoading ? overlayLoading : false}
         transparent
         animationType="fade"
         onRequestClose={cancelOverlayLoading}

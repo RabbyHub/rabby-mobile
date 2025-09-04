@@ -8,13 +8,15 @@ import {
   TouchableOpacity,
   View,
   ViewStyle,
+  Platform,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { isNumber } from 'lodash';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+const isAndroid = Platform.OS === 'android';
 
 export const StepInput: React.FC<{
   value?: number;
@@ -174,6 +176,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontSize: 17,
       // lineHeight: 22,
       fontWeight: '700',
+      ...(isAndroid
+        ? {
+            height: 60, // avoid some android phone show number not in center
+            lineHeight: 22,
+          }
+        : {}),
       color: colors2024['neutral-title-1'],
     },
     opacity0: {
