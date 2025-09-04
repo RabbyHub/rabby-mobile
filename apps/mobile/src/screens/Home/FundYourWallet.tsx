@@ -113,19 +113,19 @@ export const FoundYourWalletGuide = () => {
           );
         },
       },
-      {
-        title: t('page.nextComponent.multiAddressHome.buyWithFiat'),
-        desc: t('page.nextComponent.multiAddressHome.buyWithFiatDesc'),
-        icon: RcIconBuyCC,
-        onPress: () => {
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBuy,
-              params: {},
-            }),
-          );
-        },
-      },
+      // {
+      //   title: t('page.nextComponent.multiAddressHome.buyWithFiat'),
+      //   desc: t('page.nextComponent.multiAddressHome.buyWithFiatDesc'),
+      //   icon: RcIconBuyCC,
+      //   onPress: () => {
+      //     navigation.dispatch(
+      //       StackActions.push(RootNames.StackTransaction, {
+      //         screen: RootNames.MultiBuy,
+      //         params: {},
+      //       }),
+      //     );
+      //   },
+      // },
     ],
     [t, navigation],
   );

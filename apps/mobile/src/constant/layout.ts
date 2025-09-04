@@ -148,7 +148,9 @@ export const RootNames = {
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',
+  /** @deprecated */
   Buy: 'Buy',
+  /** @deprecated */
   MultiBuy: 'MultiBuy',
   CopyTrading: 'CopyTrading',
   AccountTransaction: 'AccountTransaction',
