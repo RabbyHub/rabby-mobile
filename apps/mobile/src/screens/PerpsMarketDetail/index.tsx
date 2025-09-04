@@ -340,7 +340,7 @@ export const PerpsMarketDetailScreen = () => {
             tpPrice={tpPrice}
             onAutoCloseChange={handleAutoCloseSwitch}
           />
-          <PerpsInfo market={market} />
+          <PerpsInfo market={market} activeAssetCtx={activeAssetCtx} />
           <PerpsHistorySection
             coin={coin}
             marketDataMap={marketDataMap}

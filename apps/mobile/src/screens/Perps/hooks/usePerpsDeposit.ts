@@ -222,7 +222,7 @@ export const usePerpsDeposit = ({
     () => {
       fetchUserNonFundingLedgerUpdates();
     },
-    perpsState.localLoadingHistory.length > 0 ? 5000 : undefined,
+    perpsState.localLoadingHistory.length > 0 ? 60 * 1000 : undefined,
   );
 
   const handleSignDepositDirect = useMemoizedFn(async (hash: string) => {
