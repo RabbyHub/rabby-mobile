@@ -21,6 +21,7 @@ import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components2024/Toast';
 import { minBy } from 'lodash';
 import { usePerspPopupState } from '@/screens/Perps/hooks/usePerpsPopupState';
+import { useTranslation } from 'react-i18next';
 type SignActionType = 'approveAgent' | 'approveBuilderFee';
 
 interface SignAction {
@@ -275,6 +276,7 @@ export const usePerpsInitial = () => {
 
 export const usePerpsState = () => {
   const [popupSate, setPopupState] = usePerspPopupState();
+  const { t } = useTranslation();
   const deleteAgentCbRef = useRef<(() => Promise<void>) | null>(null);
   const { safeSetBuilderFee } = usePerpsInitial();
   const {
@@ -324,6 +326,7 @@ export const usePerpsState = () => {
     if (deleteAgentCbRef.current) {
       try {
         await deleteAgentCbRef.current();
+        toast.success(t('page.perps.deleteAgentSuccess'));
       } catch (error) {
         toast.error((error as any).message || 'Delete agent failed');
       }
@@ -484,7 +487,7 @@ export const usePerpsState = () => {
       const res = await sdk.exchange?.setReferrer(PERPS_REFERENCE_CODE);
       console.log('setReference res', res);
     } catch (e) {
-      console.error('Failed to set reference:', e);
+      // console.error('Failed to set reference:', e);
     }
   }, []);
 
@@ -687,15 +690,18 @@ export const usePerpsState = () => {
           signature: signature as string,
         });
         console.log('withdraw res', res);
-        setLocalLoadingHistory([
-          {
-            time: Date.now(),
-            hash: res.hash || '',
-            type: 'withdraw',
-            status: 'pending',
-            usdValue: (+amount - 1).toString(),
-          },
-        ]);
+        setLocalLoadingHistory(
+          [
+            {
+              time: Date.now(),
+              hash: res.hash || '',
+              type: 'withdraw',
+              status: 'pending',
+              usdValue: (+amount - 1).toString(),
+            },
+          ],
+          false,
+        );
         fetchClearinghouseState();
         return true;
       } catch (error: any) {

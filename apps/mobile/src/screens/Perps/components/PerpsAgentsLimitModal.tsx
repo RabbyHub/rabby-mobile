@@ -33,8 +33,7 @@ export const PerpsAgentsLimitModal: React.FC<Props> = ({
         <View style={styles.container}>
           <RcWarningFull />
           <Text style={styles.description}>
-            You’ve reached the maximum number of agents. Create a new one to
-            replace an existing agent?
+            {t('page.perps.deleteAgentModal')}
           </Text>
           <View style={styles.footer}>
             <Button

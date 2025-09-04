@@ -114,7 +114,8 @@ export const usePerpsPosition = ({
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
           fetchClearinghouseState();
-          fetchUserHistoricalOrders();
+          // no need
+          // fetchUserHistoricalOrders();
           const { totalSz, avgPx } = filled;
           toast.success(
             `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`,
@@ -202,7 +203,8 @@ export const usePerpsPosition = ({
         const filled = res?.response?.data?.statuses[0]?.filled;
         if (filled) {
           fetchClearinghouseState();
-          fetchUserHistoricalOrders();
+          // no need
+          // fetchUserHistoricalOrders();
 
           const { totalSz, avgPx } = filled;
           toast.success(

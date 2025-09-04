@@ -139,8 +139,13 @@ export const usePerpsStore = () => {
 
   // Reducers 转换为 setState 操作
   const setLocalLoadingHistory = useMemoizedFn(
-    (payload: AccountHistoryItem[]) => {
-      setState(prev => ({ ...prev, localLoadingHistory: payload }));
+    (payload: AccountHistoryItem[], isReset: boolean = false) => {
+      setState(prev => ({
+        ...prev,
+        localLoadingHistory: isReset
+          ? payload
+          : [...payload, ...prev.localLoadingHistory],
+      }));
     },
   );
 
@@ -566,6 +571,7 @@ export const usePerpsStore = () => {
     stopPolling();
     unsubscribeAll();
     resetState();
+    fetchPerpPermission('');
   });
 
   const initEventBus = useMemoizedFn(() => {

@@ -146,15 +146,18 @@ export const usePerpsDeposit = ({
     const currentTxs = [buildTx(amount) as Tx];
 
     const handleSetHistory = (hash: string) => {
-      setLocalLoadingHistory([
-        {
-          time: Date.now(),
-          hash,
-          type: 'deposit',
-          status: 'pending',
-          usdValue: amount.toString(),
-        },
-      ]);
+      setLocalLoadingHistory(
+        [
+          {
+            time: Date.now(),
+            hash,
+            type: 'deposit',
+            status: 'pending',
+            usdValue: amount.toString(),
+          },
+        ],
+        false,
+      );
     };
 
     const handleFullback = async () => {
@@ -249,15 +252,18 @@ export const usePerpsDeposit = ({
       throw new Error('No hash tx');
     }
 
-    setLocalLoadingHistory([
-      {
-        time: Date.now(),
-        hash,
-        type: 'deposit',
-        status: 'pending',
-        usdValue: cacheAmount.toString(),
-      },
-    ]);
+    setLocalLoadingHistory(
+      [
+        {
+          time: Date.now(),
+          hash,
+          type: 'deposit',
+          status: 'pending',
+          usdValue: cacheAmount.toString(),
+        },
+      ],
+      false,
+    );
   });
 
   return {

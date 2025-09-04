@@ -30,6 +30,11 @@ export const PerpsAccountCard: React.FC<{
     );
   }, [positionAndOpenOrders]);
 
+  const withdrawDisabled = useMemo(
+    () => !Number(accountSummary?.withdrawable || 0),
+    [accountSummary?.withdrawable],
+  );
+
   if (isLogin) {
     return (
       <View style={[styles.card, styles.balanceCard]}>
@@ -64,7 +69,7 @@ export const PerpsAccountCard: React.FC<{
               }}
               titleStyle={styles.smBtnTitle}
               title={t('page.perps.PerpsCard.withdrawBtn')}
-              disabled={!accountSummary?.withdrawable}
+              disabled={withdrawDisabled}
             />
           </View>
           <View style={styles.btnItem}>
