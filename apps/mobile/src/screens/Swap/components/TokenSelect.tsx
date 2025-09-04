@@ -125,7 +125,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const {
       visible: tokenSelectorVisible,
-      visibleRef: tokenSelectorVisibleRef,
       tokenSelectorModalRef,
       setTokenSelectorVisible,
     } = useTokenSelectorModalVisible({
@@ -170,6 +169,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           return;
         }
         const existedTokens = !!tokens.length;
+        console.debug('[feat] existedTokens', existedTokens);
 
         if (!existedTokens) {
           if (type === 'send') {
@@ -180,6 +180,11 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
           }
         }
         timeRef.current = setTimeout(() => {
+          console.debug(
+            '[feat] currentAccount?.address',
+            currentAccount?.address,
+          );
+
           if (currentAccount?.address) {
             loadToken(currentAccount.address, true);
           } else {

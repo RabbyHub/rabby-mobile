@@ -121,7 +121,7 @@ export default function useAccountsBalance(opts?: {
                   });
                 }
               } catch (e) {
-                console.log('fetchTotalBalance  error', e);
+                console.log('fetchTotalBalance error', e);
                 // api fetch error fallback get from cache store
                 const cacheData = preferenceService.getAddressBalance(account);
                 if (uniqueList.find(o => isSameAddress(o.address, account))) {
@@ -140,7 +140,7 @@ export default function useAccountsBalance(opts?: {
           setBalanceAccounts(queueBalanceArr);
         }
       } catch (e) {
-        console.error('fetchTotalBalance  error', e);
+        console.error('fetchTotalBalance error', e);
       } finally {
         setBalanceLoading(false);
       }

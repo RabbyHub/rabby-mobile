@@ -119,7 +119,7 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   );
 
   const derivedAccounts = useMemo(() => {
-    return JSON.parse(accountsJSON);
+    return JSON.parse(accountsJSON) as KeyringAccountWithAlias[];
   }, [accountsJSON]);
 
   return {

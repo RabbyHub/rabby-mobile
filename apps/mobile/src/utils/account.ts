@@ -96,3 +96,10 @@ export function stableSerializeAccounts<T extends KeyringAccountWithAlias[]>(
     0,
   );
 }
+
+export function stableSerializeItems<
+  T extends any[],
+  Sorter extends (a: T[number], b: T[number]) => number,
+>(items: T, sorter: Sorter) {
+  return JSON.stringify(items.sort(sorter), null, 0);
+}

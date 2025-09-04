@@ -1,6 +1,6 @@
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { filterMyAccounts } from '@/utils/account';
+import { filterMyAccounts, stableSerializeItems } from '@/utils/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import React, { useMemo } from 'react';
@@ -27,7 +27,7 @@ export const useAccountInfo = () => {
     return accounts.some(account => account.type === KEYRING_CLASS.GNOSIS);
   }, [accounts]);
   const {
-    addresses: top10Addresses,
+    addresses: top10AddressesOrig,
     totalBalance: top10Balance,
     totalEvmBalance: top10EvmBalance,
     notTop10Addresses,
@@ -64,6 +64,16 @@ export const useAccountInfo = () => {
   const notMatterAccounts = useMemo(() => {
     return [...notTop10Addresses, ...gnosisAccounts, ...watchAccounts];
   }, [notTop10Addresses, gnosisAccounts, watchAccounts]);
+
+  const top10AddressesOrigJSON = useMemo(() => {
+    return stableSerializeItems(top10AddressesOrig, (a, b) =>
+      a.localeCompare(b),
+    );
+  }, [top10AddressesOrig]);
+
+  const top10Addresses = useMemo(() => {
+    return JSON.parse(top10AddressesOrigJSON) as string[];
+  }, [top10AddressesOrigJSON]);
 
   return {
     top10Addresses,

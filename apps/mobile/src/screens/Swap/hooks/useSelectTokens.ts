@@ -173,7 +173,13 @@ export const useSelectTokens = ({
         });
     }
     return [];
-  }, [enableSearchTokensV2, keyword, chain_server_id, currentAddress]);
+  }, [
+    enableSearchTokensV2,
+    currentAddress,
+    top10Addresses,
+    keyword,
+    chain_server_id,
+  ]);
 
   const loadUserTokenSettings = useCallback(() => {
     setUserTokenSettings(prev => {
@@ -387,7 +393,7 @@ export const useSelectTokens = ({
     return resTokens;
   }, [chain_server_id, currentAddress, keyword, tokensMap]);
 
-  console.debug('[feat] tokens.length', tokens.length);
+  // console.debug('[feat] tokens.length', tokens.length);
 
   const tokenWithOwner = useMemo(() => {
     if (enableSearchTokensV2 && keyword) {
@@ -430,14 +436,16 @@ export const useSelectTokens = ({
     userTokenSettings,
   ]);
 
+  // console.debug('[feat] top10Addresses', top10Addresses);
   const loadOnVisibleChanged = useCallback(
     (nextVisible = false) => {
       if (!nextVisible) return;
 
-      fetchAccounts();
+      // only need fetch accounts when use top10Addresses
+      if (!currentAccount) fetchAccounts();
       loadUserTokenSettings();
     },
-    [fetchAccounts, loadUserTokenSettings],
+    [currentAccount, fetchAccounts, loadUserTokenSettings],
   );
 
   const isLoading = isLoadingToken || isCheckingExpire || isLoadingCacheToken;
