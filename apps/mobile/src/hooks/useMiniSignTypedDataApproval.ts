@@ -14,7 +14,6 @@ export let DirectSubmitReject;
 
 const miniApprovalAtom = atom<{
   txs?: MiniTypedData[];
-  visible?: boolean;
   onReject?: (e?: any) => void;
   onResolve?: (res: Awaited<ReturnType<typeof sendSignTypedData>>[]) => void;
   onVisibleChange?: (v: boolean) => void;
@@ -59,14 +58,12 @@ export const useSendMiniSignTypedData = () => {
               id: id || prev.id,
               txs,
               ga,
-              visible: directSubmit ? false : true,
               directSubmit: !!directSubmit,
               account,
               onReject: e => {
                 setState(prev => ({
                   ...prev,
                   txs: [],
-                  visible: false,
                 }));
                 const signingTxId =
                   notificationService.currentMiniApproval?.signingTxId;
@@ -80,7 +77,6 @@ export const useSendMiniSignTypedData = () => {
                 setState(prev => ({
                   ...prev,
                   txs: [],
-                  visible: false,
                 }));
                 notificationService.currentMiniApproval = null;
                 resolve(res);
@@ -101,7 +97,6 @@ export const useSendMiniSignTypedData = () => {
     }: {
       txs: MiniTypedData[];
       ga?: Record<string, any>;
-      // directSubmit?: boolean;
       account: Account;
       autoSign?: boolean;
     }) => {
@@ -112,7 +107,6 @@ export const useSendMiniSignTypedData = () => {
           id: uniqueId('mini-approval'),
           txs,
           ga,
-          // directSubmit,
           account,
           autoSign,
         };
