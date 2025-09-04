@@ -26,7 +26,7 @@ import {
 export const PerpsOpenPositionCheckPopup: React.FC<{
   visible?: boolean;
   onClose?(): void;
-  onConfirm?(): void;
+  onConfirm?(): Promise<void>;
   info: {
     coin: string;
     margin: string;
@@ -46,7 +46,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   };
 }> = ({ visible, onClose, info, onConfirm }) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
-
+  const [loading, setLoading] = React.useState<boolean>(false);
   const { styles, colors2024, isLight } = useTheme2024({
     getStyle: getStyle,
   });
@@ -77,6 +77,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   useEffect(() => {
     if (visible) {
       modalRef.current?.present();
+      setLoading(false);
     } else {
       modalRef.current?.close();
     }
@@ -299,7 +300,12 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
             title={t('page.perpsDetail.PerpsOpenPositionCheckPopup.btn', {
               direction,
             })}
-            onPress={onConfirm}
+            onPress={async () => {
+              setLoading(true);
+              await onConfirm?.();
+              setLoading(false);
+            }}
+            loading={loading}
           />
         </AutoLockView>
       </BottomSheetScrollView>

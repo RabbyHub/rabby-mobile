@@ -212,7 +212,7 @@ export const PerpsOpenPositionPopup: React.FC<{
     });
     setLoading(false);
     onConfirm();
-    return res;
+    // return res;
   });
 
   const handleAutoCloseSwitch = useMemoizedFn((e: boolean) => {

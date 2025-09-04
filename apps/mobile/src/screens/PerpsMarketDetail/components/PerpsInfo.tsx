@@ -9,8 +9,12 @@ import BigNumber from 'bignumber.js';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { WsActiveAssetCtx } from '@rabby-wallet/hyperliquid-sdk';
 
-export const PerpsInfo: React.FC<{ market: MarketData }> = ({ market }) => {
+export const PerpsInfo: React.FC<{
+  market: MarketData;
+  activeAssetCtx: WsActiveAssetCtx['ctx'] | null;
+}> = ({ market, activeAssetCtx }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const { showTipsPopup } = useTipsPopup();
@@ -31,7 +35,9 @@ export const PerpsInfo: React.FC<{ market: MarketData }> = ({ market }) => {
           </View>
           <View>
             <Text style={styles.value}>
-              {formatUsdValueKMB(Number(market?.dayNtlVlm || 0))}
+              {formatUsdValueKMB(
+                Number(activeAssetCtx?.dayNtlVlm || market?.dayNtlVlm || 0),
+              )}
             </Text>
           </View>
         </View>
@@ -57,8 +63,10 @@ export const PerpsInfo: React.FC<{ market: MarketData }> = ({ market }) => {
           <View>
             <Text style={styles.value}>
               {formatUsdValueKMB(
-                new BigNumber(market?.openInterest || 0)
-                  .times(market?.markPx || 0)
+                new BigNumber(
+                  activeAssetCtx?.openInterest || market?.openInterest || 0,
+                )
+                  .times(activeAssetCtx?.markPx || market?.markPx || 0)
                   .toString(),
               )}
             </Text>
@@ -85,7 +93,10 @@ export const PerpsInfo: React.FC<{ market: MarketData }> = ({ market }) => {
           </TouchableOpacity>
           <View>
             <Text style={styles.value}>
-              {formatPercent(Number(market?.funding || 0), 6)}
+              {formatPercent(
+                Number(activeAssetCtx?.funding || market?.funding || 0),
+                6,
+              )}
             </Text>
           </View>
         </View>
