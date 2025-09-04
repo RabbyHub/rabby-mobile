@@ -111,7 +111,7 @@ export const PerpsScreen = () => {
 
   return (
     <>
-      <NormalScreenContainer2024 type={isLight ? 'bg2' : 'bg1'}>
+      <NormalScreenContainer2024 type={isLight ? 'bg0' : 'bg1'}>
         {!hasPermission ? <PerpsRegionAlert /> : null}
         <ScrollView
           style={styles.container}

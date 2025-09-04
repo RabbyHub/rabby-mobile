@@ -314,7 +314,7 @@ export const PerpsOpenPositionPopup: React.FC<{
         // snapPoints={snapPoints}
         {...makeBottomSheetProps({
           colors: colors2024,
-          linearGradientType: isLight ? 'bg2' : 'bg1',
+          linearGradientType: isLight ? 'bg0' : 'bg1',
         })}
         onDismiss={onCancel}
         enableDynamicSizing

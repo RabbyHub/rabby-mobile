@@ -335,7 +335,7 @@ export const PerpsAutoCloseModal: React.FC<Props> = ({
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   keyboardAvoidView: {
     height: '100%',
   },
@@ -350,7 +350,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     width: '100%',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
     borderRadius: 20,
   },
 
@@ -431,7 +433,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 16,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-1']
+      : colors2024['neutral-bg-2'],
     minHeight: 115,
 
     display: 'flex',

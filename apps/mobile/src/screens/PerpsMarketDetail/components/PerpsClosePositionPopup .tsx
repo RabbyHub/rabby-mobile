@@ -100,7 +100,7 @@ export const PerpsClosePositionPopup: React.FC<{
       // snapPoints={snapPoints}
       {...makeBottomSheetProps({
         colors: colors2024,
-        linearGradientType: 'bg2',
+        linearGradientType: isLight ? 'bg0' : 'bg1',
       })}
       onDismiss={onCancel}
       // enableDynamicSizing
@@ -187,7 +187,7 @@ export const PerpsClosePositionPopup: React.FC<{
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     container: {
       height: '100%',
@@ -206,7 +206,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
     },
     list: {
       borderRadius: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
     },
     listItemContainer: {
       padding: 16,
