@@ -39,7 +39,7 @@ export const GlobalMiniSignTypedDataApproval = () => {
     eventBus.on(EVENT_ROUTE_CHANGE, () => {
       clear();
       state?.onReject?.();
-      setState({ txs: [], visible: false, directSubmit: false });
+      setState({ txs: [], directSubmit: false });
       submittingToastRef?.current?.();
     });
   });
