@@ -202,22 +202,33 @@ export const usePerpsDeposit = ({
       } catch (e) {
         setDirectSigning(false);
         console.error(e);
-        // handleFullback();
+        if (
+          (e as any).name === 'SimulateError' ||
+          isAbortedDirectSubmitError(e)
+        ) {
+          await handleFullback();
+        }
       }
     } else if (
       isHardWareAccountAccountSupportMiniApproval(currentPerpsAccount.type)
     ) {
-      const res = await sendMiniTransactions({
-        txs: currentTxs || [],
-        ga: {
-          category: 'Perps',
-          source: 'Perps',
-          trigger: 'Perps',
-        },
-        directSubmit: false,
-        account: currentPerpsAccount!,
-      });
-      handleSetHistory(res[0].txHash);
+      try {
+        const res = await sendMiniTransactions({
+          txs: currentTxs || [],
+          ga: {
+            category: 'Perps',
+            source: 'Perps',
+            trigger: 'Perps',
+          },
+          directSubmit: false,
+          account: currentPerpsAccount!,
+        });
+        handleSetHistory(res[0].txHash);
+      } catch (error) {
+        if ((error as any).name === 'SimulateError') {
+          await handleFullback();
+        }
+      }
     } else {
       await handleFullback();
     }
