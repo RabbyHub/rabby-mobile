@@ -38,6 +38,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   direction: 'Long' | 'Short';
   providerFee: number;
   coin: string;
+  coinLogo?: string;
   markPrice: number;
   leverageRang: [number, number]; // [min, max]
   pxDecimals: number;
@@ -67,6 +68,7 @@ export const PerpsOpenPositionPopup: React.FC<{
   direction,
   providerFee,
   coin,
+  coinLogo,
   markPrice,
   leverageRang,
   pxDecimals,
@@ -149,8 +151,9 @@ export const PerpsOpenPositionPopup: React.FC<{
 
   // 验证 margin 输入
   const marginValidation = React.useMemo(() => {
-    const marginValue = Number(margin);
+    const marginValue = Number(margin) || 0;
     const usdValue = marginValue * leverage;
+    const sizeValue = Number(tradeSize) * markPrice;
     const maxValue = maxNtlValue || PERPS_MAX_NTL_VALUE;
 
     if (marginValue === 0) {
@@ -177,7 +180,7 @@ export const PerpsOpenPositionPopup: React.FC<{
       };
     }
 
-    if (usdValue < 10) {
+    if (usdValue < 10 || sizeValue < 10) {
       // 最小订单限制 $10
       return {
         isValid: false,
@@ -202,7 +205,15 @@ export const PerpsOpenPositionPopup: React.FC<{
     }
 
     return { isValid: true, error: null };
-  }, [margin, availableBalance, t, leverage, maxNtlValue]);
+  }, [
+    margin,
+    leverage,
+    tradeSize,
+    markPrice,
+    maxNtlValue,
+    availableBalance,
+    t,
+  ]);
 
   const leverageRangeValidation = React.useMemo(() => {
     if (selectedLeverage == null || Number.isNaN(+selectedLeverage)) {
@@ -424,32 +435,36 @@ export const PerpsOpenPositionPopup: React.FC<{
                 </View>
                 {autoClose.isOpen ? (
                   <View style={styles.listSub}>
-                    <View style={styles.listSubItem}>
-                      <Text style={styles.listSubItemLabel}>
-                        {t('page.perpsDetail.PerpsOpenPositionPopup.tpPrice')}
-                      </Text>
-                      <Text style={styles.value}>
-                        ${splitNumberByStep(autoClose.tpTriggerPx || 0)}
-                      </Text>
-                      {/* <RcArrowRight2CC
+                    {autoClose.tpTriggerPx ? (
+                      <View style={styles.listSubItem}>
+                        <Text style={styles.listSubItemLabel}>
+                          {t('page.perpsDetail.PerpsOpenPositionPopup.tpPrice')}
+                        </Text>
+                        <Text style={styles.value}>
+                          ${splitNumberByStep(autoClose.tpTriggerPx || 0)}
+                        </Text>
+                        {/* <RcArrowRight2CC
                         width={16}
                         height={16}
                         color={colors2024['neutral-body']}
                       /> */}
-                    </View>
-                    <View style={styles.listSubItem}>
-                      <Text style={styles.listSubItemLabel}>
-                        {t('page.perpsDetail.PerpsOpenPositionPopup.slPrice')}
-                      </Text>
-                      <Text style={styles.value}>
-                        ${splitNumberByStep(autoClose.slTriggerPx || 0)}
-                      </Text>
-                      {/* <RcArrowRight2CC
+                      </View>
+                    ) : null}
+                    {autoClose.slTriggerPx ? (
+                      <View style={styles.listSubItem}>
+                        <Text style={styles.listSubItemLabel}>
+                          {t('page.perpsDetail.PerpsOpenPositionPopup.slPrice')}
+                        </Text>
+                        <Text style={styles.value}>
+                          ${splitNumberByStep(autoClose.slTriggerPx || 0)}
+                        </Text>
+                        {/* <RcArrowRight2CC
                         width={16}
                         height={16}
                         color={colors2024['neutral-body']}
                       /> */}
-                    </View>
+                      </View>
+                    ) : null}
                   </View>
                 ) : null}
               </View>
@@ -480,6 +495,7 @@ export const PerpsOpenPositionPopup: React.FC<{
           bothFee,
           autoClose,
           estimatedLiquidationPrice,
+          coinLogo,
         }}
         visible={isReviewMode}
         onClose={() => {
@@ -507,6 +523,7 @@ export const PerpsOpenPositionPopup: React.FC<{
               tpTriggerPx: params.tpPrice,
               slTriggerPx: params.slPrice,
             });
+            setAutoCloseVisible(false);
           }}
         />
       ) : null}
@@ -574,6 +591,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       ...(!isAndroid && {
         fontFamily: 'SF Pro Rounded', // avoid some android phone show number not in center
       }),
+      minWidth: 80,
     },
     inputError: {
       borderColor: colors2024['red-default'],

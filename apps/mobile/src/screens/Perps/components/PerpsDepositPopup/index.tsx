@@ -22,7 +22,7 @@ import { useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
 import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
 import { useUsdInput } from '@/hooks/useUsdInput';
@@ -297,7 +297,9 @@ const getStyle = createGetStyles2024(ctx => {
       gap: 12,
     },
     input: {
-      fontFamily: 'SF Pro Rounded',
+      ...(Platform.OS === 'ios' && {
+        fontFamily: 'SF Pro Rounded', // avoid some android phone show number not in center
+      }),
       fontSize: 28,
       lineHeight: 36,
       fontWeight: '700',

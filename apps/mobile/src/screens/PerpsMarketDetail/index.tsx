@@ -401,6 +401,7 @@ export const PerpsMarketDetailScreen = () => {
           currentAssetCtx?.maxUsdValueSize || PERPS_MAX_NTL_VALUE,
         )}
         coin={coin}
+        coinLogo={currentAssetCtx?.logoUrl}
         pxDecimals={currentAssetCtx?.pxDecimals || 2}
         szDecimals={currentAssetCtx?.szDecimals || 0}
         leverageRang={[1, currentAssetCtx?.maxLeverage || 5]}

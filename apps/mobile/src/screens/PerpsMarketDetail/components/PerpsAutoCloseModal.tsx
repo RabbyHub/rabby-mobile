@@ -471,7 +471,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['green-default'],
   },
   input: {
-    fontFamily: 'SF Pro Rounded',
+    ...(Platform.OS === 'ios' && {
+      fontFamily: 'SF Pro Rounded', // avoid some android phone show number not in center
+    }),
     fontSize: 36,
     lineHeight: 42,
     fontWeight: '700',

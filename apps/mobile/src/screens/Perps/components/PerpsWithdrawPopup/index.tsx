@@ -17,7 +17,7 @@ import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
 
 export const PerpsWithdrawPopup: React.FC<{
   visible?: boolean;
@@ -233,7 +233,9 @@ const getStyle = createGetStyles2024(ctx => {
       gap: 12,
     },
     input: {
-      fontFamily: 'SF Pro Rounded',
+      ...(Platform.OS === 'ios' && {
+        fontFamily: 'SF Pro Rounded', // avoid some android phone show number not in center
+      }),
       fontSize: 28,
       lineHeight: 36,
       fontWeight: '700',

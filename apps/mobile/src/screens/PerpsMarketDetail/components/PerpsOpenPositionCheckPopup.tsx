@@ -1,5 +1,5 @@
 import { RcArrowRight2CC, RcIconInfoFillCC } from '@/assets/icons/common';
-import { AppSwitch } from '@/components';
+import { AppSwitch, AssetAvatar } from '@/components';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Button } from '@/components2024/Button';
@@ -29,6 +29,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
   onConfirm?(): Promise<void>;
   info: {
     coin: string;
+    coinLogo?: string;
     margin: string;
     direction: 'Long' | 'Short';
     leverage: number;
@@ -55,6 +56,7 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
 
   const {
     coin: coin,
+    coinLogo,
     margin,
     direction,
     leverage,
@@ -109,16 +111,15 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                   {t('page.perpsDetail.PerpsOpenPositionCheckPopup.perps')}
                 </Text>
               </View>
-              <View>
+              <View style={styles.coinContainer}>
+                <AssetAvatar size={24} logo={coinLogo} />
                 <Text style={styles.value}>{coin} - USD</Text>
               </View>
             </View>
             <View style={styles.listItem}>
               <View style={styles.listItemMain}>
                 <Text style={styles.label}>
-                  {t(
-                    'page.perpsDetail.PerpsOpenPositionCheckPopup.initialMargin',
-                  )}
+                  {t('page.perpsDetail.PerpsOpenPositionCheckPopup.margin')}
                 </Text>
               </View>
               <View>
@@ -180,36 +181,40 @@ export const PerpsOpenPositionCheckPopup: React.FC<{
                   </View>
                 </View>
                 <View style={styles.listSub}>
-                  <View style={styles.listSubItem}>
-                    <Text style={styles.listSubItemLabel}>
-                      {t(
-                        'page.perpsDetail.PerpsOpenPositionCheckPopup.tpPrice',
-                      )}
-                    </Text>
-                    <Text style={styles.value}>
-                      ${splitNumberByStep(autoClose.tpTriggerPx || 0)}
-                    </Text>
-                    {/* <RcArrowRight2CC
+                  {autoClose.tpTriggerPx ? (
+                    <View style={styles.listSubItem}>
+                      <Text style={styles.listSubItemLabel}>
+                        {t(
+                          'page.perpsDetail.PerpsOpenPositionCheckPopup.tpPrice',
+                        )}
+                      </Text>
+                      <Text style={styles.value}>
+                        ${splitNumberByStep(autoClose.tpTriggerPx || 0)}
+                      </Text>
+                      {/* <RcArrowRight2CC
                       width={16}
                       height={16}
                       color={colors2024['neutral-body']}
                     /> */}
-                  </View>
-                  <View style={styles.listSubItem}>
-                    <Text style={styles.listSubItemLabel}>
-                      {t(
-                        'page.perpsDetail.PerpsOpenPositionCheckPopup.slPrice',
-                      )}
-                    </Text>
-                    <Text style={styles.value}>
-                      ${splitNumberByStep(autoClose.slTriggerPx || 0)}
-                    </Text>
-                    {/* <RcArrowRight2CC
+                    </View>
+                  ) : null}
+                  {autoClose.slTriggerPx ? (
+                    <View style={styles.listSubItem}>
+                      <Text style={styles.listSubItemLabel}>
+                        {t(
+                          'page.perpsDetail.PerpsOpenPositionCheckPopup.slPrice',
+                        )}
+                      </Text>
+                      <Text style={styles.value}>
+                        ${splitNumberByStep(autoClose.slTriggerPx || 0)}
+                      </Text>
+                      {/* <RcArrowRight2CC
                       width={16}
                       height={16}
                       color={colors2024['neutral-body']}
                     /> */}
-                  </View>
+                    </View>
+                  ) : null}
                 </View>
               </View>
             ) : null}
@@ -397,6 +402,12 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       lineHeight: 20,
       fontWeight: '700',
       color: colors2024['neutral-title-1'],
+    },
+    coinContainer: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
     },
   };
 });
