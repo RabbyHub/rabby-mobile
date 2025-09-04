@@ -28,6 +28,7 @@ import { PerpsPositionSection } from './components/PerpsPositionSection';
 import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
+import { PerpsIntro } from '../PerpsMarketDetail/components/PerpsIntro';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -130,6 +131,7 @@ export const PerpsScreen = () => {
             marketDataMap={marketDataMap}
             historyList={homeHistoryList}
           />
+          <PerpsIntro />
         </ScrollView>
       </NormalScreenContainer2024>
       <PerpsAccountSelectorPopup
