@@ -7,6 +7,7 @@ import { getAllMyAccount } from '@/core/apis/address';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { preferenceService } from '@/core/services';
+import { addressUtils } from '@rabby-wallet/base-utils';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -48,8 +49,11 @@ export async function getScreenshotFeedbackExtra({
   const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
   const myAccountList = await getAllMyAccount();
-  const myAddressList = myAccountList.map(acc => acc.address);
-  const currentAddress = preferenceService.getFallbackAccount()?.address;
+  const myAddressList = myAccountList.map(acc =>
+    addressUtils.ellipsis(acc.address),
+  );
+  const myFirstAddress = myAccountList[0]?.address;
+  const myCurrentAddress = preferenceService.getFallbackAccount()?.address;
 
   return {
     totalBalanceText,
@@ -60,7 +64,8 @@ export async function getScreenshotFeedbackExtra({
     appBuildRevision,
     applicationId: APPLICATION_ID,
     myAddressList,
-    currentAddress,
+    myFirstAddress,
+    myCurrentAddress,
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
     systemVersion: runTryCatch(() => DeviceInfo.getSystemVersion()),
