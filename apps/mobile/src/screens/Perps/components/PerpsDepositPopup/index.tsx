@@ -217,7 +217,7 @@ export const PerpsDepositPopup: React.FC<{
           {canShowDirectSubmit ? (
             <AuthButton
               authTitle={t('page.whitelist.confirmPassword')}
-              title={t('global.confirm')}
+              title={t('page.perps.PerpsDepositPopup.depositBtn')}
               onFinished={handleDeposit}
               disabled={!amountValidation.isValid}
               loading={loading}
