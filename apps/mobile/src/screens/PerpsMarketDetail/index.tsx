@@ -400,7 +400,12 @@ export const PerpsMarketDetailScreen = () => {
           setAmountVisible(false);
         }}
         onDeposit={async v => {
-          await handleDeposit(v);
+          try {
+            await handleDeposit(v);
+          } catch (e) {
+            console.error(e);
+          }
+          setAmountVisible(false);
         }}
       />
       <PerpsOpenPositionPopup
