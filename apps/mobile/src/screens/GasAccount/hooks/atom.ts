@@ -56,7 +56,6 @@ const syncDeleteGasAccount = async (
       }
     }
     const perpsAccount = await perpsService.getCurrentAccount();
-    console.log('perpsAccount', perpsAccount, address, type);
     if (
       isSameAddress(perpsAccount?.address || '', address) &&
       perpsAccount?.type === type

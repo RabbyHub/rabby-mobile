@@ -88,7 +88,6 @@ export const formatMarkData = (
       })
       .filter(Boolean) as MarketData[];
 
-    // console.log('format result', result);
     return result;
   } catch (e) {
     console.error('Failed to format market data:', e);

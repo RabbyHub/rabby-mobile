@@ -254,7 +254,6 @@ export const PerpsChart: React.FC<{
     // if (!seriesRef.current) return;
 
     const interval = getInterval(selectedInterval);
-    console.log('subscribeCandle', market, interval);
     const { unsubscribe } = sdk.ws.subscribeToCandles(
       market.name,
       interval,

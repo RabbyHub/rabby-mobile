@@ -57,8 +57,6 @@ export const PerpsScreen = () => {
 
   const [popupState, setPopupState] = usePerspPopupState();
 
-  // console.log({ marketData });
-
   const handleLogin = useMemoizedFn(async (v: Account) => {
     await login(v);
     setPopupState(prev => ({

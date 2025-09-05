@@ -41,7 +41,6 @@ export const useAuth = (params?: {
     onBeforeAuth?.();
     return new Promise(async (resolve, reject) => {
       if (!isBiometricsEnabled) {
-        console.log('----------isBiometricsEnabled------');
         AuthenticationModal2024.show({
           title: authTitle || 'Enter the Password to Confirm',
           authType: ['password'],
@@ -59,7 +58,6 @@ export const useAuth = (params?: {
         });
       }
       try {
-        console.log('----------requestGenericPassword------');
         await apisKeychain.requestGenericPassword({
           purpose: RequestGenericPurpose.DECRYPT_PWD,
           onPlainPassword: async password => {
@@ -72,7 +70,6 @@ export const useAuth = (params?: {
         if (__DEV__) {
           console.error(error);
         }
-        console.log('---------???????--------', authTitle);
         AuthenticationModal2024.show({
           title: authTitle || 'Enter the Password to Confirm',
           authType: ['password'],

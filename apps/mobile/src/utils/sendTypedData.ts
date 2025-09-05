@@ -94,8 +94,6 @@ export const sendSignTypedData = async ({
   try {
     const data1 = data as any;
 
-    console.log('sendMiniSignTypedData');
-
     hash = await apisKeyring.signTypedData(currentAccount?.type, from, data1, {
       brandName: currentAccount.brandName,
       signTextMethod: method,

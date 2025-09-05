@@ -236,8 +236,6 @@ export const usePerpsDeposit = ({
     } else {
       await handleFullback();
     }
-
-    // console.log('fallback res tx', tx);
   });
 
   useInterval(
