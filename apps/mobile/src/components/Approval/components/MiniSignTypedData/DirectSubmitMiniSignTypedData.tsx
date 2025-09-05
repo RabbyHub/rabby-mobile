@@ -191,7 +191,14 @@ export const MiniDirectSubmitTypedDataApproval = ({
   return (
     <>
       <AppBottomSheetModal
-        index={isHardwareWallet && task.status !== 'idle' ? 0 : -1}
+        index={
+          isHardwareWallet &&
+          isSignTypedDataSigning &&
+          txs?.length &&
+          task.status === 'active'
+            ? 0
+            : -1
+        }
         ref={sheetModalRef}
         // enableDismissOnClose={false}
         style={styles.sheet}
@@ -255,29 +262,31 @@ export const MiniDirectSubmitTypedDataApproval = ({
         account={account}
       />
 
-      <Modal
-        visible={overlayLoading && !isHardwareWallet}
-        transparent
-        animationType="fade"
-        onRequestClose={cancelOverlayLoading}
-        statusBarTranslucent>
-        <Pressable style={styles.overlay}>
-          <View style={styles.loadingContainer}>
-            <Animated.View
-              style={[
-                {
-                  transform: [
-                    {
-                      rotate,
-                    },
-                  ],
-                },
-              ]}>
-              <IconLoadingCC color={'white'} width={24} height={24} />
-            </Animated.View>
-          </View>
-        </Pressable>
-      </Modal>
+      {overlayLoading && !isHardwareWallet ? (
+        <Modal
+          visible={overlayLoading && !isHardwareWallet}
+          transparent
+          animationType="fade"
+          onRequestClose={cancelOverlayLoading}
+          statusBarTranslucent>
+          <Pressable style={styles.overlay}>
+            <View style={styles.loadingContainer}>
+              <Animated.View
+                style={[
+                  {
+                    transform: [
+                      {
+                        rotate,
+                      },
+                    ],
+                  },
+                ]}>
+                <IconLoadingCC color={'white'} width={24} height={24} />
+              </Animated.View>
+            </View>
+          </Pressable>
+        </Modal>
+      ) : null}
     </>
   );
 };
