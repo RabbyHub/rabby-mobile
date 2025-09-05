@@ -4,19 +4,18 @@ import { Button } from '@/components2024/Button';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { openapi } from '@/core/request';
-import { Tip } from '@/components/Tip';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { useTheme2024 } from '@/hooks/theme';
 import { AbstractPortfolioToken, AbstractProject } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
-import { findChain, getChain } from '@/utils/chain';
+import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { abstractTokenToTokenItem } from '@/utils/token';
 import { CHAINS_ENUM } from '@debank/common';
 import { preferenceService } from '@/core/services';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
@@ -46,15 +45,31 @@ import { IssuerAndListSite } from './components/IssuerAndListSite';
 import RcIconWarningCC from '@/assets2024/icons/common/warning-circle-cc.svg';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import { useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { isFromBackAtom } from '../Swap/hooks/atom';
-import { useTokenBalance } from './hook';
+import {
+  fetchTokenPriceData,
+  useTokenBalance,
+  useTokenMarketInfo,
+} from './hook';
 import { RightMore } from './components/RightMore';
 import HeaderBalanceCard from './components/HeaderBalanceCard';
 import { navigate } from '@/utils/navigation';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { DynamicCustomMaterialTabBar } from './components/CustomTabBar';
 import CustomLabel from './components/CustomLabel';
+import { CandlePeriod } from '@/components2024/TradingViewCandleChart/type';
+import TradingViewCandleChart, {
+  TradingViewChartRef,
+} from '@/components2024/TradingViewCandleChart';
+import TimePanel from './components/TimePanel';
+import MarketInfo from './components/MarketInfo';
+import { atomByMMKV } from '@/core/storage/mmkv';
+
+const currentIntervalAtom = atomByMMKV<CandlePeriod>(
+  '@tokenDetail.currentInterval',
+  CandlePeriod.ONE_MINUTE,
+);
 
 const isAndroid = Platform.OS === 'android';
 
@@ -265,7 +280,11 @@ export const TokenMarketInfoScreen = () => {
 
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
 
-  const { data: tokenWithAmount, refreshAsync } = useRequest(
+  const {
+    data: tokenWithAmount,
+    refreshAsync,
+    loading: tokenWithAmountLoading,
+  } = useRequest(
     async () => {
       const res = await openapi.getToken(
         finalAccount!.address,
@@ -277,6 +296,7 @@ export const TokenMarketInfoScreen = () => {
         price_24h_change: res?.price_24h_change,
         usd_value: res?.usd_value,
         price: res?.price,
+        support_market_data: res?.support_market_data,
       });
     },
     {
@@ -596,12 +616,36 @@ export const TokenMarketInfoScreen = () => {
   );
 
   const tokenPriceChartRef = React.useRef<TokenChartRef>(null);
+  const chartWebViewRef = React.useRef<TradingViewChartRef>(null);
+  const [currentInterval, setCurrentInterval] = useAtom(currentIntervalAtom);
 
+  const [loading, setLoading] = useState(true);
   const handleRefresh = useCallback(() => {
     refreshTokenEntity();
     refreshAsync();
     tokenPriceChartRef.current?.refreshChart();
   }, [refreshAsync, refreshTokenEntity]);
+
+  const { marketInfo, holdInfo, supplyInfo } = useTokenMarketInfo({
+    chain: token.chain,
+    tokenId: token._tokenId,
+  });
+
+  const handleChangeInterval = useCallback(
+    (interval: CandlePeriod) => {
+      setCurrentInterval(interval);
+      fetchTokenPriceData(
+        {
+          chain: token.chain,
+          tokenId: token._tokenId,
+        },
+        interval,
+      ).then(res => {
+        chartWebViewRef.current?.setData(res);
+      });
+    },
+    [setCurrentInterval, token._tokenId, token.chain],
+  );
 
   if (isSingleAddress && !finalAccount) {
     return null;
@@ -631,7 +675,8 @@ export const TokenMarketInfoScreen = () => {
         renderTabBar={renderTabBar}
         tabBarHeight={30}
         containerStyle={styles.container}
-        headerContainerStyle={styles.tabBarWrap}>
+        headerContainerStyle={styles.tabBarWrap}
+        pagerProps={{ scrollEnabled: !isAndroid }}>
         <Tabs.Tab label={renderMarketDataLabel} name="marketData">
           <ScrollView
             refreshControl={
@@ -649,13 +694,63 @@ export const TokenMarketInfoScreen = () => {
                 onPress={handleOpenTokenDetail}
               />
             )}
-            <View style={{ position: 'relative', marginTop: 12 }}>
-              <TokenPriceChart
-                ref={tokenPriceChartRef}
-                token={tokenWithAmount || token}
-                amountList={[]}
-                relateDefiList={[]}
-              />
+            <View
+              style={{
+                position: 'relative',
+                marginTop: 12,
+              }}>
+              {tokenWithAmountLoading ? (
+                <View style={styles.skeleton} />
+              ) : tokenWithAmount?.support_market_data ? (
+                <>
+                  <MarketInfo
+                    price={tokenWithAmount?.price ?? 0}
+                    price24hChange={tokenWithAmount?.price_24h_change ?? 0}
+                    marketCap={
+                      supplyInfo?.market_cap_usd_value?.toString() ?? ''
+                    }
+                    totalSupply={supplyInfo?.total_supply?.toString() ?? ''}
+                    volume24h={
+                      marketInfo?.market?.volume_amount_24h?.toString() ?? ''
+                    }
+                    txns24h={marketInfo?.market?.txns_24h?.toString() ?? ''}
+                    holders={holdInfo?.holder_count?.toString() ?? ''}
+                  />
+                  <TimePanel
+                    currentInterval={currentInterval}
+                    onSelect={handleChangeInterval}
+                  />
+                  <TradingViewCandleChart
+                    ref={chartWebViewRef}
+                    height={300}
+                    style={[
+                      styles.klineContainer,
+                      {
+                        opacity: loading ? 0.01 : 1,
+                      },
+                    ]}
+                    onChartReady={() => {
+                      setLoading(false);
+                      fetchTokenPriceData(
+                        {
+                          chain: token.chain,
+                          tokenId: token._tokenId,
+                        },
+                        currentInterval,
+                      ).then(res => {
+                        chartWebViewRef.current?.setData(res);
+                      });
+                    }}
+                  />
+                </>
+              ) : (
+                <TokenPriceChart
+                  ref={tokenPriceChartRef}
+                  token={tokenWithAmount || token}
+                  amountList={[]}
+                  relateDefiList={[]}
+                />
+              )}
             </View>
             <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
             <View style={{ height: isAndroid ? 200 + safeOffBottom : 156 }} />
@@ -841,6 +936,17 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       backgroundColor: colors2024['neutral-body'],
       height: 4,
       borderRadius: 100,
+    },
+    skeleton: {
+      marginTop: 12,
+      width: screenWidth - 32,
+      height: 200,
+      borderRadius: 12,
+      marginHorizontal: 16,
+    },
+    klineContainer: {
+      paddingHorizontal: 16,
+      marginBottom: 12,
     },
   };
 });
