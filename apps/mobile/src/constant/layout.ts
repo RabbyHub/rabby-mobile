@@ -31,7 +31,7 @@ export const ASSETS_ITEM_HEIGHT = 68;
 export const ASSETS_ITEM_HEIGHT_NEW = 74;
 export const DEFI_ITEM_HEIGHT = 120;
 export const ASSETS_SECTION_HEADER = 36;
-export const TOKEN_EMPTY_ROW_HIGHT = 434;
+export const TOKEN_EMPTY_ROW_HIGHT = 326;
 export const ASSETS_EMPTY_ROW_HIGHT = 186;
 export const ASSETS_SEPARATOR_HEIGHT = 8;
 export const ASSETS_LIST_HEADER = 22;
@@ -148,7 +148,9 @@ export const RootNames = {
   Bridge: 'Bridge',
   MultiBridge: 'MultiBridge',
   GasAccount: 'GasAccount',
+  /** @deprecated */
   Buy: 'Buy',
+  /** @deprecated */
   MultiBuy: 'MultiBuy',
   CopyTrading: 'CopyTrading',
   AccountTransaction: 'AccountTransaction',

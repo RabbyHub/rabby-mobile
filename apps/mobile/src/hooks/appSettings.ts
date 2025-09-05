@@ -8,6 +8,7 @@ import { apisAutoLock } from '@/core/apis';
 import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 import { preferenceService } from '@/core/services';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { useAtomCallback } from 'jotai/utils';
 
 const isIOS = DeviceUtils.isIOS();
 
@@ -83,6 +84,16 @@ export function useExpScreenCapture() {
     showFeedbackOnScreenshotCapture,
     onExpScreenCaptureChange,
   };
+}
+
+export function useGetShowFeedbackOnScreenshotCapture() {
+  const getShowFeedbackOnScreenshotCapture = useAtomCallback(get => {
+    if (!isNonPublicProductionEnv) return true;
+
+    return get(ExperimentalSettingsAtom).showFeedbackOnScreenshotCapture;
+  });
+
+  return { getShowFeedbackOnScreenshotCapture };
 }
 
 export function useForceAllowScreenshot() {

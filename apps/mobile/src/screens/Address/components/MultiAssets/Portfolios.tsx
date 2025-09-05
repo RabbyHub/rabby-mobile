@@ -592,7 +592,6 @@ export const Portfolios = () => {
             <MemoizedEmptyTokenRow
               style={styles.emptyTokenHolder}
               onReceive={handleOnReceive}
-              onBuy={handleOnBuy}
               onImport={handleOnImport}
             />
           );
@@ -605,7 +604,6 @@ export const Portfolios = () => {
       foldHideList,
       getDefiMenuActions,
       getTokenMenuActions,
-      handleOnBuy,
       handleOnImport,
       handleOnReceive,
       handleOpenDefiDetail,

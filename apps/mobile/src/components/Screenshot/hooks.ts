@@ -20,10 +20,10 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { toast } from '@/components2024/Toast';
 import { useRefState } from '@/hooks/common/useRefState';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { PerAndroid } from '@/core/utils/permissions';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
+import { useGetShowFeedbackOnScreenshotCapture } from '@/hooks/appSettings';
 
 export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
   IS_ANDROID; /*  && !__DEV__ */
@@ -264,8 +264,16 @@ export function useSubmitSuccessModalVisible() {
     }));
   }, [setFeedbackByScreenshot]);
 
+  const getIsSubmitSuccessModalVisible = useAtomCallback(get => {
+    return {
+      submitSuccessModalVisible: get(feedbackByScreenshotAtom)
+        .submitSuccessModalShown,
+    };
+  });
+
   return {
     submitSuccessModalVisible: feedbackByScreenshot.submitSuccessModalShown,
+    getIsSubmitSuccessModalVisible,
     closeSubmitSuccessModal,
   };
 }
@@ -325,14 +333,17 @@ export function useUserDidTakeScreenshot({
   const { shouldToastFeedbackByScreenshot, setLastScreenshot } =
     useLastScreenshot();
 
+  const { getShowFeedbackOnScreenshotCapture } =
+    useGetShowFeedbackOnScreenshotCapture();
+
   useEffect(() => {
     if (!isTop) return;
 
     const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(
       async params => {
+        if (!getShowFeedbackOnScreenshotCapture()) return;
         if (!params?.captured) {
           if (IS_ANDROID && params && !params?.androidHasPermission) return;
-          return;
         }
 
         if (!shouldToastFeedbackByScreenshot()) return;
@@ -359,7 +370,7 @@ export function useUserDidTakeScreenshot({
           );
         } else if (fullPath && (await RNFS.exists(fullPath))) {
           const inAppPath = await appScreenshotFS.saveScreenshotFrom(fullPath, {
-            imageType: params.imageType,
+            imageType: params?.imageType,
           });
           if (!inAppPath) return;
 
@@ -368,7 +379,7 @@ export function useUserDidTakeScreenshot({
               // TODO: set contentType by params.type
               uri: AppScreenshotFS.normalizeBase64(
                 inAppPath,
-                params.imageType || 'image/jpeg',
+                params?.imageType || 'image/jpeg',
               ),
               height: sizes.height,
               width: sizes.width,
@@ -381,7 +392,12 @@ export function useUserDidTakeScreenshot({
     return () => {
       remove();
     };
-  }, [isTop, shouldToastFeedbackByScreenshot, setLastScreenshot]);
+  }, [
+    isTop,
+    shouldToastFeedbackByScreenshot,
+    setLastScreenshot,
+    getShowFeedbackOnScreenshotCapture,
+  ]);
 }
 export function useFeedbackOnScreenshot() {
   const [submitFeedbackOnScreenshot, setSubmitFeedbackOnScreenshot] = useAtom(
@@ -462,7 +478,7 @@ export function useSubmitFeedbackOnScreenshot() {
     useRefState(false);
   const submitFeedbackByScreenshot = useCallback(
     async function () {
-      const extraInfo = getScreenshotFeedbackExtra({ totalBalanceText });
+      const extraInfo = await getScreenshotFeedbackExtra({ totalBalanceText });
       // console.debug('[debug] extraInfo', extraInfo);
 
       if (isSubmittingRef.current) return;

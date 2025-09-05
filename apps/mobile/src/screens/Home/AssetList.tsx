@@ -19,7 +19,6 @@ import {
   ASSETS_SEPARATOR_HEIGHT,
   DEFI_ITEM_HEIGHT,
   RootNames,
-  TOKEN_EMPTY_ROW_HIGHT,
 } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
 import { MenuAction } from '@/components2024/ContextMenuView/ContextMenuView';
@@ -540,7 +539,6 @@ export const AssetList = forwardRef<FlatList<any>, Props>(
             return (
               <EmptyTokenRow
                 onReceive={handleOnReceive}
-                onBuy={handleOnBuy}
                 onImport={handleOnImport}
               />
             );
@@ -569,7 +567,6 @@ export const AssetList = forwardRef<FlatList<any>, Props>(
         getDefiMenuActions,
         getDefiOrNftMenuAction,
         getTokenMenuActions,
-        handleOnBuy,
         handleOnImport,
         handleOnReceive,
         handleOpenDefiDetail,
