@@ -7,7 +7,7 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import { Account } from '@/core/services/preference';
 import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
-import { useAuth } from '@/hooks/useAuth';
+// import { useAuth } from '@/hooks/useAuth';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
 import {
   directSigningAtom,
@@ -48,7 +48,7 @@ export const usePerpsDeposit = ({
 
   useClearMiniGasStateEffect({});
 
-  const runAuth = useAuth();
+  // const runAuth = useAuth();
   const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
 
   const updateMiniSignTx = useMemoizedFn((amount: number) => {
@@ -185,7 +185,7 @@ export const usePerpsDeposit = ({
         return;
       }
       try {
-        await runAuth();
+        // await runAuth();
         prepareMiniTransactions({
           txs: currentTxs || [],
           ga: {

@@ -26,6 +26,8 @@ import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
 import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
 import { useUsdInput } from '@/hooks/useUsdInput';
+import AuthButton from '@/components2024/AuthButton';
+import { isAccountSupportDirectSign } from '@/utils/account';
 
 export const PerpsDepositPopup: React.FC<{
   account?: Account | null;
@@ -127,6 +129,8 @@ export const PerpsDepositPopup: React.FC<{
     }
   }, [runFetchUsdcToken, setAmount, visible]);
 
+  const canShowDirectSubmit = isAccountSupportDirectSign(account?.type);
+
   if (!account) {
     return null;
   }
@@ -210,13 +214,29 @@ export const PerpsDepositPopup: React.FC<{
               ) : null}
             </View>
           </View>
-          <Button
-            type="primary"
-            title={t('page.perps.PerpsDepositPopup.depositBtn')}
-            onPress={handleDeposit}
-            disabled={!amountValidation.isValid}
-            loading={loading}
-          />
+          {canShowDirectSubmit ? (
+            <AuthButton
+              authTitle={t('page.whitelist.confirmPassword')}
+              title={t('global.confirm')}
+              onFinished={handleDeposit}
+              loading={loading}
+              type={'primary'}
+              syncUnlockTime
+              onBeforeAuth={() => {
+                Keyboard.dismiss();
+              }}
+              // onCancel={() => {
+              // }}
+            />
+          ) : (
+            <Button
+              type="primary"
+              title={t('page.perps.PerpsDepositPopup.depositBtn')}
+              onPress={handleDeposit}
+              disabled={!amountValidation.isValid}
+              loading={loading}
+            />
+          )}
         </BottomSheetView>
       </AppBottomSheetModal>
       <PerpsSelectTokenPopup
