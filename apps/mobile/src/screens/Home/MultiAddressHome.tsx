@@ -579,7 +579,7 @@ function MultiAddressHome(): JSX.Element {
       const status = i.status ?? 1;
       const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
       const addressTs =
-        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? 0;
+        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? Date.now();
       if (addressTs && addressTs / 1000 > i.time_at) {
         return;
       }
