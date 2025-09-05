@@ -45,7 +45,7 @@ class WatchKeyring extends EventEmitter implements KeyringIntf {
 
   async addAccounts(): Promise<string[]> {
     if (!isValidAddress(this.accountToAdd)) {
-      throw new Error("The address you're are trying to import is invalid");
+      throw new Error("The address you're trying to import is invalid");
     }
     const prefixedAddress: string = addHexPrefix(this.accountToAdd);
 

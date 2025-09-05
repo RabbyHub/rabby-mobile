@@ -2555,6 +2555,7 @@
       "desc": "Submitted Successfully"
     },
     "kline": {
+      "__skip_translation": true,
       "tp": "TP",
       "entry": "Entry",
       "sl": "SL",
@@ -2678,7 +2679,7 @@
       "errorWords_one": "1 incorrect word",
       "errorWords_other": "{{count}} incorrect words",
       "notFoundKeyringByAddress": "Can't find keyring by address",
-      "duplicateAccount": "The account you're are trying to import is duplicate",
+      "duplicateAccount": "The account you're trying to import is duplicate",
       "canNotUnlock": "Cannot unlock without a previous vault"
     },
     "transactionWatcher": {

@@ -24,6 +24,7 @@ import { useAccounts } from './account';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { useBiometrics } from './biometrics';
 import { useFetchTokensForAllAccounts } from '@/components/AccountSwitcher/hooks';
+import { browserStateAtom } from './browser/useBrowser';
 
 const syncCustomTestChainList = () => {
   try {
@@ -66,6 +67,7 @@ const DEBUG_IN_PAGE_SCRIPTS = {
  */
 export function useInitializeAppOnTop() {
   const { isAppUnlocked, setAppLock } = useAppUnlocked();
+  const [, setBrowserState] = useAtom(browserStateAtom);
 
   const apiInitializedRef = React.useRef(false);
   const doInitializeApis = React.useCallback(async () => {
@@ -96,6 +98,14 @@ export function useInitializeAppOnTop() {
     const onLock = () => {
       setAppLock(prev => ({ ...prev, appUnlocked: false }));
       fetchAccounts();
+      setBrowserState({
+        isShowBrowser: false,
+        isShowSearch: false,
+        isShowManage: false,
+        searchText: '',
+        searchTabId: '',
+        trigger: '',
+      });
     };
     keyringService.on('unlock', onUnlock);
     keyringService.on('lock', onLock);
@@ -104,7 +114,7 @@ export function useInitializeAppOnTop() {
       keyringService.off('unlock', onUnlock);
       keyringService.off('lock', onLock);
     };
-  }, [setAppLock, doInitializeApis, fetchAccounts]);
+  }, [setAppLock, doInitializeApis, fetchAccounts, setBrowserState]);
 
   const { fetchTop5TokensForAllAccountsOnce } = useFetchTokensForAllAccounts();
   React.useEffect(() => {
