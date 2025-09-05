@@ -1,3 +1,4 @@
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { useState, useEffect, useRef } from 'react';
 import { useMemoizedFn } from 'ahooks';
 import {
@@ -527,7 +528,7 @@ export const usePerpsStore = () => {
 
         console.log('User fills update:', data.fills.length);
         const { fills, isSnapshot, user } = data;
-        if (user !== address) {
+        if (!isSameAddress(user, address)) {
           return;
         }
 
