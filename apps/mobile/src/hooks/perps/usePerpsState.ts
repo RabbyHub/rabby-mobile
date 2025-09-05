@@ -624,6 +624,7 @@ export const usePerpsState = () => {
     // apisPerps.destroyPerpsSDK();
     apisPerps.setPerpsCurrentAccount(null);
     apisPerps.setSendApproveAfterDeposit(address, []);
+    deleteAgentCbRef.current = null;
   });
 
   const setCurrentPerpsAccount = useMemoizedFn((account: Account | null) => {
