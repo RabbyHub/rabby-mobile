@@ -208,29 +208,31 @@ export const MiniDirectSubmitApproval = ({
         account={account}
       />
 
-      <Modal
-        visible={showMaskLoading ? overlayLoading : false}
-        transparent
-        animationType="fade"
-        onRequestClose={cancelOverlayLoading}
-        statusBarTranslucent>
-        <Pressable style={styles.overlay}>
-          <View style={styles.loadingContainer}>
-            <Animated.View
-              style={[
-                {
-                  transform: [
-                    {
-                      rotate,
-                    },
-                  ],
-                },
-              ]}>
-              <IconLoadingCC color={'white'} width={24} height={24} />
-            </Animated.View>
-          </View>
-        </Pressable>
-      </Modal>
+      {showMaskLoading && overlayLoading ? (
+        <Modal
+          visible={overlayLoading}
+          transparent
+          animationType="fade"
+          onRequestClose={cancelOverlayLoading}
+          statusBarTranslucent>
+          <Pressable style={styles.overlay}>
+            <View style={styles.loadingContainer}>
+              <Animated.View
+                style={[
+                  {
+                    transform: [
+                      {
+                        rotate,
+                      },
+                    ],
+                  },
+                ]}>
+                <IconLoadingCC color={'white'} width={24} height={24} />
+              </Animated.View>
+            </View>
+          </Pressable>
+        </Modal>
+      ) : null}
     </>
   );
 };
