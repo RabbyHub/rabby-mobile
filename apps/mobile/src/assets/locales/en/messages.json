@@ -2124,6 +2124,7 @@
       }
     },
     "perps": {
+      "__skip_translation": true,
       "title": "Perps",
       "PerpsCard": {
         "title": "Trade Perps",
@@ -2260,6 +2261,7 @@
       }
     },
     "perpsDetail": {
+      "__skip_translation": true,
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
