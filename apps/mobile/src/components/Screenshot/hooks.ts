@@ -264,8 +264,16 @@ export function useSubmitSuccessModalVisible() {
     }));
   }, [setFeedbackByScreenshot]);
 
+  const getIsSubmitSuccessModalVisible = useAtomCallback(get => {
+    return {
+      submitSuccessModalVisible: get(feedbackByScreenshotAtom)
+        .submitSuccessModalShown,
+    };
+  });
+
   return {
     submitSuccessModalVisible: feedbackByScreenshot.submitSuccessModalShown,
+    getIsSubmitSuccessModalVisible,
     closeSubmitSuccessModal,
   };
 }
