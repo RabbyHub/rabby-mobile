@@ -219,6 +219,7 @@ export const PerpsDepositPopup: React.FC<{
               authTitle={t('page.whitelist.confirmPassword')}
               title={t('global.confirm')}
               onFinished={handleDeposit}
+              disabled={!amountValidation.isValid}
               loading={loading}
               type={'primary'}
               syncUnlockTime

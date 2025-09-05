@@ -28,6 +28,7 @@ import {
   View,
 } from 'react-native';
 import { PerpsDepositTokenModal } from './PerpsDepositTokenModal';
+import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 
 export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
@@ -157,6 +158,14 @@ export const PerpsSelectTokenPopup: React.FC<{
             renderItem={renderItem}
             ItemSeparatorComponent={() => <View style={styles.divider} />}
             keyExtractor={item => item.id + item.chain}
+            ListEmptyComponent={
+              <NotMatchedHolder
+                style={{
+                  height: 400,
+                }}
+                text="No tokens"
+              />
+            }
           />
         </AutoLockView>
       </AppBottomSheetModal>
