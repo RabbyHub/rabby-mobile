@@ -2325,6 +2325,7 @@
       "desc": "Submitted Successfully"
     },
     "kline": {
+      "__skip_translation": true,
       "tp": "TP",
       "entry": "Entry",
       "sl": "SL",
