@@ -4,6 +4,7 @@ import { usePerpsState } from '@/hooks/perps/usePerpsState';
 import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { useMemoizedFn } from 'ahooks';
 import * as Sentry from '@sentry/react-native';
+import { Dimensions, Platform, Text } from 'react-native';
 
 export const usePerpsPosition = ({
   setCurrentTpOrSl,
@@ -117,8 +118,21 @@ export const usePerpsPosition = ({
           // no need
           // fetchUserHistoricalOrders();
           const { totalSz, avgPx } = filled;
+          const msg = `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
           toast.success(
-            `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`,
+            Platform.OS === 'android'
+              ? ({ textStyle }) => (
+                  <Text
+                    style={[
+                      textStyle,
+                      {
+                        maxWidth: Dimensions.get('window').width - 100,
+                      },
+                    ]}>
+                    {msg}
+                  </Text>
+                )
+              : msg,
           );
           setCurrentTpOrSl({
             tpPrice: undefined,
@@ -207,8 +221,21 @@ export const usePerpsPosition = ({
           // fetchUserHistoricalOrders();
 
           const { totalSz, avgPx } = filled;
+          const msg = `Opened ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
           toast.success(
-            `Opened ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`,
+            Platform.OS === 'android'
+              ? ({ textStyle }) => (
+                  <Text
+                    style={[
+                      textStyle,
+                      {
+                        maxWidth: Dimensions.get('window').width - 100,
+                      },
+                    ]}>
+                    {msg}
+                  </Text>
+                )
+              : msg,
           );
           setCurrentTpOrSl({
             tpPrice: tpTriggerPx,
