@@ -19,14 +19,17 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
 
   const { t } = useTranslation();
 
-  const isConnectedRef = React.useRef(apiOneKey.isConnected(account.address));
+  const isConnectedPromise = React.useMemo(
+    () => apiOneKey.isConnected(account.address),
+    [account.address],
+  );
 
   const handleSubmit = React.useCallback(() => {
     if (isSubmitting) {
       return;
     }
     setIsSubmitting(true);
-    isConnectedRef.current.then(([isConnected]) => {
+    isConnectedPromise.then(([isConnected]) => {
       if (!isConnected) {
         onClickConnect(
           () => {
@@ -42,7 +45,7 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
       props.onSubmit();
       setIsSubmitting(false);
     });
-  }, [isSubmitting, props, onClickConnect]);
+  }, [isSubmitting, isConnectedPromise, props, onClickConnect]);
 
   return (
     <MiniProcessActions
