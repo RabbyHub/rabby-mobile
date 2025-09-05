@@ -23,6 +23,7 @@ export const miniApprovalAtom = atom<{
   id?: string;
   directSubmit?: boolean;
   account?: Account;
+  showMaskLoading?: boolean;
 }>({
   txs: [],
 });
@@ -67,6 +68,7 @@ export const useMiniApproval = () => {
                   ...prev,
                   txs: [],
                   visible: false,
+                  showMaskLoading: true,
                 }));
                 const signingTxId =
                   notificationService.currentMiniApproval?.signingTxId;
@@ -81,6 +83,7 @@ export const useMiniApproval = () => {
                   ...prev,
                   txs: [],
                   visible: false,
+                  showMaskLoading: true,
                 }));
                 notificationService.currentMiniApproval = null;
                 resolve(res);
@@ -125,11 +128,13 @@ export const useMiniApproval = () => {
       ga,
       directSubmit,
       account,
+      showMaskLoading,
     }: {
       txs: Tx[];
       ga?: Record<string, any>;
       directSubmit?: boolean;
       account: Account;
+      showMaskLoading?: boolean;
     }) => {
       clear();
       setState(prev => {
@@ -140,6 +145,7 @@ export const useMiniApproval = () => {
           ga,
           directSubmit,
           account,
+          showMaskLoading: showMaskLoading ?? true,
         };
       });
     },

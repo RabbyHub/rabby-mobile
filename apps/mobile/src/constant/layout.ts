@@ -152,7 +152,14 @@ export const RootNames = {
   Buy: 'Buy',
   /** @deprecated */
   MultiBuy: 'MultiBuy',
+  /**
+   * @deprecated
+   */
   CopyTrading: 'CopyTrading',
+  Perps: 'Perps',
+  PerpsMarketList: 'PerpsMarketList',
+  PerpsMarketDetail: 'PerpsMarketDetail',
+  PerpsHistory: 'PerpsHistory',
   AccountTransaction: 'AccountTransaction',
   /* @deprecated */
   MyBundle: 'MyBundle',

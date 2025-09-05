@@ -73,3 +73,7 @@ export const formatUsdValueKMBWithSign = (value: string | number): string => {
 
   return `+${formatUsdValueKMB(bnValue.toNumber())}`;
 };
+
+export const formatPercent = (value: number, decimals = 8) => {
+  return `${(value * 100).toFixed(decimals)}%`;
+};

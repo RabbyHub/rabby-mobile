@@ -1,27 +1,28 @@
-import React, { useMemo } from 'react';
 import { default as RcIconBg } from '@/assets/icons/gas-account/bg.svg';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import React from 'react';
 import { View, ViewProps } from 'react-native';
-import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
 
 export const GasAccountWrapperBg = ({
   children,
   style,
   ...others
 }: ViewProps) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyle(colors), [colors]);
+  const { styles, isLight } = useTheme2024({
+    getStyle,
+  });
   return (
     <View {...others} style={[styles.container, style]}>
       <View style={styles.bgWrapper}>
-        <RcIconBg width={'100%'} />
+        <RcIconBg width={'100%'} style={isLight ? null : styles.opacity50} />
       </View>
       {children}
     </View>
   );
 };
 
-const getStyle = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(() => ({
   container: {
     position: 'relative',
   },
@@ -33,5 +34,8 @@ const getStyle = createGetStyles(colors => ({
     bottom: 0,
     alignItems: 'center',
     zIndex: -1,
+  },
+  opacity50: {
+    opacity: 0.5,
   },
 }));

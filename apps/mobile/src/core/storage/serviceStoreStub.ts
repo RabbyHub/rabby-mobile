@@ -17,6 +17,7 @@ import {
 import { useMount } from 'ahooks';
 import { browserService, dappService } from '../services/shared';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 
 /**
  * @description only call this hook on app's top level
@@ -29,6 +30,7 @@ export function useSetupServiceStub() {
   const { getBookmarkList } = useBrowserBookmark();
   const { getBrowserHistoryList } = useBrowserHistory();
   const [, setTabs] = useAtom(tabsAtom);
+  const { initEventBus } = usePerpsStore();
 
   useEffect(() => {
     const disposes: Function[] = [];
@@ -87,5 +89,9 @@ export function useSetupServiceStub() {
         };
       }),
     });
+  });
+
+  useMount(() => {
+    initEventBus();
   });
 }

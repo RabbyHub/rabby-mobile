@@ -1,3 +1,4 @@
+import { apisPerps } from './perps';
 export * as apisLock from './lock';
 export * as apisAutoLock from './autoLock';
 export * as apisKeychain from './keychain';
@@ -20,3 +21,4 @@ export * as apiToken from './token';
 export { apiCustomTestnet } from './customTestnet';
 export { apiCustomRPC } from './customRPC';
 export * as apisAccount from './account';
+export * from './perps';

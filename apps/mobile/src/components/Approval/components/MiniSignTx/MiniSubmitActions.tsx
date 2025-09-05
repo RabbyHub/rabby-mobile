@@ -17,6 +17,7 @@ import { Button } from '@/components2024/Button';
 import { useAtomValue } from 'jotai';
 import { directSigningAtom } from '@/hooks/useMiniApprovalDirectSign';
 import useDebounce from 'react-use/lib/useDebounce';
+import { useGetMiniSigningTypedData } from '@/hooks/useMiniApprovalDirectSignTypedData';
 
 extend([mixPlugin]);
 
@@ -33,6 +34,7 @@ export const MiniSubmitActions: React.FC<Props> = ({
   chain,
   isSwap,
   directSubmit,
+  miniSignType = 'tx',
 }) => {
   const { t } = useTranslation();
   const [isSign, setIsSign] = React.useState(!gasLess);
@@ -66,6 +68,8 @@ export const MiniSubmitActions: React.FC<Props> = ({
 
   const directSigning = useAtomValue(directSigningAtom);
 
+  const signingTypedData = useGetMiniSigningTypedData();
+
   useDebounce(
     () => {
       if (
@@ -87,6 +91,16 @@ export const MiniSubmitActions: React.FC<Props> = ({
       pressedConfirm,
       directSubmit,
     ],
+  );
+
+  useDebounce(
+    () => {
+      if (signingTypedData && directSubmit && miniSignType === 'typedData') {
+        onSubmit();
+      }
+    },
+    300,
+    [miniSignType, signingTypedData, handlePress, directSubmit],
   );
 
   return (

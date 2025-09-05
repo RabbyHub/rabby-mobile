@@ -19,7 +19,7 @@ import type {
 import type { ContactBookService } from '@rabby-wallet/service-address';
 import * as ethUtil from 'ethereumjs-util';
 import log from 'loglevel';
-import * as bip39 from '@scure/bip39'
+import * as bip39 from '@scure/bip39';
 import * as import_english from '@scure/bip39/wordlists/english';
 
 import type { KeyringClassType, KeyringInstance } from './types';
@@ -28,6 +28,7 @@ import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
 import { mergeVault } from './utils/mergeVault';
+import { passwordDecrypt, passwordEncrypt } from './utils/password';
 
 const UNENCRYPTED_IGNORE_KEYRING = [
   KEYRING_TYPE.SimpleKeyring,
@@ -64,6 +65,8 @@ export type KeyringServiceOptions = {
   onSetAddressAlias?: OnSetAddressAlias;
   onCreateKeyring?: OnCreateKeyring;
 };
+
+export type PersistType = 'perps' | 'keyring';
 
 export class KeyringService extends RNEventEmitter {
   //
@@ -664,7 +667,7 @@ export class KeyringService extends RNEventEmitter {
         // Not all the keyrings support this, so we have to check
         if (typeof keyring.removeAccount === 'function') {
           keyring.removeAccount(address, brand);
-          this.emit('removedAccount', address);
+          this.emit('removedAccount', address, type, brand);
           const currentKeyring = keyring;
           return [await keyring.getAccounts(), currentKeyring];
         }
@@ -1310,6 +1313,28 @@ export class KeyringService extends RNEventEmitter {
     await this._updateMemStoreKeyrings();
 
     return addedAccounts;
+  }
+
+  async encryptWithPassword(content: any) {
+    if (!this.#password) {
+      throw new Error('password can not be null');
+    }
+    const encrypted = await passwordEncrypt({
+      data: content,
+      password: this.#password,
+    });
+    return encrypted;
+  }
+
+  async decryptWithPassword(str: string) {
+    if (!this.#password) {
+      throw new Error('password can not be null');
+    }
+    const decrypted = await passwordDecrypt({
+      encryptedData: str,
+      password: this.#password,
+    });
+    return decrypted;
   }
 }
 
