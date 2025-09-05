@@ -140,7 +140,7 @@ export const MiniDirectSubmitTypedDataApproval = ({
 
   useEffect(() => {
     if (!isSignTypedDataSigning && txs?.length && autoSign) {
-      sheetModalRef.current?.present();
+      // sheetModalRef.current?.present();
       setMiniSigningTypedData(true);
       console.log('setMiniSigningTypedData true');
     }
@@ -183,10 +183,22 @@ export const MiniDirectSubmitTypedDataApproval = ({
   );
 
   useEffect(() => {
-    if (!txs?.length) {
-      sheetModalRef.current?.dismiss();
+    if (txs?.length) {
+      sheetModalRef.current?.present();
+    } else {
+      // sheetModalRef.current?.dismiss();
     }
   }, [sheetModalRef, txs]);
+
+  useEffect(() => {
+    if (isSignTypedDataSigning) {
+      if (txs?.length) {
+        sheetModalRef.current?.present();
+      }
+    } else {
+      sheetModalRef.current?.dismiss();
+    }
+  }, [isSignTypedDataSigning, sheetModalRef, txs?.length]);
 
   return (
     <>
