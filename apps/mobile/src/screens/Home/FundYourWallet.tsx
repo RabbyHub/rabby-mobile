@@ -187,7 +187,7 @@ export const FoundYourWalletGuide = () => {
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   noAssetsContainer: {
     marginHorizontal: 16,
-    height: 434,
+    height: 348,
   },
 
   bgb2: {
