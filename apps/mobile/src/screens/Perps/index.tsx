@@ -112,7 +112,9 @@ export const PerpsScreen = () => {
   }, [setPopupState]);
 
   const onRefresh = useMemoizedFn(() => {
-    refreshData();
+    if (isLogin) {
+      refreshData();
+    }
     fetchMarketData(false);
   });
 
