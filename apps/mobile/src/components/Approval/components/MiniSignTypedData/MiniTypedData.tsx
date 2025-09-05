@@ -34,7 +34,6 @@ export const MiniSignTypedDate = ({
   directSubmit?: boolean;
   account: Account;
 }) => {
-  console.log('MiniSignTypedDate mount');
   const handleAllow = useMemoizedFn(async () => {
     const currentAccount = account;
 

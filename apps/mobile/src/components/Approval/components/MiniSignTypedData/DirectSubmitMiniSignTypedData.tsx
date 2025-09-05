@@ -142,7 +142,6 @@ export const MiniDirectSubmitTypedDataApproval = ({
     if (!isSignTypedDataSigning && txs?.length && autoSign) {
       // sheetModalRef.current?.present();
       setMiniSigningTypedData(true);
-      console.log('setMiniSigningTypedData true');
     }
   }, [
     autoSign,
@@ -156,8 +155,6 @@ export const MiniDirectSubmitTypedDataApproval = ({
     () => isHardWareAccountAccountSupportMiniApproval(account.type),
     [account.type],
   );
-
-  console.log('txs', txs?.length, task.status);
 
   const pressBackdropRef = useRef(false);
 

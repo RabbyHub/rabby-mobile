@@ -85,7 +85,6 @@ export const usePerpsInitial = () => {
         payload.address,
       );
 
-      console.log('getSendApproveAfterDeposit res', approveSignatures);
       if (approveSignatures?.length) {
         const item = approveSignatures[0];
         const expiredTime = item.nonce + 1000 * 60 * 60 * 24;
@@ -173,10 +172,8 @@ export const usePerpsInitial = () => {
         };
 
         const currentAccount = await apisPerps.getPerpsCurrentAccount();
-        console.log(' init currentAccount', currentAccount);
         if (!currentAccount || !currentAccount.address) {
           // 如果没有登录状态，则只获取市场数据即可
-          console.log('noLoginAction no currentAccount');
           await noLoginAction();
           return false;
         }
@@ -188,7 +185,6 @@ export const usePerpsInitial = () => {
 
         if (!targetTypeAccount) {
           // 地址列表没找到
-          console.log('noLoginAction no targetTypeAccount');
           await noLoginAction();
           return false;
         }
@@ -196,7 +192,6 @@ export const usePerpsInitial = () => {
         const res = await apisPerps.getPerpsAgentWallet(currentAccount.address);
         if (!res) {
           // 没有找到store对应的 agent wallet
-          console.log('noLoginAction no PerpsAgentWallet');
           await noLoginAction();
           return false;
         }
@@ -337,7 +332,6 @@ export const usePerpsState = () => {
   const checkIsExtraAgentIsExpired = useMemoizedFn(
     async (account: Account, agentAddress: string) => {
       const sdk = apisPerps.getPerpsSDK();
-      console.log('----------extraAgents', account.address);
       const extraAgents = await sdk.info.extraAgents(account.address);
       const item = extraAgents.find(agent =>
         isSameAddress(agent.address, agentAddress),
@@ -371,7 +365,6 @@ export const usePerpsState = () => {
                 nonce: action?.nonce || 0,
                 signature: signActions[0].signature,
               });
-              console.log('deleteAgent res', res);
             }
           };
           // setDeleteAgentModalVisible?.(true);
@@ -449,12 +442,10 @@ export const usePerpsState = () => {
             }),
             account,
           });
-          console.log('Mini sign result', result);
           result.forEach((item, idx) => {
             signActions[idx].signature = item.txHash;
           });
         } catch (error) {
-          console.log('Mini sign rejected or failed:', error);
           throw error || 'Canceled';
         }
       } else {
@@ -488,7 +479,6 @@ export const usePerpsState = () => {
     try {
       const sdk = apisPerps.getPerpsSDK();
       const res = await sdk.exchange?.setReferrer(PERPS_REFERENCE_CODE);
-      console.log('setReference res', res);
     } catch (e) {
       // console.error('Failed to set reference:', e);
     }
@@ -497,8 +487,6 @@ export const usePerpsState = () => {
   const handleDirectApprove = useCallback(
     async (signActions: SignAction[]): Promise<void> => {
       const sdk = apisPerps.getPerpsSDK();
-
-      console.log('handleDirectApprove', sdk.exchange);
 
       const results = await Promise.all(
         signActions.map(async actionObj => {
@@ -529,9 +517,7 @@ export const usePerpsState = () => {
       setTimeout(() => {
         handleSafeSetReference();
       }, 500);
-      const [approveAgentRes, approveBuilderFeeRes] = results;
-      console.log('sendApproveAgentRes', approveAgentRes);
-      console.log('sendApproveBuilderFeeRes', approveBuilderFeeRes);
+      // const [approveAgentRes, approveBuilderFeeRes] = results;
     },
     [handleSafeSetReference],
   );
@@ -634,7 +620,6 @@ export const usePerpsState = () => {
   const handleWithdraw = useMemoizedFn(
     async (amount: number | string): Promise<boolean> => {
       try {
-        console.log('handleWithdraw', amount);
         const sdk = apisPerps.getPerpsSDK();
 
         if (!currentPerpsAccount) {
@@ -653,7 +638,6 @@ export const usePerpsState = () => {
           amount: amount.toString(),
           destination: currentPerpsAccount.address,
         });
-        console.log('withdraw action', action);
         let signature = '';
         if (
           currentPerpsAccount.type === KEYRING_CLASS.PRIVATE_KEY ||
@@ -687,13 +671,11 @@ export const usePerpsState = () => {
             account: currentPerpsAccount,
           });
         }
-        console.log('withdraw signature', signature);
         const res = await sdk.exchange.sendWithdraw({
           action: action.message as any,
           nonce: action.nonce || 0,
           signature: signature as string,
         });
-        console.log('withdraw res', res);
         setLocalLoadingHistory(
           [
             {
