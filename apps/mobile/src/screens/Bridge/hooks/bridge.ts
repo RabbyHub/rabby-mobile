@@ -1,6 +1,6 @@
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { RootNames } from '@/constant/layout';
-import { sendRequest } from '@/core/apis/provider';
+import { sendRequest } from '@/core/apis/sendRequest';
 import {
   bridgeService,
   preferenceService,

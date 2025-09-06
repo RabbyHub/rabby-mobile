@@ -16,7 +16,7 @@ public class ReactNativeSecurityPackage extends TurboReactPackage {
   @Nullable
   @Override
   public NativeModule getModule(String name, ReactApplicationContext reactContext) {
-    if (name.equals(ReactNativeSecurityModule.NAME)) {
+    if (name.equals(ReactNativeSecurityImpl.NAME)) {
       return new ReactNativeSecurityModule(reactContext);
     } else {
       return null;
@@ -29,10 +29,10 @@ public class ReactNativeSecurityPackage extends TurboReactPackage {
       final Map<String, ReactModuleInfo> moduleInfos = new HashMap<>();
       boolean isTurboModule = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED;
       moduleInfos.put(
-              ReactNativeSecurityModule.NAME,
+              ReactNativeSecurityImpl.NAME,
               new ReactModuleInfo(
-                      ReactNativeSecurityModule.NAME,
-                      ReactNativeSecurityModule.NAME,
+                      ReactNativeSecurityImpl.NAME,
+                      ReactNativeSecurityImpl.NAME,
                       false, // canOverrideExistingModule
                       false, // needsEagerInit
                       true, // hasConstants

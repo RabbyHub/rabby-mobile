@@ -277,7 +277,7 @@ index 6664b6f6eacb37743d049556dc55f613c0244517..7d639e3c139cb506fc8ef23044e3e121
      public void onHostResume() {
          // do nothing
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
-index d59e19ce82a5a03a60c558b35171af713719af4a..95d4b70232583266d81abf9262a3c8fbc3c01c46 100644
+index d59e19ce82a5a03a60c558b35171af713719af4a..1179dc4d407a6faac186ee60cc7b7c55bb61f261 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 @@ -1,7 +1,9 @@
@@ -442,14 +442,14 @@ index 4600a8dc5c448a2236d25e40172453f93ae92c45..4550481079f5b59e9a11029082958bf6
  }
 \ No newline at end of file
 diff --git a/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java b/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
-index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..456547621a60911296e878fe45d9aa55ae6ebf80 100644
+index 5bae4aa9e66897473a9083a2c9320c99d72e80d7..658f23b62bffb5fec8ed8bd15b4dc0ce430d95aa 100644
 --- a/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
 +++ b/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
 @@ -331,6 +331,12 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
          mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
      }
  
-+    @Override
++    // @Override
 +    @ReactProp(name = "disableJsPromptLike")
 +    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
 +        mRNCWebViewManagerImpl.setDisableJsPromptLike(view, value);

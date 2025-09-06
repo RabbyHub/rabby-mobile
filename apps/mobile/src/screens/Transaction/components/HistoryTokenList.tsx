@@ -23,7 +23,6 @@ import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { fetchHistoryTokenUUId } from './utils';
 import { HistoryItemTokenPrice } from './HistoryItemTokenPrice';
 import { ellipsisOverflowedText } from '@/utils/text';
 import BuyWalletSVG from '@/assets2024/icons/swap/buy-wallet.svg';

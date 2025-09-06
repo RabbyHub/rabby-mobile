@@ -15,10 +15,11 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.LifecycleEventListener;
+import com.facebook.react.module.annotations.ReactModule;
 import android.view.WindowManager;
 
+@ReactModule(name = RNHelpersImpl.NAME)
 public class RNHelpersModule extends EventEmitterPackageSpec /* implements LifecycleEventListener */ {
-  public static final String NAME = "RNHelpers";
   private final ReactApplicationContext reactContext;
 
   public RNHelpersModule(ReactApplicationContext reactContext) {
@@ -31,11 +32,11 @@ public class RNHelpersModule extends EventEmitterPackageSpec /* implements Lifec
   @Override
   @NonNull
   public String getName() {
-    return NAME;
+    return RNHelpersImpl.NAME;
   }
 
   @ReactMethod
   public void forceExitApp() {
-    android.os.Process.killProcess(android.os.Process.myPid());
+    RNHelpersImpl.forceExitApp();
   }
 }

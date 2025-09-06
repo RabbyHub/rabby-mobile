@@ -1,7 +1,7 @@
 // https://github.com/mrousavy/react-native-mmkv/blob/master/docs/WRAPPER_JOTAI.md
 // AsyncStorage 有 bug，会闪白屏
 
-import { MMKV, MMKVConfiguration } from 'react-native-mmkv';
+import { MMKV, Configuration as MMKVConfiguration } from 'react-native-mmkv';
 
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { StorageAdapater } from '@rabby-wallet/persist-store';

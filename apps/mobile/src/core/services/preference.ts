@@ -199,15 +199,19 @@ export class PreferenceService {
 
   private _allowedToNotifyAccountsChanged = false;
 
+  // private _matomoRequestEvent: typeof import('@/utils/analytics').matomoRequestEvent;
+
   constructor(
     options: StorageAdapaterOptions & {
       keyringService: KeyringService;
       sessionService: import('./session').SessionService;
+      // matomoRequestEvent: typeof import('@/utils/analytics').matomoRequestEvent;
     },
   ) {
     const defaultLang = 'en';
     this.keyringService = options.keyringService;
     this.sessionService = options.sessionService;
+    // this._matomoRequestEvent = options.matomoRequestEvent;
     this.store = createPersistStore<PreferenceStore>(
       {
         name: APP_STORE_NAMES.preference,

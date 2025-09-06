@@ -1,5 +1,5 @@
 import { BUILD_CHANNEL } from '@/constant/env';
-import { preferenceService } from '@/core/services';
+import { type PreferenceService } from '@/core/services/preference';
 import firebaseAnalytics from '@react-native-firebase/analytics';
 
 export const analytics = firebaseAnalytics();
@@ -10,6 +10,11 @@ import { Platform } from 'react-native';
 const ANALYTICS_PATH = 'https://matomo.debank.com/matomo.php';
 const genExtensionId = customAlphabet('1234567890abcdef', 16);
 
+const preferenceServiceRef = { current: null as PreferenceService | null };
+export function setPreferenceServiceRef(service: PreferenceService) {
+  preferenceServiceRef.current = service;
+}
+
 async function postData(url = '', params: URLSearchParams) {
   const response = await fetch(`${url}?${params.toString()}`, {
     method: 'POST',
@@ -18,10 +23,12 @@ async function postData(url = '', params: URLSearchParams) {
   return response;
 }
 
-let extensionId = preferenceService.getPreference('extensionId') as string;
+let extensionId = preferenceServiceRef.current?.getPreference(
+  'extensionId',
+) as string;
 if (!extensionId) {
   extensionId = genExtensionId();
-  preferenceService.setPreference({ extensionId });
+  preferenceServiceRef.current?.setPreference({ extensionId });
 }
 
 const getParams = async () => {

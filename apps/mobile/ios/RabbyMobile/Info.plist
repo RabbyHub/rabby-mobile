@@ -118,5 +118,7 @@
 	<false />
 	<key>rabbit_code</key>
 	<string>$(RABBY_MOBILE_CODE)</string>
+	<key>turbo_module_enabled</key>
+	<string>$(RABBY_MOBILE_NEW_ARCH_ENABLED)</string>
 </dict>
 </plist>

@@ -33,6 +33,8 @@ export function getSentryEnv() {
 export const SENTRY_DEBUG = APP_RUNTIME_ENV !== 'production';
 
 export const IS_HERMES_ENABLED = !!(global as any).HermesInternal;
+export const isTurboModuleEnabled = !!global.__turboModuleProxy;
+export const isFabricEnabled = !!global.nativeFabricUIManager;
 
 export const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
 export const isNonPublicProductionEnv = isSelfhostRegPkg || __DEV__;

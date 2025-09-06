@@ -24,6 +24,7 @@ import {
   GAS_ACCOUNT_WITHDRAWED_ADDRESS,
   L2_DEPOSIT_ADDRESS_MAP,
 } from '@/constant/gas-account';
+import { fetchHistoryTokenUUId, isNFTTokenId } from '@/utils/assets';
 
 export function getApproveTokeName(data: HistoryDisplayItem): string {
   const tokenId = data.token_approve?.token_id || '';
@@ -83,22 +84,6 @@ export function getHistoryItemType(data: TxHistoryItem): HistoryItemCateType {
 
   return HistoryItemCateType.UnKnown;
 }
-
-export const fetchHistoryTokenUUId = (
-  token_id: string,
-  chain: string,
-): string => {
-  return `${chain}_token:${token_id}`;
-};
-
-export const fetchHistoryTokenItem = (
-  token_id: string,
-  chain: string,
-  tokenDict: Record<string, TokenItem>,
-) => {
-  const tokenUUID = `${chain}_token:${token_id}`;
-  return tokenDict[tokenUUID] || tokenDict[token_id] || {};
-};
 
 export const ensureHistoryListItemFromDb = (item: HistoryItemEntity) => {
   return {
@@ -251,10 +236,6 @@ export const loadTxSaveFromLocalStore = async (tx: TransactionHistoryItem) => {
   } catch (e) {
     console.log('loadTxSaveFromLocalStore error', e);
   }
-};
-
-export const isNFTTokenId = (tokenId: string) => {
-  return tokenId.length === 32;
 };
 
 export const txDonePatchTokenAmountInDb = async (

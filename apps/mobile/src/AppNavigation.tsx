@@ -20,7 +20,7 @@ import {
   useSetNavigationReady,
   useStackScreenConfig,
 } from './hooks/navigation';
-import { analytics, matomoLogScreenView } from './utils/analytics';
+// import { analytics, matomoLogScreenView } from './utils/analytics';
 
 import {
   TestkitsNavigator,
@@ -407,11 +407,11 @@ export default function AppNavigation({
     }
     onRouteChange(readyRootName);
 
-    analytics.logScreenView({
-      screen_name: readyRootName,
-      screen_class: readyRootName,
-    });
-    matomoLogScreenView({ name: readyRootName });
+    // analytics.logScreenView({
+    //   screen_name: readyRootName,
+    //   screen_class: readyRootName,
+    // });
+    // matomoLogScreenView({ name: readyRootName });
   }, [setNavigationReady, isAppUnlocked, onRouteChange]);
 
   const { hasActiveDapp: isShowingDappCard } = useOpenedActiveDappState();
@@ -447,11 +447,11 @@ export default function AppNavigation({
           );
         }
 
-        analytics.logScreenView({
-          screen_name: routeNameRef.current,
-          screen_class: routeNameRef.current,
-        });
-        matomoLogScreenView({ name: currentRouteName! });
+        // analytics.logScreenView({
+        //   screen_name: routeNameRef.current,
+        //   screen_class: routeNameRef.current,
+        // });
+        // matomoLogScreenView({ name: currentRouteName! });
       }
       routeNameRef.current = currentRouteName;
     },

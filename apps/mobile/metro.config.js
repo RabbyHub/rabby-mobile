@@ -67,6 +67,11 @@ const config = {
       transform: {
         experimentalImportSupport: false,
         inlineRequires: true,
+        // // it's recommended to disable on new arch enabled
+        // ...(process.env.NODE_ENV === 'production' &&
+        //   process.env.RABBY_MOBILE_NEW_ARCH_ENABLED !== 'true' && {
+        //     inlineRequires: false,
+        //   }),
       },
     }),
   },

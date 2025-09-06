@@ -43,6 +43,7 @@ import { APP_STORE_NAMES } from '../storage/storeConstant';
 import { MetamaskModeService } from './metamaskModeService';
 import { SyncChainService } from './syncChainService';
 import { PerpsService } from './perpsService';
+import { matomoRequestEvent, setPreferenceServiceRef } from '@/utils/analytics';
 
 migrateAppStorage(appStorage);
 
@@ -124,6 +125,7 @@ export const preferenceService = new PreferenceService({
   keyringService,
   sessionService,
 });
+setPreferenceServiceRef(preferenceService);
 
 try_catch_issue_on_preference({ pos: 'after_preference' });
 

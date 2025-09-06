@@ -39,6 +39,7 @@ import {
   IS_HERMES_ENABLED,
   isNonPublicProductionEnv,
   isSelfhostRegPkg,
+  isTurboModuleEnabled,
   NEED_DEVSETTINGBLOCKS,
 } from '@/constant/env';
 import { RootNames } from '@/constant/layout';
@@ -157,6 +158,7 @@ function AlertBuildInfo() {
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
         `Hermes Enabled: ${IS_HERMES_ENABLED}`,
+        `Turbo Module Enabled: ${isTurboModuleEnabled}`,
         '   ',
         !!BUILD_GIT_INFO.BUILD_GIT_HASH_TIME &&
           `Lastest Commit: ${dayjs(BUILD_GIT_INFO.BUILD_GIT_HASH_TIME).format(
@@ -180,6 +182,7 @@ function AlertBuildInfo() {
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Revision: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
         `Hermes Enabled: ${IS_HERMES_ENABLED}`,
+        `Turbo Module Enabled: ${isTurboModuleEnabled}`,
       ]
         .filter(Boolean)
         .join('\n'),

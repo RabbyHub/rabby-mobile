@@ -16,11 +16,22 @@ import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 import { useMakeMockDataForRateGuideExposure } from '@/components/RateModal/hooks';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import { isNonPublicProductionEnv } from '@/constant/env';
-import { useMockClearOfflineChainTips } from '@/screens/Home/components/OfflineChainNotify';
 import {
   FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
+import { closedTipsChainsAtom } from '@/screens/Home/components/OfflineChainNotify';
+import { offlineChainService } from '@/core/services';
+
+export const useMockClearOfflineChainTips = () => {
+  const [, setClosedTipsChain] = useAtom(closedTipsChainsAtom);
+  const clearOfflineChainTips = useCallback(() => {
+    offlineChainService.mockClearCloseTipsChains();
+    setClosedTipsChain([]);
+  }, [setClosedTipsChain]);
+
+  return { clearOfflineChainTips };
+};
 
 const MAKE_DEFAULT_MOCK_DATA = () => ({
   forceShowFundWallet: false,

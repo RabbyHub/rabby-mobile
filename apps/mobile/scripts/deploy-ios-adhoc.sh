@@ -57,6 +57,9 @@ build_adhoc() {
   yarn;
   yarn syncrnversion;
   cd $project_dir/ios;
+  if [ "$RABBY_MOBILE_NEW_ARCH_ENABLED" == "true" ]; then
+    export RCT_NEW_ARCH_ENABLED=1;
+  fi
   bundle install && bundle exec pod install --repo-update;
   cd $project_dir;
   bundle exec fastlane ios adhoc;

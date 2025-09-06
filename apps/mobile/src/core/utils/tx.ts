@@ -1,6 +1,6 @@
 import { sortBy } from 'lodash';
 import type { TransactionHistoryItem } from '../services/transactionHistory';
-import { customRPCService } from '../services';
+import type { CustomRPCService } from '../services/customRPCService';
 
 const getGasPrice = (tx: TransactionHistoryItem) => {
   return Number(tx.rawTx.gasPrice || tx.rawTx.maxFeePerGas || 0);
@@ -16,7 +16,11 @@ export const findMaxGasTx = (txs: TransactionHistoryItem[]) => {
   return list[0];
 };
 
-export const getRpcTxReceipt = (chainServerId: string, hash: string) => {
+export const getRpcTxReceipt = async (
+  chainServerId: string,
+  hash: string,
+  customRPCService: CustomRPCService,
+) => {
   return customRPCService
     .defaultEthRPC({
       chainServerId,
@@ -39,4 +43,8 @@ export const getRpcTxReceipt = (chainServerId: string, hash: string) => {
         gas_used: 0,
       };
     });
+};
+
+export const isNFTTokenId = (tokenId: string) => {
+  return tokenId.length === 32;
 };

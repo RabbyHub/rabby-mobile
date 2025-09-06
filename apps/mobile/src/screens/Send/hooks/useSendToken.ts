@@ -35,7 +35,7 @@ import {
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { abiCoder } from '@/core/apis/sendRequest';
+import { abiCoder, sendRequest } from '@/core/apis/sendRequest';
 import { zeroAddress } from '@ethereumjs/util';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { useFindChain } from '@/hooks/useFindChain';
@@ -795,7 +795,7 @@ export function useSendTokenForm({
       isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chain.isTestnet
     ) {
-      const res = await apiProvider.sendRequest(
+      const res = await sendRequest(
         {
           data: {
             method: 'eth_sendTransaction',
@@ -976,7 +976,7 @@ export function useSendTokenForm({
 
             return;
           }
-          const res = await apiProvider.sendRequest(
+          const res = await sendRequest(
             {
               data: {
                 method: 'eth_sendTransaction',
@@ -1047,24 +1047,23 @@ export function useSendTokenForm({
               });
           }
         } else {
-          await apiProvider
-            .sendRequest({
-              data: {
-                method: 'eth_sendTransaction',
-                params: [params],
-                $ctx: {
-                  ga: {
-                    category: 'Send',
-                    source: 'sendToken',
-                    toAddress,
-                    // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-                    trigger: 'sendToken',
-                  },
+          await sendRequest({
+            data: {
+              method: 'eth_sendTransaction',
+              params: [params],
+              $ctx: {
+                ga: {
+                  category: 'Send',
+                  source: 'sendToken',
+                  toAddress,
+                  // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                  trigger: 'sendToken',
                 },
               },
-              session: INTERNAL_REQUEST_SESSION,
-              account,
-            })
+            },
+            session: INTERNAL_REQUEST_SESSION,
+            account,
+          })
             .then(resp => {
               const hash = resp as string;
               console.debug('hash', hash);

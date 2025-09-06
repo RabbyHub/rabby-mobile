@@ -61,7 +61,8 @@ react {
 def enableProguardInReleaseBuilds = true
 
 def isNewArchitectureEnabled() {
-  return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true"
+  // get from rootProject, or from env
+  return (rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true") || (System.getenv("RABBY_MOBILE_NEW_ARCH_ENABLED") == "true");
 }
 
 /**
@@ -97,6 +98,7 @@ android {
         versionCode 100132
         versionName "0.6.35"
         missingDimensionStrategy "store", "play"
+        buildConfigField("boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString())
     }
     splits {
         abi {
@@ -171,11 +173,15 @@ android {
         if (isNewArchitectureEnabled()) {
           java.srcDirs += [
             "src/newarch",
+            "src/newarch/com/debank/rabbymobile",
             // This is needed to build Kotlin project with NewArch enabled
             "${project.buildDir}/generated/source/codegen/java"
           ]
         } else {
-          java.srcDirs += ["src/oldarch"]
+          java.srcDirs += [
+            "src/oldarch",
+            "src/oldarch/com/debank/rabbymobile"
+          ]
         }
       }
     }

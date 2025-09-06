@@ -55,8 +55,9 @@
   self.moduleName = @"RabbyMobile";
 
   NSString *rabbitCodeFromBundle = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"rabbit_code"];
+  NSString *turboModuleEnabled = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"turbo_module_enabled"];
   NSString *rabbitCode = rabbitCodeFromBundle ?: @"RABBY_MOBILE_CODE_DEV";
-  self.initialProps = @{ @"rabbitCode": rabbitCode };
+  self.initialProps = @{ @"rabbitCode": rabbitCode, @"turboModuleEnabled": @(turboModuleEnabled.boolValue) };
 
   RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:launchOptions];
 

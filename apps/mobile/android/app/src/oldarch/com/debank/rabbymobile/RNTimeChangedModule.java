@@ -15,10 +15,11 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.LifecycleEventListener;
+import com.facebook.react.module.annotations.ReactModule;
 import android.view.WindowManager;
 
+@ReactModule(name = RNTimeChangedImpl.NAME)
 public class RNTimeChangedModule extends EventEmitterPackageSpec implements LifecycleEventListener {
-  public static final String NAME = "RNTimeChanged";
   private final ReactApplicationContext reactContext;
 
   public RNTimeChangedModule(ReactApplicationContext reactContext) {
@@ -31,36 +32,12 @@ public class RNTimeChangedModule extends EventEmitterPackageSpec implements Life
   @Override
   @NonNull
   public String getName() {
-    return NAME;
-  }
-
-  private class TimeChangeBroadcastReceiver extends BroadcastReceiver {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      WritableMap params = Arguments.createMap();
-      String action = intent.getAction();
-      params.putString("androidAction", action);
-
-      ReactApplication rnApp = (ReactApplication) context.getApplicationContext();
-      ReactContext reactContext = rnApp.getReactNativeHost().getReactInstanceManager()
-                                .getCurrentReactContext();
-
-      if (Intent.ACTION_TIME_CHANGED.equals(action)) {
-        params.putString("reason", "timeSet");
-        RabbyUtils.rnCtxSendEvent(reactContext, "onTimeChanged", params);
-      } else if (Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
-        params.putString("reason", "timeZoneChanged");
-        RabbyUtils.rnCtxSendEvent(reactContext, "onTimeChanged", params);
-      }/*  else {
-        params.putString("reason", "unknown");
-        RabbyUtils.rnCtxSendEvent(reactContext, "onTimeChanged", params);
-      } */
-    }
+    return RNTimeChangedImpl.NAME;
   }
 
   @ReactMethod
   public void exitAppForSecurity() {
-    android.os.Process.killProcess(android.os.Process.myPid());
+    RNTimeChangedImpl.exitAppForSecurity();
   }
 
   @Override
@@ -69,7 +46,7 @@ public class RNTimeChangedModule extends EventEmitterPackageSpec implements Life
     filter.addAction(Intent.ACTION_TIME_CHANGED);
     filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
 
-    TimeChangeBroadcastReceiver tcreceiver = new TimeChangeBroadcastReceiver();
+    RNTimeChangedImpl.TimeChangeBroadcastReceiver tcreceiver = new RNTimeChangedImpl.TimeChangeBroadcastReceiver();
     reactContext.registerReceiver(tcreceiver , filter);
 
     if (Build.VERSION.SDK_INT >= 34) {

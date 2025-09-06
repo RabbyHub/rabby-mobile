@@ -34,6 +34,11 @@ deployment_local_dir="$script_dir/deployments/android"
 
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
+if [ "$RABBY_MOBILE_NEW_ARCH_ENABLED" == "true" ]; then
+  cp $project_dir/android/gradle.properties $project_dir/android/gradle.properties.bak
+  sed -i.bak 's/^newArchEnabled=[^[:space:]]*$/newArchEnabled=true/' $project_dir/android/gradle.properties
+fi
+
 build_selfhost() {
   export RABBY_MOBILE_BUILD_ENV="regression";
   [ -z "$CI" ] && yarn;

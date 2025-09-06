@@ -4,12 +4,10 @@ import { useCallback, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { SceneAccount } from '@/utils/account';
 
 export type AccountSwitcherScene = 'Receive' | 'GasAccount';
 
-type SceneAccount = Account & {
-  isPinned?: boolean;
-};
 export function useSortAccountOnSelector() {
   const { accounts } = useAccounts({ disableAutoFetch: true });
 

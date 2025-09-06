@@ -51,9 +51,9 @@ const rneuiTheme = createTheme({
   },
 });
 
-type AppProps = { rabbitCode: string };
+type AppProps = { rabbitCode: string; turboModuleEnabled: boolean };
 
-function MainScreen({ rabbitCode }: AppProps) {
+function MainScreen({ rabbitCode, turboModuleEnabled }: AppProps) {
   const { isAppUnlocked } = useInitializeAppOnTop();
   const { couldRender, securityChainOnTop } = useBootstrapApp({ rabbitCode });
   const { binaryTheme } = useAppTheme({ isAppTop: true });
@@ -99,7 +99,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   );
 }
 
-function App({ rabbitCode }: AppProps): JSX.Element {
+function App({ rabbitCode, turboModuleEnabled }: AppProps): JSX.Element {
   return (
     <AppErrorBoundary>
       <ThemeProvider theme={rneuiTheme}>
@@ -111,6 +111,7 @@ function App({ rabbitCode }: AppProps): JSX.Element {
                 {/* read from native bundle on production */}
                 <MainScreen
                   rabbitCode={__DEV__ ? 'RABBY_MOBILE_CODE_DEV' : rabbitCode}
+                  turboModuleEnabled={turboModuleEnabled}
                 />
               </GestureHandlerRootView>
               {/* <MainScreen /> */}

@@ -10,10 +10,7 @@ import { EntityAddressAssetBase } from './base';
 import { columnConverter, badRealTransformer } from './_helpers';
 import { prepareAppDataSource } from '../imports';
 import { HistoryItemCateType } from '@/screens/Transaction/components/type';
-import {
-  fetchHistoryTokenItem,
-  isNFTTokenId,
-} from '@/screens/Transaction/components/utils';
+import { fetchHistoryTokenItem, isNFTTokenId } from '@/utils/assets';
 import { IManageToken } from '@/core/services/preference';
 import {
   GAS_ACCOUNT_RECEIVED_ADDRESS,

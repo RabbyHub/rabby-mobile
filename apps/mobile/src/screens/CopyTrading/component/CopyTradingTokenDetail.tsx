@@ -40,7 +40,7 @@ import { RcIconRightCC, RcIconSelectCC } from '@/assets/icons/common';
 
 import { TokenInfo } from './TokenInfo';
 import { SmartWallets } from './SmartWallets';
-import { SameNameTokens } from './SameNameTokens';
+import { SameNameTokens, TabType } from './SameNameTokens';
 import { toast } from '@/components/Toast';
 import { openapi } from '@/core/request';
 import { removeAllGlobalBottomSheetModals2024 } from '@/components2024/GlobalBottomSheetModal';
@@ -55,12 +55,6 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-
-export enum TabType {
-  tokenInfo = 'tokenInfo',
-  smartWallets = 'smartWallets',
-  sameNameTokens = 'sameNameTokens',
-}
 
 export default function CopyTradingTokenDetail() {
   const { t } = useTranslation();

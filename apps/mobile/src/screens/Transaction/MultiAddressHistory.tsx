@@ -55,7 +55,6 @@ import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
 import { TransactionAlert } from '../TransactionRecord/components/TransactionAlert';
 import {
   ensureHistoryListItemFromDb,
-  fetchHistoryTokenItem,
   getHistoryItemType,
   judgeIsSmallUsdTx,
 } from './components/utils';
@@ -65,6 +64,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
 import { HistoryItemCateType } from './components/type';
+import { fetchHistoryTokenItem } from '@/utils/assets';
 
 const _PAGE_COUNT = 200;
 const REALL_TIME_API_PAGE_COUNT = 20;

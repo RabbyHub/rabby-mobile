@@ -1,7 +1,10 @@
 import { Platform } from 'react-native';
 import { resolveNativeModule, IS_ANDROID } from './utils';
+import { NativeModuleNames } from './specs/types';
 
-const { ReactNativeSecurity } = resolveNativeModule('ReactNativeSecurity');
+const { ReactNativeSecurity } = resolveNativeModule(
+  NativeModuleNames.ReactNativeSecurity,
+);
 
 export function nativeBlockScreen() {
   if (IS_ANDROID) {

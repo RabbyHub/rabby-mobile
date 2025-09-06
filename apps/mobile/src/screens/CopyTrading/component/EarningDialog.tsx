@@ -30,7 +30,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { TabType } from './CopyTradingTokenDetail';
+import { TabType } from './SameNameTokens';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
 import { QueryCopyTradingBuyItemResult } from '@/databases/entities/copyTradingBuyItem';

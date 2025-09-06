@@ -21,7 +21,6 @@ import { CHAINS_ENUM } from '@debank/common';
 import { approveToken, revokeNFTApprove } from '@/core/apis/approvals';
 import { resetNavigationTo } from '@/hooks/navigation';
 import { HistoryDisplayItem } from '../MultiAddressHistory';
-import { fetchHistoryTokenUUId } from './utils';
 import { useMyAccounts } from '@/hooks/account';
 import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
 import { HistoryItemCateType } from './type';

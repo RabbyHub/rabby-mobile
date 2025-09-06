@@ -64,7 +64,7 @@ import {
   formatUsdValueKMBWithSign,
 } from '../Home/utils/price';
 import { useProfit } from './component/useProfit';
-import { TabType } from './component/CopyTradingTokenDetail';
+import { TabType } from './component/SameNameTokens';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { matomoRequestEvent } from '@/utils/analytics';
 const DEFAULT_COUNT = 10;

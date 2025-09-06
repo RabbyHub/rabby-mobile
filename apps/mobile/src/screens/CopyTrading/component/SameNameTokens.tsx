@@ -29,13 +29,18 @@ import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
-import { TabType } from './CopyTradingTokenDetail';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { toast } from '@/components2024/Toast';
 import { LoadingLinear } from '@/screens/TokenDetail/components/TokenPriceChart/LoadingLinear';
 import { RootNames } from '@/constant/layout';
 import { naviPush } from '@/utils/navigation';
 import { chain } from 'lodash';
+
+export enum TabType {
+  tokenInfo = 'tokenInfo',
+  smartWallets = 'smartWallets',
+  sameNameTokens = 'sameNameTokens',
+}
 
 interface SameNameTokensProps {
   tradingTokenItem: TokenItem;

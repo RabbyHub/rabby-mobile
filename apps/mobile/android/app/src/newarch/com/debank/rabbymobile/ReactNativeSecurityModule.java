@@ -6,11 +6,12 @@ import androidx.annotation.NonNull;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.module.annotations.ReactModule;
 import android.view.WindowManager;
 
-public class ReactNativeSecurityModule extends SimplePackageSpec {
-  public static final String NAME = "ReactNativeSecurity";
 
+@ReactModule(name = ReactNativeSecurityImpl.NAME)
+public class ReactNativeSecurityModule extends NativeReactNativeSecuritySpec {
   ReactNativeSecurityModule(ReactApplicationContext context) {
     super(context);
   }
@@ -18,34 +19,26 @@ public class ReactNativeSecurityModule extends SimplePackageSpec {
   @Override
   @NonNull
   public String getName() {
-    return NAME;
+    return ReactNativeSecurityImpl.NAME;
   }
 
-  @ReactMethod
+  @Override
+  // @ReactMethod
   public void blockScreen() {
     final Activity activity = getCurrentActivity();
 
     if (activity != null) {
-      activity.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-            activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-        }
-      });
+      ReactNativeSecurityImpl.blockScreen(activity);
     }
   }
 
-  @ReactMethod
+  @Override
+  // @ReactMethod
   public void unblockScreen() {
     final Activity activity = getCurrentActivity();
 
     if (activity != null) {
-      activity.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
-        }
-      });
+      ReactNativeSecurityImpl.unblockScreen(activity);
     }
   }
 }

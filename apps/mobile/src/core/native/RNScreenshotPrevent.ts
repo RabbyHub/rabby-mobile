@@ -1,43 +1,17 @@
-import { PermissionsAndroid } from 'react-native';
+import { NativeModuleNames } from './specs/types';
 import {
-  IS_ANDROID,
-  IS_IOS,
+  EventEmitterRecordToListeners,
   makeRnEEClass,
   resolveNativeModule,
 } from './utils';
-import i18next from 'i18next';
 
 const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
-  'RNScreenshotPrevent',
+  NativeModuleNames.RNScreenshotPrevent,
 );
 
-type Listeners = {
-  /**
-   * @platform iOS, Android >= 14
-   */
-  userDidTakeScreenshot: (ret?: {
-    androidScanEmpty?: string;
-    androidHasPermission?: boolean;
-    captured?: boolean;
-    path?: string;
-    height?: string | number;
-    width?: string | number;
-    imageBase64?: string;
-    imageType?: 'jpeg' | 'png';
-    name?: string;
-  }) => any;
-  screenCapturedChanged: (ret: { isBeingCaptured: boolean }) => any;
-  screenCaptureDetectionChanged: (ret: { enabled: boolean }) => any;
-  /**
-   * @description subscribe to android app state change, pause means app is in background, resume means app is in foreground
-   */
-  androidOnLifeCycleChanged: (ret: { state: 'resume' | 'pause' }) => any;
-  /** @description pointless now */
-  preventScreenshotChanged: (ret: {
-    isPrevent: boolean;
-    success: boolean;
-  }) => any;
-};
+type Listeners = EventEmitterRecordToListeners<
+  import('./specs/NativeRNScreenshotPrevent').EventEmitterRecord
+>;
 const { NativeEventEmitter } = makeRnEEClass<Listeners>();
 const eventEmitter = new NativeEventEmitter(nativeModule);
 
@@ -118,7 +92,10 @@ if (__DEV__) {
  * @see https://github.com/killserver/react-native-screenshot-prevent/issues/17
  */
 const RNScreenshotPrevent = Object.freeze({
-  ...nativeModule,
+  togglePreventScreenshot: nativeModule.togglePreventScreenshot,
+  iosIsBeingCaptured: nativeModule.iosIsBeingCaptured,
+  iosProtectFromScreenRecording: nativeModule.iosProtectFromScreenRecording,
+  iosUnprotectFromScreenRecording: nativeModule.iosUnprotectFromScreenRecording,
   onPreventScreenshotChanged,
   // iosToggleBlurView(bool: boolean) {
   //   nativeModule.iosToggleBlurView(!!bool);

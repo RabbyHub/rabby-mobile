@@ -36,7 +36,7 @@ import {
 } from './screens/Approvals/useApprovalsPage';
 import { HistoryItemCateType } from './screens/Transaction/components/type';
 import type { AddrDescResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { TabType } from './screens/CopyTrading/component/CopyTradingTokenDetail';
+import { TabType } from './screens/CopyTrading/component/SameNameTokens';
 import { DisplayedProject } from './screens/Home/utils/project';
 
 /**

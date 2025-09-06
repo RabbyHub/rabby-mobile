@@ -7,6 +7,23 @@ import {
 } from '@rabby-wallet/keyring-utils/src/types';
 import BigNumber from 'bignumber.js';
 
+export type SceneAccount = Account & {
+  isPinned?: boolean;
+};
+
+export function isSameAccount(
+  account: Account,
+  saccount?: SceneAccount | null,
+) {
+  if (!saccount) return false;
+
+  return (
+    saccount?.address?.toLowerCase() === account.address.toLowerCase() &&
+    saccount?.brandName === account.brandName &&
+    saccount?.type === account.type
+  );
+}
+
 export function findAccountByPriority(accounts: KeyringAccountWithAlias[]) {
   const priority = {
     [KEYRING_TYPE.HdKeyring]: 1,

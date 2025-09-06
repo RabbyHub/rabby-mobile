@@ -46,6 +46,7 @@ public class MainActivity extends ReactActivity {
         } else {
           initialProperties.putString("rabbitCode", "RABBY_MOBILE_CODE_DEV");
         }
+        initialProperties.putBoolean("turboModuleEnabled", BuildConfig.IS_NEW_ARCHITECTURE_ENABLED);
         return initialProperties;
       }
     };

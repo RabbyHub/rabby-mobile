@@ -63,7 +63,6 @@
     "react-native-animateable-text@0.14.2": "patch:react-native-animateable-text@npm%3A0.14.2#./.yarn/patches/react-native-animateable-text-npm-0.14.2-9dfa5fe6c7.patch",
     "react-native-fs@^2.20.0": "patch:react-native-fs@npm%3A2.20.0#./.yarn/patches/react-native-fs-npm-2.20.0-a38fe24051.patch",
     "react-native-keychain@8.0.0": "patch:react-native-keychain@npm%3A8.0.0#./.yarn/patches/react-native-keychain-npm-8.0.0-22c1f5c020.patch",
-    "react-native-mmkv@^2.12.2": "patch:react-native-mmkv@npm%3A2.12.2#./.yarn/patches/react-native-mmkv-npm-2.12.2-9efa7abf70.patch",
     "react-native-quick-crypto@0.7.13": "patch:react-native-quick-crypto@npm%3A0.7.13#./.yarn/patches/react-native-quick-crypto-npm-0.7.13-2726ada4c8.patch",
     "react-native-reanimated@^3.6.1": "patch:react-native-reanimated@npm%3A3.6.1#./.yarn/patches/react-native-reanimated-npm-3.6.1-68d8b4ad7e.patch",
     "react-native-webview@13.10.5": "patch:react-native-webview@npm%3A13.10.5#./.yarn/patches/react-native-webview-npm-13.10.5-714eb41569.patch",

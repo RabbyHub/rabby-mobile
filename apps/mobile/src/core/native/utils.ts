@@ -6,57 +6,42 @@ import {
   Platform,
   UIManager,
 } from 'react-native';
+import { EventEmitter } from 'react-native/Libraries/Types/CodegenTypes';
 import { enableLayoutAnimations } from 'react-native-reanimated';
+import { TurboNativeModules } from './specs';
+import { NativeModuleNames } from './specs/types';
 
 const isTurboModuleEnabled = global.__turboModuleProxy != null;
 
-interface NativeModulesStatic {
-  ReactNativeSecurity: /* NativeModule &  */ {
-    blockScreen(): void;
-    unblockScreen(): void;
-  };
-  RNScreenshotPrevent: NativeModule & {
-    togglePreventScreenshot: (isPrevent: boolean) => void;
-    iosIsBeingCaptured(): boolean;
-    // iosToggleBlurView(isProtected: boolean): void;
-    iosProtectFromScreenRecording(): Promise<void>;
-    iosUnprotectFromScreenRecording(): Promise<void>;
-  };
-  RNTimeChanged: NativeModule & {
-    exitAppForSecurity(): void;
-  };
-  RNHelpers: NativeModule & {
-    forceExitApp(): void;
-    /**
-     * @description try to set a file to not be backed up by iCloud
-     * @param filePath
-     */
-    iosExcludeFileFromBackup?(filePath: string): Promise<boolean>;
-    // /**
-    //  * @description try to set a directory's files(including files in subdirectories) to not be backed up by iCloud
-    //  */
-    // iosExcludeDirectoryFromBackup?(directoryPath: string): Promise<boolean>;
-  };
-}
+type NativeModulesStatic = {
+  [NativeModuleNames.ReactNativeSecurity]: /* NativeModule &  */ import('./specs/NativeReactNativeSecurity').Methods;
+  [NativeModuleNames.RNScreenshotPrevent]: NativeModule &
+    import('./specs/NativeRNScreenshotPrevent').Methods;
+  [NativeModuleNames.RNTimeChanged]: NativeModule &
+    import('./specs/NativeRNTimeChanged').Methods;
+  [NativeModuleNames.RNHelpers]: NativeModule &
+    import('./specs/NativeRNHelpers').Methods;
+};
 
 export const IS_ANDROID = Platform.OS === 'android';
 export const IS_IOS = Platform.OS === 'ios';
 
 if (IS_ANDROID) {
   enableLayoutAnimations(false);
-  UIManager.setLayoutAnimationEnabledExperimental &&
-    UIManager.setLayoutAnimationEnabledExperimental(false);
+  // TODO: only use it if new arch not enabled
+  // UIManager.setLayoutAnimationEnabledExperimental &&
+  //   UIManager.setLayoutAnimationEnabledExperimental(false);
 }
 
-export function resolveNativeModule<T extends keyof NativeModulesStatic>(
-  name: T,
-) {
+export function resolveNativeModule<T extends NativeModuleNames>(name: T) {
   const NATIVE_ERROR =
     `The native module '${name}' doesn't seem to be added. Make sure: \n\n` +
     '- You rebuilt the app after native code changed\n' +
     '- You are not using Expo managed workflow\n';
 
-  const nModule = NativeModules[name];
+  const nModule = isTurboModuleEnabled
+    ? TurboNativeModules[name]
+    : NativeModules[name];
 
   const module: NativeModulesStatic[T] = nModule
     ? nModule
@@ -76,6 +61,10 @@ export function resolveNativeModule<T extends keyof NativeModulesStatic>(
   };
 }
 
+type EventEmitterDef = Record<string, EventEmitter<any>>;
+export type EventEmitterRecordToListeners<T extends EventEmitterDef> = {
+  [K in keyof T]: Parameters<T[K]>[0];
+};
 type Listener = (resp?: any) => void;
 
 export function makeRnEEClass<Listeners extends Record<string, Listener>>() {

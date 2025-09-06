@@ -16,7 +16,7 @@ public class RNHelpersPackage extends TurboReactPackage {
   @Nullable
   @Override
   public NativeModule getModule(String name, ReactApplicationContext reactContext) {
-    if (name.equals(RNHelpersModule.NAME)) {
+    if (name.equals(RNHelpersImpl.NAME)) {
       return new RNHelpersModule(reactContext);
     } else {
       return null;
@@ -29,10 +29,10 @@ public class RNHelpersPackage extends TurboReactPackage {
       final Map<String, ReactModuleInfo> moduleInfos = new HashMap<>();
       boolean isTurboModule = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED;
       moduleInfos.put(
-              RNHelpersModule.NAME,
+              RNHelpersImpl.NAME,
               new ReactModuleInfo(
-                      RNHelpersModule.NAME,
-                      RNHelpersModule.NAME,
+                      RNHelpersImpl.NAME,
+                      RNHelpersImpl.NAME,
                       false, // canOverrideExistingModule
                       false, // needsEagerInit
                       true, // hasConstants

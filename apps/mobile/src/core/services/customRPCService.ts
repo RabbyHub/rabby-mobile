@@ -89,7 +89,7 @@ const fetchDefaultRpc = async () => {
   return data.rpcs as RPCDefaultItem[];
 };
 
-class CustomRPCService {
+export class CustomRPCService {
   store: RPCServiceStore = {
     customRPC: {},
     defaultRPC: {},

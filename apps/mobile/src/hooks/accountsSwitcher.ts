@@ -14,6 +14,7 @@ import {
   SceneAccountInfo,
   sceneAccountInfoAtom,
 } from './sceneAccountInfoAtom';
+import { SceneAccount } from '@/utils/account';
 
 export type PropsForAccountSwitchScreen<T extends void | object = void> = {
   isForMultipleAddress?: boolean;
@@ -231,18 +232,10 @@ export function useSwitchSceneCurrentAccount() {
   };
 }
 
-export function isSameAccount(
-  account: Account,
-  saccount?: SceneAccount | null,
-) {
-  if (!saccount) return false;
+import { isSameAccount as _isSameAccount } from '@/utils/account';
 
-  return (
-    saccount?.address?.toLowerCase() === account.address.toLowerCase() &&
-    saccount?.brandName === account.brandName &&
-    saccount?.type === account.type
-  );
-}
+/** @deprecated */
+export const isSameAccount = _isSameAccount;
 
 const ScenesSupportAllAccounts: AccountSwitcherScene[] = [
   // 'Swap',
@@ -325,9 +318,6 @@ function computeSceneAccountInfo({
   return result;
 }
 
-type SceneAccount = Account & {
-  isPinned?: boolean;
-};
 export function useSceneAccountInfo(options: {
   forScene: AccountSwitcherScene;
 }) {

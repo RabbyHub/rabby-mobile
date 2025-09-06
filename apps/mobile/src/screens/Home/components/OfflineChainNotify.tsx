@@ -21,17 +21,9 @@ import {
 import { useMockDataForHomeCenterArea } from '@/screens/Settings/sheetModals/DevUIHomeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant/env';
 
-const closedTipsChainsAtom = atom(offlineChainService.getCloseTipsChains());
-
-export const useMockClearOfflineChainTips = () => {
-  const [, setClosedTipsChain] = useAtom(closedTipsChainsAtom);
-  const clearOfflineChainTips = useCallback(() => {
-    offlineChainService.mockClearCloseTipsChains();
-    setClosedTipsChain([]);
-  }, [setClosedTipsChain]);
-
-  return { clearOfflineChainTips };
-};
+export const closedTipsChainsAtom = atom(
+  offlineChainService.getCloseTipsChains(),
+);
 
 export const useOfflineChain = () => {
   const [closedTipsChains, _setClosedTipsChain] = useAtom(closedTipsChainsAtom);

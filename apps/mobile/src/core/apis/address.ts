@@ -1,4 +1,3 @@
-import { isSameAccount } from '@/hooks/accountsSwitcher';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import {
@@ -13,6 +12,7 @@ import {
 import { getKeyring } from './keyring';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { BroadcastEvent } from '@/constant/event';
+import { isSameAccount } from '@/utils/account';
 
 export async function addWatchAddress(address: string) {
   const keyring = await getKeyring(KEYRING_TYPE.WatchAddressKeyring);

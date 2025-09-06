@@ -11,7 +11,7 @@ import {
   swapService,
   transactionHistoryService,
 } from '@/core/services';
-import { sendRequest } from '@/core/apis/provider';
+import { sendRequest } from '@/core/apis/sendRequest';
 import { navigationRef } from '@/utils/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';

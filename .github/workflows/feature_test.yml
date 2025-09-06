@@ -34,6 +34,10 @@ on:
         required: false
         type: boolean
         default: false
+      RABBY_MOBILE_NEW_ARCH_ENABLED:
+        required: false
+        type: boolean
+        default: true
 
 defaults:
   run:
@@ -125,8 +129,6 @@ jobs:
               RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS=${{ secrets.KEYCHAIN_PASS }}
             fi
             security unlock-keychain -p $RABBY_MOBILE_UNLOCK_KEYCHAIN_PASS login.keychain
-            # cd ios && bundle install && bundle exec pod install --deployment;
-            # cd ../;
             ./scripts/deploy-ios-adhoc.sh
 
             # # cleanup packager
@@ -150,6 +152,7 @@ jobs:
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
           DISABLE_AWS_CLI_HTTPS_VALIDATION: ${{ inputs.__DANGEROUS_NO_VERIFY_SSL }}
           GHA_MOCK_BUILD_FAILED: ${{ inputs.GHA_MOCK_BUILD_FAILED }}
+          RABBY_MOBILE_NEW_ARCH_ENABLED: ${{ inputs.RABBY_MOBILE_NEW_ARCH_ENABLED }}
           CONFIGURATION: release
           TYPE: adhoc
           RABBY_MOBILE_BUILD_ENV: regression

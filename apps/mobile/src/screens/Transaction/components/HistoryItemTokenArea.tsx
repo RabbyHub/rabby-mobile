@@ -12,7 +12,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { HistoryItemCateType } from './type';
 import { TokenChangeDataItem } from './HistoryItem';
-import { isNFTTokenId } from './utils';
+import { isNFTTokenId } from '@/utils/assets';
 
 interface ItemIconProps {
   type?: HistoryItemCateType | undefined;

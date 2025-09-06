@@ -36,6 +36,7 @@ import {
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { updateExpiredTime } from '@/databases/sync/utils';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { customRPCService } from './customRPCService';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -922,7 +923,7 @@ export class TransactionHistoryService {
             });
           } else {
             // Use standard RPC to get transaction receipt
-            return getRpcTxReceipt(chain.serverId, tx.hash!);
+            return getRpcTxReceipt(chain.serverId, tx.hash!, customRPCService);
           }
         }),
       );
