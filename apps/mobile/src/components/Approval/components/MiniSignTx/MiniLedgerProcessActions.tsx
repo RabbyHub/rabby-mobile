@@ -19,14 +19,17 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
     autoConnect: false,
   });
 
-  const isConnectedRef = React.useRef(apiLedger.isConnected(account.address));
+  const isConnectedPromise = React.useMemo(
+    () => apiLedger.isConnected(account.address),
+    [account.address],
+  );
 
   const handleSubmit = useMemoizedFn(() => {
     if (isSubmitting) {
       return;
     }
     setIsSubmitting(true);
-    isConnectedRef.current.then(([isConnected]) => {
+    isConnectedPromise.then(([isConnected]) => {
       if (!isConnected) {
         onClickConnect(
           () => {
