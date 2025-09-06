@@ -231,7 +231,7 @@ export const HistoryList = forwardRef(
         }
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
-        removeClippedSubviews={true}
+        removeClippedSubviews={false}
         ListFooterComponent={
           loadingMore ? <SkeletonCard /> : <View style={{ height: bottom }} />
         }

@@ -1,4 +1,4 @@
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { StackActions, useNavigation } from '@react-navigation/core';
 import {
   createGlobalBottomSheetModal2024,

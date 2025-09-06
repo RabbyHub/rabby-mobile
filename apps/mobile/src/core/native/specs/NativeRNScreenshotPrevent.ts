@@ -4,6 +4,9 @@ import type { EventEmitter } from 'react-native/Libraries/Types/CodegenTypes';
 import { ExtractEventEmitters, ExtractMethods, TrimNeverValues } from './types';
 
 export interface Spec extends TurboModule {
+  readonly addListener: (eventType: string) => void;
+  readonly removeListeners: (count: number) => void;
+
   togglePreventScreenshot: (isPrevent: boolean) => void;
   iosIsBeingCaptured(): boolean;
   // iosToggleBlurView(isProtected: boolean): void;

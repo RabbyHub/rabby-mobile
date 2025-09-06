@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 
 import RcIconCopy from '@/assets2024/singleHome/copy.svg';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 
 import { Text } from '@/components';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
@@ -18,6 +18,7 @@ import { refreshingAtom } from './hooks/project';
 import { useAtomValue } from 'jotai';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { loadingCurveAtom } from '@/hooks/useCurve';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function HomeHeaderArea({
   account: currentAccount,
@@ -36,8 +37,8 @@ export default function HomeHeaderArea({
   const handleCopyAddress = useCallback<
     React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
   >(
-    evt => {
-      evt.stopPropagation();
+    (evt?) => {
+      evt?.stopPropagation();
       if (!currentAccount?.address) {
         return;
       }
@@ -61,7 +62,7 @@ export default function HomeHeaderArea({
       <View style={styles.innerBox}>
         <View style={styles.touchBox}>
           <View style={styles.accountBox}>
-            <View className="relative">
+            <View style={{ position: 'relative' }}>
               <TouchableOpacity hitSlop={24} onPress={goBack}>
                 <WalletIcon
                   type={currentAccount?.brandName as KEYRING_TYPE}
@@ -96,6 +97,7 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     width: '100%',
     marginLeft: 8,
+    // ...makeDebugBorder('red'),
   },
   innerBox: {
     width: '100%',
@@ -109,6 +111,7 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 4,
+    // ...makeDebugBorder('yellow'),
   },
   accountBox: {
     flexDirection: 'row',
@@ -119,6 +122,7 @@ const getStyles = createGetStyles2024(ctx => ({
     paddingRight: 4,
     paddingBottom: 4,
     overflow: 'visible',
+    // ...makeDebugBorder(),
   },
   titleText: {
     flexShrink: 1,

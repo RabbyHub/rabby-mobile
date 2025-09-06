@@ -106,9 +106,8 @@ export const GlobalBottomSheetModal2024 = () => {
           APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
         ].includes(approvalComponent);
 
-      setModals(prev => [
-        ...prev,
-        {
+      setModals(prev => {
+        const newModal = {
           id,
           params: {
             ...params,
@@ -127,8 +126,11 @@ export const GlobalBottomSheetModal2024 = () => {
               APPROVAL_SNAP_POINTS.Unknown
             : SNAP_POINTS[params.name],
           ref: React.createRef<AppBottomSheetModal>(),
-        },
-      ]);
+        };
+        modalRefs.current[id] = newModal.ref;
+
+        return [...prev, newModal];
+      });
       if (params.preventScreenshotOnModalOpen) {
         markAtSensitiveModal(id);
       }

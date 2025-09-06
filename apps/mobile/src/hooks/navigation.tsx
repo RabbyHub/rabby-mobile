@@ -115,6 +115,7 @@ export const useStackScreenConfig = () => {
         headerTintColor: colors['neutral-title-1'],
         headerLeft: ({ tintColor }) => (
           <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
             style={styles.backButtonStyle}
             hitSlop={24}
             onPress={navBack}>
@@ -157,6 +158,7 @@ export const useStackScreenConfig = () => {
         headerTintColor: colors2024['neutral-title-1'],
         headerLeft: ({ tintColor }) => (
           <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
             style={styles.backButtonStyle}
             hitSlop={hitSlop}
             onPress={navBack}>
@@ -219,6 +221,7 @@ export function useBottomTabScreenConfig() {
         headerTintColor: colors2024['neutral-title-1'],
         headerLeft: ({ tintColor }) => (
           <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
             style={styles.backButtonStyle}
             hitSlop={hitSlop}
             onPress={navBack}>

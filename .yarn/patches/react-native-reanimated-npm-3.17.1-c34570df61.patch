@@ -1,0 +1,13 @@
+diff --git a/src/platform-specific/findHostInstance.ts b/src/platform-specific/findHostInstance.ts
+index da56c8eb67f4be89ac42ad22bc38f27500247f82..32f5baa54420800a31ce64441eb1acedaf68c43c 100644
+--- a/src/platform-specific/findHostInstance.ts
++++ b/src/platform-specific/findHostInstance.ts
+@@ -86,7 +86,7 @@ export function findHostInstance(
+     a valid React ref.
+   */
+   return findHostInstance_DEPRECATED(
+-    !isFabric() || (component as IAnimatedComponentInternal).hasAnimatedRef()
++    !isFabric() || (typeof (component as IAnimatedComponentInternal).hasAnimatedRef === 'function' && (component as IAnimatedComponentInternal).hasAnimatedRef())
+       ? (component as IAnimatedComponentInternal)._componentRef
+       : component
+   );

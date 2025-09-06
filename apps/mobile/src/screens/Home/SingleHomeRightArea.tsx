@@ -117,7 +117,10 @@ export const HeaderRightHistory: React.FC<HeaderRightHistoryProps> = ({
   ]);
 
   return (
-    <CustomTouchableOpacity hitSlop={historyHitSlop} onPress={openHistory}>
+    <CustomTouchableOpacity
+      as="RNGHTouchableOpacity"
+      hitSlop={historyHitSlop}
+      onPress={openHistory}>
       {pendingTxCount > 0 ? (
         <View
           style={{ marginRight: 16, position: 'relative', paddingVertical: 4 }}>
@@ -176,7 +179,10 @@ export const RightArea: React.FC<{
   return (
     <>
       <HeaderRightHistory account={currentAccount} />
-      <CustomTouchableOpacity hitSlop={hitSlop} onPress={onPress}>
+      <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
+        hitSlop={hitSlop}
+        onPress={onPress}>
         <RcIconMore width={24} height={24} color={colors2024['neutral-body']} />
       </CustomTouchableOpacity>
     </>

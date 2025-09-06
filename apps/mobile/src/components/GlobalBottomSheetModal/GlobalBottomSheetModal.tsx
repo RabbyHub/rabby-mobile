@@ -82,9 +82,8 @@ export const GlobalBottomSheetModal = () => {
           APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
         ].includes(approvalComponent);
 
-      setModals(prev => [
-        ...prev,
-        {
+      setModals(prev => {
+        const newModal = {
           id,
           params: {
             ...params,
@@ -103,8 +102,11 @@ export const GlobalBottomSheetModal = () => {
               APPROVAL_SNAP_POINTS.Unknown
             : SNAP_POINTS[params.name],
           ref: React.createRef<AppBottomSheetModal>(),
-        },
-      ]);
+        };
+        modalRefs.current[id] = newModal.ref;
+
+        return [...prev, newModal];
+      });
       setTimeout(() => {
         handlePresent(id);
       }, 0);

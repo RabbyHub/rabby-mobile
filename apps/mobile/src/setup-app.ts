@@ -9,6 +9,16 @@ import './databases/orm';
 import './core/services';
 import './core/utils/fonts';
 import './core/config/online';
+import { FlatList } from 'react-native';
+
+// @ts-expect-error
+FlatList.defaultProps = Object.assign({}, FlatList.defaultProps, {
+  /**
+   * @see https://github.com/software-mansion/react-native-screens/issues/2339#issuecomment-2350979876
+   * @see perf issue https://github.com/software-mansion/react-native-screens/issues/2339#issuecomment-3177692971
+   */
+  removeClippedSubviews: false,
+});
 
 setJSExceptionHandler((error, isFatal) => {
   console.debug('setJSExceptionHandler:: error');

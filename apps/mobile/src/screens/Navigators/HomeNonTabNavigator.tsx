@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler';
 import { makeHeadersPresets, RootNames } from '@/constant/layout';
-import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+// import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeNonTabNavigatorParamsList } from '@/navigation-type';
 import SearchScreen from '../Search';
 import WatchlistScreen from '../Watchlist';
@@ -10,7 +11,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 
 const HomeNonTabStack =
-  createCustomNativeStackNavigator<HomeNonTabNavigatorParamsList>();
+  createNativeStackNavigator<HomeNonTabNavigatorParamsList>();
 
 export default function HomeNonTabNavigator() {
   const { colors, colors2024, isLight } = useTheme2024({ getStyle });

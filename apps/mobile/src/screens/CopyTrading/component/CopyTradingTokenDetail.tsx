@@ -20,6 +20,7 @@ import {
   Linking,
   ImageBackground,
 } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 import { naviPush } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import ImgTwitter from '@/assets2024/icons/copyTrading/ImgTwitter.png';
@@ -212,9 +213,7 @@ export default function CopyTradingTokenDetail() {
 
   const getHeaderRight = useCallback(() => {
     return (
-      <TouchableOpacity
-        style={styles.tokenHeaderTwitter}
-        onPress={handleTwitterPress}>
+      <Pressable style={styles.tokenHeaderTwitter} onPress={handleTwitterPress}>
         <Image source={ImgTwitter} style={styles.tokenHeaderTwitterIcon} />
         <Text style={styles.twitterName} numberOfLines={1} ellipsizeMode="tail">
           {t('page.copyTrading.twitterNews')}
@@ -224,7 +223,7 @@ export default function CopyTradingTokenDetail() {
           height={18}
           color={colors2024['neutral-title-1']}
         />
-      </TouchableOpacity>
+      </Pressable>
     );
   }, [styles, handleTwitterPress, t, colors2024]);
 

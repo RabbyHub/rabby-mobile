@@ -12,6 +12,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useRoute } from '@react-navigation/native';
 import { GetNestedScreenNavigationProps } from '@/navigation-type';
 import { RightArea } from './SingleHomeRightArea';
+import { HomeNativeStackHeader } from './components/NativeStackHeader';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -68,14 +69,14 @@ function HomeScreen(): JSX.Element {
 
   React.useEffect(() => {
     setNavigationOptions({
+      header: props => <HomeNativeStackHeader {...props} />,
       headerTitle: renderHeaderTitle,
       headerRight: renderHeaderRight,
     });
   }, [
-    currentAccount.address,
-    navigation,
-    renderHeaderRight,
+    currentAccount,
     renderHeaderTitle,
+    renderHeaderRight,
     setNavigationOptions,
   ]);
 

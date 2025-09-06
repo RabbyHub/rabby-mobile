@@ -15,6 +15,7 @@ export const SendHeaderLeft = ({
   const navigation = useNavigation();
   return (
     <CustomTouchableOpacity
+      as="RNGHTouchableOpacity"
       style={styles.backButtonStyle}
       hitSlop={24}
       onPress={() => {

@@ -1,14 +1,15 @@
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
-import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+// import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { DappsNavigatorParamsList } from '@/navigation-type';
 import { DappsScreen } from '../Dapps/DappsScreen';
 import { IS_IOS } from '@/core/native/utils';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { FavoriteDappsScreen } from '../Dapps/FavoriteDappsScreen';
 
-const DappsStack = createCustomNativeStackNavigator<DappsNavigatorParamsList>();
+const DappsStack = createNativeStackNavigator<DappsNavigatorParamsList>();
 
 export function DappsNavigator() {
   const { mergeScreenOptions, mergeScreenOptions2024 } = useStackScreenConfig();

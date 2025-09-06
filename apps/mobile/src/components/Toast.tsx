@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   StyleProp,
   TextStyle,
+  Dimensions,
 } from 'react-native';
 import Toast, { ToastOptions } from 'react-native-root-toast';
 import { SvgProps } from 'react-native-svg';
@@ -17,6 +18,7 @@ import {
 } from '@/assets/icons/common';
 import React from 'react';
 import { ThemeColors } from '@/constant/theme';
+import { makeDebugBorder } from '@/utils/styles';
 
 const config: ToastOptions = {
   position: Toast.positions.TOP + 80,
@@ -190,6 +192,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    maxWidth: Dimensions.get('window').width - 32,
   },
   icon: {
     marginRight: 8,

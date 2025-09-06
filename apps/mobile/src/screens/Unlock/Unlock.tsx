@@ -1,6 +1,11 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useCallback, useLayoutEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import {
   View,
   TextInput,
@@ -8,6 +13,7 @@ import {
   ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
+  Text,
 } from 'react-native';
 import * as Yup from 'yup';
 
@@ -56,12 +62,24 @@ const prevFailedRef = { hide: null as (() => void) | null };
 const toastFailed = toastWithIcon(RcIconInfoForToast);
 const toastBiometricsFailed = (message?: string) => {
   prevFailedRef.hide?.();
-  prevFailedRef.hide = toastFailed(message);
+  prevFailedRef.hide = toastFailed(ctx => (
+    <Text style={[ctx.textStyle, ctx.config?.textStyle, { minWidth: 102 }]}>
+      {message || 'Biometrics authentication failed'}
+    </Text>
+  ));
 };
 const toastLoading = toastWithIcon(() => (
   <ActivityIndicator style={{ marginRight: 6 }} />
 ));
-const toastUnlocking = () => toastLoading('Unlocking', { duration: 3000 });
+const toastUnlocking = () =>
+  toastLoading(
+    ctx => (
+      <Text style={[ctx.textStyle, ctx.config?.textStyle, { minWidth: 84 }]}>
+        {'Unlocking'}
+      </Text>
+    ),
+    { duration: 3000 },
+  );
 
 export function BiometricsIcon(props: { isFaceID?: boolean; size?: number }) {
   const { isFaceID = isIOS, size = BiometricsIconSize } = props;
@@ -100,6 +118,10 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   }, [navigation, afterLeaveFromUnlock]);
 
   const { tipEnableBiometrics } = useTipedUserEnableBiometrics();
+
+  useEffect(() => {
+    toastUnlocking();
+  }, []);
 
   const formik = useFormik({
     initialValues: INIT_DATA,

@@ -146,7 +146,7 @@ export const RightMore: React.FC<{
         menuActions: menuActions,
       }}
       triggerProps={{ action: 'press' }}>
-      <CustomTouchableOpacity hitSlop={hitSlop}>
+      <CustomTouchableOpacity as="RNGHTouchableOpacity" hitSlop={hitSlop}>
         <RcIconMore width={24} height={24} />
       </CustomTouchableOpacity>
     </DropDownMenuView>
@@ -244,6 +244,7 @@ export const DeFiDetailScreen = () => {
   const getHeaderLeft = useMemoizedFn(() => {
     return (
       <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
         style={styles.backButtonStyle}
         hitSlop={24}
         onPress={navBack}>

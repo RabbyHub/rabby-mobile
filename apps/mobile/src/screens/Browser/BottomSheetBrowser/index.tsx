@@ -245,7 +245,7 @@ export const BrowserManagePopup = () => {
           });
         }
       }}>
-      <AutoLockView as="BottomSheetView">
+      <AutoLockView as="BottomSheetView" style={{ height: '100%' }}>
         <BrowserManage />
       </AutoLockView>
     </AppBottomSheetModal>
@@ -262,6 +262,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
       overflow: 'hidden',
+      height: '100%',
     },
     customHandleContainer: {
       position: 'absolute',

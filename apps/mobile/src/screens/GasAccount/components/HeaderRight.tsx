@@ -2,7 +2,7 @@ import { RcIconGasAccountHeaderRight } from '@/assets/icons/gas-account';
 import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Tip } from '@/components';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import {
@@ -48,6 +48,7 @@ export const GasAccountHeader: React.FC = () => {
       content={
         <View style={styles.optionList}>
           <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
             style={styles.option}
             onPress={handleSwitch}
             hitSlop={10}>
@@ -60,6 +61,7 @@ export const GasAccountHeader: React.FC = () => {
             </Text>
           </CustomTouchableOpacity>
           <CustomTouchableOpacity
+            as="RNGHTouchableOpacity"
             style={styles.option}
             onPress={handleLogout}
             hitSlop={10}>
@@ -71,7 +73,8 @@ export const GasAccountHeader: React.FC = () => {
           </CustomTouchableOpacity>
         </View>
       }>
-      <Pressable
+      <CustomTouchableOpacity
+        as="RNGHTouchableOpacity"
         style={styles.container}
         onPress={() => setVisible(true)}
         hitSlop={10}>
@@ -82,7 +85,7 @@ export const GasAccountHeader: React.FC = () => {
           style={styles.walletIcon}
         /> */}
         <RcIconGasAccountHeaderRight />
-      </Pressable>
+      </CustomTouchableOpacity>
     </Tip>
   );
 };

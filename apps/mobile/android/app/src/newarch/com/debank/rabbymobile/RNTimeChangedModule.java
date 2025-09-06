@@ -37,6 +37,12 @@ public class RNTimeChangedModule extends NativeRNTimeChangedSpec implements Life
     return RNTimeChangedImpl.NAME;
   }
 
+  @Override
+  public void addListener(String eventType) {};
+
+  @Override
+  public void removeListeners(double count) {};
+
 
   @ReactMethod
   public void exitAppForSecurity() {

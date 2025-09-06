@@ -11,6 +11,7 @@ import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import android.widget.ImageView;
 
+import com.facebook.proguard.annotations.DoNotStrip;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Promise;
@@ -45,6 +46,12 @@ public class RNScreenshotPreventModule extends NativeRNScreenshotPreventSpec {
   public String getName() {
     return RNScreenshotPreventImpl.NAME;
   }
+
+  @Override
+  public void addListener(String eventType) {};
+
+  @Override
+  public void removeListeners(double count) {};
 
   @Override
   public void togglePreventScreenshot(boolean isPrevent) {

@@ -1,13 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import {
-  View,
-  StyleProp,
-  ViewStyle,
-  TouchableOpacity,
-  Keyboard,
-} from 'react-native';
+import { View, StyleProp, ViewStyle, Keyboard } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 import RcIconSwapHistory from '@/assets2024/icons/common/IconHistoryCC.svg';
 import { SendHistory } from './SendHistory';
 import PendingTx from '@/screens/Bridge/components/PendingTx';
@@ -16,7 +11,6 @@ import {
   useReadSendPendingCount,
   useReadSendSuccessTxList,
 } from '../../hooks/useSendPendingCount';
-import { useFocusEffect } from '@react-navigation/native';
 
 interface IProps {
   isForMultipleAddress?: boolean;
@@ -55,11 +49,11 @@ export const SendHeaderRight = ({
   return (
     <>
       <View style={styles.container}>
-        <TouchableOpacity onPress={openHistory} style={styles.iconContainer}>
+        <Pressable onPress={openHistory} style={styles.iconContainer}>
           <RcIconSwapHistory color={colors2024['neutral-body']} />
           {/* not very accurate */}
           {/* {Boolean(isShowDot) && <View style={styles.greenDot} />} */}
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <SendHistory

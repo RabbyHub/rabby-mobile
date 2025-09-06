@@ -1,4 +1,7 @@
-// https://github.com/react-navigation/react-navigation/blob/b2fa62c8ea5c5ad40a3541a7258cba62467e7a56/packages/routers/src/StackRouter.tsx
+/**
+ * @see https://github.com/react-navigation/react-navigation/blob/%40react-navigation/routers%407.5.1/packages/routers/src/StackRouter.tsx
+ * @see file:///./../../node_modules/@react-navigation/routers/src/StackRouter.tsx
+ */
 
 import { StackRouter, StackRouterOptions } from '@react-navigation/native';
 
