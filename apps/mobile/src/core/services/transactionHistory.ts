@@ -286,12 +286,6 @@ export class TransactionHistoryService {
     ).length;
   }
 
-  getSendFailedCount(address?: string) {
-    return this.store.sendFailList.filter(item =>
-      address ? item.startsWith(address) : true,
-    ).length;
-  }
-
   getClearSuccessAndFailListTs() {
     return this.store.clearSuccessAndFailListTs;
   }
