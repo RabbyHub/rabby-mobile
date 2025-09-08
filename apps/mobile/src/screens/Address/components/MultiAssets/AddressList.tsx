@@ -136,6 +136,7 @@ export const AddressList = () => {
     modalRef.current = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.NOT_MATTER_ADDRESS_DIALOG,
       bottomSheetModalProps: {
+        rootViewType: 'View',
         enablePanDownToClose: true,
         enableContentPanningGesture: true,
       },
