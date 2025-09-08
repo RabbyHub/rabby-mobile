@@ -1,20 +1,22 @@
 import { Tab } from '@/core/services/browserService';
 import { useBrowser } from '@/hooks/browser/useBrowser';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useMemoizedFn, useMount } from 'ahooks';
 import { useTranslation } from 'react-i18next';
 import { ListRenderItem, StyleProp, View, ViewStyle } from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
 import { BrowserTabCard } from './BrowserTabCard';
 // import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useRef } from 'react';
 import { BrowserTabEmpty } from './BrowserTabEmpty';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetFlatList,
+  BottomSheetFlatListMethods,
+} from '@gorhom/bottom-sheet';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
-export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
+export const BrowserTabList = ({ style }: {} & RNViewProps) => {
   const { colors2024, styles, isLight } = useTheme2024({
     getStyle,
   });
@@ -70,8 +72,7 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
       </View>
     );
   });
-  // todo fix any
-  const ref = useRef<any>(null);
+  const ref = useRef<BottomSheetFlatListMethods>(null);
   useMount(() => {
     setTimeout(() => {
       const index = displayedTabs.findIndex(item => item.id === activeTabId);
