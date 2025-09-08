@@ -124,9 +124,8 @@ export const Button = ({
     disabledTitleStyle,
   ]);
 
+  const treatAsDisabled = disabled || loading;
   const innerStyle = useMemo(() => {
-    const isDisabled = disabled;
-
     return StyleSheet.flatten([
       styles.button,
       {
@@ -136,7 +135,7 @@ export const Button = ({
         borderWidth: 1,
       },
       type === 'primary' && !noShadow && styles.shadowButton,
-      isDisabled &&
+      treatAsDisabled &&
         (type === 'ghost'
           ? {
               borderColor: colors2024['brand-disable'],
@@ -147,7 +146,7 @@ export const Button = ({
       buttonStyle,
     ]);
   }, [
-    disabled,
+    treatAsDisabled,
     styles.button,
     styles.shadowButton,
     bgColor,
@@ -189,7 +188,7 @@ export const Button = ({
       <TouchableComponentInternal
         onPress={handleOnPress}
         delayPressIn={0}
-        activeOpacity={0.3}
+        activeOpacity={treatAsDisabled ? 1 : 0.3}
         accessibilityRole="button"
         accessibilityState={accessibilityState}
         {...rest}

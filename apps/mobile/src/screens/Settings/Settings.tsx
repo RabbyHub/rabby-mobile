@@ -36,6 +36,7 @@ import {
   APP_RUNTIME_ENV,
   BUILD_CHANNEL,
   BUILD_GIT_INFO,
+  IS_HERMES_ENABLED,
   isNonPublicProductionEnv,
   isSelfhostRegPkg,
   NEED_DEVSETTINGBLOCKS,
@@ -74,7 +75,6 @@ import {
 } from '../ManagePassword/components/ManagePasswordSheetModal';
 
 import { useBiometrics, useBiometricsComputed } from '@/hooks/biometrics';
-import { useIsForceAllowScreenshot } from '@/hooks/appSettings';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import {
   AutoLockCountDownLabel,
@@ -132,6 +132,16 @@ import MockBatchRevokeModal, {
 import { preferenceService } from '@/core/services';
 import { useClearBrowserData } from '@/hooks/browser/useClearBrowserData';
 import { useMultiPress } from '@/hooks/tap';
+import DevUIHomeCenterAreaModal, {
+  useUIDevHomeCenterAreaModalVisiable,
+} from './sheetModals/DevUIHomeCenterArea';
+import DevScreenRecordingModal, {
+  useDevScreenRecordingModalVisiable,
+} from './sheetModals/DevScreenRecording';
+import {
+  DevModalReactotron,
+  useReactotronModalVisible,
+} from './Modals/DevModalReactotron';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -146,6 +156,7 @@ function AlertBuildInfo() {
       [
         `Runtime Env: ${APP_RUNTIME_ENV}`,
         `Commit Hash: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+        `Hermes Enabled: ${IS_HERMES_ENABLED}`,
         '   ',
         !!BUILD_GIT_INFO.BUILD_GIT_HASH_TIME &&
           `Lastest Commit: ${dayjs(BUILD_GIT_INFO.BUILD_GIT_HASH_TIME).format(
@@ -165,7 +176,13 @@ function AlertBuildInfo() {
   } else {
     Alert.alert(
       'Build Info',
-      [`Runtime Env: ${APP_RUNTIME_ENV}`].filter(Boolean).join('\n'),
+      [
+        `Runtime Env: ${APP_RUNTIME_ENV}`,
+        `Revision: ${BUILD_GIT_INFO.BUILD_GIT_HASH}`,
+        `Hermes Enabled: ${IS_HERMES_ENABLED}`,
+      ]
+        .filter(Boolean)
+        .join('\n'),
       [
         {
           text: 'OK',
@@ -524,11 +541,9 @@ function DevSettingsBlocks() {
     }, [fetchBiometrics]),
   );
 
-  const { forceAllowScreenshot } = useIsForceAllowScreenshot();
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
-  const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
   const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
@@ -537,11 +552,16 @@ function DevSettingsBlocks() {
   const { setCloudDriveTestItemModalVisible } =
     useCloudDriveTestItemModalVisible();
   const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
+  const { setDevUIHomeCenterAreaModalVisible } =
+    useUIDevHomeCenterAreaModalVisiable();
   const { setDevUIWipModalVisible } = useUIDevWipModalVisiable();
   const { setDevUIPlaygroundModalVisible } = useDevUIPlaygroundModalVisible();
   const { setDataPlaygroundModalVisible } = useDevDataPlaygroundModalVisible();
+  const { setDevScreenRecordingModalVisible } =
+    useDevScreenRecordingModalVisiable();
   const [isShowOpenApiPopup, setIsShowOpenApiPopup] = useState(false);
   const { setMockBatchRevokeVisible } = useDevMockBatchRevokeVisible();
+  const { setReactotronModalVisible } = useReactotronModalVisible();
   const currentAccount = preferenceService.getFallbackAccount();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
@@ -600,6 +620,13 @@ function DevSettingsBlocks() {
               },
             },
             {
+              label: '[UI] Mock Home Center Areas',
+              icon: RcCode,
+              onPress: () => {
+                setDevUIHomeCenterAreaModalVisible(true);
+              },
+            },
+            {
               label: '[UI] Wip Helpers',
               icon: RcCode,
               onPress: () => {
@@ -621,17 +648,11 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: forceAllowScreenshot
-                ? `Force Allow Capture`
-                : `Disallow Capture Sensitive Scene`,
+              label: 'Screen Recording',
               icon: isIOS ? RcScreenRecord : RcScreenshot,
-              rightNode: (
-                <SwitchAllowScreenshot ref={switchAllowScreenshotRef} />
-              ),
               onPress: () => {
-                switchAllowScreenshotRef.current?.toggle();
+                setDevScreenRecordingModalVisible(true);
               },
-              visible: isNonPublicProductionEnv,
             },
             {
               label: (
@@ -766,6 +787,13 @@ function DevSettingsBlocks() {
                 });
               },
             },
+            {
+              label: 'Reactotron Settings',
+              icon: RcCode,
+              onPress: async () => {
+                setReactotronModalVisible(true);
+              },
+            },
             // {
             //   label: 'Test Biometrics',
             //   icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
@@ -815,8 +843,11 @@ function DevSettingsBlocks() {
       <CloudDriveTestItemModal />
       <WalletLockTestItemModal />
       <DevUIWipModal />
+      <DevUIHomeCenterAreaModal />
       <DevUIPlaygroundModal />
       <DevDataPlayground />
+      <DevScreenRecordingModal />
+      {__DEV__ && <DevModalReactotron />}
       <OpenApiPopup
         visible={isShowOpenApiPopup}
         onClose={() => {

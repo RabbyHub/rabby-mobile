@@ -84,7 +84,36 @@
     "Addresses": "Địa chỉ",
     "24h": "24h",
     "Edit": "Chỉnh sửa",
-    "Wallets": "Chọn Ví"
+    "Wallets": "Chọn Ví",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "hãyHỏiTôiSau"
+      },
+      "mediaLibrary": {
+        "message": "Ứng dụng này cần truy cập vào thư viện phương tiện của bạn để phát hiện ảnh chụp màn hình.",
+        "title": "Quyền truy cập Thư viện Media"
+      },
+      "camera": {
+        "title": "Quyền Truy Cập Camera",
+        "message": "Ứng dụng này cần quyền truy cập vào camera của bạn để chụp ảnh."
+      },
+      "bluetoothScan": {
+        "title": "Quyền truy cập quét Bluetooth",
+        "message": "Ứng dụng này cần quyền truy cập vào Bluetooth của bạn để quét các thiết bị."
+      },
+      "bluetoothConnect": {
+        "title": "Quyền Kết Nối Bluetooth",
+        "message": "Ứng dụng này cần truy cập Bluetooth của bạn để kết nối với các thiết bị."
+      },
+      "bluetoothAdmin": {
+        "title": "Quyền Quản Trị Bluetooth",
+        "message": "Ứng dụng này cần quyền truy cập vào Bluetooth của bạn để quản lý thiết bị."
+      },
+      "location": {
+        "message": "Ứng dụng này cần quyền truy cập vào vị trí của bạn để cung cấp các tính năng dựa trên vị trí.",
+        "title": "Quyền truy cập vị trí"
+      }
+    }
   },
   "page": {
     "transactions": {
@@ -652,6 +681,15 @@
         "insufficient": "Số dư gas của bạn không đủ để trang trải phí gas mạng. Thêm tiền cho gas và thử lại.",
         "nonceTooLow": "Nonce quá thấp. Chúng tôi sẽ cập nhật nó thành {{nonce}}. Nhấn \"Retry\" để xác nhận và thử lại.",
         "gasPriceTooLow": "Giá gas quá thấp. Chúng tôi sẽ điều chỉnh nó lên 30% để giúp giao dịch của bạn được xác nhận. Nhấn “Retry” để xác nhận và thử lại."
+      },
+      "addLiquidity": {
+        "token0": "Thêm Token 1",
+        "poolPrice": "Giá Pool",
+        "marketPrice": "Giá Thị Trường",
+        "receiver": "Người nhận",
+        "priceDiff": "Giá chênh lệch",
+        "token1": "Thêm Token 2",
+        "title": "Thêm Tính Thanh Khoản"
       }
     },
     "sendNFT": {
@@ -1078,6 +1116,9 @@
         "descriptionAndroid": "Nếu bạn thích Rabby, việc đánh giá nhanh trên Google Play sẽ có ý nghĩa rất lớn.",
         "feedbackTitle": "Bạn có phản hồi? Chúng tôi đang lắng nghe.",
         "descriptionIOS": "Nếu bạn thích Rabby, một đánh giá nhanh trên App Store sẽ có ý nghĩa lớn."
+      },
+      "homeCenterTipScreenshot": {
+        "description": "Chụp màn hình bất cứ lúc nào để nhanh chóng báo cáo lỗi"
       }
     },
     "signText": {
@@ -1700,7 +1741,16 @@
       "ContentGeneratedByAI": "Nội dung này được tạo bởi AI",
       "ShowMore": "Hiển thị thêm",
       "Introduction": "Giới thiệu",
-      "Fold": "Gập"
+      "Fold": "Gập",
+      "notSupported": "Token không hỗ trợ",
+      "balance": "Số dư",
+      "Mybalance": "Số dư Token",
+      "guideToMarketData": "Dữ liệu thị trường:",
+      "Transaction": "Lịch sử Token",
+      "tabs": {
+        "tokenSecurity": "Bảo mật Token",
+        "marketData": "Dữ liệu thị trường"
+      }
     },
     "backupPrivateKey": {
       "clickToShow": "Nhấn để hiển thị private key",
@@ -2024,10 +2074,18 @@
         "recent": "Gần đây",
         "openUrl": "Mở \"{{searchText}}\"",
         "placeholder": "Tìm kiếm Website",
-        "searchInGoogle": "Tìm \"{{searchText}}\" trên Google"
+        "searchInGoogle": "Tìm \"{{searchText}}\" trên Google",
+        "recentEmpty": "Bắt đầu Khám Phá Website"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Mở Trang Web"
+      },
+      "menu": {
+        "contentModeMobile": "Yêu cầu Trang Di Động",
+        "refresh": "Làm mới",
+        "disconnect": "Ngắt kết nối",
+        "favorite": "Yêu thích",
+        "contentModeDesktop": "Yêu cầu Trang Web Máy Tính"
       }
     },
     "browserManage": {
@@ -2133,6 +2191,12 @@
       },
       "toast": {
         "remove": "Xóa khỏi danh sách theo dõi thành công"
+      }
+    },
+    "universalLink": {
+      "error": {
+        "setupWalletFirst": "Vui lòng hoàn tất việc thiết lập ví trước.",
+        "unlockWalletFirst": "Vui lòng mở khóa ứng dụng để truy cập liên kết."
       }
     }
   },
@@ -2247,7 +2311,8 @@
       "loginInTip": {
         "title": "Gửi tiền USDC / USDT",
         "login": "Đăng nhập GasAccount",
-        "desc": "Thanh toán phí Gas trên tất cả các chuỗi"
+        "desc": "Thanh toán phí Gas trên tất cả các chuỗi",
+        "loginAndClaim": "Đăng nhập và Nhận {{amount}}"
       },
       "depositPopup": {
         "title": "Gửi tiền",
@@ -2269,7 +2334,13 @@
       "depositWithTokenDesc": "Không có phí bổ sung, rút tiền ngay lập tức",
       "depositWithPay": "Mua với",
       "depositWithToken": "Gửi với Token",
-      "depositWithPayDesc": "30% phí, không có withdrawals"
+      "depositWithPayDesc": "30% phí, không có withdrawals",
+      "giftInfo": {
+        "noWithdrawableBalanceTitle": "{{amount}} Không thể rút tiền",
+        "giftTips": "Phần thưởng Gas cho người dùng tích cực",
+        "gotIt": "Tôi đã hiểu rồi",
+        "noWithdrawableBalanceDescription": "{{amount}} trong số dư gas của bạn không thể rút:\n1. Apple Pay / Google Pay\n2. Gas Rewards"
+      }
     },
     "NoLongerSupports": {
       "button": "Hiểu rồi",
@@ -2312,6 +2383,24 @@
       "buttonText": "Làm mới",
       "offlineText": "Lỗi mạng",
       "serviceErrorText": "Lỗi dịch vụ"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "Mô tả vấn đề"
+      },
+      "feedbackLabel": "Mô tả lỗi:",
+      "submitButtonText": "Gửi đi",
+      "title": "Ảnh chụp màn hình để báo cáo lỗi"
+    },
+    "feedbackModal": {
+      "issueDescriptionLabel": "Mô tả:",
+      "title": "Phản hồi từ Rabby Support",
+      "pendingTitle": "Hỗ trợ Rabby chưa phản hồi.",
+      "repliedTitle": "Hỗ trợ Rabby đã phản hồi:",
+      "issueDescription": "Đây là vấn đề bạn đã báo cáo:"
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "Gửi thành công"
     }
   },
   "constant": {

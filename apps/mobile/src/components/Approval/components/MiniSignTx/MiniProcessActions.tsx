@@ -3,10 +3,12 @@ import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ActionsContainer, Props } from '../FooterBar/ActionsContainer';
 import { GasLessAnimatedWrapper } from '../FooterBar/GasLessComponents';
 import { Button } from '@/components2024/Button';
+import { useGetMiniSigningTypedData } from '@/hooks/useMiniApprovalDirectSignTypedData';
+import useDebounce from 'react-use/lib/useDebounce';
 
 const getStyles2024 = createGetStyles2024(({ colors2024 }) => ({
   button: {
@@ -48,6 +50,8 @@ export const MiniProcessActions: React.FC<Props> = ({
   isGasNotEnough,
   buttonIcon,
   isMiniSignTx,
+  directSubmit,
+  miniSignType,
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -70,6 +74,18 @@ export const MiniProcessActions: React.FC<Props> = ({
           }
       : {},
   ]);
+
+  const signingTypedData = useGetMiniSigningTypedData();
+
+  useDebounce(
+    () => {
+      if (signingTypedData && directSubmit && miniSignType === 'typedData') {
+        onSubmit();
+      }
+    },
+    300,
+    [signingTypedData, disabledProcess, directSubmit, miniSignType],
+  );
 
   return (
     <ActionsContainer onCancel={onCancel} isMiniSignTx={isMiniSignTx}>

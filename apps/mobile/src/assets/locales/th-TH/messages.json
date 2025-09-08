@@ -141,7 +141,8 @@
       "loginInTip": {
         "title": "ฝาก USDC / USDT",
         "desc": "จ่ายค่าธรรมเนียม Gas บนทุกเชน",
-        "login": "เข้าสู่ระบบ GasAccount"
+        "login": "เข้าสู่ระบบ GasAccount",
+        "loginAndClaim": "เข้าสู่ระบบและเรียกร้อง {{amount}}"
       },
       "gasExceed": "ยอดคงเหลือใน GasAccount ไม่เกิน $1000",
       "loginConfirmModal": {
@@ -164,7 +165,13 @@
       "depositWithToken": "ฝากด้วย Token",
       "depositWithPay": "ซื้อด้วย",
       "depositWithTokenDesc": "ไม่มีค่าธรรมเนียมเพิ่มเติม ถอนเงินได้ทันที",
-      "depositWithPayDesc": "ค่าธรรมเนียม 30% ไม่สามารถถอนได้"
+      "depositWithPayDesc": "ค่าธรรมเนียม 30% ไม่สามารถถอนได้",
+      "giftInfo": {
+        "gotIt": "ฉันได้รับแล้ว",
+        "noWithdrawableBalanceTitle": "{{amount}} ไม่สามารถถอนออกได้",
+        "noWithdrawableBalanceDescription": "{{amount}} ของยอดก๊าซของคุณไม่สามารถถอนออกได้:\n1. Apple Pay / Google Pay\n2. Gas Rewards",
+        "giftTips": "รางวัล Gas สำหรับผู้ใช้ที่ใช้งานอยู่"
+      }
     },
     "NoLongerSupports": {
       "button": "เข้าใจแล้ว",
@@ -203,6 +210,24 @@
       "buttonText": "รีเฟรช",
       "serviceErrorText": "ข้อผิดพลาดของบริการ",
       "offlineText": "ข้อผิดพลาดของเครือข่าย"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "อธิบายปัญหา"
+      },
+      "submitButtonText": "ส่ง",
+      "feedbackLabel": "คำอธิบายข้อบกพร่อง:",
+      "title": "ถ่ายภาพหน้าจอเพื่อตอบแจ้งข้อผิดพลาด"
+    },
+    "feedbackModal": {
+      "pendingTitle": "Rabby Support ยังไม่ได้ตอบกลับ。",
+      "issueDescriptionLabel": "คำอธิบาย:",
+      "title": "การตอบกลับจาก Rabby Support",
+      "repliedTitle": "Rabby สนับสนุนได้ตอบกลับแล้ว:",
+      "issueDescription": "นี่คือปัญหาที่คุณรายงาน:"
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "ส่งเรียบร้อยแล้ว"
     }
   },
   "page": {
@@ -812,6 +837,15 @@
         "nonceTooLow": "Nonce ต่ำเกินไป เราจะอัปเดตเป็น {{nonce}} คลิก “Retry” เพื่อยืนยันและลองอีกครั้ง",
         "insufficient": "ยอดเงินก๊าซของคุณไม่เพียงพอที่จะครอบคลุมค่าธรรมเนียมก๊าซของเครือข่าย เติมเงินสำหรับก๊าซและลองอีกครั้ง。",
         "gasPriceTooLow": "ราคาก๊าซต่ำเกินไป เราจะปรับมันขึ้น 30% เพื่อช่วยให้การทำธุรกรรมของคุณยืนยัน คลิก “Retry” เพื่อยืนยันและลองอีกครั้ง"
+      },
+      "addLiquidity": {
+        "receiver": "ผู้รับ",
+        "marketPrice": "ราคาในตลาด",
+        "title": "เพิ่มสภาพคล่อง",
+        "token0": "เพิ่มโทเค็น 1",
+        "poolPrice": "ราคา POOL",
+        "priceDiff": "ราคาแตกต่าง",
+        "token1": "เพิ่มโทเคน 2"
       }
     },
     "signFooterBar": {
@@ -1215,6 +1249,9 @@
         "feedbackSuccess": "ขอขอบคุณสำหรับข้อเสนอแนะของคุณ",
         "descriptionIOS": "หากคุณชอบ Rabby การให้คะแนนอย่างรวดเร็วใน App Store จะมีความหมายมาก",
         "feedbackTitle": "มีข้อเสนอแนะไหม? เรากำลังฟังอยู่。"
+      },
+      "homeCenterTipScreenshot": {
+        "description": "ถ่าย screenshot ได้ตลอดเวลาเพื่อรายงานข้อบกพร่องอย่างรวดเร็ว"
       }
     },
     "switchChain": {
@@ -1949,7 +1986,16 @@
       "ContentGeneratedByAI": "เนื้อหาชิ้นนี้สร้างขึ้นโดย AI",
       "Fold": "พับ",
       "Introduction": "บทนำ",
-      "ShowMore": "แสดงเพิ่มเติม"
+      "ShowMore": "แสดงเพิ่มเติม",
+      "notSupported": "โทเค็นไม่รองรับ",
+      "Mybalance": "ยอดคงเหลือโทเค็น",
+      "guideToMarketData": "ข้อมูลตลาด:",
+      "balance": "ยอดคงเหลือ",
+      "Transaction": "ประวัติโทเคน",
+      "tabs": {
+        "marketData": "ข้อมูลตลาด",
+        "tokenSecurity": "ความปลอดภัยของโทเคน"
+      }
     },
     "setting": {
       "aboutUs": "เกี่ยวกับเรา",
@@ -2143,10 +2189,18 @@
         "results": "ผลลัพธ์",
         "placeholder": "ค้นหาเว็บไซต์",
         "searchInGoogle": "ค้นหา \"{{searchText}}\" ใน Google",
-        "openUrl": "เปิด \"{{searchText}}\""
+        "openUrl": "เปิด \"{{searchText}}\"",
+        "recentEmpty": "เริ่มสำรวจเว็บไซต์"
       },
       "BrowserSearchEntry": {
         "openWebsites": "เปิดเว็บไซต์"
+      },
+      "menu": {
+        "contentModeMobile": "ขอเว็บไซต์มือถือ",
+        "refresh": "รีเฟรช",
+        "favorite": "รายการโปรด",
+        "disconnect": "ตัดการเชื่อมต่อ",
+        "contentModeDesktop": "ขอเว็บไซต์เดสก์ท็อป"
       }
     },
     "browserManage": {
@@ -2253,6 +2307,12 @@
       "toast": {
         "remove": "ลบออกจากรายการเฝ้าดูเรียบร้อยแล้ว"
       }
+    },
+    "universalLink": {
+      "error": {
+        "unlockWalletFirst": "กรุณาปลดล็อกแอปเพื่อเปิดลิงก์",
+        "setupWalletFirst": "กรุณาเสร็จสิ้นการตั้งค่ากระเป๋าเงินก่อน"
+      }
     }
   },
   "native": {
@@ -2312,7 +2372,36 @@
     "Addresses": "ที่อยู่",
     "24h": "24ชั่วโมง",
     "Edit": "แก้ไข",
-    "Wallets": "เลือกกระเป๋าเงิน"
+    "Wallets": "เลือกกระเป๋าเงิน",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "ถามฉันทีหลัง"
+      },
+      "mediaLibrary": {
+        "title": "สิทธิ์การเข้าถึงห้องสมุดมีเดีย",
+        "message": "แอปนี้ต้องการการเข้าถึงห้องสมุดสื่อของคุณเพื่อตรวจจับภาพหน้าจอ"
+      },
+      "camera": {
+        "message": "แอปนี้ต้องการเข้าถึงกล้องของคุณเพื่อถ่ายภาพ",
+        "title": "สิทธิ์กล้อง"
+      },
+      "bluetoothScan": {
+        "title": "การอนุญาตสแกน Bluetooth",
+        "message": "แอปนี้ต้องการการเข้าถึง Bluetooth ของคุณเพื่อตรวจสอบอุปกรณ์"
+      },
+      "bluetoothConnect": {
+        "title": "สิทธิ์การเชื่อมต่อ Bluetooth",
+        "message": "แอปนี้ต้องการการเข้าถึง Bluetooth ของคุณเพื่อเชื่อมต่อกับอุปกรณ์ต่างๆ。"
+      },
+      "bluetoothAdmin": {
+        "title": "Bluetooth สิทธิผู้ดูแล",
+        "message": "แอปนี้ต้องการการเข้าถึง Bluetooth ของคุณเพื่อจัดการอุปกรณ์"
+      },
+      "location": {
+        "message": "แอปนี้ต้องการการเข้าถึงตำแหน่งของคุณเพื่อให้สามารถให้บริการฟีเจอร์ที่อิงตามตำแหน่งได้",
+        "title": "สิทธิ์การเข้าถึงตำแหน่ง"
+      }
+    }
   },
   "background": {
     "transactionWatcher": {

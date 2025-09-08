@@ -27,6 +27,7 @@ import { RootNames } from '@/constant/layout';
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
+import { useClearMiniGasStateEffect } from '@/hooks/miniSignGasStore';
 
 export const enableInsufficientQuote = true;
 
@@ -225,6 +226,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
           user_addr: userAddress,
           start: 0,
           limit: 1,
+          is_all: true,
         });
         return latestTx?.history_list?.[0]?.to_token;
       };
@@ -297,9 +299,12 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     | {
         chainEnum?: CHAINS_ENUM | undefined;
         tokenId?: TokenItem['id'];
+        toChainEnum?: CHAINS_ENUM;
+        toTokenId?: TokenItem['id'];
       }
     | undefined;
 
+  // init from token and chain
   useMount(() => {
     if (!navState?.chainEnum || !navState?.tokenId) {
       return;
@@ -310,6 +315,22 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
     setFromToken({
       ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
       id: navState?.tokenId,
+    });
+  });
+
+  // init to token and chain
+  useMount(() => {
+    if (!navState?.toChainEnum || !navState?.toTokenId) {
+      return;
+    }
+
+    const chainItem = findChainByEnum(navState?.toChainEnum, {
+      fallback: true,
+    });
+    wrappedSwitchToChain(chainItem?.enum || CHAINS_ENUM.ETH, false);
+    setToToken({
+      ...getChainDefaultToken(chainItem?.enum || CHAINS_ENUM.ETH),
+      id: navState?.toTokenId,
     });
   });
 
@@ -903,6 +924,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         user_addr: userAddress,
         start: 0,
         limit: 1,
+        is_all: true,
       });
       if (initIdRef.current !== currentFetchId) {
         return;
@@ -977,6 +999,10 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
       };
     }, [setRefreshId]),
   );
+
+  useClearMiniGasStateEffect({
+    chainServerId: findChainByEnum(fromChain)?.serverId || '',
+  });
 
   return {
     clearExpiredTimer,

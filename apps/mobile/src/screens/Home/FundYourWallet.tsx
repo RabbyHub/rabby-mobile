@@ -2,9 +2,9 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, Text, TouchableOpacity, View } from 'react-native';
 
-import RcIconImport from '@/assets2024/icons/home/IconImport.svg';
-import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
-import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
+import RcIconImportCC from '@/assets2024/icons/home/IconImportCC.svg';
+import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
+import RcIconBuyCC from '@/assets2024/icons/home/IconBuyCC.svg';
 import RcIconRightArrow from '@/assets2024/icons/home/rightArrow.svg';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { RootNames } from '@/constant/layout';
@@ -32,7 +32,7 @@ export const FundYourWallet = ({
   onClose: () => void;
 }) => {
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   return (
     <>
@@ -57,7 +57,11 @@ export const FundYourWallet = ({
                 }}>
                 <View style={styles.itemInner}>
                   <View style={styles.noAssetsIconWrapper}>
-                    <item.icon width={16.8} height={16.8} />
+                    <item.icon
+                      width={16.8}
+                      height={16.8}
+                      color={colors2024['brand-default-icon']}
+                    />
                   </View>
                   <View style={styles.noAssetsRight}>
                     <Text style={styles.noAssetsItemName}>{item.title}</Text>
@@ -83,7 +87,7 @@ export const FoundYourWalletGuide = () => {
       {
         title: t('page.nextComponent.multiAddressHome.importAddress'),
         desc: t('page.nextComponent.multiAddressHome.importAddressDesc'),
-        icon: RcIconImport,
+        icon: RcIconImportCC,
         onPress: () => {
           navigation.dispatch(
             StackActions.push(RootNames.StackAddress, {
@@ -99,7 +103,7 @@ export const FoundYourWalletGuide = () => {
       {
         title: t('page.nextComponent.multiAddressHome.receiveCrypto'),
         desc: t('page.nextComponent.multiAddressHome.receiveCryptoDesc'),
-        icon: RcIconReceive,
+        icon: RcIconReceiveCC,
         onPress: () => {
           navigation.dispatch(
             StackActions.push(RootNames.StackAddress, {
@@ -109,19 +113,19 @@ export const FoundYourWalletGuide = () => {
           );
         },
       },
-      {
-        title: t('page.nextComponent.multiAddressHome.buyWithFiat'),
-        desc: t('page.nextComponent.multiAddressHome.buyWithFiatDesc'),
-        icon: RcIconBuy,
-        onPress: () => {
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBuy,
-              params: {},
-            }),
-          );
-        },
-      },
+      // {
+      //   title: t('page.nextComponent.multiAddressHome.buyWithFiat'),
+      //   desc: t('page.nextComponent.multiAddressHome.buyWithFiatDesc'),
+      //   icon: RcIconBuyCC,
+      //   onPress: () => {
+      //     navigation.dispatch(
+      //       StackActions.push(RootNames.StackTransaction, {
+      //         screen: RootNames.MultiBuy,
+      //         params: {},
+      //       }),
+      //     );
+      //   },
+      // },
     ],
     [t, navigation],
   );
@@ -183,7 +187,7 @@ export const FoundYourWalletGuide = () => {
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   noAssetsContainer: {
     marginHorizontal: 16,
-    height: 434,
+    height: 348,
   },
 
   bgb2: {

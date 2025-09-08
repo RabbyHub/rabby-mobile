@@ -84,6 +84,7 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
         user_addr: account!.address,
         start: 0,
         limit: 10,
+        is_all: true,
       });
 
       const openModalTs = bridgeService.getOpenBridgeHistoryTs(account.address);
@@ -131,16 +132,22 @@ export const usePollBridgePendingNumber = (timer = 10000) => {
           );
           return;
         }
-        if (findTx && findTx.status === 'completed' && localPendingTxData) {
+        if (
+          findTx &&
+          (findTx.status === 'completed' || findTx.status === 'failed') &&
+          localPendingTxData
+        ) {
+          const status =
+            findTx.status === 'completed' ? 'allSuccess' : 'failed';
           setLocalPendingTxData({
             ...localPendingTxData,
-            status: 'allSuccess',
+            status,
             completedAt: Date.now(),
           });
           transactionHistoryService.completeBridgeTxHistory(
             recentlyTxHash,
             localPendingTxData.fromChainId,
-            'allSuccess',
+            status,
           );
           setBridgeHistoryRedDot(true);
         }
@@ -222,6 +229,7 @@ export const useBridgeHistory = () => {
         user_addr: addr,
         start: start,
         limit: limit,
+        is_all: true,
       });
       return {
         list: data?.history_list,

@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable } from 'react-native';
 
-import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
-import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
-import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
-import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
+import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
+import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
+import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
+import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
@@ -20,8 +20,6 @@ import { StackActions, useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamsList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
-import { toast } from '@/components2024/Toast';
-import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -37,34 +35,12 @@ const TokenActions = ({
   finalAccount,
   tokenSelectType,
 }: Props) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const setIsFromBack = useSetAtom(isFromBackAtom);
   const { switchSceneCurrentAccount } = useSwitchSceneCurrentAccount();
   const { navigateToSendPolyScreen } = useSendRoutes();
   const navigation = useNavigation<HomeProps['navigation']>();
-
-  const tokenChain = useMemo(() => {
-    return getChain(token?.chain);
-  }, [token?.chain]);
-
-  const { isSupportedChain: isSwapSupportedChain, data: externalSwapDapps } =
-    useExternalSwapBridgeDapps(tokenChain!.enum, 'swap');
-
-  const tokenSupportSwap = useMemo(
-    () => isSwapSupportedChain || externalSwapDapps.length > 0,
-    [isSwapSupportedChain, externalSwapDapps],
-  );
-
-  const {
-    isSupportedChain: isBridgeSupportedChain,
-    data: externalBridgeDapps,
-  } = useExternalSwapBridgeDapps(tokenChain!.enum, 'bridge');
-
-  const tokenSupportBridge = useMemo(
-    () => isBridgeSupportedChain || externalBridgeDapps.length > 0,
-    [isBridgeSupportedChain, externalBridgeDapps],
-  );
 
   const isFromSwap =
     !!tokenSelectType && ['swapTo', 'swapFrom'].includes(tokenSelectType);
@@ -80,7 +56,7 @@ const TokenActions = ({
       {
         key: 'Send',
         title: t('page.home.services.send'),
-        Icon: RcIconSend,
+        Icon: RcIconSendCC,
         onPress: async () => {
           const chain = findChain({
             serverId: token.chain,
@@ -101,7 +77,7 @@ const TokenActions = ({
       {
         key: 'Receive',
         title: t('page.home.services.receive'),
-        Icon: RcIconReceive,
+        Icon: RcIconReceiveCC,
         onPress: async () => {
           if (!finalAccount) {
             return;
@@ -136,13 +112,8 @@ const TokenActions = ({
       {
         key: 'Swap',
         title: t('page.home.services.swap'),
-        Icon: RcIconSwap,
-        disabled: !tokenSupportSwap,
+        Icon: RcIconSwapCC,
         onPress: async () => {
-          if (!tokenSupportSwap) {
-            toast.error(t('page.tokenDetail.notSupported'));
-            return;
-          }
           const chain = findChain({
             serverId: token.chain,
           });
@@ -164,13 +135,8 @@ const TokenActions = ({
       {
         key: 'Bridge',
         title: t('page.home.services.bridge'),
-        Icon: RcIconBridge,
-        disabled: !tokenSupportBridge,
+        Icon: RcIconBridgeCC,
         onPress: async () => {
-          if (!tokenSupportBridge) {
-            toast.error(t('page.tokenDetail.notSupported'));
-            return;
-          }
           const chain = findChain({
             serverId: token.chain,
           });
@@ -200,8 +166,6 @@ const TokenActions = ({
       token.chain,
       token.symbol,
       tokenSelectType,
-      tokenSupportBridge,
-      tokenSupportSwap,
     ],
   );
   return (
@@ -216,7 +180,12 @@ const TokenActions = ({
           }}
           key={item.key}>
           <View style={styles.actionIconWrapper}>
-            <item.Icon width={20} height={20} style={styles.actionIcon} />
+            <item.Icon
+              width={20}
+              height={20}
+              style={styles.actionIcon}
+              color={colors2024['brand-default-icon']}
+            />
           </View>
           <Text
             numberOfLines={1}

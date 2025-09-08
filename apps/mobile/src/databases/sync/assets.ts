@@ -72,6 +72,33 @@ export async function syncRemoteTokens(address: string, _tokens: TokenItem[]) {
     });
 }
 
+export async function syncRemoteTokensAmount(
+  updateTokens: {
+    address: string;
+    token: TokenItem;
+  }[],
+) {
+  const syncTimestamp = Date.now();
+
+  const tokenItems = updateTokens.map(raw => {
+    const tokenItem = new TokenItemEntity();
+    TokenItemEntity.fillEntity(tokenItem, raw.address, raw.token);
+    tokenItem._local_updated_at = syncTimestamp;
+    return tokenItem;
+  });
+
+  await prepareAppDataSource();
+
+  await batchSaveWithPQueueAndTransaction(TokenItemEntity, tokenItems, {
+    owner_addr: '',
+    taskFor: 'token',
+    batchSize: 20, // most time is updating a few tokens only
+    concurrency: 1,
+    delayBetweenTasks: 1.5 * 1e3,
+    waitTaskDoneReturn: true,
+  });
+}
+
 const updateSwapFailHistoryItem = (
   historyItem: HistoryItemEntity,
   swapFailHistoryList: TransactionGroup[],

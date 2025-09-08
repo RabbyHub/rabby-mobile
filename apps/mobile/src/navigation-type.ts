@@ -151,6 +151,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIScreenContainerShowCase]?: {};
   [RootNames.DevUIDapps]?: {};
   [RootNames.DevDataSQLite]?: {};
+  [RootNames.DevUIPermissions]?: {};
 };
 
 export type AddressNavigatorParamList = {
@@ -350,6 +351,8 @@ export type TransactionNavigatorParamList = {
   [RootNames.Bridge]?: {
     chainEnum?: CHAINS_ENUM | undefined;
     tokenId?: TokenItem['id'];
+    toChainEnum?: CHAINS_ENUM;
+    toTokenId?: TokenItem['id'];
   };
   [RootNames.MultiBridge]?: TransactionNavigatorParamList['Bridge'] & object;
   [RootNames.GasAccount]?: {};
@@ -361,6 +364,15 @@ export type TransactionNavigatorParamList = {
     revokeList: ApprovalSpenderItemToBeRevoked[];
     dataSource: AssetApprovalSpender[];
     account: Account;
+  };
+
+  [RootNames.Perps]?: {};
+  [RootNames.PerpsMarketList]?: {};
+  [RootNames.PerpsHistory]?: {
+    coin?: string;
+  };
+  [RootNames.PerpsMarketDetail]: {
+    market: string;
   };
 };
 

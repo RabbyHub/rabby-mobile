@@ -1,4 +1,4 @@
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { openapi } from '@/core/request';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -10,6 +10,10 @@ import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address'
 import { RelatedDeFiType, TokenFromAddressItem } from '.';
 import { unionBy } from 'lodash';
 import { formatPrice } from '@/utils/number';
+import {
+  CandleData,
+  CandlePeriod,
+} from '@/components2024/TradingViewCandleChart/type';
 
 export const useTokenDetail = (
   chain: string,
@@ -190,5 +194,114 @@ export const useTokenBalance = ({
     isLoss,
     is24hNoChange,
     price,
+  };
+};
+
+export const useRealTimeTokenInfo = (token: {
+  chain: string;
+  tokenId: string;
+}) => {
+  const [data, setData] = useState<
+    {
+      address: string;
+      token: TokenItem;
+    }[]
+  >([]);
+  const fetchData = useMemoizedFn(async (relatedAddresses: string[]) => {
+    const results = await Promise.allSettled(
+      relatedAddresses.map(async address => {
+        const res = await openapi.getToken(address, token.chain, token.tokenId);
+        return { address, token: res };
+      }),
+    );
+    const successData = results
+      .filter(result => result.status === 'fulfilled')
+      .map(result => result.value);
+    setData(successData);
+    return successData;
+  });
+  return {
+    tokens: data,
+    refreshAsync: fetchData,
+  };
+};
+export const fetchTokenPriceData = async (
+  token: {
+    chain: string;
+    tokenId: string;
+  },
+  interval: string,
+): Promise<CandleData> => {
+  const data = await openapi.getTokenKlineData({
+    token_id: token.tokenId,
+    chain_id: token.chain,
+    interval,
+  });
+
+  return {
+    coin: `${token.chain}:${token.tokenId}`,
+    interval: interval as CandlePeriod,
+    showVolume: true,
+    candles: data.data_list.map(item => ({
+      time: item[0],
+      open: item[1],
+      high: item[2],
+      low: item[3],
+      close: item[4],
+      volume: item[5],
+    })),
+  };
+};
+
+export const useTokenMarketInfo = (token: {
+  chain: string;
+  tokenId: string;
+}) => {
+  const { data: marketInfo, loading: marketInfoLoading } = useRequest(
+    async () => {
+      const res = await openapi.getTokenMarketInfo({
+        token_id: token.tokenId,
+        chain_id: token.chain,
+      });
+      return res;
+    },
+    {
+      refreshDeps: [token.chain, token.tokenId],
+    },
+  );
+
+  const { data: holdInfo, loading: holdInfoLoading } = useRequest(
+    async () => {
+      const res = await openapi.getTokenHolderInfo({
+        token_id: token.tokenId,
+        chain_id: token.chain,
+      });
+      return res;
+    },
+    {
+      refreshDeps: [token.chain, token.tokenId],
+    },
+  );
+
+  const { data: supplyInfo, loading: supplyInfoLoading } = useRequest(
+    async () => {
+      const res = await openapi.getTokenSupplyInfo({
+        token_id: token.tokenId,
+        chain_id: token.chain,
+      });
+      return res;
+    },
+    {
+      refreshDeps: [token.chain, token.tokenId],
+    },
+  );
+
+  return {
+    marketInfo,
+    marketInfoLoading,
+    holdInfo,
+    holdInfoLoading,
+    supplyInfo,
+    supplyInfoLoading,
   };
 };

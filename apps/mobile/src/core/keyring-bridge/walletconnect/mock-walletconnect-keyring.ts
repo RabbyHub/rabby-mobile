@@ -52,7 +52,7 @@ export class MockWalletConnectKeyring {
     }
 
     if (!isAddress(this.accountToAdd.address)) {
-      throw new Error("The address you're are trying to import is invalid");
+      throw new Error("The address you're trying to import is invalid");
     }
     const prefixedAddress = addHexPrefix(this.accountToAdd.address);
 

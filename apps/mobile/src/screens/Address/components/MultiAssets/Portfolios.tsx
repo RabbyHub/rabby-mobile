@@ -111,6 +111,10 @@ export const Portfolios = () => {
   const [foldDefi, setFoldDefi] = useState(true);
   const [foldScam, setFoldScam] = useState(true);
 
+  const top10Balance = useMemo(() => {
+    return getTotalBalance(top10Addresses);
+  }, [top10Addresses, getTotalBalance]);
+
   const tokenLists = useMemo(() => {
     const unFoldList: ActionItem[] = tokens
       .filter(i => !i._isFold)
@@ -311,10 +315,6 @@ export const Portfolios = () => {
     },
     [],
   );
-
-  const top10Balance = useMemo(() => {
-    return getTotalBalance(top10Addresses);
-  }, [top10Addresses, getTotalBalance]);
 
   const { refresh: refreshCurve } = useMultiCurve(
     top10Addresses,
@@ -592,7 +592,6 @@ export const Portfolios = () => {
             <MemoizedEmptyTokenRow
               style={styles.emptyTokenHolder}
               onReceive={handleOnReceive}
-              onBuy={handleOnBuy}
               onImport={handleOnImport}
             />
           );
@@ -605,7 +604,6 @@ export const Portfolios = () => {
       foldHideList,
       getDefiMenuActions,
       getTokenMenuActions,
-      handleOnBuy,
       handleOnImport,
       handleOnReceive,
       handleOpenDefiDetail,

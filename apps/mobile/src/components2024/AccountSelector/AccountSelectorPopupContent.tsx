@@ -72,12 +72,18 @@ export const AccountSelectorPopupContent: React.FC<{
   value?: Account | null;
   scrollToBottom(): void;
   isHideToken?: boolean;
+  isShowSafeAddressSection?: boolean;
+  isShowWatchAddressSection?: boolean;
+  title?: React.ReactNode;
 }> = ({
   containerStyle,
   value: selectedAccount,
   onChange,
   scrollToBottom,
   isHideToken,
+  isShowSafeAddressSection = true,
+  isShowWatchAddressSection = true,
+  title,
 }) => {
   const { styles } = useTheme2024({ getStyle: getPanelStyle });
 
@@ -130,7 +136,17 @@ export const AccountSelectorPopupContent: React.FC<{
   return (
     <View style={[styles.panel, containerStyle]}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('component.AccountSelector.title')}</Text>
+        {title ? (
+          typeof title === 'string' ? (
+            <Text style={styles.title}>{title}</Text>
+          ) : (
+            title
+          )
+        ) : (
+          <Text style={styles.title}>
+            {t('component.AccountSelector.title')}
+          </Text>
+        )}
       </View>
       <View style={styles.scrollViewContainer}>
         <View
@@ -172,7 +188,7 @@ export const AccountSelectorPopupContent: React.FC<{
               })}
             </View>
           </View>
-          {!!safeAddresses.length && (
+          {isShowSafeAddressSection && !!safeAddresses.length && (
             <View style={[styles.section, { marginTop: 30 }]}>
               <SectionCollapsableNav
                 title={t(
@@ -207,7 +223,7 @@ export const AccountSelectorPopupContent: React.FC<{
               )}
             </View>
           )}
-          {!!watchAddresses.length && (
+          {isShowWatchAddressSection && !!watchAddresses.length && (
             <View style={[styles.section, { marginTop: 30 }]}>
               <SectionCollapsableNav
                 title={t(

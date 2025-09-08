@@ -175,7 +175,7 @@ const Swap = ({
     inSufficient,
     slippageChanged,
     slippageState,
-    slippage,
+    slippage: _slippage,
     setSlippage,
     payTokenIsNativeToken,
     isSlippageHigh,
@@ -220,6 +220,11 @@ const Swap = ({
     setIsCustomSlippage,
   } = useSlippageStore();
 
+  const slippage = useMemo(
+    () => (autoSlippage ? autoSuggestSlippage : _slippage),
+    [_slippage, autoSlippage, autoSuggestSlippage],
+  );
+
   const {
     isSupportedChain,
     data: externalDapps,
@@ -227,11 +232,14 @@ const Swap = ({
   } = useExternalSwapBridgeDapps(chain, 'swap');
   const openTab = useMemoizedFn((url: string) => {
     _openTab(url);
-    matomoRequestEvent({
-      category: 'Websites Usage',
-      action: 'Website_Visit_Other',
-      label: safeGetOrigin(url),
-    });
+    const origin = safeGetOrigin(url);
+    if (origin) {
+      matomoRequestEvent({
+        category: 'Websites Usage',
+        action: 'Website_Visit_Other',
+        label: origin,
+      });
+    }
   });
   const [swapDappOpen, setSwapDappOpen] = useState(false);
 

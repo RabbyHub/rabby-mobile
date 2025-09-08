@@ -23,19 +23,19 @@ import { StackActions, useFocusEffect } from '@react-navigation/native';
 import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
 import IconGift from '@/assets2024/icons/home/IconGift.svg';
 import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
-import { RootNames } from '@/constant/layout';
-import { createGetStyles2024 } from '@/utils/styles';
+import { RootNames, ScreenLayouts } from '@/constant/layout';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import RcIconSend from '@/assets2024/icons/home/IconSend.svg';
-import RcIconReceive from '@/assets2024/icons/home/IconReceive.svg';
-import RcIconSwap from '@/assets2024/icons/home/IconSwap.svg';
-import RcIconBridge from '@/assets2024/icons/home/IconBridge.svg';
-import RcIconHistory from '@/assets2024/icons/home/IconHistory.svg';
+import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
+import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
+import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
+import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
+import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
 import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
-import RcIconGasAccount from '@/assets2024/icons/home/IconGasAccount.svg';
-import RcIconApprovals from '@/assets2024/icons/home/IconApprovals.svg';
+import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
+import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
 import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
-import RcIconWatchlist from '@/assets2024/icons/home/IconWatchlist.svg';
+import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { useTranslation } from 'react-i18next';
@@ -67,7 +67,7 @@ import { debounce, unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
 import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
-import RcIconCopyTrading from '@/assets2024/icons/home/IconCopyTrading.svg';
+import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import { FoundYourWalletGuide } from './FundYourWallet';
 import {
   OfflineChainNotify,
@@ -104,6 +104,15 @@ import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
 import dayjs from 'dayjs';
 import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
+import { isNonPublicProductionEnv } from '@/constant/env';
+import { PerpsPnl } from './components/PerpsPnl';
+import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
+import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
+import {
+  useSetTotalBalanceText,
+  useViewedHomeTip,
+} from '@/components/Screenshot/hooks';
 
 const HeaderHeight = 24;
 
@@ -121,7 +130,7 @@ function MultiAddressHomeHeader(
   const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
-  const { isDisConnnect } = useGlobalStatus();
+  const { isDisConnect } = useGlobalStatus();
 
   const { accountsLength } = useAccountsBalance({
     cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
@@ -168,26 +177,30 @@ function MultiAddressHomeHeader(
             {loading && <RcIconloading />}
           </Animated.View>
         </View>
-        <TouchableWithoutFeedback
-          style={styles.settingEntry}
-          onPress={() => {
-            navigation.navigate(RootNames.StackSettings, {
-              screen: RootNames.Settings,
-              params: {},
-            });
 
-            matomoRequestEvent({
-              category: 'Click_Header',
-              action: 'Click_Setting',
-            });
-          }}>
-          <RcIconSetting color={colors2024['neutral-title-1']} />
-          {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
-        </TouchableWithoutFeedback>
+        <View style={styles.rightArea}>
+          <FeedbackEntryOnHeader style={styles.feedbackEntry} />
+          <TouchableWithoutFeedback
+            style={styles.settingEntry}
+            onPress={() => {
+              navigation.navigate(RootNames.StackSettings, {
+                screen: RootNames.Settings,
+                params: {},
+              });
+
+              matomoRequestEvent({
+                category: 'Click_Header',
+                action: 'Click_Setting',
+              });
+            }}>
+            <RcIconSetting color={colors2024['neutral-foot']} />
+            {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
+          </TouchableWithoutFeedback>
+        </View>
       </View>
 
       <GlobalWarning
-        hasError={isDisConnnect}
+        hasError={isDisConnect}
         description={t('component.globalWarning.networkError.globalDesc')}
         style={styles.globalWarning}
         onRefresh={() => {
@@ -280,7 +293,7 @@ function MultiAddressHomeHeader(
   );
 }
 
-const ITEM_LAYOUT_PADDING_HORIZONTAL = 16;
+const ITEM_LAYOUT_PADDING_HORIZONTAL = ScreenLayouts.homeHorizontalPadding;
 const ITEM_GRID_GAP = 12;
 const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 
@@ -298,7 +311,7 @@ function MultiAddressHome(): JSX.Element {
   }>();
   const { top10Addresses } = useAccountInfo();
 
-  // 添加gift资格检查hook
+  // add gift eligibility check hook
   const { checkAddressesEligibility, getCurrentEligibleAddress } =
     useGasAccountEligibility();
   const currentEligibleAddress = getCurrentEligibleAddress();
@@ -309,7 +322,7 @@ function MultiAddressHome(): JSX.Element {
   const { width } = Dimensions.get('window');
   const itemWidth =
     (width - ITEM_LAYOUT_PADDING_HORIZONTAL * 2 - ITEM_GRID_GAP - 2) / 2;
-  // 使用useMemo直接计算isEligible，使其能够响应相关状态变化
+  // use useMemo to directly calculate isEligible so that it can respond to related state changes
   const isEligible = useMemo(() => {
     return (
       currentEligibleAddress !== undefined &&
@@ -330,22 +343,22 @@ function MultiAddressHome(): JSX.Element {
         {
           key: MultiHomeFeatTitle.Swap,
           title: t('page.home.services.swap'),
-          icon: RcIconSwap,
+          icon: RcIconSwapCC,
         },
         {
           key: MultiHomeFeatTitle.Send,
           title: t('page.home.services.send'),
-          icon: RcIconSend,
+          icon: RcIconSendCC,
         },
         {
           key: MultiHomeFeatTitle.Receive,
           title: t('page.home.services.receive'),
-          icon: RcIconReceive,
+          icon: RcIconReceiveCC,
         },
         {
           key: MultiHomeFeatTitle.Bridge,
           title: t('page.home.services.bridge'),
-          icon: RcIconBridge,
+          icon: RcIconBridgeCC,
         },
         // {
         //   key: MultiHomeFeatTitle.CopyTrading,
@@ -353,22 +366,27 @@ function MultiAddressHome(): JSX.Element {
         //   icon: RcIconCopyTrading,
         // },
         {
+          key: MultiHomeFeatTitle.Perps,
+          title: t('page.home.services.perps'),
+          icon: RcIconPerps,
+        },
+        {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
-          icon: RcIconHistory,
+          icon: RcIconHistoryCC,
           badge: historyCount?.fail || historyCount?.success,
           isSuccess: !historyCount?.fail,
         },
         {
           key: MultiHomeFeatTitle.Approvals,
           title: t('page.home.services.approvals'),
-          icon: RcIconApprovals,
+          icon: RcIconApprovalsCC,
           badge: alertInfo.total,
         },
         {
           key: MultiHomeFeatTitle.GasAccount,
           title: t('page.home.services.gasAccount'),
-          icon: RcIconGasAccount,
+          icon: RcIconGasAccountCC,
           showGiftIcon: isEligible,
         },
         // __DEV__ && {
@@ -385,7 +403,7 @@ function MultiAddressHome(): JSX.Element {
         {
           key: MultiHomeFeatTitle.Watchlist,
           title: t('page.home.services.watchlist'),
-          icon: RcIconWatchlist,
+          icon: RcIconWatchlistCC,
         },
         // {
         //   title: MultiHomeFeatTitle.Ecosystem,
@@ -399,6 +417,7 @@ function MultiAddressHome(): JSX.Element {
         key: MultiHomeFeatTitle;
         title: string;
         icon: React.FC<import('react-native-svg').SvgProps>;
+        color?: string;
         badge?: number;
         isSuccess?: boolean;
         showGiftIcon?: boolean;
@@ -449,6 +468,7 @@ function MultiAddressHome(): JSX.Element {
   useCexSupportList();
   useFetchCexInfo();
   useInitDetectDBAssets();
+  useSetTotalBalanceText(combineData.netWorth);
 
   const { accounts } = useMyAccounts({
     disableAutoFetch: true,
@@ -485,8 +505,10 @@ function MultiAddressHome(): JSX.Element {
   const { syncTop10Assets } = useSyncAssetsDB(unionAccounts);
   const { syncTop10History } = useSyncHistoryDB(top10Addresses);
 
-  const displayFundWallet = useMemo(
-    () =>
+  const { mockData } = useMockDataForHomeCenterArea();
+
+  const displayFundWalletOrig = useMemo(() => {
+    return (
       !!balanceAccounts.length &&
       balanceAccounts.every(e => e.balance === 0) &&
       balanceCacheAccounts.every(e => e.balance === 0) &&
@@ -494,9 +516,16 @@ function MultiAddressHome(): JSX.Element {
         e =>
           transactionHistoryService.getTransactionGroups({ address: e.address })
             .length === 0,
-      ),
-    [balanceAccounts, balanceCacheAccounts],
-  );
+      )
+    );
+  }, [balanceAccounts, balanceCacheAccounts]);
+
+  const displayFundWallet = useMemo(() => {
+    if (isNonPublicProductionEnv && mockData.forceShowFundWallet) {
+      return true;
+    }
+    return displayFundWalletOrig;
+  }, [displayFundWalletOrig, mockData.forceShowFundWallet]);
 
   const fetchHistory = useCallback(() => {
     const addresses = balanceCacheAccounts.map(i => i.address);
@@ -550,7 +579,7 @@ function MultiAddressHome(): JSX.Element {
       const status = i.status ?? 1;
       const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
       const addressTs =
-        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? 0;
+        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? Date.now();
       if (addressTs && addressTs / 1000 > i.time_at) {
         return;
       }
@@ -597,6 +626,13 @@ function MultiAddressHome(): JSX.Element {
       setHasOpenCopyTrading(value ?? true);
     }, [setHasOpenCopyTrading]),
   );
+  useFocusEffect(
+    useCallback(() => {
+      if (appState === 'active') {
+        refreshCurve();
+      }
+    }, [appState, refreshCurve]),
+  );
 
   const thorttleGetSuccessAndFailList = useMemo(
     () => debounce(getSuccessAndFailList, 1000),
@@ -623,7 +659,6 @@ function MultiAddressHome(): JSX.Element {
         triggerUpdateAlert();
         syncTop10Assets();
         syncTop10History();
-        refreshCurve();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
@@ -731,9 +766,9 @@ function MultiAddressHome(): JSX.Element {
             params: {},
           });
           break;
-        case MultiHomeFeatTitle.CopyTrading:
+        case MultiHomeFeatTitle.Perps:
           navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.CopyTrading,
+            screen: RootNames.Perps,
             params: {},
           });
           break;
@@ -767,6 +802,10 @@ function MultiAddressHome(): JSX.Element {
         );
       }
 
+      if (el.key === MultiHomeFeatTitle.Perps) {
+        return <PerpsPnl />;
+      }
+
       if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
         return <HomePendingBadge number={pendingTxCount} />;
       }
@@ -789,10 +828,10 @@ function MultiAddressHome(): JSX.Element {
       );
     },
     [
-      showTipsDollarDialog,
-      pendingTxCount,
-      styles.badgeStyle,
       hasOpenCopyTrading,
+      pendingTxCount,
+      showTipsDollarDialog,
+      styles.badgeStyle,
     ],
   );
 
@@ -815,7 +854,7 @@ function MultiAddressHome(): JSX.Element {
 
       matomoRequestEvent({
         category: 'Websites Usage',
-        action: `Website_LikeStatus`,
+        action: 'Website_LikeStatus',
         label: `LikeDapp:${
           browserService.bookmark.getState().ids?.length || 0
         }`,
@@ -823,7 +862,7 @@ function MultiAddressHome(): JSX.Element {
 
       matomoRequestEvent({
         category: 'Websites Usage',
-        action: `Website_TabStatus`,
+        action: 'Website_TabStatus',
         label: `TabNumber:${
           browserService.getBrowserTabs()?.tabs?.length || 0
         }`,
@@ -831,7 +870,7 @@ function MultiAddressHome(): JSX.Element {
 
       matomoRequestEvent({
         category: 'Watchlist Usage',
-        action: `Watchlist_LikeStatus`,
+        action: 'Watchlist_LikeStatus',
         label: `LikeToken:${
           preferenceService.getPreference('pinedQueue')?.length || 0
         }`,
@@ -841,17 +880,27 @@ function MultiAddressHome(): JSX.Element {
 
   const { shouldShowRateGuideOnHome } = useExposureRateGuide();
   const offlineChainData = useOfflineChain();
+  const { viewedHomeTip } = useViewedHomeTip();
 
-  const { noBetweenContent } = useMemo(() => {
-    const _noBetweenContent =
-      !displayFundWallet &&
-      !shouldShowRateGuideOnHome &&
-      (!offlineChainData.displayWillClosedChain ||
-        !offlineChainData.offlineChainInfo);
+  const { noBetweenContent, onlyOneContent } = useMemo(() => {
+    const visibleEls = [
+      displayFundWallet,
+      shouldShowRateGuideOnHome,
+      offlineChainData.displayWillClosedChain &&
+        offlineChainData.offlineChainInfo,
+      !viewedHomeTip,
+    ];
+    const hasBetweenContent = visibleEls.some(Boolean);
     return {
-      noBetweenContent: _noBetweenContent,
+      noBetweenContent: !hasBetweenContent,
+      onlyOneContent: visibleEls.filter(Boolean).length === 1,
     };
-  }, [shouldShowRateGuideOnHome, offlineChainData, displayFundWallet]);
+  }, [
+    shouldShowRateGuideOnHome,
+    offlineChainData,
+    displayFundWallet,
+    viewedHomeTip,
+  ]);
 
   return (
     <NormalScreenContainer2024
@@ -897,6 +946,9 @@ function MultiAddressHome(): JSX.Element {
               noBetweenContent
                 ? styles.contentBetweenHeaderAndMatrixEmpty
                 : styles.contentBetweenHeaderAndMatrix,
+              onlyOneContent
+                ? styles.contentBetweenHeaderAndMatrixOnlyOne
+                : null,
             ]}>
             <OfflineChainNotify data={offlineChainData} />
 
@@ -911,6 +963,8 @@ function MultiAddressHome(): JSX.Element {
                 <RateModal totalBalanceText={combineData.netWorth} />
               </View>
             )}
+
+            <TipFeedbackByScreenshot />
           </View>
 
           <View style={[{ marginTop: 0 }, styles.grid]}>
@@ -930,7 +984,11 @@ function MultiAddressHome(): JSX.Element {
                     });
                   }}>
                   <View style={styles.iconWrapper}>
-                    <el.icon width={28} height={28} />
+                    <el.icon
+                      width={28}
+                      height={28}
+                      color={el.color || colors2024['brand-default-icon']}
+                    />
                     {generateCustomBadgeIcon(el)}
                   </View>
                   <Text style={styles.gridText}>{el.title}</Text>
@@ -986,6 +1044,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
+    position: 'relative',
     // flex: 1,
     // backgroundColor: colors2024['neutral-title-1'],
   },
@@ -1011,13 +1070,25 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  rightArea: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // position: 'relative',
+    // ...makeDebugBorder(),
+  },
+  feedbackEntry: {
+    height: '100%',
+    paddingRight: 6,
+    // ...makeDebugBorder(),
+  },
   settingEntry: {
     marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
     flexDirection: 'row',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 12,
+    paddingLeft: 6,
     paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
     position: 'relative',
   },
@@ -1160,9 +1231,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 12,
     marginBottom: 12,
     gap: 12,
+    // ...makeDebugBorder(),
   },
   contentBetweenHeaderAndMatrixEmpty: {
     marginBottom: 12,
+  },
+  contentBetweenHeaderAndMatrixOnlyOne: {
+    paddingTop: 0,
   },
   menuContainer: {
     marginTop: 0,

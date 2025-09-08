@@ -92,4 +92,20 @@ export default class DeviceUtils {
     const apiLevel = await getApiLevel();
     return apiLevel;
   }
+
+  static isGteAndroid(type: 12 | 13 | 14) {
+    if (!this.isAndroid()) {
+      return false;
+    }
+
+    const androidVersion = Platform.Version as number;
+    switch (type) {
+      case 12:
+        return androidVersion >= 32;
+      case 13:
+        return androidVersion >= 33;
+      case 14:
+        return androidVersion >= 34;
+    }
+  }
 }

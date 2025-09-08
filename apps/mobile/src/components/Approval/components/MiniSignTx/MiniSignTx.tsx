@@ -1,11 +1,11 @@
-import { AppBottomSheetModal, Text } from '@/components';
+import { AppBottomSheetModal } from '@/components';
 import { toast } from '@/components/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { Chain } from '@/constant/chains';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import { apisSafe } from '@/core/apis/safe';
 import { openapi } from '@/core/request';
-import { customRPCService, preferenceService } from '@/core/services';
+import { customRPCService } from '@/core/services';
 import { Account, ChainGas } from '@/core/services/preference';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -15,7 +15,7 @@ import { useFindChain } from '@/hooks/useFindChain';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { intToHex } from '@/utils/number';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import {
   calcMaxPriorityFee,
   checkGasAndNonce,
@@ -62,7 +62,6 @@ import {
 import { MiniFooterBar } from './MiniFooterBar';
 import { MiniWaiting } from './MiniWaiting';
 import { getStyles } from './style';
-import { useBatchSignTxTask } from './useBatchSignTxTask';
 import { calcGasLimit } from '@/core/apis/transactions';
 import {
   ActionRequireData,
@@ -73,29 +72,20 @@ import { apiCustomRPC, apiProvider } from '@/core/apis';
 import { toast as toast2024 } from '@/components2024/Toast';
 import { useGasAccountInfo } from '@/screens/GasAccount/hooks';
 import { apisTransactionHistory } from '@/core/apis/transactionHistory';
-import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { sleep } from '@/utils/async';
 import {
   MiniApprovalTaskType,
   useMiniApprovalTask,
 } from '@/hooks/useMiniApprovalTask';
-import { ActivityIndicator, Modal, Pressable, View } from 'react-native';
 import { sendTransaction } from '@/utils/sendTransaction';
-import {
-  EVENT_MINI_APPROVAL_START_SIGN,
-  eventBus,
-  EVENTS,
-} from '@/utils/events';
+import { EVENT_MINI_APPROVAL_START_SIGN, eventBus } from '@/utils/events';
 import AutoLockView from '@/components/AutoLockView';
 import {
   directSigningAtom,
-  useResetMiniApprovalDirectSignState,
   useSetDirectSubmitInnerError,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
-import { isAccountSupportDirectSign } from '@/utils/account';
-import { SwapModal } from '@/screens/Swap/components/Modal';
 import { MiniApprovalError } from './error';
+import { useMiniSignGasStore } from '@/hooks/miniSignGasStore';
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
     session: {
@@ -512,10 +502,29 @@ export const MiniSignTx = ({
   const [gasLessConfig, setGasLessConfig] = useState<GasLessConfig | undefined>(
     undefined,
   );
-  const { activeApprovalPopup } = useCommonPopupView();
-  const invokeEnterPassphrase = useEnterPassphraseModal('address');
+
+  const {
+    updateMiniCustomPrice,
+    setMiniGasLevel,
+    miniGasLevel,
+    miniCustomPrice,
+  } = useMiniSignGasStore();
 
   const handleInitTask = useMemoizedFn(() => {
+    if (selectedGas && txsResult[0]) {
+      const lastGasLevel = selectedGas?.level || 'normal';
+      setMiniGasLevel(lastGasLevel as any);
+
+      if (selectedGas?.level === 'custom') {
+        updateMiniCustomPrice(
+          parseInt(
+            support1559
+              ? txsResult[0].tx.maxFeePerGas || '0'
+              : txsResult[0].tx.gasPrice || '0',
+          ),
+        );
+      }
+    }
     task.init(
       txsResult.map(item => {
         return {
@@ -758,21 +767,21 @@ export const MiniSignTx = ({
       });
 
       checkCanProcess();
-      const lastTimeGas: ChainGas | null =
-        await preferenceService.getLastTimeGasSelection(chainId);
+      const lastTimeGas: ChainGas = {
+        lastTimeSelect: miniGasLevel === 'custom' ? 'gasPrice' : 'gasLevel',
+        gasLevel: miniGasLevel,
+        gasPrice: miniCustomPrice || 0,
+      };
+
       let customGasPrice = 0;
-      if (
-        lastTimeGas?.lastTimeSelect === 'gasPrice' &&
-        lastTimeGas.gasPrice &&
-        !directSubmit
-      ) {
+      if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
         // use cached gasPrice if exist
         customGasPrice = lastTimeGas.gasPrice;
       }
       if (
+        ((isSend || isSwap || isBridge) && txs[0].gasPrice) ||
         isSpeedUp ||
-        isCancel ||
-        ((isSend || isSwap || isBridge) && txs[0].gasPrice)
+        isCancel
       ) {
         // use gasPrice set by dapp when it's a speedup or cancel tx
         customGasPrice = parseInt(txs[0].gasPrice!);
@@ -785,13 +794,12 @@ export const MiniSignTx = ({
         ((isSend || isSwap || isBridge) && customGasPrice) ||
         isSpeedUp ||
         isCancel ||
-        (lastTimeGas?.lastTimeSelect === 'gasPrice' && !directSubmit)
+        lastTimeGas?.lastTimeSelect === 'gasPrice'
       ) {
         gas = gasList.find(item => item.level === 'custom')!;
       } else if (
         lastTimeGas?.lastTimeSelect &&
-        lastTimeGas?.lastTimeSelect === 'gasLevel' &&
-        !directSubmit
+        lastTimeGas?.lastTimeSelect === 'gasLevel'
       ) {
         const target = gasList.find(
           item => item.level === lastTimeGas?.gasLevel,

@@ -1,4 +1,8 @@
-import { gasAccountService, keyringService } from '@/core/services';
+import {
+  gasAccountService,
+  keyringService,
+  perpsService,
+} from '@/core/services';
 import { GasAccountServiceStore } from '@/core/services/gasAccount';
 import { eventBus, EVENTS } from '@/utils/events';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -37,18 +41,27 @@ const syncDeleteGasAccount = async (
     const restAddresses = await keyringService.getAllAddresses();
     const gasAccount =
       gasAccountService.getGasAccountData() as GasAccountServiceStore;
-    if (!gasAccount?.account?.address) return;
-    // check if there is another type address in wallet
-    const stillHasAddr = restAddresses.some(item => {
-      return (
-        isSameAddress(item.address, gasAccount.account!.address) &&
-        item.type !== KEYRING_TYPE.WatchAddressKeyring
-      );
-    });
-    if (!stillHasAddr && isSameAddress(address, gasAccount.account.address)) {
-      // if there is no another type address then reset signature
-      gasAccountService.setGasAccountSig();
-      eventBus.emit(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, null);
+    if (gasAccount?.account?.address) {
+      // check if there is another type address in wallet
+      const stillHasAddr = restAddresses.some(item => {
+        return (
+          isSameAddress(item.address, gasAccount.account!.address) &&
+          item.type !== KEYRING_TYPE.WatchAddressKeyring
+        );
+      });
+      if (!stillHasAddr && isSameAddress(address, gasAccount.account.address)) {
+        // if there is no another type address then reset signature
+        gasAccountService.setGasAccountSig();
+        eventBus.emit(EVENTS.AUTO_LOGIN_GAS_ACCOUNT, null);
+      }
+    }
+    const perpsAccount = await perpsService.getCurrentAccount();
+    if (
+      isSameAddress(perpsAccount?.address || '', address) &&
+      perpsAccount?.type === type
+    ) {
+      eventBus.emit(EVENTS.PERPS.LOG_OUT, null);
+      perpsService.setCurrentAccount(null);
     }
   }
 };

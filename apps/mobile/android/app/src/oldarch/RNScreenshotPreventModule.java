@@ -98,6 +98,8 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implem
   public void iosProtectFromScreenRecording(final Promise promise) {
     if (BuildConfig.DEBUG) {
       promise.reject("Not implemented for Android");
+    } else {
+      promise.resolve(null);
     }
 
     this.togglePreventScreenshot(true);
@@ -107,6 +109,8 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec /* implem
   public void iosUnprotectFromScreenRecording(final Promise promise) {
     if (BuildConfig.DEBUG) {
       promise.reject("Not implemented for Android");
+    } else {
+      promise.resolve(null);
     }
 
     this.togglePreventScreenshot(false);

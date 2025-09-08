@@ -29,7 +29,7 @@ export const use24hCurveData = ({
   serverId: string;
   days: 1 | 7;
 }) => {
-  const { data, loading } = useRequest(
+  const { data, loading, refreshAsync } = useRequest(
     async () => {
       let _data = await openapi.getTokenPriceCurve({
         chain_id: serverId,
@@ -61,7 +61,7 @@ export const use24hCurveData = ({
     return formatTokenDateCurve([0, dayjs().unix()], data || [], amount);
   }, [data, amount]);
 
-  return { data: formatData, loading };
+  return { data: formatData, loading, refreshAsync };
   // return useRequest(
   //   async () => {
   //     let _data = await openapi.getTokenPriceCurve({

@@ -332,7 +332,7 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
       throw new Error('There is no address to add');
     }
     if (!isAddress(this.accountToAdd)) {
-      throw new Error("The address you're are trying to import is invalid");
+      throw new Error("The address you're trying to import is invalid");
     }
     const prefixedAddress = addHexPrefix(this.accountToAdd);
 

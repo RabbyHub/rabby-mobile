@@ -84,7 +84,36 @@
     "Addresses": "Adressen",
     "24h": "24h",
     "Edit": "Bearbeiten",
-    "Wallets": "Wallet auswählen"
+    "Wallets": "Wallet auswählen",
+    "permissionRequest": {
+      "common": {
+        "askMeLater": "fragMichSpäter"
+      },
+      "mediaLibrary": {
+        "title": "Medienbibliotheksberechtigung",
+        "message": "Diese App benötigt Zugriff auf Ihre Mediathek, um Screenshots zu erkennen."
+      },
+      "camera": {
+        "message": "Diese App benötigt Zugriff auf Ihre Kamera, um Fotos aufzunehmen.",
+        "title": "Kameraberechtigung"
+      },
+      "bluetoothScan": {
+        "title": "Bluetooth-Scan-Berechtigung",
+        "message": "Diese App benötigt Zugriff auf Ihr Bluetooth, um nach Geräten zu scannen."
+      },
+      "bluetoothConnect": {
+        "title": "Bluetooth-Verbindungsberechtigung",
+        "message": "Diese App benötigt Zugriff auf Ihr Bluetooth, um sich mit Geräten zu verbinden."
+      },
+      "bluetoothAdmin": {
+        "title": "Bluetooth-Administrationsberechtigung",
+        "message": "Diese App benötigt Zugriff auf Ihr Bluetooth, um Geräte zu verwalten."
+      },
+      "location": {
+        "title": "Standortberechtigung",
+        "message": "Diese App benötigt Zugriff auf Ihren Standort, um standortbasierte Funktionen bereitzustellen."
+      }
+    }
   },
   "component": {
     "accountSwitcher": {
@@ -217,7 +246,8 @@
       "loginInTip": {
         "login": "Bei GasAccount anmelden",
         "desc": "Zahlen Sie Gasgebühren auf allen Chains",
-        "title": "USDC / USDT einzahlen"
+        "title": "USDC / USDT einzahlen",
+        "loginAndClaim": "Melde dich an und fordere {{amount}} an"
       },
       "withdrawPopup": {
         "amount": "Betrag",
@@ -228,7 +258,13 @@
       "depositWithToken": "Mit Token einzahlen",
       "depositWithPayDesc": "30 % Gebühr, keine Abhebungen",
       "depositWithTokenDesc": "Keine zusätzlichen Gebühren, sofortige Auszahlungen",
-      "depositWithPay": "Kaufen mit"
+      "depositWithPay": "Kaufen mit",
+      "giftInfo": {
+        "gotIt": "Ich hab's verstanden",
+        "noWithdrawableBalanceDescription": "{{amount}} von Ihrem Gas-Guthaben ist nicht abhebbar:\n1. Apple Pay / Google Pay\n2. Gas Rewards",
+        "noWithdrawableBalanceTitle": "{{amount}} Nicht abhebbar",
+        "giftTips": "Gas Belohnung für aktive Nutzer"
+      }
     },
     "externalSwapBrideDappPopup": {
       "viewDappOptions": "Dapp-Optionen anzeigen",
@@ -262,6 +298,24 @@
       "buttonText": "Aktualisieren",
       "serviceErrorText": "Dienstfehler",
       "offlineText": "Netzwerkfehler"
+    },
+    "screenshotModal": {
+      "feedbackInput": {
+        "placeholder": "Beschreiben Sie das Problem"
+      },
+      "feedbackLabel": "Fehlerbeschreibung:",
+      "submitButtonText": "Einreichen",
+      "title": "Snapshot zum Bericht über einen Fehler"
+    },
+    "feedbackModal": {
+      "title": "Antwort vom Rabby Support",
+      "issueDescriptionLabel": "Beschreibung:",
+      "pendingTitle": "Rabby Support hat nicht geantwortet.",
+      "repliedTitle": "Rabby Support hat geantwortet:",
+      "issueDescription": "Hier ist das von Ihnen gemeldete Problem:"
+    },
+    "submitFeedbackSuccessModal": {
+      "desc": "Erfolgreich eingereicht"
     }
   },
   "page": {
@@ -732,6 +786,15 @@
         "defaultTips": "Etwas stimmt nicht. Bitte versuchen Sie es später erneut.",
         "insufficient": "Ihr Gasguthaben reicht nicht aus, um die Netzwerk-Gebühr für Gas zu decken. Fügen Sie Geld für Gas hinzu und versuchen Sie es erneut.",
         "nonceTooHigh": "Nonce zu hoch. Bitte passen Sie die Nonce an und versuchen Sie es erneut."
+      },
+      "addLiquidity": {
+        "poolPrice": "Pool Preis",
+        "title": "Liquidität hinzufügen",
+        "token0": "Token 1 hinzufügen",
+        "token1": "Token 2 hinzufügen",
+        "priceDiff": "Preis-Diff",
+        "receiver": "Empfänger",
+        "marketPrice": "Marktpreis"
       }
     },
     "sendNFT": {
@@ -1223,6 +1286,9 @@
         "feedbackTitle": "Haben Sie Feedback? Wir hören zu.",
         "descriptionAndroid": "Wenn dir Rabby gefällt, würde eine kurze Bewertung im Google Play viel bedeuten.",
         "descriptionIOS": "Wenn dir Rabby gefällt, würde eine kurze Bewertung im App Store sehr viel bedeuten."
+      },
+      "homeCenterTipScreenshot": {
+        "description": "Machen Sie jederzeit einen Screenshot, um schnell einen Fehler zu melden."
       }
     },
     "switchChain": {
@@ -1966,7 +2032,16 @@
       "Fold": "Falt",
       "ContentGeneratedByAI": "Dieser Inhalt wurde von KI generiert",
       "ShowMore": "Weitere anzeigen",
-      "Introduction": "Einleitung"
+      "Introduction": "Einleitung",
+      "balance": "Guthaben",
+      "guideToMarketData": "Marktdaten:",
+      "notSupported": "Token wird nicht unterstützt",
+      "Transaction": "Token-Historie",
+      "Mybalance": "Token-Bestand",
+      "tabs": {
+        "tokenSecurity": "Token-Sicherheit",
+        "marketData": "Marktdaten"
+      }
     },
     "setting": {
       "currentVersion": "Aktuelle Version",
@@ -2202,10 +2277,18 @@
         "placeholder": "Websites durchsuchen",
         "searchInGoogle": "Suche \"{{searchText}}\" in Google",
         "results": "Ergebnisse",
-        "openUrl": "Öffnen \"{{searchText}}\""
+        "openUrl": "Öffnen \"{{searchText}}\"",
+        "recentEmpty": "Starten Sie die Erkundung der Website"
       },
       "BrowserSearchEntry": {
         "openWebsites": "Websites öffnen"
+      },
+      "menu": {
+        "contentModeDesktop": "Anforderung der Desktop-Website",
+        "disconnect": "Trennen",
+        "favorite": "Favorit",
+        "contentModeMobile": "Mobile-Seite anfordern",
+        "refresh": "Aktualisieren"
       }
     },
     "browserManage": {
@@ -2311,6 +2394,12 @@
       },
       "toast": {
         "remove": "Erfolgreich von der Watchlist entfernt"
+      }
+    },
+    "universalLink": {
+      "error": {
+        "unlockWalletFirst": "Bitte entsperren Sie die App, um den Link zu öffnen.",
+        "setupWalletFirst": "Bitte richten Sie zunächst die Wallet ein."
       }
     }
   },

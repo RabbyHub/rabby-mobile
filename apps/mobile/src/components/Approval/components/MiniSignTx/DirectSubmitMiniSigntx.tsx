@@ -40,6 +40,7 @@ export const MiniDirectSubmitApproval = ({
   onSubmitted,
   id,
   account,
+  showMaskLoading = true,
 }: {
   txs?: Tx[];
   visible?: boolean;
@@ -51,6 +52,7 @@ export const MiniDirectSubmitApproval = ({
   onSubmitted?: (isSuccess: boolean) => void;
   id?: string;
   account: Account;
+  showMaskLoading?: boolean;
 }) => {
   const { styles } = useTheme2024({
     getStyle: getSheetStyles,
@@ -206,29 +208,31 @@ export const MiniDirectSubmitApproval = ({
         account={account}
       />
 
-      <Modal
-        visible={overlayLoading}
-        transparent
-        animationType="fade"
-        onRequestClose={cancelOverlayLoading}
-        statusBarTranslucent>
-        <Pressable style={styles.overlay}>
-          <View style={styles.loadingContainer}>
-            <Animated.View
-              style={[
-                {
-                  transform: [
-                    {
-                      rotate,
-                    },
-                  ],
-                },
-              ]}>
-              <IconLoadingCC color={'white'} width={24} height={24} />
-            </Animated.View>
-          </View>
-        </Pressable>
-      </Modal>
+      {showMaskLoading && overlayLoading ? (
+        <Modal
+          visible={overlayLoading}
+          transparent
+          animationType="fade"
+          onRequestClose={cancelOverlayLoading}
+          statusBarTranslucent>
+          <Pressable style={styles.overlay}>
+            <View style={styles.loadingContainer}>
+              <Animated.View
+                style={[
+                  {
+                    transform: [
+                      {
+                        rotate,
+                      },
+                    ],
+                  },
+                ]}>
+                <IconLoadingCC color={'white'} width={24} height={24} />
+              </Animated.View>
+            </View>
+          </Pressable>
+        </Modal>
+      ) : null}
     </>
   );
 };

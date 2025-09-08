@@ -215,8 +215,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
   ) {
     await prepareAppDataSource();
 
-    const time = Date.now();
-    console.log('batchMultAddressTokensByIdAndChain', time);
     const res = (
       await this.getRepository().findBy({
         owner_addr: In(addresses),
@@ -229,8 +227,6 @@ export class TokenItemEntity extends EntityAddressAssetBase {
         ...i,
         cex_ids: columnConverter.jsonStringToObj(i.cex_ids),
       }));
-
-    console.log('batchMultAddressTokensByIdAndChain', Date.now() - time);
 
     return res;
   }

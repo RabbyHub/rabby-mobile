@@ -4,34 +4,47 @@ import { useTranslation } from 'react-i18next';
 import { Props } from '../FooterBar/ActionsContainer';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { MiniProcessActions } from './MiniProcessActions';
+import { useMemoizedFn } from 'ahooks';
+import { apiLedger } from '@/core/apis';
 
 export const MiniLedgerProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
 
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { status, onClickConnect } = useLedgerStatus(account.address, {
+  const { onClickConnect } = useLedgerStatus(account.address, {
     onDismiss: () => {
       setIsSubmitting(false);
     },
+    autoConnect: false,
   });
 
-  const handleSubmit = React.useCallback(() => {
-    if (status !== 'CONNECTED') {
-      if (isSubmitting) {
-        return;
-      }
-      setIsSubmitting(true);
+  const isConnectedPromise = React.useMemo(
+    () => apiLedger.isConnected(account.address),
+    [account.address],
+  );
 
-      onClickConnect(() => {
-        props.onSubmit();
-        setIsSubmitting(false);
-      });
+  const handleSubmit = useMemoizedFn(() => {
+    if (isSubmitting) {
       return;
     }
-    props.onSubmit();
-    setIsSubmitting(false);
-  }, [status, props, isSubmitting, onClickConnect]);
+    setIsSubmitting(true);
+    isConnectedPromise.then(([isConnected]) => {
+      if (!isConnected) {
+        onClickConnect(
+          () => {
+            props.onSubmit();
+            setIsSubmitting(false);
+          },
+          () => props.onCancel?.(),
+        );
+        return;
+      } else {
+        props.onSubmit();
+        setIsSubmitting(false);
+      }
+    });
+  });
 
   return (
     <MiniProcessActions

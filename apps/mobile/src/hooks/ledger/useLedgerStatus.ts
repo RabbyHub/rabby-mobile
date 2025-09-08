@@ -17,43 +17,56 @@ export const useLedgerStatus = (
   address: string,
   extra?: {
     onDismiss?(): void;
+    autoConnect?: boolean;
   },
 ) => {
   const [status, setStatus] = useAtom(ledgerStatusAtom);
   const [deviceId, setDeviceId] = React.useState<string>();
 
   React.useEffect(() => {
-    apiLedger.isConnected(address).then(([isConnected, id]) => {
-      setStatus(isConnected ? 'CONNECTED' : 'DISCONNECTED');
-      if (id) {
-        setDeviceId(id);
-      }
-    });
-  }, [address, setStatus]);
+    if (extra?.autoConnect ?? true) {
+      apiLedger.isConnected(address).then(([isConnected, id]) => {
+        setStatus(isConnected ? 'CONNECTED' : 'DISCONNECTED');
+        if (id) {
+          setDeviceId(id);
+        }
+      });
+    }
+  }, [address, setStatus, extra?.autoConnect]);
 
   const onClickConnect = React.useCallback(
-    (cb?: () => void) => {
+    (cb?: () => void, rej?: () => void) => {
+      let isConnected = false;
+      const onDismiss = extra?.onDismiss;
       const id = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.CONNECT_LEDGER,
         deviceId,
         onSelectDevice: async (d: Device) => {
           console.log('selected device', d.id);
-          setTimeout(() => {
-            removeGlobalBottomSheetModal2024(id);
-          }, 0);
           try {
             await TransportBLE.open(d.id);
             apiLedger.fixDeviceId(address, d.id);
             setStatus('CONNECTED');
+            isConnected = true;
             cb?.();
           } catch (e) {
             console.log('ledger connect error', e);
             await TransportBLE.disconnectDevice(d.id);
+            rej?.();
             setStatus('DISCONNECTED');
+          } finally {
+            setTimeout(() => {
+              removeGlobalBottomSheetModal2024(id);
+            }, 0);
           }
         },
         bottomSheetModalProps: {
-          onDismiss: extra?.onDismiss,
+          onDismiss: () => {
+            if (!isConnected) {
+              rej?.();
+            }
+            onDismiss?.();
+          },
         },
       });
     },

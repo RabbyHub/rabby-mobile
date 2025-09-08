@@ -38,6 +38,7 @@ import { useGasAccountInfo } from './screens/GasAccount/hooks';
 import { useIncreaseTxCountOnAppTop } from './components/RateModal/hooks';
 import { useIntervalSyncDDefaultRPCs } from './hooks/defaultRPCs';
 import { useUniversalLinkOnTop } from './hooks/universalLink';
+import { useUserDidTakeScreenshot } from './components/Screenshot/hooks';
 
 import { useTrezorConnectOnUrl } from './hooks/trezor/useTrezor';
 
@@ -64,7 +65,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useUniversalLinkOnTop();
   useSecureOnBackground();
   useGlobalAppPreventScreenrecordOnDev();
-  useAppPreventScreenshotOnScreen();
+  useAppPreventScreenshotOnScreen({ isTop: true });
   useAutoGoogleSignIfPreviousSignedOnTop();
   useNoLongerSupports();
   useTriggerI18nChangeOnAppTop();
@@ -73,6 +74,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useTrezorConnectOnUrl();
   useIncreaseTxCountOnAppTop({ isTop: true });
   useIntervalSyncDDefaultRPCs();
+  useUserDidTakeScreenshot({ isTop: true });
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();

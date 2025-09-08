@@ -49,11 +49,14 @@ export const BrowserTabList = ({ style }: { style?: StyleProp<ViewStyle> }) => {
           isActive={activeTabId === item.id}
           onPress={tab => {
             switchToTab(tab.id);
-            matomoRequestEvent({
-              category: 'Websites Usage',
-              action: 'Website_Visit_Website Tab',
-              label: safeGetOrigin(tab.url || tab.initialUrl),
-            });
+            const origin = safeGetOrigin(tab.url || tab.initialUrl);
+            if (origin) {
+              matomoRequestEvent({
+                category: 'Websites Usage',
+                action: 'Website_Visit_Website Tab',
+                label: origin,
+              });
+            }
           }}
           onPressClose={tab => {
             if (displayedTabs.length === 1) {

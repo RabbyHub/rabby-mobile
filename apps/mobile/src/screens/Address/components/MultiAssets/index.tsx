@@ -12,7 +12,6 @@ import { Portfolios } from './Portfolios';
 import { MultiChart } from './RenderRow/CurveChart';
 import { loadingMultiCurveAtom, useMultiCurve } from '@/hooks/useMultiCurve';
 import { useAccountInfo } from './hooks';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
 import { Tabs, MaterialTabItem } from 'react-native-collapsible-tab-view';
 import { CustomMaterialTabBar } from '@/components2024/CustomTabs/CustomMaterialTabBar';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -22,6 +21,7 @@ import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useAssets } from '@/screens/Search/useAssets';
 import LoadingCircle from '@/components2024/RotateLoadingCircle';
 import { useAtomValue } from 'jotai';
+import useAccountsBalance from '@/hooks/useAccountsBalance';
 
 export const MultiAssets = ({
   onUpdateIsDecrease,
@@ -53,7 +53,7 @@ export const MultiAssets = ({
     top10Balance.totalEvm,
   );
 
-  const { isDisConnnect } = useGlobalStatus();
+  const { isDisConnect } = useGlobalStatus();
 
   useEffect(() => {
     onUpdateIsDecrease(combineData.isLoss);
@@ -139,11 +139,11 @@ export const MultiAssets = ({
         loading={isLoadingCurve}
         pathColor={pathColor}
         isNoAssets={false}
-        isDisConnnect={isDisConnnect}
+        isDisConnect={isDisConnect}
         handleScroll={handleScroll}
       />
     );
-  }, [combineData, handleScroll, isDisConnnect, isLoadingCurve, pathColor]);
+  }, [combineData, handleScroll, isDisConnect, isLoadingCurve, pathColor]);
 
   const listLength = useMemo(() => {
     return list.length > 10 ? 10 : list.length;
@@ -169,7 +169,7 @@ export const MultiAssets = ({
     <Tabs.Container
       containerStyle={styles.container}
       minHeaderHeight={0}
-      headerHeight={HEADER_CHART_HEIGHT + (isDisConnnect ? ALERT_HEIGHT : 0)}
+      headerHeight={HEADER_CHART_HEIGHT + (isDisConnect ? ALERT_HEIGHT : 0)}
       renderTabBar={renderTabBar}
       tabBarHeight={SWITCH_HEADER_HEIGHT - 16}
       renderHeader={renderHeader}

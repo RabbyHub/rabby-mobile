@@ -42,7 +42,7 @@ export const AddressList = () => {
     fetchAccounts,
   } = useAccountInfo();
 
-  const { triggerUpdate, getTotalBalance, balanceAccounts } =
+  const { triggerUpdate, balanceAccounts, getTotalBalance } =
     useAccountsBalance({
       cacheTime: 10 * 60 * 1000,
       accountsNoUnique: true, // balanceAccounts has filter same address accounts

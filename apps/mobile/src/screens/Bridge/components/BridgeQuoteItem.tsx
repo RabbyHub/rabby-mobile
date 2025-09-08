@@ -108,7 +108,7 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
           )}
         </View>
         <View style={styles.rightSection}>
-          <AssetAvatar size={20} logo={props.payToken.logo_url} />
+          <AssetAvatar size={20} logo={props.receiveToken.logo_url} />
           <Text
             style={styles.tokenAmount}
             numberOfLines={1}
