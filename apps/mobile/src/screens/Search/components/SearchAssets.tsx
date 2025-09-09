@@ -124,6 +124,7 @@ export const SearchAssets: React.FC<Props> = ({
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
             decimalPrecision
+            showExchangeLogos
             rightSlot={
               <Pressable
                 style={styles.rightSlot}
