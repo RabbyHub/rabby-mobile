@@ -36,6 +36,7 @@ import { formatPrice, formatUsdValue } from '@/utils/number';
 import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { formatUsdValueKMB } from '../../utils/price';
 import { ellipsisAddress } from '@/utils/address';
+import { ExchangeLogos } from './ExchangeLogos';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -257,8 +258,9 @@ export const ExternalTokenRow = memo(
     touchable = true,
     decimalPrecision = false,
     isPined = false,
-    leftSlot,
+    rightSlot,
     onPressRightIcon,
+    showExchangeLogos,
   }: {
     data: TokenRowDataType;
     style?: ViewStyle;
@@ -270,8 +272,9 @@ export const ExternalTokenRow = memo(
     onTokenPress?(token: TokenRowDataType): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
-    leftSlot?: ReactNode;
+    rightSlot?: ReactNode;
     onPressRightIcon?(): void;
+    showExchangeLogos?: boolean;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
@@ -402,7 +405,6 @@ export const ExternalTokenRow = memo(
         onPress={onPressToken}>
         <View style={styles.serachTokenRowTokenWrap}>
           <View style={styles.serachTokenContent}>
-            {leftSlot}
             <AssetAvatar
               logo={data?.logo_url}
               chain={data?.chain}
@@ -420,6 +422,14 @@ export const ExternalTokenRow = memo(
                     ellipsizeMode="tail">
                     {getTokenSymbol(data)}
                   </Text>
+                  {showExchangeLogos && (
+                    <ExchangeLogos
+                      logos={
+                        data.identity?.cex_list?.map(item => item.logo_url) ||
+                        []
+                      }
+                    />
+                  )}
                 </View>
                 <Text style={styles.usdValue}>
                   {decimalPrecision ? '$' : ''}
@@ -438,6 +448,7 @@ export const ExternalTokenRow = memo(
                 </Text>
               </View>
             </View>
+            {rightSlot}
           </View>
 
           {ExtraContent}
@@ -645,10 +656,15 @@ const getStyles = createGetStyles2024(ctx => ({
   colContent: {
     flexDirection: 'column',
     justifyContent: 'center',
+    alignItems: 'flex-end',
     gap: 0,
+    flex: 0,
   },
   leftColContent: {
     maxWidth: '70%',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    flex: 1,
     overflow: 'hidden',
   },
   verticalLine: {
