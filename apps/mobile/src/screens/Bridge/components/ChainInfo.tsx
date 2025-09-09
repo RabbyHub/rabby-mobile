@@ -116,6 +116,7 @@ export function ChainInfo({
       },
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
+        rootViewType: 'View',
       },
     });
   }, [

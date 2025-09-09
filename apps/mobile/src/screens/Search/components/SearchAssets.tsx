@@ -170,6 +170,7 @@ export const SearchAssets: React.FC<Props> = ({
       titleText: t('page.swap.selectChainModalTitle'),
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
+        rootViewType: 'View',
       },
       onChange: (chain: CHAINS_ENUM) => {
         removeChainModal();
