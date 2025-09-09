@@ -187,6 +187,7 @@ function ReceiveScreen(): JSX.Element {
       account: account,
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
+        rootViewType: 'View',
         enablePanDownToClose: true,
       },
       supportChains: isSafe ? safeChains.map(item => item.enum) : undefined,

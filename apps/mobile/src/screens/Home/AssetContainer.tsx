@@ -364,6 +364,7 @@ export const AssetContainer: React.FC<Props> = ({
         bottomSheetModalProps: {
           enableContentPanningGesture: true,
           enablePanDownToClose: true,
+          rootViewType: 'View',
           handleStyle: {
             backgroundColor: isLight
               ? colors2024['neutral-bg-0']
