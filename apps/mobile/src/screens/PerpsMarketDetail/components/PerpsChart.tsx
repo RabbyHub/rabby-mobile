@@ -77,8 +77,7 @@ type CandleBar = CandlestickData<UTCTimestamp>;
 
 const toUtc = (t: number): UTCTimestamp => Math.floor(t) as UTCTimestamp;
 
-// todo fix any
-const parseCandles = (data: CandleSnapshot): any[] => {
+const parseCandles = (data: CandleSnapshot): CandleBar[] => {
   if (!data || !Array.isArray(data) || data.length === 0) {
     return [];
   }

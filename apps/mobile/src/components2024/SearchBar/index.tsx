@@ -32,15 +32,16 @@ export interface Props extends Omit<TextInputProps, 'style'> {
   searchIcon?: ReactNode;
   alwaysShowCancel?: boolean;
   inputStyle?: StyleProp<TextStyle>;
-  ref?: React.ForwardedRef<{
-    focus(): void;
-    blur(): void;
-    clear(): void;
-  }>;
   as?: 'TextInput' | 'BottomSheetTextInput';
 }
 
-export const NextSearchBar: React.FC<Props> = React.forwardRef(
+export type NextSearchBarMethods = {
+  focus(): void;
+  blur(): void;
+  clear(): void;
+};
+
+export const NextSearchBar = React.forwardRef<NextSearchBarMethods, Props>(
   (
     {
       style,

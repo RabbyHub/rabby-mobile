@@ -1,18 +1,16 @@
 import React, { useRef } from 'react';
 import {
   StyleProp,
-  StyleSheet,
   Text,
   TextInput,
   TextStyle,
   TouchableOpacity,
   View,
-  ViewStyle,
   Platform,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
 import { isNumber } from 'lodash';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
@@ -39,10 +37,11 @@ export const StepInput: React.FC<{
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyle });
   const InputComponent =
-    as === 'BottomSheetTextInput' ? BottomSheetTextInput : TextInput;
+    as === 'BottomSheetTextInput'
+      ? (BottomSheetTextInput as unknown as typeof TextInput)
+      : TextInput;
 
-  // todo fix any
-  const inputRef = useRef<any>(null);
+  const inputRef = useRef<TextInput>(null);
 
   const handlePlus = useMemoizedFn(() => {
     const nextVal = (value || 0) + step;

@@ -9,6 +9,10 @@ import { uniqueId } from 'lodash';
 import { sleep } from '@/utils/async';
 import { globalSheetModalEvents } from '@/components/GlobalBottomSheetModal/event';
 
+/**
+ * @deprecated
+ * @see file:///./../services2024/appWin.ts createGlobalBottomSheetModal
+ */
 const createGlobalBottomSheetModal = <T extends MODAL_NAMES = MODAL_NAMES>(
   params: CreateParams<T>,
 ) => {
@@ -19,6 +23,9 @@ const createGlobalBottomSheetModal = <T extends MODAL_NAMES = MODAL_NAMES>(
   return id;
 };
 
+/**
+ * @deprecated
+ */
 async function removeGlobalBottomSheetModal(
   id?: string | null,
   params?: RemoveParams & {
@@ -42,6 +49,9 @@ async function removeGlobalBottomSheetModal(
   return waitMaxtime ? Promise.all([promise, sleep(waitMaxtime)]) : promise;
 }
 
+/**
+ * @deprecated
+ */
 const globalBottomSheetModalAddListener = (
   eventName: EVENT_NAMES.DISMISS /*  | EVENT_NAMES.CLOSED */,
   callback: (key: string) => void,
@@ -54,10 +64,16 @@ const globalBottomSheetModalAddListener = (
   globalSheetModalEvents.on(eventName, callback);
 };
 
+/**
+ * @deprecated
+ */
 const presentGlobalBottomSheetModal = (key: string) => {
   globalSheetModalEvents.emit(EVENT_NAMES.PRESENT, key);
 };
 
+/**
+ * @deprecated
+ */
 export const apisAppWin = {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
