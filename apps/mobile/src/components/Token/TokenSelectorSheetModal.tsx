@@ -676,9 +676,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     data={token.$origin as TokenRowDataType}
                     logoSize={40}
                     touchable={false}
-                    leftSlot={
+                    rightSlot={
                       <Pressable
-                        style={styles.leftSlot}
+                        style={styles.rightSlot}
                         onPress={e => {
                           e.stopPropagation();
                           if (isPined) {
@@ -761,17 +761,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   (disabled || lightDisable) && styles.tokenItemDisabled,
                 ]}>
                 <View style={styles.tokenLeft}>
-                  <Favorite
-                    favorite={isPined}
-                    style={styles.favorite}
-                    handlePressFavorite={() => {
-                      if (isPined) {
-                        removePinedToken(token.$origin as any);
-                      } else {
-                        pinToken(token.$origin as any);
-                      }
-                    }}
-                  />
                   <AssetAvatar
                     logo={token?._logo}
                     size={40}
@@ -833,12 +822,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                     )}
                   </View>
                 </View>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}>
+                <View style={styles.tokenRight}>
                   <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
                     <Text style={[styles.tokenHeaderNetworth]}>
                       {isExcludeBalanceShowTips ? (
@@ -865,6 +849,17 @@ export const TokenSelectorSheetModal = React.forwardRef<
                       {token._amount} {token._symbol}
                     </Text>
                   </View>
+                  <Favorite
+                    favorite={isPined}
+                    style={styles.favorite}
+                    handlePressFavorite={() => {
+                      if (isPined) {
+                        removePinedToken(token.$origin as any);
+                      } else {
+                        pinToken(token.$origin as any);
+                      }
+                    }}
+                  />
                 </View>
               </TouchableOpacity>
             </TokenItemContextMenu>
@@ -879,11 +874,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
         supportChains,
         isFromModalType,
         query,
+        needToTokenMarketInfo,
         type,
         styles.tokenItem,
         styles.tokenItemDisabled,
         styles.tokenLeft,
-        styles.favorite,
         styles.chainLogo,
         styles.tokenInfoCol,
         styles.tokenNameBox,
@@ -892,10 +887,12 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.tokenInfoColRight,
         styles.tardeLevel,
         styles.tardeLevelText,
+        styles.tokenRight,
         styles.tokenHeaderNetworth,
         styles.tips,
         styles.tokenHeaderAmount,
         styles.textSecondary,
+        styles.favorite,
         styles.scamHeader,
         styles.tokenRowWrap,
         styles.tokenRowTokenWrap,
@@ -905,7 +902,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         styles.arrow,
         styles.tokenRowUsdValueWrap,
         styles.tokenRowUsdValue,
-        styles.leftSlot,
+        styles.rightSlot,
         isBridgeTo,
         colors2024,
         t,
@@ -917,7 +914,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
         disabledTips,
         removePinedToken,
         pinToken,
-        needToTokenMarketInfo,
       ],
     );
 
@@ -1434,6 +1430,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       flexDirection: 'row',
       alignItems: 'center',
     },
+    tokenRight: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
     tokenInfoCol: {
       flexDirection: 'column',
       alignItems: 'flex-start',
@@ -1545,10 +1546,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
       zIndex: 1,
     },
     favorite: {
-      marginRight: 8,
+      marginLeft: 8,
     },
-    leftSlot: {
-      marginRight: 8,
+    rightSlot: {
+      marginLeft: 8,
     },
   };
 });

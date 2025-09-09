@@ -257,7 +257,7 @@ export const ExternalTokenRow = memo(
     touchable = true,
     decimalPrecision = false,
     isPined = false,
-    leftSlot,
+    rightSlot,
     onPressRightIcon,
   }: {
     data: TokenRowDataType;
@@ -270,7 +270,7 @@ export const ExternalTokenRow = memo(
     onTokenPress?(token: TokenRowDataType): void;
     touchable?: boolean;
     decimalPrecision?: boolean;
-    leftSlot?: ReactNode;
+    rightSlot?: ReactNode;
     onPressRightIcon?(): void;
   }) => {
     const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -402,7 +402,6 @@ export const ExternalTokenRow = memo(
         onPress={onPressToken}>
         <View style={styles.serachTokenRowTokenWrap}>
           <View style={styles.serachTokenContent}>
-            {leftSlot}
             <AssetAvatar
               logo={data?.logo_url}
               chain={data?.chain}
@@ -438,6 +437,7 @@ export const ExternalTokenRow = memo(
                 </Text>
               </View>
             </View>
+            {rightSlot}
           </View>
 
           {ExtraContent}
