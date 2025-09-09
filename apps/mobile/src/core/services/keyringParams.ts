@@ -4,6 +4,7 @@ import { bindOneKeyEvents } from '@/utils/onekey';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
 import { getKeyringParams } from '../utils/getKeyringParams';
+import { EthTrezorKeyring } from '@rabby-wallet/eth-keyring-trezor';
 
 export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] &
   object = async (keyring, account, contactService) => {
@@ -32,6 +33,10 @@ export const onCreateKeyring: KeyringServiceOptions['onCreateKeyring'] &
 
   if (Keyring.type === KEYRING_CLASS.HARDWARE.ONEKEY) {
     bindOneKeyEvents(keyring);
+  }
+
+  if (Keyring.type === KEYRING_CLASS.HARDWARE.TREZOR) {
+    (keyring as unknown as EthTrezorKeyring)?.init;
   }
 
   return keyring;

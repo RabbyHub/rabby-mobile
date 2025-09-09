@@ -27,6 +27,10 @@ const getLinkingConfig = () => {
 
     getStateFromPath: (path: string, options: any) => {
       const newPath = path.replace('mobile-redirect/', '')?.toLowerCase();
+      console.debug('getStateFromPath', {
+        path,
+        options,
+      });
 
       if (
         newPath.startsWith(RootNames.Buy.toLowerCase()) ||
