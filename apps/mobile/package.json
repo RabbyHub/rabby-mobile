@@ -94,7 +94,7 @@
     "@rneui/themed": "^4.0.0-rc.8",
     "@sentry/react-native": "6.10.0",
     "@shopify/flash-list": "^1.8.0",
-    "@trezor/connect-mobile": "9.6.1-beta.2",
+    "@trezor/connect-mobile": "9.6.2",
     "@types/highlight-words-core": "1.2.3",
     "@types/lodash.debounce": "^4.0.9",
     "@types/pump": "^1.1.3",
