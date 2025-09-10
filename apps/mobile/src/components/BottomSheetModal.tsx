@@ -7,7 +7,7 @@ import { forwardRef, useCallback } from 'react';
 import { AppBottomSheetModal } from './customized/BottomSheet';
 import { RefreshAutoLockBottomSheetBackdrop } from './patches/refreshAutoLockUI';
 
-const Backdrop = (p: BottomSheetBackdropProps) => (
+const renderBackdrop = (p: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
     {...p}
     disappearsOnIndex={-1}
@@ -17,7 +17,13 @@ const Backdrop = (p: BottomSheetBackdropProps) => (
 export const BSheetModal = forwardRef<BottomSheetModal, BottomSheetModalProps>(
   (props, ref) => {
     return (
-      <AppBottomSheetModal ref={ref} backdropComponent={Backdrop} {...props}>
+      <AppBottomSheetModal
+        ref={ref}
+        backdropComponent={renderBackdrop}
+        backdropProps={{
+          style: {},
+        }}
+        {...props}>
         {props.children}
       </AppBottomSheetModal>
     );
