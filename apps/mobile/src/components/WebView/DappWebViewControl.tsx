@@ -10,7 +10,6 @@ import {
 import WebView from 'react-native-webview';
 
 import {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModalProvider,
 } from '@gorhom/bottom-sheet';
