@@ -37,6 +37,7 @@ import RcIconFavorite from '@/assets2024/icons/home/favorite.svg';
 import { formatUsdValueKMB } from '../../utils/price';
 import { ellipsisAddress } from '@/utils/address';
 import { ExchangeLogos } from './ExchangeLogos';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
 
 const formatPercentage = (x: number) => {
   if (Math.abs(x) < 0.00001) {
@@ -282,6 +283,7 @@ export const ExternalTokenRow = memo(
     );
 
     const isGasToken = useMemo(() => data.id === data.chain, [data]);
+    const { list: cexList } = useCexSupportList();
 
     const onPressToken = useCallback(() => {
       return onTokenPress?.(data);
@@ -422,7 +424,16 @@ export const ExternalTokenRow = memo(
                   </Text>
                   <ExchangeLogos
                     logos={
-                      data.identity?.cex_list?.map(item => item.logo_url) || []
+                      data.cex_ids
+                        ? data.cex_ids
+                            .map(
+                              id =>
+                                cexList.find(item => item.id === id)
+                                  ?.logo_url || '',
+                            )
+                            .filter(i => !!i) || []
+                        : data.identity?.cex_list?.map(item => item.logo_url) ||
+                          []
                     }
                   />
                 </View>
