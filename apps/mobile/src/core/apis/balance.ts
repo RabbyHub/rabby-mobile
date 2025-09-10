@@ -64,15 +64,22 @@ export const getAddressBalance = async (
   return getTotalBalanceCached(address, force);
 };
 
-export const getAddressCacheBalance = async (
+export const getAddressCacheBalanceSync = (
   address: string | undefined,
   isTestnet = false,
-) => {
+): EvmTotalBalanceResponse | null => {
   if (!address) {
     return null;
   }
   if (isTestnet) {
-    return await preferenceService.getTestnetAddressBalance(address);
+    return preferenceService.getTestnetAddressBalance(address);
   }
-  return await preferenceService.getAddressBalance(address);
+  return preferenceService.getAddressBalance(address);
+};
+
+export const getAddressCacheBalance = async (
+  address: string | undefined,
+  isTestnet = false,
+) => {
+  return getAddressCacheBalanceSync(address, isTestnet);
 };

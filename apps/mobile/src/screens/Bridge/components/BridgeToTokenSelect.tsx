@@ -26,6 +26,7 @@ import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
 import { FavoriteFilterType } from '@/components/Token/FavoriteFilterItem';
 import { useUserTokenSettings } from '@/hooks/useTokenSettings';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTokenSelectorModalVisible } from '@/components/Token/TokenSelectorSheetModal';
 
 interface BridgeToTokenSelectProps {
   // allowClearAccountFilter?: boolean;
@@ -58,7 +59,15 @@ const BridgeToTokenSelect = ({
   });
 
   const bridgeSupportedChains = useBridgeSupportedChains();
-  const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
+  const {
+    visible: tokenSelectorVisible,
+    tokenSelectorModalRef,
+    setTokenSelectorVisible,
+  } = useTokenSelectorModalVisible({
+    onVisibleChanged: useMemoizedFn(visible => {
+      if (!visible) return;
+    }),
+  });
 
   const { finalSceneCurrentAccount: currentAccount } = useSceneAccountInfo({
     forScene: 'MakeTransactionAbout',
@@ -226,6 +235,7 @@ const BridgeToTokenSelect = ({
       </TouchableOpacity>
 
       <TokenSelectorSheetModal
+        ref={tokenSelectorModalRef}
         visible={tokenSelectorVisible}
         list={displayTokenList}
         onConfirm={handleCurrentTokenChange}
