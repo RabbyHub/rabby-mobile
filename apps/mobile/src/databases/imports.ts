@@ -6,7 +6,13 @@ const appDataSourceInitRef = {
   current: null as null | Promise<DataSource>,
 };
 
-export async function initializeAppDataSource(dbOptions?: DataSourceOptions) {
+export async function initializeAppDataSource(
+  /**
+   * @description when no dbOptions are provided, will not initialize the app data source but
+   * try to use the pre-existing one
+   */
+  dbOptions?: DataSourceOptions,
+) {
   if (dbOptions) {
     const appDataSource = new DataSource({ ...dbOptions });
 
@@ -40,6 +46,9 @@ export async function initializeAppDataSource(dbOptions?: DataSourceOptions) {
           console.error('[initializeAppDataSource] error', error);
           throw error;
         }
+
+        // enable WAL mode
+        appDataSource.query('PRAGMA journal_mode=WAL');
 
         return as;
       },

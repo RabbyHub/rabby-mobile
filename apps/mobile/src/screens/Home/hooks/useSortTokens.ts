@@ -9,37 +9,36 @@ import { apiBalance } from '@/core/apis';
 import { AbstractPortfolioToken } from '../types';
 import { Account } from '@/core/services/preference';
 
+const sortByChainBalance = <T extends TokenItem | AbstractPortfolioToken>(
+  list: T[],
+  currentAddress?: Account['address'] | null,
+) => {
+  if (currentAddress) {
+    const cache = apiBalance.getAddressCacheBalanceSync(currentAddress);
+    if (cache) {
+      list.sort((a, b) => {
+        const chain1 = cache.chain_list.find(chain => chain.id === a.chain);
+        const chain2 = cache.chain_list.find(chain => chain.id === b.chain);
+        if (chain1 && chain2) {
+          if (chain1.usd_value <= 0 && chain2.usd_value <= 0) {
+            return (chain2.born_at || 0) - (chain1.born_at || 0);
+          }
+          return chain2.usd_value - chain1.usd_value;
+        }
+        return 0;
+      });
+    }
+  }
+  return list;
+};
+
 const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
   list: T[],
   account?: Account | null,
 ) => {
-  const currentAccount = account;
-  const [result, setResult] = useState<T[]>([]);
+  const result = useMemo(() => {
+    if (!list) return [];
 
-  const sortByChainBalance = async (list: T[]) => {
-    if (currentAccount) {
-      const cache = await apiBalance.getAddressCacheBalance(
-        currentAccount.address,
-      );
-      if (cache) {
-        list.sort((a, b) => {
-          const chain1 = cache.chain_list.find(chain => chain.id === a.chain);
-          const chain2 = cache.chain_list.find(chain => chain.id === b.chain);
-          if (chain1 && chain2) {
-            if (chain1.usd_value <= 0 && chain2.usd_value <= 0) {
-              return (chain2.born_at || 0) - (chain1.born_at || 0);
-            }
-            return chain2.usd_value - chain1.usd_value;
-          }
-          return 0;
-        });
-      }
-    }
-    return list;
-  };
-
-  useEffect(() => {
-    if (!list) return;
     const hasUsdValue: T[] = [];
     const hasAmount: T[] = [];
     const others: T[] = [];
@@ -77,11 +76,13 @@ const useSortToken = <T extends TokenItem | AbstractPortfolioToken>(
       }
       return bWorth - aWorth;
     });
-    sortByChainBalance(others).then(list => {
-      setResult([...hasUsdValue, ...hasAmount, ...list]);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [list]);
+
+    return [
+      ...hasUsdValue,
+      ...hasAmount,
+      ...sortByChainBalance(others, account?.address),
+    ];
+  }, [list, account?.address]);
 
   return result;
 };

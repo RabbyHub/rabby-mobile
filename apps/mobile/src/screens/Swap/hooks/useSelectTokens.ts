@@ -1,37 +1,95 @@
-import { useSafeState } from '@/hooks/useSafeState';
-import { useMyAccounts } from '@/hooks/account';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import _, { add } from 'lodash';
+import { isAddress } from 'viem';
+import BigNumber from 'bignumber.js';
+import * as Sentry from '@sentry/react-native';
+import useAsync from 'react-use/lib/useAsync';
+
+import { useRefState } from '@/hooks/common/useRefState';
+import { useMyAccounts } from '@/hooks/account';
 import { syncTokens } from '@/databases/hooks/assets';
 import { TokenItemEntity } from '@/databases/entities/tokenitem';
-import _ from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { tokenItem2AbstractTokenWithOwner } from '@/utils/token';
 import { tagTokenItem } from '@/screens/Home/utils/token';
 import { preferenceService } from '@/core/services';
-import useAsync from 'react-use/lib/useAsync';
 import { TokenSelectType } from '@/components/Token/TokenSelectorSheetModal';
 import { openapi } from '@/core/request';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { Account } from '@/core/services/preference';
-import { isAddress } from 'viem';
-import BigNumber from 'bignumber.js';
 import { formatUsdValue } from '@/utils/number';
 import { formatAmount } from '@/utils/math';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
+import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { wrapAbortableFn } from '@/databases/sync/utils';
+import { atomByMMKV } from '@/core/storage/mmkv';
+import { useAtom } from 'jotai';
 
 type LocalDBTokenItem = TokenItem & {
   _db_id?: TokenItemEntity['_db_id'];
   owner_addr: TokenItemEntity['owner_addr'];
 };
-export const useTokenAssetsMap = () => {
+
+const tokensByAddrAtom = atomByMMKV<Record<string, LocalDBTokenItem[]>>(
+  '@TokenSelectorByAddr',
+  {},
+);
+function useTokensByAddr() {
+  const [tokensByAddr, setTokensByAddr] = useAtom(tokensByAddrAtom);
+
+  const cacheTokensByAddr = useCallback(
+    (address: string, tokens: LocalDBTokenItem[]) => {
+      const addr = address.toLowerCase();
+
+      setTokensByAddr(prev => {
+        return {
+          ...prev,
+          [addr]: tokens,
+        };
+      });
+
+      return tokens;
+    },
+    [setTokensByAddr],
+  );
+
+  const getTokensByAddr = useCallback(
+    (address: string) => {
+      return tokensByAddr[address.toLowerCase()] || [];
+    },
+    [tokensByAddr],
+  );
+
+  return {
+    cacheTokensByAddr,
+    getTokensByAddr,
+  };
+}
+
+export const useSelectTokens = ({
+  currentAccount: _currentAccount,
+  noNeedTokens = false,
+  keyword,
+  chain_server_id,
+  type,
+}: {
+  currentAccount?: Account | null;
+  noNeedTokens?: boolean;
+  keyword?: string;
+  chain_server_id?: string;
+  type?: TokenSelectType;
+}) => {
+  const { accounts } = useMyAccounts({ disableAutoFetch: true });
+  const [isFirstFetch, setIsFirstFetch] = useState(true);
+
   const [tokensMap, setTokensMap] = useState<{
     [address: string]: LocalDBTokenItem[];
   }>({});
+
   // ref tag if address has tokens
-  const addressHasTokensRef = useRef<{
-    [address: string]: boolean;
-  }>({});
+  const addressHasTokensRef = useRef<{ [address: string]: boolean }>({});
 
   const updateTokens = useCallback(
     ({
@@ -48,39 +106,14 @@ export const useTokenAssetsMap = () => {
           [lowerAddress]: newTokens,
         };
       });
+      addressHasTokensRef.current[lowerAddress] = !!newTokens.length;
     },
     [],
   );
-  useEffect(() => {
-    Object.keys(tokensMap).forEach(address => {
-      addressHasTokensRef.current[address] = !!tokensMap[address]?.length;
-    });
-  }, [tokensMap]);
-  return { tokensMap, setTokensMap, updateTokens, addressHasTokensRef };
-};
 
-export const useSelectTokens = ({
-  currentAccount,
-  visible,
-  keyword,
-  chain_server_id,
-  type,
-}: {
-  currentAccount?: Account | null;
-  visible?: boolean;
-  keyword?: string;
-  chain_server_id?: string;
-  type?: TokenSelectType;
-}) => {
-  const [isLoading, setLoading] = useSafeState(false);
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-  const [isFirstFetch, setIsFirstFetch] = useState(true);
-  const { tokensMap, setTokensMap, updateTokens, addressHasTokensRef } =
-    useTokenAssetsMap();
   const [userTokenSettings, setUserTokenSettings] = useState({});
-  const currentAddress = currentAccount?.address;
+  const currentAccount = useDebounceValue(_currentAccount, 100);
+
   const { top10Addresses, fetchAccounts } = useAccountInfo();
 
   const enableSearchTokensV2 = useMemo(
@@ -92,6 +125,9 @@ export const useSelectTokens = ({
       ),
     [keyword, type],
   );
+
+  const currentAddress = currentAccount?.address || _currentAccount?.address;
+
   const {
     value: swapToTokenSearchResult,
     loading: swapToTokenSearchResultLoading,
@@ -158,119 +194,173 @@ export const useSelectTokens = ({
         });
     }
     return [];
-  }, [enableSearchTokensV2, keyword, chain_server_id, currentAccount?.address]);
+  }, [
+    enableSearchTokensV2,
+    currentAddress,
+    top10Addresses,
+    keyword,
+    chain_server_id,
+  ]);
 
-  useEffect(() => {
-    if (visible && Object.keys(userTokenSettings).length === 0) {
-      preferenceService
-        .getUserTokenSettings()
-        .then(res => res || {})
-        .then(setUserTokenSettings);
-    }
-  }, [userTokenSettings, visible]);
+  const loadUserTokenSettings = useCallback(() => {
+    setUserTokenSettings(prev => {
+      if (Object.keys(prev).length > 0) return prev;
 
+      return preferenceService.getUserTokenSettingsSync();
+    });
+  }, []);
+
+  const [isLoadingToken, setIsLoadingToken] = useState(false);
   const loadToken = useCallback(
     async (_address: string, force?: boolean) => {
       const address = _address.toLowerCase();
-      if (!address) {
-        return;
-      }
+      if (!address) return;
+
       try {
         const tokensExisted = addressHasTokensRef.current[address];
-        if (!tokensExisted) {
-          setLoading(true);
-        }
-        // if token exist and not expired, don't sync to store
-        const tokenRes = await syncTokens(address, force, tokensExisted);
-        if (!tokenRes.length) {
-          setLoading(false);
-          return;
-        }
-        updateTokens({
-          address,
-          newTokens: tokenRes || [],
-        });
+        setIsLoadingToken(true);
+        // if (!tokensExisted) setIsLoadingToken(true);
+        await wrapAbortableFn({
+          label: `loadToken-${address}`,
+          fn: async signal => {
+            // if token exist and not expired, don't sync to store
+            const tokenRes = await syncTokens(address, force, tokensExisted);
+            if (signal.aborted) return;
+            if (!tokenRes.length) return;
+
+            updateTokens({
+              address,
+              newTokens: tokenRes || [],
+            });
+          },
+        }).run();
       } catch (error) {
+        console.error('loadToken error', error);
+        Sentry.captureException(error);
       } finally {
-        setLoading(false);
+        setIsLoadingToken(false);
       }
     },
-    [addressHasTokensRef, setLoading, updateTokens],
+    [updateTokens],
   );
 
-  const batchLoadCacheTokens = useCallback(
-    async (_addresses: string[]) => {
-      if (!_addresses.length) {
-        return;
-      }
-      const addresses = _addresses.map(i => i.toLowerCase());
-      setLoading(true);
-      const cachedTokens = await TokenItemEntity.batchMultAddressTokens(
-        addresses,
-      );
-      const assestGroup = _.groupBy(cachedTokens, 'owner_addr');
-      setTokensMap(_pre => {
-        const curr = { ...(_pre || {}) };
-        Object.keys(assestGroup).forEach(address => {
-          curr[address] = assestGroup[address];
-        });
-        return curr;
-      });
-      setTimeout(() => {
-        setLoading(false);
-      }, 0);
-    },
-    [setLoading, setTokensMap],
-  );
+  const [isLoadingCacheToken, setIsLoadingCacheToken] = useState(false);
+  const loadCacheTokenCRef = useRef<AbortController | null>(null);
+  const batchLoadCacheTokens = useCallback(async (_addresses: string[]) => {
+    if (!_addresses.length) return;
 
+    const addresses = _addresses.map(i => i.toLowerCase());
+    setIsLoadingCacheToken(true);
+    try {
+      loadCacheTokenCRef.current?.abort();
+      loadCacheTokenCRef.current = new AbortController();
+      await wrapAbortableFn({
+        label: 'batchLoadCacheTokens',
+        externalControllerRef: loadCacheTokenCRef,
+        fn: async signal => {
+          const cachedTokens = await TokenItemEntity.batchMultiAddressTokens(
+            addresses,
+          );
+          if (signal.aborted) return;
+
+          const assestGroup = _.groupBy(cachedTokens, 'owner_addr');
+          if (signal.aborted) return;
+          setTokensMap(_pre => {
+            const curr = { ...(_pre || {}) };
+            Object.keys(assestGroup).forEach(address => {
+              curr[address] = assestGroup[address];
+            });
+            return curr;
+          });
+        },
+        onFinally: () => (loadCacheTokenCRef.current = null),
+      }).run();
+    } catch (error) {
+      console.error('batchLoadCacheTokens:: error', error);
+    } finally {
+      setIsLoadingCacheToken(false);
+    }
+  }, []);
+
+  const [isCheckingExpire, setIsCheckingExpire] = useState(false);
+  const checkingExpireCRef = useRef<AbortController | null>(null);
   const checkIsExpireAndUpdate = useCallback(
     async (force?: boolean) => {
       try {
-        for (const address of top10Addresses) {
-          try {
-            await loadToken(address, force);
-          } catch (error) {
-            console.error(
-              `Error fetching data for ${address.slice(-4)}:`,
-              error,
-            );
-          }
-        }
-        await new Promise(resolve => setTimeout(resolve, 0));
+        setIsCheckingExpire(true);
+
+        checkingExpireCRef.current?.abort();
+        checkingExpireCRef.current = new AbortController();
+        await wrapAbortableFn({
+          label: 'checkIsExpireAndUpdate',
+          externalControllerRef: checkingExpireCRef,
+          fn: async signal => {
+            for (const address of top10Addresses) {
+              if (signal.aborted) return;
+              try {
+                await loadToken(address, force);
+              } catch (error) {
+                console.error(
+                  `Error fetching data for ${address.slice(-4)}:`,
+                  error,
+                );
+              }
+            }
+            await new Promise(resolve => setTimeout(resolve, 0));
+          },
+          onFinally: () => (checkingExpireCRef.current = null),
+        }).run();
+      } catch (error) {
+        console.error('checkIsExpireAndUpdate error', error);
       } finally {
+        setIsCheckingExpire(false);
         setIsFirstFetch(false);
       }
     },
     [loadToken, top10Addresses],
   );
 
+  /** @deprecated */
   const getCacheTop10Tokens = useCallback(async () => {
     const emptyTokenAddresses = top10Addresses.filter(
-      addr => !tokensMap[addr]?.length,
+      addr => !addressHasTokensRef.current[addr],
     );
     await batchLoadCacheTokens(emptyTokenAddresses);
-  }, [batchLoadCacheTokens, tokensMap, top10Addresses]);
+  }, [batchLoadCacheTokens, top10Addresses]);
 
   const getCacheTokens = useCallback(
-    (addrresses: string[]) => {
-      return batchLoadCacheTokens(addrresses);
+    async (addresses: string[], options?: { isTop10?: boolean }) => {
+      if (options?.isTop10) {
+        const emptyTokenAddresses = top10Addresses.filter(
+          addr => !addressHasTokensRef.current[addr],
+        );
+        await batchLoadCacheTokens(emptyTokenAddresses);
+      }
+      await batchLoadCacheTokens(addresses);
     },
-    [batchLoadCacheTokens],
+    [top10Addresses, batchLoadCacheTokens],
   );
 
-  // filter tokens
-  const tokens = useMemo(() => {
+  const tokensInMemory = useMemo(() => {
     let resTokens: LocalDBTokenItem[] = [];
-    if (!visible) {
-      return [];
-    }
     if (currentAddress) {
       resTokens = tokensMap[currentAddress?.toLowerCase()] || [];
     } else {
       resTokens = Object.values(tokensMap).flat();
     }
+    return resTokens;
+  }, [currentAddress, tokensMap]);
+
+  const existedTokens = !!tokensInMemory.length;
+
+  // filter tokens
+  const tokens = useMemo(() => {
+    if (noNeedTokens) return [];
+    let resTokens: LocalDBTokenItem[] = Array.from(tokensInMemory);
     if (chain_server_id) {
-      resTokens = resTokens.filter(token => token.chain === chain_server_id);
+      resTokens = tokensInMemory.filter(
+        token => token.chain === chain_server_id,
+      );
     }
     if (keyword) {
       resTokens = resTokens
@@ -357,7 +447,7 @@ export const useSelectTokens = ({
     }
 
     return resTokens;
-  }, [chain_server_id, currentAddress, keyword, tokensMap, visible]);
+  }, [noNeedTokens, tokensInMemory, chain_server_id, keyword]);
 
   const tokenWithOwner = useMemo(() => {
     if (enableSearchTokensV2 && keyword) {
@@ -400,20 +490,33 @@ export const useSelectTokens = ({
     userTokenSettings,
   ]);
 
-  useEffect(() => {
-    if (visible) {
+  const loadOnVisibleChanged = useCallback(
+    (nextVisible = false) => {
+      if (!nextVisible) {
+        loadCacheTokenCRef.current?.abort();
+        checkingExpireCRef.current?.abort();
+        return;
+      }
+
       fetchAccounts();
-    }
-  }, [visible, fetchAccounts]);
+      loadUserTokenSettings();
+    },
+    [fetchAccounts, loadUserTokenSettings],
+  );
+
+  const isLoading = isLoadingToken || isCheckingExpire || isLoadingCacheToken;
 
   return {
     tokensMap,
     tokens: tokenWithOwner,
+    existedTokens,
     isLoading: isLoading || swapToTokenSearchResultLoading,
     getCacheTop10Tokens,
     getCacheTokens,
+    loadUserTokenSettings,
     checkIsExpireAndUpdate,
     loadToken,
     refreshing: !!isLoading && !isFirstFetch,
+    loadOnVisibleChanged,
   };
 };
