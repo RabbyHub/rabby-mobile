@@ -113,19 +113,19 @@ export const FoundYourWalletGuide = () => {
           );
         },
       },
-      {
-        title: t('page.nextComponent.multiAddressHome.buyWithFiat'),
-        desc: t('page.nextComponent.multiAddressHome.buyWithFiatDesc'),
-        icon: RcIconBuyCC,
-        onPress: () => {
-          navigation.dispatch(
-            StackActions.push(RootNames.StackTransaction, {
-              screen: RootNames.MultiBuy,
-              params: {},
-            }),
-          );
-        },
-      },
+      // {
+      //   title: t('page.nextComponent.multiAddressHome.buyWithFiat'),
+      //   desc: t('page.nextComponent.multiAddressHome.buyWithFiatDesc'),
+      //   icon: RcIconBuyCC,
+      //   onPress: () => {
+      //     navigation.dispatch(
+      //       StackActions.push(RootNames.StackTransaction, {
+      //         screen: RootNames.MultiBuy,
+      //         params: {},
+      //       }),
+      //     );
+      //   },
+      // },
     ],
     [t, navigation],
   );
@@ -187,7 +187,7 @@ export const FoundYourWalletGuide = () => {
 const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   noAssetsContainer: {
     marginHorizontal: 16,
-    height: 434,
+    height: 348,
   },
 
   bgb2: {

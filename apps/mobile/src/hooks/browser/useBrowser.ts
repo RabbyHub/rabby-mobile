@@ -29,7 +29,7 @@ export const tabsAtom = atom<{
 
 export const visibleAtom = atom(false);
 const managePopupAtom = atom(false);
-const browserStateAtom = atom({
+export const browserStateAtom = atom({
   isShowBrowser: false,
   isShowSearch: false,
   isShowManage: false,

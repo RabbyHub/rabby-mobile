@@ -1,5 +1,6 @@
-import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { Dimensions, Modal, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 
@@ -15,8 +16,32 @@ export function SubmitSuccessModal() {
 
   const { styles, colors2024 } = useTheme2024({ getStyle: getModalStyle });
 
-  const { submitSuccessModalVisible, closeSubmitSuccessModal } =
-    useSubmitSuccessModalVisible();
+  const {
+    submitSuccessModalVisible,
+    getIsSubmitSuccessModalVisible,
+    closeSubmitSuccessModal,
+  } = useSubmitSuccessModalVisible();
+
+  useEffect(() => {
+    if (!getIsSubmitSuccessModalVisible()) return;
+
+    /**
+     * @why avoid Modal freeze whole app, though I don't know why it will freeze
+     */
+    const timer = setTimeout(() => {
+      if (getIsSubmitSuccessModalVisible()) {
+        closeSubmitSuccessModal();
+      }
+    }, 5 * 1e3);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [
+    submitSuccessModalVisible,
+    getIsSubmitSuccessModalVisible,
+    closeSubmitSuccessModal,
+  ]);
 
   return (
     <Modal

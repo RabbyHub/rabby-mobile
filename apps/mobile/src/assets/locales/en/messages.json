@@ -979,7 +979,9 @@
         "websites": "Websites",
         "copyTrading": "Copy Trading",
         "search": "Search Token",
-        "watchlist": "Watchlist"
+        "watchlist": "Watchlist",
+        "perps": "Perps",
+        "perpsMarketList": "More Perps"
       }
     },
     "copyTrading": {
@@ -1842,6 +1844,23 @@
       "tabs": {
         "marketData": "Market data",
         "tokenSecurity": "Token Security"
+      },
+      "interval": {
+        "1M": "1M",
+        "5M": "5M",
+        "15M": "15M",
+        "30M": "30M",
+        "1H": "1H",
+        "4H": "4H",
+        "1D": "1D",
+        "1W": "1W"
+      },
+      "marketInfo": {
+        "marketCap": "Market Cap",
+        "totalSupply": "Total Supply",
+        "volume24h": "24h Volume",
+        "txns24h": "24h Txns",
+        "holders": "Holders"
       }
     },
     "defiDetail": {
@@ -2103,6 +2122,234 @@
         "setupWalletFirst": "Please finish setting up wallet first.",
         "unlockWalletFirst": "Please unlock the app to open the link."
       }
+    },
+    "perps": {
+      "__skip_translation": true,
+      "title": "Perps",
+      "PerpsCard": {
+        "title": "Trade Perps",
+        "loginDesc": "Log in with your address and deposit funds to start trading perps",
+        "loginBtn": "Log in to Trading Perps",
+        "learnBtn": "Learn about Perps",
+        "available": "Available",
+        "withdrawBtn": "Withdraw",
+        "depositBtn": "Deposit"
+      },
+      "selectAccountTitle": "Select an address to log in",
+      "PerpsGuidePopup": {
+        "step1Title": "Master Perpetual Futures",
+        "step1Desc": "With perpetual futures, you're not just trading assets. You're trading what you think will happen next",
+        "step2Title": "Long",
+        "step2Desc": "When you expect the price to rise, you open a long. If the price rises, you gain. If it falls, you lose.",
+        "step3Title": "Short",
+        "step3Desc": "When you expect the price to fall, you open a short. If the price falls, you gain. If it rises, you lose.",
+        "step4Title": "Adjusting Leverage",
+        "step4Desc": "Leverage lets you trade with more than you put in. It can increase both your gains and your losses.",
+        "step5Title": "Liquidation",
+        "step5Desc": "Every position has a liquidation price. If the market price reaches it, your position will be closed. Using higher leverage increases the risk of being liquidated"
+      },
+      "PerpsDepositPopup": {
+        "title": "Deposit",
+        "amount": "Amount",
+        "balance": "Balance",
+        "depositBtn": "Deposit",
+        "minimumDepositSize": "The minimum deposit amount is $5",
+        "insufficientBalance": "Insufficient balance",
+        "invalidNumber": "Please input a valid number"
+      },
+      "PerpsWithdrawPopup": {
+        "title": "Withdraw",
+        "amount": "Amount",
+        "available": "available",
+        "withdrawBtn": "Withdraw",
+        "minimumWithdrawSize": "The minimum withdraw amount is $2",
+        "insufficientBalance": "Insufficient balance",
+        "invalidNumber": "Please input a valid number",
+        "feeTip": "Fee : $1.00",
+        "feeTooltipTitle": "Fee",
+        "feeTooltipDesc": "Withdrawal Fee charged by Hyperliquid: $1"
+      },
+      "PerpsWithdrawFeePopup": {
+        "title": "Fee",
+        "desc": "Withdrawar Fee charged by Hyperliquid: $1",
+        "btn": "I Got it"
+      },
+      "historyDetail": {
+        "date": "Date",
+        "price": "Price",
+        "size": "Size",
+        "tradeValue": "Trade Value",
+        "fee": "Fee",
+        "closedPnl": "Closed PNL",
+        "provider": "Provider",
+        "title": {
+          "openLong": "Open Long",
+          "openShort": "Open Short",
+          "closeLong": "Close Long",
+          "closeShort": "Close Short",
+          "closeLongTp": "Close Long Take Profit",
+          "closeLongSl": "Close Long Stop Loss",
+          "closeLongLiquidation": "Close Long Liquidation",
+          "closeShortLiquidation": "Close Short Liquidation",
+          "closeShortTp": "Close Short Take Profit",
+          "closeShortSl": "Close Short Stop Loss"
+        },
+        "perps": "Perps",
+        "gotItBtn": "I Got it",
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
+      },
+      "PerpsAutoCloseModal": {
+        "takeProfitTipsLong": "Take profit price must be higher than current price",
+        "stopLossTipsLong": "Stop loss price must be lower than current price",
+        "takeProfitTipsShort": "Take profit price must be lower than current price",
+        "stopLossTipsLongLiquidation": "Price is lower than the liquidation price ({{price}})",
+        "stopLossTipsShort": "Stop loss price must be higher than current price",
+        "stopLossTipsShortLiquidation": "Price is higher than the liquidation price ({{price}})",
+        "takeProfit": "Take profit",
+        "loss": "Loss",
+        "profit": "Profit",
+        "stopLoss": "Stop loss "
+      },
+      "PerpsDepositTokenModal": {
+        "goSwapDesc": "Only USDC on Arbitrum is supported for direct deposit. Please swap your current token to USDC before depositing.",
+        "goBridgeDesc": "Only USDC on Arbitrum is supported for direct deposit. Please bridge your current token to USDC on Arbitrum before depositing.",
+        "swapBtn": "Swap",
+        "bridgeBtn": "Bridge",
+        "directTag": "Direct Deposit"
+      },
+      "explorePerps": "Explore Perps",
+      "more": "More",
+      "history": {
+        "title": "History",
+        "closeLongTp": "Close Long Take Profit",
+        "closeLongSl": "Close Long stop loss",
+        "closeLongLiquidation": "Close Long Liquidation",
+        "closeLong": "Close Long",
+        "closeShortTp": "Close Short Take Profit",
+        "closeShortSl": "Close Short Stop Loss",
+        "closeShortLiquidation": "Close Short Liquidation",
+        "closeShort": "Close Short",
+        "openLong": "Open Long",
+        "openShort": "Open Short",
+        "status": {
+          "completed": "Completed",
+          "pending": "Pending"
+        },
+        "deposit": "Deposit",
+        "withdraw": "Withdraw"
+      },
+      "PerpsSelectTokenPopup": {
+        "title": "Select Token to Deposit"
+      },
+      "positions": "Positions",
+      "PerpsAccountLogoutPopup": {
+        "title": "Log Out Current Address",
+        "desc": "You are logging out of your current Perps account. You can restore it anytime by logging in with this address.",
+        "logout": "Log out"
+      },
+      "PerpsDepositCard": {
+        "availableToTrade": "Available to trade: ",
+        "deposit": "Deposit"
+      },
+      "regionNotSupport": "Opening positions is not supported in your region",
+      "deleteAgentModal": "You’ve reached the maximum number of agents. Would you delete an existing agent to create a new one?",
+      "deleteAgentSuccess": "Agent deleted successfully",
+      "leverageRangeMinError": "The minimum leverage is {{min}}x",
+      "leverageRangeMaxError": "The maximum leverage is {{max}}x",
+      "PerpsAccountSelectorPopup": {
+        "lastUsed": "Last Used"
+      }
+    },
+    "perpsDetail": {
+      "__skip_translation": true,
+      "PerpsPosition": {
+        "title": "Position",
+        "pnl": "PNL",
+        "size": "Size",
+        "margin": "Margin(Isolated)",
+        "autoClose": "Auto Close",
+        "marginIsolated": "Margin (isolated)",
+        "fundingPayments": "Founding Payments",
+        "liquidationPrice": "Liquidation Price",
+        "entryPrice": "Entry Price",
+        "direction": "Direction",
+        "tpPrice": "Take-Profit Price",
+        "slPrice": "Stop-Loss Price",
+        "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
+        "fundingPaymentsTips": "This is the net funding payments since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
+      },
+      "PerpsInfo": {
+        "title": "Info",
+        "24Vol": "24h Volumn",
+        "openInterest": "Open Interest",
+        "funding": "Funding",
+        "openInterestTips": "The total outstanding position of all users on this contract.",
+        "fundingTips": "This is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token. lf positive, long pays short. lf negative, short pays long."
+      },
+      "PerpsIntro": {
+        "title": "What’s Perps ?",
+        "desc": "Trading perpetual contracts involves significant risks, including the possibility of losing your investment and collateral rapidly due to high leverage and market volatility. Such trading may not be suitable for all users. Prices may be affected by funding rates and liquidity, and you could be automatically liquidated without prior notice. Market data is provided by Hyperliquid."
+      },
+      "PerpsClosePositionPopup": {
+        "title": "Close {{coin}} {{direction}} Position",
+        "positionSize": "Position Size",
+        "pnl": "PNL",
+        "closeBtn": "Close {{direction}}",
+        "fee": "Fee:",
+        "rabbyFeeTips": "Rabby fee: 0.05%",
+        "providerFeeTips": "Provider fee: {{fee}}"
+      },
+      "PerpsOpenPositionPopup": {
+        "margin": "Margin",
+        "invalidNumber": "Please input a valid number",
+        "insufficientBalance": "Insufficient balance",
+        "maximumOrderSize": "The maximum order size is {{amount}}",
+        "minimumOrderSize": "The minimum order size is $10",
+        "available": "available",
+        "leverage": "Leverage",
+        "size": "Size",
+        "autoClose": "Auto Close",
+        "tpPrice": "Take-Profit Price",
+        "slPrice": "Stop-Loss Price",
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
+      },
+      "PerpsOpenPositionCheckPopup": {
+        "title": "Check Order",
+        "perps": "Perps",
+        "initialMargin": " Initial Margin",
+        "direction": "Direction",
+        "size": "Size",
+        "autoClose": "Auto Close",
+        "price": "Price",
+        "estLqPrice": "Estimated Liquidation Price",
+        "slPrice": "Stop-Loss Price",
+        "tpPrice": "Take-Profit Price",
+        "fee": "Fee",
+        "btn": "Open {{direction}} Position",
+        "rabbyFeeTips": "Rabby fee: 0.05%",
+        "providerFeeTips": "Provider fee: {{fee}}",
+        "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
+        "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
+        "margin": "Margin"
+      },
+      "action": {
+        "closePosition": "Close {{direction}} Position",
+        "long": "Long",
+        "short": "Short",
+        "noPermission": "Opening positions is not supported in your region"
+      },
+      "PerpsAutoCloseModal": {
+        "slPrice": "Stop Loss Price",
+        "tpPrice": "Take Profit Price",
+        "price": "Price:",
+        "entryPrice": "Entry Price:",
+        "setTpPrice": "Set Take-Profit Price",
+        "setSlPrice": "Set Stop-Loss Price"
+      }
+    },
+    "perpsHistory": {
+      "title": "History"
     }
   },
   "component": {
@@ -2306,6 +2553,24 @@
     },
     "submitFeedbackSuccessModal": {
       "desc": "Submitted Successfully"
+    },
+    "kline": {
+      "__skip_translation": true,
+      "tp": "TP",
+      "entry": "Entry",
+      "sl": "SL",
+      "liq": "LIQ",
+      "high": "High",
+      "low": "Low",
+      "time": "Time",
+      "open": "Open",
+      "close": "Close",
+      "chg": "Chg",
+      "chgPercent": "%Chg",
+      "volume": "Volume"
+    },
+    "GlobalTipsPopup": {
+      "btn": "I Got it"
     }
   },
   "native": {
@@ -2394,7 +2659,9 @@
         "title": "Location Permission",
         "message": "This app needs access to your location to provide location-based features."
       }
-    }
+    },
+    "check": "Check",
+    "gotIt": "Got It"
   },
   "background": {
     "error": {

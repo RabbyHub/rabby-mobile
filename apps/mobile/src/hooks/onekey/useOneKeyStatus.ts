@@ -16,6 +16,7 @@ export const useOneKeyStatus = (
   address: string,
   extra?: {
     onDismiss?(): void;
+    autoConnect?: boolean;
   },
 ) => {
   const [status, setStatus] = useAtom(oneKeyStatusAtom);
@@ -23,16 +24,21 @@ export const useOneKeyStatus = (
   let toastHiddenRef = React.useRef<() => void>(() => {});
 
   React.useEffect(() => {
-    apiOneKey.isConnected(address).then(([isConnected, id]) => {
-      setStatus(isConnected ? 'CONNECTED' : 'DISCONNECTED');
-      if (id) {
-        setDeviceId(id);
-      }
-    });
-  }, [address, setStatus]);
+    if (extra?.autoConnect) {
+      apiOneKey.isConnected(address).then(([isConnected, id]) => {
+        setStatus(isConnected ? 'CONNECTED' : 'DISCONNECTED');
+        if (id) {
+          setDeviceId(id);
+        }
+      });
+    }
+  }, [address, setStatus, extra?.autoConnect]);
 
   const onClickConnect = React.useCallback(
-    (cb?: () => void) => {
+    (cb?: () => void, rej?: () => void) => {
+      let isConnected = false;
+      const onDismiss = extra?.onDismiss;
+
       const id = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.CONNECT_ONEKEY,
         deviceId,
@@ -46,9 +52,10 @@ export const useOneKeyStatus = (
             await apiOneKey.unlockDevice();
             await apiOneKey.fixConnectId(address, connectDeviceId);
             setStatus('CONNECTED');
+            isConnected = true;
             cb?.();
           } catch (e) {
-            console.log('ledger connect error', e);
+            rej?.();
             setStatus('DISCONNECTED');
           } finally {
             setTimeout(() => {
@@ -58,7 +65,12 @@ export const useOneKeyStatus = (
           }
         },
         bottomSheetModalProps: {
-          onDismiss: extra?.onDismiss,
+          onDismiss: () => {
+            if (!isConnected) {
+              rej?.();
+            }
+            onDismiss?.();
+          },
         },
       });
     },

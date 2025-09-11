@@ -67,7 +67,7 @@ import { debounce, unionBy } from 'lodash';
 import { useUpgradeInfo } from '@/hooks/version';
 
 import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
-import RcIconCopyTrading from '@/assets2024/icons/home/IconCopyTrading.svg';
+import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
 import { FoundYourWalletGuide } from './FundYourWallet';
 import {
   OfflineChainNotify,
@@ -106,6 +106,7 @@ import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
 import { isNonPublicProductionEnv } from '@/constant/env';
+import { PerpsPnl } from './components/PerpsPnl';
 import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
 import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
 import {
@@ -365,6 +366,11 @@ function MultiAddressHome(): JSX.Element {
         //   icon: RcIconCopyTrading,
         // },
         {
+          key: MultiHomeFeatTitle.Perps,
+          title: t('page.home.services.perps'),
+          icon: RcIconPerps,
+        },
+        {
           key: MultiHomeFeatTitle.History,
           title: t('page.home.services.history'),
           icon: RcIconHistoryCC,
@@ -576,7 +582,7 @@ function MultiAddressHome(): JSX.Element {
         return;
       }
       const addressTs =
-        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? 0;
+        clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? Date.now();
       if (addressTs && addressTs / 1000 > i.time_at) {
         return;
       }
@@ -763,9 +769,9 @@ function MultiAddressHome(): JSX.Element {
             params: {},
           });
           break;
-        case MultiHomeFeatTitle.CopyTrading:
+        case MultiHomeFeatTitle.Perps:
           navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.CopyTrading,
+            screen: RootNames.Perps,
             params: {},
           });
           break;
@@ -799,6 +805,10 @@ function MultiAddressHome(): JSX.Element {
         );
       }
 
+      if (el.key === MultiHomeFeatTitle.Perps) {
+        return <PerpsPnl />;
+      }
+
       if (el.key === MultiHomeFeatTitle.History && pendingTxCount > 0) {
         return <HomePendingBadge number={pendingTxCount} />;
       }
@@ -821,10 +831,10 @@ function MultiAddressHome(): JSX.Element {
       );
     },
     [
-      showTipsDollarDialog,
-      pendingTxCount,
-      styles.badgeStyle,
       hasOpenCopyTrading,
+      pendingTxCount,
+      showTipsDollarDialog,
+      styles.badgeStyle,
     ],
   );
 

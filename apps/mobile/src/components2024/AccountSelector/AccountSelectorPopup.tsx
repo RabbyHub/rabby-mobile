@@ -14,7 +14,18 @@ export const AccountSelectorPopup: React.FC<{
   onClose?(): void;
   value?: Account | null;
   onChange?: (a: Account) => void;
-}> = ({ visible, onClose, value, onChange }) => {
+  isShowSafeAddressSection?: boolean;
+  isShowWatchAddressSection?: boolean;
+  title?: React.ReactNode;
+}> = ({
+  visible,
+  onClose,
+  value,
+  onChange,
+  isShowSafeAddressSection = true,
+  isShowWatchAddressSection = true,
+  title,
+}) => {
   const modalRef = useRef<AppBottomSheetModal>(null);
 
   const { styles, colors2024, isLight } = useTheme2024({
@@ -58,6 +69,9 @@ export const AccountSelectorPopup: React.FC<{
               scrollToBottom={scrollToBottom}
               value={value}
               onChange={onChange}
+              isShowSafeAddressSection={isShowSafeAddressSection}
+              isShowWatchAddressSection={isShowWatchAddressSection}
+              title={title}
             />
           </View>
         </AutoLockView>

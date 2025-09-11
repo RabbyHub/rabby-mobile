@@ -11,6 +11,7 @@ import {
   contactService,
   keyringService,
   preferenceService,
+  transactionHistoryService,
 } from '@/core/services';
 import { removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
@@ -232,6 +233,7 @@ export function useRemoveAccount() {
       ) {
         await deleteDBResourceForAddress(account.address);
         updateHistoryTimeSingleAddress(account.address, 0);
+        transactionHistoryService.clearSuccessAndFailList(account.address);
       }
     },
     [accounts, fetchAccounts, updateHistoryTimeSingleAddress],

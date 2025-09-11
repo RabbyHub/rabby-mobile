@@ -226,6 +226,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
           user_addr: userAddress,
           start: 0,
           limit: 1,
+          is_all: true,
         });
         return latestTx?.history_list?.[0]?.to_token;
       };
@@ -923,6 +924,7 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
         user_addr: userAddress,
         start: 0,
         limit: 1,
+        is_all: true,
       });
       if (initIdRef.current !== currentFetchId) {
         return;

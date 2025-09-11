@@ -13,6 +13,7 @@ export enum MultiHomeFeatTitle {
   Search = 'Search',
   Watchlist = 'Watchlist',
   CopyTrading = 'Copy Trading',
+  Perps = 'Perps',
 
   /** @deprecated */
   TEST_DAPP = 'TEST_DAPP',

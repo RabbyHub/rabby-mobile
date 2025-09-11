@@ -9,6 +9,7 @@ export { default as RcIconCorrectCC } from './correct-cc.svg';
 export { default as RcArrowDownCC } from './arrow-down-cc.svg';
 export { default as RcIconInfoCC } from './info-cc.svg';
 export { default as RcIconInfoFillCC } from './icon-info-fill.svg';
+export { default as RcIconInfoFill1CC } from './icon-info-fill-cc.svg';
 export { default as RcIconInfo2CC } from './info2-cc.svg';
 export { default as RcIconCopyCC } from './copy-cc.svg';
 export { default as RcIconCopyRegularCC } from './copy-regular-cc.svg';
