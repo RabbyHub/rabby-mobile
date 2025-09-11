@@ -15,18 +15,19 @@ const isIOS = DeviceUtils.isIOS();
 type ScreenshotSettings = {
   androidForceAllowScreenCapture: boolean;
   iosForceAllowScreenRecord: boolean;
-  showFeedbackOnScreenshotCapture: boolean;
 };
-const ExperimentalSettingsAtom = atomByMMKV('@ExperimentalSettings', {
-  /**
-   * @description means screen-capture/screen-recording on Android, or screen-recording on iOS
-   *
-   * for iOS, change it need restart the app
-   */
-  androidForceAllowScreenCapture: false,
-  iosForceAllowScreenRecord: false,
-  showFeedbackOnScreenshotCapture: true,
-});
+const ExperimentalSettingsAtom = atomByMMKV<ScreenshotSettings>(
+  '@ExperimentalSettings',
+  {
+    /**
+     * @description means screen-capture/screen-recording on Android, or screen-recording on iOS
+     *
+     * for iOS, change it need restart the app
+     */
+    androidForceAllowScreenCapture: false,
+    iosForceAllowScreenRecord: false,
+  },
+);
 
 const KEY = isIOS
   ? 'iosForceAllowScreenRecord'
@@ -42,11 +43,7 @@ function isAllowScreenshot(
 
 export function useExpScreenCapture() {
   const [
-    {
-      androidForceAllowScreenCapture,
-      iosForceAllowScreenRecord,
-      showFeedbackOnScreenshotCapture,
-    },
+    { androidForceAllowScreenCapture, iosForceAllowScreenRecord },
     setExpData,
   ] = useAtom(ExperimentalSettingsAtom);
   const onExpScreenCaptureChange = useCallback(
@@ -64,7 +61,6 @@ export function useExpScreenCapture() {
       androidForceAllowScreenCapture: false,
       iosForceAllowScreenRecord: false,
       forceAllowScreenshot: false,
-      showFeedbackOnScreenshotCapture: true,
       onExpScreenCaptureChange,
     }),
     [onExpScreenCaptureChange],
@@ -81,19 +77,8 @@ export function useExpScreenCapture() {
       androidForceAllowScreenCapture,
       iosForceAllowScreenRecord,
     }),
-    showFeedbackOnScreenshotCapture,
     onExpScreenCaptureChange,
   };
-}
-
-export function useGetShowFeedbackOnScreenshotCapture() {
-  const getShowFeedbackOnScreenshotCapture = useAtomCallback(get => {
-    if (!isNonPublicProductionEnv) return true;
-
-    return get(ExperimentalSettingsAtom).showFeedbackOnScreenshotCapture;
-  });
-
-  return { getShowFeedbackOnScreenshotCapture };
 }
 
 export function useForceAllowScreenshot() {

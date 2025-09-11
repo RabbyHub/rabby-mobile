@@ -215,9 +215,7 @@
       "feedbackInput": {
         "placeholder": "อธิบายปัญหา"
       },
-      "submitButtonText": "ส่ง",
-      "feedbackLabel": "คำอธิบายข้อบกพร่อง:",
-      "title": "ถ่ายภาพหน้าจอเพื่อตอบแจ้งข้อผิดพลาด"
+      "submitButtonText": "ส่ง"
     },
     "feedbackModal": {
       "pendingTitle": "Rabby Support ยังไม่ได้ตอบกลับ。",
@@ -226,9 +224,7 @@
       "repliedTitle": "Rabby สนับสนุนได้ตอบกลับแล้ว:",
       "issueDescription": "นี่คือปัญหาที่คุณรายงาน:"
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "ส่งเรียบร้อยแล้ว"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "page": {
     "getStart": {

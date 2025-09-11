@@ -1,0 +1,81 @@
+import React from 'react';
+import { Text } from 'react-native';
+
+import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import { SwitchToggleType } from '@/components';
+import { useScreenshotToReportEnabled } from '@/components/Screenshot/hooks';
+import useInterval from 'react-use/lib/useInterval';
+import { NEED_DEVSETTINGBLOCKS } from '@/constant/env';
+import { useTheme2024 } from '@/hooks/theme';
+import { getTimeSpanByMs } from '@/utils/time';
+
+export const SwitchScreenshotToReport = React.forwardRef<
+  SwitchToggleType,
+  React.ComponentProps<typeof AppSwitch2024>
+>((props, ref) => {
+  const { isScreenshotToReportEnabled, toggleScreenshotToReport } =
+    useScreenshotToReportEnabled();
+
+  React.useImperativeHandle(ref, () => ({
+    toggle: (enabled?: boolean) => {
+      toggleScreenshotToReport(enabled ?? !isScreenshotToReportEnabled);
+    },
+  }));
+
+  return (
+    <AppSwitch2024
+      {...props}
+      circleSize={20}
+      value={!!isScreenshotToReportEnabled}
+      changeValueImmediately={false}
+      onValueChange={toggleScreenshotToReport}
+    />
+  );
+});
+
+export function LabelScreenshotToReport() {
+  const { disableScreenshotToReportUntil } = useScreenshotToReportEnabled();
+  const { colors } = useTheme2024();
+
+  const [spinner, setSpinner] = React.useState(false);
+  useInterval(() => {
+    if (NEED_DEVSETTINGBLOCKS) {
+      // trigger countDown re-calculated
+      setSpinner(prev => !prev);
+    }
+  }, 500);
+
+  const { text: timeOffset, mins } = React.useMemo(() => {
+    spinner;
+    if (disableScreenshotToReportUntil === Infinity) {
+      return { text: `∞`, mins: 0 };
+    }
+    const diffMs = Math.max(disableScreenshotToReportUntil - Date.now(), 0);
+
+    const timeSpans = getTimeSpanByMs(diffMs);
+
+    return {
+      mins: timeSpans.m,
+      text: [
+        timeSpans.d ? `${timeSpans.d}d` : '',
+        timeSpans.h ? `${timeSpans.h}h` : '',
+        timeSpans.m ? `${timeSpans.m}m` : '',
+        timeSpans.s ? `${timeSpans.s}s` : '',
+      ].join(' '),
+    };
+  }, [disableScreenshotToReportUntil, spinner]);
+
+  return (
+    <Text
+      style={{
+        color:
+          mins < 5
+            ? colors['green-default']
+            : mins < 8
+            ? colors['orange-default']
+            : colors['red-default'],
+      }}>
+      {timeOffset}
+    </Text>
+  );
+}

@@ -2388,9 +2388,7 @@
       "feedbackInput": {
         "placeholder": "Mô tả vấn đề"
       },
-      "feedbackLabel": "Mô tả lỗi:",
-      "submitButtonText": "Gửi đi",
-      "title": "Ảnh chụp màn hình để báo cáo lỗi"
+      "submitButtonText": "Gửi đi"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "Mô tả:",
@@ -2399,9 +2397,7 @@
       "repliedTitle": "Hỗ trợ Rabby đã phản hồi:",
       "issueDescription": "Đây là vấn đề bạn đã báo cáo:"
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "Gửi thành công"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "Nhập khẩu bằng Seed Phrase",

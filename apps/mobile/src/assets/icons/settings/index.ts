@@ -163,3 +163,12 @@ export const RcI18n = makeThemeIcon2024FromCC(RcI18nCC, ctx => ({
   onLight: ctx.colors2024['brand-default'],
   onDark: ctx.colors2024['brand-default'],
 }));
+
+import { default as RcScreenshotReportCC } from './screenshot-report-cc.svg';
+export const RcScreenshotReport = makeThemeIcon2024FromCC(
+  RcScreenshotReportCC,
+  ctx => ({
+    onLight: ctx.colors2024['brand-default'],
+    onDark: ctx.colors2024['brand-default'],
+  }),
+);
