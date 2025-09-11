@@ -24,49 +24,11 @@ import { formatAmount } from '@/utils/math';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { wrapAbortableFn } from '@/databases/sync/utils';
-import { atomByMMKV } from '@/core/storage/mmkv';
-import { useAtom } from 'jotai';
 
 type LocalDBTokenItem = TokenItem & {
   _db_id?: TokenItemEntity['_db_id'];
   owner_addr: TokenItemEntity['owner_addr'];
 };
-
-const tokensByAddrAtom = atomByMMKV<Record<string, LocalDBTokenItem[]>>(
-  '@TokenSelectorByAddr',
-  {},
-);
-function useTokensByAddr() {
-  const [tokensByAddr, setTokensByAddr] = useAtom(tokensByAddrAtom);
-
-  const cacheTokensByAddr = useCallback(
-    (address: string, tokens: LocalDBTokenItem[]) => {
-      const addr = address.toLowerCase();
-
-      setTokensByAddr(prev => {
-        return {
-          ...prev,
-          [addr]: tokens,
-        };
-      });
-
-      return tokens;
-    },
-    [setTokensByAddr],
-  );
-
-  const getTokensByAddr = useCallback(
-    (address: string) => {
-      return tokensByAddr[address.toLowerCase()] || [];
-    },
-    [tokensByAddr],
-  );
-
-  return {
-    cacheTokensByAddr,
-    getTokensByAddr,
-  };
-}
 
 export const useSelectTokens = ({
   currentAccount: _currentAccount,
