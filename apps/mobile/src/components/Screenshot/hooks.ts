@@ -17,20 +17,18 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { useAtomCallback } from 'jotai/utils';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
-import { toast } from '@/components2024/Toast';
 import { useRefState } from '@/hooks/common/useRefState';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
-import i18next from 'i18next';
 
 export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = IS_ANDROID && !__DEV__;
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 const screenshotFeedbackAtom = atomByMMKV('@screenshotFeedback', {
   viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   feedbacks: [] as LocalUserFeedbackItem[],
-  disableScreenshotToReportUntil: -1,
+  disableScreenshotToReportUntil: Infinity,
 });
 
 function isEnabledScreenshotToReport(
