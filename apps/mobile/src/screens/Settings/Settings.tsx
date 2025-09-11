@@ -29,6 +29,7 @@ import {
   RcI18n,
   RcFaceId,
   RcFingerprint,
+  RcIconCurrency,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -142,6 +143,10 @@ import {
   DevModalReactotron,
   useReactotronModalVisible,
 } from './Modals/DevModalReactotron';
+import {
+  CurrencySelectorPopup,
+  useCurrentCurrencyVisible,
+} from './sheetModals/CurrencySelectorPopup';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -225,6 +230,8 @@ function SettingsBlocks() {
   const { currentLangLabel, setCurrentLanguageModalVisible } =
     useCurrentLanguageModalVisible();
 
+  const { currency, setIsShowCurrencyPopup } = useCurrentCurrencyVisible();
+
   const disabledBiometrics =
     !couldSetupBiometrics || !APP_FEATURE_SWITCH.biometricsAuth;
 
@@ -286,6 +293,16 @@ function SettingsBlocks() {
             },
             rightTextNode: (
               <Text style={styles.rightText}>{currentLangLabel}</Text>
+            ),
+          },
+          {
+            label: t('page.setting.currency'),
+            icon: RcIconCurrency,
+            onPress: () => {
+              setIsShowCurrencyPopup(true);
+            },
+            rightTextNode: (
+              <Text style={styles.rightText}>{currency?.currency_name}</Text>
             ),
           },
           {
@@ -522,6 +539,8 @@ function SettingsBlocks() {
       <SelectAutolockTimeBottomSheetModal ref={selectAutolockTimeRef} />
 
       <CurrentLanguageSelectorModal />
+
+      <CurrencySelectorPopup />
     </>
   );
 }

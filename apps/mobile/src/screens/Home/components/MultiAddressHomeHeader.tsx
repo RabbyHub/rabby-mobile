@@ -39,7 +39,7 @@ import {
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
 import { usePinnedAccountList } from '@/hooks/account';
-import { getChangeData } from '@/hooks/useCurve';
+import { formatSmallCurrencyValue, getChangeData } from '@/hooks/useCurve';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
 import { AddressItemContextMenu } from '@/screens/Address/components/AddressItemContextMenu';
@@ -51,6 +51,7 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { useHideBalance } from '../hooks/useHideBalance';
 import { useMemoizedFn } from 'ahooks';
 import { BlurView } from '@react-native-community/blur';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const HeaderHeight = 24;
 
@@ -69,6 +70,7 @@ export function MultiAddressHomeHeader(
   const spinValue = useRef(new Animated.Value(0)).current;
   const { remoteVersion } = useUpgradeInfo();
   const { isDisConnect } = useGlobalStatus();
+  const { currency, formatCurrentCurrency } = useCurrency();
 
   const pinnedAccountList = usePinnedAccountList();
   const [hideType, setHideType] = useHideBalance();
@@ -128,8 +130,8 @@ export function MultiAddressHomeHeader(
   const percentChange = useMemo(() => {
     return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
       data.isLoss ? '-' : '+'
-    }${data.change})`;
-  }, [data]);
+    }${formatCurrentCurrency(data.rawChange)})`;
+  }, [data.changePercent, data.isLoss, data.rawChange, formatCurrentCurrency]);
 
   useEffect(() => {
     if (loading) {
@@ -265,7 +267,10 @@ export function MultiAddressHomeHeader(
                         styles.netWorth,
                         hideType === 'HALF_HIDE' ? styles.halfOpacity : null,
                       ]}>
-                      {data.netWorth}
+                      {/* {data.netWorth} */}
+                      {formatSmallCurrencyValue(data.rawNetWorth, {
+                        currency,
+                      })}
                     </Text>
                   )}
                   {loadingNewCurve ? (
@@ -332,7 +337,7 @@ export function MultiAddressHomeHeader(
                           {({
                             WalletIcon,
                             WalletName,
-                            WalletBalance,
+                            // WalletBalance,
                             WalletPin,
                           }) => (
                             <View style={styles.accountItem}>
@@ -368,9 +373,18 @@ export function MultiAddressHomeHeader(
                                           ? styles.halfOpacity
                                           : null,
                                       ]}>
-                                      <WalletBalance
-                                        style={styles.accountBalance}
-                                      />
+                                      <Text style={styles.accountBalance}>
+                                        {formatCurrentCurrency(
+                                          item.balance || 0,
+                                        )}
+                                        {/* {formatCurrentCurrency(
+                                          !item.balance
+                                            ? 0
+                                            : item.balance > 10
+                                            ? Math.floor(item.balance)
+                                            : item.balance.toFixed(2),
+                                        )} */}
+                                      </Text>
                                       {typeof item.changePercent ===
                                       'string' ? (
                                         <Text

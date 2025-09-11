@@ -88,7 +88,7 @@ export const numberWithCommasIsLtOne = (
 };
 
 export const formatNumber = (
-  num: string | number,
+  num: string | number | BigNumber,
   decimal = 2,
   opt = {} as BigNumber.Format,
   formatMillion = false,
@@ -164,6 +164,43 @@ export const formatUsdValue = (
     return `$${formatNumber(value, decimal, {}, formatMillion)}`;
   }
   return '<$0.01';
+};
+
+export const formatCurrency = (
+  value: string | number,
+  options?: {
+    decimal?: number;
+    formatMillion?: boolean;
+    currency?: {
+      currency_name: string;
+      currency_code: string;
+      usd_exchange_rate: number;
+    };
+  },
+) => {
+  const {
+    decimal,
+    formatMillion,
+    currency = {
+      currency_name: 'USD',
+      currency_code: '$',
+      usd_exchange_rate: 1,
+    },
+  } = options || {};
+  const bnValue = new BigNumber(value).times(currency.usd_exchange_rate);
+  const symbol = currency.currency_code;
+  if (bnValue.lt(0)) {
+    return `-${symbol}${formatNumber(
+      bnValue.absoluteValue(),
+      decimal,
+      {},
+      formatMillion,
+    )}`;
+  }
+  if (bnValue.gte(0.01) || bnValue.eq(0)) {
+    return `${symbol}${formatNumber(bnValue, decimal, {}, formatMillion)}`;
+  }
+  return `<${symbol}0.01`;
 };
 
 export const formatPerpsNumber = (

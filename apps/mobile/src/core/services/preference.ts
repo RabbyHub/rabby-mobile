@@ -175,6 +175,8 @@ export interface PreferenceStore {
   lastReportTime?: number;
 
   balanceHideType?: BALANCE_HIDE_TYPE;
+
+  currency?: string;
 }
 
 export interface AddressSortStore {
@@ -253,6 +255,7 @@ export class PreferenceService {
           hasOpenCopyTrading: false,
           watchlistSkip: false,
           balanceHideType: BALANCE_HIDE_TYPE.SHOW,
+          currency: 'USD',
         },
       },
       {
