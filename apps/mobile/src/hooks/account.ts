@@ -30,7 +30,7 @@ import { useAtomicRequest } from './common/useAtomicAction';
 import { appServiceEvents } from '@/core/services/_utils';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { deleteDBResourceForAddress } from '@/databases/sync/assets';
-import { filterMyAccounts, stableSortByAddress } from '@/utils/account';
+import { filterMyAccounts } from '@/utils/account';
 import { isEqual, unionBy } from 'lodash';
 import { BalanceEntity } from '@/databases/entities/balance';
 import { useHistoryTokenDict } from './historyTokenDict';

@@ -1,7 +1,7 @@
 import { useAccounts } from '@/hooks/account';
 import { useCreationWithDeepCompare } from '@/hooks/common/useMemozied';
 import { useSortAddressList } from '@/screens/Address/useSortAddressList';
-import { filterMyAccounts, stableSortByAddress } from '@/utils/account';
+import { filterMyAccounts } from '@/utils/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useCreation } from 'ahooks';
@@ -68,7 +68,7 @@ export const useAccountInfo = () => {
   }, [notTop10Addresses, gnosisAccounts, watchAccounts]);
 
   const top10Addresses = useCreationWithDeepCompare(() => {
-    return stableSortByAddress(top10AddressesOrig);
+    return top10AddressesOrig;
   }, [top10AddressesOrig]);
 
   return {
