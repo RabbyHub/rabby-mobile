@@ -90,7 +90,6 @@ export async function getScreenshotFeedbackExtra({
     manufacturer: runTryCatch(() => DeviceInfo.getManufacturerSync()),
 
     isLandscape: runTryCatch(() => DeviceInfo.isLandscapeSync()),
-    isLandscapeSync: runTryCatch(() => DeviceInfo.isLandscapeSync()),
     isTablet: runTryCatch(() => DeviceInfo.isTablet()),
     isLowRamDevice: runTryCatch(() => DeviceInfo.isLowRamDevice()),
     isDisplayZoomed: runTryCatch(() => DeviceInfo.isDisplayZoomed()),

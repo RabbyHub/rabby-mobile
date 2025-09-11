@@ -34,9 +34,13 @@ const screenshotFeedbackAtom = atomByMMKV('@screenshotFeedback', {
 function isEnabledScreenshotToReport(
   disableScreenshotToReportUntil?: number | null,
 ) {
-  if (!disableScreenshotToReportUntil) return true;
+  if (
+    disableScreenshotToReportUntil === null ||
+    disableScreenshotToReportUntil === undefined
+  )
+    return false;
 
-  return (disableScreenshotToReportUntil || 0) < Date.now();
+  return disableScreenshotToReportUntil < Date.now();
 }
 
 export function useScreenshotToReportEnabled() {
