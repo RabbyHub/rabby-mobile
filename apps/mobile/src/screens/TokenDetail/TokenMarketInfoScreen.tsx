@@ -752,7 +752,6 @@ export const TokenMarketInfoScreen = () => {
                 />
               )}
             </View>
-            <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
             <View style={{ height: isAndroid ? 200 + safeOffBottom : 156 }} />
           </ScrollView>
         </Tabs.Tab>
@@ -763,6 +762,7 @@ export const TokenMarketInfoScreen = () => {
             }
             style={styles.innerContainer}>
             {riskInfo.content}
+            <TokenChainAndContract token={token} tokenEntity={tokenEntity} />
             <IssuerAndListSite
               tokenEntity={tokenEntity}
               entityLoading={entityLoading}

@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -25,6 +25,9 @@ interface Props {
   tokenEntity?: TokenEntityDetail;
   entityLoading: boolean;
 }
+
+// TODO: get tag_names from tokenEntity
+const tag_names = ['Memo', 'Layer1', 'Liquid Staking'];
 
 const DomainUrlLink = ({
   url,
@@ -111,6 +114,20 @@ const ExpandableDescription = ({
     [description, hasCalculated],
   );
 
+  const tagNamesContent = useMemo(() => {
+    return tag_names.length > 0 ? (
+      <View style={styles.tagContainer}>
+        {tag_names.map(item => {
+          return (
+            <Text style={styles.tagText} key={item}>
+              {item}
+            </Text>
+          );
+        })}
+      </View>
+    ) : null;
+  }, [styles.tagContainer, styles.tagText]);
+
   // If the outer layer is loading, display the title and skeleton
   if (entityLoading) {
     return null;
@@ -154,6 +171,7 @@ const ExpandableDescription = ({
               {t('page.tokenDetail.Fold')}
             </Text>
           </Text>
+          {tagNamesContent}
           <View
             style={{
               ...styles.horizontalLine,
@@ -215,6 +233,7 @@ const ExpandableDescription = ({
             </Text>
           )}
         </Text>
+        {tagNamesContent}
       </View>
     </>
   );
@@ -660,5 +679,22 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 4,
     width: '75%',
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 16,
+  },
+  tagText: {
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
 }));
