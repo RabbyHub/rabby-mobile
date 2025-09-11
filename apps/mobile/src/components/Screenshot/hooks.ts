@@ -28,12 +28,19 @@ type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 const screenshotFeedbackAtom = atomByMMKV('@screenshotFeedback', {
   viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   feedbacks: [] as LocalUserFeedbackItem[],
-  disableScreenshotToReportUntil: Infinity,
+  showFeedbackOnScreenshot: false,
+  disableScreenshotToReportUntil: -1,
 });
 
-function isEnabledScreenshotToReport(
-  disableScreenshotToReportUntil?: number | null,
-) {
+function isEnabledScreenshotToReport({
+  showFeedbackOnScreenshot,
+  disableScreenshotToReportUntil,
+}: {
+  showFeedbackOnScreenshot: boolean | null;
+  disableScreenshotToReportUntil?: number | null;
+}) {
+  if (!showFeedbackOnScreenshot) return false;
+
   if (
     disableScreenshotToReportUntil === null ||
     disableScreenshotToReportUntil === undefined
@@ -48,40 +55,39 @@ export function useScreenshotToReportEnabled() {
     screenshotFeedbackAtom,
   );
 
-  const isScreenshotToReportEnabled = useMemo(() => {
-    return isEnabledScreenshotToReport(
-      screenshotFeedback.disableScreenshotToReportUntil,
-    );
-  }, [screenshotFeedback.disableScreenshotToReportUntil]);
+  const isShowFeedbackOnScreenshot = useMemo(() => {
+    return !!screenshotFeedback.showFeedbackOnScreenshot;
+  }, [screenshotFeedback]);
 
   const toggleScreenshotToReport = useCallback(
-    (nextVal?: boolean | number | 'skipIn24hours') => {
+    (nextVal?: boolean) => {
       setScreenshotFeedback(prev => {
         if (nextVal === undefined) {
-          const prevEnabled = isEnabledScreenshotToReport(
-            prev.disableScreenshotToReportUntil,
-          );
+          const prevEnabled = !!prev.showFeedbackOnScreenshot;
           nextVal = !prevEnabled;
-        } else if (nextVal === 'skipIn24hours') {
-          nextVal = Date.now() + 24 * 60 * 60 * 1000;
         }
 
-        if (typeof nextVal === 'number') {
-          if (__DEV__ && nextVal < Date.now()) {
-            console.warn(
-              `Screenshot reporting disabled until ${new Date(
-                nextVal,
-              ).toLocaleString()}, which is earlier than now(${new Date().toLocaleDateString()}), it would disable the function.`,
-            );
-          }
+        return {
+          ...prev,
+          showFeedbackOnScreenshot: nextVal,
+        };
+      });
+    },
+    [setScreenshotFeedback],
+  );
+
+  const toggleSkipReportIn24Hours = useCallback(
+    (nextVal: boolean = true) => {
+      setScreenshotFeedback(prev => {
+        if (nextVal) {
           return {
             ...prev,
-            disableScreenshotToReportUntil: nextVal,
+            disableScreenshotToReportUntil: Date.now() + 24 * 60 * 60 * 1000,
           };
         } else {
           return {
             ...prev,
-            disableScreenshotToReportUntil: !!nextVal ? -1 : Infinity,
+            disableScreenshotToReportUntil: -1,
           };
         }
       });
@@ -92,18 +98,15 @@ export function useScreenshotToReportEnabled() {
   return {
     disableScreenshotToReportUntil:
       screenshotFeedback.disableScreenshotToReportUntil,
-    isScreenshotToReportEnabled,
+    isShowFeedbackOnScreenshot,
     toggleScreenshotToReport,
+    toggleSkipReportIn24Hours,
   };
 }
 
 export function useGetShowFeedbackOnScreenshotCapture() {
   const getShowFeedbackOnScreenshotCapture = useAtomCallback(get => {
-    if (!isNonPublicProductionEnv) return true;
-
-    return isEnabledScreenshotToReport(
-      get(screenshotFeedbackAtom).disableScreenshotToReportUntil,
-    );
+    return isEnabledScreenshotToReport(get(screenshotFeedbackAtom));
   });
 
   return { getShowFeedbackOnScreenshotCapture };
@@ -476,7 +479,7 @@ export function useSubmitFeedbackOnScreenshot() {
     useFeedbackOnScreenshot();
   const { onFeedbackSubmitted } = useScreenshotFeedbacks();
 
-  const { toggleScreenshotToReport } = useScreenshotToReportEnabled();
+  const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
 
   const closeSubmitModal = useCallback(
     ({
@@ -484,7 +487,7 @@ export function useSubmitFeedbackOnScreenshot() {
       clearText = true,
     }: { skipInNext1Day?: boolean; clearText?: boolean } = {}) => {
       if (skipInNext1Day) {
-        toggleScreenshotToReport('skipIn24hours');
+        toggleSkipReportIn24Hours(true);
       }
       setSubmitFeedbackOnScreenshot(prev => ({
         ...prev,
@@ -494,7 +497,7 @@ export function useSubmitFeedbackOnScreenshot() {
         uploadedImageUrl: '',
       }));
     },
-    [toggleScreenshotToReport, setSubmitFeedbackOnScreenshot],
+    [toggleSkipReportIn24Hours, setSubmitFeedbackOnScreenshot],
   );
 
   const { stateRef: isSubmittingRef, setRefState: setSubmitting } =

@@ -13,12 +13,12 @@ export const SwitchScreenshotToReport = React.forwardRef<
   SwitchToggleType,
   React.ComponentProps<typeof AppSwitch2024>
 >((props, ref) => {
-  const { isScreenshotToReportEnabled, toggleScreenshotToReport } =
+  const { isShowFeedbackOnScreenshot, toggleScreenshotToReport } =
     useScreenshotToReportEnabled();
 
   React.useImperativeHandle(ref, () => ({
     toggle: (enabled?: boolean) => {
-      toggleScreenshotToReport(enabled ?? !isScreenshotToReportEnabled);
+      toggleScreenshotToReport(enabled);
     },
   }));
 
@@ -26,7 +26,7 @@ export const SwitchScreenshotToReport = React.forwardRef<
     <AppSwitch2024
       {...props}
       circleSize={20}
-      value={!!isScreenshotToReportEnabled}
+      value={!!isShowFeedbackOnScreenshot}
       changeValueImmediately={false}
       onValueChange={toggleScreenshotToReport}
     />

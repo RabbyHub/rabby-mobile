@@ -22,7 +22,10 @@ import { IS_IOS } from '@/core/native/utils';
 import { SwitchAllowScreenshot } from '../components/SwitchAllowScreenshot';
 import { useExpScreenCapture } from '@/hooks/appSettings';
 import { LabelScreenshotToReport } from '../components/SwitchScreenshotToReport';
-import { useScreenshotToReportEnabled } from '@/components/Screenshot/hooks';
+import {
+  useGetShowFeedbackOnScreenshotCapture,
+  useScreenshotToReportEnabled,
+} from '@/components/Screenshot/hooks';
 
 const devScreenRecordingModalVisibleAtom = atom(false);
 export function useDevScreenRecordingModalVisiable() {
@@ -65,7 +68,10 @@ export default function DevScreenRecordingModal({
   const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
 
-  const { isScreenshotToReportEnabled } = useScreenshotToReportEnabled();
+  const { getShowFeedbackOnScreenshotCapture } =
+    useGetShowFeedbackOnScreenshotCapture();
+  const isScreenshotReportEnabled = getShowFeedbackOnScreenshotCapture();
+  const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
 
   const Items = (() => {
     const list: DevTestItem[] = [
@@ -85,17 +91,19 @@ export default function DevScreenRecordingModal({
         visible: isNonPublicProductionEnv,
       },
       {
-        label: isScreenshotToReportEnabled
+        label: isScreenshotReportEnabled
           ? 'Report on screenshot now'
           : 'Disable Screenshot Until',
         icon: <RcCountdown style={styles.labelIcon} />,
-        // onPress: () => {},
+        onPress: () => {
+          toggleSkipReportIn24Hours(false);
+        },
         rightNode: (
           <Text>
-            {isScreenshotToReportEnabled ? null : <LabelScreenshotToReport />}
+            {isScreenshotReportEnabled ? null : <LabelScreenshotToReport />}
           </Text>
         ),
-        visible: !isScreenshotToReportEnabled,
+        visible: !isScreenshotReportEnabled,
       },
     ];
 
