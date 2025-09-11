@@ -65,6 +65,7 @@ import TradingViewCandleChart, {
 import TimePanel from './components/TimePanel';
 import MarketInfo from './components/MarketInfo';
 import { atomByMMKV } from '@/core/storage/mmkv';
+import ActivityAndHolders from './components/Market/ActivityAndHolders';
 
 const currentIntervalAtom = atomByMMKV<CandlePeriod>(
   '@tokenDetail.currentInterval',
@@ -752,6 +753,7 @@ export const TokenMarketInfoScreen = () => {
                 />
               )}
             </View>
+            <ActivityAndHolders />
             <View style={{ height: isAndroid ? 200 + safeOffBottom : 156 }} />
           </ScrollView>
         </Tabs.Tab>

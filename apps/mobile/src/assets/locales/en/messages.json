@@ -1861,7 +1861,10 @@
         "volume24h": "24h Volume",
         "txns24h": "24h Txns",
         "holders": "Holders",
-        "empty": "No Data"
+        "empty": "No Data",
+        "activity": "Activity",
+        "summary": "Summary",
+        "details": "Details"
       }
     },
     "defiDetail": {
