@@ -49,28 +49,46 @@ export const AccountInfo: React.FC<Props> = ({
 
   return (
     <View style={styles.wrapper}>
-      <View style={styles.addressInfoContainer}>
-        <View style={styles.addressContainer}>
-          <BrandIcon width={20} height={20} />
-          <Tip content={enableNicknameTip ? nickname : undefined}>
-            <TruncatedText
-              onTruncate={setEnableNicknameTip}
-              text={nickname}
-              numberOfLines={1}
-              style={styles.nickname}
-            />
-          </Tip>
-          <AddressViewer
-            addressStyle={styles.addressStyle}
-            disabledPress
-            showArrow={false}
-            address={account.address}
+      <BrandIcon
+        width={20}
+        height={20}
+        style={{
+          flexShrink: 0,
+        }}
+      />
+      <View style={styles.ellipsis}>
+        <Tip content={enableNicknameTip ? nickname : undefined}>
+          <TruncatedText
+            onTruncate={setEnableNicknameTip}
+            text={nickname}
+            numberOfLines={1}
+            style={styles.nickname}
           />
-        </View>
-        {isTestnet ? null : (
-          <Text style={styles.balance}>${displayBalance}</Text>
-        )}
+        </Tip>
       </View>
+
+      <AddressViewer
+        addressStyle={[
+          styles.addressStyle,
+          {
+            flexShrink: 0,
+          },
+        ]}
+        disabledPress
+        showArrow={false}
+        address={account.address}
+      />
+      {isTestnet ? null : (
+        <Text
+          style={[
+            styles.balance,
+            {
+              flexShrink: 0,
+            },
+          ]}>
+          ${displayBalance}
+        </Text>
+      )}
     </View>
   );
 };
@@ -81,13 +99,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
-  },
-  addressInfoContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    height: 18,
-    gap: 16,
+    flexWrap: 'nowrap',
+    overflow: 'hidden',
+    gap: 6,
   },
   addressContainer: {
     gap: 6,
@@ -120,5 +136,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     color: colors2024['neutral-foot'],
     lineHeight: 16,
+    marginLeft: 'auto',
+  },
+  ellipsis: {
+    flexShrink: 1,
+    minWidth: 0,
+    maxWidth: '100%',
   },
 }));
