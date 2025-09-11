@@ -32,7 +32,7 @@ import { PerpsSelectTokenPopup } from './PerpsSelectTokenPopup';
 import { useUsdInput } from '@/hooks/useUsdInput';
 import AuthButton from '@/components2024/AuthButton';
 import { isAccountSupportDirectSign } from '@/utils/account';
-import { formatTokenAmount } from '@debank/common';
+import { CHAINS_ENUM, formatTokenAmount } from '@debank/common';
 import { PerpBridgeQuote, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain } from '@/utils/chain';
 import { abiCoder } from '@/core/apis/sendRequest';
@@ -40,6 +40,7 @@ import { getERC20Allowance } from '@/core/apis/provider';
 import { approveToken } from '@/core/apis/approvals';
 import { Linear } from '@/screens/Transaction/components/SkeletonCard';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
+import { ETH_USDT_CONTRACT } from '@/constant/swap';
 
 export interface PerpBridgeHistory {
   from_chain_id: string;
@@ -241,11 +242,33 @@ export const PerpsDepositPopup: React.FC<{
               new BigNumber(amount).times(10 ** token.decimals),
             );
           }
+
+          let shouldTwoStepApprove = false;
+          if (
+            fromChain?.enum === CHAINS_ENUM.ETH &&
+            isSameAddress(token.id, ETH_USDT_CONTRACT) &&
+            Number(allowance) !== 0 &&
+            !tokenApproved
+          ) {
+            shouldTwoStepApprove = true;
+          }
           if (controller.signal.aborted) {
             return;
           }
           if (res.tx) {
             if (!tokenApproved) {
+              if (shouldTwoStepApprove) {
+                const resp = await approveToken({
+                  chainServerId: token.chain,
+                  id: token._tokenId,
+                  spender: res.approve_contract_id,
+                  amount: 0,
+                  account: account,
+                  isBuild: true,
+                });
+                targetTxs.push(resp.params[0]);
+              }
+
               const resp = await approveToken({
                 chainServerId: token.chain,
                 id: token._tokenId,
@@ -256,9 +279,16 @@ export const PerpsDepositPopup: React.FC<{
               });
               targetTxs.push(resp.params[0]);
             }
-
+            const bridgeTx = {
+              from: res.tx.from,
+              to: res.tx.to,
+              value: res.tx.value,
+              data: res.tx.data,
+              chainId: res.tx.chainId,
+            } as Tx;
+            targetTxs.push(bridgeTx);
+            setTxs(targetTxs);
             setBridgeQuote(res);
-            targetTxs.push(res.tx);
             setQuoteLoading(false);
             setCacheBridgeHistory({
               from_chain_id: token.chain,
@@ -267,7 +297,6 @@ export const PerpsDepositPopup: React.FC<{
               to_token_amount: res.to_token_amount,
               tx: res.tx,
             });
-            setTxs(targetTxs);
           } else {
             setBridgeQuote(null);
             setTxs([]);
