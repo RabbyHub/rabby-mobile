@@ -177,7 +177,7 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
                       ]}
                       type="ghost"
                       disabled={isSubmitting}
-                      loading={isSubmitting}
+                      // loading={isSubmitting}
                       loadingStyle={styles.buttonLoading}
                       onPress={wrapOnPress(() => {
                         closeSubmitModal({ skipInNext1Day });
@@ -198,8 +198,8 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
                         styles.submitButtonTitle,
                       ]}
                       type="primary"
-                      disabled={!canSubmitFeedback}
-                      loading={isSubmitting}
+                      disabled={isSubmitting || !canSubmitFeedback}
+                      // loading={isSubmitting}
                       loadingStyle={styles.buttonLoading}
                       onPress={wrapOnPress(evt => {
                         submitFeedbackByScreenshot();
