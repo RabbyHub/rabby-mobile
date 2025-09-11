@@ -14,10 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import {
-  useScreenshotToReportEnabled,
-  useSubmitFeedbackOnScreenshot,
-} from './hooks';
+import { useSubmitFeedbackOnScreenshot } from './hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 
 import { Button } from '@/components2024/Button';
@@ -25,8 +22,7 @@ import { FontWeightEnum } from '@/core/utils/fonts';
 import ModalInput from './ModalInput';
 import { toast } from '@/components2024/Toast';
 
-import RcUncheckbox from './icons/checkbox-empty.svg';
-import RcCheckbox from './icons/checkbox-filled.svg';
+import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
 
 function SwitchTextLine({
   checked,
@@ -39,12 +35,14 @@ function SwitchTextLine({
   const { styles } = useTheme2024({ getStyle: getSwitchLineStyle });
   const { t } = useTranslation();
 
-  const IconComp = checked ? RcCheckbox : RcUncheckbox;
+  const IconComp = checked
+    ? ICONS_COMMON_2024.RcCheckboxFilledBrand
+    : ICONS_COMMON_2024.RcCheckboxEmpty;
 
   return (
     <View style={[styles.switchArea, style]}>
       <TouchableOpacity
-        activeOpacity={0.7}
+        activeOpacity={0.5}
         style={styles.switchPressable}
         onPress={() => onChange(!checked)}>
         <IconComp style={{ marginRight: 4 }} width={24} height={24} />
@@ -75,7 +73,7 @@ const getSwitchLineStyle = createGetStyles2024(ctx => {
       height: 24,
     },
     skipText: {
-      color: '#9A9CA9',
+      color: ctx.isLight ? '#9A9CA9' : ctx.colors2024['neutral-info'],
       fontFamily: 'SF Pro Rounded',
       fontSize: 12,
       fontStyle: 'normal',
