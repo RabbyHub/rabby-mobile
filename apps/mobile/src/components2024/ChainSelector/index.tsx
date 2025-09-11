@@ -85,6 +85,7 @@ export const ChainSelector = ({
       account,
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
+        rootViewType: 'View',
       },
       onChange: chain => {
         removeGlobalBottomSheetModal2024(id);

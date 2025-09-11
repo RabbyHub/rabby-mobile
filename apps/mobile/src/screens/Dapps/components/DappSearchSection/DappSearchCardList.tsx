@@ -66,6 +66,9 @@ export const DappSearchCardList = ({
       hideTestnetTab: true,
       titleText: t('page.receiveAddressList.selectChainTitle'),
       account,
+      bottomSheetModalProps: {
+        rootViewType: 'View',
+      },
       onChange: (v: CHAINS_ENUM) => {
         onChainChange?.(v);
         removeGlobalBottomSheetModal2024(id);
