@@ -49,7 +49,7 @@ export async function getScreenshotFeedbackExtra({
   const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
   const myAccountList = await getAllAccounts();
-  const myFirstAddress = myAccountList[0]?.address;
+  let myFirstCallableAddress = '';
   const {
     callables: myCallableAddressCount,
     uncallables: myUncallableAddressCount,
@@ -59,6 +59,7 @@ export async function getScreenshotFeedbackExtra({
         item.type !== KEYRING_TYPE.WatchAddressKeyring &&
         item.type !== KEYRING_TYPE.GnosisKeyring
       ) {
+        myFirstCallableAddress = myFirstCallableAddress || item.address;
         acc.callables += 1;
       } else {
         acc.uncallables += 1;
@@ -79,7 +80,7 @@ export async function getScreenshotFeedbackExtra({
     applicationId: APPLICATION_ID,
     myCallableAddressCount,
     myUncallableAddressCount,
-    myFirstAddress,
+    myFirstAddress: myFirstCallableAddress,
     myCurrentAddress,
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
