@@ -311,122 +311,126 @@ export function MultiAddressHomeHeader(
                 </Text>
                 <RcIconSmallArrow />
               </View>
-              <View style={styles.accountList}>
-                {addressListData?.map(item => {
-                  const isZeroPercentChange = item.changePercent === '0%';
-                  return (
-                    <AddressItemContextMenu
-                      account={item}
-                      preViewBorderRadius={16}
-                      key={`${item.type}-${item.address}`}
-                      actions={['copy', 'pin', 'edit', 'delete']}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          trigger('impactLight', {
-                            enableVibrateFallback: true,
-                            ignoreAndroidSystemSettings: false,
-                          });
-                          navigation.push(RootNames.SingleAddressStack, {
-                            screen: RootNames.SingleAddressHome,
-                            params: {
-                              account: item,
-                            },
-                          });
-                        }}>
-                        <AddressItem account={item} fetchAccount={false}>
-                          {({
-                            WalletIcon,
-                            WalletName,
-                            // WalletBalance,
-                            WalletPin,
-                          }) => (
-                            <View style={styles.accountItem}>
-                              <WalletIcon
-                                width={46}
-                                height={46}
-                                borderRadius={12}
-                              />
-                              <View style={styles.accountContent}>
-                                {hideType === 'HIDE' ? (
-                                  <>
-                                    <Text style={styles.accountName}>
-                                      *****
-                                    </Text>
-                                    <Text style={styles.accountBalance}>
-                                      *****
-                                    </Text>
-                                  </>
-                                ) : (
-                                  <>
-                                    <WalletName
-                                      style={[
-                                        styles.accountName,
-                                        hideType === 'HALF_HIDE'
-                                          ? styles.halfOpacity
-                                          : null,
-                                      ]}
-                                    />
-                                    <View
-                                      style={[
-                                        styles.accountBalanceRow,
-                                        hideType === 'HALF_HIDE'
-                                          ? styles.halfOpacity
-                                          : null,
-                                      ]}>
+              {addressListData?.length ? (
+                <View style={styles.accountList}>
+                  {addressListData?.map(item => {
+                    const isZeroPercentChange = item.changePercent === '0%';
+                    return (
+                      <AddressItemContextMenu
+                        account={item}
+                        preViewBorderRadius={16}
+                        key={`${item.type}-${item.address}`}
+                        actions={['copy', 'pin', 'edit', 'delete']}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            trigger('impactLight', {
+                              enableVibrateFallback: true,
+                              ignoreAndroidSystemSettings: false,
+                            });
+                            navigation.push(RootNames.SingleAddressStack, {
+                              screen: RootNames.SingleAddressHome,
+                              params: {
+                                account: item,
+                              },
+                            });
+                          }}>
+                          <AddressItem account={item} fetchAccount={false}>
+                            {({
+                              WalletIcon,
+                              WalletName,
+                              // WalletBalance,
+                              WalletPin,
+                            }) => (
+                              <View style={styles.accountItem}>
+                                <WalletIcon
+                                  width={46}
+                                  height={46}
+                                  borderRadius={12}
+                                />
+                                <View style={styles.accountContent}>
+                                  {hideType === 'HIDE' ? (
+                                    <>
+                                      <Text style={styles.accountName}>
+                                        *****
+                                      </Text>
                                       <Text style={styles.accountBalance}>
-                                        {formatCurrentCurrency(
-                                          item.balance || 0,
-                                        )}
-                                        {/* {formatCurrentCurrency(
+                                        *****
+                                      </Text>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <WalletName
+                                        style={[
+                                          styles.accountName,
+                                          hideType === 'HALF_HIDE'
+                                            ? styles.halfOpacity
+                                            : null,
+                                        ]}
+                                      />
+                                      <View
+                                        style={[
+                                          styles.accountBalanceRow,
+                                          hideType === 'HALF_HIDE'
+                                            ? styles.halfOpacity
+                                            : null,
+                                        ]}>
+                                        <Text style={styles.accountBalance}>
+                                          {formatCurrentCurrency(
+                                            item.balance || 0,
+                                          )}
+                                          {/* {formatCurrentCurrency(
                                           !item.balance
                                             ? 0
                                             : item.balance > 10
                                             ? Math.floor(item.balance)
                                             : item.balance.toFixed(2),
                                         )} */}
-                                      </Text>
-                                      {typeof item.changePercent ===
-                                      'string' ? (
-                                        <Text
-                                          style={[
-                                            styles.percent,
-                                            {
-                                              color: !isZeroPercentChange
-                                                ? data.isLoss
-                                                  ? colors2024['red-default']
-                                                  : colors2024['green-default']
-                                                : colors2024[
-                                                    'neutral-secondary'
-                                                  ],
-                                            },
-                                          ]}>{`${
-                                          isZeroPercentChange
-                                            ? ''
-                                            : item.isLoss
-                                            ? '-'
-                                            : '+'
-                                        }${item.changePercent}`}</Text>
-                                      ) : null}
-                                    </View>
-                                  </>
-                                )}
+                                        </Text>
+                                        {typeof item.changePercent ===
+                                        'string' ? (
+                                          <Text
+                                            style={[
+                                              styles.percent,
+                                              {
+                                                color: !isZeroPercentChange
+                                                  ? data.isLoss
+                                                    ? colors2024['red-default']
+                                                    : colors2024[
+                                                        'green-default'
+                                                      ]
+                                                  : colors2024[
+                                                      'neutral-secondary'
+                                                    ],
+                                              },
+                                            ]}>{`${
+                                            isZeroPercentChange
+                                              ? ''
+                                              : item.isLoss
+                                              ? '-'
+                                              : '+'
+                                          }${item.changePercent}`}</Text>
+                                        ) : null}
+                                      </View>
+                                    </>
+                                  )}
+                                </View>
+                                <View style={styles.accountItemExtra}>
+                                  <ArrowCircleCC
+                                    style={styles.arrow}
+                                    color={colors2024['neutral-body']}
+                                    backgroundColor={colors2024['neutral-bg-5']}
+                                  />
+                                </View>
+                                <WalletPin style={styles.walletPin} />
                               </View>
-                              <View style={styles.accountItemExtra}>
-                                <ArrowCircleCC
-                                  style={styles.arrow}
-                                  color={colors2024['neutral-body']}
-                                  backgroundColor={colors2024['neutral-bg-5']}
-                                />
-                              </View>
-                              <WalletPin style={styles.walletPin} />
-                            </View>
-                          )}
-                        </AddressItem>
-                      </TouchableOpacity>
-                    </AddressItemContextMenu>
-                  );
-                })}
-              </View>
+                            )}
+                          </AddressItem>
+                        </TouchableOpacity>
+                      </AddressItemContextMenu>
+                    );
+                  })}
+                </View>
+              ) : null}
               {hideType === 'HALF_HIDE' ? (
                 <View style={styles.accountCardMask}>
                   {Platform.OS === 'ios' ? (
