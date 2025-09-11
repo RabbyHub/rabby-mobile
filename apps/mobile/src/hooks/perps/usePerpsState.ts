@@ -64,8 +64,6 @@ export const usePerpsInitial = () => {
     fetchMarketData,
     fetchPerpFee,
     subscribeToUserData,
-    startPolling,
-    stopPolling,
     unsubscribeAll,
     logout: _logout,
   } = usePerpsStore();
@@ -303,17 +301,11 @@ export const usePerpsState = () => {
     fetchMarketData,
     fetchPerpFee,
     subscribeToUserData,
-    startPolling,
-    stopPolling,
     unsubscribeAll,
     logout: _logout,
   } = usePerpsStore();
   const { isInitialized, currentPerpsAccount, isLogin, positionAndOpenOrders } =
     perpsState;
-  // const wallet = useWallet();
-  const { accounts: accountsList } = useAccounts({
-    disableAutoFetch: true,
-  });
 
   const sendMiniSignTypedData = useSendMiniSignTypedData();
 
@@ -418,6 +410,26 @@ export const usePerpsState = () => {
 
     return signActions;
   });
+
+  const judgeIsUserAgentIsExpired = useMemoizedFn(
+    async (errorMessage: string) => {
+      const masterAddress = currentPerpsAccount?.address;
+      if (!masterAddress) {
+        return false;
+      }
+
+      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
+        masterAddress,
+      );
+      const agentAddress = agentWalletPreference?.agentAddress;
+      if (agentAddress && errorMessage.includes(agentAddress)) {
+        console.warn('handle action agent is expired, logout');
+        toast.error('Agent is expired, please login again');
+        logout(masterAddress);
+        return true;
+      }
+    },
+  );
 
   const executeSignatures = useMemoizedFn(
     async (signActions: SignAction[], account: Account): Promise<void> => {
@@ -747,6 +759,7 @@ export const usePerpsState = () => {
     userFills: perpsState.userFills,
     hasPermission: perpsState.hasPermission,
     homeHistoryList,
+    perpFee: perpsState.perpFee,
 
     // Actions
     login,
@@ -756,5 +769,8 @@ export const usePerpsState = () => {
     refreshData: refreshData,
     handleDeleteAgent,
     fetchMarketData,
+    fetchClearinghouseState,
+
+    judgeIsUserAgentIsExpired,
   };
 };

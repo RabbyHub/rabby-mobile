@@ -11,11 +11,13 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { PerpsPositionItem } from './PerpsPositionItem';
+import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
 
 export const PerpsPositionSection: React.FC<{
   positionAndOpenOrders?: PositionAndOpenOrder[];
   marketDataMap: MarketDataMap;
-}> = ({ positionAndOpenOrders, marketDataMap }) => {
+  onClosePosition: (position: AssetPosition['position']) => void;
+}> = ({ positionAndOpenOrders, marketDataMap, onClosePosition }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const navigation = useRabbyAppNavigation();
@@ -41,6 +43,7 @@ export const PerpsPositionSection: React.FC<{
             <PerpsPositionItem
               key={index}
               item={item.position}
+              onClosePosition={() => onClosePosition(item.position)}
               marketData={marketDataMap[item.position.coin]}
               onPress={() => {
                 navigation.push(RootNames.StackTransaction, {
@@ -98,6 +101,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   content: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
+    gap: 12,
   },
 }));

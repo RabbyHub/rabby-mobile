@@ -25,6 +25,9 @@ import BigNumber from 'bignumber.js';
 import { useAtom } from 'jotai';
 import { useState } from 'react';
 import abiCoderInst, { AbiCoder } from 'web3-eth-abi';
+import { PerpBridgeHistory } from '../components/PerpsDepositPopup';
+import { openapi } from '@/core/request';
+import { last } from 'lodash';
 const abiCoder = abiCoderInst as unknown as AbiCoder;
 
 export const usePerpsDeposit = ({
@@ -37,8 +40,6 @@ export const usePerpsDeposit = ({
     fetchUserNonFundingLedgerUpdates,
     setLocalLoadingHistory,
   } = usePerpsStore();
-  const [miniSignTx, setMiniSignTx] = useState<Tx | null>(null);
-  const [cacheAmount, setCacheAmount] = useState<number>(0);
 
   const {
     sendMiniTransactions,
@@ -51,224 +52,146 @@ export const usePerpsDeposit = ({
   // const runAuth = useAuth();
   const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
 
-  const updateMiniSignTx = useMemoizedFn((amount: number) => {
-    const token = ARB_USDC_TOKEN_ITEM;
-    const to = PERPS_SEND_ARB_USDC_ADDRESS;
+  const postPerpBridgeQuote = useMemoizedFn(
+    async (hash: string, cacheBridgeHistory?: PerpBridgeHistory) => {
+      if (!hash || !cacheBridgeHistory) {
+        throw new Error('No hash tx');
+      }
 
-    const chain = findChain({
-      serverId: token.chain,
-    })!;
-    const sendValue = new BigNumber(amount || 0)
-      .multipliedBy(10 ** token.decimals)
-      .decimalPlaces(0, BigNumber.ROUND_DOWN);
-    const dataInput = [
-      {
-        name: 'transfer',
-        type: 'function',
-        inputs: [
-          {
-            type: 'address',
-            name: 'to',
+      const res = await openapi.postPerpBridgeHistory({
+        from_chain_id: cacheBridgeHistory.from_chain_id,
+        from_token_id: cacheBridgeHistory.from_token_id,
+        from_token_amount: cacheBridgeHistory.from_token_amount,
+        to_token_amount: cacheBridgeHistory.to_token_amount,
+        tx_id: hash,
+        tx: cacheBridgeHistory.tx,
+      });
+      console.log('postPerpBridgeQuote res', res);
+    },
+  );
+
+  const handleDeposit = useMemoizedFn(
+    async (
+      txs: Tx[],
+      amount: string,
+      cacheBridgeHistory?: PerpBridgeHistory,
+    ) => {
+      if (!txs || txs.length === 0) {
+        throw new Error('No txs');
+      }
+
+      if (!currentPerpsAccount) {
+        return;
+      }
+      const currentTxs = txs;
+
+      const handleSetHistory = (hash: string) => {
+        setLocalLoadingHistory(
+          [
+            {
+              time: Date.now(),
+              hash,
+              type: 'deposit',
+              status: 'pending',
+              usdValue: amount.toString(),
+            },
+          ],
+          false,
+        );
+
+        postPerpBridgeQuote(hash, cacheBridgeHistory);
+      };
+
+      const handleFullback = async () => {
+        const res = await sendRequest({
+          data: {
+            method: 'eth_sendTransaction',
+            params: currentTxs,
+            $ctx: {
+              ga: {
+                category: 'Perps',
+                source: 'Perps',
+                trigger: 'Perps',
+              },
+            },
           },
-          {
-            type: 'uint256',
-            name: 'value',
-          },
-        ] as any[],
-      } as const,
-      [to, sendValue.toFixed(0)] as any[],
-    ] as const;
-    const params: Record<string, any> = {
-      chainId: chain.id,
-      from: currentPerpsAccount!.address,
-      to: token.id,
-      value: '0x0',
-      data: abiCoder.encodeFunctionCall(dataInput[0], dataInput[1]),
-      isSend: true,
-    };
+          session: INTERNAL_REQUEST_SESSION,
+          account: currentPerpsAccount,
+        });
 
-    setCacheAmount(amount);
-    setMiniSignTx(params as Tx);
-    return params;
-  });
+        const txHash = last(res) as string;
+        handleSetHistory(txHash);
+      };
 
-  const buildTx = useMemoizedFn((amount: number | string) => {
-    const token = ARB_USDC_TOKEN_ITEM;
-    const to = PERPS_SEND_ARB_USDC_ADDRESS;
-
-    const chain = findChain({
-      serverId: token.chain,
-    })!;
-    const sendValue = new BigNumber(amount || 0)
-      .multipliedBy(10 ** token.decimals)
-      .decimalPlaces(0, BigNumber.ROUND_DOWN);
-    const dataInput = [
-      {
-        name: 'transfer',
-        type: 'function',
-        inputs: [
-          {
-            type: 'address',
-            name: 'to',
-          },
-          {
-            type: 'uint256',
-            name: 'value',
-          },
-        ] as any[],
-      } as const,
-      [to, sendValue.toFixed(0)] as any[],
-    ] as const;
-    const params: Record<string, any> = {
-      chainId: chain.id,
-      from: currentPerpsAccount!.address,
-      to: token.id,
-      value: '0x0',
-      data: abiCoder.encodeFunctionCall(dataInput[0], dataInput[1]),
-      isSend: true,
-    };
-
-    return params;
-  });
-
-  const clearMiniSignTx = useMemoizedFn(() => {
-    setMiniSignTx(null);
-  });
-
-  const handleDeposit = useMemoizedFn(async (amount: number | string) => {
-    // if (!miniSignTx) {
-    //   throw new Error('No miniSignTx');
-    // }
-
-    if (!currentPerpsAccount) {
-      return;
-    }
-    const currentTxs = [buildTx(amount) as Tx];
-
-    const handleSetHistory = (hash: string) => {
-      setLocalLoadingHistory(
-        [
-          {
-            time: Date.now(),
-            hash,
-            type: 'deposit',
-            status: 'pending',
-            usdValue: amount.toString(),
-          },
-        ],
-        false,
-      );
-    };
-
-    const handleFullback = async () => {
-      const res = await sendRequest({
-        data: {
-          method: 'eth_sendTransaction',
-          params: currentTxs,
-          $ctx: {
+      if (isAccountSupportDirectSign(currentPerpsAccount.type)) {
+        if (isDirectSigning) {
+          return;
+        }
+        try {
+          // await runAuth();
+          prepareMiniTransactions({
+            txs: currentTxs || [],
             ga: {
               category: 'Perps',
               source: 'Perps',
               trigger: 'Perps',
             },
-          },
-        },
-        session: INTERNAL_REQUEST_SESSION,
-        account: currentPerpsAccount,
-      });
-
-      handleSetHistory(res);
-    };
-
-    if (isAccountSupportDirectSign(currentPerpsAccount.type)) {
-      if (isDirectSigning) {
-        return;
-      }
-      try {
-        // await runAuth();
-        prepareMiniTransactions({
-          txs: currentTxs || [],
-          ga: {
-            category: 'Perps',
-            source: 'Perps',
-            trigger: 'Perps',
-          },
-          directSubmit: true,
-          account: currentPerpsAccount!,
-          showMaskLoading: false,
-        });
-        setDirectSigning(true);
-        await sleep(500);
-        const res = await sendPrepareMiniTransactions({
-          directSubmit: true,
-        });
-        handleSetHistory(res[0].txHash);
-      } catch (e) {
-        setDirectSigning(false);
-        console.error(e);
-        if (
-          (e as any).name === 'SimulateError' ||
-          isAbortedDirectSubmitError(e)
-        ) {
-          await handleFullback();
+            directSubmit: true,
+            account: currentPerpsAccount!,
+            showMaskLoading: false,
+          });
+          setDirectSigning(true);
+          await sleep(500);
+          const res = await sendPrepareMiniTransactions({
+            directSubmit: true,
+          });
+          const txHash = last(res)?.txHash || '';
+          handleSetHistory(txHash);
+        } catch (e) {
+          setDirectSigning(false);
+          console.error(e);
+          if (
+            (e as any).name === 'SimulateError' ||
+            isAbortedDirectSubmitError(e)
+          ) {
+            await handleFullback();
+          }
         }
-      }
-    } else if (
-      isHardWareAccountAccountSupportMiniApproval(currentPerpsAccount.type)
-    ) {
-      try {
-        const res = await sendMiniTransactions({
-          txs: currentTxs || [],
-          ga: {
-            category: 'Perps',
-            source: 'Perps',
-            trigger: 'Perps',
-          },
-          directSubmit: false,
-          account: currentPerpsAccount!,
-        });
-        handleSetHistory(res[0].txHash);
-      } catch (error) {
-        if ((error as any).name === 'SimulateError') {
-          await handleFullback();
+      } else if (
+        isHardWareAccountAccountSupportMiniApproval(currentPerpsAccount.type)
+      ) {
+        try {
+          const res = await sendMiniTransactions({
+            txs: currentTxs || [],
+            ga: {
+              category: 'Perps',
+              source: 'Perps',
+              trigger: 'Perps',
+            },
+            directSubmit: false,
+            account: currentPerpsAccount!,
+          });
+          const txHash = last(res)?.txHash || '';
+          handleSetHistory(txHash);
+        } catch (error) {
+          if ((error as any).name === 'SimulateError') {
+            await handleFullback();
+          }
         }
+      } else {
+        await handleFullback();
       }
-    } else {
-      await handleFullback();
-    }
-  });
+    },
+  );
 
   useInterval(
     () => {
       fetchUserNonFundingLedgerUpdates();
     },
-    perpsState.localLoadingHistory.length > 0 ? 60 * 1000 : undefined,
+    perpsState.localLoadingHistory.length > 0 ? 30 * 1000 : undefined,
   );
 
-  const handleSignDepositDirect = useMemoizedFn(async (hash: string) => {
-    if (!hash) {
-      throw new Error('No hash tx');
-    }
-
-    setLocalLoadingHistory(
-      [
-        {
-          time: Date.now(),
-          hash,
-          type: 'deposit',
-          status: 'pending',
-          usdValue: cacheAmount.toString(),
-        },
-      ],
-      false,
-    );
-  });
-
   return {
-    miniSignTx,
-    clearMiniSignTx,
-    updateMiniSignTx,
     handleDeposit,
-    handleSignDepositDirect,
   };
 };

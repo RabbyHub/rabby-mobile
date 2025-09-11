@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { Animated, Text, View } from 'react-native';
 import RcIconPending from '@/assets2024/icons/history/IconPending.svg';
 import { Easing } from 'react-native-reanimated';
+import { BigNumber } from 'bignumber.js';
+import { formatPerpsUsdValue } from '@/utils/number';
 
 interface HistoryAccountItemProps {
   data: AccountHistoryItem;
@@ -20,6 +22,7 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const spinValue = useRef(new Animated.Value(0)).current;
+  const isRealDeposit = type === 'deposit' || type === 'receive';
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -39,7 +42,7 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
   return (
     <View style={styles.card}>
       <View style={styles.leftContent}>
-        {type === 'deposit' ? (
+        {isRealDeposit ? (
           <RcIconDepositCC
             color={colors2024['neutral-body']}
             bgColor={colors2024['neutral-bg-5']}
@@ -56,8 +59,10 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
         )}
         <View style={styles.textContainer}>
           <Text style={styles.title}>
-            {type === 'deposit'
-              ? t('page.perps.history.deposit')
+            {isRealDeposit
+              ? type === 'deposit'
+                ? t('page.perps.history.deposit')
+                : t('page.perps.history.receive')
               : t('page.perps.history.withdraw')}
           </Text>
           {status === 'pending' ? (
@@ -86,9 +91,9 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
             <Text
               style={[
                 styles.amount,
-                type === 'deposit' ? styles.greenText : styles.redText,
+                isRealDeposit ? styles.greenText : styles.redText,
               ]}>
-              {type === 'deposit' ? '+' : '-'}
+              {isRealDeposit ? '+' : '-'}
               {`$${usdValue}`}
             </Text>
             <Text style={styles.timeText}>{sinceTime(time / 1000)}</Text>
@@ -97,10 +102,10 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
           <Text
             style={[
               styles.amount,
-              type === 'deposit' ? styles.greenText : styles.redText,
+              isRealDeposit ? styles.greenText : styles.redText,
             ]}>
-            {type === 'deposit' ? '+' : '-'}
-            {`$${usdValue}`}
+            {isRealDeposit ? '+' : '-'}
+            {`${formatPerpsUsdValue(usdValue)}`}
           </Text>
         )}
       </View>
