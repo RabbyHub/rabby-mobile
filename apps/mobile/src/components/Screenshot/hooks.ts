@@ -101,8 +101,8 @@ export function useGetShowFeedbackOnScreenshotCapture() {
   const getShowFeedbackOnScreenshotCapture = useAtomCallback(get => {
     if (!isNonPublicProductionEnv) return true;
 
-    return (
-      get(screenshotFeedbackAtom).disableScreenshotToReportUntil < Date.now()
+    return isEnabledScreenshotToReport(
+      get(screenshotFeedbackAtom).disableScreenshotToReportUntil,
     );
   });
 
