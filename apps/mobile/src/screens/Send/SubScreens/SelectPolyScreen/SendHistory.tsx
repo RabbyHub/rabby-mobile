@@ -55,29 +55,16 @@ export const SendHistory = ({
     forScene: 'MakeTransactionAbout',
   });
 
-  const [successTxList, setSuccessTxList] = useState<string[]>([]);
-
-  const updateTxList = useMemoizedFn(() => {
-    const txList = transactionHistoryService.getSendSucceedList(
-      isForMultipleAddress ? undefined : currentAccount?.address,
-    );
-    setSuccessTxList(txList);
-
-    transactionHistoryService.clearSendSuccessAndFailList(
-      isForMultipleAddress ? undefined : currentAccount?.address,
-    );
-  });
   const { getCexInfoByAddress } = useGetCexList();
 
   useEffect(() => {
     if (visible) {
       bottomRef.current?.present();
       runAsync();
-      updateTxList();
     } else {
       bottomRef.current?.dismiss();
     }
-  }, [visible, runAsync, updateTxList]);
+  }, [visible, runAsync]);
 
   const isDarkTheme = useGetBinaryMode() === 'dark';
 
@@ -113,8 +100,6 @@ export const SendHistory = ({
             isInSendHistory={true}
             closeHistoryPopup={onClose}
             onPressBottomBtn={onPressBottomBtn}
-            // historySuccessList={successTxList}
-            // onRefresh={onRefresh}
           />
         </>
       );

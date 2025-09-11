@@ -575,9 +575,12 @@ function MultiAddressHome(): JSX.Element {
       true,
       timestamp / 1000,
     );
-    list.map(i => {
+    list.forEach(i => {
       const status = i.status ?? 1;
       const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
+      if (i.tx_from_address === i.owner_addr) {
+        return;
+      }
       const addressTs =
         clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? Date.now();
       if (addressTs && addressTs / 1000 > i.time_at) {
