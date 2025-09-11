@@ -1201,7 +1201,7 @@ const SignMainnetTx = ({ params, origin, account: $account }: SignTxProps) => {
       const res = await openapi.gasLessTxCheck({
         tx: {
           ...tx,
-          nonce: realNonce,
+          nonce: realNonce || tx.nonce,
           gasPrice: tx.gasPrice || tx.maxFeePerGas,
           gas: gasLimit,
         },
