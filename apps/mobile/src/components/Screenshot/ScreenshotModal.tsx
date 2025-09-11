@@ -205,11 +205,15 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
                         submitFeedbackByScreenshot();
                         setTimeout(() => {
                           closeSubmitModal({
-                            skipInNext1Day: true,
+                            skipInNext1Day,
                             clearText: true,
                           });
                           toast.success(
                             t('component.submitFeedbackSuccessModal.desc'),
+                            {
+                              duration: 3000,
+                              hideOnPress: true,
+                            },
                           );
                         }, 300);
                       })}
