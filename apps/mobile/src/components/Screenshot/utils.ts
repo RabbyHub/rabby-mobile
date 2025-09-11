@@ -102,6 +102,7 @@ export async function getScreenshotFeedbackExtra({
     }),
 
     userAgent: runTryCatch(() => DeviceInfo.getUserAgentSync()),
+    fontScale: runTryCatch(() => DeviceInfo.getFontScaleSync()),
 
     latestErrors,
   };
