@@ -23,15 +23,89 @@ import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { getScreenshotFeedbackExtra } from './utils';
 import { getGlobalScreenCapturable } from '@/hooks/native/security';
-import { useGetShowFeedbackOnScreenshotCapture } from '@/hooks/appSettings';
+import i18next from 'i18next';
 
-export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT =
-  IS_ANDROID; /*  && !__DEV__ */
+export const FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT = IS_ANDROID && !__DEV__;
 type LocalUserFeedbackItem = Pick<UserFeedbackItem, 'id' | 'create_at'>;
 const screenshotFeedbackAtom = atomByMMKV('@screenshotFeedback', {
   viewedHomeTip: FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
   feedbacks: [] as LocalUserFeedbackItem[],
+  disableScreenshotToReportUntil: -1,
 });
+
+function isEnabledScreenshotToReport(
+  disableScreenshotToReportUntil?: number | null,
+) {
+  if (!disableScreenshotToReportUntil) return true;
+
+  return (disableScreenshotToReportUntil || 0) < Date.now();
+}
+
+export function useScreenshotToReportEnabled() {
+  const [screenshotFeedback, setScreenshotFeedback] = useAtom(
+    screenshotFeedbackAtom,
+  );
+
+  const isScreenshotToReportEnabled = useMemo(() => {
+    return isEnabledScreenshotToReport(
+      screenshotFeedback.disableScreenshotToReportUntil,
+    );
+  }, [screenshotFeedback.disableScreenshotToReportUntil]);
+
+  const toggleScreenshotToReport = useCallback(
+    (nextVal?: boolean | number | 'skipIn24hours') => {
+      setScreenshotFeedback(prev => {
+        if (nextVal === undefined) {
+          const prevEnabled = isEnabledScreenshotToReport(
+            prev.disableScreenshotToReportUntil,
+          );
+          nextVal = !prevEnabled;
+        } else if (nextVal === 'skipIn24hours') {
+          nextVal = Date.now() + 24 * 60 * 60 * 1000;
+        }
+
+        if (typeof nextVal === 'number') {
+          if (__DEV__ && nextVal < Date.now()) {
+            console.warn(
+              `Screenshot reporting disabled until ${new Date(
+                nextVal,
+              ).toLocaleString()}, which is earlier than now(${new Date().toLocaleDateString()}), it would disable the function.`,
+            );
+          }
+          return {
+            ...prev,
+            disableScreenshotToReportUntil: nextVal,
+          };
+        } else {
+          return {
+            ...prev,
+            disableScreenshotToReportUntil: !!nextVal ? -1 : Infinity,
+          };
+        }
+      });
+    },
+    [setScreenshotFeedback],
+  );
+
+  return {
+    disableScreenshotToReportUntil:
+      screenshotFeedback.disableScreenshotToReportUntil,
+    isScreenshotToReportEnabled,
+    toggleScreenshotToReport,
+  };
+}
+
+export function useGetShowFeedbackOnScreenshotCapture() {
+  const getShowFeedbackOnScreenshotCapture = useAtomCallback(get => {
+    if (!isNonPublicProductionEnv) return true;
+
+    return (
+      get(screenshotFeedbackAtom).disableScreenshotToReportUntil < Date.now()
+    );
+  });
+
+  return { getShowFeedbackOnScreenshotCapture };
+}
 
 export function useViewedHomeTip() {
   const [screenshotFeedback, setScreenshotFeedback] = useAtom(
@@ -168,32 +242,29 @@ export function useLatestRepliedFeedbacks() {
   return { lastRepliedFeedback, loading, error };
 }
 
-function getDefaultValue() {
+function getDefaultValue(): {
+  lastScreenshot: ImageResolvedAssetSource | null;
+  submitModalShown: boolean;
+  feedbackText: string;
+  uploadedImageUrl: string;
+
+  totalBalanceText: string;
+
+  viewingFeedback: UserFeedbackItem | null;
+} {
   return {
     lastScreenshot: null,
     submitModalShown: false,
     feedbackText: '',
     uploadedImageUrl: '',
-    submitSuccessModalShown: false,
 
     totalBalanceText: '',
-    globalScreenCaptureDisabled: false,
 
     viewingFeedback: null,
   };
 }
 export const SCREENSHOT_FEEDBACK_MAX_LENGTH = 301;
-const feedbackByScreenshotAtom = atom<{
-  lastScreenshot: ImageResolvedAssetSource | null;
-  submitModalShown: boolean;
-  feedbackText: string;
-  uploadedImageUrl: string;
-  submitSuccessModalShown: boolean;
-
-  totalBalanceText: string;
-
-  viewingFeedback: UserFeedbackItem | null;
-}>(getDefaultValue());
+const feedbackByScreenshotAtom = atom(getDefaultValue());
 
 export function useViewingFeedback() {
   const [feedbackByScreenshot, setFeedbackByScreenshot] = useAtom(
@@ -248,33 +319,6 @@ export function useSubmitFeedbackModalVisible() {
   const [feedbackByScreenshot] = useAtom(feedbackByScreenshotAtom);
   return {
     submitFeedbackModalVisible: feedbackByScreenshot.submitModalShown,
-    submitSuccessModalShown: feedbackByScreenshot.submitSuccessModalShown,
-  };
-}
-
-export function useSubmitSuccessModalVisible() {
-  const [feedbackByScreenshot, setFeedbackByScreenshot] = useAtom(
-    feedbackByScreenshotAtom,
-  );
-
-  const closeSubmitSuccessModal = useCallback(() => {
-    setFeedbackByScreenshot(prev => ({
-      ...prev,
-      submitSuccessModalShown: false,
-    }));
-  }, [setFeedbackByScreenshot]);
-
-  const getIsSubmitSuccessModalVisible = useAtomCallback(get => {
-    return {
-      submitSuccessModalVisible: get(feedbackByScreenshotAtom)
-        .submitSuccessModalShown,
-    };
-  });
-
-  return {
-    submitSuccessModalVisible: feedbackByScreenshot.submitSuccessModalShown,
-    getIsSubmitSuccessModalVisible,
-    closeSubmitSuccessModal,
   };
 }
 
@@ -413,32 +457,6 @@ export function useFeedbackOnScreenshot() {
     [setSubmitFeedbackOnScreenshot],
   );
 
-  const showSubmitSuccessModal = useCallback(() => {
-    if (IS_IOS) {
-      setSubmitFeedbackOnScreenshot(prev => ({
-        ...prev,
-        submitModalShown: false,
-      }));
-      /**
-       * I don't know why, but if we change submitModalShown/submitSuccessModalShown at the same time,
-       * on iOS, the modal charged by submitSuccessModalShown will not display its main component,
-       * but the whole app will be freezed as it's presented on somewhere you can't see
-       */
-      setTimeout(() => {
-        setSubmitFeedbackOnScreenshot(prev => ({
-          ...prev,
-          submitSuccessModalShown: true,
-        }));
-      }, 500);
-    } else {
-      setSubmitFeedbackOnScreenshot(prev => ({
-        ...prev,
-        submitSuccessModalShown: true,
-        submitModalShown: false,
-      }));
-    }
-  }, [setSubmitFeedbackOnScreenshot]);
-
   return {
     globalModalShown: submitFeedbackOnScreenshot.submitModalShown,
     feedbackText: submitFeedbackOnScreenshot.feedbackText,
@@ -447,22 +465,25 @@ export function useFeedbackOnScreenshot() {
       SCREENSHOT_FEEDBACK_MAX_LENGTH - 1,
     uploadedImageUrl: submitFeedbackOnScreenshot.uploadedImageUrl,
     onChangeFeedback,
-    showSubmitSuccessModal,
   };
 }
 export function useSubmitFeedbackOnScreenshot() {
   const [{ lastScreenshot, totalBalanceText }, setSubmitFeedbackOnScreenshot] =
     useAtom(feedbackByScreenshotAtom);
-  const {
-    globalModalShown,
-    feedbackText,
-    uploadedImageUrl,
-    showSubmitSuccessModal,
-  } = useFeedbackOnScreenshot();
+  const { globalModalShown, feedbackText, uploadedImageUrl } =
+    useFeedbackOnScreenshot();
   const { onFeedbackSubmitted } = useScreenshotFeedbacks();
 
+  const { toggleScreenshotToReport } = useScreenshotToReportEnabled();
+
   const closeSubmitModal = useCallback(
-    ({ clearText = true }: { clearText?: boolean } = {}) => {
+    ({
+      skipInNext1Day = false,
+      clearText = true,
+    }: { skipInNext1Day?: boolean; clearText?: boolean } = {}) => {
+      if (skipInNext1Day) {
+        toggleScreenshotToReport('skipIn24hours');
+      }
       setSubmitFeedbackOnScreenshot(prev => ({
         ...prev,
         submitModalShown: false,
@@ -471,7 +492,7 @@ export function useSubmitFeedbackOnScreenshot() {
         uploadedImageUrl: '',
       }));
     },
-    [setSubmitFeedbackOnScreenshot],
+    [toggleScreenshotToReport, setSubmitFeedbackOnScreenshot],
   );
 
   const { stateRef: isSubmittingRef, setRefState: setSubmitting } =
@@ -513,12 +534,10 @@ export function useSubmitFeedbackOnScreenshot() {
         setSubmitting(false, true);
       }
 
-      closeSubmitModal({ clearText: true });
       if (submitResult?.id) {
-        showSubmitSuccessModal();
         onFeedbackSubmitted(submitResult);
       } else {
-        toast.error('Feedback submission failed, please try again later');
+        console.error('Feedback submission failed, please try again later');
       }
     },
     [
@@ -527,9 +546,7 @@ export function useSubmitFeedbackOnScreenshot() {
       uploadedImageUrl,
       lastScreenshot?.uri,
       isSubmittingRef,
-      closeSubmitModal,
       setSubmitting,
-      showSubmitSuccessModal,
       onFeedbackSubmitted,
     ],
   );
@@ -543,6 +560,6 @@ export function useSubmitFeedbackOnScreenshot() {
     isSubmitting: isSubmittingRef.current,
     submitFeedbackByScreenshot,
 
-    canSubmitFeedback: !!lastScreenshot?.uri,
+    canSubmitFeedback: !!lastScreenshot?.uri && !!feedbackText.trim(),
   };
 }

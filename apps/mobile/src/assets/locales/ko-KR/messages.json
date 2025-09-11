@@ -2388,9 +2388,7 @@
       "feedbackInput": {
         "placeholder": "문제를 설명하세요"
       },
-      "feedbackLabel": "버그 설명:",
-      "submitButtonText": "제출",
-      "title": "버그 신고를 위한 스냅샷"
+      "submitButtonText": "제출"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "설명:",
@@ -2399,9 +2397,7 @@
       "title": "Rabby 지원팀의 응답",
       "pendingTitle": "Rabby Support가 회신하지 않았습니다."
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "성공적으로 제출되었습니다"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "constant": {
     "IMPORTED_HD_KEYRING_NEED_PASSPHRASE": "시드 구문(암호구)로 가져옴",

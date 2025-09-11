@@ -2344,9 +2344,7 @@
       "feedbackInput": {
         "placeholder": "Décrivez le problème"
       },
-      "submitButtonText": "Soumettre",
-      "title": "Capture d'écran pour signaler un bug",
-      "feedbackLabel": "Description du bug :"
+      "submitButtonText": "Soumettre"
     },
     "feedbackModal": {
       "title": "Réponse du support Rabby",
@@ -2355,9 +2353,7 @@
       "pendingTitle": "Le support de Rabby n'a pas répondu.",
       "issueDescription": "Voici le problème que vous avez signalé :"
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "Soumis avec succès"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "global": {
     "next": "Suivant",

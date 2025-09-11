@@ -303,9 +303,7 @@
       "feedbackInput": {
         "placeholder": "Beschreiben Sie das Problem"
       },
-      "feedbackLabel": "Fehlerbeschreibung:",
-      "submitButtonText": "Einreichen",
-      "title": "Snapshot zum Bericht über einen Fehler"
+      "submitButtonText": "Einreichen"
     },
     "feedbackModal": {
       "title": "Antwort vom Rabby Support",
@@ -314,9 +312,7 @@
       "repliedTitle": "Rabby Support hat geantwortet:",
       "issueDescription": "Hier ist das von Ihnen gemeldete Problem:"
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "Erfolgreich eingereicht"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "page": {
     "transactions": {

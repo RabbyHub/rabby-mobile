@@ -2299,8 +2299,6 @@
       "feedbackInput": {
         "placeholder": "Jelaskan masalahnya"
       },
-      "title": "Snapshot untuk Melaporkan Bug",
-      "feedbackLabel": "Deskripsi bug:",
       "submitButtonText": "Kirim"
     },
     "feedbackModal": {
@@ -2310,9 +2308,7 @@
       "pendingTitle": "Dukungan Rabby belum membalas.",
       "repliedTitle": "Dukungan Rabby telah membalas:"
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "Dikirim dengan Sukses"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "native": {
     "biometrics": {

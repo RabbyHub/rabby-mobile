@@ -2299,9 +2299,7 @@
       "feedbackInput": {
         "placeholder": "Sorunu tanımlayın"
       },
-      "submitButtonText": "Gönder",
-      "feedbackLabel": "Hata tanımı:",
-      "title": "Hata Bildirmek için Anlık Görüntü Alın"
+      "submitButtonText": "Gönder"
     },
     "feedbackModal": {
       "repliedTitle": "Rabby Destek yanıtladı:",
@@ -2310,9 +2308,7 @@
       "title": "Rabby Destekten Yanıt",
       "issueDescription": "İşte bildirdiğiniz sorun:"
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "Başarıyla Gönderildi"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "native": {
     "biometrics": {

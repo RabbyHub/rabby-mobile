@@ -1952,7 +1952,8 @@
       "clearPendingWarning": "The removed transaction may still be confirmed on-chain unless it is replaced.",
       "clearPendingResetDesc": "Also reset my local nonce data and signature record",
       "clearPendingToast": "Local pending transaction removed",
-      "clearBrowserData": "Clear Browser Data"
+      "clearBrowserData": "Clear Browser Data",
+      "screenshotReportSwitch": "Screenshot to report bug"
     },
     "settingModal": {
       "themeMode": {
@@ -2537,12 +2538,14 @@
       }
     },
     "screenshotModal": {
-      "title": "Snapshot to Report Bug",
+      "title": "Screenshot to Report Bug",
       "submitButtonText": "Submit",
       "feedbackInput": {
-        "placeholder": "Describe the issue"
+        "placeholder": "Describe the issue (required)"
       },
-      "feedbackLabel": "Bug description: "
+      "switchArea": {
+        "skipText": "Skip this popup for 1 day"
+      }
     },
     "feedbackModal": {
       "title": "Response from Rabby Support",
@@ -2552,7 +2555,7 @@
       "issueDescriptionLabel": "Description: "
     },
     "submitFeedbackSuccessModal": {
-      "desc": "Submitted Successfully"
+      "desc": "Submitted Successfully!"
     },
     "kline": {
       "__skip_translation": true,
