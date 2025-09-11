@@ -4,7 +4,6 @@ import { useSortAddressList } from '@/screens/Address/useSortAddressList';
 import { filterMyAccounts } from '@/utils/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { useCreation } from 'ahooks';
 import React, { useMemo } from 'react';
 
 export const isTabsSwiping = {
