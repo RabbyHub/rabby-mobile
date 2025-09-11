@@ -1860,7 +1860,8 @@
         "totalSupply": "Total Supply",
         "volume24h": "24h Volume",
         "txns24h": "24h Txns",
-        "holders": "Holders"
+        "holders": "Holders",
+        "empty": "No Data"
       }
     },
     "defiDetail": {
