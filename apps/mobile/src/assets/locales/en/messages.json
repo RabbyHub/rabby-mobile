@@ -152,10 +152,11 @@
       "gasLimitEmptyAlert": "Please input gas limit",
       "gasLimitMinValueAlert": "Gas limit should be more than 21000",
       "gasAccount": {
-        "gasCost": "Gas cost for transferring gas to your address: ",
-        "estimatedGas": "Estimated Gas: ",
-        "maxGas": "Max Gas: ",
-        "sendGas": "The Gas transfer to you for current transaction: "
+        "description": "Using GasAccount to pay for gas fees. View payment details below:",
+        "gasCost": "Gas cost for transferring gas to your address:",
+        "estimatedGas": "Estimated Gas:",
+        "maxGas": "Max Gas:",
+        "sendGas": "The Gas transfer to you for current transaction:"
       },
       "balanceChange": {
         "successTitle": "Simulation Results",
@@ -1953,7 +1954,9 @@
       "clearPendingResetDesc": "Also reset my local nonce data and signature record",
       "clearPendingToast": "Local pending transaction removed",
       "clearBrowserData": "Clear Browser Data",
-      "screenshotReportSwitch": "Screenshot to report bug"
+      "screenshotReportSwitch": "Screenshot to report bug",
+      "currency": "Currency",
+      "searchCurrency": "Search Currency"
     },
     "settingModal": {
       "themeMode": {

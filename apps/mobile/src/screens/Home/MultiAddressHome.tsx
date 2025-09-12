@@ -1,3 +1,19 @@
+import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
+import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
+import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
+import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
+import IconGift from '@/assets2024/icons/home/IconGift.svg';
+import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
+import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
+import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
+import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
+import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { RootNames } from '@/constant/layout';
+import { IS_ANDROID } from '@/core/native/utils';
+import { useAppThemeConfig, useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import { StackActions, useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
@@ -6,296 +22,86 @@ import React, {
   useState,
 } from 'react';
 import {
-  View,
-  Text,
   Animated,
-  TouchableOpacity,
+  Dimensions,
   Easing,
+  Platform,
   RefreshControl,
   ScrollView,
-  Dimensions,
   StyleSheet,
-  Platform,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
-import IconDollar from '@/assets2024/icons/home/IconDollar.svg';
-import IconGift from '@/assets2024/icons/home/IconGift.svg';
-import { useTheme2024, useAppThemeConfig } from '@/hooks/theme';
-import { RootNames, ScreenLayouts } from '@/constant/layout';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import RcIconSendCC from '@/assets2024/icons/home/IconSendCC.svg';
-import RcIconReceiveCC from '@/assets2024/icons/home/IconReceiveCC.svg';
-import RcIconSwapCC from '@/assets2024/icons/home/IconSwapCC.svg';
-import RcIconBridgeCC from '@/assets2024/icons/home/IconBridgeCC.svg';
-import RcIconHistoryCC from '@/assets2024/icons/home/IconHistoryCC.svg';
-import RcIconloading from '@/assets2024/icons/home/Iconloading.svg';
-import RcIconGasAccountCC from '@/assets2024/icons/home/IconGasAccountCC.svg';
-import RcIconApprovalsCC from '@/assets2024/icons/home/IconApprovalsCC.svg';
-import RcIconDapps from '@/assets2024/icons/home/IconDapps.svg';
-import RcIconWatchlistCC from '@/assets2024/icons/home/IconWatchlistCC.svg';
 
+import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { MultiHomeFeatTitle } from '@/constant/newStyle';
-import { useTranslation } from 'react-i18next';
-import RcIconSetting from '@/assets2024/icons/common/IconSetting.svg';
-import useAccountsBalance from '@/hooks/useAccountsBalance';
+import { apisAccount } from '@/core/apis';
 import {
   browserService,
+  currencyService,
   gasAccountService,
   preferenceService,
   transactionHistoryService,
 } from '@/core/services';
-import { useMemoizedFn } from 'ahooks';
-import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
-import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
-import { matomoRequestEvent } from '@/utils/analytics';
-import { apisAccount } from '@/core/apis';
-import { resetNavigationTo } from '@/hooks/navigation';
-import { navigate } from '@/utils/navigation';
-import { useApprovalAlertCounts } from './hooks/approvals';
-import { BadgeText } from './components/HomeTopArea';
-import { useMyAccounts } from '@/hooks/account';
-import { ThemeColors2024 } from '@/constant/theme';
-import { useAppState } from '@react-native-community/hooks';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSyncAssetsDB } from '@/databases/hooks/assets';
-import { useSortAddressList } from '../Address/useSortAddressList';
 import { useSyncHistoryDB } from '@/databases/hooks/history';
+import { useMyAccounts } from '@/hooks/account';
+import { useSwitchSceneCurrentAccount } from '@/hooks/accountsSwitcher';
+import { resetNavigationTo } from '@/hooks/navigation';
+import useAccountsBalance from '@/hooks/useAccountsBalance';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { navigate } from '@/utils/navigation';
+import { useAppState } from '@react-native-community/hooks';
+import { useMemoizedFn } from 'ahooks';
 import { debounce, unionBy } from 'lodash';
-import { useUpgradeInfo } from '@/hooks/version';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSortAddressList } from '../Address/useSortAddressList';
+import { BadgeText } from './components/HomeTopArea';
+import { useApprovalAlertCounts } from './hooks/approvals';
 
-import RcIconBuy from '@/assets2024/icons/home/IconBuy.svg';
 import RcIconPerps from '@/assets2024/icons/home/IconPerps.svg';
-import { FoundYourWalletGuide } from './FundYourWallet';
-import {
-  OfflineChainNotify,
-  useOfflineChain,
-} from './components/OfflineChainNotify';
-import { colord } from 'colord';
-import { useSendRoutes } from '@/hooks/useSendRoutes';
-import { useFetchCexInfo } from '@/hooks/useAddrDesc';
-import { useMultiCurve } from '@/hooks/useMultiCurve';
-import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
-import { Card } from '@/components2024/Card';
-import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
-import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
-import LinearGradient from 'react-native-linear-gradient';
-import { LoadingLinear } from '../TokenDetail/components/TokenPriceChart/LoadingLinear';
-import { Skeleton } from '@rneui/base';
-import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
-import { BlurShadowView } from '@/components2024/BluerShadow';
-import { HistoryItemEntity } from '@/databases/entities/historyItem';
-import { judgeIsSmallUsdTx } from '../Transaction/components/utils';
-import { useHistoryTokenDict } from '@/hooks/historyTokenDict';
-import { useAppOrmSyncEvents } from '@/databases/sync/_event';
-import { useCexSupportList } from '@/hooks/useCexSupportList';
-import { HomePendingBadge } from './components/HomePending';
-import { useTipsDollarDialog } from '../CopyTrading/component/hooks';
+import { RateModal } from '@/components/RateModal/RateModal';
 import { RateModalTriggerOnHome } from '@/components/RateModal/RateModalTriggerOnHome';
 import { useExposureRateGuide } from '@/components/RateModal/hooks';
-import { RateModal } from '@/components/RateModal/RateModal';
-import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
-import { useGlobalStatus } from '@/hooks/useGlobalStatus';
-import { useInitDetectDBAssets } from '../Search/useAssets';
-import { useBrowser } from '@/hooks/browser/useBrowser';
-import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
-import dayjs from 'dayjs';
-import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
-import { isNonPublicProductionEnv } from '@/constant/env';
-import { PerpsPnl } from './components/PerpsPnl';
-import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
 import { TipFeedbackByScreenshot } from '@/components/Screenshot/HomeCenterTip';
 import {
   useSetTotalBalanceText,
   useViewedHomeTip,
 } from '@/components/Screenshot/hooks';
+import { isNonPublicProductionEnv } from '@/constant/env';
+import {
+  HOME_REFRESH_INTERVAL,
+  ITEM_GRID_GAP,
+  ITEM_LAYOUT_PADDING_HORIZONTAL,
+} from '@/constant/home';
+import { HistoryItemEntity } from '@/databases/entities/historyItem';
+import { useAppOrmSyncEvents } from '@/databases/sync/_event';
+import { useFetchCexInfo } from '@/hooks/useAddrDesc';
+import { useCexSupportList } from '@/hooks/useCexSupportList';
+import { useGasAccountEligibility } from '@/hooks/useGasAccountEligibility';
+import { useMultiCurve } from '@/hooks/useMultiCurve';
+import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { deleteLongTimeCurveCache } from '@/utils/24balanceCurveCache';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { colord } from 'colord';
+import dayjs from 'dayjs';
+import { useAccountInfo } from '../Address/components/MultiAssets/hooks';
+import { BrowserSearchEntry } from '../Browser/components/BrowserSearchEntry';
+import { useTipsDollarDialog } from '../CopyTrading/component/hooks';
+import { useInitDetectDBAssets } from '../Search/useAssets';
+import { useMockDataForHomeCenterArea } from '../Settings/sheetModals/DevUIHomeCenterArea';
+import { FoundYourWalletGuide } from './FundYourWallet';
+import { HomePendingBadge } from './components/HomePending';
+import {
+  OfflineChainNotify,
+  useOfflineChain,
+} from './components/OfflineChainNotify';
+import { PerpsPnl } from './components/PerpsPnl';
+import { MultiAddressHomeHeader } from './components/MultiAddressHomeHeader';
 
 const HeaderHeight = 24;
-
-function MultiAddressHomeHeader(
-  prop: {
-    data: ReturnType<typeof useMultiCurve>['combineData'];
-    loading: boolean;
-    loadingNewCurve: boolean;
-    onRefresh?: () => void;
-  } & RNViewProps,
-): JSX.Element {
-  const { loading, data, loadingNewCurve, style, onRefresh } = prop;
-  const { navigation } = useSafeSetNavigationOptions();
-  const { t } = useTranslation();
-  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
-  const spinValue = useRef(new Animated.Value(0)).current;
-  const { remoteVersion } = useUpgradeInfo();
-  const { isDisConnect } = useGlobalStatus();
-
-  const { accountsLength } = useAccountsBalance({
-    cacheTime: HOME_REFRESH_INTERVAL, // 5 minutes
-    accountsNoUnique: true, // balanceAccounts has filter same address accounts
-  });
-
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  const percentChange = useMemo(() => {
-    return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
-      data.isLoss ? '-' : '+'
-    }${data.change})`;
-  }, [data]);
-
-  useEffect(() => {
-    if (loading) {
-      Animated.loop(
-        Animated.timing(spinValue, {
-          toValue: 1,
-          duration: 1600,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
-      spinValue.resetAnimation();
-    }
-  }, [loading, spinValue]);
-
-  return (
-    <View style={style}>
-      <View style={styles.headerBox}>
-        <View style={styles.leftBox}>
-          <Text style={styles.balanceTextBox}>
-            {t('page.nextComponent.multiAddressHome.totalBalance')}
-          </Text>
-          <Animated.View
-            style={{
-              transform: [{ rotate: spin }],
-            }}>
-            {loading && <RcIconloading />}
-          </Animated.View>
-        </View>
-
-        <View style={styles.rightArea}>
-          <FeedbackEntryOnHeader style={styles.feedbackEntry} />
-          <TouchableWithoutFeedback
-            style={styles.settingEntry}
-            onPress={() => {
-              navigation.navigate(RootNames.StackSettings, {
-                screen: RootNames.Settings,
-                params: {},
-              });
-
-              matomoRequestEvent({
-                category: 'Click_Header',
-                action: 'Click_Setting',
-              });
-            }}>
-            <RcIconSetting color={colors2024['neutral-foot']} />
-            {remoteVersion.couldUpgrade && <View style={styles.redDot} />}
-          </TouchableWithoutFeedback>
-        </View>
-      </View>
-
-      <GlobalWarning
-        hasError={isDisConnect}
-        description={t('component.globalWarning.networkError.globalDesc')}
-        style={styles.globalWarning}
-        onRefresh={() => {
-          onRefresh?.();
-        }}
-      />
-
-      <View style={styles.curveBox}>
-        <BlurShadowView isLight={isLight}>
-          <LinearGradient
-            colors={
-              isLight
-                ? ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 1)']
-                : ['rgba(37,38,40,1)', 'rgba(28,27,27,1)']
-            }
-            style={{
-              padding: 1,
-              borderRadius: 21,
-            }}>
-            <Card
-              style={[styles.curveCard, styles.shadowView]}
-              onPress={() => {
-                navigation.dispatch(
-                  StackActions.push(RootNames.StackAddress, {
-                    screen: RootNames.AddressAssetsOverview,
-                    params: {},
-                  }),
-                );
-                matomoRequestEvent({
-                  category: 'Click_Header',
-                  action: 'Click_Address',
-                });
-              }}>
-              <LinearGradient
-                colors={
-                  isLight
-                    ? ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)']
-                    : ['rgba(0, 0, 0, 0.6)', 'rgba(25, 26, 27, 0.3)']
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.curveContainer}>
-                {loadingNewCurve ? (
-                  <Skeleton
-                    width={181}
-                    height={44}
-                    style={styles.skeleton}
-                    LinearGradientComponent={LoadingLinear}
-                  />
-                ) : (
-                  <Text style={styles.netWorth}>{data.netWorth}</Text>
-                )}
-                {loadingNewCurve ? (
-                  <Skeleton
-                    width={100}
-                    height={22}
-                    style={styles.skeleton}
-                    LinearGradientComponent={LoadingLinear}
-                  />
-                ) : (
-                  <View style={styles.changeSection}>
-                    <Text
-                      style={[
-                        styles.changePercent,
-                        {
-                          color: data.isLoss
-                            ? colors2024['red-default']
-                            : colors2024['green-default'],
-                        },
-                      ]}>
-                      {percentChange}
-                    </Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.accountBg}>
-                <RcIconSmallWallet />
-                <Text style={styles.accountText}>
-                  {accountsLength >= 10 ? '10' : accountsLength}
-                </Text>
-                <RcIconSmallArrow />
-              </View>
-            </Card>
-          </LinearGradient>
-        </BlurShadowView>
-      </View>
-    </View>
-  );
-}
-
-const ITEM_LAYOUT_PADDING_HORIZONTAL = ScreenLayouts.homeHorizontalPadding;
-const ITEM_GRID_GAP = 12;
-const HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
 
 function MultiAddressHome(): JSX.Element {
   const { navigation } = useSafeSetNavigationOptions();
@@ -575,9 +381,12 @@ function MultiAddressHome(): JSX.Element {
       true,
       timestamp / 1000,
     );
-    list.map(i => {
+    list.forEach(i => {
       const status = i.status ?? 1;
       const id = `${i.owner_addr.toLowerCase()}-${i.txHash}`;
+      if (i.tx_from_address === i.owner_addr) {
+        return;
+      }
       const addressTs =
         clearSuccessAndFailListTsObj[i.owner_addr.toLowerCase()] ?? Date.now();
       if (addressTs && addressTs / 1000 > i.time_at) {
@@ -680,6 +489,7 @@ function MultiAddressHome(): JSX.Element {
       forceUpdate();
       syncTop10Assets(true);
       syncTop10History(true);
+      currencyService.syncCurrencyList(true);
     });
   }, [
     triggerUpdate,
@@ -1035,105 +845,6 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     position: 'relative',
     overflow: 'hidden',
   },
-  headerBox: {
-    height: HeaderHeight,
-    // paddingLeft: 8,
-    // paddingRight: 38,
-    paddingTop: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-    position: 'relative',
-    // flex: 1,
-    // backgroundColor: colors2024['neutral-title-1'],
-  },
-  leftBox: {
-    height: HeaderHeight,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  balanceTextBox: {
-    marginRight: 12,
-    color: colors2024['neutral-title-1'],
-    fontWeight: '700',
-    fontSize: 20,
-    lineHeight: 24,
-    textAlign: 'left',
-    fontFamily: 'SF Pro Rounded',
-  },
-  balanceBox: {
-    paddingHorizontal: ITEM_LAYOUT_PADDING_HORIZONTAL + 4,
-    marginTop: 30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  rightArea: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // position: 'relative',
-    // ...makeDebugBorder(),
-  },
-  feedbackEntry: {
-    height: '100%',
-    paddingRight: 6,
-    // ...makeDebugBorder(),
-  },
-  settingEntry: {
-    marginRight: -ITEM_LAYOUT_PADDING_HORIZONTAL,
-    flexDirection: 'row',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingLeft: 6,
-    paddingRight: ITEM_LAYOUT_PADDING_HORIZONTAL,
-    position: 'relative',
-  },
-  usdText: {
-    fontSize: 36,
-    fontWeight: '900',
-    textAlign: 'left',
-    color: colors2024['neutral-title-1'],
-    lineHeight: 42,
-    fontFamily: 'SF Pro Rounded',
-  },
-  accountBg: {
-    minWidth: 72,
-    padding: 8,
-    paddingLeft: 14,
-    borderRadius: 10,
-    backgroundColor: isLight
-      ? ThemeColors2024.dark['neutral-bg-1']
-      : colors2024['brand-default'],
-    shadowColor: colors2024['brand-light-1'],
-    shadowOffset: { width: 0, height: 9.411 },
-    shadowOpacity: 0.1,
-    shadowRadius: 22.587,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // elevation: 500,
-  },
-  button: {
-    height: 38,
-  },
-  accountText: {
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'left',
-    color: colors2024['neutral-InvertHighlight'],
-    lineHeight: 20,
-    fontFamily: 'SF Pro Rounded',
-  },
-  pinBox: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   scroll: {
     flex: 1,
   },
@@ -1430,16 +1141,19 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   curveCard: {
     borderRadius: 20,
-    paddingVertical: 28,
+    paddingVertical: 24,
     paddingHorizontal: 20,
-    height: 128,
     borderWidth: 0,
     borderColor: isLight
       ? colors2024['neutral-bg-1']
       : colors2024['neutral-line'],
     backgroundColor: 'transparent',
+  },
+  curveCardInner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
   },
   shadowView: {
     ...Platform.select({
@@ -1462,7 +1176,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
       : colors2024['neutral-bg-2'],
   },
   curveContainer: {
-    gap: 10,
+    gap: 6,
   },
   arrow: {
     width: 42,
@@ -1472,13 +1186,13 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   changePercent: {
     fontSize: 16,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: '500',
     color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
   },
   netWorth: {
     fontSize: 42,
-    lineHeight: 42,
+    lineHeight: 46,
     fontWeight: '900',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',

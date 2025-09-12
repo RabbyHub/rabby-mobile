@@ -188,8 +188,7 @@ export const HistoryTokenList = ({
         isApprove ? approve?.price : receives?.[0]?.price || sends?.[0]?.price
       ) as number;
       const isUnlimited =
-        singleAmount &&
-        new BigNumber(singleAmount).gte(new BigNumber(10).pow(18).times(1e9));
+        singleAmount && new BigNumber(singleAmount).gte(10 ** 9);
       const appvoveAmmountStr = singleAmount
         ? isUnlimited
           ? t('page.transactions.detail.Unlimited')
@@ -227,7 +226,6 @@ export const HistoryTokenList = ({
                         16,
                       )}
                 </Text>
-                {}
                 {Boolean(!tokenIsNft && singleAmount && !isUnlimited) && (
                   <HistoryItemTokenPrice
                     tokenId={tokenId}
@@ -378,7 +376,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
   },
   singleColomnBox: {
-    // flex: 1,
+    flex: 1,
     flexDirection: 'column',
     // alignItems: 'center',
   },

@@ -124,9 +124,9 @@ export const SearchAssets: React.FC<Props> = ({
             onTokenPress={handleOpenTokenDetail}
             logoSize={40}
             decimalPrecision
-            leftSlot={
+            rightSlot={
               <Pressable
-                style={styles.leftSlot}
+                style={styles.rightSlot}
                 onPress={e => {
                   e.stopPropagation();
                   handlePressFavorite(item.id, item.chain);
@@ -153,7 +153,7 @@ export const SearchAssets: React.FC<Props> = ({
       colors2024,
       handleOpenTokenDetail,
       handlePressFavorite,
-      styles.leftSlot,
+      styles.rightSlot,
       styles.renderItemWrapper,
       watchlistTokenList,
     ],
@@ -169,6 +169,7 @@ export const SearchAssets: React.FC<Props> = ({
       titleText: t('page.swap.selectChainModalTitle'),
       bottomSheetModalProps: {
         enableContentPanningGesture: true,
+        rootViewType: 'View',
       },
       onChange: (chain: CHAINS_ENUM) => {
         removeChainModal();
@@ -424,7 +425,7 @@ const getStyles = createGetStyles2024(ctx => ({
   footer: {
     height: 200,
   },
-  leftSlot: {
-    marginRight: 8,
+  rightSlot: {
+    marginLeft: 8,
   },
 }));

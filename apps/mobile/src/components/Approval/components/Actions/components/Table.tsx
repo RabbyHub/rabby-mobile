@@ -11,6 +11,7 @@ const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       alignItems: 'stretch',
       paddingVertical: 11,
+      gap: 12,
     },
     hasTip: {
       flexDirection: 'row',
@@ -21,15 +22,16 @@ const getStyles = (colors: AppColorsVariants) =>
     rowWrapper: {
       position: 'relative',
       fontWeight: '500',
-      alignItems: 'flex-start',
-      // whiteSpace: 'nowrap',
     },
     notTitle: {
       textAlign: 'right',
-      justifyContent: 'flex-end',
+      flex: 1,
+      minWidth: 0,
+      flexShrink: 1,
+      alignItems: 'flex-end',
     },
     title: {
-      flex: 1,
+      flex: 0,
       flexShrink: 0,
     },
   });
@@ -84,8 +86,8 @@ const Row = ({
     <View
       style={StyleSheet.flatten([
         {
-          ...(isTitle ? styles.title : styles.notTitle),
           ...styles.rowWrapper,
+          ...(isTitle ? styles.title : styles.notTitle),
           ...(tip ? styles.hasTip : {}),
           ...(itemsCenter ? { justifyContent: 'center' } : {}),
         },

@@ -172,3 +172,4 @@ export const RcScreenshotReport = makeThemeIcon2024FromCC(
     onDark: ctx.colors2024['brand-default'],
   }),
 );
+export { default as RcIconCurrency } from './icon-currency.svg';
