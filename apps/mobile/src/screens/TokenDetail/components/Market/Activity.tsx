@@ -7,6 +7,7 @@ import { Pressable, Text, View } from 'react-native';
 import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
+import { ellipsisAddress } from '@/utils/address';
 
 const mockSummaryData = {
   '5m': {
@@ -183,13 +184,151 @@ const Summary = ({ data }: ISummaryData) => {
   );
 };
 
+// TODO: mock data
+const mock_list_data = [
+  {
+    id: '123',
+    action: 'buy',
+    price: 123,
+    amount: 123,
+    usd_value: 123,
+    tx_id: '12312312312',
+    user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff80b',
+    time_at: 1757483317,
+  },
+  {
+    id: '124',
+    action: 'sell',
+    price: 123,
+    amount: 123,
+    usd_value: 123,
+    tx_id: '12312312312',
+    user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff801',
+    time_at: 1757483318,
+  },
+  {
+    id: '125',
+    action: 'buy',
+    price: 123,
+    amount: 123,
+    usd_value: 123,
+    tx_id: '12312312312',
+    user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff802',
+    time_at: 1757483318,
+  },
+  {
+    id: '126',
+    action: 'buy',
+    price: 123,
+    amount: 123,
+    usd_value: 123,
+    tx_id: '12312312312',
+    user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff803',
+    time_at: 1757483318,
+  },
+];
+
+const enum TabKey {
+  all = 'all',
+  buy = 'buy',
+  sell = 'sell',
+}
+
 const Details = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState(TabKey.all);
 
   return (
     <InfoContainer title={t('page.tokenDetail.marketInfo.details')}>
-      <EmptyData />
+      {mock_list_data.length > 0 ? (
+        <View style={styles.detailsContainer}>
+          <View style={styles.switchTabs}>
+            <Pressable
+              style={[
+                styles.switchTabItem,
+                activeTab === TabKey.all && styles.switchTabItemActive,
+              ]}
+              onPress={() => setActiveTab(TabKey.all)}>
+              <Text
+                style={[
+                  styles.switchTabItemText,
+                  activeTab === TabKey.all && styles.activeTabItemText,
+                ]}>
+                All
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.switchTabItem,
+                activeTab === TabKey.buy && styles.switchTabItemActive,
+              ]}
+              onPress={() => setActiveTab(TabKey.buy)}>
+              <Text
+                style={[
+                  styles.switchTabItemText,
+                  activeTab === TabKey.buy && styles.activeTabItemText,
+                ]}>
+                Buy
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.switchTabItem,
+                activeTab === TabKey.sell && styles.switchTabItemActive,
+              ]}
+              onPress={() => setActiveTab(TabKey.sell)}>
+              <Text
+                style={[
+                  styles.switchTabItemText,
+                  activeTab === TabKey.sell && styles.activeTabItemText,
+                ]}>
+                Sell
+              </Text>
+            </Pressable>
+          </View>
+          <View style={styles.tableHeader}>
+            <Text style={styles.tableHeaderItem}>Type|Time</Text>
+            <Text style={styles.tableHeaderItem}>Price</Text>
+            <Text style={styles.tableHeaderItem}>Qnt</Text>
+            <Text style={styles.tableHeaderItem}>Value</Text>
+            <Text style={styles.tableHeaderItem}>Address</Text>
+          </View>
+          <View style={styles.tableBody}>
+            {mock_list_data.map((item, index) => {
+              const isBuy = item.action === 'buy';
+              return (
+                <View
+                  key={item.user_addr}
+                  style={[
+                    styles.tableRow,
+                    index === mock_list_data.length - 1 &&
+                      styles.hideBottomBorder,
+                  ]}>
+                  <View style={styles.actionAndTime}>
+                    <Text
+                      style={[
+                        styles.chatTopText,
+                        !isBuy && styles.chatTopTextRight,
+                      ]}>
+                      {isBuy ? 'Buy' : 'Sell'}
+                    </Text>
+                    <Text style={styles.timeAtItem}>{item.time_at}</Text>
+                  </View>
+                  <Text style={styles.indexItem}>{item.price}</Text>
+                  <Text style={styles.ratioItem}>{item.amount}</Text>
+                  <Text style={styles.amountItem}>{item.usd_value}</Text>
+                  <Text style={styles.addressItem}>
+                    {item.user_addr ? ellipsisAddress(item.user_addr, 4) : '-'}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      ) : (
+        <EmptyData />
+      )}
     </InfoContainer>
   );
 };
@@ -287,8 +426,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     backgroundColor: colors2024['green-light-4'],
     paddingVertical: 4,
-    paddingHorizontal: 4,
     borderRadius: 6,
+    width: 29,
+    textAlign: 'center',
     overflow: 'hidden',
   },
   actionAmount: {
@@ -338,5 +478,104 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 17,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
+  },
+  switchTabs: {
+    display: 'flex',
+    flexDirection: 'row',
+    marginTop: 12,
+  },
+  switchTabItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 70,
+    height: 30,
+  },
+  switchTabItemActive: {
+    borderRadius: 8,
+    backgroundColor: colors2024['neutral-bg-2'],
+  },
+  switchTabItemText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  activeTabItemText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  detailsContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    paddingHorizontal: 16,
+  },
+  tableHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  tableHeaderItem: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  tableBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    marginTop: 12,
+  },
+  tableRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors2024['neutral-line'],
+    alignItems: 'center',
+  },
+  hideBottomBorder: {
+    borderBottomWidth: 0,
+  },
+  indexItem: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  ratioItem: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  amountItem: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  addressItem: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  timeAtItem: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  actionAndTime: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
   },
 }));

@@ -72,7 +72,7 @@ const Details = ({ data }: DetailsProps) => {
               {item.amount ? formatNumber(item.amount) : '-'}
             </Text>
             <Text style={styles.addressItem}>
-              {item.user_addr ? ellipsisAddress(item.user_addr) : '-'}
+              {item.user_addr ? ellipsisAddress(item.user_addr, 4) : '-'}
             </Text>
           </View>
         ))}
