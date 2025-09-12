@@ -103,24 +103,29 @@ export const usePerpsDeposit = ({
       };
 
       const handleFullback = async () => {
-        const res = await sendRequest({
-          data: {
-            method: 'eth_sendTransaction',
-            params: currentTxs,
-            $ctx: {
-              ga: {
-                category: 'Perps',
-                source: 'Perps',
-                trigger: 'Perps',
+        const promise = Promise.all(
+          currentTxs.map(tx => {
+            return sendRequest({
+              data: {
+                method: 'eth_sendTransaction',
+                params: [tx],
+                $ctx: {
+                  ga: {
+                    category: 'Perps',
+                    source: 'Perps',
+                    trigger: 'Perps',
+                  },
+                },
               },
-            },
-          },
-          session: INTERNAL_REQUEST_SESSION,
-          account: currentPerpsAccount,
-        });
+              session: INTERNAL_REQUEST_SESSION,
+              account: currentPerpsAccount,
+            });
+          }),
+        );
 
-        const txHash = last(res) as string;
-        handleSetHistory(txHash);
+        const res = await promise;
+        const signature = last(res as Array<string>);
+        handleSetHistory(signature as string);
       };
 
       if (isAccountSupportDirectSign(currentPerpsAccount.type)) {

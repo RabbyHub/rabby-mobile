@@ -38,6 +38,7 @@ export const PerpsPositionItem: React.FC<{
     Number(liquidationPx || 0) < Number(entryPx || 0) ? 'Long' : 'Short';
   const absPnlUsd = Math.abs(Number(unrealizedPnl));
   const absPnlPct = Math.abs(Number(returnOnEquity));
+  const leverageType = item.leverage.type || 'isolated';
   const pnlText = `${sign}$${formatUsdValue(absPnlUsd)} (${formatPct(
     absPnlPct,
   )})`;
@@ -74,7 +75,9 @@ export const PerpsPositionItem: React.FC<{
             </View>
             <View style={styles.isolatedRow}>
               <Text style={styles.isolatedText}>
-                {t('page.perpsDetail.PerpsPosition.isolated')}
+                {leverageType === 'cross'
+                  ? t('page.perpsDetail.PerpsPosition.cross')
+                  : t('page.perpsDetail.PerpsPosition.isolated')}
               </Text>
             </View>
           </View>
@@ -272,7 +275,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '500',
+    fontWeight: '700',
     color: colors2024['neutral-title-1'],
     marginBottom: 10,
   },

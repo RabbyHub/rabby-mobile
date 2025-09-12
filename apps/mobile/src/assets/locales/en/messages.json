@@ -2268,6 +2268,7 @@
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
+        "cross": "Cross",
         "isolated": "Isolated",
         "size": "Size",
         "markPrice": "Mark Price",
