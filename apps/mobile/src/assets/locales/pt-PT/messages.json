@@ -230,7 +230,11 @@
       "feedbackInput": {
         "placeholder": "Descreva o problema"
       },
-      "submitButtonText": "Enviar"
+      "submitButtonText": "Enviar",
+      "switchArea": {
+        "skipText": "Ignorar este popup por 1 dia"
+      },
+      "title": "Captura de Ecrã para Reportar Erro"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "Descrição:",
@@ -239,7 +243,12 @@
       "issueDescription": "Aqui está o problema que você relatou:",
       "pendingTitle": "O suporte do Rabby ainda não respondeu."
     },
-    "submitFeedbackSuccessModal": {}
+    "submitFeedbackSuccessModal": {
+      "desc": "Submetido com Sucesso!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Eu entendi"
+    }
   },
   "global": {
     "Cancel": "Cancelar",
@@ -312,7 +321,9 @@
         "title": "Permissão de Localização",
         "message": "Este app precisa de acesso à sua localização para oferecer funcionalidades baseadas na localização."
       }
-    }
+    },
+    "gotIt": "Entendi",
+    "check": "Verifique"
   },
   "page": {
     "getStart": {
@@ -535,7 +546,8 @@
         "maxGas": "Max Gas: ",
         "estimatedGas": "Estimativa de Gas:",
         "sendGas": "A transferência de Gas para si na transação atual:",
-        "gasCost": "Custo de Gas para transferir gas para o seu endereço:"
+        "gasCost": "Custo de Gas para transferir gas para o seu endereço:",
+        "description": "Usando GasAccount para pagar as taxas de gás. Veja os detalhes do pagamento abaixo:"
       },
       "gasLimitEmptyAlert": "Por favor, insira o limite de gas",
       "revokePermit": {
@@ -996,7 +1008,9 @@
         "websites": "Websites",
         "search": "Pesquisar Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Lista de Vigilância"
+        "watchlist": "Lista de Vigilância",
+        "perpsMarketList": "Mais Perps",
+        "perps": "Perps"
       }
     },
     "manageAddress": {
@@ -1943,6 +1957,23 @@
       "tabs": {
         "tokenSecurity": "Token Security",
         "marketData": "Dados de mercado"
+      },
+      "interval": {
+        "15M": "15M",
+        "1M": "1M",
+        "1D": "1D",
+        "4H": "4H",
+        "5M": "5M",
+        "1W": "1W",
+        "1H": "1H",
+        "30M": "30M"
+      },
+      "marketInfo": {
+        "marketCap": "Capitalização de Mercado",
+        "holders": "Titulares",
+        "volume24h": "Volume de 24h",
+        "txns24h": "24h Txns",
+        "totalSupply": "Fornecimento Total"
       }
     },
     "customTestnet": {
@@ -2002,7 +2033,10 @@
       "clearPendingToast": "Transação pendente local removida",
       "clearPendingResetDesc": "Também redefina meus dados locais de nonce e registro de assinatura.",
       "clearPendingWarning": "A transação removida pode ainda estar confirmada na cadeia, a menos que seja substituída.",
-      "clearBrowserData": "Limpar dados do navegador"
+      "clearBrowserData": "Limpar dados do navegador",
+      "currency": "Moeda",
+      "searchCurrency": "Pesquisar Moeda",
+      "screenshotReportSwitch": "Captura de ecrã para reportar erro"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -2397,6 +2431,9 @@
         "setupWalletFirst": "Por favor, conclua a configuração da wallet primeiro.",
         "unlockWalletFirst": "Por favor, desbloqueie o app para abrir o link."
       }
+    },
+    "perpsHistory": {
+      "title": "Histórico"
     }
   },
   "constant": {

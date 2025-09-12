@@ -113,7 +113,9 @@
         "title": "Standortberechtigung",
         "message": "Diese App benötigt Zugriff auf Ihren Standort, um standortbasierte Funktionen bereitzustellen."
       }
-    }
+    },
+    "gotIt": "Verstanden",
+    "check": "Überprüfen"
   },
   "component": {
     "accountSwitcher": {
@@ -303,7 +305,11 @@
       "feedbackInput": {
         "placeholder": "Beschreiben Sie das Problem"
       },
-      "submitButtonText": "Einreichen"
+      "submitButtonText": "Einreichen",
+      "switchArea": {
+        "skipText": "Überspringe dieses Popup für 1 Tag"
+      },
+      "title": "Screenshot zur Fehlermeldung"
     },
     "feedbackModal": {
       "title": "Antwort vom Rabby Support",
@@ -312,7 +318,12 @@
       "repliedTitle": "Rabby Support hat geantwortet:",
       "issueDescription": "Hier ist das von Ihnen gemeldete Problem:"
     },
-    "submitFeedbackSuccessModal": {}
+    "submitFeedbackSuccessModal": {
+      "desc": "Erfolgreich eingereicht!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Ich habe es verstanden"
+    }
   },
   "page": {
     "transactions": {
@@ -629,7 +640,8 @@
         "maxGas": "Max Gas: ",
         "gasCost": "Gas-Kosten für die Übertragung von Gas an Ihre Adresse:",
         "estimatedGas": "Geschätztes Gas:",
-        "sendGas": "Die Gas-Übertragung für Ihre aktuelle Transaktion: "
+        "sendGas": "Die Gas-Übertragung für Ihre aktuelle Transaktion: ",
+        "description": "GasAccount verwenden, um Transaktionsgebühren zu bezahlen. Details zur Zahlung finden Sie unten:"
       },
       "importedDelegatedAddress": "Importierte delegierte Adresse",
       "recommendGasLimitTip": "Geschätzt {{est}}. Aktuell {{current}}x, empfohlen",
@@ -1087,7 +1099,9 @@
         "queue": "Warteschlange",
         "search": "Token suchen",
         "copyTrading": "Copy Trading",
-        "watchlist": "Überwachungsliste"
+        "watchlist": "Überwachungsliste",
+        "perps": "Perps",
+        "perpsMarketList": "Mehr Perps"
       }
     },
     "manageAddress": {
@@ -2037,6 +2051,23 @@
       "tabs": {
         "tokenSecurity": "Token-Sicherheit",
         "marketData": "Marktdaten"
+      },
+      "interval": {
+        "4H": "4H",
+        "1M": "1M",
+        "1H": "1H",
+        "1D": "1D",
+        "5M": "5M",
+        "1W": "1W",
+        "15M": "15M",
+        "30M": "30M"
+      },
+      "marketInfo": {
+        "txns24h": "24h Txns",
+        "totalSupply": "Gesamtvorrat",
+        "volume24h": "24h Volumen",
+        "marketCap": "Marktkapitalisierung",
+        "holders": "Inhaber"
       }
     },
     "setting": {
@@ -2063,7 +2094,10 @@
       "clearPendingResetDesc": "Setze auch meine lokalen Nonce-Daten und Signaturaufzeichnungen zurück.",
       "clearPendingToast": "Lokale ausstehende Transaktion entfernt",
       "clearPendingWarning": "Die entfernte Transaktion kann weiterhin on-chain bestätigt werden, es sei denn, sie wird ersetzt.",
-      "clearBrowserData": "Browser-Daten löschen"
+      "clearBrowserData": "Browser-Daten löschen",
+      "currency": "Währung",
+      "searchCurrency": "Währung suchen",
+      "screenshotReportSwitch": "Screenshot, um einen Fehler zu melden"
     },
     "miniSignFooterBar": {
       "signWithLedger": "Signieren",
@@ -2397,6 +2431,9 @@
         "unlockWalletFirst": "Bitte entsperren Sie die App, um den Link zu öffnen.",
         "setupWalletFirst": "Bitte richten Sie zunächst die Wallet ein."
       }
+    },
+    "perpsHistory": {
+      "title": "Verlauf"
     }
   },
   "constant": {

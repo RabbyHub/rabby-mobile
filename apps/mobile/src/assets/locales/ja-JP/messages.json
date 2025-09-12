@@ -211,7 +211,8 @@
         "maxGas": "最大Gas:",
         "estimatedGas": "推定ガス: ",
         "sendGas": "現在の取引のためにあなたに送られるGas：",
-        "gasCost": "ガスをあなたのアドレスに転送する際のガスコスト："
+        "gasCost": "ガスをあなたのアドレスに転送する際のガスコスト：",
+        "description": "GasAccountを使用してガス料金を支払います。以下に支払いの詳細を表示します："
       },
       "recommendGasLimitTip": "推定 {{est}}。現在は {{current}}x、推奨",
       "moreSafeSigNeeded": "{{0}} つの確認が必要です",
@@ -914,7 +915,9 @@
         "websites": "ウェブサイト",
         "search": "Search Token",
         "copyTrading": "コピー取引",
-        "watchlist": "ウォッチリスト"
+        "watchlist": "ウォッチリスト",
+        "perps": "パープス",
+        "perpsMarketList": "より多くのPerps"
       }
     },
     "nextComponent": {
@@ -1713,6 +1716,23 @@
       "tabs": {
         "tokenSecurity": "トークンセキュリティ",
         "marketData": "マーケットデータ"
+      },
+      "interval": {
+        "1M": "1M",
+        "1W": "1W",
+        "4H": "4H",
+        "1H": "1H",
+        "1D": "1D",
+        "15M": "15M",
+        "30M": "30M",
+        "5M": "5M"
+      },
+      "marketInfo": {
+        "holders": "保有者",
+        "marketCap": "時価総額",
+        "volume24h": "24時間取引量",
+        "totalSupply": "総供給量",
+        "txns24h": "24時間取引"
       }
     },
     "customTestnet": {
@@ -1870,7 +1890,10 @@
       "clearPendingToast": "ローカルの保留中のトランザクションが削除されました",
       "clearPendingResetDesc": "ローカルの nonce データと署名記録もリセットします。",
       "clearPendingWarning": "削除されたトランザクションは、置き換えられない限り、オンチェーンでまだ確認される可能性があります。",
-      "clearBrowserData": "ブラウザデータをクリア"
+      "clearBrowserData": "ブラウザデータをクリア",
+      "searchCurrency": "通貨を検索",
+      "currency": "通貨",
+      "screenshotReportSwitch": "バグを報告するためのスクリーンショット"
     },
     "settingModal": {
       "themeMode": {
@@ -2162,6 +2185,9 @@
         "setupWalletFirst": "最初にウォレットの設定を完了してください。",
         "unlockWalletFirst": "アプリをアンロックしてリンクを開いてください。"
       }
+    },
+    "perpsHistory": {
+      "title": "履歴"
     }
   },
   "global": {
@@ -2235,7 +2261,9 @@
         "title": "位置の権限",
         "message": "このアプリは、位置情報に基づく機能を提供するために、あなたの位置情報へのアクセスが必要です。"
       }
-    }
+    },
+    "check": "チェック",
+    "gotIt": "わかった"
   },
   "bluetooth": {
     "powered_off_alert": {
@@ -2445,7 +2473,11 @@
       "feedbackInput": {
         "placeholder": "問題を説明してください。"
       },
-      "submitButtonText": "送信"
+      "submitButtonText": "送信",
+      "switchArea": {
+        "skipText": "このポップアップを1日間スキップする"
+      },
+      "title": "バグを報告するためのスクリーンショット"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "説明:",
@@ -2454,7 +2486,12 @@
       "title": "Rabbyサポートからの応答",
       "pendingTitle": "Rabby サポートが返信していません。"
     },
-    "submitFeedbackSuccessModal": {}
+    "submitFeedbackSuccessModal": {
+      "desc": "正常に提出されました！"
+    },
+    "GlobalTipsPopup": {
+      "btn": "理解しました"
+    }
   },
   "common": {
     "dialog": {

@@ -113,7 +113,9 @@
         "title": "位置权限",
         "message": "该应用需要访问您的位置，以提供基于位置的功能。"
       }
-    }
+    },
+    "check": "检查",
+    "gotIt": "明白了"
   },
   "constant": {
     "IMPORTED_HD_KEYRING": "通过种子短语导入",
@@ -356,7 +358,8 @@
         "sendGas": "当前交易的Gas转移给你：",
         "maxGas": "最大 Gas: ",
         "estimatedGas": "预估 Gas:",
-        "gasCost": "将 gas 转移到您的地址的 gas 费用："
+        "gasCost": "将 gas 转移到您的地址的 gas 费用：",
+        "description": "使用 GasAccount 支付 gas 费用。查看支付详情如下："
       },
       "gasLimitLessThanGasUsed": "Gas limit 太低。交易有 95% 的可能性会失败。",
       "interactContract": "交互合约",
@@ -806,7 +809,9 @@
         "approvals": "授权",
         "search": "搜索 Token",
         "copyTrading": "跟单交易",
-        "watchlist": "观察列表"
+        "watchlist": "观察列表",
+        "perpsMarketList": "更多 Perps",
+        "perps": "合约"
       }
     },
     "manageAddress": {
@@ -1860,6 +1865,23 @@
       "tabs": {
         "tokenSecurity": "代币安全",
         "marketData": "市场数据"
+      },
+      "interval": {
+        "1D": "1D",
+        "1H": "1H",
+        "15M": "15M",
+        "30M": "30M",
+        "5M": "5M",
+        "1W": "1W",
+        "4H": "4H",
+        "1M": "1M"
+      },
+      "marketInfo": {
+        "volume24h": "24小时交易量",
+        "marketCap": "市场总值",
+        "totalSupply": "总供应量",
+        "holders": "持有者",
+        "txns24h": "24h 交易次数"
       }
     },
     "customRpc": {
@@ -1915,7 +1937,10 @@
       "clearPendingWarning": "被移除的交易可能仍会在链上确认，除非它被替换。",
       "clearPendingResetDesc": "还重置了我的本地 nonce 数据和签名记录。",
       "clearPendingToast": "本地待处理交易已被移除",
-      "clearBrowserData": "清除浏览器数据"
+      "clearBrowserData": "清除浏览器数据",
+      "currency": "货币",
+      "searchCurrency": "搜索货币",
+      "screenshotReportSwitch": "截图以报告错误"
     },
     "settingModal": {
       "themeMode": {
@@ -2207,6 +2232,9 @@
         "setupWalletFirst": "请先完成钱包设置。",
         "unlockWalletFirst": "请解锁应用以打开链接。"
       }
+    },
+    "perpsHistory": {
+      "title": "历史"
     }
   },
   "component": {
@@ -2397,7 +2425,11 @@
       "feedbackInput": {
         "placeholder": "描述问题"
       },
-      "submitButtonText": "提交"
+      "submitButtonText": "提交",
+      "switchArea": {
+        "skipText": "在此弹窗上跳过 1 天"
+      },
+      "title": "截图以报告bug"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "描述：",
@@ -2406,7 +2438,12 @@
       "issueDescription": "您报告的问题是：",
       "repliedTitle": "Rabby Support 已回复："
     },
-    "submitFeedbackSuccessModal": {}
+    "submitFeedbackSuccessModal": {
+      "desc": "提交成功！"
+    },
+    "GlobalTipsPopup": {
+      "btn": "我明白了"
+    }
   },
   "bluetooth": {
     "permissions_alert": {

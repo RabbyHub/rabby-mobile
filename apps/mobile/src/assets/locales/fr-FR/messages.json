@@ -326,7 +326,8 @@
         "maxGas": "Gaz maximal :",
         "estimatedGas": "Estimated Gas :",
         "sendGas": "Le transfert de Gas pour votre transaction actuelle :",
-        "gasCost": "Coût du gas pour transférer du gas à votre adresse :"
+        "gasCost": "Coût du gas pour transférer du gas à votre adresse :",
+        "description": "Utiliser GasAccount pour payer les frais de gaz. Voir les détails du paiement ci-dessous :"
       },
       "nftCollectionApprove": {
         "approveCollection": "Approuver la collection",
@@ -886,7 +887,9 @@
         "send": "Envoyer",
         "search": "Rechercher Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Liste de surveillance"
+        "watchlist": "Liste de surveillance",
+        "perps": "Perps",
+        "perpsMarketList": "Plus de Perps"
       }
     },
     "bridge": {
@@ -1724,6 +1727,23 @@
       "tabs": {
         "tokenSecurity": "Sécurité des tokens",
         "marketData": "Données de marché"
+      },
+      "interval": {
+        "1M": "1M",
+        "5M": "5M",
+        "1W": "1W",
+        "1H": "1H",
+        "30M": "30M",
+        "4H": "4H",
+        "15M": "15M",
+        "1D": "1D"
+      },
+      "marketInfo": {
+        "holders": "Détenteurs",
+        "totalSupply": "Offre Totale",
+        "volume24h": "Volume sur 24h",
+        "txns24h": "24h Txns",
+        "marketCap": "Capitalisation boursière"
       }
     },
     "rabbyPoints": {
@@ -1827,7 +1847,10 @@
       "clearPendingToast": "Transaction en attente local supprimée",
       "clearPendingWarning": "La transaction supprimée peut toujours être confirmée sur la chaîne, à moins qu'elle ne soit remplacée.",
       "clearPendingResetDesc": "Réinitialiser également mes données de nonce locales et mon enregistrement de signature.",
-      "clearBrowserData": "Effacer les données du navigateur"
+      "clearBrowserData": "Effacer les données du navigateur",
+      "searchCurrency": "Rechercher une devise",
+      "screenshotReportSwitch": "Capture d'écran pour signaler un bug",
+      "currency": "Monnaie"
     },
     "settingModal": {
       "themeMode": {
@@ -2119,6 +2142,9 @@
         "setupWalletFirst": "Veuillez d'abord terminer la configuration du wallet.",
         "unlockWalletFirst": "Veuillez déverrouiller l'application pour ouvrir le lien."
       }
+    },
+    "perpsHistory": {
+      "title": "Historique"
     }
   },
   "native": {
@@ -2344,7 +2370,11 @@
       "feedbackInput": {
         "placeholder": "Décrivez le problème"
       },
-      "submitButtonText": "Soumettre"
+      "submitButtonText": "Soumettre",
+      "switchArea": {
+        "skipText": "Ignorer cette fenêtre contextuelle pendant 1 jour"
+      },
+      "title": "Capture d'écran pour signaler un bug"
     },
     "feedbackModal": {
       "title": "Réponse du support Rabby",
@@ -2353,7 +2383,12 @@
       "pendingTitle": "Le support de Rabby n'a pas répondu.",
       "issueDescription": "Voici le problème que vous avez signalé :"
     },
-    "submitFeedbackSuccessModal": {}
+    "submitFeedbackSuccessModal": {
+      "desc": "Soumis avec succès !"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Je l'ai compris"
+    }
   },
   "global": {
     "next": "Suivant",
@@ -2426,7 +2461,9 @@
         "title": "Permission d'emplacement",
         "message": "Cette application a besoin d'accéder à votre emplacement pour fournir des fonctionnalités basées sur la localisation."
       }
-    }
+    },
+    "gotIt": "Compris",
+    "check": "Vérifier"
   },
   "background": {
     "transactionWatcher": {
