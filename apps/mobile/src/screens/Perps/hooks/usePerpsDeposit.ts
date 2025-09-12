@@ -103,9 +103,10 @@ export const usePerpsDeposit = ({
       };
 
       const handleFullback = async () => {
-        const promise = Promise.all(
-          currentTxs.map(tx => {
-            return sendRequest({
+        const results: string[] = [];
+        for (const tx of currentTxs) {
+          try {
+            const result = await sendRequest({
               data: {
                 method: 'eth_sendTransaction',
                 params: [tx],
@@ -120,11 +121,13 @@ export const usePerpsDeposit = ({
               session: INTERNAL_REQUEST_SESSION,
               account: currentPerpsAccount,
             });
-          }),
-        );
 
-        const res = await promise;
-        const signature = last(res as Array<string>);
+            results.push(result);
+          } catch (error) {
+            throw error;
+          }
+        }
+        const signature = last(results as Array<string>);
         handleSetHistory(signature as string);
       };
 

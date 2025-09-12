@@ -217,15 +217,21 @@ export const usePerpsStore = () => {
       const withdrawList = newHistoryList.filter(
         item => item.type === 'withdraw',
       );
+      const receiveList = newHistoryList.filter(
+        item => item.type === 'receive',
+      );
       const maxTimeItemDeposit = maxBy(depositList, 'time');
       const maxTimeItemWithdraw = maxBy(withdrawList, 'time');
+      const maxTimeItemReceive = maxBy(receiveList, 'time');
       setState(prev => {
         // 使用当前userAccountHistory过滤 localLoadingHistory
         const filteredLocalHistory = state.localLoadingHistory.filter(item => {
           if (item.type === 'deposit') {
             return item.time >= (maxTimeItemDeposit?.time || 0);
-          } else {
+          } else if (item.type === 'withdraw') {
             return item.time >= (maxTimeItemWithdraw?.time || 0);
+          } else {
+            return item.time >= (maxTimeItemReceive?.time || 0);
           }
         });
         return {
