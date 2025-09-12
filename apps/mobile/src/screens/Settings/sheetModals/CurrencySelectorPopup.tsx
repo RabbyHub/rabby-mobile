@@ -208,7 +208,7 @@ export function CurrencySelectorPopup({
   );
 }
 
-const getStyle = createGetStyles2024(({ colors2024 }) => {
+const getStyle = createGetStyles2024(({ colors2024, isLight }) => {
   return {
     container: {
       paddingHorizontal: 16,
@@ -264,7 +264,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       alignItems: 'center',
       gap: 12,
       borderRadius: 16,
-      backgroundColor: colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-1']
+        : colors2024['neutral-bg-2'],
       paddingVertical: 20,
       paddingHorizontal: 24,
 
