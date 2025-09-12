@@ -148,7 +148,7 @@ export const BottomSheetBrowser = () => {
           });
         }
       }}>
-      <AutoLockView as="BottomSheetView" style={styles.customContentStyle}>
+      <AutoLockView as="View" style={styles.customContentStyle}>
         {!isTransparent ? (
           <BottomSheetHandlableView
             style={[

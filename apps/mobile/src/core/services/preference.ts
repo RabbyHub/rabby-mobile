@@ -20,6 +20,7 @@ import { reportActionStats } from '../utils/reportActionStats';
 import { REPORT_TIMEOUT_ACTION_KEY } from './type';
 import { EvmTotalBalanceResponse } from '@/databases/hooks/balance';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { BALANCE_HIDE_TYPE } from '@/screens/Home/hooks/useHideBalance';
 
 const { isSameAddress } = addressUtils;
 
@@ -172,6 +173,10 @@ export interface PreferenceStore {
   watchlistSkip?: boolean;
 
   lastReportTime?: number;
+
+  balanceHideType?: BALANCE_HIDE_TYPE;
+
+  currency?: string;
 }
 
 export interface AddressSortStore {
@@ -249,6 +254,8 @@ export class PreferenceService {
           addressAvatarMap: {},
           hasOpenCopyTrading: false,
           watchlistSkip: false,
+          balanceHideType: BALANCE_HIDE_TYPE.SHOW,
+          currency: 'USD',
         },
       },
       {

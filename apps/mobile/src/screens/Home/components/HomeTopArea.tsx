@@ -367,6 +367,8 @@ export const HomeTopArea = ({
           data={
             curveData || {
               list: [],
+              rawNetWorth: 0,
+              rawChange: 0,
               netWorth: '',
               change: '',
               changePercent: '',

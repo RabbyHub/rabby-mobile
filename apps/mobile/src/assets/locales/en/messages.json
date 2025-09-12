@@ -1953,7 +1953,9 @@
       "clearPendingWarning": "The removed transaction may still be confirmed on-chain unless it is replaced.",
       "clearPendingResetDesc": "Also reset my local nonce data and signature record",
       "clearPendingToast": "Local pending transaction removed",
-      "clearBrowserData": "Clear Browser Data"
+      "clearBrowserData": "Clear Browser Data",
+      "currency": "Currency",
+      "searchCurrency": "Search Currency"
     },
     "settingModal": {
       "themeMode": {

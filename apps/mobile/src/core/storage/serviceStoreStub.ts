@@ -6,7 +6,9 @@ import { currentAccountAtom } from '@/hooks/account';
 import { tabsAtom } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useBrowserHistory } from '@/hooks/browser/useBrowserHistory';
+import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
 import { chainListAtom } from '@/hooks/useChainList';
+import { currencyServiceAtom } from '@/hooks/useCurrency';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { dappServiceAtom } from '@/hooks/useDapps';
 import {
@@ -14,16 +16,20 @@ import {
   EVENT_UPDATE_CHAIN_LIST,
   eventBus,
 } from '@/utils/events';
-import { useMount } from 'ahooks';
-import { browserService, dappService } from '../services/shared';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { usePerpsStore } from '@/hooks/perps/usePerpsStore';
+import { useMount } from 'ahooks';
+import {
+  browserService,
+  currencyService,
+  dappService,
+} from '../services/shared';
 
 /**
  * @description only call this hook on app's top level
  */
 export function useSetupServiceStub() {
   const [, setDappServices] = useAtom(dappServiceAtom);
+  const [, setCurrencyServices] = useAtom(currencyServiceAtom);
   const [, setCurrentAccount] = useAtom(currentAccountAtom);
   const [, setChainList] = useAtom(chainListAtom);
   const { getAllRPC } = useCustomRPC();
@@ -43,6 +49,18 @@ export function useSetupServiceStub() {
       disposes.forEach(dispose => dispose());
     };
   }, [setDappServices]);
+
+  useEffect(() => {
+    const disposes: Function[] = [];
+
+    currencyService.setBeforeSetKV((k, v) => {
+      setCurrencyServices(prev => ({ ...prev, [k]: v }));
+    }, disposes);
+
+    return () => {
+      disposes.forEach(dispose => dispose());
+    };
+  }, [setCurrencyServices]);
 
   useMount(() => {
     eventBus.on(EVENT_SWITCH_ACCOUNT, (v: any) => {
