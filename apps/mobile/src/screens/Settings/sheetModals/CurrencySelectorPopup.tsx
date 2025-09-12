@@ -28,7 +28,8 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
-import { sortBy } from 'lodash';
+import { sortBy, uniq } from 'lodash';
+import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 
 const visibleAtom = atom(false);
 export function useCurrentCurrencyVisible() {
@@ -70,13 +71,22 @@ export function CurrencySelectorPopup({
   const deferredSearchText = useDeferredValue(searchText);
 
   const sortedList = useMemo(() => {
-    return sortBy(currencyStore.currencyList, item => {
-      if (item.code === 'USD') {
-        return 'A';
-      }
-      return item.code;
-    });
-  }, [currencyStore.currencyList]);
+    const topList = uniq([currency.code, 'USD', 'EUR']);
+
+    return [
+      ...topList.map(code => {
+        return currencyStore.currencyList.find(item => {
+          return item.code === code;
+        });
+      }),
+      ...sortBy(
+        currencyStore.currencyList.filter(item => !topList.includes(item.code)),
+        item => {
+          return item.code;
+        },
+      ),
+    ].filter(Boolean) as CurrencyItem[];
+  }, [currency.code, currencyStore.currencyList]);
 
   const list = useMemo(() => {
     if (!deferredSearchText.trim()) {
