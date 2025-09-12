@@ -230,9 +230,7 @@
       "feedbackInput": {
         "placeholder": "Describa el problema"
       },
-      "submitButtonText": "Enviar",
-      "title": "Captura de pantalla para informar de un error",
-      "feedbackLabel": "Descripción del error:"
+      "submitButtonText": "Enviar"
     },
     "feedbackModal": {
       "title": "Respuesta del soporte de Rabby",
@@ -241,9 +239,7 @@
       "pendingTitle": "Rabby Support no ha respondido.",
       "repliedTitle": "La asistencia de Rabby ha respondido:"
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "Enviado correctamente"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "page": {
     "getStart": {

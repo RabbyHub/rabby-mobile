@@ -2397,8 +2397,6 @@
       "feedbackInput": {
         "placeholder": "描述问题"
       },
-      "feedbackLabel": "错误描述：",
-      "title": "截图以报告错误",
       "submitButtonText": "提交"
     },
     "feedbackModal": {
@@ -2408,9 +2406,7 @@
       "issueDescription": "您报告的问题是：",
       "repliedTitle": "Rabby Support 已回复："
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "提交成功"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "bluetooth": {
     "permissions_alert": {

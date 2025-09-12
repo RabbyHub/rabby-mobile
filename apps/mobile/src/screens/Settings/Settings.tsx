@@ -29,6 +29,7 @@ import {
   RcI18n,
   RcFaceId,
   RcFingerprint,
+  RcScreenshotReport,
   RcIconCurrency,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
@@ -143,6 +144,11 @@ import {
   DevModalReactotron,
   useReactotronModalVisible,
 } from './Modals/DevModalReactotron';
+import {
+  FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+  useScreenshotToReportEnabled,
+} from '@/components/Screenshot/hooks';
+import { SwitchScreenshotToReport } from './components/SwitchScreenshotToReport';
 import {
   CurrencySelectorPopup,
   useCurrentCurrencyVisible,
@@ -260,6 +266,8 @@ function SettingsBlocks() {
 
   const { clearBrowserData } = useClearBrowserData();
 
+  const { toggleScreenshotToReport } = useScreenshotToReportEnabled();
+
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       settings: {
@@ -343,6 +351,16 @@ function SettingsBlocks() {
             rightTextNode: ctx => {
               return <Text style={styles.rightText}>{appThemeText}</Text>;
             },
+          },
+          {
+            label: t('page.setting.screenshotReportSwitch'),
+            icon: RcScreenshotReport,
+            rightNode: <SwitchScreenshotToReport ref={switchBiometricsRef} />,
+            onPress: () => {
+              toggleScreenshotToReport();
+            },
+            disabled: disabledBiometrics,
+            visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
           },
           {
             label: t('page.setting.clearPending'),

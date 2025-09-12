@@ -230,9 +230,7 @@
       "feedbackInput": {
         "placeholder": "Descreva o problema"
       },
-      "submitButtonText": "Enviar",
-      "feedbackLabel": "Descrição do bug:",
-      "title": "Captura para Reportar Erro"
+      "submitButtonText": "Enviar"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "Descrição:",
@@ -241,9 +239,7 @@
       "issueDescription": "Aqui está o problema que você relatou:",
       "pendingTitle": "O suporte do Rabby ainda não respondeu."
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "Submetido com Sucesso"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "global": {
     "Cancel": "Cancelar",

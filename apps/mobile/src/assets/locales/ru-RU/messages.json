@@ -2388,9 +2388,7 @@
       "feedbackInput": {
         "placeholder": "Опишите проблему"
       },
-      "feedbackLabel": "Описание ошибки:",
-      "submitButtonText": "Отправить",
-      "title": "Снимок для отчета об ошибке"
+      "submitButtonText": "Отправить"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "Описание:",
@@ -2399,9 +2397,7 @@
       "repliedTitle": "Служба поддержки Rabby ответила:",
       "issueDescription": "Вот проблема, о которой вы сообщили:"
     },
-    "submitFeedbackSuccessModal": {
-      "desc": "Отправлено успешно"
-    }
+    "submitFeedbackSuccessModal": {}
   },
   "constant": {
     "KEYRING_TYPE_TEXT": {

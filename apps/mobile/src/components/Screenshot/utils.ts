@@ -3,11 +3,11 @@ import DeviceInfo from 'react-native-device-info';
 
 import { APP_VERSIONS, APPLICATION_ID } from '@/constant';
 import { BUILD_GIT_INFO } from '@/constant/env';
-import { getAllMyAccount } from '@/core/apis/address';
+import { getAllAccounts } from '@/core/apis/address';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { UserFeedbackItem } from '@rabby-wallet/rabby-api/dist/types';
 import { preferenceService } from '@/core/services';
-import { addressUtils } from '@rabby-wallet/base-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 function runTryCatch<T extends (...args: any[]) => any>(
   fn: T,
@@ -48,11 +48,26 @@ export async function getScreenshotFeedbackExtra({
   const appBuildNumber = APP_VERSIONS.buildNumber;
   const appBuildRevision = BUILD_GIT_INFO.BUILD_GIT_HASH;
 
-  const myAccountList = await getAllMyAccount();
-  const myAddressList = myAccountList.map(acc =>
-    addressUtils.ellipsis(acc.address),
+  const myAccountList = await getAllAccounts();
+  let myFirstCallableAddress = '';
+  const {
+    callables: myCallableAddressCount,
+    uncallables: myUncallableAddressCount,
+  } = myAccountList.reduce(
+    (acc, item) => {
+      if (
+        item.type !== KEYRING_TYPE.WatchAddressKeyring &&
+        item.type !== KEYRING_TYPE.GnosisKeyring
+      ) {
+        myFirstCallableAddress = myFirstCallableAddress || item.address;
+        acc.callables += 1;
+      } else {
+        acc.uncallables += 1;
+      }
+      return acc;
+    },
+    { callables: 0, uncallables: 0 },
   );
-  const myFirstAddress = myAccountList[0]?.address;
   const myCurrentAddress = preferenceService.getFallbackAccount()?.address;
 
   return {
@@ -63,8 +78,9 @@ export async function getScreenshotFeedbackExtra({
     appBuildNumber,
     appBuildRevision,
     applicationId: APPLICATION_ID,
-    myAddressList,
-    myFirstAddress,
+    myCallableAddressCount,
+    myUncallableAddressCount,
+    myFirstAddress: myFirstCallableAddress,
     myCurrentAddress,
 
     systemName: runTryCatch(() => DeviceInfo.getSystemName()),
@@ -75,7 +91,6 @@ export async function getScreenshotFeedbackExtra({
     manufacturer: runTryCatch(() => DeviceInfo.getManufacturerSync()),
 
     isLandscape: runTryCatch(() => DeviceInfo.isLandscapeSync()),
-    isLandscapeSync: runTryCatch(() => DeviceInfo.isLandscapeSync()),
     isTablet: runTryCatch(() => DeviceInfo.isTablet()),
     isLowRamDevice: runTryCatch(() => DeviceInfo.isLowRamDevice()),
     isDisplayZoomed: runTryCatch(() => DeviceInfo.isDisplayZoomed()),
@@ -87,6 +102,7 @@ export async function getScreenshotFeedbackExtra({
     }),
 
     userAgent: runTryCatch(() => DeviceInfo.getUserAgentSync()),
+    fontScale: runTryCatch(() => DeviceInfo.getFontScaleSync()),
 
     latestErrors,
   };
