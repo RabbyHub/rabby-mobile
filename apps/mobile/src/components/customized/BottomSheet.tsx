@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModal,
   BottomSheetModalProps,
@@ -15,6 +14,7 @@ import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { IS_IOS } from '@/core/native/utils';
+import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
@@ -105,7 +105,7 @@ export const AppBottomSheetModal = forwardRef<
       Function
   >(
     _props => (
-      <BottomSheetBackdrop
+      <AppBottomSheetBackdrop
         {..._props}
         {...props.backdropProps}
         disappearsOnIndex={-1}
