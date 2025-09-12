@@ -39,6 +39,7 @@ import { MultiHomeFeatTitle } from '@/constant/newStyle';
 import { apisAccount } from '@/core/apis';
 import {
   browserService,
+  currencyService,
   gasAccountService,
   preferenceService,
   transactionHistoryService,
@@ -485,6 +486,7 @@ function MultiAddressHome(): JSX.Element {
       forceUpdate();
       syncTop10Assets(true);
       syncTop10History(true);
+      currencyService.syncCurrencyList(true);
     });
   }, [
     triggerUpdate,

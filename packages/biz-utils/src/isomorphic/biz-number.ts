@@ -172,9 +172,10 @@ export const formatCurrency = (
     decimal?: number;
     formatMillion?: boolean;
     currency?: {
-      currency_name: string;
-      currency_code: string;
-      usd_exchange_rate: number;
+      symbol: string;
+      code: string;
+      logo_url: string;
+      usd_rate: number;
     };
   },
 ) => {
@@ -182,13 +183,13 @@ export const formatCurrency = (
     decimal,
     formatMillion,
     currency = {
-      currency_name: 'USD',
-      currency_code: '$',
-      usd_exchange_rate: 1,
+      code: 'USD',
+      symbol: '$',
+      usd_rate: 1,
     },
   } = options || {};
-  const bnValue = new BigNumber(value).times(currency.usd_exchange_rate);
-  const symbol = currency.currency_code;
+  const bnValue = new BigNumber(value).times(currency.usd_rate);
+  const { symbol } = currency;
   if (bnValue.lt(0)) {
     return `-${symbol}${formatNumber(
       bnValue.absoluteValue(),

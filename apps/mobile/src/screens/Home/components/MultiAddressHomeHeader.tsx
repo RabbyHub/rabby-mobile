@@ -23,14 +23,12 @@ import { useUpgradeInfo } from '@/hooks/version';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { useTranslation } from 'react-i18next';
 
-import { ArrowCircleCC } from '@/assets2024/icons/address';
 import RcIconSmallArrow from '@/assets2024/icons/home/IconSmallArrow.svg';
 import RcIconSmallWallet from '@/assets2024/icons/home/IconSmallWallet.svg';
 import RcIconEyeCC from '@/assets2024/icons/home/eye-cc.svg';
-import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
 import RcIconEyeCloseCC from '@/assets2024/icons/home/eye-close-cc.svg';
+import RcIconEyeHalfCloseCC from '@/assets2024/icons/home/eye-half-close-cc.svg';
 import { FeedbackEntryOnHeader } from '@/components/Screenshot/FeedbackEntryOnHeader';
-import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { BlurShadowView } from '@/components2024/BluerShadow';
 import { Card } from '@/components2024/Card';
 import { GlobalWarning } from '@/components2024/GlobalWarning/Warining';
@@ -39,19 +37,19 @@ import {
   ITEM_LAYOUT_PADDING_HORIZONTAL,
 } from '@/constant/home';
 import { usePinnedAccountList } from '@/hooks/account';
+import { useCurrency } from '@/hooks/useCurrency';
 import { formatSmallCurrencyValue, getChangeData } from '@/hooks/useCurve';
 import { useGlobalStatus } from '@/hooks/useGlobalStatus';
 import { useMultiCurve } from '@/hooks/useMultiCurve';
-import { AddressItemContextMenu } from '@/screens/Address/components/AddressItemContextMenu';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
+import { BlurView } from '@react-native-community/blur';
 import { Skeleton } from '@rneui/base';
-import { trigger } from 'react-native-haptic-feedback';
+import { useMemoizedFn } from 'ahooks';
+import { sortBy } from 'lodash';
 import LinearGradient from 'react-native-linear-gradient';
 import { LoadingLinear } from '../../TokenDetail/components/TokenPriceChart/LoadingLinear';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { useHideBalance } from '../hooks/useHideBalance';
-import { useMemoizedFn } from 'ahooks';
-import { BlurView } from '@react-native-community/blur';
-import { useCurrency } from '@/hooks/useCurrency';
+import { HomeAddressItem } from './HomeAddressItem';
 
 const HeaderHeight = 24;
 
@@ -90,31 +88,33 @@ export function MultiAddressHomeHeader(
   );
 
   const addressListData = useMemo(() => {
-    return pinnedAccountList
-      .filter(
-        item =>
-          ![
-            KEYRING_TYPE.GnosisKeyring,
-            KEYRING_TYPE.WatchAddressKeyring,
-            KEYRING_TYPE.WalletConnectKeyring,
-          ].includes(item.type),
-      )
-      .slice(0, 3)
-      .map(item => {
-        const hasChangeData = multiTimeStamp[
-          item.address.toLowerCase()
-        ]?.data?.some(i => i.usd_value !== 0);
-        const chartData = getChangeData(
-          multiTimeStamp[item.address.toLowerCase()]?.data || [],
-          item.evmBalance,
-          new Date().getTime(),
-        );
-        return {
-          ...item,
-          changePercent: hasChangeData ? chartData?.changePercent : undefined,
-          isLoss: hasChangeData ? chartData?.isLoss : undefined,
-        };
-      });
+    return sortBy(
+      pinnedAccountList
+        .filter(
+          item =>
+            ![
+              KEYRING_TYPE.GnosisKeyring,
+              KEYRING_TYPE.WatchAddressKeyring,
+              KEYRING_TYPE.WalletConnectKeyring,
+            ].includes(item.type),
+        )
+        .map(item => {
+          const hasChangeData = multiTimeStamp[
+            item.address.toLowerCase()
+          ]?.data?.some(i => i.usd_value !== 0);
+          const chartData = getChangeData(
+            multiTimeStamp[item.address.toLowerCase()]?.data || [],
+            item.evmBalance,
+            new Date().getTime(),
+          );
+          return {
+            ...item,
+            changePercent: hasChangeData ? chartData?.changePercent : undefined,
+            isLoss: hasChangeData ? chartData?.isLoss : undefined,
+          };
+        }),
+      item => -(item.balance || 0),
+    ).slice(0, 3);
   }, [pinnedAccountList, multiTimeStamp]);
 
   const { accountsLength } = useAccountsBalance({
@@ -130,7 +130,7 @@ export function MultiAddressHomeHeader(
   const percentChange = useMemo(() => {
     return `${data.isLoss ? '-' : '+'}${data.changePercent}(${
       data.isLoss ? '-' : '+'
-    }${formatCurrentCurrency(data.rawChange)})`;
+    }${formatCurrentCurrency(Math.abs(data.rawChange))})`;
   }, [data.changePercent, data.isLoss, data.rawChange, formatCurrentCurrency]);
 
   useEffect(() => {
@@ -265,7 +265,7 @@ export function MultiAddressHomeHeader(
                     <Text
                       style={[
                         styles.netWorth,
-                        hideType === 'HALF_HIDE' ? styles.halfOpacity : null,
+                        hideType === 'HALF_HIDE' ? styles.opacity20 : null,
                       ]}>
                       {/* {data.netWorth} */}
                       {formatSmallCurrencyValue(data.rawNetWorth, {
@@ -288,9 +288,7 @@ export function MultiAddressHomeHeader(
                         <Text
                           style={[
                             styles.changePercent,
-                            hideType === 'HALF_HIDE'
-                              ? styles.halfOpacity
-                              : null,
+                            hideType === 'HALF_HIDE' ? styles.opacity20 : null,
                             {
                               color: data.isLoss
                                 ? colors2024['red-default']
@@ -312,121 +310,19 @@ export function MultiAddressHomeHeader(
                 <RcIconSmallArrow />
               </View>
               {addressListData?.length ? (
-                <View style={styles.accountList}>
+                <View
+                  style={[
+                    styles.accountList,
+                    hideType === 'HALF_HIDE' ? styles.opacity30 : null,
+                  ]}>
                   {addressListData?.map(item => {
-                    const isZeroPercentChange = item.changePercent === '0%';
                     return (
-                      <AddressItemContextMenu
+                      <HomeAddressItem
                         account={item}
-                        preViewBorderRadius={16}
                         key={`${item.type}-${item.address}`}
-                        actions={['copy', 'pin', 'edit', 'delete']}>
-                        <TouchableOpacity
-                          onPress={() => {
-                            trigger('impactLight', {
-                              enableVibrateFallback: true,
-                              ignoreAndroidSystemSettings: false,
-                            });
-                            navigation.push(RootNames.SingleAddressStack, {
-                              screen: RootNames.SingleAddressHome,
-                              params: {
-                                account: item,
-                              },
-                            });
-                          }}>
-                          <AddressItem account={item} fetchAccount={false}>
-                            {({
-                              WalletIcon,
-                              WalletName,
-                              // WalletBalance,
-                              WalletPin,
-                            }) => (
-                              <View style={styles.accountItem}>
-                                <WalletIcon
-                                  width={46}
-                                  height={46}
-                                  borderRadius={12}
-                                />
-                                <View style={styles.accountContent}>
-                                  {hideType === 'HIDE' ? (
-                                    <>
-                                      <Text style={styles.accountName}>
-                                        *****
-                                      </Text>
-                                      <Text style={styles.accountBalance}>
-                                        *****
-                                      </Text>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <WalletName
-                                        style={[
-                                          styles.accountName,
-                                          hideType === 'HALF_HIDE'
-                                            ? styles.halfOpacity
-                                            : null,
-                                        ]}
-                                      />
-                                      <View
-                                        style={[
-                                          styles.accountBalanceRow,
-                                          hideType === 'HALF_HIDE'
-                                            ? styles.halfOpacity
-                                            : null,
-                                        ]}>
-                                        <Text style={styles.accountBalance}>
-                                          {formatCurrentCurrency(
-                                            item.balance || 0,
-                                          )}
-                                          {/* {formatCurrentCurrency(
-                                          !item.balance
-                                            ? 0
-                                            : item.balance > 10
-                                            ? Math.floor(item.balance)
-                                            : item.balance.toFixed(2),
-                                        )} */}
-                                        </Text>
-                                        {typeof item.changePercent ===
-                                        'string' ? (
-                                          <Text
-                                            style={[
-                                              styles.percent,
-                                              {
-                                                color: !isZeroPercentChange
-                                                  ? data.isLoss
-                                                    ? colors2024['red-default']
-                                                    : colors2024[
-                                                        'green-default'
-                                                      ]
-                                                  : colors2024[
-                                                      'neutral-secondary'
-                                                    ],
-                                              },
-                                            ]}>{`${
-                                            isZeroPercentChange
-                                              ? ''
-                                              : item.isLoss
-                                              ? '-'
-                                              : '+'
-                                          }${item.changePercent}`}</Text>
-                                        ) : null}
-                                      </View>
-                                    </>
-                                  )}
-                                </View>
-                                <View style={styles.accountItemExtra}>
-                                  <ArrowCircleCC
-                                    style={styles.arrow}
-                                    color={colors2024['neutral-body']}
-                                    backgroundColor={colors2024['neutral-bg-5']}
-                                  />
-                                </View>
-                                <WalletPin style={styles.walletPin} />
-                              </View>
-                            )}
-                          </AddressItem>
-                        </TouchableOpacity>
-                      </AddressItemContextMenu>
+                        isLoss={item.isLoss}
+                        changePercent={item.changePercent}
+                      />
                     );
                   })}
                 </View>
@@ -691,60 +587,11 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     marginTop: 28,
   },
 
-  accountItem: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 16,
-    backgroundColor: isLight
-      ? colors2024['neutral-bg-2']
-      : colors2024['neutral-bg-3'],
-    padding: 12,
-    width: '100%',
-    position: 'relative',
-  },
-  accountContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
-  },
-  accountName: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-  },
-  accountBalanceRow: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  accountBalance: {
-    fontFamily: 'SF Pro Rounded',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: colors2024['neutral-body'],
-  },
-  walletPin: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-  },
-  accountItemExtra: {
-    marginLeft: 'auto',
-  },
-  percent: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '500',
-    fontFamily: 'SF Pro Rounded',
-  },
-  halfOpacity: {
+  opacity20: {
     opacity: 0.2,
+  },
+  opacity30: {
+    opacity: 0.3,
   },
   hidden: {
     display: 'none',

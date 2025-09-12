@@ -28,6 +28,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
+import { sortBy } from 'lodash';
 
 const visibleAtom = atom(false);
 export function useCurrentCurrencyVisible() {
@@ -68,21 +69,26 @@ export function CurrencySelectorPopup({
 
   const deferredSearchText = useDeferredValue(searchText);
 
+  const sortedList = useMemo(() => {
+    return sortBy(currencyStore.currencyList, item => {
+      if (item.code === 'USD') {
+        return 'A';
+      }
+      return item.code;
+    });
+  }, [currencyStore.currencyList]);
+
   const list = useMemo(() => {
     if (!deferredSearchText.trim()) {
-      return currencyStore.currencyList;
+      return sortedList;
     }
-    return currencyStore.currencyList.filter(item => {
+    return sortedList.filter(item => {
       return (
-        item.currency_name
-          .toLowerCase()
-          .includes(deferredSearchText.toLowerCase()) ||
-        item.currency_code
-          .toLowerCase()
-          .includes(deferredSearchText.toLowerCase())
+        item.code.toLowerCase().includes(deferredSearchText.toLowerCase()) ||
+        item.symbol.toLowerCase().includes(deferredSearchText.toLowerCase())
       );
     });
-  }, [currencyStore.currencyList, deferredSearchText]);
+  }, [deferredSearchText, sortedList]);
 
   const { height } = useWindowDimensions();
   const maxHeight = useMemo(() => {
@@ -158,24 +164,24 @@ export function CurrencySelectorPopup({
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}>
           {list.map((item, idx) => {
-            const isSelected = currency.currency_name === item.currency_name;
+            const isSelected = currency.code === item.code;
 
             return (
               <TouchableOpacity
-                key={item.currency_name}
+                key={item.code}
                 onPress={() => {
-                  setCurrentCurrency(item.currency_name);
+                  setCurrentCurrency(item.code);
                   setIsShowCurrencyPopup(false);
                 }}>
                 <View style={styles.listItem}>
                   <FastImage
                     style={styles.icon}
                     source={{
-                      uri: item.country_logo_url,
+                      uri: item.logo_url,
                     }}
                   />
                   <Text style={styles.label}>
-                    {item.currency_name} ({item.currency_code})
+                    {item.code} ({item.symbol})
                   </Text>
                   {isSelected ? (
                     <View style={styles.extra}>
@@ -259,7 +265,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       width: 32,
       height: 32,
       borderRadius: 10000,
-      backgroundColor: 'red',
     },
 
     label: {

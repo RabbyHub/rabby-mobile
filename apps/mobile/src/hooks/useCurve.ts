@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { atom, useAtom } from 'jotai';
 import { USD_CURRENCY } from '@/constant/currency';
 import BigNumber from 'bignumber.js';
+import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
 
@@ -42,24 +43,20 @@ export const formatSmallUsdValue = (value: number) => {
 export const formatSmallCurrencyValue = (
   value: number,
   options?: {
-    currency?: {
-      currency_name: string;
-      currency_code: string;
-      usd_exchange_rate: number;
-    };
+    currency?: CurrencyItem;
   },
 ) => {
   const { currency = USD_CURRENCY } = options || {};
-  const val = new BigNumber(value).times(currency.usd_exchange_rate);
+  const val = new BigNumber(value).times(currency.usd_rate);
   if (val.isZero() || val.isNaN()) {
-    return `${currency.currency_code}0`;
+    return `${currency.symbol}0`;
   }
 
   if (val.isLessThan(0.01)) {
-    return `<${currency.currency_code}0.01`;
+    return `<${currency.symbol}0.01`;
   }
   if (val.isLessThanOrEqualTo(10)) {
-    return `${currency.currency_code}${splitNumberByStep(val.toFixed(2))}`;
+    return `${currency.symbol}${splitNumberByStep(val.toFixed(2))}`;
   }
   return formatCurrency(value, {
     decimal: val.isGreaterThan(1000000) ? 2 : 0,

@@ -302,7 +302,7 @@ function SettingsBlocks() {
               setIsShowCurrencyPopup(true);
             },
             rightTextNode: (
-              <Text style={styles.rightText}>{currency?.currency_name}</Text>
+              <Text style={styles.rightText}>{currency?.code}</Text>
             ),
           },
           {

@@ -3,21 +3,13 @@ import {
   StorageAdapaterOptions,
   StoreServiceBase,
 } from '@rabby-wallet/persist-store';
+import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
+import { openapi } from '../request';
 import dayjs from 'dayjs';
-import axios from 'axios';
-import { Chain } from '@debank/common';
-import { SupportedChain } from '@rabby-wallet/rabby-api/dist/types';
-import { supportedChainToChain } from '@/isomorphic/chain';
-import { updateChainStore } from '@/constant/chains';
 
 type CurrencyServiceStore = {
   data: {
-    currencyList: {
-      currency_name: string;
-      currency_code: string;
-      usd_exchange_rate: number;
-      country_logo_url: string;
-    }[];
+    currencyList: CurrencyItem[];
     updatedAt: number;
     currency: string;
   };
@@ -54,25 +46,15 @@ export class CurrencyService extends StoreServiceBase<
     };
   }
 
-  syncCurrencyList = async () => {
-    // if (dayjs().isBefore(dayjs(this.store.data.updatedAt).add(55, 'minute'))) {
-    //   return;
-    // }
+  syncCurrencyList = async (isForce?: boolean) => {
+    if (
+      dayjs().isBefore(dayjs(this.store.data.updatedAt).add(9, 'minute')) &&
+      !isForce
+    ) {
+      return;
+    }
     try {
-      const list = [
-        {
-          currency_code: '$',
-          currency_name: 'USD',
-          country_logo_url: 'https://xxx',
-          usd_exchange_rate: 1,
-        },
-        {
-          currency_code: '¥',
-          currency_name: 'CNY',
-          country_logo_url: 'https://xxx',
-          usd_exchange_rate: 7,
-        },
-      ];
+      const list = await openapi.getCurrencyList();
 
       this.store.data = {
         ...this.store.data,
@@ -80,16 +62,16 @@ export class CurrencyService extends StoreServiceBase<
         updatedAt: Date.now(),
       };
     } catch (e) {
-      console.error('fetch chain list error: ', e);
+      console.error('fetch currency list error: ', e);
     }
   };
 
   resetTimer = () => {
-    const periodInMinutes = 60;
+    const periodInMinutes = 10;
     if (this.timer) {
       clearInterval(this.timer);
     }
-    this.syncCurrencyList();
+    this.syncCurrencyList(true);
 
     this.timer = setInterval(() => {
       this.syncCurrencyList();

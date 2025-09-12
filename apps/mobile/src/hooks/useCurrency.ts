@@ -34,7 +34,7 @@ export function useCurrency() {
   const currency = useMemo(() => {
     return (
       currencyStore.currencyList.find(
-        item => item.currency_name === currencyStore.currency,
+        item => item.code === currencyStore.currency,
       ) || USD_CURRENCY
     );
   }, [currencyStore.currency, currencyStore.currencyList]);
