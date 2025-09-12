@@ -60,9 +60,7 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
         <View style={styles.textContainer}>
           <Text style={styles.title}>
             {isRealDeposit
-              ? type === 'deposit'
-                ? t('page.perps.history.deposit')
-                : t('page.perps.history.receive')
+              ? t('page.perps.history.deposit')
               : t('page.perps.history.withdraw')}
           </Text>
           {status === 'pending' ? (
@@ -94,7 +92,7 @@ export const PerpsHistoryAccountItem: React.FC<HistoryAccountItemProps> = ({
                 isRealDeposit ? styles.greenText : styles.redText,
               ]}>
               {isRealDeposit ? '+' : '-'}
-              {`$${usdValue}`}
+              {`${formatPerpsUsdValue(usdValue)}`}
             </Text>
             <Text style={styles.timeText}>{sinceTime(time / 1000)}</Text>
           </>

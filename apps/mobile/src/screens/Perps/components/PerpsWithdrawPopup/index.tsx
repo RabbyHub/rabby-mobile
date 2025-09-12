@@ -143,21 +143,23 @@ export const PerpsWithdrawPopup: React.FC<{
                 ]}
                 placeholder="$0"
               />
-              <TouchableOpacity
-                style={styles.maxButtonWrapper}
-                onPress={() => {
-                  setAmount(
-                    Number(
-                      (
-                        Math.floor(
-                          Number(accountSummary?.withdrawable || 0) * 100,
-                        ) / 100
-                      ).toFixed(2),
-                    ).toString(),
-                  );
-                }}>
-                <Text style={styles.maxButtonText}>MAX</Text>
-              </TouchableOpacity>
+              {!amount && (
+                <TouchableOpacity
+                  style={styles.maxButtonWrapper}
+                  onPress={() => {
+                    setAmount(
+                      Number(
+                        (
+                          Math.floor(
+                            Number(accountSummary?.withdrawable || 0) * 100,
+                          ) / 100
+                        ).toFixed(2),
+                      ).toString(),
+                    );
+                  }}>
+                  <Text style={styles.maxButtonText}>MAX</Text>
+                </TouchableOpacity>
+              )}
               <View style={styles.divider} />
 
               <View style={styles.tokenContainer}>

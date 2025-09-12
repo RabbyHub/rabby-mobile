@@ -499,7 +499,10 @@ export const PerpsDepositPopup: React.FC<{
               <Text style={styles.formItemDesc}>
                 {t('page.perps.PerpsDepositPopup.balance')}:{' '}
                 {tokenInfo
-                  ? `${formatPerpsUsdValue(depositMaxUsdValue)}`
+                  ? `${formatPerpsUsdValue(
+                      depositMaxUsdValue,
+                      BigNumber.ROUND_DOWN,
+                    )}`
                   : '$0'}
               </Text>
             </View>
@@ -518,17 +521,19 @@ export const PerpsDepositPopup: React.FC<{
                 onChangeText={setUsdValue}
                 numberOfLines={1}
               />
-              <TouchableOpacity
-                style={styles.maxButtonWrapper}
-                onPress={() => {
-                  setUsdValue(
-                    Number(
-                      (Math.floor(depositMaxUsdValue * 100) / 100).toFixed(2),
-                    ).toString(),
-                  );
-                }}>
-                <Text style={styles.maxButtonText}>MAX</Text>
-              </TouchableOpacity>
+              {!usdValue && (
+                <TouchableOpacity
+                  style={styles.maxButtonWrapper}
+                  onPress={() => {
+                    setUsdValue(
+                      Number(
+                        (Math.floor(depositMaxUsdValue * 100) / 100).toFixed(2),
+                      ).toString(),
+                    );
+                  }}>
+                  <Text style={styles.maxButtonText}>MAX</Text>
+                </TouchableOpacity>
+              )}
               <View style={styles.divider} />
               <TouchableOpacity
                 onPress={() => {
