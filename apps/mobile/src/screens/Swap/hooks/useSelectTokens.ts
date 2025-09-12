@@ -24,6 +24,7 @@ import { formatAmount } from '@/utils/math';
 import { useAccountInfo } from '@/screens/Address/components/MultiAssets/hooks';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 import { wrapAbortableFn } from '@/databases/sync/utils';
+import { stableSortByAddress } from '@/utils/account';
 
 type LocalDBTokenItem = TokenItem & {
   _db_id?: TokenItemEntity['_db_id'];
@@ -183,11 +184,15 @@ export const useSelectTokens = ({
         setIsLoadingToken(true);
         // if (!tokensExisted) setIsLoadingToken(true);
         await wrapAbortableFn({
-          label: `loadToken-${address}`,
+          label: [
+            `loadToken`,
+            `${address}`,
+            `${force ? 'force' : 'normal'}`,
+            tokensExisted ? 'onlysync' : 'syncandupdate',
+          ],
           fn: async signal => {
             // if token exist and not expired, don't sync to store
             const tokenRes = await syncTokens(address, force, tokensExisted);
-            if (signal.aborted) return;
             if (!tokenRes.length) return;
 
             updateTokens({
@@ -217,7 +222,7 @@ export const useSelectTokens = ({
       loadCacheTokenCRef.current?.abort();
       loadCacheTokenCRef.current = new AbortController();
       await wrapAbortableFn({
-        label: 'batchLoadCacheTokens',
+        label: ['batchLoadCacheTokens', ...stableSortByAddress(addresses)],
         externalControllerRef: loadCacheTokenCRef,
         fn: async signal => {
           const cachedTokens = await TokenItemEntity.batchMultiAddressTokens(
@@ -254,7 +259,7 @@ export const useSelectTokens = ({
         checkingExpireCRef.current?.abort();
         checkingExpireCRef.current = new AbortController();
         await wrapAbortableFn({
-          label: 'checkIsExpireAndUpdate',
+          label: ['checkIsExpireAndUpdate', force ? 'force' : 'normal'],
           externalControllerRef: checkingExpireCRef,
           fn: async signal => {
             for (const address of top10Addresses) {
@@ -282,14 +287,6 @@ export const useSelectTokens = ({
     [loadToken, top10Addresses],
   );
 
-  /** @deprecated */
-  const getCacheTop10Tokens = useCallback(async () => {
-    const emptyTokenAddresses = top10Addresses.filter(
-      addr => !addressHasTokensRef.current[addr],
-    );
-    await batchLoadCacheTokens(emptyTokenAddresses);
-  }, [batchLoadCacheTokens, top10Addresses]);
-
   const getCacheTokens = useCallback(
     async (addresses: string[], options?: { isTop10?: boolean }) => {
       if (options?.isTop10) {
@@ -313,7 +310,7 @@ export const useSelectTokens = ({
     return resTokens;
   }, [currentAddress, tokensMap]);
 
-  const existedTokens = !!tokensInMemory.length;
+  // const existedTokensInMemory = !!tokensInMemory.length;
 
   // filter tokens
   const tokens = useMemo(() => {
@@ -454,11 +451,7 @@ export const useSelectTokens = ({
 
   const loadOnVisibleChanged = useCallback(
     (nextVisible = false) => {
-      if (!nextVisible) {
-        loadCacheTokenCRef.current?.abort();
-        checkingExpireCRef.current?.abort();
-        return;
-      }
+      if (!nextVisible) return;
 
       fetchAccounts();
       loadUserTokenSettings();
@@ -471,9 +464,8 @@ export const useSelectTokens = ({
   return {
     tokensMap,
     tokens: tokenWithOwner,
-    existedTokens,
+    existedTokens: !!tokenWithOwner.length,
     isLoading: isLoading || swapToTokenSearchResultLoading,
-    getCacheTop10Tokens,
     getCacheTokens,
     loadUserTokenSettings,
     checkIsExpireAndUpdate,

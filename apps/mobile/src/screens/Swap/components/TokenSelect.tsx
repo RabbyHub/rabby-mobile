@@ -149,8 +149,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       type: type,
     });
 
-    const isSwapTo = type === 'swapTo';
-
     useImperativeHandle(ref, () => ({
       openTokenModal: conds => {
         setQueryConds(prev => ({ ...prev, ...conds }));
@@ -178,7 +176,6 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         }
       })();
     }, [
-      // tokenSelectorVisible,
       currentAccount?.address,
       useSwapTokenList,
       loadToken,
@@ -188,20 +185,21 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
       type,
     ]);
 
+    const currentAddress = currentAccount?.address;
     // swap token list
     const { value: swapTokenList, loading: swapTokenListLoading } =
       useAsync(async () => {
-        if (!currentAccount || !useSwapTokenList || !tokenSelectorVisible) {
+        if (!currentAddress || !useSwapTokenList || !tokenSelectorVisible) {
           return [];
         }
         const list = await openapi.getSwapTokenList(
-          currentAccount.address,
+          currentAddress,
           queryConds.chainServerId ? queryConds.chainServerId : undefined,
         );
         return list;
       }, [
         queryConds.chainServerId,
-        currentAccount,
+        currentAddress,
         useSwapTokenList,
         tokenSelectorVisible,
       ]);
@@ -210,7 +208,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
 
     const searchedLocalTokensWithOwner = useMemo(
       () =>
-        (isSwapTo || type === 'bridgeFrom' || type === 'swapFrom') &&
+        (type === 'swapTo' || type === 'bridgeFrom' || type === 'swapFrom') &&
         queryConds.keyword
           ? tokens
           : tokens.map(
@@ -221,7 +219,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
                     'ownerAccount' in e ? e.ownerAccount : undefined,
                 } as TokenItemMaybeWithOwner),
             ),
-      [isSwapTo, queryConds.keyword, tokens, type],
+      [type, queryConds.keyword, tokens],
     );
 
     const { isSearchLoading, allTokens, searchedTokenByQuery, allTokenItems } =
