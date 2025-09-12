@@ -13,29 +13,22 @@ export function useSheetModal(
   const sheetModalRef = existingSheetModalRef || internalRef;
 
   const toggleShowSheetModal = React.useCallback(
-    async (
-      shownType: SheetModalShowType,
-      animationConfigs?: WithSpringConfig | WithTimingConfig,
-    ) => {
-      let finalAc: typeof animationConfigs;
-      if (animationConfigs) {
-        finalAc = { ...animationConfigs };
-      }
+    async (shownType: SheetModalShowType) => {
       switch (shownType) {
         case 'destroy':
-          sheetModalRef.current?.dismiss(finalAc);
+          sheetModalRef.current?.dismiss();
           return;
         case 'collapse':
-          sheetModalRef.current?.collapse(finalAc);
+          sheetModalRef.current?.collapse();
           return;
         case true:
           sheetModalRef.current?.present();
           return;
         case false:
-          sheetModalRef.current?.close(finalAc);
+          sheetModalRef.current?.close();
           return;
         default:
-          sheetModalRef.current?.snapToIndex(shownType, finalAc);
+          sheetModalRef.current?.snapToIndex(shownType);
           return;
       }
     },
@@ -72,19 +65,19 @@ export function useSheetModals<T extends string>(
       }
       switch (shownType) {
         case 'destroy':
-          sheetModalRefs[type]?.current?.dismiss(finalAc);
+          sheetModalRefs[type]?.current?.dismiss();
           return;
         case 'collapse':
-          sheetModalRefs[type]?.current?.collapse(finalAc);
+          sheetModalRefs[type]?.current?.collapse();
           return;
         case true:
           sheetModalRefs[type]?.current?.present();
           return;
         case false:
-          sheetModalRefs[type]?.current?.close(finalAc);
+          sheetModalRefs[type]?.current?.close();
           return;
         default:
-          sheetModalRefs[type]?.current?.snapToIndex(shownType, finalAc);
+          sheetModalRefs[type]?.current?.snapToIndex(shownType);
           return;
       }
     },
