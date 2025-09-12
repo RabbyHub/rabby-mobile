@@ -310,8 +310,6 @@ export const useSelectTokens = ({
     return resTokens;
   }, [currentAddress, tokensMap]);
 
-  // const existedTokensInMemory = !!tokensInMemory.length;
-
   // filter tokens
   const tokens = useMemo(() => {
     if (noNeedTokens) return [];
@@ -464,7 +462,7 @@ export const useSelectTokens = ({
   return {
     tokensMap,
     tokens: tokenWithOwner,
-    existedTokens: !!tokenWithOwner.length,
+    existedTokens: !!tokensInMemory.length,
     isLoading: isLoading || swapToTokenSearchResultLoading,
     getCacheTokens,
     loadUserTokenSettings,
