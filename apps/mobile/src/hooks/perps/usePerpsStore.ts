@@ -277,6 +277,10 @@ export const usePerpsStore = () => {
     (clearinghouseState: ClearinghouseState, openOrders: OpenOrder[]) => {
       setState(prev => ({
         ...prev,
+        accountSummary: {
+          ...clearinghouseState.marginSummary,
+          withdrawable: clearinghouseState.withdrawable,
+        },
         positionAndOpenOrders: clearinghouseState.assetPositions.map(
           position => ({
             ...position,
