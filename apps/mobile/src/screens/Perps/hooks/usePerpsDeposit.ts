@@ -91,7 +91,7 @@ export const usePerpsDeposit = ({
             {
               time: Date.now(),
               hash,
-              type: 'deposit',
+              type: cacheBridgeHistory ? 'receive' : 'deposit',
               status: 'pending',
               usdValue: amount.toString(),
             },
