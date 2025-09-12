@@ -435,15 +435,16 @@ export const usePerpsStore = () => {
         })
         .map(item => {
           if (item.delta.type === 'internalTransfer') {
+            const fee = (item.delta as any).fee as string;
+            const realUsdValue = Number(item.delta.usdc) - Number(fee || '0');
             return {
               time: item.time,
               hash: item.hash,
               type: 'receive' as const,
               status: 'success' as const,
-              usdValue: item.delta.usdc || '0',
+              usdValue: realUsdValue.toString(),
             };
           }
-
           const type =
             item.delta.type === 'accountClassTransfer'
               ? item.delta.toPerp
