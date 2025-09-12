@@ -132,7 +132,7 @@ export function ModalsSubmitFeedbackByScreenshotStub() {
             if (Keyboard.isVisible()) {
               Keyboard.dismiss();
             } else {
-              closeSubmitModal();
+              closeSubmitModal({ skipInNext1Day });
             }
           }}>
           <View style={[styles.modalWrapper]}>
