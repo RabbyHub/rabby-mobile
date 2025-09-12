@@ -344,11 +344,7 @@ export const PerpsDepositPopup: React.FC<{
     }
   }, [isValidAmount, visible, setTxs, setBridgeQuote, setQuoteLoading]);
 
-  const {
-    runAsync: handleDeposit,
-    loading,
-    cancel,
-  } = useRequest(
+  const { runAsync: handleDeposit, loading } = useRequest(
     async () => {
       Keyboard.dismiss();
       const bridgeValue = (
@@ -376,10 +372,9 @@ export const PerpsDepositPopup: React.FC<{
   useEffect(() => {
     if (visible) {
       setUsdValue('');
-      cancel();
       setSelectedToken(ensureAbstractPortfolioToken(ARB_USDC_TOKEN_ITEM));
     }
-  }, [setUsdValue, visible, setSelectedToken, cancel]);
+  }, [setUsdValue, visible, setSelectedToken]);
 
   const depositMaxUsdValue = useMemo(() => {
     return Number((tokenInfo?.amount || 0) * (tokenInfo?.price || 0));
