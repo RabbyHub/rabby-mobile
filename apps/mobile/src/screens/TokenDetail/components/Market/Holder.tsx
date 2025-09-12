@@ -6,7 +6,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import EmptyData from './EmptyData';
 import { ellipsisAddress } from '@/utils/address';
-import { formatNumber } from '@/utils/number';
+import { formatPercent, formatAmountValueKMB } from '../../util';
 
 interface SummaryProps {
   top10ratio: number;
@@ -22,13 +22,15 @@ const Summary = ({ top10ratio, top100ratio }: SummaryProps) => {
         <Text style={styles.summaryItemTitle}>
           {t('page.tokenDetail.marketInfo.holderSections.top10HoldersRatio')}
         </Text>
-        <Text style={styles.summaryItemValue}>{top10ratio}</Text>
+        <Text style={styles.summaryItemValue}>{formatPercent(top10ratio)}</Text>
       </View>
       <View style={styles.summaryItem}>
         <Text style={styles.summaryItemTitle}>
           {t('page.tokenDetail.marketInfo.holderSections.top100HoldersRatio')}
         </Text>
-        <Text style={styles.summaryItemValue}>{top100ratio}</Text>
+        <Text style={styles.summaryItemValue}>
+          {formatPercent(top100ratio)}
+        </Text>
       </View>
     </View>
   );
@@ -67,9 +69,11 @@ const Details = ({ data }: DetailsProps) => {
               index === data.length - 1 && styles.hideBottomBorder,
             ]}>
             <Text style={styles.indexItem}>{index + 1}</Text>
-            <Text style={styles.ratioItem}>{item.ratio}</Text>
+            <Text style={styles.ratioItem}>
+              {item.ratio ? formatPercent(item.ratio, 2) : '-'}
+            </Text>
             <Text style={styles.amountItem}>
-              {item.amount ? formatNumber(item.amount) : '-'}
+              {item.amount ? formatAmountValueKMB(item.amount) : '-'}
             </Text>
             <Text style={styles.addressItem}>
               {item.user_addr ? ellipsisAddress(item.user_addr, 4) : '-'}

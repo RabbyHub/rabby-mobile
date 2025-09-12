@@ -8,10 +8,13 @@ import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
 import { ellipsisAddress } from '@/utils/address';
+import { formatPercent, formatAmountValueKMB } from '../../util';
+import { formatUsdValueKMB } from '@/screens/Home/utils/price';
+import { formatPrice } from '@/utils/number';
 
 const mockSummaryData = {
   '5m': {
-    price: { open: 0.208, close: 0.21, change: 0.96 },
+    price: { open: 0.208, close: 0.21, change: 0.9611 },
     summary: {
       buy: { count: 3210, volume_amount: 185432.12 },
       sell: { count: 2198, volume_amount: 171003.55 },
@@ -24,7 +27,7 @@ const mockSummaryData = {
     },
   },
   '1h': {
-    price: { open: 0.208, close: 0.21, change: 0.16 },
+    price: { open: 0.208, close: 0.21, change: 0.162 },
     summary: {
       buy: { count: 320, volume_amount: 185432.12 },
       sell: { count: 298, volume_amount: 171003.55 },
@@ -37,7 +40,7 @@ const mockSummaryData = {
     },
   },
   '6h': {
-    price: { open: 0.208, close: 0.21, change: 0.26 },
+    price: { open: 0.208, close: 0.21, change: 0.2 },
     summary: {
       buy: { count: 320, volume_amount: 185432.12 },
       sell: { count: 298, volume_amount: 171003.55 },
@@ -95,7 +98,9 @@ const Summary = ({ data }: ISummaryData) => {
               ]}>
               <Text style={styles.switchItemText}>5 Min</Text>
               <Text style={styles.switchItemPercentage}>
-                {data?.['5m']?.price?.change}
+                {data?.['5m']?.price?.change
+                  ? formatPercent(data?.['5m']?.price?.change)
+                  : '-'}
               </Text>
             </Pressable>
             <Pressable
@@ -106,7 +111,9 @@ const Summary = ({ data }: ISummaryData) => {
               ]}>
               <Text style={styles.switchItemText}>1 Hour</Text>
               <Text style={styles.switchItemPercentage}>
-                {data?.['1h']?.price?.change}
+                {data?.['1h']?.price?.change
+                  ? formatPercent(data?.['1h']?.price?.change)
+                  : '-'}
               </Text>
             </Pressable>
             <Pressable
@@ -117,7 +124,9 @@ const Summary = ({ data }: ISummaryData) => {
               ]}>
               <Text style={styles.switchItemText}>6 Hour</Text>
               <Text style={styles.switchItemPercentage}>
-                {data?.['6h']?.price?.change}
+                {data?.['6h']?.price?.change
+                  ? formatPercent(data?.['6h']?.price?.change)
+                  : '-'}
               </Text>
             </Pressable>
             <Pressable
@@ -128,7 +137,9 @@ const Summary = ({ data }: ISummaryData) => {
               ]}>
               <Text style={styles.switchItemText}>24 Hour</Text>
               <Text style={styles.switchItemPercentage}>
-                {data?.['24h']?.price?.change}
+                {data?.['24h']?.price?.change
+                  ? formatPercent(data?.['24h']?.price?.change)
+                  : '-'}
               </Text>
             </Pressable>
           </View>
@@ -137,7 +148,7 @@ const Summary = ({ data }: ISummaryData) => {
               <View style={styles.chatTop}>
                 <Text style={styles.chatTopText}>Buy</Text>
                 <Text style={styles.actionAmount}>
-                  {currentData?.summary?.buy?.count}
+                  {formatAmountValueKMB(currentData?.summary?.buy?.count)}
                 </Text>
               </View>
               <View style={styles.chatBottomLine} />
@@ -148,7 +159,7 @@ const Summary = ({ data }: ISummaryData) => {
                   Sell
                 </Text>
                 <Text style={[styles.actionAmount, styles.actionAmountRight]}>
-                  {currentData?.summary?.sell?.count}
+                  {formatAmountValueKMB(currentData?.summary?.sell?.count)}
                 </Text>
               </View>
               <View
@@ -160,19 +171,23 @@ const Summary = ({ data }: ISummaryData) => {
             <View style={styles.summaryBottomItem}>
               <Text style={styles.summaryBottomItemText}>Volume</Text>
               <Text style={styles.summaryBottomItemValue}>
-                {currentData?.summary?.totals?.volume_usd_value}
+                {formatUsdValueKMB(
+                  currentData?.summary?.totals?.volume_usd_value,
+                )}
               </Text>
             </View>
             <View style={styles.summaryBottomItem}>
               <Text style={styles.summaryBottomItemText}>Trading Count</Text>
               <Text style={styles.summaryBottomItemValue}>
-                {currentData?.summary?.totals?.trading_count}
+                {formatAmountValueKMB(
+                  currentData?.summary?.totals?.trading_count,
+                )}
               </Text>
             </View>
             <View style={styles.summaryBottomItem}>
               <Text style={styles.summaryBottomItemText}>Addresses</Text>
               <Text style={styles.summaryBottomItemValue}>
-                {currentData?.summary?.totals?.addresses}
+                {formatAmountValueKMB(currentData?.summary?.totals?.addresses)}
               </Text>
             </View>
           </View>
@@ -189,7 +204,7 @@ const mock_list_data = [
   {
     id: '123',
     action: 'buy',
-    price: 123,
+    price: 123.2234424,
     amount: 123,
     usd_value: 123,
     tx_id: '12312312312',
@@ -199,7 +214,7 @@ const mock_list_data = [
   {
     id: '124',
     action: 'sell',
-    price: 123,
+    price: 123.000021,
     amount: 123,
     usd_value: 123,
     tx_id: '12312312312',
@@ -209,9 +224,9 @@ const mock_list_data = [
   {
     id: '125',
     action: 'buy',
-    price: 123,
-    amount: 123,
-    usd_value: 123,
+    price: 0.000004324,
+    amount: 123424233,
+    usd_value: 124342343244243,
     tx_id: '12312312312',
     user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff802',
     time_at: 1757483318,
@@ -219,8 +234,8 @@ const mock_list_data = [
   {
     id: '126',
     action: 'buy',
-    price: 123,
-    amount: 123,
+    price: 0.000000000001,
+    amount: 123042342,
     usd_value: 123,
     tx_id: '12312312312',
     user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff803',
@@ -315,9 +330,15 @@ const Details = () => {
                     </Text>
                     <Text style={styles.timeAtItem}>{item.time_at}</Text>
                   </View>
-                  <Text style={styles.indexItem}>{item.price}</Text>
-                  <Text style={styles.ratioItem}>{item.amount}</Text>
-                  <Text style={styles.amountItem}>{item.usd_value}</Text>
+                  <Text style={styles.indexItem}>
+                    {formatPrice(item.price)}
+                  </Text>
+                  <Text style={styles.ratioItem}>
+                    {formatAmountValueKMB(item.amount)}
+                  </Text>
+                  <Text style={styles.amountItem}>
+                    {formatUsdValueKMB(item.usd_value)}
+                  </Text>
                   <Text style={styles.addressItem}>
                     {item.user_addr ? ellipsisAddress(item.user_addr, 4) : '-'}
                   </Text>
