@@ -318,6 +318,7 @@ export function MultiAddressHomeHeader(
                   {addressListData?.map(item => {
                     return (
                       <HomeAddressItem
+                        hideType={hideType}
                         account={item}
                         key={`${item.type}-${item.address}`}
                         isLoss={item.isLoss}
@@ -332,7 +333,7 @@ export function MultiAddressHomeHeader(
                   {Platform.OS === 'ios' ? (
                     <BlurView
                       style={styles.accountCardMaskBlur}
-                      blurAmount={1.5}
+                      blurAmount={0.5}
                       blurType={isLight ? 'light' : 'dark'}
                       reducedTransparencyFallbackColor="white"
                     />
@@ -501,7 +502,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   curveCard: {
     borderRadius: 20,
     paddingVertical: 24,
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
     borderWidth: 0,
     borderColor: isLight
       ? colors2024['neutral-bg-1']
@@ -515,6 +516,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
+    paddingHorizontal: 20,
   },
   shadowView: {
     ...Platform.select({
@@ -585,6 +587,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     gap: 8,
     width: '100%',
     marginTop: 28,
+    paddingHorizontal: 14,
   },
 
   opacity20: {
