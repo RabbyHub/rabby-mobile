@@ -396,12 +396,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
     ) {
       toggleShowSheetModal('destroy');
     }
+
+    const currentRoute = getLatestNavigationName();
     const isInInitialRoute = useMemo(() => {
       if (!visible || !initialRouteRef.current) {
         return true;
       }
-      return getLatestNavigationName() === initialRouteRef.current;
-    }, [visible]);
+      return currentRoute === initialRouteRef.current;
+    }, [currentRoute, visible]);
 
     useEffect(() => {
       if (!isFromBack && visible) {
