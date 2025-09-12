@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import EmptyData from './EmptyData';
-import { ellipsisAddress } from '@/utils/address';
+import { shortEllipsisAddress } from '@/utils/address';
 import { formatPercent, formatAmountValueKMB } from '../../util';
 
 interface SummaryProps {
@@ -70,13 +70,13 @@ const Details = ({ data }: DetailsProps) => {
             ]}>
             <Text style={styles.indexItem}>{index + 1}</Text>
             <Text style={styles.ratioItem}>
-              {item.ratio ? formatPercent(item.ratio, 2) : '-'}
+              {item.ratio ? formatPercent(item.ratio) : '-'}
             </Text>
             <Text style={styles.amountItem}>
               {item.amount ? formatAmountValueKMB(item.amount) : '-'}
             </Text>
             <Text style={styles.addressItem}>
-              {item.user_addr ? ellipsisAddress(item.user_addr, 4) : '-'}
+              {item.user_addr ? shortEllipsisAddress(item.user_addr, 4) : '-'}
             </Text>
           </View>
         ))}

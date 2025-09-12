@@ -7,7 +7,7 @@ import { Pressable, Text, View } from 'react-native';
 import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
-import { ellipsisAddress } from '@/utils/address';
+import { shortEllipsisAddress } from '@/utils/address';
 import { formatPercent, formatAmountValueKMB, formatTime } from '../../util';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { formatPrice } from '@/utils/number';
@@ -342,7 +342,9 @@ const Details = () => {
                     {formatUsdValueKMB(item.usd_value)}
                   </Text>
                   <Text style={styles.addressItem}>
-                    {item.user_addr ? ellipsisAddress(item.user_addr, 4) : '-'}
+                    {item.user_addr
+                      ? shortEllipsisAddress(item.user_addr, 4)
+                      : '-'}
                   </Text>
                 </View>
               );
