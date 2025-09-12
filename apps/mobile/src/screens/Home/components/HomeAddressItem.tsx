@@ -21,6 +21,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { AddressItemContextMenu } from '@/screens/Address/components/AddressItemContextMenu';
 import { trigger } from 'react-native-haptic-feedback';
 import { BALANCE_HIDE_TYPE } from '../hooks/useHideBalance';
+import { BlurShadowView } from '@/components2024/BluerShadow';
 
 export const HomeAddressItem: React.FC<{
   account: KeyringAccountWithAlias;
@@ -69,58 +70,60 @@ export const HomeAddressItem: React.FC<{
             ignoreAndroidSystemSettings: false,
           });
         }}>
-        <AddressItem account={account} fetchAccount={false}>
-          {({
-            WalletIcon,
-            WalletName,
-            // WalletBalance,
-            WalletPin,
-          }) => (
-            <View style={styles.accountItem}>
-              <WalletIcon width={46} height={46} borderRadius={12} />
-              <View style={styles.accountContent}>
-                {hideType === 'HIDE' ? (
-                  <>
-                    <Text style={styles.accountName}>*****</Text>
-                    <Text style={styles.accountBalance}>*****</Text>
-                  </>
-                ) : (
-                  <>
-                    <WalletName style={[styles.accountName]} />
-                    <View style={[styles.accountBalanceRow]}>
-                      <Text style={styles.accountBalance}>
-                        {formatCurrentCurrency(account.balance || 0)}
-                      </Text>
-                      {typeof changePercent === 'string' ? (
-                        <Text
-                          style={[
-                            styles.percent,
-                            {
-                              color: !isZeroPercentChange
-                                ? isLoss
-                                  ? colors2024['red-default']
-                                  : colors2024['green-default']
-                                : colors2024['neutral-secondary'],
-                            },
-                          ]}>{`${
-                          isZeroPercentChange ? '' : isLoss ? '-' : '+'
-                        }${changePercent}`}</Text>
-                      ) : null}
-                    </View>
-                  </>
-                )}
+        <BlurShadowView isLight blurAmount={2} borderRadius={16}>
+          <AddressItem account={account} fetchAccount={false}>
+            {({
+              WalletIcon,
+              WalletName,
+              // WalletBalance,
+              WalletPin,
+            }) => (
+              <View style={styles.accountItem}>
+                <WalletIcon width={46} height={46} borderRadius={12} />
+                <View style={styles.accountContent}>
+                  {hideType === 'HIDE' ? (
+                    <>
+                      <Text style={styles.accountName}>*****</Text>
+                      <Text style={styles.accountBalance}>*****</Text>
+                    </>
+                  ) : (
+                    <>
+                      <WalletName style={[styles.accountName]} />
+                      <View style={[styles.accountBalanceRow]}>
+                        <Text style={styles.accountBalance}>
+                          {formatCurrentCurrency(account.balance || 0)}
+                        </Text>
+                        {typeof changePercent === 'string' ? (
+                          <Text
+                            style={[
+                              styles.percent,
+                              {
+                                color: !isZeroPercentChange
+                                  ? isLoss
+                                    ? colors2024['red-default']
+                                    : colors2024['green-default']
+                                  : colors2024['neutral-secondary'],
+                              },
+                            ]}>{`${
+                            isZeroPercentChange ? '' : isLoss ? '-' : '+'
+                          }${changePercent}`}</Text>
+                        ) : null}
+                      </View>
+                    </>
+                  )}
+                </View>
+                <View style={styles.accountItemExtra}>
+                  <ArrowCircleCC
+                    // style={styles.arrow}
+                    color={colors2024['neutral-body']}
+                    backgroundColor={colors2024['neutral-bg-5']}
+                  />
+                </View>
+                <WalletPin style={styles.walletPin} />
               </View>
-              <View style={styles.accountItemExtra}>
-                <ArrowCircleCC
-                  // style={styles.arrow}
-                  color={colors2024['neutral-body']}
-                  backgroundColor={colors2024['neutral-bg-5']}
-                />
-              </View>
-              <WalletPin style={styles.walletPin} />
-            </View>
-          )}
-        </AddressItem>
+            )}
+          </AddressItem>
+        </BlurShadowView>
       </TouchableOpacity>
     </AddressItemContextMenu>
   );

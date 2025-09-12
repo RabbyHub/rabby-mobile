@@ -578,7 +578,7 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   globalWarning: {
     marginHorizontal: 16,
     marginTop: 16,
-    marginBottom: -16,
+    // marginBottom: -16,
   },
 
   accountList: {
