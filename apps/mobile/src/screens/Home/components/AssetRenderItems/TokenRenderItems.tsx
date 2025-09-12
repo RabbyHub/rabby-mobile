@@ -298,6 +298,7 @@ export const ExternalTokenRow = memo(
 
     const ExtraContent = useMemo(() => {
       const notVerified = data.is_verified === false;
+      const isSuspicious = data.is_suspicious;
       return (
         <Pressable
           onPress={e => {
@@ -343,7 +344,7 @@ export const ExternalTokenRow = memo(
             )}
           </View>
           <View style={styles.rightSection}>
-            {notVerified && (
+            {(notVerified || isSuspicious) && (
               <View>
                 <RcTipCC
                   style={styles.tips}
@@ -363,7 +364,7 @@ export const ExternalTokenRow = memo(
                 color={
                   notVerified
                     ? colors2024['red-default']
-                    : data.is_suspicious
+                    : isSuspicious
                     ? colors2024['orange-default']
                     : colors2024['neutral-title-1']
                 }
