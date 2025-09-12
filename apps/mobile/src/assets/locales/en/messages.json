@@ -1864,7 +1864,16 @@
         "empty": "No Data",
         "activity": "Activity",
         "summary": "Summary",
-        "details": "Details"
+        "details": "Details",
+        "holderSections": {
+          "top10HoldersRatio": "Top 10 Holders Ratio",
+          "top100HoldersRatio": "Top 100 Holders Ratio",
+          "tableHeader": {
+            "address": "Address",
+            "ratio": "Ratio",
+            "position": "Position"
+          }
+        }
       }
     },
     "defiDetail": {

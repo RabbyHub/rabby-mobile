@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
 import Activity from './Activity';
 import Holder from './Holder';
 
@@ -11,6 +11,7 @@ const enum TabKey {
   activity = 'activity',
   holders = 'holders',
 }
+
 const ActivityAndHolders = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [activeTabKey, setActiveTabKey] = useState<TabKey>(TabKey.activity);
