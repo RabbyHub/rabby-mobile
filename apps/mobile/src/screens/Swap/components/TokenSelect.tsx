@@ -159,7 +159,9 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
     // fetch tokens
     useEffect(() => {
       (async () => {
+        tokenSelectorVisible;
         useSwapTokenList;
+
         if (!existedTokens) {
           if (type === 'send') {
             currentAccount?.address &&
@@ -176,6 +178,7 @@ const TokenSelect = forwardRef<TokenSelectInst, TokenSelectProps>(
         }
       })();
     }, [
+      tokenSelectorVisible,
       currentAccount?.address,
       useSwapTokenList,
       loadToken,
