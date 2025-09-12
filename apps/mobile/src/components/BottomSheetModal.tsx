@@ -20,9 +20,6 @@ export const BSheetModal = forwardRef<BottomSheetModal, BottomSheetModalProps>(
       <AppBottomSheetModal
         ref={ref}
         backdropComponent={renderBackdrop}
-        backdropProps={{
-          style: {},
-        }}
         {...props}>
         {props.children}
       </AppBottomSheetModal>
