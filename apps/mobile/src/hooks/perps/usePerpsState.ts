@@ -321,7 +321,7 @@ export const usePerpsState = () => {
     }
   });
 
-  const checkIsExtraAgentIsExpired = useMemoizedFn(
+  const checkExtraAgent = useMemoizedFn(
     async (account: Account, agentAddress: string) => {
       const sdk = apisPerps.getPerpsSDK();
       const extraAgents = await sdk.info.extraAgents(account.address);
@@ -574,16 +574,17 @@ export const usePerpsState = () => {
       // const { privateKey, publicKey } = await getOrCreateAgentWallet(account);
       const sdk = apisPerps.getPerpsSDK();
       const res = await apisPerps.getPerpsAgentWallet(account.address);
+      const agentAddress = res?.preference?.agentAddress || '';
+      const { isExpired, needDelete } = await checkExtraAgent(
+        account,
+        agentAddress,
+      );
+      if (needDelete) {
+        // 先不登录，防止hl服务状态不同步
+        return false;
+      }
+
       if (res) {
-        // 如果存在 agent wallet, 则检查是否过期
-        const { isExpired, needDelete } = await checkIsExtraAgentIsExpired(
-          account,
-          res.preference.agentAddress,
-        );
-        if (needDelete) {
-          // 先不登录，防止hl服务状态不同步
-          return false;
-        }
         if (!isExpired) {
           sdk.initAccount(
             account.address,
@@ -606,14 +607,6 @@ export const usePerpsState = () => {
     } catch (error: any) {
       console.error('Failed to login Perps account:', error);
       toast.error(error.message || 'Login failed');
-      // Sentry.captureException(
-      //   new Error(
-      //     'PERPS Login failed' +
-      //       JSON.stringify({
-      //         error,
-      //       }),
-      //   ),
-      // );
     }
   });
 
