@@ -365,7 +365,10 @@ export const PerpsDepositPopup: React.FC<{
     async () => {
       Keyboard.dismiss();
       const value = isDirectDeposit ? usdValue : estReceiveUsdValue.toString();
-      await onDeposit?.(txs, value, cacheBridgeHistory || undefined);
+      const bridgeHistory = isDirectDeposit
+        ? undefined
+        : cacheBridgeHistory || undefined;
+      await onDeposit?.(txs, value, bridgeHistory);
       setTxs([]);
       setBridgeQuote(null);
     },
