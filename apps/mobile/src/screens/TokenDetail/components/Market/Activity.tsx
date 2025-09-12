@@ -8,7 +8,7 @@ import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
 import { ellipsisAddress } from '@/utils/address';
-import { formatPercent, formatAmountValueKMB } from '../../util';
+import { formatPercent, formatAmountValueKMB, formatTime } from '../../util';
 import { formatUsdValueKMB } from '@/screens/Home/utils/price';
 import { formatPrice } from '@/utils/number';
 
@@ -209,7 +209,7 @@ const mock_list_data = [
     usd_value: 123,
     tx_id: '12312312312',
     user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff80b',
-    time_at: 1757483317,
+    time_at: 1757183318,
   },
   {
     id: '124',
@@ -219,7 +219,7 @@ const mock_list_data = [
     usd_value: 123,
     tx_id: '12312312312',
     user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff801',
-    time_at: 1757483318,
+    time_at: 1757677406,
   },
   {
     id: '125',
@@ -229,7 +229,7 @@ const mock_list_data = [
     usd_value: 124342343244243,
     tx_id: '12312312312',
     user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff802',
-    time_at: 1757483318,
+    time_at: 1757670406,
   },
   {
     id: '126',
@@ -239,7 +239,7 @@ const mock_list_data = [
     usd_value: 123,
     tx_id: '12312312312',
     user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff803',
-    time_at: 1757483318,
+    time_at: 1757677006,
   },
 ];
 
@@ -328,7 +328,9 @@ const Details = () => {
                       ]}>
                       {isBuy ? 'Buy' : 'Sell'}
                     </Text>
-                    <Text style={styles.timeAtItem}>{item.time_at}</Text>
+                    <Text style={styles.timeAtItem}>
+                      {formatTime(item.time_at)}
+                    </Text>
                   </View>
                   <Text style={styles.indexItem}>
                     {formatPrice(item.price)}

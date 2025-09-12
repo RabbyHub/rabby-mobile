@@ -1,3 +1,4 @@
+import { getTimeSpan } from '@/utils/time';
 import BigNumber from 'bignumber.js';
 
 export const formatPercent = (value: number) => {
@@ -29,4 +30,29 @@ export const formatAmountValueKMB = (value: string | number): string => {
   }
 
   return `${formattedValue}`;
+};
+
+// <60s: XX s
+// < 60min: XX min
+// <24hr: XX hr
+// XX day
+export const formatTime = (time: number) => {
+  const timeElapse = Date.now() / 1000 - time;
+
+  let timeStr = '';
+  const { d, h, m, s } = getTimeSpan(timeElapse);
+
+  if (d) {
+    timeStr = `${d} day` + (d > 1 ? 's' : '');
+  }
+  if (h && !timeStr) {
+    timeStr = `<${h} hr` + (h > 1 ? 's' : '');
+  }
+  if (m && !timeStr) {
+    timeStr = `<${m} min` + (m > 1 ? 's' : '');
+  }
+  if (!timeStr) {
+    timeStr = `<${s} sec` + (s > 1 ? 's' : '');
+  }
+  return timeStr;
 };
