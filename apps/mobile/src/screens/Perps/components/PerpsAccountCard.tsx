@@ -69,6 +69,7 @@ export const PerpsAccountCard: React.FC<{
               }}
               titleStyle={styles.smBtnTitle}
               title={t('page.perps.PerpsCard.withdrawBtn')}
+              buttonStyle={styles.withdrawBtn}
               disabled={withdrawDisabled}
             />
           </View>
@@ -173,6 +174,9 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
   smBtnTitle: {
     fontSize: 18,
     lineHeight: 22,
+  },
+  withdrawBtn: {
+    backgroundColor: 'transparent',
   },
   loginCardContent: {
     display: 'flex',
