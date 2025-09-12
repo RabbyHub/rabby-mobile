@@ -265,7 +265,7 @@ export function MultiAddressHomeHeader(
                     <Text
                       style={[
                         styles.netWorth,
-                        hideType === 'HALF_HIDE' ? styles.opacity20 : null,
+                        hideType === 'HALF_HIDE' ? styles.balanceOpacity : null,
                       ]}>
                       {/* {data.netWorth} */}
                       {formatSmallCurrencyValue(data.rawNetWorth, {
@@ -288,7 +288,9 @@ export function MultiAddressHomeHeader(
                         <Text
                           style={[
                             styles.changePercent,
-                            hideType === 'HALF_HIDE' ? styles.opacity20 : null,
+                            hideType === 'HALF_HIDE'
+                              ? styles.balanceOpacity
+                              : null,
                             {
                               color: data.isLoss
                                 ? colors2024['red-default']
@@ -313,7 +315,7 @@ export function MultiAddressHomeHeader(
                 <View
                   style={[
                     styles.accountList,
-                    hideType === 'HALF_HIDE' ? styles.opacity30 : null,
+                    hideType === 'HALF_HIDE' ? styles.addressOpacity : null,
                   ]}>
                   {addressListData?.map(item => {
                     return (
@@ -330,14 +332,14 @@ export function MultiAddressHomeHeader(
               ) : null}
               {hideType === 'HALF_HIDE' ? (
                 <View style={styles.accountCardMask}>
-                  {Platform.OS === 'ios' ? (
+                  {/* {Platform.OS === 'ios' ? (
                     <BlurView
                       style={styles.accountCardMaskBlur}
-                      blurAmount={0.5}
+                      blurAmount={1.5}
                       blurType={isLight ? 'light' : 'dark'}
                       reducedTransparencyFallbackColor="white"
                     />
-                  ) : null}
+                  ) : null} */}
                 </View>
               ) : null}
             </Card>
@@ -590,10 +592,10 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     paddingHorizontal: 14,
   },
 
-  opacity20: {
+  balanceOpacity: {
     opacity: 0.2,
   },
-  opacity30: {
+  addressOpacity: {
     opacity: 0.3,
   },
   hidden: {
