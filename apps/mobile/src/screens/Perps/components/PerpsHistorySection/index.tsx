@@ -22,7 +22,7 @@ import { PerpsHistoryEmpty } from './PerpsHistoryEmpty';
 import { PerpsHistoryItem } from './PerpsHistoryItem';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
-import { RcArrowRight2CC } from '@/assets/icons/common';
+import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
 
 export const PerpsHistorySection: React.FC<{
   marketDataMap: MarketDataMap;

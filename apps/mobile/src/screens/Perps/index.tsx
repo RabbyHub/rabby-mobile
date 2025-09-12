@@ -1,17 +1,23 @@
-/* eslint-disable react-native/no-inline-styles */
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshControl, ScrollView, Text, View } from 'react-native';
+import {
+  Dimensions,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  Text,
+} from 'react-native';
 import { PerpsAccountCard } from './components/PerpsAccountCard';
 import { PerpsHeaderRight } from './components/PerpsHeaderRight';
 import { PerpsHeaderTitle } from './components/PerpsHeaderTitle';
 // import { PerpsMain } from './components/PerpsMain';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { PerpsAgentsLimitModal } from './components/PerpsAgentsLimitModal';
+import * as Sentry from '@sentry/react-native';
 import { PerpsGuidePopup } from './components/PerpsGuidePopup';
 import { PerpsDepositPopup } from './components/PerpsDepositPopup';
 import { PerpsWithdrawPopup } from './components/PerpsWithdrawPopup';
@@ -29,6 +35,9 @@ import { apisPerps } from '@/core/apis';
 import { PerpsAccountSelectorPopup } from './components/PerpsAccountSelectorPopup';
 import { PerpsRegionAlert } from './components/PerpsRegionAlert';
 import { PerpsIntro } from '../PerpsMarketDetail/components/PerpsIntro';
+import { PerpsClosePositionPopup } from '../PerpsMarketDetail/components/PerpsClosePositionPopup ';
+import { AssetPosition } from '@rabby-wallet/hyperliquid-sdk';
+import { toast } from '@/components2024/Toast';
 
 export const PerpsScreen = () => {
   const { t } = useTranslation();
@@ -53,8 +62,16 @@ export const PerpsScreen = () => {
     hasPermission,
     refreshData,
     fetchMarketData,
+    perpFee,
+
+    judgeIsUserAgentIsExpired,
+    fetchClearinghouseState,
   } = usePerpsState();
 
+  const [closePositionVisible, setClosePositionVisible] = React.useState(false);
+  const [closePosition, setClosePosition] = useState<
+    AssetPosition['position'] | null
+  >(null);
   const [popupState, setPopupState] = usePerspPopupState();
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
@@ -77,7 +94,7 @@ export const PerpsScreen = () => {
     }
   });
 
-  const { handleDeposit, updateMiniSignTx } = usePerpsDeposit({
+  const { handleDeposit } = usePerpsDeposit({
     currentPerpsAccount,
   });
 
@@ -97,6 +114,78 @@ export const PerpsScreen = () => {
       ),
     });
   }, [currentPerpsAccount, isLogin, navigation, setPopupState]);
+
+  const handleClosePosition = useMemoizedFn(
+    async (params: {
+      coin: string;
+      size: string;
+      direction: 'Long' | 'Short';
+      price: string;
+    }) => {
+      try {
+        const sdk = apisPerps.getPerpsSDK();
+        const { coin, direction, price, size } = params;
+        const res = await sdk.exchange?.marketOrderClose({
+          coin,
+          isBuy: direction === 'Short',
+          size,
+          midPx: price,
+        });
+
+        const filled = res?.response?.data?.statuses[0]?.filled;
+        if (filled) {
+          fetchClearinghouseState();
+          const { totalSz, avgPx } = filled;
+          const msg = `Closed ${direction} ${coin}-USD: Size ${totalSz} at Price $${avgPx}`;
+          toast.success(
+            Platform.OS === 'android'
+              ? ({ textStyle }) => (
+                  <Text
+                    style={[
+                      textStyle,
+                      {
+                        maxWidth: Dimensions.get('window').width - 100,
+                      },
+                    ]}>
+                    {msg}
+                  </Text>
+                )
+              : msg,
+          );
+        } else {
+          const msg = res?.response?.data?.statuses[0]?.error;
+          toast.error(msg || 'close position error');
+          Sentry.captureException(
+            new Error(
+              'PERPS close position noFills' +
+                'params: ' +
+                JSON.stringify(params) +
+                'res: ' +
+                JSON.stringify(res),
+            ),
+          );
+          return null;
+        }
+      } catch (e: any) {
+        const isExpired = await judgeIsUserAgentIsExpired(e?.message || '');
+        if (isExpired) {
+          return null;
+        }
+        console.error('close position error', e);
+        toast.error(e?.message || 'close position error');
+        Sentry.captureException(
+          new Error(
+            'PERPS close position error' +
+              'params: ' +
+              JSON.stringify(params) +
+              'error: ' +
+              JSON.stringify(e),
+          ),
+        );
+        return null;
+      }
+    },
+  );
 
   useEffect(() => {
     apisPerps.getHasDoneNewUserProcess().then(hasDoneNewUserProcess => {
@@ -135,6 +224,10 @@ export const PerpsScreen = () => {
           <PerpsPositionSection
             positionAndOpenOrders={positionAndOpenOrders}
             marketDataMap={marketDataMap}
+            onClosePosition={position => {
+              setClosePosition(position);
+              setClosePositionVisible(true);
+            }}
           />
           <PerpsMarketSection marketData={marketData} />
           {isLogin ? (
@@ -215,9 +308,9 @@ export const PerpsScreen = () => {
             isShowDepositPopup: false,
           }));
         }}
-        onDeposit={async v => {
+        onDeposit={async (txs, amount, cacheBridgeHistory) => {
           try {
-            await handleDeposit(v);
+            await handleDeposit(txs, amount, cacheBridgeHistory);
           } catch (e) {
             console.error(e);
           }
@@ -245,6 +338,28 @@ export const PerpsScreen = () => {
           }));
         }}
       />
+      {closePosition && (
+        <PerpsClosePositionPopup
+          visible={closePositionVisible}
+          coin={closePosition?.coin}
+          providerFee={perpFee}
+          direction={Number(closePosition.szi || 0) > 0 ? 'Long' : 'Short'}
+          positionSize={Math.abs(Number(closePosition.szi || 0)).toString()}
+          pnl={Number(closePosition.unrealizedPnl || 0)}
+          onCancel={() => setClosePositionVisible(false)}
+          onConfirm={() => {
+            setClosePositionVisible(false);
+          }}
+          handleClosePosition={async () => {
+            await handleClosePosition({
+              coin: closePosition.coin,
+              size: Math.abs(Number(closePosition.szi || 0)).toString() || '0',
+              direction: Number(closePosition.szi || 0) > 0 ? 'Long' : 'Short',
+              price: closePosition.entryPx || '0',
+            });
+          }}
+        />
+      )}
     </>
   );
 };

@@ -2158,6 +2158,9 @@
         "balance": "Balance",
         "depositBtn": "Deposit",
         "minimumDepositSize": "The minimum deposit amount is $5",
+        "estReceiveTooltip": "Cross-chain deposit is processed via LiFi, may incur some slippage. Estimated arrival in {{number}}s.",
+        "estReceive": "Est. Receive: {{balance}}",
+        "fetchQuoteFailed": "Failed to fetch deposit quote. Please switch token.",
         "insufficientBalance": "Insufficient balance",
         "invalidNumber": "Please input a valid number"
       },
@@ -2269,16 +2272,23 @@
       "PerpsPosition": {
         "title": "Position",
         "pnl": "PNL",
+        "cross": "Cross",
+        "isolated": "Isolated",
         "size": "Size",
+        "markPrice": "Mark Price",
+        "justMargin": "Margin",
         "margin": "Margin(Isolated)",
         "autoClose": "Auto Close",
         "marginIsolated": "Margin (isolated)",
-        "fundingPayments": "Founding Payments",
+        "marginCross": "Margin (Cross)",
+        "fundingPayments": "Funding Payments",
         "liquidationPrice": "Liquidation Price",
         "entryPrice": "Entry Price",
         "direction": "Direction",
+        "closePosition": "Close {{direction}}",
         "tpPrice": "Take-Profit Price",
         "slPrice": "Stop-Loss Price",
+        "liqPrice": "Liq.Price",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "fundingPaymentsTips": "This is the net funding payments since the position was opened. Funding is an hourly fee that traders pay or receive to keep the price of the perp contract close to the actual price of the token.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage."
@@ -2335,7 +2345,7 @@
         "providerFeeTips": "Provider fee: {{fee}}",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
-        "margin": "Margin"
+        "margin": "Margin(Isolated)"
       },
       "action": {
         "closePosition": "Close {{direction}} Position",

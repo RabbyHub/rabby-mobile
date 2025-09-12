@@ -33,9 +33,7 @@ import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 import { HistoryItemCateType } from './type';
 import { Account } from '@/core/services/preference';
 import { isArray } from 'lodash';
-
-const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1);
-
+import { Dimensions } from 'react-native';
 const BuyWalletIcon = makeThemeIcon(BuyWalletSVG, BuyWalletDarkSVG);
 
 interface ItemProps {
@@ -238,7 +236,8 @@ export const HistoryTokenList = ({
                 )}
               </View>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', width: 32 }}>
               <RcIconSingleArrow
                 width={32}
                 height={32}
@@ -376,7 +375,8 @@ const getStyle = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
   },
   singleColomnBox: {
-    flex: 1,
+    // flex: 1,
+    width: Dimensions.get('window').width - 160,
     flexDirection: 'column',
     // alignItems: 'center',
   },

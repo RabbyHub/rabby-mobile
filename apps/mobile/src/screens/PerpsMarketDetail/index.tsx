@@ -157,13 +157,7 @@ export const PerpsMarketDetailScreen = () => {
     setCurrentTpOrSl,
   });
 
-  const {
-    miniSignTx,
-    clearMiniSignTx,
-    updateMiniSignTx,
-    handleDeposit,
-    handleSignDepositDirect,
-  } = usePerpsDeposit({
+  const { handleDeposit } = usePerpsDeposit({
     currentPerpsAccount,
   });
 
@@ -237,6 +231,7 @@ export const PerpsMarketDetailScreen = () => {
         size: Math.abs(Number(currentPosition.position.szi || 0)),
         marginUsed: Number(currentPosition.position.marginUsed || 0),
         side: Number(currentPosition.position.szi || 0) > 0 ? 'Long' : 'Short',
+        type: currentPosition.position.leverage.type,
         leverage: Number(currentPosition.position.leverage.value || 1),
         entryPrice: Number(currentPosition.position.entryPx || 0),
         liquidationPrice: Number(
@@ -399,9 +394,9 @@ export const PerpsMarketDetailScreen = () => {
         onClose={() => {
           setAmountVisible(false);
         }}
-        onDeposit={async v => {
+        onDeposit={async (txs, amount, cacheBridgeHistory) => {
           try {
-            await handleDeposit(v);
+            await handleDeposit(txs, amount, cacheBridgeHistory);
           } catch (e) {
             console.error(e);
           }

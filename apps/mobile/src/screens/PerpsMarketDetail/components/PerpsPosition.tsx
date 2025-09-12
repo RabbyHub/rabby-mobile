@@ -16,6 +16,7 @@ export const PerpsPosition: React.FC<{
     marginUsed: number;
     side: string;
     leverage: number;
+    type: 'isolated' | 'cross';
     entryPrice: number;
     liquidationPrice: string;
     autoClose: boolean;
@@ -106,7 +107,9 @@ export const PerpsPosition: React.FC<{
         <View style={styles.listItem}>
           <View style={styles.listItemMain}>
             <Text style={styles.label}>
-              {t('page.perpsDetail.PerpsPosition.marginIsolated')}
+              {positionData?.type === 'cross'
+                ? t('page.perpsDetail.PerpsPosition.marginCross')
+                : t('page.perpsDetail.PerpsPosition.marginIsolated')}
             </Text>
           </View>
           <View>
