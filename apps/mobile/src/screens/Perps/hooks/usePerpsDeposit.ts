@@ -104,7 +104,7 @@ export const usePerpsDeposit = ({
 
       const handleFullback = async () => {
         const results: string[] = [];
-        for await (const tx of currentTxs) {
+        for (const tx of currentTxs) {
           try {
             const result = await sendRequest({
               data: {

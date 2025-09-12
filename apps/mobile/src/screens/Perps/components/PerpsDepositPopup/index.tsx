@@ -10,6 +10,7 @@ import {
   ARB_USDC_TOKEN_SERVER_CHAIN,
   PERPS_SEND_ARB_USDC_ADDRESS,
 } from '@/constant/perps';
+import useAsync from 'react-use/lib/useAsync';
 import { Skeleton } from '@rneui/themed';
 import { openapi } from '@/core/request';
 import { Account } from '@/core/services/preference';
@@ -45,6 +46,7 @@ import { approveToken } from '@/core/apis/approvals';
 import { Linear } from '@/screens/Transaction/components/SkeletonCard';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
+import { apisPerps } from '@/core/apis';
 
 export interface PerpBridgeHistory {
   from_chain_id: string;
@@ -154,13 +156,6 @@ export const PerpsDepositPopup: React.FC<{
 
     return params as Tx;
   });
-
-  const isDirectDeposit = useMemo(() => {
-    return (
-      selectedToken?._tokenId === ARB_USDC_TOKEN_ID &&
-      selectedToken?.chain === ARB_USDC_TOKEN_SERVER_CHAIN
-    );
-  }, [selectedToken]);
 
   const amountValidation = React.useMemo(() => {
     const amountValue = Number(usdValue);
@@ -344,13 +339,32 @@ export const PerpsDepositPopup: React.FC<{
     }
   }, [isValidAmount, visible, setTxs, setBridgeQuote, setQuoteLoading]);
 
+  const isDirectDeposit = useMemo(() => {
+    return (
+      selectedToken?._tokenId === ARB_USDC_TOKEN_ID &&
+      selectedToken?.chain === ARB_USDC_TOKEN_SERVER_CHAIN
+    );
+  }, [selectedToken]);
+
+  const { value: isNeedDepositBeforeApprove } = useAsync(async () => {
+    if (!account?.address || !visible) {
+      return false;
+    }
+    const sdk = apisPerps.getPerpsSDK();
+    const { role } = await sdk.info.getUserRole(account.address);
+    return role === 'missing' && !isDirectDeposit;
+  }, [account?.address, visible, isDirectDeposit]);
+
+  const estReceiveUsdValue = useMemo(() => {
+    const value =
+      (bridgeQuote?.to_token_amount || 0) * ARB_USDC_TOKEN_ITEM.price;
+    return isNeedDepositBeforeApprove ? value - 1 : value;
+  }, [bridgeQuote, isNeedDepositBeforeApprove]);
+
   const { runAsync: handleDeposit, loading } = useRequest(
     async () => {
       Keyboard.dismiss();
-      const bridgeValue = (
-        (bridgeQuote?.to_token_amount || 0) * ARB_USDC_TOKEN_ITEM.price
-      ).toString();
-      const value = isDirectDeposit ? usdValue : bridgeValue;
+      const value = isDirectDeposit ? usdValue : estReceiveUsdValue.toString();
       await onDeposit?.(txs, value, cacheBridgeHistory || undefined);
       setTxs([]);
       setBridgeQuote(null);
@@ -424,10 +438,7 @@ export const PerpsDepositPopup: React.FC<{
               Keyboard.dismiss();
               showTipsPopup({
                 title: t('page.perps.PerpsDepositPopup.estReceive', {
-                  balance: formatUsdValue(
-                    (bridgeQuote?.to_token_amount || 0) *
-                      ARB_USDC_TOKEN_ITEM.price,
-                  ),
+                  balance: formatUsdValue(estReceiveUsdValue),
                 }),
                 desc: t('page.perps.PerpsDepositPopup.estReceiveTooltip', {
                   number: bridgeQuote?.duration || 0,
@@ -436,10 +447,7 @@ export const PerpsDepositPopup: React.FC<{
             }}>
             <Text style={styles.estReceiveText}>
               {t('page.perps.PerpsDepositPopup.estReceive', {
-                balance: formatUsdValue(
-                  (bridgeQuote?.to_token_amount || 0) *
-                    ARB_USDC_TOKEN_ITEM.price,
-                ),
+                balance: formatUsdValue(estReceiveUsdValue),
               })}
             </Text>
             <RcIconInfoFill1CC
@@ -464,6 +472,7 @@ export const PerpsDepositPopup: React.FC<{
     quoteError,
     showTipsPopup,
     colors2024,
+    estReceiveUsdValue,
   ]);
 
   const canShowDirectSubmit = isAccountSupportDirectSign(account?.type);
