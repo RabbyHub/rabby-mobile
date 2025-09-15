@@ -19,7 +19,7 @@ import {
 } from '@rabby-wallet/eth-keyring-gnosis';
 import { EVENTS, eventBus } from '@/utils/events';
 import { Account } from '../services/preference';
-import { difference, isEqual, sortBy, uniq } from 'lodash';
+import { isEqual, sortBy, uniq, without } from 'lodash';
 import { toChecksumAddress } from '@ethereumjs/util';
 import { hashSafeMessage } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
 
@@ -56,7 +56,7 @@ class ApisSafe {
       return Promise.reject(new Error(t('background.error.invalidAddress')));
     }
     return Promise.all(
-      difference(GNOSIS_SUPPORT_CHAINS, excludeChains || []).map(
+      without(GNOSIS_SUPPORT_CHAINS, ...(excludeChains || [])).map(
         async chainEnum => {
           const chain = findChain({ enum: chainEnum });
           try {
