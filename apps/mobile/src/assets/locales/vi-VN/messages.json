@@ -113,7 +113,9 @@
         "message": "Ứng dụng này cần quyền truy cập vào vị trí của bạn để cung cấp các tính năng dựa trên vị trí.",
         "title": "Quyền truy cập vị trí"
       }
-    }
+    },
+    "check": "Kiểm tra",
+    "gotIt": "Đã hiểu"
   },
   "page": {
     "transactions": {
@@ -418,7 +420,8 @@
         "sendGas": "Gas chuyển đến bạn cho giao dịch hiện tại:",
         "estimatedGas": "Ước tính Gas:",
         "maxGas": "Max Gas: ",
-        "gasCost": "Chi phí Gas để chuyển gas đến địa chỉ của bạn:"
+        "gasCost": "Chi phí Gas để chuyển gas đến địa chỉ của bạn:",
+        "description": "Sử dụng GasAccount để thanh toán phí gas. Xem chi tiết thanh toán bên dưới:"
       },
       "crossChain": {
         "title": "Cross Chain"
@@ -1180,7 +1183,9 @@
         "websites": "Websites",
         "search": "Tìm kiếm Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Danh sách theo dõi"
+        "watchlist": "Danh sách theo dõi",
+        "perps": "Perps",
+        "perpsMarketList": "Thêm Perps"
       }
     },
     "securityEngine": {
@@ -1686,7 +1691,10 @@
       "clearPendingToast": "Giao dịch chờ địa phương đã bị xóa",
       "clearPendingResetDesc": "Cũng đặt lại dữ liệu nonce địa phương và bản ghi chữ ký của tôi",
       "clearPendingWarning": "Giao dịch đã bị xóa có thể vẫn được xác nhận trên chuỗi trừ khi nó bị thay thế.",
-      "clearBrowserData": "Xóa Dữ Liệu Trình Duyệt"
+      "clearBrowserData": "Xóa Dữ Liệu Trình Duyệt",
+      "currency": "Tiền tệ",
+      "searchCurrency": "Tìm kiếm Tiền tệ",
+      "screenshotReportSwitch": "Chụp màn hình để báo cáo lỗi"
     },
     "tokenDetail": {
       "excludeBalanceTipsButton": "Tôi hiểu rồi.",
@@ -1750,6 +1758,23 @@
       "tabs": {
         "tokenSecurity": "Bảo mật Token",
         "marketData": "Dữ liệu thị trường"
+      },
+      "interval": {
+        "5M": "5M",
+        "1D": "1D",
+        "15M": "15M",
+        "4H": "4H",
+        "1H": "1H",
+        "1M": "1M",
+        "1W": "1W",
+        "30M": "30M"
+      },
+      "marketInfo": {
+        "txns24h": "24h Txns",
+        "holders": "Người nắm giữ",
+        "volume24h": "24h Khối lượng",
+        "totalSupply": "Tổng cung",
+        "marketCap": "Vốn Hoá Thị Trường"
       }
     },
     "backupPrivateKey": {
@@ -2198,6 +2223,9 @@
         "setupWalletFirst": "Vui lòng hoàn tất việc thiết lập ví trước.",
         "unlockWalletFirst": "Vui lòng mở khóa ứng dụng để truy cập liên kết."
       }
+    },
+    "perpsHistory": {
+      "title": "Lịch sử"
     }
   },
   "component": {
@@ -2388,9 +2416,11 @@
       "feedbackInput": {
         "placeholder": "Mô tả vấn đề"
       },
-      "feedbackLabel": "Mô tả lỗi:",
       "submitButtonText": "Gửi đi",
-      "title": "Ảnh chụp màn hình để báo cáo lỗi"
+      "switchArea": {
+        "skipText": "Bỏ qua thông báo này trong 1 ngày"
+      },
+      "title": "Chụp màn hình để Báo cáo Lỗi"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "Mô tả:",
@@ -2400,7 +2430,10 @@
       "issueDescription": "Đây là vấn đề bạn đã báo cáo:"
     },
     "submitFeedbackSuccessModal": {
-      "desc": "Gửi thành công"
+      "desc": "Gửi thành công!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Tôi hiểu rồi"
     }
   },
   "constant": {

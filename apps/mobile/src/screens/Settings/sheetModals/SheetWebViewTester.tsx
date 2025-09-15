@@ -1,10 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 
-import {
-  BottomSheetBackdrop,
-  BottomSheetBackdropProps,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useSheetModalsOnSettingScreen } from './hooks';
 import DappWebViewControl from '@/components/WebView/DappWebViewControl';
 import { devLog } from '@/utils/logger';

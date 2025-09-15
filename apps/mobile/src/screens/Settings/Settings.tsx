@@ -29,6 +29,8 @@ import {
   RcI18n,
   RcFaceId,
   RcFingerprint,
+  RcScreenshotReport,
+  RcIconCurrency,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -142,6 +144,15 @@ import {
   DevModalReactotron,
   useReactotronModalVisible,
 } from './Modals/DevModalReactotron';
+import {
+  FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
+  useScreenshotToReportEnabled,
+} from '@/components/Screenshot/hooks';
+import { SwitchScreenshotToReport } from './components/SwitchScreenshotToReport';
+import {
+  CurrencySelectorPopup,
+  useCurrentCurrencyVisible,
+} from './sheetModals/CurrencySelectorPopup';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -225,6 +236,8 @@ function SettingsBlocks() {
   const { currentLangLabel, setCurrentLanguageModalVisible } =
     useCurrentLanguageModalVisible();
 
+  const { currency, setIsShowCurrencyPopup } = useCurrentCurrencyVisible();
+
   const disabledBiometrics =
     !couldSetupBiometrics || !APP_FEATURE_SWITCH.biometricsAuth;
 
@@ -252,6 +265,8 @@ function SettingsBlocks() {
   const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
   const { clearBrowserData } = useClearBrowserData();
+
+  const { toggleScreenshotToReport } = useScreenshotToReportEnabled();
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -286,6 +301,16 @@ function SettingsBlocks() {
             },
             rightTextNode: (
               <Text style={styles.rightText}>{currentLangLabel}</Text>
+            ),
+          },
+          {
+            label: t('page.setting.currency'),
+            icon: RcIconCurrency,
+            onPress: () => {
+              setIsShowCurrencyPopup(true);
+            },
+            rightTextNode: (
+              <Text style={styles.rightText}>{currency?.code}</Text>
             ),
           },
           {
@@ -326,6 +351,16 @@ function SettingsBlocks() {
             rightTextNode: ctx => {
               return <Text style={styles.rightText}>{appThemeText}</Text>;
             },
+          },
+          {
+            label: t('page.setting.screenshotReportSwitch'),
+            icon: RcScreenshotReport,
+            rightNode: <SwitchScreenshotToReport ref={switchBiometricsRef} />,
+            onPress: () => {
+              toggleScreenshotToReport();
+            },
+            disabled: disabledBiometrics,
+            visible: !FORCE_DISABLE_FEEDBACK_BY_SCREENSHOT,
           },
           {
             label: t('page.setting.clearPending'),
@@ -522,6 +557,8 @@ function SettingsBlocks() {
       <SelectAutolockTimeBottomSheetModal ref={selectAutolockTimeRef} />
 
       <CurrentLanguageSelectorModal />
+
+      <CurrencySelectorPopup />
     </>
   );
 }

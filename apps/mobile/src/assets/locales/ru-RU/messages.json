@@ -113,7 +113,9 @@
         "title": "Разрешение на местоположение",
         "message": "Это приложение нуждается в доступе к вашему местоположению для предоставления функций, основанных на местоположении."
       }
-    }
+    },
+    "gotIt": "Понял",
+    "check": "Проверить"
   },
   "page": {
     "getStart": {
@@ -488,7 +490,8 @@
         "estimatedGas": "Предполагаемый Gas:",
         "gasCost": "Стоимость газа за перевод газа на ваш адрес:",
         "maxGas": "Макс Gas:",
-        "sendGas": "Перевод Gas на ваш счет для текущей транзакции:"
+        "sendGas": "Перевод Gas на ваш счет для текущей транзакции:",
+        "description": "Использование GasAccount для оплаты газовых сборов. Посмотрите детали платежа ниже:"
       },
       "gasPriceTitle": "Gas Price (Gwei)",
       "cancelTx": {
@@ -942,7 +945,9 @@
         "send": "Отправить",
         "search": "Поиск токена",
         "copyTrading": "Копирование торговли",
-        "watchlist": "Список наблюдения"
+        "watchlist": "Список наблюдения",
+        "perps": "Перпсы",
+        "perpsMarketList": "Больше Perps"
       }
     },
     "dashboard": {
@@ -1739,7 +1744,10 @@
       "clearPendingToast": "Локальная ожидающая транзакция удалена",
       "clearPendingResetDesc": "Также сбросить мои локальные данные nonce и запись подписи",
       "clearPendingWarning": "Удаленная транзакция все еще может быть подтверждена в цепочке, если она не будет заменена.",
-      "clearBrowserData": "Очистить данные браузера"
+      "clearBrowserData": "Очистить данные браузера",
+      "screenshotReportSwitch": "Скриншот для сообщения об ошибке",
+      "currency": "Валюта",
+      "searchCurrency": "Поиск валюты"
     },
     "gasAccount": {
       "GasAccountDepositTipPopup": {
@@ -1906,6 +1914,23 @@
       "tabs": {
         "marketData": "Рынковые данные",
         "tokenSecurity": "Безопасность токенов"
+      },
+      "interval": {
+        "30M": "30M",
+        "1D": "1Д",
+        "4H": "4H",
+        "5M": "5M",
+        "1W": "1W",
+        "15M": "15М",
+        "1M": "1M",
+        "1H": "1H"
+      },
+      "marketInfo": {
+        "holders": "Держатели",
+        "marketCap": "Рыночная капитализация",
+        "totalSupply": "Общее предложение",
+        "txns24h": "24h Txns",
+        "volume24h": "24h Объем"
       }
     },
     "settingModal": {
@@ -2198,6 +2223,9 @@
         "unlockWalletFirst": "Пожалуйста, разблокируйте приложение, чтобы открыть ссылку.",
         "setupWalletFirst": "Пожалуйста, сначала завершите настройку кошелька."
       }
+    },
+    "perpsHistory": {
+      "title": "История"
     }
   },
   "component": {
@@ -2388,9 +2416,11 @@
       "feedbackInput": {
         "placeholder": "Опишите проблему"
       },
-      "feedbackLabel": "Описание ошибки:",
       "submitButtonText": "Отправить",
-      "title": "Снимок для отчета об ошибке"
+      "switchArea": {
+        "skipText": "Пропустить это всплывающее окно на 1 день"
+      },
+      "title": "Скриншот для сообщения об ошибке"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "Описание:",
@@ -2400,7 +2430,10 @@
       "issueDescription": "Вот проблема, о которой вы сообщили:"
     },
     "submitFeedbackSuccessModal": {
-      "desc": "Отправлено успешно"
+      "desc": "Отправлено успешно!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Я понял это"
     }
   },
   "constant": {

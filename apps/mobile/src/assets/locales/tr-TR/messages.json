@@ -127,7 +127,8 @@
         "gasCost": "Adresinize gaz transferi için gaz maliyeti:",
         "estimatedGas": "Tahmini Gas:",
         "sendGas": "Bu işlem için size transfer edilen Gas:",
-        "maxGas": "Maksimum Gas:"
+        "maxGas": "Maksimum Gas:",
+        "description": "GasAccount ile gaz ücretlerini ödemek. Ödeme detaylarını aşağıda görüntüleyin:"
       },
       "balanceChange": {
         "errorTitle": "Bakiye değişikliği alınamadı",
@@ -980,7 +981,9 @@
         "queue": "Kuyruk",
         "websites": "Web Siteleri",
         "copyTrading": "Copy Trading",
-        "watchlist": "Göz Atma Listesi"
+        "watchlist": "Göz Atma Listesi",
+        "perps": "Perps",
+        "perpsMarketList": "Daha Fazla Perps"
       }
     },
     "dashboard": {
@@ -1795,6 +1798,23 @@
       "tabs": {
         "marketData": "Piyasa verileri",
         "tokenSecurity": "Token Güvenliği"
+      },
+      "interval": {
+        "1D": "1G",
+        "30M": "30M",
+        "1W": "1W",
+        "4H": "4H",
+        "15M": "15M",
+        "1H": "1H",
+        "1M": "1M",
+        "5M": "5M"
+      },
+      "marketInfo": {
+        "txns24h": "24 saat Txns",
+        "volume24h": "24h İşlem Hacmi",
+        "holders": "Sahipler",
+        "marketCap": "Piyasa Değeri",
+        "totalSupply": "Toplam Arz"
       }
     },
     "approvalsAddressList": {
@@ -1881,7 +1901,10 @@
       "clearPendingDesc1": "Bu, tüm bekleyen işlemlerinizi temizleyecektir. Bu, bazı durumlarda Rabby'deki işlemin durumunun zincirdeki durumla eşleşmemesi sorununu çözmenize yardımcı olabilir.",
       "clearPendingDesc2": "Bu, hesaplarınızdaki bakiyeleri değiştirmeyecek veya seed phrase'inizi yeniden girmenizi gerektirmeyecektir. Tüm varlıklarınız ve hesap bilgilerinizi güvende kalacaktır.",
       "addCustomNetwork": "Özel Ağ Ekle",
-      "clearBrowserData": "Tarayıcı Verilerini Temizle"
+      "clearBrowserData": "Tarayıcı Verilerini Temizle",
+      "currency": "Para Birimi",
+      "searchCurrency": "Para Araştırması",
+      "screenshotReportSwitch": "Hata bildirmek için ekran görüntüsü alın"
     },
     "settingModal": {
       "themeMode": {
@@ -2109,6 +2132,9 @@
         "unlockWalletFirst": "Lütfen bağlantıyı açmak için uygulamayı açın.",
         "setupWalletFirst": "Lütfen önce cüzdanı kurmayı tamamlayın."
       }
+    },
+    "perpsHistory": {
+      "title": "Geçmiş"
     }
   },
   "component": {
@@ -2300,8 +2326,10 @@
         "placeholder": "Sorunu tanımlayın"
       },
       "submitButtonText": "Gönder",
-      "feedbackLabel": "Hata tanımı:",
-      "title": "Hata Bildirmek için Anlık Görüntü Alın"
+      "switchArea": {
+        "skipText": "Bu açılır pencereyi 1 gün için atla"
+      },
+      "title": "Hata Bildirmek için Ekran Görüntüsü"
     },
     "feedbackModal": {
       "repliedTitle": "Rabby Destek yanıtladı:",
@@ -2311,7 +2339,10 @@
       "issueDescription": "İşte bildirdiğiniz sorun:"
     },
     "submitFeedbackSuccessModal": {
-      "desc": "Başarıyla Gönderildi"
+      "desc": "Başarıyla Gönderildi!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Anladım"
     }
   },
   "native": {
@@ -2400,7 +2431,9 @@
         "message": "Bu uygulama, konum tabanlı özellikler sağlamak için konumunuza erişim gerektirir.",
         "title": "Konum İzni"
       }
-    }
+    },
+    "gotIt": "Tamamdır",
+    "check": "Kontrol Et"
   },
   "background": {
     "error": {

@@ -18,7 +18,6 @@ import { AppSwitch, Button, Text } from '@/components';
 import { RcIconAddressDetailEdit } from '@/assets/icons/address';
 import QRCode from 'react-native-qrcode-svg';
 import {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModal,
   BottomSheetView,

@@ -231,8 +231,10 @@
         "placeholder": "Describa el problema"
       },
       "submitButtonText": "Enviar",
-      "title": "Captura de pantalla para informar de un error",
-      "feedbackLabel": "Descripción del error:"
+      "switchArea": {
+        "skipText": "Saltar este popup por 1 día"
+      },
+      "title": "Captura de pantalla para reportar un error"
     },
     "feedbackModal": {
       "title": "Respuesta del soporte de Rabby",
@@ -242,7 +244,10 @@
       "repliedTitle": "La asistencia de Rabby ha respondido:"
     },
     "submitFeedbackSuccessModal": {
-      "desc": "Enviado correctamente"
+      "desc": "¡Enviado con éxito!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Lo tengo"
     }
   },
   "page": {
@@ -455,7 +460,8 @@
         "estimatedGas": "Gas estimado:",
         "gasCost": "Costo de gas para transferir gas a su dirección:",
         "maxGas": "Max Gas: ",
-        "sendGas": "La transferencia de Gas para usted en la transacción actual:"
+        "sendGas": "La transferencia de Gas para usted en la transacción actual:",
+        "description": "Usando GasAccount para pagar las tarifas de gas. Ver detalles de pago a continuación:"
       },
       "viewRaw": "Ver sin procesar",
       "sendNFT": {
@@ -1018,7 +1024,9 @@
         "queue": "Cola",
         "search": "Buscar Token",
         "copyTrading": "Copy Trading",
-        "watchlist": "Lista de seguimiento"
+        "watchlist": "Lista de seguimiento",
+        "perpsMarketList": "Más Perps",
+        "perps": "Perps"
       }
     },
     "dashboard": {
@@ -1907,6 +1915,23 @@
       "tabs": {
         "tokenSecurity": "Seguridad del Token",
         "marketData": "Datos del mercado"
+      },
+      "interval": {
+        "1D": "1D",
+        "15M": "15M",
+        "30M": "30M",
+        "1W": "1W",
+        "1H": "1H",
+        "5M": "5M",
+        "1M": "1M",
+        "4H": "4H"
+      },
+      "marketInfo": {
+        "holders": "Poseedores",
+        "totalSupply": "Suministro total",
+        "marketCap": "Capitalización de mercado",
+        "txns24h": "24h Txns",
+        "volume24h": "Volumen 24h"
       }
     },
     "setting": {
@@ -1933,7 +1958,10 @@
       "clearPendingResetDesc": "También restablecer mis datos de nonce locales y el registro de firmas.",
       "clearPendingToast": "Transacción pendiente local eliminada",
       "clearPendingWarning": "La transacción eliminada todavía puede ser confirmada en la cadena a menos que sea reemplazada.",
-      "clearBrowserData": "Borrar datos del navegador"
+      "clearBrowserData": "Borrar datos del navegador",
+      "searchCurrency": "Buscar moneda",
+      "currency": "Moneda",
+      "screenshotReportSwitch": "Captura de pantalla para informar un error"
     },
     "gasAccount": {
       "deposit": "Depósito",
@@ -2328,6 +2356,9 @@
         "setupWalletFirst": "Por favor, completa primero la configuración de la wallet.",
         "unlockWalletFirst": "Por favor, desbloquea la aplicación para abrir el enlace."
       }
+    },
+    "perpsHistory": {
+      "title": "Historia"
     }
   },
   "global": {
@@ -2401,7 +2432,9 @@
         "title": "Permiso de ubicación",
         "message": "Esta aplicación necesita acceso a tu ubicación para proporcionar funciones basadas en la ubicación."
       }
-    }
+    },
+    "check": "Verificar",
+    "gotIt": "Entendido"
   },
   "bluetooth": {
     "powered_off_alert": {

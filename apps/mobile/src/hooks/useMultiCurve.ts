@@ -239,6 +239,9 @@ export const useMultiCurve = (
   }, [addresses, combineData.list.length, disableAutoFetch, fetch]);
 
   const isLoadingNew = useMemo(() => {
+    if (addresses.length === 0) {
+      return false;
+    }
     return addresses?.every(address => {
       return !multiTimeStamp[address.toLowerCase()]?.data?.length;
     });

@@ -34,7 +34,7 @@ export const PerpsSelectTokenPopup: React.FC<{
   onClose?(): void;
   visible?: boolean;
   account: Account;
-  onSelect?(token: AbstractPortfolioToken): void;
+  onSelect?(token: AbstractPortfolioToken): Promise<void>;
 }> = ({ onClose, visible, account, onSelect }) => {
   const { t } = useTranslation();
   const { styles, colors2024, isLight } = useTheme2024({
@@ -169,11 +169,6 @@ export const PerpsSelectTokenPopup: React.FC<{
           />
         </AutoLockView>
       </AppBottomSheetModal>
-      <PerpsDepositTokenModal
-        visible={false}
-        arbUsdcToken={arbUsdc}
-        token={tokens?.[1]}
-      />
     </>
   );
 };

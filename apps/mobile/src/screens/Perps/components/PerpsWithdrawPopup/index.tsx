@@ -10,11 +10,12 @@ import { AccountSummary } from '@/hooks/perps/usePerpsStore';
 import { useTheme2024 } from '@/hooks/theme';
 import { useTipsPopup } from '@/hooks/useTipsPopup';
 import { useUsdInput } from '@/hooks/useUsdInput';
-import { formatUsdValue } from '@/utils/number';
+import { formatPerpsUsdValue, formatUsdValue } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useRequest } from 'ahooks';
+import BigNumber from 'bignumber.js';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Platform, Text, TouchableOpacity, View } from 'react-native';
@@ -122,7 +123,10 @@ export const PerpsWithdrawPopup: React.FC<{
                 {t('page.perps.PerpsWithdrawPopup.amount')}
               </Text>
               <Text style={styles.formItemDesc}>
-                {formatUsdValue(accountSummary?.withdrawable || 0)}{' '}
+                {formatPerpsUsdValue(
+                  accountSummary?.withdrawable || 0,
+                  BigNumber.ROUND_DOWN,
+                )}{' '}
                 {t('page.perps.PerpsWithdrawPopup.available')}
               </Text>
             </View>
@@ -139,6 +143,23 @@ export const PerpsWithdrawPopup: React.FC<{
                 ]}
                 placeholder="$0"
               />
+              {!amount && (
+                <TouchableOpacity
+                  style={styles.maxButtonWrapper}
+                  onPress={() => {
+                    setAmount(
+                      Number(
+                        (
+                          Math.floor(
+                            Number(accountSummary?.withdrawable || 0) * 100,
+                          ) / 100
+                        ).toFixed(2),
+                      ).toString(),
+                    );
+                  }}>
+                  <Text style={styles.maxButtonText}>MAX</Text>
+                </TouchableOpacity>
+              )}
               <View style={styles.divider} />
 
               <View style={styles.tokenContainer}>
@@ -296,6 +317,18 @@ const getStyle = createGetStyles2024(ctx => {
       width: 1,
       height: 28,
       backgroundColor: ctx.colors2024['neutral-line'],
+    },
+    maxButtonWrapper: {
+      padding: 4,
+      backgroundColor: ctx.colors2024['brand-light-1'],
+      borderRadius: 8,
+    },
+    maxButtonText: {
+      color: ctx.colors2024['brand-default'],
+      fontSize: 14,
+      fontWeight: '700',
+      lineHeight: 18,
+      fontFamily: 'SF Pro Rounded',
     },
     tokenContainer: {
       display: 'flex',

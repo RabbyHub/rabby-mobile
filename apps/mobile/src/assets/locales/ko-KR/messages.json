@@ -354,7 +354,8 @@
         "maxGas": "최대 Gas: ",
         "sendGas": "현재 거래에 대한 Gas 전송:",
         "estimatedGas": "예상 Gas:",
-        "gasCost": "귀하의 주소로 가스를 전송하는 가스 비용:"
+        "gasCost": "귀하의 주소로 가스를 전송하는 가스 비용:",
+        "description": "GasAccount으로 가스 요금을 지불합니다. 아래에서 결제 세부정보를 확인하세요:"
       },
       "gasLimitLessThanGasUsed": "Gas limit이 너무 낮습니다. 거래가 실패할 확률이 95%입니다.",
       "multiSigChainNotMatch": "다중 서명 주소는 이 체인에 없으며 트랜잭션을 시작할 수 없습니다.",
@@ -771,7 +772,9 @@
         "approvals": "승인",
         "search": "토큰 검색",
         "copyTrading": "복사 거래",
-        "watchlist": "관심 목록"
+        "watchlist": "관심 목록",
+        "perps": "펍스",
+        "perpsMarketList": "더 많은 Perps"
       }
     },
     "bridge": {
@@ -1792,6 +1795,23 @@
       "tabs": {
         "marketData": "시장 데이터",
         "tokenSecurity": "토큰 보안"
+      },
+      "interval": {
+        "4H": "4시간",
+        "30M": "30M",
+        "1H": "1H",
+        "15M": "15M",
+        "1M": "1M",
+        "5M": "5M",
+        "1W": "1W",
+        "1D": "1D"
+      },
+      "marketInfo": {
+        "marketCap": "시가총액",
+        "volume24h": "24시간 거래량",
+        "txns24h": "24시간 거래",
+        "holders": "홀더",
+        "totalSupply": "총 공급량"
       }
     },
     "setting": {
@@ -1818,7 +1838,10 @@
       "clearPendingResetDesc": "또한 내 로컬 nonce 데이터 및 서명 기록을 재설정합니다.",
       "clearPendingToast": "로컬 보류 중인 거래가 제거되었습니다.",
       "clearPendingWarning": "삭제된 거래는 교체되지 않는 한 여전히 온체인에서 확인될 수 있습니다.",
-      "clearBrowserData": "브라우저 데이터 삭제"
+      "clearBrowserData": "브라우저 데이터 삭제",
+      "currency": "통화",
+      "screenshotReportSwitch": "버그 보고를 위한 스크린샷",
+      "searchCurrency": "통화 검색"
     },
     "settingModal": {
       "themeMode": {
@@ -2110,6 +2133,9 @@
         "setupWalletFirst": "지갑 설정을 먼저 완료해 주세요.",
         "unlockWalletFirst": "앱을 잠금 해제하여 링크를 열어주세요."
       }
+    },
+    "perpsHistory": {
+      "title": "역사"
     }
   },
   "global": {
@@ -2183,7 +2209,9 @@
         "title": "위치 권한",
         "message": "이 앱은 위치 기반 기능을 제공하기 위해 귀하의 위치 접근이 필요합니다."
       }
-    }
+    },
+    "gotIt": "알겠습니다",
+    "check": "확인"
   },
   "native": {
     "biometrics": {
@@ -2388,9 +2416,11 @@
       "feedbackInput": {
         "placeholder": "문제를 설명하세요"
       },
-      "feedbackLabel": "버그 설명:",
       "submitButtonText": "제출",
-      "title": "버그 신고를 위한 스냅샷"
+      "switchArea": {
+        "skipText": "이 팝업을 1일 동안 건너뛰기"
+      },
+      "title": "버그 보고를 위한 스크린샷"
     },
     "feedbackModal": {
       "issueDescriptionLabel": "설명:",
@@ -2400,7 +2430,10 @@
       "pendingTitle": "Rabby Support가 회신하지 않았습니다."
     },
     "submitFeedbackSuccessModal": {
-      "desc": "성공적으로 제출되었습니다"
+      "desc": "성공적으로 제출되었습니다!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "알겠어요"
     }
   },
   "constant": {

@@ -1,18 +1,5 @@
-import React, {
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from 'react';
-import {
-  Dimensions,
-  Keyboard,
-  Text,
-  TextInput,
-  TextInputProps,
-  View,
-} from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Dimensions, Keyboard, Text, TextInput, View } from 'react-native';
 
 import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -24,38 +11,20 @@ import { useTranslation } from 'react-i18next';
 import { IS_ANDROID } from '@/core/native/utils';
 
 export type BottomInputMethods = {};
-export type BottomInputProps = {
-  visible?: boolean;
-} & RNViewProps;
+export type BottomInputProps = {} & RNViewProps;
 
-const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
-  ({ visible, style }, ref) => {
-    const { feedbackText, onChangeFeedback } = useFeedbackOnScreenshot();
+const ModalInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
+  ({ style }, ref) => {
+    const { feedbackText: value, onChangeFeedback } = useFeedbackOnScreenshot();
 
-    const [value, setValue] = useState(feedbackText);
+    // const [value, setValue] = useState(feedbackText);
+    // useEffect(() => {
+    //   setValue(feedbackText);
+    // }, [feedbackText]);
     const valueOverLimit = value.length > SCREENSHOT_FEEDBACK_MAX_LENGTH - 1;
 
-    const { styles } = useTheme2024({ getStyle: getBottomInputStyle });
+    const { styles } = useTheme2024({ getStyle: getStyle });
     const { t } = useTranslation();
-
-    useEffect(() => {
-      if (visible) {
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 300);
-      } else {
-        setTimeout(() => {
-          inputRef.current?.blur();
-        }, 300);
-        Keyboard.dismiss();
-      }
-    }, [visible]);
-
-    useEffect(() => {
-      if (visible) {
-        setValue(feedbackText);
-      }
-    }, [visible, feedbackText]);
 
     const inputRef = useRef<any>(null);
     const isEmpty = !value;
@@ -66,20 +35,13 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
     }, [onChangeFeedback, value]);
 
     return (
-      <View
-        {...(!visible && { pointerEvents: 'none' })}
-        style={[
-          styles.container,
-          // containerAnimatedStyle,
-          !visible && { opacity: 0, height: 0 },
-          style,
-        ]}>
+      <View style={[styles.container, style]}>
         <View style={[styles.inputContainer]}>
           <TextInput
             ref={inputRef}
             value={value}
             onChangeText={text => {
-              setValue(text);
+              onChangeFeedback(text);
             }}
             multiline={true}
             onBlur={handleDone}
@@ -95,19 +57,19 @@ const ModalBottomInput = React.forwardRef<BottomInputMethods, BottomInputProps>(
             placeholderTextColor={styles.inputPlaceholder.color}
             style={[styles.input, isEmpty ? styles.inputPlaceholder : null]}
           />
-          <Text style={styles.inputTextLenIndicator}>
+          {/* <Text style={styles.inputTextLenIndicator}>
             <Text style={[valueOverLimit && styles.inputTextOverLimit]}>
               {value.length}
             </Text>
             {`/${SCREENSHOT_FEEDBACK_MAX_LENGTH - 1}`}
-          </Text>
+          </Text> */}
         </View>
       </View>
     );
   },
 );
 
-export default ModalBottomInput;
+export default ModalInput;
 
 export const ModalBottomInputSizes = {
   mainHeight: 108,
@@ -116,28 +78,14 @@ export const ModalBottomInputSizes = {
   },
 };
 
-const getBottomInputStyle = createGetStyles2024(({ colors2024 }) => {
-  const winLayout = Dimensions.get('window');
+const getStyle = createGetStyles2024(({ colors2024 }) => {
   return {
-    // outerMask: {
-    //   position: 'absolute',
-    //   height: winLayout.height,
-    //   width: winLayout.width,
-    //   ...(__DEV__ && {
-    //     backgroundColor: 'red',
-    //   }),
-    // },
     container: {
       position: 'relative',
       backgroundColor: colors2024['neutral-bg-1'],
-      paddingHorizontal: 16,
-      paddingVertical: 12,
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
-      bottom: 0,
-      minHeight: ModalBottomInputSizes.totalContainerHeight,
     },
     inputContainer: {
       flex: 1,
@@ -147,6 +95,7 @@ const getBottomInputStyle = createGetStyles2024(({ colors2024 }) => {
       paddingHorizontal: 12,
       paddingVertical: 12,
       backgroundColor: colors2024['neutral-bg-5'],
+      maxHeight: 78,
     },
     input: {
       flex: 1,

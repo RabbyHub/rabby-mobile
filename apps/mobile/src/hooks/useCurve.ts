@@ -1,10 +1,17 @@
 import { getNetCurve } from '@/utils/24balanceCurveCache';
 import { patchCurveData } from '@/utils/curve';
 import { CurveDayType } from '@/utils/curveDayType';
-import { formatUsdValue, splitNumberByStep } from '@/utils/number';
+import {
+  formatCurrency,
+  formatUsdValue,
+  splitNumberByStep,
+} from '@/utils/number';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { atom, useAtom } from 'jotai';
+import { USD_CURRENCY } from '@/constant/currency';
+import BigNumber from 'bignumber.js';
+import { CurrencyItem } from '@rabby-wallet/rabby-api/dist/types';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
 
@@ -31,6 +38,31 @@ export const formatSmallUsdValue = (value: number) => {
     return `$${splitNumberByStep(value.toFixed(2))}`;
   }
   return formatUsdValue(value, value > 1000000 ? 2 : 0, true);
+};
+
+export const formatSmallCurrencyValue = (
+  value: number,
+  options?: {
+    currency?: CurrencyItem;
+  },
+) => {
+  const { currency = USD_CURRENCY } = options || {};
+  const val = new BigNumber(value).times(currency.usd_rate);
+  if (val.isZero() || val.isNaN()) {
+    return `${currency.symbol}0`;
+  }
+
+  if (val.isLessThan(0.01)) {
+    return `<${currency.symbol}0.01`;
+  }
+  if (val.isLessThanOrEqualTo(10)) {
+    return `${currency.symbol}${splitNumberByStep(val.toFixed(2))}`;
+  }
+  return formatCurrency(value, {
+    decimal: val.isGreaterThan(1000000) ? 2 : 0,
+    formatMillion: true,
+    currency,
+  });
 };
 
 export const formChartData = (
@@ -107,7 +139,9 @@ export const formChartData = (
 
   return {
     list,
+    rawNetWorth: staticBalance || endNetWorth,
     netWorth: formatSmallUsdValue(staticBalance || endNetWorth),
+    rawChange: assetsChange,
     change: `${formatUsdValue(Math.abs(assetsChange))}`,
     changePercent:
       startData.usd_value !== 0

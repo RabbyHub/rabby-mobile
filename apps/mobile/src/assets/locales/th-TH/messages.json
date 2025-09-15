@@ -216,8 +216,10 @@
         "placeholder": "อธิบายปัญหา"
       },
       "submitButtonText": "ส่ง",
-      "feedbackLabel": "คำอธิบายข้อบกพร่อง:",
-      "title": "ถ่ายภาพหน้าจอเพื่อตอบแจ้งข้อผิดพลาด"
+      "switchArea": {
+        "skipText": "ข้ามป๊อปอัปนี้ไป 1 วัน"
+      },
+      "title": "จับภาพหน้าจอเพื่อนำเสนอข้อบกพร่อง"
     },
     "feedbackModal": {
       "pendingTitle": "Rabby Support ยังไม่ได้ตอบกลับ。",
@@ -227,7 +229,10 @@
       "issueDescription": "นี่คือปัญหาที่คุณรายงาน:"
     },
     "submitFeedbackSuccessModal": {
-      "desc": "ส่งเรียบร้อยแล้ว"
+      "desc": "ส่งเสร็จเรียบร้อย!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "ฉันเข้าใจแล้ว"
     }
   },
   "page": {
@@ -695,7 +700,8 @@
         "estimatedGas": "ประมาณการ Gas:",
         "sendGas": "โอน Gas ให้คุณสำหรับธุรกรรมปัจจุบัน:",
         "maxGas": "Max Gas: ",
-        "gasCost": "ค่าใช้จ่าย Gas สำหรับการโอนไปยังที่อยู่ของคุณ:"
+        "gasCost": "ค่าใช้จ่าย Gas สำหรับการโอนไปยังที่อยู่ของคุณ:",
+        "description": "ใช้ GasAccount เพื่อชำระค่าธรรมเนียมแก๊ส ดูรายละเอียดการชำระเงินด้านล่าง:"
       },
       "nftApprove": {
         "approveNFT": "อนุมัติ NFT",
@@ -928,7 +934,9 @@
         "queue": "คิว",
         "search": "ค้นหา Token",
         "copyTrading": "การคัดลอกการซื้อขาย",
-        "watchlist": "รายการเฝ้าติดตาม"
+        "watchlist": "รายการเฝ้าติดตาม",
+        "perps": "Perps",
+        "perpsMarketList": "มากขึ้น Perps"
       }
     },
     "gasTopUp": {
@@ -1995,6 +2003,23 @@
       "tabs": {
         "marketData": "ข้อมูลตลาด",
         "tokenSecurity": "ความปลอดภัยของโทเคน"
+      },
+      "interval": {
+        "1W": "1W",
+        "1D": "1D",
+        "1H": "1ชั่วโมง",
+        "4H": "4H",
+        "5M": "5M",
+        "15M": "15M",
+        "30M": "30M",
+        "1M": "1M"
+      },
+      "marketInfo": {
+        "holders": "ผู้ถือ",
+        "txns24h": "24h Txns",
+        "marketCap": "มูลค่าตลาด",
+        "totalSupply": "การจัดหาโดยรวม",
+        "volume24h": "24h ปริมาณ"
       }
     },
     "setting": {
@@ -2021,7 +2046,10 @@
       "clearPendingToast": "ธุรกรรมที่รอดำเนินการในท้องถิ่นถูกลบออกแล้ว",
       "clearPendingResetDesc": "ยังรีเซ็ตข้อมูล nonce ท้องถิ่นและบันทึกลายเซ็นของฉัน",
       "clearPendingWarning": "การทำธุรกรรมที่ถูกลบอาจยังถูกยืนยันในบล็อคเชนได้ นอกจากจะมีการแทนที่มัน",
-      "clearBrowserData": "ล้างข้อมูลเบราว์เซอร์"
+      "clearBrowserData": "ล้างข้อมูลเบราว์เซอร์",
+      "screenshotReportSwitch": "ถ่ายภาพหน้าจอเพื่อติดตามข้อบกพร่อง",
+      "currency": "สกุลเงิน",
+      "searchCurrency": "ค้นหาเงินตรา"
     },
     "settingModal": {
       "themeMode": {
@@ -2313,6 +2341,9 @@
         "unlockWalletFirst": "กรุณาปลดล็อกแอปเพื่อเปิดลิงก์",
         "setupWalletFirst": "กรุณาเสร็จสิ้นการตั้งค่ากระเป๋าเงินก่อน"
       }
+    },
+    "perpsHistory": {
+      "title": "ประวัติศาสตร์"
     }
   },
   "native": {
@@ -2401,7 +2432,9 @@
         "message": "แอปนี้ต้องการการเข้าถึงตำแหน่งของคุณเพื่อให้สามารถให้บริการฟีเจอร์ที่อิงตามตำแหน่งได้",
         "title": "สิทธิ์การเข้าถึงตำแหน่ง"
       }
-    }
+    },
+    "gotIt": "เข้าใจแล้ว",
+    "check": "ตรวจสอบ"
   },
   "background": {
     "transactionWatcher": {
