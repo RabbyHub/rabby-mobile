@@ -31,6 +31,9 @@ export const formatAmountValueKMB = (value: string | number): string => {
 
   return `${formattedValue}`;
 };
+export const formatUsdValueKMB = (value: string | number): string => {
+  return `$${formatAmountValueKMB(value)}`;
+};
 
 // <60s: XX s
 // < 60min: XX min

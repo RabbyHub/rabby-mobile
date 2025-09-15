@@ -56,7 +56,7 @@ const Details = ({ data }: DetailsProps) => {
         <Text style={styles.tableHeaderItem}>
           {t('page.tokenDetail.marketInfo.holderSections.tableHeader.position')}
         </Text>
-        <Text style={styles.tableHeaderItem}>
+        <Text style={[styles.tableHeaderItem]}>
           {t('page.tokenDetail.marketInfo.holderSections.tableHeader.address')}
         </Text>
       </View>
@@ -180,7 +180,9 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   summaryItem: {
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-4'],
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 8,

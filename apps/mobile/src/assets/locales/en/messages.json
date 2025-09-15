@@ -1874,6 +1874,23 @@
             "ratio": "Ratio",
             "position": "Position"
           }
+        },
+        "activitySections": {
+          "tableHeader": {
+            "all": "All",
+            "min": "Min",
+            "hour": "Hour",
+            "buy": "Buy",
+            "sell": "Sell",
+            "volume": "Volume",
+            "tradingCount": "Trading Count",
+            "addresses": "Addresses",
+            "type": "Type",
+            "time": "Time",
+            "price": "Price",
+            "qnt": "Qnt",
+            "value": "Value"
+          }
         }
       }
     },

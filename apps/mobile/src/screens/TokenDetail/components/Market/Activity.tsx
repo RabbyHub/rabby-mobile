@@ -8,8 +8,12 @@ import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
 import { shortEllipsisAddress } from '@/utils/address';
-import { formatPercent, formatAmountValueKMB, formatTime } from '../../util';
-import { formatUsdValueKMB } from '@/screens/Home/utils/price';
+import {
+  formatPercent,
+  formatAmountValueKMB,
+  formatTime,
+  formatUsdValueKMB,
+} from '../../util';
 import { formatPrice } from '@/utils/number';
 
 const mockSummaryData = {
@@ -96,7 +100,12 @@ const Summary = ({ data }: ISummaryData) => {
                 styles.switchItem,
                 activeTab === TabKey['5m'] && styles.activeItem,
               ]}>
-              <Text style={styles.switchItemText}>5 Min</Text>
+              <Text style={styles.switchItemText}>
+                5{' '}
+                {t(
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.min',
+                )}
+              </Text>
               <Text style={styles.switchItemPercentage}>
                 {data?.['5m']?.price?.change
                   ? formatPercent(data?.['5m']?.price?.change)
@@ -109,7 +118,12 @@ const Summary = ({ data }: ISummaryData) => {
                 styles.switchItem,
                 activeTab === TabKey['1h'] && styles.activeItem,
               ]}>
-              <Text style={styles.switchItemText}>1 Hour</Text>
+              <Text style={styles.switchItemText}>
+                1{' '}
+                {t(
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.hour',
+                )}
+              </Text>
               <Text style={styles.switchItemPercentage}>
                 {data?.['1h']?.price?.change
                   ? formatPercent(data?.['1h']?.price?.change)
@@ -122,7 +136,12 @@ const Summary = ({ data }: ISummaryData) => {
                 styles.switchItem,
                 activeTab === TabKey['6h'] && styles.activeItem,
               ]}>
-              <Text style={styles.switchItemText}>6 Hour</Text>
+              <Text style={styles.switchItemText}>
+                6{' '}
+                {t(
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.hour',
+                )}
+              </Text>
               <Text style={styles.switchItemPercentage}>
                 {data?.['6h']?.price?.change
                   ? formatPercent(data?.['6h']?.price?.change)
@@ -135,7 +154,12 @@ const Summary = ({ data }: ISummaryData) => {
                 styles.switchItem,
                 activeTab === TabKey['24h'] && styles.activeItem,
               ]}>
-              <Text style={styles.switchItemText}>24 Hour</Text>
+              <Text style={styles.switchItemText}>
+                24{' '}
+                {t(
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.hour',
+                )}
+              </Text>
               <Text style={styles.switchItemPercentage}>
                 {data?.['24h']?.price?.change
                   ? formatPercent(data?.['24h']?.price?.change)
@@ -146,7 +170,11 @@ const Summary = ({ data }: ISummaryData) => {
           <View style={styles.summaryChartContainer}>
             <View style={styles.chartLeft}>
               <View style={styles.chatTop}>
-                <Text style={styles.chatTopText}>Buy</Text>
+                <Text style={styles.chatTopText}>
+                  {t(
+                    'page.tokenDetail.marketInfo.activitySections.tableHeader.buy',
+                  )}
+                </Text>
                 <Text style={styles.actionAmount}>
                   {formatAmountValueKMB(currentData?.summary?.buy?.count)}
                 </Text>
@@ -156,7 +184,9 @@ const Summary = ({ data }: ISummaryData) => {
             <View style={styles.chartRight}>
               <View style={[styles.chatTop, styles.chatTopRight]}>
                 <Text style={[styles.chatTopText, styles.chatTopTextRight]}>
-                  Sell
+                  {t(
+                    'page.tokenDetail.marketInfo.activitySections.tableHeader.sell',
+                  )}
                 </Text>
                 <Text style={[styles.actionAmount, styles.actionAmountRight]}>
                   {formatAmountValueKMB(currentData?.summary?.sell?.count)}
@@ -169,7 +199,11 @@ const Summary = ({ data }: ISummaryData) => {
           </View>
           <View style={styles.summaryBottomContainer}>
             <View style={styles.summaryBottomItem}>
-              <Text style={styles.summaryBottomItemText}>Volume</Text>
+              <Text style={styles.summaryBottomItemText}>
+                {t(
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.volume',
+                )}
+              </Text>
               <Text style={styles.summaryBottomItemValue}>
                 {formatUsdValueKMB(
                   currentData?.summary?.totals?.volume_usd_value,
@@ -177,7 +211,11 @@ const Summary = ({ data }: ISummaryData) => {
               </Text>
             </View>
             <View style={styles.summaryBottomItem}>
-              <Text style={styles.summaryBottomItemText}>Trading Count</Text>
+              <Text style={styles.summaryBottomItemText}>
+                {t(
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.tradingCount',
+                )}
+              </Text>
               <Text style={styles.summaryBottomItemValue}>
                 {formatAmountValueKMB(
                   currentData?.summary?.totals?.trading_count,
@@ -185,7 +223,11 @@ const Summary = ({ data }: ISummaryData) => {
               </Text>
             </View>
             <View style={styles.summaryBottomItem}>
-              <Text style={styles.summaryBottomItemText}>Addresses</Text>
+              <Text style={styles.summaryBottomItemText}>
+                {t(
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.addresses',
+                )}
+              </Text>
               <Text style={styles.summaryBottomItemValue}>
                 {formatAmountValueKMB(currentData?.summary?.totals?.addresses)}
               </Text>
@@ -270,7 +312,9 @@ const Details = () => {
                   styles.switchTabItemText,
                   activeTab === TabKey.all && styles.activeTabItemText,
                 ]}>
-                All
+                {t(
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.all',
+                )}
               </Text>
             </Pressable>
             <Pressable
@@ -284,7 +328,9 @@ const Details = () => {
                   styles.switchTabItemText,
                   activeTab === TabKey.buy && styles.activeTabItemText,
                 ]}>
-                Buy
+                {t(
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.buy',
+                )}
               </Text>
             </Pressable>
             <Pressable
@@ -298,16 +344,42 @@ const Details = () => {
                   styles.switchTabItemText,
                   activeTab === TabKey.sell && styles.activeTabItemText,
                 ]}>
-                Sell
+                {t(
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.sell',
+                )}
               </Text>
             </Pressable>
           </View>
           <View style={styles.tableHeader}>
-            <Text style={styles.tableHeaderItem}>Type|Time</Text>
-            <Text style={styles.tableHeaderItem}>Price</Text>
-            <Text style={styles.tableHeaderItem}>Qnt</Text>
-            <Text style={styles.tableHeaderItem}>Value</Text>
-            <Text style={styles.tableHeaderItem}>Address</Text>
+            <Text style={styles.tableHeaderItem}>
+              {t(
+                'page.tokenDetail.marketInfo.activitySections.tableHeader.type',
+              )}
+              |
+              {t(
+                'page.tokenDetail.marketInfo.activitySections.tableHeader.time',
+              )}
+            </Text>
+            <Text style={styles.tableHeaderItem}>
+              {t(
+                'page.tokenDetail.marketInfo.activitySections.tableHeader.price',
+              )}
+            </Text>
+            <Text style={styles.tableHeaderItem}>
+              {t(
+                'page.tokenDetail.marketInfo.activitySections.tableHeader.qnt',
+              )}
+            </Text>
+            <Text style={styles.tableHeaderItem}>
+              {t(
+                'page.tokenDetail.marketInfo.activitySections.tableHeader.value',
+              )}
+            </Text>
+            <Text style={[styles.tableHeaderItem, styles.lastItem]}>
+              {t(
+                'page.tokenDetail.marketInfo.activitySections.tableHeader.address',
+              )}
+            </Text>
           </View>
           <View style={styles.tableBody}>
             {mock_list_data.map((item, index) => {
@@ -326,7 +398,13 @@ const Details = () => {
                         styles.chatTopText,
                         !isBuy && styles.chatTopTextRight,
                       ]}>
-                      {isBuy ? 'Buy' : 'Sell'}
+                      {isBuy
+                        ? t(
+                            'page.tokenDetail.marketInfo.activitySections.tableHeader.buy',
+                          )
+                        : t(
+                            'page.tokenDetail.marketInfo.activitySections.tableHeader.sell',
+                          )}
                     </Text>
                     <Text style={styles.timeAtItem}>
                       {formatTime(item.time_at)}
@@ -553,6 +631,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    flex: 1,
+  },
+  lastItem: {
+    textAlign: 'right',
   },
   tableBody: {
     display: 'flex',
@@ -577,24 +659,28 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    flex: 1,
   },
   ratioItem: {
     fontSize: 12,
     fontWeight: '500',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    flex: 1,
   },
   amountItem: {
     fontSize: 12,
     fontWeight: '500',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    flex: 1,
   },
   addressItem: {
     fontSize: 12,
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    flex: 1,
   },
   timeAtItem: {
     fontSize: 12,
@@ -606,5 +692,6 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
+    flex: 1,
   },
 }));
