@@ -127,7 +127,8 @@
         "maxGas": "Max Gas:",
         "sendGas": "Gas transfer ke Anda untuk transaksi saat ini:",
         "gasCost": "Biaya gas untuk mentransfer gas ke alamat Anda:",
-        "estimatedGas": "Estimasi Gas:"
+        "estimatedGas": "Estimasi Gas:",
+        "description": "Menggunakan GasAccount untuk membayar biaya gas. Lihat detail pembayaran di bawah:"
       },
       "balanceChange": {
         "successTitle": "Hasil Simulasi",
@@ -980,7 +981,9 @@
         "websites": "Situs Web",
         "approvals": "Persetujuan",
         "copyTrading": "Copy Trading",
-        "watchlist": "Daftar Pantauan"
+        "watchlist": "Daftar Pantauan",
+        "perps": "Perps",
+        "perpsMarketList": "Lebih Banyak Perp"
       }
     },
     "dashboard": {
@@ -1795,6 +1798,23 @@
       "tabs": {
         "marketData": "Data pasar",
         "tokenSecurity": "Keamanan Token"
+      },
+      "interval": {
+        "1D": "1D",
+        "4H": "4H",
+        "30M": "30M",
+        "1M": "1M",
+        "5M": "5M",
+        "1H": "1H",
+        "1W": "1W",
+        "15M": "15M"
+      },
+      "marketInfo": {
+        "marketCap": "Kapitalisasi Pasar",
+        "volume24h": "24h Volume",
+        "totalSupply": "Total Supply",
+        "holders": "Pemegang",
+        "txns24h": "24h Txns"
       }
     },
     "approvalsAddressList": {
@@ -1881,7 +1901,10 @@
       "clearPendingDesc2": "Ini tidak akan mengubah saldo di akun Anda atau mengharuskan Anda untuk memasukkan kembali frase benih Anda. Semua aset dan informasi akun Anda akan tetap aman.",
       "modifyRPCURL": "Ubah URL RPC",
       "clearPendingDesc1": "Ini akan menghapus semua transaksi yang tertunda. Ini bisa membantu Anda menyelesaikan masalah bahwa dalam beberapa kasus status transaksi di Rabby tidak sesuai dengan status on-chain.",
-      "clearBrowserData": "Hapus Data Peramban"
+      "clearBrowserData": "Hapus Data Peramban",
+      "searchCurrency": "Cari Mata Uang",
+      "screenshotReportSwitch": "Ambil tangkapan layar untuk melaporkan bug",
+      "currency": "Mata Uang"
     },
     "settingModal": {
       "themeMode": {
@@ -2109,6 +2132,9 @@
         "setupWalletFirst": "Silakan selesaikan pengaturan dompet terlebih dahulu.",
         "unlockWalletFirst": "Silakan buka kunci aplikasi untuk membuka tautan tersebut."
       }
+    },
+    "perpsHistory": {
+      "title": "Sejarah"
     }
   },
   "component": {
@@ -2299,9 +2325,11 @@
       "feedbackInput": {
         "placeholder": "Jelaskan masalahnya"
       },
-      "title": "Snapshot untuk Melaporkan Bug",
-      "feedbackLabel": "Deskripsi bug:",
-      "submitButtonText": "Kirim"
+      "submitButtonText": "Kirim",
+      "switchArea": {
+        "skipText": "Lewati popup ini selama 1 hari"
+      },
+      "title": "Screenshot untuk Melaporkan Bug"
     },
     "feedbackModal": {
       "issueDescription": "Ini adalah masalah yang Anda laporkan:",
@@ -2311,7 +2339,10 @@
       "repliedTitle": "Dukungan Rabby telah membalas:"
     },
     "submitFeedbackSuccessModal": {
-      "desc": "Dikirim dengan Sukses"
+      "desc": "Dikirim Berhasil!"
+    },
+    "GlobalTipsPopup": {
+      "btn": "Saya Mengerti"
     }
   },
   "native": {
@@ -2400,7 +2431,9 @@
         "title": "Izin Lokasi",
         "message": "Aplikasi ini memerlukan akses ke lokasi Anda untuk menyediakan fitur berbasis lokasi."
       }
-    }
+    },
+    "gotIt": "Dapatkan",
+    "check": "Periksa"
   },
   "background": {
     "error": {

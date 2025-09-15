@@ -1,4 +1,4 @@
-// patch from node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/BottomSheetBackdrop.tsx
+// patch from file:///./../../../node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/BottomSheetBackdrop.tsx
 
 import React, { memo, useCallback, useMemo, useState } from 'react';
 import { ViewProps } from 'react-native';
@@ -25,6 +25,7 @@ import {
 import { styles } from '@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/styles';
 import type { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/types';
 import { apisAutoLock } from '@/core/apis';
+import { useTheme2024 } from '@/hooks/theme';
 
 /**
  * @description this component is patched from the original BottomSheetBackdrop.tsx on package @gorhom/bottom-sheet,
@@ -44,9 +45,10 @@ const BottomSheetBackdropComponent = ({
   //#region hooks
   const { snapToIndex, close } = useBottomSheet();
   //#endregion
+  const { isLight } = useTheme2024();
 
   //#region defaults
-  const opacity = _providedOpacity ?? DEFAULT_OPACITY;
+  const opacity = _providedOpacity ?? isLight ? 0.2 : 0.7;
   const appearsOnIndex = _providedAppearsOnIndex ?? DEFAULT_APPEARS_ON_INDEX;
   const disappearsOnIndex =
     _providedDisappearsOnIndex ?? DEFAULT_DISAPPEARS_ON_INDEX;

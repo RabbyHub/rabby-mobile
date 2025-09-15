@@ -1,28 +1,87 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Dimensions,
   GestureResponderEvent,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { useSubmitFeedbackOnScreenshot } from './hooks';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 
-// import RcCloseCC from './icons/close-cc.svg';
-import RcEditCC from './icons/edit-cc.svg';
 import { Button } from '@/components2024/Button';
-import { useTranslation } from 'react-i18next';
 import { FontWeightEnum } from '@/core/utils/fonts';
-import ModalBottomInput from './ModalBottomInput';
-import { useOnKeyboardDismissed } from '@/hooks/system/keyboard';
-import { SubmitSuccessModal } from './SubmitSuccessModal';
+import ModalInput from './ModalInput';
+import { toast } from '@/components2024/Toast';
+
+import { ICONS_COMMON_2024 } from '@/assets2024/icons/common';
+
+function SwitchTextLine({
+  checked,
+  onChange,
+  style,
+}: {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+} & RNViewProps) {
+  const { styles } = useTheme2024({ getStyle: getSwitchLineStyle });
+  const { t } = useTranslation();
+
+  const IconComp = checked
+    ? ICONS_COMMON_2024.RcCheckboxFilledBrand
+    : ICONS_COMMON_2024.RcCheckboxEmpty;
+
+  return (
+    <View style={[styles.switchArea, style]}>
+      <TouchableOpacity
+        activeOpacity={0.5}
+        style={styles.switchPressable}
+        onPress={() => onChange(!checked)}>
+        <IconComp style={{ marginRight: 4 }} width={24} height={24} />
+        <Text style={styles.skipText}>
+          {t('component.screenshotModal.switchArea.skipText')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const getSwitchLineStyle = createGetStyles2024(ctx => {
+  return {
+    switchArea: {
+      width: '100%',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    switchPressable: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      // ...makeDebugBorder(),
+    },
+    skipCheckbox: {
+      width: 24,
+      height: 24,
+    },
+    skipText: {
+      color: ctx.isLight ? '#9A9CA9' : ctx.colors2024['neutral-info'],
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 12,
+      fontStyle: 'normal',
+      fontWeight: 500,
+      lineHeight: 16,
+    },
+  };
+});
 
 // const IMAGE_CONTAIN_STYLE = { height: 200, width: '100%' } as const;
 const IMAGE_RESIZE_MODE = 'cover' as const;
@@ -35,208 +94,145 @@ function wrapOnPress(handler?: (evt: GestureResponderEvent) => void) {
 }
 
 export function ModalsSubmitFeedbackByScreenshotStub() {
-  const { t } = useTranslation();
-
   const { styles } = useTheme2024({ getStyle: getModalStyle });
+  const { t } = useTranslation();
 
   const {
     lastScreenshot,
     globalModalShown,
     closeSubmitModal,
-    feedbackText,
     isSubmitting,
     submitFeedbackByScreenshot,
     canSubmitFeedback,
   } = useSubmitFeedbackOnScreenshot();
 
-  const [bottomInputVisible, setBottomInputVisible] = React.useState(false);
+  const [skipInNext1Day, setSkipInNext1Day] = useState(false);
 
-  const [editIconParentLayout, setEditIconParentLayout] = React.useState({
-    width: 0,
-  });
-
-  useOnKeyboardDismissed(
-    useCallback(() => {
-      setBottomInputVisible(false);
-    }, []),
-  );
+  useEffect(() => {
+    if (globalModalShown) {
+      setSkipInNext1Day(false);
+    }
+  }, [globalModalShown]);
 
   return (
-    <>
-      <SubmitSuccessModal />
+    <Modal
+      visible={globalModalShown}
+      transparent
+      animationType="fade"
+      style={styles.modalComp}>
+      <View style={[styles.maskExtra, styles.maskBg]} />
 
-      <Modal
-        visible={globalModalShown}
-        transparent
-        animationType="fade"
-        style={styles.modalComp}>
-        <View
-          style={[styles.maskExtra, !bottomInputVisible && styles.maskBg]}
-        />
-
-        <KeyboardAvoidingView
-          behavior={IS_IOS ? 'padding' : 'padding'}
-          style={[{ flex: 1 }]}>
-          <TouchableOpacity
-            style={[
-              styles.avoidingView,
-              (bottomInputVisible || IS_ANDROID) && styles.maskBg,
-              bottomInputVisible && { flexShrink: 0 },
-            ]}
-            activeOpacity={1}
-            onPress={() => {
-              if (bottomInputVisible) {
-                setBottomInputVisible(false);
-              } else {
-                closeSubmitModal();
-              }
-            }}>
-            <View style={[styles.modalWrapper]}>
-              <TouchableOpacity
-                style={[styles.modal]}
-                activeOpacity={1}
-                onPress={wrapOnPress(() => {
-                  setBottomInputVisible(false);
-                })}>
-                {/* <TouchableOpacity
-                  style={styles.modalClose}
-                  onPress={wrapOnPress(() => {
-                    closeSubmitModal();
-                  })}>
-                  <RcCloseCC
-                    style={styles.modalCloseIcon}
-                    color={styles.modalCloseIcon.color}
-                  />
-                </TouchableOpacity> */}
-                <View style={styles.modalContent}>
-                  <View style={styles.titleWrapper}>
-                    <Text style={styles.title}>
-                      {t('component.screenshotModal.title')}
-                    </Text>
-                  </View>
-                  <View
-                    style={[styles.imageWrapper]}
-                    onLayout={event => {
-                      const { width } = event.nativeEvent.layout;
-                      setEditIconParentLayout({ width });
-                    }}>
-                    {lastScreenshot?.uri && (
-                      <Image
-                        style={[
-                          styles.image,
-                          { width: '100%', height: '100%' },
-                        ]}
-                        source={{ uri: lastScreenshot.uri }}
-                        resizeMode={IMAGE_RESIZE_MODE}
-                      />
-                    )}
-                    {/* Edit pen icon */}
-                    <TouchableOpacity
-                      style={[
-                        styles.editIconWrapper,
-                        !editIconParentLayout.width
-                          ? {}
-                          : {
-                              left: getEditPenIconLeftValue(
-                                editIconParentLayout.width,
-                              ),
-                            },
-                      ]}
-                      onPress={wrapOnPress(evt => {
-                        setBottomInputVisible(true);
-                      })}>
-                      <RcEditCC
-                        style={styles.editIcon}
-                        color={styles.editIcon.color}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                  {/* Submit Area */}
-                  <View style={styles.submitArea}>
-                    {!!feedbackText && (
-                      <TouchableOpacity
-                        style={styles.feedbackPreview}
-                        onPress={wrapOnPress(evt => {
-                          setBottomInputVisible(true);
-                        })}>
-                        <Text
-                          style={styles.feedbackPreviewText}
-                          numberOfLines={1}
-                          lineBreakMode="clip">
-                          <Text style={{ fontWeight: 'bold' }}>
-                            {t('component.screenshotModal.feedbackLabel')}{' '}
-                          </Text>
-                          {feedbackText.slice(0, 300)}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                    <View style={styles.buttonGroup}>
-                      <Button
-                        title={t('global.cancel')}
-                        containerStyle={[
-                          styles.buttonContainer,
-                          styles.cancelButtonContainer,
-                        ]}
-                        buttonStyle={[
-                          styles.buttonStyle,
-                          styles.cancelButtonStyle,
-                        ]}
-                        titleStyle={[
-                          styles.buttonTitle,
-                          styles.cancelButtonTitle,
-                        ]}
-                        type="ghost"
-                        disabled={isSubmitting}
-                        loading={isSubmitting}
-                        loadingStyle={styles.buttonLoading}
-                        onPress={wrapOnPress(() => {
-                          closeSubmitModal();
-                        })}
-                      />
-                      <Button
-                        title={t('component.screenshotModal.submitButtonText')}
-                        containerStyle={[
-                          styles.buttonContainer,
-                          styles.submitButtonContainer,
-                        ]}
-                        buttonStyle={[
-                          styles.buttonStyle,
-                          styles.submitButtonStyle,
-                        ]}
-                        titleStyle={[
-                          styles.buttonTitle,
-                          styles.submitButtonTitle,
-                        ]}
-                        type="primary"
-                        disabled={!canSubmitFeedback || bottomInputVisible}
-                        loading={isSubmitting}
-                        loadingStyle={styles.buttonLoading}
-                        onPress={wrapOnPress(evt => {
-                          submitFeedbackByScreenshot();
-                        })}
-                      />
-                    </View>
-                  </View>
+      <KeyboardAvoidingView
+        behavior={IS_IOS ? 'padding' : 'padding'}
+        style={[{ flex: 1 }]}>
+        <TouchableOpacity
+          style={[styles.avoidingView, IS_ANDROID && styles.maskBg]}
+          activeOpacity={1}
+          onPress={() => {
+            if (Keyboard.isVisible()) {
+              Keyboard.dismiss();
+            } else {
+              closeSubmitModal({ skipInNext1Day });
+            }
+          }}>
+          <View style={[styles.modalWrapper]}>
+            <TouchableOpacity
+              style={[styles.modal]}
+              activeOpacity={1}
+              onPress={wrapOnPress(() => {
+                Keyboard.dismiss();
+              })}>
+              <View style={styles.modalContent}>
+                <View style={styles.titleWrapper}>
+                  <Text style={styles.title}>
+                    {t('component.screenshotModal.title')}
+                  </Text>
                 </View>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-
-          {IS_IOS && (
-            <ModalBottomInput
-              visible={bottomInputVisible}
-              style={[!bottomInputVisible && styles.leaveDocumentFlow]}
-            />
-          )}
-        </KeyboardAvoidingView>
-        {IS_ANDROID && (
-          <ModalBottomInput
-            visible={bottomInputVisible}
-            style={[!bottomInputVisible && styles.leaveDocumentFlow]}
-          />
-        )}
-      </Modal>
-    </>
+                <View style={[styles.imageWrapper]}>
+                  {lastScreenshot?.uri && (
+                    <Image
+                      style={[styles.image, { width: '100%', height: '100%' }]}
+                      source={{ uri: lastScreenshot.uri }}
+                      resizeMode={IMAGE_RESIZE_MODE}
+                    />
+                  )}
+                </View>
+                {/* Submit Area */}
+                <View style={styles.submitArea}>
+                  <ModalInput style={[]} />
+                  <View style={styles.buttonGroup}>
+                    <Button
+                      title={t('global.cancel')}
+                      containerStyle={[
+                        styles.buttonContainer,
+                        styles.cancelButtonContainer,
+                      ]}
+                      buttonStyle={[
+                        styles.buttonStyle,
+                        styles.cancelButtonStyle,
+                      ]}
+                      titleStyle={[
+                        styles.buttonTitle,
+                        styles.cancelButtonTitle,
+                      ]}
+                      type="ghost"
+                      disabled={isSubmitting}
+                      // loading={isSubmitting}
+                      loadingStyle={styles.buttonLoading}
+                      onPress={wrapOnPress(() => {
+                        closeSubmitModal({ skipInNext1Day });
+                      })}
+                    />
+                    <Button
+                      title={t('component.screenshotModal.submitButtonText')}
+                      containerStyle={[
+                        styles.buttonContainer,
+                        styles.submitButtonContainer,
+                      ]}
+                      buttonStyle={[
+                        styles.buttonStyle,
+                        styles.submitButtonStyle,
+                      ]}
+                      titleStyle={[
+                        styles.buttonTitle,
+                        styles.submitButtonTitle,
+                      ]}
+                      type="primary"
+                      disabled={isSubmitting || !canSubmitFeedback}
+                      // loading={isSubmitting}
+                      loadingStyle={styles.buttonLoading}
+                      onPress={wrapOnPress(evt => {
+                        submitFeedbackByScreenshot();
+                        setTimeout(() => {
+                          closeSubmitModal({
+                            skipInNext1Day,
+                            clearText: true,
+                          });
+                          toast.success(
+                            t('component.submitFeedbackSuccessModal.desc'),
+                            {
+                              duration: 3000,
+                              hideOnPress: true,
+                            },
+                          );
+                        }, 300);
+                      })}
+                    />
+                  </View>
+                  <SwitchTextLine
+                    checked={skipInNext1Day}
+                    onChange={nextVal => {
+                      setSkipInNext1Day(nextVal);
+                    }}
+                    style={[]}
+                  />
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
@@ -247,16 +243,16 @@ const SIZES = {
   MODAL_MIN_H: 450,
 
   IMG_MAX_H: 450,
-  IMG_MAX_W: 230,
+  IMG_MAX_W: 321,
 
   EDIT_ICON_WRAPPER_SIZE: 60,
 };
-function getEditPenIconLeftValue(
-  imageWrapperW = SIZES.IMG_MAX_W,
-  editIconWrapperW = SIZES.EDIT_ICON_WRAPPER_SIZE,
-) {
-  return (imageWrapperW - editIconWrapperW) / 2;
-}
+// function getEditPenIconLeftValue(
+//   imageWrapperW = SIZES.IMG_MAX_W,
+//   editIconWrapperW = SIZES.EDIT_ICON_WRAPPER_SIZE,
+// ) {
+//   return (imageWrapperW - editIconWrapperW) / 2;
+// }
 const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
   const winLayout = Dimensions.get('window');
   const modalWidth = winLayout.width - SIZES.MODAL_MASK_H_PADDING * 2;
@@ -341,79 +337,23 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
     imageWrapper: {
       position: 'relative',
       width: '100%',
-      maxWidth: SIZES.IMG_MAX_W,
+      // maxWidth: SIZES.IMG_MAX_W,
       maxHeight: SIZES.IMG_MAX_H,
       borderRadius: 21,
       borderWidth: 1,
       borderStyle: 'solid',
       borderColor: colors2024['neutral-line'],
       flex: 1,
-      marginTop: 30,
-      marginBottom: 30,
+      marginTop: 16,
+      marginBottom: 16,
       // ...makeDebugBorder(),
     },
     image: IS_IOS ? { borderRadius: 21 } : {},
-    editIconWrapper: {
-      position: 'absolute',
-      zIndex: 9,
-      // top: 17,
-      bottom: -14,
-      left: getEditPenIconLeftValue(),
-      alignSelf: 'center',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: SIZES.EDIT_ICON_WRAPPER_SIZE,
-      width: SIZES.EDIT_ICON_WRAPPER_SIZE,
-      borderRadius: SIZES.EDIT_ICON_WRAPPER_SIZE,
-      borderWidth: 1,
-      borderStyle: 'solid',
-      shadowOpacity: 1,
-      shadowRadius: SIZES.EDIT_ICON_WRAPPER_SIZE,
-      elevation: 10,
-      ...(isLight
-        ? {
-            borderColor: colors2024['neutral-bg-1'],
-            // backgroundColor: 'rgba(255, 255, 255, 0.80)',
-            backgroundColor: colors2024['neutral-bg-1'],
-            shadowColor: 'rgba(0, 0, 0, 0.20)',
-            shadowOffset: {
-              width: 0,
-              height: 24,
-            },
-          }
-        : {
-            borderWidth: 2,
-            borderColor: colors2024['neutral-bg-2'],
-            backgroundColor: colors2024['neutral-bg-1'],
-            shadowColor: '#fff',
-            shadowOffset: {
-              width: 0,
-              height: 13,
-            },
-          }),
-    },
-    editIcon: {
-      color: colors2024['neutral-body'],
-      height: 35,
-      width: 35,
-    },
     submitArea: {
       position: 'relative',
       width: '100%',
-    },
-    feedbackPreview: {
-      padding: 9,
-      borderRadius: 6,
-      backgroundColor: colors2024['neutral-bg-5'],
-      marginHorizontal: 17,
-      marginBottom: 16,
-    },
-    feedbackPreviewText: {
-      color: colors2024['neutral-foot'],
-      fontSize: 12,
-      fontFamily: 'SF Pro Rounded',
-      fontWeight: '500',
-      lineHeight: 16,
+      gap: 16,
+      // ...makeDebugBorder('yellow'),
     },
     buttonGroup: {
       flexDirection: 'row',
@@ -453,12 +393,5 @@ const getModalStyle = createGetStyles2024(({ isLight, colors2024 }) => {
     submitButtonContainer: {},
     submitButtonTitle: {},
     submitButtonStyle: {},
-
-    leaveDocumentFlow: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-    },
   };
 });

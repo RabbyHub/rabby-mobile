@@ -148,7 +148,7 @@ export const BottomSheetBrowser = () => {
           });
         }
       }}>
-      <AutoLockView as="BottomSheetView" style={styles.customContentStyle}>
+      <AutoLockView as="View" style={styles.customContentStyle}>
         {!isTransparent ? (
           <BottomSheetHandlableView
             style={[
@@ -224,9 +224,9 @@ export const BrowserManagePopup = () => {
   return (
     <AppBottomSheetModal
       index={browserState.isShowManage ? 0 : -1}
+      enableHandlePanningGesture
       enableContentPanningGesture={true}
       enablePanDownToClose
-      enableHandlePanningGesture
       // name="urlWebviewContainerRef"
       handleStyle={styles.handleStyle}
       handleIndicatorStyle={styles.handleIndicatorStyle}
@@ -245,7 +245,7 @@ export const BrowserManagePopup = () => {
           });
         }
       }}>
-      <AutoLockView as="BottomSheetView">
+      <AutoLockView as="View">
         <BrowserManage />
       </AutoLockView>
     </AppBottomSheetModal>

@@ -9,13 +9,23 @@ import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
-import { RcScreenshot, RcScreenRecord, RcCode } from '@/assets/icons/settings';
+import {
+  RcScreenshot,
+  RcScreenRecord,
+  RcCode,
+  RcCountdown,
+} from '@/assets/icons/settings';
 import { DevTestItem, GeneralTestItem } from './testDevUtils';
 import { AppSwitch, SwitchToggleType } from '@/components/customized/Switch';
 import { isNonPublicProductionEnv } from '@/constant/env';
 import { IS_IOS } from '@/core/native/utils';
 import { SwitchAllowScreenshot } from '../components/SwitchAllowScreenshot';
 import { useExpScreenCapture } from '@/hooks/appSettings';
+import { LabelScreenshotToReport } from '../components/SwitchScreenshotToReport';
+import {
+  useGetShowFeedbackOnScreenshotCapture,
+  useScreenshotToReportEnabled,
+} from '@/components/Screenshot/hooks';
 
 const devScreenRecordingModalVisibleAtom = atom(false);
 export function useDevScreenRecordingModalVisiable() {
@@ -55,12 +65,13 @@ export default function DevScreenRecordingModal({
     onCancel?.();
   }, [setDevScreenRecordingModalVisible, onCancel]);
 
-  const {
-    forceAllowScreenshot,
-    showFeedbackOnScreenshotCapture,
-    onExpScreenCaptureChange,
-  } = useExpScreenCapture();
+  const { forceAllowScreenshot } = useExpScreenCapture();
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
+
+  const { getShowFeedbackOnScreenshotCapture } =
+    useGetShowFeedbackOnScreenshotCapture();
+  const isScreenshotReportEnabled = getShowFeedbackOnScreenshotCapture();
+  const { toggleSkipReportIn24Hours } = useScreenshotToReportEnabled();
 
   const Items = (() => {
     const list: DevTestItem[] = [
@@ -80,27 +91,19 @@ export default function DevScreenRecordingModal({
         visible: isNonPublicProductionEnv,
       },
       {
-        label: showFeedbackOnScreenshotCapture
-          ? 'Show Feedback On Captured'
-          : 'No Feedback On Captured',
-        icon: <RcCode style={styles.labelIcon} />,
-        // onPress: () => {
-        // },
-        rightNode(ctx) {
-          return (
-            <AppSwitch
-              circleSize={20}
-              backgroundActive={colors['green-default']}
-              circleBorderActiveColor={colors['green-default']}
-              value={showFeedbackOnScreenshotCapture}
-              onValueChange={value => {
-                onExpScreenCaptureChange({
-                  showFeedbackOnScreenshotCapture: value,
-                });
-              }}
-            />
-          );
+        label: isScreenshotReportEnabled
+          ? 'Report on screenshot now'
+          : 'Disable Screenshot Until',
+        icon: <RcCountdown style={styles.labelIcon} />,
+        onPress: () => {
+          toggleSkipReportIn24Hours(false);
         },
+        rightNode: (
+          <Text>
+            {isScreenshotReportEnabled ? null : <LabelScreenshotToReport />}
+          </Text>
+        ),
+        visible: !isScreenshotReportEnabled,
       },
     ];
 

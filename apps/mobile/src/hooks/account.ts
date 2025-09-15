@@ -220,6 +220,30 @@ export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
   };
 };
 
+export const usePinnedAccountList = (opts?: { disableAutoFetch?: boolean }) => {
+  const { disableAutoFetch = false } = opts || {};
+  const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
+  const { accounts } = useAccounts(opts);
+
+  const pinnedAccountList = useMemo(() => {
+    const res: KeyringAccountWithAlias[] = [];
+    pinAddresses?.forEach(pinAddr => {
+      const acc = accounts.find(account => {
+        return (
+          isSameAddress(pinAddr.address, account.address) &&
+          account.brandName === pinAddr.brandName
+        );
+      });
+      if (acc) {
+        res.push(acc);
+      }
+    });
+    return res;
+  }, [accounts, pinAddresses]);
+
+  return pinnedAccountList;
+};
+
 export function useRemoveAccount() {
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const { updateHistoryTimeSingleAddress } = useHistoryTokenDict();

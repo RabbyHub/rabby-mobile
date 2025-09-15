@@ -122,7 +122,9 @@
         "title": "位置權限",
         "message": "此應用需要訪問您的位置以提供基於位置的功能。"
       }
-    }
+    },
+    "check": "檢查",
+    "gotIt": "了解了"
   },
   "background": {
     "transactionWatcher": {
@@ -500,7 +502,8 @@
         "estimatedGas": "預估 Gas:",
         "sendGas": "當前交易的Gas轉移給你：",
         "maxGas": "最大 Gas: ",
-        "gasCost": "將 gas 轉移到您的地址的 gas 費用："
+        "gasCost": "將 gas 轉移到您的地址的 gas 費用：",
+        "description": "使用 GasAccount 來支付燃料費。請查看以下付款詳情："
       },
       "contractAddress": "合約地址",
       "addressNote": "地址備註",
@@ -895,7 +898,9 @@
         "gasAccount": "GasAccount",
         "search": "搜尋 Token",
         "copyTrading": "複製交易",
-        "watchlist": "觀察清單"
+        "watchlist": "觀察清單",
+        "perpsMarketList": "更多 Perps",
+        "perps": "永续合约"
       }
     },
     "dashboard": {
@@ -1830,6 +1835,23 @@
       "tabs": {
         "tokenSecurity": "代幣安全",
         "marketData": "市場數據"
+      },
+      "interval": {
+        "5M": "5M",
+        "1W": "1W",
+        "30M": "30M",
+        "1D": "1天",
+        "1M": "1M",
+        "4H": "4H",
+        "15M": "15M",
+        "1H": "1H"
+      },
+      "marketInfo": {
+        "holders": "持有者",
+        "marketCap": "市值",
+        "txns24h": "24小時交易數量",
+        "volume24h": "24小時交易量",
+        "totalSupply": "總供應量"
       }
     },
     "customTestnet": {
@@ -1952,7 +1974,10 @@
       "clearPendingResetDesc": "還要重置我的本地 nonce 數據和簽名記錄",
       "clearPendingToast": "本地待处理交易已移除",
       "clearPendingWarning": "移除的交易可能仍然会在链上被确认，除非它被替换。",
-      "clearBrowserData": "清除瀏覽器數據"
+      "clearBrowserData": "清除瀏覽器數據",
+      "searchCurrency": "搜尋貨幣",
+      "currency": "貨幣",
+      "screenshotReportSwitch": "截圖以報告錯誤"
     },
     "securityEngine": {
       "ignoreAlert": "忽略警報",
@@ -2255,6 +2280,9 @@
         "unlockWalletFirst": "請解鎖應用程式以打開連結。",
         "setupWalletFirst": "請先完成錢包設置。"
       }
+    },
+    "perpsHistory": {
+      "title": "歷史"
     }
   },
   "component": {
@@ -2445,9 +2473,11 @@
       "feedbackInput": {
         "placeholder": "描述問題"
       },
-      "feedbackLabel": "錯誤描述：",
-      "title": "截圖以報告錯誤",
-      "submitButtonText": "提交"
+      "submitButtonText": "提交",
+      "switchArea": {
+        "skipText": "暫時跳過此彈窗 1 天"
+      },
+      "title": "截圖以報告錯誤"
     },
     "feedbackModal": {
       "repliedTitle": "Rabby Support 已回复：",
@@ -2457,7 +2487,10 @@
       "issueDescription": "這是您報告的問題："
     },
     "submitFeedbackSuccessModal": {
-      "desc": "提交成功"
+      "desc": "提交成功！"
+    },
+    "GlobalTipsPopup": {
+      "btn": "我明白了"
     }
   },
   "common": {

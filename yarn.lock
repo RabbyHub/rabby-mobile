@@ -4102,21 +4102,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ethereumjs/rlp@npm:^5.0.0, @ethereumjs/rlp@npm:^5.0.2":
+  version: 5.0.2
+  resolution: "@ethereumjs/rlp@npm:5.0.2"
+  bin:
+    rlp: bin/rlp.cjs
+  checksum: b569061ddb1f4cf56a82f7a677c735ba37f9e94e2bbaf567404beb9e2da7aa1f595e72fc12a17c61f7aec67fd5448443efe542967c685a2fe0ffc435793dcbab
+  languageName: node
+  linkType: hard
+
 "@ethereumjs/rlp@npm:^5.0.1":
   version: 5.0.1
   resolution: "@ethereumjs/rlp@npm:5.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40ethereumjs%2Frlp%2F-%2Frlp-5.0.1.tgz"
   bin:
     rlp: bin/rlp.cjs
   checksum: eddff08718c3b8312007ef51a951dff6b2c1152f9f9ea6fb9eec65d50caf3fa53f5894d79d6d450eef70a5ef3b0688be044912096aa8d263345a0d9debb4d477
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/rlp@npm:^5.0.2":
-  version: 5.0.2
-  resolution: "@ethereumjs/rlp@npm:5.0.2"
-  bin:
-    rlp: bin/rlp.cjs
-  checksum: b569061ddb1f4cf56a82f7a677c735ba37f9e94e2bbaf567404beb9e2da7aa1f595e72fc12a17c61f7aec67fd5448443efe542967c685a2fe0ffc435793dcbab
   languageName: node
   linkType: hard
 
@@ -4197,6 +4197,21 @@ __metadata:
     "@ethereumjs/util": ^9.0.3
     ethereum-cryptography: ^2.1.3
   checksum: 1fa6ef7a5eea7605ca065ab4df5446bdbf17a368267b60cdbb315cfcd78ac82dc689ba020093ae3d42940ad196bfffbfa705fd51f30a277c6eb60b04432db743
+  languageName: node
+  linkType: hard
+
+"@ethereumjs/util@npm:9.0.0":
+  version: 9.0.0
+  resolution: "@ethereumjs/util@npm:9.0.0"
+  dependencies:
+    "@ethereumjs/rlp": ^5.0.0
+    ethereum-cryptography: ^2.1.2
+  peerDependencies:
+    c-kzg: ^2.1.0
+  peerDependenciesMeta:
+    c-kzg:
+      optional: true
+  checksum: c0e2a50aac614a8167df060f0fe6d7b9805adebd83df81a26b596c92eb76454e2e6f25d8f5b9e49cb629355020a8a07feb4d6c1b8238990dcf82e256153bf328
   languageName: node
   linkType: hard
 
@@ -7727,7 +7742,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@msgpack/msgpack@npm:^3.1.2":
+"@msgpack/msgpack@npm:3.1.2":
   version: 3.1.2
   resolution: "@msgpack/msgpack@npm:3.1.2"
   checksum: dd258a7bb684ed2becfb90002233b56b922d95086b98c99a1ce9416b1ac9fe67275dcdaa36cb1a1c8f3f289daff1b31262d060ed7e7035b98cb036e54254ed60
@@ -8546,16 +8561,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/hyperliquid-sdk@npm:1.0.2":
-  version: 1.0.2
-  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.0.2"
+"@rabby-wallet/hyperliquid-sdk@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@rabby-wallet/hyperliquid-sdk@npm:1.0.6"
   dependencies:
-    "@ethereumjs/util": ^9.0.0
+    "@ethereumjs/util": 9.0.0
     "@metamask/eth-sig-util": 5.1.0
-    "@msgpack/msgpack": ^3.1.2
-    ethereum-cryptography: ^2.1.0
-    ws: ^8.18.2
-  checksum: 2baf254b76240f66019f8eaad4db4f491d2368e6d4bfafbcc37c81dc80686f9f18d0a6432d62e818006c5189dbe166ba2aa3accf51cb5fc588720236aff2e699
+    "@msgpack/msgpack": 3.1.2
+    "@noble/hashes": 1.8.0
+    ethereum-cryptography: 2.2.1
+  checksum: 0f89635f6908a099b840bb05d50dbd3fab48c3cf170cc7573d19b8c669b7095e43bdac452de10167127835e8f327265df09eeec2501a6a4ee44bd43e26bb4fd6
   languageName: node
   linkType: hard
 
@@ -8754,6 +8769,23 @@ __metadata:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
   checksum: e0aa62bbf92d5ce647dc777197684a461132d868313a4b98ade956fe2cc1ea7fa3ab2a18d049d95ae8b7f9e243305fef13870e2b77b0e023d651d851f4444f33
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/rabby-api@npm:0.9.42":
+  version: 0.9.42
+  resolution: "@rabby-wallet/rabby-api@npm:0.9.42"
+  dependencies:
+    "@rabby-wallet/rabby-sign": 0.4.0
+    axios: ^0.27.2
+    axios-rate-limit: ^1.3.0
+    eth-rpc-errors: ^4.0.3
+    lodash: ^4.17.21
+    qss: ^2.0.3
+  peerDependencies:
+    "@debank/common": ^0.3.9
+    "@rabby-wallet/rabby-sign": ">= 0.3"
+  checksum: c870c66ff90b9e9057625e46b52f8ed9d50250a92409dade6c68c598feda72eb3699f09e818967ae8d0cd93c20098edc94e8b8149762f4dba94db43f4c3e9b8c
   languageName: node
   linkType: hard
 
@@ -21673,6 +21705,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ethereum-cryptography@npm:2.2.1, ethereum-cryptography@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "ethereum-cryptography@npm:2.2.1"
+  dependencies:
+    "@noble/curves": 1.4.2
+    "@noble/hashes": 1.4.0
+    "@scure/bip32": 1.4.0
+    "@scure/bip39": 1.3.0
+  checksum: 1466e4c417b315a6ac67f95088b769fafac8902b495aada3c6375d827e5a7882f9e0eea5f5451600d2250283d9198b8a3d4d996e374e07a80a324e29136f25c6
+  languageName: node
+  linkType: hard
+
 "ethereum-cryptography@npm:^0.1.3":
   version: 0.1.3
   resolution: "ethereum-cryptography@npm:0.1.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fethereum-cryptography%2F-%2Fethereum-cryptography-0.1.3.tgz"
@@ -21705,18 +21749,6 @@ __metadata:
     "@scure/bip32": 1.3.1
     "@scure/bip39": 1.2.1
   checksum: 2e8f7b8cc90232ae838ab6a8167708e8362621404d26e79b5d9e762c7b53d699f7520aff358d9254de658fcd54d2d0af168ff909943259ed27dc4cef2736410c
-  languageName: node
-  linkType: hard
-
-"ethereum-cryptography@npm:^2.1.0, ethereum-cryptography@npm:^2.2.1":
-  version: 2.2.1
-  resolution: "ethereum-cryptography@npm:2.2.1"
-  dependencies:
-    "@noble/curves": 1.4.2
-    "@noble/hashes": 1.4.0
-    "@scure/bip32": 1.4.0
-    "@scure/bip39": 1.3.0
-  checksum: 1466e4c417b315a6ac67f95088b769fafac8902b495aada3c6375d827e5a7882f9e0eea5f5451600d2250283d9198b8a3d4d996e374e07a80a324e29136f25c6
   languageName: node
   linkType: hard
 
@@ -32793,11 +32825,11 @@ __metadata:
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": 5.0.2
-    "@rabby-wallet/hyperliquid-sdk": 1.0.2
+    "@rabby-wallet/hyperliquid-sdk": 1.0.6
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.13
-    "@rabby-wallet/rabby-api": 0.9.40
+    "@rabby-wallet/rabby-api": 0.9.42
     "@rabby-wallet/rabby-security-engine": 2.0.11
     "@rabby-wallet/rabby-sign-bvm": 0.1.1
     "@rabby-wallet/rabby-swap": 0.0.63
@@ -41284,7 +41316,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.18.0, ws@npm:^8.18.2":
+"ws@npm:^8.18.0":
   version: 8.18.3
   resolution: "ws@npm:8.18.3"
   peerDependencies:

@@ -64,8 +64,6 @@ export const usePerpsInitial = () => {
     fetchMarketData,
     fetchPerpFee,
     subscribeToUserData,
-    startPolling,
-    stopPolling,
     unsubscribeAll,
     logout: _logout,
   } = usePerpsStore();
@@ -303,17 +301,11 @@ export const usePerpsState = () => {
     fetchMarketData,
     fetchPerpFee,
     subscribeToUserData,
-    startPolling,
-    stopPolling,
     unsubscribeAll,
     logout: _logout,
   } = usePerpsStore();
   const { isInitialized, currentPerpsAccount, isLogin, positionAndOpenOrders } =
     perpsState;
-  // const wallet = useWallet();
-  const { accounts: accountsList } = useAccounts({
-    disableAutoFetch: true,
-  });
 
   const sendMiniSignTypedData = useSendMiniSignTypedData();
 
@@ -329,7 +321,7 @@ export const usePerpsState = () => {
     }
   });
 
-  const checkIsExtraAgentIsExpired = useMemoizedFn(
+  const checkExtraAgent = useMemoizedFn(
     async (account: Account, agentAddress: string) => {
       const sdk = apisPerps.getPerpsSDK();
       const extraAgents = await sdk.info.extraAgents(account.address);
@@ -418,6 +410,26 @@ export const usePerpsState = () => {
 
     return signActions;
   });
+
+  const judgeIsUserAgentIsExpired = useMemoizedFn(
+    async (errorMessage: string) => {
+      const masterAddress = currentPerpsAccount?.address;
+      if (!masterAddress) {
+        return false;
+      }
+
+      const agentWalletPreference = await apisPerps.getAgentWalletPreference(
+        masterAddress,
+      );
+      const agentAddress = agentWalletPreference?.agentAddress;
+      if (agentAddress && errorMessage.includes(agentAddress)) {
+        console.warn('handle action agent is expired, logout');
+        toast.error('Agent is expired, please login again');
+        logout(masterAddress);
+        return true;
+      }
+    },
+  );
 
   const executeSignatures = useMemoizedFn(
     async (signActions: SignAction[], account: Account): Promise<void> => {
@@ -562,16 +574,17 @@ export const usePerpsState = () => {
       // const { privateKey, publicKey } = await getOrCreateAgentWallet(account);
       const sdk = apisPerps.getPerpsSDK();
       const res = await apisPerps.getPerpsAgentWallet(account.address);
+      const agentAddress = res?.preference?.agentAddress || '';
+      const { isExpired, needDelete } = await checkExtraAgent(
+        account,
+        agentAddress,
+      );
+      if (needDelete) {
+        // 先不登录，防止hl服务状态不同步
+        return false;
+      }
+
       if (res) {
-        // 如果存在 agent wallet, 则检查是否过期
-        const { isExpired, needDelete } = await checkIsExtraAgentIsExpired(
-          account,
-          res.preference.agentAddress,
-        );
-        if (needDelete) {
-          // 先不登录，防止hl服务状态不同步
-          return false;
-        }
         if (!isExpired) {
           sdk.initAccount(
             account.address,
@@ -594,14 +607,6 @@ export const usePerpsState = () => {
     } catch (error: any) {
       console.error('Failed to login Perps account:', error);
       toast.error(error.message || 'Login failed');
-      // Sentry.captureException(
-      //   new Error(
-      //     'PERPS Login failed' +
-      //       JSON.stringify({
-      //         error,
-      //       }),
-      //   ),
-      // );
     }
   });
 
@@ -747,6 +752,7 @@ export const usePerpsState = () => {
     userFills: perpsState.userFills,
     hasPermission: perpsState.hasPermission,
     homeHistoryList,
+    perpFee: perpsState.perpFee,
 
     // Actions
     login,
@@ -756,5 +762,8 @@ export const usePerpsState = () => {
     refreshData: refreshData,
     handleDeleteAgent,
     fetchMarketData,
+    fetchClearinghouseState,
+
+    judgeIsUserAgentIsExpired,
   };
 };

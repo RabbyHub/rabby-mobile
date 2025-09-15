@@ -1,4 +1,3 @@
-import { RcArrowRight2CC } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { MarketData } from '@/hooks/perps/usePerpsStore';
@@ -8,6 +7,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { PerpsMarketItem } from './PerpsMarketItem';
+import RcArrowRight2CC from '@/assets2024/icons/copyTrading/IconRrightArrowCC.svg';
 
 export const PerpsMarketSection: React.FC<{
   marketData: MarketData[];

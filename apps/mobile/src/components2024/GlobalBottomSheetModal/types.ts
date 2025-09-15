@@ -120,9 +120,11 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
   bottomSheetModalProps?: Partial<BottomSheetModalProps> & {
     linearGradientType?: LinearGradientContainerProps['type'];
     /**
-     * use BottomSheetScrollView instead of BottomSheetView
+     * @description by default we use BottomSheetView, but if your sub views contain scrollable content, you MUST use View as modal's inner root
+     * @see https://gorhom.dev/react-native-bottom-sheet/scrollables
+     * @default 'BottomSheetView'
      */
-    useBottomSheetScrollView?: boolean;
+    rootViewType?: 'View' | 'BottomSheetView' | 'BottomSheetScrollView';
   };
   /**
    * @description by default, every global modal instance will prevent the hardware back button on android,

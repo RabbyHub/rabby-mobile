@@ -4,7 +4,7 @@ import { Skeleton } from '@rneui/themed';
 import { StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
-const Linear = () => {
+export const Linear = () => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
