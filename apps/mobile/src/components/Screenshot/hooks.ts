@@ -41,11 +41,7 @@ function isEnabledScreenshotToReport({
 }) {
   if (!showFeedbackOnScreenshot) return false;
 
-  if (
-    disableScreenshotToReportUntil === null ||
-    disableScreenshotToReportUntil === undefined
-  )
-    return false;
+  disableScreenshotToReportUntil = disableScreenshotToReportUntil || 0;
 
   return disableScreenshotToReportUntil < Date.now();
 }
