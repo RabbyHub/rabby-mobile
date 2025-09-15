@@ -225,7 +225,7 @@ const Summary = ({ data }: ISummaryData) => {
             <View style={styles.summaryBottomItem}>
               <Text style={styles.summaryBottomItemText}>
                 {t(
-                  'page.tokenDetail.marketInfo.activitySections.tableHeader.addresses',
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.address',
                 )}
               </Text>
               <Text style={styles.summaryBottomItemValue}>

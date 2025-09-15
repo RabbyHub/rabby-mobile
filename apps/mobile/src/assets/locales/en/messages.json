@@ -1884,7 +1884,7 @@
             "sell": "Sell",
             "volume": "Volume",
             "tradingCount": "Trading Count",
-            "addresses": "Addresses",
+            "address": "Address",
             "type": "Type",
             "time": "Time",
             "price": "Price",
