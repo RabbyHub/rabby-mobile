@@ -371,7 +371,7 @@ const Activity = () => {
 
 export default Activity;
 
-const getStyles = createGetStyles2024(({ colors2024 }) => ({
+const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   container: {
     position: 'relative',
     gap: 12,
@@ -405,7 +405,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 7,
   },
   activeItem: {
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-4'],
     borderRadius: 8,
   },
   switchItemText: {
@@ -519,7 +521,9 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   switchTabItemActive: {
     borderRadius: 8,
-    backgroundColor: colors2024['neutral-bg-2'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-4'],
   },
   switchTabItemText: {
     fontSize: 12,
