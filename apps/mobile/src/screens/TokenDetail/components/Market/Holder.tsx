@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import EmptyData from './EmptyData';
-import { shortEllipsisAddress } from '@/utils/address';
 import { formatPercent, formatAmountValueKMB } from '../../util';
+import AddressView from './AddressView';
 
 interface SummaryProps {
   top10ratio: number;
@@ -49,14 +49,14 @@ const Details = ({ data }: DetailsProps) => {
   return (
     <View style={styles.details}>
       <View style={styles.tableHeader}>
-        <Text style={styles.tableHeaderItem}>#</Text>
+        <Text style={[styles.tableHeaderItem, styles.firstItem]}>#</Text>
         <Text style={styles.tableHeaderItem}>
           {t('page.tokenDetail.marketInfo.holderSections.tableHeader.ratio')}
         </Text>
         <Text style={styles.tableHeaderItem}>
           {t('page.tokenDetail.marketInfo.holderSections.tableHeader.position')}
         </Text>
-        <Text style={[styles.tableHeaderItem]}>
+        <Text style={[styles.tableHeaderItem, styles.lastItem]}>
           {t('page.tokenDetail.marketInfo.holderSections.tableHeader.address')}
         </Text>
       </View>
@@ -75,9 +75,9 @@ const Details = ({ data }: DetailsProps) => {
             <Text style={styles.amountItem}>
               {item.amount ? formatAmountValueKMB(item.amount) : '-'}
             </Text>
-            <Text style={styles.addressItem}>
-              {item.user_addr ? shortEllipsisAddress(item.user_addr, 4) : '-'}
-            </Text>
+            <View style={styles.addressItem}>
+              <AddressView address={item.user_addr || ''} />
+            </View>
           </View>
         ))}
       </View>
@@ -218,6 +218,15 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    flex: 1,
+  },
+  firstItem: {
+    flex: 0,
+    width: 60,
+  },
+  lastItem: {
+    flex: 1,
+    textAlign: 'right',
   },
   tableBody: {
     display: 'flex',
@@ -240,23 +249,24 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    width: 60,
   },
   ratioItem: {
     fontSize: 12,
     fontWeight: '500',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    flex: 1,
   },
   amountItem: {
     fontSize: 12,
     fontWeight: '500',
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
+    flex: 1,
   },
   addressItem: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    display: 'flex',
+    flex: 1,
   },
 }));

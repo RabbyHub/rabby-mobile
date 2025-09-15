@@ -7,7 +7,6 @@ import { Pressable, Text, View } from 'react-native';
 import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
-import { shortEllipsisAddress } from '@/utils/address';
 import {
   formatPercent,
   formatAmountValueKMB,
@@ -15,6 +14,7 @@ import {
   formatUsdValueKMB,
 } from '../../util';
 import { formatPrice } from '@/utils/number';
+import AddressView from './AddressView';
 
 const mockSummaryData = {
   '5m': {
@@ -268,7 +268,7 @@ const mock_list_data = [
     action: 'buy',
     price: 0.000004324,
     amount: 123424233,
-    usd_value: 124342343244243,
+    usd_value: 13343244243,
     tx_id: '12312312312',
     user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff802',
     time_at: 1757670406,
@@ -419,11 +419,9 @@ const Details = () => {
                   <Text style={styles.amountItem}>
                     {formatUsdValueKMB(item.usd_value)}
                   </Text>
-                  <Text style={styles.addressItem}>
-                    {item.user_addr
-                      ? shortEllipsisAddress(item.user_addr, 4)
-                      : '-'}
-                  </Text>
+                  <View style={styles.addressItem}>
+                    <AddressView address={item.user_addr} />
+                  </View>
                 </View>
               );
             })}
@@ -676,10 +674,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
   },
   addressItem: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
+    display: 'flex',
+    justifyContent: 'flex-end',
     flex: 1,
   },
   timeAtItem: {
