@@ -194,6 +194,7 @@ export const HistoryTokenList = ({
         : '0';
       const singeToken = isArray(token) ? token[0] : token;
       const isSend = type === HistoryItemCateType.Send;
+      const isGasDeposit = type === HistoryItemCateType.GAS_DEPOSIT;
       const tokenIsNft = tokenId?.length === 32;
       return (
         <TouchableOpacity onPress={() => handlePress(singeToken!, tokenIsNft)}>
@@ -212,10 +213,10 @@ export const HistoryTokenList = ({
                   numberOfLines={1}
                   style={[
                     styles.tokenAmountText,
-                    isSend && styles.isSendTextColor,
+                    (isSend || isGasDeposit) && styles.isSendTextColor,
                     isApprove && styles.tokenApproveAmountText,
                   ]}>
-                  {!isApprove && (isSend ? '- ' : '+ ')}
+                  {!isApprove && (isSend || isGasDeposit ? '- ' : '+ ')}
                   {tokenIsNft ? singleAmount : appvoveAmmountStr}{' '}
                   {tokenIsNft
                     ? t('page.singleHome.sectionHeader.Nft')
