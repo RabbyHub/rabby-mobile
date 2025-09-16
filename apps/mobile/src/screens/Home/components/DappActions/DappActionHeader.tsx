@@ -76,7 +76,7 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   descriptionContainer: {
     marginTop: 15,
-    borderRadius: 12,
+    borderRadius: 6,
     paddingVertical: 6,
     paddingHorizontal: 16,
     backgroundColor: colors2024['brand-light-1'],

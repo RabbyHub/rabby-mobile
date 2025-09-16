@@ -9,13 +9,18 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useDappAction } from './hook';
-import { useCanProcessDirectSubmit } from '@/hooks/useMiniApprovalDirectSign';
 import { sendRequest } from '@/core/apis/provider';
 import { toast } from '@/components2024/Toast';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
-import { Account } from '@/core/services/preference';
 import { DappActionHeader } from './DappActionHeader';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useAccounts } from '@/hooks/account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import {
+  isAccountSupportDirectSign,
+  isAccountSupportMiniApproval,
+} from '@/utils/account';
 
 export const enum ActionType {
   Withdraw = 'withdraw',
@@ -42,16 +47,33 @@ export const DappActions = ({
   data,
   chain,
   protocolLogo,
-  currentAccount,
+  address,
+  addressType,
 }: {
   data?: WithdrawAction[];
   chain?: string;
   protocolLogo?: string;
-  currentAccount?: Account;
+  address?: string;
+  addressType?: KEYRING_TYPE;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const [disableSignBtn, setDisableSignBtn] = useState(false);
+
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
+
+  const currentAccount = useMemo(
+    () =>
+      accounts.find(
+        item =>
+          address &&
+          isSameAddress(item.address, address) &&
+          item.type === addressType,
+      ),
+    [accounts, address, addressType],
+  );
 
   const withdrawAction = useMemo(
     () =>
@@ -106,7 +128,12 @@ export const DappActions = ({
     },
     [isQueueWithdraw],
   );
-  const canDirectSign = useCanProcessDirectSubmit();
+  const canDirectSign = useMemo(() => {
+    return (
+      isAccountSupportMiniApproval(currentAccount?.type || '') &&
+      isAccountSupportDirectSign(currentAccount?.type)
+    );
+  }, [currentAccount?.type]);
 
   useEffect(() => {
     setMiniSignExtraProps(pre => ({ ...pre, disableSignBtn }));
@@ -115,6 +142,7 @@ export const DappActions = ({
   const handleSubmit = useCallback(
     async (action: () => Promise<Tx[]>, title?: string) => {
       const txs = await action();
+      console.log('CUSTOM_LOGGER:=>: txs', txs);
       if (canDirectSign) {
         resetMiniSignExtraProps();
         setMiniSignExtraProps(pre => ({
@@ -137,6 +165,7 @@ export const DappActions = ({
             account: currentAccount!,
           });
           const hash = res[res.length - 1].txHash;
+          console.log('CUSTOM_LOGGER:=>: hash', hash);
         } catch (error) {
           console.error('error occur', error);
         }
@@ -147,7 +176,6 @@ export const DappActions = ({
               data: {
                 method: 'eth_sendTransaction',
                 params: [tx],
-                // TODO: add ga
               },
               session: INTERNAL_REQUEST_SESSION,
               account: currentAccount!,

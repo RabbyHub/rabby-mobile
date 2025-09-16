@@ -7,6 +7,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { DappActions } from './DappActions';
 import { Account } from '@/core/services/preference';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 // 已支持的模板
 const TemplateDict = {
@@ -57,12 +58,14 @@ export const WrapperDappActionsMemoItem = ({
   item,
   chain,
   protocolLogo,
-  currentAccount,
+  address,
+  addressType,
 }: {
   item: AbstractPortfolio;
   chain?: string;
   protocolLogo?: string;
-  currentAccount?: Account;
+  address?: string;
+  addressType?: KEYRING_TYPE;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
@@ -74,7 +77,8 @@ export const WrapperDappActionsMemoItem = ({
             data={item._originPortfolio.withdraw_actions}
             chain={chain}
             protocolLogo={protocolLogo}
-            currentAccount={currentAccount}
+            address={address}
+            addressType={addressType}
           />
         )}
     </View>
