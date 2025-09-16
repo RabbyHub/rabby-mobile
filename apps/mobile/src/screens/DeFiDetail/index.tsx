@@ -10,7 +10,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
-import { MemoItem } from '../Home/components/ProtocolMoreItem';
+import { WrapperDappActionsMemoItem } from '../Home/components/ProtocolMoreItem';
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { toast } from '@/components2024/Toast';
 import { AbstractPortfolio, AbstractProject } from '../Home/types';
@@ -154,7 +154,7 @@ export const RightMore: React.FC<{
 };
 
 export const DeFiDetailScreen = () => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles, colors2024, isLight } = useTheme2024({ getStyle });
   const { setNavigationOptions, navigation } = useSafeSetNavigationOptions();
   const {
     data: routeData,
@@ -358,13 +358,15 @@ export const DeFiDetailScreen = () => {
       section: SectionListItem;
     }) => {
       return (
-        <MemoItem
+        <WrapperDappActionsMemoItem
           item={item}
+          chain={data.chain}
+          protocolLogo={data.logo}
           key={`${item.id}-${section.address}-${section.totalUsdValue}`}
         />
       );
     },
-    [],
+    [data.chain, data.logo],
   );
 
   const { bottom } = useSafeAreaInsets();
@@ -407,7 +409,7 @@ export const DeFiDetailScreen = () => {
 
   return (
     <NormalScreenContainer2024
-      type="bg1"
+      type={isLight ? 'bg0' : 'bg1'}
       overwriteStyle={[
         styles.container,
         { paddingBottom: androidBottomOffset },
@@ -471,7 +473,7 @@ export const DeFiDetailScreen = () => {
       {data?.site_url ? (
         <View style={styles.footer}>
           <Button
-            type="primary"
+            type="ghost"
             title={
               Platform.OS === 'ios'
                 ? t('page.defiDetail.viewSiteInWebsite')
@@ -497,7 +499,7 @@ export const DeFiDetailScreen = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
+const getStyle = createGetStyles2024(({ isLight, colors2024 }) => ({
   scrollContainer: {
     flex: 1,
     width: '100%',
@@ -510,7 +512,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 4,
     paddingTop: 20,
     paddingBottom: 8,
-    backgroundColor: colors2024['neutral-bg-1'],
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-0']
+      : colors2024['neutral-bg-1'],
   },
   backButtonStyle: {
     // width: 56,

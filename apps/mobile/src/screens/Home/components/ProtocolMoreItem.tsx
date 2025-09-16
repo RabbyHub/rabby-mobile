@@ -1,10 +1,11 @@
 import React, { useMemo, memo } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AbstractPortfolio } from '../types';
 import PortfolioTemplate from '../portfolios';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
+import { DappActions } from './DappActions';
 
 // 已支持的模板
 const TemplateDict = {
@@ -44,12 +45,37 @@ export const MemoItem = memo(
       <PortfolioDetail
         name={item._originPortfolio.name}
         data={item}
-        style={StyleSheet.flatten([styles.portfolioCard])}
+        // style={StyleSheet.flatten([styles.portfolioCard])}
       />
     );
   },
   (prev, next) => prev.item.id === next.item.id,
 );
+
+export const WrapperDappActionsMemoItem = ({
+  item,
+  chain,
+  protocolLogo,
+}: {
+  item: AbstractPortfolio;
+  chain?: string;
+  protocolLogo?: string;
+}) => {
+  const { styles } = useTheme2024({ getStyle: getStyles });
+  return (
+    <View style={styles.portfolioCard}>
+      <MemoItem item={item} />
+      {!!item._originPortfolio.withdraw_actions?.length &&
+        !item?._originPortfolio?.proxy_detail?.proxy_contract_id && (
+          <DappActions
+            data={item._originPortfolio.withdraw_actions}
+            chain={chain}
+            protocolLogo={protocolLogo}
+          />
+        )}
+    </View>
+  );
+};
 
 const getStyles = createGetStyles2024(ctx => ({
   portfolioCard: {
@@ -58,8 +84,8 @@ const getStyles = createGetStyles2024(ctx => ({
     // paddingHorizontal: 8,
     marginHorizontal: 20,
     borderRadius: 12,
-    backgroundColor: ctx.colors2024['neutral-bg-1'],
-    borderWidth: 1,
-    borderColor: ctx.colors2024['neutral-line'],
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
   },
 }));
