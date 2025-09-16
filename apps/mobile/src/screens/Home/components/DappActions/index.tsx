@@ -139,7 +139,6 @@ export const DappActions = ({
   const handleSubmit = useCallback(
     async (action: () => Promise<Tx[]>, title?: string) => {
       const txs = await action();
-      console.log('CUSTOM_LOGGER:=>: txs', txs);
       if (canDirectSign) {
         resetMiniSignExtraProps();
         resetGasCache();
@@ -158,13 +157,11 @@ export const DappActions = ({
           onPreExecChange,
         }));
         try {
-          const res = await sendMiniTransactions({
+          await sendMiniTransactions({
             txs: txs,
             account: currentAccount!,
           });
-          const hash = res[res.length - 1].txHash;
           resetGasCache();
-          console.log('CUSTOM_LOGGER:=>: hash', hash);
         } catch (error) {
           console.error('error occur', error);
           resetGasCache();

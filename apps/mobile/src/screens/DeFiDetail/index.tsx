@@ -69,6 +69,9 @@ export const RightMore: React.FC<{
   const { t } = useTranslation();
 
   const menuActions = React.useMemo(() => {
+    if (!token) {
+      return [];
+    }
     return [
       {
         title: token._isFold
@@ -284,11 +287,17 @@ export const DeFiDetailScreen = () => {
 
   const sectionsMultiProject = useMemo(() => {
     const sectionsList: SectionListItem[] = [];
-    if (isSingleAddress) {
+    if (isSingleAddress && data) {
+      const currAddressPortfolio = currentPortfolio.find(
+        item => item.id === routeData.id,
+      );
+      if (!currAddressPortfolio) {
+        return sectionsList;
+      }
       sectionsList.push({
-        data: data._portfolios || portfolioList,
-        project: data,
-        totalUsdValue: new BigNumber(data.netWorth),
+        data: currAddressPortfolio._portfolios || portfolioList,
+        project: currAddressPortfolio,
+        totalUsdValue: new BigNumber(currAddressPortfolio?.netWorth || 0),
         type: finalAccount.type,
         address: finalAccount.address,
         aliasName:
@@ -307,7 +316,7 @@ export const DeFiDetailScreen = () => {
       const { portfolios } = assetsMap[address];
 
       portfolios?.map(portfolio => {
-        if (portfolio.id === data.id && portfolio.chain === data.chain) {
+        if (portfolio.id === data?.id && portfolio.chain === data?.chain) {
           tempList.push({
             data: portfolio._portfolios,
             project: portfolio,
@@ -333,7 +342,18 @@ export const DeFiDetailScreen = () => {
     return sectionsList.sort((a, b) =>
       new BigNumber(b.totalUsdValue).comparedTo(new BigNumber(a.totalUsdValue)),
     );
-  }, [data, assetsMap, accounts, isSingleAddress, finalAccount, portfolioList]);
+  }, [
+    isSingleAddress,
+    data,
+    assetsMap,
+    accounts,
+    currentPortfolio,
+    portfolioList,
+    finalAccount.type,
+    finalAccount.address,
+    finalAccount.aliasName,
+    routeData.id,
+  ]);
 
   // 来自同一个地址的totalUsdValue不重复计算
   const sumNetWorth = useMemo(() => {
@@ -346,8 +366,8 @@ export const DeFiDetailScreen = () => {
     const res = Array.from(addressMap.values()).reduce((pre, cur) => {
       return pre.plus(cur.totalUsdValue);
     }, new BigNumber(0));
-    return res ? formatNetworth(res.toNumber()) : data._netWorth;
-  }, [data._netWorth, sectionsMultiProject]);
+    return res ? formatNetworth(res.toNumber()) : data?._netWorth || 0;
+  }, [data?._netWorth, sectionsMultiProject]);
 
   const renderItem = useCallback(
     ({
@@ -360,15 +380,15 @@ export const DeFiDetailScreen = () => {
       return (
         <WrapperDappActionsMemoItem
           item={item}
-          chain={data.chain}
-          protocolLogo={data.logo}
+          chain={data?.chain}
+          protocolLogo={data?.logo}
           address={section.address}
           addressType={section.type}
           key={`${item.id}-${section.address}-${section.totalUsdValue}`}
         />
       );
     },
-    [data.chain, data.logo],
+    [data?.chain, data?.logo],
   );
 
   const { bottom } = useSafeAreaInsets();
@@ -408,6 +428,10 @@ export const DeFiDetailScreen = () => {
     },
     [styles.accountBox, styles.titleText, styles.walletIcon],
   );
+
+  if (!data) {
+    return null;
+  }
 
   return (
     <NormalScreenContainer2024
@@ -451,7 +475,7 @@ export const DeFiDetailScreen = () => {
             onRefresh={async () => {
               try {
                 if (isSingleAddress) {
-                  await updateSpecificProtocol(data.id, data.chain || '');
+                  await updateSpecificProtocol(data?.id, data?.chain || '');
                 } else {
                   const addresses = [
                     ...new Set(
@@ -460,7 +484,7 @@ export const DeFiDetailScreen = () => {
                   ];
                   await Promise.all(
                     addresses.map(address =>
-                      loadSpecificDefi(address, data.id, data.chain || ''),
+                      loadSpecificDefi(address, data?.id, data?.chain || ''),
                     ),
                   );
                 }
@@ -482,9 +506,9 @@ export const DeFiDetailScreen = () => {
                 : t('page.defiDetail.viewSiteInApp')
             }
             onPress={() => {
-              if (data.site_url) {
-                openTab(data.site_url);
-                const origin = safeGetOrigin(data.site_url);
+              if (data?.site_url) {
+                openTab(data?.site_url);
+                const origin = safeGetOrigin(data?.site_url);
                 if (origin) {
                   matomoRequestEvent({
                     category: 'Websites Usage',

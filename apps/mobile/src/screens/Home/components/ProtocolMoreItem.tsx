@@ -47,7 +47,7 @@ export const MemoItem = memo(
       <PortfolioDetail
         name={item._originPortfolio.name}
         data={item}
-        // style={StyleSheet.flatten([styles.portfolioCard])}
+        style={styles.detail}
       />
     );
   },
@@ -92,6 +92,11 @@ const getStyles = createGetStyles2024(ctx => ({
     // paddingHorizontal: 8,
     marginHorizontal: 20,
     borderRadius: 12,
+    backgroundColor: ctx.isLight
+      ? ctx.colors2024['neutral-bg-1']
+      : ctx.colors2024['neutral-bg-2'],
+  },
+  detail: {
     backgroundColor: ctx.isLight
       ? ctx.colors2024['neutral-bg-1']
       : ctx.colors2024['neutral-bg-2'],
