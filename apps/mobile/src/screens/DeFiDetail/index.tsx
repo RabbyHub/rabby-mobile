@@ -362,11 +362,12 @@ export const DeFiDetailScreen = () => {
           item={item}
           chain={data.chain}
           protocolLogo={data.logo}
+          currentAccount={finalAccount}
           key={`${item.id}-${section.address}-${section.totalUsdValue}`}
         />
       );
     },
-    [data.chain, data.logo],
+    [data.chain, data.logo, finalAccount],
   );
 
   const { bottom } = useSafeAreaInsets();

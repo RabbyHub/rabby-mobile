@@ -1,6 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleProp, Text, View, ViewStyle } from 'react-native';
-import { useTranslation } from 'react-i18next';
 import {
   ExplainTxResponse,
   Tx,
@@ -10,6 +9,13 @@ import {
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useDappAction } from './hook';
+import { useCanProcessDirectSubmit } from '@/hooks/useMiniApprovalDirectSign';
+import { sendRequest } from '@/core/apis/provider';
+import { toast } from '@/components2024/Toast';
+import { useMiniApproval } from '@/hooks/useMiniApproval';
+import { Account } from '@/core/services/preference';
+import { DappActionHeader } from './DappActionHeader';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 
 export const enum ActionType {
   Withdraw = 'withdraw',
@@ -36,18 +42,16 @@ export const DappActions = ({
   data,
   chain,
   protocolLogo,
+  currentAccount,
 }: {
   data?: WithdrawAction[];
   chain?: string;
   protocolLogo?: string;
+  currentAccount?: Account;
 }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const [disabledSign, setDisabledSign] = useState(false);
-  const [isShowMiniSign, setIsShowMiniSign] = useState(false);
-  const [miniSignTxs, setMiniSignTxs] = useState<Tx[]>([]);
-  const [title, setTitle] = useState<string>('');
+  const [disableSignBtn, setDisableSignBtn] = useState(false);
 
   const withdrawAction = useMemo(
     () =>
@@ -69,16 +73,23 @@ export const DappActions = ({
   const { valid: showWithdraw, action: actionWithdraw } = useDappAction(
     withdrawAction,
     chain,
+    currentAccount,
   );
   const { valid: showClaim, action: actionClaim } = useDappAction(
     claimAction,
     chain,
+    currentAccount,
   );
+  const {
+    sendMiniTransactions,
+    setMiniSignExtraProps,
+    resetMiniSignExtraProps,
+  } = useMiniApproval();
 
   const onPreExecChange = useCallback(
     (r: ExplainTxResponse) => {
       if (!r.pre_exec.success) {
-        setDisabledSign(true);
+        setDisableSignBtn(true);
         return;
       }
       if (
@@ -87,34 +98,99 @@ export const DappActions = ({
       ) {
         // queue withdraw not need to check balance change
         if (!isQueueWithdraw) {
-          setDisabledSign(true);
+          setDisableSignBtn(true);
           return;
         }
       }
-      setDisabledSign(false);
+      setDisableSignBtn(false);
     },
     [isQueueWithdraw],
+  );
+  const canDirectSign = useCanProcessDirectSubmit();
+
+  useEffect(() => {
+    setMiniSignExtraProps(pre => ({ ...pre, disableSignBtn }));
+  }, [setMiniSignExtraProps, disableSignBtn]);
+
+  const handleSubmit = useCallback(
+    async (action: () => Promise<Tx[]>, title?: string) => {
+      const txs = await action();
+      if (canDirectSign) {
+        resetMiniSignExtraProps();
+        setMiniSignExtraProps(pre => ({
+          ...pre,
+          title: (
+            <DappActionHeader
+              logo={protocolLogo}
+              chain={chain}
+              title={title}
+              showQueueDesc={isQueueWithdraw}
+            />
+          ),
+          showSimulateChange: true,
+          autoThrowPreExecError: false,
+          onPreExecChange,
+        }));
+        try {
+          const res = await sendMiniTransactions({
+            txs: txs,
+            account: currentAccount!,
+          });
+          const hash = res[res.length - 1].txHash;
+        } catch (error) {
+          console.error('error occur', error);
+        }
+      } else {
+        try {
+          for await (const tx of txs) {
+            await sendRequest({
+              data: {
+                method: 'eth_sendTransaction',
+                params: [tx],
+                // TODO: add ga
+              },
+              session: INTERNAL_REQUEST_SESSION,
+              account: currentAccount!,
+            });
+          }
+        } catch (error) {
+          console.error('Transaction failed:', error);
+          toast.error(
+            typeof (error as any)?.message === 'string'
+              ? (error as any)?.message
+              : 'Transaction failed',
+          );
+        }
+      }
+    },
+    [
+      canDirectSign,
+      chain,
+      currentAccount,
+      isQueueWithdraw,
+      onPreExecChange,
+      protocolLogo,
+      resetMiniSignExtraProps,
+      sendMiniTransactions,
+      setMiniSignExtraProps,
+    ],
   );
   return (
     <View style={styles.container}>
       {showWithdraw && (
         <ActionButton
           text="Withdraw"
-          // className={`${showClaim ? 'w-[216px]' : 'flex-1'}`}
-          onPress={
-            () => {}
-            // handleSubmit(actionWithdraw, t('component.DappActions.withdraw'))
-          }
+          onPress={() => {
+            handleSubmit(actionWithdraw, 'Withdraw');
+          }}
         />
       )}
       {showClaim && (
         <ActionButton
           text="Claim"
-          // className={`${showWithdraw ? 'w-[108px]' : 'flex-1'}`}
-          onPress={
-            () => {}
-            // handleSubmit(actionClaim, t('component.DappActions.claim'))
-          }
+          onPress={() => {
+            handleSubmit(actionClaim, 'Claim');
+          }}
         />
       )}
     </View>
