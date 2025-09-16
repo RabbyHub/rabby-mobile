@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
@@ -296,6 +296,82 @@ const Details = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(TabKey.all);
 
+  const renderHeader = useCallback(() => {
+    return (
+      <View style={styles.tableHeader}>
+        <Text style={styles.tableHeaderItem}>
+          {t('page.tokenDetail.marketInfo.activitySections.tableHeader.type')}|
+          {t('page.tokenDetail.marketInfo.activitySections.tableHeader.time')}
+        </Text>
+        <Text style={styles.tableHeaderItem}>
+          {t('page.tokenDetail.marketInfo.activitySections.tableHeader.price')}
+        </Text>
+        <Text style={styles.tableHeaderItem}>
+          {t('page.tokenDetail.marketInfo.activitySections.tableHeader.qnt')}
+        </Text>
+        <Text style={styles.tableHeaderItem}>
+          {t('page.tokenDetail.marketInfo.activitySections.tableHeader.value')}
+        </Text>
+        <Text style={[styles.tableHeaderItem, styles.lastItem]}>
+          {t(
+            'page.tokenDetail.marketInfo.activitySections.tableHeader.address',
+          )}
+        </Text>
+      </View>
+    );
+  }, [styles.lastItem, styles.tableHeader, styles.tableHeaderItem, t]);
+
+  const renderItem = useCallback(
+    ({ item, index }) => {
+      const isBuy = item.action === 'buy';
+      return (
+        <View
+          key={item.user_addr}
+          style={[
+            styles.tableRow,
+            index === mock_list_data.length - 1 && styles.hideBottomBorder,
+          ]}>
+          <View style={styles.actionAndTime}>
+            <Text
+              style={[styles.chatTopText, !isBuy && styles.chatTopTextRight]}>
+              {isBuy
+                ? t(
+                    'page.tokenDetail.marketInfo.activitySections.tableHeader.buy',
+                  )
+                : t(
+                    'page.tokenDetail.marketInfo.activitySections.tableHeader.sell',
+                  )}
+            </Text>
+            <Text style={styles.timeAtItem}>{formatTime(item.time_at)}</Text>
+          </View>
+          <Text style={styles.indexItem}>{formatPrice(item.price)}</Text>
+          <Text style={styles.ratioItem}>
+            {formatAmountValueKMB(item.amount)}
+          </Text>
+          <Text style={styles.amountItem}>
+            {formatUsdValueKMB(item.usd_value)}
+          </Text>
+          <View style={styles.addressItem}>
+            <AddressView address={item.user_addr} />
+          </View>
+        </View>
+      );
+    },
+    [
+      styles.actionAndTime,
+      styles.addressItem,
+      styles.amountItem,
+      styles.chatTopText,
+      styles.chatTopTextRight,
+      styles.hideBottomBorder,
+      styles.indexItem,
+      styles.ratioItem,
+      styles.tableRow,
+      styles.timeAtItem,
+      t,
+    ],
+  );
+
   return (
     <InfoContainer title={t('page.tokenDetail.marketInfo.details')}>
       {mock_list_data.length > 0 ? (
@@ -350,82 +426,12 @@ const Details = () => {
               </Text>
             </Pressable>
           </View>
-          <View style={styles.tableHeader}>
-            <Text style={styles.tableHeaderItem}>
-              {t(
-                'page.tokenDetail.marketInfo.activitySections.tableHeader.type',
-              )}
-              |
-              {t(
-                'page.tokenDetail.marketInfo.activitySections.tableHeader.time',
-              )}
-            </Text>
-            <Text style={styles.tableHeaderItem}>
-              {t(
-                'page.tokenDetail.marketInfo.activitySections.tableHeader.price',
-              )}
-            </Text>
-            <Text style={styles.tableHeaderItem}>
-              {t(
-                'page.tokenDetail.marketInfo.activitySections.tableHeader.qnt',
-              )}
-            </Text>
-            <Text style={styles.tableHeaderItem}>
-              {t(
-                'page.tokenDetail.marketInfo.activitySections.tableHeader.value',
-              )}
-            </Text>
-            <Text style={[styles.tableHeaderItem, styles.lastItem]}>
-              {t(
-                'page.tokenDetail.marketInfo.activitySections.tableHeader.address',
-              )}
-            </Text>
-          </View>
-          <View style={styles.tableBody}>
-            {mock_list_data.map((item, index) => {
-              const isBuy = item.action === 'buy';
-              return (
-                <View
-                  key={item.user_addr}
-                  style={[
-                    styles.tableRow,
-                    index === mock_list_data.length - 1 &&
-                      styles.hideBottomBorder,
-                  ]}>
-                  <View style={styles.actionAndTime}>
-                    <Text
-                      style={[
-                        styles.chatTopText,
-                        !isBuy && styles.chatTopTextRight,
-                      ]}>
-                      {isBuy
-                        ? t(
-                            'page.tokenDetail.marketInfo.activitySections.tableHeader.buy',
-                          )
-                        : t(
-                            'page.tokenDetail.marketInfo.activitySections.tableHeader.sell',
-                          )}
-                    </Text>
-                    <Text style={styles.timeAtItem}>
-                      {formatTime(item.time_at)}
-                    </Text>
-                  </View>
-                  <Text style={styles.indexItem}>
-                    {formatPrice(item.price)}
-                  </Text>
-                  <Text style={styles.ratioItem}>
-                    {formatAmountValueKMB(item.amount)}
-                  </Text>
-                  <Text style={styles.amountItem}>
-                    {formatUsdValueKMB(item.usd_value)}
-                  </Text>
-                  <View style={styles.addressItem}>
-                    <AddressView address={item.user_addr} />
-                  </View>
-                </View>
-              );
-            })}
-          </View>
+          <FlatList
+            data={mock_list_data}
+            renderItem={renderItem}
+            contentContainerStyle={styles.tableBody}
+            ListHeaderComponent={renderHeader}
+          />
         </View>
       ) : (
         <EmptyData />
