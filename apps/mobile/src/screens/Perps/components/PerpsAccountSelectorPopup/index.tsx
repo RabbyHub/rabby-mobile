@@ -1,29 +1,20 @@
-import { RcIconCorrectCC } from '@/assets/icons/common';
 import AutoLockView from '@/components/AutoLockView';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useAccountSelectorList } from '@/components2024/AccountSelector/useAccountSelectorList';
 import { makeBottomSheetProps } from '@/components2024/GlobalBottomSheetModal/utils-help';
-import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { apisPerps } from '@/core/apis';
 import { Account } from '@/core/services/preference';
-import { isSameAccount } from '@/hooks/accountsSwitcher';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { useTheme2024 } from '@/hooks/theme';
-import { AddressItemShadowView } from '@/screens/Address/components/AddressItemShadowView';
-import { ellipsisAddress } from '@/utils/address';
-import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn, useRequest } from 'ahooks';
+import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
+import { PerpsAccountSelectorItem } from './PerpsAccountSelectorItem';
 
 export const PerpsAccountSelectorPopup: React.FC<{
   visible?: boolean;
@@ -52,7 +43,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
     }
   }, [visible]);
 
-  const { data: lastUsdeAccount, runAsync: runGetLastUsedAccount } = useRequest(
+  const { data: lastUsedAccount, runAsync: runGetLastUsedAccount } = useRequest(
     () => {
       return apisPerps.getPerpsLastUsedAccount();
     },
@@ -65,8 +56,68 @@ export const PerpsAccountSelectorPopup: React.FC<{
     selectedAccount: value,
   });
 
+  const sdk = apisPerps.getPerpsSDK();
+
+  const { data: _data, runAsync: runFetchPerpsInfo } = useRequest(
+    async () => {
+      const res = await Promise.allSettled(
+        myAddresses.slice(0, 10).map(async item => {
+          const info = await sdk.info.getClearingHouseState(item.address);
+          return info;
+        }),
+      );
+
+      const dict = {
+        active: [],
+        inactive: [],
+      } as Record<
+        string,
+        { info?: ClearinghouseState; account: KeyringAccountWithAlias }[]
+      >;
+      res.map((item, index) => {
+        if (
+          item.status === 'fulfilled' &&
+          (item.value.assetPositions.length ||
+            +item.value.marginSummary > 0 ||
+            +item.value.withdrawable > 0)
+        ) {
+          dict.active.push({ info: item.value, account: myAddresses[index] });
+        } else {
+          dict.inactive.push({ account: myAddresses[index] });
+        }
+      });
+      dict.inactive.push(
+        ...myAddresses.slice(10).map(item => ({ account: item })),
+      );
+      dict.active = sortBy(
+        dict.active,
+        item => -(item.info?.marginSummary.accountValue || 0),
+      );
+
+      return dict;
+    },
+    {
+      manual: true,
+      cacheKey: `PerpsAccountSelectorPopup-fetchPerpsInfo-${myAddresses
+        .map(i => i.address)
+        .join('-')}`,
+      // cacheTime: 10 * 1000,
+      staleTime: 10 * 1000,
+    },
+  );
+
+  const data = useMemo(() => {
+    if (!_data) {
+      return {
+        active: [],
+        inactive: myAddresses.map(item => ({ account: item })),
+      };
+    }
+    return _data;
+  }, [_data, myAddresses]);
+
   const [tmpSelectAccount, setTmpSelectAccount] = useState<Account | null>(
-    null,
+    value || null,
   );
 
   const {
@@ -92,12 +143,18 @@ export const PerpsAccountSelectorPopup: React.FC<{
 
   useEffect(() => {
     if (!visible) {
-      setTmpSelectAccount(null);
+      setTmpSelectAccount(value || null);
       cancelSelect();
     } else {
       runGetLastUsedAccount();
     }
-  }, [cancelSelect, runGetLastUsedAccount, visible]);
+  }, [cancelSelect, runGetLastUsedAccount, value, visible]);
+
+  useEffect(() => {
+    if (visible) {
+      runFetchPerpsInfo();
+    }
+  }, [runFetchPerpsInfo, visible]);
 
   return (
     <AppBottomSheetModal
@@ -116,7 +173,64 @@ export const PerpsAccountSelectorPopup: React.FC<{
           <View>
             <Text style={styles.title}>{title || 'Select Account'}</Text>
           </View>
-          {myAddresses?.map(item => {
+          {data?.active.length ? (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Activated address</Text>
+                <Text style={styles.sectionTitle}>HyperLiquid Balance</Text>
+              </View>
+              {data?.active?.map(item => {
+                return (
+                  <PerpsAccountSelectorItem
+                    key={
+                      item.account.address +
+                      item.account.type +
+                      item.account.brandName
+                    }
+                    account={item.account}
+                    tmpSelectAccount={
+                      tmpSelectAccount as KeyringAccountWithAlias
+                    }
+                    info={item.info}
+                    lastUsedAccount={lastUsedAccount as KeyringAccountWithAlias}
+                    loading={loading}
+                    onPress={handleSelect}
+                    currentAccount={value as KeyringAccountWithAlias}
+                  />
+                );
+              })}
+            </View>
+          ) : null}
+          {data?.inactive.length ? (
+            <View style={styles.section}>
+              {data.active.length ? (
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Not Activated wallet</Text>
+                </View>
+              ) : null}
+              {data?.inactive?.map(item => {
+                return (
+                  <PerpsAccountSelectorItem
+                    key={
+                      item.account.address +
+                      item.account.type +
+                      item.account.brandName
+                    }
+                    account={item.account}
+                    tmpSelectAccount={
+                      tmpSelectAccount as KeyringAccountWithAlias
+                    }
+                    info={item.info}
+                    lastUsedAccount={lastUsedAccount as KeyringAccountWithAlias}
+                    loading={loading}
+                    onPress={handleSelect}
+                    currentAccount={value as KeyringAccountWithAlias}
+                  />
+                );
+              })}
+            </View>
+          ) : null}
+          {/* {myAddresses?.map(item => {
             const usdValue = (() => {
               const b = item.balance || 0;
               return `$${splitNumberByStep(
@@ -185,7 +299,7 @@ export const PerpsAccountSelectorPopup: React.FC<{
                 </AddressItemShadowView>
               </TouchableOpacity>
             );
-          })}
+          })} */}
         </AutoLockView>
       </BottomSheetScrollView>
     </AppBottomSheetModal>
@@ -193,21 +307,21 @@ export const PerpsAccountSelectorPopup: React.FC<{
 };
 
 const getModalStyle = createGetStyles2024(ctx => {
-  const { colors2024 } = ctx;
+  const { colors2024, isLight } = ctx;
   return {
     handleStyle: {
-      backgroundColor: ctx.isLight
-        ? ctx.colors2024['neutral-bg-0']
-        : ctx.colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
       paddingTop: 10,
       height: 36,
     },
     container: {
       // height: '100%',
       minHeight: 364,
-      backgroundColor: ctx.isLight
-        ? ctx.colors2024['neutral-bg-0']
-        : ctx.colors2024['neutral-bg-1'],
+      backgroundColor: isLight
+        ? colors2024['neutral-bg-0']
+        : colors2024['neutral-bg-1'],
       paddingHorizontal: 20,
       // display: 'flex',
       // flexDirection: 'column',
@@ -222,111 +336,23 @@ const getModalStyle = createGetStyles2024(ctx => {
       marginBottom: 20,
       textAlign: 'center',
     },
-    list: {
-      // flex: 1,
-      // height: '100%',
-      paddingBottom: 56,
+    section: {
+      marginBottom: 8,
     },
-    listContent: {
-      // paddingBottom: 36,
-    },
-    panelContainer: {
-      position: 'relative',
-      width: '100%',
-    },
-    addressItemView: {
-      backgroundColor: ctx.colors2024['neutral-bg-1'],
-      padding: 16,
-      marginBottom: 12,
-      borderRadius: 20,
-    },
-    addressItemInner: {
+    sectionHeader: {
       display: 'flex',
       flexDirection: 'row',
+      justifyContent: 'space-between',
       alignItems: 'center',
-      gap: 8,
+      paddingHorizontal: 6,
+      marginBottom: 12,
     },
-    addressText: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '500',
-      color: colors2024['neutral-foot'],
+    sectionTitle: {
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: '400',
+      color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
-    },
-    walletIcon: {},
-    centerInfo: {
-      flexDirection: 'column',
-      flexShrink: 1,
-      width: '100%',
-      // ...makeDebugBorder('blue')
-    },
-    nameAndAdderss: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      // ...makeDebugBorder('yellow'),
-    },
-    addressAliasName: {
-      flexShrink: 1,
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      lineHeight: 20,
-      fontStyle: 'normal',
-      fontWeight: '500',
-      color: ctx.colors2024['neutral-foot'],
-    },
-    balanceText: {
-      fontSize: 16,
-      lineHeight: 20,
-      fontWeight: '700',
-      color: colors2024['neutral-title-1'],
-      fontFamily: 'SF Pro Rounded',
-    },
-    bottomArea: {
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      width: '100%',
-      marginTop: 6,
-    },
-    divider: {
-      height: 12,
-      maxHeight: '100%',
-      width: 1,
-      backgroundColor: ctx.colors2024['brand-light-1'],
-      marginHorizontal: 8,
-    },
-    addressUsdValue: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 16,
-      fontStyle: 'normal',
-      fontWeight: '700',
-      lineHeight: 20,
-      color: ctx.colors2024['neutral-title-1'],
-    },
-    addressUsdValueCurrent: {
-      // color: ctx.colors2024['brand-default'],
-      color: ctx.colors2024['neutral-title-1'],
-      fontWeight: '700',
-    },
-    rightArea: {
-      justifyContent: 'center',
-      alignItems: 'center',
-      // height: '100%',
-    },
-    tag: {
-      paddingVertical: 1,
-      paddingHorizontal: 4,
-      borderRadius: 4,
-      backgroundColor: colors2024['brand-light-1'],
-    },
-    tagText: {
-      fontFamily: 'SF Pro Rounded',
-      fontSize: 12,
-      fontStyle: 'normal',
-      fontWeight: '700',
-      lineHeight: 16,
-      color: ctx.colors2024['brand-default'],
     },
   };
 });
