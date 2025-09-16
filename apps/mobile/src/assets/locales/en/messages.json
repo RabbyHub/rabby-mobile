@@ -91,6 +91,7 @@
         "name": "Name",
         "RevokeToken": "Revoke Token",
         "InteractionResults": "Interaction Results",
+        "Simulation Results": "Simulation Results",
         "totalApprovedAmount": "Current Approved Amount",
         "PurchaseFrom": "Purchased from",
         "WillReceive": "Will Receive: ≈ {{token}}"
