@@ -12,7 +12,13 @@ const enum TabKey {
   holders = 'holders',
 }
 
-const ActivityAndHolders = () => {
+const ActivityAndHolders = ({
+  tokenId,
+  chainId,
+}: {
+  tokenId: string;
+  chainId: string;
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [activeTabKey, setActiveTabKey] = useState<TabKey>(TabKey.activity);
   const { t } = useTranslation();
@@ -38,7 +44,9 @@ const ActivityAndHolders = () => {
         </Text>
       </View>
       <View style={styles.content}>
-        {activeTabKey === TabKey.activity && <Activity />}
+        {activeTabKey === TabKey.activity && (
+          <Activity tokenId={tokenId} chainId={chainId} />
+        )}
         {activeTabKey === TabKey.holders && <Holder />}
       </View>
     </View>

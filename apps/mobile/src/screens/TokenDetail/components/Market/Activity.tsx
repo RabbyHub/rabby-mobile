@@ -1,9 +1,15 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View, Dimensions } from 'react-native';
 import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
@@ -15,6 +21,9 @@ import {
 } from '../../util';
 import { formatPrice } from '@/utils/number';
 import AddressView from './AddressView';
+// import { openapi } from '@/core/request';
+import { getMarketTradingHistory } from './mock';
+import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 
 const mockSummaryData = {
   '5m': {
@@ -176,7 +185,9 @@ const Summary = ({ data }: ISummaryData) => {
                   )}
                 </Text>
                 <Text style={styles.actionAmount}>
-                  {formatAmountValueKMB(currentData?.summary?.buy?.count)}
+                  {formatAmountValueKMB(
+                    currentData?.summary?.buy?.count ?? 0,
+                  ) || '-'}
                 </Text>
               </View>
               <View style={styles.chatBottomLine} />
@@ -189,7 +200,9 @@ const Summary = ({ data }: ISummaryData) => {
                   )}
                 </Text>
                 <Text style={[styles.actionAmount, styles.actionAmountRight]}>
-                  {formatAmountValueKMB(currentData?.summary?.sell?.count)}
+                  {formatAmountValueKMB(
+                    currentData?.summary?.sell?.count ?? 0,
+                  ) || '-'}
                 </Text>
               </View>
               <View
@@ -206,8 +219,8 @@ const Summary = ({ data }: ISummaryData) => {
               </Text>
               <Text style={styles.summaryBottomItemValue}>
                 {formatUsdValueKMB(
-                  currentData?.summary?.totals?.volume_usd_value,
-                )}
+                  currentData?.summary?.totals?.volume_usd_value ?? 0,
+                ) || '-'}
               </Text>
             </View>
             <View style={styles.summaryBottomItem}>
@@ -218,8 +231,8 @@ const Summary = ({ data }: ISummaryData) => {
               </Text>
               <Text style={styles.summaryBottomItemValue}>
                 {formatAmountValueKMB(
-                  currentData?.summary?.totals?.trading_count,
-                )}
+                  currentData?.summary?.totals?.trading_count ?? 0,
+                ) || '-'}
               </Text>
             </View>
             <View style={styles.summaryBottomItem}>
@@ -229,7 +242,9 @@ const Summary = ({ data }: ISummaryData) => {
                 )}
               </Text>
               <Text style={styles.summaryBottomItemValue}>
-                {formatAmountValueKMB(currentData?.summary?.totals?.addresses)}
+                {formatAmountValueKMB(
+                  currentData?.summary?.totals?.addresses ?? 0,
+                ) || '-'}
               </Text>
             </View>
           </View>
@@ -241,60 +256,70 @@ const Summary = ({ data }: ISummaryData) => {
   );
 };
 
-// TODO: mock data
-const mock_list_data = [
-  {
-    id: '123',
-    action: 'buy',
-    price: 123.2234424,
-    amount: 123,
-    usd_value: 123,
-    tx_id: '12312312312',
-    user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff80b',
-    time_at: 1757183318,
-  },
-  {
-    id: '124',
-    action: 'sell',
-    price: 123.000021,
-    amount: 123,
-    usd_value: 123,
-    tx_id: '12312312312',
-    user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff801',
-    time_at: 1757677406,
-  },
-  {
-    id: '125',
-    action: 'buy',
-    price: 0.000004324,
-    amount: 123424233,
-    usd_value: 13343244243,
-    tx_id: '12312312312',
-    user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff802',
-    time_at: 1757670406,
-  },
-  {
-    id: '126',
-    action: 'buy',
-    price: 0.000000000001,
-    amount: 123042342,
-    usd_value: 123,
-    tx_id: '12312312312',
-    user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff803',
-    time_at: 1757677006,
-  },
-];
-
-const enum TabKey {
+const enum DetailsTabKey {
   all = 'all',
   buy = 'buy',
   sell = 'sell',
 }
 
-const Details = () => {
+type MarketTradingHistoryItem = {
+  id: string;
+  action: 'buy' | 'sell';
+  price: number;
+  amount: number;
+  usd_value: number;
+  tx_id: string;
+  user_addr: string;
+  time_at: number;
+};
+
+const Details = ({
+  tokenId,
+  chainId,
+}: {
+  tokenId: string;
+  chainId: string;
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState(TabKey.all);
+  const [activeTab, setActiveTab] = useState(DetailsTabKey.buy);
+
+  const service = useCallback(
+    async (d?: {
+      list: MarketTradingHistoryItem[];
+      nextCursor?: string;
+      hasMore: boolean;
+    }) => {
+      if (activeTab === DetailsTabKey.all) {
+        return { list: [], nextCursor: undefined, hasMore: false };
+      }
+      const res = await getMarketTradingHistory({
+        token_id: tokenId,
+        chain_id: chainId,
+        action: activeTab,
+        limit: 20,
+        cursor: d?.nextCursor,
+      });
+      const page = res?.page || {};
+      const merged = [...(res?.data_list || [])];
+      return {
+        list: merged,
+        nextCursor: page?.next_cursor,
+        hasMore: !!page?.has_next,
+      };
+    },
+    [activeTab, chainId, tokenId],
+  );
+
+  const { data, loadMore, reloadAsync } = useInfiniteScroll(service, {
+    isNoMore: d => (d ? !d.hasMore : false),
+  });
+
+  const list = data?.list || [];
+
+  useEffect(() => {
+    reloadAsync();
+  }, [activeTab, reloadAsync]);
 
   const renderHeader = useCallback(() => {
     return (
@@ -329,7 +354,7 @@ const Details = () => {
           key={item.user_addr}
           style={[
             styles.tableRow,
-            index === mock_list_data.length - 1 && styles.hideBottomBorder,
+            index === list.length - 1 && styles.hideBottomBorder,
           ]}>
           <View style={styles.actionAndTime}>
             <Text
@@ -369,24 +394,57 @@ const Details = () => {
       styles.tableRow,
       styles.timeAtItem,
       t,
+      list.length,
     ],
   );
+  const footerRef = useRef<any>(null);
+  const renderFooter = useCallback(() => {
+    return <View ref={footerRef} style={styles.footerContainer} />;
+  }, [styles.footerContainer]);
+
+  useEffect(() => {
+    let timer: any;
+    const checkVisible = () => {
+      if (!footerRef.current) {
+        return;
+      }
+      try {
+        footerRef.current.measureInWindow(
+          (x: number, y: number, w: number, h: number) => {
+            const windowH = Dimensions.get('window').height;
+            const visible = y < windowH && y + h > 0;
+            if (visible) {
+              loadMore();
+            }
+          },
+        );
+      } catch (e) {
+        // ignore
+      }
+    };
+    timer = setInterval(checkVisible, 400);
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [loadMore]);
 
   return (
     <InfoContainer title={t('page.tokenDetail.marketInfo.details')}>
-      {mock_list_data.length > 0 ? (
+      {list.length > 0 ? (
         <View style={styles.detailsContainer}>
           <View style={styles.switchTabs}>
             <Pressable
               style={[
                 styles.switchTabItem,
-                activeTab === TabKey.all && styles.switchTabItemActive,
+                activeTab === DetailsTabKey.all && styles.switchTabItemActive,
               ]}
-              onPress={() => setActiveTab(TabKey.all)}>
+              onPress={() => setActiveTab(DetailsTabKey.all)}>
               <Text
                 style={[
                   styles.switchTabItemText,
-                  activeTab === TabKey.all && styles.activeTabItemText,
+                  activeTab === DetailsTabKey.all && styles.activeTabItemText,
                 ]}>
                 {t(
                   'page.tokenDetail.marketInfo.activitySections.tableHeader.all',
@@ -396,13 +454,13 @@ const Details = () => {
             <Pressable
               style={[
                 styles.switchTabItem,
-                activeTab === TabKey.buy && styles.switchTabItemActive,
+                activeTab === DetailsTabKey.buy && styles.switchTabItemActive,
               ]}
-              onPress={() => setActiveTab(TabKey.buy)}>
+              onPress={() => setActiveTab(DetailsTabKey.buy)}>
               <Text
                 style={[
                   styles.switchTabItemText,
-                  activeTab === TabKey.buy && styles.activeTabItemText,
+                  activeTab === DetailsTabKey.buy && styles.activeTabItemText,
                 ]}>
                 {t(
                   'page.tokenDetail.marketInfo.activitySections.tableHeader.buy',
@@ -412,13 +470,13 @@ const Details = () => {
             <Pressable
               style={[
                 styles.switchTabItem,
-                activeTab === TabKey.sell && styles.switchTabItemActive,
+                activeTab === DetailsTabKey.sell && styles.switchTabItemActive,
               ]}
-              onPress={() => setActiveTab(TabKey.sell)}>
+              onPress={() => setActiveTab(DetailsTabKey.sell)}>
               <Text
                 style={[
                   styles.switchTabItemText,
-                  activeTab === TabKey.sell && styles.activeTabItemText,
+                  activeTab === DetailsTabKey.sell && styles.activeTabItemText,
                 ]}>
                 {t(
                   'page.tokenDetail.marketInfo.activitySections.tableHeader.sell',
@@ -427,10 +485,14 @@ const Details = () => {
             </Pressable>
           </View>
           <FlatList
-            data={mock_list_data}
+            data={list}
             renderItem={renderItem}
+            keyExtractor={item => item.id}
             contentContainerStyle={styles.tableBody}
             ListHeaderComponent={renderHeader}
+            nestedScrollEnabled={true} // Android
+            scrollEnabled={false} // iOS
+            ListFooterComponent={renderFooter}
           />
         </View>
       ) : (
@@ -440,13 +502,19 @@ const Details = () => {
   );
 };
 
-const Activity = () => {
+const Activity = ({
+  tokenId,
+  chainId,
+}: {
+  tokenId: string;
+  chainId: string;
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   return (
     <View style={styles.container}>
       <Summary data={mockSummaryData} />
-      <Details />
+      <Details tokenId={tokenId} chainId={chainId} />
     </View>
   );
 };
@@ -695,5 +763,28 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     gap: 4,
     flex: 1,
+  },
+  footerContainer: {
+    height: 0,
+    width: '100%',
+  },
+  footerText: {
+    fontSize: 12,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  loadMoreBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: isLight
+      ? colors2024['neutral-bg-2']
+      : colors2024['neutral-bg-4'],
+  },
+  loadMoreText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors2024['neutral-body'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));
