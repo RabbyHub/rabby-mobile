@@ -1,8 +1,8 @@
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useClearMiniApprovalTask } from './useMiniApprovalTask';
-import { uniqueId } from 'lodash';
+import { noop, uniqueId } from 'lodash';
 import { sendTransaction } from '@/utils/sendTransaction';
 import {
   notificationService,
@@ -10,6 +10,7 @@ import {
 } from '@/core/services';
 import { sleep } from '@/utils/async';
 import { Account } from '@/core/services/preference';
+import { ReactNode, useCallback } from 'react';
 
 export let DirectSubmitReject;
 
@@ -28,9 +29,25 @@ export const miniApprovalAtom = atom<{
   txs: [],
 });
 
+const DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG = {
+  // autoTriggerPreExecError: false,
+  showSimulateChange: false,
+  title: null as ReactNode,
+  disableSignBtn: false,
+  onPreExecChange: noop,
+  autoThrowPreExecError: true,
+  // onRedirectToDeposit: noop,
+};
+
+const miniSignExtraPropsAtom = atom(DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+
+export const useGetMiniSignTxExtraProps = () =>
+  useAtomValue(miniSignExtraPropsAtom);
+
 // let globalCurrentApprovalId = uniqueId('mini-approval');
 export const useMiniApproval = () => {
   const [state, setState] = useAtom(miniApprovalAtom);
+  const setMiniSignExtraProps = useSetAtom(miniSignExtraPropsAtom);
   const { clear } = useClearMiniApprovalTask();
 
   const _sendMiniTransactions = useMemoizedFn(
@@ -70,6 +87,7 @@ export const useMiniApproval = () => {
                   visible: false,
                   showMaskLoading: true,
                 }));
+                setMiniSignExtraProps(DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
                 const signingTxId =
                   notificationService.currentMiniApproval?.signingTxId;
                 if (signingTxId) {
@@ -85,6 +103,7 @@ export const useMiniApproval = () => {
                   visible: false,
                   showMaskLoading: true,
                 }));
+                setMiniSignExtraProps(DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
                 notificationService.currentMiniApproval = null;
                 resolve(res);
               },
@@ -122,6 +141,10 @@ export const useMiniApproval = () => {
     },
   );
 
+  const resetMiniSignExtraProps = useCallback(() => {
+    setMiniSignExtraProps(DEFAULT_MINI_SIGN_TX_EXTRA_CONFIG);
+  }, [setMiniSignExtraProps]);
+
   const prepareMiniTransactions = useMemoizedFn(
     ({
       txs,
@@ -137,6 +160,7 @@ export const useMiniApproval = () => {
       showMaskLoading?: boolean;
     }) => {
       clear();
+      resetMiniSignExtraProps();
       setState(prev => {
         return {
           ...prev,
@@ -172,5 +196,7 @@ export const useMiniApproval = () => {
     sendMiniTransactions,
     prepareMiniTransactions,
     sendPrepareMiniTransactions,
+    setMiniSignExtraProps,
+    resetMiniSignExtraProps,
   };
 };
