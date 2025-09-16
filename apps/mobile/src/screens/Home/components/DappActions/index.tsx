@@ -17,10 +17,8 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import {
-  isAccountSupportDirectSign,
-  isAccountSupportMiniApproval,
-} from '@/utils/account';
+import { isAccountSupportMiniApproval } from '@/utils/account';
+import { useMiniSignGasStore } from '@/hooks/miniSignGasStore';
 
 export const enum ActionType {
   Withdraw = 'withdraw',
@@ -108,6 +106,8 @@ export const DappActions = ({
     resetMiniSignExtraProps,
   } = useMiniApproval();
 
+  const { reset: resetGasCache } = useMiniSignGasStore();
+
   const onPreExecChange = useCallback(
     (r: ExplainTxResponse) => {
       if (!r.pre_exec.success) {
@@ -129,10 +129,7 @@ export const DappActions = ({
     [isQueueWithdraw],
   );
   const canDirectSign = useMemo(() => {
-    return (
-      isAccountSupportMiniApproval(currentAccount?.type || '') &&
-      isAccountSupportDirectSign(currentAccount?.type)
-    );
+    return isAccountSupportMiniApproval(currentAccount?.type || '');
   }, [currentAccount?.type]);
 
   useEffect(() => {
@@ -145,6 +142,7 @@ export const DappActions = ({
       console.log('CUSTOM_LOGGER:=>: txs', txs);
       if (canDirectSign) {
         resetMiniSignExtraProps();
+        resetGasCache();
         setMiniSignExtraProps(pre => ({
           ...pre,
           title: (
@@ -165,9 +163,11 @@ export const DappActions = ({
             account: currentAccount!,
           });
           const hash = res[res.length - 1].txHash;
+          resetGasCache();
           console.log('CUSTOM_LOGGER:=>: hash', hash);
         } catch (error) {
           console.error('error occur', error);
+          resetGasCache();
         }
       } else {
         try {
@@ -198,11 +198,15 @@ export const DappActions = ({
       isQueueWithdraw,
       onPreExecChange,
       protocolLogo,
+      resetGasCache,
       resetMiniSignExtraProps,
       sendMiniTransactions,
       setMiniSignExtraProps,
     ],
   );
+  if (!showWithdraw && !showClaim) {
+    return null;
+  }
   return (
     <View style={styles.container}>
       {showWithdraw && (
