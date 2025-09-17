@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleProp, Text, View, ViewStyle } from 'react-native';
+import {
+  StyleProp,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 import {
   ExplainTxResponse,
   Tx,
@@ -19,6 +25,7 @@ import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { isAccountSupportMiniApproval } from '@/utils/account';
 import { useMiniSignGasStore } from '@/hooks/miniSignGasStore';
+import { debounce } from 'lodash';
 
 export const enum ActionType {
   Withdraw = 'withdraw',
@@ -34,10 +41,11 @@ interface ActionButtonProps {
 
 const ActionButton = ({ text, onPress, style }: ActionButtonProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const debounceOnPress = useMemo(() => debounce(onPress, 200), [onPress]);
   return (
-    <Pressable style={[styles.button, style]} onPress={onPress}>
+    <TouchableOpacity style={[styles.button, style]} onPress={debounceOnPress}>
       <Text style={styles.buttonText}>{text}</Text>
-    </Pressable>
+    </TouchableOpacity>
   );
 };
 
@@ -57,8 +65,6 @@ export const DappActions = ({
   onRefresh?: () => Promise<void>;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-
-  const [disableSignBtn, setDisableSignBtn] = useState(false);
 
   const { accounts } = useAccounts({
     disableAutoFetch: true,
@@ -110,6 +116,12 @@ export const DappActions = ({
 
   const { reset: resetGasCache } = useMiniSignGasStore();
 
+  const setDisableSignBtn = useCallback(
+    (v: boolean) => {
+      setMiniSignExtraProps(pre => ({ ...pre, disableSignBtn: v }));
+    },
+    [setMiniSignExtraProps],
+  );
   const onPreExecChange = useCallback(
     (r: ExplainTxResponse) => {
       if (!r.pre_exec.success) {
@@ -128,15 +140,11 @@ export const DappActions = ({
       }
       setDisableSignBtn(false);
     },
-    [isQueueWithdraw],
+    [isQueueWithdraw, setDisableSignBtn],
   );
   const canDirectSign = useMemo(() => {
     return isAccountSupportMiniApproval(currentAccount?.type || '');
   }, [currentAccount?.type]);
-
-  useEffect(() => {
-    setMiniSignExtraProps(pre => ({ ...pre, disableSignBtn }));
-  }, [setMiniSignExtraProps, disableSignBtn]);
 
   const handleSubmit = useCallback(
     async (action: () => Promise<Tx[]>, title?: string) => {

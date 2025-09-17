@@ -394,12 +394,6 @@ export const DeFiDetailScreen = () => {
     updateSpecificProtocol,
   ]);
 
-  useEffect(() => {
-    // init refresh realtime data
-    handleRefresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const renderItem = useCallback(
     ({
       item,
