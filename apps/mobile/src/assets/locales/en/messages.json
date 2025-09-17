@@ -2139,7 +2139,7 @@
         "withdrawBtn": "Withdraw",
         "depositBtn": "Deposit"
       },
-      "selectAccountTitle": "Select an Wallet to Log In",
+      "selectAccountTitle": "Select a Wallet to Log In",
       "PerpsGuidePopup": {
         "step1Title": "Master Perpetual Futures",
         "step1Desc": "With perpetual futures, you're not just trading assets. You're trading what you think will happen next",
@@ -2265,7 +2265,7 @@
       "leverageRangeMaxError": "The maximum leverage is {{max}}x",
       "PerpsAccountSelectorPopup": {
         "lastUsed": "Last Used",
-        "activatedAddress": "Activated address",
+        "activatedAddress": "Activated wallet",
         "hyperliquidBalance": "HyperLiquid Balance",
         "notActivatedAddress": "Not Activated wallet"
       }
