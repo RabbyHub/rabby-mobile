@@ -47,12 +47,14 @@ export const DappActions = ({
   protocolLogo,
   address,
   addressType,
+  onRefresh,
 }: {
   data?: WithdrawAction[];
   chain?: string;
   protocolLogo?: string;
   address?: string;
   addressType?: KEYRING_TYPE;
+  onRefresh?: () => Promise<void>;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -162,6 +164,9 @@ export const DappActions = ({
             account: currentAccount!,
           });
           resetGasCache();
+          setTimeout(() => {
+            onRefresh?.();
+          }, 500);
         } catch (error) {
           console.error('error occur', error);
           resetGasCache();
@@ -178,6 +183,9 @@ export const DappActions = ({
               account: currentAccount!,
             });
           }
+          setTimeout(() => {
+            onRefresh?.();
+          }, 500);
         } catch (error) {
           console.error('Transaction failed:', error);
           toast.error(
@@ -194,6 +202,7 @@ export const DappActions = ({
       currentAccount,
       isQueueWithdraw,
       onPreExecChange,
+      onRefresh,
       protocolLogo,
       resetGasCache,
       resetMiniSignExtraProps,

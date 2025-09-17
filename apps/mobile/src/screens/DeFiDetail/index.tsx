@@ -368,6 +368,38 @@ export const DeFiDetailScreen = () => {
     return res ? formatNetworth(res.toNumber()) : data?._netWorth || 0;
   }, [data?._netWorth, sectionsMultiProject]);
 
+  const handleRefresh = useCallback(async () => {
+    try {
+      if (isSingleAddress) {
+        await updateSpecificProtocol(data?.id, data?.chain || '');
+      } else {
+        const addresses = [
+          ...new Set(sectionsMultiProject.map(section => section.address)),
+        ];
+        await Promise.all(
+          addresses.map(address =>
+            loadSpecificDefi(address, data?.id, data?.chain || ''),
+          ),
+        );
+      }
+    } catch (error) {
+      console.error('Failed to refresh specific protocol:', error);
+    }
+  }, [
+    data?.chain,
+    data?.id,
+    isSingleAddress,
+    loadSpecificDefi,
+    sectionsMultiProject,
+    updateSpecificProtocol,
+  ]);
+
+  useEffect(() => {
+    // init refresh realtime data
+    handleRefresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const renderItem = useCallback(
     ({
       item,
@@ -383,11 +415,12 @@ export const DeFiDetailScreen = () => {
           protocolLogo={data?.logo}
           address={section.address}
           addressType={section.type}
+          onRefresh={handleRefresh}
           key={`${item.id}-${section.address}-${section.totalUsdValue}`}
         />
       );
     },
-    [data?.chain, data?.logo],
+    [data?.chain, data?.logo, handleRefresh],
   );
 
   const { bottom } = useSafeAreaInsets();
@@ -470,29 +503,7 @@ export const DeFiDetailScreen = () => {
         }
         renderSectionHeader={renderSectionHeader}
         refreshControl={
-          <RefreshControl
-            onRefresh={async () => {
-              try {
-                if (isSingleAddress) {
-                  await updateSpecificProtocol(data?.id, data?.chain || '');
-                } else {
-                  const addresses = [
-                    ...new Set(
-                      sectionsMultiProject.map(section => section.address),
-                    ),
-                  ];
-                  await Promise.all(
-                    addresses.map(address =>
-                      loadSpecificDefi(address, data?.id, data?.chain || ''),
-                    ),
-                  );
-                }
-              } catch (error) {
-                console.error('Failed to refresh specific protocol:', error);
-              }
-            }}
-            refreshing={refreshing}
-          />
+          <RefreshControl onRefresh={handleRefresh} refreshing={refreshing} />
         }
       />
       {data?.site_url ? (

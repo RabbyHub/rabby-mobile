@@ -60,12 +60,14 @@ export const WrapperDappActionsMemoItem = ({
   protocolLogo,
   address,
   addressType,
+  onRefresh,
 }: {
   item: AbstractPortfolio;
   chain?: string;
   protocolLogo?: string;
   address?: string;
   addressType?: KEYRING_TYPE;
+  onRefresh?: () => Promise<void>;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   return (
@@ -79,6 +81,7 @@ export const WrapperDappActionsMemoItem = ({
             protocolLogo={protocolLogo}
             address={address}
             addressType={addressType}
+            onRefresh={onRefresh}
           />
         )}
     </View>
