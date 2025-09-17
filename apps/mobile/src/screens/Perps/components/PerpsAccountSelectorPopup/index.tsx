@@ -176,8 +176,12 @@ export const PerpsAccountSelectorPopup: React.FC<{
           {data?.active.length ? (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Activated address</Text>
-                <Text style={styles.sectionTitle}>HyperLiquid Balance</Text>
+                <Text style={styles.sectionTitle}>
+                  {t('page.perps.PerpsAccountSelectorPopup.activatedAddress')}
+                </Text>
+                <Text style={styles.sectionTitle}>
+                  {t('page.perps.PerpsAccountSelectorPopup.hyperliquidBalance')}
+                </Text>
               </View>
               {data?.active?.map(item => {
                 return (
@@ -205,7 +209,11 @@ export const PerpsAccountSelectorPopup: React.FC<{
             <View style={styles.section}>
               {data.active.length ? (
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Not Activated wallet</Text>
+                  <Text style={styles.sectionTitle}>
+                    {t(
+                      'page.perps.PerpsAccountSelectorPopup.notActivatedAddress',
+                    )}
+                  </Text>
                 </View>
               ) : null}
               {data?.inactive?.map(item => {
