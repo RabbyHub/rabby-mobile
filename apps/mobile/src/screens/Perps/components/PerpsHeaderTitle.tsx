@@ -27,15 +27,16 @@ export const PerpsHeaderTitle: React.FC<{
   }, [account?.address]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{t('page.perps.title')}</Text>
-      {account ? (
-        <TouchableOpacity
-          onPress={() => {
-            setPopupState(prev => {
-              return { ...prev, isShowLoginPopup: !prev.isShowLoginPopup };
-            });
-          }}>
+    <TouchableOpacity
+      onPress={() => {
+        setPopupState(prev => {
+          return { ...prev, isShowLoginPopup: !prev.isShowLoginPopup };
+        });
+      }}
+      disabled={!account}>
+      <View style={styles.container}>
+        <Text style={styles.title}>{t('page.perps.title')}</Text>
+        {account ? (
           <View style={styles.addressContainer}>
             <WalletIcon
               style={styles.walletIcon}
@@ -55,9 +56,9 @@ export const PerpsHeaderTitle: React.FC<{
               lineColor={colors2024['neutral-title-1']}
             />
           </View>
-        </TouchableOpacity>
-      ) : null}
-    </View>
+        ) : null}
+      </View>
+    </TouchableOpacity>
   );
 };
 
