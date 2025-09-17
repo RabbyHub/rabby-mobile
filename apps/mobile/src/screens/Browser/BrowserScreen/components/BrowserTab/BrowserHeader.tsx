@@ -16,7 +16,7 @@ import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { IS_IOS } from '@/core/native/utils';
 import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
-import { useMyAccounts } from '@/hooks/account';
+import { useLastedTxAccount, useMyAccounts } from '@/hooks/account';
 import {
   RcIconBack1CC,
   RcIconTabsCC,
@@ -28,6 +28,7 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { CurrentDappPopup } from './CurrentDappPopup';
+import { useGetDappAccount } from '@/hooks/useDapps';
 
 export function BrowserHeader({
   dapp,
@@ -54,17 +55,7 @@ export function BrowserHeader({
 
   const { t } = useTranslation();
 
-  const { accounts } = useMyAccounts({
-    disableAutoFetch: true,
-  });
-
-  const account = useMemo(() => {
-    return (
-      dapp?.currentAccount ||
-      accounts?.[0] ||
-      preferenceService.getFallbackAccount()
-    );
-  }, [accounts, dapp?.currentAccount]);
+  const account = useGetDappAccount(dapp);
 
   const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
   const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);

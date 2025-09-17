@@ -1,13 +1,20 @@
+import { sortBy } from 'lodash';
 import { createDappBySession } from '@/core/apis/dapp';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { apisDapp } from '@/core/apis';
 import { DappInfo } from '@/core/services/dappService';
 import { type Account } from '@/core/services/preference';
-import { dappService } from '@/core/services/shared';
+import {
+  dappService,
+  preferenceService,
+  transactionHistoryService,
+} from '@/core/services/shared';
 import { FieldNilable, stringUtils } from '@rabby-wallet/base-utils';
 import { useMemoizedFn } from 'ahooks';
 import { atom, useAtom } from 'jotai';
+import { KeyringAccountWithAlias, useAccounts, useMyAccounts } from './account';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 export const dappServiceAtom = atom<FieldNilable<typeof dappService.store>>(
   dappService.store,
@@ -109,4 +116,49 @@ export function useDappCurrentAccount() {
   );
 
   return { setDappCurrentAccount };
+}
+
+export const getDappAccount = ({
+  dappInfo,
+  accounts,
+}: {
+  dappInfo?: DappInfo;
+  accounts: KeyringAccountWithAlias[];
+}) => {
+  let res = accounts.find(
+    acc =>
+      dappInfo?.currentAccount &&
+      isSameAddress(acc.address, dappInfo.currentAccount.address) &&
+      acc.type === dappInfo.currentAccount.type,
+  );
+  if (!res) {
+    const tx = sortBy(
+      transactionHistoryService.store.transactions,
+      item => -item.createdAt,
+    )[0];
+    if (tx) {
+      const txAccount = accounts.find(
+        acc =>
+          isSameAddress(acc.address, tx.address) &&
+          (tx.keyringType ? acc.type === tx.keyringType : true),
+      );
+      if (txAccount) {
+        res = txAccount;
+      }
+      console.log('find by tx', { tx, txAccount });
+    }
+  }
+  return res || accounts[0] || preferenceService.getFallbackAccount();
+};
+
+export function useGetDappAccount(dappInfo?: DappInfo) {
+  const { accounts } = useAccounts({
+    disableAutoFetch: true,
+  });
+
+  const account = useMemo(() => {
+    return getDappAccount({ dappInfo, accounts });
+  }, [accounts, dappInfo]);
+
+  return account;
 }
