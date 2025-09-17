@@ -30,7 +30,7 @@ import { formatIntlTimestamp } from '@/utils/time';
 import { useRoute } from '@react-navigation/native';
 import { getAlianName } from '@/core/apis/contact';
 import { ellipsisAddress } from '@/utils/address';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { getChain } from '@/utils/chain';
@@ -157,7 +157,7 @@ export const AddressItemInDetail = ({
     );
 
     if (idx > -1) {
-      navigate(RootNames.SingleAddressStack, {
+      navigateDeprecated(RootNames.SingleAddressStack, {
         screen: RootNames.SingleAddressHome,
         params: {
           account: accounts[idx],

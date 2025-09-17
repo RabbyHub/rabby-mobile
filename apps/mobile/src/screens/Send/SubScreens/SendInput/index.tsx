@@ -3,7 +3,7 @@ import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
 import {
   Keyboard,
@@ -142,7 +142,7 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
   }, [scanner]);
   useEffect(() => {
     if (navParams?.autoScan) {
-      navigate(RootNames.Scanner);
+      navigateDeprecated(RootNames.Scanner);
     }
   }, [navParams?.autoScan]);
 
@@ -236,7 +236,7 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
                   <TouchableOpacity
                     style={ctx.wrapperStyle}
                     onPress={() => {
-                      navigate(RootNames.Scanner);
+                      navigateDeprecated(RootNames.Scanner);
                     }}>
                     <ScannerCC
                       style={ctx.iconStyle}

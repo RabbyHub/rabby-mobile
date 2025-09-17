@@ -9,7 +9,7 @@ import ScannerCC from '@/assets2024/icons/common/scanner-cc.svg';
 import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { isValidHexAddress, Hex } from '@metamask/utils';
 import {
   Keyboard,
@@ -250,7 +250,7 @@ const WhitelistInputScreen = () => {
   }, [scanner]);
   useEffect(() => {
     if (navParams?.autoScan) {
-      navigate(RootNames.Scanner);
+      navigateDeprecated(RootNames.Scanner);
     }
   }, [navParams?.autoScan]);
   useEffect(() => {
@@ -344,7 +344,7 @@ const WhitelistInputScreen = () => {
                       />
                       <TouchableOpacity
                         onPress={() => {
-                          navigate(RootNames.Scanner);
+                          navigateDeprecated(RootNames.Scanner);
                         }}>
                         <ScannerCC
                           style={ctx.iconStyle}

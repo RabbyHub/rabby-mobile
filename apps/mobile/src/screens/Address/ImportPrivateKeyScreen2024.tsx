@@ -4,7 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { apiPrivateKey } from '@/core/apis';
-import { navigate, replaceToFirst } from '@/utils/navigation';
+import { navigateDeprecated, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
@@ -173,7 +173,7 @@ export const ImportPrivateKeyScreen2024 = () => {
                   <TouchableView
                     style={ctx.wrapperStyle}
                     onPress={() => {
-                      navigate(RootNames.Scanner);
+                      navigateDeprecated(RootNames.Scanner);
                     }}>
                     <RcIconScannerCC
                       style={ctx.iconStyle}

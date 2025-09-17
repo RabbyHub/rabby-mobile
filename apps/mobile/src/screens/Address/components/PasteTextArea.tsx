@@ -16,7 +16,7 @@ import { toast } from '@/components/Toast';
 import { useTranslation } from 'react-i18next';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -105,7 +105,7 @@ export const PasteTextArea: React.FC<Props> = ({
   }, [onChange, t]);
 
   const onPressScan = React.useCallback(() => {
-    navigate(RootNames.Scanner);
+    navigateDeprecated(RootNames.Scanner);
   }, []);
 
   return (

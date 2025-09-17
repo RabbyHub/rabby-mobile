@@ -20,7 +20,7 @@ import { useChainList } from '@/hooks/useChainList';
 import { FooterButton } from '../FooterButton/FooterButton';
 import { RcIconAddCircle } from '@/assets/icons/address';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { Account } from '@/core/services/preference';
@@ -221,7 +221,7 @@ export default function SelectSortedChain({
           }
           onPress={() => {
             onClose?.();
-            navigate(RootNames.StackSettings, {
+            navigateDeprecated(RootNames.StackSettings, {
               screen: RootNames.CustomTestnet,
             });
           }}

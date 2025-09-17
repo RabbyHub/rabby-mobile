@@ -479,6 +479,7 @@ export default function AppNavigation({
       {/* <GlobalAccountSwitcherStub /> */}
       <NavigationIndependentTree>
         <NavigationContainer
+          navigationInChildEnabled
           linking={linking}
           ref={navigationRef}
           // key={userId}

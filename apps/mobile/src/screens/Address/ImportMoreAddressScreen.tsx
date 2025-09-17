@@ -8,7 +8,7 @@ import {
   apiOneKey,
 } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import {
   HARDWARE_KEYRING_TYPES,
   KEYRING_CLASS,
@@ -373,7 +373,7 @@ export const ImportMoreAddressScreen = () => {
           true,
         )
           .then(() => {
-            navigate(RootNames.StackAddress, {
+            navigateDeprecated(RootNames.StackAddress, {
               screen: RootNames.ImportSuccess,
               params: {
                 type: hdType,
@@ -400,7 +400,7 @@ export const ImportMoreAddressScreen = () => {
         await apiHD?.importAddress(acc.index - 1);
       }
 
-      navigate(RootNames.StackAddress, {
+      navigateDeprecated(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess,
         params: {
           type: hdType,

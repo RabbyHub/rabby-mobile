@@ -22,7 +22,7 @@ import { RcIconAddCircle } from '@/assets/icons/address';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { Account } from '@/core/services/preference';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
@@ -199,7 +199,7 @@ export default function SelectSortedChain({
           icon={<RcIconAddCircle color={colors['neutral-title-2']} />}
           onPress={() => {
             onClose?.();
-            navigate(RootNames.StackSettings, {
+            navigateDeprecated(RootNames.StackSettings, {
               screen: RootNames.CustomTestnet,
             });
           }}

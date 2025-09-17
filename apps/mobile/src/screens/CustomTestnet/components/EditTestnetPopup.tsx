@@ -33,7 +33,7 @@ import { ModalLayouts, RootNames } from '@/constant/layout';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import AutoLockView from '@/components/AutoLockView';
 import { ConfirmModifyRpcModal } from './ConfirmModifyRpcModal';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 
 export const EditCustomTestnetPopup = ({
   data,
@@ -236,7 +236,7 @@ export const EditCustomTestnetPopup = ({
         onConfirm={() => {
           setIsShowModifyRpcModal(false);
           onCancel?.();
-          navigate(RootNames.StackSettings, {
+          navigateDeprecated(RootNames.StackSettings, {
             screen: RootNames.CustomRPC,
             params: {
               chainId: formik.values.id!,

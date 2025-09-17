@@ -13,7 +13,7 @@ import { CombineTokensItem } from '@/screens/Home/hooks/store';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 interface Props {
@@ -37,7 +37,7 @@ export const TokenArea: React.FC<Props> = ({
         a => isSameAddress(a.address, item.address) && item.type === a.type,
       );
       if (account) {
-        navigate(RootNames.SingleAddressStack, {
+        navigateDeprecated(RootNames.SingleAddressStack, {
           screen: RootNames.SingleAddressHome,
           params: {
             account: account,

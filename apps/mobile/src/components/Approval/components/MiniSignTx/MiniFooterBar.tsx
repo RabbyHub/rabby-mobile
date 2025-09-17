@@ -8,7 +8,7 @@ import { DappInfo } from '@/core/services/dappService';
 import { Account } from '@/core/services/preference';
 import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { MiniApprovalTaskType } from '@/hooks/useMiniApprovalTask';
-import { navigate } from '@/utils/navigation';
+import { navigateDeprecated } from '@/utils/navigation';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
@@ -468,7 +468,7 @@ export const MiniFooterBar: React.FC<Props> = ({
               }}
               onGotoGasAccount={() => {
                 rejectApproval?.();
-                navigate(RootNames.StackTransaction, {
+                navigateDeprecated(RootNames.StackTransaction, {
                   screen: RootNames.GasAccount,
                   params: {},
                 });
@@ -487,7 +487,7 @@ export const MiniFooterBar: React.FC<Props> = ({
               onDeposit={onDeposit}
               onGotoGasAccount={() => {
                 rejectApproval?.();
-                navigate(RootNames.StackTransaction, {
+                navigateDeprecated(RootNames.StackTransaction, {
                   screen: RootNames.GasAccount,
                   params: {},
                 });
@@ -613,7 +613,7 @@ export const MiniFooterBar: React.FC<Props> = ({
                   }}
                   onGotoGasAccount={() => {
                     rejectApproval?.();
-                    navigate(RootNames.StackTransaction, {
+                    navigateDeprecated(RootNames.StackTransaction, {
                       screen: RootNames.GasAccount,
                       params: {},
                     });
@@ -634,7 +634,7 @@ export const MiniFooterBar: React.FC<Props> = ({
                   onDeposit={onDeposit}
                   onGotoGasAccount={() => {
                     rejectApproval?.();
-                    navigate(RootNames.StackTransaction, {
+                    navigateDeprecated(RootNames.StackTransaction, {
                       screen: RootNames.GasAccount,
                       params: {},
                     });
