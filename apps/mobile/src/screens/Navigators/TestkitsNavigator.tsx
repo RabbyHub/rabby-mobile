@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
-import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { registerAppScreen } from '@/perfs/apis';
 import {
@@ -60,7 +60,7 @@ const DevDataSQLite = registerAppScreen<
   name: TESTKITS_PRELOAD_SCREENS.DevDataSQLite,
 });
 
-const Stack = createCustomNativeStackNavigator();
+const Stack = createNativeStackNavigator();
 
 // devOnlyDelayNavi(
 //   ({ naviPush, RootNames }) => {
@@ -84,7 +84,7 @@ export function TestkitsNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        statusBarColor: colors['blue-default'],
+        statusBarBackgroundColor: colors['blue-default'],
       }}>
       <Stack.Screen
         name={RootNames.NewUserGetStarted2024}

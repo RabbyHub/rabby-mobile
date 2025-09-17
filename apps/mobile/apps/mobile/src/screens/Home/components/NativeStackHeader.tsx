@@ -1,110 +1,101 @@
+// pick from file:///./../../../../node_modules/@react-navigation/native-stack/src/views/NativeStackView.tsx
+// @see file:///./../../../../node_modules/@react-navigation/elements/src/Header/Header.tsx
+
+import { Image } from 'react-native';
 import {
-  getHeaderTitle,
   Header,
+  getHeaderTitle,
   HeaderBackButton,
 } from '@react-navigation/elements';
-
-import * as React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
-
 import { NativeStackHeaderProps } from '@react-navigation/native-stack';
+import { StyleSheet } from 'react-native';
+import { makeDebugBorder } from '@/utils/styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export function ScreenHeader({
-  headerHeight,
-  canGoBack,
-  nativeHeaderProps,
-}: {
-  headerHeight?: number;
-  canGoBack: boolean;
-  nativeHeaderProps: NativeStackHeaderProps;
-}) {
-  const { options, route, navigation } = nativeHeaderProps;
+export function HomeNativeStackHeader(props: NativeStackHeaderProps) {
+  const { options, navigation, route } = props;
+
+  const canGoBack = true;
 
   const {
-    header,
-    headerShown,
     headerTintColor,
     headerBackImageSource,
     headerLeft,
     headerRight,
     headerTitle,
-    headerTitleAlign,
-    headerTitleStyle,
     headerStyle,
     headerShadowVisible,
     headerTransparent,
-    headerBackground,
     headerBackTitle,
-    presentation,
-    contentStyle,
   } = options;
 
-  const finalHeaderStyle = StyleSheet.flatten([
-    headerStyle,
-    headerHeight && { height: headerHeight },
-  ]);
+  const insets = useSafeAreaInsets();
 
   return (
     <Header
       title={getHeaderTitle(options, route.name)}
       headerTintColor={headerTintColor}
+      headerLeftContainerStyle={{
+        // ...makeDebugBorder(),
+        paddingLeft: 8,
+      }}
       headerLeft={
         typeof headerLeft === 'function'
-          ? ({ tintColor }) =>
+          ? ({ label, ...rest }) =>
               headerLeft({
-                tintColor,
-                canGoBack,
-                label: headerBackTitle,
+                ...rest,
+                label: headerBackTitle ?? label,
               })
           : headerLeft === undefined && canGoBack
-          ? ({ tintColor }) => (
+          ? ({ tintColor, label, ...rest }) => (
               <HeaderBackButton
+                {...rest}
+                label={headerBackTitle ?? label}
                 tintColor={tintColor}
                 backImage={
                   headerBackImageSource !== undefined
                     ? () => (
                         <Image
                           source={headerBackImageSource}
-                          style={[styles.backImage, { tintColor }]}
+                          resizeMode="contain"
+                          tintColor={tintColor}
+                          style={styles.backImage}
                         />
                       )
                     : undefined
                 }
                 onPress={navigation.goBack}
-                canGoBack={canGoBack}
               />
             )
           : headerLeft
+      }
+      headerTitleContainerStyle={
+        {
+          // ...makeDebugBorder('pink')
+        }
       }
       headerRight={
         typeof headerRight === 'function'
           ? ({ tintColor }) => headerRight({ tintColor, canGoBack })
           : headerRight
       }
+      headerRightContainerStyle={{
+        paddingRight: 12,
+      }}
       headerTitle={
         typeof headerTitle === 'function'
           ? ({ children, tintColor }) => headerTitle({ children, tintColor })
           : headerTitle
       }
-      headerTitleAlign={headerTitleAlign}
-      headerTitleStyle={headerTitleStyle}
       headerTransparent={headerTransparent}
       headerShadowVisible={headerShadowVisible}
-      headerBackground={headerBackground}
-      // @ts-expect-error
-      headerStyle={finalHeaderStyle}
+      headerStyle={[styles.header, headerStyle]}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    flex: 1,
-  },
+  header: {},
   backImage: {
     height: 24,
     width: 24,
@@ -112,11 +103,3 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 });
-
-ScreenHeader.SafeContainer = function ScreenHeaderContainer({
-  children,
-}: React.PropsWithChildren<RNViewProps>) {
-  const { top } = useSafeAreaInsets();
-
-  return <View style={{ top }}>{children}</View>;
-};

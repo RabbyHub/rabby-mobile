@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import React from 'react';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { useTheme2024 } from '@/hooks/theme';
 import { AddressListScreen } from '@/screens/Address/AddressListScreen';
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
@@ -52,8 +52,7 @@ import { SyncExtensionPasswordScreen } from '../SyncExtension/SyncExtensionPassw
 import { SyncExtensionAccountSuccessfulScreen } from '../SyncExtension/SyncExtensionAccountSuccessScreen';
 import { AddressAssetsOverview } from '@/screens/Address/AddressAssetsOverviewScreen';
 
-const AddressStack =
-  createCustomNativeStackNavigator<AddressNavigatorParamList>();
+const AddressStack = createNativeStackNavigator<AddressNavigatorParamList>();
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   headerRight: {
@@ -218,7 +217,7 @@ export function AddressNavigator() {
         options={{
           title: t('screens.addressStackTitle.ImportSuccess'),
           headerTintColor: colors2024['neutral-bg-1'],
-          statusBarColor: colors2024['neutral-bg-1'],
+          statusBarBackgroundColor: colors2024['neutral-bg-1'],
         }}
       />
       <AddressStack.Screen

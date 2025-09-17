@@ -1,4 +1,5 @@
-// pick from apps/mobile/node_modules/@react-navigation/native-stack/src/views/NativeStackView.tsx
+// pick from file:///./../../../../node_modules/@react-navigation/native-stack/src/views/NativeStackView.tsx
+// @see file:///./../../../../node_modules/@react-navigation/elements/src/Header/Header.tsx
 
 import { Image } from 'react-native';
 import {
@@ -8,14 +9,10 @@ import {
 } from '@react-navigation/elements';
 import { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { StyleSheet } from 'react-native';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeDebugBorder } from '@/utils/styles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-/**
- * @deprecated we haven't understand the render mechanism in @react-navigation/native-stack,
- * don't use it now
- */
-export function renderNativeStackHeader(props: NativeStackHeaderProps) {
+export function HomeNativeStackHeader(props: NativeStackHeaderProps) {
   const { options, navigation, route } = props;
 
   const canGoBack = true;
@@ -26,68 +23,79 @@ export function renderNativeStackHeader(props: NativeStackHeaderProps) {
     headerLeft,
     headerRight,
     headerTitle,
-    headerTitleAlign,
-    headerTitleStyle,
     headerStyle,
     headerShadowVisible,
     headerTransparent,
-    headerBackground,
     headerBackTitle,
   } = options;
+
+  const insets = useSafeAreaInsets();
 
   return (
     <Header
       title={getHeaderTitle(options, route.name)}
       headerTintColor={headerTintColor}
+      headerLeftContainerStyle={{
+        // ...makeDebugBorder(),
+        paddingLeft: 8,
+      }}
       headerLeft={
         typeof headerLeft === 'function'
-          ? ({ tintColor }) =>
+          ? ({ label, ...rest }) =>
               headerLeft({
-                tintColor,
-                canGoBack,
-                label: headerBackTitle,
+                ...rest,
+                label: headerBackTitle ?? label,
               })
           : headerLeft === undefined && canGoBack
-          ? ({ tintColor }) => (
+          ? ({ tintColor, label, ...rest }) => (
               <HeaderBackButton
+                {...rest}
+                label={headerBackTitle ?? label}
                 tintColor={tintColor}
                 backImage={
                   headerBackImageSource !== undefined
                     ? () => (
                         <Image
                           source={headerBackImageSource}
-                          style={[styles.backImage, { tintColor }]}
+                          resizeMode="contain"
+                          tintColor={tintColor}
+                          style={styles.backImage}
                         />
                       )
                     : undefined
                 }
                 onPress={navigation.goBack}
-                canGoBack={canGoBack}
               />
             )
           : headerLeft
+      }
+      headerTitleContainerStyle={
+        {
+          // ...makeDebugBorder('pink')
+        }
       }
       headerRight={
         typeof headerRight === 'function'
           ? ({ tintColor }) => headerRight({ tintColor, canGoBack })
           : headerRight
       }
+      headerRightContainerStyle={{
+        paddingRight: 12,
+      }}
       headerTitle={
         typeof headerTitle === 'function'
           ? ({ children, tintColor }) => headerTitle({ children, tintColor })
           : headerTitle
       }
-      headerTitleAlign={headerTitleAlign}
-      headerTitleStyle={headerTitleStyle}
       headerTransparent={headerTransparent}
       headerShadowVisible={headerShadowVisible}
-      headerBackground={headerBackground}
-      headerStyle={headerStyle}
+      headerStyle={[styles.header, headerStyle]}
     />
   );
 }
 
 const styles = StyleSheet.create({
+  header: {},
   backImage: {
     height: 24,
     width: 24,

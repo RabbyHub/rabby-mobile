@@ -36,7 +36,7 @@ import { default as RcIconEyeCloseCC } from '@/assets/icons/receive/eye-close-cc
 import { RcArrowRightCC } from '@/assets/icons/common';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useGnosisNetworks } from '@/hooks/gnosis/useGnosisNetworks';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 
 function ReceiveScreen(): JSX.Element {
   const [selectedChain, setSelectedChain] = useState<CHAINS_ENUM | null>(null);
@@ -45,10 +45,7 @@ function ReceiveScreen(): JSX.Element {
 
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
-        'TransactionNavigatorParamList',
-        'Receive'
-      >['route']
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'Receive'>
     >();
 
   const account = route.params.account;

@@ -2,6 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type {
   CompositeScreenProps,
   NavigatorScreenParams,
+  RouteProp,
 } from '@react-navigation/native';
 
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -430,10 +431,17 @@ export type GetNestedScreensParamsList<
   T extends _NestedScreensParamsName,
   K extends keyof _NestedScreensParamsDict[T] & string,
 > = _NestedScreensParamsDict[T][K];
+
+/** @deprecated use `GetNestedScreenRouteProp` directly */
 export type GetNestedScreenNavigationProps<
   T extends _NestedScreensParamsName,
   K extends keyof _NestedScreensParamsDict[T] & string,
 > = CompositeScreenProps<
+  // @ts-expect-error
   NativeStackScreenProps<_NestedScreensParamsDict[T], K>,
   NativeStackScreenProps<RootStackParamsList>
 >;
+export type GetNestedScreenRouteProp<
+  T extends _NestedScreensParamsName,
+  K extends keyof _NestedScreensParamsDict[T] & string,
+> = RouteProp<_NestedScreensParamsDict[T], K>;

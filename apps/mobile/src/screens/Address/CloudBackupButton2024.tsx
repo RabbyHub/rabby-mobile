@@ -1,5 +1,5 @@
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript/src/types';
+import { NativeStackHeaderRightProps } from '@react-navigation/native-stack';
 import React from 'react';
 import { IS_IOS } from '@/core/native/utils';
 import { Image, Keyboard } from 'react-native';
@@ -18,7 +18,9 @@ const hitSlop = {
 };
 
 /** @deprecated */
-export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
+export const CloudBackupButton2024: React.FC<
+  NativeStackHeaderRightProps
+> = ({}) => {
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const onPress = React.useCallback(() => {

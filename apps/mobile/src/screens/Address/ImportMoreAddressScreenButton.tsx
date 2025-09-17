@@ -5,7 +5,7 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { RcIconHeaderSettings } from '@/assets/icons/home';
-import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript/src/types';
+import { NativeStackHeaderRightProps } from '@react-navigation/native-stack';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -18,9 +18,9 @@ const hitSlop = {
   right: 10,
 };
 
-export const ImportMoreAddressScreenButton: React.FC<HeaderButtonProps> = ({
-  tintColor,
-}) => {
+export const ImportMoreAddressScreenButton: React.FC<
+  NativeStackHeaderRightProps
+> = ({ tintColor }) => {
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportMoreAddress)?.params,
   ) as {

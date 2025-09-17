@@ -10,8 +10,9 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalScreenContainer';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useRoute } from '@react-navigation/native';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RightArea } from './SingleHomeRightArea';
+import { HomeNativeStackHeader } from './components/NativeStackHeader';
 
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
@@ -20,10 +21,10 @@ function HomeScreen(): JSX.Element {
   const fadeAnim = React.useRef(new Animated.Value(1)).current;
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
+      GetNestedScreenRouteProp<
         'SingleAddressNavigatorParamList',
         'SingleAddressHome'
-      >['route']
+      >
     >();
   const currentAccount = route?.params?.account;
   const { triggerUpdate } = useTriggerHomeBalanceUpdate();
@@ -68,6 +69,7 @@ function HomeScreen(): JSX.Element {
 
   React.useEffect(() => {
     setNavigationOptions({
+      header: props => <HomeNativeStackHeader {...props} />,
       headerTitle: renderHeaderTitle,
       headerRight: renderHeaderRight,
     });

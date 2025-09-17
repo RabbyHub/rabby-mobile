@@ -4,10 +4,7 @@ import {
 } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { TransactionNavigatorParamList } from '@/navigation-type';
-import {
-  UNSTABLE_usePreventRemove,
-  useNavigationState,
-} from '@react-navigation/native';
+import { usePreventRemove, useNavigationState } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -139,7 +136,7 @@ export const BatchRevokeScreen = () => {
   const [accountDepositVisible, setAccountDepositVisible] =
     React.useState(false);
 
-  UNSTABLE_usePreventRemove(
+  usePreventRemove(
     task.status !== 'idle' &&
       task.status !== 'completed' &&
       !accountDepositVisible,
