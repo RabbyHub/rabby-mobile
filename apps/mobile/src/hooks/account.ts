@@ -4,6 +4,7 @@ import { atom, useAtom } from 'jotai';
 import {
   KeyringAccount,
   CORE_KEYRING_TYPES,
+  KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 import * as Sentry from '@sentry/react-native';
 
@@ -234,7 +235,14 @@ export const usePinnedAccountList = (opts?: { disableAutoFetch?: boolean }) => {
           account.brandName === pinAddr.brandName
         );
       });
-      if (acc) {
+      if (
+        acc &&
+        ![
+          KEYRING_TYPE.GnosisKeyring,
+          KEYRING_TYPE.WatchAddressKeyring,
+          KEYRING_TYPE.WalletConnectKeyring,
+        ].includes(acc.type)
+      ) {
         res.push(acc);
       }
     });
