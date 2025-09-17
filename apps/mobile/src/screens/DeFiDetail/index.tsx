@@ -287,11 +287,11 @@ export const DeFiDetailScreen = () => {
 
   const sectionsMultiProject = useMemo(() => {
     const sectionsList: SectionListItem[] = [];
-    if (isSingleAddress && data) {
-      const currAddressPortfolio = currentPortfolio.find(
-        item => item.id === routeData.id,
+    if (isSingleAddress) {
+      const currAddressPortfolio = currentPortfolio?.find(
+        item => item.id === data?.id,
       );
-      if (!currAddressPortfolio) {
+      if (!currAddressPortfolio || !data) {
         return sectionsList;
       }
       sectionsList.push({
@@ -352,7 +352,6 @@ export const DeFiDetailScreen = () => {
     finalAccount.type,
     finalAccount.address,
     finalAccount.aliasName,
-    routeData.id,
   ]);
 
   // 来自同一个地址的totalUsdValue不重复计算
