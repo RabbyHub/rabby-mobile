@@ -121,7 +121,7 @@ export const PerpsAccountSelectorItem: React.FC<{
               <>
                 {info ? (
                   <View style={styles.perpsInfo}>
-                    <Text style={styles.addressUsdValue}>
+                    <Text style={styles.perpsUsdValue}>
                       {formatUsdValue(
                         Number(info?.marginSummary.accountValue || 0),
                       )}
@@ -136,7 +136,9 @@ export const PerpsAccountSelectorItem: React.FC<{
                         {splitNumberByStep(Math.abs(positionAllPnl).toFixed(2))}
                       </Text>
                     ) : (
-                      <Text style={styles.noPositionText}>No Position</Text>
+                      <Text style={styles.noPositionText}>
+                        {t('page.perps.PerpsAccountSelectorPopup.noPosition')}
+                      </Text>
                     )}
                   </View>
                 ) : null}
@@ -313,6 +315,14 @@ const getStyle = createGetStyles2024(ctx => {
     },
     pnlGreen: {
       color: colors2024['green-default'],
+    },
+    perpsUsdValue: {
+      fontFamily: 'SF Pro Rounded',
+      fontSize: 17,
+      fontStyle: 'normal',
+      fontWeight: '700',
+      lineHeight: 22,
+      color: ctx.colors2024['neutral-title-1'],
     },
   };
 });

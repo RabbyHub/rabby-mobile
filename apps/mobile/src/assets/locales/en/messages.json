@@ -2265,9 +2265,10 @@
       "leverageRangeMaxError": "The maximum leverage is {{max}}x",
       "PerpsAccountSelectorPopup": {
         "lastUsed": "Last Used",
-        "activatedAddress": "Activated wallet",
-        "hyperliquidBalance": "HyperLiquid Balance",
-        "notActivatedAddress": "Not Activated wallet"
+        "activatedAddress": "Activated",
+        "hyperliquidBalance": "Perps Balance",
+        "notActivatedAddress": "Not Activated",
+        "noPosition": "No Position"
       }
     },
     "perpsDetail": {

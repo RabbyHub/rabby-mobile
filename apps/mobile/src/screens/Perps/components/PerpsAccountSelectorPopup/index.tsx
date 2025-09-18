@@ -10,7 +10,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { ClearinghouseState } from '@rabby-wallet/hyperliquid-sdk';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { sortBy } from 'lodash';
+import { keyBy, sortBy, uniqBy } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
@@ -60,12 +60,25 @@ export const PerpsAccountSelectorPopup: React.FC<{
 
   const { data: _data, runAsync: runFetchPerpsInfo } = useRequest(
     async () => {
-      const res = await Promise.allSettled(
-        myAddresses.slice(0, 10).map(async item => {
-          const info = await sdk.info.getClearingHouseState(item.address);
-          return info;
+      const list = uniqBy(myAddresses, i => i.address.toLowerCase());
+      const res = await Promise.all(
+        list.slice(0, 10).map(async item => {
+          try {
+            const info = await sdk.info.getClearingHouseState(item.address);
+            return {
+              address: item.address,
+              info,
+            };
+          } catch (e) {
+            return {
+              address: item.address,
+              info: null,
+            };
+          }
         }),
       );
+
+      const resDict = keyBy(res, item => item.address.toLowerCase());
 
       const dict = {
         active: [],
@@ -74,21 +87,25 @@ export const PerpsAccountSelectorPopup: React.FC<{
         string,
         { info?: ClearinghouseState; account: KeyringAccountWithAlias }[]
       >;
-      res.map((item, index) => {
+      myAddresses.forEach((account, index) => {
+        const item = resDict[account.address.toLowerCase()];
         if (
-          item.status === 'fulfilled' &&
-          (item.value.assetPositions.length ||
-            +item.value.marginSummary > 0 ||
-            +item.value.withdrawable > 0)
+          item?.info &&
+          (item.info.assetPositions.length ||
+            +item.info.marginSummary > 0 ||
+            +item.info.withdrawable > 0)
         ) {
-          dict.active.push({ info: item.value, account: myAddresses[index] });
+          dict.active.push({
+            info: {
+              ...item.info,
+            },
+            account: account,
+          });
         } else {
-          dict.inactive.push({ account: myAddresses[index] });
+          dict.inactive.push({ account: account });
         }
       });
-      dict.inactive.push(
-        ...myAddresses.slice(10).map(item => ({ account: item })),
-      );
+
       dict.active = sortBy(
         dict.active,
         item => -(item.info?.marginSummary.accountValue || 0),
@@ -345,7 +362,7 @@ const getModalStyle = createGetStyles2024(ctx => {
       textAlign: 'center',
     },
     section: {
-      marginBottom: 8,
+      marginBottom: 12,
     },
     sectionHeader: {
       display: 'flex',
@@ -353,11 +370,11 @@ const getModalStyle = createGetStyles2024(ctx => {
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: 6,
-      marginBottom: 12,
+      marginBottom: 8,
     },
     sectionTitle: {
-      fontSize: 17,
-      lineHeight: 22,
+      fontSize: 16,
+      lineHeight: 20,
       fontWeight: '400',
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',

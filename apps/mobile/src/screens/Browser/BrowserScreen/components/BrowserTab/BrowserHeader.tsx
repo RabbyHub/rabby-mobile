@@ -1,15 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import {
   Image,
-  Platform,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
 
-import { RcNextSearchCC } from '@/assets/icons/common';
 import { RcIconDisconnectCC } from '@/assets/icons/dapp';
+import {
+  RcIconBack1CC,
+  RcIconTabsCC,
+  ReactIconHome,
+} from '@/assets2024/icons/browser';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
@@ -17,11 +20,6 @@ import { IS_IOS } from '@/core/native/utils';
 import { dappService, preferenceService } from '@/core/services';
 import { DappInfo } from '@/core/services/dappService';
 import { useMyAccounts } from '@/hooks/account';
-import {
-  RcIconBack1CC,
-  RcIconTabsCC,
-  ReactIconHome,
-} from '@/assets2024/icons/browser';
 import { useTheme2024 } from '@/hooks/theme';
 import { getAddressBarTitle, isGoogle } from '@/utils/browser';
 import { findChain } from '@/utils/chain';
