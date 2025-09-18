@@ -229,7 +229,7 @@ const Details = ({
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState(DetailsTabKey.buy);
+  const [activeTab, setActiveTab] = useState(DetailsTabKey.all);
 
   const service = useCallback(
     async (d?: {
@@ -332,7 +332,11 @@ const Details = ({
           <Text style={styles.ratioItem}>
             {formatAmountValueKMB(item.amount)}
           </Text>
-          <Text style={styles.amountItem}>
+          <Text
+            style={[
+              styles.amountItem,
+              isBuy ? styles.amountItemGreen : styles.amountItemRed,
+            ]}>
             {formatUsdValueKMB(item.usd_value)}
           </Text>
           <View style={styles.addressItem}>
@@ -342,18 +346,20 @@ const Details = ({
       );
     },
     [
+      styles.tableRow,
+      styles.hideBottomBorder,
       styles.actionAndTime,
-      styles.addressItem,
-      styles.amountItem,
       styles.chatTopText,
       styles.chatTopTextRight,
-      styles.hideBottomBorder,
+      styles.timeAtItem,
       styles.indexItem,
       styles.ratioItem,
-      styles.tableRow,
-      styles.timeAtItem,
-      t,
+      styles.amountItem,
+      styles.amountItemGreen,
+      styles.amountItemRed,
+      styles.addressItem,
       list.length,
+      t,
     ],
   );
   const footerRef = useRef<any>(null);
@@ -717,9 +723,15 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   amountItem: {
     fontSize: 12,
     fontWeight: '500',
-    color: colors2024['neutral-title-1'],
+    color: colors2024['green-default'],
     fontFamily: 'SF Pro Rounded',
     flex: 1,
+  },
+  amountItemGreen: {
+    color: colors2024['green-default'],
+  },
+  amountItemRed: {
+    color: colors2024['red-default'],
   },
   addressItem: {
     display: 'flex',
