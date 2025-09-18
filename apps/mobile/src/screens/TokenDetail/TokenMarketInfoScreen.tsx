@@ -753,10 +753,12 @@ export const TokenMarketInfoScreen = () => {
                 />
               )} */}
             </View>
-            <ActivityAndHolders
-              tokenId={token._tokenId}
-              chainId={token.chain}
-            />
+            {!!tokenWithAmount?.support_market_data && (
+              <ActivityAndHolders
+                tokenId={token._tokenId}
+                chainId={token.chain}
+              />
+            )}
             <View style={{ height: isAndroid ? 200 + safeOffBottom : 156 }} />
           </ScrollView>
         </Tabs.Tab>
