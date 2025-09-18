@@ -21,64 +21,11 @@ import {
 } from '../../util';
 import { formatPrice } from '@/utils/number';
 import AddressView from './AddressView';
-// import { openapi } from '@/core/request';
-import { getMarketTradingHistory } from './mock';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
-
-const mockSummaryData = {
-  '5m': {
-    price: { open: 0.208, close: 0.21, change: 0.9611 },
-    summary: {
-      buy: { count: 3210, volume_amount: 185432.12 },
-      sell: { count: 2198, volume_amount: 171003.55 },
-      totals: {
-        trading_count: 6118,
-        volume_usd_value: 3516435.67,
-        volume_amount: 3122312.312,
-        addresses: 5211,
-      },
-    },
-  },
-  '1h': {
-    price: { open: 0.208, close: 0.21, change: 0.162 },
-    summary: {
-      buy: { count: 320, volume_amount: 185432.12 },
-      sell: { count: 298, volume_amount: 171003.55 },
-      totals: {
-        trading_count: 618,
-        volume_usd_value: 356435.67,
-        volume_amount: 312312312.312,
-        addresses: 521,
-      },
-    },
-  },
-  '6h': {
-    price: { open: 0.208, close: 0.21, change: 0.2 },
-    summary: {
-      buy: { count: 320, volume_amount: 185432.12 },
-      sell: { count: 298, volume_amount: 171003.55 },
-      totals: {
-        trading_count: 618,
-        volume_usd_value: 356435.67,
-        volume_amount: 312312312.312,
-        addresses: 521,
-      },
-    },
-  },
-  '24h': {
-    price: { open: 0.208, close: 0.21, change: 0.46 },
-    summary: {
-      buy: { count: 320, volume_amount: 185432.12 },
-      sell: { count: 298, volume_amount: 171003.55 },
-      totals: {
-        trading_count: 618,
-        volume_usd_value: 356435.67,
-        volume_amount: 312312312.312,
-        addresses: 521,
-      },
-    },
-  },
-};
+import { useRequest } from 'ahooks';
+import { openapi } from '@/core/request';
+import { uniqBy } from 'lodash';
+import { Service } from 'ahooks/lib/useInfiniteScroll/types';
 
 interface ISummaryData {
   data?: MarketSummary;
@@ -290,17 +237,19 @@ const Details = ({
       nextCursor?: string;
       hasMore: boolean;
     }) => {
-      if (activeTab === DetailsTabKey.all) {
-        return { list: [], nextCursor: undefined, hasMore: false };
-      }
-      const res = await getMarketTradingHistory({
+      const res = await openapi.getMarketTradingHistory({
         token_id: tokenId,
         chain_id: chainId,
-        action: activeTab,
+        action: activeTab === DetailsTabKey.all ? undefined : activeTab,
         limit: 20,
         cursor: d?.nextCursor,
       });
-      const page = res?.page || {};
+      console.log(
+        'CUSTOM_LOGGER:=>: res',
+        res?.data_list?.length,
+        res?.pagination?.has_next,
+      );
+      const page = res?.pagination || {};
       const merged = [...(res?.data_list || [])];
       return {
         list: merged,
@@ -311,11 +260,21 @@ const Details = ({
     [activeTab, chainId, tokenId],
   );
 
-  const { data, loadMore, reloadAsync } = useInfiniteScroll(service, {
-    isNoMore: d => (d ? !d.hasMore : false),
-  });
+  const { data, loadMore, reloadAsync, loading, loadingMore } =
+    useInfiniteScroll(
+      service as Service<{
+        list: MarketTradingHistoryItem[];
+        nextCursor?: string;
+        hasMore: boolean;
+      }>,
+      {
+        isNoMore: d => (d ? !d.hasMore : false),
+      },
+    );
 
-  const list = data?.list || [];
+  const list = useMemo(() => {
+    return uniqBy(data?.list, 'id');
+  }, [data?.list]);
 
   useEffect(() => {
     reloadAsync();
@@ -430,6 +389,9 @@ const Details = ({
     };
   }, [loadMore]);
 
+  if (loading) {
+    return null;
+  }
   return (
     <InfoContainer title={t('page.tokenDetail.marketInfo.details')}>
       {list.length > 0 ? (
@@ -510,10 +472,22 @@ const Activity = ({
   chainId: string;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { data: summaryData, loading: summaryLoading } = useRequest(
+    async () => {
+      const res = await openapi.getMarketSummary({
+        token_id: tokenId,
+        chain_id: chainId,
+      });
+      return res;
+    },
+    {
+      refreshDeps: [tokenId, chainId],
+    },
+  );
 
   return (
     <View style={styles.container}>
-      <Summary data={mockSummaryData} />
+      {!summaryLoading && <Summary data={summaryData} />}
       <Details tokenId={tokenId} chainId={chainId} />
     </View>
   );
