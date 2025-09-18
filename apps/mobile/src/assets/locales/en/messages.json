@@ -1344,6 +1344,18 @@
             "legacy": "Legacy: HD path used by MEW / Mycrypto."
           }
         },
+        "trezor": {
+          "hdPathType": {
+            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+          },
+          "hdPathTypeNoChain": {
+            "bip44": "BIP44: HDpath defined by the BIP44 protocol.",
+            "ledgerLive": "Ledger Live: Ledger official HD path.",
+            "legacy": "Legacy: HD path used by MEW / Mycrypto."
+          }
+        },
         "selectIndexTip": "Select the serial number of wallets to start from:",
         "manageAddressFrom": "Manage wallet from {{0}} to {{1}}",
         "customAddressHdPath": "Custom Wallet HD path",
