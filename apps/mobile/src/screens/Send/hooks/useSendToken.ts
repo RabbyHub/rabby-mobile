@@ -46,7 +46,7 @@ import { RootNames } from '@/constant/layout';
 import {
   useFocusEffect,
   useIsFocused,
-  useNavigationState,
+  useRoute,
 } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
@@ -65,6 +65,7 @@ import {
 import { useRecentSendPendingTx } from './useRecentSend';
 import { last } from 'lodash';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 
 function makeDefaultToken(): TokenItem & {
   tokenId?: string;
@@ -387,9 +388,12 @@ export function useSendTokenForm({
 
   const { sendTokenScreenState: screenState, putScreenState } =
     useSendTokenScreenState();
-  const multiNavParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.MultiSend)?.params,
-  );
+
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'MultiSend'>
+    >();
+  const multiNavParams = route.params;
   const [formValues, setFormValues] = React.useState<FormSendToken>({
     ...DF_SEND_TOKEN_FORM,
   });

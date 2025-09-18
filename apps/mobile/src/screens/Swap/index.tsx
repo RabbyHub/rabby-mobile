@@ -18,7 +18,7 @@ import {
   CompositeScreenProps,
   useIsFocused,
   useNavigation,
-  useNavigationState,
+  useRoute,
 } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
@@ -70,6 +70,7 @@ import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
 import { naviReplace } from '@/utils/navigation';
 import {
+  GetNestedScreenRouteProp,
   RootStackParamsList,
   TransactionNavigatorParamList,
 } from '@/navigation-type';
@@ -268,15 +269,11 @@ const Swap = ({
     () => (chain === CHAINS_ENUM.ETH ? originPreferMEVGuarded : false),
     [chain, originPreferMEVGuarded],
   );
-
-  const navState = useNavigationState(
-    s =>
-      s.routes.find(
-        r =>
-          r.name ===
-          (isForMultipleAddress ? RootNames.MultiSwap : RootNames.Swap),
-      )?.params,
-  ) as TransactionNavigatorParamList['Swap'] | undefined;
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'Swap'>
+    >();
+  const navState = route.params;
 
   useMount(() => {
     preferenceService.setReportActionTs(

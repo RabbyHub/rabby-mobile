@@ -6,7 +6,8 @@ import NormalScreenContainer2024 from '@/components2024/ScreenContainer/NormalSc
 import { WhiteListItem } from '../../components/WhiteListItem';
 import EmptyWhiteListHolder from '../../components/EmptyWhiteListHolder';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { useAccounts } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
@@ -15,11 +16,14 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils/src/types';
 
 const SelectTypeScreenScreen = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { type } = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SelectTypeAddress)?.params,
-  ) as {
-    type: 'watch' | 'safe';
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        'SelectTypeAddress'
+      >
+    >();
+  const { type } = route.params || {};
   const { accounts } = useAccounts();
   const { isAddrOnWhitelist } = useWhitelist();
   const { setNavigationOptions } = useSafeSetNavigationOptions();

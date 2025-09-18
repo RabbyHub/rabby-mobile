@@ -3,7 +3,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { RootNames } from '@/constant/layout';
 import { useNavigation, useRoute } from '@react-navigation/core';
 import {
-  GetNestedScreenNavigationProps,
+  GetNestedScreenRouteProp,
   RootStackParamsList,
 } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -23,10 +23,10 @@ export function ReceiveAddressListScreen(): JSX.Element {
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
+      GetNestedScreenRouteProp<
         'AddressNavigatorParamList',
         'ReceiveAddressList'
-      >['route']
+      >
     >();
   const handleSelect = async account => {
     const params: {

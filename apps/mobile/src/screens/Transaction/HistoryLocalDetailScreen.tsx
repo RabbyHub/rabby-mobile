@@ -32,7 +32,7 @@ import { Swap } from './components/Actions/Swap';
 import { Send } from './components/Actions/Send';
 import { useTranslation } from 'react-i18next';
 import { UnknownAction } from './components/Actions/UnknownAction';
-import { GetNestedScreenNavigationProps } from '@/navigation-type';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { KeyringAccountWithAlias, useMyAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -42,10 +42,10 @@ import { HistoryItemCateType } from './components/type';
 function HistoryLocalDetailScreen(): JSX.Element {
   const route =
     useRoute<
-      GetNestedScreenNavigationProps<
+      GetNestedScreenRouteProp<
         'TransactionNavigatorParamList',
         'HistoryLocalDetail'
-      >['route']
+      >
     >();
   const {
     data: _data,

@@ -2,6 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type {
   CompositeScreenProps,
   NavigatorScreenParams,
+  RouteProp,
 } from '@react-navigation/native';
 
 import { KeyringAccountWithAlias } from '@/hooks/account';
@@ -190,7 +191,10 @@ export type AddressNavigatorParamList = {
     delaySetPassword?: boolean;
   };
   [RootNames.ImportNewAddress]?: {};
-  [RootNames.ImportMethods]?: {};
+  [RootNames.ImportMethods]?: {
+    isNotNewUserProc?: boolean; // if has address
+    isFromEmptyAddress?: boolean;
+  };
   [RootNames.ImportSuccess]?: {
     address: string | string[];
     brandName: string;
@@ -300,22 +304,31 @@ export type TransactionNavigatorParamList = {
     type?: HistoryItemCateType;
     onPressBottomBtn?: (data: SendAction) => void;
     isInSendHistory?: boolean;
-    // sendsToken: (TokenItem | undefined)[];
-    // approveToken?: TokenItem;
-    // formatType: HistoryItemCateType;
-    // recievesToken: (TokenItem | undefined)[];
   };
-  [RootNames.Send]?: {};
+  [RootNames.Send]?:
+    | {
+        chainEnum?: CHAINS_ENUM | undefined;
+        tokenId?: TokenItem['id'];
+        toAddress?: string;
+        addressBrandName?: string;
+        addrDesc?: AddrDescResponse['desc'];
+      }
+    | {
+        safeInfo: { nonce: number; chainId: number };
+        toAddress?: string;
+        addressBrandName?: string;
+        addrDesc?: AddrDescResponse['desc'];
+      };
   [RootNames.SendTo]?: {};
   [RootNames.SendInput]?: {
     autoScan?: boolean;
   };
-  [RootNames.WhitelistInput]?: {};
+  [RootNames.WhitelistInput]?: { autoScan?: boolean };
   [RootNames.SelectImportAddress]?: {};
   [RootNames.SelectTypeAddress]?: {
     type: 'watch' | 'safe';
   };
-  [RootNames.MultiSend]?: {};
+  [RootNames.MultiSend]?: TransactionNavigatorParamList['Send'] & object;
   [RootNames.SendNFT]: {
     nftItem: NFTItem;
     collectionName?: string;
@@ -421,6 +434,8 @@ type _NestedScreensParamsDict = {
 };
 type _NestedScreensParamsName = keyof _NestedScreensParamsDict;
 
+export type GetRootScreenRouteProp<T extends keyof RootStackParamsList> =
+  RouteProp<RootStackParamsList, T>;
 export type GetRootScreensParamsList<T extends keyof RootStackParamsList> =
   RootStackParamsList[T];
 export type GetRootScreenNavigationProps<T extends keyof RootStackParamsList> =
@@ -430,6 +445,8 @@ export type GetNestedScreensParamsList<
   T extends _NestedScreensParamsName,
   K extends keyof _NestedScreensParamsDict[T] & string,
 > = _NestedScreensParamsDict[T][K];
+
+/** @deprecated use `GetNestedScreenRouteProp` directly */
 export type GetNestedScreenNavigationProps<
   T extends _NestedScreensParamsName,
   K extends keyof _NestedScreensParamsDict[T] & string,
@@ -437,3 +454,7 @@ export type GetNestedScreenNavigationProps<
   NativeStackScreenProps<_NestedScreensParamsDict[T], K>,
   NativeStackScreenProps<RootStackParamsList>
 >;
+export type GetNestedScreenRouteProp<
+  T extends _NestedScreensParamsName,
+  K extends keyof _NestedScreensParamsDict[T] & string,
+> = RouteProp<_NestedScreensParamsDict[T], K>;
