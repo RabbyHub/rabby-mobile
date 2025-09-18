@@ -80,6 +80,7 @@ export const GlobalBottomSheetModal = () => {
           APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
           APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
           APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
+          APPROVAL_MODAL_NAMES.TrezorHardwareWaiting,
         ].includes(approvalComponent);
 
       setModals(prev => [
