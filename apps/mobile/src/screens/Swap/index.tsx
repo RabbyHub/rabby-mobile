@@ -22,7 +22,7 @@ import {
 } from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
-import { useAtom, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import React, {
   useCallback,
   useEffect,
@@ -40,6 +40,7 @@ import { LowCreditModal } from './components/LowCreditModal';
 import { QuoteList } from './components/Quotes';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
 import {
+  useDetectLoss,
   usePollSwapPendingNumber,
   useSlippageStore,
   useSwapUnlimitedAllowance,
@@ -56,7 +57,6 @@ import {
   PropsForAccountSwitchScreen,
   ScreenSceneAccountProvider,
   useSceneAccountInfo,
-  useSwitchSceneCurrentAccount,
 } from '@/hooks/accountsSwitcher';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { SwapTokenItem } from './components/Token';
@@ -64,11 +64,8 @@ import { Divider } from '@rneui/themed';
 import BridgeSwitchBtn from '../Bridge/components/BridgeSwitchBtn';
 import BridgeShowMore from '../Bridge/components/BridgeShowMore';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
-import useDebounce from 'react-use/lib/useDebounce';
 import { useSwapRecentToTokens } from './hooks/recent';
-import { SWAP_SLIPPAGE } from '../Bridge/components/BridgeSlippage';
 import { useSwitchSceneAccountOnSelectedTokenWithOwner } from '@/databases/hooks/token';
-import { naviReplace } from '@/utils/navigation';
 import {
   RootStackParamsList,
   TransactionNavigatorParamList,
@@ -83,25 +80,26 @@ import {
 import { useExternalSwapBridgeDapps } from '@/components/ExternalSwapBridgeDappPopup/hook';
 import { Tip } from '@/components';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
-import {
-  isAccountSupportDirectSign,
-  isAccountSupportMiniApproval,
-} from '@/utils/account';
-import AuthButton from '@/components2024/AuthButton';
+import { isAccountSupportMiniApproval } from '@/utils/account';
 import {
   directSigningAtom,
   isAbortedDirectSubmitError,
   useCanProcessDirectSubmit,
+  useMiniDirectSignGasFeeDisableProcess,
+  useMiniDirectSignGasFeeTooHigh,
 } from '@/hooks/useMiniApprovalDirectSign';
-import { PendingTxItem } from './components/PendingTxItem';
-import { error } from 'console';
+import {
+  ApprovePendingTxItem,
+  PendingTxItem,
+} from './components/PendingTxItem';
 import { toast } from '@/components2024/Toast';
-import { Account } from '@/core/services/preference';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { last } from 'lodash';
 import { SwapTxHistoryItem } from '@/core/services/transactionHistory';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useTwoStepSwap } from './hooks/twoStepSwap';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import useDebounce from 'react-use/lib/useDebounce';
 const isAndroid = Platform.OS === 'android';
 
 type SwapRouteProps = CompositeScreenProps<
@@ -244,6 +242,10 @@ const Swap = ({
   const [swapDappOpen, setSwapDappOpen] = useState(false);
 
   const refresh = useSetAtom(refreshIdAtom);
+  const refreshId = useAtomValue(refreshIdAtom);
+
+  console.log('refreshId', refreshId);
+
   const [
     { visible: isShowRabbyFeePopup, dexName, dexFeeDesc },
     setIsShowRabbyFeePopup,
@@ -301,11 +303,8 @@ const Swap = ({
 
   const navigation = useNavigation<SwapRouteProps['navigation']>();
 
-  const {
-    sendMiniTransactions,
-    prepareMiniTransactions,
-    sendPrepareMiniTransactions,
-  } = useMiniApproval();
+  const { prepareMiniTransactions, sendPrepareMiniTransactions } =
+    useMiniApproval();
 
   useEffect(() => {
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
@@ -357,21 +356,6 @@ const Swap = ({
     navState?.tokenId,
     navState?.type,
   ]);
-
-  const btnText = useMemo(() => {
-    if (!isSupportedChain) {
-      return t('component.externalSwapBrideDappPopup.swapOnDapp');
-    }
-    if (quoteLoading) {
-      return t('page.swap.title');
-    }
-
-    if (activeProvider?.shouldApproveToken) {
-      return t('page.swap.approve-swap');
-    }
-
-    return t('page.swap.title');
-  }, [activeProvider?.shouldApproveToken, isSupportedChain, quoteLoading, t]);
 
   const { safeOffBottom } = useSafeSizes();
 
@@ -466,6 +450,7 @@ const Swap = ({
         console.error(error);
       } finally {
         refresh(e => e + 1);
+        console.log('refresh finally');
       }
     }
   });
@@ -541,7 +526,7 @@ const Swap = ({
 
   const canShowDirectSubmit = useMemo(
     () =>
-      isAccountSupportDirectSign(currentAccount?.type) &&
+      isAccountSupportMiniApproval(currentAccount?.type || '') &&
       isSupportedChain &&
       !inSufficient,
     [currentAccount?.type, inSufficient, isSupportedChain],
@@ -553,69 +538,36 @@ const Swap = ({
     setIsSubmitting(false);
   }, [payAmount, payToken?.id, receiveToken?.id, chain]);
 
-  const {
-    //  loading: isSubmitting,
-    runAsync: handleSwap,
-  } = useRequest(
-    async () => {
-      if (receiveToken) {
-        setRecentSwapToToken(receiveToken);
-      }
-      if (isAccountSupportMiniApproval(currentAccount?.type)) {
-        clearExpiredTimer();
+  const handleSwap = useMemoizedFn(async () => {
+    if (receiveToken) {
+      setRecentSwapToToken(receiveToken);
+    }
+    if (canShowDirectSubmit) {
+      clearExpiredTimer();
 
-        try {
-          setIsSubmitting(true);
+      try {
+        setIsSubmitting(true);
 
-          let currentTxs = txs;
-          currentTxs = await runBuildSwapTxs();
+        if (!currentTxs?.length) {
+          toast.info('please retry');
+          throw new Error('no txs');
+        }
 
-          if (!currentTxs?.length) {
-            currentTxs = await runBuildSwapTxs();
+        let txHash = '';
+        if (isDirectSigning) {
+          return;
+        } else {
+          setDirectSigning(true);
+          setMiniSignLoading(true);
+        }
+        const res = await sendPrepareMiniTransactions({
+          directSubmit: canShowDirectSubmit,
+        });
+        txHash = last(res)?.txHash || '';
 
-            if (canShowDirectSubmit && currentTxs?.length && !isDirectSigning) {
-              prepareMiniTransactions({
-                txs: currentTxs || [],
-                ga: {
-                  category: 'Swap',
-                  source: 'swap',
-                  swapUseSlider,
-                },
-                directSubmit: canShowDirectSubmit,
-                account: currentAccount!,
-              });
-            }
-          }
+        miniSignNextStep(txHash);
 
-          if (!currentTxs?.length) {
-            toast.info('please retry');
-            throw new Error('no txs');
-          }
-
-          let txHash = '';
-          if (canShowDirectSubmit) {
-            if (isDirectSigning) {
-              return;
-            } else {
-              setDirectSigning(true);
-            }
-            const res = await sendPrepareMiniTransactions({
-              directSubmit: canShowDirectSubmit,
-            });
-            txHash = last(res)?.txHash || '';
-          } else {
-            const res = await sendMiniTransactions({
-              txs: currentTxs,
-              ga: {
-                category: 'Swap',
-                source: 'swap',
-                swapUseSlider,
-              },
-              account: currentAccount!,
-            });
-            txHash = last(res)?.txHash || '';
-          }
-
+        if (!isApprove) {
           mutateTxs([]);
           transactionHistoryService.addSwapTxHistory({
             hash: txHash,
@@ -660,35 +612,32 @@ const Swap = ({
                   : 'CopyTrading_BuyCreateSwap',
             });
           }
-        } catch (e) {
-          setDirectSigning(false);
-          if ((e as any)?.name === 'SimulateError') {
-            gotoSwap();
-          } else if (isAbortedDirectSubmitError(e)) {
-            console.log('AbortedDirectSubmitError swap');
-          } else {
-            mutateTxs([]);
-            refresh(e => e + 1);
-          }
-        } finally {
-          setIsSubmitting(false);
         }
-      } else {
-        gotoSwap();
+      } catch (e) {
+        setDirectSigning(false);
+        if ((e as any)?.name === 'SimulateError') {
+          gotoSwap();
+        } else if (isAbortedDirectSubmitError(e)) {
+          console.log('AbortedDirectSubmitError swap');
+        } else {
+          mutateTxs([]);
+          refresh(e => e + 1);
+          console.log('refresh handleSwap ');
+        }
+      } finally {
+        setIsSubmitting(false);
+        setMiniSignLoading(false);
       }
-      preferenceService.setReportActionTs(
-        REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN,
-        {
-          chain: chainServerId,
-        },
-      );
-    },
-    {
-      manual: true,
-    },
-  );
-
-  const canUseMiniTx = isAccountSupportMiniApproval(currentAccount?.type || '');
+    } else {
+      gotoSwap();
+    }
+    preferenceService.setReportActionTs(
+      REPORT_TIMEOUT_ACTION_KEY.CLICK_SWAP_OR_APPROVE_BTN,
+      {
+        chain: chainServerId,
+      },
+    );
+  });
 
   const amountAvailable = useMemo(
     () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
@@ -739,125 +688,6 @@ const Swap = ({
 
   const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
   const canDirectSign = useCanProcessDirectSubmit();
-
-  useEffect(() => {
-    if (!isSubmitting && canUseMiniTx && !canShowDirectSubmit) {
-      prepareMiniTransactions({
-        txs: txs || [],
-        ga: {
-          category: 'Swap',
-          source: 'swap',
-          swapUseSlider,
-        },
-        account: currentAccount!,
-      });
-    }
-  }, [
-    canUseMiniTx,
-    txs,
-    prepareMiniTransactions,
-    swapUseSlider,
-    isSubmitting,
-    canShowDirectSubmit,
-    currentAccount,
-  ]);
-
-  useEffect(() => {
-    if (
-      !swapBtnDisabled &&
-      activeProvider &&
-      canUseMiniTx &&
-      canShowDirectSubmit
-    ) {
-      mutateTxs([]);
-      runBuildSwapTxs().then(txs => {
-        prepareMiniTransactions({
-          txs: txs || [],
-          ga: {
-            category: 'Swap',
-            source: 'swap',
-            swapUseSlider,
-          },
-          directSubmit: canShowDirectSubmit,
-          account: currentAccount!,
-        });
-      });
-    }
-  }, [
-    activeProvider,
-    canShowDirectSubmit,
-    canUseMiniTx,
-    currentAccount,
-    mutateTxs,
-    prepareMiniTransactions,
-    runBuildSwapTxs,
-    swapBtnDisabled,
-    swapUseSlider,
-  ]);
-
-  useEffect(() => {
-    if (isFocused && canShowDirectSubmit) {
-      prepareMiniTransactions({
-        txs: [],
-        ga: {
-          category: 'Swap',
-          source: 'swap',
-          swapUseSlider,
-        },
-        directSubmit: canShowDirectSubmit,
-        account: currentAccount!,
-      });
-    }
-  }, [
-    isFocused,
-    activeProvider,
-    canShowDirectSubmit,
-    prepareMiniTransactions,
-    swapUseSlider,
-    currentAccount,
-  ]);
-
-  useEffect(() => {
-    if (isFocused) {
-      refresh(e => e + 1);
-    }
-  }, [isFocused, refresh]);
-
-  useEffect(() => {
-    if (!isFocused) {
-      lowCreditInit.current = false;
-    } else if (
-      receiveToken &&
-      receiveToken?.low_credit_score &&
-      !lowCreditInit.current &&
-      navState?.type !== 'Sell'
-    ) {
-      if (navState?.type === 'Buy' && navState?.tokenId !== receiveToken.id) {
-        return;
-      }
-      setLowCreditToken(receiveToken);
-      setLowCreditVisible(true);
-      lowCreditInit.current = true;
-    }
-  }, [
-    isFocused,
-    receiveToken,
-    setLowCreditToken,
-    setLowCreditVisible,
-    navState,
-  ]);
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const listener = () => {
-  //       handleAmountChange('');
-  //     };
-  //     eventBus.addListener(EVENT_MINI_APPROVAL_START_SIGN, listener);
-  //     return () => {
-  //       eventBus.removeListener(EVENT_MINI_APPROVAL_START_SIGN, listener);
-  //     };
-  //   }, [handleAmountChange]),
-  // );
 
   const [showMoreOpen, setShowMoreOpen] = useState(false);
 
@@ -924,6 +754,215 @@ const Swap = ({
     setIsShowRabbyFeePopup,
   ]);
 
+  const [miniSignLoading, setMiniSignLoading] = useState(false);
+
+  const {
+    shouldTwoStep: shouldTwoStepSwap,
+    currentTxs,
+    next,
+    isApprove,
+    approvePending: approveTxPending,
+    setApprovePending,
+    approveHash,
+  } = useTwoStepSwap({
+    txs,
+    chain,
+    enable:
+      !!currentAccount?.type &&
+      isAccountSupportMiniApproval(currentAccount?.type),
+    type: 'approveSwap',
+    // onApprovePending,
+  });
+
+  console.log('approveHash', approveHash);
+
+  const miniSignNextStep = (hash: string) => {
+    if (isApprove) {
+      console.log('hash', hash);
+      transactionHistoryService.addApproveSwapTokenTxHistory({
+        address: currentAccount?.address!,
+        chainId: currentTxs![0]!.chainId,
+        amount: Number(payAmount),
+        token: payToken!,
+        status: 'pending',
+        createdAt: Date.now(),
+        hash,
+      });
+      setApprovePending(true);
+    }
+    next(hash);
+    setMiniSignLoading(false);
+  };
+
+  const showLoss = useDetectLoss({
+    payToken,
+    receiveToken,
+    receiveRawAmount: activeProvider?.actualReceiveAmount || 0,
+    payAmount,
+  });
+
+  // const { gasFeeDisableProcess } = useMiniDirectSignGasFeeDisableProcess();
+
+  const miniSignGasFeeTooHigh = useMiniDirectSignGasFeeTooHigh();
+
+  const showRiskTips =
+    isSlippageLow || isSlippageHigh || showLoss || miniSignGasFeeTooHigh;
+
+  useEffect(() => {
+    if (!isSubmitting && canShowDirectSubmit) {
+      prepareMiniTransactions({
+        txs: currentTxs || [],
+        ga: {
+          category: 'Swap',
+          source: 'swap',
+          swapUseSlider,
+        },
+        directSubmit: canShowDirectSubmit,
+        account: currentAccount!,
+        transparentMask: true,
+        showMaskLoading: true,
+      });
+    }
+  }, [
+    currentTxs,
+    prepareMiniTransactions,
+    swapUseSlider,
+    isSubmitting,
+    canShowDirectSubmit,
+    currentAccount,
+  ]);
+
+  useEffect(() => {
+    if (!activeProvider) {
+      mutateTxs([]);
+    }
+  }, [activeProvider, mutateTxs]);
+
+  useEffect(() => {
+    if (activeProvider && canShowDirectSubmit) {
+      mutateTxs([]);
+      runBuildSwapTxs();
+    }
+  }, [
+    activeProvider,
+    canShowDirectSubmit,
+    currentAccount,
+    mutateTxs,
+    runBuildSwapTxs,
+    swapUseSlider,
+  ]);
+
+  useEffect(() => {
+    if (isFocused) {
+      prepareMiniTransactions({
+        txs: [],
+        ga: {
+          category: 'Swap',
+          source: 'swap',
+          swapUseSlider,
+        },
+        directSubmit: canShowDirectSubmit,
+        account: currentAccount!,
+      });
+    }
+  }, [
+    isFocused,
+    activeProvider,
+    canShowDirectSubmit,
+    prepareMiniTransactions,
+    swapUseSlider,
+    currentAccount,
+  ]);
+
+  useEffect(() => {
+    if (isFocused) {
+      refresh(e => e + 1);
+      console.log('refresh isFocused');
+    }
+  }, [isFocused, refresh]);
+
+  useEffect(() => {
+    if (!isFocused) {
+      lowCreditInit.current = false;
+    } else if (
+      receiveToken &&
+      receiveToken?.low_credit_score &&
+      !lowCreditInit.current &&
+      navState?.type !== 'Sell'
+    ) {
+      if (navState?.type === 'Buy' && navState?.tokenId !== receiveToken.id) {
+        return;
+      }
+      setLowCreditToken(receiveToken);
+      setLowCreditVisible(true);
+      lowCreditInit.current = true;
+    }
+  }, [
+    isFocused,
+    receiveToken,
+    setLowCreditToken,
+    setLowCreditVisible,
+    navState,
+  ]);
+
+  const originBtnText = useMemo(() => {
+    if (!isSupportedChain) {
+      return t('component.externalSwapBrideDappPopup.swapOnDapp');
+    }
+
+    if (shouldTwoStepSwap) {
+      if (!isApprove && !approveTxPending) {
+        return t('page.swap.title');
+      }
+      return t('page.swap.approve');
+    }
+
+    if (canShowDirectSubmit) {
+      return t('global.Confirm');
+    }
+
+    if (activeProvider?.shouldApproveToken) {
+      return t('page.swap.approve-swap');
+    }
+
+    if (quoteLoading) {
+      return t('page.swap.title');
+    }
+
+    return t('page.swap.title');
+  }, [
+    activeProvider?.shouldApproveToken,
+    approveTxPending,
+    canShowDirectSubmit,
+    isApprove,
+    isSupportedChain,
+    quoteLoading,
+    shouldTwoStepSwap,
+    t,
+  ]);
+
+  const [latestQuoteBtnText, setLatestQuoteBtnText] = useState('');
+
+  const btnText = latestQuoteBtnText || originBtnText;
+
+  useDebounce(
+    () => {
+      if (originBtnText && activeProvider && !quoteLoading) {
+        setLatestQuoteBtnText(originBtnText);
+      }
+    },
+    300,
+    [originBtnText, activeProvider, quoteLoading],
+  );
+
+  useDebounce(
+    () => {
+      setLatestQuoteBtnText(originBtnText);
+    },
+    300,
+    [chain, payToken?.id, receiveToken?.id],
+  );
+
   return (
     <NormalScreenContainer2024 type="bg1">
       {isForMultipleAddress && (
@@ -934,7 +973,10 @@ const Swap = ({
           styles.container,
 
           {
-            marginBottom: 112 + (isAndroid ? 20 + safeOffBottom : 0),
+            marginBottom:
+              112 +
+              (isAndroid ? 20 + safeOffBottom : 0) +
+              (showRiskTips ? 26 : 0),
           },
         ]}
         ref={keyboardAwareRef}
@@ -1043,64 +1085,79 @@ const Swap = ({
             <Text style={styles.errorTip}>{t('page.swap.no-quote-found')}</Text>
           ) : null}
 
-          {isShowMoreVisible && (
-            <View
-              style={{
-                marginHorizontal: -24,
-              }}>
-              <BridgeShowMore
-                autoSuggestSlippage={autoSuggestSlippage}
-                supportDirectSign={canShowDirectSubmit}
-                openFeePopup={openFeePopup}
-                open={showMoreOpen}
-                setOpen={setShowMoreOpen}
-                sourceName={sourceName}
-                sourceLogo={sourceLogo}
-                slippage={slippageState}
-                displaySlippage={slippage}
-                onSlippageChange={setSlippage}
-                fromToken={payToken}
-                toToken={receiveToken}
-                amount={payAmount}
-                toAmount={
-                  isWrapToken
-                    ? payAmount
-                    : activeProvider?.actualReceiveAmount || 0
-                }
-                openQuotesList={openQuotesList}
-                quoteLoading={quoteLoading}
-                slippageError={isSlippageHigh || isSlippageLow}
-                autoSlippage={!!autoSlippage}
-                isCustomSlippage={isCustomSlippage}
-                setAutoSlippage={setAutoSlippage}
-                setIsCustomSlippage={setIsCustomSlippage}
-                type="swap"
-                isWrapToken={isWrapToken}
-                isBestQuote={
-                  !!activeProvider &&
-                  !!bestQuoteDex &&
-                  bestQuoteDex === activeProvider?.name
-                }
-                showMEVGuardedSwitch={showMEVGuardedSwitch}
-                originPreferMEVGuarded={originPreferMEVGuarded}
-                switchPreferMEV={switchPreferMEV}
-                recommendValue={
-                  slippageValidInfo?.is_valid
-                    ? undefined
-                    : slippageValidInfo?.suggest_slippage
-                }
-              />
-            </View>
-          )}
+          {isShowMoreVisible &&
+            (!shouldTwoStepSwap || (shouldTwoStepSwap && !approveHash)) && (
+              <View
+                style={{
+                  marginHorizontal: -24,
+                }}>
+                <BridgeShowMore
+                  autoSuggestSlippage={autoSuggestSlippage}
+                  supportDirectSign={canShowDirectSubmit}
+                  openFeePopup={openFeePopup}
+                  open={showMoreOpen}
+                  setOpen={setShowMoreOpen}
+                  sourceName={sourceName}
+                  sourceLogo={sourceLogo}
+                  slippage={slippageState}
+                  displaySlippage={slippage}
+                  onSlippageChange={setSlippage}
+                  fromToken={payToken}
+                  toToken={receiveToken}
+                  amount={payAmount}
+                  toAmount={
+                    isWrapToken
+                      ? payAmount
+                      : activeProvider?.actualReceiveAmount || 0
+                  }
+                  openQuotesList={openQuotesList}
+                  quoteLoading={quoteLoading}
+                  slippageError={isSlippageHigh || isSlippageLow}
+                  autoSlippage={!!autoSlippage}
+                  isCustomSlippage={isCustomSlippage}
+                  setAutoSlippage={setAutoSlippage}
+                  setIsCustomSlippage={setIsCustomSlippage}
+                  type="swap"
+                  isWrapToken={isWrapToken}
+                  isBestQuote={
+                    !!activeProvider &&
+                    !!bestQuoteDex &&
+                    bestQuoteDex === activeProvider?.name
+                  }
+                  showMEVGuardedSwitch={showMEVGuardedSwitch}
+                  originPreferMEVGuarded={originPreferMEVGuarded}
+                  switchPreferMEV={switchPreferMEV}
+                  recommendValue={
+                    slippageValidInfo?.is_valid
+                      ? undefined
+                      : slippageValidInfo?.suggest_slippage
+                  }
+                />
+              </View>
+            )}
 
-          {Boolean(!isShowMoreVisible && localPendingTxData) && (
-            <PendingTxItem
-              type="swap"
+          {!approveHash &&
+            Boolean(!isShowMoreVisible && localPendingTxData) && (
+              <PendingTxItem
+                type="swap"
+                isForMultipleAddress={isForMultipleAddress}
+                data={localPendingTxData!}
+                clearLocalPendingTxData={clearLocalPendingTxData}
+              />
+            )}
+
+          {shouldTwoStepSwap &&
+          !!currentAccount?.address &&
+          approveHash &&
+          currentTxs?.[0]?.chainId ? (
+            <ApprovePendingTxItem
+              type="approveSwap"
               isForMultipleAddress={isForMultipleAddress}
-              data={localPendingTxData!}
-              clearLocalPendingTxData={clearLocalPendingTxData}
+              address={currentAccount?.address}
+              hash={approveHash}
+              chainId={currentTxs[0]?.chainId}
             />
-          )}
+          ) : null}
 
           {!isSupportedChain ? (
             <>
@@ -1132,11 +1189,20 @@ const Swap = ({
           }>
           <View>
             {canShowDirectSubmit ? (
-              <AuthButton
+              <DirectSignBtn
+                key={`${refreshId}-${chain}-${payToken?.id}-${receiveToken?.id}-${payAmount}-${activeProvider?.quote?.tx?.data}-${isApprove}`}
+                loading={miniSignLoading}
+                loadingType="circle"
+                showTextOnLoading
                 authTitle={t('page.whitelist.confirmPassword')}
-                title={t('global.confirm')}
+                title={btnText}
                 onFinished={handleSwap}
-                disabled={swapBtnDisabled || !canDirectSign || isDirectSigning}
+                disabled={
+                  swapBtnDisabled ||
+                  !canDirectSign ||
+                  isDirectSigning ||
+                  approveTxPending
+                }
                 type={'primary'}
                 syncUnlockTime
                 onBeforeAuth={() => {
@@ -1144,7 +1210,11 @@ const Swap = ({
                 }}
                 onCancel={() => {
                   refresh(e => e + 1);
+                  console.log('refresh AuthButton');
                 }}
+                account={currentAccount}
+                showHardWalletProcess
+                showRiskTips={showRiskTips && !swapBtnDisabled}
               />
             ) : (
               <Button
@@ -1158,6 +1228,8 @@ const Swap = ({
                   }
                   if (!activeProvider || slippageChanged) {
                     refresh(e => e + 1);
+                    console.log('refresh !activeProvider || slippageChanged');
+
                     return;
                   }
                   if (activeProvider?.shouldTwoStepApprove) {

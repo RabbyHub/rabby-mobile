@@ -36,6 +36,7 @@ import { getGasLevelI18nKey } from '@/utils/trans';
 import {
   gasRelativeComponentAtom,
   miniApprovalGasAtom,
+  useMiniSignGasUSDLimit,
 } from '@/hooks/useMiniApprovalDirectSign';
 import BigNumber from 'bignumber.js';
 // import { RcIconInfoCC } from '@/assets/icons/common';
@@ -134,105 +135,16 @@ const BridgeShowMore = ({
     sourceName,
   ]);
 
-  const [showSlippageError, setShowSlippageError] = useState(false);
-
-  const [showGasFeeError, setShowGasFeeError] = useState(false);
-
   const showErrorWhenClosed = useMemo(
-    () =>
-      !quoteLoading &&
-      !open &&
-      (showGasFeeError || showSlippageError || data?.showLoss),
-    [data?.showLoss, open, quoteLoading, showGasFeeError, showSlippageError],
-  );
-
-  useDebounce(
-    () => {
-      if (slippageError) {
-        setShowSlippageError(true);
-      } else {
-        setShowSlippageError(false);
-      }
-    },
-    50,
-    [setShowSlippageError, slippageError],
+    () => !quoteLoading && !open && data?.showLoss,
+    [data?.showLoss, open, quoteLoading],
   );
 
   return (
-    <View
-      style={StyleSheet.flatten([
-        styles.container,
-        showErrorWhenClosed && {
-          marginTop: 0,
-        },
-      ])}>
-      {showErrorWhenClosed ? (
-        <View style={{ marginBottom: 24 }}>
-          {data?.showLoss && !quoteLoading && (
-            <View style={{ marginTop: 12 }}>
-              <View style={[styles.lossInfo, { marginBottom: 0 }]}>
-                <View style={styles.flexRow}>
-                  <Text style={styles.impactText}>
-                    {t('page.bridge.price-impact')}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.diffBox}
-                    onPress={() => setLossImpactOpen(i => !i)}>
-                    <Text style={styles.lossAmount}>-{data?.diff}%</Text>
-                    <Animated.View
-                      style={{
-                        transform: [
-                          { rotate: !lossImpactOpen ? '180deg' : '0deg' },
-                        ],
-                      }}>
-                      <RcIconPolygon />
-                    </Animated.View>
-                  </TouchableOpacity>
-                </View>
-                {lossImpactOpen && (
-                  <View style={styles.impactTooltip}>
-                    <Text style={styles.impactTooltipText}>
-                      {t('page.bridge.est-payment')}{' '}
-                      {formatTokenAmount(amount || '0')}
-                      {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
-                    </Text>
-                    <Text style={styles.impactTooltipText}>
-                      {t('page.bridge.est-receiving')}{' '}
-                      {formatTokenAmount(toAmount || '0')}
-                      {getTokenSymbol(toToken)} ≈ {data?.toUsd}
-                    </Text>
-                    <Text style={styles.impactTooltipText}>
-                      {t('page.bridge.est-difference')} {data?.lossUsd}
-                    </Text>
-                  </View>
-                )}
-
-                <Text style={[styles.lossTip, { marginBottom: 0 }]}>
-                  {t('page.bridge.loss-tips', { usd: data?.lossUsd })}
-                </Text>
-              </View>
-            </View>
-          )}
-          {showSlippageError ? (
-            <View style={{ marginTop: 12 }}>
-              <BridgeSlippage
-                autoSuggestSlippage={autoSuggestSlippage}
-                value={slippage}
-                displaySlippage={displaySlippage}
-                onChange={onSlippageChange}
-                autoSlippage={autoSlippage}
-                isCustomSlippage={isCustomSlippage}
-                setAutoSlippage={setAutoSlippage}
-                setIsCustomSlippage={setIsCustomSlippage}
-                type={type}
-                isWrapToken={isWrapToken}
-                recommendValue={recommendValue}
-                loading={quoteLoading}
-              />
-            </View>
-          ) : null}
-
-          {fromToken && showGasFeeError ? (
+    <View style={StyleSheet.flatten([styles.container])}>
+      {
+        <View style={{ marginBottom: 24, gap: 15 }}>
+          {fromToken ? (
             <DirectSignGasInfo
               supportDirectSign={supportDirectSign}
               loading={!!quoteLoading}
@@ -241,8 +153,67 @@ const BridgeShowMore = ({
               chainServeId={fromToken?.chain}
             />
           ) : null}
+
+          <BridgeSlippage
+            autoSuggestSlippage={autoSuggestSlippage}
+            value={slippage}
+            displaySlippage={displaySlippage}
+            onChange={onSlippageChange}
+            autoSlippage={autoSlippage}
+            isCustomSlippage={isCustomSlippage}
+            setAutoSlippage={setAutoSlippage}
+            setIsCustomSlippage={setIsCustomSlippage}
+            type={type}
+            isWrapToken={isWrapToken}
+            recommendValue={recommendValue}
+            loading={quoteLoading}
+          />
+
+          {showErrorWhenClosed && (
+            <View style={[styles.lossInfo, { marginBottom: 0 }]}>
+              <View style={styles.flexRow}>
+                <Text style={styles.impactText}>
+                  {t('page.bridge.price-impact')}
+                </Text>
+                <TouchableOpacity
+                  style={styles.diffBox}
+                  onPress={() => setLossImpactOpen(i => !i)}>
+                  <Text style={styles.lossAmount}>-{data?.diff}%</Text>
+                  <Animated.View
+                    style={{
+                      transform: [
+                        { rotate: !lossImpactOpen ? '180deg' : '0deg' },
+                      ],
+                    }}>
+                    <RcIconPolygon />
+                  </Animated.View>
+                </TouchableOpacity>
+              </View>
+              {lossImpactOpen && (
+                <View style={styles.impactTooltip}>
+                  <Text style={styles.impactTooltipText}>
+                    {t('page.bridge.est-payment')}{' '}
+                    {formatTokenAmount(amount || '0')}
+                    {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
+                  </Text>
+                  <Text style={styles.impactTooltipText}>
+                    {t('page.bridge.est-receiving')}{' '}
+                    {formatTokenAmount(toAmount || '0')}
+                    {getTokenSymbol(toToken)} ≈ {data?.toUsd}
+                  </Text>
+                  <Text style={styles.impactTooltipText}>
+                    {t('page.bridge.est-difference')} {data?.lossUsd}
+                  </Text>
+                </View>
+              )}
+
+              <Text style={[styles.lossTip, { marginBottom: 0 }]}>
+                {t('page.bridge.loss-tips', { usd: data?.lossUsd })}
+              </Text>
+            </View>
+          )}
         </View>
-      ) : null}
+      }
 
       <View style={styles.header}>
         <View style={styles.dottedLine} />
@@ -360,31 +331,6 @@ const BridgeShowMore = ({
           )}
         </ListItem>
 
-        <BridgeSlippage
-          autoSuggestSlippage={autoSuggestSlippage}
-          value={slippage}
-          displaySlippage={displaySlippage}
-          onChange={onSlippageChange}
-          autoSlippage={autoSlippage}
-          isCustomSlippage={isCustomSlippage}
-          setAutoSlippage={setAutoSlippage}
-          setIsCustomSlippage={setIsCustomSlippage}
-          type={type}
-          isWrapToken={isWrapToken}
-          recommendValue={recommendValue}
-          loading={quoteLoading}
-        />
-
-        {fromToken ? (
-          <DirectSignGasInfo
-            supportDirectSign={supportDirectSign}
-            loading={!!quoteLoading}
-            openShowMore={setShowGasFeeError}
-            noQuote={!sourceLogo && !sourceName}
-            chainServeId={fromToken?.chain}
-          />
-        ) : null}
-
         <ListItem
           name={t('page.swap.rabbyFee.title')}
           style={{
@@ -418,7 +364,6 @@ const BridgeShowMore = ({
 export const DirectSignGasInfo = ({
   supportDirectSign,
   loading,
-  openShowMore,
   noQuote,
   chainServeId,
 }: {
@@ -443,7 +388,10 @@ export const DirectSignGasInfo = ({
     height: 0,
   });
 
-  const chainEnum = findChainByServerID(chainServeId)?.enum;
+  const chainId = useMemo(
+    () => findChainByServerID(chainServeId)?.id,
+    [chainServeId],
+  );
 
   const showGasContent =
     !!miniApprovalGas &&
@@ -478,27 +426,6 @@ export const DirectSignGasInfo = ({
             (gasAccountCost?.gas_cost || 0),
         )
       : miniApprovalGas?.gasCostUsdStr;
-
-  useEffect(() => {
-    if (
-      showGasContent &&
-      (miniApprovalGas?.showGasLevelPopup ||
-        (gasCostUsd &&
-          new BigNumber(gasCostUsd?.replaceAll('$', '') || '0').gt(
-            chainEnum === CHAINS_ENUM.ETH ? 10 : 1,
-          )))
-    ) {
-      openShowMore(true);
-    } else {
-      openShowMore(false);
-    }
-  }, [
-    chainEnum,
-    gasCostUsd,
-    miniApprovalGas?.showGasLevelPopup,
-    openShowMore,
-    showGasContent,
-  ]);
 
   useEffect(() => {
     if (loading || !showGasContent || noQuote) {
@@ -664,6 +591,7 @@ export const DirectSignGasInfo = ({
               onConfirm={() => {
                 setGasModalVisible(false);
               }}
+              chainId={chainId}
             />
           </>
         ) : !loading && noQuote ? (

@@ -11,17 +11,18 @@ import { ModalAddToContacts } from '@/components/Address/SheetModalAddToContacts
 import { apiBalance } from '@/core/apis';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { Button } from '@/components2024/Button';
-import AuthButton from '@/components2024/AuthButton';
 import { useTranslation } from 'react-i18next';
 import {
   directSigningAtom,
   useCanProcessDirectSubmit,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
+import { DirectSignBtn } from '@/components2024/DirectSignBtn';
+import { Account } from '@/core/services/preference';
 
 const isAndroid = Platform.OS === 'android';
 
-export default function BottomArea() {
+export default function BottomArea({ account }: { account: Account | null }) {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
 
@@ -35,6 +36,7 @@ export default function BottomArea() {
       canDirectSign: canShowDirectSign,
       toAddressInContactBook,
     },
+
     fns: { putScreenState, fetchContactAccounts },
   } = useSendTokenInternalContext();
 
@@ -56,13 +58,17 @@ export default function BottomArea() {
         isAndroid && { paddingBottom: 20 + safeOffBottom },
       ]}>
       {canShowDirectSign ? (
-        <AuthButton
+        <DirectSignBtn
+          loadingType="circle"
+          loading={isDirectSigning}
           authTitle={t('page.whitelist.confirmPassword')}
           title={t('global.confirm')}
           onFinished={handleSubmit}
           disabled={!canSubmit || !canDirectSign || isDirectSigning}
           type={'primary'}
           syncUnlockTime
+          account={account}
+          showHardWalletProcess
         />
       ) : (
         <Button

@@ -197,23 +197,27 @@ export const BridgeSlippage = (props: SlippageProps) => {
               }}
             />
           ) : (
-            <Text style={[styles.value, !!tips && styles.warning]}>
-              {type === 'swap' && autoSlippage
-                ? autoSuggestSlippage || displaySlippage
-                : displaySlippage}
-              %
-            </Text>
+            <>
+              <Text style={[styles.value, !!tips && styles.warning]}>
+                {type === 'swap' && autoSlippage
+                  ? autoSuggestSlippage || displaySlippage
+                  : displaySlippage}
+                %
+              </Text>
+              <Animated.View
+                style={{
+                  transform: [{ rotate: slippageOpen ? '180deg' : '0deg' }],
+                }}>
+                <RcIconBluePolygon
+                  color={
+                    tips
+                      ? colors2024['red-default']
+                      : colors2024['brand-default']
+                  }
+                />
+              </Animated.View>
+            </>
           )}
-          <Animated.View
-            style={{
-              transform: [{ rotate: slippageOpen ? '180deg' : '0deg' }],
-            }}>
-            <RcIconBluePolygon
-              color={
-                tips ? colors2024['red-default'] : colors2024['brand-default']
-              }
-            />
-          </Animated.View>
         </View>
       </TouchableOpacity>
       {slippageOpen && (

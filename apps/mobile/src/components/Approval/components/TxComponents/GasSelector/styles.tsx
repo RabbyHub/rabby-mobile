@@ -153,11 +153,12 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     paddingBottom: 24,
   },
   gasSelectorModalAmount: {
-    fontWeight: '700',
-    fontSize: 24,
-    lineHeight: 28,
+    fontWeight: '800',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 36,
+    lineHeight: 42,
     textAlign: 'center',
-    color: colors['neutral-title-1'],
+    color: colors2024['neutral-title-1'],
     marginBottom: 8,
   },
   gasSelectorModalError: {
@@ -207,7 +208,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
   modalWrap: {
     position: 'relative',
     flex: 1,
-    backgroundColor: colors['neutral-bg2'],
+    backgroundColor: colors['neutral-bg1'],
   },
   gasLimitLabel: {
     paddingHorizontal: 20,
@@ -259,18 +260,22 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     gap: 12,
   },
   gasPriceDescText: {
-    color: colors['neutral-body'],
-    fontSize: 13,
-    lineHeight: 16,
+    color: colors2024['neutral-secondary'],
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 20,
+    fontFamily: 'SF Pro Rounded',
   },
   gasPriceDescBoldText: {
-    color: colors['neutral-title1'],
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '500',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '800',
   },
   gasPriceDescItem: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
   feeDivider: {
     backgroundColor: colors['neutral-line'],
@@ -310,7 +315,7 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     marginBottom: 32,
   },
   footer: {
-    backgroundColor: colors['neutral-bg2'],
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   cardBody: {
     padding: 12,
@@ -328,6 +333,13 @@ export const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     marginBottom: 32,
   },
   cardItem: {},
+  fixedContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 30,
+    marginBottom: 20,
+  },
 }));
 /**
  * @deprecated

@@ -6,6 +6,7 @@ import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { MiniProcessActions } from './MiniProcessActions';
 import { useMemoizedFn } from 'ahooks';
 import { apiLedger } from '@/core/apis';
+import { useSetHardWareWalletSignBleStatus } from './atom';
 
 export const MiniLedgerProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
@@ -24,26 +25,34 @@ export const MiniLedgerProcessActions: React.FC<Props> = props => {
     [account.address],
   );
 
+  const { setLedgerCheckBlePending } = useSetHardWareWalletSignBleStatus();
+
   const handleSubmit = useMemoizedFn(() => {
     if (isSubmitting) {
       return;
     }
     setIsSubmitting(true);
-    isConnectedPromise.then(([isConnected]) => {
-      if (!isConnected) {
-        onClickConnect(
-          () => {
-            props.onSubmit();
-            setIsSubmitting(false);
-          },
-          () => props.onCancel?.(),
-        );
-        return;
-      } else {
-        props.onSubmit();
-        setIsSubmitting(false);
-      }
-    });
+    setLedgerCheckBlePending(true);
+    isConnectedPromise
+      .then(([isConnected]) => {
+        setLedgerCheckBlePending(false);
+        if (!isConnected) {
+          onClickConnect(
+            () => {
+              props.onSubmit();
+              setIsSubmitting(false);
+            },
+            () => props.onCancel?.(),
+          );
+          return;
+        } else {
+          props.onSubmit();
+          setIsSubmitting(false);
+        }
+      })
+      .finally(() => {
+        setLedgerCheckBlePending(false);
+      });
   });
 
   return (

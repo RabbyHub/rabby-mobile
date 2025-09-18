@@ -22,6 +22,7 @@ import BigNumber from 'bignumber.js';
 import { getGasLevelI18nKey } from '@/utils/trans';
 import { miniApprovalGasAtom } from '@/hooks/useMiniApprovalDirectSign';
 import { formatGasHeaderUsdValue } from '@/utils/number';
+import { useMiniSignFixedMode } from '@/hooks/miniSignGasStore';
 
 const GasMethod = (props: {
   active: boolean;
@@ -64,11 +65,13 @@ export default function ShowMoreGasSelectModal({
   onCancel,
   onConfirm,
   layout,
+  chainId,
 }: {
   visible: boolean;
   onCancel: () => void;
   onConfirm: () => void;
   layout: { x: number; y: number; width: number; height: number };
+  chainId?: number;
 }) {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -83,6 +86,9 @@ export default function ShowMoreGasSelectModal({
     }
     return formatGasHeaderUsdValue(n || '0');
   }, []);
+
+  const fixedMode = useMiniSignFixedMode(chainId);
+  console.debug('fixedMode', chainId, fixedMode);
 
   if (!miniApprovalGas) {
     return null;
@@ -167,6 +173,9 @@ export default function ShowMoreGasSelectModal({
                 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text style={styles.level}>{levelTitle}</Text>
+                  {isCustom && fixedMode ? (
+                    <Text style={styles.fixedMode}>Fixed mode</Text>
+                  ) : null}
                   {!isCustom && (
                     <Text style={styles.gwei}> ({gwei} Gwei) </Text>
                   )}
@@ -174,9 +183,22 @@ export default function ShowMoreGasSelectModal({
                 </View>
 
                 {isCustom ? (
-                  <IconGasCustomRightArrowCC
-                    color={colors2024['neutral-foot']}
-                  />
+                  <>
+                    {isActive ? (
+                      <Text
+                        style={[
+                          styles.usd,
+                          (isNotEnough || errorOnGasAccount) && {
+                            color: colors2024['red-default'],
+                          },
+                        ]}>
+                        {costUsd}
+                      </Text>
+                    ) : null}
+                    <IconGasCustomRightArrowCC
+                      color={colors2024['neutral-foot']}
+                    />
+                  </>
                 ) : (
                   <Text
                     style={[
@@ -267,6 +289,24 @@ const getStyle = createGetStyles2024(({ colors, colors2024 }) => ({
     borderStyle: 'solid',
     borderColor: colors2024['brand-default'],
     backgroundColor: colors2024['brand-light-1'],
+  },
+  fixedMode: {
+    // padding: '1 4',
+    color: colors2024['brand-default'],
+    paddingVertical: 1,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 16,
+    backgroundColor: colors2024['brand-light-1'],
+    borderRadius: 4,
+    marginLeft: 2,
+    marginRight: 6,
+    overflow: 'hidden',
   },
   level: {
     color: colors2024['neutral-title-1'],

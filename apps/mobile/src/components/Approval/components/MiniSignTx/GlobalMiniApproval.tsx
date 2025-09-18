@@ -8,6 +8,7 @@ import { toastWithDotAnimation } from '@/components2024/Toast';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { MiniDirectSubmitApproval } from './DirectSubmitMiniSigntx';
 import { MiniApproval } from './MiniSignTx';
+import { useMiniSignGasStore } from '@/hooks/miniSignGasStore';
 
 export const GlobalMiniApproval = () => {
   const [state, setState] = useAtom(miniApprovalAtom);
@@ -33,6 +34,9 @@ export const GlobalMiniApproval = () => {
       );
     }
   });
+
+  // prefetch data
+  useMiniSignGasStore(-1);
 
   const handleSubmitted = useMemoizedFn(() => {
     submittingToastRef?.current?.();

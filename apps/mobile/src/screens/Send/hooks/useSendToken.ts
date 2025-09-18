@@ -23,7 +23,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
-import { Account, ChainGas } from '@/core/services/preference';
+import { Account } from '@/core/services/preference';
 import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
 import { formatSpeicalAmount } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
@@ -50,10 +50,7 @@ import {
 } from '@react-navigation/native';
 import { sendScreenParamsAtom } from '@/hooks/useSendRoutes';
 import { ITokenCheck } from '@/components/Token/TokenSelectorSheetModal';
-import {
-  isAccountSupportDirectSign,
-  isAccountSupportMiniApproval,
-} from '@/utils/account';
+import { isAccountSupportMiniApproval } from '@/utils/account';
 import { useMiniApproval } from '@/hooks/useMiniApproval';
 import { usePollSendPendingCount } from './useSendPendingCount';
 import { eventBus, EVENTS } from '@/utils/events';
@@ -540,11 +537,8 @@ export function useSendTokenForm({
     });
   }, [loadGasListAndResolve, putScreenState]);
 
-  const {
-    sendMiniTransactions,
-    prepareMiniTransactions,
-    sendPrepareMiniTransactions,
-  } = useMiniApproval();
+  const { prepareMiniTransactions, sendPrepareMiniTransactions } =
+    useMiniApproval();
 
   const [isDirectSigning, setDirectSigning] = useAtom(directSigningAtom);
 
@@ -828,6 +822,7 @@ export function useSendTokenForm({
             },
             directSubmit: true,
             account,
+            transparentMask: true,
           });
         }
       }
@@ -858,8 +853,7 @@ export function useSendTokenForm({
       });
       const directSubmit =
         isAccountSupportMiniApproval(currentAccount?.type || '') &&
-        !chain.isTestnet &&
-        isAccountSupportDirectSign(currentAccount?.type || '');
+        !chain.isTestnet;
       if (isNativeToken && (!directSubmit || isForceSignTx)) {
         // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
         const couldSpecifyIntrinsicGas =
@@ -921,131 +915,57 @@ export function useSendTokenForm({
           isAccountSupportMiniApproval(currentAccount?.type || '') &&
           !chain.isTestnet
         ) {
-          if (isAccountSupportDirectSign(currentAccount?.type || '')) {
-            if (isDirectSigning) {
-              return;
-            } else {
-              setDirectSigning(true);
-            }
-
-            if (!prepareRef.current) {
-              prepareCountRef.current++;
-              prepareRef.current = prepareDirectSubmitMiniTx(
-                prepareCountRef.current,
-              );
-            }
-            try {
-              await prepareRef.current;
-
-              const res = await sendPrepareMiniTransactions({
-                directSubmit: true,
-              });
-
-              transactionHistoryService.addSendTxHistory({
-                token: currentToken,
-                amount: Number(amount),
-                to,
-                from: currentAccount?.address!,
-                chainId: chain.id,
-                hash: last(res)?.txHash!,
-                address: currentAccount?.address!,
-                status: 'pending',
-                createdAt: Date.now(),
-              });
-
-              runFetchPendingCount();
-              runFetchLocalPendingTx();
-              handleFieldChange('amount', '');
-              sendTokenEventsRef.current.emit(
-                SendTokenEvents.ON_SIGNED_SUCCESS,
-              );
-            } catch (error) {
-              if ((error as any)?.name === 'SimulateError') {
-                handleSubmit({
-                  to,
-                  amount,
-                  messageDataForSendToEoa,
-                  messageDataForContractCall,
-                  isForceSignTx: true,
-                });
-              }
-              if (isAbortedDirectSubmitError(error)) {
-                console.log('AbortedDirectSubmitError useSendToken');
-              }
-            }
-
+          if (isDirectSigning) {
             return;
+          } else {
+            setDirectSigning(true);
           }
-          const res = await apiProvider.sendRequest(
-            {
-              data: {
-                method: 'eth_sendTransaction',
-                params: [params],
-                $ctx: {
-                  ga: {
-                    category: 'Send',
-                    source: 'sendToken',
-                    toAddress,
-                    // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-                    trigger: 'sendToken',
-                  },
-                },
-              },
-              session: INTERNAL_REQUEST_SESSION,
-              account,
-            },
-            true,
-          );
-          const tx = res.params?.[0];
-          if (tx) {
-            await sendMiniTransactions({
-              txs: [tx],
-              ga: {
-                category: 'Send',
-                source: 'sendToken',
-                toAddress,
-                // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-                trigger: 'sendToken',
-              },
-              account,
-            })
-              .then(resp => {
-                currentAccount.type !== KEYRING_CLASS.GNOSIS &&
-                  transactionHistoryService.addSendTxHistory({
-                    token: currentToken,
-                    amount: Number(amount),
-                    to,
-                    from: currentAccount?.address!,
-                    chainId: chain.id,
-                    hash: last(resp)?.txHash!,
-                    address: currentAccount?.address!,
-                    status: 'pending',
-                    createdAt: Date.now(),
-                  });
 
-                runFetchPendingCount();
-                runFetchLocalPendingTx();
-                handleFieldChange('amount', '');
-                sendTokenEventsRef.current.emit(
-                  SendTokenEvents.ON_SIGNED_SUCCESS,
-                );
-              })
-              .catch(err => {
-                if (err?.name === 'SimulateError') {
-                  handleSubmit({
-                    to,
-                    amount,
-                    messageDataForSendToEoa,
-                    messageDataForContractCall,
-                    isForceSignTx: true,
-                  });
-                }
-                if (isAbortedDirectSubmitError(err)) {
-                  console.log('AbortedDirectSubmitError useSendToken');
-                }
-                // toast.info(err.message);
-              });
+          if (!prepareRef.current) {
+            prepareCountRef.current++;
+            prepareRef.current = prepareDirectSubmitMiniTx(
+              prepareCountRef.current,
+            );
           }
+          try {
+            await prepareRef.current;
+
+            const res = await sendPrepareMiniTransactions({
+              directSubmit: true,
+            });
+
+            transactionHistoryService.addSendTxHistory({
+              token: currentToken,
+              amount: Number(amount),
+              to,
+              from: currentAccount?.address!,
+              chainId: chain.id,
+              hash: last(res)?.txHash!,
+              address: currentAccount?.address!,
+              status: 'pending',
+              createdAt: Date.now(),
+            });
+
+            runFetchPendingCount();
+            runFetchLocalPendingTx();
+            handleFieldChange('amount', '');
+            sendTokenEventsRef.current.emit(SendTokenEvents.ON_SIGNED_SUCCESS);
+          } catch (error) {
+            if ((error as any)?.name === 'SimulateError') {
+              handleSubmit({
+                to,
+                amount,
+                messageDataForSendToEoa,
+                messageDataForContractCall,
+                isForceSignTx: true,
+              });
+            }
+            if (isAbortedDirectSubmitError(error)) {
+              console.log('AbortedDirectSubmitError useSendToken');
+            }
+          }
+
+          return;
         } else {
           await apiProvider
             .sendRequest({
@@ -1119,7 +1039,6 @@ export function useSendTokenForm({
       runFetchPendingCount,
       runFetchLocalPendingTx,
       handleFieldChange,
-      sendMiniTransactions,
     ],
   );
 
@@ -1624,7 +1543,6 @@ export function useSendTokenForm({
 
       canDirectSign:
         isAccountSupportMiniApproval(currentAccount?.type || '') &&
-        isAccountSupportDirectSign(currentAccount?.type) &&
         !chainItem?.isTestnet,
     };
   }, [
@@ -1660,7 +1578,7 @@ export function useSendTokenForm({
     if (
       isFocused &&
       !screenState.isSubmitLoading &&
-      isAccountSupportDirectSign(currentAccount?.type || '') &&
+      isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet
     ) {
       prepareMiniTransactions({
@@ -1693,7 +1611,7 @@ export function useSendTokenForm({
     if (
       isFocused &&
       !screenState.isSubmitLoading &&
-      isAccountSupportDirectSign(currentAccount?.type || '') &&
+      isAccountSupportMiniApproval(currentAccount?.type || '') &&
       !chainItem?.isTestnet &&
       computed.canSubmit
     ) {

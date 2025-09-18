@@ -72,6 +72,7 @@ import AutoLockView from '@/components/AutoLockView';
 import {
   directSigningAtom,
   useSetDirectSubmitInnerError,
+  useSetMiniSignChain,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
 import { MiniApprovalError } from './error';
@@ -383,27 +384,31 @@ export const MiniSignTx = ({
   );
 
   const {
-    updateMiniCustomPrice,
-    setMiniGasLevel,
-    miniGasLevel,
-    miniCustomPrice,
-  } = useMiniSignGasStore();
+    // updateMiniCustomPrice,
+    // setMiniGasLevel,
+    // miniGasLevel,
+    // miniCustomPrice,
+    currentMiniCustomGas,
+    currentMiniSignGasLevel,
+    updateMiniGas,
+  } = useMiniSignGasStore(chainId);
 
   const handleInitTask = useMemoizedFn(() => {
-    if (selectedGas && txsResult[0]) {
-      const lastGasLevel = selectedGas?.level || 'normal';
-      setMiniGasLevel(lastGasLevel as any);
+    // if (selectedGas && txsResult[0]) {
+    //   const lastGasLevel = selectedGas?.level || 'normal';
+    //   setMiniGasLevel(lastGasLevel as any);
 
-      if (selectedGas?.level === 'custom') {
-        updateMiniCustomPrice(
-          parseInt(
-            support1559
-              ? txsResult[0].tx.maxFeePerGas || '0'
-              : txsResult[0].tx.gasPrice || '0',
-          ),
-        );
-      }
-    }
+    //   if (selectedGas?.level === 'custom') {
+    //     updateMiniCustomPrice(
+    //       parseInt(
+    //         support1559
+    //           ? txsResult[0].tx.maxFeePerGas || '0'
+    //           : txsResult[0].tx.gasPrice || '0',
+    //       ),
+    //     );
+    //   }
+    // }
+
     task.init(
       txsResult.map(item => {
         return {
@@ -484,6 +489,14 @@ export const MiniSignTx = ({
         }),
       );
     }
+    updateMiniGas({
+      chainId: txs?.[0]?.chainId!,
+      gasLevel: gas.level as any,
+      fixed: !!gas?.fixedMode,
+      customGasPrice:
+        gas.level === 'custom' ? Math.round(gas.price) : undefined,
+    });
+
     Promise.all(
       txsResult.map(async item => {
         const tx = {
@@ -647,9 +660,10 @@ export const MiniSignTx = ({
 
       checkCanProcess();
       const lastTimeGas: ChainGas = {
-        lastTimeSelect: miniGasLevel === 'custom' ? 'gasPrice' : 'gasLevel',
-        gasLevel: miniGasLevel,
-        gasPrice: miniCustomPrice || 0,
+        lastTimeSelect:
+          currentMiniSignGasLevel === 'custom' ? 'gasPrice' : 'gasLevel',
+        gasLevel: currentMiniSignGasLevel,
+        gasPrice: currentMiniCustomGas || 0,
       };
 
       let customGasPrice = 0;
@@ -1106,6 +1120,7 @@ export const MiniSignTx = ({
               </View>
             ) : null}
             <GasSelectorHeader
+              fixedMode
               tx={txs[0]}
               gasAccountCost={gasAccountCost}
               gasMethod={gasMethod}

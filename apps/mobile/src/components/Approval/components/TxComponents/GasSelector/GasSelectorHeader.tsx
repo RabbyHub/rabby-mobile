@@ -38,7 +38,7 @@ import { formatTokenAmount, formatGasHeaderUsdValue } from '@/utils/number';
 import IconQuestionMark from '@/assets/icons/sign/question-mark.svg';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { GasSelectContainer } from './GasSelectContainer';
-import { FooterButton } from '@/components/FooterButton/FooterButton';
+import { FooterButton } from '@/components2024/FooterButton/FooterButton';
 import { TextInput } from 'react-native-gesture-handler';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { Skeleton } from '@rneui/themed';
@@ -66,11 +66,13 @@ import { useSetAtom } from 'jotai';
 import { miniApprovalGasAtom } from '@/hooks/useMiniApprovalDirectSign';
 import useDebounce from 'react-use/lib/useDebounce';
 import { Account } from '@/core/services/preference';
+import { CheckBoxRect } from '@/components2024/CheckBox';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
   nonce: number;
   maxPriorityFee: number;
+  fixedMode?: boolean;
 }
 
 interface GasSelectorProps {
@@ -135,6 +137,7 @@ interface GasSelectorProps {
     gas: GasSelectorResponse,
   ) => Promise<[number, boolean, boolean]>;
   account: Account;
+  fixedMode?: boolean;
 }
 
 const useExplainGas = ({
@@ -191,6 +194,7 @@ export const GasSelectorHeader = ({
   checkGasLevelIsNotEnough,
   directSubmit,
   account,
+  fixedMode,
 }: GasSelectorProps) => {
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
@@ -427,6 +431,8 @@ export const GasSelectorHeader = ({
     ],
   );
 
+  const [checkedFixedMode, setCheckedFixedMode] = useState(false);
+
   const handleConfirmGas = () => {
     if (!selectedGas) return;
     if (selectedGas.level === 'custom') {
@@ -437,6 +443,7 @@ export const GasSelectorHeader = ({
         nonce: Number(customNonce),
         level: selectedGas.level,
         maxPriorityFee: (maxPriorityFee ?? 0) * 1e9,
+        fixedMode: checkedFixedMode,
       });
     } else {
       onChange({
@@ -779,7 +786,7 @@ export const GasSelectorHeader = ({
   const hasTip = isReal1559 && isHardware;
   const hasFee = is1559;
   const snapPoint = React.useMemo(() => {
-    let v = 500;
+    let v = 500 + (fixedMode ? 30 : 0);
     if (hasTip) {
       v += 50;
     }
@@ -787,7 +794,7 @@ export const GasSelectorHeader = ({
       v += 100;
     }
     return v;
-  }, [hasFee, hasTip]);
+  }, [hasFee, hasTip, fixedMode]);
 
   const setMiniApprovalGasState = useSetAtom(miniApprovalGasAtom);
 
@@ -1121,11 +1128,22 @@ export const GasSelectorHeader = ({
         snapPoints={[snapPoint]}
         ref={modalRef}
         handleStyle={{
-          backgroundColor: colors['neutral-bg2'],
+          backgroundColor: colors['neutral-bg1'],
         }}
         onDismiss={handleClosePopup}>
         <BottomSheetView style={styles.modalWrap}>
-          <AppBottomSheetModalTitle title={t('page.signTx.gasSelectorTitle')} />
+          <AppBottomSheetModalTitle
+            style={{
+              color: colors2024['neutral-title-1'],
+              textAlign: 'center',
+              fontFamily: 'SF Pro Rounded',
+              fontSize: 20,
+              fontStyle: 'normal',
+              fontWeight: '800',
+              lineHeight: 24,
+            }}
+            title={t('page.signTx.gasSelectorTitle')}
+          />
           <View style={styles.gasSelectorModalTop}>
             {disabled ? (
               <Text style={styles.gasSelectorModalAmount}>
@@ -1286,7 +1304,34 @@ export const GasSelectorHeader = ({
               </View>
             )}
           </View>
-
+          {fixedMode ? (
+            <Pressable
+              style={[
+                {
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+              ]}
+              onPress={() => {
+                setCheckedFixedMode(e => !e);
+              }}>
+              <CheckBoxRect checked={checkedFixedMode} />
+              <Text
+                // style={styles.warningText}
+                style={{
+                  marginLeft: 4,
+                  color: colors2024['neutral-secondary'],
+                  fontFamily: 'SF Pro Rounded',
+                  fontSize: 12,
+                  fontStyle: 'normal',
+                  fontWeight: '500',
+                  lineHeight: 16,
+                }}>
+                {t('page.miniSignFooterBar.fixedModeText')}
+              </Text>
+            </Pressable>
+          ) : null}
           <FooterButton
             footerStyle={styles.footer}
             type="primary"

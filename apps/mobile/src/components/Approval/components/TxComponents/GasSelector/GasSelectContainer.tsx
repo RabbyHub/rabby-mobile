@@ -12,12 +12,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { TextInput } from 'react-native-gesture-handler';
 import { Skeleton } from '@rneui/themed';
 import { calcGasEstimated } from '@/utils/time';
+import { createGetStyles2024 } from '@/utils/styles';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -25,70 +25,63 @@ export interface GasSelectorResponse extends GasLevel {
   maxPriorityFee: number;
 }
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    cardBody: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: 8,
-    },
-    card: {
-      flex: 1,
-      backgroundColor: colors['neutral-card-3'],
-      borderRadius: 8,
-      borderColor: 'transparent',
-      borderWidth: 1,
-      paddingTop: 14,
-      paddingBottom: 12,
-      shadowColor: colors['neutral-black'],
-      shadowOffset: {
-        width: 2,
-        height: 4,
-      },
-      shadowOpacity: 0.1,
-    },
-    cardActive: {
-      backgroundColor: colors['blue-light-1'],
-      borderColor: colors['blue-default'],
-      shadowColor: 'transparent',
-    },
-    cardItem: {},
-    cardItemTitle: {
-      color: colors['neutral-body'],
-      fontSize: 12,
-      textAlign: 'center',
-      lineHeight: 14,
-      fontWeight: '500',
-    },
-    cardItemText: {
-      color: colors['neutral-body'],
-      textAlign: 'center',
-      fontSize: 15,
-      fontWeight: '500',
-      margin: 0,
-      height: 18,
-      padding: 0,
-      marginTop: 6,
-    },
-    cardItemTextActive: {
-      // color: colors['blue-default'],
-    },
-    cardBodyDisabled: {},
-    cardTime: {
-      marginTop: 2,
-    },
-    cardTimeText: {
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-foot'],
-      textAlign: 'center',
-      marginTop: 2,
-    },
-    cardTimeLoader: {
-      marginTop: 2,
-      alignItems: 'center',
-    },
-  });
+const getStyles = createGetStyles2024(({ colors, colors2024 }) => ({
+  cardBody: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  card: {
+    flex: 1,
+    backgroundColor: colors2024['neutral-bg-2'],
+    borderRadius: 8,
+    borderColor: 'transparent',
+    borderWidth: 1,
+    paddingTop: 14,
+    paddingBottom: 12,
+  },
+  cardActive: {
+    backgroundColor: colors2024['brand-light-1'],
+    borderColor: colors['blue-default'],
+    shadowColor: 'transparent',
+  },
+  cardItem: {},
+  cardItemTitle: {
+    color: colors['neutral-body'],
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 14,
+    fontWeight: '500',
+  },
+  cardItemText: {
+    color: colors['neutral-body'],
+    textAlign: 'center',
+    fontSize: 15,
+    fontWeight: '500',
+    margin: 0,
+    height: 18,
+    padding: 0,
+    marginTop: 6,
+  },
+  cardItemTextActive: {
+    // color: colors['blue-default'],
+  },
+  cardBodyDisabled: {},
+  cardTime: {
+    marginTop: 2,
+  },
+  cardTimeText: {
+    fontSize: 12,
+    lineHeight: 14,
+    color: colors['neutral-foot'],
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  cardTimeLoader: {
+    marginTop: 2,
+    alignItems: 'center',
+  },
+}));
 
 export const GasSelectContainer = ({
   gasList,
@@ -122,8 +115,9 @@ export const GasSelectContainer = ({
   isLoadingGas?: boolean;
   customGasEstimated?: number;
 }) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({
+    getStyle: getStyles,
+  });
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
   const handlePanelSelection = (e, item) => {
