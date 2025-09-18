@@ -85,75 +85,31 @@ const Details = ({ data }: DetailsProps) => {
   );
 };
 
-// TODO: mock data
-const mockSummary = {
-  top10ratio: 0.2444553,
-  top100ratio: 0.5444,
-};
-const mockDetails = {
-  data: [
-    {
-      user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff80b',
-      amount: 1000000,
-      ratio: 0.2444553,
-    },
-    {
-      user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff801',
-      amount: 1000000,
-      ratio: 0.2444553,
-    },
-    {
-      user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff802',
-      amount: 1000000,
-      ratio: 0.2444553,
-    },
-    {
-      user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff804',
-      amount: 1000000,
-      ratio: 0.2444553,
-    },
-    {
-      user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff803',
-      amount: 1000000,
-      ratio: 0.2444553,
-    },
-    {
-      user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff805',
-      amount: 1000000,
-      ratio: 0.2444553,
-    },
-    {
-      user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff806',
-      amount: 1000000,
-      ratio: 0.2444553,
-    },
-    {
-      user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff807',
-      amount: 1000000,
-      ratio: 0.2444553,
-    },
-    {
-      user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff808',
-      amount: 1000000,
-      ratio: 0.2444553,
-    },
-    {
-      user_addr: '0xb84168cf3be63c6b8dad05ff5d755e97432ff809',
-      amount: 1000000,
-      ratio: 0.2444553,
-    },
-  ],
-};
-const Holder = () => {
+interface HolderProps {
+  top10ratio: number;
+  top100ratio: number;
+  data: {
+    user_addr?: string;
+    amount?: number;
+    ratio?: number;
+  }[];
+  isEmpty: boolean;
+}
+const Holder = ({ top10ratio, top100ratio, data, isEmpty }: HolderProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
-  //TODO: STATE & fetch
+
+  if (isEmpty) {
+    return (
+      <View style={styles.container}>
+        <EmptyData />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Summary {...mockSummary} />
-      <Details data={mockDetails.data} />
-      {/* <EmptyData /> */}
+      <Summary top100ratio={top100ratio} top10ratio={top10ratio} />
+      <Details data={data} />
     </View>
   );
 };

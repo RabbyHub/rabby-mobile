@@ -6,6 +6,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import Activity from './Activity';
 import Holder from './Holder';
+import { useHolderInfo } from './hooks';
 
 const enum TabKey {
   activity = 'activity',
@@ -22,6 +23,11 @@ const ActivityAndHolders = ({
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [activeTabKey, setActiveTabKey] = useState<TabKey>(TabKey.activity);
   const { t } = useTranslation();
+
+  const { summaryData, detailsData, isHolderEmpty } = useHolderInfo(
+    tokenId,
+    chainId,
+  );
 
   return (
     <View style={styles.container}>
@@ -47,7 +53,14 @@ const ActivityAndHolders = ({
         {activeTabKey === TabKey.activity && (
           <Activity tokenId={tokenId} chainId={chainId} />
         )}
-        {activeTabKey === TabKey.holders && <Holder />}
+        {activeTabKey === TabKey.holders && (
+          <Holder
+            top10ratio={summaryData?.ratio_top10 || 0}
+            top100ratio={summaryData?.ratio_top100 || 0}
+            data={detailsData?.data_list || []}
+            isEmpty={isHolderEmpty}
+          />
+        )}
       </View>
     </View>
   );
