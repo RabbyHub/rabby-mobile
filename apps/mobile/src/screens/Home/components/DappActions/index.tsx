@@ -170,6 +170,7 @@ export const DappActions = ({
           await sendMiniTransactions({
             txs: txs,
             account: currentAccount!,
+            waitTime: 0,
           });
           resetGasCache();
           setTimeout(() => {

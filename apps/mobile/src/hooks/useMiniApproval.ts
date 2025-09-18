@@ -120,17 +120,19 @@ export const useMiniApproval = () => {
       ga,
       directSubmit,
       account,
+      waitTime = 600,
     }: {
       txs: Tx[];
       ga?: Record<string, any>;
       directSubmit?: boolean;
       account: Account;
+      waitTime?: number;
     }) => {
       clear();
       /**
        * wait popup close
        */
-      await sleep(600);
+      await sleep(waitTime);
       return _sendMiniTransactions({
         txs,
         ga,

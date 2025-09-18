@@ -79,8 +79,8 @@ import { useMiniSignGasStore } from '@/hooks/miniSignGasStore';
 import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { View } from 'react-native';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
-import { BalanceChange } from '@/screens/Transaction/components/Actions/components/BalanceChange';
 import { useGetMiniSignTxExtraProps } from '@/hooks/useMiniApproval';
+import BalanceChange from '../TxComponents/BalanceChange';
 
 export const MiniSignTx = ({
   txs,
@@ -1070,6 +1070,12 @@ export const MiniSignTx = ({
     !!checkErrors.find(item => item.level === 'forbidden') ||
     disableSignBtn;
 
+  console.log(
+    'BalanceChange',
+    showSimulateChange,
+    txsResult?.[txsResult?.length - 1]?.preExecResult,
+  );
+
   return (
     <>
       <MiniFooterBar
@@ -1093,10 +1099,7 @@ export const MiniSignTx = ({
                           txsResult?.[txsResult?.length - 1].preExecResult
                             .balance_change
                         }
-                        successTitle={t(
-                          'page.transactions.detail.Simulation Results',
-                        )}
-                        containerStyle={styles.balanceChangeContainer}
+                        style={styles.balanceChangeContainer}
                       />
                     ) : (
                       <BalanceChangeLoading />
@@ -1407,6 +1410,11 @@ const getSheetStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   balanceChangeContainer: {
     backgroundColor: colors2024['neutral-bg-2'],
+    marginTop: 0,
     marginBottom: 16,
+    paddingVertical: 16,
+    paddingTop: 12,
+    paddingBottom: 0,
+    borderRadius: 8,
   },
 }));

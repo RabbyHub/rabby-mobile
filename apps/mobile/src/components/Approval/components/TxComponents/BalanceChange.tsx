@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ViewProps } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -195,6 +195,7 @@ const BalanceChange = ({
   data,
   version,
   account,
+  style,
 }: {
   data?: IBalanceChange;
   isSupport?: boolean;
@@ -202,6 +203,7 @@ const BalanceChange = ({
   chainEnum?: CHAINS_ENUM;
   version: 'v0' | 'v1' | 'v2';
   account?: Account;
+  style?: ViewProps['style'];
 }) => {
   const { t } = useTranslation();
   const isSuccess = data?.success;
@@ -254,6 +256,7 @@ const BalanceChange = ({
             marginTop: 10,
             paddingBottom: 10,
           },
+          style,
         ])}>
         <Text style={styles.headline}>
           {t('page.signTx.balanceChange.notSupport')}
@@ -264,7 +267,7 @@ const BalanceChange = ({
 
   if (version === 'v1' && data?.error) {
     return (
-      <View style={styles.tokenBalanceChange}>
+      <View style={[styles.tokenBalanceChange, style]}>
         <Text style={styles.headline}>
           {isSuccess
             ? t('page.signTx.balanceChange.successTitle')
@@ -297,7 +300,7 @@ const BalanceChange = ({
   }
 
   return (
-    <View style={styles.tokenBalanceChange}>
+    <View style={[styles.tokenBalanceChange, style]}>
       <View
         style={StyleSheet.flatten([
           commonStyle.rowFlexCenterItem,
