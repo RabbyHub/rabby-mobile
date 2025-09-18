@@ -1,4 +1,5 @@
 import { appIsDev } from '@/constant/env';
+import { UL_HOSTNAME, UL_PATH_PREFIX } from '@/constant/universalLink';
 import type { TrezorBridgeInterface } from '@rabby-wallet/eth-keyring-trezor';
 import TrezorConnect from '@trezor/connect-mobile';
 import { Linking } from 'react-native';
@@ -26,7 +27,7 @@ export default class TrezorBridge implements TrezorBridgeInterface {
           console.debug('deeplinkOpen', url);
           Linking.openURL(url);
         },
-        deeplinkCallbackUrl: 'rabby://connect-trezor',
+        deeplinkCallbackUrl: `https://${UL_HOSTNAME}${UL_PATH_PREFIX}/connect-trezor`, //'rabby://connect-trezor',
         ...config,
       });
       this.isDeviceConnected = true;
