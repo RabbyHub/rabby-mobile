@@ -292,13 +292,16 @@ const Details = ({
   }, [loadMore]);
 
   useEffect(() => {
-    if (data?.list?.length && data?.list?.length > 20) {
+    if (
+      (data?.list?.length && data?.list?.length > 20) ||
+      (!data?.list && !loading)
+    ) {
       return;
     }
     return every10sEvent.on(() => {
       reloadAsync();
     });
-  }, [reloadAsync, data?.list?.length]);
+  }, [reloadAsync, data?.list?.length, data?.list, loading]);
 
   const list = useMemo(() => {
     return uniqBy(data?.list, 'id');
@@ -500,21 +503,28 @@ const Activity = ({
     refresh: refreshSummary,
   } = useRequest(
     async () => {
-      const res = await openapi.getMarketSummary({
-        token_id: tokenId,
-        chain_id: chainId,
-      });
-      return res;
+      try {
+        const res = await openapi.getMarketSummary({
+          token_id: tokenId,
+          chain_id: chainId,
+        });
+        return res;
+      } catch (error) {
+        return undefined;
+      }
     },
     {
       refreshDeps: [tokenId, chainId],
     },
   );
   useEffect(() => {
+    if (!summaryData && !summaryLoading) {
+      return;
+    }
     return every10sEvent.on(() => {
       refreshSummary();
     });
-  }, [refreshSummary]);
+  }, [refreshSummary, summaryData, summaryLoading]);
 
   return (
     <View style={styles.container}>

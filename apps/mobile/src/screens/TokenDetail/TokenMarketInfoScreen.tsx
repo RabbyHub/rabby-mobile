@@ -657,6 +657,9 @@ export const TokenMarketInfoScreen = () => {
   }, []);
 
   const handleRefreshChart = useCallback(() => {
+    if (!tokenWithAmount?.support_market_data) {
+      return;
+    }
     fetchTokenPriceData(
       {
         chain: token.chain,
@@ -667,7 +670,12 @@ export const TokenMarketInfoScreen = () => {
     ).then(res => {
       chartWebViewRef.current?.updateCandleData(res.candles[0]);
     });
-  }, [currentInterval, token._tokenId, token.chain]);
+  }, [
+    currentInterval,
+    token._tokenId,
+    token.chain,
+    tokenWithAmount?.support_market_data,
+  ]);
 
   useEvery10sEvent();
 
@@ -786,12 +794,10 @@ export const TokenMarketInfoScreen = () => {
                 />
               )}
             </View>
-            {!!tokenWithAmount?.support_market_data && (
-              <ActivityAndHolders
-                tokenId={token._tokenId}
-                chainId={token.chain}
-              />
-            )}
+            <ActivityAndHolders
+              tokenId={token._tokenId}
+              chainId={token.chain}
+            />
             <View style={{ height: isAndroid ? 200 + safeOffBottom : 156 }} />
           </ScrollView>
         </Tabs.Tab>

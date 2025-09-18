@@ -27,14 +27,6 @@ export const useHolderInfo = (tokenId: string, chainId: string) => {
     return res;
   });
 
-  useEffect(() => {
-    const refresh = () => {
-      refreshSummary();
-      refreshDetails();
-    };
-    return every10sEvent.on(refresh);
-  }, [refreshSummary, refreshDetails]);
-
   const holderEmpty = useMemo(() => {
     return (
       !summaryData?.ratio_top100 &&
@@ -49,6 +41,17 @@ export const useHolderInfo = (tokenId: string, chainId: string) => {
     summaryData,
     summaryLoading,
   ]);
+
+  useEffect(() => {
+    if (holderEmpty) {
+      return;
+    }
+    const refresh = () => {
+      refreshSummary();
+      refreshDetails();
+    };
+    return every10sEvent.on(refresh);
+  }, [refreshSummary, refreshDetails, holderEmpty]);
 
   return {
     summaryData,
