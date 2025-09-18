@@ -52,6 +52,18 @@ const Summary = ({ data }: ISummaryData) => {
 
   const [activeTab, setActiveTab] = useState(TabKey['5m']);
   const currentData = useMemo(() => data?.[activeTab], [data, activeTab]);
+  const { buyFlex, sellFlex } = useMemo(() => {
+    const buyCount = currentData?.summary?.buy?.count ?? 0;
+    const sellCount = currentData?.summary?.sell?.count ?? 0;
+    const total = (buyCount || 0) + (sellCount || 0);
+    if (!total) {
+      return { buyFlex: 1, sellFlex: 1 };
+    }
+    return {
+      buyFlex: buyCount / total,
+      sellFlex: sellCount / total,
+    };
+  }, [currentData?.summary?.buy?.count, currentData?.summary?.sell?.count]);
 
   return (
     <InfoContainer title={t('page.tokenDetail.marketInfo.summary')}>
@@ -145,7 +157,6 @@ const Summary = ({ data }: ISummaryData) => {
                   ) || '-'}
                 </Text>
               </View>
-              <View style={styles.chatBottomLine} />
             </View>
             <View style={styles.chartRight}>
               <View style={[styles.chatTop, styles.chatTopRight]}>
@@ -160,10 +171,17 @@ const Summary = ({ data }: ISummaryData) => {
                   ) || '-'}
                 </Text>
               </View>
-              <View
-                style={[styles.chatBottomLine, styles.chatBottomLineRight]}
-              />
             </View>
+          </View>
+          <View style={styles.chatBottomLineContainer}>
+            <View style={[styles.chatBottomLine, { flex: buyFlex }]} />
+            <View
+              style={[
+                styles.chatBottomLine,
+                styles.chatBottomLineRight,
+                { flex: sellFlex },
+              ]}
+            />
           </View>
           <View style={styles.summaryBottomContainer}>
             <View style={styles.summaryBottomItem}>
@@ -636,12 +654,25 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     color: colors2024['red-default'],
     backgroundColor: colors2024['red-light-2'],
   },
+  chatBottomLineContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    height: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    gap: 4,
+    paddingHorizontal: 16,
+    marginTop: 1,
+  },
   chatBottomLine: {
     height: 4,
     borderRadius: 20,
+    flex: 1,
     backgroundColor: colors2024['green-default'],
   },
   chatBottomLineRight: {
+    flex: 1,
     backgroundColor: colors2024['red-default'],
   },
   summaryBottomContainer: {
