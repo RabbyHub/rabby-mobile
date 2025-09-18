@@ -4,7 +4,8 @@ import React from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
-import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { RcIconInfo2CC } from '@/assets/icons/common';
 import QRCode from 'react-native-qrcode-svg';
 import { RootNames } from '@/constant/layout';
@@ -79,11 +80,11 @@ export const BackupPrivateKeyScreen = () => {
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
   const nav = useNavigation();
-  const { data } = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.BackupPrivateKey)?.params,
-  ) as {
-    data: string;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'AddressNavigatorParamList', 'BackupPrivateKey'>
+    >();
+  const { data } = route.params || {};
 
   const handleDone = React.useCallback(() => {
     nav.goBack();

@@ -14,7 +14,8 @@ import HelpIcon from '@/assets2024/icons/common/help.svg';
 import { RootNames } from '@/constant/layout';
 import { default as RcIconBackupCloud } from '@/assets/icons/nextComponent/IconBackupCloud.svg';
 import { default as RcIconBackupManual } from '@/assets/icons/nextComponent/IconBackupManual.svg';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
@@ -35,11 +36,14 @@ function MainListBlocks() {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
 
-  const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.CreateChooseBackup)?.params,
-  ) as {
-    delaySetPassword?: boolean;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'AddressNavigatorParamList',
+        'CreateChooseBackup'
+      >
+    >();
+  const state = route.params;
 
   const handleBackupToCloud = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({

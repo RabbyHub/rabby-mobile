@@ -6,8 +6,9 @@ import { useThemeColors } from '@/hooks/theme';
 import {
   useIsFocused,
   useNavigation,
-  useNavigationState,
+  useRoute,
 } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import React from 'react';
 import {
   Keyboard,
@@ -94,19 +95,15 @@ export const ImportSuccessScreen = () => {
 
     [colors, safeOffHeader],
   );
-  const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.ImportSuccess)?.params,
-  ) as {
-    address: string | string[];
-    brandName: string;
-    deepLink: string;
-    isFirstImport: boolean;
-    type: KEYRING_TYPE;
-    supportChainList?: Chain[];
-    mnemonics?: string;
-    passphrase?: string;
-    keyringId?: number;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'AddressNavigatorParamList', 'ImportSuccess'>
+    >();
+  const state = route.params;
+  if (!state) {
+    throw new Error('[ImportSuccessScreen] state is undefined');
+  }
+
   const [importAddresses, setImportAddresses] = React.useState<
     {
       address: string;

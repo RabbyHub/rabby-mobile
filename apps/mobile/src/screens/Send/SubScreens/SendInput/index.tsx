@@ -18,8 +18,9 @@ import PasteButton from '@/components2024/PasteButton';
 import { useTranslation } from 'react-i18next';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
 import { useWhiteListAddress } from '../../hooks/useWhiteListAddress';
-import { useNavigationState } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { useSendRoutes } from '@/hooks/useSendRoutes';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -60,11 +61,11 @@ const SendInputScreen = ({ cleanInput }: { cleanInput?: () => void }) => {
   const [error, setError] = React.useState<INPUT_ERROR>();
   const scanner = useScanner();
   const [loading, setLoading] = useState(false);
-  const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.SendInput)?.params,
-  ) as {
-    autoScan?: boolean;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'TransactionNavigatorParamList', 'SendInput'>
+    >();
+  const navParams = route.params || {};
   const [ensResult, setEnsResult] = React.useState<null | {
     addr: string;
     name: string;

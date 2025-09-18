@@ -10,8 +10,11 @@ import AnimationImportSuccess from '@/assets2024/animations/animation-import-suc
 import Lottie from 'lottie-react-native';
 import { toast } from '@/components2024/Toast';
 import { RootNames } from '@/constant/layout';
-import { AddressNavigatorParamList } from '@/navigation-type';
-import { useNavigationState } from '@react-navigation/native';
+import {
+  AddressNavigatorParamList,
+  GetNestedScreenRouteProp,
+} from '@/navigation-type';
+import { useNavigationState, useRoute } from '@react-navigation/native';
 import { useAccounts } from '@/hooks/account';
 import { useSortAddressList } from '../Address/useSortAddressList';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
@@ -27,11 +30,14 @@ export const SyncExtensionAccountSuccessfulScreen = () => {
   const navigation = useRabbyAppNavigation();
   const { syncMultiAddressesHistory } = useSyncHistoryDB();
 
-  const navState = useNavigationState(
-    s =>
-      s.routes.find(e => e.name === RootNames.SyncExtensionAccountSuccess)
-        ?.params,
-  ) as AddressNavigatorParamList['SyncExtensionAccountSuccess'];
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'AddressNavigatorParamList',
+        'SyncExtensionAccountSuccess'
+      >
+    >();
+  const navState = route.params;
 
   const { accounts: acc } = useAccounts();
 

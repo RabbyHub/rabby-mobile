@@ -22,8 +22,9 @@ import { useAggregatorsList, useBridgeSupportedChains } from './atom';
 import { getERC20Allowance } from '@/core/apis/provider';
 import { apiProvider } from '@/core/apis';
 import { useMount } from 'ahooks';
-import { useFocusEffect, useNavigationState } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import { useSwapBridgeSlider } from '@/screens/Swap/hooks/slider';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useSceneAccountInfo } from '@/hooks/accountsSwitcher';
@@ -288,21 +289,14 @@ export const useBridge = (isForMultipleAddress?: boolean) => {
   //   },
   // });
 
-  const navState = useNavigationState(
-    s =>
-      s.routes.find(
-        r =>
-          r.name ===
-          (isForMultipleAddress ? RootNames.MultiBridge : RootNames.Bridge),
-      )?.params,
-  ) as
-    | {
-        chainEnum?: CHAINS_ENUM | undefined;
-        tokenId?: TokenItem['id'];
-        toChainEnum?: CHAINS_ENUM;
-        toTokenId?: TokenItem['id'];
-      }
-    | undefined;
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<
+        'TransactionNavigatorParamList',
+        typeof RootNames.Bridge | typeof RootNames.MultiBridge
+      >
+    >();
+  const navState = route.params;
 
   // init from token and chain
   useMount(() => {

@@ -5,8 +5,9 @@ import { useTheme2024 } from '@/hooks/theme';
 import {
   useIsFocused,
   useNavigation,
-  useNavigationState,
+  useRoute,
 } from '@react-navigation/native';
+import { GetNestedScreenRouteProp } from '@/navigation-type';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
@@ -67,21 +68,16 @@ export const ImportSuccessScreen2024 = () => {
     useRef<ReturnType<typeof createGlobalBottomSheetModal2024>>();
   const { t } = useTranslation();
 
-  const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.ImportSuccess2024)?.params,
-  ) as {
-    address: string | string[];
-    brandName: string;
-    deepLink: string;
-    isFirstImport: boolean;
-    isFirstCreate: boolean;
-    type: KEYRING_TYPE;
-    supportChainList?: Chain[];
-    mnemonics?: string;
-    passphrase?: string;
-    alias?: string;
-    keyringId?: number;
-  };
+  const route =
+    useRoute<
+      GetNestedScreenRouteProp<'AddressNavigatorParamList', 'ImportSuccess2024'>
+    >();
+  const state = route.params;
+
+  if (!state) {
+    throw new Error('[ImportSuccess2024] route.params is undefined');
+  }
+
   const [loadingBalance, setLoadingBalance] = useState(true);
   const [addressBalances, setAddressBalances] = useState<
     Record<string, number>

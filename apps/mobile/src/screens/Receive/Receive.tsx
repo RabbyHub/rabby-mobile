@@ -165,11 +165,7 @@ function ReceiveScreen(): JSX.Element {
     }
   }, [isWatchMode]);
 
-  const navState = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.Receive)?.params,
-  ) as
-    | { chainEnum?: CHAINS_ENUM | undefined; tokenSymbol?: TokenItem['symbol'] }
-    | undefined;
+  const navState = route.params;
 
   useEffect(() => {
     if (navState?.chainEnum) {
