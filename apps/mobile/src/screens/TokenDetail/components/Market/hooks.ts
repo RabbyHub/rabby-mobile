@@ -1,26 +1,40 @@
 import { openapi } from '@/core/request';
 import { useRequest } from 'ahooks';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { every10sEvent } from '../../event';
 
 export const useHolderInfo = (tokenId: string, chainId: string) => {
-  const { data: summaryData, loading: summaryLoading } = useRequest(
-    async () => {
-      const res = await openapi.getTokenHolderSummary({
-        token_id: tokenId,
-        chain_id: chainId,
-      });
-      return res;
-    },
-  );
-  const { data: detailsData, loading: detailsLoading } = useRequest(
-    async () => {
-      const res = await openapi.getTokenHolderList({
-        token_id: tokenId,
-        chain_id: chainId,
-      });
-      return res;
-    },
-  );
+  const {
+    data: summaryData,
+    loading: summaryLoading,
+    refresh: refreshSummary,
+  } = useRequest(async () => {
+    const res = await openapi.getTokenHolderSummary({
+      token_id: tokenId,
+      chain_id: chainId,
+    });
+    return res;
+  });
+  const {
+    data: detailsData,
+    loading: detailsLoading,
+    refresh: refreshDetails,
+  } = useRequest(async () => {
+    const res = await openapi.getTokenHolderList({
+      token_id: tokenId,
+      chain_id: chainId,
+    });
+    return res;
+  });
+
+  useEffect(() => {
+    const refresh = () => {
+      refreshSummary();
+      refreshDetails();
+    };
+    return every10sEvent.on(refresh);
+  }, [refreshSummary, refreshDetails]);
+
   const holderEmpty = useMemo(() => {
     return (
       !summaryData?.ratio_top100 &&

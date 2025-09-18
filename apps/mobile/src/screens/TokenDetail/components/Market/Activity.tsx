@@ -33,6 +33,7 @@ import { openapi } from '@/core/request';
 import { debounce, uniqBy } from 'lodash';
 import { Service } from 'ahooks/lib/useInfiniteScroll/types';
 import { scrollEndCallBack } from './hooks';
+import { every10sEvent } from '../../event';
 
 interface ISummaryData {
   data?: MarketSummary;
@@ -282,12 +283,22 @@ const Details = ({
           }
           return d ? !d.hasMore : false;
         },
+        manual: true,
       },
     );
 
   useEffect(() => {
     scrollEndCallBack.cb = debounce(loadMore, 1000);
   }, [loadMore]);
+
+  useEffect(() => {
+    if (data?.list?.length && data?.list?.length > 20) {
+      return;
+    }
+    return every10sEvent.on(() => {
+      reloadAsync();
+    });
+  }, [reloadAsync, data?.list?.length]);
 
   const list = useMemo(() => {
     return uniqBy(data?.list, 'id');
@@ -483,7 +494,11 @@ const Activity = ({
   chainId: string;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { data: summaryData, loading: summaryLoading } = useRequest(
+  const {
+    data: summaryData,
+    loading: summaryLoading,
+    refresh: refreshSummary,
+  } = useRequest(
     async () => {
       const res = await openapi.getMarketSummary({
         token_id: tokenId,
@@ -495,10 +510,15 @@ const Activity = ({
       refreshDeps: [tokenId, chainId],
     },
   );
+  useEffect(() => {
+    return every10sEvent.on(() => {
+      refreshSummary();
+    });
+  }, [refreshSummary]);
 
   return (
     <View style={styles.container}>
-      {!summaryLoading && <Summary data={summaryData} />}
+      {(!summaryLoading || summaryData) && <Summary data={summaryData} />}
       <Details tokenId={tokenId} chainId={chainId} />
     </View>
   );

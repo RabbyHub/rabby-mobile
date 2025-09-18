@@ -67,6 +67,7 @@ import MarketInfo from './components/MarketInfo';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import ActivityAndHolders from './components/Market/ActivityAndHolders';
 import { scrollEndCallBack } from './components/Market/hooks';
+import { every10sEvent, useEvery10sEvent } from './event';
 
 const currentIntervalAtom = atomByMMKV<CandlePeriod>(
   '@tokenDetail.currentInterval',
@@ -655,6 +656,29 @@ export const TokenMarketInfoScreen = () => {
     }
   }, []);
 
+  const handleRefreshChart = useCallback(() => {
+    fetchTokenPriceData(
+      {
+        chain: token.chain,
+        tokenId: token._tokenId,
+      },
+      currentInterval,
+      Math.floor(Date.now() / 1000),
+    ).then(res => {
+      chartWebViewRef.current?.updateCandleData(res.candles[0]);
+    });
+  }, [currentInterval, token._tokenId, token.chain]);
+
+  useEvery10sEvent();
+
+  useEffect(() => {
+    return every10sEvent.on(() => {
+      refreshTokenEntity();
+      refreshAsync();
+      handleRefreshChart();
+    });
+  }, [handleRefresh, handleRefreshChart, refreshAsync, refreshTokenEntity]);
+
   if (isSingleAddress && !finalAccount) {
     return null;
   }
@@ -709,7 +733,7 @@ export const TokenMarketInfoScreen = () => {
                 position: 'relative',
                 marginTop: 12,
               }}>
-              {tokenWithAmountLoading ? (
+              {tokenWithAmountLoading && !tokenWithAmount ? (
                 <View style={styles.skeleton} />
               ) : tokenWithAmount?.support_market_data ? (
                 <>
