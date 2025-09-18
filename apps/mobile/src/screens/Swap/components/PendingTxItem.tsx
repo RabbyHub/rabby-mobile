@@ -236,11 +236,6 @@ export const ApprovePendingTxItem = ({
     return v as ApproveTokenTxHistoryItem;
   }, [type, address]);
 
-  console.log(
-    'ApprovePendingTxItem data',
-    transactionHistoryService.getStore(),
-  );
-
   useMount(() => {
     getApproveItem();
   });

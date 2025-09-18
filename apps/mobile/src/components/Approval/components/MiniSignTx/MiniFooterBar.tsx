@@ -536,8 +536,6 @@ export const MiniFooterBar: React.FC<Props> = ({
   const { gasFeeDisableProcess, checkGasFee } =
     useMiniDirectSignGasFeeDisableProcess();
 
-  console.log('gasFeeDisableProcess', gasFeeDisableProcess, checkGasFee);
-
   if (!account) {
     return null;
   }

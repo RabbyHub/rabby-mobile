@@ -35,7 +35,6 @@ export const useTwoStepSwap = ({
   const isApprove = shouldTwoStep && !!_txs?.length && index < _txs?.length - 1;
 
   useEffect(() => {
-    console.log('reset setApproveHash');
     setApproveHash('');
     setIndex(0);
     setApprovePending(false);

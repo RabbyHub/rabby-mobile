@@ -201,16 +201,8 @@ export const useTokenPair = ({ account }: { account: Account }) => {
           const result = p(pre);
           enableRefreshRef.current = result ? true : false;
 
-          console.log(
-            'enableRefreshRef.current setOriActiveProvider',
-            enableRefreshRef.current,
-          );
           return result;
         }
-        console.log(
-          'enableRefreshRef.current setOriActiveProvider',
-          enableRefreshRef.current,
-        );
 
         return p;
       });
@@ -504,7 +496,6 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         inSufficientCanGetQuote &&
         !isDraggingSlider
       ) {
-        console.log('render _runGetAllQuotes');
         setTokenRefreshId(e => e + 1);
         const limit = rateLimitRef.current?.checkRateLimit();
         setRateLimit(!!limit);
@@ -684,14 +675,11 @@ export const useTokenPair = ({ account }: { account: Account }) => {
         }) || []),
       ];
 
-      console.log('setActiveProvider setActiveProvider');
       if (sortedList?.[0]) {
         const bestQuote = sortedList[0];
         const { preExecResult } = bestQuote;
 
         setBestQuoteDex(bestQuote.name);
-
-        console.log('setActiveProvider setActiveProvider');
 
         setActiveProvider(
           !bestQuote.preExecResult || !bestQuote.preExecResult.isSdkPass
@@ -907,7 +895,6 @@ export const useTokenPair = ({ account }: { account: Account }) => {
 
   useFocusEffect(
     useCallback(() => {
-      console.log('useFocusEffect refresh');
       const refresh = () => {
         setTokenRefreshId(e => e + 1);
       };

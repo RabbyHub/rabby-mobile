@@ -90,7 +90,6 @@ export const DirectSignBtn = ({
   const disabled = showRiskTips
     ? !riskChecked || props.disabled
     : props.disabled;
-  console.log('checkGasFee', checkGasFee);
   return (
     <View>
       {showRiskTips ? (

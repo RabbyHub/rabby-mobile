@@ -244,8 +244,6 @@ const Swap = ({
   const refresh = useSetAtom(refreshIdAtom);
   const refreshId = useAtomValue(refreshIdAtom);
 
-  console.log('refreshId', refreshId);
-
   const [
     { visible: isShowRabbyFeePopup, dexName, dexFeeDesc },
     setIsShowRabbyFeePopup,
@@ -450,7 +448,6 @@ const Swap = ({
         console.error(error);
       } finally {
         refresh(e => e + 1);
-        console.log('refresh finally');
       }
     }
   });
@@ -618,11 +615,9 @@ const Swap = ({
         if ((e as any)?.name === 'SimulateError') {
           gotoSwap();
         } else if (isAbortedDirectSubmitError(e)) {
-          console.log('AbortedDirectSubmitError swap');
         } else {
           mutateTxs([]);
           refresh(e => e + 1);
-          console.log('refresh handleSwap ');
         }
       } finally {
         setIsSubmitting(false);
@@ -774,11 +769,8 @@ const Swap = ({
     // onApprovePending,
   });
 
-  console.log('approveHash', approveHash);
-
   const miniSignNextStep = (hash: string) => {
     if (isApprove) {
-      console.log('hash', hash);
       transactionHistoryService.addApproveSwapTokenTxHistory({
         address: currentAccount?.address!,
         chainId: currentTxs![0]!.chainId,
@@ -877,7 +869,6 @@ const Swap = ({
   useEffect(() => {
     if (isFocused) {
       refresh(e => e + 1);
-      console.log('refresh isFocused');
     }
   }, [isFocused, refresh]);
 
@@ -1210,7 +1201,6 @@ const Swap = ({
                 }}
                 onCancel={() => {
                   refresh(e => e + 1);
-                  console.log('refresh AuthButton');
                 }}
                 account={currentAccount}
                 showHardWalletProcess
@@ -1228,7 +1218,6 @@ const Swap = ({
                   }
                   if (!activeProvider || slippageChanged) {
                     refresh(e => e + 1);
-                    console.log('refresh !activeProvider || slippageChanged');
 
                     return;
                   }

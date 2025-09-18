@@ -63,12 +63,6 @@ export const MiniDirectSubmitApproval = ({
     getStyle: getSheetStyles,
   });
 
-  console.log('transparentMask props', {
-    showMaskLoading,
-    transparentMask,
-    checkGasFee,
-  });
-
   const dismissedByCodeRef = useRef(false);
 
   const [overlayLoading, setOverlayLoading] = React.useState(false);
@@ -109,8 +103,6 @@ export const MiniDirectSubmitApproval = ({
 
   const setMiniSignChain = useSetMiniSignChain();
   const { setCheckGasFee } = useMiniDirectSignGasFeeDisableProcess();
-
-  console.log('useMiniDirectSignGasFeeDisableProcess', checkGasFee);
 
   useEffect(() => {
     if (txs?.[0]?.chainId) {
