@@ -709,7 +709,7 @@ export const TokenMarketInfoScreen = () => {
                 position: 'relative',
                 marginTop: 12,
               }}>
-              {/* {tokenWithAmountLoading ? (
+              {tokenWithAmountLoading ? (
                 <View style={styles.skeleton} />
               ) : tokenWithAmount?.support_market_data ? (
                 <>
@@ -760,7 +760,7 @@ export const TokenMarketInfoScreen = () => {
                   amountList={[]}
                   relateDefiList={[]}
                 />
-              )} */}
+              )}
             </View>
             {!!tokenWithAmount?.support_market_data && (
               <ActivityAndHolders
