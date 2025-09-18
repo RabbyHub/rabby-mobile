@@ -1457,7 +1457,7 @@ PODS:
     - Yoga
   - react-native-ble-manager (11.6.0):
     - React-Core
-  - react-native-ble-plx (3.1.2):
+  - react-native-ble-plx (3.4.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2718,7 +2718,7 @@ SPEC CHECKSUMS:
   react-native-aes: 2f9ce51c4bd1e9fb5c50f5c867df05bcac10884b
   react-native-animateable-text: f1a64668dda53870a478868d3a6f0761fe897814
   react-native-ble-manager: 7e6373a746c5a815d0a65a11cc5f633c72c36c5b
-  react-native-ble-plx: bd93c5231134719c2aec7a7b4cf3f520ff78342a
+  react-native-ble-plx: 3dca6a0dc25f690d94d55346d7e69ac8d0fd9e8b
   react-native-blur: 89fca766002a2cf738ff37cca82a9776700841e6
   react-native-cloud-storage: c6dcdd85718315adf3a2598b34fb7d3e7de7715a
   react-native-compat: 39946b7c56b5f95619353d20d3dcd39c8c7003c5

@@ -29,22 +29,25 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
       return;
     }
     setIsSubmitting(true);
-    isConnectedPromise.then(([isConnected]) => {
-      if (!isConnected) {
-        onClickConnect(
-          () => {
-            props.onSubmit();
-            setIsSubmitting(false);
-          },
-          () => {
-            props.onCancel?.();
-          },
-        );
-        return;
-      }
-      props.onSubmit();
-      setIsSubmitting(false);
-    });
+    isConnectedPromise
+      .then(([isConnected]) => {
+        if (!isConnected) {
+          onClickConnect(
+            () => {
+              props.onSubmit();
+              setIsSubmitting(false);
+            },
+            () => {
+              props.onCancel?.();
+            },
+          );
+          return;
+        }
+        props.onSubmit();
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   }, [isSubmitting, isConnectedPromise, props, onClickConnect]);
 
   return (
@@ -54,6 +57,7 @@ export const MiniOneKeyProcessActions: React.FC<Props> = props => {
       submitText={t('page.signFooterBar.oneKeyConfirm')}
       disabledProcess={disabledProcess}
       buttonIcon={<OneKeySvg width={22} height={22} viewBox="0 0 28 28" />}
+      loading={isSubmitting}
     />
   );
 };

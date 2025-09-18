@@ -52,6 +52,7 @@ export const MiniProcessActions: React.FC<Props> = ({
   isMiniSignTx,
   directSubmit,
   miniSignType,
+  loading,
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -110,6 +111,7 @@ export const MiniProcessActions: React.FC<Props> = ({
                 onPress={onSubmit}
                 icon={buttonIcon}
                 title={buttonText}
+                loading={loading}
               />
             </GasLessAnimatedWrapper>
           </View>
