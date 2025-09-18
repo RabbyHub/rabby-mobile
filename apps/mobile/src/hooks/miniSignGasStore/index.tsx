@@ -57,13 +57,6 @@ export const useMiniSignGasStore = (chainId: number) => {
   const currentMiniCustomGas =
     fixedCustomGas?.[chainId] ?? miniCustomPrice?.[chainId];
 
-  console.log('fixedCustomGas', fixedCustomGas);
-
-  console.log('currentMiniCustomGas', {
-    currentMiniCustomGas,
-    currentMiniSignGasLevel,
-  });
-
   const updateMiniGas = useCallback(
     (params: {
       gasLevel: typeof miniGasLevel;
