@@ -297,7 +297,6 @@ const Details = ({
       nextCursor?: string;
       hasMore: boolean;
     }) => {
-      console.log('CUSTOM_LOGGER:=>: getMarketTradingHistory', 11);
       const res = await openapi.getMarketTradingHistory({
         token_id: tokenId,
         chain_id: chainId,
@@ -305,11 +304,6 @@ const Details = ({
         limit: 20,
         cursor: d?.nextCursor,
       });
-      console.log(
-        'CUSTOM_LOGGER:=>: res',
-        res?.data_list?.length,
-        res?.pagination?.has_next,
-      );
       const page = res?.pagination || {};
       const merged = [...(res?.data_list || [])];
       return {
@@ -358,7 +352,6 @@ const Details = ({
   const list = useMemo(() => {
     return uniqBy(data?.list, 'id');
   }, [data?.list]);
-  console.log('CUSTOM_LOGGER:=>: list', list.length);
 
   useEffect(() => {
     reloadAsync();
