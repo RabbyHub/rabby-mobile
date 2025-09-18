@@ -1864,7 +1864,7 @@
         "holders": "Holders",
         "empty": "No Data",
         "activity": "Activity",
-        "summary": "Summary",
+        "summary": "Summary Data",
         "details": "Details",
         "holderSections": {
           "top10HoldersRatio": "Top 10 Holders Ratio",
@@ -1878,13 +1878,14 @@
         "activitySections": {
           "tableHeader": {
             "all": "All",
-            "min": "Min",
+            "min": "min",
             "hour": "Hour",
             "buy": "Buy",
             "sell": "Sell",
             "volume": "Volume",
             "tradingCount": "Trading Count",
             "address": "Address",
+            "addresses": "Addresses",
             "type": "Type",
             "time": "Time",
             "price": "Price",

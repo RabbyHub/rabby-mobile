@@ -47,7 +47,7 @@ const enum TabKey {
 }
 
 const Summary = ({ data }: ISummaryData) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState(TabKey['5m']);
@@ -65,6 +65,15 @@ const Summary = ({ data }: ISummaryData) => {
     };
   }, [currentData?.summary?.buy?.count, currentData?.summary?.sell?.count]);
 
+  const getTextColor = useCallback(
+    (v: number) => {
+      if (!v || typeof v !== 'number') {
+        return colors2024['neutral-body'];
+      }
+      return v > 0 ? colors2024['green-default'] : colors2024['red-default'];
+    },
+    [colors2024],
+  );
   return (
     <InfoContainer title={t('page.tokenDetail.marketInfo.summary')}>
       {data ? (
@@ -82,7 +91,13 @@ const Summary = ({ data }: ISummaryData) => {
                   'page.tokenDetail.marketInfo.activitySections.tableHeader.min',
                 )}
               </Text>
-              <Text style={styles.switchItemPercentage}>
+              <Text
+                style={[
+                  styles.switchItemPercentage,
+                  {
+                    color: getTextColor(data?.['5m']?.price?.change ?? 0),
+                  },
+                ]}>
                 {data?.['5m']?.price?.change
                   ? formatPercent(data?.['5m']?.price?.change)
                   : '-'}
@@ -100,7 +115,13 @@ const Summary = ({ data }: ISummaryData) => {
                   'page.tokenDetail.marketInfo.activitySections.tableHeader.hour',
                 )}
               </Text>
-              <Text style={styles.switchItemPercentage}>
+              <Text
+                style={[
+                  styles.switchItemPercentage,
+                  {
+                    color: getTextColor(data?.['1h']?.price?.change ?? 0),
+                  },
+                ]}>
                 {data?.['1h']?.price?.change
                   ? formatPercent(data?.['1h']?.price?.change)
                   : '-'}
@@ -118,7 +139,13 @@ const Summary = ({ data }: ISummaryData) => {
                   'page.tokenDetail.marketInfo.activitySections.tableHeader.hour',
                 )}
               </Text>
-              <Text style={styles.switchItemPercentage}>
+              <Text
+                style={[
+                  styles.switchItemPercentage,
+                  {
+                    color: getTextColor(data?.['6h']?.price?.change ?? 0),
+                  },
+                ]}>
                 {data?.['6h']?.price?.change
                   ? formatPercent(data?.['6h']?.price?.change)
                   : '-'}
@@ -136,7 +163,13 @@ const Summary = ({ data }: ISummaryData) => {
                   'page.tokenDetail.marketInfo.activitySections.tableHeader.hour',
                 )}
               </Text>
-              <Text style={styles.switchItemPercentage}>
+              <Text
+                style={[
+                  styles.switchItemPercentage,
+                  {
+                    color: getTextColor(data?.['24h']?.price?.change ?? 0),
+                  },
+                ]}>
                 {data?.['24h']?.price?.change
                   ? formatPercent(data?.['24h']?.price?.change)
                   : '-'}
@@ -211,12 +244,13 @@ const Summary = ({ data }: ISummaryData) => {
             <View style={styles.summaryBottomItem}>
               <Text style={styles.summaryBottomItemText}>
                 {t(
-                  'page.tokenDetail.marketInfo.activitySections.tableHeader.address',
+                  'page.tokenDetail.marketInfo.activitySections.tableHeader.addresses',
                 )}
               </Text>
               <Text style={styles.summaryBottomItemValue}>
                 {formatAmountValueKMB(
                   currentData?.summary?.totals?.addresses ?? 0,
+                  0,
                 ) || '-'}
               </Text>
             </View>
@@ -495,8 +529,8 @@ const Details = ({
             keyExtractor={item => item.id}
             contentContainerStyle={styles.tableBody}
             ListHeaderComponent={renderHeader}
-            nestedScrollEnabled={true} // Android
-            scrollEnabled={false} // iOS
+            nestedScrollEnabled={true}
+            scrollEnabled={false}
             ListFooterComponent={renderFooter}
           />
         </View>
@@ -775,7 +809,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   indexItem: {
     fontSize: 12,
     fontWeight: '500',
-    color: colors2024['neutral-secondary'],
+    color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     flex: 1,
   },

@@ -9,7 +9,10 @@ export const formatPercent = (value: number) => {
   );
   return `${percentNumber.toFixed(decimalsNumber)}%`;
 };
-export const formatAmountValueKMB = (value: string | number): string => {
+export const formatAmountValueKMB = (
+  value: string | number,
+  decimals = 2,
+): string => {
   const bnValue = new BigNumber(value);
 
   if (bnValue.lt(0)) {
@@ -26,7 +29,7 @@ export const formatAmountValueKMB = (value: string | number): string => {
   } else if (numValue >= 1e3) {
     formattedValue = `${(numValue / 1e3).toFixed(2)}K`;
   } else {
-    formattedValue = numValue.toFixed(2);
+    formattedValue = numValue.toFixed(decimals);
   }
 
   return `${formattedValue}`;
@@ -46,16 +49,16 @@ export const formatTime = (time: number) => {
   const { d, h, m, s } = getTimeSpan(timeElapse);
 
   if (d) {
-    timeStr = `${d} day` + (d > 1 ? 's' : '');
+    timeStr = `${d} day`;
   }
   if (h && !timeStr) {
-    timeStr = `<${h} hr` + (h > 1 ? 's' : '');
+    timeStr = `${h} hr`;
   }
   if (m && !timeStr) {
-    timeStr = `<${m} min` + (m > 1 ? 's' : '');
+    timeStr = `${m} min`;
   }
   if (!timeStr) {
-    timeStr = `<${s} sec` + (s > 1 ? 's' : '');
+    timeStr = `${s} s`;
   }
   return timeStr;
 };
