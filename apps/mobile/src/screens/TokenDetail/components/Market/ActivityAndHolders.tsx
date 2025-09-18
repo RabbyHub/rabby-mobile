@@ -50,17 +50,25 @@ const ActivityAndHolders = ({
         </Text>
       </View>
       <View style={styles.content}>
-        {activeTabKey === TabKey.activity && (
+        <View
+          style={[
+            styles.hideContent,
+            activeTabKey === TabKey.activity && styles.visibleContent,
+          ]}>
           <Activity tokenId={tokenId} chainId={chainId} />
-        )}
-        {activeTabKey === TabKey.holders && (
+        </View>
+        <View
+          style={[
+            styles.hideContent,
+            activeTabKey === TabKey.holders && styles.visibleContent,
+          ]}>
           <Holder
             top10ratio={summaryData?.ratio_top10 || 0}
             top100ratio={summaryData?.ratio_top100 || 0}
             data={detailsData?.data_list || []}
             isEmpty={isHolderEmpty}
           />
-        )}
+        </View>
       </View>
     </View>
   );
@@ -95,5 +103,17 @@ const getStyles = createGetStyles2024(({ colors2024 }) => ({
   },
   activityContent: {
     borderWidth: 1,
+  },
+  hideContent: {
+    opacity: 0,
+    zIndex: -1,
+    position: 'absolute',
+    left: 99999,
+  },
+  visibleContent: {
+    opacity: 1,
+    zIndex: 1,
+    position: 'relative',
+    left: 0,
   },
 }));

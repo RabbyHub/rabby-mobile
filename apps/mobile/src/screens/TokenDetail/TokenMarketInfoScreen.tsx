@@ -66,6 +66,7 @@ import TimePanel from './components/TimePanel';
 import MarketInfo from './components/MarketInfo';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import ActivityAndHolders from './components/Market/ActivityAndHolders';
+import { scrollEndCallBack } from './components/Market/hooks';
 
 const currentIntervalAtom = atomByMMKV<CandlePeriod>(
   '@tokenDetail.currentInterval',
@@ -647,6 +648,12 @@ export const TokenMarketInfoScreen = () => {
     },
     [setCurrentInterval, token._tokenId, token.chain],
   );
+  const handleScroll = useCallback(event => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    if (contentOffset.y + layoutMeasurement.height >= contentSize.height - 20) {
+      scrollEndCallBack?.cb?.();
+    }
+  }, []);
 
   if (isSingleAddress && !finalAccount) {
     return null;
@@ -680,6 +687,8 @@ export const TokenMarketInfoScreen = () => {
         pagerProps={{ scrollEnabled: !isAndroid }}>
         <Tabs.Tab label={renderMarketDataLabel} name="marketData">
           <ScrollView
+            onScroll={handleScroll}
+            scrollEventThrottle={200}
             refreshControl={
               <RefreshControl refreshing={false} onRefresh={handleRefresh} />
             }

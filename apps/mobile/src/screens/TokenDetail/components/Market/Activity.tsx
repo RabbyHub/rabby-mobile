@@ -9,7 +9,13 @@ import { useTranslation } from 'react-i18next';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { FlatList, Pressable, Text, View, Dimensions } from 'react-native';
+import {
+  FlatList,
+  Pressable,
+  Text,
+  View,
+  ActivityIndicator,
+} from 'react-native';
 import InfoContainer from './InfoContainer';
 import EmptyData from './EmptyData';
 import { MarketSummary } from '@rabby-wallet/rabby-api/dist/types';
@@ -24,8 +30,9 @@ import AddressView from './AddressView';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { useRequest } from 'ahooks';
 import { openapi } from '@/core/request';
-import { uniqBy } from 'lodash';
+import { debounce, uniqBy } from 'lodash';
 import { Service } from 'ahooks/lib/useInfiniteScroll/types';
+import { scrollEndCallBack } from './hooks';
 
 interface ISummaryData {
   data?: MarketSummary;
@@ -227,7 +234,7 @@ const Details = ({
   tokenId: string;
   chainId: string;
 }) => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(DetailsTabKey.all);
 
@@ -237,6 +244,7 @@ const Details = ({
       nextCursor?: string;
       hasMore: boolean;
     }) => {
+      console.log('CUSTOM_LOGGER:=>: getMarketTradingHistory', 11);
       const res = await openapi.getMarketTradingHistory({
         token_id: tokenId,
         chain_id: chainId,
@@ -268,13 +276,23 @@ const Details = ({
         hasMore: boolean;
       }>,
       {
-        isNoMore: d => (d ? !d.hasMore : false),
+        isNoMore: d => {
+          if (d && d?.list?.length >= 200) {
+            return true;
+          }
+          return d ? !d.hasMore : false;
+        },
       },
     );
+
+  useEffect(() => {
+    scrollEndCallBack.cb = debounce(loadMore, 1000);
+  }, [loadMore]);
 
   const list = useMemo(() => {
     return uniqBy(data?.list, 'id');
   }, [data?.list]);
+  console.log('CUSTOM_LOGGER:=>: list', list.length);
 
   useEffect(() => {
     reloadAsync();
@@ -364,40 +382,27 @@ const Details = ({
   );
   const footerRef = useRef<any>(null);
   const renderFooter = useCallback(() => {
-    return <View ref={footerRef} style={styles.footerContainer} />;
-  }, [styles.footerContainer]);
+    return (
+      <View
+        ref={footerRef}
+        style={[styles.footerContainer, !loadingMore && styles.hideFooter]}>
+        {loadingMore && (
+          <ActivityIndicator
+            style={styles.loading}
+            color={colors2024['neutral-body']}
+            size="small"
+          />
+        )}
+      </View>
+    );
+  }, [
+    colors2024,
+    loadingMore,
+    styles.footerContainer,
+    styles.hideFooter,
+    styles.loading,
+  ]);
 
-  useEffect(() => {
-    let timer: any;
-    const checkVisible = () => {
-      if (!footerRef.current) {
-        return;
-      }
-      try {
-        footerRef.current.measureInWindow(
-          (x: number, y: number, w: number, h: number) => {
-            const windowH = Dimensions.get('window').height;
-            const visible = y < windowH && y + h > 0;
-            if (visible) {
-              loadMore();
-            }
-          },
-        );
-      } catch (e) {
-        // ignore
-      }
-    };
-    timer = setInterval(checkVisible, 400);
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [loadMore]);
-
-  if (loading) {
-    return null;
-  }
   return (
     <InfoContainer title={t('page.tokenDetail.marketInfo.details')}>
       {list.length > 0 ? (
@@ -463,7 +468,7 @@ const Details = ({
             ListFooterComponent={renderFooter}
           />
         </View>
-      ) : (
+      ) : loading ? null : (
         <EmptyData />
       )}
     </InfoContainer>
@@ -751,8 +756,14 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flex: 1,
   },
   footerContainer: {
-    height: 0,
+    height: 40,
     width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hideFooter: {
+    height: 0,
   },
   footerText: {
     fontSize: 12,
@@ -772,5 +783,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '700',
     color: colors2024['neutral-body'],
     fontFamily: 'SF Pro Rounded',
+  },
+  loading: {
+    paddingBottom: 10,
   },
 }));

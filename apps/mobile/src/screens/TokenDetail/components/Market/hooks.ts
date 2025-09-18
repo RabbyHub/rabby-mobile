@@ -25,15 +25,14 @@ export const useHolderInfo = (tokenId: string, chainId: string) => {
     return (
       !summaryData?.ratio_top100 &&
       !summaryData?.ratio_top10 &&
-      !detailsData?.data_list &&
+      !detailsData?.data_list.length &&
       !detailsLoading &&
       !summaryLoading
     );
   }, [
-    detailsData?.data_list,
+    detailsData?.data_list.length,
     detailsLoading,
-    summaryData?.ratio_top10,
-    summaryData?.ratio_top100,
+    summaryData,
     summaryLoading,
   ]);
 
@@ -44,4 +43,8 @@ export const useHolderInfo = (tokenId: string, chainId: string) => {
     detailsLoading,
     isHolderEmpty: holderEmpty,
   };
+};
+
+export const scrollEndCallBack = {
+  cb: () => {},
 };
