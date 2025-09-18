@@ -30,7 +30,7 @@ import AddressView from './AddressView';
 import useInfiniteScroll from 'ahooks/lib/useInfiniteScroll';
 import { useRequest } from 'ahooks';
 import { openapi } from '@/core/request';
-import { debounce, uniqBy } from 'lodash';
+import { throttle, uniqBy } from 'lodash';
 import { Service } from 'ahooks/lib/useInfiniteScroll/types';
 import { scrollEndCallBack } from './hooks';
 import { every10sEvent } from '../../event';
@@ -288,7 +288,7 @@ const Details = ({
     );
 
   useEffect(() => {
-    scrollEndCallBack.cb = debounce(loadMore, 1000);
+    scrollEndCallBack.cb = throttle(loadMore, 1000);
   }, [loadMore]);
 
   useEffect(() => {

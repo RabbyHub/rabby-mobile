@@ -129,7 +129,7 @@ const ExpandableDescription = ({
   }, [styles.tagContainer, styles.tagText]);
 
   // If the outer layer is loading, display the title and skeleton
-  if (entityLoading) {
+  if (entityLoading && !description) {
     return null;
     // return (
     //   <>
@@ -259,7 +259,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.IssuedBy')}</Text>
       </View>
-      {entityLoading ? (
+      {entityLoading && !tokenEntity?.domain_id ? (
         <Skeleton
           width={'100%'}
           height={68}
@@ -371,7 +371,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.ListedBy')}</Text>
       </View>
-      {entityLoading ? (
+      {entityLoading && !tokenEntity ? (
         <Skeleton
           width={'100%'}
           height={68}
@@ -410,7 +410,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
           {t('page.tokenDetail.SupportedExchanges')}
         </Text>
       </View>
-      {entityLoading ? (
+      {entityLoading && !tokenEntity ? (
         <Skeleton
           width={'100%'}
           height={68}
