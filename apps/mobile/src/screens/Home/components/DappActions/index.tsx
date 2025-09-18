@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   StyleProp,
   Text,
@@ -24,7 +24,6 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAccounts } from '@/hooks/account';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { isAccountSupportMiniApproval } from '@/utils/account';
-import { useMiniSignGasStore } from '@/hooks/miniSignGasStore';
 import { debounce } from 'lodash';
 
 export const enum ActionType {
@@ -114,8 +113,6 @@ export const DappActions = ({
     resetMiniSignExtraProps,
   } = useMiniApproval();
 
-  const { reset: resetGasCache } = useMiniSignGasStore();
-
   const setDisableSignBtn = useCallback(
     (v: boolean) => {
       setMiniSignExtraProps(pre => ({ ...pre, disableSignBtn: v }));
@@ -151,7 +148,6 @@ export const DappActions = ({
       const txs = await action();
       if (canDirectSign) {
         resetMiniSignExtraProps();
-        resetGasCache();
         setMiniSignExtraProps(pre => ({
           ...pre,
           title: (
@@ -172,13 +168,11 @@ export const DappActions = ({
             account: currentAccount!,
             waitTime: 0,
           });
-          resetGasCache();
           setTimeout(() => {
             onRefresh?.();
           }, 500);
         } catch (error) {
           console.error('error occur', error);
-          resetGasCache();
         }
       } else {
         try {
@@ -213,7 +207,6 @@ export const DappActions = ({
       onPreExecChange,
       onRefresh,
       protocolLogo,
-      resetGasCache,
       resetMiniSignExtraProps,
       sendMiniTransactions,
       setMiniSignExtraProps,
