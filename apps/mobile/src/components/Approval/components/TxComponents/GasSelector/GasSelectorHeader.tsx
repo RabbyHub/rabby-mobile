@@ -138,6 +138,7 @@ interface GasSelectorProps {
   ) => Promise<[number, boolean, boolean]>;
   account: Account;
   fixedMode?: boolean;
+  defaultFixedModeOnCurrentChain?: boolean;
 }
 
 const useExplainGas = ({
@@ -195,6 +196,7 @@ export const GasSelectorHeader = ({
   directSubmit,
   account,
   fixedMode,
+  defaultFixedModeOnCurrentChain = false,
 }: GasSelectorProps) => {
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
@@ -431,7 +433,9 @@ export const GasSelectorHeader = ({
     ],
   );
 
-  const [checkedFixedMode, setCheckedFixedMode] = useState(false);
+  const [checkedFixedMode, setCheckedFixedMode] = useState(
+    defaultFixedModeOnCurrentChain,
+  );
 
   const handleConfirmGas = () => {
     if (!selectedGas) return;

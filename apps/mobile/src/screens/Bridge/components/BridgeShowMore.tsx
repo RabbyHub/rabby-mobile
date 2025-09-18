@@ -27,7 +27,6 @@ import { AppSwitch, AssetAvatar, Tip } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import RcIconBluePolygon from '@/assets2024/icons/bridge/IconBluePolygon.svg';
-import useDebounce from 'react-use/lib/useDebounce';
 import { formatGasHeaderUsdValue, formatTokenAmount } from '@/utils/number';
 import { CustomSkeleton } from '@/components2024/CustomSkeleton';
 import { useAtom } from 'jotai';
@@ -36,13 +35,10 @@ import { getGasLevelI18nKey } from '@/utils/trans';
 import {
   gasRelativeComponentAtom,
   miniApprovalGasAtom,
-  useMiniSignGasUSDLimit,
 } from '@/hooks/useMiniApprovalDirectSign';
-import BigNumber from 'bignumber.js';
 // import { RcIconInfoCC } from '@/assets/icons/common';
 import RcIconInfoCC from '@/assets2024/icons/offlineChain/info-cc.svg';
 import { IS_ANDROID } from '@/core/native/utils';
-import { CHAINS_ENUM } from '@debank/common';
 import { findChainByServerID } from '@/utils/chain';
 import { noop } from 'lodash';
 
@@ -135,85 +131,83 @@ const BridgeShowMore = ({
     sourceName,
   ]);
 
-  const showErrorWhenClosed = useMemo(
-    () => !quoteLoading && !open && data?.showLoss,
-    [data?.showLoss, open, quoteLoading],
+  const showLossInfo = useMemo(
+    () => !quoteLoading && data?.showLoss,
+    [data?.showLoss, quoteLoading],
   );
 
   return (
     <View style={StyleSheet.flatten([styles.container])}>
-      {
-        <View style={{ marginBottom: 24, gap: 15 }}>
-          {fromToken ? (
-            <DirectSignGasInfo
-              supportDirectSign={supportDirectSign}
-              loading={!!quoteLoading}
-              openShowMore={noop}
-              noQuote={!sourceLogo && !sourceName}
-              chainServeId={fromToken?.chain}
-            />
-          ) : null}
-
-          <BridgeSlippage
-            autoSuggestSlippage={autoSuggestSlippage}
-            value={slippage}
-            displaySlippage={displaySlippage}
-            onChange={onSlippageChange}
-            autoSlippage={autoSlippage}
-            isCustomSlippage={isCustomSlippage}
-            setAutoSlippage={setAutoSlippage}
-            setIsCustomSlippage={setIsCustomSlippage}
-            type={type}
-            isWrapToken={isWrapToken}
-            recommendValue={recommendValue}
-            loading={quoteLoading}
-          />
-
-          {showErrorWhenClosed && (
-            <View style={[styles.lossInfo, { marginBottom: 0 }]}>
-              <View style={styles.flexRow}>
-                <Text style={styles.impactText}>
-                  {t('page.bridge.price-impact')}
-                </Text>
-                <TouchableOpacity
-                  style={styles.diffBox}
-                  onPress={() => setLossImpactOpen(i => !i)}>
-                  <Text style={styles.lossAmount}>-{data?.diff}%</Text>
-                  <Animated.View
-                    style={{
-                      transform: [
-                        { rotate: !lossImpactOpen ? '180deg' : '0deg' },
-                      ],
-                    }}>
-                    <RcIconPolygon />
-                  </Animated.View>
-                </TouchableOpacity>
-              </View>
-              {lossImpactOpen && (
-                <View style={styles.impactTooltip}>
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-payment')}{' '}
-                    {formatTokenAmount(amount || '0')}
-                    {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
-                  </Text>
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-receiving')}{' '}
-                    {formatTokenAmount(toAmount || '0')}
-                    {getTokenSymbol(toToken)} ≈ {data?.toUsd}
-                  </Text>
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-difference')} {data?.lossUsd}
-                  </Text>
-                </View>
-              )}
-
-              <Text style={[styles.lossTip, { marginBottom: 0 }]}>
-                {t('page.bridge.loss-tips', { usd: data?.lossUsd })}
+      <View style={{ marginBottom: 24, gap: 15 }}>
+        {showLossInfo && (
+          <View style={[styles.lossInfo, { marginBottom: 0 }]}>
+            <View style={styles.flexRow}>
+              <Text style={styles.impactText}>
+                {t('page.bridge.price-impact')}
               </Text>
+              <TouchableOpacity
+                style={styles.diffBox}
+                onPress={() => setLossImpactOpen(i => !i)}>
+                <Text style={styles.lossAmount}>-{data?.diff}%</Text>
+                <Animated.View
+                  style={{
+                    transform: [
+                      { rotate: !lossImpactOpen ? '180deg' : '0deg' },
+                    ],
+                  }}>
+                  <RcIconPolygon />
+                </Animated.View>
+              </TouchableOpacity>
             </View>
-          )}
-        </View>
-      }
+            {lossImpactOpen && (
+              <View style={styles.impactTooltip}>
+                <Text style={styles.impactTooltipText}>
+                  {t('page.bridge.est-payment')}{' '}
+                  {formatTokenAmount(amount || '0')}
+                  {getTokenSymbol(fromToken)} ≈ {data?.fromUsd}
+                </Text>
+                <Text style={styles.impactTooltipText}>
+                  {t('page.bridge.est-receiving')}{' '}
+                  {formatTokenAmount(toAmount || '0')}
+                  {getTokenSymbol(toToken)} ≈ {data?.toUsd}
+                </Text>
+                <Text style={styles.impactTooltipText}>
+                  {t('page.bridge.est-difference')} {data?.lossUsd}
+                </Text>
+              </View>
+            )}
+
+            <Text style={[styles.lossTip, { marginBottom: 0 }]}>
+              {t('page.bridge.loss-tips', { usd: data?.lossUsd })}
+            </Text>
+          </View>
+        )}
+
+        {fromToken ? (
+          <DirectSignGasInfo
+            supportDirectSign={supportDirectSign}
+            loading={!!quoteLoading}
+            openShowMore={noop}
+            noQuote={!sourceLogo && !sourceName}
+            chainServeId={fromToken?.chain}
+          />
+        ) : null}
+
+        <BridgeSlippage
+          autoSuggestSlippage={autoSuggestSlippage}
+          value={slippage}
+          displaySlippage={displaySlippage}
+          onChange={onSlippageChange}
+          autoSlippage={autoSlippage}
+          isCustomSlippage={isCustomSlippage}
+          setAutoSlippage={setAutoSlippage}
+          setIsCustomSlippage={setIsCustomSlippage}
+          type={type}
+          isWrapToken={isWrapToken}
+          recommendValue={recommendValue}
+          loading={quoteLoading}
+        />
+      </View>
 
       <View style={styles.header}>
         <View style={styles.dottedLine} />
@@ -234,53 +228,6 @@ const BridgeShowMore = ({
       </View>
 
       <View style={[styles.body, !open && { height: 0 }]}>
-        {data?.showLoss && !quoteLoading && (
-          <>
-            <View style={styles.lossInfo}>
-              <View style={styles.flexRow}>
-                <Text style={styles.impactText}>
-                  {t('page.bridge.price-impact')}
-                </Text>
-                <TouchableOpacity
-                  style={styles.diffBox}
-                  onPress={() => setLossImpactOpen(i => !i)}>
-                  <Text style={styles.lossAmount}>-{data.diff}%</Text>
-                  <Animated.View
-                    style={{
-                      transform: [
-                        { rotate: !lossImpactOpen ? '180deg' : '0deg' },
-                      ],
-                    }}>
-                    <RcIconPolygon />
-                  </Animated.View>
-                </TouchableOpacity>
-              </View>
-              {lossImpactOpen && (
-                <View style={styles.impactTooltip}>
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-payment')}{' '}
-                    {formatTokenAmount(amount || '0')}
-                    {getTokenSymbol(fromToken)} ≈ {data.fromUsd}
-                  </Text>
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-receiving')}{' '}
-                    {formatTokenAmount(toAmount || '0')}
-                    {getTokenSymbol(toToken)} ≈ {data.toUsd}
-                  </Text>
-                  <Text style={styles.impactTooltipText}>
-                    {t('page.bridge.est-difference')} {data.lossUsd}
-                  </Text>
-                </View>
-              )}
-
-              <Text style={styles.lossTip}>
-                {t('page.bridge.loss-tips', { usd: data?.lossUsd })}
-              </Text>
-              <View style={styles.dottedLine} />
-            </View>
-          </>
-        )}
-
         <ListItem
           name={
             type === 'bridge'
@@ -331,11 +278,7 @@ const BridgeShowMore = ({
           )}
         </ListItem>
 
-        <ListItem
-          name={t('page.swap.rabbyFee.title')}
-          style={{
-            marginTop: 12,
-          }}>
+        <ListItem name={t('page.swap.rabbyFee.title')}>
           <Pressable onPress={openFeePopup}>
             <Text style={isWrapToken ? styles.wrapTokenFee : styles.fee}>
               {isWrapToken && type === 'swap'
@@ -531,6 +474,7 @@ export const DirectSignGasInfo = ({
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
+                  height: 24,
                   gap: 8,
                 }}>
                 <Text
@@ -606,7 +550,7 @@ export const DirectSignGasInfo = ({
           />
         )}
       </ListItem>
-      {showGasContent ? (
+      {showGasContent && gasTipsComponent ? (
         <View style={{ marginTop: 6 }}>{gasTipsComponent}</View>
       ) : null}
     </>
@@ -614,8 +558,6 @@ export const DirectSignGasInfo = ({
 };
 
 export const SendShowMore = ({
-  open,
-  setOpen,
   supportDirectSign,
   loading,
   chainServeId,
@@ -626,64 +568,18 @@ export const SendShowMore = ({
   loading: boolean;
   chainServeId: string;
 }) => {
-  const { t } = useTranslation();
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-
-  const [showGasFeeError, setShowGasFeeError] = useState(false);
-
-  const showErrorWhenClosed = useMemo(
-    () => !open && showGasFeeError,
-    [open, showGasFeeError],
-  );
-
+  const { styles } = useTheme2024({ getStyle });
   if (!supportDirectSign) {
     return null;
   }
   return (
-    <View
-      style={StyleSheet.flatten([
-        styles.container,
-        showErrorWhenClosed && {
-          marginTop: 0,
-        },
-      ])}>
-      {showErrorWhenClosed ? (
-        <View style={{ marginBottom: 24 }}>
-          {showErrorWhenClosed ? (
-            <DirectSignGasInfo
-              supportDirectSign={supportDirectSign}
-              loading={false}
-              openShowMore={noop}
-              chainServeId={chainServeId}
-            />
-          ) : null}
-        </View>
-      ) : null}
-      <View style={styles.header}>
-        <View style={styles.dottedLine} />
-        <TouchableOpacity
-          onPress={() => setOpen(e => !e)}
-          style={styles.headerTextWrapper}>
-          <Text style={styles.headerText}>
-            {t('page.bridge.showMore.title')}
-          </Text>
-          <ArrowRightSVG
-            width={14}
-            height={14}
-            style={[styles.icon, open && { transform: [{ rotate: '-90deg' }] }]}
-            color={colors2024['neutral-secondary']}
-          />
-        </TouchableOpacity>
-        <View style={styles.dottedLine} />
-      </View>
-      <View style={[styles.body, !open && { height: 0 }]}>
-        <DirectSignGasInfo
-          supportDirectSign={supportDirectSign}
-          loading={loading}
-          openShowMore={setShowGasFeeError}
-          chainServeId={chainServeId}
-        />
-      </View>
+    <View style={StyleSheet.flatten([styles.container])}>
+      <DirectSignGasInfo
+        supportDirectSign={supportDirectSign}
+        loading={loading}
+        openShowMore={noop}
+        chainServeId={chainServeId}
+      />
     </View>
   );
 };

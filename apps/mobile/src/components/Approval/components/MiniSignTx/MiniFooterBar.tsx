@@ -445,6 +445,16 @@ export const MiniFooterBar: React.FC<Props> = ({
     const showGasLessToSign =
       showGasLess && !canGotoUseGasAccount && canUseGasLess;
 
+    const noGasComponent =
+      !showGasLessToSign &&
+      !(showGasLess && !payGasByGasAccount && !canUseGasLess) &&
+      !(payGasByGasAccount && !gasAccountCanPay);
+
+    if (noGasComponent) {
+      setGasRelativeComponent(null);
+      return;
+    }
+
     setGasRelativeComponent(
       !isInited ? null : (
         <>

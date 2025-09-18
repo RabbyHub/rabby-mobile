@@ -72,12 +72,13 @@ import AutoLockView from '@/components/AutoLockView';
 import {
   directSigningAtom,
   useSetDirectSubmitInnerError,
-  useSetMiniSignChain,
 } from '@/hooks/useMiniApprovalDirectSign';
 import { useAtom } from 'jotai';
 import { MiniApprovalError } from './error';
-import { useMiniSignGasStore } from '@/hooks/miniSignGasStore';
-import { OpenApiService } from '@rabby-wallet/rabby-api';
+import {
+  useMiniSignFixedMode,
+  useMiniSignGasStore,
+} from '@/hooks/miniSignGasStore';
 import { View } from 'react-native';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
 import { BalanceChange } from '@/screens/Transaction/components/Actions/components/BalanceChange';
@@ -392,6 +393,8 @@ export const MiniSignTx = ({
     currentMiniSignGasLevel,
     updateMiniGas,
   } = useMiniSignGasStore(chainId);
+
+  const fixedModeOnCurrentChain = useMiniSignFixedMode(chainId);
 
   const handleInitTask = useMemoizedFn(() => {
     // if (selectedGas && txsResult[0]) {
@@ -1121,6 +1124,7 @@ export const MiniSignTx = ({
             ) : null}
             <GasSelectorHeader
               fixedMode
+              defaultFixedModeOnCurrentChain={fixedModeOnCurrentChain}
               tx={txs[0]}
               gasAccountCost={gasAccountCost}
               gasMethod={gasMethod}
