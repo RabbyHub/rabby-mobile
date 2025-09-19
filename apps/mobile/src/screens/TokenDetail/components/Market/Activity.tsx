@@ -847,6 +847,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontWeight: '500',
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
+    marginLeft: 4,
   },
   actionAndTime: {
     display: 'flex',
