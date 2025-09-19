@@ -278,7 +278,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.IssuedBy')}</Text>
       </View>
-      {entityLoading && !tokenEntity?.domain_id ? (
+      {entityLoading && !tokenEntity ? (
         <Skeleton
           width={'100%'}
           height={68}

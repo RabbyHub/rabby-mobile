@@ -559,14 +559,6 @@ const Activity = ({
       refreshDeps: [tokenId, chainId],
     },
   );
-  useEffect(() => {
-    if (!summaryData && !summaryLoading) {
-      return;
-    }
-    return every10sEvent.on(() => {
-      refreshSummary();
-    });
-  }, [refreshSummary, summaryData, summaryLoading]);
   const isSummaryEmpty = useMemo(() => {
     return (
       !summaryLoading &&
@@ -576,6 +568,15 @@ const Activity = ({
       !summaryData?.['24h']
     );
   }, [summaryData, summaryLoading]);
+
+  useEffect(() => {
+    if (isSummaryEmpty) {
+      return;
+    }
+    return every10sEvent.on(() => {
+      refreshSummary();
+    });
+  }, [isSummaryEmpty, refreshSummary]);
 
   return (
     <View style={styles.container}>
