@@ -75,7 +75,9 @@ export const PerpsScreen = () => {
   const [popupState, setPopupState] = usePerspPopupState();
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
-    logout(currentPerpsAccount?.address || '');
+    if (currentPerpsAccount?.address) {
+      logout(currentPerpsAccount?.address || '');
+    }
     await login(v);
     setPopupState(prev => ({
       ...prev,
