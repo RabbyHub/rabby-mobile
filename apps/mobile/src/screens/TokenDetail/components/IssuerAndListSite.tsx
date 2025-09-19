@@ -26,9 +26,6 @@ interface Props {
   entityLoading: boolean;
 }
 
-// TODO: get tag_names from tokenEntity
-const tag_names = ['Memo', 'Layer1', 'Liquid Staking'];
-
 const DomainUrlLink = ({
   url,
   name,
@@ -60,9 +57,11 @@ const DomainUrlLink = ({
 const ExpandableDescription = ({
   description,
   entityLoading,
+  tags,
 }: {
   description: string;
   entityLoading: boolean;
+  tags?: string[];
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -115,9 +114,9 @@ const ExpandableDescription = ({
   );
 
   const tagNamesContent = useMemo(() => {
-    return tag_names.length > 0 ? (
-      <View style={styles.tagContainer}>
-        {tag_names.map(item => {
+    return tags?.length && tags?.length > 0 ? (
+      <View style={[styles.tagContainer, { marginTop: description ? 16 : 0 }]}>
+        {tags?.map(item => {
           return (
             <Text style={styles.tagText} key={item}>
               {item}
@@ -126,10 +125,14 @@ const ExpandableDescription = ({
         })}
       </View>
     ) : null;
-  }, [styles.tagContainer, styles.tagText]);
+  }, [description, styles.tagContainer, styles.tagText, tags]);
+
+  const hasData = useMemo(() => {
+    return description || (tags?.length && tags?.length > 0);
+  }, [description, tags]);
 
   // If the outer layer is loading, display the title and skeleton
-  if (entityLoading && !description) {
+  if (entityLoading && !hasData) {
     return null;
     // return (
     //   <>
@@ -148,8 +151,23 @@ const ExpandableDescription = ({
     // );
   }
 
-  if (!description) {
+  if (!hasData) {
     return null;
+  }
+
+  if (hasData && !description) {
+    return (
+      <>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>
+            {t('page.tokenDetail.Introduction')}
+          </Text>
+        </View>
+        <View style={{ ...styles.itemCard, ...styles.tagsContainer }}>
+          {tagNamesContent}
+        </View>
+      </>
+    );
   }
 
   if (isExpanded) {
@@ -255,6 +273,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
       <ExpandableDescription
         description={(tokenEntity as any)?.description ?? ''}
         entityLoading={entityLoading}
+        tags={tokenEntity?.tag_ids}
       />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.IssuedBy')}</Text>
@@ -637,6 +656,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     alignItems: 'flex-start',
   },
+  tagsContainer: {
+    alignItems: 'flex-start',
+    width: '100%',
+  },
   moreButton: {
     alignSelf: 'flex-end',
     paddingVertical: 4,
@@ -684,6 +707,8 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'row',
     gap: 8,
     marginTop: 16,
+    width: '100%',
+    flexWrap: 'wrap',
   },
   tagText: {
     color: colors2024['neutral-foot'],
