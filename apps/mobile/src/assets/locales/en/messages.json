@@ -2143,7 +2143,7 @@
         "withdrawBtn": "Withdraw",
         "depositBtn": "Deposit"
       },
-      "selectAccountTitle": "Select an address to log in",
+      "selectAccountTitle": "Select a Wallet to Log In",
       "PerpsGuidePopup": {
         "step1Title": "Master Perpetual Futures",
         "step1Desc": "With perpetual futures, you're not just trading assets. You're trading what you think will happen next",
@@ -2268,7 +2268,11 @@
       "leverageRangeMinError": "The minimum leverage is {{min}}x",
       "leverageRangeMaxError": "The maximum leverage is {{max}}x",
       "PerpsAccountSelectorPopup": {
-        "lastUsed": "Last Used"
+        "lastUsed": "Last Used",
+        "activatedAddress": "Activated",
+        "hyperliquidBalance": "Perps Balance",
+        "notActivatedAddress": "Not Activated",
+        "noPosition": "No Position"
       }
     },
     "perpsDetail": {
@@ -2316,7 +2320,7 @@
         "closeBtn": "Close {{direction}}",
         "fee": "Fee:",
         "rabbyFeeTips": "Rabby fee: 0.05%",
-        "providerFeeTips": "Provider fee: {{fee}}"
+        "providerFeeTips": "Hyperliquid fee: {{fee}}"
       },
       "PerpsOpenPositionPopup": {
         "margin": "Margin",
@@ -2346,7 +2350,7 @@
         "fee": "Fee",
         "btn": "Open {{direction}} Position",
         "rabbyFeeTips": "Rabby fee: 0.05%",
-        "providerFeeTips": "Provider fee: {{fee}}",
+        "providerFeeTips": "Hyperliquid fee: {{fee}}",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
         "margin": "Margin(Isolated)"

@@ -423,26 +423,28 @@ export const PerpsMarketDetailScreen = () => {
           setOpenPositionVisible(false);
         }}
       />
-      <PerpsClosePositionPopup
-        visible={closePositionVisible}
-        coin={coin}
-        providerFee={providerFee}
-        direction={positionDirection}
-        positionSize={positionData?.size.toString() || '0'}
-        pnl={positionData?.pnl || 0}
-        onCancel={() => setClosePositionVisible(false)}
-        onConfirm={() => {
-          setClosePositionVisible(false);
-        }}
-        handleClosePosition={async () => {
-          await handleClosePosition({
-            coin,
-            size: positionData?.size.toString() || '0',
-            direction: positionData?.direction as 'Long' | 'Short',
-            price: (activeAssetCtx?.markPx as unknown as string) || '0',
-          });
-        }}
-      />
+      {positionData ? (
+        <PerpsClosePositionPopup
+          visible={closePositionVisible}
+          coin={coin}
+          providerFee={providerFee}
+          direction={positionData?.direction as 'Long' | 'Short'}
+          positionSize={positionData?.size.toString() || '0'}
+          pnl={positionData?.pnl || 0}
+          onCancel={() => setClosePositionVisible(false)}
+          onConfirm={() => {
+            setClosePositionVisible(false);
+          }}
+          handleClosePosition={async () => {
+            await handleClosePosition({
+              coin,
+              size: positionData?.size.toString() || '0',
+              direction: positionData?.direction as 'Long' | 'Short',
+              price: (activeAssetCtx?.markPx as unknown as string) || '0',
+            });
+          }}
+        />
+      ) : null}
 
       {autoCloseVisible ? (
         <PerpsAutoCloseModal

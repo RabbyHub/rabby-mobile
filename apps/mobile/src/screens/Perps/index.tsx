@@ -75,6 +75,9 @@ export const PerpsScreen = () => {
   const [popupState, setPopupState] = usePerspPopupState();
 
   const handleLogin = useMemoizedFn(async (v: Account) => {
+    if (currentPerpsAccount?.address) {
+      logout(currentPerpsAccount?.address || '');
+    }
     await login(v);
     setPopupState(prev => ({
       ...prev,
@@ -101,19 +104,8 @@ export const PerpsScreen = () => {
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <PerpsHeaderTitle account={currentPerpsAccount} />,
-      headerRight: () => (
-        <PerpsHeaderRight
-          isLogin={isLogin}
-          onPress={() => {
-            setPopupState(prev => ({
-              ...prev,
-              isShowLogoutPopup: true,
-            }));
-          }}
-        />
-      ),
     });
-  }, [currentPerpsAccount, isLogin, navigation, setPopupState]);
+  }, [currentPerpsAccount, navigation]);
 
   const handleClosePosition = useMemoizedFn(
     async (params: {
