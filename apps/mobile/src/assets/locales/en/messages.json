@@ -2316,7 +2316,7 @@
         "closeBtn": "Close {{direction}}",
         "fee": "Fee:",
         "rabbyFeeTips": "Rabby fee: 0.05%",
-        "providerFeeTips": "Provider fee: {{fee}}"
+        "providerFeeTips": "Hyperliquid fee: {{fee}}"
       },
       "PerpsOpenPositionPopup": {
         "margin": "Margin",
@@ -2346,7 +2346,7 @@
         "fee": "Fee",
         "btn": "Open {{direction}} Position",
         "rabbyFeeTips": "Rabby fee: 0.05%",
-        "providerFeeTips": "Provider fee: {{fee}}",
+        "providerFeeTips": "Hyperliquid fee: {{fee}}",
         "liquidationPriceTips": "The price at which your position is automatically closed by the exchange to prevent further losses when your margin falls below the maintenance margin level.",
         "sizeTips": "The total value or quantity of your trade, set by margin and leverage.",
         "margin": "Margin(Isolated)"
