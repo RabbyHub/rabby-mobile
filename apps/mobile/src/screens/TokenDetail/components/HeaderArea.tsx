@@ -5,12 +5,13 @@ import {
   TextStyle,
   View,
   ViewStyle,
+  Text,
 } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 
-import { AssetAvatar, Text } from '@/components';
+import { AssetAvatar } from '@/components';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getTokenSymbol } from '@/utils/token';
