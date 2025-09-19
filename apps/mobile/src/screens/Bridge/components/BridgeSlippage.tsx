@@ -340,8 +340,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     overflow: 'hidden',
   },
   warningTipContainer: {
-    // marginTop: 4,
-    marginTop: -12,
+    marginTop: 8,
     marginBottom: 12,
   },
   warningTip: {
