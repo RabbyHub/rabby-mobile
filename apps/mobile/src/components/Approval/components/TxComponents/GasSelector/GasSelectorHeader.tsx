@@ -556,6 +556,7 @@ export const GasSelectorHeader = ({
             chainId,
             isCancel || isSpeedUp,
           ),
+          fixedMode: checkedFixedMode,
         });
       } else {
         onChange({
@@ -573,6 +574,7 @@ export const GasSelectorHeader = ({
       }
     },
     [
+      checkedFixedMode,
       afterGasLimit,
       chainId,
       changedCustomGas,

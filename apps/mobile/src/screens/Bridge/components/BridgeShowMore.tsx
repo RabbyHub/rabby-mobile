@@ -21,7 +21,6 @@ import { useTranslation } from 'react-i18next';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { BridgeSlippage } from './BridgeSlippage';
-import RcIconPolygon from '@/assets2024/icons/bridge/IconPolygon.svg';
 import { tokenPriceImpact } from '../hooks/token';
 import { AppSwitch, AssetAvatar, Tip } from '@/components';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -140,7 +139,7 @@ const BridgeShowMore = ({
 
   return (
     <View style={StyleSheet.flatten([styles.container])}>
-      <View style={{ marginBottom: 24, gap: 15 }}>
+      <View style={{ marginBottom: 24, gap: 12 }}>
         {showLossInfo && (
           <View style={[styles.lossInfo, { marginBottom: 0 }]}>
             <View style={styles.flexRow}>
@@ -163,9 +162,7 @@ const BridgeShowMore = ({
             </View>
 
             <WarningText>
-              <Text style={{ marginBottom: 10 }}>
-                {t('page.bridge.loss-tips', { usd: data?.lossUsd })}
-              </Text>
+              <Text>{t('page.bridge.loss-tips', { usd: data?.lossUsd })}</Text>
               {lossImpactOpen && (
                 <>
                   {'\n'}
@@ -395,7 +392,7 @@ export const DirectSignGasInfo = ({
   }
 
   return (
-    <>
+    <View>
       <ListItem
         name={<>{'Gas Fee'}</>}
         LeftIcon={
@@ -468,10 +465,7 @@ export const DirectSignGasInfo = ({
                 </Tip>
               )}
           </>
-        }
-        style={{
-          marginTop: 12,
-        }}>
+        }>
         {showGasContent ? (
           <>
             <TouchableOpacity
@@ -574,14 +568,14 @@ export const DirectSignGasInfo = ({
         )}
       </ListItem>
       {showGasFeeTooHightTips ? (
-        <WarningText style={{ marginTop: 0 }}>
+        <WarningText style={{ marginTop: 10 }}>
           {t('page.bridge.gasFeeTooHight')}
         </WarningText>
       ) : null}
       {showGasContent && gasTipsComponent ? (
         <View style={{ marginTop: 6 }}>{gasTipsComponent}</View>
       ) : null}
-    </>
+    </View>
   );
 };
 

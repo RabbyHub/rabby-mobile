@@ -187,6 +187,9 @@ export default function ShowMoreGasSelectModal({
                       <Text
                         style={[
                           styles.usd,
+                          {
+                            marginLeft: 'auto',
+                          },
                           (isNotEnough || errorOnGasAccount) && {
                             color: colors2024['red-default'],
                           },
