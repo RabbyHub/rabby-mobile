@@ -288,7 +288,6 @@ const TradingViewCandleChart = forwardRef<TradingViewChartRef, ChartProps>(
         <WebView
           ref={webViewRef}
           style={styles.webView}
-          injectedJavaScript={TradeViewJSGlobalUtils}
           {...(IS_IOS && { allowFileAccess: true })}
           source={{ html: htmlContent, baseUrl: WEBVIEW_BASEURL }}
           onMessage={handleWebViewMessage}

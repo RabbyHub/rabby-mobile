@@ -184,6 +184,7 @@ export const createTradingViewChartTemplate = (
       refAssetForTradeView('bignumber.js@9.3.1-bignumber.min.js').quoted
     }></script>
     <script>
+      ${TradeViewJSGlobalUtils}
       window.colors = {
         background: "${colors.background}",
         text: "${colors.text}",
