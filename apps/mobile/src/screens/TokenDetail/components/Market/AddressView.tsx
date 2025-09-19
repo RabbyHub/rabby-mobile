@@ -34,7 +34,7 @@ const AddressView = ({ address }: IProps) => {
 
   return (
     <Pressable style={styles.container} onPress={handleCopyAddress}>
-      <Text style={styles.addressItem}>
+      <Text style={styles.addressItem} ellipsizeMode="tail" numberOfLines={1}>
         {address ? shortEllipsisAddress(address, 4) : '-'}
       </Text>
       <RcIconCopy width={10} height={10} style={styles.copy} />

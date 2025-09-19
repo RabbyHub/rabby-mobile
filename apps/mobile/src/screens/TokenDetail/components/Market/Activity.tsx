@@ -37,6 +37,7 @@ import { every10sEvent } from '../../event';
 
 interface ISummaryData {
   data?: MarketSummary;
+  isEmpty: boolean;
 }
 
 const enum TabKey {
@@ -46,24 +47,27 @@ const enum TabKey {
   '24h' = '24h',
 }
 
-const Summary = ({ data }: ISummaryData) => {
+const Summary = ({ data, isEmpty }: ISummaryData) => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
-  const [activeTab, setActiveTab] = useState(TabKey['5m']);
+  const [activeTab, setActiveTab] = useState(TabKey['24h']);
   const currentData = useMemo(() => data?.[activeTab], [data, activeTab]);
   const { buyFlex, sellFlex } = useMemo(() => {
-    const buyCount = currentData?.summary?.buy?.count ?? 0;
-    const sellCount = currentData?.summary?.sell?.count ?? 0;
-    const total = (buyCount || 0) + (sellCount || 0);
+    const buyVolume = currentData?.summary?.buy?.volume_amount ?? 0;
+    const sellVolume = currentData?.summary?.sell?.volume_amount ?? 0;
+    const total = (buyVolume || 0) + (sellVolume || 0);
     if (!total) {
       return { buyFlex: 1, sellFlex: 1 };
     }
     return {
-      buyFlex: buyCount / total,
-      sellFlex: sellCount / total,
+      buyFlex: buyVolume / total,
+      sellFlex: sellVolume / total,
     };
-  }, [currentData?.summary?.buy?.count, currentData?.summary?.sell?.count]);
+  }, [
+    currentData?.summary?.buy?.volume_amount,
+    currentData?.summary?.sell?.volume_amount,
+  ]);
 
   const getTextColor = useCallback(
     (v: number) => {
@@ -74,9 +78,12 @@ const Summary = ({ data }: ISummaryData) => {
     },
     [colors2024],
   );
+
   return (
     <InfoContainer title={t('page.tokenDetail.marketInfo.summary')}>
-      {data ? (
+      {isEmpty ? (
+        <EmptyData />
+      ) : (
         <View style={styles.summaryContainer}>
           <View style={styles.switchContainer}>
             <Pressable
@@ -98,9 +105,7 @@ const Summary = ({ data }: ISummaryData) => {
                     color: getTextColor(data?.['5m']?.price?.change ?? 0),
                   },
                 ]}>
-                {data?.['5m']?.price?.change
-                  ? formatPercent(data?.['5m']?.price?.change)
-                  : '-'}
+                {formatPercent(data?.['5m']?.price?.change ?? 0)}
               </Text>
             </Pressable>
             <Pressable
@@ -122,9 +127,7 @@ const Summary = ({ data }: ISummaryData) => {
                     color: getTextColor(data?.['1h']?.price?.change ?? 0),
                   },
                 ]}>
-                {data?.['1h']?.price?.change
-                  ? formatPercent(data?.['1h']?.price?.change)
-                  : '-'}
+                {formatPercent(data?.['1h']?.price?.change ?? 0)}
               </Text>
             </Pressable>
             <Pressable
@@ -146,9 +149,7 @@ const Summary = ({ data }: ISummaryData) => {
                     color: getTextColor(data?.['6h']?.price?.change ?? 0),
                   },
                 ]}>
-                {data?.['6h']?.price?.change
-                  ? formatPercent(data?.['6h']?.price?.change)
-                  : '-'}
+                {formatPercent(data?.['6h']?.price?.change ?? 0)}
               </Text>
             </Pressable>
             <Pressable
@@ -170,9 +171,7 @@ const Summary = ({ data }: ISummaryData) => {
                     color: getTextColor(data?.['24h']?.price?.change ?? 0),
                   },
                 ]}>
-                {data?.['24h']?.price?.change
-                  ? formatPercent(data?.['24h']?.price?.change)
-                  : '-'}
+                {formatPercent(data?.['24h']?.price?.change ?? 0)}
               </Text>
             </Pressable>
           </View>
@@ -186,7 +185,7 @@ const Summary = ({ data }: ISummaryData) => {
                 </Text>
                 <Text style={styles.actionAmount}>
                   {formatAmountValueKMB(
-                    currentData?.summary?.buy?.count ?? 0,
+                    currentData?.summary?.buy?.volume_amount ?? 0,
                   ) || '-'}
                 </Text>
               </View>
@@ -200,7 +199,7 @@ const Summary = ({ data }: ISummaryData) => {
                 </Text>
                 <Text style={[styles.actionAmount, styles.actionAmountRight]}>
                   {formatAmountValueKMB(
-                    currentData?.summary?.sell?.count ?? 0,
+                    currentData?.summary?.sell?.volume_amount ?? 0,
                   ) || '-'}
                 </Text>
               </View>
@@ -256,8 +255,6 @@ const Summary = ({ data }: ISummaryData) => {
             </View>
           </View>
         </View>
-      ) : (
-        <EmptyData />
       )}
     </InfoContainer>
   );
@@ -570,10 +567,21 @@ const Activity = ({
       refreshSummary();
     });
   }, [refreshSummary, summaryData, summaryLoading]);
+  const isSummaryEmpty = useMemo(() => {
+    return (
+      !summaryLoading &&
+      !summaryData?.['1h'] &&
+      !summaryData?.['5m'] &&
+      !summaryData?.['6h'] &&
+      !summaryData?.['24h']
+    );
+  }, [summaryData, summaryLoading]);
 
   return (
     <View style={styles.container}>
-      {(!summaryLoading || summaryData) && <Summary data={summaryData} />}
+      {(!summaryLoading || summaryData) && (
+        <Summary data={summaryData} isEmpty={isSummaryEmpty} />
+      )}
       <Details tokenId={tokenId} chainId={chainId} />
     </View>
   );
@@ -780,6 +788,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   },
   lastItem: {
     textAlign: 'right',
+    flex: 1.1,
   },
   tableBody: {
     display: 'flex',
@@ -829,7 +838,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
   addressItem: {
     display: 'flex',
     justifyContent: 'flex-end',
-    flex: 1,
+    flex: 1.1,
   },
   timeAtItem: {
     fontSize: 12,

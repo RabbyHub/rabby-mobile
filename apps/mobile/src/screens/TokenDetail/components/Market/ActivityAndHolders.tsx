@@ -40,14 +40,16 @@ const ActivityAndHolders = ({
           onPress={() => setActiveTabKey(TabKey.activity)}>
           {t('page.tokenDetail.marketInfo.activity')}
         </Text>
-        <Text
-          style={[
-            styles.headerText,
-            activeTabKey === TabKey.holders && styles.activeText,
-          ]}
-          onPress={() => setActiveTabKey(TabKey.holders)}>
-          {t('page.tokenDetail.marketInfo.holders')}
-        </Text>
+        {isHolderEmpty ? null : (
+          <Text
+            style={[
+              styles.headerText,
+              activeTabKey === TabKey.holders && styles.activeText,
+            ]}
+            onPress={() => setActiveTabKey(TabKey.holders)}>
+            {t('page.tokenDetail.marketInfo.holders')}
+          </Text>
+        )}
       </View>
       <View style={styles.content}>
         <View
