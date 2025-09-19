@@ -64,10 +64,6 @@ function ImportMethods(): JSX.Element {
       GetNestedScreenRouteProp<'AddressNavigatorParamList', 'ImportMethods'>
     >();
   const state = route.params;
-  if (!state) {
-    throw new Error('[ImportMethods] state is undefined');
-  }
-  // const state = undefined;
 
   const onPressCloud = React.useCallback(() => {
     Keyboard.dismiss();
