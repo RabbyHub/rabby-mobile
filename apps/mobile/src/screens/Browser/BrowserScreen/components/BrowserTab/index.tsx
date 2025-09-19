@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {
   useCallback,
   useEffect,
@@ -45,7 +46,7 @@ import {
 } from '@/hooks/browser/useBrowser';
 import { useBrowserBookmark } from '@/hooks/browser/useBrowserBookmark';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
-import { useDapps } from '@/hooks/useDapps';
+import { getDappAccount, useDapps } from '@/hooks/useDapps';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { sleep } from '@/utils/async';
 import { isGoogle, isValidAppStoreUrl } from '@/utils/browser';
@@ -70,6 +71,7 @@ import { PERPS_INVITE_URL } from '@/constant/perps';
 import { CurrentDappPopup } from './CurrentDappPopup';
 import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
 import { useHyperliquidReferral } from '../../hooks/useHyperliquidReferral';
+import { useAccounts } from '@/hooks/account';
 
 type BrowserTabProps = {
   origin: string;
@@ -549,6 +551,13 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
     const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
     const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
 
+    const { accounts } = useAccounts({
+      disableAutoFetch: true,
+    });
+    const account = useMemo(() => {
+      return getDappAccount({ dappInfo, accounts });
+    }, [accounts, dappInfo, browserState.isShowBrowser]);
+
     return (
       <Freeze freeze={!isActive}>
         <View style={[style, styles.dappWebViewControl]}>
@@ -807,9 +816,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             </NativeViewGestureHandler>
           </ViewShot>
           {isActive && !browserState.isShowSearch ? (
-            <View
-              style={styles.dappWebViewNavControl}
-              key={browserState.isShowBrowser ? 'show' : 'hide'}>
+            <View style={styles.dappWebViewNavControl}>
               <BrowserHeader
                 dapp={dappInfo}
                 url={webviewState.resolvedUrl}
@@ -822,6 +829,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                     trigger: 'browser',
                   });
                 }}
+                account={account}
                 tabsCount={tabsCount}
                 canGoBack={webviewState.canGoBack}
                 onGoBack={handleGoBack}
@@ -903,6 +911,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                         trigger: 'browser',
                       });
                     }}
+                    account={account}
                     tabsCount={tabsCount}
                     canGoBack={webviewState.canGoBack}
                     onGoBack={handleGoBack}
@@ -926,6 +935,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                 onClose={() => {
                   setIsShowCurrentDappPopup(false);
                 }}
+                account={account}
                 dapp={dappInfo}
               />
               <AccountSelectorPopup
@@ -933,8 +943,7 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                 onClose={() => {
                   setIsShowAccountPopup(false);
                 }}
-                // todo
-                value={dappInfo?.currentAccount}
+                value={account}
                 onChange={v => {
                   dappService.updateDapp({
                     ...dappInfo,

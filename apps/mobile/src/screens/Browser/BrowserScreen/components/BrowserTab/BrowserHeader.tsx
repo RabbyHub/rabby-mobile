@@ -26,6 +26,7 @@ import { findChain } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTranslation } from 'react-i18next';
 import { CurrentDappPopup } from './CurrentDappPopup';
+import { Account } from '@/core/services/preference';
 
 export function BrowserHeader({
   dapp,
@@ -37,6 +38,7 @@ export function BrowserHeader({
   onGoBack,
   onGoHome,
   onAccountPress,
+  account,
 }: {
   dapp?: DappInfo;
   url?: string;
@@ -44,6 +46,7 @@ export function BrowserHeader({
   onLocationBarPress?(str?: string): void;
   tabsCount?: number;
   canGoBack?: boolean;
+  account?: Account;
   onGoBack?(): void;
   onGoHome?(): void;
   onAccountPress?(): void;
@@ -54,7 +57,7 @@ export function BrowserHeader({
 
   const { t } = useTranslation();
 
-  const account = useGetDappAccount(dapp);
+  // const account = useGetDappAccount(dapp);
 
   const chain = useMemo(() => {
     if (!dapp?.isConnected) {
