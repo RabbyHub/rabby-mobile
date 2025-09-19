@@ -1862,7 +1862,38 @@
         "totalSupply": "Total Supply",
         "volume24h": "24h Volume",
         "txns24h": "24h Txns",
-        "holders": "Holders"
+        "holders": "Holders",
+        "empty": "No Data",
+        "activity": "Activity",
+        "summary": "Summary Data",
+        "details": "Details",
+        "holderSections": {
+          "top10HoldersRatio": "Top 10 Holders Ratio",
+          "top100HoldersRatio": "Top 100 Holders Ratio",
+          "tableHeader": {
+            "address": "Address",
+            "ratio": "Ratio",
+            "position": "Position"
+          }
+        },
+        "activitySections": {
+          "tableHeader": {
+            "all": "All",
+            "min": "min",
+            "hour": "Hour",
+            "buy": "Buy",
+            "sell": "Sell",
+            "volume": "Volume",
+            "tradingCount": "Trading Count",
+            "address": "Address",
+            "addresses": "Addresses",
+            "type": "Type",
+            "time": "Time",
+            "price": "Price",
+            "qnt": "Qnt",
+            "value": "Value"
+          }
+        }
       }
     },
     "defiDetail": {

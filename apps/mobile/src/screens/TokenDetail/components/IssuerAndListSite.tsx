@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 
 import { useTheme2024 } from '@/hooks/theme';
@@ -57,9 +57,11 @@ const DomainUrlLink = ({
 const ExpandableDescription = ({
   description,
   entityLoading,
+  tags,
 }: {
   description: string;
   entityLoading: boolean;
+  tags?: string[];
 }) => {
   const { styles, colors2024, isLight } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
@@ -111,8 +113,26 @@ const ExpandableDescription = ({
     [description, hasCalculated],
   );
 
+  const tagNamesContent = useMemo(() => {
+    return tags?.length && tags?.length > 0 ? (
+      <View style={[styles.tagContainer, { marginTop: description ? 16 : 0 }]}>
+        {tags?.map(item => {
+          return (
+            <Text style={styles.tagText} key={item}>
+              {item}
+            </Text>
+          );
+        })}
+      </View>
+    ) : null;
+  }, [description, styles.tagContainer, styles.tagText, tags]);
+
+  const hasData = useMemo(() => {
+    return description || (tags?.length && tags?.length > 0);
+  }, [description, tags]);
+
   // If the outer layer is loading, display the title and skeleton
-  if (entityLoading) {
+  if (entityLoading && !hasData) {
     return null;
     // return (
     //   <>
@@ -131,8 +151,23 @@ const ExpandableDescription = ({
     // );
   }
 
-  if (!description) {
+  if (!hasData) {
     return null;
+  }
+
+  if (hasData && !description) {
+    return (
+      <>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>
+            {t('page.tokenDetail.Introduction')}
+          </Text>
+        </View>
+        <View style={{ ...styles.itemCard, ...styles.tagsContainer }}>
+          {tagNamesContent}
+        </View>
+      </>
+    );
   }
 
   if (isExpanded) {
@@ -154,6 +189,7 @@ const ExpandableDescription = ({
               {t('page.tokenDetail.Fold')}
             </Text>
           </Text>
+          {tagNamesContent}
           <View
             style={{
               ...styles.horizontalLine,
@@ -215,6 +251,7 @@ const ExpandableDescription = ({
             </Text>
           )}
         </Text>
+        {tagNamesContent}
       </View>
     </>
   );
@@ -236,11 +273,12 @@ export const IssuerAndListSite: React.FC<Props> = ({
       <ExpandableDescription
         description={(tokenEntity as any)?.description ?? ''}
         entityLoading={entityLoading}
+        tags={tokenEntity?.tag_ids}
       />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.IssuedBy')}</Text>
       </View>
-      {entityLoading ? (
+      {entityLoading && !tokenEntity ? (
         <Skeleton
           width={'100%'}
           height={68}
@@ -352,7 +390,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('page.tokenDetail.ListedBy')}</Text>
       </View>
-      {entityLoading ? (
+      {entityLoading && !tokenEntity ? (
         <Skeleton
           width={'100%'}
           height={68}
@@ -391,7 +429,7 @@ export const IssuerAndListSite: React.FC<Props> = ({
           {t('page.tokenDetail.SupportedExchanges')}
         </Text>
       </View>
-      {entityLoading ? (
+      {entityLoading && !tokenEntity ? (
         <Skeleton
           width={'100%'}
           height={68}
@@ -469,7 +507,7 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     fontFamily: 'SF Pro Rounded',
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '700',
+    fontWeight: '900',
   },
 
   header: {
@@ -618,6 +656,10 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     flexDirection: 'column',
     alignItems: 'flex-start',
   },
+  tagsContainer: {
+    alignItems: 'flex-start',
+    width: '100%',
+  },
   moreButton: {
     alignSelf: 'flex-end',
     paddingVertical: 4,
@@ -660,5 +702,24 @@ const getStyles = createGetStyles2024(({ colors2024, isLight }) => ({
     backgroundColor: colors2024['neutral-line'],
     borderRadius: 4,
     width: '75%',
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 16,
+    width: '100%',
+    flexWrap: 'wrap',
+  },
+  tagText: {
+    color: colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    backgroundColor: colors2024['neutral-bg-5'],
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
 }));
