@@ -443,7 +443,7 @@ export const GasSelectorHeader = ({
   );
 
   useEffect(() => {
-    if (selectedGas?.level !== 'custom') {
+    if (selectedGas && selectedGas?.level !== 'custom') {
       setCheckedFixedMode(false);
     }
   }, [selectedGas]);
@@ -492,6 +492,7 @@ export const GasSelectorHeader = ({
 
   const handleClickEdit = useCallback(() => {
     setModalVisible(true);
+    console.log('handleClickEdit', defaultFixedModeOnCurrentChain);
     modalRef.current?.expand();
     if (rawSelectedGas?.level !== 'custom') {
       setSelectedGas(rawSelectedGas);
@@ -507,7 +508,13 @@ export const GasSelectorHeader = ({
     setTimeout(() => {
       customerInputRef.current?.focus();
     }, 50);
-  }, [chain?.serverId, gasLimit, nonce, rawSelectedGas]);
+  }, [
+    chain?.serverId,
+    gasLimit,
+    nonce,
+    rawSelectedGas,
+    defaultFixedModeOnCurrentChain,
+  ]);
 
   const panelSelection = (e, gas: GasLevel) => {
     e.stopPropagation();
