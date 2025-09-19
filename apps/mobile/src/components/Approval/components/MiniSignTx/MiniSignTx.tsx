@@ -1070,12 +1070,6 @@ export const MiniSignTx = ({
     !!checkErrors.find(item => item.level === 'forbidden') ||
     disableSignBtn;
 
-  console.log(
-    'BalanceChange',
-    showSimulateChange,
-    txsResult?.[txsResult?.length - 1]?.preExecResult,
-  );
-
   return (
     <>
       <MiniFooterBar
