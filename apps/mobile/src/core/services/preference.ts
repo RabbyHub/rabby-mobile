@@ -177,6 +177,11 @@ export interface PreferenceStore {
   balanceHideType?: BALANCE_HIDE_TYPE;
 
   currency?: string;
+
+  hyperliquidInvite?: {
+    lastTime?: number;
+    dict?: Record<string, { lastTime?: number }>;
+  };
 }
 
 export interface AddressSortStore {
@@ -256,6 +261,11 @@ export class PreferenceService {
           watchlistSkip: false,
           balanceHideType: BALANCE_HIDE_TYPE.SHOW,
           currency: 'USD',
+
+          hyperliquidInvite: {
+            lastTime: 0,
+            dict: {},
+          },
         },
       },
       {

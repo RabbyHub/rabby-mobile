@@ -38,6 +38,7 @@ export function BrowserHeader({
   canGoBack,
   onGoBack,
   onGoHome,
+  onAccountPress,
 }: {
   dapp?: DappInfo;
   url?: string;
@@ -47,6 +48,7 @@ export function BrowserHeader({
   canGoBack?: boolean;
   onGoBack?(): void;
   onGoHome?(): void;
+  onAccountPress?(): void;
 }) {
   const { colors2024, styles } = useTheme2024({
     getStyle,
@@ -65,9 +67,6 @@ export function BrowserHeader({
       preferenceService.getFallbackAccount()
     );
   }, [accounts, dapp?.currentAccount]);
-
-  const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
-  const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
 
   const chain = useMemo(() => {
     if (!dapp?.isConnected) {
@@ -147,11 +146,7 @@ export function BrowserHeader({
             <TouchableOpacity
               style={styles.account}
               onPress={() => {
-                if (dapp?.isConnected) {
-                  setIsShowCurrentDappPopup(true);
-                } else {
-                  setIsShowAccountPopup(true);
-                }
+                onAccountPress?.();
               }}>
               {account ? (
                 <WalletIcon
@@ -186,31 +181,6 @@ export function BrowserHeader({
           </View>
         ) : null}
       </View>
-      {dapp ? (
-        <>
-          <CurrentDappPopup
-            visible={isShowCurrentDappPopup}
-            onClose={() => {
-              setIsShowCurrentDappPopup(false);
-            }}
-            dapp={dapp}
-          />
-          <AccountSelectorPopup
-            visible={isShowAccountPopup}
-            onClose={() => {
-              setIsShowAccountPopup(false);
-            }}
-            value={account}
-            onChange={v => {
-              dappService.updateDapp({
-                ...dapp,
-                currentAccount: v,
-              });
-              setIsShowAccountPopup(false);
-            }}
-          />
-        </>
-      ) : null}
     </>
   );
 }

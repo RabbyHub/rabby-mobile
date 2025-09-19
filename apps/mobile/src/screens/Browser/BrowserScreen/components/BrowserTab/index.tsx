@@ -32,7 +32,11 @@ import { isNonPublicProductionEnv } from '@/constant/env';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
-import { browserService, dappService } from '@/core/services';
+import {
+  browserService,
+  dappService,
+  preferenceService,
+} from '@/core/services';
 import { Tab } from '@/core/services/browserService';
 import { FontNames } from '@/core/utils/fonts';
 import {
@@ -60,6 +64,12 @@ import { BrowserHeader } from './BrowserHeader';
 import { BrowserProgressBar } from './BrowserProgressBar';
 import { EVENT_BROWSER_ACTION, eventBus } from '@/utils/events';
 import { Freeze } from 'react-freeze';
+import { HyperliquidInvitePopup } from './HyperliquidInvitePopup';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { PERPS_INVITE_URL } from '@/constant/perps';
+import { CurrentDappPopup } from './CurrentDappPopup';
+import { AccountSelectorPopup } from '@/components2024/AccountSelector/AccountSelectorPopup';
+import { useHyperliquidReferral } from '../../hooks/useHyperliquidReferral';
 
 type BrowserTabProps = {
   origin: string;
@@ -529,6 +539,16 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
       };
     }, [handleAction, isActive]);
 
+    const { isShowInvite, setIsShowInvite } = useHyperliquidReferral({
+      url: webviewState.resolvedUrl,
+      connectedAddress: dappInfo?.isConnected
+        ? dappInfo?.currentAccount?.address
+        : null,
+    });
+
+    const [isShowAccountPopup, setIsShowAccountPopup] = useState(false);
+    const [isShowCurrentDappPopup, setIsShowCurrentDappPopup] = useState(false);
+
     return (
       <Freeze freeze={!isActive}>
         <View style={[style, styles.dappWebViewControl]}>
@@ -804,6 +824,13 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
                 canGoBack={webviewState.canGoBack}
                 onGoBack={handleGoBack}
                 onGoHome={handleGoHome}
+                onAccountPress={() => {
+                  if (dappInfo?.isConnected) {
+                    setIsShowCurrentDappPopup(true);
+                  } else {
+                    setIsShowAccountPopup(true);
+                  }
+                }}
               />
               {/* <BrowserFooter
               url={webviewState.resolvedUrl}
@@ -826,6 +853,95 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
               canViewMore={!!url}
             /> */}
             </View>
+          ) : null}
+          {safeGetOrigin(webviewState.resolvedUrl) ===
+            safeGetOrigin(PERPS_INVITE_URL) && dappInfo?.isConnected ? (
+            <HyperliquidInvitePopup
+              visible={
+                isShowInvite &&
+                isActive &&
+                !browserState.isShowSearch &&
+                browserState.isShowBrowser &&
+                !isShowAccountPopup &&
+                !isShowCurrentDappPopup
+              }
+              connectedAddress={
+                dappInfo.isConnected ? dappInfo.currentAccount?.address : null
+              }
+              onClose={() => {
+                setIsShowInvite(false);
+                preferenceService.setPreference({
+                  hyperliquidInvite: {
+                    ...preferenceService.getPreference('hyperliquidInvite'),
+                    lastTime: Date.now(),
+                  },
+                });
+              }}
+              onInvite={() => {
+                handleGoTo(PERPS_INVITE_URL);
+                setIsShowInvite(false);
+                preferenceService.setPreference({
+                  hyperliquidInvite: {
+                    ...preferenceService.getPreference('hyperliquidInvite'),
+                    lastTime: Date.now(),
+                  },
+                });
+              }}
+              footer={
+                <View style={styles.dappWebViewNavControl}>
+                  <BrowserHeader
+                    dapp={dappInfo}
+                    url={webviewState.resolvedUrl}
+                    onViewTabs={handleViewTabs}
+                    onLocationBarPress={str => {
+                      setPartialBrowserState({
+                        isShowSearch: true,
+                        searchText: str,
+                        searchTabId: tabId,
+                        trigger: 'browser',
+                      });
+                    }}
+                    tabsCount={tabsCount}
+                    canGoBack={webviewState.canGoBack}
+                    onGoBack={handleGoBack}
+                    onGoHome={handleGoHome}
+                    onAccountPress={() => {
+                      if (dappInfo?.isConnected) {
+                        setIsShowCurrentDappPopup(true);
+                      } else {
+                        setIsShowAccountPopup(true);
+                      }
+                    }}
+                  />
+                </View>
+              }
+            />
+          ) : null}
+          {dappInfo ? (
+            <>
+              <CurrentDappPopup
+                visible={isShowCurrentDappPopup}
+                onClose={() => {
+                  setIsShowCurrentDappPopup(false);
+                }}
+                dapp={dappInfo}
+              />
+              <AccountSelectorPopup
+                visible={isShowAccountPopup}
+                onClose={() => {
+                  setIsShowAccountPopup(false);
+                }}
+                // todo
+                value={dappInfo?.currentAccount}
+                onChange={v => {
+                  dappService.updateDapp({
+                    ...dappInfo,
+                    currentAccount: v,
+                  });
+                  setIsShowAccountPopup(false);
+                }}
+              />
+            </>
           ) : null}
         </View>
       </Freeze>
