@@ -84,7 +84,6 @@ import { View } from 'react-native';
 import { BalanceChangeLoading } from './BalanceChangeLoanding';
 import { useGetMiniSignTxExtraProps } from '@/hooks/useMiniApproval';
 import BalanceChange from '../TxComponents/BalanceChange';
-import { isSelfhostRegPkg } from '@/constant/env';
 
 let count = 1;
 let unCount = 0;
@@ -116,7 +115,7 @@ export const MiniSignTx = ({
 }) => {
   useEffect(() => {
     if (count - unCount !== 1) {
-      if (__DEV__ || isSelfhostRegPkg) {
+      if (__DEV__) {
         toast2024.info(
           `MiniSignTx error render, count:${count},unCount:${unCount}`,
         );
