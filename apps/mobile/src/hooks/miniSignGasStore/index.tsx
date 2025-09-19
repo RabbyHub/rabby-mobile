@@ -69,8 +69,7 @@ export const useMiniSignGasStore = (chainId: number) => {
         chainId &&
         (typeof params.customGasPrice)?.toLowerCase() === 'number'
       ) {
-        setMiniCustomPrice(pre => ({
-          ...pre,
+        setMiniCustomPrice(() => ({
           [chainId]: params.customGasPrice || 0,
         }));
       }
