@@ -184,8 +184,8 @@ const Summary = ({ data, isEmpty }: ISummaryData) => {
                   )}
                 </Text>
                 <Text style={styles.actionAmount}>
-                  {formatAmountValueKMB(
-                    currentData?.summary?.buy?.volume_amount ?? 0,
+                  {formatUsdValueKMB(
+                    currentData?.summary?.buy?.volume_usd_value ?? 0,
                   ) || '-'}
                 </Text>
               </View>
@@ -198,8 +198,8 @@ const Summary = ({ data, isEmpty }: ISummaryData) => {
                   )}
                 </Text>
                 <Text style={[styles.actionAmount, styles.actionAmountRight]}>
-                  {formatAmountValueKMB(
-                    currentData?.summary?.sell?.volume_amount ?? 0,
+                  {formatUsdValueKMB(
+                    currentData?.summary?.sell?.volume_usd_value ?? 0,
                   ) || '-'}
                 </Text>
               </View>

@@ -795,6 +795,7 @@ export const TokenMarketInfoScreen = () => {
               )}
             </View>
             <ActivityAndHolders
+              hideActivity={!tokenWithAmount?.support_market_data}
               tokenId={token._tokenId}
               chainId={token.chain}
             />

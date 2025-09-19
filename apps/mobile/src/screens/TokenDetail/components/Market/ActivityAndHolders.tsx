@@ -16,9 +16,11 @@ const enum TabKey {
 const ActivityAndHolders = ({
   tokenId,
   chainId,
+  hideActivity,
 }: {
   tokenId: string;
   chainId: string;
+  hideActivity?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const [activeTabKey, setActiveTabKey] = useState<TabKey>(TabKey.activity);
@@ -28,6 +30,37 @@ const ActivityAndHolders = ({
     tokenId,
     chainId,
   );
+
+  if (hideActivity) {
+    if (
+      !summaryData?.ratio_top10 &&
+      !summaryData?.ratio_top100 &&
+      !detailsData?.data_list.length
+    ) {
+      return null;
+    }
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text
+            style={[styles.headerText, styles.activeText]}
+            onPress={() => setActiveTabKey(TabKey.holders)}>
+            {t('page.tokenDetail.marketInfo.holders')}
+          </Text>
+        </View>
+        <View style={styles.content}>
+          <View style={[styles.hideContent, styles.visibleContent]}>
+            <Holder
+              top10ratio={summaryData?.ratio_top10 || 0}
+              top100ratio={summaryData?.ratio_top100 || 0}
+              data={detailsData?.data_list || []}
+              isEmpty={isHolderEmpty}
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
