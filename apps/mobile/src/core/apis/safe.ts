@@ -19,7 +19,7 @@ import {
 } from '@rabby-wallet/eth-keyring-gnosis';
 import { EVENTS, eventBus } from '@/utils/events';
 import { Account } from '../services/preference';
-import { uniq } from 'lodash';
+import { isEqual, sortBy, uniq, without } from 'lodash';
 import { toChecksumAddress } from '@ethereumjs/util';
 import { hashSafeMessage } from '@safe-global/protocol-kit/dist/src/utils/eip-712';
 
@@ -51,27 +51,29 @@ export const createSafeService = async ({
 };
 
 class ApisSafe {
-  fetchGnosisChainList = (address: string) => {
+  fetchGnosisChainList = (address: string, excludeChains?: string[]) => {
     if (!isAddress(address)) {
       return Promise.reject(new Error(t('background.error.invalidAddress')));
     }
     return Promise.all(
-      GNOSIS_SUPPORT_CHAINS.map(async chainEnum => {
-        const chain = findChain({ enum: chainEnum });
-        try {
-          const safe = await createSafeService({
-            address,
-            networkId: chain!.network,
-          });
-          const owners = await safe.getOwners();
-          if (owners) {
-            return chain;
+      without(GNOSIS_SUPPORT_CHAINS, ...(excludeChains || [])).map(
+        async chainEnum => {
+          const chain = findChain({ enum: chainEnum });
+          try {
+            const safe = await createSafeService({
+              address,
+              networkId: chain!.network,
+            });
+            const owners = await safe.getOwners();
+            if (owners) {
+              return chain;
+            }
+          } catch (e) {
+            console.error(e);
+            return null;
           }
-        } catch (e) {
-          console.error(e);
-          return null;
-        }
-      }),
+        },
+      ),
     ).then(chains => chains.filter((chain): chain is Chain => !!chain));
   };
   importGnosisAddress = async (address: string, networkIds: string[]) => {
@@ -110,15 +112,27 @@ class ApisSafe {
     if (!keyring) {
       return;
     }
+    let isChanged = false;
     Object.entries(keyring.networkIdsMap).forEach(
       async ([address, networks]) => {
-        const chainList = await this.fetchGnosisChainList(address);
-        keyring.setNetworkIds(
+        const chainList = await this.fetchGnosisChainList(
           address,
-          uniq((networks || []).concat(chainList.map(chain => chain.network))),
+          networks.map(id => findChain({ networkId: id })?.enum || ''),
         );
+        const nextNetworks = uniq(
+          (networks || []).concat(chainList.map(chain => chain.network)),
+        );
+        const isSame = isEqual(sortBy(networks), sortBy(nextNetworks));
+        if (isSame) {
+          return;
+        }
+        isChanged = true;
+        keyring.setNetworkIds(address, nextNetworks);
       },
     );
+    if (isChanged) {
+      await keyringService.persistAllKeyrings();
+    }
   };
 
   syncGnosisNetworks = async (address: string) => {
@@ -127,11 +141,19 @@ class ApisSafe {
       return;
     }
     const networks = keyring.networkIdsMap[address];
-    const chainList = await this.fetchGnosisChainList(address);
-    keyring.setNetworkIds(
+    const chainList = await this.fetchGnosisChainList(
       address,
-      uniq((networks || []).concat(chainList.map(chain => chain.network))),
+      networks.map(id => findChain({ networkId: id })?.enum || ''),
     );
+    const nextNetworks = uniq(
+      (networks || []).concat(chainList.map(chain => chain.network)),
+    );
+    const isSame = isEqual(sortBy(networks), sortBy(nextNetworks));
+    if (isSame) {
+      return;
+    }
+    keyring.setNetworkIds(address, nextNetworks);
+    await keyringService.persistAllKeyrings();
   };
   getSafeVersion = async ({
     address,
