@@ -27,7 +27,7 @@ export default class TrezorBridge implements TrezorBridgeInterface {
           console.debug('deeplinkOpen', url);
           Linking.openURL(url);
         },
-        deeplinkCallbackUrl: `https://${UL_HOSTNAME}${UL_PATH_PREFIX}/connect-trezor`, //'rabby://connect-trezor',
+        deeplinkCallbackUrl: `https://${UL_HOSTNAME}${UL_PATH_PREFIX}connect-trezor`, //'rabby://connect-trezor',
         ...config,
       });
       this.isDeviceConnected = true;
