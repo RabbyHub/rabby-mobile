@@ -1,14 +1,27 @@
 import { miniApprovalAtom } from '@/hooks/useMiniApproval';
 import { useClearMiniApprovalTask } from '@/hooks/useMiniApprovalTask';
 import { EVENT_ROUTE_CHANGE, eventBus } from '@/utils/events';
-import { useMemoizedFn, useMount } from 'ahooks';
+import { useMemoizedFn, useMount, useUnmount } from 'ahooks';
 import { useAtom } from 'jotai';
 import React, { useRef } from 'react';
 import { toastWithDotAnimation } from '@/components2024/Toast';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { MiniDirectSubmitApproval } from './DirectSubmitMiniSigntx';
 import { MiniApproval } from './MiniSignTx';
-import { useMiniSignGasStore } from '@/hooks/miniSignGasStore';
+import {
+  useMemoMiniSignGasStore,
+  useMiniSignGasStore,
+} from '@/hooks/miniSignGasStore';
+import { RootNames } from '@/constant/layout';
+
+const DON_AUTO_RESET_GAS_SCREEN = [
+  RootNames.Swap,
+  RootNames.MultiSwap,
+  RootNames.Bridge,
+  RootNames.MultiBridge,
+  RootNames.Send,
+  RootNames.MultiSend,
+] as string[];
 
 export const GlobalMiniApproval = () => {
   const [state, setState] = useAtom(miniApprovalAtom);
@@ -38,18 +51,32 @@ export const GlobalMiniApproval = () => {
   // prefetch data
   useMiniSignGasStore(-1);
 
+  const { reset: resetMemoGas } = useMemoMiniSignGasStore();
+
   const handleSubmitted = useMemoizedFn(() => {
     submittingToastRef?.current?.();
   });
 
-  useMount(() => {
-    eventBus.on(EVENT_ROUTE_CHANGE, () => {
+  const onEventRouteChange = useMemoizedFn(
+    ({ currentRouteName }: { currentRouteName: string }) => {
+      if (!DON_AUTO_RESET_GAS_SCREEN.includes(currentRouteName)) {
+        resetMemoGas();
+      }
       clear();
       state?.onReject?.();
       setState({ txs: [], visible: false, directSubmit: false });
       submittingToastRef?.current?.();
-    });
+    },
+  );
+
+  useMount(() => {
+    eventBus.addListener(EVENT_ROUTE_CHANGE, onEventRouteChange);
   });
+
+  useUnmount(() => {
+    eventBus.removeListener(EVENT_ROUTE_CHANGE, onEventRouteChange);
+  });
+
   if (!currentAccount) {
     return null;
   }

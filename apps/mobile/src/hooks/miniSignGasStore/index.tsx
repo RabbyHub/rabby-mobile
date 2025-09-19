@@ -15,7 +15,7 @@ const customPriceAtom = atom<{
   [key: number]: number;
 }>({});
 
-const useMemoMiniSignGasStore = () => {
+export const useMemoMiniSignGasStore = () => {
   const [miniGasLevel, setMiniGasLevel] = useAtom(gasLevelAtom);
   const [miniCustomPrice, setMiniCustomPrice] = useAtom(customPriceAtom);
 
