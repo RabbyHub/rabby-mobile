@@ -807,7 +807,9 @@ export const BrowserTab = React.forwardRef<BrowserRef, BrowserTabProps>(
             </NativeViewGestureHandler>
           </ViewShot>
           {isActive && !browserState.isShowSearch ? (
-            <View style={styles.dappWebViewNavControl}>
+            <View
+              style={styles.dappWebViewNavControl}
+              key={browserState.isShowBrowser ? 'show' : 'hide'}>
               <BrowserHeader
                 dapp={dappInfo}
                 url={webviewState.resolvedUrl}
